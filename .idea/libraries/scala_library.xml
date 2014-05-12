@@ -1,0 +1,21 @@
+<component name="libraryTable">
+  <library name="scala-library">
+    <CLASSES>
+      <root url="jar:///usr/share/scala/lib/akka-actor_2.11-2.3.2.jar!/" />
+      <root url="jar:///usr/share/scala/lib/config-1.2.0.jar!/" />
+      <root url="jar:///usr/share/scala/lib/jline-2.11.jar!/" />
+      <root url="jar:///usr/share/scala/lib/scala-actors-2.11.0.jar!/" />
+      <root url="jar:///usr/share/scala/lib/scala-compiler.jar!/" />
+      <root url="jar:///usr/share/scala/lib/scala-continuations-library_2.11-1.0.1.jar!/" />
+      <root url="jar:///usr/share/scala/lib/scala-library.jar!/" />
+      <root url="jar:///usr/share/scala/lib/scala-parser-combinators_2.11-1.0.1.jar!/" />
+      <root url="jar:///usr/share/scala/lib/scala-reflect.jar!/" />
+      <root url="jar:///usr/share/scala/lib/scala-swing_2.11-1.0.1.jar!/" />
+      <root url="jar:///usr/share/scala/lib/scala-xml_2.11-1.0.1.jar!/" />
+    </CLASSES>
+    <JAVADOC />
+    <SOURCES>
+      <root url="jar://$USER_HOME$/scala/scala-library-2.11.0-sources.jar!/" />
+    </SOURCES>
+  </library>
+</component>

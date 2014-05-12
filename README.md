@@ -1,0 +1,1 @@
+IntelliJ plugin for Haskell

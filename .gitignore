@@ -1,0 +1,9 @@
+/gen
+/dist
+/out
+/target
+/.idea/workspace.xml
+/.idea/vcs.xml
+/.idea/rik.xml
+/.idea/dictionaries/rik.xml
+*~
