@@ -1,46 +1,54 @@
 <idea-plugin version="2">
-  <id>com.powertuple.intellij.haskell</id>
-  <name>Haskell plugin for IntelliJ</name>
-  <version>0.1</version>
-  <vendor email="rikvdkleij@gmail.com" url="http://www.powertuple.com">PowerTuple</vendor>
+    <id>com.powertuple.intellij.haskell</id>
+    <name>Haskell plugin for IntelliJ</name>
+    <version>0.1</version>
+    <vendor email="rikvdkleij@gmail.com" url="http://www.powertuple.com">PowerTuple</vendor>
 
-  <description><![CDATA[
+    <description><![CDATA[
         Haskell support.
     ]]></description>
 
-  <change-notes><![CDATA[
+    <change-notes><![CDATA[
         First version.
     ]]>
-  </change-notes>
+    </change-notes>
 
-  <!-- please see http://confluence.jetbrains.com/display/IDEADEV/Build+Number+Ranges for description -->
-  <idea-version since-build="135"/>
+    <!-- please see http://confluence.jetbrains.com/display/IDEADEV/Build+Number+Ranges for description -->
+    <idea-version since-build="135"/>
 
-  <!-- please see http://confluence.jetbrains.com/display/IDEADEV/Plugin+Compatibility+with+IntelliJ+Platform+Products
-       on how to target different products -->
-  <!-- uncomment to enable plugin in all products
-  <depends>com.intellij.modules.lang</depends>
-  -->
+    <!-- please see http://confluence.jetbrains.com/display/IDEADEV/Plugin+Compatibility+with+IntelliJ+Platform+Products
+         on how to target different products -->
+    <!-- uncomment to enable plugin in all products
+    <depends>com.intellij.modules.lang</depends>
+    -->
 
-  <extensions defaultExtensionNs="com.intellij">
-      <fileTypeFactory implementation="com.powertuple.intellij.haskell.HaskellFileTypeFactory"/>
-      <lang.parserDefinition language="Haskell" implementationClass="com.powertuple.intellij.haskell.HaskellParserDefinition"/>
-      <lang.syntaxHighlighterFactory key="Haskell"
-                                     implementationClass="com.powertuple.intellij.haskell.highlighter.HaskellSyntaxHighlighterFactory"/>
+    <extensions defaultExtensionNs="com.intellij">
+        <fileTypeFactory implementation="com.powertuple.intellij.haskell.HaskellFileTypeFactory"/>
+        <lang.parserDefinition language="Haskell"
+                               implementationClass="com.powertuple.intellij.haskell.HaskellParserDefinition"/>
+        <lang.syntaxHighlighterFactory key="Haskell"
+                                       implementationClass="com.powertuple.intellij.haskell.highlighter.HaskellSyntaxHighlighterFactory"/>
 
-      <externalAnnotator language="Haskell" implementationClass="com.powertuple.intellij.haskell.annotator.GhcModExternalAnnotator"/>
-  </extensions>
+        <externalAnnotator language="Haskell"
+                           implementationClass="com.powertuple.intellij.haskell.annotator.GhcModExternalAnnotator"/>
 
-  <application-components>
-    <!-- Add your application components here -->
-  </application-components>
+        <applicationConfigurable instance="com.powertuple.intellij.haskell.settings.HaskellConfigurable"/>
 
-  <project-components>
-    <!-- Add your project components here -->
-  </project-components>
+        <applicationService serviceImplementation="com.powertuple.intellij.haskell.settings.HaskellSettings"/>
+    </extensions>
 
-  <actions>
-    <!-- Add your actions here -->
-  </actions>
+    <application-components>
+        <!-- Add your application components here -->
+    </application-components>
+
+    <project-components>
+        <!--<component>-->
+        <!--<implementation-class>com.powertuple.intellij.haskell.HaskellProjectComponent</implementation-class>-->
+        <!--</component>-->
+    </project-components>
+
+    <actions>
+        <!-- Add your actions here -->
+    </actions>
 
 </idea-plugin>

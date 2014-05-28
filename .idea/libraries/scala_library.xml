@@ -16,6 +16,7 @@
     <JAVADOC />
     <SOURCES>
       <root url="jar://$USER_HOME$/scala/scala-library-2.11.0-sources.jar!/" />
+      <root url="jar://$USER_HOME$/scala/akka-actor_2.11-2.3.2-sources.jar!/" />
     </SOURCES>
   </library>
 </component>
