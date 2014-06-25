@@ -1,3 +1,19 @@
+/*
+ * Copyright 2014 Rik van der Kleij
+
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
 package com.powertuple.intellij.haskell.settings
 
 import com.intellij.openapi.options.{ConfigurationException, Configurable}
@@ -7,7 +23,7 @@ import com.intellij.openapi.fileChooser.FileChooserDescriptorFactory
 import java.awt.{Insets, GridBagConstraints, GridBagLayout}
 import javax.swing.event.DocumentEvent
 import com.intellij.ui.DocumentAdapter
-import com.powertuple.intellij.haskell.external.SystemProcessContainer
+import com.powertuple.intellij.haskell.external.{GhcModi, GhciModManager}
 
 class HaskellConfigurable extends Configurable {
   private var isModifiedByUser = false
@@ -114,7 +130,7 @@ class HaskellConfigurable extends Configurable {
     state.ghcModiPath = ghcModiPathField.getText
     state.hdocsPath = hdocsPathField.getText
 
-    SystemProcessContainer.setReconnect()
+    GhciModManager.setReinit()
 
     isModifiedByUser = false
   }

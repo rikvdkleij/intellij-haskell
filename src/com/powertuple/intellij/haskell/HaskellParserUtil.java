@@ -1,19 +1,23 @@
+/*
+ * Copyright 2014 Rik van der Kleij
+
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
 package com.powertuple.intellij.haskell;
 
-import com.intellij.lang.PsiBuilder;
 import com.intellij.lang.parser.GeneratedParserUtilBase;
 
 public class HaskellParserUtil extends GeneratedParserUtilBase {
 
-    public static boolean ghcMod(PsiBuilder builder_, int level_) {
-//        if (builder_.eof()) return true;
-        System.out.println("test rik van rikkie");
-//        IElementType one = builder_.rawLookup(1);
-//        IElementType two = builder_.rawLookup(2);
-//        if (one == TokenType.WHITE_SPACE && (two == HaskellTypes.HS_DOT || two == null) || one == null && builder_.getTokenType() == HaskellTypes.HS_DOT) {
-//            builder_.remapCurrentToken(TokenType.ERROR_ELEMENT);
-//            return true;
-//        }
-        return false;
-    }
 }

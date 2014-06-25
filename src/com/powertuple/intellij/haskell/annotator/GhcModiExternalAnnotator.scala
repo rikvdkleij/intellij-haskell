@@ -1,3 +1,19 @@
+/*
+ * Copyright 2014 Rik van der Kleij
+
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
 package com.powertuple.intellij.haskell.annotator
 
 import com.intellij.lang.annotation.{AnnotationHolder, ExternalAnnotator}
@@ -14,10 +30,10 @@ import com.intellij.codeInsight.daemon.impl.DaemonCodeAnalyzerImpl
 import com.intellij.openapi.ui.MessageType
 import scala.collection.JavaConversions._
 import com.powertuple.intellij.haskell.HaskellFileType
-import com.powertuple.intellij.haskell.external.SystemProcessContainer
+import com.powertuple.intellij.haskell.external.GhciModManager
 
-class GhcModExternalAnnotator extends ExternalAnnotator[GhcModInitialInfo, GhcModResult] {
-  private val Log = Logger.getInstance(classOf[GhcModExternalAnnotator])
+class GhcModiExternalAnnotator extends ExternalAnnotator[GhcModInitialInfo, GhcModResult] {
+  private val Log = Logger.getInstance(classOf[GhcModiExternalAnnotator])
 
   private val GhcModNotificationGroup = NotificationGroup.balloonGroup("Ghc-mod inspections")
 
@@ -41,7 +57,7 @@ class GhcModExternalAnnotator extends ExternalAnnotator[GhcModInitialInfo, GhcMo
       }
     }, ModalityState.any())
 
-    val ghcModi = SystemProcessContainer.getGhcModi(initialInfoGhcMod.psiFile.getProject.getBasePath)
+    val ghcModi = GhciModManager.getGhcMod(initialInfoGhcMod.psiFile.getProject)
     val ghcModOutput = ghcModi.execute("check " + initialInfoGhcMod.filePath)
 
     if (ghcModOutput.outputLines.isEmpty) {
@@ -52,7 +68,7 @@ class GhcModExternalAnnotator extends ExternalAnnotator[GhcModInitialInfo, GhcMo
   }
 
   override def apply(psiFile: PsiFile, ghcModResult: GhcModResult, holder: AnnotationHolder) {
-    if (!ghcModResult.problems.isEmpty && psiFile.isValid) {
+    if (ghcModResult.problems.nonEmpty && psiFile.isValid) {
       for (annotation <- createAnnotations(ghcModResult, psiFile.getText)) {
         annotation match {
           case ErrorAnnotation(textRange, message) => holder.createErrorAnnotation(textRange, message)
@@ -100,9 +116,8 @@ class GhcModExternalAnnotator extends ExternalAnnotator[GhcModInitialInfo, GhcMo
 
   private def parseGhcModOutputLine(ghcModOutput: String): GhcModProblem = {
     val ghcModProblemPattern = """.+:([\d]+):([\d]+):(.+)""".r
-
     val ghcModProblemPattern(lineNr, columnNr, description) = ghcModOutput
-    new GhcModProblem(lineNr.toInt, columnNr.toInt, description)
+    new GhcModProblem(lineNr.toInt, columnNr.toInt - 1, description)
   }
 }
 

@@ -14,24 +14,30 @@
  * limitations under the License.
  */
 
-package com.powertuple.intellij.haskell;
+package com.powertuple.intellij.haskell.external
 
-import com.intellij.lang.Language;
+import com.intellij.openapi.project.Project
 
-public class HaskellLanguage extends Language {
-    public static final HaskellLanguage INSTANCE = new HaskellLanguage();
+object GhciModManager {
 
-    public HaskellLanguage() {
-        super("Haskell");
+  private var reinit = false
+
+  def getGhcMod(project: Project): GhcModi = {
+    if (reinit) {
+      val ghcModi = ghcModiFrom(project)
+      ghcModi.reinit()
+      reinit = false
+      ghcModi
+    } else {
+      ghcModiFrom(project)
     }
+  }
 
-    @Override
-    public String getDisplayName() {
-        return "Haskell language";
-    }
+  def setReinit() {
+    reinit = true
+  }
 
-    @Override
-    public boolean isCaseSensitive() {
-        return true;
-    }
+  private def ghcModiFrom(project: Project)= {
+    project.getComponent(classOf[GhcModi])
+  }
 }

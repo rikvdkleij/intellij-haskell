@@ -26,11 +26,15 @@
         <fileTypeFactory implementation="com.powertuple.intellij.haskell.HaskellFileTypeFactory"/>
         <lang.parserDefinition language="Haskell"
                                implementationClass="com.powertuple.intellij.haskell.HaskellParserDefinition"/>
+
+        <colorSettingsPage implementation="com.powertuple.intellij.haskell.highlighter.HaskellColorSettingsPage"/>
         <lang.syntaxHighlighterFactory key="Haskell"
                                        implementationClass="com.powertuple.intellij.haskell.highlighter.HaskellSyntaxHighlighterFactory"/>
+        <lang.braceMatcher language="Haskell" implementationClass="com.powertuple.intellij.haskell.highlighter.HaskellBraceMatcher"/>
+        <lang.commenter language="Haskell" implementationClass="com.powertuple.intellij.haskell.HaskellCommenter"/>
 
         <externalAnnotator language="Haskell"
-                           implementationClass="com.powertuple.intellij.haskell.annotator.GhcModExternalAnnotator"/>
+                           implementationClass="com.powertuple.intellij.haskell.annotator.GhcModiExternalAnnotator"/>
 
         <applicationConfigurable instance="com.powertuple.intellij.haskell.settings.HaskellConfigurable"/>
 
@@ -42,6 +46,10 @@
     </application-components>
 
     <project-components>
+        <component>
+            <implementation-class>com.powertuple.intellij.haskell.external.GhcModi</implementation-class>
+        </component>
+
         <!--<component>-->
         <!--<implementation-class>com.powertuple.intellij.haskell.HaskellProjectComponent</implementation-class>-->
         <!--</component>-->

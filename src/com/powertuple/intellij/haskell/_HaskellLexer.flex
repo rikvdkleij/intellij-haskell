@@ -18,93 +18,121 @@ import static com.powertuple.intellij.haskell.psi.HaskellTypes.*;
 %type IElementType
 %unicode
 
-ControlCharacter = [\000 - \037]
-Whitespace = ([ \t\n] | {ControlCharacter})+
+control_character   = [\000 - \037]
+newline             = \r|\n|\r\n|\f
+WHITECHAR           = ({newline} | ' ' | \t | {control_character} | \ )
 
-SMALL=[a-z_]    // ignoring any unicode lowercase letter for now
-LARGE=[A-Z]     // ignoring any unicode uppercase letter for now
-DIGIT=[0-9]     // ignoring any unicode decimal digit for now
-DECIMAL={DIGIT}+
-HEXADECIMAL=0[xX][0-9A-Fa-f]+
-OCTAL=0[oO][0-7]+
-FLOAT=[-+]?([0-9]+(\\.[0-9]*)?|\\.[0-9]+)([eE][-+]?[0-9]+)?
-COMMENT="--"[^\r\n]*
+small               = [a-z_]          // ignoring any unicode lowercase letter for now
+large               = [A-Z]           // ignoring any unicode uppercase letter for now
+digit               = [0-9]           // ignoring any unicode decimal digit for now
+DECIMAL             = {digit}+
 
-EOL=\r|\n|\r\n
-NCOMMENT="{-" (.|{EOL})* "-}"
+hexit               = [0-9A-Fa-f]
+HEXADECIMAL         = 0[xX]{hexit}+
 
-CHARACTER_LITERAL = \' [^\'\\\r\n]* \'
-STRING_LITERAL = \" [^\"\\\r\n]* \"
+octit               = [0-7]
+OCTAL               = 0[oO]{octit}+
+
+FLOAT               = [-+]?([0-9]+(\\.[0-9]*)?|\\.[0-9]+)([eE][-+]?[0-9]+)?
+
+COMMENT             = "--"[^\r\n]*
+NCOMMENT            = "{-" (.|{newline})* "-}"
+
+CHARACTER_LITERAL   = \' [^\'\\\r\n\f]* \'
+STRING_LITERAL      = \" [^\"\\\r\n\f]* \"
+
+VAR_ID              = {small} ({small} | {large} | {digit} | ')*
+CON_ID              = {large} ({small} | {large})*
 
 %%
 <YYINITIAL> {
+
+    {WHITECHAR}           { return HS_WHITE_CHAR;}
+
     {COMMENT}             { return HS_COMMENT; }
     {NCOMMENT}            { return HS_NCOMMENT; }
-
-    {Whitespace}          { return com.intellij.psi.TokenType.WHITE_SPACE; }
-
-
-
-//    "{"                   { return HS_LEFT_BRACE; }
-//    "}"                   { return HS_RIGHT_BRACE; }
-//    "["                   { return HS_LEFT_BRACKET; }
-//    "]"                   { return HS_RIGHT_BRACKET; }
-//    "("                   { return HS_LEFT_PAREN; }
-//    ")"                   { return HS_RIGHT_PAREN; }
-//    ":"                   { return HS_COLON;}
-//    ";"                   { return HS_SEMICOLON;}
-//    "."                   { return HS_DOT; }
-//    ","                   { return HS_COMMA; }
-//    "|"                   { return HS_VERTICAL_BAR;}
-    "="                   { return HS_DEFINED_BY; }
-    "<-"                  { return HS_DRAW_FROM_OR_MATCHES_OR_IN; }
-    "=>"                  { return HS_INSTANCE_CONTEXTS; }
-
-
-    "<"                  { return HS_LT; }
-    ">"                  { return HS_GT; }
-
-    // not listed as reserved identifier but have meaning in certain context
-//    "as"                  { return HS_AS; }
-//    "hiding"                  { return HS_HIDING; }
-//    "qualified"                  { return HS_QUALIFIED; }
-
-    // reserved identifiers
-    "case"                { return HS_CASE_KEYWORD; }
-    "class"               { return HS_CLASS_KEYWORD; }
-    "data"                { return HS_DATA_KEYWORD; }
-    "default"             { return HS_DEFAULT_KEYWORD; }
-    "deriving"            { return HS_DERIVING_KEYWORD; }
-//    "do"                  { return HS_DO_KEYWORD; }
-//    "else"                { return HS_ELSE_KEYWORD; }
-//    "hiding"              { return HS_HIDING_KEYWORD; }
-//    "if"                  { return HS_IF_KEYWORD; }
-//    "import"              { return HS_IMPORT_KEYWORD; }
-//    "in"                  { return HS_IN_KEYWORD; }
-//    "infix"               { return HS_INFIX_KEYWORD; }
-//    "infixl"              { return HS_INFIXL_KEYWORD; }
-//    "infixr"              { return HS_INFIXR_KEYWORD; }
-//    "instance"            { return HS_INSTANCE_KEYWORD; }
-//    "let"                 { return HS_LET_KEYWORD; }
-    "module"              { return HS_MODULE_KEYWORD; }
-//    "newtype"             { return HS_NEWTYPE_KEYWORD; }
-//    "of"                  { return HS_OF_KEYWORD; }
-//    "then"                { return HS_THEN_KEYWORD; }
-//    "type"                { return HS_TYPE_KEYWORD; }
-    "where"               { return HS_WHERE_KEYWORD; }
-
-//    "_"                   { return HS___KEYWORD; }
 
     {CHARACTER_LITERAL}   { return HS_CHARACTER_LITERAL;  }
     {STRING_LITERAL}      { return HS_STRING_LITERAL;  }
 
-    {SMALL}               { return HS_SMALL; }
-    {LARGE}               { return HS_LARGE; }
     {DECIMAL}             { return HS_DECIMAL; }
     {HEXADECIMAL}         { return HS_HEXADECIMAL; }
     {OCTAL}               { return HS_OCTAL; }
     {FLOAT}               { return HS_FLOAT; }
 
+    // ascSymbol except reservedop
+    "!"                   { return HS_EXCLAMATION_MARK; }
+    "#"                   { return HS_HASH; }
+    "$"                   { return HS_DOLLAR; }
+    "%"                   { return HS_PERCENTAGE; }
+    "&"                   { return HS_AMPERSAND; }
+    "*"                   { return HS_STAR; }
+    "+"                   { return HS_PLUS; }
+    "."                   { return HS_DOT; }
+    "/"                   { return HS_SLASH; }
+    "<"                   { return HS_LT; }
+    ">"                   { return HS_GT; }
+    "?"                   { return HS_QUESTION_MARK; }
+    "^"                   { return HS_CARET; }
+    "-"                   { return HS_DASH; }
 
-    [^] { return com.intellij.psi.TokenType.BAD_CHARACTER; }
+    // special
+    "("                   { return HS_LEFT_PAREN; }
+    ")"                   { return HS_RIGHT_PAREN; }
+    ","                   { return HS_COMMA; }
+    ";"                   { return HS_SEMICOLON;}
+    "["                   { return HS_LEFT_BRACKET; }
+    "]"                   { return HS_RIGHT_BRACKET; }
+    "`"                   { return HS_BACKQUOTE; }
+    "{"                   { return HS_LEFT_BRACE; }
+    "}"                   { return HS_RIGHT_BRACE; }
+
+    // reservedop
+    ".."                  { return HS_DOT_DOT; }
+    "::"                  { return HS_COLON_COLON; }
+    ":"                   { return HS_COLON; }
+    "="                   { return HS_DEFINED_BY; }
+    "\\"                  { return HS_BACKSLASH; }
+    "|"                   { return HS_VERTICAL_BAR; }
+    "<-"                  { return HS_LEFT_ARROW; }
+    "->"                  { return HS_RIGHT_ARROW; }
+    "@"                   { return HS_AT; }
+    "~"                   { return HS_TILDE; }
+    "=>"                  { return HS_DOUBLE_RIGHT_ARROW; }
+
+    // not listed as reserved identifier but have meaning in certain context,
+    // let's say specialreservedid
+    "as"                  { return HS_AS; }
+    "qualified"           { return HS_QUALIFIED; }
+    "hiding"              { return HS_HIDING; }
+
+    // reservedid
+    "case"                { return HS_CASE; }
+    "class"               { return HS_CLASS; }
+    "data"                { return HS_DATA; }
+    "default"             { return HS_DEFAULT; }
+    "deriving"            { return HS_DERIVING; }
+    "do"                  { return HS_DO; }
+    "else"                { return HS_ELSE; }
+    "foreign"             { return HS_FOREIGN; }
+    "if"                  { return HS_IF; }
+    "import"              { return HS_IMPORT; }
+    "in"                  { return HS_IN; }
+    "infix"               { return HS_INFIX; }
+    "infixl"              { return HS_INFIXL; }
+    "infixr"              { return HS_INFIXR; }
+    "instance"            { return HS_INSTANCE; }
+    "let"                 { return HS_LET; }
+    "module"              { return HS_MODULE; }
+    "newtype"             { return HS_NEWTYPE; }
+    "of"                  { return HS_OF; }
+    "then"                { return HS_THEN; }
+    "type"                { return HS_TYPE; }
+    "where"               { return HS_WHERE; }
+    "_"                  { return HS_UNDERSCORE; }
+
+    {VAR_ID}              { return HS_VAR_ID; }
+    {CON_ID}              { return HS_CON_ID; }
+
+    [^]                   { return com.intellij.psi.TokenType.BAD_CHARACTER; }
 }
