@@ -14,7 +14,7 @@ Other Haskell support by help from external tools as ghc-mod(i).
 In the meantime also Atsky started to create [Haskell-idea-plugin](https://github.com/Atsky/haskell-idea-plugin) based on ideah plugin in Kotlin. First I saw clear difference
  in approach (besides language) but it looks like we are eventually using to same approach to support Haskell code in IntelliJ. 
  
-This plugin is written in Java/Scala and is mentioned not to support GHC/Cabal directly. Mine idea is to support sandbox projects
+This plugin is written in Java/Scala and is mentioned not to support GHC/Cabal directly. My idea is to support sandbox projects
 and doing the initial/basic Haskell configuration in terminal. This plugin will rely on external tools (mainly ghc-mod(i)) for Haskell language support in IntelliJ IDEA.
 The code in this project for setting the paths to external tools is based on Haskell-idea-plugin. I have no experience in creating IntelliJ
 plugins so it's 'inspiring' to look to code of other plugins :-)

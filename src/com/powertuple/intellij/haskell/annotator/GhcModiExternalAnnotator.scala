@@ -16,26 +16,17 @@
 
 package com.powertuple.intellij.haskell.annotator
 
-import com.intellij.lang.annotation.{AnnotationHolder, ExternalAnnotator}
-import com.intellij.notification.NotificationGroup
-import com.intellij.openapi.diagnostic.Logger
-import com.intellij.psi.PsiFile
-import com.intellij.openapi.util.TextRange
-import com.intellij.openapi.application.{ModalityState, ApplicationManager}
-import com.intellij.openapi.fileEditor.FileDocumentManager
-import com.intellij.execution.process.ProcessOutput
-import com.intellij.openapi.util.text.StringUtil
 import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer
 import com.intellij.codeInsight.daemon.impl.DaemonCodeAnalyzerImpl
-import com.intellij.openapi.ui.MessageType
-import scala.collection.JavaConversions._
+import com.intellij.lang.annotation.{AnnotationHolder, ExternalAnnotator}
+import com.intellij.openapi.application.{ApplicationManager, ModalityState}
+import com.intellij.openapi.fileEditor.FileDocumentManager
+import com.intellij.openapi.util.TextRange
+import com.intellij.psi.PsiFile
 import com.powertuple.intellij.haskell.HaskellFileType
 import com.powertuple.intellij.haskell.external.GhciModManager
 
-class GhcModiExternalAnnotator extends ExternalAnnotator[GhcModInitialInfo, GhcModResult] {
-  private val Log = Logger.getInstance(classOf[GhcModiExternalAnnotator])
-
-  private val GhcModNotificationGroup = NotificationGroup.balloonGroup("Ghc-mod inspections")
+class GhcModiExternalAnnotator extends ExternalAnnotator[GhcModInitialInfo, GhcModiResult] {
 
   /**
    * Returning null will cause doAnnotate() not to be called by Intellij API.
@@ -50,7 +41,7 @@ class GhcModiExternalAnnotator extends ExternalAnnotator[GhcModInitialInfo, GhcM
     }
   }
 
-  override def doAnnotate(initialInfoGhcMod: GhcModInitialInfo): GhcModResult = {
+  override def doAnnotate(initialInfoGhcMod: GhcModInitialInfo): GhcModiResult = {
     ApplicationManager.getApplication.invokeAndWait(new Runnable() {
       override def run() {
         FileDocumentManager.getInstance.saveDocument(FileDocumentManager.getInstance().getDocument(initialInfoGhcMod.psiFile.getVirtualFile))
@@ -58,16 +49,16 @@ class GhcModiExternalAnnotator extends ExternalAnnotator[GhcModInitialInfo, GhcM
     }, ModalityState.any())
 
     val ghcModi = GhciModManager.getGhcMod(initialInfoGhcMod.psiFile.getProject)
-    val ghcModOutput = ghcModi.execute("check " + initialInfoGhcMod.filePath)
+    val ghcModiOutput = ghcModi.execute("check " + initialInfoGhcMod.filePath)
 
-    if (ghcModOutput.outputLines.isEmpty) {
-      new GhcModResult(Seq())
+    if (ghcModiOutput.outputLines.isEmpty) {
+      new GhcModiResult(Seq())
     } else {
-      new GhcModResult(ghcModOutput.outputLines.map(parseGhcModOutputLine))
+      new GhcModiResult(ghcModiOutput.outputLines.map(parseGhcModiOutputLine))
     }
   }
 
-  override def apply(psiFile: PsiFile, ghcModResult: GhcModResult, holder: AnnotationHolder) {
+  override def apply(psiFile: PsiFile, ghcModResult: GhcModiResult, holder: AnnotationHolder) {
     if (ghcModResult.problems.nonEmpty && psiFile.isValid) {
       for (annotation <- createAnnotations(ghcModResult, psiFile.getText)) {
         annotation match {
@@ -85,20 +76,15 @@ class GhcModiExternalAnnotator extends ExternalAnnotator[GhcModInitialInfo, GhcM
     fileStatusMap.markFileScopeDirty(document, new TextRange(0, document.getTextLength), psiFile.getTextLength)
   }
 
-  private def startOffSetForProblem(lengthPerLine: Array[Int], problem: GhcModProblem): Int = {
-    val lineNr = problem.lineNr
-    (if (lineNr <= 1) {
-      0
-    } else {
-      lengthPerLine.take(lineNr - 1).sum
-    }) + problem.columnNr - 1
+  private def startOffSetForProblem(lengthPerLine: Iterator[Int], problem: GhcModiProblem): Int = {
+    lengthPerLine.take(problem.lineNr - 1).map(_ + 1).sum + problem.columnNr
   }
 
-  private[annotator] def createAnnotations(ghcModResult: GhcModResult, text: String): Seq[Annotation] = {
-    val lengthPerLine = StringUtil.splitByLines(text, false).map(_.size + 1)
+  private[annotator] def createAnnotations(ghcModResult: GhcModiResult, text: String): Seq[Annotation] = {
+    val lengthPerLine = text.lines.map(_.size)
     for (problem <- ghcModResult.problems) yield {
       val startOffSet = startOffSetForProblem(lengthPerLine, problem)
-      val textRange = TextRange.create(startOffSet, startOffSet + 1)
+      val textRange = TextRange.create(startOffSet - 1, startOffSet)
       if (problem.description.startsWith("Warning:")) {
         WarningAnnotation(textRange, problem.description)
       } else {
@@ -107,25 +93,18 @@ class GhcModiExternalAnnotator extends ExternalAnnotator[GhcModInitialInfo, GhcM
     }
   }
 
-  private[annotator] def parseGhcModOutput(ghcModOutput: ProcessOutput): Seq[GhcModProblem] = {
-    ghcModOutput match {
-      case gmo if !gmo.getStderrLines.isEmpty => GhcModNotificationGroup.createNotification(s"Ghc-mod error output: ${gmo.getStderr}", MessageType.ERROR); Seq()
-      case gmo => gmo.getStdoutLines.map(parseGhcModOutputLine)
-    }
-  }
-
-  private def parseGhcModOutputLine(ghcModOutput: String): GhcModProblem = {
+  private[annotator] def parseGhcModiOutputLine(ghcModOutput: String): GhcModiProblem = {
     val ghcModProblemPattern = """.+:([\d]+):([\d]+):(.+)""".r
     val ghcModProblemPattern(lineNr, columnNr, description) = ghcModOutput
-    new GhcModProblem(lineNr.toInt, columnNr.toInt - 1, description)
+    new GhcModiProblem(lineNr.toInt, columnNr.toInt, description)
   }
 }
 
 case class GhcModInitialInfo(psiFile: PsiFile, filePath: String)
 
-case class GhcModResult(problems: Seq[GhcModProblem] = Seq())
+case class GhcModiResult(problems: Seq[GhcModiProblem] = Seq())
 
-case class GhcModProblem(lineNr: Int, columnNr: Int, description: String)
+case class GhcModiProblem(lineNr: Int, columnNr: Int, description: String)
 
 abstract class Annotation
 

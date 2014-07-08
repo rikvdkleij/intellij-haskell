@@ -27,35 +27,13 @@ import org.jetbrains.annotations.NotNull;
 )
 public class HaskellSettings implements PersistentStateComponent<HaskellSettings.HaskellSettingsState> {
 
+    private HaskellSettingsState haskellSettingsState = new HaskellSettingsState();
+
     @NotNull
     public static HaskellSettings getInstance() {
-        HaskellSettings persisted = ServiceManager.getService(HaskellSettings.class);
-        if (persisted == null) {
-            persisted = new HaskellSettings();
-        }
-
-        if (persisted.getState().ghcModPath == null) {
-            persisted.getState().ghcModPath = "ghc-mod";
-        }
-
-        if (persisted.getState().ghcModiPath == null) {
-            persisted.getState().ghcModiPath = "ghc-modi";
-        }
-
-        if (persisted.getState().hdocsPath == null) {
-            persisted.getState().hdocsPath = "hdocs";
-        }
-
-        return persisted;
+        final HaskellSettings haskellSettings = ServiceManager.getService(HaskellSettings.class);
+        return haskellSettings != null ? haskellSettings : new HaskellSettings();
     }
-
-    public static class HaskellSettingsState {
-        public String ghcModPath;
-        public String ghcModiPath;
-        public String hdocsPath;
-    }
-
-    private HaskellSettingsState haskellSettingsState = new HaskellSettingsState();
 
     @NotNull
     public HaskellSettingsState getState() {
@@ -64,5 +42,11 @@ public class HaskellSettings implements PersistentStateComponent<HaskellSettings
 
     public void loadState(HaskellSettingsState haskellSettingsState) {
         this.haskellSettingsState = haskellSettingsState;
+    }
+
+    public static class HaskellSettingsState {
+        public String ghcModPath = "ghc-mod";
+        public String ghcModiPath = "ghc-modi";
+        public String hdocsPath = "hdocs";
     }
 }

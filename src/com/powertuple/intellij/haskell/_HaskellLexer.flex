@@ -18,9 +18,9 @@ import static com.powertuple.intellij.haskell.psi.HaskellTypes.*;
 %type IElementType
 %unicode
 
-control_character   = [\000 - \037]
-newline             = \r|\n|\r\n|\f
-WHITECHAR           = ({newline} | ' ' | \t | {control_character} | \ )
+control_character    = [\000 - \037]
+NEWLINE             = \r|\n|\r\n
+WHITE_SPACE         = ([ \t\f] | {control_character})+
 
 small               = [a-z_]          // ignoring any unicode lowercase letter for now
 large               = [A-Z]           // ignoring any unicode uppercase letter for now
@@ -36,7 +36,7 @@ OCTAL               = 0[oO]{octit}+
 FLOAT               = [-+]?([0-9]+(\\.[0-9]*)?|\\.[0-9]+)([eE][-+]?[0-9]+)?
 
 COMMENT             = "--"[^\r\n]*
-NCOMMENT            = "{-" (.|{newline})* "-}"
+NCOMMENT            = "{-" (.|{NEWLINE})* "-}"
 
 CHARACTER_LITERAL   = \' [^\'\\\r\n\f]* \'
 STRING_LITERAL      = \" [^\"\\\r\n\f]* \"
@@ -47,10 +47,44 @@ CON_ID              = {large} ({small} | {large})*
 %%
 <YYINITIAL> {
 
-    {WHITECHAR}           { return HS_WHITE_CHAR;}
-
     {COMMENT}             { return HS_COMMENT; }
     {NCOMMENT}            { return HS_NCOMMENT; }
+    {NEWLINE}             { return HS_NEWLINE; }
+    {WHITE_SPACE}         { return com.intellij.psi.TokenType.WHITE_SPACE; }
+
+    // not listed as reserved identifier but have meaning in certain context,
+    // let's say specialreservedid
+    "as"                  { return HS_AS; }
+    "qualified"           { return HS_QUALIFIED; }
+    "hiding"              { return HS_HIDING; }
+
+    // reservedid
+    "case"                { return HS_CASE; }
+    "class"               { return HS_CLASS; }
+    "data"                { return HS_DATA; }
+    "default"             { return HS_DEFAULT; }
+    "deriving"            { return HS_DERIVING; }
+    "do"                  { return HS_DO; }
+    "else"                { return HS_ELSE; }
+    "foreign"             { return HS_FOREIGN; }
+    "if"                  { return HS_IF; }
+    "import"              { return HS_IMPORT; }
+    "in"                  { return HS_IN; }
+    "infix"               { return HS_INFIX; }
+    "infixl"              { return HS_INFIXL; }
+    "infixr"              { return HS_INFIXR; }
+    "instance"            { return HS_INSTANCE; }
+    "let"                 { return HS_LET; }
+    "module"              { return HS_MODULE; }
+    "newtype"             { return HS_NEWTYPE; }
+    "of"                  { return HS_OF; }
+    "then"                { return HS_THEN; }
+    "type"                { return HS_TYPE; }
+    "where"               { return HS_WHERE; }
+    "_"                   { return HS_UNDERSCORE; }
+
+    {VAR_ID}              { return HS_VAR_ID; }
+    {CON_ID}              { return HS_CON_ID; }
 
     {CHARACTER_LITERAL}   { return HS_CHARACTER_LITERAL;  }
     {STRING_LITERAL}      { return HS_STRING_LITERAL;  }
@@ -91,7 +125,7 @@ CON_ID              = {large} ({small} | {large})*
     ".."                  { return HS_DOT_DOT; }
     "::"                  { return HS_COLON_COLON; }
     ":"                   { return HS_COLON; }
-    "="                   { return HS_DEFINED_BY; }
+    "="                   { return HS_EQUAL; }
     "\\"                  { return HS_BACKSLASH; }
     "|"                   { return HS_VERTICAL_BAR; }
     "<-"                  { return HS_LEFT_ARROW; }
@@ -100,39 +134,5 @@ CON_ID              = {large} ({small} | {large})*
     "~"                   { return HS_TILDE; }
     "=>"                  { return HS_DOUBLE_RIGHT_ARROW; }
 
-    // not listed as reserved identifier but have meaning in certain context,
-    // let's say specialreservedid
-    "as"                  { return HS_AS; }
-    "qualified"           { return HS_QUALIFIED; }
-    "hiding"              { return HS_HIDING; }
-
-    // reservedid
-    "case"                { return HS_CASE; }
-    "class"               { return HS_CLASS; }
-    "data"                { return HS_DATA; }
-    "default"             { return HS_DEFAULT; }
-    "deriving"            { return HS_DERIVING; }
-    "do"                  { return HS_DO; }
-    "else"                { return HS_ELSE; }
-    "foreign"             { return HS_FOREIGN; }
-    "if"                  { return HS_IF; }
-    "import"              { return HS_IMPORT; }
-    "in"                  { return HS_IN; }
-    "infix"               { return HS_INFIX; }
-    "infixl"              { return HS_INFIXL; }
-    "infixr"              { return HS_INFIXR; }
-    "instance"            { return HS_INSTANCE; }
-    "let"                 { return HS_LET; }
-    "module"              { return HS_MODULE; }
-    "newtype"             { return HS_NEWTYPE; }
-    "of"                  { return HS_OF; }
-    "then"                { return HS_THEN; }
-    "type"                { return HS_TYPE; }
-    "where"               { return HS_WHERE; }
-    "_"                  { return HS_UNDERSCORE; }
-
-    {VAR_ID}              { return HS_VAR_ID; }
-    {CON_ID}              { return HS_CON_ID; }
-
-    [^]                   { return com.intellij.psi.TokenType.BAD_CHARACTER; }
+.                         { return com.intellij.psi.TokenType.BAD_CHARACTER; }
 }

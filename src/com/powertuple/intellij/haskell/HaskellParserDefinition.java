@@ -33,9 +33,24 @@ import com.powertuple.intellij.haskell.psi.HaskellFile;
 import com.powertuple.intellij.haskell.psi.HaskellTypes;
 import org.jetbrains.annotations.NotNull;
 
+import static com.powertuple.intellij.haskell.psi.HaskellTypes.*;
+
 public class HaskellParserDefinition implements ParserDefinition {
     public static final TokenSet WHITE_SPACES = TokenSet.create(TokenType.WHITE_SPACE);
     public static final TokenSet COMMENTS = TokenSet.create(HaskellTypes.HS_COMMENT, HaskellTypes.HS_NCOMMENT);
+
+    public static final TokenSet RESERVED_IDS = TokenSet.create(
+            HS_CASE, HS_CLASS, HS_DATA, HS_DEFAULT, HS_DERIVING, HS_DO, HS_ELSE, HS_FOREIGN,
+            HS_IF, HS_IMPORT, HS_IN, HS_INFIX, HS_INFIXL, HS_INFIXR, HS_INSTANCE, HS_LET,
+            HS_MODULE, HS_NEWTYPE, HS_OF, HS_THEN, HS_TYPE, HS_WHERE, HS_UNDERSCORE,
+            HS_AS, HS_QUALIFIED, HS_HIDING
+    );
+
+    public static final TokenSet OPERATORS = TokenSet.create(
+            HS_DOT_DOT, HS_COLON, HS_COLON_COLON, HS_DEFINED_BY, HS_SLASH, HS_VERTICAL_BAR,
+            HS_LEFT_ARROW, HS_RIGHT_ARROW, HS_AT, HS_TILDE, HS_DOUBLE_RIGHT_ARROW,
+            HS_QVARSYM, HS_VARSYM, HS_QCONSYM, HS_CONSYM
+    );
 
     @NotNull
     @Override

@@ -20,43 +20,38 @@
   tokens = [
   ]
 
-  name(".*")='varide'
+//  name(".*")='varide'
 //  extends(".*")=lexeme
 }
 
 program                     ::= (lexeme | whitespace)*
-whitespace                  ::= (whitestuff)+
-whitestuff                  ::= WHITE_CHAR | COMMENT | NCOMMENT
-lexeme                      ::= qvarid | qconid | qvarsym | qconsym | literal | special | reservedop | reservedid | specialreservedid
+private whitespace          ::= (whitestuff)+
+private whitestuff          ::= WHITE_CHAR | COMMENT | NCOMMENT | NEWLINE
+private lexeme              ::= qvarid | varid | qconid | conid | qconsym | consym | qvarsym | varsym |  literal
+                                | special | reservedop | reservedid | specialreservedid
+
 literal                     ::= DECIMAL | HEXADECIMAL | OCTAL | FLOAT | CHARACTER_LITERAL | STRING_LITERAL
 
-special                     ::= LEFT_PAREN | RIGHT_PAREN | COMMA | SEMICOLON | LEFT_BRACKET | RIGHT_BRACKET
+private special             ::= LEFT_PAREN | RIGHT_PAREN | COMMA | SEMICOLON | LEFT_BRACKET | RIGHT_BRACKET
                                 | BACKQUOTE | LEFT_BRACE | RIGHT_BRACE
 
-ascSymbolExcReservedopDash  ::= EXCLAMATION_MARK | HASH | DOLLAR| PERCENTAGE | AMPERSAND | STAR
-                                | PLUS | DOT | BACKSLASH | LT | GT | QUESTION_MARK | CARET
-ascSymbolExcReservedop      ::= ascSymbolExcReservedopDash | DASH
+private ascSymbol           ::= EXCLAMATION_MARK | HASH | DOLLAR| PERCENTAGE | AMPERSAND | STAR
+                                | PLUS | DOT | SLASH | LT | EQUAL | GT | QUESTION_MARK | AT | BACKSLASH | CARET
+                                | VERTICAL_BAR | TILDE | COLON | DASH
 
-symbolExcReservedopDash     ::= ascSymbolExcReservedopDash    // ignoring unicode symbols
+private symbol              ::= ascSymbol                   // ignoring unicode symbols
 
-varsym                      ::= (symbolExcReservedopDash (symbolExcReservedopDash | ':')*)    // operator
-consym                      ::= (':' (symbolExcReservedopDash | ':')*)                        // operator constructor
+varsym                      ::= (symbol (symbol | ':')*)    // operator
+consym                      ::= (':' (symbol | ':')*)       // operator constructor
 
-varid                       ::= VAR_ID                      // variables
-conid                       ::= CON_ID                      // constructors
-tyvar                       ::= varid                       // type variables
-tycon                       ::= conid                       // type constructors
-tycls                       ::= conid                       // type classes
-modid                       ::= (conid '.')* conid          // modules
+private varid               ::= VAR_ID                      // variables and type variables
+private conid               ::= CON_ID                      // constructors, type constructors and type classes
 
-qvarid                      ::= (modid '.')? varid
-qconid                      ::= (modid '.')? conid
-qtycon                      ::= (modid '.')? tycon
-qtycls                      ::= (modid '.')? tycls
+qvarid                      ::= (conid '.')+ varid
+qconid                      ::= (conid '.')+ conid
 
-qvarsym                     ::= (modid '.')? varsym
-qconsym                     ::= (modid '.')? consym
-
+qvarsym                     ::= (conid '.')+ varsym
+qconsym                     ::= (conid '.')+ consym
 
 reservedid                  ::= CASE | CLASS | DATA | DEFAULT | DERIVING | DO | ELSE
                               | FOREIGN | IF | IMPORT | IN | INFIX | INFIXL | INFIXR

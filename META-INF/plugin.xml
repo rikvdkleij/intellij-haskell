@@ -1,6 +1,6 @@
 <idea-plugin version="2">
     <id>com.powertuple.intellij.haskell</id>
-    <name>Haskell plugin for IntelliJ</name>
+    <name>Haskell</name>
     <version>0.1</version>
     <vendor email="rikvdkleij@gmail.com" url="http://www.powertuple.com">PowerTuple</vendor>
 
@@ -39,6 +39,10 @@
         <applicationConfigurable instance="com.powertuple.intellij.haskell.settings.HaskellConfigurable"/>
 
         <applicationService serviceImplementation="com.powertuple.intellij.haskell.settings.HaskellSettings"/>
+
+        <lang.formatter language="Haskell" implementationClass="com.powertuple.intellij.haskell.formatter.HaskellFormattingModelBuilder"/>
+        <codeStyleSettingsProvider implementation="com.powertuple.intellij.haskell.formatter.settings.HaskellCodeStyleSettingsProvider"/>
+        <langCodeStyleSettingsProvider implementation="com.powertuple.intellij.haskell.formatter.settings.HaskellLanguageCodeStyleSettingsProvider"/>
     </extensions>
 
     <application-components>

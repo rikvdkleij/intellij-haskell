@@ -16,35 +16,23 @@
 
 package com.powertuple.intellij.haskell.annotator
 
-import org.scalatest.{BeforeAndAfterEach, GivenWhenThen, Matchers, FunSpec}
-import com.intellij.execution.process.ProcessOutput
+import org.scalatest.{BeforeAndAfterEach, FunSpec, GivenWhenThen, Matchers}
 
 class GhcModExternalAnnotatorSpec extends FunSpec with Matchers with GivenWhenThen with BeforeAndAfterEach {
 
-  val ghcModExternalAnnotator = new GhcModiExternalAnnotator
+  val ghcModiExternalAnnotator = new GhcModiExternalAnnotator
 
-  describe("Parsing ghc-mod output") {
-    Given("output of ghc-mod")
-    val output = new ProcessOutput()
-    output.appendStdout("file/path/HaskellFile.hs:1:11:parse error on input\n")
-    output.appendStdout("file/path/HaskellFile.hs:12:5:another parse error on input")
+  describe("Parsing ghc-modi output") {
+    Given("output of ghc-modi")
+    val output = "file/path/HaskellFile.hs:1:11:parse error on input"
 
-    When("parsed to problem list")
-    val problems = ghcModExternalAnnotator.parseGhcModOutput(output)
+    When("parsed to ghc-modi problem")
+    val ghcModiProblem = ghcModiExternalAnnotator.parseGhcModiOutputLine(output)
 
-    Then("list should have size 2")
-    problems should have size 2
-    val problem1 = problems(0)
-    val problem2 = problems(1)
-
-    And("contain right data")
-    problem1.lineNr should equal(1)
-    problem1.columnNr should equal(11)
-    problem1.description should equal("parse error on input")
-
-    problem2.lineNr should equal(12)
-    problem2.columnNr should equal(5)
-    problem2.description should equal("another parse error on input")
+    Then("it should contain right data")
+    ghcModiProblem.lineNr should equal(1)
+    ghcModiProblem.columnNr should equal(11)
+    ghcModiProblem.description should equal("parse error on input")
   }
 
   describe("Determine annotation offset when compile error") {
@@ -52,20 +40,20 @@ class GhcModExternalAnnotatorSpec extends FunSpec with Matchers with GivenWhenTh
     val someCode =
       """
         |Some Haskell code
-        |which does not
+        |  which does not
         |
         |com pile
       """.stripMargin
 
-    When("ghc-mod is executed")
-    val ghcModResult = GhcModResult(Seq(GhcModProblem(4, 3, "something wrong")))
-    val annotations = ghcModExternalAnnotator.createAnnotations(ghcModResult, someCode)
+    When("ghc-modi is called")
+    val ghcModiResult = GhcModiResult(Seq(GhcModiProblem(4, 3, "something wrong")))
+    val annotations = ghcModiExternalAnnotator.createAnnotations(ghcModiResult, someCode)
 
     Then("annotation holder should contain right annotation")
     annotations should have length 1
 
     val annotation = annotations(0)
-    annotation.asInstanceOf[ErrorAnnotation].textRange.getStartOffset should equal(36)
+    annotation.asInstanceOf[ErrorAnnotation].textRange.getStartOffset should equal(38)
   }
 
   describe("Determine annotation offset when compile warning") {
@@ -75,9 +63,9 @@ class GhcModExternalAnnotatorSpec extends FunSpec with Matchers with GivenWhenTh
         |some code
       """.stripMargin
 
-    When("ghc-mod is executed")
-    val ghcModResult = GhcModResult(Seq(GhcModProblem(1, 1, "Warning: some warning")))
-    val annotations = ghcModExternalAnnotator.createAnnotations(ghcModResult, someCode)
+    When("ghc-modi is executed")
+    val ghcModiResult = GhcModiResult(Seq(GhcModiProblem(1, 1, "Warning: some warning")))
+    val annotations = ghcModiExternalAnnotator.createAnnotations(ghcModiResult, someCode)
 
     Then("annotation holder should contain right annotation")
     annotations should have length 1

@@ -84,7 +84,8 @@ public class HaskellColorSettingsPage implements ColorSettingsPage {
                 "-- line comment\n" +
                 "{- nested \n" +
                 "comment -}\n" +
-                "data Bool = True | False";
+                "data Bool = True | False\n" +
+                "let l = [1,2] ";
     }
 
     @NotNull
