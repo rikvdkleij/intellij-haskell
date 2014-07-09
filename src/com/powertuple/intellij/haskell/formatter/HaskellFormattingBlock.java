@@ -54,10 +54,10 @@ public class HaskellFormattingBlock implements ASTBlock {
 
     private boolean indentWithTabSize;
     private int indentCounter;
-    private static final TokenSet ReservedIdsToIndent = TokenSet.create(HS_VERTICAL_BAR);
-    public static final TokenSet RESERVED_IDS_TO_INDENT = TokenSet.create(HS_WHERE, HS_THEN, HS_DO);
+    private static final TokenSet RESERVED_OPS_TO_INDENT = TokenSet.create(HS_VERTICAL_BAR);
+    public static final TokenSet RESERVED_IDS_TO_INDENT = TokenSet.create(HS_WHERE, HS_THEN, HS_DO, HS_CASE);
     public static final TokenSet RESERVED_IDS_TO_BACK_INDENT = TokenSet.create(HS_ELSE);
-    private final TokenSet INDENT_PREV_RESERVED_IDS = TokenSet.create(HS_WHERE, HS_DO, HS_THEN, HS_ELSE);
+    private final TokenSet INDENT_PREV_RESERVED_IDS = TokenSet.create(HS_WHERE, HS_DO, HS_THEN, HS_ELSE, HS_OF);
 
     public HaskellFormattingBlock(@NotNull ASTNode node,
                                   @NotNull CommonCodeStyleSettings settings,
@@ -77,6 +77,7 @@ public class HaskellFormattingBlock implements ASTBlock {
         this.indentWithTabSize = indentWithTabSize;
     }
 
+    @NotNull
     @Override
     public ASTNode getNode() {
         return node;
@@ -91,6 +92,10 @@ public class HaskellFormattingBlock implements ASTBlock {
     @NotNull
     @Override
     public List<Block> getSubBlocks() {
+        if (!(node instanceof FileElement)) {
+            return Collections.emptyList();
+        }
+
         if (subBlocks == null) {
             subBlocks = buildSubBlocks();
         }
@@ -99,10 +104,6 @@ public class HaskellFormattingBlock implements ASTBlock {
 
     private List<Block> buildSubBlocks() {
         final List<Block> blocks = new ArrayList<Block>();
-
-        if (!(node instanceof FileElement)) {
-            return Collections.unmodifiableList(blocks);
-        }
 
         ASTNode prevNode = null;
         Alignment alignment = null;
@@ -180,7 +181,7 @@ public class HaskellFormattingBlock implements ASTBlock {
     }
 
     private boolean isReservedOpToIndent(ASTNode node) {
-        return node.findChildByType(ReservedIdsToIndent) != null;
+        return node.findChildByType(RESERVED_OPS_TO_INDENT) != null;
     }
 
     private boolean isReservedIdToIndent(ASTNode node) {

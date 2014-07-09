@@ -30,9 +30,7 @@ import com.powertuple.intellij.haskell.psi.HaskellElementType;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import static com.powertuple.intellij.haskell.psi.HaskellTypes.HS_COMMA;
-import static com.powertuple.intellij.haskell.psi.HaskellTypes.HS_NEWLINE;
-import static com.powertuple.intellij.haskell.psi.HaskellTypes.HS_TYPE;
+import static com.powertuple.intellij.haskell.psi.HaskellTypes.*;
 
 public class HaskellFormattingModelBuilder implements FormattingModelBuilder {
 
@@ -50,8 +48,14 @@ public class HaskellFormattingModelBuilder implements FormattingModelBuilder {
         return new SpacingBuilder(settings.getRootSettings(), HaskellLanguage.INSTANCE)
                 .before(HS_COMMA).spaceIf(settings.SPACE_BEFORE_COMMA)
                 .after(HS_COMMA).spaceIf(settings.SPACE_AFTER_COMMA)
-
-                .around(HaskellParserDefinition.RESERVED_IDS).spaces(1);
+                .before(HS_LEFT_PAREN).spaces(1)
+                .after(HS_LEFT_PAREN).spaces(0)
+                .before(HS_RIGHT_PAREN).spaces(0)
+                .before(HS_LEFT_BRACKET).spaces(1)
+                .after(HS_LEFT_BRACKET).spaces(0)
+                .before(HS_RIGHT_BRACKET).spaces(0)
+                .around(HS_RESERVEDID).spaces(1)
+                .around(HS_VARSYM).spaces(1);
     }
 
     @Nullable
