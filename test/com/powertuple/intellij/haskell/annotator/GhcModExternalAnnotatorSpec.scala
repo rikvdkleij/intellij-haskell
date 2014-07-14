@@ -22,7 +22,7 @@ class GhcModExternalAnnotatorSpec extends FunSpec with Matchers with GivenWhenTh
 
   val ghcModiExternalAnnotator = new GhcModiExternalAnnotator
 
-  describe("Parsing ghc-modi output") {
+  describe("Parsing ghc-modi check output") {
     Given("output of ghc-modi")
     val output = "file/path/HaskellFile.hs:1:11:parse error on input"
 

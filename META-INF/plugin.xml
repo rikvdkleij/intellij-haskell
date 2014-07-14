@@ -60,6 +60,13 @@
     </project-components>
 
     <actions>
+        <action id="Haskell.ShowType" class="com.powertuple.intellij.haskell.actions.ShowTypeAction"
+                text="Show Type" description="Show Type">
+
+            <keyboard-shortcut first-keystroke="alt EQUALS" keymap="$default"/>
+            <add-to-group group-id="CodeEditorViewGroup" anchor="last" />
+        </action>
+
         <!-- Add your actions here -->
     </actions>
 

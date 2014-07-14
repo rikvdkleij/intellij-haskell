@@ -36,8 +36,8 @@ class GhcModiExternalAnnotator extends ExternalAnnotator[GhcModInitialInfo, GhcM
     vFile match {
       case null => null // can be case if file is in memory only (just created file)
       case f if f.getFileType != HaskellFileType.INSTANCE => null
-      case f if f.getCanonicalPath == null => null
-      case f => GhcModInitialInfo(psiFile, f.getCanonicalPath)
+      case f if f.getPath == null => null
+      case f => GhcModInitialInfo(psiFile, f.getPath)
     }
   }
 

@@ -55,7 +55,8 @@ public class HaskellFormattingModelBuilder implements FormattingModelBuilder {
                 .after(HS_LEFT_BRACKET).spaces(0)
                 .before(HS_RIGHT_BRACKET).spaces(0)
                 .around(HS_RESERVEDID).spaces(1)
-                .around(HS_VARSYM).spaces(1);
+                .around(HS_VARSYM).spaces(1)
+                .around(HS_QVARSYM).spaces(1);
     }
 
     @Nullable
