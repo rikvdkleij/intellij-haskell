@@ -23,6 +23,8 @@
     -->
 
     <extensions defaultExtensionNs="com.intellij">
+        <internalFileTemplate name="Haskell Module"/>
+
         <fileTypeFactory implementation="com.powertuple.intellij.haskell.HaskellFileTypeFactory"/>
         <lang.parserDefinition language="Haskell"
                                implementationClass="com.powertuple.intellij.haskell.HaskellParserDefinition"/>
@@ -67,7 +69,10 @@
             <add-to-group group-id="CodeEditorViewGroup" anchor="last" />
         </action>
 
-        <!-- Add your actions here -->
+        <action id="Haskell.HaskellFile" class="com.powertuple.intellij.haskell.actions.CreateHaskellFileAction"
+                text="Haskell Module" description="Create new Haskell module">
+            <add-to-group group-id="NewGroup" anchor="before" relative-to-action="NewFile"/>
+        </action>
     </actions>
 
 </idea-plugin>
