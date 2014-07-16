@@ -1,6 +1,7 @@
 // Derived from http://www.haskell.org/onlinereport/haskell2010/haskellch10.html
 {
   parserClass="com.powertuple.intellij.haskell.parser.HaskellParser"
+  parserUtilClass="com.powertuple.intellij.haskell.HaskellParserUtil"
 
   extends="com.intellij.extapi.psi.ASTWrapperPsiElement"
 
@@ -13,15 +14,9 @@
   elementTypeClass="com.powertuple.intellij.haskell.psi.HaskellElementType"
   tokenTypeClass="com.powertuple.intellij.haskell.psi.HaskellTokenType"
 
+  psiImplUtilClass="com.powertuple.intellij.haskell.psi.impl.HaskellPsiImplUtil"
+
   elementTypePrefix="HS_"
-
-  parserUtilClass="com.powertuple.intellij.haskell.HaskellParserUtil"
-
-  tokens = [
-  ]
-
-//  name(".*")='varide'
-//  extends(".*")=lexeme
 }
 
 program                     ::= (lexeme | whitespace)*
@@ -44,8 +39,11 @@ private symbol              ::= ascSymbol                   // ignoring unicode 
 varsym                      ::= (symbol (symbol | ':')*)    // operator
 consym                      ::= (':' (symbol | ':')*)       // operator constructor
 
-private varid               ::= VAR_ID                      // variables and type variables
-private conid               ::= CON_ID                      // constructors, type constructors and type classes
+varid                       ::= VAR_ID                      // variables and type variables
+                                 {mixin="com.powertuple.intellij.haskell.psi.impl.HaskellNamedElementImpl"
+                                  implements="com.powertuple.intellij.haskell.psi.HaskellNamedElement" methods=[getName setName getNameIdentifier]}
+
+conid                       ::= CON_ID                      // constructors, type constructors and type classes
 
 qvarid                      ::= (conid '.')+ varid
 qconid                      ::= (conid '.')+ conid

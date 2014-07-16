@@ -16,5 +16,41 @@
 
 package com.powertuple.intellij.haskell.psi.impl;
 
+import com.intellij.lang.ASTNode;
+import com.intellij.psi.PsiElement;
+import com.powertuple.intellij.haskell.psi.HaskellElementFactory;
+import com.powertuple.intellij.haskell.psi.HaskellTokenType;
+import com.powertuple.intellij.haskell.psi.HaskellTypes;
+import com.powertuple.intellij.haskell.psi.HaskellVarid;
+
 public class HaskellPsiImplUtil {
+
+    public static String getName(HaskellVarid element) {
+        ASTNode keyNode = element.getNode().findChildByType(HaskellTypes.HS_VAR_ID);
+        if (keyNode != null) {
+            return keyNode.getText();
+        } else {
+            return null;
+        }
+    }
+
+    public static PsiElement setName(HaskellVarid element, String newName) {
+        ASTNode keyNode = element.getNode().findChildByType(HaskellTypes.HS_VAR_ID);
+        if (keyNode != null) {
+            HaskellVarid property = HaskellElementFactory.createVar(element.getProject(), newName);
+            ASTNode newKeyNode = property.getFirstChild().getNode();
+            element.getNode().replaceChild(keyNode, newKeyNode);
+        }
+        return element;
+    }
+
+    public static PsiElement getNameIdentifier(HaskellVarid haskellVarid) {
+        ASTNode keyNode = haskellVarid.getNode().findChildByType(HaskellTypes.HS_VAR_ID);
+        if (keyNode != null) {
+            return keyNode.getPsi();
+        } else {
+            return null;
+        }
+
+    }
 }

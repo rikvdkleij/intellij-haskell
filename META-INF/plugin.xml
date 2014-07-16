@@ -45,6 +45,9 @@
         <lang.formatter language="Haskell" implementationClass="com.powertuple.intellij.haskell.formatter.HaskellFormattingModelBuilder"/>
         <codeStyleSettingsProvider implementation="com.powertuple.intellij.haskell.formatter.settings.HaskellCodeStyleSettingsProvider"/>
         <langCodeStyleSettingsProvider implementation="com.powertuple.intellij.haskell.formatter.settings.HaskellLanguageCodeStyleSettingsProvider"/>
+
+
+        <psi.referenceContributor implementation="com.powertuple.intellij.haskell.HaskellVaridReferenceContributor"/>
     </extensions>
 
     <application-components>
