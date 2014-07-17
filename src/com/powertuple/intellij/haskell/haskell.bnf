@@ -22,7 +22,7 @@
 program                     ::= (lexeme | whitespace)*
 private whitespace          ::= (whitestuff)+
 private whitestuff          ::= WHITE_CHAR | COMMENT | NCOMMENT | NEWLINE
-private lexeme              ::= qvarid | varid | qconid | conid | qconsym | consym | qvarsym | varsym |  literal
+private lexeme              ::= qvar | var | qcon | con | qconsym | consym | qvarsym | varsym | literal
                                 | special | reservedop | reservedid | specialreservedid
 
 literal                     ::= DECIMAL | HEXADECIMAL | OCTAL | FLOAT | CHARACTER_LITERAL | STRING_LITERAL
@@ -39,17 +39,17 @@ private symbol              ::= ascSymbol                   // ignoring unicode 
 varsym                      ::= (symbol (symbol | ':')*)    // operator
 consym                      ::= (':' (symbol | ':')*)       // operator constructor
 
-varid                       ::= VAR_ID                      // variables and type variables
+var                         ::= VAR_ID                      // variables and type variables
                                  {mixin="com.powertuple.intellij.haskell.psi.impl.HaskellNamedElementImpl"
                                   implements="com.powertuple.intellij.haskell.psi.HaskellNamedElement" methods=[getName setName getNameIdentifier]}
 
-conid                       ::= CON_ID                      // constructors, type constructors and type classes
+con                         ::= CON_ID                      // constructors, type constructors and type classes
 
-qvarid                      ::= (conid '.')+ varid
-qconid                      ::= (conid '.')+ conid
+qvar                        ::= (con'.')+ var
+qcon                        ::= (con'.')+ con
 
-qvarsym                     ::= (conid '.')+ varsym
-qconsym                     ::= (conid '.')+ consym
+qvarsym                     ::= (con'.')+ varsym
+qconsym                     ::= (con'.')+ consym
 
 reservedid                  ::= CASE | CLASS | DATA | DEFAULT | DERIVING | DO | ELSE
                               | FOREIGN | IF | IMPORT | IN | INFIX | INFIXL | INFIXR

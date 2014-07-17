@@ -41,8 +41,8 @@ NCOMMENT            = "{-" (.|{NEWLINE})* "-}"
 CHARACTER_LITERAL   = \' [^\'\\\r\n\f]* \'
 STRING_LITERAL      = \" [^\"\\\r\n\f]* \"
 
-VAR_ID              = {small} ({small} | {large} | {digit} | ')*
-CON_ID              = {large} ({small} | {large})*
+VAR_ID              = ({small} ({small} | {large} | {digit} | ')* )+
+CON_ID              = ({large} ({small} | {large})* )+
 
 %%
 <YYINITIAL> {
