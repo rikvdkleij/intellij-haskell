@@ -8,3 +8,4 @@
 /.idea/dictionaries/rik.xml
 *~
 .idea/inspectionProfiles
+/src/com/powertuple/intellij/haskell/_HaskellLexer.java
