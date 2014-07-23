@@ -16,7 +16,7 @@
 
 package com.powertuple.intellij.haskell.psi;
 
-import com.intellij.psi.PsiNameIdentifierOwner;
+import com.intellij.psi.PsiElement;
 
-public interface HaskellNamedElement extends HaskellCompositeElement, PsiNameIdentifierOwner {
+public interface HaskellCompositeElement extends PsiElement {
 }

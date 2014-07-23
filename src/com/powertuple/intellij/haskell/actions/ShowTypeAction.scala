@@ -21,9 +21,8 @@ import com.intellij.openapi.editor.Editor
 import com.intellij.psi.util.PsiUtilBase
 import com.intellij.psi.{PsiElement, PsiFile}
 import com.powertuple.intellij.haskell.external.GhciModManager
-import com.powertuple.intellij.haskell.psi.HaskellFile
-import com.powertuple.intellij.haskell.util.LineColumnPosition
-import com.powertuple.intellij.haskell.{HaskellLanguage, HaskellNotificationGroup}
+import com.powertuple.intellij.haskell.util.{FileUtil, LineColumnPosition}
+import com.powertuple.intellij.haskell.{HaskellFile, HaskellLanguage, HaskellNotificationGroup}
 
 import scala.util.{Failure, Success, Try}
 
@@ -41,16 +40,20 @@ class ShowTypeAction extends AnAction {
 
     val psiFile = PsiUtilBase.getPsiFileInEditor(editor, CommonDataKeys.PROJECT.getData(context))
     if (psiFile.getLanguage != HaskellLanguage.INSTANCE) return
+    FileUtil.saveFile(psiFile)
 
-    val startExpression = findStartOfExpression(editor, psiFile)
+    val startPositionExpression = findStartOfExpression(editor, psiFile) match {
+      case Some(lcp) => lcp
+      case None => HaskellNotificationGroup.notifyError("Could not find start position of expression"); return
+    }
 
     val ghcModi = GhciModManager.getGhcMod(psiFile.getProject)
     val vFile = psiFile.getVirtualFile
-    val cmd = s"type ${vFile.getPath} ${startExpression.lineNr} ${startExpression.colunmNr}"
+    val cmd = s"type ${vFile.getPath} ${startPositionExpression.lineNr} ${startPositionExpression.colunmNr}"
     val ghcModiOutput = ghcModi.execute(cmd)
 
     val typeInfo = ghcModiOutputToTypeInfo(ghcModiOutput.outputLines) match {
-      case Success(typeInfos) => typeInfos.find(ty => ty.startLine == startExpression.lineNr && ty.startColumn == startExpression.colunmNr)
+      case Success(typeInfos) => typeInfos.find(ty => ty.startLine == startPositionExpression.lineNr && ty.startColumn == startPositionExpression.colunmNr)
       case Failure(error) => HaskellNotificationGroup.notifyError(s"Could not determine type with $cmd. Error: $error.getMessage"); None
     }
 
@@ -60,7 +63,7 @@ class ShowTypeAction extends AnAction {
     }
   }
 
-  private def findStartOfExpression(editor: Editor, psiFile: PsiFile): LineColumnPosition = {
+  private def findStartOfExpression(editor: Editor, psiFile: PsiFile): Option[LineColumnPosition] = {
     val offset = editor.getCaretModel.getOffset
     val element = psiFile.findElementAt(offset)
 

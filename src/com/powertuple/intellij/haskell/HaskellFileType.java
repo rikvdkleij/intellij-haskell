@@ -25,6 +25,8 @@ import javax.swing.*;
 public class HaskellFileType extends LanguageFileType {
     public static final HaskellFileType INSTANCE = new HaskellFileType();
 
+    public static HaskellFileType MODULE = new HaskellFileType();
+
     private HaskellFileType() {
         super(com.powertuple.intellij.haskell.HaskellLanguage.INSTANCE);
     }

@@ -19,12 +19,12 @@ package com.powertuple.intellij.haskell.annotator
 import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer
 import com.intellij.codeInsight.daemon.impl.DaemonCodeAnalyzerImpl
 import com.intellij.lang.annotation.{AnnotationHolder, ExternalAnnotator}
-import com.intellij.openapi.application.{ApplicationManager, ModalityState}
 import com.intellij.openapi.fileEditor.FileDocumentManager
 import com.intellij.openapi.util.TextRange
 import com.intellij.psi.PsiFile
 import com.powertuple.intellij.haskell.HaskellFileType
 import com.powertuple.intellij.haskell.external.GhciModManager
+import com.powertuple.intellij.haskell.util.FileUtil
 
 class GhcModiExternalAnnotator extends ExternalAnnotator[GhcModInitialInfo, GhcModiResult] {
 
@@ -32,6 +32,8 @@ class GhcModiExternalAnnotator extends ExternalAnnotator[GhcModInitialInfo, GhcM
    * Returning null will cause doAnnotate() not to be called by Intellij API.
    */
   override def collectInformation(psiFile: PsiFile): GhcModInitialInfo = {
+    FileUtil.saveFile(psiFile)
+
     val vFile = psiFile.getVirtualFile
     vFile match {
       case null => null // can be case if file is in memory only (just created file)
@@ -42,12 +44,6 @@ class GhcModiExternalAnnotator extends ExternalAnnotator[GhcModInitialInfo, GhcM
   }
 
   override def doAnnotate(initialInfoGhcMod: GhcModInitialInfo): GhcModiResult = {
-    ApplicationManager.getApplication.invokeAndWait(new Runnable() {
-      override def run() {
-        FileDocumentManager.getInstance.saveDocument(FileDocumentManager.getInstance().getDocument(initialInfoGhcMod.psiFile.getVirtualFile))
-      }
-    }, ModalityState.any())
-
     val ghcModi = GhciModManager.getGhcMod(initialInfoGhcMod.psiFile.getProject)
     val ghcModiOutput = ghcModi.execute("check " + initialInfoGhcMod.filePath)
 
@@ -73,7 +69,7 @@ class GhcModiExternalAnnotator extends ExternalAnnotator[GhcModInitialInfo, GhcM
   private def markFileDirty(psiFile: PsiFile) {
     val fileStatusMap = DaemonCodeAnalyzer.getInstance(psiFile.getProject).asInstanceOf[DaemonCodeAnalyzerImpl].getFileStatusMap
     val document = FileDocumentManager.getInstance().getDocument(psiFile.getVirtualFile)
-    fileStatusMap.markFileScopeDirty(document, new TextRange(0, document.getTextLength), psiFile.getTextLength)
+    fileStatusMap.markFileScopeDirty(document, new TextRange(0, document.getTextLength), document.getTextLength)
   }
 
   private def startOffSetForProblem(lengthPerLine: Iterator[Int], problem: GhcModiProblem): Int = {
@@ -84,7 +80,7 @@ class GhcModiExternalAnnotator extends ExternalAnnotator[GhcModInitialInfo, GhcM
     val lengthPerLine = text.lines.map(_.size)
     for (problem <- ghcModResult.problems) yield {
       val startOffSet = startOffSetForProblem(lengthPerLine, problem)
-      val textRange = TextRange.create(startOffSet - 1, startOffSet)
+      val textRange = TextRange.create(startOffSet, startOffSet + 1)
       if (problem.description.startsWith("Warning:")) {
         WarningAnnotation(textRange, problem.description)
       } else {

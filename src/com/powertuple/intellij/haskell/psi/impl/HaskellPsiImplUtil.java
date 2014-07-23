@@ -18,14 +18,16 @@ package com.powertuple.intellij.haskell.psi.impl;
 
 import com.intellij.lang.ASTNode;
 import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiReference;
+import com.intellij.psi.impl.source.resolve.reference.ReferenceProvidersRegistry;
+import com.intellij.util.ArrayUtil;
 import com.powertuple.intellij.haskell.psi.HaskellElementFactory;
-import com.powertuple.intellij.haskell.psi.HaskellTokenType;
 import com.powertuple.intellij.haskell.psi.HaskellTypes;
-import com.powertuple.intellij.haskell.psi.HaskellVarid;
+import com.powertuple.intellij.haskell.psi.HaskellVar;
 
 public class HaskellPsiImplUtil {
 
-    public static String getName(HaskellVarid element) {
+    public static String getName(HaskellVar element) {
         ASTNode keyNode = element.getNode().findChildByType(HaskellTypes.HS_VAR_ID);
         if (keyNode != null) {
             return keyNode.getText();
@@ -34,23 +36,26 @@ public class HaskellPsiImplUtil {
         }
     }
 
-    public static PsiElement setName(HaskellVarid element, String newName) {
+    public static PsiElement setName(HaskellVar element, String newName) {
         ASTNode keyNode = element.getNode().findChildByType(HaskellTypes.HS_VAR_ID);
         if (keyNode != null) {
-            HaskellVarid property = HaskellElementFactory.createVar(element.getProject(), newName);
+            HaskellVar property = HaskellElementFactory.createVar(element.getProject(), newName);
             ASTNode newKeyNode = property.getFirstChild().getNode();
             element.getNode().replaceChild(keyNode, newKeyNode);
         }
         return element;
     }
 
-    public static PsiElement getNameIdentifier(HaskellVarid haskellVarid) {
-        ASTNode keyNode = haskellVarid.getNode().findChildByType(HaskellTypes.HS_VAR_ID);
+    public static PsiElement getNameIdentifier(HaskellVar haskellVar) {
+        ASTNode keyNode = haskellVar.getNode().findChildByType(HaskellTypes.HS_VAR_ID);
         if (keyNode != null) {
             return keyNode.getPsi();
         } else {
             return null;
         }
+    }
 
+    public static PsiReference getReference(HaskellVar haskellVar) {
+        return ArrayUtil.getFirstElement(ReferenceProvidersRegistry.getReferencesFromProviders(haskellVar));
     }
 }

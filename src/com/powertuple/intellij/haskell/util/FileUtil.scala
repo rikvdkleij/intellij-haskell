@@ -18,6 +18,26 @@ package com.powertuple.intellij.haskell.util
 
 import com.intellij.openapi.fileEditor.FileDocumentManager
 import com.intellij.psi.PsiFile
+import com.intellij.util.ui.UIUtil
+
+object FileUtil {
+
+  def saveFile(psiFile: PsiFile) {
+    UIUtil.invokeLaterIfNeeded(new Runnable {
+      override def run() {
+        FileDocumentManager.getInstance.saveDocument(FileDocumentManager.getInstance().getDocument(psiFile.getVirtualFile))
+      }
+    })
+  }
+
+  def saveAllFiles() {
+    UIUtil.invokeLaterIfNeeded(new Runnable {
+      override def run() {
+        FileDocumentManager.getInstance.saveAllDocuments()
+      }
+    })
+  }
+}
 
 case class LineColumnPosition(lineNr: Int, colunmNr: Int) extends Ordered[LineColumnPosition] {
 
@@ -33,14 +53,21 @@ case class LineColumnPosition(lineNr: Int, colunmNr: Int) extends Ordered[LineCo
 
 object LineColumnPosition {
 
-  def fromOffset(psiFile: PsiFile, offset: Int): LineColumnPosition = {
-    val file = psiFile.getVirtualFile
-    if (file == null) return null
+  def fromOffset(psiFile: PsiFile, offset: Int): Option[LineColumnPosition] = {
     val fdm = FileDocumentManager.getInstance
-    val doc = fdm.getCachedDocument(file)
-    if (doc == null) return null
-    val lineIndex = doc.getLineNumber(offset)
-    val startOffSet = offset - doc.getLineStartOffset(lineIndex)
-    LineColumnPosition(lineIndex + 1, startOffSet + 1)
+    for {
+      file <- Option(psiFile.getVirtualFile)
+      doc <- Option(fdm.getDocument(file))
+      li = doc.getLineNumber(offset)
+    } yield LineColumnPosition(li + 1, offset - doc.getLineStartOffset(li) + 1)
+  }
+
+  def getOffset(psiFile: PsiFile, lineCol: LineColumnPosition): Option[Int] = {
+    val fdm = FileDocumentManager.getInstance
+    for {
+      file <- Option(psiFile.getVirtualFile)
+      doc <- Option(fdm.getDocument(file))
+      startOffsetLine = doc.getLineStartOffset(lineCol.lineNr - 1)
+    } yield startOffsetLine + lineCol.colunmNr - 1
   }
 }

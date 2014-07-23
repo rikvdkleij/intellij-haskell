@@ -3,7 +3,8 @@
   parserClass="com.powertuple.intellij.haskell.parser.HaskellParser"
   parserUtilClass="com.powertuple.intellij.haskell.HaskellParserUtil"
 
-  extends="com.intellij.extapi.psi.ASTWrapperPsiElement"
+  implements="com.powertuple.intellij.haskell.psi.HaskellCompositeElement"
+  extends="com.powertuple.intellij.haskell.psi.impl.HaskellCompositeElementImpl"
 
   psiClassPrefix="Haskell"
   psiImplClassSuffix="Impl"
@@ -11,7 +12,7 @@
   psiImplPackage="com.powertuple.intellij.haskell.psi.impl"
 
   elementTypeHolderClass="com.powertuple.intellij.haskell.psi.HaskellTypes"
-  elementTypeClass="com.powertuple.intellij.haskell.psi.HaskellElementType"
+  elementTypeClass="com.powertuple.intellij.haskell.psi.HaskellCompositeElementType"
   tokenTypeClass="com.powertuple.intellij.haskell.psi.HaskellTokenType"
 
   psiImplUtilClass="com.powertuple.intellij.haskell.psi.impl.HaskellPsiImplUtil"
@@ -22,7 +23,7 @@
 program                     ::= (lexeme | whitespace)*
 private whitespace          ::= (whitestuff)+
 private whitestuff          ::= WHITE_CHAR | COMMENT | NCOMMENT | NEWLINE
-private lexeme              ::= qvar | var | qcon | con | qconsym | consym | qvarsym | varsym | literal
+private lexeme              ::= start_type_signature | qvar | var | qcon | con | qconsym | consym | qvarsym | varsym | literal
                                 | special | reservedop | reservedid | specialreservedid
 
 literal                     ::= DECIMAL | HEXADECIMAL | OCTAL | FLOAT | CHARACTER_LITERAL | STRING_LITERAL
@@ -39,9 +40,11 @@ private symbol              ::= ascSymbol                   // ignoring unicode 
 varsym                      ::= (symbol (symbol | ':')*)    // operator
 consym                      ::= (':' (symbol | ':')*)       // operator constructor
 
+start_type_signature        ::= VAR_ID COLON_COLON          // start of type signature
+
 var                         ::= VAR_ID                      // variables and type variables
                                  {mixin="com.powertuple.intellij.haskell.psi.impl.HaskellNamedElementImpl"
-                                  implements="com.powertuple.intellij.haskell.psi.HaskellNamedElement" methods=[getName setName getNameIdentifier]}
+                                  implements="com.powertuple.intellij.haskell.psi.HaskellNamedElement" methods=[getName setName getNameIdentifier getReference]}
 
 con                         ::= CON_ID                      // constructors, type constructors and type classes
 
@@ -60,199 +63,3 @@ reservedop                  ::= DOT_DOT | COLON | COLON_COLON | DEFINED_BY | SLA
                               | RIGHT_ARROW | AT | TILDE | DOUBLE_RIGHT_ARROW
 
 specialreservedid           ::= AS | QUALIFIED | HIDING
-
-// Context-Free Syntax (under construction because left-recursion is not supported by generator)
-//module      ::= 'module' modid (exports)? 'where' body
-//                | body
-//
-//body        ::= impdecls *
-//                |  topdecls *
-//                | (impdecls ';' topdecls) *
-//
-//impdecls    ::= impdecl(';' impdecl)*
-//
-//exports     ::= '(' export(',' export)* ')'
-//
-//export      ::= qvar
-//                | qtycon (('..') | ((cname(',' cname)* )?))?
-//                | qtycls (('..') | ((qvar (',' qvar)* )?))?
-//                | module modid
-//
-//impdecl     ::= import ('qualified')? modid ('as' modid)? (impspec)?
-//
-//impspec     ::= '(' (import (',' import )* (',' )?)? ')'
-//                | 'hiding' ((import (',' import )* (',' )?)?)
-//import      ::= var
-//                | tycon (('..') | ((cname (',' cname )*)?))?
-//cname       ::= var | con
-//topdecls    ::= (topdecl (';' topdecl)*)?
-//topdecl     ::= 'type' simpletype DEFINED_BY type
-//                | 'data' ( context '=>' )? simpletype DEFINED_BY constrs ( deriving )?
-//                | 'newtype' ( context '=>' )? simpletype DEFINED_BY newconstr ( deriving )?
-//                | 'class' ( scontext '=>' )? tycls tyvar ('where' cdecls)?
-//                | 'instance' ( scontext '=>' )? qtycls inst ('where' idecls)?
-//                | 'default' (( type (',' type)* )? )
-//                | 'foreign' fdecl
-//                | decl
-//decls       ::= '{' (decl (';' decl )*)? '}'
-//decl        ::= gendecl
-//                | (funlhs | pat) rhs
-//cdecls      ::= '{' (cdecl (';' cdecl )*)? '}'
-//cdecl       ::= gendecl
-//                | (funlhs | var) rhs
-//idecls      ::=  '{' (idecl ( ';' idecl)* )? '}'
-//idecl       ::= (funlhs | var ) rhs
-//gendecl     ::= vars '::' (context '=>')? type                  // type signature
-//                | fixity (integer)? ops                         // fixity signature
-//                |                                               // empty declaration
-//
-//ops         ::= op (',' op )*
-//vars        ::= var (',' var)*
-//fixity      ::= 'infixl' | 'infixr' | 'infix'
-//
-//type        ::= btype ('->' type)?                              // function type
-//
-//btype       ::= (btype)? atype                                  // type application
-//
-//atype       ::= gtycon
-//                | tyvar
-//                | (type(',' type )+)                            // tuple type
-//                | '['type']'                                    // list type
-//                | '('type')'                                    // parenthesized constructor
-//
-//gtycon      ::= qtycon
-//                | '()'                                          // unit type
-//                | '[]'                                          // list constructor
-//                | '(->)'                                        // function constructor
-//                | '(,' (',')* ')'                               // tupling constructor
-//
-//context     ::= class
-//                | '(' (class (',' class)* )? ')'
-//class       ::= qtycls tyvar
-//                | qtycls (tyvar (atype)+ )
-//scontext    ::= simpleclass
-//                | '(' (simpleclass (',' simpleclass)* )? ')'
-//simpleclass ::= qtycls tyvar
-//
-//simpletype  ::= tycon (tyvar)*
-//constrs     ::= constr (| constr)*
-//constr      ::= con (('!')? atype)*
-//                | (btype | '!' atype) conop (btype | '!' atype)
-//                | con '{' (fielddecl (',' fielddecl)* )? '}'
-//newconstr   ::= con atype
-//                | con '{' var '::' type '}'
-//fielddecl   ::= vars '::' (type | '!' atype)
-//deriving    ::= 'deriving' (dclass | '(' (dclass (',' dclass)* )? ')' )
-//dclass      ::= qtycls
-//
-//inst        ::= gtycon
-//                | '(' gtycon ( tyvar )* ')'
-//                | '(' tyvar ( ',' tyvar )+ ')'
-//                | '(' tyvar '->' tyvar ')'
-//                | (tyvar)?
-//
-//fdecl       ::= 'import' callconv (safety)? impent var '::' ftype
-//                | 'export' callconv expent var '::' ftype
-//callconv    ::=  'ccall' | 'stdcall' | 'cplusplus'                              //  (calling convention)
-//                | 'jvm' | 'dotnet'                                              // | 'system-specific calling conventions'????
-//impent      ::= (string_)?
-//expent      ::= (string_)?
-//safety      ::= 'unsafe' | 'safe'
-//
-//ftype       ::= frtype
-//                | fatype ::= ftype                                          // do not know how to handle this
-//
-//frtype      ::= fatype
-//                | '()'
-//fatype      ::= qtycon (atype)*
-//
-//funlhs      ::= var (apat)+
-//                | pat varop pat
-//                | '(' funlhs ')' (apat)+
-//rhs         ::= DEFINED_BY exp ('where' decls)?
-//                | gdrhs ('where' decls)?
-//gdrhs       ::= guards DEFINED_BY exp (gdrhs)?
-//guards      ::= '|' guard+
-//guard       ::= pat '<-' infixexp
-//                | 'let' decls
-//                | infixexp
-//
-//exp         ::=  infixexp '::' (context '=>')? type
-//                | infixexp
-//
-//infixexp    ::= lexp qop  infixexp
-//                | '-' infixexp
-//                | lexp
-//
-//lexp        ::= '\' (apat)+ '->' exp
-//                | 'let' decls 'in' exp
-//                | 'if' exp 'then' exp 'else' exp
-//                | 'case' exp 'of' '{' alts '}'
-//                | 'do' '{' stmts '}'
-//                | fexp
-//
-//fexp        ::= (fexp)? aexp
-//
-//aexp        ::= qvar
-//                | gcon
-//                | literal
-//                | '(' exp ')'
-//                | '(' exp (',' exp )+ ')'
-//                | '[' exp (',' exp )* ']'
-//                | '[' exp (',' exp )? '..' ( exp )? ']'
-//                | '[' exp | qual (',' qual )* ']'
-//                | '(' infixexp qop ')'
-//                | '(' qop infixexp ')'
-//                | qcon '{' (fbind ( ',' fbind)* )? '}'
-//                | aexp '{' fbind (',' fbind)* '}'
-//
-//qual        ::= pat '<-' exp
-//                | 'let' decls
-//                | exp
-//
-//alts        ::= (alt (';' alt )* )?
-//alt         ::= pat '->' exp ('where' decls)?
-//                | pat gdpat ('where' decls)?
-//                | // (empty alternative)
-//gdpat       ::=  guards '->' exp (gdpat)?
-//stmts       ::= (stmt)* exp (';')?
-//stmt        ::= exp ';'
-//                | pat '<-' exp ';'
-//                | 'let' decls ';'
-//                | ';' // (empty statement)
-//fbind       ::= qvar DEFINED_BY exp
-//pat	        ::= lpat qconop pat	  // (infix constructor)
-//                | lpat
-//
-//left lpat   ::=	apat
-//                | '-' (integer | float) // (negative literal)
-//                | gcon (apat)+
-//
-//apat        ::= var ('@' apat)?	                    // (as pattern)
-//                | gcon                              // (arity gcon  =  0)
-//                | qcon (fpat)*                      // (labeled pattern, k ≥ 0)
-//                | literal
-//                | '_'	                            // (wildcard)
-//                | '('pat')'                         // (parenthesized pattern)
-//                | '('pat (',' pat)+ ')'             // (tuple pattern, k ≥ 2)
-//                | '['pat (',' pat)* ']'             // (list pattern, k ≥ 1)
-//                | '~' apat
-//
-//fpat        ::= qvar DEFINED_BY pat
-//
-//gcon        ::= '()'
-//                | '[]'
-//                | '(' (',')* ')'
-//                | qcon
-//
-//var         ::= varid | '(' varsym ')'                  // variable
-//qvar        ::= qvarid | '(' qvarsym ')'
-//con         ::= conid | '(' consym ')'
-//qcon        ::= qconid | '(' gconsym ')'
-//varop       ::= varsym | '`' varid '`'
-//qvarop      ::= qvarsym | '`' qvarid '`'
-//conop       ::= consym | '`' conid '`'
-//qconop      ::= gconsym | '`' qconid '`'
-//op          ::= varop | conop
-//qop         ::= qvarop | qconop
-//gconsym     ::= ':' | qconsym

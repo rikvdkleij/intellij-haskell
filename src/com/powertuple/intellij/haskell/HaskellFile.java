@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package com.powertuple.intellij.haskell.psi;
+package com.powertuple.intellij.haskell;
 
 import com.intellij.extapi.psi.PsiFileBase;
 import com.intellij.openapi.fileTypes.FileType;

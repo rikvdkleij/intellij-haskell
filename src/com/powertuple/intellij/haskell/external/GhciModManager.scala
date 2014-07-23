@@ -18,6 +18,9 @@ package com.powertuple.intellij.haskell.external
 
 import com.intellij.openapi.project.Project
 
+/**
+ * TODO: Create separate ghc-modi instances for libraries.
+ */
 object GhciModManager {
 
   private var reinit = false

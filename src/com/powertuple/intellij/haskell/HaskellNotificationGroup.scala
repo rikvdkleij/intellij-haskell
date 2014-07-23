@@ -26,4 +26,8 @@ object HaskellNotificationGroup {
   def notifyError(message: String) {
     Group.createNotification(message, MessageType.ERROR).notify(null)
   }
+
+  def notifyInfo(message: String) {
+    Group.createNotification(message, MessageType.INFO).notify(null)
+  }
 }

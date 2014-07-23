@@ -29,7 +29,6 @@ import com.intellij.psi.TokenType;
 import com.intellij.psi.tree.IFileElementType;
 import com.intellij.psi.tree.TokenSet;
 import com.powertuple.intellij.haskell.parser.HaskellParser;
-import com.powertuple.intellij.haskell.psi.HaskellFile;
 import com.powertuple.intellij.haskell.psi.HaskellTypes;
 import org.jetbrains.annotations.NotNull;
 

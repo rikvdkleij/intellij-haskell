@@ -21,8 +21,8 @@ import com.powertuple.intellij.haskell.HaskellLanguage;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
-public class HaskellElementType extends IElementType {
-    public HaskellElementType(@NotNull @NonNls String debugName) {
+public class HaskellCompositeElementType extends IElementType {
+    public HaskellCompositeElementType(@NotNull @NonNls String debugName) {
         super(debugName, HaskellLanguage.INSTANCE);
     }
 }

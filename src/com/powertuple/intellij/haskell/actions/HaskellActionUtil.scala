@@ -16,7 +16,6 @@
 
 package com.powertuple.intellij.haskell.actions
 
-import java.awt.Point
 import java.awt.event.{MouseEvent, MouseMotionAdapter}
 
 import com.intellij.codeInsight.hint.{HintManager, HintManagerImpl, HintUtil}
@@ -24,7 +23,7 @@ import com.intellij.openapi.actionSystem.{AnActionEvent, CommonDataKeys}
 import com.intellij.openapi.editor.Editor
 import com.intellij.ui.LightweightHint
 import com.intellij.util.ui.UIUtil
-import com.powertuple.intellij.haskell.psi.HaskellFile
+import com.powertuple.intellij.haskell.HaskellFile
 
 object HaskellActionUtil {
 

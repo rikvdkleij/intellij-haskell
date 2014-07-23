@@ -24,9 +24,7 @@ import com.intellij.psi.PsiFile;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
 import com.intellij.psi.codeStyle.CommonCodeStyleSettings;
 import com.powertuple.intellij.haskell.HaskellLanguage;
-import com.powertuple.intellij.haskell.HaskellParserDefinition;
 import com.powertuple.intellij.haskell.formatter.settings.HaskellCodeStyleSettings;
-import com.powertuple.intellij.haskell.psi.HaskellElementType;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 

@@ -47,7 +47,12 @@
         <langCodeStyleSettingsProvider implementation="com.powertuple.intellij.haskell.formatter.settings.HaskellLanguageCodeStyleSettingsProvider"/>
 
 
-        <psi.referenceContributor implementation="com.powertuple.intellij.haskell.HaskellVaridReferenceContributor"/>
+        <psi.referenceContributor implementation="com.powertuple.intellij.haskell.HaskellReferenceContributor"/>
+
+        <lang.elementManipulator forClass="com.powertuple.intellij.haskell.psi.impl.HaskellVarImpl"
+                                 implementationClass="com.powertuple.intellij.haskell.psi.HaskellStringLiteralManipulator"/>
+
+        <fileBasedIndex implementation="com.powertuple.intellij.haskell.util.HaskellFileIndex"/>
     </extensions>
 
     <application-components>
