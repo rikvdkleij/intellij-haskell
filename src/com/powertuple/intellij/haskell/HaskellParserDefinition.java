@@ -46,7 +46,7 @@ public class HaskellParserDefinition implements ParserDefinition {
     );
 
     public static final TokenSet OPERATORS = TokenSet.create(
-            HS_DOT_DOT, HS_COLON, HS_COLON_COLON, HS_DEFINED_BY, HS_SLASH, HS_VERTICAL_BAR,
+            HS_DOT_DOT, HS_COLON, HS_COLON_COLON, HS_EQUAL, HS_SLASH, HS_VERTICAL_BAR,
             HS_LEFT_ARROW, HS_RIGHT_ARROW, HS_AT, HS_TILDE, HS_DOUBLE_RIGHT_ARROW,
             HS_QVARSYM, HS_VARSYM, HS_QCONSYM, HS_CONSYM
     );

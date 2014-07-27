@@ -24,6 +24,7 @@ import com.intellij.psi.PsiFile;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
 import com.intellij.psi.codeStyle.CommonCodeStyleSettings;
 import com.powertuple.intellij.haskell.HaskellLanguage;
+import com.powertuple.intellij.haskell.HaskellParserDefinition;
 import com.powertuple.intellij.haskell.formatter.settings.HaskellCodeStyleSettings;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -52,9 +53,9 @@ public class HaskellFormattingModelBuilder implements FormattingModelBuilder {
                 .before(HS_LEFT_BRACKET).spaces(1)
                 .after(HS_LEFT_BRACKET).spaces(0)
                 .before(HS_RIGHT_BRACKET).spaces(0)
-                .around(HS_RESERVEDID).spaces(1)
-                .around(HS_VARSYM).spaces(1)
-                .around(HS_QVARSYM).spaces(1);
+                .around(HaskellParserDefinition.RESERVED_IDS).spaces(1)
+                .around(HaskellParserDefinition.OPERATORS).spaces(1)
+                .around(HS_CON).spaces(1);
     }
 
     @Nullable

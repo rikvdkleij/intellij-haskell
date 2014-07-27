@@ -60,7 +60,7 @@ reservedid                  ::= CASE | CLASS | DATA | DEFAULT | DERIVING | DO | 
                               | INSTANCE | LET | MODULE | NEWTYPE | OF | THEN | TYPE
                               | WHERE | UNDERSCORE
 
-reservedop                  ::= DOT_DOT | COLON | COLON_COLON | DEFINED_BY | SLASH | VERTICAL_BAR | LEFT_ARROW
+reservedop                  ::= DOT_DOT | COLON | COLON_COLON | EQUAL | SLASH | VERTICAL_BAR | LEFT_ARROW
                               | RIGHT_ARROW | AT | TILDE | DOUBLE_RIGHT_ARROW
 
 specialreservedid           ::= AS | QUALIFIED | HIDING | INCLUDE

@@ -59,7 +59,7 @@ public class HaskellFormattingBlock implements ASTBlock {
     private static final TokenSet RESERVED_ELEMENTS_TO_INDENT = TokenSet.create(HS_VERTICAL_BAR);
     private static final TokenSet RESERVED_IDS_TO_INDENT = TokenSet.create(HS_WHERE, HS_THEN, HS_DO, HS_CASE);
     private static final TokenSet RESERVED_IDS_TO_BACK_INDENT = TokenSet.create(HS_ELSE);
-    private static final TokenSet INDENT_PREV_ELEMENTS = TokenSet.create(HS_DO, HS_WHERE, HS_THEN, HS_ELSE, HS_OF, HS_DOLLAR);
+    private static final TokenSet INDENT_PREV_ELEMENTS = TokenSet.create(HS_DO, HS_WHERE, HS_THEN, HS_ELSE, HS_OF);
     private static final TokenSet START_DEFINITION_ELEMENTS = TokenSet.create(HS_MODULE, HS_START_TYPE_SIGNATURE, HS_DATA, HS_INSTANCE, HS_CLASS,
             HS_IMPORT, HS_COMMENT, HS_NCOMMENT);
 
@@ -174,7 +174,7 @@ public class HaskellFormattingBlock implements ASTBlock {
                     alignment = Alignment.createAlignment(true);
                 } else if (indentBecausePrevElement(prevNode) && !startOfNewDefinition && !startNewlineInDefinition) {
                     alignment = Alignment.createAlignment(true);
-                } else if ((prevNode.getElementType() == HS_LEFT_PAREN) && startNewlineInDefinition) {
+                } else if (typeExistsFor(prevNode, TokenSet.create(HS_LEFT_PAREN, HS_DOLLAR)) && startNewlineInDefinition) {
                     indentCounter += 1;
                     alignment = Alignment.createAlignment(true);
                 }
