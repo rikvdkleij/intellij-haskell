@@ -42,7 +42,7 @@ public class HaskellParserDefinition implements ParserDefinition {
             HS_CASE, HS_CLASS, HS_DATA, HS_DEFAULT, HS_DERIVING, HS_DO, HS_ELSE, HS_FOREIGN,
             HS_IF, HS_IMPORT, HS_IN, HS_INFIX, HS_INFIXL, HS_INFIXR, HS_INSTANCE, HS_LET,
             HS_MODULE, HS_NEWTYPE, HS_OF, HS_THEN, HS_TYPE, HS_WHERE, HS_UNDERSCORE,
-            HS_AS, HS_QUALIFIED, HS_HIDING
+            HS_AS, HS_QUALIFIED, HS_HIDING, HS_INCLUDE
     );
 
     public static final TokenSet OPERATORS = TokenSet.create(

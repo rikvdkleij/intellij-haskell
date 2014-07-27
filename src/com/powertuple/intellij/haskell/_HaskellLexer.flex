@@ -18,9 +18,18 @@ import static com.powertuple.intellij.haskell.psi.HaskellTypes.*;
 %type IElementType
 %unicode
 
-control_character    = [\000 - \037]
+%{
+    private int commentStart;
+    private int commentDepth;
+%}
+
+%xstate NCOMMENT, TEX
+
+control_character   = [\000 - \037]
 NEWLINE             = \r|\n|\r\n
-WHITE_SPACE         = ([ \t\f] | {control_character})+
+unispace            = \x05
+WHITE_CHAR          = [ \t\f] | {control_character} | {unispace}
+WHITE_SPACE         = {WHITE_CHAR}+
 
 small               = [a-z_]          // ignoring any unicode lowercase letter for now
 large               = [A-Z]           // ignoring any unicode uppercase letter for now
@@ -36,7 +45,6 @@ OCTAL               = 0[oO]{octit}+
 FLOAT               = [-+]?([0-9]+(\\.[0-9]*)?|\\.[0-9]+)([eE][-+]?[0-9]+)?
 
 COMMENT             = "--"[^\r\n]*
-NCOMMENT            = "{-" (.|{NEWLINE})* "-}"
 
 CHARACTER_LITERAL   = \' [^\'\\\r\n\f]* \'
 STRING_LITERAL      = \" [^\"\\\r\n\f]* \"
@@ -45,10 +53,48 @@ VAR_ID              = ({small} ({small} | {large} | {digit} | ')* )+
 CON_ID              = ({large} ({small} | {large})* )+
 
 %%
-<YYINITIAL> {
+
+<TEX> {
+    [^\\]+            { return HS_NCOMMENT; }
+    "\\begin{code}"   { yybegin(YYINITIAL); return HS_NCOMMENT; }
+    \\+*              { return HS_NCOMMENT; }
+}
+
+<NCOMMENT> {
+    "{-" {
+        commentDepth++;
+    }
+
+    <<EOF>> {
+        int state = yystate();
+        yybegin(YYINITIAL);
+        zzStartRead = commentStart;
+        return HS_NCOMMENT;
+    }
+
+    "-}" {
+        if (commentDepth > 0) {
+            commentDepth--;
+        }
+        else {
+             int state = yystate();
+             yybegin(YYINITIAL);
+             zzStartRead = commentStart;
+             return HS_NCOMMENT;
+        }
+    }
+
+    .|{WHITE_CHAR}|{NEWLINE} {}
+}
+
+"{-" {
+    yybegin(NCOMMENT);
+    commentDepth = 0;
+    commentStart = getTokenStart();
+}
+
 
     {COMMENT}             { return HS_COMMENT; }
-    {NCOMMENT}            { return HS_NCOMMENT; }
     {NEWLINE}             { return HS_NEWLINE; }
     {WHITE_SPACE}         { return com.intellij.psi.TokenType.WHITE_SPACE; }
 
@@ -57,6 +103,7 @@ CON_ID              = ({large} ({small} | {large})* )+
     "as"                  { return HS_AS; }
     "qualified"           { return HS_QUALIFIED; }
     "hiding"              { return HS_HIDING; }
+    "#include"            { return HS_INCLUDE; }
 
     // reservedid
     "case"                { return HS_CASE; }
@@ -134,5 +181,7 @@ CON_ID              = ({large} ({small} | {large})* )+
     "~"                   { return HS_TILDE; }
     "=>"                  { return HS_DOUBLE_RIGHT_ARROW; }
 
+    "\\end{code}"         { yybegin(TEX); return HS_NCOMMENT; }
+    "\\section"           { yybegin(TEX); return HS_NCOMMENT; }
+
 .                         { return com.intellij.psi.TokenType.BAD_CHARACTER; }
-}

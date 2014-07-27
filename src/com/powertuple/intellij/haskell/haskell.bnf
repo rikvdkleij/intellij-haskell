@@ -22,7 +22,7 @@
 
 program                     ::= (lexeme | whitespace)*
 private whitespace          ::= (whitestuff)+
-private whitestuff          ::= WHITE_CHAR | COMMENT | NCOMMENT | NEWLINE
+private whitestuff          ::= COMMENT | NCOMMENT | NEWLINE
 private lexeme              ::= start_type_signature | qvar | var | qcon | con | qconsym | consym | qvarsym | varsym | literal
                                 | special | reservedop | reservedid | specialreservedid
 
@@ -62,4 +62,4 @@ reservedid                  ::= CASE | CLASS | DATA | DEFAULT | DERIVING | DO | 
 reservedop                  ::= DOT_DOT | COLON | COLON_COLON | DEFINED_BY | SLASH | VERTICAL_BAR | LEFT_ARROW
                               | RIGHT_ARROW | AT | TILDE | DOUBLE_RIGHT_ARROW
 
-specialreservedid           ::= AS | QUALIFIED | HIDING
+specialreservedid           ::= AS | QUALIFIED | HIDING | INCLUDE

@@ -10,7 +10,7 @@ import com.intellij.util.CommonProcessors
 import com.intellij.util.indexing.FileBasedIndex.InputFilter
 import com.intellij.util.indexing._
 import com.intellij.util.io.{DataExternalizer, EnumeratorStringDescriptor, KeyDescriptor}
-import com.powertuple.intellij.haskell.{HaskellFile, HaskellFileType}
+import com.powertuple.intellij.haskell.{HaskellFile, HaskellFileType, LiterateHaskellFileType}
 import gnu.trove.THashSet
 
 import scala.collection.JavaConversions._
@@ -50,7 +50,7 @@ object HaskellFileIndex {
   private final val HaskellModuleFilter = new FileBasedIndex.InputFilter {
 
     def acceptInput(file: VirtualFile): Boolean = {
-      file.getFileType == HaskellFileType.INSTANCE
+      file.getFileType == HaskellFileType.INSTANCE || file.getFileType == LiterateHaskellFileType.INSTANCE
     }
   }
 

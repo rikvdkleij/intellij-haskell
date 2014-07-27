@@ -25,7 +25,7 @@
     <extensions defaultExtensionNs="com.intellij">
         <internalFileTemplate name="Haskell Module"/>
 
-        <fileTypeFactory implementation="com.powertuple.intellij.haskell.HaskellFileTypeFactory"/>
+        <fileTypeFactory implementation="com.powertuple.intellij.haskell.HaskellLanguageFileTypeFactory"/>
         <lang.parserDefinition language="Haskell"
                                implementationClass="com.powertuple.intellij.haskell.HaskellParserDefinition"/>
 
