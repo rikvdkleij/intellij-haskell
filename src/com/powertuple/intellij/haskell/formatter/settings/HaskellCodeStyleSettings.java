@@ -25,4 +25,5 @@ public class HaskellCodeStyleSettings extends CustomCodeStyleSettings {
     }
 
     public boolean INDENT_WHERE_WITH_TAB_SIZE = true;
+    public boolean INDENT_DO_WITH_TAB_SIZE = true;
 }

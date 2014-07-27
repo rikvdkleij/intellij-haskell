@@ -78,12 +78,9 @@ public class HaskellLanguageCodeStyleSettingsProvider extends LanguageCodeStyleS
     private static final String SPACING_CODE_SAMPLE =
             "l = [1,2,3]";
 
+
     private static final String INDENT_CODE_SAMPLE =
-            "module SayHello\n" +
-                    "(\n" +
-                    "sayHello\n" +
-                    ") where\n" +
-                    "\n" +
+            "module SayHello(\nsayHello\n)where\n\n" +
                     "sayHello :: IO ()\n" +
                     "sayHello = do\n" +
                     "name <- getLine\n" +

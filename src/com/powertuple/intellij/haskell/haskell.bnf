@@ -23,7 +23,7 @@
 program                     ::= (lexeme | whitespace)*
 private whitespace          ::= (whitestuff)+
 private whitestuff          ::= COMMENT | NCOMMENT | NEWLINE
-private lexeme              ::= start_type_signature | qvar | var | qcon | con | qconsym | consym | qvarsym | varsym | literal
+private lexeme              ::= start_type_signature | start_definition | qvar | var | qcon | con | qconsym | consym | qvarsym | varsym | literal
                                 | special | reservedop | reservedid | specialreservedid
 
 literal                     ::= DECIMAL | HEXADECIMAL | OCTAL | FLOAT | CHARACTER_LITERAL | STRING_LITERAL
@@ -41,6 +41,7 @@ varsym                      ::= (symbol (symbol | ':')*)    // operator
 consym                      ::= (':' (symbol | ':')*)       // operator constructor
 
 start_type_signature        ::= VAR_ID COLON_COLON          // start of type signature
+start_definition            ::= VAR_ID+ EQUAL
 
 var                         ::= VAR_ID                      // variables and type variables
                                  {mixin="com.powertuple.intellij.haskell.psi.impl.HaskellNamedElementImpl"

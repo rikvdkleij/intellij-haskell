@@ -36,7 +36,9 @@ import java.util.List;
 import static com.powertuple.intellij.haskell.psi.HaskellTypes.*;
 
 /**
- * Formatter which use blank line as start of new definition.
+ * Formatter which use blank line as signal to back indent.
+ * <p/>
+ * TODO: Refactor this horrible code!! Scala??
  */
 public class HaskellFormattingBlock implements ASTBlock {
 
@@ -52,12 +54,14 @@ public class HaskellFormattingBlock implements ASTBlock {
     private List<Block> subBlocks;
     private Boolean incomplete;
 
-    private boolean indentWithTabSize;
+    private int tabCounter;
     private int indentCounter;
-    private static final TokenSet RESERVED_OPS_TO_INDENT = TokenSet.create(HS_VERTICAL_BAR);
-    public static final TokenSet RESERVED_IDS_TO_INDENT = TokenSet.create(HS_WHERE, HS_THEN, HS_DO, HS_CASE);
-    public static final TokenSet RESERVED_IDS_TO_BACK_INDENT = TokenSet.create(HS_ELSE);
-    private final TokenSet INDENT_PREV_RESERVED_IDS = TokenSet.create(HS_WHERE, HS_DO, HS_THEN, HS_ELSE, HS_OF);
+    private static final TokenSet RESERVED_ELEMENTS_TO_INDENT = TokenSet.create(HS_VERTICAL_BAR);
+    private static final TokenSet RESERVED_IDS_TO_INDENT = TokenSet.create(HS_WHERE, HS_THEN, HS_DO, HS_CASE);
+    private static final TokenSet RESERVED_IDS_TO_BACK_INDENT = TokenSet.create(HS_ELSE);
+    private static final TokenSet INDENT_PREV_ELEMENTS = TokenSet.create(HS_DO, HS_WHERE, HS_THEN, HS_ELSE, HS_OF, HS_DOLLAR);
+    private static final TokenSet START_DEFINITION_ELEMENTS = TokenSet.create(HS_MODULE, HS_START_TYPE_SIGNATURE, HS_DATA, HS_INSTANCE, HS_CLASS,
+            HS_IMPORT, HS_COMMENT, HS_NCOMMENT);
 
     public HaskellFormattingBlock(@NotNull ASTNode node,
                                   @NotNull CommonCodeStyleSettings settings,
@@ -65,7 +69,7 @@ public class HaskellFormattingBlock implements ASTBlock {
                                   @NotNull SpacingBuilder spacingBuilder,
                                   @Nullable Wrap wrap,
                                   int indentCounter,
-                                  boolean indentWithTabSize,
+                                  int tabCounter,
                                   @Nullable Alignment alignment) {
         this.node = node;
         this.wrap = wrap;
@@ -74,7 +78,7 @@ public class HaskellFormattingBlock implements ASTBlock {
         this.haskellSettings = haskellSettings;
         this.spacingBuilder = spacingBuilder;
         this.indentCounter = indentCounter;
-        this.indentWithTabSize = indentWithTabSize;
+        this.tabCounter = tabCounter;
     }
 
     @NotNull
@@ -111,39 +115,43 @@ public class HaskellFormattingBlock implements ASTBlock {
         boolean startNewlineInDefinition = false;
         boolean startOfNewDefinition = false;
         boolean notIndentAgain = false;
+        boolean newLine = false;
+        boolean blankLine = false;
 
         for (ASTNode child = node.getFirstChildNode(); child != null; child = child.getTreeNext()) {
             if (child.getElementType() == HS_NEWLINE) {
-                if (startNewlineInDefinition) {
-                    startOfNewDefinition = true;
-                    indentCounter = 0;
-                    alignment = null;
-                    notIndentAgain = false;
+                if (newLine) {
+                    blankLine = true;
                 } else {
-                    startNewlineInDefinition = true;
+                    newLine = true;
                 }
-                continue;
-            } else if (child.getElementType() == TokenType.WHITE_SPACE) {
+            }
+
+            if (typeExistsFor(child, START_DEFINITION_ELEMENTS) || (blankLine && child.getElementType() == HS_START_DEFINITION)) {
+                startOfNewDefinition = true;
+                indentCounter = 0;
+                tabCounter = 0;
+                alignment = null;
+                notIndentAgain = false;
+            }
+
+            if (!startOfNewDefinition && newLine) {
+                startNewlineInDefinition = true;
+            }
+
+            if (child.getElementType() == HS_NEWLINE || child.getElementType() == TokenType.WHITE_SPACE) {
                 continue;
             }
 
-            indentWithTabSize = false;
 
             if (isReservedIdToIndent(child) && startNewlineInDefinition && !startOfNewDefinition) {
+                doWhereSpecialCase(child);
                 if (typeExistsFor(child, HS_WHERE)) {
                     if (indentCounter > 0) {
                         indentCounter--;
                     }
-                    if (haskellSettings.INDENT_WHERE_WITH_TAB_SIZE) {
-                        indentWithTabSize = true;
-                    } else {
-                        indentCounter += 1;
-                    }
-                } else {
-                    indentCounter += 1;
                 }
                 alignment = null;
-                notIndentAgain = false;
             } else if (isReservedIdToBackIndent(child) && startNewlineInDefinition) {
                 if (indentCounter > 0) {
                     indentCounter -= 1;
@@ -151,37 +159,69 @@ public class HaskellFormattingBlock implements ASTBlock {
                     indentCounter = 0;
                 }
                 alignment = null;
-                notIndentAgain = false;
-            } else if (isReservedOpToIndent(child) && startNewlineInDefinition && !notIndentAgain) {
-                indentCounter += 1;
+            } else if (isReservedElementToIndent(child) && startNewlineInDefinition) {
+                if (!notIndentAgain) {
+                    indentCounter += 1;
+                    notIndentAgain = true;
+                }
                 notIndentAgain = true;
             } else if (prevNode != null) {
                 if (typeExistsFor(prevNode, HS_EQUAL) && startNewlineInDefinition) {
                     indentCounter += 1;
                     alignment = Alignment.createAlignment(true);
-                    notIndentAgain = false;
-                } else if (indentBecausePrevReservedId(prevNode) && !startOfNewDefinition && startNewlineInDefinition) {
-                    indentCounter += 1;
+                } else if (indentBecausePrevElement(prevNode) && !startOfNewDefinition && startNewlineInDefinition) {
+                    doWhereSpecialCase(prevNode);
                     alignment = Alignment.createAlignment(true);
-                    notIndentAgain = false;
+                } else if (indentBecausePrevElement(prevNode) && !startOfNewDefinition && !startNewlineInDefinition) {
+                    alignment = Alignment.createAlignment(true);
                 } else if ((prevNode.getElementType() == HS_LEFT_PAREN) && startNewlineInDefinition) {
                     indentCounter += 1;
                     alignment = Alignment.createAlignment(true);
-                    notIndentAgain = false;
                 }
             }
 
-            blocks.add(new HaskellFormattingBlock(child, settings, haskellSettings, spacingBuilder, getWrap(), indentCounter, indentWithTabSize, alignment));
+            if (blankLine) {
+                notIndentAgain = false;
+                alignment = null;
+                if (tabCounter > 0) {
+                    tabCounter -= 1;
+                } else if (indentCounter > 0) {
+                    indentCounter -= 1;
+                }
+            }
 
+            blocks.add(new HaskellFormattingBlock(child, settings, haskellSettings, spacingBuilder, getWrap(), indentCounter, tabCounter, alignment));
+
+            newLine = false;
+            blankLine = false;
             startOfNewDefinition = false;
             startNewlineInDefinition = false;
             prevNode = child;
         }
+
         return Collections.unmodifiableList(blocks);
     }
 
-    private boolean isReservedOpToIndent(ASTNode node) {
-        return node.findChildByType(RESERVED_OPS_TO_INDENT) != null;
+    private void doWhereSpecialCase(ASTNode node) {
+        if (typeExistsFor(node, HS_DO)) {
+            if (haskellSettings.INDENT_DO_WITH_TAB_SIZE) {
+                tabCounter += 1;
+            } else {
+                indentCounter += 1;
+            }
+        } else if (typeExistsFor(node, HS_WHERE)) {
+            if (haskellSettings.INDENT_WHERE_WITH_TAB_SIZE) {
+                tabCounter += 1;
+            } else {
+                indentCounter += 1;
+            }
+        } else {
+            indentCounter += 1;
+        }
+    }
+
+    private boolean isReservedElementToIndent(ASTNode node) {
+        return node.findChildByType(RESERVED_ELEMENTS_TO_INDENT) != null;
     }
 
     private boolean isReservedIdToIndent(ASTNode node) {
@@ -192,12 +232,16 @@ public class HaskellFormattingBlock implements ASTBlock {
         return node.findChildByType(RESERVED_IDS_TO_BACK_INDENT) != null;
     }
 
-    private boolean indentBecausePrevReservedId(ASTNode node) {
-        return node.findChildByType(INDENT_PREV_RESERVED_IDS) != null;
+    private boolean indentBecausePrevElement(ASTNode node) {
+        return node.findChildByType(INDENT_PREV_ELEMENTS) != null;
     }
 
     private boolean typeExistsFor(ASTNode node, IElementType elementType) {
-        return node.findChildByType(elementType) != null;
+        return node.getElementType() == elementType || node.findChildByType(elementType) != null;
+    }
+
+    private boolean typeExistsFor(ASTNode node, TokenSet elementTypes) {
+        return elementTypes.contains(node.getElementType()) || node.findChildByType(elementTypes) != null;
     }
 
     private int getTabSize() {
@@ -211,7 +255,7 @@ public class HaskellFormattingBlock implements ASTBlock {
     @Override
     @Nullable
     public Indent getIndent() {
-        return Indent.getSpaceIndent(indentCounter * getIndentSize() + (indentWithTabSize ? getTabSize() : 0));
+        return Indent.getSpaceIndent((indentCounter * getIndentSize()) + (tabCounter * getTabSize()));
     }
 
     @Nullable

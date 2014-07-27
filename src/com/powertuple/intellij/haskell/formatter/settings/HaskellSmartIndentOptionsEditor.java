@@ -26,18 +26,22 @@ import javax.swing.*;
 public class HaskellSmartIndentOptionsEditor extends SmartIndentOptionsEditor {
 
     private JCheckBox indentWhereWithTabSizeCheckBox;
+    private JCheckBox indentDoWithTabSizeCheckBox;
 
     protected void addComponents() {
         super.addComponents();
 
         indentWhereWithTabSizeCheckBox = new JCheckBox("Indent 'where' with tab size");
+        indentDoWithTabSizeCheckBox = new JCheckBox("Indent 'do' with tab size");
         add(indentWhereWithTabSizeCheckBox, true);
+        add(indentDoWithTabSizeCheckBox, true);
     }
 
     public boolean isModified(final CodeStyleSettings settings, final CommonCodeStyleSettings.IndentOptions options) {
         boolean isModified = super.isModified(settings, options);
 
         isModified |= isFieldModified(indentWhereWithTabSizeCheckBox, getHaskellCodeStyleSettings(settings).INDENT_WHERE_WITH_TAB_SIZE);
+        isModified |= isFieldModified(indentDoWithTabSizeCheckBox, getHaskellCodeStyleSettings(settings).INDENT_DO_WITH_TAB_SIZE);
 
         return isModified;
     }
@@ -46,17 +50,20 @@ public class HaskellSmartIndentOptionsEditor extends SmartIndentOptionsEditor {
         super.apply(settings, options);
 
         getHaskellCodeStyleSettings(settings).INDENT_WHERE_WITH_TAB_SIZE = indentWhereWithTabSizeCheckBox.isSelected();
+        getHaskellCodeStyleSettings(settings).INDENT_DO_WITH_TAB_SIZE = indentDoWithTabSizeCheckBox.isSelected();
     }
 
     public void reset(@NotNull final CodeStyleSettings settings, @NotNull final CommonCodeStyleSettings.IndentOptions options) {
         super.reset(settings, options);
 
         indentWhereWithTabSizeCheckBox.setSelected(getHaskellCodeStyleSettings(settings).INDENT_WHERE_WITH_TAB_SIZE);
+        indentDoWithTabSizeCheckBox.setSelected(getHaskellCodeStyleSettings(settings).INDENT_DO_WITH_TAB_SIZE);
     }
 
     public void setEnabled(final boolean enabled) {
         super.setEnabled(enabled);
         indentWhereWithTabSizeCheckBox.setEnabled(enabled);
+        indentDoWithTabSizeCheckBox.setEnabled(enabled);
     }
 
     private HaskellCodeStyleSettings getHaskellCodeStyleSettings(final CodeStyleSettings settings) {

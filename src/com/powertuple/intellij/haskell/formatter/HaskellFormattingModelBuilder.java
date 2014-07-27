@@ -38,7 +38,7 @@ public class HaskellFormattingModelBuilder implements FormattingModelBuilder {
         CommonCodeStyleSettings commonSettings = settings.getCommonSettings(HaskellLanguage.INSTANCE);
         HaskellCodeStyleSettings haskellSettings = settings.getCustomSettings(HaskellCodeStyleSettings.class);
         SpacingBuilder spacingBuilder = createSpacingBuilder(commonSettings, haskellSettings);
-        HaskellFormattingBlock block = new HaskellFormattingBlock(element.getNode(), commonSettings, haskellSettings, spacingBuilder, Wrap.createWrap(WrapType.NONE, true), 0, false, null);
+        HaskellFormattingBlock block = new HaskellFormattingBlock(element.getNode(), commonSettings, haskellSettings, spacingBuilder, Wrap.createWrap(WrapType.NONE, true), 0, 0, null);
         return FormattingModelProvider.createFormattingModelForPsiFile(element.getContainingFile(), block, settings);
     }
 
