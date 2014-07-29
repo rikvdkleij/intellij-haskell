@@ -20,7 +20,7 @@ import com.intellij.codeInsight.lookup.LookupElementBuilder
 import com.intellij.openapi.util.TextRange
 import com.intellij.openapi.vfs.LocalFileSystem
 import com.intellij.psi._
-import com.intellij.psi.search.{FilenameIndex, GlobalSearchScope}
+import com.intellij.psi.search.GlobalSearchScope
 import com.intellij.psi.util.{PsiTreeUtil, PsiUtilCore}
 import com.powertuple.intellij.haskell.external.GhciModManager
 import com.powertuple.intellij.haskell.util.{FileUtil, HaskellFileIndex, LineColumnPosition}
@@ -28,7 +28,7 @@ import com.powertuple.intellij.haskell.{HaskellFile, HaskellIcons, HaskellNotifi
 
 import scala.util.{Failure, Success, Try}
 
-class HaskellVarReference(element: PsiElement, textRange: TextRange) extends PsiReferenceBase[PsiElement](element, textRange) {
+class HaskellVarReference(element: HaskellVar, textRange: TextRange) extends PsiReferenceBase[HaskellVar](element, textRange) {
 
   override def resolve: PsiElement = {
     FileUtil.saveAllFiles()
@@ -46,7 +46,7 @@ class HaskellVarReference(element: PsiElement, textRange: TextRange) extends Psi
       haskellFile <- Option(PsiManager.getInstance(myElement.getProject).
           findFile(LocalFileSystem.getInstance().findFileByPath(expressionInfo.filePath)).asInstanceOf[HaskellFile])
       startOffset <- LineColumnPosition.getOffset(haskellFile, LineColumnPosition(expressionInfo.lineNr, expressionInfo.colNr))
-    } yield PsiUtilCore.getElementAtOffset(haskellFile, startOffset)).orNull
+    } yield PsiUtilCore.getElementAtOffset(haskellFile, startOffset).getParent.asInstanceOf[HaskellVar]).orNull
   }
 
   /**
@@ -91,12 +91,16 @@ class HaskellVarReference(element: PsiElement, textRange: TextRange) extends Psi
   }
 
   private def expressionInfoFrom(outputLine: String): Option[ExpressionInfo] = {
-    ghcModiOutputToExpressionInfo(outputLine) match {
-      case Success(ei) => Some(ei)
-      case Failure(error) => if (error.getMessage == null) {
-        throw error
-      } else HaskellNotificationGroup.notifyInfo(error.getMessage);
-        None
+    if (outputLine == "Cannot show info") {
+      None
+    } else {
+      ghcModiOutputToExpressionInfo(outputLine) match {
+        case Success(ei) => Some(ei)
+        case Failure(error) => if (error.getMessage == null) {
+          throw error
+        } else HaskellNotificationGroup.notifyInfo(error.getMessage);
+          None
+      }
     }
   }
 

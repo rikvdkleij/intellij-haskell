@@ -40,8 +40,8 @@ private symbol              ::= ascSymbol                   // ignoring unicode 
 varsym                      ::= (symbol (symbol | ':')*)    // operator
 consym                      ::= (':' (symbol | ':')*)       // operator constructor
 
-start_type_signature        ::= VAR_ID COLON_COLON          // start of type signature
-start_definition            ::= VAR_ID+ EQUAL
+start_type_signature        ::= var COLON_COLON
+start_definition            ::= var+ EQUAL
 
 var                         ::= VAR_ID                      // variables and type variables
                                  {mixin="com.powertuple.intellij.haskell.psi.impl.HaskellNamedElementImpl"

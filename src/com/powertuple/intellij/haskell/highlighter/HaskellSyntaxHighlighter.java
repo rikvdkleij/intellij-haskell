@@ -81,10 +81,10 @@ public class HaskellSyntaxHighlighter extends SyntaxHighlighterBase {
         if (type == HS_LEFT_BRACKET || type == HS_RIGHT_BRACKET) {
             return pack(BRACKET);
         }
-        if (type == HS_VAR_ID) {
+        if (type == HS_VAR) {
             return pack(SYMBOL);
         }
-        if (type == HS_CON_ID) {
+        if (type == HS_CON) {
             return pack(CONSTRUCTOR);
         }
         return EMPTY;

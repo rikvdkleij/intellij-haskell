@@ -35,7 +35,7 @@ public class HaskellReferenceContributor extends PsiReferenceContributor {
                         if (!(element instanceof HaskellVar)) {
                             return PsiReference.EMPTY_ARRAY;
                         }
-                        return new PsiReference[]{new HaskellVarReference(element, TextRange.from(0, element.getTextLength()))};
+                        return new PsiReference[]{new HaskellVarReference((HaskellVar) element, TextRange.from(0, element.getTextLength()))};
                     }
                 });
     }

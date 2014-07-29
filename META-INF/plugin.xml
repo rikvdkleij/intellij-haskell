@@ -53,6 +53,8 @@
                                  implementationClass="com.powertuple.intellij.haskell.psi.HaskellStringLiteralManipulator"/>
 
         <fileBasedIndex implementation="com.powertuple.intellij.haskell.util.HaskellFileIndex"/>
+
+        <lang.findUsagesProvider language="Haskell" implementationClass="com.powertuple.intellij.haskell.HaskellFindUsagesProvider"/>
     </extensions>
 
     <application-components>
