@@ -21,7 +21,7 @@ import com.intellij.openapi.editor.Editor
 import com.intellij.psi.util.PsiUtilBase
 import com.intellij.psi.{PsiElement, PsiFile}
 import com.powertuple.intellij.haskell.external.GhciModManager
-import com.powertuple.intellij.haskell.util.{FileUtil, LineColumnPosition}
+import com.powertuple.intellij.haskell.util.{ProjectUtil, FileUtil, LineColumnPosition}
 import com.powertuple.intellij.haskell.{HaskellFile, HaskellLanguage, HaskellNotificationGroup}
 
 import scala.util.{Failure, Success, Try}
@@ -39,6 +39,12 @@ class ShowTypeAction extends AnAction {
     if (editor == null) return
 
     val psiFile = PsiUtilBase.getPsiFileInEditor(editor, CommonDataKeys.PROJECT.getData(context))
+
+    // Skip library files
+    if (!ProjectUtil.isProjectFile(psiFile)) {
+      return;
+    }
+
     if (psiFile.getLanguage != HaskellLanguage.INSTANCE) return
     FileUtil.saveFile(psiFile)
 

@@ -23,7 +23,7 @@ import com.intellij.psi._
 import com.intellij.psi.search.GlobalSearchScope
 import com.intellij.psi.util.{PsiTreeUtil, PsiUtilCore}
 import com.powertuple.intellij.haskell.external.GhciModManager
-import com.powertuple.intellij.haskell.util.{FileUtil, HaskellFileIndex, LineColumnPosition}
+import com.powertuple.intellij.haskell.util.{FileUtil, HaskellFileIndex, LineColumnPosition, ProjectUtil}
 import com.powertuple.intellij.haskell.{HaskellFile, HaskellIcons, HaskellNotificationGroup}
 
 import scala.util.{Failure, Success, Try}
@@ -31,9 +31,15 @@ import scala.util.{Failure, Success, Try}
 class HaskellVarReference(element: HaskellVar, textRange: TextRange) extends PsiReferenceBase[HaskellVar](element, textRange) {
 
   override def resolve: PsiElement = {
+    val psiFile = myElement.getContainingFile
+
+    // Skip library files
+    if (!ProjectUtil.isProjectFile(psiFile)) {
+      return null;
+    }
+
     FileUtil.saveAllFiles()
 
-    val psiFile = myElement.getContainingFile
     val expression = myElement.getText.substring(textRange.getStartOffset, textRange.getEndOffset)
 
     (for {
@@ -106,12 +112,14 @@ class HaskellVarReference(element: HaskellVar, textRange: TextRange) extends Psi
 
   private def ghcModiOutputToExpressionInfo(ghcModiOutput: String): Try[ExpressionInfo] = Try {
     val GhcModiInfoPattern = """(.+)-- Defined at (.+):([\d]+):([\d]+)""".r
+    val GhcModiInfoLibraryPathPattern = """(.+)-- Defined in ‘(.+):(.*)’.*""".r
     val GhcModiInfoLibraryPattern = """(.+)-- Defined in ‘(.+)’""".r
 
     ghcModiOutput match {
       case GhcModiInfoPattern(typeSignature, filePath, lineNr, colNr) => LocalExpressionInfo(typeSignature.trim, filePath, lineNr.toInt, colNr.toInt)
+      case GhcModiInfoLibraryPathPattern(typeSignature, libraryName, filePath) => LibraryExpressionInfo(typeSignature.trim, findLibraryFilePath(filePath))
       case GhcModiInfoLibraryPattern(typeSignature, modulePath) => LibraryExpressionInfo(typeSignature, findLibraryFilePath(modulePath))
-      case _ => throw new Exception(s"Unknown pattern for ghc-modi output: $ghcModiOutput")
+      case _ => throw new Exception(s"Unknown pattern for ghc-modi info output: $ghcModiOutput")
     }
   }
 

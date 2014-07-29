@@ -14,31 +14,16 @@
  * limitations under the License.
  */
 
-package com.powertuple.intellij.haskell.external
+package com.powertuple.intellij.haskell.util
 
-import com.intellij.openapi.project.Project
-import com.intellij.openapi.roots.libraries.{Library, LibraryTablesRegistrar, LibraryTable}
+import com.intellij.psi.PsiFile
+import com.intellij.psi.search.GlobalSearchScope
 
-object GhciModManager {
+object ProjectUtil {
 
-  private var reinit = false
-
-  def getGhcMod(project: Project): GhcModi = {
-    if (reinit) {
-      val ghcModi = ghcModiFrom(project)
-      ghcModi.reinit()
-      reinit = false
-      ghcModi
-    } else {
-      ghcModiFrom(project)
-    }
-  }
-
-  def setReinit() {
-    reinit = true
-  }
-
-  private def ghcModiFrom(project: Project)= {
-    project.getComponent(classOf[GhcModi])
+  def isProjectFile(psiFile: PsiFile): Boolean = {
+    val project = psiFile.getProject
+    val files = HaskellFileIndex.getFilesByName(project, psiFile.getName.split('.')(0), GlobalSearchScope.projectScope(project))
+    files.nonEmpty
   }
 }
