@@ -34,43 +34,4 @@ class GhcModExternalAnnotatorSpec extends FunSpec with Matchers with GivenWhenTh
     ghcModiProblem.columnNr should equal(11)
     ghcModiProblem.description should equal("parse error on input")
   }
-
-  describe("Determine annotation offset when compile error") {
-    Given("some Haskell code which gives compile errors")
-    val someCode =
-      """
-        |Some Haskell code
-        |  which does not
-        |
-        |com pile
-      """.stripMargin
-
-    When("ghc-modi is called")
-    val ghcModiResult = GhcModiResult(Seq(GhcModiProblem(4, 3, "something wrong")))
-    val annotations = ghcModiExternalAnnotator.createAnnotations(ghcModiResult, someCode)
-
-    Then("annotation holder should contain right annotation")
-    annotations should have length 1
-
-    val annotation = annotations(0)
-    annotation.asInstanceOf[ErrorAnnotation].textRange.getStartOffset should equal(38)
-  }
-
-  describe("Determine annotation offset when compile warning") {
-    Given("some Haskell code which gives compile warnings")
-    val someCode =
-      """
-        |some code
-      """.stripMargin
-
-    When("ghc-modi is executed")
-    val ghcModiResult = GhcModiResult(Seq(GhcModiProblem(1, 1, "Warning: some warning")))
-    val annotations = ghcModiExternalAnnotator.createAnnotations(ghcModiResult, someCode)
-
-    Then("annotation holder should contain right annotation")
-    annotations should have length 1
-
-    val annotation = annotations(0)
-    annotation.asInstanceOf[WarningAnnotation].textRange.getStartOffset should equal(0)
-  }
 }

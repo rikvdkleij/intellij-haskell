@@ -24,7 +24,7 @@ import com.intellij.openapi.util.TextRange
 import com.intellij.psi.PsiFile
 import com.powertuple.intellij.haskell.HaskellFileType
 import com.powertuple.intellij.haskell.external.GhciModManager
-import com.powertuple.intellij.haskell.util.FileUtil
+import com.powertuple.intellij.haskell.util.{LineColumnPosition, FileUtil}
 
 class GhcModiExternalAnnotator extends ExternalAnnotator[GhcModInitialInfo, GhcModiResult] {
 
@@ -56,7 +56,7 @@ class GhcModiExternalAnnotator extends ExternalAnnotator[GhcModInitialInfo, GhcM
 
   override def apply(psiFile: PsiFile, ghcModResult: GhcModiResult, holder: AnnotationHolder) {
     if (ghcModResult.problems.nonEmpty && psiFile.isValid) {
-      for (annotation <- createAnnotations(ghcModResult, psiFile.getText)) {
+      for (annotation <- createAnnotations(ghcModResult, psiFile)) {
         annotation match {
           case ErrorAnnotation(textRange, message) => holder.createErrorAnnotation(textRange, message)
           case WarningAnnotation(textRange, message) => holder.createWarningAnnotation(textRange, message)
@@ -72,15 +72,10 @@ class GhcModiExternalAnnotator extends ExternalAnnotator[GhcModInitialInfo, GhcM
     fileStatusMap.markFileScopeDirty(document, new TextRange(0, document.getTextLength), document.getTextLength)
   }
 
-  private def startOffSetForProblem(lengthPerLine: Iterator[Int], problem: GhcModiProblem): Int = {
-    lengthPerLine.take(problem.lineNr - 1).map(_ + 1).sum + problem.columnNr
-  }
-
-  private[annotator] def createAnnotations(ghcModResult: GhcModiResult, text: String): Seq[Annotation] = {
-    val lengthPerLine = text.lines.map(_.size)
+  private[annotator] def createAnnotations(ghcModResult: GhcModiResult, psiFile: PsiFile): Seq[Annotation] = {
     for (problem <- ghcModResult.problems) yield {
-      val startOffSet = startOffSetForProblem(lengthPerLine, problem)
-      val textRange = TextRange.create(startOffSet, startOffSet + 1)
+      val startOffSet = LineColumnPosition.getOffset(psiFile, LineColumnPosition(problem.lineNr, problem.columnNr)).getOrElse(0)
+      val textRange = TextRange.create(startOffSet,  startOffSet + 1)
       if (problem.description.startsWith("Warning:")) {
         WarningAnnotation(textRange, problem.description)
       } else {
