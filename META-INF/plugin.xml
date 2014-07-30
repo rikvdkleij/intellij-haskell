@@ -55,6 +55,10 @@
         <fileBasedIndex implementation="com.powertuple.intellij.haskell.util.HaskellFileIndex"/>
 
         <lang.findUsagesProvider language="Haskell" implementationClass="com.powertuple.intellij.haskell.HaskellFindUsagesProvider"/>
+
+        <lang.namesValidator language="Haskell" implementationClass="com.powertuple.intellij.haskell.HaskellNamesValidator"/>
+        <lang.refactoringSupport language="Haskell" implementationClass="com.powertuple.intellij.haskell.HaskellRefactoringSupportProvider"/>
+        <renamePsiElementProcessor implementation="com.powertuple.intellij.haskell.HaskellRenameVariableProcessor"/>
     </extensions>
 
     <application-components>
