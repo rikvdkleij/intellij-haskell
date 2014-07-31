@@ -59,6 +59,8 @@
         <lang.namesValidator language="Haskell" implementationClass="com.powertuple.intellij.haskell.HaskellNamesValidator"/>
         <lang.refactoringSupport language="Haskell" implementationClass="com.powertuple.intellij.haskell.HaskellRefactoringSupportProvider"/>
         <renamePsiElementProcessor implementation="com.powertuple.intellij.haskell.HaskellRenameVariableProcessor"/>
+
+        <lang.documentationProvider language="Haskell" implementationClass="com.powertuple.intellij.haskell.HaskellDocumentationProvider"/>
     </extensions>
 
     <application-components>
@@ -67,7 +69,7 @@
 
     <project-components>
         <component>
-            <implementation-class>com.powertuple.intellij.haskell.external.GhcModi</implementation-class>
+            <implementation-class>com.powertuple.intellij.haskell.external.GhcModiManager</implementation-class>
         </component>
 
         <!--<component>-->

@@ -20,13 +20,10 @@ import com.intellij.codeInsight.lookup.LookupElementBuilder
 import com.intellij.openapi.util.TextRange
 import com.intellij.openapi.vfs.LocalFileSystem
 import com.intellij.psi._
-import com.intellij.psi.search.GlobalSearchScope
 import com.intellij.psi.util.{PsiTreeUtil, PsiUtilCore}
-import com.powertuple.intellij.haskell.external.GhciModManager
-import com.powertuple.intellij.haskell.util.{FileUtil, HaskellFileIndex, LineColumnPosition, ProjectUtil}
-import com.powertuple.intellij.haskell.{HaskellFile, HaskellIcons, HaskellNotificationGroup}
-
-import scala.util.{Failure, Success, Try}
+import com.powertuple.intellij.haskell.external.{ExpressionInfo, GhcModiManager, ProjectExpressionInfo}
+import com.powertuple.intellij.haskell.util.{FileUtil, LineColumnPosition, ProjectUtil}
+import com.powertuple.intellij.haskell.{HaskellFile, HaskellIcons}
 
 class HaskellVarReference(element: HaskellVar, textRange: TextRange) extends PsiReferenceBase[HaskellVar](element, textRange) {
 
@@ -48,7 +45,7 @@ class HaskellVarReference(element: HaskellVar, textRange: TextRange) extends Psi
           findFile(LocalFileSystem.getInstance().findFileByPath(expressionInfo.filePath)).asInstanceOf[HaskellFile])
       typeSignature <- findTypeSignaturesFor(haskellFile, expression)
     } yield typeSignature).orElse(for {
-      expressionInfo <- getLocalExpressionInfo(getExpressionInfo(psiFile, expression))
+      expressionInfo <- getProjectExpressionInfo(getExpressionInfo(psiFile, expression))
       haskellFile <- Option(PsiManager.getInstance(myElement.getProject).
           findFile(LocalFileSystem.getInstance().findFileByPath(expressionInfo.filePath)).asInstanceOf[HaskellFile])
       startOffset <- LineColumnPosition.getOffset(haskellFile, LineColumnPosition(expressionInfo.lineNr, expressionInfo.colNr))
@@ -64,9 +61,9 @@ class HaskellVarReference(element: HaskellVar, textRange: TextRange) extends Psi
     vars.map(v => LookupElementBuilder.create(v).withIcon(HaskellIcons.HASKELL_SMALL_LOGO).withTypeText(v.getName))
   }
 
-  private def getLocalExpressionInfo(expressionInfo: Option[ExpressionInfo]) = {
+  private def getProjectExpressionInfo(expressionInfo: Option[ExpressionInfo]) = {
     expressionInfo match {
-      case Some(lei: LocalExpressionInfo) => Some(lei)
+      case Some(lei: ProjectExpressionInfo) => Some(lei)
       case _ => None
     }
   }
@@ -78,78 +75,7 @@ class HaskellVarReference(element: HaskellVar, textRange: TextRange) extends Psi
     }
   }
 
-  private def getOutputLine(outputLines: Seq[String]): Option[String] = {
-    outputLines match {
-      case Seq(ol) => Some(ol)
-      case _ => None
-    }
-  }
-
   private def getExpressionInfo(psiFile: PsiFile, expression: String): Option[ExpressionInfo] = {
-    val ghcModi = GhciModManager.getGhcMod(psiFile.getProject)
-    val cmd = s"info ${psiFile.getVirtualFile.getPath} $expression"
-    val ghcModiOutput = ghcModi.execute(cmd)
-
-    for {
-      outputLine <- getOutputLine(ghcModiOutput.outputLines)
-      expressionInfo <- expressionInfoFrom(outputLine)
-    } yield expressionInfo
+    GhcModiManager.getInstance(psiFile.getProject).findInfoFor(psiFile, expression)
   }
-
-  private def expressionInfoFrom(outputLine: String): Option[ExpressionInfo] = {
-    if (outputLine == "Cannot show info") {
-      None
-    } else {
-      ghcModiOutputToExpressionInfo(outputLine) match {
-        case Success(ei) => Some(ei)
-        case Failure(error) => if (error.getMessage == null) {
-          throw error
-        } else HaskellNotificationGroup.notifyInfo(error.getMessage);
-          None
-      }
-    }
-  }
-
-  private def ghcModiOutputToExpressionInfo(ghcModiOutput: String): Try[ExpressionInfo] = Try {
-    val GhcModiInfoPattern = """(.+)-- Defined at (.+):([\d]+):([\d]+)""".r
-    val GhcModiInfoLibraryPathPattern = """(.+)-- Defined in ‘(.+):(.*)’.*""".r
-    val GhcModiInfoLibraryPattern = """(.+)-- Defined in ‘(.+)’""".r
-
-    ghcModiOutput match {
-      case GhcModiInfoPattern(typeSignature, filePath, lineNr, colNr) => LocalExpressionInfo(typeSignature.trim, filePath, lineNr.toInt, colNr.toInt)
-      case GhcModiInfoLibraryPathPattern(typeSignature, libraryName, filePath) => LibraryExpressionInfo(typeSignature.trim, findLibraryFilePath(filePath))
-      case GhcModiInfoLibraryPattern(typeSignature, modulePath) => LibraryExpressionInfo(typeSignature, findLibraryFilePath(modulePath))
-      case _ => throw new Exception(s"Unknown pattern for ghc-modi info output: $ghcModiOutput")
-    }
-  }
-
-  private def findLibraryFilePath(modulePath: String) = {
-    val (fileName, dirs) = modulePath.split('.').toList.reverse match {
-      case fn :: d => (fn, d)
-      case _ => throw new Exception(s"Could not determine file and directory for $modulePath")
-    }
-
-    val files = HaskellFileIndex.getFilesByName(myElement.getProject, fileName, GlobalSearchScope.allScope(myElement.getProject))
-    val file = files.find(hf => checkPath(hf.getContainingDirectory, dirs)).getOrElse(throw new Exception(s"Could not find file path for $modulePath"))
-    file.getVirtualFile.getPath
-  }
-
-  private def checkPath(dir: PsiDirectory, dirNames: List[String]): Boolean = {
-    dirNames match {
-      case h :: t if dir.getName == h => checkPath(dir.getParentDirectory, t)
-      case h :: t => false
-      case _ => true
-    }
-  }
-
-  abstract class ExpressionInfo {
-    def typeSignature: String
-
-    def filePath: String
-  }
-
-  case class LocalExpressionInfo(typeSignature: String, filePath: String, lineNr: Int, colNr: Int) extends ExpressionInfo
-
-  case class LibraryExpressionInfo(typeSignature: String, filePath: String) extends ExpressionInfo
-
 }

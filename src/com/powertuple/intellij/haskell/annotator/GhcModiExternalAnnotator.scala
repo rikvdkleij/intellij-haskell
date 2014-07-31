@@ -23,8 +23,8 @@ import com.intellij.openapi.fileEditor.FileDocumentManager
 import com.intellij.openapi.util.TextRange
 import com.intellij.psi.PsiFile
 import com.powertuple.intellij.haskell.HaskellFileType
-import com.powertuple.intellij.haskell.external.GhciModManager
-import com.powertuple.intellij.haskell.util.{LineColumnPosition, FileUtil}
+import com.powertuple.intellij.haskell.external.GhcModiManager
+import com.powertuple.intellij.haskell.util.{FileUtil, LineColumnPosition}
 
 class GhcModiExternalAnnotator extends ExternalAnnotator[GhcModInitialInfo, GhcModiResult] {
 
@@ -44,7 +44,7 @@ class GhcModiExternalAnnotator extends ExternalAnnotator[GhcModInitialInfo, GhcM
   }
 
   override def doAnnotate(initialInfoGhcMod: GhcModInitialInfo): GhcModiResult = {
-    val ghcModi = GhciModManager.getGhcMod(initialInfoGhcMod.psiFile.getProject)
+    val ghcModi = GhcModiManager.getInstance(initialInfoGhcMod.psiFile.getProject).getGhcMod
     val ghcModiOutput = ghcModi.execute("check " + initialInfoGhcMod.filePath)
 
     if (ghcModiOutput.outputLines.isEmpty) {
@@ -75,7 +75,7 @@ class GhcModiExternalAnnotator extends ExternalAnnotator[GhcModInitialInfo, GhcM
   private[annotator] def createAnnotations(ghcModResult: GhcModiResult, psiFile: PsiFile): Seq[Annotation] = {
     for (problem <- ghcModResult.problems) yield {
       val startOffSet = LineColumnPosition.getOffset(psiFile, LineColumnPosition(problem.lineNr, problem.columnNr)).getOrElse(0)
-      val textRange = TextRange.create(startOffSet,  startOffSet + 1)
+      val textRange = TextRange.create(startOffSet, startOffSet + 1)
       if (problem.description.startsWith("Warning:")) {
         WarningAnnotation(textRange, problem.description)
       } else {

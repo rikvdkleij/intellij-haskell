@@ -23,13 +23,13 @@ import com.intellij.openapi.fileChooser.FileChooserDescriptorFactory
 import java.awt.{Insets, GridBagConstraints, GridBagLayout}
 import javax.swing.event.DocumentEvent
 import com.intellij.ui.DocumentAdapter
-import com.powertuple.intellij.haskell.external.{GhcModi, GhciModManager}
+import com.powertuple.intellij.haskell.external.{GhcModi, GhcModiManager}
 
 class HaskellConfigurable extends Configurable {
   private var isModifiedByUser = false
   private val ghcModPathField = new TextFieldWithBrowseButton
   private val ghcModiPathField = new TextFieldWithBrowseButton
-  private val hdocsPathField = new TextFieldWithBrowseButton
+  private val haskellDocsPathField = new TextFieldWithBrowseButton
 
   override def getDisplayName: String = {
     "Haskell"
@@ -39,7 +39,7 @@ class HaskellConfigurable extends Configurable {
 
   private val GhcMod = "ghc-mod"
   private val GhcModi = "ghc-modi"
-  private val Hdocs = "hdocs"
+  private val HaskellDocs = "haskell-docs"
 
   override def createComponent: JComponent = {
 
@@ -55,11 +55,11 @@ class HaskellConfigurable extends Configurable {
       null,
       FileChooserDescriptorFactory.createSingleLocalFileDescriptor())
 
-    hdocsPathField.addBrowseFolderListener(
-      s"Select $Hdocs",
+    haskellDocsPathField.addBrowseFolderListener(
+      s"Select $HaskellDocs",
       null,
       null,
-      FileChooserDescriptorFactory.createSingleFolderDescriptor())
+      FileChooserDescriptorFactory.createSingleLocalFileDescriptor())
 
     val settingsPanel = new JPanel(new GridBagLayout())
 
@@ -70,7 +70,7 @@ class HaskellConfigurable extends Configurable {
     }
 
     ghcModPathField.getTextField.getDocument.addDocumentListener(listener)
-    hdocsPathField.getTextField.getDocument.addDocumentListener(listener)
+    haskellDocsPathField.getTextField.getDocument.addDocumentListener(listener)
     ghcModiPathField.getTextField.getDocument.addDocumentListener(listener)
 
     val base = new GridBagConstraints {
@@ -110,7 +110,7 @@ class HaskellConfigurable extends Configurable {
 
     addLabeledControl(0, GhcMod, ghcModPathField)
     addLabeledControl(2, GhcModi, ghcModiPathField)
-    addLabeledControl(1, Hdocs, hdocsPathField)
+    addLabeledControl(1, HaskellDocs, haskellDocsPathField)
 
 
     settingsPanel.add(new JPanel(), base.setConstraints(
@@ -128,9 +128,9 @@ class HaskellConfigurable extends Configurable {
     val state = HaskellSettings.getInstance().getState
     state.ghcModPath = ghcModPathField.getText
     state.ghcModiPath = ghcModiPathField.getText
-    state.hdocsPath = hdocsPathField.getText
+    state.haskellDocsPath = haskellDocsPathField.getText
 
-    GhciModManager.setReinit()
+    GhcModiManager.setReinit()
 
     isModifiedByUser = false
   }
@@ -141,7 +141,7 @@ class HaskellConfigurable extends Configurable {
         throw new ConfigurationException(s"Invalid path to $command")
       }
     }
-    Seq((GhcMod, ghcModPathField.getText), (GhcModi, ghcModiPathField.getText), (Hdocs, hdocsPathField.getText)).foreach({ case (c, p) => validate(c, p)})
+    Seq((GhcMod, ghcModPathField.getText), (GhcModi, ghcModiPathField.getText), (HaskellDocs, haskellDocsPathField.getText)).foreach({ case (c, p) => validate(c, p)})
   }
 
   override def disposeUIResources() {
@@ -153,7 +153,7 @@ class HaskellConfigurable extends Configurable {
     val state = HaskellSettings.getInstance().getState
     ghcModPathField.getTextField.setText(state.ghcModPath)
     ghcModiPathField.getTextField.setText(state.ghcModiPath)
-    hdocsPathField.getTextField.setText(state.hdocsPath)
+    haskellDocsPathField.getTextField.setText(state.haskellDocsPath)
 
     isModifiedByUser = false
   }

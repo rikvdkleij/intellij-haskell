@@ -19,7 +19,6 @@ package com.powertuple.intellij.haskell.external
 import java.io._
 import java.util.concurrent.{Executors, TimeoutException}
 
-import com.intellij.openapi.components.ProjectComponent
 import com.intellij.openapi.project.Project
 import com.powertuple.intellij.haskell.HaskellNotificationGroup
 import com.powertuple.intellij.haskell.settings.HaskellSettings
@@ -30,7 +29,7 @@ import scala.concurrent.{Await, ExecutionContext, Future}
 import scala.io._
 import scala.sys.process._
 
-class GhcModi(val project: Project, val settings: HaskellSettings) extends ProjectComponent {
+private[external] class GhcModi(val settings: HaskellSettings, val project: Project) {
 
   private implicit val ec = new ExecutionContext {
     val threadPool = Executors.newSingleThreadExecutor
@@ -82,13 +81,7 @@ class GhcModi(val project: Project, val settings: HaskellSettings) extends Proje
     }
   }
 
-  private def exit() {
-    if (outputStream != null) {
-      outputStream.close()
-    }
-  }
-
-  private def startGhcModi() {
+  def startGhcModi() {
     try {
       Process(settings.getState.ghcModiPath, new File(project.getBasePath)).run(
         new ProcessIO(
@@ -109,19 +102,11 @@ class GhcModi(val project: Project, val settings: HaskellSettings) extends Proje
     startGhcModi()
   }
 
-  override def projectOpened(): Unit = {
-    startGhcModi()
+  def exit() {
+    if (outputStream != null) {
+      outputStream.close()
+    }
   }
-
-  override def projectClosed(): Unit = {
-    exit()
-  }
-
-  override def initComponent(): Unit = {}
-
-  override def disposeComponent(): Unit = {}
-
-  override def getComponentName: String = "ghcModi"
 }
 
 case class GhcModiOutput(outputLines: Seq[String] = Seq())

@@ -20,7 +20,7 @@ import com.intellij.openapi.actionSystem.{AnAction, AnActionEvent, CommonDataKey
 import com.intellij.openapi.editor.Editor
 import com.intellij.psi.util.PsiUtilBase
 import com.intellij.psi.{PsiElement, PsiFile}
-import com.powertuple.intellij.haskell.external.GhciModManager
+import com.powertuple.intellij.haskell.external.GhcModiManager
 import com.powertuple.intellij.haskell.util.{ProjectUtil, FileUtil, LineColumnPosition}
 import com.powertuple.intellij.haskell.{HaskellFile, HaskellLanguage, HaskellNotificationGroup}
 
@@ -53,7 +53,7 @@ class ShowTypeAction extends AnAction {
       case None => HaskellNotificationGroup.notifyError("Could not find start position of expression"); return
     }
 
-    val ghcModi = GhciModManager.getGhcMod(psiFile.getProject)
+    val ghcModi = GhcModiManager.getInstance(psiFile.getProject).getGhcMod
     val vFile = psiFile.getVirtualFile
     val cmd = s"type ${vFile.getPath} ${startPositionExpression.lineNr} ${startPositionExpression.colunmNr}"
     val ghcModiOutput = ghcModi.execute(cmd)
