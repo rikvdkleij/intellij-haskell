@@ -18,3 +18,22 @@ This plugin is written in Java/Scala and is mentioned not to support GHC/Cabal d
 and doing the initial/basic Haskell configuration in terminal. This plugin will rely on external tools (mainly ghc-mod(i)) for Haskell language support in IntelliJ IDEA.
 The user interface component in this project for setting the paths to external tools is based on Haskell-idea-plugin. I have no experience in creating IntelliJ
 plugins so it's 'inspiring' to look to code of other plugins. Especially thanks to developers of the Erlang plugin :-)
+
+# Features
+- Syntax highlighting (which can be customized);
+- Error/warning highlighting;
+- Find Usages of variables;
+- Resolving references of variables (also to library code if library source code is added to project);
+- Code completion by resolving references;
+- Renaming variables (which first shows preview so refactoring scope can be adjusted);
+- View type info;
+- View quick documentation;
+- View quick definition;
+- Code formatting (works reasonably but did not test it with all kinds of code; not finished yet);
+
+Features are with the help of ghc-modi and haskell-docs!!
+
+# TODO:
+- Code completion by using ghc-modi directly;
+- Structure view;
+- Go to function and go to symbol;
