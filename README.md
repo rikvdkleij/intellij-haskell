@@ -33,3 +33,4 @@ Features are with the help of ghc-modi and haskell-docs!!
 - Code completion by using ghc-modi directly;
 - Structure view;
 - Go to function and go to symbol;
+- Inspection by hlint;
