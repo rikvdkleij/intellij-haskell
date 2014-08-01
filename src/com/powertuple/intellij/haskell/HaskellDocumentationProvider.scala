@@ -45,7 +45,7 @@ class HaskellDocumentationProvider extends AbstractDocumentationProvider {
     val arguments = (expressionInfo, getSandboxPackageDbPath(project)) match {
       case (Some(lei: LibraryExpressionInfo), Some(dbPath)) => Seq("-g", s"-package-db=$dbPath", s"${lei.module}", expression)
       case (Some(lei: LibraryExpressionInfo), None) => Seq(s"${lei.module}", expression)
-      case (None, _) => HaskellNotificationGroup.notifyInfo("Can not determine haskell-docs argument 'module'"); Seq()
+      case (_, _) => HaskellNotificationGroup.notifyInfo("Can not determine haskell-docs argument 'module'"); Seq()
     }
 
     val stdOutputput = ExternalProcess.getProcessOutput(project.getBasePath, haskellDocs, arguments).getStdout
