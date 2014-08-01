@@ -30,4 +30,8 @@ public class HaskellTokenType extends IElementType {
     public String toString() {
         return "HaskellTokenType." + super.toString();
     }
+
+    public String getName() {
+        return super.toString().toLowerCase();
+    }
 }

@@ -61,6 +61,8 @@
         <renamePsiElementProcessor implementation="com.powertuple.intellij.haskell.HaskellRenameVariableProcessor"/>
 
         <lang.documentationProvider language="Haskell" implementationClass="com.powertuple.intellij.haskell.HaskellDocumentationProvider"/>
+
+        <completion.contributor language="Haskell" implementationClass="com.powertuple.intellij.haskell.HaskellCompletionContributor"/>
     </extensions>
 
     <application-components>
@@ -72,9 +74,9 @@
             <implementation-class>com.powertuple.intellij.haskell.external.GhcModiManager</implementation-class>
         </component>
 
-        <!--<component>-->
-        <!--<implementation-class>com.powertuple.intellij.haskell.HaskellProjectComponent</implementation-class>-->
-        <!--</component>-->
+        <component>
+            <implementation-class>com.powertuple.intellij.haskell.HaskellDocumentationProvider</implementation-class>
+        </component>
     </project-components>
 
     <actions>
