@@ -13,10 +13,8 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+package com.powertuple.intellij.haskell.psi
 
-package com.powertuple.intellij.haskell.psi;
+import com.intellij.psi.PsiNameIdentifierOwner
 
-import com.intellij.psi.PsiElement;
-
-public interface HaskellCompositeElement extends PsiElement {
-}
+trait HaskellNamedElement extends HaskellCompositeElement with PsiNameIdentifierOwner

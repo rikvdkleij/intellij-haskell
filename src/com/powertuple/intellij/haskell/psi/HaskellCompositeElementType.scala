@@ -13,10 +13,10 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+package com.powertuple.intellij.haskell.psi
 
-package com.powertuple.intellij.haskell.psi;
+import com.intellij.psi.tree.IElementType
+import com.powertuple.intellij.haskell.HaskellLanguage
+import org.jetbrains.annotations.{NonNls, NotNull}
 
-import com.intellij.psi.PsiNameIdentifierOwner;
-
-public interface HaskellNamedElement extends HaskellCompositeElement, PsiNameIdentifierOwner {
-}
+class HaskellCompositeElementType(@NotNull @NonNls debugName: String) extends IElementType(debugName, HaskellLanguage.INSTANCE)
