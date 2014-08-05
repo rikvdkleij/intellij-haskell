@@ -63,6 +63,9 @@
         <lang.documentationProvider language="Haskell" implementationClass="com.powertuple.intellij.haskell.HaskellDocumentationProvider"/>
 
         <completion.contributor language="Haskell" implementationClass="com.powertuple.intellij.haskell.HaskellCompletionContributor"/>
+
+        <gotoSymbolContributor implementation="com.powertuple.intellij.haskell.HaskellSymbolContributor"/>
+        <lang.psiStructureViewFactory language="Haskell" implementationClass="com.powertuple.intellij.haskell.HaskellStructureViewFactory"/>
     </extensions>
 
     <application-components>

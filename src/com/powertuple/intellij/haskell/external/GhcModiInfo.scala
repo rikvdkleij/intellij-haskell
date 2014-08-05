@@ -20,7 +20,7 @@ import com.intellij.openapi.project.Project
 import com.intellij.psi.search.GlobalSearchScope
 import com.intellij.psi.{PsiDirectory, PsiFile}
 import com.powertuple.intellij.haskell.HaskellNotificationGroup
-import com.powertuple.intellij.haskell.util.HaskellFileIndex
+import com.powertuple.intellij.haskell.util.{HaskellFileIndex, ProjectUtil}
 
 import scala.util.{Failure, Success, Try}
 
@@ -31,13 +31,20 @@ private[external] object GhcModiInfo {
   val GhcModiInfoLibraryPattern = """(.+)-- Defined in ‘(.+)’""".r
 
   def findInfoFor(ghcModi: GhcModi, psiFile: PsiFile, expression: String): Option[ExpressionInfo] = {
-    val cmd = s"info ${psiFile.getVirtualFile.getPath} $expression"
-    val ghcModiOutput = ghcModi.execute(cmd)
 
-    for {
-      outputLine <- getSingleLine(ghcModiOutput.outputLines)
-      expressionInfo <- expressionInfoFrom(outputLine, psiFile.getProject)
-    } yield expressionInfo
+    // Skip library files
+    if (!ProjectUtil.isProjectFile(psiFile)) {
+      None
+    } else {
+
+      val cmd = s"info ${psiFile.getVirtualFile.getPath} $expression"
+      val ghcModiOutput = ghcModi.execute(cmd)
+
+      for {
+        outputLine <- getSingleLine(ghcModiOutput.outputLines)
+        expressionInfo <- expressionInfoFrom(outputLine, psiFile.getProject)
+      } yield expressionInfo
+    }
   }
 
   private def getSingleLine(outputLines: Seq[String]) = {

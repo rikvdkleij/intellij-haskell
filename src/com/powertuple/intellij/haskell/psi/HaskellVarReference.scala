@@ -68,9 +68,10 @@ class HaskellVarReference(element: HaskellVar, textRange: TextRange) extends Psi
     }
   }
 
-  private def findTypeSignaturesFor(haskellFile: HaskellFile, expression: String) = {
+  private def findTypeSignaturesFor(haskellFile: HaskellFile, expression: String): Option[PsiElement] = {
     Option(PsiTreeUtil.getChildrenOfType(haskellFile, classOf[HaskellStartTypeSignature])) match {
-      case Some(typeSignatures) => typeSignatures.map(ts => ts.getFirstChild).find(v => v.getText == expression)
+      //      case Some(typeSignatures) => typeSignatures.map(ts => ts.getFirstChild).find(v => v.getText == expression)
+      case Some(typeSignatures) => typeSignatures.find(v => v.getIdentifier == expression).map(_.getNameIdentifier)
       case _ => None
     }
   }

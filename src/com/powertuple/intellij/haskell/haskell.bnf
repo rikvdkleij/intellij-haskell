@@ -18,12 +18,15 @@
   psiImplUtilClass="com.powertuple.intellij.haskell.psi.impl.HaskellPsiImplUtil"
 
   elementTypePrefix="HS_"
+
+  methods("start_type_signature|start_definition|start_data_declaration")=[getIdentifier getNameIdentifier]
+  implements("start_type_signature|start_definition|start_data_declaration")="com.powertuple.intellij.haskell.psi.HaskellStartDeclarationElement"
 }
 
 program                     ::= (lexeme | whitespace)*
 private whitespace          ::= (whitestuff)+
 private whitestuff          ::= COMMENT | NCOMMENT | NEWLINE
-private lexeme              ::= start_type_signature | start_definition | qvar | var | qcon | con | qconsym | consym | qvarsym | varsym | literal
+private lexeme              ::= start_type_signature | start_definition | start_data_declaration | qvar | var | qcon | con | qconsym | consym | qvarsym | varsym | literal
                                 | special | reservedop | reservedid | specialreservedid
 
 literal                     ::= DECIMAL | HEXADECIMAL | OCTAL | FLOAT | CHARACTER_LITERAL | STRING_LITERAL
@@ -40,12 +43,16 @@ private symbol              ::= ascSymbol                   // ignoring unicode 
 varsym                      ::= (symbol (symbol | ':')*)    // operator
 consym                      ::= (':' (symbol | ':')*)       // operator constructor
 
-start_type_signature        ::= var COLON_COLON
+start_type_signature        ::= var COLON_COLON (context DOUBLE_RIGHT_ARROW)? (var | con | special)
+start_data_declaration      ::= DATA (context DOUBLE_RIGHT_ARROW)? con
+
 start_definition            ::= var+ EQUAL
+
+context                     ::= con var | '(' con var (',' con var)+ ')'
 
 var                         ::= VAR_ID                      // variables and type variables
                                  {mixin="com.powertuple.intellij.haskell.psi.impl.HaskellNamedElementImpl"
-                                  implements="com.powertuple.intellij.haskell.psi.HaskellNamedElement" methods=[getName setName getNameIdentifier getReference]}
+                                  implements="com.powertuple.intellij.haskell.psi.HaskellNamedElement" methods=[getName setName getNameIdentifier getReference getPresentation]}
 
 con                         ::= CON_ID                      // constructors, type constructors and type classes
 
