@@ -14,13 +14,13 @@
  * limitations under the License.
  */
 
-package com.powertuple.intellij.haskell.actions
+package com.powertuple.intellij.haskell.external
 
 import org.scalatest.{BeforeAndAfterEach, FunSpec, GivenWhenThen, Matchers}
 
 class GhcModTypeInfoSpec extends FunSpec with Matchers with GivenWhenThen with BeforeAndAfterEach {
 
-  val showTypeAction = new ShowTypeAction
+  val ghcModiTypeInfo = GhcModiTypeInfo
 
   describe("Parsing ghc-modi type info output") {
     Given("type info output of ghc-modi")
@@ -30,13 +30,13 @@ class GhcModTypeInfoSpec extends FunSpec with Matchers with GivenWhenThen with B
       """12 1 12 25 "[Integer]"""")
 
     When("converted to list of type info")
-    val typeInfo = showTypeAction.ghcModiOutputToTypeInfo(output).get
+    val typeInfos = ghcModiTypeInfo.ghcModiOutputToTypeInfo(output).get
 
     Then("it should contain right info")
-    typeInfo should have length 3
+    typeInfos should have length 3
 
-    typeInfo(0) shouldEqual TypeInfo(12, 10, 12, 19, "[Integer] -> [Integer]")
-    typeInfo(1) shouldEqual TypeInfo(12, 10, 12, 25, "[Integer]")
-    typeInfo(2) shouldEqual TypeInfo(12, 1, 12, 25, "[Integer]")
+    typeInfos(0) shouldEqual TypeInfo(12, 10, 12, 19, "[Integer] -> [Integer]")
+    typeInfos(1) shouldEqual TypeInfo(12, 10, 12, 25, "[Integer]")
+    typeInfos(2) shouldEqual TypeInfo(12, 1, 12, 25, "[Integer]")
   }
 }

@@ -18,7 +18,7 @@ package com.powertuple.intellij.haskell.external
 
 import com.intellij.openapi.components.{ProjectComponent, ServiceManager}
 import com.intellij.openapi.project.Project
-import com.intellij.psi.PsiFile
+import com.intellij.psi.{PsiElement, PsiFile}
 import com.powertuple.intellij.haskell.settings.HaskellSettings
 
 object GhcModiManager {
@@ -46,6 +46,10 @@ class GhcModiManager(val project: Project, val settings: HaskellSettings) extend
 
   def findInfoFor(psifile: PsiFile, expression: String): Option[ExpressionInfo] = {
     GhcModiInfo.findInfoFor(ghcModi, psifile, expression)
+  }
+
+  def findTypeInfoFor(psifile: PsiFile, psiElement: PsiElement): Option[TypeInfo] = {
+    GhcModiTypeInfo.findInfoFor(ghcModi, psifile, psiElement)
   }
 
   override def projectOpened(): Unit = {
