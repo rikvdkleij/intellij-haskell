@@ -36,12 +36,12 @@ Features are with the help of ghc-modi and haskell-docs!!
 - Go to function;
 - Inspection by hlint;
 
-# Tips for start using it:
+# Getting started: 
 - Install ghc-mod and haskell-docs;
 - Set file paths to ghc-modi and haskell-docs in Settings/Haskell;
+- Be sure in Settings/Filetypes that Haskell language file is registered with pattern *.hs and Literate Haskell language file with pattern *.lhs; 
 - First install Cabal sandbox project (be sure that Haddock documentation is generated, see [haskell-docs](https://github.com/chrisdone/haskell-docs)). 
 - After project is installed in sandbox, create Haskell project in IntelliJ by using File/Open from IntelliJ menu;
-- Be sure in Settings/Filetypes that Haskell language file is registered with pattern *.hs and Literate Haskell language file with pattern *.lhs; 
-- For now, select No SDK in Project Setting;
+- Select No SDK in Project Setting;
 - Select in Modules Settings which folders to exclude (like .cabal-sandbox and dist) and which folders are Source and Test (normally src and test).
 - Add library(package) source root directories to project in Project Settings/Libraries;
