@@ -93,7 +93,7 @@ private class HaskellStructureViewTreeElement(val element: PsiElement, val typeS
 
   override def getPresentableText: String = {
     element match {
-      case hv: HaskellVarImpl => hv.getName
+      case hv: HaskellStartDeclarationElement => hv.getIdentifier
       case pf: PsiFile => pf.getName
       case _ => null
     }

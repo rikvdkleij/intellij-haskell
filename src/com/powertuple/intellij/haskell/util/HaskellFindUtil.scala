@@ -41,10 +41,10 @@ object HaskellFindUtil {
     findDeclarations(project, includeNonProjectItems).filter(hv => hv.getIdentifier == name)
   }
 
-  def findTypeSignature(haskellVar: HaskellVar): String = {
+  def findTypeSignature(haskellVar: HaskellVar): Option[String] = {
     GhcModiManager.getInstance(haskellVar.getProject).findInfoFor(haskellVar.getContainingFile, haskellVar.getName) match {
-      case Some(info) => info.typeSignature
-      case None => ""
+      case Some(info) => Some(info.typeSignature)
+      case None => None
     }
   }
 }

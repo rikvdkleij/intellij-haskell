@@ -27,6 +27,7 @@ import com.powertuple.intellij.haskell.HaskellIcons;
 import com.powertuple.intellij.haskell.psi.*;
 import com.powertuple.intellij.haskell.util.HaskellFindUtil$;
 import org.jetbrains.annotations.Nullable;
+import scala.Option;
 
 import javax.swing.*;
 
@@ -72,8 +73,8 @@ public class HaskellPsiImplUtil {
             @Nullable
             @Override
             public String getPresentableText() {
-                String typeSignature = HaskellFindUtil$.MODULE$.findTypeSignature(element);
-                return typeSignature.isEmpty() ? element.getName() : typeSignature;
+                Option<String> typeSignature = HaskellFindUtil$.MODULE$.findTypeSignature(element);
+                return typeSignature.isDefined() ? typeSignature.get() : element.getName();
             }
 
             @Nullable
