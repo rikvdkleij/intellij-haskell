@@ -26,8 +26,8 @@ and expects that the initial/basic Haskell configuration is done on command-line
 - View quick documentation;
 - View quick definition;
 - Code formatting (works reasonably but did not test it with all kinds of code; not finished yet);
-- Structure view (typesignatures and data declarations;
-- Go to symbol (by typesignatures declarations)
+- Structure view (type signatures and data declarations;
+- Go to symbol (by type signatures declarations)
 
 Features are with the help of ghc-modi and haskell-docs!!
 
@@ -37,6 +37,7 @@ Features are with the help of ghc-modi and haskell-docs!!
 - Inspection by hlint;
 
 # Tips for start using it:
+- Install ghc-mod and haskell-docs;
 - Set file paths to ghc-modi and haskell-docs in Settings/Haskell;
 - First install Cabal sandbox project (be sure that Haddock documentation is generated, see [haskell-docs](https://github.com/chrisdone/haskell-docs)). 
 - After project is installed in sandbox, create Haskell project in IntelliJ by using File/Open from IntelliJ menu;
