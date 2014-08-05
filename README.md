@@ -32,9 +32,11 @@ and expects that the initial/basic Haskell configuration is done on command-line
 Features are with the help of ghc-modi and haskell-docs!!
 
 # TODO:
-- Code completion by using ghc-modi directly;
+- Code completion by looking to import declarations with help of ghc-mod;
 - Go to function;
 - Inspection by hlint;
+- Integration of stylish-haskell; 
+- Integration of hsimport;
 
 # Getting started: 
 - Install ghc-mod and haskell-docs;
