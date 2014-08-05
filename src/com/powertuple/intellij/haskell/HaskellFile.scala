@@ -72,7 +72,7 @@ class LiterateHaskellFileType extends LanguageFileType(HaskellLanguage.INSTANCE)
   }
 
   def getDescription: String = {
-     "Literate Haskell file"
+     "Literate Haskell language file"
   }
 
   def getDefaultExtension: String = {
