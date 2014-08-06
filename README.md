@@ -11,9 +11,9 @@ Some months ago I started his project because I was learning Haskell and I was m
 In the meantime also Atsky started to create [Haskell-idea-plugin](https://github.com/Atsky/haskell-idea-plugin) based on ideah plugin in Kotlin. 
  Looking to their recent changes, they are more focusing on Cabal and debugging support.
  
-This plugin is written in Java/Scala and is mentioned not to support GHC/Cabal directly. This plugin support sandbox projects
-and expects that the initial/basic Haskell configuration is done on command-line. This plugin relies on external tools,
- ghc-modi and haskell-docs, for Haskell language support in IntelliJ IDEA.
+This plugin is written mainly in Scala and is mentioned not to support GHC/Cabal directly. This plugin support sandbox projects
+and expects that the Cabal init/install/build is done on command-line. This plugin relies on external tools,
+ ghc-mod(i) and haskell-docs, for Haskell language support in IntelliJ IDEA.
 
 # Features
 - Syntax highlighting (which can be customized);
@@ -26,10 +26,10 @@ and expects that the initial/basic Haskell configuration is done on command-line
 - View quick documentation;
 - View quick definition;
 - Code formatting (works reasonably but did not test it with all kinds of code; not finished yet);
-- Structure view (type signatures and data declarations;
-- Go to symbol (by type signatures declarations)
+- Structure view (type signatures and data declarations);
+- Go to symbol (by type signatures declarations);
 
-Features are with the help of ghc-modi and haskell-docs!!
+Features are with the help of ghc-mod(i) and haskell-docs!!
 
 # TODO:
 - Code completion by looking to import declarations with help of ghc-mod;
