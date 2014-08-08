@@ -41,7 +41,7 @@ class HaskellDocumentationProvider extends AbstractDocumentationProvider {
     val project = psiFile.getProject
     val haskellDocs = HaskellSettings.getInstance().getState.haskellDocsPath
 
-    val expressionInfo = GhcModiManager.getInstance(project).findInfoFor(psiFile, expression)
+    val expressionInfo = GhcModiManager.findInfoFor(psiFile, expression)
     val arguments = (expressionInfo, getSandboxPackageDbPath(project)) match {
       case (Some(lei: LibraryExpressionInfo), Some(dbPath)) => Seq("-g", s"-package-db=$dbPath", s"${lei.module}", expression)
       case (Some(lei: LibraryExpressionInfo), None) => Seq(s"${lei.module}", expression)

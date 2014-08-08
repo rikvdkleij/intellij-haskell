@@ -27,6 +27,11 @@ object HaskellElementFactory {
     haskellFile.getFirstChild.asInstanceOf[HaskellVar]
   }
 
+  def createCon(project: Project, name: String): HaskellCon = {
+    val haskellFile = createFile(project, name)
+    haskellFile.getFirstChild.asInstanceOf[HaskellCon]
+  }
+
   private def createFile(project: Project, text: String): HaskellFile = {
     val name = "dummy.hs"
     PsiFileFactory.getInstance(project).createFileFromText(name, HaskellFileType.INSTANCE, text).asInstanceOf[HaskellFile]

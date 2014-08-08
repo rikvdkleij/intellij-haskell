@@ -37,7 +37,7 @@ private[external] object GhcModiInfo {
       None
     } else {
 
-      val cmd = s"info ${psiFile.getVirtualFile.getPath} $expression"
+      val cmd = s"info ${psiFile.getOriginalFile.getVirtualFile.getPath} $expression"
       val ghcModiOutput = ghcModi.execute(cmd)
 
       for {
@@ -86,8 +86,11 @@ private[external] object GhcModiInfo {
     }
 
     val files = HaskellFileIndex.getFilesByName(project, fileName, GlobalSearchScope.allScope(project))
-    val file = files.find(hf => checkPath(hf.getContainingDirectory, dirs)).getOrElse(throw new Exception(s"Could not find file path for $module"))
-    file.getVirtualFile.getPath
+    val file = files.find(hf => checkPath(hf.getContainingDirectory, dirs))
+    file match {
+      case Some(f) => f.getVirtualFile.getPath
+      case None => throw new Exception(s"Could not find file path for $module. Please add sources of this library/package to 'Project Settings'/Libraries")
+    }
   }
 
   private def checkPath(dir: PsiDirectory, dirNames: List[String]): Boolean = {

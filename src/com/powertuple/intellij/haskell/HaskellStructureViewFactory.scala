@@ -27,8 +27,7 @@ import com.intellij.pom.Navigatable
 import com.intellij.psi.util.PsiTreeUtil
 import com.intellij.psi.{PsiElement, PsiFile}
 import com.powertuple.intellij.haskell.external.GhcModiManager
-import com.powertuple.intellij.haskell.psi.impl.HaskellVarImpl
-import com.powertuple.intellij.haskell.psi.{HaskellVar, HaskellStartDataDeclaration, HaskellStartDeclarationElement, HaskellStartTypeSignature}
+import com.powertuple.intellij.haskell.psi.{HaskellStartDataDeclaration, HaskellStartDeclarationElement, HaskellStartTypeSignature}
 import com.powertuple.intellij.haskell.util.ProjectUtil
 
 class HaskellStructureViewFactory extends PsiStructureViewFactory {
@@ -85,7 +84,7 @@ private class HaskellStructureViewTreeElement(val element: PsiElement, val typeS
   }
 
   private def createTreeElementWithTypeSignatureFor(element: HaskellStartDeclarationElement) = {
-    GhcModiManager.getInstance(element.getProject).findInfoFor(element.getContainingFile, element.getIdentifier) match {
+    GhcModiManager.findInfoFor(element.getContainingFile, element.getIdentifier) match {
       case Some(info) => Some(new HaskellStructureViewTreeElement(element, info.typeSignature))
       case None => if (ProjectUtil.isProjectFile(element.getContainingFile)) None else Some(new HaskellStructureViewTreeElement(element, ""))
     }

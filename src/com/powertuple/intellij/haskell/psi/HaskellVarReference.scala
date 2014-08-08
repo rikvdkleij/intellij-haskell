@@ -57,8 +57,8 @@ class HaskellVarReference(element: HaskellVar, textRange: TextRange) extends Psi
    */
   override def getVariants: Array[AnyRef] = {
     val haskellFile = myElement.getContainingFile.asInstanceOf[HaskellFile]
-    val vars = PsiTreeUtil.getChildrenOfType(haskellFile, classOf[HaskellVar]).filter(v => v != null && v.getName != null && !v.getName.isEmpty).groupBy(_.getName).map(_._2.head).toArray
-    vars.map(v => LookupElementBuilder.create(v).withIcon(HaskellIcons.HASKELL_SMALL_LOGO).withTypeText(v.getName))
+    val declarations = PsiTreeUtil.getChildrenOfType(haskellFile, classOf[HaskellStartDeclarationElement]).map(_.getIdentifier)
+    declarations.map(id => LookupElementBuilder.create(id).withIcon(HaskellIcons.HASKELL_SMALL_LOGO))
   }
 
   private def getProjectExpressionInfo(expressionInfo: Option[ExpressionInfo]) = {
@@ -70,13 +70,12 @@ class HaskellVarReference(element: HaskellVar, textRange: TextRange) extends Psi
 
   private def findTypeSignaturesFor(haskellFile: HaskellFile, expression: String): Option[PsiElement] = {
     Option(PsiTreeUtil.getChildrenOfType(haskellFile, classOf[HaskellStartTypeSignature])) match {
-      //      case Some(typeSignatures) => typeSignatures.map(ts => ts.getFirstChild).find(v => v.getText == expression)
       case Some(typeSignatures) => typeSignatures.find(v => v.getIdentifier == expression).map(_.getNameIdentifier)
       case _ => None
     }
   }
 
   private def getExpressionInfo(psiFile: PsiFile, expression: String): Option[ExpressionInfo] = {
-    GhcModiManager.getInstance(psiFile.getProject).findInfoFor(psiFile, expression)
+    GhcModiManager.findInfoFor(psiFile, expression)
   }
 }

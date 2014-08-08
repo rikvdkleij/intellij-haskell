@@ -26,7 +26,8 @@
 program                     ::= (lexeme | whitespace)*
 private whitespace          ::= (whitestuff)+
 private whitestuff          ::= COMMENT | NCOMMENT | NEWLINE
-private lexeme              ::= start_type_signature | start_definition | start_data_declaration | qvar | var | qcon | con | qconsym | consym | qvarsym | varsym | literal
+private lexeme              ::= start_type_signature | start_definition | start_data_declaration | import_declaration |
+                                qvar | var | qcon | con | qconsym | consym | qvarsym | varsym | literal
                                 | special | reservedop | reservedid | specialreservedid
 
 literal                     ::= DECIMAL | HEXADECIMAL | OCTAL | FLOAT | CHARACTER_LITERAL | STRING_LITERAL
@@ -43,6 +44,8 @@ private symbol              ::= ascSymbol                   // ignoring unicode 
 varsym                      ::= (symbol (symbol | ':')*)    // operator
 consym                      ::= (':' (symbol | ':')*)       // operator constructor
 
+import_declaration          ::= IMPORT qcon {methods=[getModuleName]}
+
 start_type_signature        ::= var COLON_COLON (context DOUBLE_RIGHT_ARROW)? (var | con | special)
 start_data_declaration      ::= DATA (context DOUBLE_RIGHT_ARROW)? con
 
@@ -55,9 +58,11 @@ var                         ::= VAR_ID                      // variables and typ
                                   implements="com.powertuple.intellij.haskell.psi.HaskellNamedElement" methods=[getName setName getNameIdentifier getReference getPresentation]}
 
 con                         ::= CON_ID                      // constructors, type constructors and type classes
+                                 {mixin="com.powertuple.intellij.haskell.psi.impl.HaskellNamedElementImpl"
+                                  implements="com.powertuple.intellij.haskell.psi.HaskellNamedElement" methods=[getName setName getNameIdentifier getPresentation]}
 
 qvar                        ::= (con'.')+ var
-qcon                        ::= (con'.')+ con
+qcon                        ::= (con'.')? con {methods=[getName]}
 
 qvarsym                     ::= (con'.')+ varsym
 qconsym                     ::= (con'.')+ consym

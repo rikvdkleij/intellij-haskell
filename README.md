@@ -28,11 +28,11 @@ and expects that the Cabal init/install/build is done on command-line. This plug
 - Code formatting (works reasonably but did not test it with all kinds of code; not finished yet);
 - Structure view (type signatures and data declarations);
 - Go to symbol (by type signatures declarations);
+- Code completion by looking to import declarations with help of ghc-mod;
 
 Features are with the help of ghc-mod(i) and haskell-docs!!
 
 # TODO:
-- Code completion by looking to import declarations with help of ghc-mod;
 - Go to function;
 - Inspection by hlint;
 - Integration of stylish-haskell; 

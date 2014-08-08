@@ -19,8 +19,11 @@ package com.powertuple.intellij.haskell
 import com.intellij.codeInsight.completion._
 import com.intellij.codeInsight.lookup.LookupElementBuilder
 import com.intellij.patterns.PlatformPatterns
+import com.intellij.psi.PsiFile
+import com.intellij.psi.util.PsiTreeUtil
 import com.intellij.util.ProcessingContext
-import com.powertuple.intellij.haskell.psi.HaskellTokenType
+import com.powertuple.intellij.haskell.external.GhcMod
+import com.powertuple.intellij.haskell.psi.{HaskellImportDeclaration, HaskellTokenType}
 
 class HaskellCompletionContributor extends CompletionContributor {
 
@@ -30,10 +33,24 @@ class HaskellCompletionContributor extends CompletionContributor {
     def addCompletions(parameters: CompletionParameters, context: ProcessingContext, result: CompletionResultSet) {
       ReservedIdNames.foreach(k => result.addElement(LookupElementBuilder.create(k).
           withIcon(HaskellIcons.HASKELL_SMALL_LOGO).withTypeText("Reserved id")))
+
+      val position = parameters.getPosition
+      val project = position.getProject
+      val browseInfo = GhcMod.browseInfo(project, getImportedModuleNames(parameters.getOriginalFile))
+      browseInfo.foreach(bi => result.addElement(LookupElementBuilder.create(bi.name).withTypeText(bi.typeSignature).withTailText(bi.moduleName, true).withIcon(HaskellIcons.HASKELL_SMALL_LOGO)))
     }
   })
 
   override def beforeCompletion(context: CompletionInitializationContext): Unit = {
-    context.setDummyIdentifier("a")
+    context.setDummyIdentifier("_")
+  }
+
+  private def getImportedModuleNames(psiFile: PsiFile): Seq[String] = {
+    import scala.collection.JavaConversions._
+
+    Option(PsiTreeUtil.findChildrenOfType(psiFile, classOf[HaskellImportDeclaration])) match {
+      case None => Seq()
+      case Some(m) => m.map(_.getModuleName).toSeq
+    }
   }
 }

@@ -19,6 +19,7 @@ package com.powertuple.intellij.haskell.external
 import com.intellij.openapi.components.{ProjectComponent, ServiceManager}
 import com.intellij.openapi.project.Project
 import com.intellij.psi.{PsiElement, PsiFile}
+import com.powertuple.intellij.haskell.psi.HaskellNamedElement
 import com.powertuple.intellij.haskell.settings.HaskellSettings
 
 object GhcModiManager {
@@ -29,12 +30,32 @@ object GhcModiManager {
   def setReinit() {
     reinit = true
   }
+
+
+  def findInfoFor(psiFile: PsiFile, expression: String): Option[ExpressionInfo] = {
+    GhcModiInfo.findInfoFor(getGhcModi(psiFile), psiFile, expression)
+  }
+
+  def findTypeInfoFor(psiFile: PsiFile, psiElement: PsiElement): Option[TypeInfo] = {
+    GhcModiTypeInfo.findInfoFor(getGhcModi(psiFile), psiFile, psiElement)
+  }
+
+  def findTypeSignature(haskellVar: HaskellNamedElement): Option[String] = {
+    findInfoFor(haskellVar.getContainingFile, haskellVar.getName) match {
+      case Some(info) => Some(info.typeSignature)
+      case None => None
+    }
+  }
+
+  private def getGhcModi(psiFile: PsiFile) = {
+    getInstance(psiFile.getProject).getGhcModi
+  }
 }
 
 class GhcModiManager(val project: Project, val settings: HaskellSettings) extends ProjectComponent {
   private var ghcModi: GhcModi = _
 
-  def getGhcMod: GhcModi = {
+  def getGhcModi: GhcModi = {
     if (GhcModiManager.reinit) {
       ghcModi.reinit()
       GhcModiManager.reinit = false
@@ -44,13 +65,6 @@ class GhcModiManager(val project: Project, val settings: HaskellSettings) extend
     }
   }
 
-  def findInfoFor(psifile: PsiFile, expression: String): Option[ExpressionInfo] = {
-    GhcModiInfo.findInfoFor(ghcModi, psifile, expression)
-  }
-
-  def findTypeInfoFor(psifile: PsiFile, psiElement: PsiElement): Option[TypeInfo] = {
-    GhcModiTypeInfo.findInfoFor(ghcModi, psifile, psiElement)
-  }
 
   override def projectOpened(): Unit = {
     ghcModi = new GhcModi(settings, project)

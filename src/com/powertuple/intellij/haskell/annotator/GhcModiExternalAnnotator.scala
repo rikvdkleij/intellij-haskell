@@ -44,7 +44,7 @@ class GhcModiExternalAnnotator extends ExternalAnnotator[GhcModInitialInfo, GhcM
   }
 
   override def doAnnotate(initialInfoGhcMod: GhcModInitialInfo): GhcModiResult = {
-    val ghcModi = GhcModiManager.getInstance(initialInfoGhcMod.psiFile.getProject).getGhcMod
+    val ghcModi = GhcModiManager.getInstance(initialInfoGhcMod.psiFile.getProject).getGhcModi
     val ghcModiOutput = ghcModi.execute("check " + initialInfoGhcMod.filePath)
 
     if (ghcModiOutput.outputLines.isEmpty) {

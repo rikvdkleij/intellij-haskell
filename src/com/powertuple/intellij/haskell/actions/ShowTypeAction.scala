@@ -20,6 +20,9 @@ import com.intellij.openapi.actionSystem.{AnAction, AnActionEvent, CommonDataKey
 import com.intellij.psi.util.PsiUtilBase
 import com.powertuple.intellij.haskell.external.GhcModiManager
 
+/**
+ * TODO: Also supported selected expressions.
+ */
 class ShowTypeAction extends AnAction {
 
   override def update(e: AnActionEvent) {
@@ -36,7 +39,7 @@ class ShowTypeAction extends AnAction {
     val offset = editor.getCaretModel.getOffset
     val psiElement = psiFile.findElementAt(offset)
 
-    GhcModiManager.getInstance(psiFile.getProject).findTypeInfoFor(psiFile, psiElement) match {
+    GhcModiManager.findTypeInfoFor(psiFile, psiElement) match {
       case Some(ti) => HaskellActionUtil.showHint(editor, ti.typeSignature)
       case None => HaskellActionUtil.showHint(editor, "Could not determine type of expression")
     }

@@ -19,8 +19,7 @@ package com.powertuple.intellij.haskell.util
 import com.intellij.openapi.project.Project
 import com.intellij.psi.search.GlobalSearchScope
 import com.intellij.psi.util.PsiTreeUtil
-import com.powertuple.intellij.haskell.external.GhcModiManager
-import com.powertuple.intellij.haskell.psi.{HaskellStartTypeSignature, HaskellVar}
+import com.powertuple.intellij.haskell.psi.HaskellStartTypeSignature
 
 /**
  * Currently only type signatures are supported for #findDeclarations
@@ -39,12 +38,5 @@ object HaskellFindUtil {
 
   def findDeclarations(project: Project, name: String, includeNonProjectItems: Boolean): Iterable[HaskellStartTypeSignature] = {
     findDeclarations(project, includeNonProjectItems).filter(hv => hv.getIdentifier == name)
-  }
-
-  def findTypeSignature(haskellVar: HaskellVar): Option[String] = {
-    GhcModiManager.getInstance(haskellVar.getProject).findInfoFor(haskellVar.getContainingFile, haskellVar.getName) match {
-      case Some(info) => Some(info.typeSignature)
-      case None => None
-    }
   }
 }
