@@ -25,7 +25,7 @@ and expects that the Cabal init/install/build is done on command-line. This plug
 - View type info;
 - View quick documentation;
 - View quick definition;
-- Code formatting (works reasonably but did not test it with all kinds of code; not finished yet);
+- Code formatting (works reasonably but did not test it with all kinds of code; not finished yet, has to be fine-tuned);
 - Structure view;
 - Go to symbol;
 - Code completion by looking to import declarations with help of ghc-mod;

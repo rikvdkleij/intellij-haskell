@@ -30,11 +30,15 @@ object GhcMod {
       Seq("browse", "-d", "-q", "-o") ++ moduleNames
     )
     val browseInfos = output.getStdoutLines.map(_.split("::")).map(cols => {
-      val typeSignature = cols(1)
-      cols(0).split('.') match {
-        case Array() => None
-        case Array(name) => Some(BrowseInfo(name, "", typeSignature))
-        case names => Some(BrowseInfo(names.last, names.tail.mkString("."), typeSignature))
+      if (cols.size < 2) {
+        None
+      } else {
+        val typeSignature = cols(1)
+        cols(0).split('.') match {
+          case Array() => None
+          case Array(name) => Some(BrowseInfo(name, "", typeSignature))
+          case names => Some(BrowseInfo(names.last, names.tail.mkString("."), typeSignature))
+        }
       }
     })
     browseInfos.flatten

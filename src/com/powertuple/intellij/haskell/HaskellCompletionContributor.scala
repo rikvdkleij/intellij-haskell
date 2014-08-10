@@ -48,9 +48,10 @@ class HaskellCompletionContributor extends CompletionContributor {
   private def getImportedModuleNames(psiFile: PsiFile): Seq[String] = {
     import scala.collection.JavaConversions._
 
-    Option(PsiTreeUtil.findChildrenOfType(psiFile, classOf[HaskellImportDeclaration])) match {
-      case None => Seq()
-      case Some(m) => m.map(_.getModuleName).toSeq
-    }
+    Seq("Prelude") ++ (
+        Option(PsiTreeUtil.findChildrenOfType(psiFile, classOf[HaskellImportDeclaration])) match {
+          case None => Seq()
+          case Some(m) => m.map(_.getModuleName).toSeq
+        })
   }
 }
