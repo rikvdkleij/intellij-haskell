@@ -32,7 +32,7 @@ private[external] object GhcModiInfo {
 
   def findInfoFor(ghcModi: GhcModi, psiFile: PsiFile, expression: String): Option[ExpressionInfo] = {
 
-    // Skip library files
+    // Skip library files because ghc-mod(i) will not support them.
     if (!ProjectUtil.isProjectFile(psiFile)) {
       None
     } else {

@@ -21,7 +21,7 @@ import com.intellij.lang.findUsages.FindUsagesProvider
 import com.intellij.psi.PsiElement
 import com.intellij.util.Processor
 import com.powertuple.intellij.haskell.psi.HaskellTypes._
-import com.powertuple.intellij.haskell.psi.HaskellVar
+import com.powertuple.intellij.haskell.psi.{HaskellCon, HaskellNamedElement, HaskellVar}
 
 import scala.annotation.tailrec
 
@@ -41,7 +41,7 @@ class HaskellFindUsagesProvider extends FindUsagesProvider {
   private def processTokens(lexer: HaskellLexer, fileText: CharSequence, processor: Processor[WordOccurrence]) {
     val tokenType = lexer.getTokenType
     if (tokenType != null) {
-      if (tokenType == HS_VAR_ID) {
+      if (tokenType == HS_VAR_ID || tokenType == HS_CON_ID) {
         val o: WordOccurrence = new WordOccurrence(fileText, lexer.getTokenStart, lexer.getTokenEnd, WordOccurrence.Kind.CODE)
         processor.process(o)
       }
@@ -53,13 +53,14 @@ class HaskellFindUsagesProvider extends FindUsagesProvider {
   override def getType(psiElement: PsiElement): String = {
     psiElement match {
       case _: HaskellVar => "variable"
+      case _: HaskellCon => "constructor"
       case _ => "Not supported"
     }
   }
 
   override def getDescriptiveName(element: PsiElement): String = {
     val name = element match {
-      case hv: HaskellVar => hv.getName
+      case hv: HaskellNamedElement => hv.getName
       case _ => element.getText
     }
     Option(name) getOrElse "anonymous"
@@ -69,14 +70,14 @@ class HaskellFindUsagesProvider extends FindUsagesProvider {
 
   override def canFindUsagesFor(psiElement: PsiElement): Boolean = {
     psiElement match {
-      case _: HaskellVar => true
+      case _: HaskellNamedElement => true
       case _ => false
     }
   }
 
   override def getNodeText(psiElement: PsiElement, useFullName: Boolean): String = {
     val text = psiElement match {
-      case hv: HaskellVar => hv.getText
+      case hv: HaskellNamedElement => hv.getText
       case _ => psiElement.getText
     }
     Option(text) getOrElse "anonymous"

@@ -11,7 +11,7 @@ private[external] object GhcModiTypeInfo {
 
   def findInfoFor(ghcModi: GhcModi, psiFile: PsiFile, psiElement: PsiElement): Option[TypeInfo] = {
 
-    // Skip library files
+    // Skip library files because ghc-mod(i) will not support them.
     if (!ProjectUtil.isProjectFile(psiFile) || (psiFile.getLanguage != HaskellLanguage.INSTANCE)) {
       return None;
     }

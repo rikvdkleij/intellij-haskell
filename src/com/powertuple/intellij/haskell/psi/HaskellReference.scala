@@ -25,14 +25,14 @@ import com.powertuple.intellij.haskell.external.{ExpressionInfo, GhcModiManager,
 import com.powertuple.intellij.haskell.util.{FileUtil, LineColumnPosition, ProjectUtil}
 import com.powertuple.intellij.haskell.{HaskellFile, HaskellIcons}
 
-class HaskellVarReference(element: HaskellVar, textRange: TextRange) extends PsiReferenceBase[HaskellVar](element, textRange) {
+class HaskellReference(element: HaskellNamedElement, textRange: TextRange) extends PsiReferenceBase[HaskellNamedElement](element, textRange) {
 
   override def resolve: PsiElement = {
     val psiFile = myElement.getContainingFile
 
-    // Skip library files
+    // Skip library files because ghc-mod(i) will not support them.
     if (!ProjectUtil.isProjectFile(psiFile)) {
-      return null;
+      return null
     }
 
     FileUtil.saveAllFiles()
@@ -49,13 +49,13 @@ class HaskellVarReference(element: HaskellVar, textRange: TextRange) extends Psi
       haskellFile <- Option(PsiManager.getInstance(myElement.getProject).
           findFile(LocalFileSystem.getInstance().findFileByPath(expressionInfo.filePath)).asInstanceOf[HaskellFile])
       startOffset <- LineColumnPosition.getOffset(haskellFile, LineColumnPosition(expressionInfo.lineNr, expressionInfo.colNr))
-    } yield PsiUtilCore.getElementAtOffset(haskellFile, startOffset).getParent.asInstanceOf[HaskellVar]).orNull
+    } yield PsiUtilCore.getElementAtOffset(haskellFile, startOffset).getParent.asInstanceOf[HaskellNamedElement]).orNull
   }
 
   override def getVariants: Array[AnyRef] = {
     val haskellFile = myElement.getContainingFile.asInstanceOf[HaskellFile]
-    val declarations = PsiTreeUtil.getChildrenOfType(haskellFile, classOf[HaskellDeclarationElement]).map(_.getIdentifier)
-    declarations.map(id => LookupElementBuilder.create(id).withIcon(HaskellIcons.HASKELL_SMALL_LOGO))
+    val declarations = PsiTreeUtil.getChildrenOfType(haskellFile, classOf[HaskellDeclarationElement])
+    declarations.map(declarationElement => LookupElementBuilder.create(declarationElement.getIdentifierElement).withTypeText(declarationElement.getText).withIcon(HaskellIcons.HASKELL_SMALL_LOGO))
   }
 
   private def getProjectExpressionInfo(expressionInfo: Option[ExpressionInfo]) = {

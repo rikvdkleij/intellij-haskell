@@ -18,7 +18,7 @@ and expects that the Cabal init/install/build is done on command-line. This plug
 # Features
 - Syntax highlighting (which can be customized);
 - Error/warning highlighting;
-- Find Usages of variables;
+- Find Usages of variables/constructors;
 - Resolving references of variables (also to library code if library source code is added to project);
 - Code completion by resolving references;
 - Renaming variables (which first shows preview so refactoring scope can be adjusted);
@@ -26,14 +26,14 @@ and expects that the Cabal init/install/build is done on command-line. This plug
 - View quick documentation;
 - View quick definition;
 - Code formatting (works reasonably but did not test it with all kinds of code; not finished yet);
-- Structure view (type signatures and data declarations);
-- Go to symbol (by type signatures declarations);
+- Structure view;
+- Go to symbol;
 - Code completion by looking to import declarations with help of ghc-mod;
 
 Features are with the help of ghc-mod(i) and haskell-docs!!
 
 # TODO:
-- Go to function;
+- Go to definition;
 - Inspection by hlint;
 - Integration of stylish-haskell; 
 - Integration of hsimport;

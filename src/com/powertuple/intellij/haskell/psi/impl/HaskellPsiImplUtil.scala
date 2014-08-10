@@ -58,8 +58,8 @@ object HaskellPsiImplUtil {
     findFirstVarIdTokenChildPsiElement(haskellVar)
   }
 
-  def getReference(haskellVar: HaskellVar): PsiReference = {
-    ArrayUtil.getFirstElement(ReferenceProvidersRegistry.getReferencesFromProviders(haskellVar))
+  def getReference(namedElement: HaskellNamedElement): PsiReference = {
+    ArrayUtil.getFirstElement(ReferenceProvidersRegistry.getReferencesFromProviders(namedElement))
   }
 
 
@@ -143,10 +143,14 @@ object HaskellPsiImplUtil {
 
 
   def getModuleName(importDeclaration: HaskellImportDeclaration): String = {
-    val haskellQcon: HaskellQcon = PsiTreeUtil.findChildOfType(importDeclaration, classOf[HaskellQcon])
+    val haskellQcon = PsiTreeUtil.findChildOfType(importDeclaration, classOf[HaskellQcon])
     if (haskellQcon != null) haskellQcon.getId else null
   }
 
+  def getModuleName(moduleDeclaration: HaskellModuleDeclaration): String = {
+    val haskellQcon = PsiTreeUtil.findChildOfType(moduleDeclaration, classOf[HaskellQcon])
+    if (haskellQcon != null) haskellQcon.getId else null
+  }
 
   def getId(haskellSimpleType: HaskellSimpletype): String = {
     haskellSimpleType.getCon.getName

@@ -21,7 +21,9 @@ import java.util.regex.Pattern
 import com.intellij.lang.documentation.AbstractDocumentationProvider
 import com.intellij.openapi.project.Project
 import com.intellij.psi.PsiElement
-import com.powertuple.intellij.haskell.external.{ExternalProcess, GhcModiManager, LibraryExpressionInfo}
+import com.intellij.psi.util.PsiTreeUtil
+import com.powertuple.intellij.haskell.external.{ExternalProcess, GhcModiManager, LibraryExpressionInfo, ProjectExpressionInfo}
+import com.powertuple.intellij.haskell.psi.HaskellModuleDeclaration
 import com.powertuple.intellij.haskell.settings.HaskellSettings
 
 import scala.io.Source
@@ -44,8 +46,10 @@ class HaskellDocumentationProvider extends AbstractDocumentationProvider {
     val expressionInfo = GhcModiManager.findInfoFor(psiFile, expression)
     val arguments = (expressionInfo, getSandboxPackageDbPath(project)) match {
       case (Some(lei: LibraryExpressionInfo), Some(dbPath)) => Seq("-g", s"-package-db=$dbPath", s"${lei.module}", expression)
+      case (Some(pei: ProjectExpressionInfo), Some(dbPath)) => Seq("-g", s"-package-db=$dbPath", PsiTreeUtil.findChildOfType(psiFile, classOf[HaskellModuleDeclaration]).getModuleName, expression)
       case (Some(lei: LibraryExpressionInfo), None) => Seq(s"${lei.module}", expression)
-      case (_, _) => HaskellNotificationGroup.notifyInfo("Can not determine haskell-docs argument 'module'"); Seq()
+      case (_, None) => HaskellNotificationGroup.notifyInfo(s"Can not determine haskell-docs argument 'sandbox package-db path' for $expression"); Seq()
+      case (_, _) => HaskellNotificationGroup.notifyInfo(s"Can not determine haskell-docs argument 'module' for $expression"); Seq()
     }
 
     val stdOutputput = ExternalProcess.getProcessOutput(project.getBasePath, haskellDocs, arguments).getStdout

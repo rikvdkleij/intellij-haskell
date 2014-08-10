@@ -31,7 +31,6 @@ object GhcModiManager {
     reinit = true
   }
 
-
   def findInfoFor(psiFile: PsiFile, expression: String): Option[ExpressionInfo] = {
     GhcModiInfo.findInfoFor(getGhcModi(psiFile), psiFile, expression)
   }

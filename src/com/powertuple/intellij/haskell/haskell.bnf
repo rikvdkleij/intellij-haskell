@@ -26,7 +26,7 @@
 program                     ::= (lexeme | whitespace)*
 private whitespace          ::= (whitestuff)+
 private whitestuff          ::= COMMENT | NCOMMENT | NEWLINE
-private lexeme              ::= type_signature | start_definition | data_declaration | import_declaration | type_declaration |
+private lexeme              ::= module_declaration | import_declaration | type_signature | start_definition | data_declaration | type_declaration |
                                 qvar | var | qcon | con | qconsym | consym | qvarsym | varsym | literal
                                 | special | reservedop | reservedid | specialreservedid
 
@@ -39,11 +39,12 @@ private ascSymbol           ::= EXCLAMATION_MARK | HASH | DOLLAR| PERCENTAGE | A
                                 | PLUS | DOT | SLASH | LT | EQUAL | GT | QUESTION_MARK | AT | BACKSLASH | CARET
                                 | VERTICAL_BAR | TILDE | COLON | DASH
 
-private symbol              ::= ascSymbol                   // ignoring unicode symbols
+private symbol              ::= ascSymbol                       // ignoring unicode symbols
 
-varsym                      ::= (symbol (symbol | COLON)*)    // operator
+varsym                      ::= (symbol (symbol | COLON)*)      // operator
 consym                      ::= (COLON (symbol | COLON)*)       // operator constructor
 
+module_declaration          ::= MODULE qcon {methods=[getModuleName]}
 import_declaration          ::= IMPORT qcon {methods=[getModuleName]}
 
 type_signature              ::= vars COLON_COLON (context DOUBLE_RIGHT_ARROW)? ttype
@@ -58,13 +59,13 @@ var                         ::= VAR_ID                      // variables and typ
 
 con                         ::= CON_ID                      // constructors, type constructors and type classes
                                  {mixin="com.powertuple.intellij.haskell.psi.impl.HaskellNamedElementImpl"
-                                  implements="com.powertuple.intellij.haskell.psi.HaskellNamedElement" methods=[getName setName getNameIdentifier getPresentation]}
+                                  implements="com.powertuple.intellij.haskell.psi.HaskellNamedElement" methods=[getName setName getNameIdentifier getReference getPresentation]}
 
-qvar                        ::= (con DOT)? var {methods=[getId]}
-qcon                        ::= (con DOT)? con {methods=[getId]}
+qvar                        ::= (con DOT)* var {methods=[getId]}
+qcon                        ::= (con DOT)* con {methods=[getId]}
 
-qvarsym                     ::= (con DOT)? varsym
-qconsym                     ::= (con DOT)? consym
+qvarsym                     ::= (con DOT)* varsym
+qconsym                     ::= (con DOT)* consym
 
 reservedid                  ::= CASE | CLASS | DATA | DEFAULT | DERIVING | DO | ELSE
                               | FOREIGN | IF | IMPORT | IN | INFIX | INFIXL | INFIXR
