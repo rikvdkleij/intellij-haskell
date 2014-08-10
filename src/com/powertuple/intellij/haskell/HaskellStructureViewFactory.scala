@@ -26,9 +26,7 @@ import com.intellij.openapi.editor.Editor
 import com.intellij.pom.Navigatable
 import com.intellij.psi.util.PsiTreeUtil
 import com.intellij.psi.{PsiElement, PsiFile}
-import com.powertuple.intellij.haskell.external.GhcModiManager
-import com.powertuple.intellij.haskell.psi.{HaskellStartDataDeclaration, HaskellStartDeclarationElement, HaskellStartTypeSignature}
-import com.powertuple.intellij.haskell.util.ProjectUtil
+import com.powertuple.intellij.haskell.psi.HaskellStartDeclarationElement
 
 class HaskellStructureViewFactory extends PsiStructureViewFactory {
   def getStructureViewBuilder(psiFile: PsiFile): StructureViewBuilder = {
@@ -76,18 +74,10 @@ private class HaskellStructureViewTreeElement(val element: PsiElement, val typeS
   def getChildren: Array[TreeElement] = {
     import scala.collection.JavaConversions._
 
-    val haskellElements = element match {
-      case hf: HaskellFile => PsiTreeUtil.findChildrenOfAnyType(element, classOf[HaskellStartTypeSignature], classOf[HaskellStartDataDeclaration]).toSeq
+    (element match {
+      case hf: HaskellFile => PsiTreeUtil.findChildrenOfAnyType(element, classOf[HaskellStartDeclarationElement]).toSeq
       case _ => Seq()
-    }
-    haskellElements.flatMap(sts => createTreeElementWithTypeSignatureFor(sts)).toArray
-  }
-
-  private def createTreeElementWithTypeSignatureFor(element: HaskellStartDeclarationElement) = {
-    GhcModiManager.findInfoFor(element.getContainingFile, element.getIdentifier) match {
-      case Some(info) => Some(new HaskellStructureViewTreeElement(element, info.typeSignature))
-      case None => if (ProjectUtil.isProjectFile(element.getContainingFile)) None else Some(new HaskellStructureViewTreeElement(element, ""))
-    }
+    }).map(declarationElement => new HaskellStructureViewTreeElement(declarationElement, declarationElement.getText)).toArray
   }
 
   override def getPresentableText: String = {

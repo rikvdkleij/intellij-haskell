@@ -52,9 +52,6 @@ class HaskellVarReference(element: HaskellVar, textRange: TextRange) extends Psi
     } yield PsiUtilCore.getElementAtOffset(haskellFile, startOffset).getParent.asInstanceOf[HaskellVar]).orNull
   }
 
-  /**
-   * Did not find solution to take scope into account, so currently it returns all vars of file :-(
-   */
   override def getVariants: Array[AnyRef] = {
     val haskellFile = myElement.getContainingFile.asInstanceOf[HaskellFile]
     val declarations = PsiTreeUtil.getChildrenOfType(haskellFile, classOf[HaskellStartDeclarationElement]).map(_.getIdentifier)
@@ -68,9 +65,9 @@ class HaskellVarReference(element: HaskellVar, textRange: TextRange) extends Psi
     }
   }
 
-  private def findTypeSignaturesFor(haskellFile: HaskellFile, expression: String): Option[PsiElement] = {
+  private def findTypeSignaturesFor(haskellFile: HaskellFile, expression: String): Option[HaskellNamedElement] = {
     Option(PsiTreeUtil.getChildrenOfType(haskellFile, classOf[HaskellStartTypeSignature])) match {
-      case Some(typeSignatures) => typeSignatures.find(v => v.getIdentifier == expression).map(_.getNameIdentifier)
+      case Some(typeSignatures) => typeSignatures.find(v => v.getIdentifier == expression).map(_.getIdentifierElement)
       case _ => None
     }
   }

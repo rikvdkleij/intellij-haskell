@@ -19,14 +19,14 @@
 
   elementTypePrefix="HS_"
 
-  methods("start_type_signature|start_definition|start_data_declaration")=[getIdentifier getNameIdentifier]
-  implements("start_type_signature|start_definition|start_data_declaration")="com.powertuple.intellij.haskell.psi.HaskellStartDeclarationElement"
+  methods("start_type_signature|start_data_declaration|start_type_declaration")=[getIdentifier getIdentifierElement]
+  implements("start_type_signature|start_data_declaration|start_type_declaration")="com.powertuple.intellij.haskell.psi.HaskellStartDeclarationElement"
 }
 
 program                     ::= (lexeme | whitespace)*
 private whitespace          ::= (whitestuff)+
 private whitestuff          ::= COMMENT | NCOMMENT | NEWLINE
-private lexeme              ::= start_type_signature | start_definition | start_data_declaration | import_declaration |
+private lexeme              ::= start_type_signature | start_definition | start_data_declaration | import_declaration | start_type_declaration |
                                 qvar | var | qcon | con | qconsym | consym | qvarsym | varsym | literal
                                 | special | reservedop | reservedid | specialreservedid
 
@@ -41,17 +41,16 @@ private ascSymbol           ::= EXCLAMATION_MARK | HASH | DOLLAR| PERCENTAGE | A
 
 private symbol              ::= ascSymbol                   // ignoring unicode symbols
 
-varsym                      ::= (symbol (symbol | ':')*)    // operator
-consym                      ::= (':' (symbol | ':')*)       // operator constructor
+varsym                      ::= (symbol (symbol | COLON)*)    // operator
+consym                      ::= (COLON (symbol | COLON)*)       // operator constructor
 
 import_declaration          ::= IMPORT qcon {methods=[getModuleName]}
 
-start_type_signature        ::= var COLON_COLON (context DOUBLE_RIGHT_ARROW)? (var | con | special)
-start_data_declaration      ::= DATA (context DOUBLE_RIGHT_ARROW)? con
+start_type_signature        ::= vars COLON_COLON (context DOUBLE_RIGHT_ARROW)? ttype
+start_data_declaration      ::= DATA (context DOUBLE_RIGHT_ARROW)? simpletype EQUAL constrs (DERIVING)?
+start_type_declaration      ::= TYPE simpletype EQUAL atype
 
-start_definition            ::= var+ EQUAL
-
-context                     ::= con var | '(' con var (',' con var)+ ')'
+start_definition            ::= (qvar | qcon) EQUAL
 
 var                         ::= VAR_ID                      // variables and type variables
                                  {mixin="com.powertuple.intellij.haskell.psi.impl.HaskellNamedElementImpl"
@@ -61,11 +60,11 @@ con                         ::= CON_ID                      // constructors, typ
                                  {mixin="com.powertuple.intellij.haskell.psi.impl.HaskellNamedElementImpl"
                                   implements="com.powertuple.intellij.haskell.psi.HaskellNamedElement" methods=[getName setName getNameIdentifier getPresentation]}
 
-qvar                        ::= (con'.')+ var
-qcon                        ::= (con'.')? con {methods=[getName]}
+qvar                        ::= (con DOT)? var {methods=[getId]}
+qcon                        ::= (con DOT)? con {methods=[getId]}
 
-qvarsym                     ::= (con'.')+ varsym
-qconsym                     ::= (con'.')+ consym
+qvarsym                     ::= (con DOT)? varsym
+qconsym                     ::= (con DOT)? consym
 
 reservedid                  ::= CASE | CLASS | DATA | DEFAULT | DERIVING | DO | ELSE
                               | FOREIGN | IF | IMPORT | IN | INFIX | INFIXL | INFIXR
@@ -76,3 +75,12 @@ reservedop                  ::= DOT_DOT | COLON | COLON_COLON | EQUAL | SLASH | 
                               | RIGHT_ARROW | AT | TILDE | DOUBLE_RIGHT_ARROW
 
 specialreservedid           ::= AS | QUALIFIED | HIDING | INCLUDE
+
+vars                        ::= var (COMMA var)*
+simpletype                  ::= con (var)* {methods=[getId]}
+context                     ::= (con var | (LEFT_PAREN con var (COMMA con var)* RIGHT_PAREN))
+ttype                       ::= atype+ (RIGHT_ARROW atype+)*
+atype                       ::= (var | con | special | DOT )
+
+constrs                     ::= constr (VERTICAL_BAR constr)*
+constr                      ::= (atype | EXCLAMATION_MARK | COLON_COLON)+

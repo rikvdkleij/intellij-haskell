@@ -29,9 +29,17 @@ import com.powertuple.intellij.haskell.external.GhcModiManager
 import com.powertuple.intellij.haskell.psi._
 import org.jetbrains.annotations.Nullable
 
+import scala.collection.JavaConversions._
+
 object HaskellPsiImplUtil {
+
   def getName(haskellVar: HaskellVar): String = {
     findFirstVarIdTokenChildPsiElementName(haskellVar)
+  }
+
+  def getId(haskellQvar: HaskellQvar): String = {
+    val haskellVars = PsiTreeUtil.findChildrenOfType(haskellQvar, classOf[HaskellVar])
+    haskellVars.map(_.getName).mkString(".")
   }
 
   def setName(haskellVar: HaskellVar, newName: String): PsiElement = {
@@ -44,7 +52,6 @@ object HaskellPsiImplUtil {
         haskellVar.getNode.replaceChild(kn, newKeyNode)
         haskellVar
     }
-
   }
 
   def getNameIdentifier(haskellVar: HaskellVar): PsiElement = {
@@ -55,92 +62,12 @@ object HaskellPsiImplUtil {
     ArrayUtil.getFirstElement(ReferenceProvidersRegistry.getReferencesFromProviders(haskellVar))
   }
 
-  def getIdentifier(startTypeSignature: HaskellStartTypeSignature): String = {
-    getHaskellVarName(startTypeSignature)
-  }
-
-  def getIdentifier(startDefinition: HaskellStartDefinition): String = {
-    getHaskellVarName(startDefinition)
-  }
-
-  def getIdentifier(startDataDeclaration: HaskellStartDataDeclaration): String = {
-    val psiElement: PsiElement = findLastConIdTokenPsiElement(startDataDeclaration)
-    if (psiElement != null) psiElement.getText else null
-  }
-
-  def getPresentation(namedElement: HaskellNamedElement): ItemPresentation = {
-    new ItemPresentation {
-      @Nullable
-      def getPresentableText: String = {
-        val typeSignature: Option[String] = GhcModiManager.findTypeSignature(namedElement)
-        if (typeSignature.isDefined) typeSignature.get else namedElement.getName
-      }
-
-      @Nullable
-      def getLocationString: String = {
-        namedElement.getContainingFile.getName
-      }
-
-      @Nullable
-      def getIcon(unused: Boolean): Icon = {
-        HaskellIcons.HASKELL_SMALL_LOGO
-      }
-    }
-  }
-
-  def getNameIdentifier(startDataDeclaration: HaskellStartDataDeclaration): HaskellCon = {
-    findLastConIdTokenPsiElement(startDataDeclaration)
-  }
-
-  def getNameIdentifier(startTypeSignature: HaskellStartTypeSignature): HaskellVar = {
-    getHaskellVar(startTypeSignature)
-  }
-
-  def getNameIdentifier(startDefinition: HaskellStartDefinition): HaskellVar = {
-    getHaskellVar(startDefinition)
-  }
-
-  private def findFirstVarIdTokenChildPsiElement(compositeElement: HaskellCompositeElement): PsiElement = {
-    val keyNode: ASTNode = compositeElement.getNode.findChildByType(HaskellTypes.HS_VAR_ID)
-    if (keyNode != null) keyNode.getPsi else null
-  }
-
-  private def findFirstVarIdTokenChildPsiElementName(compositeElement: HaskellCompositeElement): String = {
-    val psiElement: PsiElement = findFirstVarIdTokenChildPsiElement(compositeElement)
-    if (psiElement != null) psiElement.getText else null
-  }
-
-  private def getHaskellVarName(startDeclarationElement: HaskellStartDeclarationElement): String = {
-    val haskellVar: HaskellVar = getHaskellVar(startDeclarationElement)
-    if (haskellVar != null) haskellVar.getName else null
-  }
-
-  private def getHaskellVar(startDeclarationElement: HaskellStartDeclarationElement): HaskellVar = {
-    PsiTreeUtil.findChildOfType(startDeclarationElement, classOf[HaskellVar])
-  }
-
-  private def findLastConIdTokenPsiElement(compositeElement: HaskellCompositeElement): HaskellCon = {
-    val keyNode: ASTNode = compositeElement.getNode.getLastChildNode
-    if (keyNode != null) keyNode.getPsi.asInstanceOf[HaskellCon] else null
-  }
-
-  private def findFirstConIdTokenChildPsiElement(compositeElement: HaskellCompositeElement): PsiElement = {
-    val keyNode: ASTNode = compositeElement.getNode.findChildByType(HaskellTypes.HS_CON_ID)
-    if (keyNode != null) keyNode.getPsi else null
-  }
-
-  private def findFirstConIdTokenChildPsiElementName(compositeElement: HaskellCompositeElement): String = {
-    val psiElement: PsiElement = findFirstConIdTokenChildPsiElement(compositeElement)
-    if (psiElement != null) psiElement.getText else null
-  }
 
   def getName(haskellCon: HaskellCon): String = {
     findFirstConIdTokenChildPsiElementName(haskellCon)
   }
 
-  def getName(haskellQcon: HaskellQcon): String = {
-    import scala.collection.JavaConversions._
-
+  def getId(haskellQcon: HaskellQcon): String = {
     val haskellCons = PsiTreeUtil.findChildrenOfType(haskellQcon, classOf[HaskellCon])
     haskellCons.map(_.getName).mkString(".")
   }
@@ -161,8 +88,97 @@ object HaskellPsiImplUtil {
     findFirstConIdTokenChildPsiElement(haskellCon)
   }
 
+  def getPresentation(namedElement: HaskellNamedElement): ItemPresentation = {
+    new ItemPresentation {
+      @Nullable
+      def getPresentableText: String = {
+        val typeSignature: Option[String] = GhcModiManager.findTypeSignature(namedElement)
+        typeSignature.getOrElse(namedElement.getName)
+      }
+
+      @Nullable
+      def getLocationString: String = {
+        namedElement.getContainingFile.getName
+      }
+
+      @Nullable
+      def getIcon(unused: Boolean): Icon = {
+        HaskellIcons.HASKELL_SMALL_LOGO
+      }
+    }
+  }
+
+
+  /**
+   * Only returns first var. Could be a number of vars with same type signature.
+   * TODO: fix this. Also #getIdentifier
+   */
+  def getIdentifierElement(startTypeSignature: HaskellStartTypeSignature): HaskellNamedElement = {
+    getFirstHaskellVar(startTypeSignature)
+  }
+
+  def getIdentifier(startTypeSignature: HaskellStartTypeSignature): String = {
+    getFirstHaskellVarName(startTypeSignature)
+  }
+
+
+  def getIdentifierElement(startDataDeclaration: HaskellStartDataDeclaration): HaskellNamedElement = {
+    val simpleType = PsiTreeUtil.findChildOfType(startDataDeclaration, classOf[HaskellSimpletype])
+    simpleType.getCon
+  }
+
+  def getIdentifier(startDataDeclaration: HaskellStartDataDeclaration): String = {
+    val haskellCon = getIdentifierElement(startDataDeclaration)
+    if (haskellCon != null) haskellCon.getName else null
+  }
+
+
+  def getIdentifierElement(typeDeclaration: HaskellStartTypeDeclaration): HaskellNamedElement = {
+    PsiTreeUtil.findChildOfType(typeDeclaration, classOf[HaskellCon])
+  }
+
+  def getIdentifier(typeDeclaration: HaskellStartTypeDeclaration): String = {
+    getIdentifierElement(typeDeclaration).getName
+  }
+
+
   def getModuleName(importDeclaration: HaskellImportDeclaration): String = {
     val haskellQcon: HaskellQcon = PsiTreeUtil.findChildOfType(importDeclaration, classOf[HaskellQcon])
-    if (haskellQcon != null) haskellQcon.getName else null
+    if (haskellQcon != null) haskellQcon.getId else null
+  }
+
+
+  def getId(haskellSimpleType: HaskellSimpletype): String = {
+    haskellSimpleType.getCon.getName
+  }
+
+
+  private def findFirstVarIdTokenChildPsiElement(compositeElement: HaskellCompositeElement): PsiElement = {
+    val keyNode: ASTNode = compositeElement.getNode.findChildByType(HaskellTypes.HS_VAR_ID)
+    if (keyNode != null) keyNode.getPsi else null
+  }
+
+  private def findFirstVarIdTokenChildPsiElementName(compositeElement: HaskellCompositeElement): String = {
+    val psiElement: PsiElement = findFirstVarIdTokenChildPsiElement(compositeElement)
+    if (psiElement != null) psiElement.getText else null
+  }
+
+  private def getFirstHaskellVar(startDeclarationElement: HaskellStartDeclarationElement): HaskellVar = {
+    PsiTreeUtil.findChildOfType(startDeclarationElement, classOf[HaskellVar])
+  }
+
+  private def getFirstHaskellVarName(startDeclarationElement: HaskellStartDeclarationElement): String = {
+    val haskellVar: HaskellVar = getFirstHaskellVar(startDeclarationElement)
+    if (haskellVar != null) haskellVar.getName else null
+  }
+
+  private def findFirstConIdTokenChildPsiElement(compositeElement: HaskellCompositeElement): PsiElement = {
+    val keyNode: ASTNode = compositeElement.getNode.findChildByType(HaskellTypes.HS_CON_ID)
+    if (keyNode != null) keyNode.getPsi else null
+  }
+
+  private def findFirstConIdTokenChildPsiElementName(compositeElement: HaskellCompositeElement): String = {
+    val psiElement: PsiElement = findFirstConIdTokenChildPsiElement(compositeElement)
+    if (psiElement != null) psiElement.getText else null
   }
 }
