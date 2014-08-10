@@ -15,6 +15,7 @@
  */
 package com.powertuple.intellij.haskell.psi
 
+import com.intellij.navigation.NavigationItem
 import com.intellij.psi.PsiNameIdentifierOwner
 
-trait HaskellNamedElement extends HaskellCompositeElement with PsiNameIdentifierOwner
+trait HaskellNamedElement extends HaskellCompositeElement with PsiNameIdentifierOwner with NavigationItem

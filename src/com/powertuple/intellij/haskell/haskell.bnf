@@ -19,14 +19,14 @@
 
   elementTypePrefix="HS_"
 
-  methods("start_type_signature|start_data_declaration|start_type_declaration")=[getIdentifier getIdentifierElement]
-  implements("start_type_signature|start_data_declaration|start_type_declaration")="com.powertuple.intellij.haskell.psi.HaskellStartDeclarationElement"
+  methods("type_signature|data_declaration|type_declaration")=[getIdentifier getIdentifierElement]
+  implements("type_signature|data_declaration|type_declaration")="com.powertuple.intellij.haskell.psi.HaskellDeclarationElement"
 }
 
 program                     ::= (lexeme | whitespace)*
 private whitespace          ::= (whitestuff)+
 private whitestuff          ::= COMMENT | NCOMMENT | NEWLINE
-private lexeme              ::= start_type_signature | start_definition | start_data_declaration | import_declaration | start_type_declaration |
+private lexeme              ::= type_signature | start_definition | data_declaration | import_declaration | type_declaration |
                                 qvar | var | qcon | con | qconsym | consym | qvarsym | varsym | literal
                                 | special | reservedop | reservedid | specialreservedid
 
@@ -46,9 +46,9 @@ consym                      ::= (COLON (symbol | COLON)*)       // operator cons
 
 import_declaration          ::= IMPORT qcon {methods=[getModuleName]}
 
-start_type_signature        ::= vars COLON_COLON (context DOUBLE_RIGHT_ARROW)? ttype
-start_data_declaration      ::= DATA (context DOUBLE_RIGHT_ARROW)? simpletype EQUAL constrs (DERIVING)?
-start_type_declaration      ::= TYPE simpletype EQUAL atype
+type_signature              ::= vars COLON_COLON (context DOUBLE_RIGHT_ARROW)? ttype
+data_declaration            ::= DATA (context DOUBLE_RIGHT_ARROW)? simpletype EQUAL constrs (DERIVING)?
+type_declaration            ::= TYPE simpletype EQUAL atype
 
 start_definition            ::= (qvar | qcon) EQUAL
 

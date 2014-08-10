@@ -18,7 +18,7 @@ package com.powertuple.intellij.haskell
 
 import com.intellij.navigation.{ChooseByNameContributor, NavigationItem}
 import com.intellij.openapi.project.Project
-import com.powertuple.intellij.haskell.psi.HaskellVar
+import com.powertuple.intellij.haskell.psi.{HaskellDeclarationElement, HaskellVar}
 import com.powertuple.intellij.haskell.psi.impl.HaskellVarImpl
 import com.powertuple.intellij.haskell.util.HaskellFindUtil
 
@@ -29,6 +29,6 @@ class HaskellSymbolContributor extends ChooseByNameContributor {
   }
 
   def getItemsByName(name: String, pattern: String, project: Project, includeNonProjectItems: Boolean): Array[NavigationItem] = {
-    HaskellFindUtil.findDeclarations(project, name, includeNonProjectItems).map(_.getFirstChild.asInstanceOf[HaskellVarImpl]).toArray
+    HaskellFindUtil.findDeclarations(project, name, includeNonProjectItems).map(_.getIdentifierElement).toArray
   }
 }

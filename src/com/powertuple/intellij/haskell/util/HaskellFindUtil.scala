@@ -19,24 +19,21 @@ package com.powertuple.intellij.haskell.util
 import com.intellij.openapi.project.Project
 import com.intellij.psi.search.GlobalSearchScope
 import com.intellij.psi.util.PsiTreeUtil
-import com.powertuple.intellij.haskell.psi.HaskellStartTypeSignature
+import com.powertuple.intellij.haskell.psi.HaskellDeclarationElement
 
-/**
- * Currently only type signatures are supported for #findDeclarations
- */
 object HaskellFindUtil {
 
-  def findDeclarations(project: Project, includeNonProjectItems: Boolean): Iterable[HaskellStartTypeSignature] = {
+  def findDeclarations(project: Project, includeNonProjectItems: Boolean): Iterable[HaskellDeclarationElement] = {
     val scope = if (includeNonProjectItems) {
       GlobalSearchScope.allScope(project)
     } else {
       GlobalSearchScope.projectScope(project)
     }
     val haskellFiles = HaskellFileIndex.getAllHaskellFiles(project, scope)
-    haskellFiles.flatMap(f => Option(PsiTreeUtil.getChildrenOfType(f, classOf[HaskellStartTypeSignature]))).flatten
+    haskellFiles.flatMap(f => Option(PsiTreeUtil.getChildrenOfType(f, classOf[HaskellDeclarationElement]))).flatten
   }
 
-  def findDeclarations(project: Project, name: String, includeNonProjectItems: Boolean): Iterable[HaskellStartTypeSignature] = {
+  def findDeclarations(project: Project, name: String, includeNonProjectItems: Boolean): Iterable[HaskellDeclarationElement] = {
     findDeclarations(project, includeNonProjectItems).filter(hv => hv.getIdentifier == name)
   }
 }

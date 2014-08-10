@@ -54,7 +54,7 @@ class HaskellVarReference(element: HaskellVar, textRange: TextRange) extends Psi
 
   override def getVariants: Array[AnyRef] = {
     val haskellFile = myElement.getContainingFile.asInstanceOf[HaskellFile]
-    val declarations = PsiTreeUtil.getChildrenOfType(haskellFile, classOf[HaskellStartDeclarationElement]).map(_.getIdentifier)
+    val declarations = PsiTreeUtil.getChildrenOfType(haskellFile, classOf[HaskellDeclarationElement]).map(_.getIdentifier)
     declarations.map(id => LookupElementBuilder.create(id).withIcon(HaskellIcons.HASKELL_SMALL_LOGO))
   }
 
@@ -66,7 +66,7 @@ class HaskellVarReference(element: HaskellVar, textRange: TextRange) extends Psi
   }
 
   private def findTypeSignaturesFor(haskellFile: HaskellFile, expression: String): Option[HaskellNamedElement] = {
-    Option(PsiTreeUtil.getChildrenOfType(haskellFile, classOf[HaskellStartTypeSignature])) match {
+    Option(PsiTreeUtil.getChildrenOfType(haskellFile, classOf[HaskellTypeSignature])) match {
       case Some(typeSignatures) => typeSignatures.find(v => v.getIdentifier == expression).map(_.getIdentifierElement)
       case _ => None
     }

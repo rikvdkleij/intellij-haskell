@@ -26,7 +26,7 @@ import com.intellij.openapi.editor.Editor
 import com.intellij.pom.Navigatable
 import com.intellij.psi.util.PsiTreeUtil
 import com.intellij.psi.{PsiElement, PsiFile}
-import com.powertuple.intellij.haskell.psi.HaskellStartDeclarationElement
+import com.powertuple.intellij.haskell.psi.HaskellDeclarationElement
 
 class HaskellStructureViewFactory extends PsiStructureViewFactory {
   def getStructureViewBuilder(psiFile: PsiFile): StructureViewBuilder = {
@@ -75,14 +75,14 @@ private class HaskellStructureViewTreeElement(val element: PsiElement, val typeS
     import scala.collection.JavaConversions._
 
     (element match {
-      case hf: HaskellFile => PsiTreeUtil.findChildrenOfAnyType(element, classOf[HaskellStartDeclarationElement]).toSeq
+      case hf: HaskellFile => PsiTreeUtil.findChildrenOfAnyType(element, classOf[HaskellDeclarationElement]).toSeq
       case _ => Seq()
     }).map(declarationElement => new HaskellStructureViewTreeElement(declarationElement, declarationElement.getText)).toArray
   }
 
   override def getPresentableText: String = {
     element match {
-      case hv: HaskellStartDeclarationElement => hv.getIdentifier
+      case hv: HaskellDeclarationElement => hv.getIdentifier
       case pf: PsiFile => pf.getName
       case _ => null
     }

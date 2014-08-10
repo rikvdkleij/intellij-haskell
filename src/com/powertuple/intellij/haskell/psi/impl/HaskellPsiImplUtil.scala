@@ -113,31 +113,31 @@ object HaskellPsiImplUtil {
    * Only returns first var. Could be a number of vars with same type signature.
    * TODO: fix this. Also #getIdentifier
    */
-  def getIdentifierElement(startTypeSignature: HaskellStartTypeSignature): HaskellNamedElement = {
-    getFirstHaskellVar(startTypeSignature)
+  def getIdentifierElement(TypeSignature: HaskellTypeSignature): HaskellNamedElement = {
+    getFirstHaskellVar(TypeSignature)
   }
 
-  def getIdentifier(startTypeSignature: HaskellStartTypeSignature): String = {
-    getFirstHaskellVarName(startTypeSignature)
+  def getIdentifier(TypeSignature: HaskellTypeSignature): String = {
+    getFirstHaskellVarName(TypeSignature)
   }
 
 
-  def getIdentifierElement(startDataDeclaration: HaskellStartDataDeclaration): HaskellNamedElement = {
-    val simpleType = PsiTreeUtil.findChildOfType(startDataDeclaration, classOf[HaskellSimpletype])
+  def getIdentifierElement(DataDeclaration: HaskellDataDeclaration): HaskellNamedElement = {
+    val simpleType = PsiTreeUtil.findChildOfType(DataDeclaration, classOf[HaskellSimpletype])
     simpleType.getCon
   }
 
-  def getIdentifier(startDataDeclaration: HaskellStartDataDeclaration): String = {
-    val haskellCon = getIdentifierElement(startDataDeclaration)
+  def getIdentifier(DataDeclaration: HaskellDataDeclaration): String = {
+    val haskellCon = getIdentifierElement(DataDeclaration)
     if (haskellCon != null) haskellCon.getName else null
   }
 
 
-  def getIdentifierElement(typeDeclaration: HaskellStartTypeDeclaration): HaskellNamedElement = {
+  def getIdentifierElement(typeDeclaration: HaskellTypeDeclaration): HaskellNamedElement = {
     PsiTreeUtil.findChildOfType(typeDeclaration, classOf[HaskellCon])
   }
 
-  def getIdentifier(typeDeclaration: HaskellStartTypeDeclaration): String = {
+  def getIdentifier(typeDeclaration: HaskellTypeDeclaration): String = {
     getIdentifierElement(typeDeclaration).getName
   }
 
@@ -163,12 +163,12 @@ object HaskellPsiImplUtil {
     if (psiElement != null) psiElement.getText else null
   }
 
-  private def getFirstHaskellVar(startDeclarationElement: HaskellStartDeclarationElement): HaskellVar = {
-    PsiTreeUtil.findChildOfType(startDeclarationElement, classOf[HaskellVar])
+  private def getFirstHaskellVar(DeclarationElement: HaskellDeclarationElement): HaskellVar = {
+    PsiTreeUtil.findChildOfType(DeclarationElement, classOf[HaskellVar])
   }
 
-  private def getFirstHaskellVarName(startDeclarationElement: HaskellStartDeclarationElement): String = {
-    val haskellVar: HaskellVar = getFirstHaskellVar(startDeclarationElement)
+  private def getFirstHaskellVarName(DeclarationElement: HaskellDeclarationElement): String = {
+    val haskellVar: HaskellVar = getFirstHaskellVar(DeclarationElement)
     if (haskellVar != null) haskellVar.getName else null
   }
 
