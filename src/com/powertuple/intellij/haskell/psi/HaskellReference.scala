@@ -25,6 +25,8 @@ import com.powertuple.intellij.haskell.external.{ExpressionInfo, GhcModiManager,
 import com.powertuple.intellij.haskell.util.{FileUtil, LineColumnPosition, ProjectUtil}
 import com.powertuple.intellij.haskell.{HaskellFile, HaskellIcons}
 
+import scala.collection.JavaConversions._
+
 class HaskellReference(element: HaskellNamedElement, textRange: TextRange) extends PsiReferenceBase[HaskellNamedElement](element, textRange) {
 
   override def resolve: PsiElement = {
@@ -49,13 +51,25 @@ class HaskellReference(element: HaskellNamedElement, textRange: TextRange) exten
       haskellFile <- Option(PsiManager.getInstance(myElement.getProject).
           findFile(LocalFileSystem.getInstance().findFileByPath(expressionInfo.filePath)).asInstanceOf[HaskellFile])
       startOffset <- LineColumnPosition.getOffset(haskellFile, LineColumnPosition(expressionInfo.lineNr, expressionInfo.colNr))
-    } yield PsiUtilCore.getElementAtOffset(haskellFile, startOffset).getParent.asInstanceOf[HaskellNamedElement]).orNull
+    } yield PsiUtilCore.getElementAtOffset(haskellFile, startOffset)).orNull
   }
 
   override def getVariants: Array[AnyRef] = {
     val haskellFile = myElement.getContainingFile.asInstanceOf[HaskellFile]
     val declarations = PsiTreeUtil.getChildrenOfType(haskellFile, classOf[HaskellDeclarationElement])
-    declarations.map(declarationElement => LookupElementBuilder.create(declarationElement.getIdentifierElement).withTypeText(declarationElement.getText).withIcon(HaskellIcons.HASKELL_SMALL_LOGO))
+
+    declarations.map {
+      case d: HaskellDataDeclaration => Seq(createLookupElement(d)) ++ d.getConstrs.getConstrList.map(e => createLookupElement(e))
+      case d => Seq(createLookupElement(d))
+    }.flatten.asInstanceOf[Array[AnyRef]]
+  }
+
+  private def createLookupElement(declarationElement: HaskellDeclarationElement) = {
+    LookupElementBuilder.create(declarationElement.getIdentifier).withTypeText(declarationElement.getText).withIcon(HaskellIcons.HASKELL_SMALL_LOGO)
+  }
+
+  private def createLookupElement(constr: HaskellConstr) = {
+    LookupElementBuilder.create(constr.getIdentifier).withTypeText(constr.getText).withIcon(HaskellIcons.HASKELL_SMALL_LOGO)
   }
 
   private def getProjectExpressionInfo(expressionInfo: Option[ExpressionInfo]) = {

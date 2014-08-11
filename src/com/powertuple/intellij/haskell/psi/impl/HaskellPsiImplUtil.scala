@@ -166,6 +166,28 @@ object HaskellPsiImplUtil {
     }
   }
 
+  def getIdentifier(constr: HaskellConstr): String = {
+    if (constr.getCons != null) {
+      constr.getCons.getIdentifier
+    } else if (constr.getCon != null) {
+      constr.getCon.getName
+    } else {
+      constr.getConop.getIdentifier
+    }
+  }
+
+  def getIdentifier(cons: HaskellCons): String = {
+    if (cons.getCon != null) {
+      cons.getCon.getName
+    } else {
+      cons.getConsym.getText
+    }
+  }
+
+  def getIdentifier(conop: HaskellConop): String = {
+    conop.getText
+  }
+
   private def findFirstVarIdTokenChildPsiElement(compositeElement: HaskellCompositeElement): PsiElement = {
     val keyNode: ASTNode = compositeElement.getNode.findChildByType(HaskellTypes.HS_VAR_ID)
     if (keyNode != null) keyNode.getPsi else null

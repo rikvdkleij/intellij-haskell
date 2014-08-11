@@ -27,9 +27,10 @@
 program                     ::= (lexeme | whitespace)*
 private whitespace          ::= (whitestuff)+
 private whitestuff          ::= COMMENT | NCOMMENT | NEWLINE
-private lexeme              ::= module_declaration | import_declaration | type_signature | start_definition | data_declaration | type_declaration |
-                                qvar | var | qcon | con | qconsym | consym | qvarsym | varsym | literal
-                                | special | reservedop | reservedid | specialreservedid
+private lexeme              ::= module_declaration | import_declaration| data_declaration | fielddecls | type_signature | type_declaration |
+                                start_definition |
+                                qvar | var | qcon | con | qconsym | consym | qvarsym | varsym | literal |
+                                special | reservedop | reservedid | specialreservedid
 
 literal                     ::= DECIMAL | HEXADECIMAL | OCTAL | FLOAT | CHARACTER_LITERAL | STRING_LITERAL
 
@@ -82,7 +83,15 @@ vars                        ::= var (COMMA var)*
 simpletype                  ::= con (var)* {methods=[getIdentifier]}
 context                     ::= (con var | (LEFT_PAREN con var (COMMA con var)* RIGHT_PAREN))
 ttype                       ::= atype+ (RIGHT_ARROW atype+)*
-atype                       ::= (var | con | special | DOT )
+atype                       ::= (var | con | LEFT_BRACKET | RIGHT_BRACKET | LEFT_PAREN | RIGHT_PAREN | DOT | RIGHT_ARROW | COMMA)
+btype                       ::= atype+
 
 constrs                     ::= constr (VERTICAL_BAR constr)*
-constr                      ::= (atype | EXCLAMATION_MARK | COLON_COLON)+
+constr                      ::= (con fielddecls) |
+                                (cons ((EXCLAMATION_MARK)? atype)*) |
+                                ((btype | EXCLAMATION_MARK atype) conop (btype | EXCLAMATION_MARK atype))
+                                  {methods=[getIdentifier]}
+fielddecls                  ::= (LEFT_BRACE fielddecl (COMMA fielddecl)* RIGHT_BRACE)
+fielddecl                   ::= vars COLON_COLON con
+cons                        ::= (con | consym)                      {methods=[getIdentifier]}
+conop                       ::= (consym | BACKQUOTE con BACKQUOTE)  {methods=[getIdentifier]}

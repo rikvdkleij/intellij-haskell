@@ -2,14 +2,14 @@
     <id>com.powertuple.intellij.haskell</id>
     <name>Haskell</name>
     <version>0.1</version>
-    <vendor email="rikvdkleij@gmail.com" url="http://www.powertuple.com">PowerTuple</vendor>
+    <vendor email="rikvdkleij@gmail.com">PowerTuple</vendor>
 
     <description><![CDATA[
         Haskell support.
     ]]></description>
 
     <change-notes><![CDATA[
-        First version.
+        Initial version.
     ]]>
     </change-notes>
 

@@ -25,9 +25,9 @@ and expects that the Cabal init/install/build is done on command-line. This plug
 - View quick definition;
 - Code formatting (works reasonably but did not test it with all kinds of code; not finished yet, has to be fine-tuned);
 - Structure view;
-- Go to declaration (called go to class);
-- Go to definition (called go to symbol);
-- Code completion by looking to import declarations;
+- Navigate to declaration (called Class in IntelliJ menu);
+- Navigate to definition (called Symbol in IntelliJ menu);
+- Code completion by looking to import declarations(`hiding` and `qualified` are not supported yet);
 
 Features are with the help of ghc-mod(i) and haskell-docs!!
 
@@ -46,4 +46,4 @@ Features are with the help of ghc-mod(i) and haskell-docs!!
 - After project is installed in sandbox, create Haskell project in IntelliJ by using File/Open from IntelliJ menu;
 - Select No SDK in Project Setting;
 - Select in Modules Settings which folders to exclude (like .cabal-sandbox and dist) and which folders are Source and Test (normally src and test).
-- Add library(package) source root directories to project in Project Settings/Libraries;
+- To get nice navigation features, add libraries and Prelude source root directories to project in Project Settings/Libraries;
