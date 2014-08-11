@@ -1,6 +1,6 @@
 /*
  * Copyright 2014 Rik van der Kleij
-
+ *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
@@ -37,7 +37,7 @@ object HaskellPsiImplUtil {
     findFirstVarIdTokenChildPsiElementName(haskellVar)
   }
 
-  def getId(haskellQvar: HaskellQvar): String = {
+  def getName(haskellQvar: HaskellQvar): String = {
     val haskellVars = PsiTreeUtil.findChildrenOfType(haskellQvar, classOf[HaskellVar])
     haskellVars.map(_.getName).mkString(".")
   }
@@ -67,7 +67,7 @@ object HaskellPsiImplUtil {
     findFirstConIdTokenChildPsiElementName(haskellCon)
   }
 
-  def getId(haskellQcon: HaskellQcon): String = {
+  def getName(haskellQcon: HaskellQcon): String = {
     val haskellCons = PsiTreeUtil.findChildrenOfType(haskellQcon, classOf[HaskellCon])
     haskellCons.map(_.getName).mkString(".")
   }
@@ -123,13 +123,11 @@ object HaskellPsiImplUtil {
 
 
   def getIdentifierElement(DataDeclaration: HaskellDataDeclaration): HaskellNamedElement = {
-    val simpleType = PsiTreeUtil.findChildOfType(DataDeclaration, classOf[HaskellSimpletype])
-    simpleType.getCon
+    PsiTreeUtil.findChildOfType(DataDeclaration, classOf[HaskellSimpletype]).getCon
   }
 
   def getIdentifier(DataDeclaration: HaskellDataDeclaration): String = {
-    val haskellCon = getIdentifierElement(DataDeclaration)
-    if (haskellCon != null) haskellCon.getName else null
+    getIdentifierElement(DataDeclaration).getName
   }
 
 
@@ -144,18 +142,29 @@ object HaskellPsiImplUtil {
 
   def getModuleName(importDeclaration: HaskellImportDeclaration): String = {
     val haskellQcon = PsiTreeUtil.findChildOfType(importDeclaration, classOf[HaskellQcon])
-    if (haskellQcon != null) haskellQcon.getId else null
+    if (haskellQcon != null) haskellQcon.getName else null
   }
 
   def getModuleName(moduleDeclaration: HaskellModuleDeclaration): String = {
     val haskellQcon = PsiTreeUtil.findChildOfType(moduleDeclaration, classOf[HaskellQcon])
-    if (haskellQcon != null) haskellQcon.getId else null
+    if (haskellQcon != null) haskellQcon.getName else null
   }
 
-  def getId(haskellSimpleType: HaskellSimpletype): String = {
+  def getIdentifier(haskellSimpleType: HaskellSimpletype): String = {
     haskellSimpleType.getCon.getName
   }
 
+  def getIdentifier(startDefinition: HaskellStartDefinition): String = {
+    getIdentifierElement(startDefinition).getName
+  }
+
+  def getIdentifierElement(startDefinition: HaskellStartDefinition): HaskellNamedElement = {
+    if (startDefinition.getQvar != null) {
+      startDefinition.getQvar.getVar
+    } else {
+      startDefinition.getQcon.getConList.last
+    }
+  }
 
   private def findFirstVarIdTokenChildPsiElement(compositeElement: HaskellCompositeElement): PsiElement = {
     val keyNode: ASTNode = compositeElement.getNode.findChildByType(HaskellTypes.HS_VAR_ID)

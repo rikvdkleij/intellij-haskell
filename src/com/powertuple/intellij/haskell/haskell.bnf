@@ -19,8 +19,9 @@
 
   elementTypePrefix="HS_"
 
-  methods("type_signature|data_declaration|type_declaration")=[getIdentifier getIdentifierElement]
+  methods("start_definition|type_signature|data_declaration|type_declaration")=[getIdentifier getIdentifierElement]
   implements("type_signature|data_declaration|type_declaration")="com.powertuple.intellij.haskell.psi.HaskellDeclarationElement"
+  implements("start_definition")="com.powertuple.intellij.haskell.psi.HaskellStartDefinitionElement"
 }
 
 program                     ::= (lexeme | whitespace)*
@@ -61,8 +62,8 @@ con                         ::= CON_ID                      // constructors, typ
                                  {mixin="com.powertuple.intellij.haskell.psi.impl.HaskellNamedElementImpl"
                                   implements="com.powertuple.intellij.haskell.psi.HaskellNamedElement" methods=[getName setName getNameIdentifier getReference getPresentation]}
 
-qvar                        ::= (con DOT)* var {methods=[getId]}
-qcon                        ::= (con DOT)* con {methods=[getId]}
+qvar                        ::= (con DOT)* var {methods=[getName]}
+qcon                        ::= (con DOT)* con {methods=[getName]}
 
 qvarsym                     ::= (con DOT)* varsym
 qconsym                     ::= (con DOT)* consym
@@ -78,7 +79,7 @@ reservedop                  ::= DOT_DOT | COLON | COLON_COLON | EQUAL | SLASH | 
 specialreservedid           ::= AS | QUALIFIED | HIDING | INCLUDE
 
 vars                        ::= var (COMMA var)*
-simpletype                  ::= con (var)* {methods=[getId]}
+simpletype                  ::= con (var)* {methods=[getIdentifier]}
 context                     ::= (con var | (LEFT_PAREN con var (COMMA con var)* RIGHT_PAREN))
 ttype                       ::= atype+ (RIGHT_ARROW atype+)*
 atype                       ::= (var | con | special | DOT )

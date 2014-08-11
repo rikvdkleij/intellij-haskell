@@ -16,6 +16,8 @@
 
 package com.powertuple.intellij.haskell.psi
 
-import com.intellij.psi.PsiElement
+trait HaskellStartDefinitionElement extends HaskellCompositeElement {
+  def getIdentifier: String
 
-trait HaskellCompositeElement extends PsiElement
+  def getIdentifierElement: HaskellNamedElement
+}

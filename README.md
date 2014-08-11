@@ -1,7 +1,5 @@
 # IntelliJ plugin for Haskell
 
-First, this plugin is work-in-progress!
-
 Some months ago I started his project because I was learning Haskell and I was missing the nice features of IntelliJ IDEA. First approach
  was to use default way of creating IntelliJ plugin by defining grammar and lexer according to
   [Haskell report](http://www.haskell.org/onlinereport/haskell2010/haskellch10.html). That did not workout because I could not define all 
@@ -27,16 +25,18 @@ and expects that the Cabal init/install/build is done on command-line. This plug
 - View quick definition;
 - Code formatting (works reasonably but did not test it with all kinds of code; not finished yet, has to be fine-tuned);
 - Structure view;
-- Go to symbol;
-- Code completion by looking to import declarations with help of ghc-mod;
+- Go to declaration (called go to class);
+- Go to definition (called go to symbol);
+- Code completion by looking to import declarations;
 
 Features are with the help of ghc-mod(i) and haskell-docs!!
 
 # TODO:
-- Go to definition;
 - Inspection by hlint;
 - Integration of stylish-haskell; 
 - Integration of hsimport;
+- Smart completion if that is achievable :-) ;
+- Hole driven development support;
 
 # Getting started: 
 - Install ghc-mod and haskell-docs;
