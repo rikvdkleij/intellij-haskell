@@ -41,7 +41,7 @@ Features are with the help of ghc-mod(i) and haskell-docs!!
 # Getting started: 
 - Cabal install ghc-mod and haskell-docs;
 - Set file paths to ghc-mod, ghc-modi and haskell-docs in Settings/Haskell;
-- Be sure in Settings/Filetypes that `Haskell language file` is registered with pattern *.hs and `Literate Haskell language file` with pattern *.lhs; 
+- Be sure in Settings/Filetypes that `Haskell language file` is registered with pattern `*.hs` and `Literate Haskell language file` with pattern `*.lhs`; 
 - First install your project in a Cabal sandbox (be sure that Haddock documentation is generated, see [haskell-docs](https://github.com/chrisdone/haskell-docs)). 
 - After project is installed in sandbox, create Haskell project in IntelliJ by using `File`/`Open` from IntelliJ menu;
 - Select `No SDK` in Project Setting;
