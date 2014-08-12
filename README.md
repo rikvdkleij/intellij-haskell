@@ -3,7 +3,8 @@
 Some months ago I started his project because I was learning Haskell and I was missing the nice features of IntelliJ IDEA. First approach
  was to use default way of creating IntelliJ plugin by defining grammar and lexer according to
   [Haskell report](http://www.haskell.org/onlinereport/haskell2010/haskellch10.html). That did not workout because I could not define all 
-  the recursiveness. Decided to use grammar and lexer definitions for tokenizing and parsing Haskell code. This is needed for syntax highlighting, all kind of navigation and so on.
+  the recursiveness. 
+  Decided to use grammar and lexer definitions only for tokenizing and parsing Haskell code, so not for syntax checking the code. This is needed for syntax highlighting, all kind of navigation and so on.
   Further Haskell language support is done with the support of the external tools: ghc-mod and haskell-docs.
 
 In the meantime also Atsky started to create [Haskell-idea-plugin](https://github.com/Atsky/haskell-idea-plugin) based on ideah plugin in Kotlin. 
