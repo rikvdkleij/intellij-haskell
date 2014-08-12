@@ -1,6 +1,6 @@
 /*
  * Copyright 2014 Rik van der Kleij
-
+ *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
@@ -40,7 +40,7 @@ public class HaskellCodeStyleConfigurable extends CodeStyleAbstractConfigurable 
 
     private static class HaskellCodeStyleMainPanel extends TabbedLanguageCodeStylePanel {
         private HaskellCodeStyleMainPanel(CodeStyleSettings currentSettings, CodeStyleSettings settings) {
-            super(HaskellLanguage.INSTANCE, currentSettings, settings);
+            super(HaskellLanguage.Instance(), currentSettings, settings);
         }
     }
 }

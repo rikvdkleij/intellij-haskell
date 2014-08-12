@@ -1,6 +1,6 @@
 /*
  * Copyright 2014 Rik van der Kleij
-
+ *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
@@ -57,7 +57,7 @@ public class HaskellSyntaxHighlighter extends SyntaxHighlighterBase {
         if (type == TokenType.BAD_CHARACTER) {
             return pack(ILLEGAL);
         }
-        if (HaskellParserDefinition.COMMENTS.contains(type)) {
+        if (HaskellParserDefinition.COMMENTS().contains(type)) {
             return pack(COMMENT);
         }
         if (type == HS_STRING_LITERAL || type == HS_CHARACTER_LITERAL) {
@@ -66,10 +66,10 @@ public class HaskellSyntaxHighlighter extends SyntaxHighlighterBase {
         if (type == HS_DECIMAL || type == HS_FLOAT | type == HS_HEXADECIMAL | type == HS_OCTAL) {
             return pack(NUMBER);
         }
-        if (RESERVED_IDS.contains(type)) {
+        if (RESERVED_IDS().contains(type)) {
             return pack(KEYWORD);
         }
-        if (OPERATORS.contains(type)) {
+        if (OPERATORS().contains(type)) {
             return pack(OPERATOR);
         }
         if (type == HS_LEFT_PAREN || type == HS_RIGHT_PAREN) {

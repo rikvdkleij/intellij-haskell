@@ -1,6 +1,6 @@
 /*
  * Copyright 2014 Rik van der Kleij
-
+ *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
@@ -13,13 +13,19 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+package com.powertuple.intellij.haskell.psi
 
-package com.powertuple.intellij.haskell;
+import com.intellij.psi.tree.IElementType
+import com.powertuple.intellij.haskell.HaskellLanguage
+import org.jetbrains.annotations.{NonNls, NotNull}
 
-import com.intellij.lexer.FlexAdapter;
+class HaskellTokenType(@NotNull @NonNls debugName: String) extends IElementType(debugName, HaskellLanguage.Instance) {
 
-public class HaskellLexerAdapter extends FlexAdapter {
-    public HaskellLexerAdapter() {
-        super(new _HaskellLexer());
-    }
+  override def toString: String = {
+    "HaskellTokenType." + super.toString
+  }
+
+  def getName: String = {
+    super.toString.toLowerCase
+  }
 }

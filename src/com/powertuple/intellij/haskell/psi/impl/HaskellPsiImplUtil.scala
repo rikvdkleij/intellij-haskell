@@ -103,7 +103,7 @@ object HaskellPsiImplUtil {
 
       @Nullable
       def getIcon(unused: Boolean): Icon = {
-        HaskellIcons.HASKELL_SMALL_LOGO
+        HaskellIcons.HaskellSmallLogo
       }
     }
   }
@@ -141,13 +141,11 @@ object HaskellPsiImplUtil {
 
 
   def getModuleName(importDeclaration: HaskellImportDeclaration): String = {
-    val haskellQcon = PsiTreeUtil.findChildOfType(importDeclaration, classOf[HaskellQcon])
-    if (haskellQcon != null) haskellQcon.getName else null
+    PsiTreeUtil.findChildOfType(importDeclaration, classOf[HaskellQcon]).getName
   }
 
   def getModuleName(moduleDeclaration: HaskellModuleDeclaration): String = {
-    val haskellQcon = PsiTreeUtil.findChildOfType(moduleDeclaration, classOf[HaskellQcon])
-    if (haskellQcon != null) haskellQcon.getName else null
+    PsiTreeUtil.findChildOfType(moduleDeclaration, classOf[HaskellQcon]).getName
   }
 
   def getIdentifier(haskellSimpleType: HaskellSimpletype): String = {
@@ -167,20 +165,17 @@ object HaskellPsiImplUtil {
   }
 
   def getIdentifier(constr: HaskellConstr): String = {
-    if (constr.getCons != null) {
-      constr.getCons.getIdentifier
-    } else if (constr.getCon != null) {
-      constr.getCon.getName
-    } else {
-      constr.getConop.getIdentifier
+    constr match {
+      case _ if constr.getCons != null => constr.getCons.getIdentifier
+      case _ if constr.getCon != null => constr.getCon.getName
+      case _ if constr.getConop != null => constr.getConop.getIdentifier
     }
   }
 
   def getIdentifier(cons: HaskellCons): String = {
-    if (cons.getCon != null) {
-      cons.getCon.getName
-    } else {
-      cons.getConsym.getText
+    cons match {
+      case _ if cons.getCon != null => cons.getCon.getName
+      case _ if cons.getConsym != null => cons.getConsym.getText
     }
   }
 

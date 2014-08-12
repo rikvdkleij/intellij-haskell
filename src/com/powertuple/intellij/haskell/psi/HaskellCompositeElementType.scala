@@ -1,6 +1,6 @@
 /*
  * Copyright 2014 Rik van der Kleij
-
+ *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
@@ -13,10 +13,11 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+
 package com.powertuple.intellij.haskell.psi
 
 import com.intellij.psi.tree.IElementType
 import com.powertuple.intellij.haskell.HaskellLanguage
 import org.jetbrains.annotations.{NonNls, NotNull}
 
-class HaskellCompositeElementType(@NotNull @NonNls debugName: String) extends IElementType(debugName, HaskellLanguage.INSTANCE)
+class HaskellCompositeElementType(@NotNull @NonNls debugName: String) extends IElementType(debugName, HaskellLanguage.Instance)

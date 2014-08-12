@@ -1,6 +1,6 @@
 /*
  * Copyright 2014 Rik van der Kleij
-
+ *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
@@ -32,12 +32,12 @@ class HaskellCompletionContributor extends CompletionContributor {
   extend(CompletionType.BASIC, PlatformPatterns.psiElement(), new CompletionProvider[CompletionParameters] {
     def addCompletions(parameters: CompletionParameters, context: ProcessingContext, result: CompletionResultSet) {
       ReservedIdNames.foreach(k => result.addElement(LookupElementBuilder.create(k).
-          withIcon(HaskellIcons.HASKELL_SMALL_LOGO).withTypeText("Reserved id")))
+          withIcon(HaskellIcons.HaskellSmallLogo).withTypeText("Reserved id")))
 
       val position = parameters.getPosition
       val project = position.getProject
       val browseInfo = GhcMod.browseInfo(project, getImportedModuleNames(parameters.getOriginalFile))
-      browseInfo.foreach(bi => result.addElement(LookupElementBuilder.create(bi.name).withTypeText(bi.typeSignature).withTailText(bi.moduleName, true).withIcon(HaskellIcons.HASKELL_SMALL_LOGO)))
+      browseInfo.foreach(bi => result.addElement(LookupElementBuilder.create(bi.name).withTypeText(bi.typeSignature).withTailText(bi.moduleName, true).withIcon(HaskellIcons.HaskellSmallLogo)))
     }
   })
 

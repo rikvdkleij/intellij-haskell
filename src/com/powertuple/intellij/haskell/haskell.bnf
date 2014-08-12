@@ -1,7 +1,6 @@
 // Derived from http://www.haskell.org/onlinereport/haskell2010/haskellch10.html
 {
   parserClass="com.powertuple.intellij.haskell.parser.HaskellParser"
-  parserUtilClass="com.powertuple.intellij.haskell.HaskellParserUtil"
 
   implements="com.powertuple.intellij.haskell.psi.HaskellCompositeElement"
   extends="com.powertuple.intellij.haskell.psi.impl.HaskellCompositeElementImpl"

@@ -88,7 +88,7 @@ private class HaskellStructureViewTreeElement(val element: PsiElement, val typeS
     }
   }
 
-  override def getIcon(unused: Boolean): Icon = HaskellIcons.HASKELL_SMALL_LOGO
+  override def getIcon(unused: Boolean): Icon = HaskellIcons.HaskellSmallLogo
 
   override def getLocationString: String = typeSignature
 }

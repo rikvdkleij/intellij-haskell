@@ -1,6 +1,6 @@
 /*
  * Copyright 2014 Rik van der Kleij
-
+ *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
@@ -14,24 +14,21 @@
  * limitations under the License.
  */
 
-package com.powertuple.intellij.haskell;
+package com.powertuple.intellij.haskell
 
-import com.intellij.lang.Language;
+import com.intellij.lang.Language
 
-public class HaskellLanguage extends Language {
-    public static final HaskellLanguage INSTANCE = new HaskellLanguage();
+object HaskellLanguage {
+  final val Instance: HaskellLanguage = new HaskellLanguage
+}
 
-    public HaskellLanguage() {
-        super("Haskell");
-    }
+class HaskellLanguage extends Language("Haskell") {
 
-    @Override
-    public String getDisplayName() {
-        return "Haskell language";
-    }
+  override def getDisplayName: String = {
+    "Haskell language"
+  }
 
-    @Override
-    public boolean isCaseSensitive() {
-        return true;
-    }
+  override def isCaseSensitive: Boolean = {
+    true
+  }
 }

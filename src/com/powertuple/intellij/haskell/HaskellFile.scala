@@ -1,6 +1,6 @@
 /*
  * Copyright 2014 Rik van der Kleij
-
+ *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
@@ -19,13 +19,14 @@ package com.powertuple.intellij.haskell
 import javax.swing._
 
 import com.intellij.extapi.psi.PsiFileBase
-import com.intellij.openapi.fileTypes.{FileTypeConsumer, FileTypeFactory, FileType, LanguageFileType}
+import com.intellij.openapi.fileTypes.{FileType, FileTypeConsumer, FileTypeFactory, LanguageFileType}
 import com.intellij.psi.FileViewProvider
 import org.jetbrains.annotations.NotNull
 
-class HaskellFile(viewProvider: FileViewProvider) extends PsiFileBase(viewProvider, HaskellLanguage.INSTANCE) {
+class HaskellFile(viewProvider: FileViewProvider) extends PsiFileBase(viewProvider, HaskellLanguage.Instance) {
 
-  @NotNull def getFileType: FileType = {
+  @NotNull
+  def getFileType: FileType = {
     HaskellFileType.INSTANCE
   }
 
@@ -42,7 +43,7 @@ object HaskellFileType {
   final val INSTANCE: HaskellFileType = new HaskellFileType
 }
 
-class HaskellFileType extends LanguageFileType(HaskellLanguage.INSTANCE) {
+class HaskellFileType extends LanguageFileType(HaskellLanguage.Instance) {
 
   def getName: String = {
     "Haskell file"
@@ -57,7 +58,7 @@ class HaskellFileType extends LanguageFileType(HaskellLanguage.INSTANCE) {
   }
 
   def getIcon: Icon = {
-    HaskellIcons.HASKELL_SMALL_LOGO
+    HaskellIcons.HaskellSmallLogo
   }
 }
 
@@ -65,22 +66,22 @@ object LiterateHaskellFileType {
   final val INSTANCE: LiterateHaskellFileType = new LiterateHaskellFileType
 }
 
-class LiterateHaskellFileType extends LanguageFileType(HaskellLanguage.INSTANCE) {
+class LiterateHaskellFileType extends LanguageFileType(HaskellLanguage.Instance) {
 
   def getName: String = {
-     "Literate Haskell file"
+    "Literate Haskell file"
   }
 
   def getDescription: String = {
-     "Literate Haskell language file"
+    "Literate Haskell language file"
   }
 
   def getDefaultExtension: String = {
-     "lhs"
+    "lhs"
   }
 
   def getIcon: Icon = {
-     HaskellIcons.HASKELL_SMALL_LOGO
+    HaskellIcons.HaskellSmallLogo
   }
 }
 

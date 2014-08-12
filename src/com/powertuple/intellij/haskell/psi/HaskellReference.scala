@@ -1,6 +1,6 @@
 /*
  * Copyright 2014 Rik van der Kleij
-
+ *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
@@ -22,7 +22,7 @@ import com.intellij.openapi.vfs.LocalFileSystem
 import com.intellij.psi._
 import com.intellij.psi.util.{PsiTreeUtil, PsiUtilCore}
 import com.powertuple.intellij.haskell.external.{ExpressionInfo, GhcModiManager, ProjectExpressionInfo}
-import com.powertuple.intellij.haskell.util.{FileUtil, LineColumnPosition, ProjectUtil}
+import com.powertuple.intellij.haskell.util.{FileUtil, LineColumnPosition}
 import com.powertuple.intellij.haskell.{HaskellFile, HaskellIcons}
 
 import scala.collection.JavaConversions._
@@ -32,24 +32,19 @@ class HaskellReference(element: HaskellNamedElement, textRange: TextRange) exten
   override def resolve: PsiElement = {
     val psiFile = myElement.getContainingFile
 
-    // Skip library files because ghc-mod(i) will not support them.
-    if (!ProjectUtil.isProjectFile(psiFile)) {
-      return null
-    }
-
     FileUtil.saveAllFiles()
 
     val expression = myElement.getText.substring(textRange.getStartOffset, textRange.getEndOffset)
 
     (for {
+      typeSignature <- findDeclarationsFor(psiFile.asInstanceOf[HaskellFile], expression)
+    } yield typeSignature).orElse(for {
       expressionInfo <- getExpressionInfo(psiFile, expression)
-      haskellFile <- Option(PsiManager.getInstance(myElement.getProject).
-          findFile(LocalFileSystem.getInstance().findFileByPath(expressionInfo.filePath)).asInstanceOf[HaskellFile])
-      typeSignature <- findTypeSignaturesFor(haskellFile, expression)
+      haskellFile <- findFile(expressionInfo.filePath)
+      typeSignature <- findDeclarationsFor(haskellFile, expression)
     } yield typeSignature).orElse(for {
       expressionInfo <- getProjectExpressionInfo(getExpressionInfo(psiFile, expression))
-      haskellFile <- Option(PsiManager.getInstance(myElement.getProject).
-          findFile(LocalFileSystem.getInstance().findFileByPath(expressionInfo.filePath)).asInstanceOf[HaskellFile])
+      haskellFile <- findFile(expressionInfo.filePath)
       startOffset <- LineColumnPosition.getOffset(haskellFile, LineColumnPosition(expressionInfo.lineNr, expressionInfo.colNr))
     } yield PsiUtilCore.getElementAtOffset(haskellFile, startOffset)).orNull
   }
@@ -64,12 +59,16 @@ class HaskellReference(element: HaskellNamedElement, textRange: TextRange) exten
     }.flatten.asInstanceOf[Array[AnyRef]]
   }
 
+  private def findFile(filePath: String): Option[HaskellFile] = {
+    Option(PsiManager.getInstance(myElement.getProject).findFile(LocalFileSystem.getInstance().findFileByPath(filePath)).asInstanceOf[HaskellFile])
+  }
+
   private def createLookupElement(declarationElement: HaskellDeclarationElement) = {
-    LookupElementBuilder.create(declarationElement.getIdentifier).withTypeText(declarationElement.getText).withIcon(HaskellIcons.HASKELL_SMALL_LOGO)
+    LookupElementBuilder.create(declarationElement.getIdentifier).withTypeText(declarationElement.getText).withIcon(HaskellIcons.HaskellSmallLogo)
   }
 
   private def createLookupElement(constr: HaskellConstr) = {
-    LookupElementBuilder.create(constr.getIdentifier).withTypeText(constr.getText).withIcon(HaskellIcons.HASKELL_SMALL_LOGO)
+    LookupElementBuilder.create(constr.getIdentifier).withTypeText(constr.getText).withIcon(HaskellIcons.HaskellSmallLogo)
   }
 
   private def getProjectExpressionInfo(expressionInfo: Option[ExpressionInfo]) = {
@@ -79,8 +78,8 @@ class HaskellReference(element: HaskellNamedElement, textRange: TextRange) exten
     }
   }
 
-  private def findTypeSignaturesFor(haskellFile: HaskellFile, expression: String): Option[HaskellNamedElement] = {
-    Option(PsiTreeUtil.getChildrenOfType(haskellFile, classOf[HaskellTypeSignature])) match {
+  private def findDeclarationsFor(haskellFile: HaskellFile, expression: String): Option[HaskellNamedElement] = {
+    Option(PsiTreeUtil.getChildrenOfType(haskellFile, classOf[HaskellDeclarationElement])) match {
       case Some(typeSignatures) => typeSignatures.find(v => v.getIdentifier == expression).map(_.getIdentifierElement)
       case _ => None
     }

@@ -1,6 +1,6 @@
 /*
  * Copyright 2014 Rik van der Kleij
-
+ *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
@@ -37,7 +37,7 @@ public class HaskellFormattingModelBuilder implements FormattingModelBuilder {
     @NotNull
     @Override
     public FormattingModel createModel(PsiElement element, CodeStyleSettings settings) {
-        CommonCodeStyleSettings commonSettings = settings.getCommonSettings(HaskellLanguage.INSTANCE);
+        CommonCodeStyleSettings commonSettings = settings.getCommonSettings(HaskellLanguage.Instance());
         HaskellCodeStyleSettings haskellSettings = settings.getCustomSettings(HaskellCodeStyleSettings.class);
         SpacingBuilder spacingBuilder = createSpacingBuilder(commonSettings, haskellSettings);
         HaskellFormattingBlock block = new HaskellFormattingBlock(element.getNode(), commonSettings, haskellSettings, spacingBuilder, Wrap.createWrap(WrapType.NONE, true), 0, 0, null);
@@ -45,7 +45,7 @@ public class HaskellFormattingModelBuilder implements FormattingModelBuilder {
     }
 
     private static SpacingBuilder createSpacingBuilder(CommonCodeStyleSettings settings, HaskellCodeStyleSettings haskellCodeStyleSettings) {
-        return new SpacingBuilder(settings.getRootSettings(), HaskellLanguage.INSTANCE)
+        return new SpacingBuilder(settings.getRootSettings(), HaskellLanguage.Instance())
                 .before(HS_COMMA).spaceIf(settings.SPACE_BEFORE_COMMA)
                 .after(HS_COMMA).spaceIf(settings.SPACE_AFTER_COMMA)
                 .before(HS_LEFT_PAREN).spaces(1)
@@ -54,7 +54,7 @@ public class HaskellFormattingModelBuilder implements FormattingModelBuilder {
                 .before(HS_LEFT_BRACKET).spaces(1)
                 .after(HS_LEFT_BRACKET).spaces(0)
                 .before(HS_RIGHT_BRACKET).spaces(0)
-                .around(HaskellParserDefinition.RESERVED_IDS).spaces(1)
+                .around(HaskellParserDefinition.RESERVED_IDS()).spaces(1)
                 .around(TokenSet.create(HS_COLON_COLON, HS_DOUBLE_RIGHT_ARROW, HS_EQUAL, HS_LEFT_ARROW, HS_RIGHT_ARROW)).spaces(1)
                 .after(HS_VERTICAL_BAR).spaces(1)
                 .after(HS_CON).spaces(1);

@@ -1,6 +1,6 @@
 /*
  * Copyright 2014 Rik van der Kleij
-
+ *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
@@ -13,14 +13,13 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+package com.powertuple.intellij.haskell
 
-package com.powertuple.intellij.haskell;
+import javax.swing._
 
-import com.intellij.openapi.util.IconLoader;
+import com.intellij.openapi.util.IconLoader
 
-import javax.swing.*;
-
-public interface HaskellIcons {
-    Icon HASKELL_SMALL_LOGO = IconLoader.getIcon("/icons/haskell-small-logo.png");
-    Icon HASKELL_LOGO = IconLoader.getIcon("/icons/haskell_24x24.png");
+object HaskellIcons {
+  final val HaskellSmallLogo: Icon = IconLoader.getIcon("/icons/haskell-small-logo.png")
+  final val HaskellLogo: Icon = IconLoader.getIcon("/icons/haskell_24x24.png")
 }
