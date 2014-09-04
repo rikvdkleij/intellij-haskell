@@ -1,6 +1,6 @@
 /*
  * Copyright 2014 Rik van der Kleij
-
+ *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package com.powertuple.intellij.haskell
+package com.powertuple.intellij.haskell.navigate
 
 import javax.swing.Icon
 
@@ -27,6 +27,7 @@ import com.intellij.pom.Navigatable
 import com.intellij.psi.util.PsiTreeUtil
 import com.intellij.psi.{PsiElement, PsiFile}
 import com.powertuple.intellij.haskell.psi.HaskellDeclarationElement
+import com.powertuple.intellij.haskell.{HaskellFile, HaskellIcons}
 
 class HaskellStructureViewFactory extends PsiStructureViewFactory {
   def getStructureViewBuilder(psiFile: PsiFile): StructureViewBuilder = {
@@ -75,20 +76,20 @@ private class HaskellStructureViewTreeElement(val element: PsiElement, val typeS
     import scala.collection.JavaConversions._
 
     (element match {
-      case hf: HaskellFile => PsiTreeUtil.findChildrenOfAnyType(element, classOf[HaskellDeclarationElement]).toSeq
+      case hf: HaskellFile => PsiTreeUtil.findChildrenOfType(element, classOf[HaskellDeclarationElement]).toSeq
       case _ => Seq()
     }).map(declarationElement => new HaskellStructureViewTreeElement(declarationElement, declarationElement.getText)).toArray
   }
 
   override def getPresentableText: String = {
     element match {
-      case hv: HaskellDeclarationElement => hv.getIdentifier
+      case hde: HaskellDeclarationElement => hde.getIdentifierElement.getName
       case pf: PsiFile => pf.getName
       case _ => null
     }
   }
 
-  override def getIcon(unused: Boolean): Icon = HaskellIcons.HaskellSmallLogo
+  override def getIcon(unused: Boolean): Icon = HaskellIcons.NewType
 
-  override def getLocationString: String = typeSignature
+  override def getLocationString: String = null
 }

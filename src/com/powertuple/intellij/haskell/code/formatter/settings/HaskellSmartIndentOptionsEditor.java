@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package com.powertuple.intellij.haskell.formatter.settings;
+package com.powertuple.intellij.haskell.code.formatter.settings;
 
 import com.intellij.application.options.SmartIndentOptionsEditor;
 import com.intellij.psi.codeStyle.CodeStyleSettings;

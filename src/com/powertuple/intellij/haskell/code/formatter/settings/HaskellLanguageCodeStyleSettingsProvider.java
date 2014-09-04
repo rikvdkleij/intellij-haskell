@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package com.powertuple.intellij.haskell.formatter.settings;
+package com.powertuple.intellij.haskell.code.formatter.settings;
 
 import com.intellij.application.options.IndentOptionsEditor;
 import com.intellij.lang.Language;
@@ -29,7 +29,7 @@ public class HaskellLanguageCodeStyleSettingsProvider extends LanguageCodeStyleS
     @NotNull
     @Override
     public Language getLanguage() {
-        return HaskellLanguage.Instance();
+        return HaskellLanguage.Instance;
     }
 
     @Override

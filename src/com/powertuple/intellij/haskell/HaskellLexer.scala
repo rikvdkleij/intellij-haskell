@@ -17,6 +17,4 @@ package com.powertuple.intellij.haskell
 
 import com.intellij.lexer.FlexAdapter
 
-class HaskellLexer extends FlexAdapter(new _HaskellLexer)
-
 class HaskellLexerAdapter extends FlexAdapter(new _HaskellLexer)

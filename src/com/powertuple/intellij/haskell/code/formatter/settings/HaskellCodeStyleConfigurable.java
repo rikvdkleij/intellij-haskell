@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package com.powertuple.intellij.haskell.formatter.settings;
+package com.powertuple.intellij.haskell.code.formatter.settings;
 
 import com.intellij.application.options.CodeStyleAbstractConfigurable;
 import com.intellij.application.options.CodeStyleAbstractPanel;
@@ -40,7 +40,7 @@ public class HaskellCodeStyleConfigurable extends CodeStyleAbstractConfigurable 
 
     private static class HaskellCodeStyleMainPanel extends TabbedLanguageCodeStylePanel {
         private HaskellCodeStyleMainPanel(CodeStyleSettings currentSettings, CodeStyleSettings settings) {
-            super(HaskellLanguage.Instance(), currentSettings, settings);
+            super(HaskellLanguage.Instance, currentSettings, settings);
         }
     }
 }

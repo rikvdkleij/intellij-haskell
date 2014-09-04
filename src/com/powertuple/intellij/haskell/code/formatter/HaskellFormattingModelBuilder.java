@@ -14,9 +14,12 @@
  * limitations under the License.
  */
 
-package com.powertuple.intellij.haskell.formatter;
+package com.powertuple.intellij.haskell.code.formatter;
 
-import com.intellij.formatting.*;
+import com.intellij.formatting.FormattingModel;
+import com.intellij.formatting.FormattingModelBuilder;
+import com.intellij.formatting.FormattingModelProvider;
+import com.intellij.formatting.SpacingBuilder;
 import com.intellij.lang.ASTNode;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.PsiElement;
@@ -26,7 +29,7 @@ import com.intellij.psi.codeStyle.CommonCodeStyleSettings;
 import com.intellij.psi.tree.TokenSet;
 import com.powertuple.intellij.haskell.HaskellLanguage;
 import com.powertuple.intellij.haskell.HaskellParserDefinition;
-import com.powertuple.intellij.haskell.formatter.settings.HaskellCodeStyleSettings;
+import com.powertuple.intellij.haskell.code.formatter.settings.HaskellCodeStyleSettings;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -37,15 +40,16 @@ public class HaskellFormattingModelBuilder implements FormattingModelBuilder {
     @NotNull
     @Override
     public FormattingModel createModel(PsiElement element, CodeStyleSettings settings) {
-        CommonCodeStyleSettings commonSettings = settings.getCommonSettings(HaskellLanguage.Instance());
+        CommonCodeStyleSettings commonSettings = settings.getCommonSettings(HaskellLanguage.Instance);
         HaskellCodeStyleSettings haskellSettings = settings.getCustomSettings(HaskellCodeStyleSettings.class);
         SpacingBuilder spacingBuilder = createSpacingBuilder(commonSettings, haskellSettings);
-        HaskellFormattingBlock block = new HaskellFormattingBlock(element.getNode(), commonSettings, haskellSettings, spacingBuilder, Wrap.createWrap(WrapType.NONE, true), 0, 0, null);
+//        HaskellFormattingBlock block = new HaskellFormattingBlock(element.getNode(), commonSettings, haskellSettings, spacingBuilder, Wrap.createWrap(WrapType.NONE, true), 0, 0, null);
+        NewHaskellFormattingBlock block = new NewHaskellFormattingBlock(element.getNode(), spacingBuilder, null);
         return FormattingModelProvider.createFormattingModelForPsiFile(element.getContainingFile(), block, settings);
     }
 
     private static SpacingBuilder createSpacingBuilder(CommonCodeStyleSettings settings, HaskellCodeStyleSettings haskellCodeStyleSettings) {
-        return new SpacingBuilder(settings.getRootSettings(), HaskellLanguage.Instance())
+        return new SpacingBuilder(settings.getRootSettings(), HaskellLanguage.Instance)
                 .before(HS_COMMA).spaceIf(settings.SPACE_BEFORE_COMMA)
                 .after(HS_COMMA).spaceIf(settings.SPACE_AFTER_COMMA)
                 .before(HS_LEFT_PAREN).spaces(1)
@@ -57,7 +61,7 @@ public class HaskellFormattingModelBuilder implements FormattingModelBuilder {
                 .around(HaskellParserDefinition.RESERVED_IDS()).spaces(1)
                 .around(TokenSet.create(HS_COLON_COLON, HS_DOUBLE_RIGHT_ARROW, HS_EQUAL, HS_LEFT_ARROW, HS_RIGHT_ARROW)).spaces(1)
                 .after(HS_VERTICAL_BAR).spaces(1)
-                .after(HS_CON).spaces(1);
+                .after(HS_QCON).spaces(1);
     }
 
     @Nullable

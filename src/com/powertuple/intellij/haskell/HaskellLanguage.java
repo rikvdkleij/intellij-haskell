@@ -14,21 +14,25 @@
  * limitations under the License.
  */
 
-package com.powertuple.intellij.haskell
+package com.powertuple.intellij.haskell;
 
-import com.intellij.lang.Language
+import com.intellij.lang.Language;
 
-object HaskellLanguage {
-  final val Instance: HaskellLanguage = new HaskellLanguage
-}
+public class HaskellLanguage extends Language {
 
-class HaskellLanguage extends Language("Haskell") {
+    public static final HaskellLanguage Instance = new HaskellLanguage();
 
-  override def getDisplayName: String = {
-    "Haskell language"
-  }
+    protected HaskellLanguage() {
+        super("Haskell");
+    }
 
-  override def isCaseSensitive: Boolean = {
-    true
-  }
+    @Override
+    public String getDisplayName() {
+        return "Haskell language";
+    }
+
+    @Override
+    public boolean isCaseSensitive() {
+        return true;
+    }
 }

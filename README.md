@@ -20,13 +20,14 @@ and expects that the Cabal init/install/build is done on command-line.
 - Resolving references of variables (also to library code if library source code is added to project);
 - Code completion by resolving references;
 - Renaming variables (which first shows preview so refactoring scope can be adjusted);
-- View type info;
+- View type info from (selected) expression;
+- View expression info;
 - View quick documentation;
 - View quick definition;
 - Code formatting (works reasonably but did not test it with all kinds of code; not finished yet, has to be fine-tuned);
 - Structure view;
-- Navigate to declaration (called Class in IntelliJ menu);
-- Navigate to definition (called Symbol in IntelliJ menu);
+- Navigate to declaration (called `Class` in IntelliJ menu);
+- Navigate to `Symbol`;
 - Code completion by looking to import declarations(`hiding` and `qualified` are not supported yet);
 
 A lot of features are with the help of ghc-mod(i) and haskell-docs!!
@@ -35,8 +36,10 @@ A lot of features are with the help of ghc-mod(i) and haskell-docs!!
 - Inspection by hlint;
 - Integration of stylish-haskell; 
 - Integration of hsimport;
-- Smart completion if that is achievable :-) ;
+- Smart completion if that is achievable :-)
 - Hole driven development support;
+- Some quick-fixes;
+- Setting scope while refactoring;
 
 # Getting started: 
 - Cabal install ghc-mod and haskell-docs;
@@ -46,7 +49,10 @@ A lot of features are with the help of ghc-mod(i) and haskell-docs!!
 - After project is installed in sandbox, create Haskell project in IntelliJ by using `File`/`Open` from IntelliJ menu;
 - Select `No SDK` in Project Setting;
 - Select in `Modules Settings` which folders to exclude (like .cabal-sandbox and dist) and which folders are `Source` and `Test` (normally src and test).
-- To get nice navigation features, add libraries and Prelude source root directories to project in `Project Settings`/`Libraries`. `cabal get` is useful for getting source code of package;
+- To get nice navigation features, add libraries, Prelude(base and integer-gmp packages) source root directories to project in `Project Settings`/`Libraries`. `cabal get` is useful for getting source code of package;
 
-# Note
+# Remarks
 - IntelliJ has a nice terminal plugin, useful for executing the Cabal commands;
+- ghc-mod can not help in library files and if Haskell source file contains not completely valid Haskell (e.g. while typing). In that case I try to solve request by using AST-tree (IntelliJ calls it PSI-tree). 
+- Because of ghc-mod issue #275 ghc-mod is used (instead of ghc-modi) for checking syntax of Haskell file;
+- Because of ghc-mod issue #265 ghc-mod is used (instead of ghc-modi) for getting symbols of module using `browse` command;

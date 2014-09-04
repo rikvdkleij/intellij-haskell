@@ -1,6 +1,6 @@
 /*
  * Copyright 2014 Rik van der Kleij
-
+ *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package com.powertuple.intellij.haskell.actions
+package com.powertuple.intellij.haskell.view
 
 import com.intellij.ide.actions.{CreateFileFromTemplateAction, CreateFileFromTemplateDialog}
 import com.intellij.openapi.project.{DumbAware, Project}

@@ -1,3 +1,19 @@
+/*
+ * Copyright 2014 Rik van der Kleij
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
 package com.powertuple.intellij.haskell.util
 
 import java.io.{DataInput, DataOutput}
@@ -63,13 +79,13 @@ object HaskellFileIndex {
     }
   }
 
-  def getAllNames(project: Project, searchScope: GlobalSearchScope): Seq[String] = {
+  def getAllNames(project: Project, searchScope: GlobalSearchScope): collection.Set[String] = {
     val allKeys: java.util.Set[String] = new THashSet[String]
     FileBasedIndex.getInstance.processAllKeys(HaskellFileIndex, new CommonProcessors.CollectProcessor[String](allKeys), searchScope, null)
-    allKeys.toSeq
+    allKeys
   }
 
-  def getFilesByName(project: Project, name: String, searchScope: GlobalSearchScope): Seq[HaskellFile] = {
+  def getFilesByName(project: Project, name: String, searchScope: GlobalSearchScope): Iterable[HaskellFile] = {
     getByName(project, name, searchScope)
   }
 
@@ -92,10 +108,11 @@ object HaskellFileIndex {
   }
 
   private def getFilesForType(fileType: FileType, project: Project, searchScope: GlobalSearchScope) = {
-    FileBasedIndex.getInstance.getContainingFiles(FileTypeIndex.NAME, fileType, searchScope).toStream.flatMap(convertToHaskellFile(_, PsiManager.getInstance(project)))
+    val psiManager = PsiManager.getInstance(project)
+    FileBasedIndex.getInstance.getContainingFiles(FileTypeIndex.NAME, fileType, searchScope).flatMap(convertToHaskellFile(_, psiManager))
   }
 
-  private def getByName(project: Project, name: String, searchScope: GlobalSearchScope): Seq[HaskellFile] = {
+  private def getByName(project: Project, name: String, searchScope: GlobalSearchScope): Iterable[HaskellFile] = {
     val psiManager = PsiManager.getInstance(project)
     val virtualFiles = getVirtualFilesByName(project, name, searchScope)
 
@@ -114,8 +131,8 @@ object HaskellFileIndex {
     }
   }
 
-  private def getVirtualFilesByName(project: Project, name: String, searchScope: GlobalSearchScope): Seq[VirtualFile] = {
-    FileBasedIndex.getInstance.getContainingFiles(HaskellFileIndex, name, searchScope).toSeq
+  private def getVirtualFilesByName(project: Project, name: String, searchScope: GlobalSearchScope) = {
+    FileBasedIndex.getInstance.getContainingFiles(HaskellFileIndex, name, searchScope)
   }
 }
 

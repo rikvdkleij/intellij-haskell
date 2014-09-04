@@ -1,6 +1,6 @@
 /*
  * Copyright 2014 Rik van der Kleij
-
+ *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
@@ -39,12 +39,12 @@ object FileUtil {
   }
 }
 
-case class LineColumnPosition(lineNr: Int, colunmNr: Int) extends Ordered[LineColumnPosition] {
+case class LineColumnPosition(lineNr: Int, columnNr: Int) extends Ordered[LineColumnPosition] {
 
   def compare(that: LineColumnPosition): Int = {
     val lineNrCompare = this.lineNr compare that.lineNr
     if (lineNrCompare == 0) {
-      this.colunmNr compare that.colunmNr
+      this.columnNr compare that.columnNr
     } else {
       lineNrCompare
     }
@@ -67,7 +67,8 @@ object LineColumnPosition {
     for {
       file <- Option(psiFile.getVirtualFile)
       doc <- Option(fdm.getDocument(file))
-      startOffsetLine = doc.getLineStartOffset(lineCol.lineNr - 1)
-    } yield startOffsetLine + lineCol.colunmNr - 1
+      val lineIndex = (if (lineCol.lineNr > doc.getLineCount) doc.getLineCount else lineCol.lineNr) - 1
+      startOffsetLine = doc.getLineStartOffset(lineIndex)
+    } yield startOffsetLine + lineCol.columnNr - 1
   }
 }

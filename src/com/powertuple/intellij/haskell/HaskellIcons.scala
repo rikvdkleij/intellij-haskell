@@ -13,13 +13,22 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.powertuple.intellij.haskell
 
-import javax.swing._
+package com.powertuple.intellij.haskell
 
 import com.intellij.openapi.util.IconLoader
 
 object HaskellIcons {
-  final val HaskellSmallLogo: Icon = IconLoader.getIcon("/icons/haskell-small-logo.png")
-  final val HaskellLogo: Icon = IconLoader.getIcon("/icons/haskell_24x24.png")
+  final val HaskellSmallLogo = IconLoader.getIcon("/icons/haskell-small-logo.png")
+  final val HaskellLogo = IconLoader.getIcon("/icons/haskell_24x24.png")
+
+  final val Data = IconLoader.getIcon("/icons/data.png")
+  final val NewType = IconLoader.getIcon("/icons/newtype.png")
+  final val Type = IconLoader.getIcon("/icons/type.png")
+  final val TypeAlias = IconLoader.getIcon("/icons/type.png")
+  final val Class = IconLoader.getIcon("/icons/class.png")
+  final val TypeFamily = IconLoader.getIcon("/icons/type_family.png")
+  final val TypeSignature = IconLoader.getIcon("/icons/type_signature.png")
+  final val Instance = IconLoader.getIcon("/icons/instance.png")
+  final val ForeignImport = IconLoader.getIcon("/icons/foreign_import.png")
 }

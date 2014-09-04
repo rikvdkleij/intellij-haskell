@@ -1,7 +1,7 @@
 package com.powertuple.intellij.haskell.psi
 
-trait HaskellDeclarationElement extends HaskellCompositeElement {
-  def getIdentifier: String
+import com.intellij.navigation.NavigationItem
 
+trait HaskellDeclarationElement extends HaskellCompositeElement with NavigationItem {
   def getIdentifierElement: HaskellNamedElement
 }

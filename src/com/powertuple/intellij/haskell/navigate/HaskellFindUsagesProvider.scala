@@ -1,6 +1,6 @@
 /*
  * Copyright 2014 Rik van der Kleij
-
+ *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
@@ -14,14 +14,15 @@
  * limitations under the License.
  */
 
-package com.powertuple.intellij.haskell
+package com.powertuple.intellij.haskell.navigate
 
 import com.intellij.lang.cacheBuilder.{WordOccurrence, WordsScanner}
 import com.intellij.lang.findUsages.FindUsagesProvider
 import com.intellij.psi.PsiElement
 import com.intellij.util.Processor
+import com.powertuple.intellij.haskell.HaskellLexer
 import com.powertuple.intellij.haskell.psi.HaskellTypes._
-import com.powertuple.intellij.haskell.psi.{HaskellCon, HaskellNamedElement, HaskellVar}
+import com.powertuple.intellij.haskell.psi._
 
 import scala.annotation.tailrec
 
@@ -41,7 +42,7 @@ class HaskellFindUsagesProvider extends FindUsagesProvider {
   private def processTokens(lexer: HaskellLexer, fileText: CharSequence, processor: Processor[WordOccurrence]) {
     val tokenType = lexer.getTokenType
     if (tokenType != null) {
-      if (tokenType == HS_VAR_ID || tokenType == HS_CON_ID) {
+      if (tokenType == HS_QVAR_ID || tokenType == HS_QCON_ID || tokenType == HS_QVAROP_ID || tokenType == HS_QCONOP_ID) {
         val o: WordOccurrence = new WordOccurrence(fileText, lexer.getTokenStart, lexer.getTokenEnd, WordOccurrence.Kind.CODE)
         processor.process(o)
       }
@@ -52,9 +53,11 @@ class HaskellFindUsagesProvider extends FindUsagesProvider {
 
   override def getType(psiElement: PsiElement): String = {
     psiElement match {
-      case _: HaskellVar => "variable"
-      case _: HaskellCon => "constructor"
-      case _ => "Not supported"
+      case _: HaskellQvar => "variable"
+      case _: HaskellQcon => "constructor"
+      case _: HaskellQvarop => "variable operator"
+      case _: HaskellQconop => "constructor operator"
+      case _ => psiElement.getText
     }
   }
 
@@ -70,14 +73,14 @@ class HaskellFindUsagesProvider extends FindUsagesProvider {
 
   override def canFindUsagesFor(psiElement: PsiElement): Boolean = {
     psiElement match {
-      case _: HaskellNamedElement => true
+      case ne : HaskellNamedElement => true
       case _ => false
     }
   }
 
   override def getNodeText(psiElement: PsiElement, useFullName: Boolean): String = {
     val text = psiElement match {
-      case hv: HaskellNamedElement => hv.getText
+      case hv: HaskellNamedElement => hv.getName
       case _ => psiElement.getText
     }
     Option(text) getOrElse "anonymous"

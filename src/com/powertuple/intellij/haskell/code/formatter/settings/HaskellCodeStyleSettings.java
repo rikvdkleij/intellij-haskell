@@ -14,16 +14,16 @@
  * limitations under the License.
  */
 
-package com.powertuple.intellij.haskell.util
+package com.powertuple.intellij.haskell.code.formatter.settings;
 
-import com.intellij.psi.PsiFile
-import com.intellij.psi.search.GlobalSearchScope
+import com.intellij.psi.codeStyle.CodeStyleSettings;
+import com.intellij.psi.codeStyle.CustomCodeStyleSettings;
 
-object ProjectUtil {
+public class HaskellCodeStyleSettings extends CustomCodeStyleSettings {
+    protected HaskellCodeStyleSettings(CodeStyleSettings settings) {
+        super("HaskellCodeStyleSettings", settings);
+    }
 
-  def isProjectFile(psiFile: PsiFile): Boolean = {
-    val project = psiFile.getProject
-    val files = HaskellFileIndex.getFilesByName(project, psiFile.getName.split('.')(0), GlobalSearchScope.projectScope(project))
-    files.nonEmpty
-  }
+    public boolean INDENT_WHERE_WITH_TAB_SIZE = true;
+    public boolean INDENT_DO_WITH_TAB_SIZE = true;
 }

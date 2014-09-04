@@ -1,6 +1,6 @@
 /*
  * Copyright 2014 Rik van der Kleij
-
+ *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
@@ -18,22 +18,36 @@ package com.powertuple.intellij.haskell.psi
 
 import com.intellij.openapi.project.Project
 import com.intellij.psi.PsiFileFactory
-import com.powertuple.intellij.haskell.{HaskellFile, HaskellFileType}
+import com.intellij.psi.util.PsiTreeUtil
+import com.powertuple.intellij.haskell.{HaskellFile, HaskellLanguage}
 
 object HaskellElementFactory {
-
-  def createVar(project: Project, name: String): HaskellVar = {
-    val haskellFile = createFile(project, name)
-    haskellFile.getFirstChild.asInstanceOf[HaskellVar]
+  def createQvar(project: Project, name: String): HaskellQvar = {
+    val haskellFile = createFileFromText(project, name)
+    PsiTreeUtil.findChildOfType(haskellFile, classOf[HaskellQvar])
   }
 
-  def createCon(project: Project, name: String): HaskellCon = {
-    val haskellFile = createFile(project, name)
-    haskellFile.getFirstChild.asInstanceOf[HaskellCon]
+  def createQcon(project: Project, name: String): HaskellQcon = {
+    val haskellFile = createFileFromText(project, name)
+    haskellFile.getFirstChild.asInstanceOf[HaskellQcon]
   }
 
-  private def createFile(project: Project, text: String): HaskellFile = {
-    val name = "dummy.hs"
-    PsiFileFactory.getInstance(project).createFileFromText(name, HaskellFileType.INSTANCE, text).asInstanceOf[HaskellFile]
+  def createQvarop(project: Project, name: String): HaskellQvarop = {
+    val haskellFile = createFileFromText(project, name)
+    haskellFile.getFirstChild.asInstanceOf[HaskellQvarop]
+  }
+
+  def createQconop(project: Project, name: String) = {
+    val haskellFile = createFileFromText(project, name)
+    haskellFile.getFirstChild.asInstanceOf[HaskellQconop]
+  }
+
+  def createDeclarationFromText(project: Project, text: String): HaskellDeclarationElement = {
+    val fileFromText: HaskellFile = createFileFromText(project, text)
+    PsiTreeUtil.findChildOfType(fileFromText, classOf[HaskellDeclarationElement])
+  }
+
+  private def createFileFromText(project: Project, text: String): HaskellFile = {
+    PsiFileFactory.getInstance(project).createFileFromText("a.hs", HaskellLanguage.Instance, text).asInstanceOf[HaskellFile]
   }
 }

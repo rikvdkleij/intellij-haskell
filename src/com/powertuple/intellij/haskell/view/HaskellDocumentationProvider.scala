@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package com.powertuple.intellij.haskell
+package com.powertuple.intellij.haskell.view
 
 import java.util.regex.Pattern
 
@@ -22,7 +22,8 @@ import com.intellij.lang.documentation.AbstractDocumentationProvider
 import com.intellij.openapi.project.Project
 import com.intellij.psi.PsiElement
 import com.intellij.psi.util.PsiTreeUtil
-import com.powertuple.intellij.haskell.external.{ExternalProcess, GhcModiManager, LibraryExpressionInfo, ProjectExpressionInfo}
+import com.powertuple.intellij.haskell.HaskellNotificationGroup
+import com.powertuple.intellij.haskell.external._
 import com.powertuple.intellij.haskell.psi.HaskellModuleDeclaration
 import com.powertuple.intellij.haskell.settings.HaskellSettings
 
@@ -43,13 +44,14 @@ class HaskellDocumentationProvider extends AbstractDocumentationProvider {
     val project = psiFile.getProject
     val haskellDocs = HaskellSettings.getInstance().getState.haskellDocsPath
 
-    val expressionInfo = GhcModiManager.findInfoFor(psiFile, expression)
+    val expressionInfo = GhcModiManager.findInfoFor(psiFile, expression).headOption
     val arguments = (expressionInfo, getSandboxPackageDbPath(project)) match {
-      case (Some(lei: LibraryExpressionInfo), Some(dbPath)) => Seq("-g", s"-package-db=$dbPath", s"${lei.module}", expression)
+      case (Some(lei: LibraryExpressionInfo), Some(dbPath)) => Seq("-g", s"-package-db=$dbPath", lei.module, expression)
       case (Some(pei: ProjectExpressionInfo), Some(dbPath)) => Seq("-g", s"-package-db=$dbPath", PsiTreeUtil.findChildOfType(psiFile, classOf[HaskellModuleDeclaration]).getModuleName, expression)
-      case (Some(lei: LibraryExpressionInfo), None) => Seq(s"${lei.module}", expression)
-      case (_, None) => HaskellNotificationGroup.notifyInfo(s"Can not determine haskell-docs argument 'sandbox package-db path' for $expression"); Seq()
-      case (_, _) => HaskellNotificationGroup.notifyInfo(s"Can not determine haskell-docs argument 'module' for $expression"); Seq()
+      case (Some(bei: BuiltInExpressionInfo), _) => Seq("Prelude", expression)
+      case (Some(lei: LibraryExpressionInfo), None) => Seq(lei.module, expression)
+      case (_, None) => HaskellNotificationGroup.notifyInfo(s"Can not determine haskell-docs GHC option `package-db` for $expression"); Seq()
+      case (_, _) => HaskellNotificationGroup.notifyInfo(s"Can not determine haskell-docs arguments <module-name> for $expression"); Seq()
     }
 
     val stdOutputput = ExternalProcess.getProcessOutput(project.getBasePath, haskellDocs, arguments).getStdout

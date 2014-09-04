@@ -1,6 +1,6 @@
 /*
  * Copyright 2014 Rik van der Kleij
-
+ *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package com.powertuple.intellij.haskell.formatter;
+package com.powertuple.intellij.haskell.code.formatter;
 
 import com.intellij.formatting.*;
 import com.intellij.lang.ASTNode;
@@ -25,7 +25,7 @@ import com.intellij.psi.formatter.FormatterUtil;
 import com.intellij.psi.impl.source.tree.FileElement;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.tree.TokenSet;
-import com.powertuple.intellij.haskell.formatter.settings.HaskellCodeStyleSettings;
+import com.powertuple.intellij.haskell.code.formatter.settings.HaskellCodeStyleSettings;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -56,12 +56,15 @@ public class HaskellFormattingBlock implements ASTBlock {
 
     private int tabCounter;
     private int indentCounter;
-    private static final TokenSet RESERVED_ELEMENTS_TO_INDENT = TokenSet.create(HS_VERTICAL_BAR);
+    private static final TokenSet TOP_ELEMENTS = TokenSet.create(HS_MODULE_DECLARATION, HS_IMPORT_DECLARATION,
+            HS_TYPE_DECLARATION , HS_DATA_DECLARATION , HS_NEWTYPE_DECLARATION , HS_CLASS_DECLARATION ,
+                    HS_INSTANCE_DECLARATION , HS_DEFAULT_DECLARATION , HS_FOREIGN_DECLARATION , HS_TYPE_FAMILY_DECLARATION , HS_DERIVING_DECLARATION , HS_DECL);
+    private static final TokenSet RESERVED_ELEMENTS_TO_INDENT = TokenSet.create(HS_VERTICAL_BAR, HS_EQUAL);
     private static final TokenSet RESERVED_IDS_TO_INDENT = TokenSet.create(HS_WHERE, HS_THEN, HS_DO, HS_CASE);
     private static final TokenSet RESERVED_IDS_TO_BACK_INDENT = TokenSet.create(HS_ELSE);
-    private static final TokenSet INDENT_PREV_ELEMENTS = TokenSet.create(HS_DO, HS_WHERE, HS_THEN, HS_ELSE, HS_OF);
-    private static final TokenSet START_DEFINITION_ELEMENTS = TokenSet.create(HS_MODULE , HS_DATA, HS_INSTANCE, HS_CLASS,
-            HS_IMPORT, HS_COMMENT, HS_NCOMMENT);
+    private static final TokenSet INDENT_PREV_ELEMENTS = TokenSet.create(HS_DO, HS_WHERE, HS_THEN, HS_ELSE, HS_OF, HS_EQUAL);
+    private static final TokenSet DECLARATION_ELEMENTS = TokenSet.create(HS_MODULE, HS_DATA, HS_INSTANCE, HS_CLASS,
+            HS_IMPORT, HS_TYPE, HS_NEWTYPE, HS_DEFAULT);
 
     public HaskellFormattingBlock(@NotNull ASTNode node,
                                   @NotNull CommonCodeStyleSettings settings,
@@ -127,7 +130,7 @@ public class HaskellFormattingBlock implements ASTBlock {
                 }
             }
 
-            if (typeExistsFor(child, START_DEFINITION_ELEMENTS) || (blankLine && child.getElementType() == HS_START_DEFINITION)) {
+            if (TOP_ELEMENTS.contains(child.getElementType())) {
                 startOfNewDefinition = true;
                 indentCounter = 0;
                 tabCounter = 0;
@@ -279,7 +282,7 @@ public class HaskellFormattingBlock implements ASTBlock {
     @NotNull
     @Override
     public ChildAttributes getChildAttributes(int newChildIndex) {
-        Block block = getSubBlocks().get(newChildIndex - 1);
+        Block block = getSubBlocks().get(newChildIndex);
         return new ChildAttributes(block.getIndent(), block.getAlignment());
     }
 
@@ -293,7 +296,7 @@ public class HaskellFormattingBlock implements ASTBlock {
 
     @Override
     public boolean isLeaf() {
-        return true;
+        return node.getFirstChildNode() == null;
     }
 
     @Override

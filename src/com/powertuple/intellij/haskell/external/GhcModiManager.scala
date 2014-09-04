@@ -17,12 +17,14 @@
 package com.powertuple.intellij.haskell.external
 
 import com.intellij.openapi.components.{ProjectComponent, ServiceManager}
+import com.intellij.openapi.editor.SelectionModel
 import com.intellij.openapi.project.Project
 import com.intellij.psi.{PsiElement, PsiFile}
 import com.powertuple.intellij.haskell.psi.HaskellNamedElement
 import com.powertuple.intellij.haskell.settings.HaskellSettings
 
 object GhcModiManager {
+
   private var reinit = false
 
   def getInstance(project: Project) = ServiceManager.getService(project, classOf[GhcModiManager])
@@ -31,7 +33,7 @@ object GhcModiManager {
     reinit = true
   }
 
-  def findInfoFor(psiFile: PsiFile, expression: String): Option[ExpressionInfo] = {
+  def findInfoFor(psiFile: PsiFile, expression: String): Seq[ExpressionInfo] = {
     GhcModiInfo.findInfoFor(getGhcModi(psiFile), psiFile, expression)
   }
 
@@ -39,10 +41,17 @@ object GhcModiManager {
     GhcModiTypeInfo.findInfoFor(getGhcModi(psiFile), psiFile, psiElement)
   }
 
-  def findTypeSignature(haskellVar: HaskellNamedElement): Option[String] = {
-    findInfoFor(haskellVar.getContainingFile, haskellVar.getName) match {
-      case Some(info) => Some(info.typeSignature)
-      case None => None
+  def findTypeInfoForSelection(psiFile: PsiFile, selectionModel: SelectionModel): Option[TypeInfo]  = {
+    GhcModiTypeInfo.findInfoForSelection(getGhcModi(psiFile), psiFile, selectionModel)
+  }
+
+  /**
+   * Assuming first definition from ghc-modi info result is the real declaration.
+   */
+  def findTypeSignature(haskellNamedElement: HaskellNamedElement): Option[String] = {
+    findInfoFor(haskellNamedElement.getContainingFile, haskellNamedElement.getName) match {
+      case Seq(info) => Some(info.typeSignature)
+      case _ => None
     }
   }
 

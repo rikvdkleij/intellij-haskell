@@ -20,20 +20,20 @@ import com.intellij.psi.AbstractElementManipulator
 import org.jetbrains.annotations.NotNull
 
 object HaskellStringLiteralManipulator {
-  def getStringTokenRange(element: HaskellVar): TextRange = {
+  def getStringTokenRange(element: HaskellQvar): TextRange = {
     TextRange.from(1, element.getTextLength - 2)
   }
 }
 
-class HaskellStringLiteralManipulator extends AbstractElementManipulator[HaskellVar] {
-  def handleContentChange(psi: HaskellVar, range: TextRange, newContent: String): HaskellVar = {
+class HaskellStringLiteralManipulator extends AbstractElementManipulator[HaskellQvar] {
+  def handleContentChange(psi: HaskellQvar, range: TextRange, newContent: String): HaskellQvar = {
     val oldText: String = psi.getText
     val newText: String = oldText.substring(0, range.getStartOffset) + newContent + oldText.substring(range.getEndOffset)
-    return psi.setName(newText).asInstanceOf[HaskellVar]
+    psi.setName(newText).asInstanceOf[HaskellQvar]
   }
 
   @NotNull
-  override def getRangeInElement(element: HaskellVar): TextRange = {
+  override def getRangeInElement(element: HaskellQvar): TextRange = {
     HaskellStringLiteralManipulator.getStringTokenRange(element)
   }
 }

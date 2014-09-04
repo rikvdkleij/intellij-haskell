@@ -16,38 +16,52 @@
 
 package com.powertuple.intellij.haskell.util
 
+import com.intellij.openapi.module.ModuleManager
 import com.intellij.openapi.project.Project
 import com.intellij.psi.search.GlobalSearchScope
 import com.intellij.psi.util.PsiTreeUtil
-import com.powertuple.intellij.haskell.psi.{HaskellDeclarationElement, HaskellStartDefinition}
+import com.powertuple.intellij.haskell.psi._
+
+import scala.collection.JavaConversions._
 
 object HaskellFindUtil {
+  private var modulesScope: Option[GlobalSearchScope] = None
 
-  def findDeclarations(project: Project, includeNonProjectItems: Boolean): Iterable[HaskellDeclarationElement] = {
+  def findDeclarationElements(project: Project, includeNonProjectItems: Boolean): Iterable[HaskellDeclarationElement] = {
     val scope = if (includeNonProjectItems) {
       GlobalSearchScope.allScope(project)
     } else {
-      GlobalSearchScope.projectScope(project)
+      getModulesScope(project)
     }
     val haskellFiles = HaskellFileIndex.getAllHaskellFiles(project, scope)
-    haskellFiles.flatMap(f => Option(PsiTreeUtil.getChildrenOfType(f, classOf[HaskellDeclarationElement]))).flatten
+    haskellFiles.flatMap(f => Option(PsiTreeUtil.findChildrenOfType(f, classOf[HaskellDeclarationElement]))).flatten
   }
 
-  def findDeclarations(project: Project, name: String, includeNonProjectItems: Boolean): Iterable[HaskellDeclarationElement] = {
-    findDeclarations(project, includeNonProjectItems).filter(hv => hv.getIdentifier == name)
+  def findDeclarationElements(project: Project, name: String, includeNonProjectItems: Boolean): Iterable[HaskellDeclarationElement] = {
+    findDeclarationElements(project, includeNonProjectItems).filter(de => de.getIdentifierElement.getName == name)
   }
 
-  def findDefinitions(project: Project, includeNonProjectItems: Boolean): Iterable[HaskellStartDefinition] = {
+  def findNamedElements(project: Project, includeNonProjectItems: Boolean): Iterable[HaskellNamedElement] = {
     val scope = if (includeNonProjectItems) {
       GlobalSearchScope.allScope(project)
     } else {
-      GlobalSearchScope.projectScope(project)
+      getModulesScope(project)
     }
     val haskellFiles = HaskellFileIndex.getAllHaskellFiles(project, scope)
-    haskellFiles.flatMap(f => Option(PsiTreeUtil.getChildrenOfType(f, classOf[HaskellStartDefinition]))).flatten
+    haskellFiles.flatMap(f => Option(PsiTreeUtil.findChildrenOfType(f, classOf[HaskellNamedElement]))).flatten
   }
 
-  def findDefinitions(project: Project, name: String, includeNonProjectItems: Boolean): Iterable[HaskellStartDefinition] = {
-    findDefinitions(project, includeNonProjectItems).filter(hv => hv.getIdentifier == name)
+  def findNamedElements(project: Project, name: String, includeNonProjectItems: Boolean): Iterable[HaskellNamedElement] = {
+    findNamedElements(project, includeNonProjectItems).filter(_.getName == name)
+  }
+
+  private def getModulesScope(project: Project) = {
+    modulesScope match {
+      case Some(s) => s
+      case None => {
+        modulesScope = Some(ModuleManager.getInstance(project).getModules.map(m => GlobalSearchScope.moduleScope(m)).reduce(_.uniteWith(_)))
+        modulesScope.get
+      }
+    }
   }
 }

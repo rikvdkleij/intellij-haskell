@@ -1,6 +1,6 @@
 /*
  * Copyright 2014 Rik van der Kleij
-
+ *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
@@ -34,14 +34,38 @@ object GhcMod {
         None
       } else {
         val typeSignature = cols(1)
-        cols(0).split('.') match {
-          case Array() => None
-          case Array(name) => Some(BrowseInfo(name, "", typeSignature))
-          case names => Some(BrowseInfo(names.last, names.tail.mkString("."), typeSignature))
+        val qualifiedName = cols(0)
+
+        val indexOperator = qualifiedName.lastIndexOf(".(") + 1
+        val (m, n) = if (indexOperator > 1) {
+          val (m, o) = qualifiedName.splitAt(indexOperator)
+          (m, o.substring(1, o.length - 2))
+        } else {
+          val indexId = qualifiedName.lastIndexOf('.') + 1
+          qualifiedName.splitAt(indexId)
         }
+        Some(BrowseInfo(n, m.init, typeSignature))
       }
     })
     browseInfos.flatten
+  }
+
+  def listAvailableModules(project: Project): Seq[String] = {
+    val output = ExternalProcess.getProcessOutput(
+      project.getBasePath,
+      HaskellSettings.getInstance().getState.ghcModPath,
+      Seq("list")
+    )
+    output.getStdoutLines
+  }
+
+  def check(project: Project, filePath: String): GhcModOutput = {
+    val output = ExternalProcess.getProcessOutput(
+      project.getBasePath,
+      HaskellSettings.getInstance().getState.ghcModPath,
+      Seq("check", filePath)
+    )
+    GhcModOutput(output.getStdoutLines)
   }
 }
 

@@ -14,19 +14,19 @@
  * limitations under the License.
  */
 
-package com.powertuple.intellij.haskell
+package com.powertuple.intellij.haskell.navigate
 
 import com.intellij.navigation.{ChooseByNameContributor, NavigationItem}
 import com.intellij.openapi.project.Project
 import com.powertuple.intellij.haskell.util.HaskellFindUtil
 
-class HaskellDefinitionContributor extends ChooseByNameContributor {
+class HaskellNamedElementContributor extends ChooseByNameContributor {
 
   def getNames(project: Project, includeNonProjectItems: Boolean): Array[String] = {
-    HaskellFindUtil.findDefinitions(project, includeNonProjectItems).map(_.getIdentifier).toArray
+    HaskellFindUtil.findNamedElements(project, includeNonProjectItems).map(_.getName).toArray
   }
 
   def getItemsByName(name: String, pattern: String, project: Project, includeNonProjectItems: Boolean): Array[NavigationItem] = {
-    HaskellFindUtil.findDefinitions(project, name, includeNonProjectItems).map(_.getIdentifierElement).toArray
+    HaskellFindUtil.findNamedElements(project, name, includeNonProjectItems).toArray
   }
 }

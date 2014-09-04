@@ -42,31 +42,31 @@
 
         <applicationService serviceImplementation="com.powertuple.intellij.haskell.settings.HaskellSettings"/>
 
-        <lang.formatter language="Haskell" implementationClass="com.powertuple.intellij.haskell.formatter.HaskellFormattingModelBuilder"/>
-        <codeStyleSettingsProvider implementation="com.powertuple.intellij.haskell.formatter.settings.HaskellCodeStyleSettingsProvider"/>
-        <langCodeStyleSettingsProvider implementation="com.powertuple.intellij.haskell.formatter.settings.HaskellLanguageCodeStyleSettingsProvider"/>
+        <lang.formatter language="Haskell" implementationClass="com.powertuple.intellij.haskell.code.formatter.HaskellFormattingModelBuilder"/>
+        <codeStyleSettingsProvider implementation="com.powertuple.intellij.haskell.code.formatter.settings.HaskellCodeStyleSettingsProvider"/>
+        <langCodeStyleSettingsProvider implementation="com.powertuple.intellij.haskell.code.formatter.settings.HaskellLanguageCodeStyleSettingsProvider"/>
 
 
         <psi.referenceContributor implementation="com.powertuple.intellij.haskell.HaskellReferenceContributor"/>
 
-        <lang.elementManipulator forClass="com.powertuple.intellij.haskell.psi.impl.HaskellVarImpl"
+        <lang.elementManipulator forClass="com.powertuple.intellij.haskell.psi.impl.HaskellQvarImpl"
                                  implementationClass="com.powertuple.intellij.haskell.psi.HaskellStringLiteralManipulator"/>
 
         <fileBasedIndex implementation="com.powertuple.intellij.haskell.util.HaskellFileIndex"/>
 
-        <lang.findUsagesProvider language="Haskell" implementationClass="com.powertuple.intellij.haskell.HaskellFindUsagesProvider"/>
+        <lang.findUsagesProvider language="Haskell" implementationClass="com.powertuple.intellij.haskell.navigate.HaskellFindUsagesProvider"/>
 
         <lang.namesValidator language="Haskell" implementationClass="com.powertuple.intellij.haskell.HaskellNamesValidator"/>
         <lang.refactoringSupport language="Haskell" implementationClass="com.powertuple.intellij.haskell.HaskellRefactoringSupportProvider"/>
         <renamePsiElementProcessor implementation="com.powertuple.intellij.haskell.HaskellRenameVariableProcessor"/>
 
-        <lang.documentationProvider language="Haskell" implementationClass="com.powertuple.intellij.haskell.HaskellDocumentationProvider"/>
+        <lang.documentationProvider language="Haskell" implementationClass="com.powertuple.intellij.haskell.view.HaskellDocumentationProvider"/>
 
-        <completion.contributor language="Haskell" implementationClass="com.powertuple.intellij.haskell.HaskellCompletionContributor"/>
+        <completion.contributor language="Haskell" implementationClass="com.powertuple.intellij.haskell.code.HaskellCompletionContributor"/>
 
-        <gotoClassContributor implementation="com.powertuple.intellij.haskell.HaskellDeclarationContributor"/>
-        <gotoSymbolContributor implementation="com.powertuple.intellij.haskell.HaskellDefinitionContributor"/>
-        <lang.psiStructureViewFactory language="Haskell" implementationClass="com.powertuple.intellij.haskell.HaskellStructureViewFactory"/>
+        <gotoClassContributor implementation="com.powertuple.intellij.haskell.navigate.HaskellDeclarationContributor"/>
+        <gotoSymbolContributor implementation="com.powertuple.intellij.haskell.navigate.HaskellNamedElementContributor"/>
+        <lang.psiStructureViewFactory language="Haskell" implementationClass="com.powertuple.intellij.haskell.navigate.HaskellStructureViewFactory"/>
     </extensions>
 
     <application-components>
@@ -79,19 +79,26 @@
         </component>
 
         <component>
-            <implementation-class>com.powertuple.intellij.haskell.HaskellDocumentationProvider</implementation-class>
+            <implementation-class>com.powertuple.intellij.haskell.view.HaskellDocumentationProvider</implementation-class>
         </component>
     </project-components>
 
     <actions>
-        <action id="Haskell.ShowType" class="com.powertuple.intellij.haskell.actions.ShowTypeAction"
+        <action id="Haskell.ShowType" class="com.powertuple.intellij.haskell.view.ShowTypeAction"
                 text="Show Type" description="Show Type">
 
             <keyboard-shortcut first-keystroke="alt EQUALS" keymap="$default"/>
             <add-to-group group-id="CodeEditorViewGroup" anchor="last" />
         </action>
 
-        <action id="Haskell.HaskellFile" class="com.powertuple.intellij.haskell.actions.CreateHaskellFileAction"
+        <action id="Haskell.ShowInfo" class="com.powertuple.intellij.haskell.view.ShowInfoAction"
+                text="Show Info" description="Show Info">
+
+            <keyboard-shortcut first-keystroke="alt ctrl EQUALS" keymap="$default"/>
+            <add-to-group group-id="CodeEditorViewGroup" anchor="last" />
+        </action>
+
+        <action id="Haskell.HaskellFile" class="com.powertuple.intellij.haskell.view.CreateHaskellFileAction"
                 text="Haskell Module" description="Create new Haskell module">
             <add-to-group group-id="NewGroup" anchor="before" relative-to-action="NewFile"/>
         </action>

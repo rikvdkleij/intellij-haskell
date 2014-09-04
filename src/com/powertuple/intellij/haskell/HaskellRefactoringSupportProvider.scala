@@ -1,6 +1,6 @@
 /*
  * Copyright 2014 Rik van der Kleij
-
+ *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
@@ -18,11 +18,11 @@ package com.powertuple.intellij.haskell
 
 import com.intellij.lang.refactoring.RefactoringSupportProvider
 import com.intellij.psi.PsiElement
-import com.powertuple.intellij.haskell.psi.HaskellVar
+import com.powertuple.intellij.haskell.psi.HaskellNamedElement
 
 class HaskellRefactoringSupportProvider extends RefactoringSupportProvider {
 
   override def isMemberInplaceRenameAvailable(element: PsiElement, context: PsiElement): Boolean = {
-    element.isInstanceOf[HaskellVar]
+    element.isInstanceOf[HaskellNamedElement]
   }
 }

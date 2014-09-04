@@ -1,6 +1,6 @@
 /*
  * Copyright 2014 Rik van der Kleij
-
+ *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
@@ -14,18 +14,22 @@
  * limitations under the License.
  */
 
-package com.powertuple.intellij.haskell.actions
+package com.powertuple.intellij.haskell.util
 
 import java.awt.event.{MouseEvent, MouseMotionAdapter}
 
 import com.intellij.codeInsight.hint.{HintManager, HintManagerImpl, HintUtil}
 import com.intellij.openapi.actionSystem.{AnActionEvent, CommonDataKeys}
 import com.intellij.openapi.editor.Editor
+import com.intellij.openapi.project.Project
+import com.intellij.openapi.ui.MessageType
+import com.intellij.openapi.ui.popup.JBPopupFactory
+import com.intellij.openapi.wm.WindowManager
 import com.intellij.ui.LightweightHint
 import com.intellij.util.ui.UIUtil
 import com.powertuple.intellij.haskell.HaskellFile
 
-object HaskellActionUtil {
+object HaskellEditorUtil {
 
   def enableAndShowIfInHaskellFile(e: AnActionEvent) {
     val presentation = e.getPresentation
@@ -69,5 +73,21 @@ object HaskellActionUtil {
 
     hintManager.showEditorHint(hint, editor, point,
       HintManager.HIDE_BY_ANY_KEY | HintManager.HIDE_BY_TEXT_CHANGE | HintManager.HIDE_BY_SCROLLING, 0, false)
+  }
+
+  def createInfoBallon(message: String, project: Project) = {
+    UIUtil.invokeLaterIfNeeded(new Runnable {
+      override def run() {
+        JBPopupFactory.getInstance().createHtmlTextBalloonBuilder(message, MessageType.INFO, null).setDialogMode(false).setFadeoutTime(2000).createBalloon().showInCenterOf(getStatusBarComponent(project))
+      }
+    })
+  }
+
+  private def getStatusBarComponent(project: Project) = {
+    WindowManager.getInstance().getStatusBar(project).getComponent
+  }
+
+  def createLabelMessage(message: String, project: Project) {
+    WindowManager.getInstance().getStatusBar(project).setInfo(message)
   }
 }

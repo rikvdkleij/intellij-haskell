@@ -1,6 +1,6 @@
 /*
  * Copyright 2014 Rik van der Kleij
-
+ *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
@@ -23,7 +23,7 @@ import com.intellij.openapi.fileEditor.FileDocumentManager
 import com.intellij.openapi.util.TextRange
 import com.intellij.psi.PsiFile
 import com.powertuple.intellij.haskell.HaskellFileType
-import com.powertuple.intellij.haskell.external.GhcModiManager
+import com.powertuple.intellij.haskell.external.GhcMod
 import com.powertuple.intellij.haskell.util.{FileUtil, LineColumnPosition}
 
 class GhcModiExternalAnnotator extends ExternalAnnotator[GhcModInitialInfo, GhcModiResult] {
@@ -32,25 +32,25 @@ class GhcModiExternalAnnotator extends ExternalAnnotator[GhcModInitialInfo, GhcM
    * Returning null will cause doAnnotate() not to be called by Intellij API.
    */
   override def collectInformation(psiFile: PsiFile): GhcModInitialInfo = {
-    FileUtil.saveFile(psiFile)
-
-    val vFile = psiFile.getVirtualFile
-    vFile match {
-      case null => null // can be case if file is in memory only (just created file)
-      case f if f.getFileType != HaskellFileType.INSTANCE => null
-      case f if f.getPath == null => null
-      case f => GhcModInitialInfo(psiFile, f.getPath)
+    (psiFile, Option(psiFile.getVirtualFile)) match {
+      case (_, None) => null // can be case if file is in memory only (just created file)
+      case (_, Some(f)) if f.getFileType != HaskellFileType.INSTANCE => null
+      case (_, Some(f)) if f.getPath == null => null
+      case (_, Some(f)) => FileUtil.saveFile(psiFile); GhcModInitialInfo(psiFile, f.getPath)
     }
   }
 
   override def doAnnotate(initialInfoGhcMod: GhcModInitialInfo): GhcModiResult = {
-    val ghcModi = GhcModiManager.getInstance(initialInfoGhcMod.psiFile.getProject).getGhcModi
-    val ghcModiOutput = ghcModi.execute("check " + initialInfoGhcMod.filePath)
+    //    val ghcModi = GhcModiManager.getInstance(initialInfoGhcMod.psiFile.getProject).getGhcModi
+    //    val ghcModOutput = ghcModi.execute("check " + initialInfoGhcMod.filePath)
 
-    if (ghcModiOutput.outputLines.isEmpty) {
+    // Temporary using `ghc-mod check` because of ghc-mod issue #275
+    val ghcModOutput = GhcMod.check(initialInfoGhcMod.psiFile.getProject, initialInfoGhcMod.filePath)
+
+    if (ghcModOutput.outputLines.isEmpty) {
       new GhcModiResult(Seq())
     } else {
-      new GhcModiResult(ghcModiOutput.outputLines.map(parseGhcModiOutputLine))
+      new GhcModiResult(ghcModOutput.outputLines.map(parseGhcModiOutputLine))
     }
   }
 
@@ -73,9 +73,9 @@ class GhcModiExternalAnnotator extends ExternalAnnotator[GhcModInitialInfo, GhcM
   }
 
   private[annotator] def createAnnotations(ghcModResult: GhcModiResult, psiFile: PsiFile): Seq[Annotation] = {
-    for (problem <- ghcModResult.problems) yield {
+    for (problem <- ghcModResult.problems.filter(_.filePath == psiFile.getOriginalFile.getVirtualFile.getPath)) yield {
       val startOffSet = LineColumnPosition.getOffset(psiFile, LineColumnPosition(problem.lineNr, problem.columnNr)).getOrElse(0)
-      val textRange = TextRange.create(startOffSet, startOffSet + 1)
+      val textRange = TextRange.create(startOffSet, startOffSet)
       if (problem.description.startsWith("Warning:")) {
         WarningAnnotation(textRange, problem.description)
       } else {
@@ -85,9 +85,9 @@ class GhcModiExternalAnnotator extends ExternalAnnotator[GhcModInitialInfo, GhcM
   }
 
   private[annotator] def parseGhcModiOutputLine(ghcModOutput: String): GhcModiProblem = {
-    val ghcModProblemPattern = """.+:([\d]+):([\d]+):(.+)""".r
-    val ghcModProblemPattern(lineNr, columnNr, description) = ghcModOutput
-    new GhcModiProblem(lineNr.toInt, columnNr.toInt, description)
+    val ghcModProblemPattern = """(.+):([\d]+):([\d]+):(.+)""".r
+    val ghcModProblemPattern(filePath, lineNr, columnNr, description) = ghcModOutput
+    new GhcModiProblem(filePath, lineNr.toInt, columnNr.toInt, description)
   }
 }
 
@@ -95,7 +95,7 @@ case class GhcModInitialInfo(psiFile: PsiFile, filePath: String)
 
 case class GhcModiResult(problems: Seq[GhcModiProblem] = Seq())
 
-case class GhcModiProblem(lineNr: Int, columnNr: Int, description: String)
+case class GhcModiProblem(filePath: String, lineNr: Int, columnNr: Int, description: String)
 
 abstract class Annotation
 
