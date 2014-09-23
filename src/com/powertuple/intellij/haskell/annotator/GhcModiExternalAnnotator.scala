@@ -41,9 +41,6 @@ class GhcModiExternalAnnotator extends ExternalAnnotator[GhcModInitialInfo, GhcM
   }
 
   override def doAnnotate(initialInfoGhcMod: GhcModInitialInfo): GhcModiResult = {
-    //    val ghcModi = GhcModiManager.getInstance(initialInfoGhcMod.psiFile.getProject).getGhcModi
-    //    val ghcModOutput = ghcModi.execute("check " + initialInfoGhcMod.filePath)
-
     // Temporary using `ghc-mod check` because of ghc-mod issue #275
     val ghcModOutput = GhcMod.check(initialInfoGhcMod.psiFile.getProject, initialInfoGhcMod.filePath)
 
@@ -72,10 +69,12 @@ class GhcModiExternalAnnotator extends ExternalAnnotator[GhcModInitialInfo, GhcM
     fileStatusMap.markFileScopeDirty(document, new TextRange(0, document.getTextLength), document.getTextLength)
   }
 
+  // TODO: Try to make problem text range more precise by using 'text' inside problem description
   private[annotator] def createAnnotations(ghcModResult: GhcModiResult, psiFile: PsiFile): Seq[Annotation] = {
     for (problem <- ghcModResult.problems.filter(_.filePath == psiFile.getOriginalFile.getVirtualFile.getPath)) yield {
       val startOffSet = LineColumnPosition.getOffset(psiFile, LineColumnPosition(problem.lineNr, problem.columnNr)).getOrElse(0)
-      val textRange = TextRange.create(startOffSet, startOffSet)
+      val elementWithProblem = Option(psiFile.findElementAt(startOffSet))
+      val textRange = elementWithProblem.map(_.getTextRange).getOrElse(TextRange.create(startOffSet, startOffSet))
       if (problem.description.startsWith("Warning:")) {
         WarningAnnotation(textRange, problem.description)
       } else {

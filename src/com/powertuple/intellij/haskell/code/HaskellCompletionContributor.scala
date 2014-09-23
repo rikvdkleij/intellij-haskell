@@ -38,14 +38,16 @@ class HaskellCompletionContributor extends CompletionContributor {
     def addCompletions(parameters: CompletionParameters, context: ProcessingContext, result: CompletionResultSet) {
       val project = parameters.getPosition.getProject
 
-      if (isModuleDeclarationInProgress(parameters.getOriginalPosition)) {
-        result.addAllElements(GhcMod.listAvailableModules(project).map(LookupElementBuilder.create))
-      }
-      else {
-        ReservedIdNames.foreach(k => result.addElement(LookupElementBuilder.create(k).
-            withIcon(HaskellIcons.HaskellSmallLogo).withTypeText("keyword")))
-        val browseInfo = GhcMod.browseInfo(project, getImportedModuleNames(parameters.getOriginalFile))
-        browseInfo.foreach(bi => result.addElement(LookupElementBuilder.create(bi.name).withTypeText(bi.typeSignature).withTailText(" " + bi.moduleName, true).withIcon(HaskellIcons.HaskellSmallLogo)))
+      val position = Option(parameters.getOriginalPosition).orElse(Option(parameters.getPosition))
+
+      position match {
+        case Some(p) if isModuleDeclarationInProgress(p) => result.addAllElements(GhcMod.listAvailableModules(project).map(LookupElementBuilder.create))
+        case _ => {
+          ReservedIdNames.foreach(k => result.addElement(LookupElementBuilder.create(k).
+              withIcon(HaskellIcons.HaskellSmallLogo).withTypeText("keyword")))
+          val browseInfo = GhcMod.browseInfo(project, getImportedModuleNames(parameters.getOriginalFile))
+          browseInfo.foreach(bi => result.addElement(LookupElementBuilder.create(bi.name).withTypeText(bi.typeSignature).withTailText(" " + bi.moduleName, true).withIcon(HaskellIcons.HaskellSmallLogo)))
+        }
       }
     }
   })
@@ -53,11 +55,8 @@ class HaskellCompletionContributor extends CompletionContributor {
   override def beforeCompletion(context: CompletionInitializationContext): Unit = {
     val file = context.getFile
     val startOffset = context.getStartOffset
-    val symbol = for {
-      psiElement <- Option(file.findElementAt(startOffset).getPrevSibling)
-      s <- Option(PsiTreeUtil.findChildOfAnyType(psiElement, classOf[HaskellSymbol]))
-    } yield s
-    context.setDummyIdentifier(symbol.map(_.getText).getOrElse("a"))
+    val caretElement = Option(file.findElementAt(startOffset - 1))
+    context.setDummyIdentifier(caretElement.map(_.getText.headOption).map(_.toString).getOrElse("a"))
   }
 
   def isModuleDeclarationInProgress(position: PsiElement): Boolean = {

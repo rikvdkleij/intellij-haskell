@@ -16,6 +16,7 @@
 
 package com.powertuple.intellij.haskell.util
 
+import java.awt.Point
 import java.awt.event.{MouseEvent, MouseMotionAdapter}
 
 import com.intellij.codeInsight.hint.{HintManager, HintManagerImpl, HintUtil}
@@ -23,10 +24,11 @@ import com.intellij.openapi.actionSystem.{AnActionEvent, CommonDataKeys}
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.MessageType
-import com.intellij.openapi.ui.popup.JBPopupFactory
+import com.intellij.openapi.ui.popup.{Balloon, JBPopupFactory}
 import com.intellij.openapi.wm.WindowManager
 import com.intellij.ui.LightweightHint
-import com.intellij.util.ui.UIUtil
+import com.intellij.ui.awt.RelativePoint
+import com.intellij.util.ui.{PositionTracker, UIUtil}
 import com.powertuple.intellij.haskell.HaskellFile
 
 object HaskellEditorUtil {
@@ -75,16 +77,25 @@ object HaskellEditorUtil {
       HintManager.HIDE_BY_ANY_KEY | HintManager.HIDE_BY_TEXT_CHANGE | HintManager.HIDE_BY_SCROLLING, 0, false)
   }
 
-  def createInfoBallon(message: String, project: Project) = {
+  def createInfoBallon(message: String, editor: Editor) = {
+    val popupFactory = JBPopupFactory.getInstance
     UIUtil.invokeLaterIfNeeded(new Runnable {
       override def run() {
-        JBPopupFactory.getInstance().createHtmlTextBalloonBuilder(message, MessageType.INFO, null).setDialogMode(false).setFadeoutTime(2000).createBalloon().showInCenterOf(getStatusBarComponent(project))
+        val balloon = JBPopupFactory.getInstance().createHtmlTextBalloonBuilder(message, MessageType.INFO, null).setCloseButtonEnabled(true).setHideOnAction(true).createBalloon()
+        balloon.show(new PositionTracker[Balloon](editor.getContentComponent) {
+          def recalculateLocation(`object`: Balloon): RelativePoint = {
+            val target: RelativePoint = popupFactory.guessBestPopupLocation(editor)
+            val screenPoint: Point = target.getScreenPoint
+            var y: Int = screenPoint.y
+            if (target.getPoint.getY > editor.getLineHeight + balloon.getPreferredSize.getHeight) {
+              y -= editor.getLineHeight
+            }
+            val relativePoint = new RelativePoint(new Point(screenPoint.x, y))
+            relativePoint
+          }
+        }, Balloon.Position.above)
       }
     })
-  }
-
-  private def getStatusBarComponent(project: Project) = {
-    WindowManager.getInstance().getStatusBar(project).getComponent
   }
 
   def createLabelMessage(message: String, project: Project) {

@@ -63,7 +63,7 @@ class HaskellColorSettingsPage extends ColorSettingsPage {
     "module ModuleName\n" +
         "import ImportModuleName\n" +
         "\"string literal\"\n" +
-        "'char'\n" +
+        "'c'\n" +
         "x = (456,434)\n" +
         "-- line comment\n" +
         "{- nested \n" +

@@ -1,6 +1,6 @@
 /*
  * Copyright 2014 Rik van der Kleij
-
+ *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
@@ -14,16 +14,8 @@
  * limitations under the License.
  */
 
-package com.powertuple.intellij.haskell.code.formatter.settings;
+package com.powertuple.intellij.haskell.code.formatter.settings
 
-import com.intellij.psi.codeStyle.CodeStyleSettings;
-import com.intellij.psi.codeStyle.CustomCodeStyleSettings;
+import com.intellij.psi.codeStyle.{CodeStyleSettings, CustomCodeStyleSettings}
 
-public class HaskellCodeStyleSettings extends CustomCodeStyleSettings {
-    protected HaskellCodeStyleSettings(CodeStyleSettings settings) {
-        super("HaskellCodeStyleSettings", settings);
-    }
-
-    public boolean INDENT_WHERE_WITH_TAB_SIZE = true;
-    public boolean INDENT_DO_WITH_TAB_SIZE = true;
-}
+class HaskellCodeStyleSettings(settings: CodeStyleSettings) extends CustomCodeStyleSettings("HaskellCodeStyleSettings", settings)

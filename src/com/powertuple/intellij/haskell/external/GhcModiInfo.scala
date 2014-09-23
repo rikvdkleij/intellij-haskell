@@ -28,8 +28,8 @@ import scala.collection.mutable.ListBuffer
 private[external] object GhcModiInfo {
 
   private final val GhcModiInfoPattern = """(.+)-- Defined at (.+):([\d]+):([\d]+)""".r
-  private final val GhcModiInfoLibraryPathPattern = """(.+)-- Defined in ‘([\w\.\-]+):([\w\.]+)’""".r
-  private final val GhcModiInfoLibraryPattern = """(.+)-- Defined in ‘([\w\.]+)’""".r
+  private final val GhcModiInfoLibraryPathPattern = """(.+)-- Defined in ‘([\w\.\-]+):([\w\.\-]+)’""".r
+  private final val GhcModiInfoLibraryPattern = """(.+)-- Defined in ‘([\w\.\-]+)’""".r
 
   def findInfoFor(ghcModi: GhcModi, psiFile: PsiFile, expression: String): Seq[ExpressionInfo] = {
     val cmd = s"info ${psiFile.getOriginalFile.getVirtualFile.getPath} $expression"
@@ -68,13 +68,11 @@ private[external] object GhcModiInfo {
     }
   }
 
-
   private def createExpressionInfo(expressionInfoString: String, project: Project): Option[ExpressionInfo] = {
-
-    val bla = expressionInfoString match {
+    expressionInfoString match {
       case GhcModiInfoPattern(typeSignature, filePath, lineNr, colNr) => Some(ProjectExpressionInfo(typeSignature.trim, filePath, lineNr.toInt, colNr.toInt))
       case GhcModiInfoLibraryPathPattern(typeSignature, libraryName, module) => if (libraryName == "ghc-prim" || libraryName == "integer-gmp") {
-        Some(BuiltInExpressionInfo(typeSignature.trim, libraryName, "GHC.Base", typeSignature.contains(" = ")))
+        Some(BuiltInExpressionInfo(typeSignature.trim, libraryName, "GHC.Base"))
       }
       else {
         findLibraryFilePath(module, project).map(LibraryExpressionInfo(typeSignature.trim, _, module))
@@ -82,7 +80,6 @@ private[external] object GhcModiInfo {
       case GhcModiInfoLibraryPattern(typeSignature, module) => findLibraryFilePath(module, project).map(LibraryExpressionInfo(typeSignature, _, module))
       case _ => HaskellNotificationGroup.notifyError(s"Unknown pattern for ghc-modi info output: $expressionInfoString"); None
     }
-    bla
   }
 
   private def findLibraryFilePath(module: String, project: Project): Option[String] = {
@@ -108,7 +105,7 @@ private[external] object GhcModiInfo {
   }
 }
 
-abstract class ExpressionInfo {
+sealed abstract class ExpressionInfo {
   def typeSignature: String
 }
 
@@ -120,4 +117,4 @@ case class ProjectExpressionInfo(typeSignature: String, filePath: String, lineNr
 
 case class LibraryExpressionInfo(typeSignature: String, filePath: String, module: String) extends FileExpressionInfo
 
-case class BuiltInExpressionInfo(typeSignature: String, libraryName: String, module: String, declarationDefinition: Boolean) extends ExpressionInfo
+case class BuiltInExpressionInfo(typeSignature: String, libraryName: String, module: String) extends ExpressionInfo

@@ -34,11 +34,11 @@ object HaskellFindUtil {
       getModulesScope(project)
     }
     val haskellFiles = HaskellFileIndex.getAllHaskellFiles(project, scope)
-    haskellFiles.flatMap(f => Option(PsiTreeUtil.findChildrenOfType(f, classOf[HaskellDeclarationElement]))).flatten
+    haskellFiles.flatMap(f => PsiTreeUtil.findChildrenOfType(f, classOf[HaskellDeclarationElement]))
   }
 
   def findDeclarationElements(project: Project, name: String, includeNonProjectItems: Boolean): Iterable[HaskellDeclarationElement] = {
-    findDeclarationElements(project, includeNonProjectItems).filter(de => de.getIdentifierElement.getName == name)
+    findDeclarationElements(project, includeNonProjectItems).filter(de => de.getIdentifierElements.map(_.getName).contains(name))
   }
 
   def findNamedElements(project: Project, includeNonProjectItems: Boolean): Iterable[HaskellNamedElement] = {
@@ -48,7 +48,7 @@ object HaskellFindUtil {
       getModulesScope(project)
     }
     val haskellFiles = HaskellFileIndex.getAllHaskellFiles(project, scope)
-    haskellFiles.flatMap(f => Option(PsiTreeUtil.findChildrenOfType(f, classOf[HaskellNamedElement]))).flatten
+    haskellFiles.flatMap(f => PsiTreeUtil.findChildrenOfType(f, classOf[HaskellNamedElement]))
   }
 
   def findNamedElements(project: Project, name: String, includeNonProjectItems: Boolean): Iterable[HaskellNamedElement] = {
@@ -59,8 +59,8 @@ object HaskellFindUtil {
     modulesScope match {
       case Some(s) => s
       case None => {
-        modulesScope = Some(ModuleManager.getInstance(project).getModules.map(m => GlobalSearchScope.moduleScope(m)).reduce(_.uniteWith(_)))
-        modulesScope.get
+        modulesScope = Some(ModuleManager.getInstance(project).getModules.map(GlobalSearchScope.moduleScope).reduce(_.uniteWith(_)))
+        modulesScope.getOrElse(None)
       }
     }
   }

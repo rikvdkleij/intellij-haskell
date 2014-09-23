@@ -47,10 +47,10 @@ private[external] class GhcModi(val settings: HaskellSettings, val project: Proj
 
   private val OK = "OK"
 
-  def execute(command: String): GhcModOutput = synchronized {
+  def execute(command: String): GhcModiOutput = synchronized {
     if (outputStream == null) {
       // creating Process has failed in #startGhcModi
-      return GhcModOutput()
+      return GhcModiOutput()
     }
 
     stdOutListBuffer.clear()
@@ -58,25 +58,26 @@ private[external] class GhcModi(val settings: HaskellSettings, val project: Proj
       outputStream.write((command + "\n").getBytes)
       outputStream.flush()
 
-      val waitForOutput = Future {
+      val waitForStdOutput = Future {
         while (stdOutListBuffer.lastOption != Some(OK)) {
-          Thread.sleep(5)
+          // wait for result
         }
+        stdOutListBuffer.init.toSeq
       }
-      Await.result(waitForOutput, 2.second)
+      val stdOutput = Await.result(waitForStdOutput, 2.second)
 
       if (stdErrListBuffer.nonEmpty) {
         HaskellNotificationGroup.notifyError(s"ghc-modi error output: ${stdErrListBuffer.mkString}")
-        GhcModOutput()
+        GhcModiOutput()
       } else {
-        GhcModOutput(stdOutListBuffer.filter(_ != OK))
+        GhcModiOutput(stdOutput)
       }
     }
     catch {
       case _: TimeoutException | _: IOException => {
         HaskellNotificationGroup.notifyError(s"Error in communication with ghc-modi. ghc-modi will be restarted. Command was: $command")
         reinit()
-        GhcModOutput()
+        GhcModiOutput()
       }
     }
   }
@@ -109,4 +110,4 @@ private[external] class GhcModi(val settings: HaskellSettings, val project: Proj
   }
 }
 
-case class GhcModOutput(outputLines: Seq[String] = Seq())
+case class GhcModiOutput(outputLines: Seq[String] = Seq())

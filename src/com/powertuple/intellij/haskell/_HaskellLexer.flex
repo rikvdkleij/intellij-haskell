@@ -30,7 +30,7 @@ newline             = \r|\n|\r\n
 unispace            = \x05
 white_char          = [ \t\f] | {control_character} | {unispace}
 include_def         = "#"("if"|"ifndef"|"define"|"elif"|"else"|"error"|"endif"|"include")[^\r\n]*
-white_space         = {white_char}+ | {include_def}
+white_space         = {white_char}+ | {include_def} | {comment}
 
 small               = [a-z_]          // ignoring any unicode lowercase letter for now
 large               = [A-Z]           // ignoring any unicode uppercase letter for now
@@ -46,16 +46,19 @@ octal               = 0[oO]{octit}+
 
 float               = [-+]?([0-9]+(\\.[0-9]*)?|\\.[0-9]+)([eE][-+]?[0-9]+)?
 
-comment             = ("--"[^\r\n]* | "\\begin{code}") {newline}?
+pragma_start        = "{-#" {white_char}* "LANGUAGE"
+pragma_end          = "#-}"
 
-gap        = \\{white_char}*\\
-cntrl      = {large} | [@\[\\\]\^_]
-charesc    = [abfnrtv\\\"\'&]
-ascii      = ("^"{cntrl})|(NUL)|(SOH)|(STX)|(ETX)|(EOT)|(ENQ)|(ACK)|(BEL)|(BS)|(HT)|(LF)|(VT)|(FF)|(CR)|(SO)|(SI)|(DLE)|(DC1)|(DC2)|(DC3)|(DC4)|(NAK)|(SYN)|(ETB)|(CAN)|(EM)|(SUB)|(ESC)|(FS)|(GS)|(RS)|(US)|(SP)|(DEL)
-escape     = \\({charesc}|{ascii}|({digit}+)|(o({octit}+))|(x({hexit}+)))
+comment             = ("--"[^\r\n]* | "\\begin{code}")
 
-character_literal  = (\'([^\'\\\n]|{escape})\')
-string_literal     = \"([^\"\\\n]|{escape}|{gap})*(\"|\n)
+gap                 = \\{white_char}*\\
+cntrl               = {large} | [@\[\\\]\^_]
+charesc             = [abfnrtv\\\"\'&]
+ascii               = ("^"{cntrl})|(NUL)|(SOH)|(STX)|(ETX)|(EOT)|(ENQ)|(ACK)|(BEL)|(BS)|(HT)|(LF)|(VT)|(FF)|(CR)|(SO)|(SI)|(DLE)|(DC1)|(DC2)|(DC3)|(DC4)|(NAK)|(SYN)|(ETB)|(CAN)|(EM)|(SUB)|(ESC)|(FS)|(GS)|(RS)|(US)|(SP)|(DEL)
+escape              = \\({charesc}|{ascii}|({digit}+)|(o({octit}+))|(x({hexit}+)))
+
+character_literal   = (\'([^\'\\\n]|{escape})\')
+string_literal      = \"([^\"\\\n]|{escape}|{gap})*(\"|\n)
 
 
 // ascSymbol except reservedop
@@ -103,14 +106,17 @@ right_brace         = "}"
 
 //special symbol
 dot_dot_parens      = "(..)"
+quote               = "'"
 
-symbol              = ({exclamation_mark} | {hash} | {dollar} | {percentage} | {ampersand} | {star} | {plus} | {dot} | {slash} | {lt} | {equal} | {gt} | {question_mark} | {at} | {backslash} | {caret} | {vertical_bar} | {tilde} | {dash})
+symbol_no_resop     = {exclamation_mark} | {hash} | {dollar} | {percentage} | {ampersand} | {star} | {plus} | {dot} | {slash} | {lt} | {gt} | {question_mark} | {caret} | {dash}
+symbol              = {equal} | {at} | {backslash} | {vertical_bar} | {tilde} | {exclamation_mark} | {hash} | {dollar} | {percentage} | {ampersand} | {star} | {plus} | {dot} | {slash} | {lt} | {gt} | {question_mark} | {caret} | {dash}
+symbol_reservedop   = {equal} | {at} | {backslash} | {vertical_bar} | {tilde}
 
-varid               = {small} ({small} | {large} | {digit} | ')* {hash}?
-varsym              = {symbol} ({symbol} | {colon})*
+varid               = {small} ({small} | {large} | {digit} | {quote})* {hash}*
+varsym              = {symbol_no_resop} ({symbol} | {colon})* | {symbol_reservedop} ({symbol} | {colon})+
 
-conid               = {large} ({small} | {large} | {digit})* {hash}?
-consym              = {colon} ({colon} | {symbol})*
+conid               = {large} ({small} | {large} | {digit} | {quote})* {hash}?
+consym              = {quote}? {colon} ({colon} | {symbol})*
 
 qvarsym             = ({conid} {dot})* {varsym}
 qconsym             = ({conid} {dot})* {consym}
@@ -168,12 +174,15 @@ qconop              = {gconsym} | {backquote} {qconid} {backquote}
 }
 
     {newline}             { return HS_NEWLINE; }
-    {white_space}         { return com.intellij.psi.TokenType.WHITE_SPACE; }
     {comment}             { return HS_COMMENT; }
+    {white_space}         { return com.intellij.psi.TokenType.WHITE_SPACE; }
+    {pragma_start}        { return HS_PRAGMA_START; }
+    {pragma_end}          { return HS_PRAGMA_END; }
 
     // not listed as reserved identifier but have meaning in certain context,
     // let's say specialreservedid
     "type family"         { return HS_TYPE_FAMILY; }
+    "type instance"       { return HS_TYPE_INSTANCE; }
     "foreign import"      { return HS_FOREIGN_IMPORT; }
     "foreign export"      { return HS_FOREIGN_EXPORT; }
 
@@ -242,15 +251,15 @@ qconop              = {gconsym} | {backquote} {qconid} {backquote}
     {caret}               { return HS_CARET; }
     {dash}                { return HS_DASH; }
 
+    {qvarop}              { return HS_QVAROP_ID; }
+    {qconop}              { return HS_QCONOP_ID; }
+
     // symbol and reservedop
     {equal}               { return HS_EQUAL; }
     {at}                  { return HS_AT; }
     {backslash}           { return HS_BACKSLASH; }
     {vertical_bar}        { return HS_VERTICAL_BAR; }
     {tilde}               { return HS_TILDE; }
-
-    {qvarop}              { return HS_QVAROP_ID; }
-    {qconop}              { return HS_QCONOP_ID; }
 
     // special
     {left_paren}          { return HS_LEFT_PAREN; }
@@ -263,6 +272,7 @@ qconop              = {gconsym} | {backquote} {qconid} {backquote}
     {left_brace}          { return HS_LEFT_BRACE; }
     {right_brace}         { return HS_RIGHT_BRACE; }
 
+    {quote}               { return HS_QUOTE; }
 
     "\\end{code}"         { yybegin(TEX); return HS_NCOMMENT; }
     "\\section"           { yybegin(TEX); return HS_NCOMMENT; }

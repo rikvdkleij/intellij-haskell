@@ -19,11 +19,12 @@ package com.powertuple.intellij.haskell.navigate
 import com.intellij.navigation.{ChooseByNameContributor, NavigationItem}
 import com.intellij.openapi.project.Project
 import com.powertuple.intellij.haskell.util.HaskellFindUtil
+import scala.collection.JavaConversions._
 
 class HaskellDeclarationContributor extends ChooseByNameContributor {
 
   def getNames(project: Project, includeNonProjectItems: Boolean): Array[String] = {
-    HaskellFindUtil.findDeclarationElements(project, includeNonProjectItems).map(_.getIdentifierElement.getName).toArray
+    HaskellFindUtil.findDeclarationElements(project, includeNonProjectItems).flatMap(_.getIdentifierElements.map(_.getName)).toArray
   }
 
   def getItemsByName(name: String, pattern: String, project: Project, includeNonProjectItems: Boolean): Array[NavigationItem] = {

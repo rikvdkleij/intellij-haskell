@@ -3,5 +3,5 @@ package com.powertuple.intellij.haskell.psi
 import com.intellij.navigation.NavigationItem
 
 trait HaskellDeclarationElement extends HaskellCompositeElement with NavigationItem {
-  def getIdentifierElement: HaskellNamedElement
+  def getIdentifierElements: Seq[HaskellNamedElement]
 }

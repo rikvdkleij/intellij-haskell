@@ -30,24 +30,20 @@ object GhcMod {
       Seq("browse", "-d", "-q", "-o") ++ moduleNames
     )
     val browseInfos = output.getStdoutLines.map(_.split("::")).map(cols => {
-      if (cols.size < 2) {
-        None
-      } else {
-        val typeSignature = cols(1)
-        val qualifiedName = cols(0)
+      val typeSignature = if (cols.size == 2) cols(1) else ""
+      val qualifiedName = cols(0)
 
-        val indexOperator = qualifiedName.lastIndexOf(".(") + 1
-        val (m, n) = if (indexOperator > 1) {
-          val (m, o) = qualifiedName.splitAt(indexOperator)
-          (m, o.substring(1, o.length - 2))
-        } else {
-          val indexId = qualifiedName.lastIndexOf('.') + 1
-          qualifiedName.splitAt(indexId)
-        }
-        Some(BrowseInfo(n, m.init, typeSignature))
+      val indexOperator = qualifiedName.lastIndexOf(".(") + 1
+      val (m, n) = if (indexOperator > 1) {
+        val (m, o) = qualifiedName.splitAt(indexOperator)
+        (m, o.substring(1, o.length - 2))
+      } else {
+        val indexId = qualifiedName.lastIndexOf('.') + 1
+        qualifiedName.splitAt(indexId)
       }
+     BrowseInfo(n, m.init, typeSignature)
     })
-    browseInfos.flatten
+    browseInfos
   }
 
   def listAvailableModules(project: Project): Seq[String] = {
@@ -59,13 +55,13 @@ object GhcMod {
     output.getStdoutLines
   }
 
-  def check(project: Project, filePath: String): GhcModOutput = {
+  def check(project: Project, filePath: String): GhcModiOutput = {
     val output = ExternalProcess.getProcessOutput(
       project.getBasePath,
       HaskellSettings.getInstance().getState.ghcModPath,
       Seq("check", filePath)
     )
-    GhcModOutput(output.getStdoutLines)
+    GhcModiOutput(output.getStdoutLines)
   }
 }
 

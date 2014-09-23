@@ -47,6 +47,11 @@ object HaskellElementFactory {
     PsiTreeUtil.findChildOfType(fileFromText, classOf[HaskellDeclarationElement])
   }
 
+  def createExpression(project: Project, name: String): HaskellExpression = {
+    val haskellFile = createFileFromText(project, name)
+    PsiTreeUtil.findChildOfType(haskellFile, classOf[HaskellExpression])
+  }
+
   private def createFileFromText(project: Project, text: String): HaskellFile = {
     PsiFileFactory.getInstance(project).createFileFromText("a.hs", HaskellLanguage.Instance, text).asInstanceOf[HaskellFile]
   }

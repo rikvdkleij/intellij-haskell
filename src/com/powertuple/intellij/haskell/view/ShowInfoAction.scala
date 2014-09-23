@@ -33,13 +33,20 @@ class ShowInfoAction extends AnAction {
       editor <- Option(CommonDataKeys.EDITOR.getData(context))
       psiFile <- Option(PsiUtilBase.getPsiFileInEditor(editor, CommonDataKeys.PROJECT.getData(context)))
       offset = editor.getCaretModel.getOffset
+      project = psiFile.getProject
       expression <- Option(psiFile.findElementAt(offset).getText)
     } yield
       GhcModiManager.findInfoFor(psiFile, expression) match {
-        case Seq(lei: LibraryExpressionInfo, _*) => HaskellEditorUtil.showHint(editor, s"${lei.typeSignature}   -- ${lei.module}")
-        case Seq(bei: BuiltInExpressionInfo, _*) => HaskellEditorUtil.showHint(editor, s"${bei.typeSignature}   -- ${bei.module}  BUILT-IN")
-        case Seq(pei: ProjectExpressionInfo, _*) => HaskellEditorUtil.showHint(editor, s"${pei.typeSignature}   -- ${pei.filePath}")
+        case Seq(expressionInfos@_*) if expressionInfos.nonEmpty => HaskellEditorUtil.createInfoBallon(expressionInfos.map(createInfoText).mkString("<br>"), editor)
         case _ => HaskellEditorUtil.showHint(editor, s"Could not determine info for $expression")
       }
+  }
+
+  private def createInfoText(expressionInfo: ExpressionInfo): String = {
+    expressionInfo match {
+      case pei: ProjectExpressionInfo => s"${pei.typeSignature}  -- ${pei.filePath}"
+      case lei: LibraryExpressionInfo => s"${lei.typeSignature}   -- ${lei.module}"
+      case bei: BuiltInExpressionInfo => s"${bei.typeSignature}   -- ${bei.module}  BUILT-IN"
+    }
   }
 }

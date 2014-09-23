@@ -40,7 +40,8 @@ object HaskellSyntaxHighlighter {
   final val Bracket = createTextAttributesKey("HS_BRACKET", DefaultLanguageHighlighterColors.BRACKETS)
   final val Variable = createTextAttributesKey("HS_VAR", DefaultLanguageHighlighterColors.GLOBAL_VARIABLE)
   final val Constructor = createTextAttributesKey("HS_CONSTRUCTOR", DefaultLanguageHighlighterColors.CLASS_NAME)
-  final val Default = createTextAttributesKey("HS_DEFAULT", DefaultLanguageHighlighterColors.FUNCTION_CALL)
+  final val Symbol = createTextAttributesKey("HS_SYMBOL", DefaultLanguageHighlighterColors.PREDEFINED_SYMBOL)
+  final val Default = createTextAttributesKey("HS_DEFAULT", DefaultLanguageHighlighterColors.CONSTANT)
 }
 
 class HaskellSyntaxHighlighter extends SyntaxHighlighterBase {
@@ -63,14 +64,14 @@ class HaskellSyntaxHighlighter extends SyntaxHighlighterBase {
       case et if et == HS_NCOMMENT => pack(BlockComment)
       case et if et == HS_STRING_LITERAL || et == HS_CHARACTER_LITERAL => pack(String)
       case et if NUMBERS.contains(et) => pack(Number)
-      case et if RESERVED_IDS.contains(et) => pack(Keyword)
+      case et if ALL_RESERVED_IDS.contains(et) => pack(Keyword)
       case et if OPERATORS.contains(et) => pack(Operator)
+      case et if SYMBOLS.contains(et) => pack(Symbol)
       case et if et == HS_LEFT_PAREN || et == HS_RIGHT_PAREN => pack(Parentheses)
       case et if et == HS_LEFT_BRACE || et == HS_RIGHT_BRACE => pack(Brace)
       case et if et == HS_LEFT_BRACKET || et == HS_RIGHT_BRACKET => pack(Bracket)
-      case et if et == HS_QVAR => pack(Variable)
-      //      case et if et == HS_VAR_ID || SYMBOLS.contains(et) => pack(Variable)
-      case et if et == HS_QCON => pack(Constructor)
+      case et if et == HS_QVAR_ID => pack(Variable)
+      case et if et == HS_QCON_ID => pack(Constructor)
       case _ => pack(Default)
     }
   }

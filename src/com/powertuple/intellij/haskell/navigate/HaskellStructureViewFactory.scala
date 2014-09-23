@@ -83,13 +83,19 @@ private class HaskellStructureViewTreeElement(val element: PsiElement, val typeS
 
   override def getPresentableText: String = {
     element match {
-      case hde: HaskellDeclarationElement => hde.getIdentifierElement.getName
+      case hde: HaskellDeclarationElement => hde.getPresentation.getPresentableText
       case pf: PsiFile => pf.getName
       case _ => null
     }
   }
 
-  override def getIcon(unused: Boolean): Icon = HaskellIcons.NewType
+  override def getIcon(unused: Boolean): Icon = {
+     element match {
+      case hde: HaskellDeclarationElement => hde.getPresentation.getIcon(unused)
+      case pf: PsiFile => HaskellIcons.Module
+      case _ => null
+    }
+  }
 
   override def getLocationString: String = null
 }
