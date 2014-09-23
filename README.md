@@ -26,8 +26,9 @@ and expects that the Cabal init/install/build is done on command-line.
 - View quick definition;
 - Structure view;
 - Navigate to declaration (called `Class` in IntelliJ menu);
-- Navigate to identifier (called `Symbol` in IntelliH menu);
+- Navigate to identifier (called `Symbol` in IntelliJ menu);
 - Code completion by looking to import declarations(`hiding` and `qualified` are not supported yet);
+- Simple form of code formatting;
 
 A lot of features are with the help of ghc-mod(i)!!
 
@@ -39,7 +40,7 @@ A lot of features are with the help of ghc-mod(i)!!
 - Hole driven development support;
 - Some quick-fixes;
 - Setting scope while refactoring;
-- Code formatting (maybe use `hindent` or `haskell-formatter` as helper);
+- Improve code formatting (maybe use `hindent` or `haskell-formatter` as helper);
 
 # Getting started: 
 - Cabal install ghc-mod and haskell-docs;
