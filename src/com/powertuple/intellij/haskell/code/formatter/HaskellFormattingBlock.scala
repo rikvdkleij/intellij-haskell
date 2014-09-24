@@ -24,15 +24,26 @@ import com.intellij.psi.TokenType
 import com.intellij.psi.formatter.common.AbstractBlock
 import com.intellij.psi.tree.IElementType
 import com.powertuple.intellij.haskell.psi.HaskellTypes._
-import org.jetbrains.annotations.Nullable
 
 import scala.annotation.tailrec
 import scala.collection.JavaConversions._
 import scala.collection.mutable
 
-class HaskellFormattingBlock(node: ASTNode, alignment: Option[Alignment], spacingBuilder: SpacingBuilder) extends AbstractBlock(node, null, alignment.orNull) {
+class HaskellFormattingBlock(node: ASTNode, alignment: Option[Alignment], spacingBuilder: SpacingBuilder, parentBlock: Block) extends AbstractBlock(node, null, alignment.orNull) {
 
-  override def buildChildren(): util.List[Block] = {
+  private var subBlocks: Option[Seq[Block]] = None
+
+  override def buildChildren: util.List[Block] = {
+    subBlocks match {
+      case Some(b) => b
+      case None =>
+        val blocks = buildSubBlocks
+        subBlocks = Some(blocks)
+        blocks
+    }
+  }
+
+  def buildSubBlocks: util.List[Block] = {
     val alignments = Seq.fill(9)(Alignment.createAlignment(true))
 
     val child: ASTNode = node.getFirstChildNode
@@ -51,11 +62,9 @@ class HaskellFormattingBlock(node: ASTNode, alignment: Option[Alignment], spacin
   }
 
   def createChildBlock(parent: ASTNode, child: ASTNode, alignments: Seq[Alignment]): Block = {
-    new HaskellFormattingBlock(child, getAlignment(parent, child, alignments), spacingBuilder)
+    new HaskellFormattingBlock(child, getAlignment(parent, child, alignments), spacingBuilder, this)
   }
 
-
-  @Nullable
   private def getAlignment(parent: ASTNode, child: ASTNode, alignments: Seq[Alignment]): Option[Alignment] = {
     val childType: IElementType = child.getElementType
 
@@ -72,7 +81,7 @@ class HaskellFormattingBlock(node: ASTNode, alignment: Option[Alignment], spacin
   }
 
   private def shouldCreateBlockFor(node: ASTNode): Boolean = {
-    node.getTextRange.getLength != 0 && node.getElementType != TokenType.WHITE_SPACE && node.getElementType != HS_NEWLINE
+    node.getTextRange.getLength != 0 && node.getElementType != TokenType.WHITE_SPACE
   }
 
   override def getIndent: Indent = {
@@ -99,6 +108,7 @@ object IndentProcessor {
       case HS_CDECL | HS_IDECLS => Indent.getNormalIndent(false)
       case HS_EQUAL | HS_DOLLAR => Indent.getContinuationIndent(true)
       case HS_VERTICAL_BAR => Indent.getNormalIndent(false)
+      case HS_LINE_EXPRESSION if child.getTreeParent.getElementType != HS_FIRST_LINE_EXPRESSION => Indent.getNormalIndent(false)
       case _ => Indent.getNoneIndent
     }
   }

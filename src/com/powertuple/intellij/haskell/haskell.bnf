@@ -156,12 +156,11 @@ idecls                      ::= expression
 
 private decl                ::= type_signature | expression
 
-expression                  ::= first_line_expression (not_align_id | line_expression)* (snl (line_expression | not_align_id)*)*
+expression                  ::= first_line_expression (snl line_expression)*
 first_line_expression       ::= line_expression
 line_expression             ::= general_id+
-not_align_id                ::= DO | WHERE | IF | THEN | ELSE
 
-private general_id          ::= (qvar | qcon | qvarop | qconop | LEFT_PAREN | RIGHT_PAREN | FLOAT |
+private general_id          ::= (qvar | qcon | qvarop | qconop | LEFT_PAREN | RIGHT_PAREN | FLOAT | DO | WHERE | IF | THEN | ELSE |
                                  COLON_COLON | DOUBLE_RIGHT_ARROW | ttype | context | RIGHT_ARROW | IN | CASE | OF | LET |
                                  SEMICOLON | LEFT_ARROW | LEFT_BRACKET | RIGHT_BRACKET | literal | LEFT_BRACE | RIGHT_BRACE |
                                  COMMA | UNDERSCORE | symbol | COLON | UNSAFE | DOT_DOT | QUOTE)

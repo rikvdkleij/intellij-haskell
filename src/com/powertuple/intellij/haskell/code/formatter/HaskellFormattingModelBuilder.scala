@@ -64,7 +64,7 @@ class HaskellFormattingModelBuilder extends FormattingModelBuilder {
     val commonSettings: CommonCodeStyleSettings = settings.getCommonSettings(HaskellLanguage.Instance)
     val haskellSettings: HaskellCodeStyleSettings = settings.getCustomSettings(classOf[HaskellCodeStyleSettings])
     val spacingBuilder: SpacingBuilder = HaskellFormattingModelBuilder.createSpacingBuilder(commonSettings, haskellSettings)
-    val block: HaskellFormattingBlock = new HaskellFormattingBlock(element.getNode, None, spacingBuilder)
+    val block: HaskellFormattingBlock = new HaskellFormattingBlock(element.getNode, None, spacingBuilder, null)
     FormattingModelProvider.createFormattingModelForPsiFile(element.getContainingFile, block, settings)
   }
 
