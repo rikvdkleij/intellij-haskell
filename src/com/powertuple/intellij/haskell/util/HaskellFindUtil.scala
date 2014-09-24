@@ -25,16 +25,9 @@ import com.powertuple.intellij.haskell.psi._
 import scala.collection.JavaConversions._
 
 object HaskellFindUtil {
-  private var modulesScope: Option[GlobalSearchScope] = None
 
   def findDeclarationElements(project: Project, includeNonProjectItems: Boolean): Iterable[HaskellDeclarationElement] = {
-    val scope = if (includeNonProjectItems) {
-      GlobalSearchScope.allScope(project)
-    } else {
-      getModulesScope(project)
-    }
-    val haskellFiles = HaskellFileIndex.getAllHaskellFiles(project, scope)
-    haskellFiles.flatMap(f => PsiTreeUtil.findChildrenOfType(f, classOf[HaskellDeclarationElement]))
+    getHaskellFiles(project, includeNonProjectItems).flatMap(f => PsiTreeUtil.findChildrenOfType(f, classOf[HaskellDeclarationElement]))
   }
 
   def findDeclarationElements(project: Project, name: String, includeNonProjectItems: Boolean): Iterable[HaskellDeclarationElement] = {
@@ -42,26 +35,19 @@ object HaskellFindUtil {
   }
 
   def findNamedElements(project: Project, includeNonProjectItems: Boolean): Iterable[HaskellNamedElement] = {
-    val scope = if (includeNonProjectItems) {
-      GlobalSearchScope.allScope(project)
-    } else {
-      getModulesScope(project)
-    }
-    val haskellFiles = HaskellFileIndex.getAllHaskellFiles(project, scope)
-    haskellFiles.flatMap(f => PsiTreeUtil.findChildrenOfType(f, classOf[HaskellNamedElement]))
+    getHaskellFiles(project, includeNonProjectItems).flatMap(f => PsiTreeUtil.findChildrenOfType(f, classOf[HaskellNamedElement]))
   }
 
   def findNamedElements(project: Project, name: String, includeNonProjectItems: Boolean): Iterable[HaskellNamedElement] = {
     findNamedElements(project, includeNonProjectItems).filter(_.getName == name)
   }
 
-  private def getModulesScope(project: Project) = {
-    modulesScope match {
-      case Some(s) => s
-      case None => {
-        modulesScope = Some(ModuleManager.getInstance(project).getModules.map(GlobalSearchScope.moduleScope).reduce(_.uniteWith(_)))
-        modulesScope.getOrElse(None)
-      }
+  private def getHaskellFiles(project: Project, includeNonProjectItems: Boolean) = {
+    val scope = if (includeNonProjectItems) {
+      GlobalSearchScope.allScope(project)
+    } else {
+      ModuleManager.getInstance(project).getModules.map(GlobalSearchScope.moduleScope).reduce(_.uniteWith(_))
     }
+    HaskellFileIndex.getAllHaskellFiles(project, scope)
   }
 }
