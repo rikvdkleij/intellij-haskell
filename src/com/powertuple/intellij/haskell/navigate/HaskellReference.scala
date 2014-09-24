@@ -17,7 +17,7 @@
 package com.powertuple.intellij.haskell.navigate
 
 import com.intellij.codeInsight.lookup.LookupElementBuilder
-import com.intellij.openapi.util.{Condition, TextRange}
+import com.intellij.openapi.util.TextRange
 import com.intellij.openapi.vfs.LocalFileSystem
 import com.intellij.psi._
 import com.intellij.psi.util.{PsiTreeUtil, PsiUtilCore}
@@ -54,22 +54,16 @@ class HaskellReference(element: HaskellNamedElement, textRange: TextRange) exten
     }).toArray
   }
 
+  // Note that current expression element is always removed from result.
   override def getVariants: Array[AnyRef] = {
-    val file = myElement.getContainingFile
-    val expressionParent = Option(PsiTreeUtil.findFirstParent(element, expressionCondition))
-    val namedElements = expressionParent.map(PsiTreeUtil.findChildrenOfType(_, classOf[HaskellNamedElement]).map(createLookupElement).toIterable).getOrElse(Iterable())
+    val file = myElement.getContainingFile.getOriginalFile
+    val namedElements = Option(PsiTreeUtil.getParentOfType(myElement, classOf[HaskellExpression])) match {
+      case Some(e) => PsiTreeUtil.findChildrenOfType(e, classOf[HaskellNamedElement]).filterNot(_.getText == myElement.getText).map(createLookupElement)
+      case None => Iterable()
+    }
 
     val declarationNamedElements = PsiTreeUtil.findChildrenOfType(file, classOf[HaskellDeclarationElement]).flatMap(createLookupElement)
     (declarationNamedElements ++ namedElements).groupBy(_.getLookupString).values.map(_.head).toArray
-  }
-
-  private final val expressionCondition = new Condition[PsiElement]() {
-    override def value(psiElement: PsiElement): Boolean = {
-      psiElement match {
-        case _: HaskellExpression => true
-        case _ => false
-      }
-    }
   }
 
   private def createLookupElement(namedElement: HaskellNamedElement) = {
