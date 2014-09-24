@@ -72,8 +72,7 @@ class HaskellFormattingBlock(node: ASTNode, alignment: Option[Alignment], spacin
   }
 
   private def shouldCreateBlockFor(node: ASTNode): Boolean = {
-    node.getTextRange.getLength != 0 && node.getElementType != TokenType.WHITE_SPACE &&
-        node.getElementType != HS_COMMENT && node.getElementType != HS_NCOMMENT && node.getElementType != HS_NEWLINE
+    node.getTextRange.getLength != 0 && node.getElementType != TokenType.WHITE_SPACE && node.getElementType != HS_NEWLINE
   }
 
   override def getIndent: Indent = {
