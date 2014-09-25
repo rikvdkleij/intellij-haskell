@@ -71,7 +71,15 @@ class HaskellReference(element: HaskellNamedElement, textRange: TextRange) exten
   }
 
   private def createLookupElement(declarationElement: HaskellDeclarationElement) = {
-    declarationElement.getIdentifierElements.map(ne => LookupElementBuilder.create(ne.getName).withTypeText(declarationElement.getPresentation.getPresentableText).withIcon(declarationElement.getPresentation.getIcon(false)))
+    declarationElement.getIdentifierElements.map(ne => LookupElementBuilder.create(removeParens(ne.getName)).withTypeText(declarationElement.getPresentation.getPresentableText).withIcon(declarationElement.getPresentation.getIcon(false)))
+  }
+
+  private def removeParens(name: String) = {
+    if (name.startsWith("(") && name.endsWith(")")) {
+      name.substring(1, name.length - 1)
+    } else {
+      name
+    }
   }
 
   private def createResolveResults(libraryExpressionInfo: LibraryExpressionInfo, expression: String): Iterable[ResolveResult] = {
