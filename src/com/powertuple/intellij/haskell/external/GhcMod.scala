@@ -30,20 +30,26 @@ object GhcMod {
       Seq("browse", "-d", "-q", "-o") ++ moduleNames
     )
     val browseInfos = output.getStdoutLines.map(_.split("::")).map(cols => {
-      val typeSignature = if (cols.size == 2) cols(1) else ""
+      val typeSignature = if (cols.size == 2) cols(1).trim else ""
       val qualifiedName = cols(0)
 
       val indexOperator = qualifiedName.lastIndexOf(".(") + 1
-      val (m, n) = if (indexOperator > 1) {
-        val (m, o) = qualifiedName.splitAt(indexOperator)
-        (m, o.substring(1, o.length - 2))
+      val (module, name) = if (indexOperator > 1) {
+        val (m, o) = trimPair(qualifiedName.splitAt(indexOperator))
+        (m, o.substring(1, o.length - 1))
       } else {
         val indexId = qualifiedName.lastIndexOf('.') + 1
-        qualifiedName.splitAt(indexId)
+        trimPair(qualifiedName.splitAt(indexId))
       }
-     BrowseInfo(n, m.init, typeSignature)
+      BrowseInfo(name, module.init, typeSignature)
     })
     browseInfos
+  }
+
+  private def trimPair(t: (String, String)) = {
+    t match {
+      case (t0, t1) => (t0.trim, t1.trim)
+    }
   }
 
   def listAvailableModules(project: Project): Seq[String] = {
