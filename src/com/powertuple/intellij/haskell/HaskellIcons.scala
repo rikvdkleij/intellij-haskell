@@ -20,6 +20,7 @@ import com.intellij.openapi.util.IconLoader
 
 object HaskellIcons {
   final val HaskellSmallLogo = IconLoader.getIcon("/icons/haskell-small-logo.png")
+  final val HaskellSmallBlueLogo = IconLoader.getIcon("/icons/haskell-small-blue-logo.png")
   final val HaskellLogo = IconLoader.getIcon("/icons/haskell_24x24.png")
 
   final val Module = IconLoader.getIcon("/icons/module.png")
@@ -27,9 +28,10 @@ object HaskellIcons {
   final val NewType = IconLoader.getIcon("/icons/newtype.png")
   final val Type = IconLoader.getIcon("/icons/type.png")
   final val Class = IconLoader.getIcon("/icons/class.png")
+  final val Default = IconLoader.getIcon("/icons/default_declaration.png")
   final val TypeFamily = IconLoader.getIcon("/icons/type_family.png")
   final val TypeInstance = IconLoader.getIcon("/icons/type_instance.png")
   final val TypeSignature = IconLoader.getIcon("/icons/type_signature.png")
   final val Instance = IconLoader.getIcon("/icons/instance.png")
-  final val ForeignImport = IconLoader.getIcon("/icons/foreign_import.png")
+  final val Foreign = IconLoader.getIcon("/icons/foreign.png")
 }

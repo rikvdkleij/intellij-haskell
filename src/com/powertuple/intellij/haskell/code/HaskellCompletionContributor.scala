@@ -24,7 +24,7 @@ import com.intellij.psi.impl.source.tree.TreeUtil
 import com.intellij.psi.util.PsiTreeUtil
 import com.intellij.psi.{PsiElement, PsiFile}
 import com.intellij.util.ProcessingContext
-import com.powertuple.intellij.haskell.external.GhcMod
+import com.powertuple.intellij.haskell.external.{BrowseInfo, GhcMod}
 import com.powertuple.intellij.haskell.psi._
 import com.powertuple.intellij.haskell.{HaskellIcons, HaskellParserDefinition}
 
@@ -39,8 +39,8 @@ class HaskellCompletionContributor extends CompletionContributor {
     def addCompletions(parameters: CompletionParameters, context: ProcessingContext, originalResultSet: CompletionResultSet) {
 
       // To get right completion behavior (especially for operators) we have to find the right prefix
-      val prefix1 = createPrefix(parameters.getOriginalPosition)
-      val prefix2 = createPrefix(parameters.getPosition)
+      val prefix1 = createPrefix(Option(parameters.getOriginalPosition))
+      val prefix2 = createPrefix(Option(parameters.getPosition))
       val prefix = if (prefix1.isEmpty) prefix2 else prefix1
       val resultSet = if (originalResultSet.getPrefixMatcher.getPrefix.isEmpty && !prefix2.isEmpty && prefix2 != ",") {
         originalResultSet.withPrefixMatcher(new PlainPrefixMatcher(prefix))
@@ -53,15 +53,15 @@ class HaskellCompletionContributor extends CompletionContributor {
       position match {
         case Some(p) if isModuleDeclarationInProgress(p) => resultSet.addAllElements(GhcMod.listAvailableModules(project).map(LookupElementBuilder.create))
         case Some(p) if isPragmaInProgress(p) =>
-          resultSet.addAllElements(LanguageExtensions.Names.map(n => LookupElementBuilder.create(n).withIcon(HaskellIcons.HaskellSmallLogo)))
+          resultSet.addAllElements(LanguageExtensions.Names.map(n => LookupElementBuilder.create(n).withIcon(HaskellIcons.HaskellSmallBlueLogo)))
           addPragmaIdsToResultSet(resultSet)
         case _ =>
-          ReservedIds.foreach(s => resultSet.addElement(LookupElementBuilder.create(s).withIcon(HaskellIcons.HaskellSmallLogo).withTypeText("keyword")))
+          ReservedIds.foreach(s => resultSet.addElement(LookupElementBuilder.create(s).withIcon(HaskellIcons.HaskellSmallBlueLogo).withTailText("keyword", true)))
 
           addPragmaIdsToResultSet(resultSet)
 
           val browseInfo = GhcMod.browseInfo(project, getImportedModuleNames(parameters.getOriginalFile))
-          browseInfo.foreach(bi => resultSet.addElement(LookupElementBuilder.create(bi.name).withTypeText(bi.typeSignature).withTailText(" " + bi.moduleName, true).withIcon(HaskellIcons.HaskellSmallLogo)))
+          browseInfo.foreach(bi => resultSet.addElement(LookupElementBuilder.create(bi.name).withTypeText(bi.typeSignature).withTailText(" " + bi.moduleName, true).withIcon(findIcon(bi))))
       }
     }
   })
@@ -73,12 +73,31 @@ class HaskellCompletionContributor extends CompletionContributor {
     context.setDummyIdentifier(caretElement.map(_.getText).getOrElse("a"))
   }
 
-  private def createPrefix(position: PsiElement) = {
-   position.getText.trim.takeWhile(c => c != ' ' && c != '\n')
+  private def findIcon(browseInfo: BrowseInfo) = {
+    import com.powertuple.intellij.haskell.HaskellIcons._
+    browseInfo.typeSignature match {
+      case ts if ts.startsWith("class ") => Class
+      case ts if ts.startsWith("data ") => Data
+      case ts if ts.startsWith("default ") => Default
+      case ts if ts.startsWith("foreign ") => Foreign
+      case ts if ts.startsWith("instance ") => Instance
+      case ts if ts.startsWith("new type ") => NewType
+      case ts if ts.startsWith("type ") => Type
+      case ts if ts.startsWith("type family ") => TypeFamily
+      case ts if ts.startsWith("type instance ") => TypeInstance
+      case _ => TypeSignature
+    }
+  }
+
+  private def createPrefix(position: Option[PsiElement]): String = {
+    position match {
+      case Some(p) => p.getText.trim.takeWhile(c => c != ' ' && c != '\n')
+      case None => ""
+    }
   }
 
   private def addPragmaIdsToResultSet(resultSet: CompletionResultSet) = {
-    PragmaIds.foreach(s => resultSet.addElement(LookupElementBuilder.create(s).withIcon(HaskellIcons.HaskellSmallLogo).withTypeText("pragma")))
+    PragmaIds.foreach(s => resultSet.addElement(LookupElementBuilder.create(s).withIcon(HaskellIcons.HaskellSmallBlueLogo).withTailText("pragma", true)))
   }
 
   private def isModuleDeclarationInProgress(position: PsiElement): Boolean = {

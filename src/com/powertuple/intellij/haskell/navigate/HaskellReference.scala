@@ -67,7 +67,7 @@ class HaskellReference(element: HaskellNamedElement, textRange: TextRange) exten
   }
 
   private def createLookupElement(namedElement: HaskellNamedElement) = {
-    LookupElementBuilder.create(namedElement.getName).withIcon(HaskellIcons.HaskellSmallLogo)
+    LookupElementBuilder.create(namedElement.getName).withIcon(HaskellIcons.HaskellSmallBlueLogo)
   }
 
   private def createLookupElement(declarationElement: HaskellDeclarationElement) = {

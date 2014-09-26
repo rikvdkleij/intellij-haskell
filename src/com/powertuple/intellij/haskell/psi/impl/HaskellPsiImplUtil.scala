@@ -119,12 +119,12 @@ object HaskellPsiImplUtil {
         case _: HaskellNewtypeDeclaration => NewType
         case _: HaskellClassDeclaration => Class
         case _: HaskellInstanceDeclaration => Instance
-        case _: HaskellDefaultDeclaration => HaskellSmallLogo
+        case _: HaskellDefaultDeclaration => Default
         case _: HaskellTypeSignature => TypeSignature
-        case _: HaskellForeignDeclaration => ForeignImport
+        case _: HaskellForeignDeclaration => Foreign
         case _: HaskellTypeFamilyDeclaration => TypeFamily
         case _: HaskellTypeInstanceDeclaration => TypeInstance
-        case _ => HaskellSmallLogo
+        case _ => HaskellSmallBlueLogo
       }
     }
   }
@@ -145,7 +145,7 @@ object HaskellPsiImplUtil {
       override def getIcon(unused: Boolean): Icon = {
         declarationElement match {
           case de: HaskellDeclarationElement => super.getIcon(unused)
-          case _ => HaskellIcons.HaskellSmallLogo
+          case _ => HaskellIcons.HaskellSmallBlueLogo
         }
       }
     }
