@@ -56,7 +56,7 @@ class HaskellCompletionContributor extends CompletionContributor {
           resultSet.addAllElements(LanguageExtensions.Names.map(n => LookupElementBuilder.create(n).withIcon(HaskellIcons.HaskellSmallBlueLogo)))
           addPragmaIdsToResultSet(resultSet)
         case _ =>
-          ReservedIds.foreach(s => resultSet.addElement(LookupElementBuilder.create(s).withIcon(HaskellIcons.HaskellSmallBlueLogo).withTailText("keyword", true)))
+          ReservedIds.foreach(s => resultSet.addElement(LookupElementBuilder.create(s).withIcon(HaskellIcons.HaskellSmallBlueLogo).withTailText(" keyword", true)))
 
           addPragmaIdsToResultSet(resultSet)
 
@@ -97,7 +97,7 @@ class HaskellCompletionContributor extends CompletionContributor {
   }
 
   private def addPragmaIdsToResultSet(resultSet: CompletionResultSet) = {
-    PragmaIds.foreach(s => resultSet.addElement(LookupElementBuilder.create(s).withIcon(HaskellIcons.HaskellSmallBlueLogo).withTailText("pragma", true)))
+    PragmaIds.foreach(s => resultSet.addElement(LookupElementBuilder.create(s).withIcon(HaskellIcons.HaskellSmallBlueLogo).withTailText(" pragma", true)))
   }
 
   private def isModuleDeclarationInProgress(position: PsiElement): Boolean = {
