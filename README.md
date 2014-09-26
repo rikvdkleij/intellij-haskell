@@ -10,7 +10,7 @@ Some months ago I started his project because I was learning Haskell and I was m
 In the meantime also Atsky started to create [Haskell-idea-plugin](https://github.com/Atsky/haskell-idea-plugin) based on ideah plugin in Kotlin. 
  Looking to their recent changes, they are more focusing on Cabal and debugging support.
  
-This plugin is written mainly in Scala and is mentioned not to support GHC/Cabal directly. This plugin support sandbox projects
+This plugin is written mainly in Scala and is not mentioned to support GHC/Cabal directly. This plugin support sandbox projects
 and expects that the Cabal init/install/build is done on command-line.
 
 # Features
@@ -45,7 +45,7 @@ A lot of features are with the help of ghc-mod(i)!!
 # Getting started: 
 - Cabal install ghc-mod and haskell-docs;
 - Set file paths to ghc-mod, ghc-modi and haskell-docs in `Settings/Haskell`;
-- Be sure in Settings/Filetypes that `Haskell language file` is registered with pattern `*.hs` and `Literate Haskell language file` with pattern `*.lhs`; 
+- Be sure in `Settings/Filetypes` that `Haskell language file` is registered with pattern `*.hs` and `Literate Haskell language file` with pattern `*.lhs`; 
 - First install your project in a Cabal sandbox (be sure that Haddock documentation is generated, see [haskell-docs](https://github.com/chrisdone/haskell-docs)). 
 - After project is installed in sandbox, create Haskell project in IntelliJ by using `File`/`Open` from IntelliJ menu;
 - Select `No SDK` in Project Setting;
