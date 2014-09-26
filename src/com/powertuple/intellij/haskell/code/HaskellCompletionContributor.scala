@@ -18,6 +18,7 @@ package com.powertuple.intellij.haskell.code
 
 import com.intellij.codeInsight.completion._
 import com.intellij.codeInsight.lookup.LookupElementBuilder
+import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Condition
 import com.intellij.patterns.PlatformPatterns
 import com.intellij.psi.impl.source.tree.TreeUtil
@@ -39,10 +40,10 @@ class HaskellCompletionContributor extends CompletionContributor {
     def addCompletions(parameters: CompletionParameters, context: ProcessingContext, originalResultSet: CompletionResultSet) {
 
       // To get right completion behavior (especially for operators) we have to find the right prefix
-      val prefix1 = createPrefix(Option(parameters.getOriginalPosition))
-      val prefix2 = createPrefix(Option(parameters.getPosition))
-      val prefix = if (prefix1.isEmpty) prefix2 else prefix1
-      val resultSet = if (originalResultSet.getPrefixMatcher.getPrefix.isEmpty && !prefix2.isEmpty && prefix2 != ",") {
+      val originalPrefix = createPrefix(Option(parameters.getOriginalPosition))
+      val currentPrefix = createPrefix(Option(parameters.getPosition))
+      val prefix = if (originalPrefix.isEmpty) currentPrefix else originalPrefix
+      val resultSet = if (originalResultSet.getPrefixMatcher.getPrefix.isEmpty && !currentPrefix.isEmpty && currentPrefix != "," && currentPrefix != "(") {
         originalResultSet.withPrefixMatcher(new PlainPrefixMatcher(prefix))
       } else {
         originalResultSet
@@ -51,7 +52,8 @@ class HaskellCompletionContributor extends CompletionContributor {
       val project = parameters.getPosition.getProject
       val position = Option(parameters.getOriginalPosition).orElse(Option(parameters.getPosition))
       position match {
-        case Some(p) if isModuleDeclarationInProgress(p) => resultSet.addAllElements(GhcMod.listAvailableModules(project).map(LookupElementBuilder.create))
+        case Some(p) if isImportSpecInProgress(p) => resultSet.addAllElements(findIdsForInImportSpec(project, p))
+        case Some(p) if isImportModuleDeclarationInProgress(p) => resultSet.addAllElements(GhcMod.listAvailableModules(project).map(LookupElementBuilder.create))
         case Some(p) if isPragmaInProgress(p) =>
           resultSet.addAllElements(LanguageExtensions.Names.map(n => LookupElementBuilder.create(n).withIcon(HaskellIcons.HaskellSmallBlueLogo)))
           addPragmaIdsToResultSet(resultSet)
@@ -60,8 +62,8 @@ class HaskellCompletionContributor extends CompletionContributor {
 
           addPragmaIdsToResultSet(resultSet)
 
-          val browseInfo = GhcMod.browseInfo(project, getImportedModuleNames(parameters.getOriginalFile))
-          browseInfo.foreach(bi => resultSet.addElement(LookupElementBuilder.create(bi.name).withTypeText(bi.typeSignature).withTailText(" " + bi.moduleName, true).withIcon(findIcon(bi))))
+          val browseInfos = GhcMod.browseInfo(project, getImportedModuleNames(parameters.getOriginalFile), removeParensFromOperator = true)
+          browseInfos.foreach(bi => resultSet.addElement(LookupElementBuilder.create(bi.name).withTypeText(bi.declaration).withTailText(" " + bi.moduleName, true).withIcon(findIcon(bi))))
       }
     }
   })
@@ -73,9 +75,16 @@ class HaskellCompletionContributor extends CompletionContributor {
     context.setDummyIdentifier(caretElement.map(_.getText).getOrElse("a"))
   }
 
+  private def findIdsForInImportSpec(project: Project, position: PsiElement): Seq[LookupElementBuilder] = {
+    (for {
+      importDeclaration <- Option(TreeUtil.findParent(position.getNode, HaskellTypes.HS_IMPORT_DECLARATION))
+      moduleName <- Option(PsiTreeUtil.findChildOfType(importDeclaration.getPsi, classOf[HaskellImportModule])).map(_.getQcon.getName)
+    } yield GhcMod.browseInfo(project, Seq(moduleName), removeParensFromOperator = false)).map(_.map(bi => LookupElementBuilder.create(bi.name))).getOrElse(Seq())
+  }
+
   private def findIcon(browseInfo: BrowseInfo) = {
     import com.powertuple.intellij.haskell.HaskellIcons._
-    browseInfo.typeSignature match {
+    browseInfo.declaration match {
       case ts if ts.startsWith("class ") => Class
       case ts if ts.startsWith("data ") => Data
       case ts if ts.startsWith("default ") => Default
@@ -100,7 +109,7 @@ class HaskellCompletionContributor extends CompletionContributor {
     PragmaIds.foreach(s => resultSet.addElement(LookupElementBuilder.create(s).withIcon(HaskellIcons.HaskellSmallBlueLogo).withTailText(" pragma", true)))
   }
 
-  private def isModuleDeclarationInProgress(position: PsiElement): Boolean = {
+  private def isImportModuleDeclarationInProgress(position: PsiElement): Boolean = {
     Option(TreeUtil.findSiblingBackward(position.getNode, HaskellTypes.HS_IMPORT)).
         orElse(Option(PsiTreeUtil.findFirstParent(position, importDeclarationCondition))).isDefined ||
         position.getPrevSibling.isInstanceOf[HaskellImportDeclaration]
@@ -112,12 +121,14 @@ class HaskellCompletionContributor extends CompletionContributor {
         orElse(Option(TreeUtil.findSiblingBackward(position.getParent.getNode, HaskellTypes.HS_PRAGMA_START))).isDefined
   }
 
+  private def isImportSpecInProgress(position: PsiElement): Boolean = {
+    Option(TreeUtil.findParent(position.getNode, HaskellTypes.HS_IMPORT_DECLARATION)).isDefined
+  }
+
   private def getImportedModuleNames(psiFile: PsiFile): Seq[String] = {
-    Seq("Prelude") ++ (
-        Option(PsiTreeUtil.findChildrenOfType(psiFile, classOf[HaskellImportDeclaration])) match {
-          case None => Seq()
-          case Some(m) => m.filter(i => !Option(i.getImportSpec).map(_.getImportEmptySpec).isDefined).map(_.getModuleName).toSeq
-        })
+    val importDeclarations = PsiTreeUtil.findChildrenOfType(psiFile, classOf[HaskellImportDeclaration])
+    val moduleNames = importDeclarations.filter(i => Option(i.getImportSpec).flatMap(is => Option(is.getImportEmptySpec)).isEmpty).map(_.getModuleName).toSeq
+    Seq("Prelude") ++ moduleNames
   }
 
   private final val importDeclarationCondition = new Condition[PsiElement]() {

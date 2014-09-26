@@ -23,26 +23,26 @@ object GhcMod {
 
   import scala.collection.JavaConversions._
 
-  def browseInfo(project: Project, moduleNames: Seq[String]): Seq[BrowseInfo] = {
+  def browseInfo(project: Project, moduleNames: Seq[String], removeParensFromOperator: Boolean): Seq[BrowseInfo] = {
     val output = ExternalProcess.getProcessOutput(
       project.getBasePath,
       HaskellSettings.getInstance().getState.ghcModPath,
       Seq("browse", "-d", "-q", "-o") ++ moduleNames
     )
     val browseInfos = output.getStdoutLines.map(_.split("::")).map(cols => {
-      val typeSignature = if (cols.size == 2) cols(1).trim else ""
+      val declaration = if (cols.size == 2) cols(1).trim else ""
       val qualifiedName = cols(0)
 
-      val indexOperator = qualifiedName.lastIndexOf(".(") + 1
-      val (module, name) = if (indexOperator > 1) {
-        val (m, o) = trimPair(qualifiedName.splitAt(indexOperator))
-        (m.substring(0, m.length - 1), o.substring(1, o.length - 1))
+      val indexOfOperator = qualifiedName.lastIndexOf(".(") + 1
+      val (module, name) = if (indexOfOperator > 1) {
+        val (m, o) = trimPair(qualifiedName.splitAt(indexOfOperator))
+        (m.substring(0, m.length - 1), if (removeParensFromOperator) o.substring(1, o.length - 1) else o)
       } else {
-        val indexId = qualifiedName.lastIndexOf('.') + 1
-        val (m, o) = trimPair(qualifiedName.splitAt(indexId))
-        (m.substring(0, m.length - 1), o)
+        val indexOfId = qualifiedName.lastIndexOf('.') + 1
+        val (m, id) = trimPair(qualifiedName.splitAt(indexOfId))
+        (m.substring(0, m.length - 1), id)
       }
-      BrowseInfo(name, module, typeSignature)
+      BrowseInfo(name, module, declaration)
     })
     browseInfos
   }
@@ -72,4 +72,4 @@ object GhcMod {
   }
 }
 
-case class BrowseInfo(name: String, moduleName: String, typeSignature: String)
+case class BrowseInfo(name: String, moduleName: String, declaration: String)
