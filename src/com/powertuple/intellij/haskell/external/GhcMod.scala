@@ -36,12 +36,13 @@ object GhcMod {
       val indexOperator = qualifiedName.lastIndexOf(".(") + 1
       val (module, name) = if (indexOperator > 1) {
         val (m, o) = trimPair(qualifiedName.splitAt(indexOperator))
-        (m, o.substring(1, o.length - 1))
+        (m.substring(0, m.length - 1), o.substring(1, o.length - 1))
       } else {
         val indexId = qualifiedName.lastIndexOf('.') + 1
-        trimPair(qualifiedName.splitAt(indexId))
+        val (m, o) = trimPair(qualifiedName.splitAt(indexId))
+        (m.substring(0, m.length - 1), o)
       }
-      BrowseInfo(name, module.init, typeSignature)
+      BrowseInfo(name, module, typeSignature)
     })
     browseInfos
   }
