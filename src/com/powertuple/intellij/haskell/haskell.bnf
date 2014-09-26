@@ -38,8 +38,10 @@ import_declaration          ::= IMPORT import_qualified? osnl import_module osnl
 import_module               ::= qcon
 import_qualified            ::= qvar
 import_qualified_as         ::= qvar qcon
-import_spec                 ::= LEFT_PAREN osnl (import_id (osnl COMMA osnl import_id)* osnl (COMMA)?)? osnl RIGHT_PAREN |
-                                  import_hiding osnl LEFT_PAREN osnl (import_id osnl (COMMA osnl import_id)* osnl (COMMA)?)? osnl RIGHT_PAREN
+import_spec                 ::= LEFT_PAREN osnl import_id (osnl COMMA osnl import_id)* osnl (COMMA)? osnl RIGHT_PAREN |
+                                  import_hiding osnl LEFT_PAREN osnl (import_id osnl (COMMA osnl import_id)* osnl (COMMA)?)? osnl RIGHT_PAREN |
+                                  import_empty_spec
+import_empty_spec           ::= LEFT_PAREN RIGHT_PAREN
 import_hiding               ::= qvar
 import_id                   ::= qvar |
                                   qcon osnl (DOT_DOT_PARENS | LEFT_PAREN osnl (cname osnl (COMMA osnl cname)*)? osnl RIGHT_PAREN)? |

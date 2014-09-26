@@ -116,7 +116,7 @@ class HaskellCompletionContributor extends CompletionContributor {
     Seq("Prelude") ++ (
         Option(PsiTreeUtil.findChildrenOfType(psiFile, classOf[HaskellImportDeclaration])) match {
           case None => Seq()
-          case Some(m) => m.map(_.getModuleName).toSeq
+          case Some(m) => m.filter(i => !Option(i.getImportSpec).map(_.getImportEmptySpec).isDefined).map(_.getModuleName).toSeq
         })
   }
 
