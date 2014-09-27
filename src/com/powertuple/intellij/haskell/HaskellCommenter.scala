@@ -26,19 +26,19 @@ class HaskellCommenter extends CodeDocumentationAwareCommenter {
   }
 
   def getBlockCommentPrefix: String = {
-    "{-\n"
+    "{-"
   }
 
   def getBlockCommentSuffix: String = {
-    "\n-}"
+    "-}"
   }
 
   def getCommentedBlockCommentPrefix: String = {
-    null
+    "{-"
   }
 
   def getCommentedBlockCommentSuffix: String = {
-    null
+    "-}"
   }
 
   def getLineCommentTokenType: IElementType = {
@@ -54,7 +54,7 @@ class HaskellCommenter extends CodeDocumentationAwareCommenter {
   }
 
   def getDocumentationCommentPrefix: String = {
-    null
+    "-- | "
   }
 
   def getDocumentationCommentLinePrefix: String = {
