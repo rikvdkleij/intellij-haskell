@@ -41,6 +41,7 @@ A lot of features are with the help of ghc-mod(i)!!
 - Some quick-fixes;
 - Setting scope while refactoring;
 - Improve code formatting (maybe use `hindent` or `haskell-formatter` as helper);
+- Improve error/warning annotation position;
 
 # Getting started: 
 - Cabal install ghc-mod and haskell-docs;
