@@ -58,7 +58,7 @@ class HaskellCompletionContributor extends CompletionContributor {
           resultSet.addAllElements(LanguageExtensions.Names.map(n => LookupElementBuilder.create(n).withIcon(HaskellIcons.HaskellSmallBlueLogo)))
           addPragmaIdsToResultSet(resultSet)
         case _ =>
-          ReservedIds.foreach(s => resultSet.addElement(LookupElementBuilder.create(s).withIcon(HaskellIcons.HaskellSmallBlueLogo).withTailText(" keyword", true)))
+          ReservedIds.foreach(s => resultSet.addElement(LookupElementBuilder.create(s + " ").withIcon(HaskellIcons.HaskellSmallBlueLogo).withTailText(" keyword", true)))
 
           addPragmaIdsToResultSet(resultSet)
 
@@ -122,7 +122,8 @@ class HaskellCompletionContributor extends CompletionContributor {
   }
 
   private def isImportSpecInProgress(position: PsiElement): Boolean = {
-    Option(TreeUtil.findParent(position.getNode, HaskellTypes.HS_IMPORT_DECLARATION)).isDefined
+   val blas = Option(TreeUtil.findParent(position.getNode, HaskellTypes.HS_IMPORT_SPEC)).isDefined
+    blas
   }
 
   private def getImportedModuleNames(psiFile: PsiFile): Seq[String] = {
