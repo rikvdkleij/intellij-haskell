@@ -67,7 +67,7 @@ object LineColumnPosition {
     for {
       file <- Option(psiFile.getVirtualFile)
       doc <- Option(fdm.getDocument(file))
-      val lineIndex = (if (lineCol.lineNr > doc.getLineCount) doc.getLineCount else lineCol.lineNr) - 1
+      val lineIndex = lineCol.lineNr - 1
       startOffsetLine = doc.getLineStartOffset(lineIndex)
     } yield startOffsetLine + lineCol.columnNr - 1
   }

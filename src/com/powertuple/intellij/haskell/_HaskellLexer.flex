@@ -268,7 +268,7 @@ qconop              = {gconsym} | {backquote} {qconid} {backquote}
     {semicolon}           { return HS_SEMICOLON;}
     {left_bracket}        { return HS_LEFT_BRACKET; }
     {right_bracket}       { return HS_RIGHT_BRACKET; }
-//    {backquote}           { return HS_BACKQUOTE; }
+    {backquote}           { return HS_BACKQUOTE; }
     {left_brace}          { return HS_LEFT_BRACE; }
     {right_brace}         { return HS_RIGHT_BRACE; }
 

@@ -22,8 +22,10 @@ import com.intellij.lang.annotation.{AnnotationHolder, ExternalAnnotator}
 import com.intellij.openapi.fileEditor.FileDocumentManager
 import com.intellij.openapi.util.TextRange
 import com.intellij.psi.PsiFile
+import com.intellij.psi.util.PsiTreeUtil
 import com.powertuple.intellij.haskell.HaskellFileType
 import com.powertuple.intellij.haskell.external.GhcMod
+import com.powertuple.intellij.haskell.psi.HaskellModuleDeclaration
 import com.powertuple.intellij.haskell.util.{FileUtil, LineColumnPosition}
 
 class GhcModiExternalAnnotator extends ExternalAnnotator[GhcModInitialInfo, GhcModiResult] {
@@ -72,14 +74,21 @@ class GhcModiExternalAnnotator extends ExternalAnnotator[GhcModInitialInfo, GhcM
   // TODO: Try to make problem text range more precise by using 'text' inside problem description
   private[annotator] def createAnnotations(ghcModResult: GhcModiResult, psiFile: PsiFile): Seq[Annotation] = {
     for (problem <- ghcModResult.problems.filter(_.filePath == psiFile.getOriginalFile.getVirtualFile.getPath)) yield {
-      val startOffSet = LineColumnPosition.getOffset(psiFile, LineColumnPosition(problem.lineNr, problem.columnNr)).getOrElse(0)
-      val elementWithProblem = Option(psiFile.findElementAt(startOffSet))
-      val textRange = elementWithProblem.map(_.getTextRange).getOrElse(TextRange.create(startOffSet, startOffSet))
+      val textRange = getProblemTextRange(psiFile, problem)
       if (problem.description.startsWith("Warning:")) {
         WarningAnnotation(textRange, problem.description)
       } else {
         ErrorAnnotation(textRange, problem.description)
       }
+    }
+  }
+
+  private def getProblemTextRange(psiFile: PsiFile, problem: GhcModiProblem): TextRange = {
+    val ghcModiOffSet = LineColumnPosition.getOffset(psiFile, LineColumnPosition(problem.lineNr, problem.columnNr)).getOrElse(0)
+    if (Option(psiFile.findElementAt(ghcModiOffSet)).isEmpty) {
+      Option(PsiTreeUtil.findChildOfType(psiFile, classOf[HaskellModuleDeclaration])).flatMap(m => Option(m.getLastChild).map(_.getTextRange)).getOrElse(TextRange.create(0, 0))
+    } else {
+      psiFile.findElementAt(ghcModiOffSet).getTextRange
     }
   }
 

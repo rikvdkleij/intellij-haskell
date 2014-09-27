@@ -165,7 +165,7 @@ line_expression             ::= general_id+
 private general_id          ::= (qvar | qcon | qvarop | qconop | LEFT_PAREN | RIGHT_PAREN | FLOAT | DO | WHERE | IF | THEN | ELSE |
                                  COLON_COLON | DOUBLE_RIGHT_ARROW | ttype | context | RIGHT_ARROW | IN | CASE | OF | LET |
                                  SEMICOLON | LEFT_ARROW | LEFT_BRACKET | RIGHT_BRACKET | literal | LEFT_BRACE | RIGHT_BRACE |
-                                 COMMA | UNDERSCORE | symbol | COLON | UNSAFE | DOT_DOT | QUOTE)
+                                 COMMA | UNDERSCORE | symbol | COLON | UNSAFE | DOT_DOT | QUOTE | BACKQUOTE)
 
 private symbol              ::= EXCLAMATION_MARK | HASH | DOLLAR | PERCENTAGE | AMPERSAND | STAR | PLUS | DOT |
                                 SLASH | LT | GT | QUESTION_MARK | AT | BACKSLASH | CARET | VERTICAL_BAR | EQUAL |
