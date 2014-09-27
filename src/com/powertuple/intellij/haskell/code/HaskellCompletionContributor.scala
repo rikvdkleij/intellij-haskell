@@ -34,7 +34,7 @@ import scala.collection.JavaConversions._
 class HaskellCompletionContributor extends CompletionContributor {
 
   private final val ReservedIds = HaskellParserDefinition.ALL_RESERVED_IDS.getTypes.map(_.asInstanceOf[HaskellTokenType].getName).toSeq
-  private final val PragmaIds = Seq("{-#", "LANGUAGE", "#-}", "{-# LANGUAGE")
+  private final val PragmaIds = Seq("{-# ", "LANGUAGE ", "#-}", "{-# LANGUAGE ")
 
   extend(CompletionType.BASIC, PlatformPatterns.psiElement(), new CompletionProvider[CompletionParameters] {
     def addCompletions(parameters: CompletionParameters, context: ProcessingContext, originalResultSet: CompletionResultSet) {
@@ -50,20 +50,18 @@ class HaskellCompletionContributor extends CompletionContributor {
       }
 
       val project = parameters.getPosition.getProject
+      val file = parameters.getOriginalFile
       val position = Option(parameters.getOriginalPosition).orElse(Option(parameters.getPosition))
       position match {
-        case Some(p) if isImportSpecInProgress(p) => resultSet.addAllElements(findIdsForInImportSpec(project, p))
-        case Some(p) if isImportModuleDeclarationInProgress(p) => resultSet.addAllElements(GhcMod.listAvailableModules(project).map(LookupElementBuilder.create))
+        case Some(p) if isImportSpecInProgress(p) => resultSet.addAllElements(findIdsForInImportModuleSpec(project, p))
+        case Some(p) if isImportModuleDeclarationInProgress(p) => resultSet.addAllElements(findModulesToImport(project))
         case Some(p) if isPragmaInProgress(p) =>
-          resultSet.addAllElements(LanguageExtensions.Names.map(n => LookupElementBuilder.create(n).withIcon(HaskellIcons.HaskellSmallBlueLogo)))
-          addPragmaIdsToResultSet(resultSet)
+          resultSet.addAllElements(getLanguageExtensionNames)
+          resultSet.addAllElements(getPragmaIds)
         case _ =>
-          ReservedIds.foreach(s => resultSet.addElement(LookupElementBuilder.create(s + " ").withIcon(HaskellIcons.HaskellSmallBlueLogo).withTailText(" keyword", true)))
-
-          addPragmaIdsToResultSet(resultSet)
-
-          val browseInfos = GhcMod.browseInfo(project, getImportedModuleNames(parameters.getOriginalFile), removeParensFromOperator = true)
-          browseInfos.foreach(bi => resultSet.addElement(LookupElementBuilder.create(bi.name).withTypeText(bi.declaration).withTailText(" " + bi.moduleName, true).withIcon(findIcon(bi))))
+          resultSet.addAllElements(getReservedIds)
+          resultSet.addAllElements(getPragmaIds)
+          resultSet.addAllElements(getIdsInScope(project, file))
       }
     }
   })
@@ -75,27 +73,54 @@ class HaskellCompletionContributor extends CompletionContributor {
     context.setDummyIdentifier(caretElement.map(_.getText).getOrElse("a"))
   }
 
-  private def findIdsForInImportSpec(project: Project, position: PsiElement): Seq[LookupElementBuilder] = {
+  private def isImportSpecInProgress(position: PsiElement): Boolean = {
+    Option(TreeUtil.findParent(position.getNode, HaskellTypes.HS_IMPORT_SPEC)).isDefined
+  }
+
+  private def findIdsForInImportModuleSpec(project: Project, position: PsiElement): Seq[LookupElementBuilder] = {
     (for {
       importDeclaration <- Option(TreeUtil.findParent(position.getNode, HaskellTypes.HS_IMPORT_DECLARATION))
       moduleName <- Option(PsiTreeUtil.findChildOfType(importDeclaration.getPsi, classOf[HaskellImportModule])).map(_.getQcon.getName)
     } yield GhcMod.browseInfo(project, Seq(moduleName), removeParensFromOperator = false)).map(_.map(bi => LookupElementBuilder.create(bi.name))).getOrElse(Seq())
   }
 
-  private def findIcon(browseInfo: BrowseInfo) = {
-    import com.powertuple.intellij.haskell.HaskellIcons._
-    browseInfo.declaration match {
-      case ts if ts.startsWith("class ") => Class
-      case ts if ts.startsWith("data ") => Data
-      case ts if ts.startsWith("default ") => Default
-      case ts if ts.startsWith("foreign ") => Foreign
-      case ts if ts.startsWith("instance ") => Instance
-      case ts if ts.startsWith("new type ") => NewType
-      case ts if ts.startsWith("type ") => Type
-      case ts if ts.startsWith("type family ") => TypeFamily
-      case ts if ts.startsWith("type instance ") => TypeInstance
-      case _ => TypeSignature
-    }
+  private def isImportModuleDeclarationInProgress(position: PsiElement): Boolean = {
+    Option(TreeUtil.findSiblingBackward(position.getNode, HaskellTypes.HS_IMPORT)).
+        orElse(Option(PsiTreeUtil.findFirstParent(position, importDeclarationCondition))).isDefined ||
+        position.getPrevSibling.isInstanceOf[HaskellImportDeclaration]
+  }
+
+  private def findModulesToImport(project: Project) = {
+    GhcMod.listAvailableModules(project).map(LookupElementBuilder.create)
+  }
+
+  private def isPragmaInProgress(position: PsiElement): Boolean = {
+    Option(TreeUtil.findSiblingBackward(position.getNode, HaskellTypes.HS_PRAGMA_START)).
+        orElse(Option(TreeUtil.findSibling(position.getNode, HaskellTypes.HS_PRAGMA_END))).
+        orElse(Option(TreeUtil.findSiblingBackward(position.getParent.getNode, HaskellTypes.HS_PRAGMA_START))).isDefined
+  }
+
+  private def getLanguageExtensionNames = {
+    LanguageExtensions.Names.map(n => LookupElementBuilder.create(n).withIcon(HaskellIcons.HaskellSmallBlueLogo))
+  }
+
+  private def getPragmaIds: Seq[LookupElementBuilder] = {
+    PragmaIds.map(p => LookupElementBuilder.create(p).withIcon(HaskellIcons.HaskellSmallBlueLogo).withTailText(" pragma", true))
+  }
+
+  private def getImportedModuleNames(psiFile: PsiFile): Seq[String] = {
+    val importDeclarations = PsiTreeUtil.findChildrenOfType(psiFile, classOf[HaskellImportDeclaration])
+    val moduleNames = importDeclarations.filter(i => Option(i.getImportSpec).flatMap(is => Option(is.getImportEmptySpec)).isEmpty).map(_.getModuleName).toSeq
+    Seq("Prelude") ++ moduleNames
+  }
+
+  private def getReservedIds = {
+    ReservedIds.map(r => LookupElementBuilder.create(r + " ").withIcon(HaskellIcons.HaskellSmallBlueLogo).withTailText(" keyword", true))
+  }
+
+  private def getIdsInScope(project: Project, file: PsiFile) = {
+    val browseInfos = GhcMod.browseInfo(project, getImportedModuleNames(file), removeParensFromOperator = true)
+    browseInfos.map(bi => LookupElementBuilder.create(bi.name).withTypeText(bi.declaration).withTailText(" " + bi.moduleName, true).withIcon(findIcon(bi)))
   }
 
   private def createPrefix(position: Option[PsiElement]): String = {
@@ -105,31 +130,20 @@ class HaskellCompletionContributor extends CompletionContributor {
     }
   }
 
-  private def addPragmaIdsToResultSet(resultSet: CompletionResultSet) = {
-    PragmaIds.foreach(s => resultSet.addElement(LookupElementBuilder.create(s).withIcon(HaskellIcons.HaskellSmallBlueLogo).withTailText(" pragma", true)))
-  }
-
-  private def isImportModuleDeclarationInProgress(position: PsiElement): Boolean = {
-    Option(TreeUtil.findSiblingBackward(position.getNode, HaskellTypes.HS_IMPORT)).
-        orElse(Option(PsiTreeUtil.findFirstParent(position, importDeclarationCondition))).isDefined ||
-        position.getPrevSibling.isInstanceOf[HaskellImportDeclaration]
-  }
-
-  private def isPragmaInProgress(position: PsiElement): Boolean = {
-    Option(TreeUtil.findSiblingBackward(position.getNode, HaskellTypes.HS_PRAGMA_START)).
-        orElse(Option(TreeUtil.findSibling(position.getNode, HaskellTypes.HS_PRAGMA_END))).
-        orElse(Option(TreeUtil.findSiblingBackward(position.getParent.getNode, HaskellTypes.HS_PRAGMA_START))).isDefined
-  }
-
-  private def isImportSpecInProgress(position: PsiElement): Boolean = {
-   val blas = Option(TreeUtil.findParent(position.getNode, HaskellTypes.HS_IMPORT_SPEC)).isDefined
-    blas
-  }
-
-  private def getImportedModuleNames(psiFile: PsiFile): Seq[String] = {
-    val importDeclarations = PsiTreeUtil.findChildrenOfType(psiFile, classOf[HaskellImportDeclaration])
-    val moduleNames = importDeclarations.filter(i => Option(i.getImportSpec).flatMap(is => Option(is.getImportEmptySpec)).isEmpty).map(_.getModuleName).toSeq
-    Seq("Prelude") ++ moduleNames
+  private def findIcon(browseInfo: BrowseInfo) = {
+    import com.powertuple.intellij.haskell.HaskellIcons._
+    browseInfo.declaration match {
+      case d if d.startsWith("class ") => Class
+      case d if d.startsWith("data ") => Data
+      case d if d.startsWith("default ") => Default
+      case d if d.startsWith("foreign ") => Foreign
+      case d if d.startsWith("instance ") => Instance
+      case d if d.startsWith("new type ") => NewType
+      case d if d.startsWith("type ") => Type
+      case d if d.startsWith("type family ") => TypeFamily
+      case d if d.startsWith("type instance ") => TypeInstance
+      case _ => TypeSignature
+    }
   }
 
   private final val importDeclarationCondition = new Condition[PsiElement]() {
