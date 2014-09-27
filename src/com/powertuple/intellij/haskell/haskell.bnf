@@ -31,7 +31,7 @@ program                     ::= onl language_pragmas? onl module_declaration onl
 language_pragmas            ::= language_pragma (nls language_pragma)*
 language_pragma             ::= PRAGMA_START osnl qcon (osnl COMMA osnl qcon)* osnl PRAGMA_END
 
-module_declaration          ::= MODULE qcon onl (exports)? onl WHERE onl body | body              {methods=[getModuleName]}
+module_declaration          ::= MODULE qcon onl (onl exports)? onl WHERE onl body | body              {methods=[getModuleName]}
 
 private body                ::= import_declaration? (nls import_declaration)* topdecl? (nls topdecl)*
 import_declaration          ::= IMPORT import_qualified? osnl import_module osnl import_qualified_as? osnl import_spec?      {methods=[getModuleName]}
@@ -43,7 +43,7 @@ import_spec                 ::= LEFT_PAREN osnl import_id (osnl COMMA osnl impor
                                   import_empty_spec
 import_empty_spec           ::= LEFT_PAREN RIGHT_PAREN
 import_hiding               ::= qvar
-import_id                   ::= qvar |
+import_id                   ::= TYPE? qvar |
                                   qcon osnl (DOT_DOT_PARENS | LEFT_PAREN osnl (cname osnl (COMMA osnl cname)*)? osnl RIGHT_PAREN)? |
                                   qcon osnl (DOT_DOT_PARENS | LEFT_PAREN osnl (qvar osnl (COMMA osnl qvar)*)? osnl RIGHT_PAREN)?
 
@@ -53,7 +53,7 @@ private topdecl             ::= type_declaration | data_declaration | newtype_de
 type_declaration            ::= TYPE osnl simpletype osnl (EQUAL | WHERE) osnl ttype
 data_declaration            ::= DATA (context osnl DOUBLE_RIGHT_ARROW)? osnl simpletype osnl ((EQUAL osnl constrs | WHERE osnl cdecls | EQUAL osnl ttype) osnl (DERIVING osnl ttype)?)?
 newtype_declaration         ::= NEWTYPE (context osnl DOUBLE_RIGHT_ARROW)? osnl simpletype osnl EQUAL osnl newconstr osnl (DERIVING osnl ttype)?
-class_declaration           ::= CLASS (scontext osnl  DOUBLE_RIGHT_ARROW)? osnl qcon osnl qvar osnl (WHERE osnl cdecls)?
+class_declaration           ::= CLASS (scontext osnl  DOUBLE_RIGHT_ARROW)? osnl qcon osnl (qvar | LEFT_PAREN type_signature RIGHT_PAREN) osnl (WHERE osnl cdecls)?
 instance_declaration        ::= INSTANCE (scontext osnl DOUBLE_RIGHT_ARROW)? osnl qcon osnl inst osnl (WHERE osnl idecls)?
 default_declaration         ::= DEFAULT LEFT_PAREN (ttype (COMMA ttype)*)? RIGHT_PAREN
 type_instance_declaration   ::= TYPE_INSTANCE expression
@@ -73,7 +73,7 @@ private snl                 ::= (&<<containsSpaces>> NEWLINE)+        // multipl
 
 comments                    ::= COMMENT | NCOMMENT
 
-qvar                        ::= QVAR_ID                                   // qualified variables and type variables
+qvar                        ::= QVAR_ID | LEFT_PAREN RIGHT_PAREN          // qualified variables and type variables
 qcon                        ::= QCON_ID                                   // qualified constructors, type constructors, modules and type classes
 
                                 // Also `| symbol` because otherwise single symbols will not be seen as operator; in _HaskellLexer.flex single symbol has higher priority than operator
@@ -110,11 +110,16 @@ private atype               ::= forall_declaration |
                                   LEFT_BRACKET osnl ttype osnl  RIGHT_BRACKET |
                                   LEFT_PAREN osnl ttype osnl RIGHT_PAREN
 
-ttype                       ::= btype (RIGHT_ARROW ttype)?
+ttype                       ::= btype (osnl RIGHT_ARROW osnl ttype)? | parallel_array_type
 
 private btype               ::= atype+    // generalization because left recursiveness is not supported
 
-simpletype                  ::= qcon osnl (LEFT_PAREN type_signature RIGHT_PAREN)+ | qcon osnl qvar* | qvar* osnl (qvarop | qconop) osnl qvar*        {methods=[getIdentifierElements]}
+simpletype                  ::= qcon osnl (LEFT_PAREN type_signature RIGHT_PAREN)+ |
+                                  qcon osnl qvar* |
+                                  qvar* osnl (qvarop | qconop) osnl qvar* |
+                                  parallel_array_type qvar                  {methods=[getIdentifierElements]}
+
+parallel_array_type         ::= LEFT_BRACKET COLON_COLON RIGHT_BRACKET
 
 type_family_type            ::= (qcon | qvarop | LEFT_PAREN? vars COLON_COLON? osnl (context DOUBLE_RIGHT_ARROW)? osnl ttype? RIGHT_PAREN?)+ (COLON_COLON osnl ttype)?
 
@@ -142,10 +147,10 @@ instvar                     ::= qvar | qconop | LEFT_BRACKET qvar RIGHT_BRACKET
 
 fixity                      ::= INFIXL | INFIXR | INFIX
 
-exports                     ::= LEFT_PAREN onl export onl (onl COMMA onl export onl)* onl COMMA? onl RIGHT_PAREN
+exports                     ::= LEFT_PAREN onl export? onl (onl COMMA onl export onl)* onl COMMA? onl RIGHT_PAREN
 private export              ::= export1 | export2 | export3
 export1                     ::= TYPE? onl qvar
-export2                     ::= qcon onl (DOT_DOT_PARENS | LEFT_PAREN onl (cname onl (COMMA onl cname)*)? onl RIGHT_PAREN)?
+export2                     ::= qcon onl (DOT_DOT_PARENS | LEFT_PAREN onl (cname onl (onl COMMA onl cname)*)? onl RIGHT_PAREN)?
 export3                     ::= MODULE qcon
 
 newconstr                   ::= qcon atype | qcon osnl LEFT_BRACE osnl qvar COLON_COLON ttype osnl RIGHT_BRACE
