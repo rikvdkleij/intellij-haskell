@@ -35,6 +35,7 @@ class HaskellCompletionContributor extends CompletionContributor {
 
   private final val ReservedIds = HaskellParserDefinition.ALL_RESERVED_IDS.getTypes.map(_.asInstanceOf[HaskellTokenType].getName).toSeq
   private final val PragmaIds = Seq("{-# ", "LANGUAGE ", "#-}", "{-# LANGUAGE ")
+  private final val InsideImportClauses = Seq("as ", "hiding ", "qualified ")
 
   extend(CompletionType.BASIC, PlatformPatterns.psiElement(), new CompletionProvider[CompletionParameters] {
     def addCompletions(parameters: CompletionParameters, context: ProcessingContext, originalResultSet: CompletionResultSet) {
@@ -53,20 +54,25 @@ class HaskellCompletionContributor extends CompletionContributor {
       val file = parameters.getOriginalFile
       val position = Option(parameters.getOriginalPosition).orElse(Option(parameters.getPosition))
       position match {
-        case Some(p) if isImportSpecInProgress(p) => resultSet.addAllElements(findIdsForInImportModuleSpec(project, p))
-        case Some(p) if isImportModuleDeclarationInProgress(p) => resultSet.addAllElements(findModulesToImport(project))
+        case Some(p) if isImportSpecInProgress(p) =>
+          resultSet.addAllElements(findIdsForInImportModuleSpec(project, p))
+        case Some(p) if isImportModuleDeclarationInProgress(p) =>
+          resultSet.addAllElements(findModulesToImport(project))
+          resultSet.addAllElements(getInsideImportClauses)
         case Some(p) if isPragmaInProgress(p) =>
           resultSet.addAllElements(getLanguageExtensionNames)
           resultSet.addAllElements(getPragmaIds)
         case _ =>
           resultSet.addAllElements(getReservedIds)
           resultSet.addAllElements(getPragmaIds)
-          resultSet.addAllElements(getIdsInScope(project, file))
+          resultSet.addAllElements(getIdsFromFullScopeImportedModules(project, file))
+          resultSet.addAllElements(getIdsFromHidingIdsImportedModules(project, file))
+          resultSet.addAllElements(getIdsFromSpecIdsImportedModules(project, file))
       }
     }
   })
 
-  override def beforeCompletion(context: CompletionInitializationContext): Unit = {
+  override def beforeCompletion(context: CompletionInitializationContext) {
     val file = context.getFile
     val startOffset = context.getStartOffset
     val caretElement = Option(file.findElementAt(startOffset - 1))
@@ -81,17 +87,20 @@ class HaskellCompletionContributor extends CompletionContributor {
     (for {
       importDeclaration <- Option(TreeUtil.findParent(position.getNode, HaskellTypes.HS_IMPORT_DECLARATION))
       moduleName <- Option(PsiTreeUtil.findChildOfType(importDeclaration.getPsi, classOf[HaskellImportModule])).map(_.getQcon.getName)
-    } yield GhcMod.browseInfo(project, Seq(moduleName), removeParensFromOperator = false)).map(_.map(bi => LookupElementBuilder.create(bi.name))).getOrElse(Seq())
+    } yield GhcMod.browseInfo(project, Seq(moduleName), removeParensFromOperator = false)).map(_.map(createLookUpElementForBrowseInfo)).getOrElse(Seq())
   }
 
   private def isImportModuleDeclarationInProgress(position: PsiElement): Boolean = {
     Option(TreeUtil.findSiblingBackward(position.getNode, HaskellTypes.HS_IMPORT)).
-        orElse(Option(PsiTreeUtil.findFirstParent(position, importDeclarationCondition))).isDefined ||
-        position.getPrevSibling.isInstanceOf[HaskellImportDeclaration]
+        orElse(Option(TreeUtil.findParent(position.getNode, HaskellTypes.HS_IMPORT_DECLARATIONS))).isDefined
   }
 
   private def findModulesToImport(project: Project) = {
-    GhcMod.listAvailableModules(project).map(LookupElementBuilder.create)
+    GhcMod.listAvailableModules(project).map(m => LookupElementBuilder.create(m + " ").withTailText(" module", true))
+  }
+
+  private def getInsideImportClauses = {
+    InsideImportClauses.map(c => LookupElementBuilder.create(c).withTailText(" clause", true))
   }
 
   private def isPragmaInProgress(position: PsiElement): Boolean = {
@@ -108,19 +117,76 @@ class HaskellCompletionContributor extends CompletionContributor {
     PragmaIds.map(p => LookupElementBuilder.create(p).withIcon(HaskellIcons.HaskellSmallBlueLogo).withTailText(" pragma", true))
   }
 
-  private def getImportedModuleNames(psiFile: PsiFile): Seq[String] = {
-    val importDeclarations = PsiTreeUtil.findChildrenOfType(psiFile, classOf[HaskellImportDeclaration])
-    val moduleNames = importDeclarations.filter(i => Option(i.getImportSpec).flatMap(is => Option(is.getImportEmptySpec)).isEmpty).map(_.getModuleName).toSeq
+  private def getFullScopeImportedModuleNames(psiFile: PsiFile): Seq[String] = {
+    val importDeclarations = findImportDeclarations(psiFile)
+    val moduleNames = importDeclarations.filter(i => Option(i.getImportSpec).isEmpty).map(_.getModuleName)
     Seq("Prelude") ++ moduleNames
+  }
+
+  private case class ImportHidingSpec(moduleName: String, ids: Seq[String])
+
+  private def getModuleNamesWithHidingIdsSpec(psiFile: PsiFile): Iterable[ImportHidingSpec] = {
+    val importDeclarations = findImportDeclarations(psiFile)
+    for {
+      importDeclaration <- importDeclarations.filter(i => Option(i.getImportSpec).flatMap(is => Option(is.getImportHidingSpec)).isDefined)
+      importId <- importDeclaration.getImportSpec.getImportHidingSpec.getImportIdList
+      v = Option(importId.getQvar).map(_.getName).toSeq
+      c = Option(importId.getQcon).map(_.getName).toSeq
+    } yield ImportHidingSpec(importDeclaration.getModuleName, v ++ c)
+  }
+
+  private case class ImportIdsSpec(moduleName: String, ids: Seq[String])
+
+  private def getImportedModulesWithSpecIds(psiFile: PsiFile): Iterable[ImportIdsSpec] = {
+    val importDeclarations = findImportDeclarations(psiFile)
+    for {
+      importDeclaration <- importDeclarations.filter(i => Option(i.getImportSpec).flatMap(is => Option(is.getImportIdsSpec)).isDefined)
+      importId <- importDeclaration.getImportSpec.getImportIdsSpec.getImportIdList
+      v = Option(importId.getQvar).map(_.getName).toSeq
+      c = Option(importId.getQcon).map(_.getName).toSeq
+    } yield ImportIdsSpec(importDeclaration.getModuleName, v ++ c)
+  }
+
+  private def getIdsFromSpecIdsImportedModules(project: Project, file: PsiFile) = {
+    val browseInfos = for {
+      idsSpec <- getImportedModulesWithSpecIds(file).toSeq
+      bi <- GhcMod.browseInfo(project, Seq(idsSpec.moduleName), removeParensFromOperator = true)
+      bisInScope <- if (idsSpec.ids.contains(bi.name)) Seq(bi) else Seq()
+    } yield bisInScope
+
+    browseInfos.map(createLookUpElementForBrowseInfo) ++ browseInfos.map(createQualifiedLookUpElementForBrowseInfo)
+  }
+
+  private def getIdsFromFullScopeImportedModules(project: Project, file: PsiFile) = {
+    val fullScopeBrowseInfos = GhcMod.browseInfo(project, getFullScopeImportedModuleNames(file), removeParensFromOperator = true)
+
+    fullScopeBrowseInfos.map(createLookUpElementForBrowseInfo) ++ fullScopeBrowseInfos.map(createQualifiedLookUpElementForBrowseInfo)
+  }
+
+  private def getIdsFromHidingIdsImportedModules(project: Project, file: PsiFile) = {
+    val browseInfos = for {
+      hidingIdsSpec <- getModuleNamesWithHidingIdsSpec(file).toSeq
+      bi <- GhcMod.browseInfo(project, Seq(hidingIdsSpec.moduleName), removeParensFromOperator = true)
+      bisInScope <- if (hidingIdsSpec.ids.contains(bi.name)) Seq() else Seq(bi)
+    } yield bisInScope
+
+    browseInfos.map(createLookUpElementForBrowseInfo) ++ browseInfos.map(createQualifiedLookUpElementForBrowseInfo)
   }
 
   private def getReservedIds = {
     ReservedIds.map(r => LookupElementBuilder.create(r + " ").withIcon(HaskellIcons.HaskellSmallBlueLogo).withTailText(" keyword", true))
   }
 
-  private def getIdsInScope(project: Project, file: PsiFile) = {
-    val browseInfos = GhcMod.browseInfo(project, getImportedModuleNames(file), removeParensFromOperator = true)
-    browseInfos.map(bi => LookupElementBuilder.create(bi.name).withTypeText(bi.declaration).withTailText(" " + bi.moduleName, true).withIcon(findIcon(bi)))
+  private def findImportDeclarations(psiFile: PsiFile) = {
+    PsiTreeUtil.findChildrenOfType(psiFile, classOf[HaskellImportDeclaration])
+  }
+
+  private def createLookUpElementForBrowseInfo(browseInfo: BrowseInfo) = {
+    LookupElementBuilder.create(browseInfo.name).withTypeText(browseInfo.declaration).withTailText(" " + browseInfo.moduleName, true).withIcon(findIcon(browseInfo))
+  }
+
+  private def createQualifiedLookUpElementForBrowseInfo(browseInfo: BrowseInfo) = {
+    LookupElementBuilder.create(browseInfo.moduleName + "." + browseInfo.name).withTypeText(browseInfo.declaration).withTailText(" " + browseInfo.moduleName, true).withIcon(findIcon(browseInfo))
   }
 
   private def createPrefix(position: Option[PsiElement]): String = {

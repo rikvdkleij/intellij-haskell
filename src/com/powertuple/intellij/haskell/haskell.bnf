@@ -33,21 +33,27 @@ language_pragma             ::= PRAGMA_START osnl qcon (osnl COMMA osnl qcon)* o
 
 module_declaration          ::= MODULE qcon onl (onl exports)? onl WHERE onl body | body              {methods=[getModuleName]}
 
-private body                ::= import_declaration? (nls import_declaration)* topdecl? (nls topdecl)*
-import_declaration          ::= IMPORT import_qualified? osnl import_module osnl import_qualified_as? osnl import_spec?      {methods=[getModuleName]}
+private body                ::= import_declarations top_declarations
+top_declarations            ::= (top_declaration nls)*
+import_declarations         ::= (import_declaration nls)*
+
+import_declaration          ::= IMPORT import_qualified? osnl import_module osnl import_qualified_as? osnl import_spec?     {methods=[getModuleName]}
 import_module               ::= qcon
 import_qualified            ::= qvar
 import_qualified_as         ::= qvar qcon
-import_spec                 ::= LEFT_PAREN osnl import_id (osnl COMMA osnl import_id)* osnl (COMMA)? osnl RIGHT_PAREN |
-                                  import_hiding osnl LEFT_PAREN osnl (import_id osnl (COMMA osnl import_id)* osnl (COMMA)?)? osnl RIGHT_PAREN |
+import_spec                 ::= import_ids_spec |
+                                  import_hiding_spec |
                                   import_empty_spec
+
+import_ids_spec             ::= LEFT_PAREN osnl import_id (osnl COMMA osnl import_id)* osnl (COMMA)? osnl RIGHT_PAREN
+import_hiding_spec          ::= import_hiding osnl LEFT_PAREN osnl (import_id osnl (COMMA osnl import_id)* osnl (COMMA)?)? osnl RIGHT_PAREN
 import_empty_spec           ::= LEFT_PAREN RIGHT_PAREN
 import_hiding               ::= qvar
 import_id                   ::= TYPE? qvar |
                                   qcon osnl (DOT_DOT_PARENS | LEFT_PAREN osnl (cname osnl (COMMA osnl cname)*)? osnl RIGHT_PAREN)? |
                                   qcon osnl (DOT_DOT_PARENS | LEFT_PAREN osnl (qvar osnl (COMMA osnl qvar)*)? osnl RIGHT_PAREN)?
 
-private topdecl             ::= type_declaration | data_declaration | newtype_declaration | class_declaration | instance_declaration | default_declaration |
+private top_declaration     ::= type_declaration | data_declaration | newtype_declaration | class_declaration | instance_declaration | default_declaration |
                                   foreign_declaration | type_family_declaration | deriving_declaration | type_instance_declaration | decl
 
 type_declaration            ::= TYPE osnl simpletype osnl (EQUAL | WHERE) osnl ttype
@@ -66,7 +72,7 @@ forall_declaration          ::= FORALL qvar+ DOT
 
 literal                     ::= DECIMAL | HEXADECIMAL | OCTAL | FLOAT | CHARACTER_LITERAL | STRING_LITERAL
 
-private nls                 ::= comments? NEWLINE+                    // new lines
+private nls                 ::= NEWLINE+                              // new lines
 private onl                 ::= NEWLINE*                              // optional new lines
 private osnl                ::= (&<<containsSpaces>> NEWLINE)*        // optional multiple new line and spaces
 private snl                 ::= (&<<containsSpaces>> NEWLINE)+        // multiple new line and spaces
