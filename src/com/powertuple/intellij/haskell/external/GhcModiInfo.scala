@@ -35,16 +35,9 @@ private[external] object GhcModiInfo {
     val cmd = s"info ${psiFile.getOriginalFile.getVirtualFile.getPath} $expression"
     val ghcModiOutput = ghcModi.execute(cmd)
     (for {
-      outputLine <- getSingleLine(ghcModiOutput.outputLines)
+      outputLine <- ghcModiOutput.outputLines.headOption
       expressionInfos <- createExpressionInfos(outputLine, psiFile.getProject)
     } yield expressionInfos).getOrElse(Seq())
-  }
-
-  private def getSingleLine(outputLines: Seq[String]) = {
-    outputLines match {
-      case Seq(ol) => Some(ol)
-      case _ => None
-    }
   }
 
   private def createExpressionInfos(outputLine: String, project: Project): Option[Seq[ExpressionInfo]] = {
@@ -68,32 +61,39 @@ private[external] object GhcModiInfo {
     }
   }
 
-  private def createExpressionInfo(expressionInfoString: String, project: Project): Option[ExpressionInfo] = {
-    expressionInfoString match {
+  private def createExpressionInfo(expressionInfo: String, project: Project): Option[ExpressionInfo] = {
+    expressionInfo match {
       case GhcModiInfoPattern(typeSignature, filePath, lineNr, colNr) => Some(ProjectExpressionInfo(typeSignature.trim, filePath, lineNr.toInt, colNr.toInt))
       case GhcModiInfoLibraryPathPattern(typeSignature, libraryName, module) => if (libraryName == "ghc-prim" || libraryName == "integer-gmp") {
         Some(BuiltInExpressionInfo(typeSignature.trim, libraryName, "GHC.Base"))
       }
       else {
-        findLibraryFilePath(module, project).map(LibraryExpressionInfo(typeSignature.trim, _, module))
+        findModuleFilePath(module, project).map(LibraryExpressionInfo(typeSignature.trim, _, module))
       }
-      case GhcModiInfoLibraryPattern(typeSignature, module) => findLibraryFilePath(module, project).map(LibraryExpressionInfo(typeSignature, _, module))
-      case _ => HaskellNotificationGroup.notifyError(s"Unknown pattern for ghc-modi info output: $expressionInfoString"); None
+      case GhcModiInfoLibraryPattern(typeSignature, module) => findModuleFilePath(module, project).map(LibraryExpressionInfo(typeSignature, _, module))
+      case _ => HaskellNotificationGroup.notifyError(s"Unknown pattern for ghc-modi info output: $expressionInfo"); None
     }
   }
 
-  private def findLibraryFilePath(module: String, project: Project): Option[String] = {
-    for {
-      (fileName, dir) <- module.split('.').toList.reverse match {
-        case fn :: d => Some(fn, d)
-        case _ => HaskellNotificationGroup.notifyError(s"Could not determine filepath for $module"); None
-      }
-      val files = HaskellFileIndex.getFilesByName(project, fileName, GlobalSearchScope.allScope(project))
-      val file = files.find(hf => checkPath(hf.getContainingDirectory, dir))
-      filePath <- file match {
-        case Some(f) => Some(f.getVirtualFile.getPath)
-        case None => HaskellNotificationGroup.notifyError(s"Could not find file path for `$module`. Please add sources of this library/package to 'Project Settings'/Libraries"); None
-      }} yield filePath
+  private def findModuleFilePath(module: String, project: Project): Option[String] = {
+    val moduleFilePath = for {
+      (name, path) <- getNameAndPathForModule(module)
+      val files = HaskellFileIndex.getFilesByName(project, name, GlobalSearchScope.allScope(project))
+      file <- files.find(hf => checkPath(hf.getContainingDirectory, path))
+      filePath <- Some(file.getVirtualFile.getPath)
+    } yield filePath
+
+    moduleFilePath match {
+      case Some(p) => Some(p)
+      case None => HaskellNotificationGroup.notifyError(s"Could not find file path for `$module`. Please add sources of this library/package to 'Project Settings'/Libraries"); None
+    }
+  }
+
+  private def getNameAndPathForModule(module: String) = {
+    module.split('.').toList.reverse match {
+      case n :: d => Some(n, d)
+      case _ => HaskellNotificationGroup.notifyError(s"Could not determine path for $module"); None
+    }
   }
 
   private def checkPath(dir: PsiDirectory, dirNames: List[String]): Boolean = {
