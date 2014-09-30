@@ -117,13 +117,27 @@ class HaskellCompletionContributor extends CompletionContributor {
     PragmaIds.map(p => LookupElementBuilder.create(p).withIcon(HaskellIcons.HaskellSmallBlueLogo).withTailText(" pragma", true))
   }
 
-  private def getFullScopeImportedModuleNames(psiFile: PsiFile): Seq[String] = {
+
+  private def getImportedModulesWithFullScope(psiFile: PsiFile): Iterable[ImportFullSpec] = {
     val importDeclarations = findImportDeclarations(psiFile)
-    val moduleNames = importDeclarations.filter(i => Option(i.getImportSpec).isEmpty).map(_.getModuleName)
-    Seq("Prelude") ++ moduleNames
+    val moduleNames = importDeclarations.filter(i => Option(i.getImportSpec).isEmpty).
+        map(i => ImportFullSpec(i.getModuleName, Option(i.getImportQualified).isDefined, Option(i.getImportQualifiedAs).map(_.getQcon).map(_.getName)))
+    Iterable(ImportFullSpec("Prelude", qualified = false, None)) ++ moduleNames
   }
 
-  private case class ImportHidingSpec(moduleName: String, ids: Seq[String])
+  private sealed abstract class ImportSpec {
+    def moduleName: String
+
+    def qualified: Boolean
+
+    def as: Option[String]
+  }
+
+  private case class ImportFullSpec(moduleName: String, qualified: Boolean, as: Option[String]) extends ImportSpec
+
+  private case class ImportHidingSpec(moduleName: String, ids: Seq[String], qualified: Boolean, as: Option[String]) extends ImportSpec
+
+  private case class ImportIdsSpec(moduleName: String, ids: Seq[String], qualified: Boolean, as: Option[String]) extends ImportSpec
 
   private def getModuleNamesWithHidingIdsSpec(psiFile: PsiFile): Iterable[ImportHidingSpec] = {
     val importDeclarations = findImportDeclarations(psiFile)
@@ -132,10 +146,14 @@ class HaskellCompletionContributor extends CompletionContributor {
       importId <- importDeclaration.getImportSpec.getImportHidingSpec.getImportIdList
       v = Option(importId.getQvar).map(_.getName).toSeq
       c = Option(importId.getQcon).map(_.getName).toSeq
-    } yield ImportHidingSpec(importDeclaration.getModuleName, v ++ c)
+    } yield ImportHidingSpec(
+      importDeclaration.getModuleName,
+      v ++ c,
+      Option(importDeclaration.getImportQualified).isDefined,
+      Option(importDeclaration.getImportQualifiedAs).map(_.getQcon).map(_.getName)
+    )
   }
 
-  private case class ImportIdsSpec(moduleName: String, ids: Seq[String])
 
   private def getImportedModulesWithSpecIds(psiFile: PsiFile): Iterable[ImportIdsSpec] = {
     val importDeclarations = findImportDeclarations(psiFile)
@@ -144,7 +162,11 @@ class HaskellCompletionContributor extends CompletionContributor {
       importId <- importDeclaration.getImportSpec.getImportIdsSpec.getImportIdList
       v = Option(importId.getQvar).map(_.getName).toSeq
       c = Option(importId.getQcon).map(_.getName).toSeq
-    } yield ImportIdsSpec(importDeclaration.getModuleName, v ++ c)
+    } yield ImportIdsSpec(
+      importDeclaration.getModuleName,
+      v ++ c, Option(importDeclaration.getImportQualified).isDefined,
+      Option(importDeclaration.getImportQualifiedAs).map(_.getQcon).map(_.getName)
+    )
   }
 
   private def getIdsFromSpecIdsImportedModules(project: Project, file: PsiFile) = {
@@ -158,9 +180,11 @@ class HaskellCompletionContributor extends CompletionContributor {
   }
 
   private def getIdsFromFullScopeImportedModules(project: Project, file: PsiFile) = {
-    val fullScopeBrowseInfos = GhcMod.browseInfo(project, getFullScopeImportedModuleNames(file), removeParensFromOperator = true)
+    val importFullSpecs = getImportedModulesWithFullScope(file)
+    val fullScopeBrowseInfos = GhcMod.browseInfo(project, importFullSpecs.map(_.moduleName).toSeq, removeParensFromOperator = true)
 
-    fullScopeBrowseInfos.map(createLookUpElementForBrowseInfo) ++ fullScopeBrowseInfos.map(createQualifiedLookUpElementForBrowseInfo)
+    fullScopeBrowseInfos.filterNot(bi => isQualified(bi, importFullSpecs)).map(createLookUpElementForBrowseInfo) ++
+        fullScopeBrowseInfos.map(createQualifiedLookUpElementForBrowseInfo)
   }
 
   private def getIdsFromHidingIdsImportedModules(project: Project, file: PsiFile) = {
@@ -172,6 +196,8 @@ class HaskellCompletionContributor extends CompletionContributor {
 
     browseInfos.map(createLookUpElementForBrowseInfo) ++ browseInfos.map(createQualifiedLookUpElementForBrowseInfo)
   }
+
+  private val isQualified = (bi: BrowseInfo, is: Iterable[ImportSpec]) => is.find(i => i.moduleName == bi.moduleName).exists(_.qualified)
 
   private def getReservedIds = {
     ReservedIds.map(r => LookupElementBuilder.create(r + " ").withIcon(HaskellIcons.HaskellSmallBlueLogo).withTailText(" keyword", true))
