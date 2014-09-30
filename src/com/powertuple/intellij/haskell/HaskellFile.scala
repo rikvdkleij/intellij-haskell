@@ -87,7 +87,7 @@ class LiterateHaskellFileType extends LanguageFileType(HaskellLanguage.Instance)
 
 class HaskellLanguageFileTypeFactory extends FileTypeFactory {
   def createFileTypes(consumer: FileTypeConsumer) {
-    consumer.consume(HaskellFileType.INSTANCE, "Haskell")
-    consumer.consume(LiterateHaskellFileType.INSTANCE, "Literate Haskell")
+    consumer.consume(HaskellFileType.INSTANCE, HaskellFileType.INSTANCE.getDefaultExtension)
+    consumer.consume(LiterateHaskellFileType.INSTANCE, LiterateHaskellFileType.INSTANCE.getDefaultExtension)
   }
 }
