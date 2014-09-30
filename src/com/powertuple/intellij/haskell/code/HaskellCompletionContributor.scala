@@ -154,40 +154,39 @@ class HaskellCompletionContributor extends CompletionContributor {
 
   private def getIdsFromFullScopeImportedModules(project: Project, file: PsiFile) = {
     val importFullSpecs = getImportedModulesWithFullScope(file).toSeq
-    val browseInfos = for {
+    for {
       ifs <- importFullSpecs
       bi <- GhcMod.browseInfo(project, ifs.moduleName, removeParensFromOperator = true)
-    } yield bi
-
-    browseInfos.filterNot(bi => isQualified(bi, importFullSpecs)).map(createLookUpElementForBrowseInfo) ++
-        browseInfos.map(createQualifiedLookUpElementForBrowseInfo)
+      le <- createLookupElements(bi, ifs)
+    } yield le
   }
 
   private def getIdsFromHidingIdsImportedModules(project: Project, file: PsiFile) = {
     val importHidingIdsSpec = getImportedModulesWithHidingIdsSpec(file).toSeq
-    val browseInfos = for {
+    for {
       ihis <- importHidingIdsSpec
       bi <- GhcMod.browseInfo(project, ihis.moduleName, removeParensFromOperator = true)
       biInScope <- if (ihis.ids.contains(bi.name)) Seq() else Seq(bi)
-    } yield biInScope
-
-    browseInfos.filterNot(bi => isQualified(bi, importHidingIdsSpec)).map(createLookUpElementForBrowseInfo) ++
-        browseInfos.map(createQualifiedLookUpElementForBrowseInfo)
+      le <- createLookupElements(bi, ihis)
+    } yield le
   }
 
   private def getIdsFromSpecIdsImportedModules(project: Project, file: PsiFile) = {
     val importIdsSpec = getImportedModulesWithSpecIds(file).toSeq
-    val browseInfos = for {
+    for {
       iis <- importIdsSpec
       bi <- GhcMod.browseInfo(project, iis.moduleName, removeParensFromOperator = true)
       biInScope <- if (iis.ids.contains(bi.name)) Seq(bi) else Seq()
-    } yield biInScope
-
-    browseInfos.filterNot(bi => isQualified(bi, importIdsSpec)).map(createLookUpElementForBrowseInfo) ++
-        browseInfos.map(createQualifiedLookUpElementForBrowseInfo)
+      le <- createLookupElements(bi, iis)
+    } yield le
   }
 
-  private val isQualified = (bi: BrowseInfo, is: Iterable[ImportSpec]) => is.find(i => i.moduleName == bi.moduleName).exists(_.qualified)
+  private def createLookupElements(browseInfo: BrowseInfo, importSpec: ImportSpec): Seq[LookupElementBuilder] = {
+    if (importSpec.qualified)
+      Seq(createQualifiedLookUpElementForBrowseInfo(browseInfo, importSpec.as))
+    else
+      Seq(createQualifiedLookUpElementForBrowseInfo(browseInfo, importSpec.as), createLookUpElementForBrowseInfo(browseInfo))
+  }
 
   private def getReservedIds = {
     ReservedIds.map(r => LookupElementBuilder.create(r + " ").withIcon(HaskellIcons.HaskellSmallBlueLogo).withTailText(" keyword", true))
@@ -198,11 +197,20 @@ class HaskellCompletionContributor extends CompletionContributor {
   }
 
   private def createLookUpElementForBrowseInfo(browseInfo: BrowseInfo) = {
-    LookupElementBuilder.create(browseInfo.name).withTypeText(browseInfo.declaration).withTailText(" " + browseInfo.moduleName, true).withIcon(findIcon(browseInfo))
+    val leb = LookupElementBuilder.create(browseInfo.name).withTailText(" " + browseInfo.moduleName, true).withIcon(findIcon(browseInfo))
+    withTypeText(leb, browseInfo)
   }
 
-  private def createQualifiedLookUpElementForBrowseInfo(browseInfo: BrowseInfo) = {
-    LookupElementBuilder.create(browseInfo.moduleName + "." + browseInfo.name).withTypeText(browseInfo.declaration).withTailText(" " + browseInfo.moduleName, true).withIcon(findIcon(browseInfo))
+  private def createQualifiedLookUpElementForBrowseInfo(browseInfo: BrowseInfo, as: Option[String]) = {
+    val le = LookupElementBuilder.create(as.getOrElse(browseInfo.moduleName) + "." + browseInfo.name).withTailText(" " + browseInfo.moduleName, true).withIcon(findIcon(browseInfo))
+    withTypeText(le, browseInfo)
+  }
+
+  private def withTypeText(lookupElement: LookupElementBuilder, browseInfo: BrowseInfo) = {
+    browseInfo.declaration match {
+      case Some(d) => lookupElement.withTypeText(d)
+      case None => lookupElement
+    }
   }
 
   private def createPrefix(position: Option[PsiElement]): String = {
@@ -215,15 +223,15 @@ class HaskellCompletionContributor extends CompletionContributor {
   private def findIcon(browseInfo: BrowseInfo) = {
     import com.powertuple.intellij.haskell.HaskellIcons._
     browseInfo.declaration match {
-      case d if d.startsWith("class ") => Class
-      case d if d.startsWith("data ") => Data
-      case d if d.startsWith("default ") => Default
-      case d if d.startsWith("foreign ") => Foreign
-      case d if d.startsWith("instance ") => Instance
-      case d if d.startsWith("new type ") => NewType
-      case d if d.startsWith("type ") => Type
-      case d if d.startsWith("type family ") => TypeFamily
-      case d if d.startsWith("type instance ") => TypeInstance
+      case Some(d) if d.startsWith("class ") => Class
+      case Some(d) if d.startsWith("data ") => Data
+      case Some(d) if d.startsWith("default ") => Default
+      case Some(d) if d.startsWith("foreign ") => Foreign
+      case Some(d) if d.startsWith("instance ") => Instance
+      case Some(d) if d.startsWith("new type ") => NewType
+      case Some(d) if d.startsWith("type ") => Type
+      case Some(d) if d.startsWith("type family ") => TypeFamily
+      case Some(d) if d.startsWith("type instance ") => TypeInstance
       case _ => TypeSignature
     }
   }

@@ -29,30 +29,26 @@ object GhcMod {
       HaskellSettings.getInstance().getState.ghcModPath,
       Seq("browse", "-d", "-q", "-o") ++ moduleNames
     )
-    output.getStdoutLines.map(createBrowseInfo(_, None, removeParensFromOperator)).flatten
+    output.getStdoutLines.map(createBrowseInfo(_, removeParensFromOperator)).flatten
   }
 
-  /**
-   * Please note that returned browse info has explicitly same module name as given module name. This is done
-   * so caller can in result refer to given module name. Especially done in case module imports other modules.
-   */
   def browseInfo(project: Project, moduleName: String, removeParensFromOperator: Boolean): Seq[BrowseInfo] = {
     val output = ExternalProcess.getProcessOutput(
       project.getBasePath,
       HaskellSettings.getInstance().getState.ghcModPath,
       Seq("browse", "-d", "-q", "-o") ++ Seq(moduleName)
     )
-    output.getStdoutLines.map(createBrowseInfo(_, Some(moduleName), removeParensFromOperator)).flatten
+    output.getStdoutLines.map(createBrowseInfo(_, removeParensFromOperator)).flatten
   }
 
-  private def createBrowseInfo(info: String, moduleName: Option[String], removeParensFromOperator: Boolean): Option[BrowseInfo] = {
+  private def createBrowseInfo(info: String, removeParensFromOperator: Boolean): Option[BrowseInfo] = {
     info.split("::") match {
       case Array(qn, d) =>
         val (m, n) = getModuleAndName(qn, removeParensFromOperator)
-        Some(BrowseInfo(n, moduleName.getOrElse(m), d))
+        Some(BrowseInfo(n, m, Some(d)))
       case Array(qn) =>
         val (m, n) = getModuleAndName(qn, removeParensFromOperator)
-        Some(BrowseInfo(n, moduleName.getOrElse(m), ""))
+        Some(BrowseInfo(n, m, None))
       case _ => None
     }
   }
@@ -94,4 +90,4 @@ object GhcMod {
   }
 }
 
-case class BrowseInfo(name: String, moduleName: String, declaration: String)
+case class BrowseInfo(name: String, moduleName: String, declaration: Option[String])
