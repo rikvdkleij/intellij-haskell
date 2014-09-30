@@ -19,7 +19,6 @@ package com.powertuple.intellij.haskell.code
 import com.intellij.codeInsight.completion._
 import com.intellij.codeInsight.lookup.LookupElementBuilder
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.util.Condition
 import com.intellij.patterns.PlatformPatterns
 import com.intellij.psi.impl.source.tree.TreeUtil
 import com.intellij.psi.util.PsiTreeUtil
@@ -117,7 +116,6 @@ class HaskellCompletionContributor extends CompletionContributor {
     PragmaIds.map(p => LookupElementBuilder.create(p).withIcon(HaskellIcons.HaskellSmallBlueLogo).withTailText(" pragma", true))
   }
 
-
   private def getImportedModulesWithFullScope(psiFile: PsiFile): Iterable[ImportFullSpec] = {
     val importDeclarations = findImportDeclarations(psiFile)
     val moduleNames = importDeclarations.filter(i => Option(i.getImportSpec).isEmpty).
@@ -125,35 +123,20 @@ class HaskellCompletionContributor extends CompletionContributor {
     Iterable(ImportFullSpec("Prelude", qualified = false, None)) ++ moduleNames
   }
 
-  private sealed abstract class ImportSpec {
-    def moduleName: String
-
-    def qualified: Boolean
-
-    def as: Option[String]
-  }
-
-  private case class ImportFullSpec(moduleName: String, qualified: Boolean, as: Option[String]) extends ImportSpec
-
-  private case class ImportHidingSpec(moduleName: String, ids: Seq[String], qualified: Boolean, as: Option[String]) extends ImportSpec
-
-  private case class ImportIdsSpec(moduleName: String, ids: Seq[String], qualified: Boolean, as: Option[String]) extends ImportSpec
-
-  private def getModuleNamesWithHidingIdsSpec(psiFile: PsiFile): Iterable[ImportHidingSpec] = {
+  private def getImportedModulesWithHidingIdsSpec(psiFile: PsiFile): Iterable[ImportHidingIdsSpec] = {
     val importDeclarations = findImportDeclarations(psiFile)
     for {
       importDeclaration <- importDeclarations.filter(i => Option(i.getImportSpec).flatMap(is => Option(is.getImportHidingSpec)).isDefined)
       importId <- importDeclaration.getImportSpec.getImportHidingSpec.getImportIdList
       v = Option(importId.getQvar).map(_.getName).toSeq
       c = Option(importId.getQcon).map(_.getName).toSeq
-    } yield ImportHidingSpec(
+    } yield ImportHidingIdsSpec(
       importDeclaration.getModuleName,
       v ++ c,
       Option(importDeclaration.getImportQualified).isDefined,
       Option(importDeclaration.getImportQualifiedAs).map(_.getQcon).map(_.getName)
     )
   }
-
 
   private def getImportedModulesWithSpecIds(psiFile: PsiFile): Iterable[ImportIdsSpec] = {
     val importDeclarations = findImportDeclarations(psiFile)
@@ -169,32 +152,39 @@ class HaskellCompletionContributor extends CompletionContributor {
     )
   }
 
-  private def getIdsFromSpecIdsImportedModules(project: Project, file: PsiFile) = {
-    val browseInfos = for {
-      idsSpec <- getImportedModulesWithSpecIds(file).toSeq
-      bi <- GhcMod.browseInfo(project, Seq(idsSpec.moduleName), removeParensFromOperator = true)
-      bisInScope <- if (idsSpec.ids.contains(bi.name)) Seq(bi) else Seq()
-    } yield bisInScope
-
-    browseInfos.map(createLookUpElementForBrowseInfo) ++ browseInfos.map(createQualifiedLookUpElementForBrowseInfo)
-  }
-
   private def getIdsFromFullScopeImportedModules(project: Project, file: PsiFile) = {
-    val importFullSpecs = getImportedModulesWithFullScope(file)
-    val fullScopeBrowseInfos = GhcMod.browseInfo(project, importFullSpecs.map(_.moduleName).toSeq, removeParensFromOperator = true)
+    val importFullSpecs = getImportedModulesWithFullScope(file).toSeq
+    val browseInfos = for {
+      ifs <- importFullSpecs
+      bi <- GhcMod.browseInfo(project, ifs.moduleName, removeParensFromOperator = true)
+    } yield bi
 
-    fullScopeBrowseInfos.filterNot(bi => isQualified(bi, importFullSpecs)).map(createLookUpElementForBrowseInfo) ++
-        fullScopeBrowseInfos.map(createQualifiedLookUpElementForBrowseInfo)
+    browseInfos.filterNot(bi => isQualified(bi, importFullSpecs)).map(createLookUpElementForBrowseInfo) ++
+        browseInfos.map(createQualifiedLookUpElementForBrowseInfo)
   }
 
   private def getIdsFromHidingIdsImportedModules(project: Project, file: PsiFile) = {
+    val importHidingIdsSpec = getImportedModulesWithHidingIdsSpec(file).toSeq
     val browseInfos = for {
-      hidingIdsSpec <- getModuleNamesWithHidingIdsSpec(file).toSeq
-      bi <- GhcMod.browseInfo(project, Seq(hidingIdsSpec.moduleName), removeParensFromOperator = true)
-      bisInScope <- if (hidingIdsSpec.ids.contains(bi.name)) Seq() else Seq(bi)
-    } yield bisInScope
+      ihis <- importHidingIdsSpec
+      bi <- GhcMod.browseInfo(project, ihis.moduleName, removeParensFromOperator = true)
+      biInScope <- if (ihis.ids.contains(bi.name)) Seq() else Seq(bi)
+    } yield biInScope
 
-    browseInfos.map(createLookUpElementForBrowseInfo) ++ browseInfos.map(createQualifiedLookUpElementForBrowseInfo)
+    browseInfos.filterNot(bi => isQualified(bi, importHidingIdsSpec)).map(createLookUpElementForBrowseInfo) ++
+        browseInfos.map(createQualifiedLookUpElementForBrowseInfo)
+  }
+
+  private def getIdsFromSpecIdsImportedModules(project: Project, file: PsiFile) = {
+    val importIdsSpec = getImportedModulesWithSpecIds(file).toSeq
+    val browseInfos = for {
+      iis <- importIdsSpec
+      bi <- GhcMod.browseInfo(project, iis.moduleName, removeParensFromOperator = true)
+      biInScope <- if (iis.ids.contains(bi.name)) Seq(bi) else Seq()
+    } yield biInScope
+
+    browseInfos.filterNot(bi => isQualified(bi, importIdsSpec)).map(createLookUpElementForBrowseInfo) ++
+        browseInfos.map(createQualifiedLookUpElementForBrowseInfo)
   }
 
   private val isQualified = (bi: BrowseInfo, is: Iterable[ImportSpec]) => is.find(i => i.moduleName == bi.moduleName).exists(_.qualified)
@@ -238,14 +228,20 @@ class HaskellCompletionContributor extends CompletionContributor {
     }
   }
 
-  private final val importDeclarationCondition = new Condition[PsiElement]() {
-    override def value(psiElement: PsiElement): Boolean = {
-      psiElement match {
-        case _: HaskellImportDeclaration => true
-        case _ => false
-      }
-    }
+  private sealed abstract class ImportSpec {
+    def moduleName: String
+
+    def qualified: Boolean
+
+    def as: Option[String]
   }
+
+  private case class ImportFullSpec(moduleName: String, qualified: Boolean, as: Option[String]) extends ImportSpec
+
+  private case class ImportHidingIdsSpec(moduleName: String, ids: Seq[String], qualified: Boolean, as: Option[String]) extends ImportSpec
+
+  private case class ImportIdsSpec(moduleName: String, ids: Seq[String], qualified: Boolean, as: Option[String]) extends ImportSpec
+
 }
 
 object LanguageExtensions {

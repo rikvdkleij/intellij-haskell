@@ -19,9 +19,9 @@ package com.powertuple.intellij.haskell.external
 import com.intellij.openapi.project.Project
 import com.powertuple.intellij.haskell.settings.HaskellSettings
 
-object GhcMod {
+import scala.collection.JavaConversions._
 
-  import scala.collection.JavaConversions._
+object GhcMod {
 
   def browseInfo(project: Project, moduleNames: Seq[String], removeParensFromOperator: Boolean): Seq[BrowseInfo] = {
     val output = ExternalProcess.getProcessOutput(
@@ -29,22 +29,44 @@ object GhcMod {
       HaskellSettings.getInstance().getState.ghcModPath,
       Seq("browse", "-d", "-q", "-o") ++ moduleNames
     )
-    val browseInfos = output.getStdoutLines.map(_.split("::")).map(cols => {
-      val declaration = if (cols.size == 2) cols(1).trim else ""
-      val qualifiedName = cols(0)
+    output.getStdoutLines.map(createBrowseInfo(_, None, removeParensFromOperator)).flatten
+  }
 
-      val indexOfOperator = qualifiedName.lastIndexOf(".(") + 1
-      val (module, name) = if (indexOfOperator > 1) {
-        val (m, o) = trimPair(qualifiedName.splitAt(indexOfOperator))
-        (m.substring(0, m.length - 1), if (removeParensFromOperator) o.substring(1, o.length - 1) else o)
-      } else {
-        val indexOfId = qualifiedName.lastIndexOf('.') + 1
-        val (m, id) = trimPair(qualifiedName.splitAt(indexOfId))
-        (m.substring(0, m.length - 1), id)
-      }
-      BrowseInfo(name, module, declaration)
-    })
-    browseInfos
+  /**
+   * Please note that returned browse info has explicitly same module name as given module name. This is done
+   * so caller can in result refer to given module name. Especially done in case module imports other modules.
+   */
+  def browseInfo(project: Project, moduleName: String, removeParensFromOperator: Boolean): Seq[BrowseInfo] = {
+    val output = ExternalProcess.getProcessOutput(
+      project.getBasePath,
+      HaskellSettings.getInstance().getState.ghcModPath,
+      Seq("browse", "-d", "-q", "-o") ++ Seq(moduleName)
+    )
+    output.getStdoutLines.map(createBrowseInfo(_, Some(moduleName), removeParensFromOperator)).flatten
+  }
+
+  private def createBrowseInfo(info: String, moduleName: Option[String], removeParensFromOperator: Boolean): Option[BrowseInfo] = {
+    info.split("::") match {
+      case Array(qn, d) =>
+        val (m, n) = getModuleAndName(qn, removeParensFromOperator)
+        Some(BrowseInfo(n, moduleName.getOrElse(m), d))
+      case Array(qn) =>
+        val (m, n) = getModuleAndName(qn, removeParensFromOperator)
+        Some(BrowseInfo(n, moduleName.getOrElse(m), ""))
+      case _ => None
+    }
+  }
+
+  private def getModuleAndName(qualifiedName: String, removeParensFromOperator: Boolean): (String, String) = {
+    val indexOfOperator = qualifiedName.lastIndexOf(".(") + 1
+    if (indexOfOperator > 1) {
+      val (m, o) = trimPair(qualifiedName.splitAt(indexOfOperator))
+      (m.substring(0, m.length - 1), if (removeParensFromOperator) o.substring(1, o.length - 1) else o)
+    } else {
+      val indexOfId = qualifiedName.lastIndexOf('.') + 1
+      val (m, id) = trimPair(qualifiedName.splitAt(indexOfId))
+      (m.substring(0, m.length - 1), id)
+    }
   }
 
   private def trimPair(t: (String, String)) = {
