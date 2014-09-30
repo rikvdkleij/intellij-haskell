@@ -131,7 +131,7 @@ class HaskellReference(element: HaskellNamedElement, textRange: TextRange) exten
   }
 
   private def findNamedElements(declarationElement: HaskellDeclarationElement, expression: String): Seq[HaskellNamedElement] = {
-    declarationElement.getIdentifierElements.filter(_.getName == expression)
+    declarationElement.getIdentifierElements.filter(_.getName.contains(expression))
   }
 
   private def getExpressionInfos(psiFile: PsiFile, expression: String): Seq[ExpressionInfo] = {

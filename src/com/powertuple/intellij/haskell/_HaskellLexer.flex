@@ -126,8 +126,8 @@ qconid              = ({conid} {dot})* {conid}
 
 gconsym             = {colon} | {qconsym}
 
-qvar                = {qvarid} | {left_paren} {qvarsym} {right_paren} {hash}?
-qcon                = {qconid} | {left_paren} {gconsym} {right_paren} {hash}?
+qvar                = {qvarid} | {left_paren} {white_char}* {qvarsym} {white_char}* {right_paren} {hash}?
+qcon                = {qconid} | {left_paren} {white_char}* {gconsym} {white_char}+ {right_paren} {hash}?
 
 qvarop              = {qvarsym} | {backquote} {qvarid} {backquote}
 qconop              = {gconsym} | {backquote} {qconid} {backquote}
