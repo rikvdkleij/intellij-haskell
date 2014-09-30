@@ -27,7 +27,7 @@ and expects that the Cabal init/install/build is done on command-line.
 - Structure view;
 - Navigate to declaration (called `Class` in IntelliJ menu);
 - Navigate to identifier (called `Symbol` in IntelliJ menu);
-- Code completion by looking to import declarations(`hiding` and `qualified` are not supported yet);
+- Code completion by looking to import declarations;
 - Simple form of code formatting;
 
 A lot of features are with the help of ghc-mod(i)!!
