@@ -62,7 +62,7 @@ class HaskellReference(element: HaskellNamedElement, textRange: TextRange) exten
       case None => Iterable()
     }
 
-    val declarationNamedElements = PsiTreeUtil.findChildrenOfType(file, classOf[HaskellDeclarationElement]).flatMap(createLookupElement)
+    val declarationNamedElements = PsiTreeUtil.findChildrenOfType(file, classOf[HaskellDeclarationElement]).flatMap(createLookupElements)
     (declarationNamedElements ++ namedElements).groupBy(_.getLookupString).values.map(_.head).toArray
   }
 
@@ -70,8 +70,18 @@ class HaskellReference(element: HaskellNamedElement, textRange: TextRange) exten
     LookupElementBuilder.create(namedElement.getName).withIcon(HaskellIcons.HaskellSmallBlueLogo)
   }
 
-  private def createLookupElement(declarationElement: HaskellDeclarationElement) = {
-    declarationElement.getIdentifierElements.map(ne => LookupElementBuilder.create(removeParens(ne.getName)).withTypeText(declarationElement.getPresentation.getPresentableText).withIcon(declarationElement.getPresentation.getIcon(false)))
+  private def createLookupElements(declarationElement: HaskellDeclarationElement) = {
+    declarationElement.getIdentifierElements.map(ne => LookupElementBuilder.create(removeParens(ne.getName)).withTypeText(getTypeText(declarationElement)).withIcon(declarationElement.getPresentation.getIcon(false)))
+  }
+
+  private def getTypeText(declarationElement: HaskellDeclarationElement) = {
+    val presentableText = declarationElement.getPresentation.getPresentableText
+    val typeSignatureDoubleColonIndex = presentableText.indexOf("::")
+    if (typeSignatureDoubleColonIndex > 0 ) {
+      presentableText.drop(typeSignatureDoubleColonIndex + 2).trim
+    } else {
+      presentableText
+    }
   }
 
   private def removeParens(name: String) = {
