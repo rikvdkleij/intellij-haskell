@@ -1,7 +1,7 @@
 <component name="libraryTable">
   <library name="scala-library">
     <CLASSES>
-      <root url="file:///usr/share/scala/lib" />
+      <root url="jar:///usr/share/scala/lib/scala-library.jar!/" />
     </CLASSES>
     <JAVADOC />
     <SOURCES>
@@ -15,6 +15,5 @@
       <root url="file://$USER_HOME$/scala/scala-2.11.2/src/partest-extras" />
       <root url="file://$USER_HOME$/scala/scala-2.11.2/src/partest-javaagent" />
     </SOURCES>
-    <jarDirectory url="file:///usr/share/scala/lib" recursive="false" />
   </library>
 </component>

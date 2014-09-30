@@ -1,6 +1,6 @@
 <idea-plugin version="2">
     <id>com.powertuple.intellij.haskell</id>
-    <name>Haskell</name>
+    <name>IntelliJ-Haskell</name>
     <version>0.1</version>
     <vendor email="rikvdkleij@gmail.com">PowerTuple</vendor>
 
@@ -24,7 +24,7 @@
     -->
 
     <extensions defaultExtensionNs="com.intellij">
-        <internalFileTemplate name="Haskell Module"/>
+        <internalFileTemplate name="Haskell"/>
 
         <fileTypeFactory implementation="com.powertuple.intellij.haskell.HaskellLanguageFileTypeFactory"/>
         <lang.parserDefinition language="Haskell"

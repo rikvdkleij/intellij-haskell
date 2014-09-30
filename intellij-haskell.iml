@@ -22,7 +22,7 @@
     <orderEntry type="inheritedJdk" />
     <orderEntry type="sourceFolder" forTests="false" />
     <orderEntry type="library" name="scala-library" level="project" />
-    <orderEntry type="library" name="scalatest" level="project" />
+    <orderEntry type="library" scope="TEST" name="scalatest" level="project" />
   </component>
 </module>
 
