@@ -40,7 +40,7 @@ class HaskellReference(element: HaskellNamedElement, textRange: TextRange) exten
         (for {
           filePath <- FileUtil.findModuleFilePath(im.getQcon.getName, project)
           file <- findFile(filePath)
-        } yield new PsiElementResolveResult(file.getNavigationElement)).toArray
+        } yield new PsiElementResolveResult(file.getOriginalElement)).toArray
       case _ =>
         val expression = myElement.getText.substring(textRange.getStartOffset, textRange.getEndOffset)
 
