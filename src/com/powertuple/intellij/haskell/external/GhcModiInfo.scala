@@ -17,10 +17,9 @@
 package com.powertuple.intellij.haskell.external
 
 import com.intellij.openapi.project.Project
-import com.intellij.psi.search.GlobalSearchScope
-import com.intellij.psi.{PsiDirectory, PsiFile}
+import com.intellij.psi.PsiFile
 import com.powertuple.intellij.haskell.HaskellNotificationGroup
-import com.powertuple.intellij.haskell.util.HaskellFileIndex
+import com.powertuple.intellij.haskell.util.FileUtil
 
 import scala.annotation.tailrec
 import scala.collection.mutable.ListBuffer
@@ -68,39 +67,10 @@ private[external] object GhcModiInfo {
         Some(BuiltInExpressionInfo(typeSignature.trim, libraryName, "GHC.Base"))
       }
       else {
-        findModuleFilePath(module, project).map(LibraryExpressionInfo(typeSignature.trim, _, module))
+        FileUtil.findModuleFilePath(module, project).map(LibraryExpressionInfo(typeSignature.trim, _, module))
       }
-      case GhcModiInfoLibraryPattern(typeSignature, module) => findModuleFilePath(module, project).map(LibraryExpressionInfo(typeSignature, _, module))
+      case GhcModiInfoLibraryPattern(typeSignature, module) => FileUtil.findModuleFilePath(module, project).map(LibraryExpressionInfo(typeSignature, _, module))
       case _ => HaskellNotificationGroup.notifyError(s"Unknown pattern for ghc-modi info output: $expressionInfo"); None
-    }
-  }
-
-  private def findModuleFilePath(module: String, project: Project): Option[String] = {
-    val moduleFilePath = for {
-      (name, path) <- getNameAndPathForModule(module)
-      val files = HaskellFileIndex.getFilesByName(project, name, GlobalSearchScope.allScope(project))
-      file <- files.find(hf => checkPath(hf.getContainingDirectory, path))
-      filePath <- Some(file.getVirtualFile.getPath)
-    } yield filePath
-
-    moduleFilePath match {
-      case Some(p) => Some(p)
-      case None => HaskellNotificationGroup.notifyError(s"Could not find file path for `$module`. Please add sources of this library/package to 'Project Settings'/Libraries"); None
-    }
-  }
-
-  private def getNameAndPathForModule(module: String) = {
-    module.split('.').toList.reverse match {
-      case n :: d => Some(n, d)
-      case _ => HaskellNotificationGroup.notifyError(s"Could not determine path for $module"); None
-    }
-  }
-
-  private def checkPath(dir: PsiDirectory, dirNames: List[String]): Boolean = {
-    dirNames match {
-      case h :: t if dir.getName == h => checkPath(dir.getParentDirectory, t)
-      case h :: t => false
-      case _ => true
     }
   }
 }

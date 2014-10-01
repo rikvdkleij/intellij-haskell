@@ -17,13 +17,14 @@
 package com.powertuple.intellij.haskell.navigate
 
 import com.intellij.codeInsight.lookup.LookupElementBuilder
-import com.intellij.openapi.util.TextRange
+import com.intellij.openapi.project.Project
+import com.intellij.openapi.util.{Condition, TextRange}
 import com.intellij.openapi.vfs.LocalFileSystem
 import com.intellij.psi._
 import com.intellij.psi.util.{PsiTreeUtil, PsiUtilCore}
 import com.powertuple.intellij.haskell.external._
 import com.powertuple.intellij.haskell.psi._
-import com.powertuple.intellij.haskell.util.{HaskellEditorUtil, LineColumnPosition}
+import com.powertuple.intellij.haskell.util.{FileUtil, HaskellEditorUtil, LineColumnPosition}
 import com.powertuple.intellij.haskell.{HaskellFile, HaskellIcons}
 
 import scala.collection.JavaConversions._
@@ -32,26 +33,31 @@ class HaskellReference(element: HaskellNamedElement, textRange: TextRange) exten
 
   override def multiResolve(incompleteCode: Boolean): Array[ResolveResult] = {
     val file = myElement.getContainingFile
+    val project = file.getProject
+    val importModule = Option(PsiTreeUtil.findFirstParent(myElement, importModuleCondition))
+    importModule match {
+      case Some(im: HaskellImportModule) =>
+        (for {
+          filePath <- FileUtil.findModuleFilePath(im.getQcon.getName, project)
+          file <- findFile(filePath)
+        } yield new PsiElementResolveResult(file.getNavigationElement)).toArray
+      case _ =>
+        val expression = myElement.getText.substring(textRange.getStartOffset, textRange.getEndOffset)
 
-    val expression = myElement.getText.substring(textRange.getStartOffset, textRange.getEndOffset)
+        val resolveResultsByGhcMod = getExpressionInfos(file, expression).map {
+          case pei: ProjectExpressionInfo => createResolveResults(pei, expression)
+          case lei: LibraryExpressionInfo => createResolveResults(lei, expression)
+          case bie: BuiltInExpressionInfo => createResolveResults(bie, file)
+        }.flatten
 
-    val resolveResultsByGhcMod = getExpressionInfos(file, expression).map {
-      case pei: ProjectExpressionInfo => createResolveResults(pei, expression)
-      case lei: LibraryExpressionInfo => createResolveResults(lei, expression)
-      case bie: BuiltInExpressionInfo => createResolveResults(bie, file)
-    }.flatten
+        displayLabelInfoMessageIfResultsContainsBuiltInDefinition(resolveResultsByGhcMod, project)
 
-    val firstBuiltInResolveResult = resolveResultsByGhcMod.find(_.isInstanceOf[BuiltInResolveResult])
-    firstBuiltInResolveResult match {
-      case Some(birs: BuiltInResolveResult) => HaskellEditorUtil.createLabelMessage(s"${birs.typeSignature} is built-in: ${birs.libraryName}:${birs.module}", file.getProject)
-      case _ => ()
+        (if (resolveResultsByGhcMod.isEmpty) {
+          findResolveResultInFile(file, expression)
+        } else {
+          resolveResultsByGhcMod
+        }).toArray
     }
-
-    (if (resolveResultsByGhcMod.isEmpty) {
-      findResolveResultInFile(file, expression)
-    } else {
-      resolveResultsByGhcMod
-    }).toArray
   }
 
   // Note that current expression element is always removed from result.
@@ -66,6 +72,23 @@ class HaskellReference(element: HaskellNamedElement, textRange: TextRange) exten
     (declarationNamedElements ++ namedElements).groupBy(_.getLookupString).values.map(_.head).toArray
   }
 
+  private final val importModuleCondition = new Condition[PsiElement]() {
+    override def value(psiElement: PsiElement): Boolean = {
+      psiElement match {
+        case _: HaskellImportModule => true
+        case _ => false
+      }
+    }
+  }
+
+  private def displayLabelInfoMessageIfResultsContainsBuiltInDefinition(resolveResultsByGhcMod: Seq[ResolveResult], project: Project): Unit = {
+    val firstBuiltInResolveResult = resolveResultsByGhcMod.find(_.isInstanceOf[BuiltInResolveResult])
+    firstBuiltInResolveResult match {
+      case Some(birs: BuiltInResolveResult) => HaskellEditorUtil.createLabelMessage(s"${birs.typeSignature} is built-in: ${birs.libraryName}:${birs.module}", project)
+      case _ => ()
+    }
+  }
+
   private def createLookupElement(namedElement: HaskellNamedElement) = {
     LookupElementBuilder.create(namedElement.getName).withIcon(HaskellIcons.HaskellSmallBlueLogo)
   }
@@ -77,7 +100,7 @@ class HaskellReference(element: HaskellNamedElement, textRange: TextRange) exten
   private def getTypeText(declarationElement: HaskellDeclarationElement) = {
     val presentableText = declarationElement.getPresentation.getPresentableText
     val typeSignatureDoubleColonIndex = presentableText.indexOf("::")
-    if (typeSignatureDoubleColonIndex > 0 ) {
+    if (typeSignatureDoubleColonIndex > 0) {
       presentableText.drop(typeSignatureDoubleColonIndex + 2).trim
     } else {
       presentableText

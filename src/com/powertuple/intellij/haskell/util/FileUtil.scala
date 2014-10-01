@@ -17,8 +17,11 @@
 package com.powertuple.intellij.haskell.util
 
 import com.intellij.openapi.fileEditor.FileDocumentManager
-import com.intellij.psi.PsiFile
+import com.intellij.openapi.project.Project
+import com.intellij.psi.{PsiDirectory, PsiFile}
+import com.intellij.psi.search.GlobalSearchScope
 import com.intellij.util.ui.UIUtil
+import com.powertuple.intellij.haskell.HaskellNotificationGroup
 
 object FileUtil {
 
@@ -36,6 +39,35 @@ object FileUtil {
         FileDocumentManager.getInstance.saveAllDocuments()
       }
     })
+  }
+
+  def findModuleFilePath(module: String, project: Project): Option[String] = {
+    val moduleFilePath = for {
+      (name, path) <- getNameAndPathForModule(module)
+      val files = HaskellFileIndex.getFilesByName(project, name, GlobalSearchScope.allScope(project))
+      file <- files.find(hf => checkPath(hf.getContainingDirectory, path))
+      filePath <- Some(file.getVirtualFile.getPath)
+    } yield filePath
+
+    moduleFilePath match {
+      case Some(p) => Some(p)
+      case None => HaskellNotificationGroup.notifyError(s"Could not find file path for `$module`. Please add sources of this library/package to 'Project Settings'/Libraries"); None
+    }
+  }
+
+  private def getNameAndPathForModule(module: String) = {
+    module.split('.').toList.reverse match {
+      case n :: d => Some(n, d)
+      case _ => HaskellNotificationGroup.notifyError(s"Could not determine path for $module"); None
+    }
+  }
+
+  private def checkPath(dir: PsiDirectory, dirNames: List[String]): Boolean = {
+    dirNames match {
+      case h :: t if dir.getName == h => checkPath(dir.getParentDirectory, t)
+      case h :: t => false
+      case _ => true
+    }
   }
 }
 
