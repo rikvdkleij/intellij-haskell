@@ -34,8 +34,8 @@ language_pragma             ::= PRAGMA_START osnl qcon (osnl COMMA osnl qcon)* o
 module_declaration          ::= MODULE qcon onl (onl exports)? onl WHERE onl body | body              {methods=[getModuleName]}
 
 private body                ::= import_declarations top_declarations
-top_declarations            ::= (top_declaration nls)*
-import_declarations         ::= (import_declaration nls)*
+top_declarations            ::= (top_declaration nls)+ top_declaration?
+import_declarations         ::= (import_declaration nls)+ import_declaration?
 
 import_declaration          ::= IMPORT import_qualified? osnl import_module osnl import_qualified_as? osnl import_spec?     {methods=[getModuleName]}
 import_module               ::= qcon

@@ -43,7 +43,7 @@ class HaskellCompletionContributor extends CompletionContributor {
       val originalPrefix = createPrefix(Option(parameters.getOriginalPosition))
       val currentPrefix = createPrefix(Option(parameters.getPosition))
       val prefix = if (originalPrefix.isEmpty) currentPrefix else originalPrefix
-      val resultSet = if (originalResultSet.getPrefixMatcher.getPrefix.isEmpty && !currentPrefix.isEmpty && currentPrefix != "," && currentPrefix != "(") {
+      val resultSet = if (originalResultSet.getPrefixMatcher.getPrefix.isEmpty && !currentPrefix.isEmpty && currentPrefix != "," && currentPrefix != "(" && currentPrefix != ")") {
         originalResultSet.withPrefixMatcher(new PlainPrefixMatcher(prefix))
       } else {
         originalResultSet

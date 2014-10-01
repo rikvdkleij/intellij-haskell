@@ -42,7 +42,7 @@ class HaskellReference(element: HaskellNamedElement, textRange: TextRange) exten
           file <- findFile(filePath)
         } yield new PsiElementResolveResult(file.getOriginalElement)).toArray
       case _ =>
-        val expression = myElement.getText.substring(textRange.getStartOffset, textRange.getEndOffset)
+        val expression = myElement.getText
 
         val resolveResultsByGhcMod = getExpressionInfos(file, expression).map {
           case pei: ProjectExpressionInfo => createResolveResults(pei, expression)
@@ -154,7 +154,8 @@ class HaskellReference(element: HaskellNamedElement, textRange: TextRange) exten
   }
 
   private def findNamedElements(declarationElement: HaskellDeclarationElement, expression: String): Seq[HaskellNamedElement] = {
-    declarationElement.getIdentifierElements.filter(_.getName.contains(expression))
+    val OperatorExpression = s"""((\\s*$expression\\s*))""".r
+    declarationElement.getIdentifierElements.filter(ne => ne.getName == expression || OperatorExpression.findFirstIn(ne.getName).isDefined)
   }
 
   private def getExpressionInfos(psiFile: PsiFile, expression: String): Seq[ExpressionInfo] = {
