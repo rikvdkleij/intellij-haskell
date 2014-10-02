@@ -34,7 +34,7 @@ class ShowInfoAction extends AnAction {
       psiFile <- Option(PsiUtilBase.getPsiFileInEditor(editor, CommonDataKeys.PROJECT.getData(context)))
       offset = editor.getCaretModel.getOffset
       project = psiFile.getProject
-      expression <- Option(psiFile.findElementAt(offset).getText)
+      expression <- Option(psiFile.findElementAt(offset)).map(_.getText.trim).flatMap(t => if (t.isEmpty) None else Some(t))
     } yield
       GhcModiManager.findInfoFor(psiFile, expression) match {
         case Seq(expressionInfos@_*) if expressionInfos.nonEmpty => HaskellEditorUtil.createInfoBallon(expressionInfos.map(createInfoText).mkString("<br>"), editor)
