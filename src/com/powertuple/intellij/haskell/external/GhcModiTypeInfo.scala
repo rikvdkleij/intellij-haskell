@@ -78,8 +78,16 @@ private[external] object GhcModiTypeInfo {
     for (outputLine <- ghcModiOutput) yield {
       outputLine match {
         case GhcModiTypeInfoPattern(startLn, startCol, endLine, endCol, typeSignature) =>
-          TypeInfo(startLn.toInt, startCol.toInt, endLine.toInt, endCol.toInt, typeSignature)
+          TypeInfo(startLn.toInt, startCol.toInt, endLine.toInt, endCol.toInt, shortenTypeSignature(typeSignature))
       }
+    }
+  }
+
+  private def shortenTypeSignature(typeSignature: String) = {
+    if (typeSignature.length > 80) {
+      typeSignature.split("->").mkString("->\n")
+    } else {
+      typeSignature
     }
   }
 }
