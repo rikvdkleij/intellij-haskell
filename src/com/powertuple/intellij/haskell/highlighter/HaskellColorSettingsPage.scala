@@ -28,7 +28,20 @@ import org.jetbrains.annotations.NotNull
 import scala.collection.JavaConversions._
 
 object HaskellColorSettingsPage {
-  private final val Attrs = Array[AttributesDescriptor](new AttributesDescriptor("Illegal character", Illegal), new AttributesDescriptor("Comment", Comment), new AttributesDescriptor("String", String), new AttributesDescriptor("Number", Number), new AttributesDescriptor("Keyword", Keyword), new AttributesDescriptor("Operator", Operator), new AttributesDescriptor("Parentheses", Parentheses), new AttributesDescriptor("Brace", Brace), new AttributesDescriptor("Bracket", Bracket), new AttributesDescriptor("Variable", Variable), new AttributesDescriptor("Constructor", Constructor))
+  private final val Attrs = Array[AttributesDescriptor](
+    new AttributesDescriptor("Illegal character", Illegal),
+    new AttributesDescriptor("Comment", Comment),
+    new AttributesDescriptor("Block comment", BlockComment),
+    new AttributesDescriptor("String", String),
+    new AttributesDescriptor("Number", Number),
+    new AttributesDescriptor("Keyword", Keyword),
+    new AttributesDescriptor("Parentheses", Parentheses),
+    new AttributesDescriptor("Brace", Brace),
+    new AttributesDescriptor("Bracket", Bracket),
+    new AttributesDescriptor("Variable", Variable),
+    new AttributesDescriptor("Constructor", Constructor),
+    new AttributesDescriptor("Operator/Symbol", Symbol),
+    new AttributesDescriptor("Default", Default))
   private final val AttributesKeyMap = Map[String, TextAttributesKey]()
 }
 
