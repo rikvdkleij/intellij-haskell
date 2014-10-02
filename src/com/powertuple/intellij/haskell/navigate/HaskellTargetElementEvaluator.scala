@@ -18,6 +18,7 @@ package com.powertuple.intellij.haskell.navigate
 
 import com.intellij.codeInsight.TargetElementEvaluatorEx
 import com.intellij.psi.{PsiElement, PsiFile, PsiReference}
+import com.powertuple.intellij.haskell.HaskellParserDefinition
 
 class HaskellTargetElementEvaluator extends TargetElementEvaluatorEx {
   def isIdentifierPart(element: PsiFile, text: CharSequence, offset: Int): Boolean = {
@@ -27,6 +28,7 @@ class HaskellTargetElementEvaluator extends TargetElementEvaluatorEx {
       case HS_QCON_ID => true
       case HS_QVAROP_ID => true
       case HS_QCONOP_ID => true
+      case et if HaskellParserDefinition.SYMBOLS.contains(et) => true
       case _ => false
     }
   }
