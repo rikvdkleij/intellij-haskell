@@ -178,6 +178,5 @@ private general_id          ::= (qvar | qcon | qvarop | qconop | LEFT_PAREN | RI
                                  SEMICOLON | LEFT_ARROW | LEFT_BRACKET | RIGHT_BRACKET | literal | LEFT_BRACE | RIGHT_BRACE |
                                  COMMA | UNDERSCORE | symbol | COLON | UNSAFE | DOT_DOT | QUOTE | BACKQUOTE)
 
-private symbol              ::= EXCLAMATION_MARK | HASH | DOLLAR | PERCENTAGE | AMPERSAND | STAR | PLUS | DOT |
-                                SLASH | LT | GT | QUESTION_MARK | AT | BACKSLASH | CARET | VERTICAL_BAR | EQUAL |
-                                TILDE | DASH
+private symbol              ::= EXCLAMATION_MARK | HASH | DOLLAR | PERCENTAGE | AMPERSAND | STAR | PLUS | DOT | SLASH | LT | EQUAL |
+                                  GT | QUESTION_MARK | AT | BACKSLASH | CARET | VERTICAL_BAR | DASH | TILDE     // except colon
