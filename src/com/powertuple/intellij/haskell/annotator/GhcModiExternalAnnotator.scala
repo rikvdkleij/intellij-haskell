@@ -71,7 +71,7 @@ class GhcModiExternalAnnotator extends ExternalAnnotator[GhcModInitialInfo, GhcM
     fileStatusMap.markFileScopeDirty(document, new TextRange(0, document.getTextLength), document.getTextLength)
   }
 
-  // TODO: Try to make problem text range more precise by using 'text' inside problem description
+  // TODO: Try to make problem text range more precise by using problem description
   private[annotator] def createAnnotations(ghcModResult: GhcModiResult, psiFile: PsiFile): Seq[Annotation] = {
     for (problem <- ghcModResult.problems.filter(_.filePath == psiFile.getOriginalFile.getVirtualFile.getPath)) yield {
       val textRange = getProblemTextRange(psiFile, problem)
