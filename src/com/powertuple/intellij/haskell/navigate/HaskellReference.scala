@@ -154,8 +154,15 @@ class HaskellReference(element: HaskellNamedElement, textRange: TextRange) exten
   }
 
   private def findNamedElements(declarationElement: HaskellDeclarationElement, expression: String): Seq[HaskellNamedElement] = {
-    val OperatorExpression = s"""((\\s*$expression\\s*))""".r
-    declarationElement.getIdentifierElements.filter(ne => ne.getName == expression || OperatorExpression.findFirstIn(ne.getName).isDefined)
+    declarationElement.getIdentifierElements.filter(ne => ne.getName == expression || isEqualAsOperator(ne.getName, expression))
+  }
+
+  private def isEqualAsOperator(name: String, expression: String) = {
+    if (name.startsWith("(") && name.endsWith(")")) {
+      name.substring(1, name.length - 1).trim == expression
+    } else {
+      false
+    }
   }
 
   private def getExpressionInfos(psiFile: PsiFile, expression: String): Seq[ExpressionInfo] = {
