@@ -51,7 +51,7 @@ object FileUtil {
 
     moduleFilePath match {
       case Some(p) => Some(p)
-      case None => HaskellNotificationGroup.notifyError(s"Could not find file path for `$module`. Please add sources of this library/package to 'Project Settings'/Libraries"); None
+      case None => HaskellNotificationGroup.notifyError(s"Could not find file path for `$module`. Please add sources of this library/package to 'Project Settings/Libraries'"); None
     }
   }
 
