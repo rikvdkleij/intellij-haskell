@@ -65,6 +65,7 @@
         <lang.documentationProvider language="Haskell" implementationClass="com.powertuple.intellij.haskell.view.HaskellDocumentationProvider"/>
 
         <completion.contributor language="Haskell" implementationClass="com.powertuple.intellij.haskell.code.HaskellCompletionContributor"/>
+        <lookup.charFilter implementation="com.powertuple.intellij.haskell.code.HaskellCompletionCharFilter"/>
 
         <gotoClassContributor implementation="com.powertuple.intellij.haskell.navigate.HaskellDeclarationContributor"/>
         <gotoSymbolContributor implementation="com.powertuple.intellij.haskell.navigate.HaskellNamedElementContributor"/>

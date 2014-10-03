@@ -37,17 +37,7 @@ class HaskellCompletionContributor extends CompletionContributor {
   private final val InsideImportClauses = Seq("as ", "hiding ", "qualified ")
 
   extend(CompletionType.BASIC, PlatformPatterns.psiElement(), new CompletionProvider[CompletionParameters] {
-    def addCompletions(parameters: CompletionParameters, context: ProcessingContext, originalResultSet: CompletionResultSet) {
-
-      // To get right completion behavior (especially for operators) we have to find the right prefix
-      val originalPrefix = createPrefix(Option(parameters.getOriginalPosition))
-      val currentPrefix = createPrefix(Option(parameters.getPosition))
-      val prefix = if (originalPrefix.isEmpty) currentPrefix else originalPrefix
-      val resultSet = if (originalResultSet.getPrefixMatcher.getPrefix.isEmpty && !currentPrefix.isEmpty && currentPrefix != "," && currentPrefix != "(" && currentPrefix != ")") {
-        originalResultSet.withPrefixMatcher(new PlainPrefixMatcher(prefix))
-      } else {
-        originalResultSet
-      }
+    def addCompletions(parameters: CompletionParameters, context: ProcessingContext, resultSet: CompletionResultSet) {
 
       val project = parameters.getPosition.getProject
       val file = parameters.getOriginalFile
