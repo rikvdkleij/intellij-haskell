@@ -51,10 +51,11 @@ A lot of features are with the help of ghc-mod(i)!!
 - After project is installed in sandbox, create Haskell project in IntelliJ by using `File`/`Open` from IntelliJ menu;
 - Select `No SDK` in Project Setting;
 - Select in `Modules Settings` which folders to exclude (like .cabal-sandbox and dist) and which folders are `Source` and `Test` (normally src and test).
-- To get nice navigation features: add for libraries, Prelude(base and integer-gmp packages) the source root directories to project in `Project Settings`/`Libraries`. `cabal get` is useful for getting source code of package;
+- To get nice navigation features: add for libraries, Prelude(base, ghc-prim and integer-gmp packages) the source root directories to project in `Project Settings`/`Libraries`. `cabal get` is useful for getting source code of package;
 
 # Remarks
 - IntelliJ has a nice terminal plugin, useful for executing the Cabal commands;
 - ghc-mod can not help in library files and if Haskell source file contains not completely valid Haskell (e.g. while typing). In that case I try to solve request by using AST-tree (IntelliJ calls it PSI-tree). 
 - Because of ghc-mod issue #275 ghc-mod is used (instead of ghc-modi) for checking syntax of Haskell file;
 - Because of ghc-mod issue #362 ghc-mod is used (instead of ghc-modi) for getting symbols of module using `browse` command;
+- This has cost me a lot of time: https://youtrack.jetbrains.com/issue/IDEA-130894
