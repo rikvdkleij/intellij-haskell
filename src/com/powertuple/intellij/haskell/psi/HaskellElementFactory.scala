@@ -16,40 +16,32 @@
 
 package com.powertuple.intellij.haskell.psi
 
+import com.intellij.lang.ASTNode
 import com.intellij.openapi.project.Project
 import com.intellij.psi.PsiFileFactory
+import com.intellij.psi.impl.source.tree.TreeUtil
 import com.intellij.psi.util.PsiTreeUtil
 import com.powertuple.intellij.haskell.{HaskellFile, HaskellLanguage}
 
 object HaskellElementFactory {
-  def createQvar(project: Project, name: String): HaskellQvar = {
+  def createQvarId(project: Project, name: String): ASTNode = {
     val haskellFile = createFileFromText(project, name)
-    PsiTreeUtil.findChildOfType(haskellFile, classOf[HaskellQvar])
+    PsiTreeUtil.findChildOfType(haskellFile, classOf[HaskellQvarId]).getNode
   }
 
-  def createQcon(project: Project, name: String): HaskellQcon = {
+  def createQconId(project: Project, name: String): ASTNode = {
     val haskellFile = createFileFromText(project, name)
-    haskellFile.getFirstChild.asInstanceOf[HaskellQcon]
+    PsiTreeUtil.findChildOfType(haskellFile, classOf[HaskellQconId]).getNode
   }
 
-  def createQvarop(project: Project, name: String): HaskellQvarop = {
+  def createQvarSym(project: Project, name: String): ASTNode = {
     val haskellFile = createFileFromText(project, name)
-    haskellFile.getFirstChild.asInstanceOf[HaskellQvarop]
+    PsiTreeUtil.findChildOfType(haskellFile, classOf[HaskellQvarSym]).getNode
   }
 
-  def createQconop(project: Project, name: String) = {
+  def createGconSym(project: Project, name: String): ASTNode = {
     val haskellFile = createFileFromText(project, name)
-    haskellFile.getFirstChild.asInstanceOf[HaskellQconop]
-  }
-
-  def createDeclarationFromText(project: Project, text: String): HaskellDeclarationElement = {
-    val fileFromText: HaskellFile = createFileFromText(project, text)
-    PsiTreeUtil.findChildOfType(fileFromText, classOf[HaskellDeclarationElement])
-  }
-
-  def createExpression(project: Project, name: String): HaskellExpression = {
-    val haskellFile = createFileFromText(project, name)
-    PsiTreeUtil.findChildOfType(haskellFile, classOf[HaskellExpression])
+    PsiTreeUtil.findChildOfType(haskellFile, classOf[HaskellGconSym]).getNode
   }
 
   private def createFileFromText(project: Project, text: String): HaskellFile = {

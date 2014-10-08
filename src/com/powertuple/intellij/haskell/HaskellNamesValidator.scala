@@ -1,6 +1,6 @@
 /*
  * Copyright 2014 Rik van der Kleij
-
+ *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
@@ -29,7 +29,7 @@ class HaskellNamesValidator extends NamesValidator {
   }
 
   override def isIdentifier(name: String, project: Project): Boolean = {
-    // TODO: Except reservedop and dashes
+    // TODO: Also check no reserved op and dashes
     !isKeyword(name, project)
   }
 }

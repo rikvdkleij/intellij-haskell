@@ -33,23 +33,23 @@ object GhcModiManager {
     reinit = true
   }
 
-  def findInfoFor(psiFile: PsiFile, expression: String): Seq[ExpressionInfo] = {
-    GhcModiInfo.findInfoFor(getGhcModi(psiFile), psiFile, expression)
+  def findInfoFor(psiFile: PsiFile, namedElement: HaskellNamedElement): Seq[IdentifierInfo] = {
+    GhcModiInfo.findInfoFor(getGhcModi(psiFile), psiFile, namedElement)
   }
 
   def findTypeInfoFor(psiFile: PsiFile, psiElement: PsiElement): Option[TypeInfo] = {
     GhcModiTypeInfo.findInfoFor(getGhcModi(psiFile), psiFile, psiElement)
   }
 
-  def findTypeInfoForSelection(psiFile: PsiFile, selectionModel: SelectionModel): Option[TypeInfo]  = {
+  def findTypeInfoForSelection(psiFile: PsiFile, selectionModel: SelectionModel): Option[TypeInfo] = {
     GhcModiTypeInfo.findInfoForSelection(getGhcModi(psiFile), psiFile, selectionModel)
   }
 
   /**
-   * Assuming first definition from ghc-modi info result is the real declaration.
+   * Assuming first definition from ghc-modi info result is the main definition.
    */
   def findTypeSignature(haskellNamedElement: HaskellNamedElement): Option[String] = {
-    findInfoFor(haskellNamedElement.getContainingFile, haskellNamedElement.getName) match {
+    findInfoFor(haskellNamedElement.getContainingFile, haskellNamedElement) match {
       case Seq(info) => Some(info.typeSignature)
       case _ => None
     }
@@ -68,9 +68,8 @@ class GhcModiManager(val project: Project, val settings: HaskellSettings) extend
       ghcModi.reinit()
       GhcModiManager.reinit = false
       ghcModi
-    } else {
-      ghcModi
     }
+    ghcModi
   }
 
 

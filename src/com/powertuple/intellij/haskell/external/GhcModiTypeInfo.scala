@@ -19,6 +19,7 @@ package com.powertuple.intellij.haskell.external
 import com.intellij.openapi.editor.SelectionModel
 import com.intellij.psi.{PsiElement, PsiFile}
 import com.powertuple.intellij.haskell.HaskellNotificationGroup
+import com.powertuple.intellij.haskell.psi._
 import com.powertuple.intellij.haskell.util.{FileUtil, LineColumnPosition}
 
 import scala.util.{Failure, Success, Try}
@@ -27,9 +28,19 @@ private[external] object GhcModiTypeInfo {
   private final val GhcModiTypeInfoPattern = """([\d]+) ([\d]+) ([\d]+) ([\d]+) "(.+)"""".r
 
   def findInfoFor(ghcModi: GhcModi, psiFile: PsiFile, psiElement: PsiElement): Option[TypeInfo] = {
-    FileUtil.saveFile(psiFile)
+    val textOffSet = psiElement.getNode.getElementType match {
+      case HaskellTypes.HS_QVARID_ID | HaskellTypes.HS_QCONID_ID => psiElement.getTextOffset
+      case HaskellTypes.HS_QVARSYM_ID | HaskellTypes.HS_GCONSYM_ID =>
+        if (Option(psiElement.getParent).map(_.getPrevSibling).map(_.getText).contains("(") &&
+            Option(psiElement.getParent).map(_.getNextSibling).map(_.getText).contains(")")) {
+          psiElement.getTextOffset - 1
+        } else {
+          psiElement.getTextOffset
+        }
+      case _ => psiElement.getTextOffset
+    }
 
-    val startPositionExpression = LineColumnPosition.fromOffset(psiFile, psiElement.getTextOffset) match {
+    val startPositionExpression = LineColumnPosition.fromOffset(psiFile, textOffSet) match {
       case Some(lcp) => Some(lcp)
       case None => HaskellNotificationGroup.notifyError(s"Could not find start position for ${psiElement.getText}"); None
     }

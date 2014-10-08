@@ -83,10 +83,9 @@ at                  = "@"
 backslash           = "\\"
 vertical_bar        = "|"
 tilde               = "~"
-
-// reservedop
-dot_dot             = ".."
 colon               = ":"
+
+// reservedop and not symbol, '..' is handled as two dots as symbol, see also special symbol (..)
 colon_colon         = "::"
 left_arrow          = "<-" | "\u2190"
 right_arrow         = "->" | "\u2192"
@@ -103,20 +102,17 @@ backquote           = "`"
 left_brace          = "{"
 right_brace         = "}"
 
-
 //special symbol
 dot_dot_parens      = "(..)"
 quote               = "'"
 
-symbol_no_resop     = {exclamation_mark} | {hash} | {dollar} | {percentage} | {ampersand} | {star} | {plus} | {dot} | {slash} | {lt} | {gt} | {question_mark} | {caret} | {dash}
-symbol              = {equal} | {at} | {backslash} | {vertical_bar} | {tilde} | {exclamation_mark} | {hash} | {dollar} | {percentage} | {ampersand} | {star} | {plus} | {dot} | {slash} | {lt} | {gt} | {question_mark} | {caret} | {dash}
-symbol_reservedop   = {equal} | {at} | {backslash} | {vertical_bar} | {tilde}
+symbol_no_colon     = {equal} | {at} | {backslash} | {vertical_bar} | {tilde} | {exclamation_mark} | {hash} | {dollar} | {percentage} | {ampersand} | {star} | {plus} | {dot} | {slash} | {lt} | {gt} | {question_mark} | {caret} | {dash}
 
 varid               = {small} ({small} | {large} | {digit} | {quote})* {hash}*
-varsym              = {symbol_no_resop} ({symbol} | {colon})* | {symbol_reservedop} ({symbol} | {colon})+
+varsym              = {symbol_no_colon} ({symbol_no_colon} | {colon})*
 
-conid               = {large} ({small} | {large} | {digit} | {quote})* {hash}?
-consym              = {quote}? {colon} ({colon} | {symbol})*
+conid               = {large} ({small} | {large} | {digit} | {quote})* {hash}* | {left_bracket} {varid}? {right_bracket}
+consym              = {quote}? {colon} ({symbol_no_colon} | {colon})*
 
 qvarsym             = ({conid} {dot})* {varsym}
 qconsym             = ({conid} {dot})* {consym}
@@ -125,12 +121,6 @@ qvarid              = ({conid} {dot})* {varid}
 qconid              = ({conid} {dot})* {conid}
 
 gconsym             = {colon} | {qconsym}
-
-qvar                = {qvarid} | {left_paren} {white_char}* {qvarsym} {white_char}* {right_paren} {hash}?
-qcon                = {qconid} | {left_paren} {white_char}* {gconsym} {white_char}+ {right_paren} {hash}?
-
-qvarop              = {qvarsym} | {backquote} {qvarid} {backquote}
-qconop              = {gconsym} | {backquote} {qconid} {backquote}
 
 %%
 
@@ -215,19 +205,18 @@ qconop              = {gconsym} | {backquote} {qconid} {backquote}
 
     {dot_dot_parens}      { return HS_DOT_DOT_PARENS; }
 
-    {qvar}                { return HS_QVAR_ID; }
-    {qcon}                { return HS_QCON_ID; }
+    // identifiers
+    {qvarid}              { return HS_QVARID_ID; }
+    {qconid}              { return HS_QCONID_ID; }
 
     {character_literal}   { return HS_CHARACTER_LITERAL;  }
     {string_literal}      { return HS_STRING_LITERAL;  }
 
-    // reservedop
+    // reservedop and no symbol, except dot_dot because this one is handled as symbol
     {colon_colon}         { return HS_COLON_COLON; }
     {left_arrow}          { return HS_LEFT_ARROW; }
     {right_arrow}         { return HS_RIGHT_ARROW; }
     {double_right_arrow}  { return HS_DOUBLE_RIGHT_ARROW; }
-    {colon}               { return HS_COLON; }
-    {dot_dot}             { return HS_DOT_DOT; }
 
     // number
     {decimal}             { return HS_DECIMAL; }
@@ -235,31 +224,16 @@ qconop              = {gconsym} | {backquote} {qconid} {backquote}
     {octal}               { return HS_OCTAL; }
     {float}               { return HS_FLOAT; }
 
-    // ascSymbol except reservedop
-    {exclamation_mark}    { return HS_EXCLAMATION_MARK; }
-    {hash}                { return HS_HASH; }
-    {dollar}              { return HS_DOLLAR; }
-    {percentage}          { return HS_PERCENTAGE; }
-    {ampersand}           { return HS_AMPERSAND; }
-    {star}                { return HS_STAR; }
-    {plus}                { return HS_PLUS; }
-    {dot}                 { return HS_DOT; }
-    {slash}               { return HS_SLASH; }
-    {lt}                  { return HS_LT; }
-    {gt}                  { return HS_GT; }
-    {question_mark}       { return HS_QUESTION_MARK; }
-    {caret}               { return HS_CARET; }
-    {dash}                { return HS_DASH; }
-
-    {qvarop}              { return HS_QVAROP_ID; }
-    {qconop}              { return HS_QCONOP_ID; }
-
-    // symbol and reservedop
+    // symbol and reservedop, except colon because this one is handled as symbol
     {equal}               { return HS_EQUAL; }
     {at}                  { return HS_AT; }
     {backslash}           { return HS_BACKSLASH; }
     {vertical_bar}        { return HS_VERTICAL_BAR; }
     {tilde}               { return HS_TILDE; }
+
+    // symbol identifiers
+    {qvarsym}             { return HS_QVARSYM_ID; }
+    {gconsym}             { return HS_GCONSYM_ID; }
 
     // special
     {left_paren}          { return HS_LEFT_PAREN; }

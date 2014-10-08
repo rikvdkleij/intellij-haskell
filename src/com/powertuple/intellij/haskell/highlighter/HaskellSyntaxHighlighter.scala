@@ -64,7 +64,7 @@ class HaskellSyntaxHighlighter extends SyntaxHighlighterBase {
       case et if et == HS_STRING_LITERAL || et == HS_CHARACTER_LITERAL => pack(String)
       case et if NUMBERS.contains(et) => pack(Number)
       case et if ALL_RESERVED_IDS.contains(et) => pack(Keyword)
-      case et if OPERATORS.contains(et) | SYMBOLS.contains(et) => pack(Symbol)
+      case et if OPERATORS.contains(et) | SYMBOLS_RES_OP.contains(et) => pack(Symbol)
       case et if et == HS_LEFT_PAREN || et == HS_RIGHT_PAREN => pack(Parentheses)
       case et if et == HS_LEFT_BRACE || et == HS_RIGHT_BRACE => pack(Brace)
       case et if et == HS_LEFT_BRACKET || et == HS_RIGHT_BRACKET => pack(Bracket)

@@ -11,17 +11,12 @@
     <change-notes><![CDATA[
         Initial version.
         See for more information: https://github.com/rikvdkleij/intellij-haskell/blob/master/README.md
+        Any feedback is welcome!
     ]]>
     </change-notes>
 
     <!-- please see http://confluence.jetbrains.com/display/IDEADEV/Build+Number+Ranges for description -->
     <idea-version since-build="135"/>
-
-    <!-- please see http://confluence.jetbrains.com/display/IDEADEV/Plugin+Compatibility+with+IntelliJ+Platform+Products
-         on how to target different products -->
-    <!-- uncomment to enable plugin in all products
-    <depends>com.intellij.modules.lang</depends>
-    -->
 
     <extensions defaultExtensionNs="com.intellij">
         <internalFileTemplate name="Haskell"/>
@@ -50,8 +45,9 @@
 
         <psi.referenceContributor implementation="com.powertuple.intellij.haskell.HaskellReferenceContributor"/>
 
-        <lang.elementManipulator forClass="com.powertuple.intellij.haskell.psi.impl.HaskellQvarImpl"
-                                 implementationClass="com.powertuple.intellij.haskell.psi.HaskellStringLiteralManipulator"/>
+        <lang.elementManipulator forClass="com.powertuple.intellij.haskell.psi.impl.HaskellNamedElementImpl"
+                                 implementationClass="com.powertuple.intellij.haskell.psi.HaskellNamedElementManipulator"/>
+
 
         <fileBasedIndex implementation="com.powertuple.intellij.haskell.util.HaskellFileIndex"/>
 
@@ -70,6 +66,8 @@
         <gotoClassContributor implementation="com.powertuple.intellij.haskell.navigate.HaskellDeclarationContributor"/>
         <gotoSymbolContributor implementation="com.powertuple.intellij.haskell.navigate.HaskellNamedElementContributor"/>
         <lang.psiStructureViewFactory language="Haskell" implementationClass="com.powertuple.intellij.haskell.navigate.HaskellStructureViewFactory"/>
+
+        <projectService serviceInterface="com.intellij.psi.search.PsiSearchHelper" serviceImplementation="com.powertuple.intellij.haskell.psi.impl.HaskellPsiSearchHelperImpl" overrides="true"/>
     </extensions>
 
     <application-components>

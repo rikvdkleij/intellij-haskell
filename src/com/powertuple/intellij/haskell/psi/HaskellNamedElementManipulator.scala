@@ -1,6 +1,6 @@
 /*
  * Copyright 2014 Rik van der Kleij
-
+ *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
@@ -13,27 +13,26 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+
 package com.powertuple.intellij.haskell.psi
 
 import com.intellij.openapi.util.TextRange
 import com.intellij.psi.AbstractElementManipulator
-import org.jetbrains.annotations.NotNull
 
-object HaskellStringLiteralManipulator {
-  def getStringTokenRange(element: HaskellQvar): TextRange = {
+object HaskellNamedElementManipulator {
+  def getStringTokenRange(element: HaskellNamedElement): TextRange = {
     TextRange.from(1, element.getTextLength - 2)
   }
 }
 
-class HaskellStringLiteralManipulator extends AbstractElementManipulator[HaskellQvar] {
-  def handleContentChange(psi: HaskellQvar, range: TextRange, newContent: String): HaskellQvar = {
+class HaskellNamedElementManipulator extends AbstractElementManipulator[HaskellNamedElement] {
+  def handleContentChange(psi: HaskellNamedElement, range: TextRange, newContent: String): HaskellNamedElement = {
     val oldText: String = psi.getText
     val newText: String = oldText.substring(0, range.getStartOffset) + newContent + oldText.substring(range.getEndOffset)
-    psi.setName(newText).asInstanceOf[HaskellQvar]
+    psi.setName(newText).asInstanceOf[HaskellNamedElement]
   }
 
-  @NotNull
-  override def getRangeInElement(element: HaskellQvar): TextRange = {
-    HaskellStringLiteralManipulator.getStringTokenRange(element)
+  override def getRangeInElement(element: HaskellNamedElement): TextRange = {
+    HaskellNamedElementManipulator.getStringTokenRange(element)
   }
 }

@@ -1,6 +1,6 @@
 /*
  * Copyright 2014 Rik van der Kleij
-
+ *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
@@ -16,14 +16,17 @@
 
 package com.powertuple.intellij.haskell.settings
 
-import com.intellij.openapi.options.{ConfigurationException, Configurable}
-import com.intellij.openapi.ui.TextFieldWithBrowseButton
+import java.awt.{GridBagConstraints, GridBagLayout, Insets}
 import javax.swing._
-import com.intellij.openapi.fileChooser.FileChooserDescriptorFactory
-import java.awt.{Insets, GridBagConstraints, GridBagLayout}
 import javax.swing.event.DocumentEvent
+
+import com.intellij.openapi.fileChooser.FileChooserDescriptorFactory
+import com.intellij.openapi.options.{Configurable, ConfigurationException}
+import com.intellij.openapi.ui.TextFieldWithBrowseButton
 import com.intellij.ui.DocumentAdapter
-import com.powertuple.intellij.haskell.external.{GhcModi, GhcModiManager}
+import com.powertuple.intellij.haskell.external.GhcModiManager
+
+import scala.language.{existentials, reflectiveCalls}
 
 class HaskellConfigurable extends Configurable {
   private var isModifiedByUser = false

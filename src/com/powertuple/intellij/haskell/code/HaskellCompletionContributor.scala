@@ -65,7 +65,10 @@ class HaskellCompletionContributor extends CompletionContributor {
     val file = context.getFile
     val startOffset = context.getStartOffset
     val caretElement = Option(file.findElementAt(startOffset - 1))
-    context.setDummyIdentifier(caretElement.map(_.getText).getOrElse("a"))
+    caretElement match {
+      case Some(e) if e.getText.trim.size > 0 => context.setDummyIdentifier(e.getText.substring(0, 1))
+      case _ => context.setDummyIdentifier("a")
+    }
   }
 
   private def isImportSpecInProgress(position: PsiElement): Boolean = {
@@ -75,7 +78,7 @@ class HaskellCompletionContributor extends CompletionContributor {
   private def findIdsForInImportModuleSpec(project: Project, position: PsiElement): Seq[LookupElementBuilder] = {
     (for {
       importDeclaration <- Option(TreeUtil.findParent(position.getNode, HaskellTypes.HS_IMPORT_DECLARATION))
-      moduleName <- Option(PsiTreeUtil.findChildOfType(importDeclaration.getPsi, classOf[HaskellImportModule])).map(_.getQcon.getName)
+      moduleName <- Option(PsiTreeUtil.findChildOfType(importDeclaration.getPsi, classOf[HaskellImportModule])).map(_.getQconId.getName)
     } yield GhcMod.browseInfo(project, Seq(moduleName), removeParensFromOperator = false)).map(_.map(createLookUpElementForBrowseInfo)).getOrElse(Seq())
   }
 
@@ -109,7 +112,7 @@ class HaskellCompletionContributor extends CompletionContributor {
   private def getImportedModulesWithFullScope(psiFile: PsiFile): Iterable[ImportFullSpec] = {
     val importDeclarations = findImportDeclarations(psiFile)
     val moduleNames = importDeclarations.filter(i => Option(i.getImportSpec).isEmpty).
-        map(i => ImportFullSpec(i.getModuleName, Option(i.getImportQualified).isDefined, Option(i.getImportQualifiedAs).map(_.getQcon).map(_.getName)))
+        map(i => ImportFullSpec(i.getModuleName, Option(i.getImportQualified).isDefined, Option(i.getImportQualifiedAs).map(_.getQconId).map(_.getName)))
     Iterable(ImportFullSpec("Prelude", qualified = false, None)) ++ moduleNames
   }
 
@@ -119,12 +122,12 @@ class HaskellCompletionContributor extends CompletionContributor {
       importDeclaration <- importDeclarations.filter(i => Option(i.getImportSpec).flatMap(is => Option(is.getImportHidingSpec)).isDefined)
       importId <- importDeclaration.getImportSpec.getImportHidingSpec.getImportIdList
       v = Option(importId.getQvar).map(_.getName).toSeq
-      c = Option(importId.getQcon).map(_.getName).toSeq
+      c = Option(importId.getQconId).map(_.getName).toSeq
     } yield ImportHidingIdsSpec(
       importDeclaration.getModuleName,
       v ++ c,
       Option(importDeclaration.getImportQualified).isDefined,
-      Option(importDeclaration.getImportQualifiedAs).map(_.getQcon).map(_.getName)
+      Option(importDeclaration.getImportQualifiedAs).map(_.getQconId).map(_.getName)
     )
   }
 
@@ -134,11 +137,11 @@ class HaskellCompletionContributor extends CompletionContributor {
       importDeclaration <- importDeclarations.filter(i => Option(i.getImportSpec).flatMap(is => Option(is.getImportIdsSpec)).isDefined)
       importId <- importDeclaration.getImportSpec.getImportIdsSpec.getImportIdList
       v = Option(importId.getQvar).map(_.getName).toSeq
-      c = Option(importId.getQcon).map(_.getName).toSeq
+      c = Option(importId.getQconId).map(_.getName).toSeq
     } yield ImportIdsSpec(
       importDeclaration.getModuleName,
       v ++ c, Option(importDeclaration.getImportQualified).isDefined,
-      Option(importDeclaration.getImportQualifiedAs).map(_.getQcon).map(_.getName)
+      Option(importDeclaration.getImportQualifiedAs).map(_.getQconId).map(_.getName)
     )
   }
 

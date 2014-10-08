@@ -24,7 +24,7 @@ import com.intellij.psi.util.PsiTreeUtil
 import com.intellij.psi.{PsiElement, PsiFile}
 import com.powertuple.intellij.haskell.HaskellNotificationGroup
 import com.powertuple.intellij.haskell.external._
-import com.powertuple.intellij.haskell.psi.HaskellModuleDeclaration
+import com.powertuple.intellij.haskell.psi.{HaskellModuleDeclaration, HaskellNamedElement}
 import com.powertuple.intellij.haskell.settings.HaskellSettings
 
 import scala.io.Source
@@ -39,24 +39,34 @@ class HaskellDocumentationProvider extends AbstractDocumentationProvider {
   private var sandboxPackageDbPath: Option[String] = None
 
   override def generateDoc(psiElement: PsiElement, originalPsiElement: PsiElement): String = {
-    val expression = originalPsiElement.getText
-    val psiFile = originalPsiElement.getContainingFile
-    val project = psiFile.getProject
-    val haskellDocs = HaskellSettings.getInstance().getState.haskellDocsPath
+    originalPsiElement.getParent match {
+      case hne: HaskellNamedElement => getHaskellDoc(hne)
+      case e => s"No documentation because this is not Haskell identifier: ${e.getText}"
+    }
+  }
 
-    val expressionInfo = GhcModiManager.findInfoFor(psiFile, expression).headOption
-    val arguments = (expressionInfo, getSandboxPackageDbPath(project), getModuleName(psiFile)) match {
-      case (Some(lei: LibraryExpressionInfo), Some(dbPath), _) => Seq("-g", s"-package-db=$dbPath", lei.module, expression)
-      case (Some(pei: ProjectExpressionInfo), Some(dbPath), _) => Seq("-g", s"-package-db=$dbPath", PsiTreeUtil.findChildOfType(psiFile, classOf[HaskellModuleDeclaration]).getModuleName, expression)
-      case (Some(bei: BuiltInExpressionInfo), _, _) => Seq("Prelude", expression)
-      case (Some(lei: LibraryExpressionInfo), None, _) => Seq(lei.module, expression)
-      case (None, Some(dbPath), Some(moduleName)) => Seq("-g", s"-package-db=$dbPath", getModuleName(psiFile).get, expression)
-      case (_, None, _) => HaskellNotificationGroup.notifyInfo(s"Can not determine haskell-docs GHC option `package-db` for $expression"); Seq()
-      case (_, _, _) => HaskellNotificationGroup.notifyInfo(s"Can not determine haskell-docs arguments <module-name> for $expression"); Seq()
+  private def getHaskellDoc(namedElement: HaskellNamedElement): String = {
+    val identifier = namedElement.getName
+    val file = namedElement.getContainingFile
+    val project = file.getProject
+    val identifierInfo = GhcModiManager.findInfoFor(file, namedElement).headOption
+    val haskellDocs = HaskellSettings.getInstance().getState.haskellDocsPath
+    val arguments = (identifierInfo, getSandboxPackageDbPath(project), getModuleName(file)) match {
+      case (Some(lei: LibraryIdentifierInfo), Some(dbPath), _) => Seq("-g", s"-package-db=$dbPath", lei.module, identifier)
+      case (Some(pei: ProjectIdentifierInfo), Some(dbPath), _) => Seq("-g", s"-package-db=$dbPath", PsiTreeUtil.findChildOfType(file, classOf[HaskellModuleDeclaration]).getModuleName, identifier)
+      case (Some(bei: BuiltInIdentifierInfo), _, _) => Seq("Prelude", identifier)
+      case (Some(lei: LibraryIdentifierInfo), None, _) => Seq(lei.module, identifier)
+      case (None, Some(dbPath), Some(moduleName)) => Seq("-g", s"-package-db=$dbPath", getModuleName(file).get, identifier)
+      case (_, None, _) => HaskellNotificationGroup.notifyInfo(s"Can not determine haskell-docs GHC option `package-db` for $identifier"); Seq()
+      case (_, _, _) => HaskellNotificationGroup.notifyInfo(s"Can not determine haskell-docs arguments <module-name> for $identifier"); Seq()
     }
 
     val stdOutputput = ExternalProcess.getProcessOutput(project.getBasePath, haskellDocs, arguments).getStdout
-    Pattern.compile("$", Pattern.MULTILINE).matcher(stdOutputput).replaceAll("<br>").replace(" ", "&nbsp;")
+    if (stdOutputput.isEmpty) {
+      "No documentation found."
+    } else {
+      Pattern.compile("$", Pattern.MULTILINE).matcher(stdOutputput).replaceAll("<br>").replace(" ", "&nbsp;")
+    }
   }
 
   private def getSandboxPackageDbPath(project: Project) = {

@@ -13,6 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+
 package com.powertuple.intellij.haskell
 
 import com.intellij.openapi.util.TextRange
@@ -29,8 +30,8 @@ class HaskellReferenceContributor extends PsiReferenceContributor {
 
       @NotNull
       def getReferencesByElement(@NotNull element: PsiElement, @NotNull context: ProcessingContext): Array[PsiReference] = {
-        if (element.isInstanceOf[HaskellQvar] || element.isInstanceOf[HaskellQvarop] ||
-            element.isInstanceOf[HaskellQcon] || element.isInstanceOf[HaskellQconop]) {
+        if (element.isInstanceOf[HaskellQvarId] || element.isInstanceOf[HaskellQvarSym] ||
+            element.isInstanceOf[HaskellQconId] || element.isInstanceOf[HaskellGconSym]) {
           Array(new HaskellReference(element.asInstanceOf[HaskellNamedElement], TextRange.from(0, element.getTextLength)))
         } else {
           PsiReference.EMPTY_ARRAY

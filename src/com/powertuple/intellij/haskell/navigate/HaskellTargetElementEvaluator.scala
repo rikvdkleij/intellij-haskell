@@ -24,11 +24,10 @@ class HaskellTargetElementEvaluator extends TargetElementEvaluatorEx {
   def isIdentifierPart(element: PsiFile, text: CharSequence, offset: Int): Boolean = {
     import com.powertuple.intellij.haskell.psi.HaskellTypes._
     element.findElementAt(offset).getNode.getElementType match {
-      case HS_QVAR_ID => true
-      case HS_QCON_ID => true
-      case HS_QVAROP_ID => true
-      case HS_QCONOP_ID => true
-      case et if HaskellParserDefinition.SYMBOLS.contains(et) => true
+      case HS_QVARID_ID => true
+      case HS_QCONID_ID => true
+      case HS_QVARSYM_ID => true
+      case HS_GCONSYM_ID => true
       case _ => false
     }
   }

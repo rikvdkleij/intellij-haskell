@@ -17,8 +17,10 @@
 package com.powertuple.intellij.haskell.view
 
 import com.intellij.openapi.actionSystem.{AnAction, AnActionEvent, CommonDataKeys}
+import com.intellij.psi.PsiElement
 import com.intellij.psi.util.PsiUtilBase
 import com.powertuple.intellij.haskell.external._
+import com.powertuple.intellij.haskell.psi.HaskellNamedElement
 import com.powertuple.intellij.haskell.util.HaskellEditorUtil
 
 class ShowInfoAction extends AnAction {
@@ -34,19 +36,27 @@ class ShowInfoAction extends AnAction {
       psiFile <- Option(PsiUtilBase.getPsiFileInEditor(editor, CommonDataKeys.PROJECT.getData(context)))
       offset = editor.getCaretModel.getOffset
       project = psiFile.getProject
-      expression <- Option(psiFile.findElementAt(offset)).map(_.getText.trim).flatMap(t => if (t.isEmpty) None else Some(t))
+      psiElement <- Option(psiFile.findElementAt(offset))
+      namedElement <- findHaskellNamedElement(psiElement)
     } yield
-      GhcModiManager.findInfoFor(psiFile, expression) match {
-        case Seq(expressionInfos@_*) if expressionInfos.nonEmpty => HaskellEditorUtil.createInfoBallon(expressionInfos.map(createInfoText).mkString("<br>"), editor)
-        case _ => HaskellEditorUtil.showHint(editor, s"Could not determine info for $expression")
+      GhcModiManager.findInfoFor(psiFile, namedElement) match {
+        case Seq(identifierInfos@_*) if identifierInfos.nonEmpty => HaskellEditorUtil.createInfoBallon(identifierInfos.map(createInfoText).mkString("<br>"), editor)
+        case _ => HaskellEditorUtil.showHint(editor, s"Could not determine info for ${namedElement.getName}")
       }
   }
 
-  private def createInfoText(expressionInfo: ExpressionInfo): String = {
-    expressionInfo match {
-      case pei: ProjectExpressionInfo => s"${pei.typeSignature}  -- ${pei.filePath}"
-      case lei: LibraryExpressionInfo => s"${lei.typeSignature}   -- ${lei.module}"
-      case bei: BuiltInExpressionInfo => s"${bei.typeSignature}   -- ${bei.module}  BUILT-IN"
+  private def findHaskellNamedElement(psiElement: PsiElement) = {
+    psiElement.getParent match {
+      case hne: HaskellNamedElement => Some(hne)
+      case _ => None
+    }
+  }
+
+  private def createInfoText(identifierInfo: IdentifierInfo): String = {
+    identifierInfo match {
+      case pei: ProjectIdentifierInfo => s"${pei.typeSignature}  -- ${pei.filePath}"
+      case lei: LibraryIdentifierInfo => s"${lei.typeSignature}   -- ${lei.module}"
+      case bei: BuiltInIdentifierInfo => s"${bei.typeSignature}   -- ${bei.module}  BUILT-IN"
     }
   }
 }

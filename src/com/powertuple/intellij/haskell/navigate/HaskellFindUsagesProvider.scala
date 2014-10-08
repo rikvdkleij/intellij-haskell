@@ -21,7 +21,6 @@ import com.intellij.lang.findUsages.FindUsagesProvider
 import com.intellij.psi.PsiElement
 import com.intellij.util.Processor
 import com.powertuple.intellij.haskell.HaskellLexer
-import com.powertuple.intellij.haskell.HaskellParserDefinition.SYMBOLS
 import com.powertuple.intellij.haskell.psi.HaskellTypes._
 import com.powertuple.intellij.haskell.psi._
 
@@ -43,7 +42,7 @@ class HaskellFindUsagesProvider extends FindUsagesProvider {
   private def processTokens(lexer: HaskellLexer, fileText: CharSequence, processor: Processor[WordOccurrence]) {
     val tokenType = lexer.getTokenType
     if (tokenType != null) {
-      if (tokenType == HS_QVAR_ID || tokenType == HS_QCON_ID || tokenType == HS_QVAROP_ID || tokenType == HS_QCONOP_ID || SYMBOLS.contains(tokenType)) {
+      if (tokenType == HS_QVARID_ID || tokenType == HS_QCONID_ID || tokenType == HS_QVARSYM_ID || tokenType == HS_GCONSYM_ID) {
         val o: WordOccurrence = new WordOccurrence(fileText, lexer.getTokenStart, lexer.getTokenEnd, WordOccurrence.Kind.CODE)
         processor.process(o)
       }

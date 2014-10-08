@@ -28,6 +28,8 @@ import com.powertuple.intellij.haskell.external.GhcMod
 import com.powertuple.intellij.haskell.psi.HaskellModuleDeclaration
 import com.powertuple.intellij.haskell.util.{FileUtil, LineColumnPosition}
 
+import scala.annotation.tailrec
+
 class GhcModiExternalAnnotator extends ExternalAnnotator[GhcModInitialInfo, GhcModiResult] {
 
   /**
@@ -86,9 +88,22 @@ class GhcModiExternalAnnotator extends ExternalAnnotator[GhcModInitialInfo, GhcM
   private def getProblemTextRange(psiFile: PsiFile, problem: GhcModiProblem): TextRange = {
     val ghcModiOffSet = LineColumnPosition.getOffset(psiFile, LineColumnPosition(problem.lineNr, problem.columnNr)).getOrElse(0)
     if (Option(psiFile.findElementAt(ghcModiOffSet)).isEmpty) {
-      Option(PsiTreeUtil.findChildOfType(psiFile, classOf[HaskellModuleDeclaration])).flatMap(m => Option(m.getLastChild).map(_.getTextRange)).getOrElse(TextRange.create(0, 0))
+      findTextRangeLastElement(ghcModiOffSet, psiFile).getOrElse(TextRange.create(0, 0))
     } else {
       psiFile.findElementAt(ghcModiOffSet).getTextRange
+    }
+  }
+
+  @tailrec
+  private def findTextRangeLastElement(offSet: Int, psiFile: PsiFile): Option[TextRange] = {
+    if (offSet > 0) {
+      Option(psiFile.findElementAt(offSet)) match {
+        case Some(e) => Some(e.getTextRange)
+        case None => findTextRangeLastElement(offSet - 1, psiFile)
+      }
+    }
+    else {
+      None
     }
   }
 

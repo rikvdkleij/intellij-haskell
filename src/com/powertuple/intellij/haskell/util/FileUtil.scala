@@ -22,6 +22,7 @@ import com.intellij.psi.{PsiDirectory, PsiFile}
 import com.intellij.psi.search.GlobalSearchScope
 import com.intellij.util.ui.UIUtil
 import com.powertuple.intellij.haskell.HaskellNotificationGroup
+import com.powertuple.intellij.haskell.external.GhcMod
 
 object FileUtil {
 
@@ -51,7 +52,14 @@ object FileUtil {
 
     moduleFilePath match {
       case Some(p) => Some(p)
-      case None => HaskellNotificationGroup.notifyError(s"Could not find file path for `$module`. Please add sources of this library/package to 'Project Settings/Libraries'"); None
+      case None =>  {
+        if (GhcMod.listAvailableModules(project).contains(module)) {
+          HaskellNotificationGroup.notifyError(s"Could not find file path for `$module`. Please add sources of this library/package to 'Project Settings/Libraries'")
+        } else {
+          ()
+        }
+        None
+      }
     }
   }
 

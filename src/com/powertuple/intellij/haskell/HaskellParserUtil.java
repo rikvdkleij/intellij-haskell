@@ -22,18 +22,10 @@ import com.intellij.psi.TokenType;
 import com.powertuple.intellij.haskell.psi.HaskellTypes;
 
 public class HaskellParserUtil extends GeneratedParserUtilBase {
-    public static boolean notReservedop(PsiBuilder builder, int level) {
-//        return !(HaskellParserDefinition.RESERVED_OPERATORS().contains(builder.rawLookup(0)) && (builder.rawLookup(1) == TokenType.WHITE_SPACE || builder.rawLookup(1) == HaskellTypes.HS_RIGHT_PAREN));
-//        return !(builder.rawLookup(0) == HaskellTypes.HS_DOT_DOT && builder.rawLookup(1) == HaskellTypes.HS_RIGHT_PAREN);
-        return true;
-    }
-
-    public static boolean notDashes(PsiBuilder builder, int level) {
-        return !(builder.rawLookup(0) == HaskellTypes.HS_DASH && builder.rawLookup(1) == HaskellTypes.HS_DASH);
-    }
-
     public static boolean containsSpaces(PsiBuilder builder, int level) {
         return (builder.rawLookup(0) == HaskellTypes.HS_NEWLINE && builder.rawLookup(1) == TokenType.WHITE_SPACE) ||
-                builder.rawLookup(0) == HaskellTypes.HS_NEWLINE && builder.rawLookup(1) == HaskellTypes.HS_NEWLINE && builder.rawLookup(2) == TokenType.WHITE_SPACE;
+                builder.rawLookup(0) == HaskellTypes.HS_NEWLINE && builder.rawLookup(1) == HaskellTypes.HS_NEWLINE && builder.rawLookup(2) == TokenType.WHITE_SPACE ||
+                builder.rawLookup(0) == HaskellTypes.HS_NEWLINE && builder.rawLookup(1) == HaskellTypes.HS_NEWLINE && builder.rawLookup(2) == HaskellTypes.HS_NEWLINE && builder.rawLookup(3) == TokenType.WHITE_SPACE ||
+                builder.rawLookup(0) == HaskellTypes.HS_NEWLINE && builder.rawLookup(1) == HaskellTypes.HS_NEWLINE && builder.rawLookup(2) == HaskellTypes.HS_NEWLINE && builder.rawLookup(3) == HaskellTypes.HS_NEWLINE && builder.rawLookup(4) == TokenType.WHITE_SPACE;
     }
 }

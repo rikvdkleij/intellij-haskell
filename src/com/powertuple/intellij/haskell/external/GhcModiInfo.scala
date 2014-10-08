@@ -19,6 +19,7 @@ package com.powertuple.intellij.haskell.external
 import com.intellij.openapi.project.Project
 import com.intellij.psi.PsiFile
 import com.powertuple.intellij.haskell.HaskellNotificationGroup
+import com.powertuple.intellij.haskell.psi._
 import com.powertuple.intellij.haskell.util.FileUtil
 
 import scala.annotation.tailrec
@@ -30,61 +31,67 @@ private[external] object GhcModiInfo {
   private final val GhcModiInfoLibraryPathPattern = """(.+)-- Defined in ‘([\w\.\-]+):([\w\.\-]+)’""".r
   private final val GhcModiInfoLibraryPattern = """(.+)-- Defined in ‘([\w\.\-]+)’""".r
 
-  def findInfoFor(ghcModi: GhcModi, psiFile: PsiFile, expression: String): Seq[ExpressionInfo] = {
-    val cmd = s"info ${psiFile.getOriginalFile.getVirtualFile.getPath} $expression"
+  def findInfoFor(ghcModi: GhcModi, psiFile: PsiFile, namedElement: HaskellNamedElement): Seq[IdentifierInfo] = {
+    val identifier = namedElement match {
+      case _: HaskellQvarId | _: HaskellQconId => namedElement.getName
+      case _: HaskellQvarSym | _: HaskellGconSym => s"(${namedElement.getName})"
+    }
+
+    val cmd = s"info ${psiFile.getOriginalFile.getVirtualFile.getPath} $identifier"
     val ghcModiOutput = ghcModi.execute(cmd)
-    (for {
+    val r = (for {
       outputLine <- ghcModiOutput.outputLines.headOption
-      expressionInfos <- createExpressionInfos(outputLine, psiFile.getProject)
-    } yield expressionInfos).getOrElse(Seq())
+      identifierInfos <- createIdentifierInfos(outputLine, psiFile.getProject)
+    } yield identifierInfos).getOrElse(Seq())
+    r
   }
 
-  private def createExpressionInfos(outputLine: String, project: Project): Option[Seq[ExpressionInfo]] = {
+  private def createIdentifierInfos(outputLine: String, project: Project): Option[Seq[IdentifierInfo]] = {
     if (outputLine == "Cannot show info") {
       None
     } else {
       val outputLines = outputLine.split("\u0000")
-      val expressionStrings = createExpressionStrings(outputLines, ListBuffer()).map(_.mkString)
-      Some(expressionStrings.flatMap(s => createExpressionInfo(s, project)))
+      val outputInfos = createInfoPerDefinition(outputLines, ListBuffer()).map(_.mkString)
+      Some(outputInfos.flatMap(s => createIdentifierInfo(s, project)))
     }
   }
 
   @tailrec
-  private def createExpressionStrings(outputLines: Array[String], expressions: ListBuffer[Array[String]]): ListBuffer[Array[String]] = {
+  private def createInfoPerDefinition(outputLines: Array[String], outputInfos: ListBuffer[Array[String]]): ListBuffer[Array[String]] = {
     if (outputLines.exists(_.contains("Defined"))) {
       val index = outputLines.indexWhere(_.contains("Defined"))
       val pair = outputLines.splitAt(index + 1)
-      createExpressionStrings(pair._2, expressions.+=(pair._1))
+      createInfoPerDefinition(pair._2, outputInfos.+=(pair._1))
     } else {
-      expressions
+      outputInfos
     }
   }
 
-  private def createExpressionInfo(expressionInfo: String, project: Project): Option[ExpressionInfo] = {
-    expressionInfo match {
-      case GhcModiInfoPattern(typeSignature, filePath, lineNr, colNr) => Some(ProjectExpressionInfo(typeSignature.trim, filePath, lineNr.toInt, colNr.toInt))
+  private def createIdentifierInfo(outputInfo: String, project: Project): Option[IdentifierInfo] = {
+    outputInfo match {
+      case GhcModiInfoPattern(typeSignature, filePath, lineNr, colNr) => Some(ProjectIdentifierInfo(typeSignature.trim, filePath, lineNr.toInt, colNr.toInt))
       case GhcModiInfoLibraryPathPattern(typeSignature, libraryName, module) => if (libraryName == "ghc-prim" || libraryName == "integer-gmp") {
-        Some(BuiltInExpressionInfo(typeSignature.trim, libraryName, "GHC.Base"))
+        Some(BuiltInIdentifierInfo(typeSignature.trim, libraryName, "GHC.Base"))
       }
       else {
-        FileUtil.findModuleFilePath(module, project).map(LibraryExpressionInfo(typeSignature.trim, _, module))
+        FileUtil.findModuleFilePath(module, project).map(LibraryIdentifierInfo(typeSignature.trim, _, module))
       }
-      case GhcModiInfoLibraryPattern(typeSignature, module) => FileUtil.findModuleFilePath(module, project).map(LibraryExpressionInfo(typeSignature, _, module))
-      case _ => HaskellNotificationGroup.notifyError(s"Unknown pattern for ghc-modi info output: $expressionInfo"); None
+      case GhcModiInfoLibraryPattern(typeSignature, module) => FileUtil.findModuleFilePath(module, project).map(LibraryIdentifierInfo(typeSignature, _, module))
+      case _ => HaskellNotificationGroup.notifyError(s"Unknown pattern for ghc-modi info output: $outputInfo"); None
     }
   }
 }
 
-sealed abstract class ExpressionInfo {
+sealed abstract class IdentifierInfo {
   def typeSignature: String
 }
 
-abstract class FileExpressionInfo extends ExpressionInfo {
+trait FileInfo {
   def filePath: String
 }
 
-case class ProjectExpressionInfo(typeSignature: String, filePath: String, lineNr: Int, colNr: Int) extends FileExpressionInfo
+case class ProjectIdentifierInfo(typeSignature: String, filePath: String, lineNr: Int, colNr: Int) extends IdentifierInfo with FileInfo
 
-case class LibraryExpressionInfo(typeSignature: String, filePath: String, module: String) extends FileExpressionInfo
+case class LibraryIdentifierInfo(typeSignature: String, filePath: String, module: String) extends IdentifierInfo with FileInfo
 
-case class BuiltInExpressionInfo(typeSignature: String, libraryName: String, module: String) extends ExpressionInfo
+case class BuiltInIdentifierInfo(typeSignature: String, libraryName: String, module: String) extends IdentifierInfo

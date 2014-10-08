@@ -29,7 +29,7 @@ import com.powertuple.intellij.haskell.{HaskellFile, HaskellIcons}
 
 import scala.collection.JavaConversions._
 
-class HaskellReference(element: HaskellNamedElement, textRange: TextRange) extends PsiPolyVariantReferenceBase[HaskellNamedElement](element, textRange) {
+class HaskellReference(namedElement: HaskellNamedElement, textRange: TextRange) extends PsiPolyVariantReferenceBase[HaskellNamedElement](namedElement, textRange) {
 
   override def multiResolve(incompleteCode: Boolean): Array[ResolveResult] = {
     val file = myElement.getContainingFile
@@ -38,38 +38,32 @@ class HaskellReference(element: HaskellNamedElement, textRange: TextRange) exten
     importModule match {
       case Some(im: HaskellImportModule) =>
         (for {
-          filePath <- FileUtil.findModuleFilePath(im.getQcon.getName, project)
+          filePath <- FileUtil.findModuleFilePath(im.getQconId.getName, project)
           file <- findFile(filePath)
         } yield new PsiElementResolveResult(file.getOriginalElement)).toArray
       case _ =>
-        val expression = myElement.getText
-
-        val resolveResultsByGhcMod = getExpressionInfos(file, expression).map {
-          case pei: ProjectExpressionInfo => createResolveResults(pei, expression)
-          case lei: LibraryExpressionInfo => createResolveResults(lei, expression)
-          case bie: BuiltInExpressionInfo => createResolveResults(bie, file)
+        val identifier = myElement.getName
+        val resolveResultsByGhcMod = getIdentifierInfos(file, myElement).map {
+          case pii: ProjectIdentifierInfo => resolveReferences(pii, identifier)
+          case lii: LibraryIdentifierInfo => resolveReferences(lii, identifier)
+          case bii: BuiltInIdentifierInfo => resolveReferences(bii, file)
         }.flatten
 
         displayLabelInfoMessageIfResultsContainsBuiltInDefinition(resolveResultsByGhcMod, project)
 
         (if (resolveResultsByGhcMod.isEmpty) {
-          findResolveResultInFile(file, expression)
+          resolveDeclarationReferencesInFile(file, identifier)
         } else {
           resolveResultsByGhcMod
         }).toArray
     }
   }
 
-  // Note that current expression element is always removed from result.
   override def getVariants: Array[AnyRef] = {
     val file = myElement.getContainingFile.getOriginalFile
-    val namedElements = Option(PsiTreeUtil.getParentOfType(myElement, classOf[HaskellExpression])) match {
-      case Some(e) => PsiTreeUtil.findChildrenOfType(e, classOf[HaskellNamedElement]).filterNot(_.getText == myElement.getText).map(createLookupElement)
-      case None => Iterable()
-    }
-
-    val declarationNamedElements = PsiTreeUtil.findChildrenOfType(file, classOf[HaskellDeclarationElement]).flatMap(createLookupElements)
-    (declarationNamedElements ++ namedElements).groupBy(_.getLookupString).values.map(_.head).toArray
+    val localNamedElements = findLocalNamedElements
+    val declarationNamedElements = findDeclarationElementsInFile(file)
+    (localNamedElements ++ declarationNamedElements).groupBy(_.getName).values.map(_.head).map(createLookupElements).flatten.toArray
   }
 
   private final val importModuleCondition = new Condition[PsiElement]() {
@@ -81,7 +75,7 @@ class HaskellReference(element: HaskellNamedElement, textRange: TextRange) exten
     }
   }
 
-  private def displayLabelInfoMessageIfResultsContainsBuiltInDefinition(resolveResultsByGhcMod: Seq[ResolveResult], project: Project): Unit = {
+  private def displayLabelInfoMessageIfResultsContainsBuiltInDefinition(resolveResultsByGhcMod: Seq[ResolveResult], project: Project) {
     val firstBuiltInResolveResult = resolveResultsByGhcMod.find(_.isInstanceOf[BuiltInResolveResult])
     firstBuiltInResolveResult match {
       case Some(birs: BuiltInResolveResult) => HaskellEditorUtil.createLabelMessage(s"${birs.typeSignature} is built-in: ${birs.libraryName}:${birs.module}", project)
@@ -89,12 +83,11 @@ class HaskellReference(element: HaskellNamedElement, textRange: TextRange) exten
     }
   }
 
-  private def createLookupElement(namedElement: HaskellNamedElement) = {
-    LookupElementBuilder.create(namedElement.getName).withIcon(HaskellIcons.HaskellSmallBlueLogo)
-  }
-
-  private def createLookupElements(declarationElement: HaskellDeclarationElement) = {
-    declarationElement.getIdentifierElements.map(ne => LookupElementBuilder.create(removeParens(ne.getName)).withTypeText(getTypeText(declarationElement)).withIcon(declarationElement.getPresentation.getIcon(false)))
+  private def createLookupElements(compositeElement: HaskellCompositeElement): Seq[LookupElementBuilder] = {
+    compositeElement match {
+      case ne: HaskellNamedElement => Seq(LookupElementBuilder.create(ne.getName).withIcon(HaskellIcons.HaskellSmallBlueLogo))
+      case de: HaskellDeclarationElement => de.getIdentifierElements.map(ne => LookupElementBuilder.create(ne.getName).withTypeText(getTypeText(de)).withIcon(de.getPresentation.getIcon(false)))
+    }
   }
 
   private def getTypeText(declarationElement: HaskellDeclarationElement) = {
@@ -107,35 +100,27 @@ class HaskellReference(element: HaskellNamedElement, textRange: TextRange) exten
     }
   }
 
-  private def removeParens(name: String) = {
-    if (name.startsWith("(") && name.endsWith(")")) {
-      name.substring(1, name.length - 1)
-    } else {
-      name
-    }
+  private def resolveReferences(libraryIdentifierInfo: LibraryIdentifierInfo, identifer: String): Iterable[ResolveResult] = {
+    findFile(libraryIdentifierInfo.filePath).map(resolveDeclarationReferencesInFile(_, identifer)).getOrElse(Iterable())
   }
 
-  private def createResolveResults(libraryExpressionInfo: LibraryExpressionInfo, expression: String): Iterable[ResolveResult] = {
-    findFile(libraryExpressionInfo.filePath).map(findResolveResultInFile(_, expression)).getOrElse(Iterable())
-  }
-
-  private def createResolveResults(projectExpressionInfo: ProjectExpressionInfo, expression: String): Iterable[ResolveResult] = {
-    findFile(projectExpressionInfo.filePath).map(file => findResolveResultInFile(file, expression)) match {
-      case None => createResolveResultsByUsingLineColumnInfo(projectExpressionInfo)
-      case Some(rr) if rr.isEmpty => createResolveResultsByUsingLineColumnInfo(projectExpressionInfo)
+  private def resolveReferences(projectIdentifierInfo: ProjectIdentifierInfo, identifier: String): Iterable[ResolveResult] = {
+    findFile(projectIdentifierInfo.filePath).map(file => resolveDeclarationReferencesInFile(file, identifier)) match {
+      case Some(rr) if rr.isEmpty => createResolveResultsByUsingLineColumnInfo(projectIdentifierInfo)
       case Some(rr) => rr
+      case None => Iterable()
     }
   }
 
-  private def createResolveResultsByUsingLineColumnInfo(projectExpressionInfo: ProjectExpressionInfo): Iterable[ResolveResult] = {
+  private def createResolveResultsByUsingLineColumnInfo(projectIdentifierInfo: ProjectIdentifierInfo): Iterable[ResolveResult] = {
     (for {
-      haskellFile <- findFile(projectExpressionInfo.filePath)
-      startOffset <- LineColumnPosition.getOffset(haskellFile, LineColumnPosition(projectExpressionInfo.lineNr, projectExpressionInfo.colNr))
-    } yield new PsiElementResolveResult(PsiUtilCore.getElementAtOffset(haskellFile, startOffset)).asInstanceOf[ResolveResult]).map(Iterable(_)).getOrElse(Iterable())
+      haskellFile <- findFile(projectIdentifierInfo.filePath)
+      startOffset <- LineColumnPosition.getOffset(haskellFile, LineColumnPosition(projectIdentifierInfo.lineNr, projectIdentifierInfo.colNr))
+    } yield new PsiElementResolveResult(PsiUtilCore.getElementAtOffset(haskellFile, startOffset)).asInstanceOf[ResolveResult]).toIterable
   }
 
-  private def createResolveResults(builtInExpressionInfo: BuiltInExpressionInfo, psiFile: PsiFile): Iterable[ResolveResult] = {
-    Iterable(new BuiltInResolveResult(builtInExpressionInfo.typeSignature, builtInExpressionInfo.libraryName, builtInExpressionInfo.module))
+  private def resolveReferences(builtInIdentifierInfo: BuiltInIdentifierInfo, psiFile: PsiFile): Iterable[ResolveResult] = {
+    Iterable(new BuiltInResolveResult(builtInIdentifierInfo.typeSignature, builtInIdentifierInfo.libraryName, builtInIdentifierInfo.module))
   }
 
   private class BuiltInResolveResult(val typeSignature: String, val libraryName: String, val module: String) extends ResolveResult {
@@ -148,24 +133,26 @@ class HaskellReference(element: HaskellNamedElement, textRange: TextRange) exten
     Option(PsiManager.getInstance(myElement.getProject).findFile(LocalFileSystem.getInstance().findFileByPath(filePath)).asInstanceOf[HaskellFile])
   }
 
-  private def findResolveResultInFile(file: PsiFile, expression: String): Iterable[ResolveResult] = {
+  private def resolveDeclarationReferencesInFile(file: PsiFile, identifier: String): Iterable[ResolveResult] = {
+    findNamedElementsEqualToIdentifier(findDeclarationElementsInFile(file).flatMap(_.getIdentifierElements), identifier).map(new PsiElementResolveResult(_))
+  }
+
+  private def findDeclarationElementsInFile(file: PsiFile): Iterable[HaskellDeclarationElement] = {
     PsiTreeUtil.findChildrenOfType(file, classOf[HaskellDeclarationElement])
-        .map(de => findNamedElements(de, expression)).flatMap(hnes => hnes.map(new PsiElementResolveResult(_)))
   }
 
-  private def findNamedElements(declarationElement: HaskellDeclarationElement, expression: String): Seq[HaskellNamedElement] = {
-    declarationElement.getIdentifierElements.filter(ne => ne.getName == expression || isEqualAsOperator(ne.getName, expression))
-  }
-
-  private def isEqualAsOperator(name: String, expression: String) = {
-    if (name.startsWith("(") && name.endsWith(")")) {
-      name.substring(1, name.length - 1).trim == expression
-    } else {
-      false
+  private def findLocalNamedElements: Iterable[HaskellNamedElement] = {
+    Option(PsiTreeUtil.getParentOfType(myElement, classOf[HaskellExpression])) match {
+      case Some(p) => PsiTreeUtil.findChildrenOfType(p, classOf[HaskellNamedElement]).filterNot(_ == myElement).toIterable
+      case None => Iterable()
     }
   }
 
-  private def getExpressionInfos(psiFile: PsiFile, expression: String): Seq[ExpressionInfo] = {
-    GhcModiManager.findInfoFor(psiFile, expression)
+  private def findNamedElementsEqualToIdentifier(namedElements: Iterable[HaskellNamedElement], identifier: String): Iterable[HaskellNamedElement] = {
+    namedElements.filter(ne => ne.getName == identifier)
+  }
+
+  private def getIdentifierInfos(psiFile: PsiFile, namedElement: HaskellNamedElement): Seq[IdentifierInfo] = {
+    GhcModiManager.findInfoFor(psiFile, namedElement)
   }
 }

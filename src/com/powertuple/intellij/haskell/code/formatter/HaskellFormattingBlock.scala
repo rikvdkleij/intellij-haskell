@@ -106,7 +106,7 @@ object IndentProcessor {
       case HS_LEFT_PAREN | HS_LEFT_BRACE | HS_LEFT_BRACKET if childType == HS_LINE_EXPRESSION => Indent.getNormalIndent(false)
       case HS_DO | HS_WHERE | HS_IF | HS_THEN | HS_CASE => Indent.getNormalIndent(false)
       case HS_CDECL | HS_IDECLS => Indent.getNormalIndent(false)
-      case HS_EQUAL | HS_DOLLAR => Indent.getContinuationIndent(true)
+      case HS_EQUAL | HS_QVAR_SYM => Indent.getContinuationIndent(true)
       case HS_VERTICAL_BAR => Indent.getNormalIndent(false)
       case HS_LINE_EXPRESSION if child.getTreeParent.getElementType != HS_FIRST_LINE_EXPRESSION => Indent.getNormalIndent(false)
       case _ => Indent.getNoneIndent
