@@ -60,7 +60,7 @@ data_declaration            ::= DATA (context osnl DOUBLE_RIGHT_ARROW)? osnl sim
 newtype_declaration         ::= NEWTYPE (context osnl DOUBLE_RIGHT_ARROW)? osnl simpletype osnl EQUAL osnl newconstr osnl (DERIVING osnl ttype)?
 class_declaration           ::= CLASS (scontext osnl  DOUBLE_RIGHT_ARROW)? osnl qcon_id osnl (qvar_id | LEFT_PAREN type_signature RIGHT_PAREN) osnl (WHERE osnl cdecls)?
 instance_declaration        ::= INSTANCE (scontext osnl DOUBLE_RIGHT_ARROW)? osnl qcon_id osnl inst osnl (WHERE osnl idecls)?
-default_declaration         ::= DEFAULT LEFT_PAREN (ttype (COMMA ttype)*)? RIGHT_PAREN
+default_declaration         ::= DEFAULT (LEFT_PAREN (ttype (COMMA ttype)*)? RIGHT_PAREN | type_signature)
 type_instance_declaration   ::= TYPE_INSTANCE expression
 
 type_signature              ::= vars COLON_COLON osnl (context DOUBLE_RIGHT_ARROW)? osnl ttype | fixity (DECIMAL)? ops
