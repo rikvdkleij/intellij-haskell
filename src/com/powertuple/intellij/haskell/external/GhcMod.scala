@@ -88,6 +88,15 @@ object GhcMod {
     )
     GhcModiOutput(output.getStdoutLines)
   }
+
+  def listLanguageExtensions(project: Project): Seq[String] = {
+    val output = ExternalProcess.getProcessOutput(
+      project.getBasePath,
+      HaskellSettings.getInstance().getState.ghcModPath,
+      Seq("lang")
+    )
+    output.getStdoutLines
+  }
 }
 
 case class BrowseInfo(name: String, moduleName: String, declaration: Option[String])

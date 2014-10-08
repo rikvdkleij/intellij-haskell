@@ -49,7 +49,7 @@ class HaskellCompletionContributor extends CompletionContributor {
           resultSet.addAllElements(findModulesToImport(project))
           resultSet.addAllElements(getInsideImportClauses)
         case Some(p) if isPragmaInProgress(p) =>
-          resultSet.addAllElements(getLanguageExtensionNames)
+          resultSet.addAllElements(getLanguageExtensions(project))
           resultSet.addAllElements(getPragmaIds)
         case _ =>
           resultSet.addAllElements(getReservedIds)
@@ -101,8 +101,8 @@ class HaskellCompletionContributor extends CompletionContributor {
         orElse(Option(TreeUtil.findSiblingBackward(position.getParent.getNode, HaskellTypes.HS_PRAGMA_START))).isDefined
   }
 
-  private def getLanguageExtensionNames = {
-    LanguageExtensions.Names.map(n => LookupElementBuilder.create(n).withIcon(HaskellIcons.HaskellSmallBlueLogo))
+  private def getLanguageExtensions(project: Project) = {
+    GhcMod.listLanguageExtensions(project).map(n => LookupElementBuilder.create(n).withIcon(HaskellIcons.HaskellSmallBlueLogo).withTailText(" language extension", true))
   }
 
   private def getPragmaIds: Seq[LookupElementBuilder] = {
@@ -242,99 +242,5 @@ class HaskellCompletionContributor extends CompletionContributor {
   private case class ImportHidingIdsSpec(moduleName: String, ids: Seq[String], qualified: Boolean, as: Option[String]) extends ImportSpec
 
   private case class ImportIdsSpec(moduleName: String, ids: Seq[String], qualified: Boolean, as: Option[String]) extends ImportSpec
-
-}
-
-object LanguageExtensions {
-
-  final val Names = Seq(
-    "AllowAmbiguousTypes",
-    "Arrows",
-    "AutoDeriveTypeable",
-    "BangPatterns",
-    "CApiFFI",
-    "ConstrainedClassMethods",
-    "ConstraintKinds",
-    "CPP",
-    "DataKinds",
-    "DefaultSignatures",
-    "DeriveDataTypeable",
-    "DeriveFoldable",
-    "DeriveFunctor",
-    "DeriveGeneric",
-    "DeriveTraversable",
-    "DisambiguateRecordFields",
-    "DoRec",
-    "EmptyCase",
-    "EmptyDataDecls",
-    "ExistentialQuantification",
-    "ExplicitForAll",
-    "ExplicitNamespaces",
-    "ExtendedDefaultRules",
-    "FlexibleContexts",
-    "FlexibleInstances",
-    "ForeignFunctionInterface",
-    "FunctionalDependencies",
-    "GADTs",
-    "GADTSyntax",
-    "GeneralizedNewtypeDeriving",
-    "Generics",
-    "ImplicitParams",
-    "ImpredicativeTypes",
-    "InterruptibleFFI",
-    "IncoherentInstances",
-    "KindSignatures",
-    "LambdaCase",
-    "LiberalTypeSynonyms",
-    "MagicHash",
-    "MonadComprehensions",
-    "MonoLocalBinds",
-    "MultiParamTypeClasses",
-    "MultiWayIf",
-    "NamedFieldPuns",
-    "NegativeLiterals",
-    "NoImplicitPrelude",
-    "NoMonoLocalBinds",
-    "NoMonomorphismRestriction",
-    "NoNPlusKPatterns",
-    "NoTraditionalRecordSyntax",
-    "NullaryTypeClasses",
-    "NumDecimals",
-    "OverlappingInstances",
-    "OverloadedLists",
-    "OverloadedStrings",
-    "PackageImports",
-    "ParallelArrays",
-    "ParallelListComp",
-    "PatternGuards",
-    "PatternSynonyms",
-    "PolyKinds",
-    "PolymorphicComponents",
-    "PostfixOperators",
-    "QuasiQuotes",
-    "Rank2Types",
-    "RankNTypes",
-    "RebindableSyntax",
-    "RecordWildCards",
-    "RecursiveDo",
-    "RelaxedPolyRec",
-    "Safe",
-    "ScopedTypeVariables",
-    "StandaloneDeriving",
-    "TemplateHaskell",
-    "TraditionalRecordSyntax",
-    "TransformListComp",
-    "Trustworthy",
-    "TupleSections",
-    "TypeFamilies",
-    "TypeOperators",
-    "TypeSynonymInstances",
-    "UnboxedTuples",
-    "UndecidableInstances",
-    "UnicodeSyntax",
-    "UnliftedFFITypes",
-    "Unsafe",
-    "ViewPatterns")
-
 
 }
