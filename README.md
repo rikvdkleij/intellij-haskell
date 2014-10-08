@@ -16,7 +16,7 @@ and expects that the Cabal init/install/build is done on command-line.
 # Features
 - Syntax highlighting (which can be customized);
 - Error/warning highlighting;
-- Find Usages of variables/constructors;
+- Find Usages of identifiers;
 - Resolving references of variables (also to library code if library source code is added to project);
 - Code completion by resolving references;
 - Renaming variables (which first shows preview so refactoring scope can be adjusted);
@@ -58,4 +58,4 @@ A lot of features are with the help of ghc-mod(i)!!
 - ghc-mod can not help in library files and if Haskell source file contains not completely valid Haskell (e.g. while typing). In that case I try to solve request by using AST-tree (IntelliJ calls it PSI-tree). 
 - Because of ghc-mod issue #275 ghc-mod is used (instead of ghc-modi) for checking syntax of Haskell file;
 - Because of ghc-mod issue #362 ghc-mod is used (instead of ghc-modi) for getting symbols of module using `browse` command;
-- This has cost me a lot of time: https://youtrack.jetbrains.com/issue/IDEA-130894
+- Created workaround for this issue: https://youtrack.jetbrains.com/issue/IDEA-130894
