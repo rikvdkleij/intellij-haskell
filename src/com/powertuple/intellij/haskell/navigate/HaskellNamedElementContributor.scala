@@ -27,6 +27,6 @@ class HaskellNamedElementContributor extends ChooseByNameContributor {
   }
 
   def getItemsByName(name: String, pattern: String, project: Project, includeNonProjectItems: Boolean): Array[NavigationItem] = {
-    HaskellFindUtil.findNamedElements(project, name, includeNonProjectItems).toArray
+    HaskellFindUtil.findNamedElements(project, pattern, includeNonProjectItems).toArray
   }
 }

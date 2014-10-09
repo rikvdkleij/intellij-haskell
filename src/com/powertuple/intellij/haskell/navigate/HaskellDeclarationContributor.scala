@@ -28,6 +28,6 @@ class HaskellDeclarationContributor extends ChooseByNameContributor {
   }
 
   def getItemsByName(name: String, pattern: String, project: Project, includeNonProjectItems: Boolean): Array[NavigationItem] = {
-    HaskellFindUtil.findDeclarationElements(project, name, includeNonProjectItems).toArray
+    HaskellFindUtil.findDeclarationElements(project, pattern, includeNonProjectItems).toArray
   }
 }

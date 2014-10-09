@@ -31,7 +31,7 @@ object HaskellFindUtil {
   }
 
   def findDeclarationElements(project: Project, name: String, includeNonProjectItems: Boolean): Iterable[HaskellDeclarationElement] = {
-    findDeclarationElements(project, includeNonProjectItems).filter(de => de.getIdentifierElements.map(_.getName).contains(name))
+    findDeclarationElements(project, includeNonProjectItems).filter(de => de.getIdentifierElements.map(_.getName.toLowerCase).contains(name.toLowerCase))
   }
 
   def findNamedElements(project: Project, includeNonProjectItems: Boolean): Iterable[HaskellNamedElement] = {
@@ -39,7 +39,7 @@ object HaskellFindUtil {
   }
 
   def findNamedElements(project: Project, name: String, includeNonProjectItems: Boolean): Iterable[HaskellNamedElement] = {
-    findNamedElements(project, includeNonProjectItems).filter(_.getName == name)
+    findNamedElements(project, includeNonProjectItems).filter(_.getName.toLowerCase == name.toLowerCase)
   }
 
   private def getHaskellFiles(project: Project, includeNonProjectItems: Boolean) = {

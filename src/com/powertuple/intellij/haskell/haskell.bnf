@@ -68,7 +68,7 @@ default_declaration         ::= DEFAULT osnl (LEFT_PAREN (ttype (COMMA ttype)*)?
 type_instance_declaration   ::= TYPE_INSTANCE osnl expression
 
 type_signature              ::= vars osnl COLON_COLON osnl ((ttype | context) DOUBLE_RIGHT_ARROW)? osnl ttype | fixity (DECIMAL)? ops
-
+//type_signature_constraint   ::= (ttype | context) DOUBLE_RIGHT_ARROW
 foreign_declaration         ::= (FOREIGN_IMPORT | FOREIGN_EXPORT) osnl expression
 type_family_declaration     ::= TYPE_FAMILY osnl type_family_type osnl (WHERE osnl expression)?
 deriving_declaration        ::= DERIVING INSTANCE (scontext osnl DOUBLE_RIGHT_ARROW)? osnl qcon_id osnl inst
