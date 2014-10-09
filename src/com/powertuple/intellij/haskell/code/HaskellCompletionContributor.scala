@@ -33,6 +33,7 @@ import scala.collection.JavaConversions._
 class HaskellCompletionContributor extends CompletionContributor {
 
   private final val ReservedIds = HaskellParserDefinition.ALL_RESERVED_IDS.getTypes.map(_.asInstanceOf[HaskellTokenType].getName).toSeq
+  private final val SpecialReservedIds = Seq("forall", "safe", "unsafe")
   private final val PragmaIds = Seq("{-# ", "LANGUAGE ", "#-}", "{-# LANGUAGE ")
   private final val InsideImportClauses = Seq("as ", "hiding ", "qualified ")
 
@@ -53,6 +54,7 @@ class HaskellCompletionContributor extends CompletionContributor {
           resultSet.addAllElements(getPragmaIds)
         case _ =>
           resultSet.addAllElements(getReservedIds)
+          resultSet.addAllElements(getSpecialReservedIds)
           resultSet.addAllElements(getPragmaIds)
           resultSet.addAllElements(getIdsFromFullScopeImportedModules(project, file))
           resultSet.addAllElements(getIdsFromHidingIdsImportedModules(project, file))
@@ -122,7 +124,7 @@ class HaskellCompletionContributor extends CompletionContributor {
       importDeclaration <- importDeclarations.filter(i => Option(i.getImportSpec).flatMap(is => Option(is.getImportHidingSpec)).isDefined)
       importId <- importDeclaration.getImportSpec.getImportHidingSpec.getImportIdList
       v = Option(importId.getQvar).map(_.getName).toSeq
-      c = Option(importId.getQconId).map(_.getName).toSeq
+      c = Option(importId.getQcon).map(_.getName).toSeq
     } yield ImportHidingIdsSpec(
       importDeclaration.getModuleName,
       v ++ c,
@@ -137,7 +139,7 @@ class HaskellCompletionContributor extends CompletionContributor {
       importDeclaration <- importDeclarations.filter(i => Option(i.getImportSpec).flatMap(is => Option(is.getImportIdsSpec)).isDefined)
       importId <- importDeclaration.getImportSpec.getImportIdsSpec.getImportIdList
       v = Option(importId.getQvar).map(_.getName).toSeq
-      c = Option(importId.getQconId).map(_.getName).toSeq
+      c = Option(importId.getQcon).map(_.getName).toSeq
     } yield ImportIdsSpec(
       importDeclaration.getModuleName,
       v ++ c, Option(importDeclaration.getImportQualified).isDefined,
@@ -185,6 +187,10 @@ class HaskellCompletionContributor extends CompletionContributor {
     ReservedIds.map(r => LookupElementBuilder.create(r + " ").withIcon(HaskellIcons.HaskellSmallBlueLogo).withTailText(" keyword", true))
   }
 
+  private def getSpecialReservedIds = {
+    SpecialReservedIds.map(sr => LookupElementBuilder.create(sr + " ").withIcon(HaskellIcons.HaskellSmallBlueLogo).withTailText(" special keyword", true))
+  }
+
   private def findImportDeclarations(psiFile: PsiFile) = {
     PsiTreeUtil.findChildrenOfType(psiFile, classOf[HaskellImportDeclaration])
   }
@@ -203,13 +209,6 @@ class HaskellCompletionContributor extends CompletionContributor {
     browseInfo.declaration match {
       case Some(d) => lookupElement.withTypeText(d)
       case None => lookupElement
-    }
-  }
-
-  private def createPrefix(position: Option[PsiElement]): String = {
-    position match {
-      case Some(p) => p.getText.trim.takeWhile(c => c != ' ' && c != '\n')
-      case None => ""
     }
   }
 

@@ -185,7 +185,6 @@ gconsym             = {colon} | {qconsym}
     "do"                  { return HS_DO; }
     "else"                { return HS_ELSE; }
 //    "foreign"             { return HS_FOREIGN; } used together with import and export, see specialreservedid
-    "forall"              { return HS_FORALL; }
     "if"                  { return HS_IF; }
     "import"              { return HS_IMPORT; }
     "in"                  { return HS_IN; }
@@ -200,7 +199,6 @@ gconsym             = {colon} | {qconsym}
     "then"                { return HS_THEN; }
     "type"                { return HS_TYPE; }
     "where"               { return HS_WHERE; }
-    "unsafe"              { return HS_UNSAFE; }
     "_"                   { return HS_UNDERSCORE; }
 
     {dot_dot_parens}      { return HS_DOT_DOT_PARENS; }
