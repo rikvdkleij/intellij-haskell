@@ -67,6 +67,8 @@
         <gotoSymbolContributor implementation="com.powertuple.intellij.haskell.navigate.HaskellNamedElementContributor"/>
         <lang.psiStructureViewFactory language="Haskell" implementationClass="com.powertuple.intellij.haskell.navigate.HaskellStructureViewFactory"/>
 
+        <quoteHandler fileType="Haskell file" className="com.powertuple.intellij.haskell.code.HaskellQuoteHandler"/>
+
         <projectService serviceInterface="com.intellij.psi.search.PsiSearchHelper" serviceImplementation="com.powertuple.intellij.haskell.psi.impl.HaskellPsiSearchHelperImpl" overrides="true"/>
     </extensions>
 
