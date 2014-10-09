@@ -91,14 +91,22 @@
                 text="Show Type" description="Show Type">
 
             <keyboard-shortcut first-keystroke="alt EQUALS" keymap="$default"/>
-            <add-to-group group-id="CodeEditorViewGroup" anchor="last" />
+            <keyboard-shortcut first-keystroke="control shift P" keymap="Mac OS X"/>
+            <keyboard-shortcut first-keystroke="alt EQUALS" keymap="Mac OS X" remove="true"/>
+            <keyboard-shortcut first-keystroke="control shift P" keymap="Mac OS X 10.5+"/>
+            <keyboard-shortcut first-keystroke="alt EQUALS" keymap="Mac OS X 10.5+" remove="true"/>
+            <add-to-group group-id="CodeEditorViewGroup" anchor="last"/>
         </action>
 
         <action id="Haskell.ShowInfo" class="com.powertuple.intellij.haskell.view.ShowInfoAction"
                 text="Show Info" description="Show Info">
 
             <keyboard-shortcut first-keystroke="alt ctrl EQUALS" keymap="$default"/>
-            <add-to-group group-id="CodeEditorViewGroup" anchor="last" />
+            <keyboard-shortcut first-keystroke="alt control shift P" keymap="Mac OS X"/>
+            <keyboard-shortcut first-keystroke="alt control EQUALS" keymap="Mac OS X" remove="true"/>
+            <keyboard-shortcut first-keystroke="alt control shift P" keymap="Mac OS X 10.5+"/>
+            <keyboard-shortcut first-keystroke="alt control EQUALS" keymap="Mac OS X 10.5+" remove="true"/>
+            <add-to-group group-id="CodeEditorViewGroup" anchor="last"/>
         </action>
 
         <action id="Haskell.HaskellFile" class="com.powertuple.intellij.haskell.view.CreateHaskellFileAction"
