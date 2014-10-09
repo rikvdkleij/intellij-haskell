@@ -102,9 +102,9 @@
                 text="Show Info" description="Show Info">
 
             <keyboard-shortcut first-keystroke="alt ctrl EQUALS" keymap="$default"/>
-            <keyboard-shortcut first-keystroke="alt control shift P" keymap="Mac OS X"/>
+            <keyboard-shortcut first-keystroke="control shift I" keymap="Mac OS X"/>
             <keyboard-shortcut first-keystroke="alt control EQUALS" keymap="Mac OS X" remove="true"/>
-            <keyboard-shortcut first-keystroke="alt control shift P" keymap="Mac OS X 10.5+"/>
+            <keyboard-shortcut first-keystroke="control shift I" keymap="Mac OS X 10.5+"/>
             <keyboard-shortcut first-keystroke="alt control EQUALS" keymap="Mac OS X 10.5+" remove="true"/>
             <add-to-group group-id="CodeEditorViewGroup" anchor="last"/>
         </action>
