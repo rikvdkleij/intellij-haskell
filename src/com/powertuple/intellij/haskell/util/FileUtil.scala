@@ -54,7 +54,7 @@ object FileUtil {
       case Some(p) => Some(p)
       case None =>  {
         if (GhcMod.listAvailableModules(project).contains(module)) {
-          HaskellNotificationGroup.notifyError(s"Could not find file path for `$module`. Please add sources of this library/package to 'Project Settings/Libraries'")
+          HaskellNotificationGroup.notifyError(s"Could not find file path for `$module`. Please add source code of package to 'Project Settings/Libraries'")
         } else {
           ()
         }
