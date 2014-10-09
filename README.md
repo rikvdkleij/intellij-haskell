@@ -13,11 +13,14 @@ In the meantime also Atsky started to create [Haskell-idea-plugin](https://githu
 This plugin is written mainly in Scala and is not mentioned to support GHC/Cabal directly. This plugin support sandbox projects
 and expects that the Cabal init/install/build is done on command-line.
 
+Any feedback is welcome!!
+
+
 # Features
 - Syntax highlighting (which can be customized);
 - Error/warning highlighting;
 - Find Usages of identifiers;
-- Resolving references of variables (also to library code if library source code is added to project);
+- Resolving references of identifiers (also to library code if library source code is added to project and resolves inside import declaration);
 - Code completion by resolving references;
 - Renaming variables (which first shows preview so refactoring scope can be adjusted);
 - View type info from (selected) expression;
@@ -58,4 +61,6 @@ A lot of features are with the help of ghc-mod(i)!!
 - ghc-mod can not help in library files and if Haskell source file contains not completely valid Haskell (e.g. while typing). In that case I try to solve request by using AST-tree (IntelliJ calls it PSI-tree). 
 - Because of ghc-mod issue #275 ghc-mod is used (instead of ghc-modi) for checking syntax of Haskell file;
 - Because of ghc-mod issue #362 ghc-mod is used (instead of ghc-modi) for getting symbols of module using `browse` command;
-- Created workaround for this issue: https://youtrack.jetbrains.com/issue/IDEA-130894
+- It would be nice if ghc-mod issue #303 would be solved. That would made it possible to get support from ghc-mod while type/syntax errors exist. For example, while typing.
+- Created workaround for this issue: https://youtrack.jetbrains.com/issue/IDEA-130894.
+- Tested on Ubuntu and Mac OSX.
