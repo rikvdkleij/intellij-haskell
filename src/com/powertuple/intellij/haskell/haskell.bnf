@@ -175,10 +175,12 @@ export3                     ::= MODULE qcon_id
 newconstr                   ::= qcon atype | qcon osnl LEFT_BRACE osnl qvar COLON_COLON ttype osnl RIGHT_BRACE
 
 private cdecls              ::= cdecl (snl cdecl)*
+cdecl                       ::= cidecl
 
-cdecl                       ::= (general_id | TYPE)+
+private idecls              ::= idecl (snl idecl)*
+idecl                       ::= cidecl
 
-idecls                      ::= (general_id | TYPE)+
+cidecl                      ::= (general_id | TYPE | NEWTYPE)+
 
 private decl                ::= type_signature | expression
 
