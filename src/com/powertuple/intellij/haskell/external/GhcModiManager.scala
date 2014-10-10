@@ -16,10 +16,13 @@
 
 package com.powertuple.intellij.haskell.external
 
+import java.io.File
+
 import com.intellij.openapi.components.{ProjectComponent, ServiceManager}
 import com.intellij.openapi.editor.SelectionModel
 import com.intellij.openapi.project.Project
 import com.intellij.psi.{PsiElement, PsiFile}
+import com.powertuple.intellij.haskell.HaskellNotificationGroup
 import com.powertuple.intellij.haskell.psi.HaskellNamedElement
 import com.powertuple.intellij.haskell.settings.HaskellSettings
 
@@ -74,12 +77,19 @@ class GhcModiManager(val project: Project, val settings: HaskellSettings) extend
 
 
   override def projectOpened(): Unit = {
-    ghcModi = new GhcModi(settings, project)
-    ghcModi.startGhcModi()
+    if (new File(project.getBasePath + "/.cabal-sandbox").exists()) {
+      ghcModi = new GhcModi(settings, project)
+      ghcModi.startGhcModi()
+      HaskellNotificationGroup.notifyInfo(s"ghc-modi is started for project ${project.getName}")
+    }
+
   }
 
   override def projectClosed(): Unit = {
-    ghcModi.exit()
+    if (new File(project.getBasePath + "/.cabal-sandbox").exists()) {
+      ghcModi.exit()
+      HaskellNotificationGroup.notifyInfo(s"ghc-modi is stopped for project ${project.getName}")
+    }
   }
 
   override def initComponent(): Unit = {}

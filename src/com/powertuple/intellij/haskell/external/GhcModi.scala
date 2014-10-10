@@ -1,6 +1,6 @@
 /*
  * Copyright 2014 Rik van der Kleij
-
+ *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
@@ -38,7 +38,9 @@ private[external] class GhcModi(val settings: HaskellSettings, val project: Proj
       threadPool.submit(runnable)
     }
 
-    def reportFailure(t: Throwable) {}
+    def reportFailure(t: Throwable): Unit = {
+      HaskellNotificationGroup.notifyError("Failure in execution context: " + t.getMessage)
+    }
   }
 
   private[this] var outputStream: OutputStream = _
@@ -84,7 +86,15 @@ private[external] class GhcModi(val settings: HaskellSettings, val project: Proj
 
   def startGhcModi() {
     try {
-      Process(settings.getState.ghcModiPath, new File(project.getBasePath)).run(
+      // Workaround because of bug in Yosemite :-(
+      val path = System.getenv("PATH")
+      val corrected_path  = if (!path.contains("/usr/local/bin")) {
+        path + ":/usr/local/bin"
+      } else {
+        path
+      }
+
+      Process(settings.getState.ghcModiPath, new File(project.getBasePath), "PATH" -> corrected_path).run(
         new ProcessIO(
           stdin => outputStream = stdin,
           stdout => Source.fromInputStream(stdout).getLines.foreach(stdOutListBuffer.+=),
@@ -93,7 +103,7 @@ private[external] class GhcModi(val settings: HaskellSettings, val project: Proj
     }
     catch {
       case e: IOException => {
-        HaskellNotificationGroup.notifyError("Can not get connection with ghc-modi. Make sure you have set right path in settings to ghc-modi.")
+        HaskellNotificationGroup.notifyError("Can not get connection with ghc-modi. Make sure you have set right path to ghc-modi in settings.")
       }
     }
   }

@@ -47,11 +47,11 @@ A lot of features are with the help of ghc-mod(i)!!
 - Improve error/warning annotation position;
 
 # Getting started: 
-- Cabal install ghc-mod and haskell-docs;
+- Cabal install latest versions of ghc-mod and haskell-docs;
 - Set file paths to ghc-mod, ghc-modi and haskell-docs in `Settings/Haskell`;
 - Be sure in `Settings/Filetypes` that `Haskell language file` is registered with pattern `*.hs` and `Literate Haskell language file` with pattern `*.lhs`; 
-- First install your project in a Cabal sandbox (be sure that Haddock documentation is generated, see [haskell-docs](https://github.com/chrisdone/haskell-docs)). 
-- After project is installed in sandbox, create Haskell project in IntelliJ by using `File`/`Open` from IntelliJ menu;
+- First install and build your project in a Cabal sandbox (be sure that Haddock documentation is generated, see [haskell-docs](https://github.com/chrisdone/haskell-docs)). 
+- After project is build in sandbox, create Haskell project in IntelliJ by using `File`/`Open` from IntelliJ menu;
 - Select `No SDK` in Project Setting;
 - Select in `Modules Settings` which folders to exclude (like .cabal-sandbox and dist) and which folders are `Source` and `Test` (normally src and test).
 - To get nice navigation features: add for libraries, Prelude(base, ghc-prim and integer-gmp packages) the source root directories to project in `Project Settings`/`Libraries`. `cabal get` is useful for getting source code of package;
@@ -63,4 +63,6 @@ A lot of features are with the help of ghc-mod(i)!!
 - Because of ghc-mod issue #362 ghc-mod is used (instead of ghc-modi) for getting symbols of module using `browse` command;
 - It would be nice if ghc-mod issue #303 would be solved. That would made it possible to get support from ghc-mod while type/syntax errors exist. For example, while typing.
 - Created workaround for this issue: https://youtrack.jetbrains.com/issue/IDEA-130894.
-- Tested on Ubuntu and Mac OSX.
+- Developed plugin on Ubuntu;
+- During testing on Mac OSX Yosimete Beta I noticed problem with ghc-modi: PATH environment variable is not (completely) passed to ghc-modi so I had to create workaround :-(. This workaround will add path `/usr/local/bin` to PATH if it's not there
+    So I assume that `ghc` is installed there.
