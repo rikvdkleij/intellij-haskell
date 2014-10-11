@@ -9,3 +9,5 @@
 *~
 .idea/inspectionProfiles
 /src/com/powertuple/intellij/haskell/_HaskellLexer.java
+idea-flex.skeleton
+JFlex.jar

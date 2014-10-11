@@ -105,6 +105,7 @@ object IndentProcessor {
     childType match {
       case HS_LEFT_PAREN | HS_LEFT_BRACE | HS_LEFT_BRACKET if childType == HS_LINE_EXPRESSION => Indent.getNormalIndent(false)
       case HS_DO | HS_WHERE | HS_IF | HS_THEN | HS_CASE => Indent.getNormalIndent(false)
+      case HS_CDECLS | HS_IDECLS => Indent.getNormalIndent(true)
       case HS_CDECL | HS_IDECL => Indent.getNormalIndent(false)
       case HS_EQUAL | HS_QVAR_SYM => Indent.getContinuationIndent(true)
       case HS_VERTICAL_BAR => Indent.getNormalIndent(false)
