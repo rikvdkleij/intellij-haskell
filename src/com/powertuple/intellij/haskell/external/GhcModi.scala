@@ -22,6 +22,7 @@ import java.util.concurrent.{Executors, TimeoutException}
 import com.intellij.openapi.project.Project
 import com.powertuple.intellij.haskell.HaskellNotificationGroup
 import com.powertuple.intellij.haskell.settings.HaskellSettings
+import sun.security.action.GetPropertyAction
 
 import scala.collection.mutable.ListBuffer
 import scala.concurrent.duration._
@@ -42,6 +43,7 @@ private[external] class GhcModi(val settings: HaskellSettings, val project: Proj
       HaskellNotificationGroup.notifyError("Failure in execution context: " + t.getMessage)
     }
   }
+  private final val LineSeparator = java.security.AccessController.doPrivileged(new GetPropertyAction("line.separator")).getBytes
 
   private[this] var outputStream: OutputStream = _
   private[this] val stdOutListBuffer = ListBuffer[String]()
@@ -57,7 +59,8 @@ private[external] class GhcModi(val settings: HaskellSettings, val project: Proj
 
     stdOutListBuffer.clear()
     try {
-      outputStream.write((command + "\n").getBytes)
+      outputStream.write(command.getBytes)
+      outputStream.write(LineSeparator)
       outputStream.flush()
 
       val waitForStdOutput = Future {
