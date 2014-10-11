@@ -76,6 +76,7 @@ class HaskellFormattingBlock(node: ASTNode, alignment: Option[Alignment], spacin
       case HS_IF | HS_THEN | HS_ELSE => Some(alignments(4))
       case HS_DO | HS_WHERE | HS_EQUAL | HS_LET => Some(alignments(5))
       case HS_EXPORTS | HS_WHERE => Some(alignments(6))
+      case HS_CDECL | HS_IDECL => Some(alignments(7))
       case _ => None
     }
   }
@@ -100,17 +101,18 @@ class HaskellFormattingBlock(node: ASTNode, alignment: Option[Alignment], spacin
 object IndentProcessor {
 
   def getChildIndent(child: ASTNode): Indent = {
+    import com.intellij.formatting.Indent._
+
     val childType = child.getElementType
 
     childType match {
-      case HS_LEFT_PAREN | HS_LEFT_BRACE | HS_LEFT_BRACKET if childType == HS_LINE_EXPRESSION => Indent.getNormalIndent(false)
-      case HS_DO | HS_WHERE | HS_IF | HS_THEN | HS_CASE => Indent.getNormalIndent(false)
-      case HS_CDECLS | HS_IDECLS => Indent.getNormalIndent(true)
-      case HS_CDECL | HS_IDECL => Indent.getNormalIndent(false)
-      case HS_EQUAL | HS_QVAR_SYM => Indent.getContinuationIndent(true)
-      case HS_VERTICAL_BAR => Indent.getNormalIndent(false)
-      case HS_LINE_EXPRESSION if child.getTreeParent.getElementType != HS_FIRST_LINE_EXPRESSION => Indent.getNormalIndent(false)
-      case _ => Indent.getNoneIndent
+      case HS_LEFT_PAREN | HS_LEFT_BRACE | HS_LEFT_BRACKET if childType == HS_LINE_EXPRESSION => getNormalIndent(false)
+      case HS_DO | HS_WHERE | HS_IF | HS_THEN | HS_CASE => getNormalIndent(false)
+      case HS_CDECLS | HS_IDECLS => getNormalIndent(true)
+      case HS_EQUAL | HS_QVAR_SYM => getNormalIndent(true)
+      case HS_VERTICAL_BAR => getNormalIndent(false)
+      case HS_LINE_EXPRESSION if child.getTreeParent.getElementType != HS_FIRST_LINE_EXPRESSION => getNormalIndent(false)
+      case _ => getNoneIndent
     }
   }
 }
