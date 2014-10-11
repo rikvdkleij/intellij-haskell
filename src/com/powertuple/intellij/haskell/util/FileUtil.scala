@@ -45,21 +45,20 @@ object FileUtil {
   def findModuleFilePath(module: String, project: Project): Option[String] = {
     val moduleFilePath = for {
       (name, path) <- getNameAndPathForModule(module)
-      val files = HaskellFileIndex.getFilesByName(project, name, GlobalSearchScope.allScope(project))
+      files = HaskellFileIndex.getFilesByName(project, name, GlobalSearchScope.allScope(project))
       file <- files.find(hf => checkPath(hf.getContainingDirectory, path))
       filePath <- Some(file.getVirtualFile.getPath)
     } yield filePath
 
     moduleFilePath match {
       case Some(p) => Some(p)
-      case None =>  {
+      case None =>
         if (GhcMod.listAvailableModules(project).contains(module)) {
           HaskellNotificationGroup.notifyWarning(s"Could not find source code for `$module`. Please add source code of package to 'Project Settings/Libraries'")
         } else {
           ()
         }
         None
-      }
     }
   }
 
@@ -107,7 +106,7 @@ object LineColumnPosition {
     for {
       file <- Option(psiFile.getVirtualFile)
       doc <- Option(fdm.getDocument(file))
-      val lineIndex = lineCol.lineNr - 1
+      lineIndex = lineCol.lineNr - 1
       startOffsetLine = doc.getLineStartOffset(lineIndex)
     } yield startOffsetLine + lineCol.columnNr - 1
   }
