@@ -1,6 +1,6 @@
 /*
  * Copyright 2014 Rik van der Kleij
-
+ *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
@@ -25,6 +25,10 @@ object HaskellNotificationGroup {
 
   def notifyError(message: String) {
     Group.createNotification(message, MessageType.ERROR).notify(null)
+  }
+
+  def notifyWarning(message: String) {
+    Group.createNotification(message, MessageType.WARNING).notify(null)
   }
 
   def notifyInfo(message: String) {
