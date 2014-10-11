@@ -54,15 +54,17 @@ A lot of features are with the help of ghc-mod(i)!!
 - After project is build in sandbox, create Haskell project in IntelliJ by using `File`/`Open` from IntelliJ menu;
 - Select `No SDK` in Project Setting;
 - Select in `Modules Settings` which folders to exclude (like .cabal-sandbox and dist) and which folders are `Source` and `Test` (normally src and test).
-- To get nice navigation features: add for libraries, Prelude(base, ghc-prim and integer-gmp packages) the source root directories to project in `Project Settings`/`Libraries`. `cabal get` is useful for getting source code of package;
+- To get nice navigation features: add for libraries, Prelude(base, ghc-prim and integer-gmp packages) the source root directories to project in `Project Settings`/`Libraries`. `cabal get` is useful for getting source code of package.
+    To get source code of libraries in `Project view`, create for example a directory `lib` inside project root directory and put source roots there;
 
 # Remarks
 - IntelliJ has a nice terminal plugin, useful for executing the Cabal commands;
 - ghc-mod can not help in library files and if Haskell source file contains not completely valid Haskell (e.g. while typing). In that case I try to solve request by using AST-tree (IntelliJ calls it PSI-tree). 
 - Because of ghc-mod issue #275 ghc-mod is used (instead of ghc-modi) for checking syntax of Haskell file;
-- Because of ghc-mod issue #362 ghc-mod is used (instead of ghc-modi) for getting symbols of module using `browse` command;
+- Because of ghc-mod issue #362 ghc-mod is used (instead of ghc-modi) for getting symbols of module using `browse` command. Performance for code completion will probably improve if I can use ghc-modi for `browse`;
 - It would be nice if ghc-mod issue #303 would be solved. That would made it possible to get support from ghc-mod while type/syntax errors exist. For example, while typing.
 - Created workaround for this issue: https://youtrack.jetbrains.com/issue/IDEA-130894.
 - Developed plugin on Ubuntu;
 - During testing on Mac OSX Yosimete Beta I noticed problem with ghc-modi: PATH environment variable value is not (completely) passed to ghc-modi so I had to create workaround :-(. This workaround will add path `/usr/local/bin` to PATH if it's not there
     So I assume that `ghc` is installed there.
+- Windows is not supported. Maybe it will work okay but I can not test it;
