@@ -7,7 +7,6 @@
         <option name="compilerLibraryLevel" value="Project" />
         <option name="compilerLibraryName" value="scala-compiler" />
         <option name="compilerOptions" value="-feature -target:jvm-1.6" />
-        <option name="debuggingInfoLevel" value="None" />
         <option name="languageLevel" value="Scala 2.11" />
       </configuration>
     </facet>
