@@ -22,6 +22,7 @@ import java.util.concurrent.{Executors, TimeoutException}
 import com.intellij.openapi.project.Project
 import com.powertuple.intellij.haskell.HaskellNotificationGroup
 import com.powertuple.intellij.haskell.settings.HaskellSettings
+import com.powertuple.intellij.haskell.util.OSUtil
 import sun.security.action.GetPropertyAction
 
 import scala.collection.mutable.ListBuffer
@@ -88,27 +89,44 @@ private[external] class GhcModi(val settings: HaskellSettings, val project: Proj
   }
 
   def startGhcModi() {
-    try {
-      // Workaround because of bug in Yosemite :-(
-      val path = System.getenv("PATH")
-      val corrected_path  = if (!path.contains("/usr/local/bin")) {
-        path + ":/usr/local/bin"
-      } else {
-        path
+    if (doesCabalSandboxExists) {
+      try {
+        val process = getEnvParameters match {
+          case None => Process(settings.getState.ghcModiPath, new File(project.getBasePath))
+          case Some(ep) => Process(settings.getState.ghcModiPath, new File(project.getBasePath), ep)
+        }
+        process.run(
+          new ProcessIO(
+            stdin => outputStream = stdin,
+            stdout => Source.fromInputStream(stdout).getLines.foreach(stdOutListBuffer.+=),
+            stderr => Source.fromInputStream(stderr).getLines.foreach(stdErrListBuffer.+=)
+          ))
       }
+      catch {
+        case e: IOException => {
+          HaskellNotificationGroup.notifyError("Can not get connection with ghc-modi. Make sure you have set right path to ghc-modi in settings.")
+        }
+      }
+      HaskellNotificationGroup.notifyInfo(s"ghc-modi is started for project ${project.getName}")
+    }
+  }
 
-      Process(settings.getState.ghcModiPath, new File(project.getBasePath), "PATH" -> corrected_path).run(
-        new ProcessIO(
-          stdin => outputStream = stdin,
-          stdout => Source.fromInputStream(stdout).getLines.foreach(stdOutListBuffer.+=),
-          stderr => Source.fromInputStream(stderr).getLines.foreach(stdErrListBuffer.+=)
-        ))
-    }
-    catch {
-      case e: IOException => {
-        HaskellNotificationGroup.notifyError("Can not get connection with ghc-modi. Make sure you have set right path to ghc-modi in settings.")
+  private def getEnvParameters: Option[(String, String)] = {
+    // Workaround because of bug in Yosemite :-(
+    if (OSUtil.isOSX) {
+      val path = System.getenv("PATH")
+      if (!path.contains("/usr/local/bin")) {
+        Some(("PATH", path + ":/usr/local/bin"))
+      } else {
+        None
       }
+    } else {
+      None
     }
+  }
+
+  private def doesCabalSandboxExists = {
+    new File(project.getBasePath + "/.cabal-sandbox").exists()
   }
 
   def reinit() {

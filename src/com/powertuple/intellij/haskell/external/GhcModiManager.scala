@@ -16,8 +16,6 @@
 
 package com.powertuple.intellij.haskell.external
 
-import java.io.File
-
 import com.intellij.openapi.components.{ProjectComponent, ServiceManager}
 import com.intellij.openapi.editor.SelectionModel
 import com.intellij.openapi.project.Project
@@ -77,19 +75,12 @@ class GhcModiManager(val project: Project, val settings: HaskellSettings) extend
 
 
   override def projectOpened(): Unit = {
-    if (new File(project.getBasePath + "/.cabal-sandbox").exists()) {
-      ghcModi = new GhcModi(settings, project)
-      ghcModi.startGhcModi()
-      HaskellNotificationGroup.notifyInfo(s"ghc-modi is started for project ${project.getName}")
-    }
-
+    ghcModi = new GhcModi(settings, project)
+    ghcModi.startGhcModi()
   }
 
   override def projectClosed(): Unit = {
-    if (new File(project.getBasePath + "/.cabal-sandbox").exists()) {
-      ghcModi.exit()
-      HaskellNotificationGroup.notifyInfo(s"ghc-modi is stopped for project ${project.getName}")
-    }
+    ghcModi.exit()
   }
 
   override def initComponent(): Unit = {}
