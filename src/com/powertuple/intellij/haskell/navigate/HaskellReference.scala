@@ -31,8 +31,9 @@ import scala.collection.JavaConversions._
 
 class HaskellReference(namedElement: HaskellNamedElement, textRange: TextRange) extends PsiPolyVariantReferenceBase[HaskellNamedElement](namedElement, textRange) {
 
+  private val file = myElement.getContainingFile
+
   override def multiResolve(incompleteCode: Boolean): Array[ResolveResult] = {
-    val file = myElement.getContainingFile
     val project = file.getProject
     val importModule = Option(PsiTreeUtil.findFirstParent(myElement, importModuleCondition))
     importModule match {
@@ -60,9 +61,8 @@ class HaskellReference(namedElement: HaskellNamedElement, textRange: TextRange) 
   }
 
   override def getVariants: Array[AnyRef] = {
-    val file = myElement.getContainingFile.getOriginalFile
     val localNamedElements = findLocalNamedElements
-    val declarationNamedElements = findDeclarationElementsInFile(file)
+    val declarationNamedElements = findDeclarationElementsInFile(file).filterNot(_.getIdentifierElements.contains(myElement))
     (localNamedElements ++ declarationNamedElements).groupBy(_.getName).values.map(_.head).map(createLookupElements).flatten.toArray
   }
 
@@ -137,15 +137,15 @@ class HaskellReference(namedElement: HaskellNamedElement, textRange: TextRange) 
     findNamedElementsEqualToIdentifier(findDeclarationElementsInFile(file).flatMap(_.getIdentifierElements), identifier).map(new PsiElementResolveResult(_))
   }
 
-  private def findDeclarationElementsInFile(file: PsiFile): Iterable[HaskellDeclarationElement] = {
-    PsiTreeUtil.findChildrenOfType(file, classOf[HaskellDeclarationElement])
-  }
-
   private def findLocalNamedElements: Iterable[HaskellNamedElement] = {
     Option(PsiTreeUtil.getParentOfType(myElement, classOf[HaskellExpression])) match {
       case Some(p) => PsiTreeUtil.findChildrenOfType(p, classOf[HaskellNamedElement]).filterNot(_ == myElement).toIterable
       case None => Iterable()
     }
+  }
+
+  private def findDeclarationElementsInFile(file: PsiFile): Iterable[HaskellDeclarationElement] = {
+    PsiTreeUtil.findChildrenOfType(file, classOf[HaskellDeclarationElement])
   }
 
   private def findNamedElementsEqualToIdentifier(namedElements: Iterable[HaskellNamedElement], identifier: String): Iterable[HaskellNamedElement] = {
