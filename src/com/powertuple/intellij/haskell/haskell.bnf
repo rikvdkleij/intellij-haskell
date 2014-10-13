@@ -27,15 +27,15 @@
   implements("type_signature|data_declaration|type_declaration|newtype_declaration|class_declaration|instance_declaration|type_family_declaration|deriving_declaration|type_instance_declaration")="com.powertuple.intellij.haskell.psi.HaskellDeclarationElement"
 }
 
-program                     ::= onl language_pragmas? onl module_declaration onl
+program                     ::= onl language_pragmas? onl module_declaration
 language_pragmas            ::= language_pragma (nl language_pragma)*
 language_pragma             ::= PRAGMA_START osnl qcon_id (osnl COMMA osnl qcon_id)* osnl PRAGMA_END
 
 module_declaration          ::= MODULE qcon_id onl (onl exports)? onl WHERE onl body | body              {methods=[getModuleName]}
 
 private body                ::= import_declarations top_declarations
-top_declarations            ::= (top_declaration nl)* top_declaration?
-import_declarations         ::= (import_declaration nl)* import_declaration?
+private top_declarations    ::= (top_declaration nl)* top_declaration?
+private import_declarations ::= (import_declaration nl)* import_declaration?
 
 import_declaration          ::= IMPORT import_qualified? osnl import_module osnl import_qualified_as? osnl import_spec?     {methods=[getModuleName]}
 import_module               ::= qcon_id
@@ -52,24 +52,24 @@ import_hiding               ::= qvar_id
 import_id                   ::= TYPE? qvar |
                                   qcon osnl (DOT_DOT_PARENS | LEFT_PAREN osnl (cname osnl (COMMA osnl cname)*)? osnl RIGHT_PAREN)?
 
-private top_declaration     ::= type_declaration | data_declaration | newtype_declaration | class_declaration | instance_declaration | default_declaration |
-                                  foreign_declaration | type_family_declaration | deriving_declaration | type_instance_declaration | decl
+top_declaration             ::= type_declaration | data_declaration | newtype_declaration | class_declaration | instance_declaration | default_declaration |
+                                  foreign_declaration | type_family_declaration | deriving_declaration | type_instance_declaration | type_signature | expression
 
 type_declaration            ::= TYPE osnl simpletype osnl (EQUAL | WHERE)? osnl (ttype | type_signature)? (DOUBLE_RIGHT_ARROW ttype)?
 data_declaration            ::= DATA osnl (context osnl DOUBLE_RIGHT_ARROW)? osnl simpletype osnl (EQUAL osnl constrs | (WHERE | EQUAL) osnl cdecls)? osnl (DERIVING osnl ttype)?
 newtype_declaration         ::= NEWTYPE osnl (context osnl DOUBLE_RIGHT_ARROW)? osnl simpletype osnl EQUAL osnl newconstr osnl (DERIVING osnl ttype)?
 class_declaration           ::= CLASS osnl (scontext osnl DOUBLE_RIGHT_ARROW)? osnl qcon_id osnl
                                   (qvar_id | LEFT_PAREN type_signature RIGHT_PAREN)*
-                                  (osnl VERTICAL_BAR osnl ttype (osnl COMMA osnl ttype)*)? osnl (WHERE osnl cdecls)? |
-                                  CLASS osnl context osnl DOUBLE_RIGHT_ARROW osnl qcon_id osnl qvar_id (osnl WHERE osnl cdecls)?     // seen in Control.Lens.Internal.Indexed
+                                  (osnl VERTICAL_BAR osnl ttype (osnl COMMA osnl ttype)*)? osnl WHERE? osnl cdecls? |
+                                  CLASS osnl context osnl DOUBLE_RIGHT_ARROW osnl qcon_id osnl qvar_id osnl WHERE? osnl cdecls?     // seen in Control.Lens.Internal.Indexed
 
-instance_declaration        ::= INSTANCE osnl (scontext osnl DOUBLE_RIGHT_ARROW)? osnl qcon_id osnl inst osnl (WHERE osnl idecls)?
+instance_declaration        ::= INSTANCE osnl (scontext osnl DOUBLE_RIGHT_ARROW)? osnl qcon_id osnl inst osnl WHERE? osnl idecls?
 default_declaration         ::= DEFAULT osnl (LEFT_PAREN (ttype (COMMA ttype)*)? RIGHT_PAREN | type_signature)
 type_instance_declaration   ::= TYPE_INSTANCE osnl expression
 
 type_signature              ::= vars osnl COLON_COLON osnl ((ttype | context) DOUBLE_RIGHT_ARROW)? osnl ttype | fixity (DECIMAL)? ops
 foreign_declaration         ::= (FOREIGN_IMPORT | FOREIGN_EXPORT) osnl expression
-type_family_declaration     ::= TYPE_FAMILY osnl type_family_type osnl (WHERE osnl expression)?
+type_family_declaration     ::= TYPE_FAMILY osnl type_family_type osnl WHERE? osnl expression?
 deriving_declaration        ::= DERIVING INSTANCE (scontext osnl DOUBLE_RIGHT_ARROW)? osnl qcon_id osnl inst
 
 literal                     ::= DECIMAL | HEXADECIMAL | OCTAL | FLOAT | CHARACTER_LITERAL | STRING_LITERAL
@@ -103,7 +103,7 @@ cname                       ::= qvar | qcon
 
 private constrs             ::= constr (osnl VERTICAL_BAR osnl constr)*
 private constr              ::= (constr1 | constr2 | constr3 | constr4)
-constr1                     ::= qcon osnl LEFT_BRACE osnl (fielddecl (onl COMMA onl fielddecl)*)? onl RIGHT_BRACE
+constr1                     ::= qcon osnl LEFT_BRACE osnl (onl fielddecl (onl COMMA? onl fielddecl)*)? onl RIGHT_BRACE
 constr2                     ::= sub_constr2 osnl qconop osnl sub_constr2
 constr3                     ::= qcon osnl (qvar_sym? osnl atype)*
 constr4                     ::= qvar_id gcon_sym qcon_id  // added because second data constructor in: data [] a = [] | a : [a] in Types.hs in ghc-prim
@@ -167,25 +167,22 @@ instvar                     ::= qcon_id | qvar_id | gcon_sym | LEFT_BRACKET qvar
 fixity                      ::= INFIXL | INFIXR | INFIX
 
 exports                     ::= LEFT_PAREN onl export? onl (onl COMMA onl export onl)* onl COMMA? onl RIGHT_PAREN
-private export              ::= export1 | export2 | export3
-export1                     ::= TYPE? onl qvar
-export2                     ::= qcon onl (DOT_DOT_PARENS | LEFT_PAREN onl (cname onl (onl COMMA onl cname)*)? onl RIGHT_PAREN)?
-export3                     ::= MODULE qcon_id
+export                      ::= export1 | export2 | export3
+private export1             ::= TYPE? onl qvar
+private export2             ::= qcon onl (DOT_DOT_PARENS | LEFT_PAREN onl (cname onl (onl COMMA onl cname)*)? onl RIGHT_PAREN)?
+private export3             ::= MODULE qcon_id
 
 newconstr                   ::= qcon atype | qcon osnl LEFT_BRACE osnl qvar COLON_COLON ttype osnl RIGHT_BRACE
 
-cdecls                      ::= cdecl (snl cdecl)*
+private cdecls              ::= cdecl (snl cdecl)*
 cdecl                       ::= cidecl
 
-idecls                      ::= idecl (snl idecl)*
+private idecls              ::= idecl (snl idecl)*
 idecl                       ::= cidecl
 
-cidecl                      ::= (general_id | TYPE | NEWTYPE)+
+private cidecl              ::= (general_id | TYPE | NEWTYPE)+
 
-private decl                ::= type_signature | expression
-
-expression                  ::= first_line_expression (snl line_expression)*
-first_line_expression       ::= line_expression
+expression                  ::= line_expression (snl line_expression)*
 line_expression             ::= general_id+
 
 private general_id          ::= (qvar_id | qcon_id | qvar_sym | gcon_sym | LEFT_PAREN | RIGHT_PAREN | FLOAT | DO | WHERE | IF | THEN | ELSE |

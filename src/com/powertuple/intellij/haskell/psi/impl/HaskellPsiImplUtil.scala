@@ -249,10 +249,7 @@ object HaskellPsiImplUtil {
   def getIdentifierElements(instanceDeclaration: HaskellInstanceDeclaration): Seq[HaskellNamedElement] = {
     val inst = instanceDeclaration.getInst
     Seq(instanceDeclaration.getQconId) ++
-        Option(instanceDeclaration.getScontext).map(_.getSimpleclassList.flatMap(_.getQconIdList)).getOrElse(Seq()) ++
-        Option(inst.getQvarId).map(Seq(_)).
-            orElse(Option(inst.getGtycon).map(g => Option(g.getQconId)).map(_.toSeq)).
-            getOrElse(Seq())
+        Option(inst.getGtycon).map(g => Option(g.getQconId).toSeq).getOrElse(Seq())
   }
 
   def getIdentifierElements(typeFamilyDeclaration: HaskellTypeFamilyDeclaration): Seq[HaskellNamedElement] = {

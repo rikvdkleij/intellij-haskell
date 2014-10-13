@@ -86,7 +86,7 @@ class HaskellCompletionContributor extends CompletionContributor {
 
   private def isImportModuleDeclarationInProgress(position: PsiElement): Boolean = {
     Option(TreeUtil.findSiblingBackward(position.getNode, HaskellTypes.HS_IMPORT)).
-        orElse(Option(TreeUtil.findParent(position.getNode, HaskellTypes.HS_IMPORT_DECLARATIONS))).isDefined
+        orElse(Option(TreeUtil.findParent(position.getNode, HaskellTypes.HS_IMPORT_DECLARATION))).isDefined
   }
 
   private def findModulesToImport(project: Project) = {

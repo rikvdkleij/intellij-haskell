@@ -49,16 +49,16 @@ class HaskellFormattingBlock(node: ASTNode, alignment: Option[Alignment], spacin
     val child: ASTNode = node.getFirstChildNode
 
     @tailrec
-    def getBlocks(child: ASTNode, blocks: mutable.Seq[Block]): Seq[Block] = {
+    def getBlocks(child: ASTNode, previousChild: ASTNode, blocks: mutable.Seq[Block]): Seq[Block] = {
       if (child == null) {
         blocks
-      } else if (shouldCreateBlockFor(child)) {
-        getBlocks(child.getTreeNext, blocks.:+(createChildBlock(node, child, alignments)))
+      } else if (shouldCreateBlockFor(child, previousChild)) {
+        getBlocks(child.getTreeNext, child, blocks.:+(createChildBlock(node, child, alignments)))
       } else {
-        getBlocks(child.getTreeNext, blocks)
+        getBlocks(child.getTreeNext, child, blocks)
       }
     }
-    getBlocks(child, mutable.Seq())
+    getBlocks(child, null, mutable.Seq())
   }
 
   def createChildBlock(parent: ASTNode, child: ASTNode, alignments: Seq[Alignment]): Block = {
@@ -71,18 +71,16 @@ class HaskellFormattingBlock(node: ASTNode, alignment: Option[Alignment], spacin
     childType match {
       case HS_LEFT_PAREN | HS_LEFT_BRACE | HS_LEFT_BRACKET | HS_COMMA => Some(alignments(0))
       case HS_VERTICAL_BAR | HS_EQUAL => Some(alignments(1))
-      case HS_EXPORT_1 | HS_EXPORT_2 | HS_EXPORT_3 => Some(alignments(2))
-      case HS_LINE_EXPRESSION => Some(alignments(3))
-      case HS_IF | HS_THEN | HS_ELSE => Some(alignments(4))
-      case HS_DO | HS_WHERE | HS_EQUAL | HS_LET => Some(alignments(5))
-      case HS_EXPORTS | HS_WHERE => Some(alignments(6))
-      case HS_CDECL | HS_IDECL => Some(alignments(7))
+      case HS_EXPORT => Some(alignments(2))
+      case HS_IF | HS_THEN | HS_ELSE => Some(alignments(3))
+      case HS_DO | HS_WHERE | HS_EQUAL | HS_LET => Some(alignments(4))
+      case HS_EXPORTS | HS_WHERE => Some(alignments(5))
       case _ => None
     }
   }
 
-  private def shouldCreateBlockFor(node: ASTNode): Boolean = {
-    node.getTextRange.getLength != 0 && node.getElementType != TokenType.WHITE_SPACE
+  private def shouldCreateBlockFor(node: ASTNode, previousNode: ASTNode): Boolean = {
+    node.getElementType != TokenType.WHITE_SPACE && node.getElementType != HS_NEWLINE
   }
 
   override def getIndent: Indent = {
@@ -106,13 +104,14 @@ object IndentProcessor {
     val childType = child.getElementType
 
     childType match {
-      case HS_LEFT_PAREN | HS_LEFT_BRACE | HS_LEFT_BRACKET if childType == HS_LINE_EXPRESSION => getNormalIndent(false)
-      case HS_DO | HS_WHERE | HS_IF | HS_THEN | HS_CASE => getNormalIndent(false)
-      case HS_CDECLS | HS_IDECLS => getNormalIndent(true)
-      case HS_EQUAL | HS_QVAR_SYM => getNormalIndent(true)
-      case HS_VERTICAL_BAR => getNormalIndent(false)
-      case HS_LINE_EXPRESSION if child.getTreeParent.getElementType != HS_FIRST_LINE_EXPRESSION => getNormalIndent(false)
-      case _ => getNoneIndent
+      case HS_MODULE_DECLARATION | HS_TOP_DECLARATION => getAbsoluteNoneIndent
+      case HS_LEFT_PAREN | HS_LEFT_BRACE | HS_LEFT_BRACKET => getNormalIndent
+      case HS_DO | HS_WHERE | HS_IF | HS_THEN | HS_CASE => getNormalIndent
+      case HS_EQUAL | HS_QVAR_SYM => getNormalIndent
+      case HS_VERTICAL_BAR => getNormalIndent
+      case HS_IDECL | HS_CDECL => getNormalIndent
+      case HS_CONSTR_1 | HS_CONSTR_2 | HS_CONSTR_3 | HS_CONSTR_4 => getNormalIndent
+      case _ => null // default, continuation without first indent
     }
   }
 }
