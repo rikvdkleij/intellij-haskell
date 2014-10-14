@@ -149,7 +149,7 @@ object HaskellPsiImplUtil {
   private abstract class HaskellItemPresentation(haskellElement: PsiElement) extends ItemPresentation {
     override def getLocationString: String = {
       val node = haskellElement.getContainingFile.getNode.getPsi
-      PsiTreeUtil.findChildOfType(node, classOf[HaskellModuleDeclaration]).getModuleName
+      Option(PsiTreeUtil.findChildOfType(node, classOf[HaskellModuleDeclaration])).map(_.getModuleName).getOrElse("")
     }
 
     def getIcon(unused: Boolean): Icon = {

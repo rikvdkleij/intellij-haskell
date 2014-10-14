@@ -35,7 +35,7 @@ class HaskellLanguageCodeStyleSettingsProvider extends LanguageCodeStyleSettings
         defaultSettings.KEEP_BLANK_LINES_IN_CODE = 1
     val indentOptions: CommonCodeStyleSettings.IndentOptions = defaultSettings.initIndentOptions
     indentOptions.INDENT_SIZE = 2
-    indentOptions.CONTINUATION_INDENT_SIZE = 2
+    indentOptions.CONTINUATION_INDENT_SIZE = 4
     indentOptions.TAB_SIZE = 2
     defaultSettings
   }

@@ -73,14 +73,20 @@ class HaskellFormattingBlock(node: ASTNode, alignment: Option[Alignment], spacin
       case HS_VERTICAL_BAR | HS_EQUAL => Some(alignments(1))
       case HS_EXPORT => Some(alignments(2))
       case HS_IF | HS_THEN | HS_ELSE => Some(alignments(3))
-      case HS_DO | HS_WHERE | HS_EQUAL | HS_LET => Some(alignments(4))
+      case HS_DO | HS_WHERE => Some(alignments(4))
       case HS_EXPORTS | HS_WHERE => Some(alignments(5))
+      case HS_LINE_EXPRESSION => Some(alignments(6))
       case _ => None
     }
   }
 
   private def shouldCreateBlockFor(node: ASTNode, previousNode: ASTNode): Boolean = {
-    node.getElementType != TokenType.WHITE_SPACE && node.getElementType != HS_NEWLINE
+    if (node.getElementType == HS_MODULE_BODY) {
+      node.getChildren(null).length > 0
+    } else {
+      (node.getElementType == HS_NEWLINE && previousNode != null && previousNode.getElementType == TokenType.WHITE_SPACE) ||
+          node.getElementType != TokenType.WHITE_SPACE && node.getElementType != HS_NEWLINE
+    }
   }
 
   override def getIndent: Indent = {
@@ -94,6 +100,10 @@ class HaskellFormattingBlock(node: ASTNode, alignment: Option[Alignment], spacin
   override def getSpacing(child1: Block, child2: Block): Spacing = {
     spacingBuilder.getSpacing(this, child1, child2)
   }
+
+  override def getChildAttributes(newChildIndex: Int): ChildAttributes = {
+    new ChildAttributes(Indent.getNoneIndent, null)
+  }
 }
 
 object IndentProcessor {
@@ -102,16 +112,16 @@ object IndentProcessor {
     import com.intellij.formatting.Indent._
 
     val childType = child.getElementType
-
     childType match {
-      case HS_MODULE_DECLARATION | HS_TOP_DECLARATION => getAbsoluteNoneIndent
-      case HS_LEFT_PAREN | HS_LEFT_BRACE | HS_LEFT_BRACKET => getNormalIndent
-      case HS_DO | HS_WHERE | HS_IF | HS_THEN | HS_CASE => getNormalIndent
+      case HS_MODULE_DECLARATION | HS_TOP_DECLARATION | HS_IMPORT_DECLARATION | HS_FIRST_LINE_EXPRESSION => getAbsoluteNoneIndent
+      case HS_DO | HS_WHERE | HS_IF | HS_CASE => getNormalIndent
       case HS_EQUAL | HS_QVAR_SYM => getNormalIndent
       case HS_VERTICAL_BAR => getNormalIndent
       case HS_IDECL | HS_CDECL => getNormalIndent
       case HS_CONSTR_1 | HS_CONSTR_2 | HS_CONSTR_3 | HS_CONSTR_4 => getNormalIndent
-      case _ => null // default, continuation without first indent
+      case HS_COMMENT | HS_NCOMMENT => getNoneIndent
+      case HS_LINE_EXPRESSION => getNormalIndent
+      case _ => getNoneIndent
     }
   }
 }
