@@ -56,7 +56,7 @@ class HaskellReference(namedElement: HaskellNamedElement, textRange: TextRange) 
           resolveDeclarationReferencesInFile(file, identifier)
         } else {
           resolveResultsByGhcMod
-        }).toArray
+        }).toArray.distinct
     }
   }
 
