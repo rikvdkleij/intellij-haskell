@@ -25,6 +25,7 @@ import com.intellij.psi.util.PsiTreeUtil
 import com.intellij.psi.{PsiElement, PsiFile}
 import com.intellij.util.ProcessingContext
 import com.powertuple.intellij.haskell.external.{BrowseInfo, GhcMod}
+import com.powertuple.intellij.haskell.psi.HaskellTypes._
 import com.powertuple.intellij.haskell.psi._
 import com.powertuple.intellij.haskell.{HaskellIcons, HaskellParserDefinition}
 
@@ -34,15 +35,21 @@ class HaskellCompletionContributor extends CompletionContributor {
 
   private final val ReservedIds = HaskellParserDefinition.ALL_RESERVED_IDS.getTypes.map(_.asInstanceOf[HaskellTokenType].getName).toSeq
   private final val SpecialReservedIds = Seq("forall", "safe", "unsafe")
-  private final val PragmaIds = Seq("{-# ", "LANGUAGE ", "#-}", "{-# LANGUAGE ")
+  private final val PragmaIds = Seq("{-#", "LANGUAGE", "#-}", "{-# LANGUAGE")
   private final val InsideImportClauses = Seq("as ", "hiding ", "qualified ")
 
   extend(CompletionType.BASIC, PlatformPatterns.psiElement(), new CompletionProvider[CompletionParameters] {
-    def addCompletions(parameters: CompletionParameters, context: ProcessingContext, resultSet: CompletionResultSet) {
+    def addCompletions(parameters: CompletionParameters, context: ProcessingContext, originalResultSet: CompletionResultSet) {
 
       val project = parameters.getPosition.getProject
       val file = parameters.getOriginalFile
-      val position = Option(parameters.getOriginalPosition).orElse(Option(parameters.getPosition))
+      val position = Option(parameters.getPosition).orElse(Option(parameters.getOriginalPosition))
+
+      val resultSet = position match {
+        case Some(p) if p.getText.startsWith("{") => originalResultSet.withPrefixMatcher(new PlainPrefixMatcher(p.getText.splitAt(2)._1))
+        case _ => originalResultSet
+      }
+
       position match {
         case Some(p) if isImportSpecInProgress(p) =>
           resultSet.addAllElements(findIdsForInImportModuleSpec(project, p))
@@ -66,7 +73,13 @@ class HaskellCompletionContributor extends CompletionContributor {
   override def beforeCompletion(context: CompletionInitializationContext) {
     val file = context.getFile
     val startOffset = context.getStartOffset
-    val caretElement = Option(file.findElementAt(startOffset - 1))
+    val offSet = if (startOffset > 0) {
+      startOffset - 1
+    } else {
+      startOffset
+    }
+
+    val caretElement = Option(file.findElementAt(offSet))
     caretElement match {
       case Some(e) if e.getText.trim.size > 0 => context.setDummyIdentifier(e.getText.substring(0, 1))
       case _ => context.setDummyIdentifier("a")
@@ -74,23 +87,23 @@ class HaskellCompletionContributor extends CompletionContributor {
   }
 
   private def isImportSpecInProgress(position: PsiElement): Boolean = {
-    Option(TreeUtil.findParent(position.getNode, HaskellTypes.HS_IMPORT_SPEC)).isDefined
+    Option(TreeUtil.findParent(position.getNode, HS_IMPORT_SPEC)).isDefined
   }
 
   private def findIdsForInImportModuleSpec(project: Project, position: PsiElement): Seq[LookupElementBuilder] = {
     (for {
-      importDeclaration <- Option(TreeUtil.findParent(position.getNode, HaskellTypes.HS_IMPORT_DECLARATION))
+      importDeclaration <- Option(TreeUtil.findParent(position.getNode, HS_IMPORT_DECLARATION))
       moduleName <- Option(PsiTreeUtil.findChildOfType(importDeclaration.getPsi, classOf[HaskellImportModule])).map(_.getQconId.getName)
     } yield GhcMod.browseInfo(project, Seq(moduleName), removeParensFromOperator = false)).map(_.map(createLookUpElementForBrowseInfo)).getOrElse(Seq())
   }
 
   private def isImportModuleDeclarationInProgress(position: PsiElement): Boolean = {
-    Option(TreeUtil.findSiblingBackward(position.getNode, HaskellTypes.HS_IMPORT)).
-        orElse(Option(TreeUtil.findParent(position.getNode, HaskellTypes.HS_IMPORT_DECLARATION))).isDefined
+    Option(TreeUtil.findSiblingBackward(position.getNode, HS_IMPORT)).
+        orElse(Option(TreeUtil.findParent(position.getNode, HS_IMPORT_DECLARATION))).isDefined
   }
 
   private def findModulesToImport(project: Project) = {
-    GhcMod.listAvailableModules(project).map(m => LookupElementBuilder.create(m + " ").withTailText(" module", true))
+    GhcMod.listAvailableModules(project).map(m => LookupElementBuilder.create(m).withTailText(" module", true))
   }
 
   private def getInsideImportClauses = {
@@ -98,9 +111,10 @@ class HaskellCompletionContributor extends CompletionContributor {
   }
 
   private def isPragmaInProgress(position: PsiElement): Boolean = {
-    Option(TreeUtil.findSiblingBackward(position.getNode, HaskellTypes.HS_PRAGMA_START)).
-        orElse(Option(TreeUtil.findSibling(position.getNode, HaskellTypes.HS_PRAGMA_END))).
-        orElse(Option(TreeUtil.findSiblingBackward(position.getParent.getNode, HaskellTypes.HS_PRAGMA_START))).isDefined
+    position.getNode.getElementType == HS_NCOMMENT ||
+        Option(TreeUtil.findSiblingBackward(position.getNode, HS_PRAGMA_START)).
+            orElse(Option(TreeUtil.findSibling(position.getNode, HS_PRAGMA_END))).
+            orElse(Option(TreeUtil.findSiblingBackward(position.getParent.getNode, HS_PRAGMA_START))).isDefined
   }
 
   private def getLanguageExtensions(project: Project) = {
@@ -184,11 +198,11 @@ class HaskellCompletionContributor extends CompletionContributor {
   }
 
   private def getReservedIds = {
-    ReservedIds.map(r => LookupElementBuilder.create(r + " ").withIcon(HaskellIcons.HaskellSmallBlueLogo).withTailText(" keyword", true))
+    ReservedIds.map(r => LookupElementBuilder.create(r).withIcon(HaskellIcons.HaskellSmallBlueLogo).withTailText(" keyword", true))
   }
 
   private def getSpecialReservedIds = {
-    SpecialReservedIds.map(sr => LookupElementBuilder.create(sr + " ").withIcon(HaskellIcons.HaskellSmallBlueLogo).withTailText(" special keyword", true))
+    SpecialReservedIds.map(sr => LookupElementBuilder.create(sr).withIcon(HaskellIcons.HaskellSmallBlueLogo).withTailText(" special keyword", true))
   }
 
   private def findImportDeclarations(psiFile: PsiFile) = {

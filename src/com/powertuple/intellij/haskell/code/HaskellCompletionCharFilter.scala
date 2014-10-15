@@ -26,7 +26,7 @@ class HaskellCompletionCharFilter extends CharFilter {
     }
     else {
       c match {
-        case ',' | ';' | ' ' | '(' | '[' | '{' => Result.SELECT_ITEM_AND_FINISH_LOOKUP
+        case ',' | ';' | ' ' | '(' | '['  => Result.SELECT_ITEM_AND_FINISH_LOOKUP
         case _ => Result.ADD_TO_PREFIX
       }
     }
