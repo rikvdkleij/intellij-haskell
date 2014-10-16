@@ -16,6 +16,8 @@
 
 package com.powertuple.intellij.haskell.code
 
+import java.util.concurrent.{Executors, TimeUnit}
+
 import com.intellij.codeInsight.completion._
 import com.intellij.codeInsight.lookup.LookupElementBuilder
 import com.intellij.openapi.project.Project
@@ -27,11 +29,20 @@ import com.intellij.util.ProcessingContext
 import com.powertuple.intellij.haskell.external.{BrowseInfo, GhcMod}
 import com.powertuple.intellij.haskell.psi.HaskellTypes._
 import com.powertuple.intellij.haskell.psi._
-import com.powertuple.intellij.haskell.{HaskellIcons, HaskellParserDefinition}
+import com.powertuple.intellij.haskell.{HaskellIcons, HaskellNotificationGroup, HaskellParserDefinition}
 
 import scala.collection.JavaConversions._
+import scala.concurrent.duration.Duration
+import scala.concurrent.{Await, ExecutionContext, Future}
+
+object HaskellCompletionContributor {
+  private final val ExecutorService = Executors.newCachedThreadPool()
+  implicit private final val ExecContext = ExecutionContext.fromExecutorService(ExecutorService)
+}
 
 class HaskellCompletionContributor extends CompletionContributor {
+
+  import HaskellCompletionContributor._
 
   private final val ReservedIds = HaskellParserDefinition.ALL_RESERVED_IDS.getTypes.map(_.asInstanceOf[HaskellTokenType].getName).toSeq
   private final val SpecialReservedIds = Seq("forall", "safe", "unsafe")
@@ -163,31 +174,39 @@ class HaskellCompletionContributor extends CompletionContributor {
 
   private def getIdsFromFullScopeImportedModules(project: Project, file: PsiFile) = {
     val importFullSpecs = getImportedModulesWithFullScope(file).toSeq
-    for {
-      ifs <- importFullSpecs
-      bi <- GhcMod.browseInfo(project, ifs.moduleName, removeParensFromOperator = true)
-      le <- createLookupElements(bi, ifs)
-    } yield le
+
+    val browseInfosWithImportSpecFutures = importFullSpecs.
+        map(ifs => Future {
+      BrowseInfosForImportFullSpec(ifs, GhcMod.browseInfo(project, ifs.moduleName, removeParensFromOperator = true))
+    }.map(bifs => createLookupElements(bifs.importSpec, bifs.browseInfos)))
+
+    Await.result(Future.sequence(browseInfosWithImportSpecFutures), Duration.create(1, TimeUnit.SECONDS)).flatten
   }
 
   private def getIdsFromHidingIdsImportedModules(project: Project, file: PsiFile) = {
     val importHidingIdsSpec = getImportedModulesWithHidingIdsSpec(file).toSeq
-    for {
-      ihis <- importHidingIdsSpec
-      bi <- GhcMod.browseInfo(project, ihis.moduleName, removeParensFromOperator = true)
-      biInScope <- if (ihis.ids.contains(bi.name)) Seq() else Seq(bi)
-      le <- createLookupElements(bi, ihis)
-    } yield le
+
+    val browseInfosWithImportHidingIdsSpecFutures = importHidingIdsSpec.
+        map(ihis => Future {
+      BrowseInfosForImportHidingIdsSpec(ihis, GhcMod.browseInfo(project, ihis.moduleName, removeParensFromOperator = true))
+    }.map(bihis => createLookupElements(bihis.importSpec, bihis.browseInfos.filterNot(bi => bihis.importSpec.ids.contains(bi.name)))))
+
+    Await.result(Future.sequence(browseInfosWithImportHidingIdsSpecFutures), Duration.create(1, TimeUnit.SECONDS)).flatten
   }
 
   private def getIdsFromSpecIdsImportedModules(project: Project, file: PsiFile) = {
     val importIdsSpec = getImportedModulesWithSpecIds(file).toSeq
-    for {
-      iis <- importIdsSpec
-      bi <- GhcMod.browseInfo(project, iis.moduleName, removeParensFromOperator = true)
-      biInScope <- if (iis.ids.contains(bi.name)) Seq(bi) else Seq()
-      le <- createLookupElements(bi, iis)
-    } yield le
+
+    val browseInfosWithImportIdsSpecFutures = importIdsSpec.
+        map(iis => Future {
+      BrowseInfosForImportIdsSpec(iis, GhcMod.browseInfo(project, iis.moduleName, removeParensFromOperator = true))
+    }.map(biis => createLookupElements(biis.importSpec, biis.browseInfos.filter(bi => biis.importSpec.ids.contains(bi.name)))))
+
+    Await.result(Future.sequence(browseInfosWithImportIdsSpecFutures), Duration.create(1, TimeUnit.SECONDS)).flatten
+  }
+
+  private def createLookupElements(importSpec: ImportSpec, browseInfos: Seq[BrowseInfo]): Seq[LookupElementBuilder] = {
+    browseInfos.flatMap(bi => createLookupElements(bi, importSpec))
   }
 
   private def createLookupElements(browseInfo: BrowseInfo, importSpec: ImportSpec): Seq[LookupElementBuilder] = {
@@ -255,5 +274,12 @@ class HaskellCompletionContributor extends CompletionContributor {
   private case class ImportHidingIdsSpec(moduleName: String, ids: Seq[String], qualified: Boolean, as: Option[String]) extends ImportSpec
 
   private case class ImportIdsSpec(moduleName: String, ids: Seq[String], qualified: Boolean, as: Option[String]) extends ImportSpec
+
+  private case class BrowseInfosForImportFullSpec(importSpec: ImportSpec, browseInfos: Seq[BrowseInfo])
+
+  private case class BrowseInfosForImportHidingIdsSpec(importSpec: ImportHidingIdsSpec, browseInfos: Seq[BrowseInfo])
+
+  private case class BrowseInfosForImportIdsSpec(importSpec: ImportIdsSpec, browseInfos: Seq[BrowseInfo])
+
 
 }
