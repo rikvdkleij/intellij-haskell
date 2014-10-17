@@ -83,8 +83,8 @@ private[external] class GhcModi(val settings: HaskellSettings, val project: Proj
       }
     }
     catch {
-      case _: Exception =>
-        HaskellNotificationGroup.notifyError(s"Error in communication with ghc-modi. Check if ghc-modi is okay. ghc-modi will not be called for 5 seconds. Command was: $command")
+      case e: Exception =>
+        HaskellNotificationGroup.notifyError(s"Error in communication with ghc-modi: ${e.getMessage}. Check if ghc-modi is okay. ghc-modi will not be called for 5 seconds. Command was: $command")
         setGhcModiProblemTime()
         exit()
         GhcModiOutput()
