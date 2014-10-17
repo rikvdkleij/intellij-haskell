@@ -1,6 +1,6 @@
 /*
  * Copyright 2014 Rik van der Kleij
-
+ *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
@@ -45,8 +45,8 @@ public class HaskellSettings implements PersistentStateComponent<HaskellSettings
     }
 
     public static class HaskellSettingsState {
-        public String ghcModPath = "ghc-mod";
-        public String ghcModiPath = "ghc-modi";
-        public String haskellDocsPath = "haskell-docs";
+        public String ghcModPath = "";
+        public String ghcModiPath = "";
+        public String haskellDocsPath = "";
     }
 }

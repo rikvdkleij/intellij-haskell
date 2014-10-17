@@ -133,7 +133,7 @@ class HaskellConfigurable extends Configurable {
     state.ghcModiPath = ghcModiPathField.getText
     state.haskellDocsPath = haskellDocsPathField.getText
 
-    GhcModiManager.setReinit()
+    GhcModiManager.doRestart()
 
     isModifiedByUser = false
   }

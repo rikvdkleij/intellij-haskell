@@ -20,23 +20,23 @@ import com.intellij.openapi.components.{ProjectComponent, ServiceManager}
 import com.intellij.openapi.editor.SelectionModel
 import com.intellij.openapi.project.Project
 import com.intellij.psi.{PsiElement, PsiFile}
-import com.powertuple.intellij.haskell.HaskellNotificationGroup
-import com.powertuple.intellij.haskell.psi.HaskellNamedElement
+import com.powertuple.intellij.haskell.psi._
 import com.powertuple.intellij.haskell.settings.HaskellSettings
 
 object GhcModiManager {
 
-  private var reinit = false
+  private var restart = false
 
   def getInstance(project: Project) = ServiceManager.getService(project, classOf[GhcModiManager])
 
-  def setReinit() {
-    reinit = true
+  def doRestart() {
+    restart = true
   }
 
   def findInfoFor(psiFile: PsiFile, namedElement: HaskellNamedElement): Seq[IdentifierInfo] = {
     GhcModiInfo.findInfoFor(getGhcModi(psiFile), psiFile, namedElement)
   }
+
 
   def findTypeInfoFor(psiFile: PsiFile, psiElement: PsiElement): Option[TypeInfo] = {
     GhcModiTypeInfo.findInfoFor(getGhcModi(psiFile), psiFile, psiElement)
@@ -65,14 +65,13 @@ class GhcModiManager(val project: Project, val settings: HaskellSettings) extend
   private var ghcModi: GhcModi = _
 
   def getGhcModi: GhcModi = {
-    if (GhcModiManager.reinit) {
-      ghcModi.reinit()
-      GhcModiManager.reinit = false
+    if (GhcModiManager.restart) {
+      ghcModi.exit()
+      GhcModiManager.restart = false
       ghcModi
     }
     ghcModi
   }
-
 
   override def projectOpened(): Unit = {
     ghcModi = new GhcModi(settings, project)

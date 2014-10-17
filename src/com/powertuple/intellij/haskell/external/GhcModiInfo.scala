@@ -39,11 +39,10 @@ private[external] object GhcModiInfo {
 
     val cmd = s"info ${psiFile.getOriginalFile.getVirtualFile.getPath} $identifier"
     val ghcModiOutput = ghcModi.execute(cmd)
-    val r = (for {
+    (for {
       outputLine <- ghcModiOutput.outputLines.headOption
       identifierInfos <- createIdentifierInfos(outputLine, psiFile.getProject)
     } yield identifierInfos).getOrElse(Seq())
-    r
   }
 
   private def createIdentifierInfos(outputLine: String, project: Project): Option[Seq[IdentifierInfo]] = {

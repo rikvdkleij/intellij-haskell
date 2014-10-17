@@ -17,7 +17,7 @@
 package com.powertuple.intellij.haskell.external
 
 import java.io._
-import java.util.concurrent.{Executors, TimeoutException}
+import java.util.concurrent.Executors
 
 import com.intellij.openapi.project.Project
 import com.powertuple.intellij.haskell.HaskellNotificationGroup
@@ -33,17 +33,9 @@ import scala.sys.process._
 
 private[external] class GhcModi(val settings: HaskellSettings, val project: Project) {
 
-  private implicit val ec = new ExecutionContext {
-    val threadPool = Executors.newSingleThreadExecutor
+  private final val ExecutorService = Executors.newSingleThreadExecutor
+  implicit private final val ExecContext = ExecutionContext.fromExecutorService(ExecutorService)
 
-    def execute(runnable: Runnable) {
-      threadPool.submit(runnable)
-    }
-
-    def reportFailure(t: Throwable): Unit = {
-      HaskellNotificationGroup.notifyError("Failure in execution context: " + t.getMessage)
-    }
-  }
   private final val LineSeparator = java.security.AccessController.doPrivileged(new GetPropertyAction("line.separator")).getBytes
 
   private[this] var outputStream: OutputStream = _
@@ -52,14 +44,25 @@ private[external] class GhcModi(val settings: HaskellSettings, val project: Proj
 
   private val OK = "OK"
 
+  private final val TimeOut = 5000L
+
+  private var ghcModiProblemTime: Option[Long] = None
+
   def execute(command: String): GhcModiOutput = synchronized {
-    if (outputStream == null) {
-      // creating Process has failed in #startGhcModi
+    if (ghcModiProblemTime.exists(gmpt => System.currentTimeMillis - gmpt < TimeOut)) {
       return GhcModiOutput()
     }
 
-    stdOutListBuffer.clear()
+    if (settings.getState.ghcModiPath.isEmpty) {
+      return GhcModiOutput()
+    }
+
+    if (outputStream == null) {
+      startGhcModi()
+    }
+
     try {
+      stdOutListBuffer.clear()
       outputStream.write(command.getBytes)
       outputStream.write(LineSeparator)
       outputStream.flush()
@@ -70,7 +73,7 @@ private[external] class GhcModi(val settings: HaskellSettings, val project: Proj
         }
         stdOutListBuffer.init.toSeq
       }
-      val stdOutput = Await.result(waitForStdOutput, 2.second)
+      val stdOutput = Await.result(waitForStdOutput, 1.second)
 
       if (stdErrListBuffer.nonEmpty) {
         HaskellNotificationGroup.notifyError(s"ghc-modi error output: ${stdErrListBuffer.mkString}")
@@ -80,16 +83,16 @@ private[external] class GhcModi(val settings: HaskellSettings, val project: Proj
       }
     }
     catch {
-      case _: TimeoutException | _: IOException => {
-        HaskellNotificationGroup.notifyError(s"Error in communication with ghc-modi. ghc-modi will be restarted. Command was: $command")
-        reinit()
+      case _: Exception =>
+        HaskellNotificationGroup.notifyError(s"Error in communication with ghc-modi. Check if ghc-modi is okay. ghc-modi will not be called for 5 seconds. Command was: $command")
+        setGhcModiProblemTime()
+        exit()
         GhcModiOutput()
-      }
     }
   }
 
   def startGhcModi() {
-    if (doesCabalSandboxExists) {
+    if (!settings.getState.ghcModiPath.isEmpty && doesCabalSandboxExists) {
       try {
         val process = getEnvParameters match {
           case None => Process(settings.getState.ghcModiPath, new File(project.getBasePath))
@@ -103,12 +106,17 @@ private[external] class GhcModi(val settings: HaskellSettings, val project: Proj
           ))
       }
       catch {
-        case e: IOException => {
-          HaskellNotificationGroup.notifyError("Can not get connection with ghc-modi. Make sure you have set right path to ghc-modi in settings.")
-        }
+        case e: Exception =>
+          HaskellNotificationGroup.notifyError("Can not start ghc-modi. Make sure you have set right path to ghc-modi in settings.")
+          setGhcModiProblemTime()
+          return
       }
-      HaskellNotificationGroup.notifyInfo(s"ghc-modi is started for project ${project.getName}")
+      HaskellNotificationGroup.notifyInfo(s"ghc-modi is called to startup for project ${project.getName}")
     }
+  }
+
+  private def setGhcModiProblemTime() = {
+    ghcModiProblemTime = Some(System.currentTimeMillis)
   }
 
   private def getEnvParameters: Option[(String, String)] = {
@@ -129,14 +137,19 @@ private[external] class GhcModi(val settings: HaskellSettings, val project: Proj
     new File(project.getBasePath + "/.cabal-sandbox").exists()
   }
 
-  def reinit() {
-    exit()
-    startGhcModi()
-  }
-
   def exit() {
-    if (outputStream != null) {
-      outputStream.close()
+    try {
+      if (stdin != null) {
+        stdin.close()
+      }
+      if (stdout != null) {
+        stdout.close()
+      }
+      if (stderr != null) {
+        stderr.close()
+      }
+    } finally {
+      outputStream = null
     }
   }
 }
