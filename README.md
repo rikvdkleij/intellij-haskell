@@ -49,7 +49,7 @@ A lot of features are with the help of ghc-mod(i)!!
 # Getting started: 
 - Cabal install latest versions of ghc-mod and haskell-docs;
 - Set file paths to ghc-mod, ghc-modi and haskell-docs in `Settings/Haskell`;
-    For Mac OSX (especially Yosemite) set directory to ghc binaries, e.g. `/usr/local/bin`, because of bug in Yosemite (see `Remarks`). 
+    IMPORTANT: For Mac OSX (especially Yosemite) set directory to ghc binaries, e.g. `/usr/local/bin`, because of bug in Yosemite (see `Remarks`). 
 - Be sure in `Settings/Filetypes` that `Haskell language file` is registered with pattern `*.hs` and `Literate Haskell language file` with pattern `*.lhs`; 
 - First install and build your project in a Cabal sandbox (be sure that Haddock documentation is generated, see [haskell-docs](https://github.com/chrisdone/haskell-docs)). 
 - After project is build in sandbox, create Haskell project in IntelliJ by using `File`/`Open` from IntelliJ menu;
@@ -66,6 +66,6 @@ A lot of features are with the help of ghc-mod(i)!!
 - It would be nice if ghc-mod issue #303 would be solved. That would made it possible to get support from ghc-mod while type/syntax errors exist. For example, while typing.
 - Created workaround for this issue: https://youtrack.jetbrains.com/issue/IDEA-130894.
 - Developed plugin on Ubuntu;
-- During testing on Mac OSX Yosimete Beta I noticed problem with ghc-modi: PATH environment variable asked from within IntelliJ was not the same as the global one. I had to create workaround only for Mac OSX :-( 
+- During testing on Mac OSX Yosemite Beta I noticed problem with ghc-modi: PATH environment variable asked from within IntelliJ was not the same as the global one. I had to create workaround only for Mac OSX :-( 
     This workaround will add path from settings to PATH environment variable which is passed to ghc-modi process. Other solutions are welcome!
 - Windows is not supported. Maybe it will work okay but I can not test it;
