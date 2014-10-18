@@ -48,8 +48,8 @@ A lot of features are with the help of ghc-mod(i)!!
 
 # Getting started: 
 - Cabal install latest versions of ghc-mod and haskell-docs;
-- Set file paths to ghc-mod, ghc-modi and haskell-docs in `Settings/Haskell`;
-    IMPORTANT: For Mac OSX (especially Yosemite) set directory to ghc binaries, e.g. `/usr/local/bin`, because of bug in Yosemite (see `Remarks`). 
+- Set file paths to ghc-mod, ghc-modi and haskell-docs in `Settings/Haskell`.
+    IMPORTANT: For Mac OSX (especially Yosemite) set directory to ghc binaries, e.g. `/usr/local/bin`, because of bug in Yosemite (see `Remarks`);
 - Be sure in `Settings/Filetypes` that `Haskell language file` is registered with pattern `*.hs` and `Literate Haskell language file` with pattern `*.lhs`; 
 - First install and build your project in a Cabal sandbox (be sure that Haddock documentation is generated, see [haskell-docs](https://github.com/chrisdone/haskell-docs)). 
 - After project is build in sandbox, create Haskell project in IntelliJ by using `File`/`Open` from IntelliJ menu;
