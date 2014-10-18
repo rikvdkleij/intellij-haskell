@@ -60,15 +60,15 @@ type_declaration            ::= TYPE osnl simpletype osnl (EQUAL | WHERE)? osnl 
 data_declaration            ::= DATA osnl (context osnl DOUBLE_RIGHT_ARROW)? osnl simpletype osnl (EQUAL osnl constrs | (WHERE | EQUAL) osnl cdecls)? osnl (DERIVING osnl ttype)? NEWLINE
 newtype_declaration         ::= NEWTYPE osnl (context osnl DOUBLE_RIGHT_ARROW)? osnl simpletype osnl EQUAL osnl newconstr osnl (DERIVING osnl ttype)? NEWLINE
 class_declaration           ::= (CLASS osnl (scontext osnl DOUBLE_RIGHT_ARROW)? osnl qcon_id osnl
-                                  (qvar_id | LEFT_PAREN type_signature RIGHT_PAREN)*
-                                  (osnl VERTICAL_BAR osnl ttype (osnl COMMA osnl ttype)*)? osnl WHERE? osnl cdecls? |
+                                    (qvar_id | LEFT_PAREN type_signature RIGHT_PAREN)*
+                                    (osnl VERTICAL_BAR osnl ttype (osnl COMMA osnl ttype)*)? osnl WHERE? osnl cdecls? |
                                   CLASS osnl context osnl DOUBLE_RIGHT_ARROW osnl qcon_id osnl qvar_id osnl WHERE? osnl cdecls?) NEWLINE     // seen in Control.Lens.Internal.Indexed
 
 instance_declaration        ::= INSTANCE osnl (scontext osnl DOUBLE_RIGHT_ARROW)? osnl qcon_id osnl inst osnl WHERE? osnl idecls? NEWLINE
 default_declaration         ::= DEFAULT osnl (LEFT_PAREN (ttype (COMMA ttype)*)? RIGHT_PAREN | type_signature) NEWLINE
 type_instance_declaration   ::= TYPE_INSTANCE osnl expression
 
-type_signature              ::= (vars osnl COLON_COLON osnl ((ttype | context) DOUBLE_RIGHT_ARROW)? osnl ttype | fixity (DECIMAL)? ops) NEWLINE?
+type_signature              ::= (vars osnl COLON_COLON osnl ((ttype | context) DOUBLE_RIGHT_ARROW)? osnl ttype | fixity (DECIMAL)? ops)
 foreign_declaration         ::= (FOREIGN_IMPORT | FOREIGN_EXPORT) osnl expression
 type_family_declaration     ::= TYPE_FAMILY osnl type_family_type osnl WHERE? osnl expression?
 deriving_declaration        ::= DERIVING INSTANCE (scontext osnl DOUBLE_RIGHT_ARROW)? osnl qcon_id osnl inst NEWLINE
@@ -178,10 +178,10 @@ private export3             ::= MODULE qcon_id
 newconstr                   ::= qcon atype | qcon osnl LEFT_BRACE osnl qvar COLON_COLON ttype osnl RIGHT_BRACE
 
 private cdecls              ::= cdecl (snl cdecl)*
-cdecl                       ::= cidecl
+cdecl                       ::= (type_signature | cidecl)
 
 private idecls              ::= idecl (snl idecl)*
-idecl                       ::= cidecl
+idecl                       ::= qvar? cidecl
 
 private cidecl              ::= (general_id | TYPE | NEWTYPE | DEFAULT)+
 
