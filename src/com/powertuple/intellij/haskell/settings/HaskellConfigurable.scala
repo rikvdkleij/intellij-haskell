@@ -67,13 +67,12 @@ class HaskellConfigurable extends Configurable {
       null,
       FileChooserDescriptorFactory.createSingleLocalFileDescriptor())
 
-    if (OSUtil.isOSX) {
-      ghcOsxPathField.addBrowseFolderListener(
-        s"Select $GhcOsxPath",
-        null,
-        null,
-        FileChooserDescriptorFactory.createSingleLocalFileDescriptor())
-    }
+    ghcOsxPathField.addBrowseFolderListener(
+      s"Select $GhcOsxPath",
+      null,
+      null,
+      FileChooserDescriptorFactory.createSingleLocalFileDescriptor())
+
 
     val settingsPanel = new JPanel(new GridBagLayout())
 
@@ -126,7 +125,9 @@ class HaskellConfigurable extends Configurable {
     addLabeledControl(0, GhcMod, ghcModPathField)
     addLabeledControl(2, GhcModi, ghcModiPathField)
     addLabeledControl(1, HaskellDocs, haskellDocsPathField)
-    addLabeledControl(3, GhcOsxPath, ghcOsxPathField)
+    if (OSUtil.isOSX) {
+      addLabeledControl(3, GhcOsxPath, ghcOsxPathField)
+    }
 
     settingsPanel.add(new JPanel(), base.setConstraints(
       gridx = 0,
