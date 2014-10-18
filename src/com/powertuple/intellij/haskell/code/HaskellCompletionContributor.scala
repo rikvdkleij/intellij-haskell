@@ -54,14 +54,14 @@ class HaskellCompletionContributor extends CompletionContributor {
 
       val project = parameters.getPosition.getProject
       val file = parameters.getOriginalFile
-      val position = Option(parameters.getPosition).orElse(Option(parameters.getOriginalPosition))
 
-      val resultSet = position match {
+      val resultSet = Option(parameters.getPosition).orElse(Option(parameters.getOriginalPosition)) match {
         case Some(p) if p.getText.startsWith("{") => originalResultSet.withPrefixMatcher(new PlainPrefixMatcher(p.getText.splitAt(2)._1))
         case _ => originalResultSet
       }
 
-      position match {
+      val completionPosition = Option(parameters.getOriginalPosition).orElse(Option(parameters.getPosition))
+      completionPosition match {
         case Some(p) if isImportSpecInProgress(p) =>
           resultSet.addAllElements(findIdsForInImportModuleSpec(project, p))
         case Some(p) if isImportModuleDeclarationInProgress(p) =>
@@ -98,7 +98,9 @@ class HaskellCompletionContributor extends CompletionContributor {
   }
 
   private def isImportSpecInProgress(position: PsiElement): Boolean = {
-    Option(TreeUtil.findParent(position.getNode, HS_IMPORT_SPEC)).isDefined
+    Option(TreeUtil.findParent(position.getNode, HS_IMPORT_ID)).isDefined ||
+        (Option(TreeUtil.findParent(position.getNode, HS_IMPORT_SPEC)).isDefined &&
+        Option(TreeUtil.findSiblingBackward(position.getNode, HS_LEFT_PAREN)).isDefined)
   }
 
   private def findIdsForInImportModuleSpec(project: Project, position: PsiElement): Seq[LookupElementBuilder] = {
