@@ -48,5 +48,6 @@ public class HaskellSettings implements PersistentStateComponent<HaskellSettings
         public String ghcModPath = "";
         public String ghcModiPath = "";
         public String haskellDocsPath = "";
+        public String ghcOsxPath = "";
     }
 }

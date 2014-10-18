@@ -122,16 +122,18 @@ private[external] class GhcModi(val settings: HaskellSettings, val project: Proj
   private def getEnvParameters: Option[(String, String)] = {
     // Workaround because of bug in Yosemite :-(
     if (OSUtil.isOSX) {
-      val path = System.getenv("PATH")
-      if (!path.contains("/usr/local/bin")) {
-        Some(("PATH", path + ":/usr/local/bin"))
-      } else {
+      val ghcOsxPath = settings.getState.ghcOsxPath
+      if (ghcOsxPath.isEmpty) {
         None
+      } else {
+        val path = System.getenv("PATH")
+        Some(("PATH", path + ":" + ghcOsxPath))
       }
     } else {
       None
     }
   }
+
 
   private def doesCabalSandboxExists = {
     new File(project.getBasePath + "/.cabal-sandbox").exists()

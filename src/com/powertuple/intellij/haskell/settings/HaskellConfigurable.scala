@@ -25,6 +25,7 @@ import com.intellij.openapi.options.{Configurable, ConfigurationException}
 import com.intellij.openapi.ui.TextFieldWithBrowseButton
 import com.intellij.ui.DocumentAdapter
 import com.powertuple.intellij.haskell.external.GhcModiManager
+import com.powertuple.intellij.haskell.util.OSUtil
 
 import scala.language.{existentials, reflectiveCalls}
 
@@ -33,6 +34,7 @@ class HaskellConfigurable extends Configurable {
   private val ghcModPathField = new TextFieldWithBrowseButton
   private val ghcModiPathField = new TextFieldWithBrowseButton
   private val haskellDocsPathField = new TextFieldWithBrowseButton
+  private val ghcOsxPathField = new TextFieldWithBrowseButton
 
   override def getDisplayName: String = {
     "Haskell"
@@ -43,6 +45,7 @@ class HaskellConfigurable extends Configurable {
   private val GhcMod = "ghc-mod"
   private val GhcModi = "ghc-modi"
   private val HaskellDocs = "haskell-docs"
+  private val GhcOsxPath = "path to ghc binaries directory"
 
   override def createComponent: JComponent = {
 
@@ -64,6 +67,14 @@ class HaskellConfigurable extends Configurable {
       null,
       FileChooserDescriptorFactory.createSingleLocalFileDescriptor())
 
+    if (OSUtil.isOSX) {
+      ghcOsxPathField.addBrowseFolderListener(
+        s"Select $GhcOsxPath",
+        null,
+        null,
+        FileChooserDescriptorFactory.createSingleLocalFileDescriptor())
+    }
+
     val settingsPanel = new JPanel(new GridBagLayout())
 
     val listener: DocumentAdapter = new DocumentAdapter() {
@@ -75,6 +86,7 @@ class HaskellConfigurable extends Configurable {
     ghcModPathField.getTextField.getDocument.addDocumentListener(listener)
     haskellDocsPathField.getTextField.getDocument.addDocumentListener(listener)
     ghcModiPathField.getTextField.getDocument.addDocumentListener(listener)
+    ghcOsxPathField.getTextField.getDocument.addDocumentListener(listener)
 
     val base = new GridBagConstraints {
       insets = new Insets(2, 0, 2, 3)
@@ -114,7 +126,7 @@ class HaskellConfigurable extends Configurable {
     addLabeledControl(0, GhcMod, ghcModPathField)
     addLabeledControl(2, GhcModi, ghcModiPathField)
     addLabeledControl(1, HaskellDocs, haskellDocsPathField)
-
+    addLabeledControl(3, GhcOsxPath, ghcOsxPathField)
 
     settingsPanel.add(new JPanel(), base.setConstraints(
       gridx = 0,
@@ -132,6 +144,7 @@ class HaskellConfigurable extends Configurable {
     state.ghcModPath = ghcModPathField.getText
     state.ghcModiPath = ghcModiPathField.getText
     state.haskellDocsPath = haskellDocsPathField.getText
+    state.ghcOsxPath = ghcOsxPathField.getText
 
     GhcModiManager.doRestart()
 
@@ -157,6 +170,7 @@ class HaskellConfigurable extends Configurable {
     ghcModPathField.getTextField.setText(state.ghcModPath)
     ghcModiPathField.getTextField.setText(state.ghcModiPath)
     haskellDocsPathField.getTextField.setText(state.haskellDocsPath)
+    ghcOsxPathField.getTextField.setText(state.ghcOsxPath)
 
     isModifiedByUser = false
   }
