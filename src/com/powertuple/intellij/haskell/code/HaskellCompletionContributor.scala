@@ -256,9 +256,9 @@ class HaskellCompletionContributor extends CompletionContributor {
       case Some(d) if d.startsWith("foreign ") => Foreign
       case Some(d) if d.startsWith("instance ") => Instance
       case Some(d) if d.startsWith("new type ") => NewType
-      case Some(d) if d.startsWith("type ") => Type
       case Some(d) if d.startsWith("type family ") => TypeFamily
       case Some(d) if d.startsWith("type instance ") => TypeInstance
+      case Some(d) if d.startsWith("type ") => Type
       case _ => TypeSignature
     }
   }
