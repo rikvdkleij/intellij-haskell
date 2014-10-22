@@ -34,8 +34,8 @@ class ShowErrorDescriptionAction extends AnAction {
       project <- Option(CommonDataKeys.PROJECT.getData(context))
       editor <- Option(CommonDataKeys.EDITOR.getData(context))
       offset = editor.getCaretModel.getOffset
-      codeAnalyzer = DaemonCodeAnalyzer.getInstance(project).asInstanceOf[DaemonCodeAnalyzerImpl]
-      info = codeAnalyzer.findHighlightByOffset(editor.getDocument, offset, false)
+      codeAnalyzer <- Option(DaemonCodeAnalyzer.getInstance(project).asInstanceOf[DaemonCodeAnalyzerImpl])
+      info <- Option(codeAnalyzer.findHighlightByOffset(editor.getDocument, offset, false))
       description = info.getDescription
     } yield {
       HaskellEditorUtil.showHint(editor, XmlUtil.escape(description).replace(" ", "&nbsp;"))
