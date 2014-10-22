@@ -28,7 +28,8 @@
         <colorSettingsPage implementation="com.powertuple.intellij.haskell.highlighter.HaskellColorSettingsPage"/>
         <lang.syntaxHighlighterFactory key="Haskell"
                                        implementationClass="com.powertuple.intellij.haskell.highlighter.HaskellSyntaxHighlighterFactory"/>
-        <lang.braceMatcher language="Haskell" implementationClass="com.powertuple.intellij.haskell.highlighter.HaskellBraceMatcher"/>
+        <lang.braceMatcher language="Haskell"
+                           implementationClass="com.powertuple.intellij.haskell.highlighter.HaskellBraceMatcher"/>
         <lang.commenter language="Haskell" implementationClass="com.powertuple.intellij.haskell.HaskellCommenter"/>
 
         <externalAnnotator language="Haskell"
@@ -38,9 +39,12 @@
 
         <applicationService serviceImplementation="com.powertuple.intellij.haskell.settings.HaskellSettings"/>
 
-        <lang.formatter language="Haskell" implementationClass="com.powertuple.intellij.haskell.code.formatter.HaskellFormattingModelBuilder"/>
-        <codeStyleSettingsProvider implementation="com.powertuple.intellij.haskell.code.formatter.settings.HaskellCodeStyleSettingsProvider"/>
-        <langCodeStyleSettingsProvider implementation="com.powertuple.intellij.haskell.code.formatter.settings.HaskellLanguageCodeStyleSettingsProvider"/>
+        <lang.formatter language="Haskell"
+                        implementationClass="com.powertuple.intellij.haskell.code.formatter.HaskellFormattingModelBuilder"/>
+        <codeStyleSettingsProvider
+                implementation="com.powertuple.intellij.haskell.code.formatter.settings.HaskellCodeStyleSettingsProvider"/>
+        <langCodeStyleSettingsProvider
+                implementation="com.powertuple.intellij.haskell.code.formatter.settings.HaskellLanguageCodeStyleSettingsProvider"/>
 
 
         <psi.referenceContributor implementation="com.powertuple.intellij.haskell.HaskellReferenceContributor"/>
@@ -51,25 +55,35 @@
 
         <fileBasedIndex implementation="com.powertuple.intellij.haskell.util.HaskellFileIndex"/>
 
-        <lang.findUsagesProvider language="Haskell" implementationClass="com.powertuple.intellij.haskell.navigate.HaskellFindUsagesProvider"/>
-        <targetElementEvaluator language="Haskell" implementationClass="com.powertuple.intellij.haskell.navigate.HaskellTargetElementEvaluator"/>
+        <lang.findUsagesProvider language="Haskell"
+                                 implementationClass="com.powertuple.intellij.haskell.navigate.HaskellFindUsagesProvider"/>
+        <targetElementEvaluator language="Haskell"
+                                implementationClass="com.powertuple.intellij.haskell.navigate.HaskellTargetElementEvaluator"/>
 
-        <lang.namesValidator language="Haskell" implementationClass="com.powertuple.intellij.haskell.HaskellNamesValidator"/>
-        <lang.refactoringSupport language="Haskell" implementationClass="com.powertuple.intellij.haskell.HaskellRefactoringSupportProvider"/>
+        <lang.namesValidator language="Haskell"
+                             implementationClass="com.powertuple.intellij.haskell.HaskellNamesValidator"/>
+        <lang.refactoringSupport language="Haskell"
+                                 implementationClass="com.powertuple.intellij.haskell.HaskellRefactoringSupportProvider"/>
         <renamePsiElementProcessor implementation="com.powertuple.intellij.haskell.HaskellRenameVariableProcessor"/>
 
-        <lang.documentationProvider language="Haskell" implementationClass="com.powertuple.intellij.haskell.view.HaskellDocumentationProvider"/>
+        <lang.documentationProvider language="Haskell"
+                                    implementationClass="com.powertuple.intellij.haskell.view.HaskellDocumentationProvider"/>
 
-        <completion.contributor language="Haskell" implementationClass="com.powertuple.intellij.haskell.code.HaskellCompletionContributor"/>
+        <completion.contributor language="Haskell"
+                                implementationClass="com.powertuple.intellij.haskell.code.HaskellCompletionContributor"/>
         <lookup.charFilter implementation="com.powertuple.intellij.haskell.code.HaskellCompletionCharFilter"/>
 
         <gotoClassContributor implementation="com.powertuple.intellij.haskell.navigate.HaskellDeclarationContributor"/>
-        <gotoSymbolContributor implementation="com.powertuple.intellij.haskell.navigate.HaskellNamedElementContributor"/>
-        <lang.psiStructureViewFactory language="Haskell" implementationClass="com.powertuple.intellij.haskell.navigate.HaskellStructureViewFactory"/>
+        <gotoSymbolContributor
+                implementation="com.powertuple.intellij.haskell.navigate.HaskellNamedElementContributor"/>
+        <lang.psiStructureViewFactory language="Haskell"
+                                      implementationClass="com.powertuple.intellij.haskell.navigate.HaskellStructureViewFactory"/>
 
         <quoteHandler fileType="Haskell file" className="com.powertuple.intellij.haskell.code.HaskellQuoteHandler"/>
 
-        <projectService serviceInterface="com.intellij.psi.search.PsiSearchHelper" serviceImplementation="com.powertuple.intellij.haskell.psi.impl.HaskellPsiSearchHelperImpl" overrides="true"/>
+        <projectService serviceInterface="com.intellij.psi.search.PsiSearchHelper"
+                        serviceImplementation="com.powertuple.intellij.haskell.psi.impl.HaskellPsiSearchHelperImpl"
+                        overrides="true"/>
     </extensions>
 
     <application-components>
@@ -82,7 +96,8 @@
         </component>
 
         <component>
-            <implementation-class>com.powertuple.intellij.haskell.view.HaskellDocumentationProvider</implementation-class>
+            <implementation-class>com.powertuple.intellij.haskell.view.HaskellDocumentationProvider
+            </implementation-class>
         </component>
     </project-components>
 
@@ -112,6 +127,14 @@
         <action id="Haskell.HaskellFile" class="com.powertuple.intellij.haskell.view.CreateHaskellFileAction"
                 text="Haskell Module" description="Create new Haskell module">
             <add-to-group group-id="NewGroup" anchor="before" relative-to-action="NewFile"/>
+        </action>
+
+        <action id="Haskell.ShowErrorDescription" class="com.powertuple.intellij.haskell.view.ShowErrorDescriptionAction"
+                text="Show Haskell error/warning" description="Show message from ghc-mod">
+            <keyboard-shortcut first-keystroke="ctrl F10" keymap="$default"/>
+            <keyboard-shortcut first-keystroke="meta F10" keymap="Mac OS X"/>
+            <keyboard-shortcut first-keystroke="meta F10" keymap="Mac OS X 10.5+"/>
+            <add-to-group group-id="CodeEditorViewGroup" anchor="last"/>
         </action>
     </actions>
 
