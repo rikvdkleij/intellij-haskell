@@ -103,7 +103,7 @@
 
     <actions>
         <action id="Haskell.ShowType" class="com.powertuple.intellij.haskell.view.ShowTypeAction"
-                text="Show Type" description="Show Type">
+                text="Show Type" description="Show type of (selected) expression">
 
             <keyboard-shortcut first-keystroke="alt EQUALS" keymap="$default"/>
             <keyboard-shortcut first-keystroke="control shift P" keymap="Mac OS X"/>
@@ -114,7 +114,7 @@
         </action>
 
         <action id="Haskell.ShowInfo" class="com.powertuple.intellij.haskell.view.ShowInfoAction"
-                text="Show Info" description="Show Info">
+                text="Show Info" description="Show info about identifier in context of file">
 
             <keyboard-shortcut first-keystroke="alt ctrl EQUALS" keymap="$default"/>
             <keyboard-shortcut first-keystroke="control shift I" keymap="Mac OS X"/>
@@ -130,7 +130,7 @@
         </action>
 
         <action id="Haskell.ShowErrorDescription" class="com.powertuple.intellij.haskell.view.ShowErrorDescriptionAction"
-                text="Show Haskell error/warning" description="Show message from ghc-mod">
+                text="Show error" description="Show error/warning description">
             <keyboard-shortcut first-keystroke="ctrl F10" keymap="$default"/>
             <keyboard-shortcut first-keystroke="meta F10" keymap="Mac OS X"/>
             <keyboard-shortcut first-keystroke="meta F10" keymap="Mac OS X 10.5+"/>
