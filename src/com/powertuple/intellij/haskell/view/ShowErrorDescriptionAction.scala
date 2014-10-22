@@ -19,6 +19,7 @@ package com.powertuple.intellij.haskell.view
 import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer
 import com.intellij.codeInsight.daemon.impl.DaemonCodeAnalyzerImpl
 import com.intellij.openapi.actionSystem.{AnAction, AnActionEvent, CommonDataKeys}
+import com.intellij.xml.util.{XmlUtil, HtmlUtil}
 import com.powertuple.intellij.haskell.util.HaskellEditorUtil
 
 class ShowErrorDescriptionAction extends AnAction {
@@ -37,7 +38,7 @@ class ShowErrorDescriptionAction extends AnAction {
       info = codeAnalyzer.findHighlightByOffset(editor.getDocument, offset, false)
       description = info.getDescription
     } yield {
-      HaskellEditorUtil.showHint(editor, description.replace(" ", "&nbsp;"))
+      HaskellEditorUtil.showHint(editor, XmlUtil.escape(description).replace(" ", "&nbsp;"))
     }
   }
 }
