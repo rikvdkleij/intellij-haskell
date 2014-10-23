@@ -53,41 +53,41 @@ private[external] class GhcModi(val settings: HaskellSettings, val project: Proj
       return GhcModiOutput()
     }
 
-    if (settings.getState.ghcModiPath.isEmpty) {
-      return GhcModiOutput()
-    }
-
     if (outputStream == null) {
       startGhcModi()
     }
 
-    try {
-      stdOutListBuffer.clear()
-      outputStream.write(command.getBytes)
-      outputStream.write(LineSeparator)
-      outputStream.flush()
+    if (outputStream != null) {
+      try {
+        stdOutListBuffer.clear()
+        outputStream.write(command.getBytes)
+        outputStream.write(LineSeparator)
+        outputStream.flush()
 
-      val waitForStdOutput = Future {
-        while (stdOutListBuffer.lastOption != Some(OK)) {
-          // wait for result
+        val waitForStdOutput = Future {
+          while (stdOutListBuffer.lastOption != Some(OK)) {
+            // wait for result
+          }
+          stdOutListBuffer.init.toSeq
         }
-        stdOutListBuffer.init.toSeq
-      }
-      val stdOutput = Await.result(waitForStdOutput, 1.second)
+        val stdOutput = Await.result(waitForStdOutput, 1.second)
 
-      if (stdErrListBuffer.nonEmpty) {
-        HaskellNotificationGroup.notifyError(s"ghc-modi error output: ${stdErrListBuffer.mkString}")
-        GhcModiOutput()
-      } else {
-        GhcModiOutput(stdOutput)
+        if (stdErrListBuffer.nonEmpty) {
+          HaskellNotificationGroup.notifyError(s"ghc-modi error output: ${stdErrListBuffer.mkString}")
+          GhcModiOutput()
+        } else {
+          GhcModiOutput(stdOutput)
+        }
       }
-    }
-    catch {
-      case e: Exception =>
-        HaskellNotificationGroup.notifyError(s"Error in communication with ghc-modi: ${e.getMessage}. Check if ghc-modi is okay. ghc-modi will not be called for 5 seconds. Command was: $command")
-        setGhcModiProblemTime()
-        exit()
-        GhcModiOutput()
+      catch {
+        case e: Exception =>
+          HaskellNotificationGroup.notifyError(s"Error in communication with ghc-modi: ${e.getMessage}. Check if ghc-modi is okay. ghc-modi will not be called for 5 seconds. Command was: $command")
+          setGhcModiProblemTime()
+          exit()
+          GhcModiOutput()
+      }
+    } else {
+      GhcModiOutput()
     }
   }
 
@@ -112,6 +112,9 @@ private[external] class GhcModi(val settings: HaskellSettings, val project: Proj
           return
       }
       HaskellNotificationGroup.notifyInfo(s"ghc-modi is called to startup for project ${project.getName}")
+    } else {
+      HaskellNotificationGroup.notifyError(s"ghc-modi is not started for project ${project.getName} because ghc-modi path is not defined and/or cabal sandbox is not created")
+      outputStream = null
     }
   }
 
