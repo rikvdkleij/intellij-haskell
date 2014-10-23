@@ -185,7 +185,7 @@ idecl                       ::= qvar? cidecl
 
 private cidecl              ::= (general_id | TYPE | NEWTYPE | DEFAULT)+
 
-expression                  ::= first_line_expression (line_expression)* last_line_expression | last_line_expression
+expression                  ::= first_line_expression (line_expression)* last_line_expression osnl | last_line_expression
 first_line_expression       ::= general_id+ snl
 line_expression             ::= general_id+ snl
 last_line_expression        ::= general_id+ NEWLINE?
