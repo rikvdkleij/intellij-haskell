@@ -32,11 +32,12 @@ Any feedback is welcome!!
 - Navigate to identifier (called `Symbol` in IntelliJ menu);
 - Code completion by looking to import declarations;
 - Simple form of code formatting;
+- Inspection by HLint;
 
 A lot of features are with the help of ghc-mod(i)!!
 
 # TODO:
-- Inspection by hlint;
+- Create quickfixes for HLint suggestions;
 - Integration of stylish-haskell; 
 - Integration of hsimport;
 - Smart completion if that is achievable :-)
