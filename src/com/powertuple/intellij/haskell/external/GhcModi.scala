@@ -92,7 +92,7 @@ private[external] class GhcModi(val settings: HaskellSettings, val project: Proj
   }
 
   def startGhcModi() {
-    if (!settings.getState.ghcModiPath.isEmpty && doesCabalSandboxExists) {
+    if (!settings.getState.ghcModiPath.isEmpty) {
       try {
         val process = getEnvParameters match {
           case None => Process(settings.getState.ghcModiPath, new File(project.getBasePath))
@@ -113,7 +113,7 @@ private[external] class GhcModi(val settings: HaskellSettings, val project: Proj
       }
       HaskellNotificationGroup.notifyInfo(s"ghc-modi is called to startup for project ${project.getName}")
     } else {
-      HaskellNotificationGroup.notifyError(s"ghc-modi is not started for project ${project.getName} because ghc-modi path is not defined and/or cabal sandbox is not created")
+      HaskellNotificationGroup.notifyError(s"ghc-modi is not started for project ${project.getName} because ghc-modi path is not defined")
       outputStream = null
     }
   }
@@ -135,11 +135,6 @@ private[external] class GhcModi(val settings: HaskellSettings, val project: Proj
     } else {
       None
     }
-  }
-
-
-  private def doesCabalSandboxExists = {
-    new File(project.getBasePath + "/.cabal-sandbox").exists()
   }
 
   def exit() {
