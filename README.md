@@ -32,7 +32,7 @@ Any feedback is welcome!!
 - Navigate to identifier (called `Symbol` in IntelliJ menu);
 - Code completion by looking to import declarations;
 - Simple form of code formatting;
-- Inspection by HLint;
+- Inspection by HLint (in next release);
 
 A lot of features are with the help of ghc-mod(i)!!
 
