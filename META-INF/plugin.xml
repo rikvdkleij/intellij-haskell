@@ -19,6 +19,8 @@
     <idea-version since-build="135"/>
 
     <extensions defaultExtensionNs="com.intellij">
+        <sdkType implementation="com.powertuple.intellij.haskell.sdk.HaskellSdkType"/>
+
         <internalFileTemplate name="Haskell"/>
 
         <fileTypeFactory implementation="com.powertuple.intellij.haskell.HaskellLanguageFileTypeFactory"/>
