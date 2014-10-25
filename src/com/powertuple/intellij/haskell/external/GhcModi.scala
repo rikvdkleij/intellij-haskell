@@ -20,6 +20,7 @@ import java.io._
 import java.util.concurrent.Executors
 
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.roots.ProjectRootManager
 import com.powertuple.intellij.haskell.HaskellNotificationGroup
 import com.powertuple.intellij.haskell.settings.HaskellSettings
 import com.powertuple.intellij.haskell.util.OSUtil
@@ -125,13 +126,13 @@ private[external] class GhcModi(val settings: HaskellSettings, val project: Proj
   private def getEnvParameters: Option[(String, String)] = {
     // Workaround because of bug in Yosemite :-(
     if (OSUtil.isOSX) {
-      val ghcOsxPath = settings.getState.ghcOsxPath
-      if (ghcOsxPath.isEmpty) {
-        None
-      } else {
-        val path = System.getenv("PATH")
-        Some(("PATH", path + ":" + ghcOsxPath))
-      }
+      for {
+        pm <- Option(ProjectRootManager.getInstance(project))
+        ps <- Option(pm.getProjectSdk)
+        hp <- Option(ps.getHomePath)
+        ghcPath = hp + "/ghc"
+        pathEnv = System.getenv("PATH")
+      } yield ("PATH", pathEnv + ":" + ghcPath)
     } else {
       None
     }

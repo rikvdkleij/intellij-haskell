@@ -28,6 +28,7 @@ import org.jdom.Element
  * Created GHC SDK because inspection tool forces to use a SDK.
  */
 class HaskellSdkType extends SdkType("GHC SDK") {
+
   override def suggestHomePath(): String = "/usr/local/bin"
 
   override def suggestSdkName(currentSdkName: String, sdkHome: String): String = "GHC"
@@ -39,9 +40,13 @@ class HaskellSdkType extends SdkType("GHC SDK") {
     ghcPath.isDirectory && ghcPath.listFiles.map(f => FileUtil.getNameWithoutExtension(f)).contains("ghc")
   }
 
-  override def getPresentableName: String = "GHC"
+  override def getPresentableName: String = "Path to GHC-binaries"
 
   override def saveAdditionalData(additionalData: SdkAdditionalData, additional: Element): Unit = {}
 
   override def getIcon: Icon = HaskellIcons.HaskellLogo
+}
+
+object HaskellSdkType {
+  def getInstance: HaskellSdkType = SdkType.findInstance(classOf[HaskellSdkType])
 }
