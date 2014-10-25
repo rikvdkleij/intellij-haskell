@@ -169,7 +169,7 @@ instvar                     ::= qcon_id | qvar_id | gcon_sym | LEFT_BRACKET qvar
 
 fixity                      ::= INFIXL | INFIXR | INFIX
 
-exports                     ::= LEFT_PAREN onl export? onl (onl COMMA onl export onl)* onl COMMA? onl RIGHT_PAREN
+exports                     ::= LEFT_PAREN onl export? onl (onl COMMA? onl export onl)* onl COMMA? onl RIGHT_PAREN
 export                      ::= export1 | export2 | export3
 private export1             ::= TYPE? onl qvar
 private export2             ::= qcon onl (DOT_DOT_PARENS | LEFT_PAREN onl (cname onl (onl COMMA onl cname)*)? onl RIGHT_PAREN)?

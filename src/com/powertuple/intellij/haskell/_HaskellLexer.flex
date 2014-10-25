@@ -29,7 +29,7 @@ control_character   = [\000 - \037]
 newline             = \r|\n|\r\n
 unispace            = \x05
 white_char          = [ \t\f] | {control_character} | {unispace}
-include_def         = "#"("if"|"ifndef"|"define"|"elif"|"else"|"error"|"endif"|"include")[^\r\n]*
+include_def         = "#"("if"|"ifdef"|"ifndef"|"define"|"elif"|"else"|"error"|"endif"|"include")[^\r\n]*
 white_space         = {white_char}+ | {include_def} | {comment}
 
 small               = [a-z_]          // ignoring any unicode lowercase letter for now
