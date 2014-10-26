@@ -20,8 +20,10 @@ import java.io.File
 import javax.swing.Icon
 
 import com.intellij.openapi.projectRoots._
+import com.intellij.openapi.roots.OrderRootType
 import com.intellij.openapi.util.io.FileUtil
 import com.powertuple.intellij.haskell.HaskellIcons
+import com.powertuple.intellij.haskell.external.ExternalProcess
 import org.jdom.Element
 
 /**
@@ -45,8 +47,25 @@ class HaskellSdkType extends SdkType("GHC SDK") {
   override def saveAdditionalData(additionalData: SdkAdditionalData, additional: Element): Unit = {}
 
   override def getIcon: Icon = HaskellIcons.HaskellLogo
+
+  override def getIconForAddAction: Icon = getIcon
+
+  override def isRootTypeApplicable(`type`: OrderRootType): Boolean = false
+
+  override def setupSdkPaths(sdk: Sdk): Unit = {}
+
+  override def getVersionString(sdkHome: String): String = HaskellSdkType.getNumericVersion(sdkHome)
 }
 
 object HaskellSdkType {
   def getInstance: HaskellSdkType = SdkType.findInstance(classOf[HaskellSdkType])
+
+  def getNumericVersion(sdkHome: String) = {
+    val output = ExternalProcess.getProcessOutput(
+      sdkHome,
+      sdkHome + File.separator + "ghc",
+      Seq("--numeric-version")
+    )
+    output.getStdout
+  }
 }
