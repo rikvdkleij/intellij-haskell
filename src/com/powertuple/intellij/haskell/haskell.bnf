@@ -185,10 +185,10 @@ idecl                       ::= qvar? cidecl
 
 private cidecl              ::= (general_id | TYPE | NEWTYPE | DEFAULT)+
 
-expression                  ::= first_line_expression (line_expression)* last_line_expression osnl | last_line_expression
+expression                  ::= first_line_expression (line_expression)* last_line_expression | last_line_expression
 first_line_expression       ::= general_id+ snl
 line_expression             ::= general_id+ snl
-last_line_expression        ::= general_id+ NEWLINE?
+last_line_expression        ::= general_id+ osnl
 
 private general_id          ::= (qvar_id | qcon_id | qvar_sym | gcon_sym | LEFT_PAREN | RIGHT_PAREN | FLOAT | DO | WHERE | IF | THEN | ELSE |
                                  COLON_COLON | DOUBLE_RIGHT_ARROW | ttype | context | RIGHT_ARROW | IN | CASE | OF | LET |
