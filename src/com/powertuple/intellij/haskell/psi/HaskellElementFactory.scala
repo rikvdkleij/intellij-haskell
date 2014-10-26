@@ -19,7 +19,6 @@ package com.powertuple.intellij.haskell.psi
 import com.intellij.lang.ASTNode
 import com.intellij.openapi.project.Project
 import com.intellij.psi.PsiFileFactory
-import com.intellij.psi.impl.source.tree.TreeUtil
 import com.intellij.psi.util.PsiTreeUtil
 import com.powertuple.intellij.haskell.{HaskellFile, HaskellLanguage}
 
@@ -42,6 +41,11 @@ object HaskellElementFactory {
   def createGconSym(project: Project, name: String): ASTNode = {
     val haskellFile = createFileFromText(project, name)
     PsiTreeUtil.findChildOfType(haskellFile, classOf[HaskellGconSym]).getNode
+  }
+
+  def createExpression(project: Project, expression: String): HaskellExpression = {
+    val haskellFile = createFileFromText(project, expression)
+    PsiTreeUtil.findChildOfType(haskellFile, classOf[HaskellExpression])
   }
 
   private def createFileFromText(project: Project, text: String): HaskellFile = {

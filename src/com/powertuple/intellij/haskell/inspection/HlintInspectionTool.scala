@@ -33,9 +33,15 @@ class HlintInspectionTool extends LocalInspectionTool {
       val hlintInfos = Hlint.check(file)
       for {
         hi <- hlintInfos
-        offSet <- LineColumnPosition.getOffset(file, LineColumnPosition(hi.startLine, hi.startColumn))
-        e <- Option(file.findElementAt(offSet))
-      } yield problemsHolder.registerProblem(e, hi.hint, findProblemHighlightType(hi))
+        startOffSet <- LineColumnPosition.getOffset(file, LineColumnPosition(hi.startLine, hi.startColumn))
+        endOffSet <- LineColumnPosition.getOffset(file, LineColumnPosition(hi.endLine, hi.endColumn - 1))
+        se <- Option(file.findElementAt(startOffSet))
+        ee <- Option(file.findElementAt(endOffSet))
+      } yield
+        hi.to match {
+          case Some(to) => problemsHolder.registerProblem(se, hi.hint, findProblemHighlightType(hi), new HlintQuickfix(se, ee, to, hi.note))
+          case None => problemsHolder.registerProblem(se, hi.hint, findProblemHighlightType(hi))
+        }
       problemsHolder.getResultsArray
     }
   }
