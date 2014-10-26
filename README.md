@@ -33,11 +33,11 @@ Any feedback is welcome!!
 - Code completion by looking to import declarations;
 - Simple form of code formatting;
 - Inspection by HLint (in next release);
+- Create quickfixes for HLint suggestions (in next release);
 
 A lot of features are with the help of ghc-mod(i)!!
 
 # TODO:
-- Create quickfixes for HLint suggestions;
 - Integration of stylish-haskell; 
 - Integration of hsimport;
 - Smart completion if that is achievable :-)
