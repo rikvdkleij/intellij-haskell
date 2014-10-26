@@ -33,7 +33,7 @@ Any feedback is welcome!!
 - Code completion by looking to import declarations;
 - Simple form of code formatting;
 - Inspection by HLint (in next release);
-- Create quickfixes for HLint suggestions (in next release);
+- Quickfixes for HLint suggestions (in next release);
 
 A lot of features are with the help of ghc-mod(i)!!
 
