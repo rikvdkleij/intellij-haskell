@@ -44,7 +44,7 @@ class HaskellConfigurable extends Configurable {
   private val GhcMod = "ghc-mod"
   private val GhcModi = "ghc-modi"
   private val HaskellDocs = "haskell-docs"
-  private val Hlint = "HLint"
+  private val Hlint = "hlint"
 
   override def createComponent: JComponent = {
 
