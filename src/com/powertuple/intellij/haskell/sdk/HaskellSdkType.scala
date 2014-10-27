@@ -42,7 +42,7 @@ class HaskellSdkType extends SdkType("GHC SDK") {
     ghcPath.isDirectory && ghcPath.listFiles.map(f => FileUtil.getNameWithoutExtension(f)).contains("ghc")
   }
 
-  override def getPresentableName: String = "Path to GHC-binaries"
+  override def getPresentableName: String = "GHC binaries"
 
   override def saveAdditionalData(additionalData: SdkAdditionalData, additional: Element): Unit = {}
 
