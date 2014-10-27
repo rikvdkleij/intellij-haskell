@@ -16,18 +16,14 @@
 
 package com.powertuple.intellij.haskell.external
 
-import com.intellij.openapi.components.{ProjectComponent, ServiceManager}
+import com.intellij.openapi.components.ServiceManager
 import com.intellij.openapi.editor.SelectionModel
-import com.intellij.openapi.project.Project
 import com.intellij.psi.{PsiElement, PsiFile}
 import com.powertuple.intellij.haskell.psi._
-import com.powertuple.intellij.haskell.settings.HaskellSettings
 
 object GhcModiManager {
 
   private var restart = false
-
-  def getInstance(project: Project) = ServiceManager.getService(project, classOf[GhcModiManager])
 
   def doRestart() {
     restart = true
@@ -37,7 +33,6 @@ object GhcModiManager {
     GhcModiInfo.findInfoFor(getGhcModi(psiFile), psiFile, namedElement)
   }
 
-
   def findTypeInfoFor(psiFile: PsiFile, psiElement: PsiElement): Option[TypeInfo] = {
     GhcModiTypeInfo.findInfoFor(getGhcModi(psiFile), psiFile, psiElement)
   }
@@ -46,46 +41,13 @@ object GhcModiManager {
     GhcModiTypeInfo.findInfoForSelection(getGhcModi(psiFile), psiFile, selectionModel)
   }
 
-  /**
-   * Assuming first definition from ghc-modi info result is the main definition.
-   */
-  def findTypeSignature(haskellNamedElement: HaskellNamedElement): Option[String] = {
-    findInfoFor(haskellNamedElement.getContainingFile, haskellNamedElement) match {
-      case Seq(info) => Some(info.typeSignature)
-      case _ => None
-    }
-  }
-
-  private def getGhcModi(psiFile: PsiFile) = {
-    getInstance(psiFile.getProject).getGhcModi
-  }
-}
-
-class GhcModiManager(val project: Project, val settings: HaskellSettings) extends ProjectComponent {
-  private var ghcModi: GhcModi = _
-
-  def getGhcModi: GhcModi = {
-    if (GhcModiManager.restart) {
+  def getGhcModi(psiFile: PsiFile): GhcModi = {
+    if (restart) {
+      val ghcModi = ServiceManager.getService(psiFile.getProject, classOf[GhcModi])
       ghcModi.exit()
-      GhcModiManager.restart = false
       ghcModi
+    } else {
+      ServiceManager.getService(psiFile.getProject, classOf[GhcModi])
     }
-    ghcModi
   }
-
-  override def projectOpened(): Unit = {
-    ghcModi = new GhcModi(settings, project)
-    ghcModi.startGhcModi()
-  }
-
-  override def projectClosed(): Unit = {
-    ghcModi.exit()
-  }
-
-  override def initComponent(): Unit = {}
-
-  override def disposeComponent(): Unit = {}
-
-  override def getComponentName: String = "ghcModiManager"
 }
-

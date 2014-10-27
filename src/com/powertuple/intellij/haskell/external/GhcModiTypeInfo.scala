@@ -74,7 +74,7 @@ private[external] object GhcModiTypeInfo {
   }
 
   private def findGhcModiInfos(psiFile: PsiFile, startPositionExpression: LineColumnPosition): Option[Seq[TypeInfo]] = {
-    val ghcModi = GhcModiManager.getInstance(psiFile.getProject).getGhcModi
+    val ghcModi = GhcModiManager.getGhcModi(psiFile)
     val vFile = psiFile.getVirtualFile
     val cmd = s"type ${vFile.getPath} ${startPositionExpression.lineNr} ${startPositionExpression.columnNr}"
     val ghcModiOutput = ghcModi.execute(cmd)

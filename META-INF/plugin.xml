@@ -98,7 +98,7 @@
 
     <project-components>
         <component>
-            <implementation-class>com.powertuple.intellij.haskell.external.GhcModiManager</implementation-class>
+            <implementation-class>com.powertuple.intellij.haskell.external.GhcModi</implementation-class>
         </component>
 
         <component>

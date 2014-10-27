@@ -19,6 +19,7 @@ package com.powertuple.intellij.haskell.external
 import java.io._
 import java.util.concurrent.Executors
 
+import com.intellij.openapi.components.ProjectComponent
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.roots.ProjectRootManager
 import com.powertuple.intellij.haskell.HaskellNotificationGroup
@@ -32,7 +33,7 @@ import scala.concurrent.{Await, ExecutionContext, Future}
 import scala.io._
 import scala.sys.process._
 
-private[external] class GhcModi(val settings: HaskellSettings, val project: Project) {
+class GhcModi(val settings: HaskellSettings, val project: Project) extends ProjectComponent {
 
   private final val ExecutorService = Executors.newSingleThreadExecutor
   implicit private final val ExecContext = ExecutionContext.fromExecutorService(ExecutorService)
@@ -152,6 +153,18 @@ private[external] class GhcModi(val settings: HaskellSettings, val project: Proj
       outputStream = null
     }
   }
+
+  override def projectOpened(): Unit = {}
+
+  override def projectClosed(): Unit = {
+    exit()
+  }
+
+  override def initComponent(): Unit = {}
+
+  override def disposeComponent(): Unit = {}
+
+  override def getComponentName: String = "ghc-modi"
 }
 
 case class GhcModiOutput(outputLines: Seq[String] = Seq())
