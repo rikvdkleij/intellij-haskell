@@ -129,10 +129,9 @@ private[external] class GhcModi(val settings: HaskellSettings, val project: Proj
       for {
         pm <- Option(ProjectRootManager.getInstance(project))
         ps <- Option(pm.getProjectSdk)
-        hp <- Option(ps.getHomePath)
-        ghcPath = hp + "/ghc"
+        ghcDir <- Option(ps.getHomePath)
         pathEnv = System.getenv("PATH")
-      } yield ("PATH", pathEnv + ":" + ghcPath)
+      } yield ("PATH", pathEnv + ":" + ghcDir)
     } else {
       None
     }
