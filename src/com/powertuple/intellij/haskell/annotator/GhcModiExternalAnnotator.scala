@@ -67,31 +67,41 @@ class GhcModiExternalAnnotator extends ExternalAnnotator[GhcModInitialInfo, GhcM
 
   // TODO: Try to make problem text range more precise by using problem description
   private[annotator] def createAnnotations(ghcModResult: GhcModCheckResult, psiFile: PsiFile): Seq[Annotation] = {
-    for (problem <- ghcModResult.problems.filter(_.filePath == psiFile.getOriginalFile.getVirtualFile.getPath)) yield {
+    (for (
+      problem <- ghcModResult.problems.filter(_.filePath == psiFile.getOriginalFile.getVirtualFile.getPath)
+    ) yield {
       val textRange = getProblemTextRange(psiFile, problem)
-      if (problem.description.startsWith("Warning:")) {
-        WarningAnnotation(textRange, problem.description)
-      } else {
-        ErrorAnnotation(textRange, problem.description)
+      textRange.map { tr =>
+        if (problem.description.startsWith("Warning:")) {
+          WarningAnnotation(tr, problem.description)
+        } else {
+          ErrorAnnotation(tr, problem.description)
+        }
       }
+    }).flatten
+  }
+
+  private def getProblemTextRange(psiFile: PsiFile, problem: GhcModProblem): Option[TextRange] = {
+    val ghcModiOffset = LineColumnPosition.getOffset(psiFile, LineColumnPosition(problem.lineNr, problem.columnNr))
+    ghcModiOffset match {
+      case Some(offset) => Some(findTextRange(psiFile, offset))
+      case None => None
     }
   }
 
-  private def getProblemTextRange(psiFile: PsiFile, problem: GhcModProblem): TextRange = {
-    val ghcModiOffSet = LineColumnPosition.getOffset(psiFile, LineColumnPosition(problem.lineNr, problem.columnNr)).getOrElse(0)
-    if (Option(psiFile.findElementAt(ghcModiOffSet)).isEmpty) {
-      findTextRangeLastElement(ghcModiOffSet, psiFile).getOrElse(TextRange.create(0, 0))
-    } else {
-      psiFile.findElementAt(ghcModiOffSet).getTextRange
+  private def findTextRange(psiFile: PsiFile, offset: Int): TextRange = {
+    Option(psiFile.findElementAt(offset)) match {
+      case Some(e) => e.getTextRange
+      case None => findTextRangeLastElement(offset, psiFile).getOrElse(TextRange.create(0, 0))
     }
   }
 
   @tailrec
-  private def findTextRangeLastElement(offSet: Int, psiFile: PsiFile): Option[TextRange] = {
-    if (offSet > 0) {
-      Option(psiFile.findElementAt(offSet)) match {
+  private def findTextRangeLastElement(offset: Int, psiFile: PsiFile): Option[TextRange] = {
+    if (offset > 0) {
+      Option(psiFile.findElementAt(offset)) match {
         case Some(e) => Some(e.getTextRange)
-        case None => findTextRangeLastElement(offSet - 1, psiFile)
+        case None => findTextRangeLastElement(offset - 1, psiFile)
       }
     }
     else {

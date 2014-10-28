@@ -16,10 +16,11 @@
 
 package com.powertuple.intellij.haskell.util
 
+import com.intellij.openapi.editor.Document
 import com.intellij.openapi.fileEditor.FileDocumentManager
 import com.intellij.openapi.project.Project
-import com.intellij.psi.{PsiDirectory, PsiFile}
 import com.intellij.psi.search.GlobalSearchScope
+import com.intellij.psi.{PsiDirectory, PsiFile}
 import com.intellij.util.ui.UIUtil
 import com.powertuple.intellij.haskell.HaskellNotificationGroup
 import com.powertuple.intellij.haskell.external.GhcMod
@@ -101,13 +102,21 @@ object LineColumnPosition {
     } yield LineColumnPosition(li + 1, offset - doc.getLineStartOffset(li) + 1)
   }
 
-  def getOffset(psiFile: PsiFile, lineCol: LineColumnPosition): Option[Int] = {
+  def getOffset(psiFile: PsiFile, lineColPos: LineColumnPosition): Option[Int] = {
     val fdm = FileDocumentManager.getInstance
     for {
       file <- Option(psiFile.getVirtualFile)
       doc <- Option(fdm.getDocument(file))
-      lineIndex = lineCol.lineNr - 1
+      lineIndex <- getLineIndex(lineColPos.lineNr, doc)
       startOffsetLine = doc.getLineStartOffset(lineIndex)
-    } yield startOffsetLine + lineCol.columnNr - 1
+    } yield startOffsetLine + lineColPos.columnNr - 1
+  }
+
+  private def getLineIndex(lineNr: Int, doc: Document) = {
+    if (lineNr > doc.getLineCount) {
+      None
+    } else {
+      Some(lineNr - 1)
+    }
   }
 }
