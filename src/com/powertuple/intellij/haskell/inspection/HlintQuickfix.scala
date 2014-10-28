@@ -23,6 +23,8 @@ import com.intellij.psi.util.PsiTreeUtil
 import com.intellij.psi.{PsiElement, PsiFile}
 import com.powertuple.intellij.haskell.psi.HaskellElementFactory
 
+import scala.annotation.tailrec
+
 class HlintQuickfix(startElement: PsiElement, endElement: PsiElement, toSuggestion: String, note: Seq[String]) extends LocalQuickFixOnPsiElement(startElement, endElement) {
   override def getText: String = s"Change to: $toSuggestion ${formatNote(note)}"
 
@@ -40,6 +42,7 @@ class HlintQuickfix(startElement: PsiElement, endElement: PsiElement, toSuggesti
 
   override def getFamilyName: String = "Inspection by HLint"
 
+  @tailrec
   private def findParentBelowParent(psiElement: PsiElement, parent: PsiElement): Option[PsiElement] = {
     Option(psiElement.getParent) match {
       case None => None
