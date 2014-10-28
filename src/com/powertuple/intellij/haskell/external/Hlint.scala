@@ -38,7 +38,7 @@ object Hlint {
   import com.powertuple.intellij.haskell.external.Hlint.HlintJsonProtocol._
 
   private[external] def deserializeHlintInfo(hlintInfo: String) = {
-    if (hlintInfo.trim.isEmpty) {
+    if (hlintInfo.trim.isEmpty || hlintInfo == "[]") {
       Seq()
     } else {
       hlintInfo.parseJson.convertTo[Seq[HlintInfo]]
