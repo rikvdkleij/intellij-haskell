@@ -29,7 +29,7 @@ import com.intellij.util.ProcessingContext
 import com.powertuple.intellij.haskell.external.{BrowseInfo, GhcMod}
 import com.powertuple.intellij.haskell.psi.HaskellTypes._
 import com.powertuple.intellij.haskell.psi._
-import com.powertuple.intellij.haskell.{HaskellIcons, HaskellNotificationGroup, HaskellParserDefinition}
+import com.powertuple.intellij.haskell.{HaskellIcons, HaskellParserDefinition}
 
 import scala.collection.JavaConversions._
 import scala.concurrent.duration.Duration
@@ -42,7 +42,7 @@ object HaskellCompletionContributor {
 
 class HaskellCompletionContributor extends CompletionContributor {
 
-  import HaskellCompletionContributor._
+  import com.powertuple.intellij.haskell.code.HaskellCompletionContributor._
 
   private final val ReservedIds = HaskellParserDefinition.ALL_RESERVED_IDS.getTypes.map(_.asInstanceOf[HaskellTokenType].getName).toSeq
   private final val SpecialReservedIds = Seq("forall", "safe", "unsafe")
@@ -100,7 +100,7 @@ class HaskellCompletionContributor extends CompletionContributor {
   private def isImportSpecInProgress(position: PsiElement): Boolean = {
     Option(TreeUtil.findParent(position.getNode, HS_IMPORT_ID)).isDefined ||
         (Option(TreeUtil.findParent(position.getNode, HS_IMPORT_SPEC)).isDefined &&
-        Option(TreeUtil.findSiblingBackward(position.getNode, HS_LEFT_PAREN)).isDefined)
+            Option(TreeUtil.findSiblingBackward(position.getNode, HS_LEFT_PAREN)).isDefined)
   }
 
   private def findIdsForInImportModuleSpec(project: Project, position: PsiElement): Seq[LookupElementBuilder] = {
@@ -142,19 +142,21 @@ class HaskellCompletionContributor extends CompletionContributor {
     val importDeclarations = findImportDeclarations(psiFile)
     val moduleNames = importDeclarations.filter(i => Option(i.getImportSpec).isEmpty).
         map(i => ImportFullSpec(i.getModuleName, Option(i.getImportQualified).isDefined, Option(i.getImportQualifiedAs).map(_.getQconId).map(_.getName)))
-    Iterable(ImportFullSpec("Prelude", qualified = false, None)) ++ moduleNames
+    if (importDeclarations.exists(_.getModuleName == "Prelude")) {
+      moduleNames
+    } else {
+      Iterable(ImportFullSpec("Prelude", qualified = false, None)) ++ moduleNames
+    }
   }
 
   private def getImportedModulesWithHidingIdsSpec(psiFile: PsiFile): Iterable[ImportHidingIdsSpec] = {
     val importDeclarations = findImportDeclarations(psiFile)
     for {
       importDeclaration <- importDeclarations.filter(i => Option(i.getImportSpec).flatMap(is => Option(is.getImportHidingSpec)).isDefined)
-      importId <- importDeclaration.getImportSpec.getImportHidingSpec.getImportIdList
-      v = Option(importId.getQvar).map(_.getName).toSeq
-      c = Option(importId.getQcon).map(_.getName).toSeq
+      importIdList = importDeclaration.getImportSpec.getImportHidingSpec.getImportIdList
     } yield ImportHidingIdsSpec(
       importDeclaration.getModuleName,
-      v ++ c,
+      importIdList.map(id => Option(id.getQvar).map(_.getName).getOrElse(id.getQcon.getName)),
       Option(importDeclaration.getImportQualified).isDefined,
       Option(importDeclaration.getImportQualifiedAs).map(_.getQconId).map(_.getName)
     )
@@ -164,12 +166,11 @@ class HaskellCompletionContributor extends CompletionContributor {
     val importDeclarations = findImportDeclarations(psiFile)
     for {
       importDeclaration <- importDeclarations.filter(i => Option(i.getImportSpec).flatMap(is => Option(is.getImportIdsSpec)).isDefined)
-      importId <- importDeclaration.getImportSpec.getImportIdsSpec.getImportIdList
-      v = Option(importId.getQvar).map(_.getName).toSeq
-      c = Option(importId.getQcon).map(_.getName).toSeq
+      importIdList = importDeclaration.getImportSpec.getImportIdsSpec.getImportIdList
     } yield ImportIdsSpec(
       importDeclaration.getModuleName,
-      v ++ c, Option(importDeclaration.getImportQualified).isDefined,
+      importIdList.map(id => Option(id.getQvar).map(_.getName).getOrElse(id.getQcon.getName)),
+      Option(importDeclaration.getImportQualified).isDefined,
       Option(importDeclaration.getImportQualifiedAs).map(_.getQconId).map(_.getName)
     )
   }
