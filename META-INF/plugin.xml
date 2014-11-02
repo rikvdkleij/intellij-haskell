@@ -88,7 +88,7 @@
                         overrides="true"/>
 
         <localInspection language="Haskell" shortName="HLintInspection" displayName="Inspection by HLint"
-                         groupName="Haskell" enabledByDefault="true" level="WARNING"
+                         groupName="Haskell" enabledByDefault="false" level="WARNING"
                          implementationClass="com.powertuple.intellij.haskell.inspection.HlintInspectionTool"/>
     </extensions>
 
