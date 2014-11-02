@@ -21,12 +21,16 @@ import com.intellij.openapi.command.undo.UndoUtil
 import com.intellij.openapi.project.Project
 import com.intellij.psi.util.PsiTreeUtil
 import com.intellij.psi.{PsiElement, PsiFile}
-import com.powertuple.intellij.haskell.psi.HaskellElementFactory
+import com.powertuple.intellij.haskell.psi.{HaskellTypes, HaskellElementFactory}
 
 import scala.annotation.tailrec
 
 class HlintQuickfix(startElement: PsiElement, endElement: PsiElement, toSuggestion: String, note: Seq[String]) extends LocalQuickFixOnPsiElement(startElement, endElement) {
-  override def getText: String = s"Change to: $toSuggestion ${formatNote(note)}"
+  override def getText: String = if (toSuggestion.isEmpty) {
+    "Remove"
+  } else {
+    s"Change to: $toSuggestion ${formatNote(note)}"
+  }
 
   override def invoke(project: Project, file: PsiFile, startElement: PsiElement, endElement: PsiElement): Unit = {
     val parent = PsiTreeUtil.findCommonParent(startElement, endElement)
@@ -34,8 +38,16 @@ class HlintQuickfix(startElement: PsiElement, endElement: PsiElement, toSuggesti
       se <- findParentBelowParent(startElement, parent)
       ee <- findParentBelowParent(endElement, parent)
     } yield {
-      parent.deleteChildRange(findParentBelowParent(se.getNextSibling, parent).getOrElse(se), ee)
-      se.replace(HaskellElementFactory.createExpression(project, toSuggestion))
+      if (toSuggestion.isEmpty) {
+        if (Option(ee.getNextSibling).exists(e => e.getNode.getElementType == HaskellTypes.HS_NEWLINE || e.getNode.getElementType == HaskellTypes.HS_SNL)) {
+          parent.deleteChildRange(se, ee.getNextSibling)
+        } else {
+          parent.deleteChildRange(se, ee)
+        }
+      } else {
+        parent.deleteChildRange(findParentBelowParent(se.getNextSibling, parent).getOrElse(se), ee)
+        se.replace(HaskellElementFactory.createExpression(project, toSuggestion))
+      }
     }
     UndoUtil.markPsiFileForUndo(file)
   }

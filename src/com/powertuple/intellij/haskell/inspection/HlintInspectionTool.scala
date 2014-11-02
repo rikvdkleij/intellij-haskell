@@ -20,29 +20,39 @@ import com.intellij.codeInspection._
 import com.intellij.psi.PsiFile
 import com.powertuple.intellij.haskell.HaskellNotificationGroup
 import com.powertuple.intellij.haskell.external.{Hlint, HlintInfo}
+import com.powertuple.intellij.haskell.psi.HaskellTypes.{HS_NEWLINE, HS_SNL}
 import com.powertuple.intellij.haskell.settings.HaskellSettings
 import com.powertuple.intellij.haskell.util.LineColumnPosition
 
 class HlintInspectionTool extends LocalInspectionTool {
-  override def checkFile(file: PsiFile, manager: InspectionManager, isOnTheFly: Boolean): Array[ProblemDescriptor] = {
-    val problemsHolder = new ProblemsHolder(manager, file, isOnTheFly)
+  override def checkFile(psiFile: PsiFile, manager: InspectionManager, isOnTheFly: Boolean): Array[ProblemDescriptor] = {
+    val problemsHolder = new ProblemsHolder(manager, psiFile, isOnTheFly)
     if (HaskellSettings.getInstance().getState.hlintPath.isEmpty) {
       HaskellNotificationGroup.notifyWarning("Can not run HLint. Configure path to HLint in Haskell Settings")
       problemsHolder.getResultsArray
     } else {
-      val hlintInfos = Hlint.check(file)
+      val hlintInfos = Hlint.check(psiFile)
       for {
         hi <- hlintInfos
-        startOffSet <- LineColumnPosition.getOffset(file, LineColumnPosition(hi.startLine, hi.startColumn))
-        endOffSet <- LineColumnPosition.getOffset(file, LineColumnPosition(hi.endLine, hi.endColumn - 1))
-        se <- Option(file.findElementAt(startOffSet))
-        ee <- Option(file.findElementAt(endOffSet))
+        startOffSet <- LineColumnPosition.getOffset(psiFile, LineColumnPosition(hi.startLine, hi.startColumn))
+        endOffSet <- LineColumnPosition.getOffset(psiFile, LineColumnPosition(hi.endLine, hi.endColumn - 1))
+        se <- Option(psiFile.findElementAt(startOffSet))
+        ee <- findLastHaskellElement(psiFile, endOffSet)
       } yield
         hi.to match {
-          case Some(to) => problemsHolder.registerProblem(se, hi.hint, findProblemHighlightType(hi), new HlintQuickfix(se, ee, to, hi.note))
-          case None => problemsHolder.registerProblem(se, hi.hint, findProblemHighlightType(hi))
+          case Some(to) => problemsHolder.registerProblem(
+            new ProblemDescriptorBase(se, ee, hi.hint, Array(new HlintQuickfix(se, ee, to, hi.note)), findProblemHighlightType(hi), false, null, true, isOnTheFly))
+          case None => problemsHolder.registerProblem(
+            new ProblemDescriptorBase(se, ee, hi.hint, Array(), findProblemHighlightType(hi), false, null, true, isOnTheFly))
         }
       problemsHolder.getResultsArray
+    }
+  }
+
+  private def findLastHaskellElement(psiFile: PsiFile, offset: Int) = {
+    Option(psiFile.findElementAt(offset)) match {
+      case Some(e) if e.getNode.getElementType == HS_NEWLINE || e.getNode.getElementType == HS_SNL => Option(psiFile.findElementAt(offset - 1))
+      case maybeElement => maybeElement
     }
   }
 
