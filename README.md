@@ -32,8 +32,9 @@ Any feedback is welcome!!
 - Navigate to identifier (called `Symbol` in IntelliJ menu);
 - Code completion by looking to import declarations;
 - Simple form of code formatting;
-- Inspection by HLint (in next release);
-- Quickfixes for HLint suggestions (in next release);
+- Inspection by HLint;
+- Quick fixes for HLint suggestions;
+- View error, action to view formatted message from ghc-mod. Especially useful in case message consists of multiple lines (Ctrl-F10, Meta-F10 on Mac OSX);
 
 A lot of features are with the help of ghc-mod(i)!!
 
@@ -42,7 +43,7 @@ A lot of features are with the help of ghc-mod(i)!!
 - Integration of hsimport;
 - Smart completion if that is achievable :-)
 - Hole driven development support;
-- Some quick-fixes;
+- Some quick fixes;
 - Setting scope while refactoring;
 - Improve code formatting (maybe use `hindent` or `haskell-formatter` as helper);
 - Improve error/warning annotation position;
@@ -50,11 +51,10 @@ A lot of features are with the help of ghc-mod(i)!!
 # Getting started: 
 - Cabal install latest versions of ghc-mod and haskell-docs;
 - Set file paths to ghc-mod, ghc-modi and haskell-docs in `Settings/Haskell`.
-    IMPORTANT: For Mac OSX (especially Yosemite) set directory to ghc binaries, e.g. `/usr/local/bin`, because of bug in Yosemite (see `Remarks`);
 - Be sure in `Settings/Filetypes` that `Haskell language file` is registered with pattern `*.hs` and `Literate Haskell language file` with pattern `*.lhs`; 
 - First install and build your project in a Cabal sandbox (be sure that Haddock documentation is generated, see [haskell-docs](https://github.com/chrisdone/haskell-docs)). 
 - After project is build in sandbox, create Haskell project in IntelliJ by using `File`/`Open` from IntelliJ menu;
-- Select `No SDK` in Project Setting;
+- Create `GHC SDK` in Project Setting by selecting path to GHC binaries, e.g. `\usr\local\bin`;
 - Select in `Modules Settings` which folders to exclude (like .cabal-sandbox and dist) and which folders are `Source` and `Test` (normally src and test).
 - To get nice navigation features: add for libraries, Prelude(base, ghc-prim and integer-gmp packages) the source root directories to project in `Project Settings`/`Libraries`. `cabal get` is useful for getting source code of package.
     To get source code of libraries in `Project view`, create for example a directory `lib` inside project root directory and put source roots there;
@@ -68,5 +68,5 @@ A lot of features are with the help of ghc-mod(i)!!
 - Created workaround for this issue: https://youtrack.jetbrains.com/issue/IDEA-130894.
 - Developed plugin on Ubuntu;
 - During testing on Mac OSX Yosemite Beta I noticed problem with ghc-modi: PATH environment variable asked from within IntelliJ was not the same as the global one. I had to create workaround only for Mac OSX :-( 
-    This workaround will add path from settings to PATH environment variable which is passed to ghc-modi process. Other solutions are welcome!
+    This workaround will add path of `GHC SDK` to PATH environment variable which is passed to ghc-modi process. Other solutions are welcome!
 - Windows is not supported. Maybe it will work okay but I can not test it;

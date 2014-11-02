@@ -1,7 +1,7 @@
 <idea-plugin version="2">
     <id>com.powertuple.intellij.haskell</id>
     <name>IntelliJ-Haskell</name>
-    <version>0.1</version>
+    <version>0.2</version>
     <vendor email="rikvdkleij@gmail.com">PowerTuple</vendor>
 
     <description><![CDATA[
@@ -9,9 +9,19 @@
     ]]></description>
 
     <change-notes><![CDATA[
-        Initial version.
-        See for more information: https://github.com/rikvdkleij/intellij-haskell/blob/master/README.md
-        Any feedback is welcome!
+        <p>0.2</p>
+        <ul>
+            <li>Inspection by HLint</li>
+            <li>Quick fixes for HLint suggestions</li>
+            <li>View error, action to view formatted message from ghc-mod. Especially useful in case message consists of multiple lines (Ctrl-F10, Meta-F10 on Mac OSX)</li>
+            <li>Haskell GHC SDK. I noticed that setting GHC SDK for existing Haskell project gave warning about corrupt SDK. In that case: close project, remove idea files and open project again.</li>
+            <li>Removed ghcOsxPath setting in favour of GHC SDK home path</li>
+            <li>ghc-modi process is started on request, not automatically anymore when project is opened</li>
+            <li>Improvements</li>
+        </ul>
+        <p>See for more information: https://github.com/rikvdkleij/intellij-haskell/blob/master/README.md</p>
+
+        <p>Any feedback is welcome!</p>
     ]]>
     </change-notes>
 
