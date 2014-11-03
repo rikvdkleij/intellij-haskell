@@ -31,7 +31,12 @@ object HaskellFindUtil {
   }
 
   def findDeclarationElements(project: Project, name: String, includeNonProjectItems: Boolean): Iterable[HaskellDeclarationElement] = {
-    findDeclarationElements(project, includeNonProjectItems).filter(de => de.getIdentifierElements.map(_.getName.toLowerCase).exists(idName => idName.contains(name.toLowerCase)))
+    val normalizedName = name.trim.toLowerCase
+    if (name.endsWith(" ")) {
+      findDeclarationElementsByConditionOnName(project, includeNonProjectItems, (n: String) => n == normalizedName)
+    } else {
+      findDeclarationElementsByConditionOnName(project, includeNonProjectItems, (n: String) => n.contains(normalizedName))
+    }
   }
 
   def findNamedElements(project: Project, includeNonProjectItems: Boolean): Iterable[HaskellNamedElement] = {
@@ -40,6 +45,10 @@ object HaskellFindUtil {
 
   def findNamedElements(project: Project, name: String, includeNonProjectItems: Boolean): Iterable[HaskellNamedElement] = {
     findNamedElements(project, includeNonProjectItems).filter(_.getName.toLowerCase.contains(name.toLowerCase))
+  }
+
+  private def findDeclarationElementsByConditionOnName(project: Project, includeNonProjectItems: Boolean, condition: String => Boolean) = {
+    findDeclarationElements(project, includeNonProjectItems).filter(de => de.getIdentifierElements.map(_.getName.toLowerCase).exists(n => condition(n)))
   }
 
   private def getHaskellFiles(project: Project, includeNonProjectItems: Boolean) = {
