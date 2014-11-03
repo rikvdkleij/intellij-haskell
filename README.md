@@ -15,6 +15,7 @@ and expects that the Cabal init/install/build is done on command-line.
 
 Any feedback is welcome!!
 
+Version 0.2 is not yet available in plugin repository. If you do not want to wait, latest version of plugin can be downloaded from [Releases](https://github.com/rikvdkleij/intellij-haskell/releases) and installed by using `Install plugin from disk` inside `Settings/Plugins`.
 
 # Features
 - Syntax highlighting (which can be customized);
