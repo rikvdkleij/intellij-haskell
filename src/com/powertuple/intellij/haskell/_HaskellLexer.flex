@@ -111,7 +111,7 @@ symbol_no_colon     = {equal} | {at} | {backslash} | {vertical_bar} | {tilde} | 
 varid               = {small} ({small} | {large} | {digit} | {quote})* {hash}*
 varsym              = {symbol_no_colon} ({symbol_no_colon} | {colon})*
 
-conid               = {large} ({small} | {large} | {digit} | {quote})* {hash}* | {left_bracket} {varid}? {right_bracket}
+conid               = {large} ({small} | {large} | {digit} | {quote})* {hash}*
 consym              = {quote}? {colon} ({symbol_no_colon} | {colon})*
 
 qvarsym             = ({conid} {dot})* {varsym}

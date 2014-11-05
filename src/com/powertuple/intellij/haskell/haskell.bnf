@@ -83,7 +83,7 @@ snl                         ::= (&<<containsSpaces>> NEWLINE)+        // multipl
 comments                    ::= COMMENT | NCOMMENT
 
 qvar_id                     ::= QVARID_ID
-qcon_id                     ::= QCONID_ID
+qcon_id                     ::= QCONID_ID | LEFT_BRACKET qvar_id? RIGHT_BRACKET
 qvar_sym                    ::= QVARSYM_ID | TILDE // added tilde because: data (~) a b = Eq# ((~#) a b) in Types.hs in ghc-prim
 gcon_sym                    ::= GCONSYM_ID
 
