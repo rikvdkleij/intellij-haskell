@@ -22,7 +22,9 @@ import com.intellij.formatting._
 import com.intellij.lang.ASTNode
 import com.intellij.psi.TokenType
 import com.intellij.psi.formatter.common.AbstractBlock
+import com.intellij.psi.impl.source.tree.TreeUtil
 import com.intellij.psi.tree.IElementType
+import com.powertuple.intellij.haskell.psi.HaskellTypes
 import com.powertuple.intellij.haskell.psi.HaskellTypes._
 
 import scala.annotation.tailrec
@@ -69,7 +71,7 @@ class HaskellFormattingBlock(node: ASTNode, alignment: Option[Alignment], spacin
     val childType: IElementType = child.getElementType
 
     childType match {
-      case HS_LEFT_PAREN | HS_LEFT_BRACE | HS_LEFT_BRACKET | HS_COMMA => Some(alignments(0))
+      case HS_LEFT_PAREN | HS_RIGHT_PAREN | HS_LEFT_BRACE | HS_RIGHT_BRACE | HS_LEFT_BRACKET | HS_RIGHT_BRACKET | HS_COMMA => Some(alignments(0))
       case HS_VERTICAL_BAR | HS_EQUAL => Some(alignments(1))
       case HS_EXPORT => Some(alignments(2))
       case HS_IF | HS_THEN | HS_ELSE => Some(alignments(3))
@@ -121,6 +123,10 @@ object IndentProcessor {
       case HS_CONSTR_1 | HS_CONSTR_2 | HS_CONSTR_3 | HS_CONSTR_4 => getNormalIndent
       case HS_COMMENT | HS_NCOMMENT => getNoneIndent
       case HS_LINE_EXPRESSION => getNormalIndent
+      case HS_LEFT_PAREN | HS_LEFT_BRACE | HS_LEFT_BRACKET
+        if TreeUtil.findParent(child, HaskellTypes.HS_LINE_EXPRESSION) != null |
+            TreeUtil.findParent(child, HaskellTypes.HS_MODULE_DECLARATION) != null |
+            TreeUtil.findParent(child, HaskellTypes.HS_IMPORT_DECLARATION) != null => getNormalIndent
       case _ => getNoneIndent
     }
   }

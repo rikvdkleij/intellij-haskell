@@ -30,25 +30,21 @@ import org.jetbrains.annotations.{NotNull, Nullable}
 object HaskellFormattingModelBuilder {
   def createSpacingBuilder(settings: CommonCodeStyleSettings, haskellCodeStyleSettings: HaskellCodeStyleSettings): SpacingBuilder = {
     new SpacingBuilder(settings.getRootSettings, HaskellLanguage.Instance).
-        beforeInside(HS_COMMA, HS_FIRST_LINE_EXPRESSION).spaceIf(settings.SPACE_BEFORE_COMMA).
-        beforeInside(HS_COMMA, HS_LINE_EXPRESSION).spaceIf(settings.SPACE_BEFORE_COMMA).
-        beforeInside(HS_COMMA, HS_LAST_LINE_EXPRESSION).spaceIf(settings.SPACE_BEFORE_COMMA).
-        afterInside(HS_COMMA, HS_FIRST_LINE_EXPRESSION).spaceIf(settings.SPACE_AFTER_COMMA).
-        afterInside(HS_COMMA, HS_LINE_EXPRESSION).spaceIf(settings.SPACE_AFTER_COMMA).
-        afterInside(HS_COMMA, HS_LAST_LINE_EXPRESSION).spaceIf(settings.SPACE_AFTER_COMMA).
-        before(HS_LEFT_PAREN).spaces(1).
-        after(HS_LEFT_PAREN).spaces(0).
-        before(HS_RIGHT_PAREN).spaces(0).
-        after(HS_RIGHT_PAREN).spaces(1).
-        before(HS_LEFT_BRACKET).spaces(1).
-        after(HS_LEFT_BRACKET).spaces(0).
-        before(HS_RIGHT_BRACKET).spaces(0).
-        after(HS_RIGHT_BRACKET).spaces(1).
-        after(HS_RIGHT_BRACE).spaces(1).
-        before(HS_LEFT_BRACE).spaces(1).
-        after(HS_LEFT_BRACE).spaces(0).
-        before(HS_RIGHT_BRACE).spaces(0).
-        after(HS_RIGHT_BRACE).spaces(1).
+        before(HS_COMMA).spaceIf(settings.SPACE_BEFORE_COMMA).
+        after(HS_COMMA).spaceIf(settings.SPACE_AFTER_COMMA).
+        before(HS_LEFT_PAREN).spacing(0, 1, 0, settings.KEEP_LINE_BREAKS, settings.KEEP_BLANK_LINES_IN_CODE).
+        after(HS_LEFT_PAREN).spacing(0, 0, 0, settings.KEEP_LINE_BREAKS, settings.KEEP_BLANK_LINES_IN_CODE).
+        before(HS_RIGHT_PAREN).spacing(0, 0, 0, settings.KEEP_LINE_BREAKS, settings.KEEP_BLANK_LINES_IN_CODE).
+        after(HS_RIGHT_PAREN).spacing(0, 1, 0, settings.KEEP_LINE_BREAKS, settings.KEEP_BLANK_LINES_IN_CODE).
+        before(HS_LEFT_BRACKET).spacing(0, 1, 0, settings.KEEP_LINE_BREAKS, settings.KEEP_BLANK_LINES_IN_CODE).
+        after(HS_LEFT_BRACKET).spacing(0, 0, 0, settings.KEEP_LINE_BREAKS, settings.KEEP_BLANK_LINES_IN_CODE).
+        before(HS_RIGHT_BRACKET).spacing(0, 0, 0, settings.KEEP_LINE_BREAKS, settings.KEEP_BLANK_LINES_IN_CODE).
+        after(HS_RIGHT_BRACKET).spacing(0, 1, 0, settings.KEEP_LINE_BREAKS, settings.KEEP_BLANK_LINES_IN_CODE).
+        after(HS_RIGHT_BRACE).spacing(0, 1, 0, settings.KEEP_LINE_BREAKS, settings.KEEP_BLANK_LINES_IN_CODE).
+        before(HS_LEFT_BRACE).spacing(0, 1, 0, settings.KEEP_LINE_BREAKS, settings.KEEP_BLANK_LINES_IN_CODE).
+        after(HS_LEFT_BRACE).spacing(0, 0, 0, settings.KEEP_LINE_BREAKS, settings.KEEP_BLANK_LINES_IN_CODE).
+        before(HS_RIGHT_BRACE).spacing(0, 0, 0, settings.KEEP_LINE_BREAKS, settings.KEEP_BLANK_LINES_IN_CODE).
+        after(HS_RIGHT_BRACE).spacing(0, 1, 0, settings.KEEP_LINE_BREAKS, settings.KEEP_BLANK_LINES_IN_CODE).
         around(HaskellParserDefinition.RESERVED_IDS).spaces(1).
         around(TokenSet.create(HS_TTYPE)).spaces(1).
         after(HS_VARS).spaces(1).
