@@ -28,15 +28,17 @@ import com.intellij.psi.PsiFile
 import com.intellij.psi.impl.source.tree.TreeUtil
 import com.intellij.psi.util.PsiTreeUtil
 import com.powertuple.intellij.haskell.external.{GhcMod, GhcModCheckResult, GhcModProblem}
-import com.powertuple.intellij.haskell.psi.{HaskellElementFactory, HaskellTypes}
-import com.powertuple.intellij.haskell.util.{OSUtil, FileUtil, LineColumnPosition}
+import com.powertuple.intellij.haskell.psi._
+import com.powertuple.intellij.haskell.util.{FileUtil, LineColumnPosition, OSUtil}
 import com.powertuple.intellij.haskell.{HaskellFile, HaskellFileType}
 
 import scala.annotation.tailrec
+import scala.collection.JavaConversions._
 
 class GhcModiExternalAnnotator extends ExternalAnnotator[GhcModInitialInfo, GhcModCheckResult] {
 
-  private final val NoTypeSignaturePattern = """Warning: Top-level binding with no type signature:\n? (.+)""".r
+  private final val NoTypeSignaturePattern = """Warning: Top-level binding with no type signature: (.+)""".r
+  private final val UseLanguageExtensionPattern = """.* Perhaps you intended to use (\w+) .*""".r
 
   /**
    * Returning null will cause doAnnotate() not to be called by Intellij API.
@@ -59,7 +61,8 @@ class GhcModiExternalAnnotator extends ExternalAnnotator[GhcModInitialInfo, GhcM
     if (ghcModResult.problems.nonEmpty && psiFile.isValid) {
       for (annotation <- createAnnotations(ghcModResult, psiFile)) {
         annotation match {
-          case ErrorAnnotation(textRange, message) => holder.createErrorAnnotation(textRange, message)
+          case ErrorAnnotation(textRange, message, None) => holder.createErrorAnnotation(textRange, message)
+          case ErrorAnnotation(textRange, message, Some(intentionAction)) => holder.createErrorAnnotation(textRange, message).registerFix(intentionAction)
           case WarningAnnotation(textRange, message, None) => holder.createWarningAnnotation(textRange, message)
           case WarningAnnotation(textRange, message, Some(intentionAction)) => holder.createWarningAnnotation(textRange, message).registerFix(intentionAction)
         }
@@ -81,13 +84,17 @@ class GhcModiExternalAnnotator extends ExternalAnnotator[GhcModInitialInfo, GhcM
     ) yield {
       val textRange = getProblemTextRange(psiFile, problem)
       textRange.map { tr =>
-        if (problem.description.startsWith("Warning:")) {
-          problem.description match {
+        val problemDescription = problem.description.trim.replace(OSUtil.LineSeparator, " ")
+        if (problemDescription.startsWith("Warning:")) {
+          problemDescription match {
             case NoTypeSignaturePattern(typeSignature) => WarningAnnotation(tr, problem.description, Some(new TypeSignatureIntentionAction(typeSignature)))
             case _ => WarningAnnotation(tr, problem.description, None)
           }
         } else {
-          ErrorAnnotation(tr, problem.description)
+          problemDescription match {
+            case UseLanguageExtensionPattern(languageExtension) => ErrorAnnotation(tr, problem.description, Some(new LanguageExtensionIntentionAction(languageExtension)))
+            case _ => ErrorAnnotation(tr, problem.description, None)
+          }
         }
       }
     }).flatten
@@ -126,11 +133,17 @@ case class GhcModInitialInfo(psiFile: PsiFile, filePath: String)
 
 abstract class Annotation
 
-case class ErrorAnnotation(textRange: TextRange, message: String) extends Annotation
+case class ErrorAnnotation(textRange: TextRange, message: String, languageExtensionIntentionAction: Option[LanguageExtensionIntentionAction]) extends Annotation
 
 case class WarningAnnotation(textRange: TextRange, message: String, typeSignatureIntentionAction: Option[TypeSignatureIntentionAction]) extends Annotation
 
-class TypeSignatureIntentionAction(typeSignature: String) extends BaseIntentionAction {
+abstract class HaskellBaseIntentionAction extends BaseIntentionAction {
+  override def isAvailable(project: Project, editor: Editor, file: PsiFile): Boolean = {
+    file.isInstanceOf[HaskellFile]
+  }
+}
+
+class TypeSignatureIntentionAction(typeSignature: String) extends HaskellBaseIntentionAction {
   setText(s"Add type signature: $typeSignature")
 
   override def getFamilyName: String = "Add type signature"
@@ -145,8 +158,23 @@ class TypeSignatureIntentionAction(typeSignature: String) extends BaseIntentionA
       case None => ()
     }
   }
+}
 
-  override def isAvailable(project: Project, editor: Editor, file: PsiFile): Boolean = {
-    file.isInstanceOf[HaskellFile]
+class LanguageExtensionIntentionAction(languageExtension: String) extends HaskellBaseIntentionAction {
+  setText(s"Add language extension: $languageExtension")
+
+  override def getFamilyName: String = "Add language extension"
+
+  override def invoke(project: Project, editor: Editor, file: PsiFile): Unit = {
+    val languagePragma = HaskellElementFactory.createLanguagePragma(project, s"{-# LANGUAGE $languageExtension #-}" + OSUtil.LineSeparator)
+    Option(PsiTreeUtil.findChildOfType(file, classOf[HaskellLanguagePragmas])) match {
+      case Some(lps) =>
+        val lastPragma = PsiTreeUtil.findChildrenOfType(lps, classOf[HaskellLanguagePragma]).lastOption.orNull
+        lps.addAfter(languagePragma, lastPragma)
+      case None => Option(file.getFirstChild) match {
+        case Some(c) => file.addBefore(languagePragma, c)
+        case None => file.add(languagePragma)
+      }
+    }
   }
 }
