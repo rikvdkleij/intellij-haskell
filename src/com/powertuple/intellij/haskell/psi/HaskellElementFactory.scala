@@ -20,6 +20,7 @@ import com.intellij.lang.ASTNode
 import com.intellij.openapi.project.Project
 import com.intellij.psi.PsiFileFactory
 import com.intellij.psi.util.PsiTreeUtil
+import com.powertuple.intellij.haskell.util.OSUtil
 import com.powertuple.intellij.haskell.{HaskellFile, HaskellLanguage}
 
 object HaskellElementFactory {
@@ -46,6 +47,11 @@ object HaskellElementFactory {
   def createExpression(project: Project, expression: String): HaskellExpression = {
     val haskellFile = createFileFromText(project, expression)
     PsiTreeUtil.findChildOfType(haskellFile, classOf[HaskellExpression])
+  }
+
+  def createTopDeclaration(project: Project, declaration: String): HaskellTopDeclaration = {
+    val haskellFile = createFileFromText(project, declaration)
+    PsiTreeUtil.findChildOfType(haskellFile, classOf[HaskellTopDeclaration])
   }
 
   private def createFileFromText(project: Project, text: String): HaskellFile = {

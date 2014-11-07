@@ -23,8 +23,8 @@
   mixin("qvar_id|qvar_sym|qcon_id|gcon_sym")="com.powertuple.intellij.haskell.psi.impl.HaskellNamedElementImpl"
   implements("qvar_id|qvar_sym|qcon_id|gcon_sym")="com.powertuple.intellij.haskell.psi.HaskellNamedElement"
 
-  methods("type_signature|data_declaration|type_declaration|newtype_declaration|class_declaration|instance_declaration|type_family_declaration|deriving_declaration|type_instance_declaration")=[getName getPresentation getIdentifierElements]
-  implements("type_signature|data_declaration|type_declaration|newtype_declaration|class_declaration|instance_declaration|type_family_declaration|deriving_declaration|type_instance_declaration")="com.powertuple.intellij.haskell.psi.HaskellDeclarationElement"
+  methods("type_signature_declaration|data_declaration|type_declaration|newtype_declaration|class_declaration|instance_declaration|type_family_declaration|deriving_declaration|type_instance_declaration")=[getName getPresentation getIdentifierElements]
+  implements("type_signature_declaration|data_declaration|type_declaration|newtype_declaration|class_declaration|instance_declaration|type_family_declaration|deriving_declaration|type_instance_declaration")="com.powertuple.intellij.haskell.psi.HaskellDeclarationElement"
 }
 
 program                     ::= onl language_pragmas? onl module_body
@@ -54,7 +54,7 @@ import_id                   ::= TYPE? qvar |
                                   qcon osnl (DOT_DOT_PARENS | LEFT_PAREN osnl (cname osnl (COMMA osnl cname)*)? osnl RIGHT_PAREN)?
 
 top_declaration             ::= type_declaration | data_declaration | newtype_declaration | class_declaration | instance_declaration | default_declaration |
-                                  foreign_declaration | type_family_declaration | deriving_declaration | type_instance_declaration | type_signature | expression
+                                  foreign_declaration | type_family_declaration | deriving_declaration | type_instance_declaration | type_signature_declaration | expression
 
 type_declaration            ::= TYPE osnl simpletype osnl (EQUAL | WHERE)? osnl (ttype | type_signature)? (DOUBLE_RIGHT_ARROW ttype)? NEWLINE
 data_declaration            ::= DATA osnl (context osnl DOUBLE_RIGHT_ARROW)? osnl simpletype osnl (EQUAL osnl constrs | (WHERE | EQUAL) osnl cdecls)? osnl (DERIVING osnl ttype)? NEWLINE
@@ -67,8 +67,8 @@ class_declaration           ::= (CLASS osnl (scontext osnl DOUBLE_RIGHT_ARROW)? 
 instance_declaration        ::= INSTANCE osnl (scontext osnl DOUBLE_RIGHT_ARROW)? osnl qcon_id osnl inst osnl WHERE? osnl idecls? NEWLINE
 default_declaration         ::= DEFAULT osnl (LEFT_PAREN (ttype (COMMA ttype)*)? RIGHT_PAREN | type_signature) NEWLINE
 type_instance_declaration   ::= TYPE_INSTANCE osnl expression
-
-type_signature              ::= (vars osnl COLON_COLON osnl ((ttype | context) DOUBLE_RIGHT_ARROW)? osnl ttype | fixity (DECIMAL)? ops)
+type_signature_declaration  ::= type_signature NEWLINE
+type_signature              ::= (vars osnl COLON_COLON osnl ((ttype | context) DOUBLE_RIGHT_ARROW)? osnl ttype | fixity (DECIMAL)? ops)   {methods=[getIdentifierElements]}
 foreign_declaration         ::= (FOREIGN_IMPORT | FOREIGN_EXPORT) osnl expression
 type_family_declaration     ::= TYPE_FAMILY osnl type_family_type osnl WHERE? osnl expression?
 deriving_declaration        ::= DERIVING INSTANCE (scontext osnl DOUBLE_RIGHT_ARROW)? osnl qcon_id osnl inst NEWLINE

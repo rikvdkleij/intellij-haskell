@@ -227,6 +227,10 @@ object HaskellPsiImplUtil {
         getOrElse(Seq())
   }
 
+  def getIdentifierElements(typeSignatureDeclaration: HaskellTypeSignatureDeclaration): Seq[HaskellNamedElement] = {
+    typeSignatureDeclaration.getTypeSignature.getIdentifierElements
+  }
+
   def getIdentifierElements(dataDeclaration: HaskellDataDeclaration): Seq[HaskellNamedElement] = {
     dataDeclaration.getSimpletype.getIdentifierElements ++ Option(dataDeclaration.getConstr1List).map(_.flatMap(c => Option(c.getQcon.getIdentifierElement))).toSeq.flatten ++
         Option(dataDeclaration.getConstr2List).map(_.flatMap(c => Option(c.getQconop.getIdentifierElement))).toSeq.flatten ++

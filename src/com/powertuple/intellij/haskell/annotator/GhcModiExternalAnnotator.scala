@@ -18,17 +18,25 @@ package com.powertuple.intellij.haskell.annotator
 
 import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer
 import com.intellij.codeInsight.daemon.impl.DaemonCodeAnalyzerImpl
+import com.intellij.codeInsight.intention.impl.BaseIntentionAction
 import com.intellij.lang.annotation.{AnnotationHolder, ExternalAnnotator}
+import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.fileEditor.FileDocumentManager
+import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.TextRange
 import com.intellij.psi.PsiFile
-import com.powertuple.intellij.haskell.HaskellFileType
+import com.intellij.psi.impl.source.tree.TreeUtil
+import com.intellij.psi.util.PsiTreeUtil
 import com.powertuple.intellij.haskell.external.{GhcMod, GhcModCheckResult, GhcModProblem}
-import com.powertuple.intellij.haskell.util.{FileUtil, LineColumnPosition}
+import com.powertuple.intellij.haskell.psi.{HaskellElementFactory, HaskellTypes}
+import com.powertuple.intellij.haskell.util.{OSUtil, FileUtil, LineColumnPosition}
+import com.powertuple.intellij.haskell.{HaskellFile, HaskellFileType}
 
 import scala.annotation.tailrec
 
 class GhcModiExternalAnnotator extends ExternalAnnotator[GhcModInitialInfo, GhcModCheckResult] {
+
+  private final val NoTypeSignaturePattern = """Warning: Top-level binding with no type signature: (.+)""".r
 
   /**
    * Returning null will cause doAnnotate() not to be called by Intellij API.
@@ -52,7 +60,8 @@ class GhcModiExternalAnnotator extends ExternalAnnotator[GhcModInitialInfo, GhcM
       for (annotation <- createAnnotations(ghcModResult, psiFile)) {
         annotation match {
           case ErrorAnnotation(textRange, message) => holder.createErrorAnnotation(textRange, message)
-          case WarningAnnotation(textRange, message) => holder.createWarningAnnotation(textRange, message)
+          case WarningAnnotation(textRange, message, None) => holder.createWarningAnnotation(textRange, message)
+          case WarningAnnotation(textRange, message, Some(intentionAction)) => holder.createWarningAnnotation(textRange, message).registerFix(intentionAction)
         }
       }
     }
@@ -73,7 +82,10 @@ class GhcModiExternalAnnotator extends ExternalAnnotator[GhcModInitialInfo, GhcM
       val textRange = getProblemTextRange(psiFile, problem)
       textRange.map { tr =>
         if (problem.description.startsWith("Warning:")) {
-          WarningAnnotation(tr, problem.description)
+          problem.description match {
+            case NoTypeSignaturePattern(typeSignature) => WarningAnnotation(tr, problem.description, Some(new TypeSignatureIntentionAction(typeSignature)))
+            case _ => WarningAnnotation(tr, problem.description, None)
+          }
         } else {
           ErrorAnnotation(tr, problem.description)
         }
@@ -108,7 +120,6 @@ class GhcModiExternalAnnotator extends ExternalAnnotator[GhcModInitialInfo, GhcM
       None
     }
   }
-
 }
 
 case class GhcModInitialInfo(psiFile: PsiFile, filePath: String)
@@ -117,4 +128,25 @@ abstract class Annotation
 
 case class ErrorAnnotation(textRange: TextRange, message: String) extends Annotation
 
-case class WarningAnnotation(textRange: TextRange, message: String) extends Annotation
+case class WarningAnnotation(textRange: TextRange, message: String, typeSignatureIntentionAction: Option[TypeSignatureIntentionAction]) extends Annotation
+
+class TypeSignatureIntentionAction(typeSignature: String) extends BaseIntentionAction {
+  setText(s"Add type signature: $typeSignature")
+
+  override def getFamilyName: String = "Add type signature"
+
+  override def invoke(project: Project, editor: Editor, file: PsiFile): Unit = {
+    val offset = editor.getCaretModel.getOffset
+    Option(file.findElementAt(offset)) match {
+      case Some(e) =>
+        val topDeclaration = TreeUtil.findParent(e.getNode, HaskellTypes.HS_TOP_DECLARATION).getPsi
+        val moduleBody = topDeclaration.getParent
+        moduleBody.addBefore(HaskellElementFactory.createTopDeclaration(project, typeSignature + OSUtil.LineSeparator), topDeclaration)
+      case None => ()
+    }
+  }
+
+  override def isAvailable(project: Project, editor: Editor, file: PsiFile): Boolean = {
+    file.isInstanceOf[HaskellFile]
+  }
+}

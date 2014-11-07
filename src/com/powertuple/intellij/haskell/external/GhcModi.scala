@@ -38,7 +38,7 @@ class GhcModi(val settings: HaskellSettings, val project: Project) extends Proje
   private final val ExecutorService = Executors.newSingleThreadExecutor
   implicit private final val ExecContext = ExecutionContext.fromExecutorService(ExecutorService)
 
-  private final val LineSeparator = java.security.AccessController.doPrivileged(new GetPropertyAction("line.separator")).getBytes
+  private final val LineSeparatorInBytes = OSUtil.LineSeparator.getBytes
 
   private[this] var outputStream: OutputStream = _
   private[this] val stdOutListBuffer = ListBuffer[String]()
@@ -63,7 +63,7 @@ class GhcModi(val settings: HaskellSettings, val project: Project) extends Proje
       try {
         stdOutListBuffer.clear()
         outputStream.write(command.getBytes)
-        outputStream.write(LineSeparator)
+        outputStream.write(LineSeparatorInBytes)
         outputStream.flush()
 
         val waitForStdOutput = Future {
