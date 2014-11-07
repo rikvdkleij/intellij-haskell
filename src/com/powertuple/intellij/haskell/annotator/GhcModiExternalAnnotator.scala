@@ -36,7 +36,7 @@ import scala.annotation.tailrec
 
 class GhcModiExternalAnnotator extends ExternalAnnotator[GhcModInitialInfo, GhcModCheckResult] {
 
-  private final val NoTypeSignaturePattern = """Warning: Top-level binding with no type signature: (.+)""".r
+  private final val NoTypeSignaturePattern = """Warning: Top-level binding with no type signature:\n? (.+)""".r
 
   /**
    * Returning null will cause doAnnotate() not to be called by Intellij API.
