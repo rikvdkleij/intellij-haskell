@@ -31,7 +31,7 @@ object HaskellFindUtil {
   }
 
   def findDeclarationElements(project: Project, name: String, includeNonProjectItems: Boolean): Iterable[HaskellDeclarationElement] = {
-    val normalizedName = name.trim.toLowerCase
+    val normalizedName = normalize(name)
     if (name.endsWith(" ")) {
       findDeclarationElementsByConditionOnName(project, includeNonProjectItems, (n: String) => n == normalizedName)
     } else {
@@ -44,11 +44,20 @@ object HaskellFindUtil {
   }
 
   def findNamedElements(project: Project, name: String, includeNonProjectItems: Boolean): Iterable[HaskellNamedElement] = {
-    findNamedElements(project, includeNonProjectItems).filter(_.getName.toLowerCase.contains(name.toLowerCase))
+    val normalizedName = normalize(name)
+    if (name.endsWith(" ")) {
+      findNamedElementsByConditionOnName(project, includeNonProjectItems, (n: String) => n == normalizedName)
+    } else {
+      findNamedElementsByConditionOnName(project, includeNonProjectItems, (n: String) => n.contains(normalizedName))
+    }
   }
 
   private def findDeclarationElementsByConditionOnName(project: Project, includeNonProjectItems: Boolean, condition: String => Boolean) = {
     findDeclarationElements(project, includeNonProjectItems).filter(de => de.getIdentifierElements.map(_.getName.toLowerCase).exists(n => condition(n)))
+  }
+
+  private def findNamedElementsByConditionOnName(project: Project, includeNonProjectItems: Boolean, condition: String => Boolean) = {
+    findNamedElements(project, includeNonProjectItems).filter(ne => condition(ne.getName.toLowerCase))
   }
 
   private def getHaskellFiles(project: Project, includeNonProjectItems: Boolean) = {
@@ -58,5 +67,9 @@ object HaskellFindUtil {
       ModuleManager.getInstance(project).getModules.map(GlobalSearchScope.moduleScope).reduce(_.uniteWith(_))
     }
     HaskellFileIndex.getAllHaskellFiles(project, scope)
+  }
+
+  private def normalize(name: String): String = {
+    name.trim.toLowerCase
   }
 }
