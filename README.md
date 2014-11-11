@@ -15,7 +15,7 @@ and expects that the Cabal init/install/build is done on command-line.
 
 Any feedback is welcome!!
 
-Version 0.2 is available in Jetbrains plugin repository.
+Version 0.3 is available in Jetbrains plugin repository.
 
 # Features
 - Syntax highlighting (which can be customized);
