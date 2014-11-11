@@ -36,7 +36,8 @@ Version 0.2 is available in Jetbrains plugin repository.
 - Inspection by HLint;
 - Quick fixes for HLint suggestions;
 - View error, action to view formatted message from ghc-mod. Especially useful in case message consists of multiple lines (Ctrl-F10, Meta-F10 on Mac OSX);
-
+- Intention actions for adding language extension pragma and type signature to code
+            
 A lot of features are with the help of ghc-mod(i)!!
 
 # TODO:
