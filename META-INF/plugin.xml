@@ -9,6 +9,13 @@
     ]]></description>
 
     <change-notes><![CDATA[
+        <p>0.3</p>
+        <ul>
+            <li>Support for exact search in navigate to declaration and identifier by putting space at the end</li>
+            <li>Intention actions for adding language extension pragma and type signature to code</li>
+            <li>Minor improvements in formatting</li>
+        </ul>
+        <br>
         <p>0.2</p>
         <ul>
             <li>Inspection by HLint</li>
@@ -19,6 +26,12 @@
             <li>ghc-modi process is started on request, not automatically anymore when project is opened</li>
             <li>Improvements</li>
         </ul>
+        <br>
+        <p>0.1</p>
+        <ul>
+            <li>Initial version</li>
+        </ul>
+
         <p>See for more information: https://github.com/rikvdkleij/intellij-haskell/blob/master/README.md</p>
 
         <p>Any feedback is welcome!</p>
