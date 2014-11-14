@@ -25,7 +25,6 @@ import com.intellij.openapi.roots.ProjectRootManager
 import com.powertuple.intellij.haskell.HaskellNotificationGroup
 import com.powertuple.intellij.haskell.settings.HaskellSettings
 import com.powertuple.intellij.haskell.util.OSUtil
-import sun.security.action.GetPropertyAction
 
 import scala.collection.mutable.ListBuffer
 import scala.concurrent.duration._
@@ -72,7 +71,7 @@ class GhcModi(val settings: HaskellSettings, val project: Project) extends Proje
           }
           stdOutListBuffer.init.toSeq
         }
-        val stdOutput = Await.result(waitForStdOutput, 1.second)
+        val stdOutput = Await.result(waitForStdOutput, 5.second)
 
         if (stdErrListBuffer.nonEmpty) {
           HaskellNotificationGroup.notifyError(s"ghc-modi error output: ${stdErrListBuffer.mkString}")
@@ -93,7 +92,7 @@ class GhcModi(val settings: HaskellSettings, val project: Project) extends Proje
     }
   }
 
-  def startGhcModi() {
+  private def startGhcModi() {
     if (!settings.getState.ghcModiPath.isEmpty) {
       try {
         val process = getEnvParameters match {
