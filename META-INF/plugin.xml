@@ -1,7 +1,7 @@
 <idea-plugin version="2">
     <id>com.powertuple.intellij.haskell</id>
     <name>IntelliJ-Haskell</name>
-    <version>0.3</version>
+    <version>0.4</version>
     <vendor email="rikvdkleij@gmail.com">PowerTuple</vendor>
 
     <description><![CDATA[
@@ -9,6 +9,12 @@
     ]]></description>
 
     <change-notes><![CDATA[
+        <p>0.4</p>
+        <ul>
+            <li>Improved communication with ghc-modi by increasing timeout</li>
+            <li>Minor improvements</li>
+        </ul>
+        <br>
         <p>0.3</p>
         <ul>
             <li>Support for exact search in navigate to declaration and identifier by putting space at the end</li>
