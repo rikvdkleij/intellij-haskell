@@ -76,7 +76,7 @@ private[external] object GhcModiInfo {
         FileUtil.findModuleFilePath(module, project).map(LibraryIdentifierInfo(typeSignature.trim, _, module))
       }
       case GhcModiInfoLibraryPattern(typeSignature, module) => FileUtil.findModuleFilePath(module, project).map(LibraryIdentifierInfo(typeSignature, _, module))
-      case _ => HaskellNotificationGroup.notifyError(s"Unknown pattern for ghc-modi info output: $outputInfo"); None
+      case _ => None
     }
   }
 }
