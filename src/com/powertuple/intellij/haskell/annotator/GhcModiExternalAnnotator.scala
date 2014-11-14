@@ -67,8 +67,8 @@ class GhcModiExternalAnnotator extends ExternalAnnotator[GhcModInitialInfo, GhcM
           case WarningAnnotation(textRange, message, Some(intentionAction)) => holder.createWarningAnnotation(textRange, message).registerFix(intentionAction)
         }
       }
+      markFileDirty(psiFile)
     }
-    markFileDirty(psiFile)
   }
 
   private def markFileDirty(psiFile: PsiFile) {
