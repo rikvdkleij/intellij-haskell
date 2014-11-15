@@ -53,7 +53,12 @@ class HaskellReference(namedElement: HaskellNamedElement, textRange: TextRange) 
         displayLabelInfoMessageIfResultsContainsBuiltInDefinition(resolveResultsByGhcMod, project)
 
         (if (resolveResultsByGhcMod.isEmpty) {
-          resolveDeclarationReferencesInFile(file, identifier)
+          val localElements = findLocalNamedElements.filter(_.getName == identifier).map(e => new PsiElementResolveResult(e))
+          if (localElements.isEmpty) {
+            resolveDeclarationReferencesInFile(file, identifier)
+          } else {
+            localElements
+          }
         } else {
           resolveResultsByGhcMod
         }).toArray.distinct

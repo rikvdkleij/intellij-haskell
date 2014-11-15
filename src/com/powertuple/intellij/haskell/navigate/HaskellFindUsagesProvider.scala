@@ -52,11 +52,11 @@ class HaskellFindUsagesProvider extends FindUsagesProvider {
   }
 
   override def getType(psiElement: PsiElement): String = {
-    psiElement match {
-      case _: HaskellQvar => "variable"
-      case _: HaskellQcon => "constructor"
-      case _: HaskellQvarop => "variable operator"
-      case _: HaskellQconop => "constructor operator"
+    psiElement.getNode.getElementType match {
+      case HS_QVAR_ID => "variable"
+      case HS_QCON_ID => "constructor"
+      case HS_QVAR_SYM => "variable operator"
+      case HS_GCON_SYM => "constructor operator"
       case _ => psiElement.getText
     }
   }
