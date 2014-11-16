@@ -8,7 +8,6 @@
       </compiler-classpath>
     </properties>
     <CLASSES>
-      <root url="jar:///usr/share/scala/lib/scala-reflect.jar!/" />
       <root url="jar:///usr/share/scala/lib/scala-library.jar!/" />
     </CLASSES>
     <JAVADOC>
