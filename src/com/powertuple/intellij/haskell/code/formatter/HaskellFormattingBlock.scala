@@ -78,6 +78,7 @@ class HaskellFormattingBlock(node: ASTNode, alignment: Option[Alignment], spacin
       case HS_DO | HS_WHERE => Some(alignments(4))
       case HS_EXPORTS | HS_WHERE => Some(alignments(5))
       case HS_LINE_EXPRESSION => Some(alignments(6))
+      case HS_CONSTR_1 | HS_CONSTR_2 | HS_CONSTR_3 | HS_CONSTR_4 => Some(alignments(7))
       case _ => None
     }
   }
@@ -104,7 +105,11 @@ class HaskellFormattingBlock(node: ASTNode, alignment: Option[Alignment], spacin
   }
 
   override def getChildAttributes(newChildIndex: Int): ChildAttributes = {
-    new ChildAttributes(Indent.getNoneIndent, null)
+    new ChildAttributes(Indent.getNoneIndent, getFirstChildAlignment)
+  }
+
+  private def getFirstChildAlignment: Alignment = {
+    getSubBlocks.find(_.getAlignment != null).map(_.getAlignment).orNull
   }
 }
 
@@ -116,7 +121,7 @@ object IndentProcessor {
     val childType = child.getElementType
     childType match {
       case HS_MODULE_DECLARATION | HS_TOP_DECLARATION | HS_IMPORT_DECLARATION | HS_FIRST_LINE_EXPRESSION => getAbsoluteNoneIndent
-      case HS_DO | HS_WHERE | HS_IF | HS_CASE => getNormalIndent
+      case HS_DO | HS_WHERE | HS_IF | HS_CASE | HS_DERIVING => getNormalIndent
       case HS_EQUAL | HS_QVAR_SYM => getNormalIndent
       case HS_VERTICAL_BAR => getNormalIndent
       case HS_IDECL | HS_CDECL => getNormalIndent
