@@ -183,7 +183,7 @@ class HaskellCompletionContributor extends CompletionContributor {
       BrowseInfosForImportFullSpec(ifs, GhcMod.browseInfo(project, ifs.moduleName, removeParensFromOperator = true))
     }.map(bifs => createLookupElements(bifs.importSpec, bifs.browseInfos)))
 
-    Await.result(Future.sequence(browseInfosWithImportSpecFutures), Duration.create(1, TimeUnit.SECONDS)).flatten
+    Await.result(Future.sequence(browseInfosWithImportSpecFutures), Duration.create(5, TimeUnit.SECONDS)).flatten
   }
 
   private def getIdsFromHidingIdsImportedModules(project: Project, file: PsiFile) = {
@@ -194,7 +194,7 @@ class HaskellCompletionContributor extends CompletionContributor {
       BrowseInfosForImportHidingIdsSpec(ihis, GhcMod.browseInfo(project, ihis.moduleName, removeParensFromOperator = true))
     }.map(bihis => createLookupElements(bihis.importSpec, bihis.browseInfos.filterNot(bi => bihis.importSpec.ids.contains(bi.name)))))
 
-    Await.result(Future.sequence(browseInfosWithImportHidingIdsSpecFutures), Duration.create(1, TimeUnit.SECONDS)).flatten
+    Await.result(Future.sequence(browseInfosWithImportHidingIdsSpecFutures), Duration.create(5, TimeUnit.SECONDS)).flatten
   }
 
   private def getIdsFromSpecIdsImportedModules(project: Project, file: PsiFile) = {
@@ -205,7 +205,7 @@ class HaskellCompletionContributor extends CompletionContributor {
       BrowseInfosForImportIdsSpec(iis, GhcMod.browseInfo(project, iis.moduleName, removeParensFromOperator = true))
     }.map(biis => createLookupElements(biis.importSpec, biis.browseInfos.filter(bi => biis.importSpec.ids.contains(bi.name)))))
 
-    Await.result(Future.sequence(browseInfosWithImportIdsSpecFutures), Duration.create(1, TimeUnit.SECONDS)).flatten
+    Await.result(Future.sequence(browseInfosWithImportIdsSpecFutures), Duration.create(5, TimeUnit.SECONDS)).flatten
   }
 
   private def createLookupElements(importSpec: ImportSpec, browseInfos: Seq[BrowseInfo]): Seq[LookupElementBuilder] = {
