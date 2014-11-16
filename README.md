@@ -21,7 +21,7 @@ Any feedback is welcome!!
 - Find Usages of identifiers;
 - Resolving references of identifiers (also to library code if library source code is added to project and resolves inside import declaration);
 - Code completion by resolving references;
-- Rename identifiers inline (in which global rename first shows preview so refactoring scope can be adjusted).
+- Inplace rename identifiers (in which global rename first shows preview so refactoring scope can be adjusted).
 - View type info from (selected) expression;
 - View expression info;
 - View quick documentation;
