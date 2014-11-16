@@ -21,7 +21,7 @@ Any feedback is welcome!!
 - Find Usages of identifiers;
 - Resolving references of identifiers (also to library code if library source code is added to project and resolves inside import declaration);
 - Code completion by resolving references;
-- Renaming variables (which first shows preview so refactoring scope can be adjusted);
+- Rename identifiers inline (in which global rename first shows preview so refactoring scope can be adjusted).
 - View type info from (selected) expression;
 - View expression info;
 - View quick documentation;
@@ -34,7 +34,7 @@ Any feedback is welcome!!
 - Inspection by HLint;
 - Quick fixes for HLint suggestions;
 - View error, action to view formatted message from ghc-mod. Especially useful in case message consists of multiple lines (Ctrl-F10, Meta-F10 on Mac OSX);
-- Intention actions for adding language extension pragma and type signature to code
+- Intention actions for adding language extension pragma and type signature to code;
             
 A lot of features are with the help of ghc-mod(i)!!
 
@@ -44,7 +44,6 @@ A lot of features are with the help of ghc-mod(i)!!
 - Smart completion if that is achievable :-)
 - Hole driven development support;
 - Some quick fixes;
-- Setting scope while refactoring;
 - Improve code formatting (maybe use `hindent` or `haskell-formatter` as helper);
 - Improve error/warning annotation position;
 
