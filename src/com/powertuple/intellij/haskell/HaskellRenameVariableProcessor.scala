@@ -16,21 +16,29 @@
 
 package com.powertuple.intellij.haskell
 
-
 import com.intellij.psi.search.LocalSearchScope
 import com.intellij.psi.search.searches.ReferencesSearch
 import com.intellij.psi.util.PsiTreeUtil
 import com.intellij.psi.{PsiElement, PsiReference}
 import com.intellij.refactoring.rename.RenamePsiElementProcessor
-import com.powertuple.intellij.haskell.external.GhcModiManager
+import com.powertuple.intellij.haskell.external.{GhcModiManager, IdentifierInfo}
 import com.powertuple.intellij.haskell.psi.{HaskellExpression, HaskellNamedElement}
 
 import scala.collection.JavaConversions._
 
 class HaskellRenameVariableProcessor extends RenamePsiElementProcessor {
+
+  private var ghcModInfo: Seq[IdentifierInfo] = _
+
+  override def prepareRenaming(element: PsiElement, newName: String, allRenames: java.util.Map[PsiElement, String]): Unit = {
+    ghcModInfo = GhcModiManager.findInfoFor(element.getContainingFile, element.asInstanceOf[HaskellNamedElement])
+  }
+
   override def canProcessElement(element: PsiElement): Boolean = element.isInstanceOf[HaskellNamedElement]
 
-  override def forcesShowPreview(): Boolean = true
+  override def forcesShowPreview(): Boolean = {
+    ghcModInfo.nonEmpty
+  }
 
   override def findReferences(element: PsiElement): java.util.Collection[PsiReference] = {
     element match {
@@ -40,9 +48,8 @@ class HaskellRenameVariableProcessor extends RenamePsiElementProcessor {
   }
 
   private def findReferencesForNamedElement(element: HaskellNamedElement): Iterable[PsiReference] = {
-    val info = GhcModiManager.findInfoFor(element.getContainingFile, element.asInstanceOf[HaskellNamedElement])
     val expressionParent = Option(PsiTreeUtil.getParentOfType(element, classOf[HaskellExpression]))
-    (info, expressionParent) match {
+    (ghcModInfo, expressionParent) match {
       case (Seq(), Some(p)) => ReferencesSearch.search(element, new LocalSearchScope(p)).findAll()
       case (_, _) => ReferencesSearch.search(element, element.getUseScope).findAll()
     }

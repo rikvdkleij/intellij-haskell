@@ -11,8 +11,8 @@
     <change-notes><![CDATA[
         <p>0.5</p>
         <ul>
-            <li>Support for IntelliJ 14. IntelliJ 13.x is not supported</li>
-            <li>Improved renaming by setting scope</li>
+            <li>Support for IntelliJ 14. IntelliJ 13.x is not supported since this version</li>
+            <li>Improved rename by setting scope automatically. Also local rename does not force preview anymore</li>
             <li>Improved Find Usages</li>
         </ul>
         <br>
