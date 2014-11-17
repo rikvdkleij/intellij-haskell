@@ -13,6 +13,8 @@ In the meantime also Atsky started to create [Haskell-idea-plugin](https://githu
 This plugin is written mainly in Scala and is not mentioned to support GHC/Cabal directly. This plugin support sandbox projects
 and expects that the Cabal init/install/build is done on command-line.
 
+From version 0.5 IntelliJ 14 is supported.
+
 Any feedback is welcome!!
 
 # Features
@@ -37,8 +39,6 @@ Any feedback is welcome!!
 - Intention actions for adding language extension pragma and type signature to code;
             
 A lot of features are with the help of ghc-mod(i)!!
-
-From version 0.5 IntelliJ 14 is supported.
 
 # TODO:
 - Integration of stylish-haskell; 
