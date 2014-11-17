@@ -66,7 +66,7 @@ A lot of features are with the help of ghc-mod(i)!!
 - Because of ghc-mod issue #275 ghc-mod is used (instead of ghc-modi) for checking syntax of Haskell file;
 - Because of ghc-mod issue #362 ghc-mod is used (instead of ghc-modi) for getting symbols of module using `browse` command. Performance for code completion will probably improve if I can use ghc-modi for `browse`;
 - It would be nice if ghc-mod issue #303 would be solved. That would made it possible to get support from ghc-mod while type/syntax errors exist. For example, while typing.
-- Created workaround for this issue: https://youtrack.jetbrains.com/issue/IDEA-130894.
+- <del> Created workaround for this issue: https://youtrack.jetbrains.com/issue/IDEA-130894. </del>
 - Developed plugin on Ubuntu;
 - During testing on Mac OSX Yosemite Beta I noticed problem with ghc-modi: PATH environment variable asked from within IntelliJ was not the same as the global one. I had to create workaround only for Mac OSX :-( 
     This workaround will add path of `GHC SDK` to PATH environment variable which is passed to ghc-modi process. Other solutions are welcome!
