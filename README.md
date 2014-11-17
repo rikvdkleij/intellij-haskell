@@ -38,14 +38,16 @@ Any feedback is welcome!!
             
 A lot of features are with the help of ghc-mod(i)!!
 
+From version 0.5 IntelliJ 14 is supported.
+
 # TODO:
 - Integration of stylish-haskell; 
 - Integration of hsimport;
 - Smart completion if that is achievable :-)
 - Hole driven development support;
-- Some quick fixes;
+- Add more quick fixes/intention actions;
 - Improve code formatting (maybe use `hindent` or `haskell-formatter` as helper);
-- Improve error/warning annotation position;
+- Build project inside IntelliJ;
 
 # Getting started: 
 - Cabal install latest versions of ghc-mod and haskell-docs;
