@@ -43,7 +43,7 @@ class HaskellReference(namedElement: HaskellNamedElement, textRange: TextRange) 
           file <- findFile(filePath)
         } yield new PsiElementResolveResult(file.getOriginalElement)).toArray
       case _ =>
-        val identifier = myElement.getName
+        val identifier = ((n: String) => n.split('.').lastOption.getOrElse(n))(myElement.getName)
         val resolveResultsByGhcMod = getIdentifierInfos(file, myElement).map {
           case pii: ProjectIdentifierInfo => resolveReferences(pii, identifier)
           case lii: LibraryIdentifierInfo => resolveReferences(lii, identifier)
