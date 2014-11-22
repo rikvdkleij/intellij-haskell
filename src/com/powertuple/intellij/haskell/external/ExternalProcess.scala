@@ -30,7 +30,7 @@ object ExternalProcess {
       new ProcessOutput
     }
     val cmd: GeneralCommandLine = new GeneralCommandLine
-    cmd.setWorkDirectory(workDir)
+    cmd.withWorkDirectory(workDir)
     cmd.setExePath(commandPath)
     cmd.addParameters(arguments)
     execute(cmd, timeout)
@@ -42,6 +42,6 @@ object ExternalProcess {
 
   def execute(cmd: GeneralCommandLine, timeout: Int): ProcessOutput = {
     val processHandler: CapturingProcessHandler = new CapturingProcessHandler(cmd.createProcess)
-    if (timeout < 0) processHandler.runProcess else processHandler.runProcess(timeout)
+    if (timeout < 0) processHandler.runProcess else processHandler.runProcess(timeout, false)
   }
 }

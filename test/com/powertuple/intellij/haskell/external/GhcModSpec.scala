@@ -14,9 +14,8 @@
  * limitations under the License.
  */
 
-package com.powertuple.intellij.haskell.annotator
+package com.powertuple.intellij.haskell.external
 
-import com.powertuple.intellij.haskell.external.GhcMod
 import org.scalatest.{BeforeAndAfterEach, FunSpec, GivenWhenThen, Matchers}
 
 class GhcModSpec extends FunSpec with Matchers with GivenWhenThen with BeforeAndAfterEach {
