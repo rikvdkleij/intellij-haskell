@@ -18,7 +18,7 @@ package com.powertuple.intellij.haskell.highlighter
 
 import com.intellij.lexer.Lexer
 import com.intellij.openapi.editor.DefaultLanguageHighlighterColors
-import com.intellij.openapi.editor.colors.TextAttributesKey
+import com.intellij.openapi.editor.colors.{CodeInsightColors, TextAttributesKey}
 import com.intellij.openapi.editor.colors.TextAttributesKey.createTextAttributesKey
 import com.intellij.openapi.fileTypes.SyntaxHighlighterBase
 import com.intellij.psi.TokenType
@@ -37,9 +37,10 @@ object HaskellSyntaxHighlighter {
   final val Parentheses = createTextAttributesKey("HS_PARENTHESES", DefaultLanguageHighlighterColors.PARENTHESES)
   final val Brace = createTextAttributesKey("HSL_BRACE", DefaultLanguageHighlighterColors.BRACES)
   final val Bracket = createTextAttributesKey("HS_BRACKET", DefaultLanguageHighlighterColors.BRACKETS)
-  final val Variable = createTextAttributesKey("HS_VAR", DefaultLanguageHighlighterColors.GLOBAL_VARIABLE)
-  final val Constructor = createTextAttributesKey("HS_CONSTRUCTOR", DefaultLanguageHighlighterColors.CLASS_NAME)
-  final val Symbol = createTextAttributesKey("HS_SYMBOL", DefaultLanguageHighlighterColors.PREDEFINED_SYMBOL)
+  final val Variable = createTextAttributesKey("HS_VARIABLE", DefaultLanguageHighlighterColors.LOCAL_VARIABLE)
+  final val Constructor = createTextAttributesKey("HS_CONSTRUCTOR", DefaultLanguageHighlighterColors.INSTANCE_FIELD)
+  final val Operator = createTextAttributesKey("HS_OPERATOR", CodeInsightColors.TYPE_PARAMETER_NAME_ATTRIBUTES)
+  final val ReservedSymbol = createTextAttributesKey("HS_SYMBOL", DefaultLanguageHighlighterColors.INSTANCE_METHOD)
   final val Default = createTextAttributesKey("HS_DEFAULT", DefaultLanguageHighlighterColors.CONSTANT)
 }
 
@@ -63,13 +64,14 @@ class HaskellSyntaxHighlighter extends SyntaxHighlighterBase {
       case et if et == HS_NCOMMENT => pack(BlockComment)
       case et if et == HS_STRING_LITERAL || et == HS_CHARACTER_LITERAL => pack(String)
       case et if NUMBERS.contains(et) => pack(Number)
-      case et if ALL_RESERVED_IDS.contains(et) => pack(Keyword)
-      case et if OPERATORS.contains(et) | SYMBOLS_RES_OP.contains(et) => pack(Symbol)
       case et if et == HS_LEFT_PAREN || et == HS_RIGHT_PAREN => pack(Parentheses)
       case et if et == HS_LEFT_BRACE || et == HS_RIGHT_BRACE => pack(Brace)
       case et if et == HS_LEFT_BRACKET || et == HS_RIGHT_BRACKET => pack(Bracket)
-      case et if et == HS_QVAR_ID => pack(Variable)
-      case et if et == HS_QCON_ID => pack(Constructor)
+      case et if ALL_RESERVED_IDS.contains(et) => pack(Keyword)
+      case et if SYMBOLS_RES_OP.contains(et) => pack(ReservedSymbol)
+      case et if OPERATORS.contains(et)  => pack(Operator)
+      case et if et == HS_QVARID_ID => pack(Variable)
+      case et if et == HS_QCONID_ID => pack(Constructor)
       case _ => pack(Default)
     }
   }

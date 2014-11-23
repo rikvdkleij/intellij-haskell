@@ -40,7 +40,8 @@ object HaskellColorSettingsPage {
     new AttributesDescriptor("Bracket", Bracket),
     new AttributesDescriptor("Variable", Variable),
     new AttributesDescriptor("Constructor", Constructor),
-    new AttributesDescriptor("Operator/Symbol", Symbol),
+    new AttributesDescriptor("Operator", Operator),
+    new AttributesDescriptor("Reserved symbol", ReservedSymbol),
     new AttributesDescriptor("Default", Default))
   private final val AttributesKeyMap = Map[String, TextAttributesKey]()
 }
@@ -82,7 +83,9 @@ class HaskellColorSettingsPage extends ColorSettingsPage {
         "{- nested \n" +
         "comment -}\n" +
         "data Bool = True | False\n" +
-        "let l = [1,2] "
+        "let l1 = [1, 2] \n" +
+        "let l2 = 1 : [] \n" +
+        "let two = 1 + 1"
   }
 
   @NotNull
