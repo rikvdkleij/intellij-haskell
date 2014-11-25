@@ -46,6 +46,7 @@ class GhcModi(val settings: HaskellSettings, val project: Project) extends Proje
   private val OK = "OK"
 
   private final val TimeOut = 5000L
+  private final val GhcModiErrorIndicator = "NG BUG:"
 
   private var ghcModiProblemTime: Option[Long] = None
 
@@ -66,18 +67,21 @@ class GhcModi(val settings: HaskellSettings, val project: Project) extends Proje
         outputStream.flush()
 
         val waitForStdOutput = Future {
-          while (stdOutListBuffer.lastOption != Some(OK)) {
+          while (stdOutListBuffer.lastOption != Some(OK) && !stdOutListBuffer.headOption.exists(_.startsWith(GhcModiErrorIndicator))) {
             // wait for result
           }
-          stdOutListBuffer.init.toSeq
+          stdOutListBuffer.toSeq
         }
         val stdOutput = Await.result(waitForStdOutput, 5.second)
 
         if (stdErrListBuffer.nonEmpty) {
           HaskellNotificationGroup.notifyError(s"ghc-modi error output: ${stdErrListBuffer.mkString}")
           GhcModiOutput()
+        } else if (stdOutput.headOption.exists(_.startsWith(GhcModiErrorIndicator))) {
+          HaskellNotificationGroup.notifyError(s"ghc-modi error output: ${stdOutput.mkString(" ")}")
+          GhcModiOutput()
         } else {
-          GhcModiOutput(stdOutput)
+          GhcModiOutput(stdOutput.init)
         }
       }
       catch {
