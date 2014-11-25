@@ -135,7 +135,11 @@ class HaskellReference(namedElement: HaskellNamedElement, textRange: TextRange) 
   }
 
   private def findFile(filePath: String): Option[HaskellFile] = {
-    Option(PsiManager.getInstance(myElement.getProject).findFile(LocalFileSystem.getInstance().findFileByPath(filePath)).asInstanceOf[HaskellFile])
+    val file = Option(LocalFileSystem.getInstance().findFileByPath(filePath))
+    file match {
+      case Some(f) => Option(PsiManager.getInstance(myElement.getProject).findFile(f)).map(_.asInstanceOf[HaskellFile])
+      case None => None
+    }
   }
 
   private def resolveDeclarationReferencesInFile(file: PsiFile, identifier: String): Iterable[ResolveResult] = {
