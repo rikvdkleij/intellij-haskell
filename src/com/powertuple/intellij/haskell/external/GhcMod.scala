@@ -16,9 +16,10 @@
 
 package com.powertuple.intellij.haskell.external
 
-import java.util.concurrent.TimeUnit
+import java.util.concurrent.{Callable, Executors, TimeUnit}
 
 import com.google.common.cache.{CacheBuilder, CacheLoader}
+import com.google.common.util.concurrent.{ListenableFuture, ListenableFutureTask}
 import com.intellij.execution.process.ProcessOutput
 import com.intellij.openapi.project.Project
 import com.powertuple.intellij.haskell.settings.HaskellSettings
@@ -29,17 +30,33 @@ object GhcMod {
 
   private case class ModuleInfo(projectBasePath: String, moduleName: String)
 
+  private val executor = Executors.newCachedThreadPool()
+
   private val browseInfoCache = CacheBuilder.newBuilder()
     .expireAfterWrite(60, TimeUnit.SECONDS)
     .build(
       new CacheLoader[ModuleInfo, ProcessOutput]() {
-        override def load(moduleInfo: ModuleInfo): ProcessOutput = {
+        private def getProcessOutput(moduleInfo: ModuleInfo): ProcessOutput = {
           ExternalProcess.getProcessOutput(
             moduleInfo.projectBasePath,
             HaskellSettings.getInstance().getState.ghcModPath,
             Seq("browse", "-d", "-q", "-o") ++ Seq(moduleInfo.moduleName),
-            1900
+            4900
           )
+        }
+
+        override def load(moduleInfo: ModuleInfo): ProcessOutput = {
+          getProcessOutput(moduleInfo)
+        }
+
+        override def reload(moduleInfo: ModuleInfo, oldValue: ProcessOutput): ListenableFuture[ProcessOutput] = {
+          val task = ListenableFutureTask.create(new Callable[ProcessOutput]() {
+            def call() = {
+              getProcessOutput(moduleInfo)
+            }
+          })
+          executor.execute(task)
+          task
         }
       }
     )
