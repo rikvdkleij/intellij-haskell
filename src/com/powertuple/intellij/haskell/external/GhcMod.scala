@@ -30,7 +30,7 @@ object GhcMod {
   private case class ModuleInfo(projectBasePath: String, moduleName: String)
 
   private val browseInfoCache = CacheBuilder.newBuilder()
-    .expireAfterWrite(10, TimeUnit.SECONDS)
+    .expireAfterWrite(60, TimeUnit.SECONDS)
     .build(
       new CacheLoader[ModuleInfo, ProcessOutput]() {
         override def load(moduleInfo: ModuleInfo): ProcessOutput = {
