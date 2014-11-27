@@ -1,7 +1,7 @@
 <idea-plugin version="2">
     <id>com.powertuple.intellij.haskell</id>
     <name>IntelliJ-Haskell</name>
-    <version>0.6.beta2</version>
+    <version>0.6</version>
     <vendor email="rikvdkleij@gmail.com">PowerTuple</vendor>
 
     <description><![CDATA[
@@ -12,6 +12,7 @@
         <p>0.6</p>
         <ul>
             <li>Bug fixes</li>
+            <li>(Performance) improvements</li>
             <li>Improved syntax highlighting</li>
         </ul>
         <p>0.5</p>
@@ -123,6 +124,8 @@
                                       implementationClass="com.powertuple.intellij.haskell.navigate.HaskellStructureViewFactory"/>
 
         <quoteHandler fileType="Haskell file" className="com.powertuple.intellij.haskell.code.HaskellQuoteHandler"/>
+
+        <typedHandler implementation="com.powertuple.intellij.haskell.code.HaskellTypedHandler" id="HaskellFile"/>
 
         <localInspection language="Haskell" shortName="HLintInspection" displayName="Inspection by HLint"
                          groupName="Haskell" enabledByDefault="false" level="WARNING"
