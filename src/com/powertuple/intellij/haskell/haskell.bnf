@@ -29,7 +29,7 @@
 
 program                     ::= onl language_pragmas? onl module_body
 language_pragmas            ::= (language_pragma onl)+
-language_pragma             ::= PRAGMA_START osnl qcon_id (osnl COMMA osnl qcon_id)* osnl PRAGMA_END NEWLINE
+language_pragma             ::= PRAGMA_START osnl qcon_id osnl qcon_id (osnl COMMA osnl qcon_id)* osnl PRAGMA_END NEWLINE
 
 module_body                 ::= module_declaration onl body | body
 module_declaration          ::= MODULE qcon_id onl WHERE? onl (onl exports)? onl WHERE? onl               {methods=[getModuleName]}
@@ -80,7 +80,7 @@ private onl                 ::= NEWLINE*                              // optiona
 private osnl                ::= (&<<containsSpaces>> NEWLINE)*        // optional multiple new line and spaces
 snl                         ::= (&<<containsSpaces>> NEWLINE)+        // multiple new line and spaces
 
-comments                    ::= COMMENT | NCOMMENT
+comments                    ::= COMMENT | NCOMMENT | NCOMMENT_START | NCOMMENT_END
 
 qvar_id                     ::= QVARID_ID
 qcon_id                     ::= QCONID_ID | LEFT_BRACKET qvar_id? RIGHT_BRACKET
@@ -165,7 +165,7 @@ inst                        ::= qvar_id gtycon |
                                   (LEFT_PAREN osnl instvar+ osnl RIGHT_PAREN)+ instvar* |
                                   (LEFT_PAREN osnl instvar+ (RIGHT_ARROW osnl instvar osnl)* osnl RIGHT_PAREN)+ instvar*
 
-instvar                     ::= qcon_id | qvar_id | gcon_sym | LEFT_BRACKET qvar_id RIGHT_BRACKET | LEFT_PAREN qvar_id? gcon_sym qvar_id? RIGHT_PAREN
+instvar                     ::= qcon_id | qvar_id | gcon_sym | LEFT_BRACKET qvar_id RIGHT_BRACKET | LEFT_PAREN qvar_id? (gcon_sym | qcon_id) qvar_id? RIGHT_PAREN
 
 fixity                      ::= INFIXL | INFIXR | INFIX
 

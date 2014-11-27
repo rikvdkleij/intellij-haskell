@@ -24,7 +24,9 @@ import com.powertuple.intellij.haskell.psi.HaskellTypes
 object HaskellBraceMatcher {
   private final val PAIRS = Array(
     new BracePair(HaskellTypes.HS_LEFT_PAREN, HaskellTypes.HS_RIGHT_PAREN, false),
+    new BracePair(HaskellTypes.HS_PRAGMA_START, HaskellTypes.HS_PRAGMA_END, true),
     new BracePair(HaskellTypes.HS_LEFT_BRACE, HaskellTypes.HS_RIGHT_BRACE, true),
+    new BracePair(HaskellTypes.HS_NCOMMENT_START, HaskellTypes.HS_NCOMMENT_END, true),
     new BracePair(HaskellTypes.HS_LEFT_BRACKET, HaskellTypes.HS_RIGHT_BRACKET, false))
 }
 

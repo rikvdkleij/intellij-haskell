@@ -56,7 +56,7 @@ class HaskellCompletionContributor extends CompletionContributor {
       val file = parameters.getOriginalFile
 
       val resultSet = Option(parameters.getPosition).orElse(Option(parameters.getOriginalPosition)) match {
-        case Some(p) if p.getText.startsWith("{") => originalResultSet.withPrefixMatcher(new PlainPrefixMatcher(p.getText.splitAt(2)._1))
+        case Some(p) if p.getText.startsWith("{") => originalResultSet.withPrefixMatcher(new PlainPrefixMatcher(p.getText))
         case _ => originalResultSet
       }
 

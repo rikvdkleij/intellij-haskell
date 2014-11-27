@@ -46,10 +46,13 @@ octal               = 0[oO]{octit}+
 
 float               = [-+]?([0-9]+(\\.[0-9]*)?|\\.[0-9]+)([eE][-+]?[0-9]+)?
 
-pragma_start        = "{-#" {white_char}* "LANGUAGE"
+pragma_start        = "{-#"
 pragma_end          = "#-}"
 
 comment             = ("--"[^\r\n]* | "\\begin{code}")
+
+ncomment_start      = "{-"
+ncomment_end        = "-}"
 
 gap                 = \\{white_char}*\\
 cntrl               = {large} | [@\[\\\]\^_]
@@ -131,7 +134,7 @@ gconsym             = {colon} | {qconsym}
 }
 
 <NCOMMENT> {
-    "{-" {
+    {ncomment_start} {
         commentDepth++;
     }
 
@@ -142,7 +145,7 @@ gconsym             = {colon} | {qconsym}
         return HS_NCOMMENT;
     }
 
-    "-}" {newline}? {
+    {ncomment_end} {newline}? {
         if (commentDepth > 0) {
             commentDepth--;
         }
@@ -157,7 +160,7 @@ gconsym             = {colon} | {qconsym}
     .|{white_char}|{newline} {}
 }
 
-"{-" {
+{ncomment_start} {
     yybegin(NCOMMENT);
     commentDepth = 0;
     commentStart = getTokenStart();
