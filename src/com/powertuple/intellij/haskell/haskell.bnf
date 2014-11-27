@@ -28,7 +28,7 @@
 }
 
 program                     ::= onl language_pragmas? onl module_body
-language_pragmas            ::= (language_pragma onl)+
+language_pragmas            ::= (language_pragma onl | other_pragma onl)+
 language_pragma             ::= PRAGMA_START osnl qcon_id osnl qcon_id (osnl COMMA osnl qcon_id)* osnl PRAGMA_END NEWLINE
 
 other_pragma                ::= PRAGMA_START (general_id | NEWLINE)+ PRAGMA_END NEWLINE
