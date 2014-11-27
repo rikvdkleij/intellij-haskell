@@ -33,7 +33,7 @@ object GhcMod {
   private val executor = Executors.newCachedThreadPool()
 
   private val browseInfoCache = CacheBuilder.newBuilder()
-    .expireAfterWrite(60, TimeUnit.SECONDS)
+    .expireAfterWrite(30, TimeUnit.SECONDS)
     .build(
       new CacheLoader[ModuleInfo, ProcessOutput]() {
         private def getProcessOutput(moduleInfo: ModuleInfo): ProcessOutput = {
