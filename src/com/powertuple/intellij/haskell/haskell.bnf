@@ -31,7 +31,8 @@ program                     ::= onl language_pragmas? onl module_body
 language_pragmas            ::= (language_pragma onl)+
 language_pragma             ::= PRAGMA_START osnl qcon_id osnl qcon_id (osnl COMMA osnl qcon_id)* osnl PRAGMA_END NEWLINE
 
-module_body                 ::= module_declaration onl body | body
+other_pragma                ::= PRAGMA_START expression PRAGMA_END NEWLINE
+module_body                 ::= module_declaration+ onl body | body
 module_declaration          ::= MODULE qcon_id onl WHERE? onl (onl exports)? onl WHERE? onl               {methods=[getModuleName]}
 
 private body                ::= import_declarations top_declarations
@@ -54,7 +55,7 @@ import_id                   ::= TYPE? qvar |
                                   qcon osnl (DOT_DOT_PARENS | LEFT_PAREN osnl (cname osnl (COMMA osnl cname)*)? osnl RIGHT_PAREN)?
 
 top_declaration             ::= type_declaration | data_declaration | newtype_declaration | class_declaration | instance_declaration | default_declaration |
-                                  foreign_declaration | type_family_declaration | deriving_declaration | type_instance_declaration | type_signature_declaration | expression
+                                  foreign_declaration | type_family_declaration | deriving_declaration | type_instance_declaration | type_signature_declaration | expression | other_pragma
 
 type_declaration            ::= TYPE osnl simpletype osnl (EQUAL | WHERE)? osnl (ttype | type_signature)? (DOUBLE_RIGHT_ARROW ttype)? NEWLINE
 data_declaration            ::= DATA osnl (context osnl DOUBLE_RIGHT_ARROW)? osnl simpletype osnl (EQUAL osnl constrs | (WHERE | EQUAL) osnl cdecls)? osnl (DERIVING osnl ttype)? NEWLINE

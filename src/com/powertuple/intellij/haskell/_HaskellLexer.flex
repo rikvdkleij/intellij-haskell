@@ -134,7 +134,7 @@ gconsym             = {colon} | {qconsym}
 }
 
 <NCOMMENT> {
-    {ncomment_start} {
+    {ncomment_start} {newline}? {
         commentDepth++;
     }
 
