@@ -31,7 +31,7 @@ program                     ::= onl language_pragmas? onl module_body
 language_pragmas            ::= (language_pragma onl)+
 language_pragma             ::= PRAGMA_START osnl qcon_id osnl qcon_id (osnl COMMA osnl qcon_id)* osnl PRAGMA_END NEWLINE
 
-other_pragma                ::= PRAGMA_START expression PRAGMA_END NEWLINE
+other_pragma                ::= PRAGMA_START (general_id | NEWLINE)+ PRAGMA_END NEWLINE
 module_body                 ::= module_declaration+ onl body | body
 module_declaration          ::= MODULE qcon_id onl WHERE? onl (onl exports)? onl WHERE? onl               {methods=[getModuleName]}
 
