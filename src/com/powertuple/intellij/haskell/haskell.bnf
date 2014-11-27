@@ -163,9 +163,9 @@ inst                        ::= qvar_id gtycon |
                                   (LEFT_PAREN osnl instvar (osnl COMMA osnl instvar)+ osnl RIGHT_PAREN)+ instvar* |
                                   (LEFT_BRACKET osnl instvar osnl RIGHT_BRACKET)+ |
                                   (LEFT_PAREN osnl instvar+ osnl RIGHT_PAREN)+ instvar* |
-                                  (LEFT_PAREN osnl instvar+ (RIGHT_ARROW osnl instvar osnl)* osnl RIGHT_PAREN)+ instvar*
+                                  (LEFT_PAREN osnl instvar+ (RIGHT_ARROW osnl instvar* osnl)* osnl RIGHT_PAREN)+ instvar*
 
-instvar                     ::= qcon_id | qvar_id | gcon_sym | LEFT_BRACKET qvar_id RIGHT_BRACKET | LEFT_PAREN qvar_id? (gcon_sym | qcon_id) qvar_id? RIGHT_PAREN
+instvar                     ::= qcon_id | qvar_id | gcon_sym | LEFT_BRACKET qvar_id RIGHT_BRACKET | LEFT_PAREN qvar_id? (gcon_sym | qcon_id) qvar_id? RIGHT_PAREN | LEFT_PAREN RIGHT_PAREN
 
 fixity                      ::= INFIXL | INFIXR | INFIX
 
