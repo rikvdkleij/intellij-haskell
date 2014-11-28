@@ -18,8 +18,8 @@ package com.powertuple.intellij.haskell.psi
 
 import com.intellij.lang.ASTNode
 import com.intellij.openapi.project.Project
-import com.intellij.psi.PsiFileFactory
 import com.intellij.psi.util.PsiTreeUtil
+import com.intellij.psi.{PsiFileFactory, PsiWhiteSpace}
 import com.powertuple.intellij.haskell.{HaskellFile, HaskellLanguage}
 
 object HaskellElementFactory {
@@ -56,6 +56,11 @@ object HaskellElementFactory {
   def createLanguagePragma(project: Project, languagePragma: String): HaskellLanguagePragma = {
     val haskellFile = createFileFromText(project, languagePragma)
     PsiTreeUtil.findChildOfType(haskellFile, classOf[HaskellLanguagePragma])
+  }
+
+  def createWhiteSpace(project: Project) = {
+    val haskellFile = createFileFromText(project, " ")
+    PsiTreeUtil.findChildOfType(haskellFile, classOf[PsiWhiteSpace])
   }
 
   private def createFileFromText(project: Project, text: String): HaskellFile = {

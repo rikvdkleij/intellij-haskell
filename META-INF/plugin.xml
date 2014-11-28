@@ -63,6 +63,10 @@
     <extensions defaultExtensionNs="com.intellij">
         <sdkType implementation="com.powertuple.intellij.haskell.sdk.HaskellSdkType"/>
 
+        <moduleType id="HASKELL_MODULE" implementationClass="com.powertuple.intellij.haskell.module.HaskellModuleType"/>
+
+        <moduleConfigurationEditorProvider implementation="com.powertuple.intellij.haskell.settings.HaskellModuleEditorsProvider" order="first"/>
+
         <internalFileTemplate name="Haskell"/>
 
         <fileTypeFactory implementation="com.powertuple.intellij.haskell.HaskellLanguageFileTypeFactory"/>
