@@ -21,7 +21,7 @@ import com.intellij.openapi.command.undo.UndoUtil
 import com.intellij.openapi.project.Project
 import com.intellij.psi.util.PsiTreeUtil
 import com.intellij.psi.{PsiElement, PsiFile}
-import com.powertuple.intellij.haskell.psi.{HaskellTypes, HaskellElementFactory}
+import com.powertuple.intellij.haskell.psi.{HaskellElementFactory, HaskellTypes}
 
 import scala.annotation.tailrec
 
@@ -46,6 +46,9 @@ class HlintQuickfix(startElement: PsiElement, endElement: PsiElement, toSuggesti
         }
       } else {
         parent.deleteChildRange(findParentBelowParent(se.getNextSibling, parent).getOrElse(se), ee)
+        if (se.getNode.getElementType == HaskellTypes.HS_LEFT_PAREN) {
+          parent.addBefore(HaskellElementFactory.createWhiteSpace(project), se)
+        }
         se.replace(HaskellElementFactory.createExpression(project, toSuggestion))
       }
     }
