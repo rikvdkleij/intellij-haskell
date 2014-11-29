@@ -1,7 +1,7 @@
 <idea-plugin version="2">
     <id>com.powertuple.intellij.haskell</id>
     <name>IntelliJ-Haskell</name>
-    <version>0.6</version>
+    <version>0.6.beta3</version>
     <vendor email="rikvdkleij@gmail.com">PowerTuple</vendor>
 
     <description><![CDATA[
@@ -14,6 +14,7 @@
             <li>Bug fixes</li>
             <li>(Performance) improvements</li>
             <li>Improved syntax highlighting</li>
+            <li>Added Haskell module</li>
         </ul>
         <p>0.5</p>
         <ul>
