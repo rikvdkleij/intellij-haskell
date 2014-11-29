@@ -18,7 +18,6 @@ package com.powertuple.intellij.haskell.external
 
 import com.intellij.openapi.project.Project
 import com.intellij.psi.PsiFile
-import com.powertuple.intellij.haskell.HaskellNotificationGroup
 import com.powertuple.intellij.haskell.psi._
 import com.powertuple.intellij.haskell.util.FileUtil
 
