@@ -17,12 +17,14 @@
 package com.powertuple.intellij.haskell.inspection
 
 import com.intellij.codeInspection._
-import com.intellij.psi.PsiFile
+import com.intellij.psi.{PsiElement, PsiFile}
 import com.powertuple.intellij.haskell.HaskellNotificationGroup
 import com.powertuple.intellij.haskell.external.{Hlint, HlintInfo}
-import com.powertuple.intellij.haskell.psi.HaskellTypes.{HS_NEWLINE, HS_SNL}
+import com.powertuple.intellij.haskell.psi.HaskellTypes.{HS_COMMENT, HS_NCOMMENT, HS_NEWLINE, HS_SNL}
 import com.powertuple.intellij.haskell.settings.HaskellSettings
 import com.powertuple.intellij.haskell.util.LineColumnPosition
+
+import scala.annotation.tailrec
 
 class HlintInspectionTool extends LocalInspectionTool {
   override def checkFile(psiFile: PsiFile, manager: InspectionManager, isOnTheFly: Boolean): Array[ProblemDescriptor] = {
@@ -34,10 +36,8 @@ class HlintInspectionTool extends LocalInspectionTool {
       val hlintInfos = Hlint.check(psiFile)
       for {
         hi <- hlintInfos
-        startOffSet <- LineColumnPosition.getOffset(psiFile, LineColumnPosition(hi.startLine, hi.startColumn))
-        endOffSet <- LineColumnPosition.getOffset(psiFile, LineColumnPosition(hi.endLine, hi.endColumn - 1))
-        se <- Option(psiFile.findElementAt(startOffSet))
-        ee <- findLastHaskellElement(psiFile, endOffSet)
+        se <- findStartHaskellElement(psiFile, hi)
+        ee <- findEndHaskellElement(psiFile, hi)
       } yield
         hi.to match {
           case Some(to) => problemsHolder.registerProblem(
@@ -49,9 +49,25 @@ class HlintInspectionTool extends LocalInspectionTool {
     }
   }
 
-  private def findLastHaskellElement(psiFile: PsiFile, offset: Int) = {
+  private def findStartHaskellElement(psiFile: PsiFile, hlintInfo: HlintInfo) = {
+    val startOffset = LineColumnPosition.getOffset(psiFile, LineColumnPosition(hlintInfo.startLine, hlintInfo.startColumn))
+    val element = startOffset.flatMap(offset => Option(psiFile.findElementAt(offset)))
+    element.filter(HlintInspectionTool.NotHaskellIdentifiers.contains(_))
+  }
+
+  private def findEndHaskellElement(psiFile: PsiFile, hlintInfo: HlintInfo): Option[PsiElement] = {
+    val endOffset = if (hlintInfo.endLine > hlintInfo.startLine && hlintInfo.endColumn > hlintInfo.startColumn) {
+      LineColumnPosition.getOffset(psiFile, LineColumnPosition(hlintInfo.endLine, hlintInfo.endColumn - 1))
+    } else {
+      LineColumnPosition.getOffset(psiFile, LineColumnPosition(hlintInfo.endLine, hlintInfo.endColumn))
+    }
+    endOffset.flatMap(offset => findHaskellIdentifier(psiFile, offset))
+  }
+
+  @tailrec
+  private def findHaskellIdentifier(psiFile: PsiFile, offset: Int): Option[PsiElement] = {
     Option(psiFile.findElementAt(offset)) match {
-      case Some(e) if e.getNode.getElementType == HS_NEWLINE || e.getNode.getElementType == HS_SNL => Option(psiFile.findElementAt(offset - 1))
+      case Some(e) if HlintInspectionTool.NotHaskellIdentifiers.contains(e.getNode.getElementType) => findHaskellIdentifier(psiFile, offset - 1)
       case maybeElement => maybeElement
     }
   }
@@ -63,4 +79,8 @@ class HlintInspectionTool extends LocalInspectionTool {
       case _ => ProblemHighlightType.INFORMATION
     }
   }
+}
+
+object HlintInspectionTool {
+  val NotHaskellIdentifiers = Seq(HS_NEWLINE, HS_SNL, HS_COMMENT, HS_NCOMMENT)
 }
