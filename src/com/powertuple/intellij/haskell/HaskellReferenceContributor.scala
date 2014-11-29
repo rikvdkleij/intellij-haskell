@@ -30,11 +30,11 @@ class HaskellReferenceContributor extends PsiReferenceContributor {
 
       @NotNull
       def getReferencesByElement(@NotNull element: PsiElement, @NotNull context: ProcessingContext): Array[PsiReference] = {
-        if (element.isInstanceOf[HaskellQvarId] || element.isInstanceOf[HaskellQvarSym] ||
-            element.isInstanceOf[HaskellQconId] || element.isInstanceOf[HaskellGconSym]) {
-          Array(new HaskellReference(element.asInstanceOf[HaskellNamedElement], TextRange.from(0, element.getTextLength)))
-        } else {
-          PsiReference.EMPTY_ARRAY
+        element match {
+          case namedElement: HaskellNamedElement =>
+            Array(new HaskellReference(namedElement, TextRange.from(0, element.getTextLength)))
+          case _ =>
+            PsiReference.EMPTY_ARRAY
         }
       }
     })
