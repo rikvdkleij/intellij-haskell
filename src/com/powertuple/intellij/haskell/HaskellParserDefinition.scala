@@ -68,12 +68,12 @@ class HaskellParserDefinition extends ParserDefinition {
 
   @NotNull
   def getStringLiteralElements: TokenSet = {
-    TokenSet.create(HaskellTypes.HS_CHARACTER_LITERAL, HaskellTypes.HS_STRING_LITERAL)
+    TokenSet.create(HS_CHARACTER_LITERAL, HS_STRING_LITERAL)
   }
 
   @NotNull
   def createElement(node: ASTNode): PsiElement = {
-    HaskellTypes.Factory.createElement(node)
+    Factory.createElement(node)
   }
 
   @NotNull
