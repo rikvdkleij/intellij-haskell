@@ -21,7 +21,7 @@ import com.intellij.psi.search.searches.ReferencesSearch
 import com.intellij.psi.util.PsiTreeUtil
 import com.intellij.psi.{PsiElement, PsiReference}
 import com.intellij.refactoring.rename.RenamePsiElementProcessor
-import com.powertuple.intellij.haskell.external.{GhcModiManager, IdentifierInfo}
+import com.powertuple.intellij.haskell.external.{GhcModiInfo, GhcModiManager, IdentifierInfo}
 import com.powertuple.intellij.haskell.psi.{HaskellExpression, HaskellNamedElement}
 
 import scala.collection.JavaConversions._
@@ -31,7 +31,7 @@ class HaskellRenameVariableProcessor extends RenamePsiElementProcessor {
   private var ghcModInfo: Seq[IdentifierInfo] = _
 
   override def prepareRenaming(element: PsiElement, newName: String, allRenames: java.util.Map[PsiElement, String]): Unit = {
-    ghcModInfo = GhcModiManager.findInfoFor(element.getContainingFile, element.asInstanceOf[HaskellNamedElement])
+    ghcModInfo = GhcModiInfo.findInfoFor(element.getContainingFile, element.asInstanceOf[HaskellNamedElement])
   }
 
   override def canProcessElement(element: PsiElement): Boolean = element.isInstanceOf[HaskellNamedElement]

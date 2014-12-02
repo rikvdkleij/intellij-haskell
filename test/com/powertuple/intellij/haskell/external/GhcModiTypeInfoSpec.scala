@@ -18,7 +18,7 @@ package com.powertuple.intellij.haskell.external
 
 import org.scalatest.{BeforeAndAfterEach, FunSpec, GivenWhenThen, Matchers}
 
-class GhcModTypeInfoSpec extends FunSpec with Matchers with GivenWhenThen with BeforeAndAfterEach {
+class GhcModiTypeInfoSpec extends FunSpec with Matchers with GivenWhenThen with BeforeAndAfterEach {
 
   val ghcModiTypeInfo = GhcModiTypeInfo
 

@@ -28,7 +28,7 @@ import com.powertuple.intellij.haskell.util.FileUtil
 import scala.annotation.tailrec
 import scala.collection.mutable.ListBuffer
 
-private[external] object GhcModiInfo {
+object GhcModiInfo {
 
   private final val GhcModiInfoPattern = """(.+)-- Defined at (.+):([\d]+):([\d]+)""".r
   private final val GhcModiInfoLibraryPathPattern = """(.+)-- Defined in ‘([\w\.\-]+):([\w\.\-]+)’""".r
@@ -70,7 +70,7 @@ private[external] object GhcModiInfo {
         }
       )
 
-  def findInfoFor(ghcModi: GhcModi, psiFile: PsiFile, namedElement: HaskellNamedElement): Seq[IdentifierInfo] = {
+  def findInfoFor(psiFile: PsiFile, namedElement: HaskellNamedElement): Seq[IdentifierInfo] = {
     val ghcModiOutput = InfoCache.get(NamedElementInfo(FileUtil.getFilePath(psiFile), getIdentifier(namedElement), psiFile.getProject))
     (for {
       outputLine <- ghcModiOutput.outputLines.headOption

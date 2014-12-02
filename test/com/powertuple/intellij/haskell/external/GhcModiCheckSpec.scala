@@ -18,14 +18,14 @@ package com.powertuple.intellij.haskell.external
 
 import org.scalatest.{BeforeAndAfterEach, FunSpec, GivenWhenThen, Matchers}
 
-class GhcModSpec extends FunSpec with Matchers with GivenWhenThen with BeforeAndAfterEach {
+class GhcModiCheckSpec extends FunSpec with Matchers with GivenWhenThen with BeforeAndAfterEach {
 
   describe("Parsing ghc-mod check output") {
     Given("output of ghc-mod check")
     val output = "file/path/HaskellFile.hs:1:11:parse error on input\u0000     and so on"
 
     When("parsed to ghc-modi problem")
-    val ghcModProblem = GhcMod.parseGhcModiOutputLine(output)
+    val ghcModProblem = GhcModiCheck.parseGhcModiOutputLine(output)
 
     Then("it should contain right data")
     ghcModProblem.lineNr should equal(1)

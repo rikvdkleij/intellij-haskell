@@ -33,7 +33,7 @@ import scala.collection.JavaConversions._
 class HaskellReference(namedElement: HaskellNamedElement, textRange: TextRange) extends PsiPolyVariantReferenceBase[HaskellNamedElement](namedElement, textRange) {
 
   private val file = myElement.getContainingFile
-  private lazy val info = GhcModiManager.findTypeInfoFor(file, myElement)
+  private lazy val info = GhcModiTypeInfo.findTypeInfoFor(file, myElement)
 
   override def multiResolve(incompleteCode: Boolean): Array[ResolveResult] = {
     val project = file.getProject
@@ -181,6 +181,6 @@ class HaskellReference(namedElement: HaskellNamedElement, textRange: TextRange) 
   }
 
   private def getIdentifierInfos(psiFile: PsiFile, namedElement: HaskellNamedElement): Seq[IdentifierInfo] = {
-    GhcModiManager.findInfoFor(psiFile, namedElement)
+    GhcModiInfo.findInfoFor(psiFile, namedElement)
   }
 }

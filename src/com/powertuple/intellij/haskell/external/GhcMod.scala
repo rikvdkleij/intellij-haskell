@@ -75,20 +75,6 @@ object GhcMod {
     output.getStdoutLines
   }
 
-  def check(project: Project, filePath: String): GhcModCheckResult = {
-    val output = ExternalProcess.getProcessOutput(
-      project.getBasePath,
-      HaskellSettings.getInstance().getState.ghcModPath,
-      Seq("check", filePath)
-    ).getStdoutLines
-
-    if (output.isEmpty) {
-      new GhcModCheckResult(Seq())
-    } else {
-      new GhcModCheckResult(output.map(parseGhcModiOutputLine))
-    }
-  }
-
   def listLanguageExtensions(project: Project): Seq[String] = {
     val output = ExternalProcess.getProcessOutput(
       project.getBasePath,
@@ -127,17 +113,6 @@ object GhcMod {
       case (t0, t1) => (t0.trim, t1.trim)
     }
   }
-
-  private[external] def parseGhcModiOutputLine(ghcModOutput: String): GhcModProblem = {
-    val ghcModProblemPattern = """(.+):([\d]+):([\d]+):(.+)""".r
-    val ghcModProblemPattern(filePath, lineNr, columnNr, description) = ghcModOutput
-    new GhcModProblem(filePath, lineNr.toInt, columnNr.toInt, description.replace("\u0000", "\n"))
-  }
 }
 
 case class BrowseInfo(name: String, moduleName: String, declaration: Option[String])
-
-case class GhcModCheckResult(problems: Seq[GhcModProblem] = Seq())
-
-case class GhcModProblem(filePath: String, lineNr: Int, columnNr: Int, description: String)
-

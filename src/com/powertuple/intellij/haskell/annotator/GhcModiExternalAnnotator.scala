@@ -27,7 +27,7 @@ import com.intellij.openapi.util.TextRange
 import com.intellij.psi.PsiFile
 import com.intellij.psi.impl.source.tree.TreeUtil
 import com.intellij.psi.util.PsiTreeUtil
-import com.powertuple.intellij.haskell.external.{GhcMod, GhcModCheckResult, GhcModProblem}
+import com.powertuple.intellij.haskell.external._
 import com.powertuple.intellij.haskell.psi._
 import com.powertuple.intellij.haskell.util.{FileUtil, LineColumnPosition, OSUtil}
 import com.powertuple.intellij.haskell.{HaskellFile, HaskellFileType}
@@ -35,7 +35,7 @@ import com.powertuple.intellij.haskell.{HaskellFile, HaskellFileType}
 import scala.annotation.tailrec
 import scala.collection.JavaConversions._
 
-class GhcModiExternalAnnotator extends ExternalAnnotator[GhcModInitialInfo, GhcModCheckResult] {
+class GhcModiExternalAnnotator extends ExternalAnnotator[GhcModInitialInfo, GhcModiCheckResult] {
 
   private final val NoTypeSignaturePattern = """Warning: Top-level binding with no type signature: (.+)""".r
   private final val UseLanguageExtensionPattern = """.* Perhaps you intended to use (\w+) .*""".r
@@ -52,12 +52,11 @@ class GhcModiExternalAnnotator extends ExternalAnnotator[GhcModInitialInfo, GhcM
     }
   }
 
-  override def doAnnotate(initialInfoGhcMod: GhcModInitialInfo): GhcModCheckResult = {
-    // Temporary using `ghc-mod check` because of ghc-mod issue #275
-    GhcMod.check(initialInfoGhcMod.psiFile.getProject, initialInfoGhcMod.filePath)
+  override def doAnnotate(initialInfoGhcMod: GhcModInitialInfo): GhcModiCheckResult = {
+    GhcModiCheck.check(initialInfoGhcMod.psiFile.getProject, initialInfoGhcMod.filePath)
   }
 
-  override def apply(psiFile: PsiFile, ghcModResult: GhcModCheckResult, holder: AnnotationHolder) {
+  override def apply(psiFile: PsiFile, ghcModResult: GhcModiCheckResult, holder: AnnotationHolder) {
     if (ghcModResult.problems.nonEmpty && psiFile.isValid) {
       for (annotation <- createAnnotations(ghcModResult, psiFile)) {
         annotation match {
@@ -67,8 +66,8 @@ class GhcModiExternalAnnotator extends ExternalAnnotator[GhcModInitialInfo, GhcM
           case WarningAnnotation(textRange, message, Some(intentionAction)) => holder.createWarningAnnotation(textRange, message).registerFix(intentionAction)
         }
       }
-      markFileDirty(psiFile)
     }
+   markFileDirty(psiFile)
   }
 
   private def markFileDirty(psiFile: PsiFile) {
@@ -77,10 +76,9 @@ class GhcModiExternalAnnotator extends ExternalAnnotator[GhcModInitialInfo, GhcM
     fileStatusMap.markFileScopeDirty(document, new TextRange(0, document.getTextLength), document.getTextLength)
   }
 
-  // TODO: Try to make problem text range more precise by using problem description
-  private[annotator] def createAnnotations(ghcModResult: GhcModCheckResult, psiFile: PsiFile): Seq[Annotation] = {
+  private[annotator] def createAnnotations(ghcModiCheckResult: GhcModiCheckResult, psiFile: PsiFile): Seq[Annotation] = {
     (for (
-      problem <- ghcModResult.problems.filter(_.filePath == psiFile.getOriginalFile.getVirtualFile.getPath)
+      problem <- ghcModiCheckResult.problems.filter(_.filePath == psiFile.getOriginalFile.getVirtualFile.getPath)
     ) yield {
       val textRange = getProblemTextRange(psiFile, problem)
       textRange.map { tr =>
@@ -100,7 +98,7 @@ class GhcModiExternalAnnotator extends ExternalAnnotator[GhcModInitialInfo, GhcM
     }).flatten
   }
 
-  private def getProblemTextRange(psiFile: PsiFile, problem: GhcModProblem): Option[TextRange] = {
+  private def getProblemTextRange(psiFile: PsiFile, problem: GhcModiProblem): Option[TextRange] = {
     val ghcModiOffset = LineColumnPosition.getOffset(psiFile, LineColumnPosition(problem.lineNr, problem.columnNr))
     ghcModiOffset match {
       case Some(offset) => Some(findTextRange(psiFile, offset))

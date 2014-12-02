@@ -49,7 +49,7 @@ class HaskellDocumentationProvider extends AbstractDocumentationProvider {
     val identifier = namedElement.getName
     val file = namedElement.getContainingFile
     val project = file.getProject
-    val identifierInfo = GhcModiManager.findInfoFor(file, namedElement).headOption
+    val identifierInfo = GhcModiInfo.findInfoFor(file, namedElement).headOption
     val haskellDocs = HaskellSettings.getInstance().getState.haskellDocsPath
     val arguments = (identifierInfo, getSandboxPackageDbPath(project), getModuleName(file)) match {
       case (Some(lei: LibraryIdentifierInfo), Some(dbPath), _) => Seq("-g", s"-package-db=$dbPath", lei.module, identifier)

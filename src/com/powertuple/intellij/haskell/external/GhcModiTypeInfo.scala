@@ -29,7 +29,7 @@ import com.powertuple.intellij.haskell.util.{FileUtil, LineColumnPosition}
 
 import scala.util.{Failure, Success, Try}
 
-private[external] object GhcModiTypeInfo {
+object GhcModiTypeInfo {
   private final val GhcModiTypeInfoPattern = """([\d]+) ([\d]+) ([\d]+) ([\d]+) "(.+)"""".r
 
   private final val Executor = Executors.newCachedThreadPool()
@@ -66,7 +66,7 @@ private[external] object GhcModiTypeInfo {
         }
       )
 
-  def findInfoFor(ghcModi: GhcModi, psiFile: PsiFile, psiElement: PsiElement): Option[TypeInfo] = {
+  def findTypeInfoFor(psiFile: PsiFile, psiElement: PsiElement): Option[TypeInfo] = {
     val textOffSet = psiElement.getNode.getElementType match {
       case HaskellTypes.HS_QVARID_ID | HaskellTypes.HS_QCONID_ID => psiElement.getTextOffset
       case HaskellTypes.HS_QVARSYM_ID | HaskellTypes.HS_GCONSYM_ID =>
@@ -91,7 +91,7 @@ private[external] object GhcModiTypeInfo {
     } yield typeInfo
   }
 
-  def findInfoForSelection(ghcModi: GhcModi, psiFile: PsiFile, selectionModel: SelectionModel): Option[TypeInfo] = {
+  def findTypeInfoForSelection(psiFile: PsiFile, selectionModel: SelectionModel): Option[TypeInfo] = {
     FileUtil.saveFile(psiFile)
 
     val selectionStart = LineColumnPosition.fromOffset(psiFile, selectionModel.getSelectionStart) match {
