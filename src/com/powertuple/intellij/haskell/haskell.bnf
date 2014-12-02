@@ -23,8 +23,11 @@
   mixin("qvar_id|qvar_sym|qcon_id|gcon_sym")="com.powertuple.intellij.haskell.psi.impl.HaskellNamedElementImpl"
   implements("qvar_id|qvar_sym|qcon_id|gcon_sym")="com.powertuple.intellij.haskell.psi.HaskellNamedElement"
 
-  methods("type_signature_declaration|data_declaration|type_declaration|newtype_declaration|class_declaration|instance_declaration|type_family_declaration|deriving_declaration|type_instance_declaration")=[getName getPresentation getIdentifierElements]
-  implements("type_signature_declaration|data_declaration|type_declaration|newtype_declaration|class_declaration|instance_declaration|type_family_declaration|deriving_declaration|type_instance_declaration")="com.powertuple.intellij.haskell.psi.HaskellDeclarationElement"
+  methods("type_signature_declaration|type_declaration|class_declaration|instance_declaration|type_family_declaration|deriving_declaration|type_instance_declaration")=[getName getPresentation getIdentifierElements]
+  implements("type_signature_declaration|type_declaration|class_declaration|instance_declaration|type_family_declaration|deriving_declaration|type_instance_declaration")="com.powertuple.intellij.haskell.psi.HaskellDeclarationElement"
+
+  methods("data_declaration|newtype_declaration")=[getName getPresentation getIdentifierElements getSimpleType]
+  implements("data_declaration|newtype_declaration")="com.powertuple.intellij.haskell.psi.HaskellDataConstructorDeclarationElement"
 }
 
 program                     ::= onl language_pragmas? onl module_body
@@ -33,7 +36,8 @@ language_pragma             ::= PRAGMA_START osnl qcon_id osnl qcon_id (osnl COM
 
 other_pragma                ::= PRAGMA_START (general_id | NEWLINE)+ PRAGMA_END NEWLINE
 module_body                 ::= module_declaration+ onl body | body
-module_declaration          ::= MODULE qcon_id onl WHERE? onl (onl exports)? onl WHERE? onl               {methods=[getModuleName]}
+module_declaration          ::= MODULE module_id onl WHERE? onl (onl exports)? onl WHERE? onl               {methods=[getModuleName]}
+module_id                   ::= qcon_id
 
 private body                ::= import_declarations top_declarations
 private top_declarations    ::= (top_declaration onl)*

@@ -16,7 +16,12 @@
 
 package com.powertuple.intellij.haskell.external
 
+import java.util.concurrent.{Callable, Executors, TimeUnit}
+
+import com.google.common.cache.{CacheBuilder, CacheLoader}
+import com.google.common.util.concurrent.{ListenableFuture, ListenableFutureTask}
 import com.intellij.openapi.editor.SelectionModel
+import com.intellij.openapi.project.Project
 import com.intellij.psi.{PsiElement, PsiFile}
 import com.powertuple.intellij.haskell.HaskellNotificationGroup
 import com.powertuple.intellij.haskell.psi._
@@ -26,6 +31,40 @@ import scala.util.{Failure, Success, Try}
 
 private[external] object GhcModiTypeInfo {
   private final val GhcModiTypeInfoPattern = """([\d]+) ([\d]+) ([\d]+) ([\d]+) "(.+)"""".r
+
+  private final val Executor = Executors.newCachedThreadPool()
+
+  private case class ElementTypeInfo(filePath: String, lineNr: Int, columnNr: Int, project: Project)
+
+  private final val TypeInfoCache = CacheBuilder.newBuilder()
+      .refreshAfterWrite(10, TimeUnit.SECONDS)
+      .build(
+        new CacheLoader[ElementTypeInfo, GhcModiOutput]() {
+          private def findTypeInfoFor(elementTypeInfo: ElementTypeInfo): GhcModiOutput = {
+            val cmd = s"type ${elementTypeInfo.filePath} ${elementTypeInfo.lineNr} ${elementTypeInfo.columnNr}"
+            GhcModiManager.getGhcModi(elementTypeInfo.project).execute(cmd)
+          }
+
+          override def load(elementTypeInfo: ElementTypeInfo): GhcModiOutput = {
+            findTypeInfoFor(elementTypeInfo)
+          }
+
+          override def reload(elementTypeInfo: ElementTypeInfo, oldInfo: GhcModiOutput): ListenableFuture[GhcModiOutput] = {
+            val task = ListenableFutureTask.create(new Callable[GhcModiOutput]() {
+              def call() = {
+                val newInfo = findTypeInfoFor(elementTypeInfo)
+                if (newInfo.outputLines.isEmpty) {
+                  oldInfo
+                } else {
+                  newInfo
+                }
+              }
+            })
+            Executor.execute(task)
+            task
+          }
+        }
+      )
 
   def findInfoFor(ghcModi: GhcModi, psiFile: PsiFile, psiElement: PsiElement): Option[TypeInfo] = {
     val textOffSet = psiElement.getNode.getElementType match {
@@ -74,14 +113,11 @@ private[external] object GhcModiTypeInfo {
   }
 
   private def findGhcModiInfos(psiFile: PsiFile, startPositionExpression: LineColumnPosition): Option[Seq[TypeInfo]] = {
-    val ghcModi = GhcModiManager.getGhcModi(psiFile)
-    val vFile = psiFile.getVirtualFile
-    val cmd = s"type ${vFile.getPath} ${startPositionExpression.lineNr} ${startPositionExpression.columnNr}"
-    val ghcModiOutput = ghcModi.execute(cmd)
-
+    val filePath = FileUtil.getFilePath(psiFile)
+    val ghcModiOutput = TypeInfoCache.get(ElementTypeInfo(filePath, startPositionExpression.lineNr, startPositionExpression.columnNr, psiFile.getProject))
     ghcModiOutputToTypeInfo(ghcModiOutput.outputLines) match {
       case Success(typeInfos) => Some(typeInfos)
-      case Failure(error) => HaskellNotificationGroup.notifyError(s"Could not determine type with $cmd. Error: $error.getMessage"); None
+      case Failure(error) => HaskellNotificationGroup.notifyError(s"Could not determine type. Error: $error.getMessage"); None
     }
   }
 

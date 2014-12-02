@@ -16,6 +16,10 @@
 
 package com.powertuple.intellij.haskell.external
 
+import java.util.concurrent.{Callable, Executors, TimeUnit}
+
+import com.google.common.cache.{CacheBuilder, CacheLoader}
+import com.google.common.util.concurrent.{ListenableFuture, ListenableFutureTask}
 import com.intellij.openapi.project.Project
 import com.intellij.psi.PsiFile
 import com.powertuple.intellij.haskell.psi._
@@ -30,14 +34,44 @@ private[external] object GhcModiInfo {
   private final val GhcModiInfoLibraryPathPattern = """(.+)-- Defined in ‘([\w\.\-]+):([\w\.\-]+)’""".r
   private final val GhcModiInfoLibraryPattern = """(.+)-- Defined in ‘([\w\.\-]+)’""".r
 
-  def findInfoFor(ghcModi: GhcModi, psiFile: PsiFile, namedElement: HaskellNamedElement): Seq[IdentifierInfo] = {
-    val identifier = namedElement match {
-      case _: HaskellQvarId | _: HaskellQconId => namedElement.getName
-      case _: HaskellQvarSym | _: HaskellGconSym => s"(${namedElement.getName})"
-    }
+  private final val NoInfoIndicator = "Cannot show info"
 
-    val cmd = s"info ${psiFile.getOriginalFile.getVirtualFile.getPath} $identifier"
-    val ghcModiOutput = ghcModi.execute(cmd)
+  private final val Executor = Executors.newCachedThreadPool()
+
+  private case class NamedElementInfo(filePath: String, identifier: String, project: Project)
+
+  private final val InfoCache = CacheBuilder.newBuilder()
+      .refreshAfterWrite(10, TimeUnit.SECONDS)
+      .build(
+        new CacheLoader[NamedElementInfo, GhcModiOutput]() {
+          private def findInfoFor(namedElementInfo: NamedElementInfo): GhcModiOutput = {
+            val cmd = s"info ${namedElementInfo.filePath} ${namedElementInfo.identifier}"
+            GhcModiManager.getGhcModi(namedElementInfo.project).execute(cmd)
+          }
+
+          override def load(namedElementInfo: NamedElementInfo): GhcModiOutput = {
+            findInfoFor(namedElementInfo)
+          }
+
+          override def reload(namedElementInfo: NamedElementInfo, oldInfo: GhcModiOutput): ListenableFuture[GhcModiOutput] = {
+            val task = ListenableFutureTask.create(new Callable[GhcModiOutput]() {
+              def call() = {
+                val newInfo = findInfoFor(namedElementInfo)
+                if (newInfo.outputLines.head == NoInfoIndicator) {
+                  oldInfo
+                } else {
+                  newInfo
+                }
+              }
+            })
+            Executor.execute(task)
+            task
+          }
+        }
+      )
+
+  def findInfoFor(ghcModi: GhcModi, psiFile: PsiFile, namedElement: HaskellNamedElement): Seq[IdentifierInfo] = {
+    val ghcModiOutput = InfoCache.get(NamedElementInfo(FileUtil.getFilePath(psiFile), getIdentifier(namedElement), psiFile.getProject))
     (for {
       outputLine <- ghcModiOutput.outputLines.headOption
       identifierInfos <- createIdentifierInfos(outputLine, psiFile.getProject)
@@ -45,7 +79,7 @@ private[external] object GhcModiInfo {
   }
 
   private def createIdentifierInfos(outputLine: String, project: Project): Option[Seq[IdentifierInfo]] = {
-    if (outputLine == "Cannot show info") {
+    if (outputLine == NoInfoIndicator) {
       None
     } else {
       val outputLines = outputLine.split("\u0000")
@@ -56,8 +90,8 @@ private[external] object GhcModiInfo {
 
   @tailrec
   private def createInfoPerDefinition(outputLines: Array[String], outputInfos: ListBuffer[Array[String]]): ListBuffer[Array[String]] = {
-    if (outputLines.exists(_.contains("Defined"))) {
-      val index = outputLines.indexWhere(_.contains("Defined"))
+    val index = outputLines.indexWhere(_.contains("Defined"))
+    if (index > -1) {
       val pair = outputLines.splitAt(index + 1)
       createInfoPerDefinition(pair._2, outputInfos.+=(pair._1))
     } else {
@@ -76,6 +110,13 @@ private[external] object GhcModiInfo {
       }
       case GhcModiInfoLibraryPattern(typeSignature, module) => FileUtil.findModuleFilePath(module, project).map(LibraryIdentifierInfo(typeSignature, _, module))
       case _ => None
+    }
+  }
+
+  private def getIdentifier(namedElement: HaskellNamedElement) = {
+    namedElement match {
+      case _: HaskellQvarId | _: HaskellQconId => namedElement.getName
+      case _: HaskellQvarSym | _: HaskellGconSym => s"(${namedElement.getName})"
     }
   }
 }

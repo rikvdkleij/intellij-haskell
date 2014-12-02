@@ -63,6 +63,10 @@ object FileUtil {
     }
   }
 
+  def getFilePath(psiFile: PsiFile): String = {
+    psiFile.getOriginalFile.getVirtualFile.getPath
+  }
+
   private def getNameAndPathForModule(module: String) = {
     module.split('.').toList.reverse match {
       case n :: d => Some(n, d)

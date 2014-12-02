@@ -20,7 +20,6 @@ import javax.swing._
 
 import com.intellij.lang.ASTNode
 import com.intellij.navigation.ItemPresentation
-import com.intellij.openapi.util.Condition
 import com.intellij.psi.impl.source.resolve.reference.ReferenceProvidersRegistry
 import com.intellij.psi.tree.IElementType
 import com.intellij.psi.util.PsiTreeUtil
@@ -28,6 +27,7 @@ import com.intellij.psi.{PsiElement, PsiReference}
 import com.intellij.util.ArrayUtil
 import com.powertuple.intellij.haskell.HaskellIcons
 import com.powertuple.intellij.haskell.psi._
+import com.powertuple.intellij.haskell.util.HaskellElementCondition
 
 import scala.collection.JavaConversions._
 
@@ -137,15 +137,6 @@ object HaskellPsiImplUtil {
     ArrayUtil.getFirstElement(ReferenceProvidersRegistry.getReferencesFromProviders(namedElement))
   }
 
-  private final val declarationElementCondition = new Condition[PsiElement]() {
-    override def value(psiElement: PsiElement): Boolean = {
-      psiElement match {
-        case _: HaskellDeclarationElement => true
-        case _ => false
-      }
-    }
-  }
-
   private abstract class HaskellItemPresentation(haskellElement: PsiElement) extends ItemPresentation {
     override def getLocationString: String = {
       val node = haskellElement.getContainingFile.getNode.getPsi
@@ -171,7 +162,7 @@ object HaskellPsiImplUtil {
   }
 
   def getPresentation(namedElement: HaskellNamedElement): ItemPresentation = {
-    val declarationElement = Option(PsiTreeUtil.findFirstParent(namedElement, declarationElementCondition)).getOrElse(namedElement)
+    val declarationElement = Option(PsiTreeUtil.findFirstParent(namedElement, HaskellElementCondition.DeclarationElementCondition)).getOrElse(namedElement)
 
     new HaskellItemPresentation(declarationElement) {
 
@@ -243,7 +234,7 @@ object HaskellPsiImplUtil {
   }
 
   def getIdentifierElements(newtypeDeclaration: HaskellNewtypeDeclaration): Seq[HaskellNamedElement] = {
-    newtypeDeclaration.getSimpletype.getIdentifierElements
+    newtypeDeclaration.getSimpletype.getIdentifierElements ++ Seq(newtypeDeclaration.getNewconstr.getQcon.getIdentifierElement)
   }
 
   def getIdentifierElements(classDeclaration: HaskellClassDeclaration): Seq[HaskellNamedElement] = {
@@ -283,6 +274,10 @@ object HaskellPsiImplUtil {
   }
 
   def getModuleName(moduleDeclaration: HaskellModuleDeclaration): String = {
-    Option(moduleDeclaration.getQconId).map(_.getName).getOrElse("Undefined module")
+    Option(moduleDeclaration.getModuleId).map(_.getQconId.getName).getOrElse("Undefined module")
+  }
+
+  def getSimpleType(dataConstructorDeclaration: HaskellDataConstructorDeclarationElement): HaskellNamedElement = {
+    dataConstructorDeclaration.getIdentifierElements.head
   }
 }

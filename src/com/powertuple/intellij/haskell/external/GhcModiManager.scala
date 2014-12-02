@@ -18,6 +18,7 @@ package com.powertuple.intellij.haskell.external
 
 import com.intellij.openapi.components.ServiceManager
 import com.intellij.openapi.editor.SelectionModel
+import com.intellij.openapi.project.Project
 import com.intellij.psi.{PsiElement, PsiFile}
 import com.powertuple.intellij.haskell.psi._
 
@@ -30,24 +31,24 @@ object GhcModiManager {
   }
 
   def findInfoFor(psiFile: PsiFile, namedElement: HaskellNamedElement): Seq[IdentifierInfo] = {
-    GhcModiInfo.findInfoFor(getGhcModi(psiFile), psiFile, namedElement)
+    GhcModiInfo.findInfoFor(getGhcModi(psiFile.getProject), psiFile, namedElement)
   }
 
   def findTypeInfoFor(psiFile: PsiFile, psiElement: PsiElement): Option[TypeInfo] = {
-    GhcModiTypeInfo.findInfoFor(getGhcModi(psiFile), psiFile, psiElement)
+    GhcModiTypeInfo.findInfoFor(getGhcModi(psiFile.getProject), psiFile, psiElement)
   }
 
   def findTypeInfoForSelection(psiFile: PsiFile, selectionModel: SelectionModel): Option[TypeInfo] = {
-    GhcModiTypeInfo.findInfoForSelection(getGhcModi(psiFile), psiFile, selectionModel)
+    GhcModiTypeInfo.findInfoForSelection(getGhcModi(psiFile.getProject), psiFile, selectionModel)
   }
 
-  def getGhcModi(psiFile: PsiFile): GhcModi = {
+  def getGhcModi(project: Project): GhcModi = {
     if (restart) {
-      val ghcModi = ServiceManager.getService(psiFile.getProject, classOf[GhcModi])
+      val ghcModi = ServiceManager.getService(project, classOf[GhcModi])
       ghcModi.exit()
       ghcModi
     } else {
-      ServiceManager.getService(psiFile.getProject, classOf[GhcModi])
+      ServiceManager.getService(project, classOf[GhcModi])
     }
   }
 }
