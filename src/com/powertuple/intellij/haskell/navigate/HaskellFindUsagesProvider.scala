@@ -73,7 +73,7 @@ class HaskellFindUsagesProvider extends FindUsagesProvider {
 
   override def canFindUsagesFor(psiElement: PsiElement): Boolean = {
     psiElement match {
-      case ne: HaskellNamedElement => true
+      case _: HaskellNamedElement => true
       case _ => false
     }
   }
