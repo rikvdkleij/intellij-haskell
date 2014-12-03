@@ -20,6 +20,7 @@ import java.util.concurrent.{Callable, Executors, TimeUnit}
 
 import com.google.common.cache.{CacheBuilder, CacheLoader}
 import com.google.common.util.concurrent.{ListenableFuture, ListenableFutureTask}
+import com.intellij.openapi.progress.ProcessCanceledException
 import com.intellij.openapi.project.Project
 import com.intellij.psi.PsiFile
 import com.powertuple.intellij.haskell.psi._
@@ -71,7 +72,13 @@ object GhcModiInfo {
       )
 
   def findInfoFor(psiFile: PsiFile, namedElement: HaskellNamedElement): Seq[IdentifierInfo] = {
-    val ghcModiOutput = InfoCache.get(NamedElementInfo(FileUtil.getFilePath(psiFile), getIdentifier(namedElement), psiFile.getProject))
+    val ghcModiOutput = try {
+      InfoCache.get(NamedElementInfo(FileUtil.getFilePath(psiFile), getIdentifier(namedElement), psiFile.getProject))
+    }
+    catch {
+      case _: ProcessCanceledException => GhcModiOutput()
+    }
+
     (for {
       outputLine <- ghcModiOutput.outputLines.headOption
       identifierInfos <- createIdentifierInfos(outputLine, psiFile.getProject)

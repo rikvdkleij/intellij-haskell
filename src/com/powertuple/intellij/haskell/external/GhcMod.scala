@@ -21,6 +21,7 @@ import java.util.concurrent.{Callable, Executors, TimeUnit}
 import com.google.common.cache.{CacheBuilder, CacheLoader}
 import com.google.common.util.concurrent.{ListenableFuture, ListenableFutureTask}
 import com.intellij.execution.process.ProcessOutput
+import com.intellij.openapi.progress.ProcessCanceledException
 import com.intellij.openapi.project.Project
 import com.powertuple.intellij.haskell.settings.HaskellSettings
 
@@ -32,37 +33,42 @@ object GhcMod {
 
   private val executor = Executors.newCachedThreadPool()
 
-  private val browseInfoCache = CacheBuilder.newBuilder()
-    .refreshAfterWrite(10, TimeUnit.SECONDS)
-    .build(
-      new CacheLoader[ModuleInfo, ProcessOutput]() {
-        private def getProcessOutput(moduleInfo: ModuleInfo): ProcessOutput = {
-          ExternalProcess.getProcessOutput(
-            moduleInfo.projectBasePath,
-            HaskellSettings.getInstance().getState.ghcModPath,
-            Seq("browse", "-d", "-q", "-o") ++ Seq(moduleInfo.moduleName),
-            4900
-          )
-        }
+  private final val BrowseInfoCache = CacheBuilder.newBuilder()
+      .refreshAfterWrite(10, TimeUnit.SECONDS)
+      .build(
+        new CacheLoader[ModuleInfo, ProcessOutput]() {
+          private def getProcessOutput(moduleInfo: ModuleInfo): ProcessOutput = {
+            ExternalProcess.getProcessOutput(
+              moduleInfo.projectBasePath,
+              HaskellSettings.getInstance().getState.ghcModPath,
+              Seq("browse", "-d", "-q", "-o") ++ Seq(moduleInfo.moduleName),
+              4900
+            )
+          }
 
-        override def load(moduleInfo: ModuleInfo): ProcessOutput = {
-          getProcessOutput(moduleInfo)
-        }
+          override def load(moduleInfo: ModuleInfo): ProcessOutput = {
+            getProcessOutput(moduleInfo)
+          }
 
-        override def reload(moduleInfo: ModuleInfo, oldValue: ProcessOutput): ListenableFuture[ProcessOutput] = {
-          val task = ListenableFutureTask.create(new Callable[ProcessOutput]() {
-            def call() = {
-              getProcessOutput(moduleInfo)
-            }
-          })
-          executor.execute(task)
-          task
+          override def reload(moduleInfo: ModuleInfo, oldValue: ProcessOutput): ListenableFuture[ProcessOutput] = {
+            val task = ListenableFutureTask.create(new Callable[ProcessOutput]() {
+              def call() = {
+                getProcessOutput(moduleInfo)
+              }
+            })
+            executor.execute(task)
+            task
+          }
         }
-      }
-    )
+      )
 
   def browseInfo(project: Project, moduleName: String, removeParensFromOperator: Boolean): Seq[BrowseInfo] = {
-    val processOutput = browseInfoCache.get(ModuleInfo(project.getBasePath, moduleName))
+    val processOutput = try {
+      BrowseInfoCache.get(ModuleInfo(project.getBasePath, moduleName))
+    }
+    catch {
+      case _: ProcessCanceledException => new ProcessOutput
+    }
     processOutput.getStdoutLines.map(createBrowseInfo(_, removeParensFromOperator)).flatten
   }
 

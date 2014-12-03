@@ -21,6 +21,7 @@ import java.util.concurrent.{Callable, Executors, TimeUnit}
 import com.google.common.cache.{CacheBuilder, CacheLoader}
 import com.google.common.util.concurrent.{ListenableFuture, ListenableFutureTask}
 import com.intellij.openapi.editor.SelectionModel
+import com.intellij.openapi.progress.ProcessCanceledException
 import com.intellij.openapi.project.Project
 import com.intellij.psi.{PsiElement, PsiFile}
 import com.powertuple.intellij.haskell.HaskellNotificationGroup
@@ -114,7 +115,12 @@ object GhcModiTypeInfo {
 
   private def findGhcModiInfos(psiFile: PsiFile, startPositionExpression: LineColumnPosition): Option[Seq[TypeInfo]] = {
     val filePath = FileUtil.getFilePath(psiFile)
-    val ghcModiOutput = TypeInfoCache.get(ElementTypeInfo(filePath, startPositionExpression.lineNr, startPositionExpression.columnNr, psiFile.getProject))
+    val ghcModiOutput = try {
+      TypeInfoCache.get(ElementTypeInfo(filePath, startPositionExpression.lineNr, startPositionExpression.columnNr, psiFile.getProject))
+    }
+    catch {
+      case _: ProcessCanceledException => GhcModiOutput()
+    }
     ghcModiOutputToTypeInfo(ghcModiOutput.outputLines) match {
       case Success(typeInfos) => Some(typeInfos)
       case Failure(error) => HaskellNotificationGroup.notifyError(s"Could not determine type. Error: $error.getMessage"); None
