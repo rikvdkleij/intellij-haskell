@@ -16,6 +16,7 @@
 package com.powertuple.intellij.haskell.code
 
 import com.intellij.codeInsight.editorActions.SimpleTokenSetQuoteHandler
+import com.intellij.psi.TokenType
 import com.powertuple.intellij.haskell.psi.HaskellTypes
 
-class HaskellQuoteHandler extends SimpleTokenSetQuoteHandler(HaskellTypes.HS_STRING_LITERAL, HaskellTypes.HS_QUOTE)
+class HaskellQuoteHandler extends SimpleTokenSetQuoteHandler(HaskellTypes.HS_STRING_LITERAL, HaskellTypes.HS_QUOTE, HaskellTypes.HS_BACKQUOTE, TokenType.BAD_CHARACTER)
