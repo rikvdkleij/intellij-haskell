@@ -19,7 +19,7 @@ package com.powertuple.intellij.haskell.external
 import java.util.concurrent.{Callable, Executors, TimeUnit}
 
 import com.google.common.cache.{CacheBuilder, CacheLoader}
-import com.google.common.util.concurrent.{ListenableFuture, ListenableFutureTask}
+import com.google.common.util.concurrent.{UncheckedExecutionException, ListenableFuture, ListenableFutureTask}
 import com.intellij.execution.process.ProcessOutput
 import com.intellij.openapi.progress.ProcessCanceledException
 import com.intellij.openapi.project.Project
@@ -67,6 +67,7 @@ object GhcMod {
       BrowseInfoCache.get(ModuleInfo(project.getBasePath, moduleName))
     }
     catch {
+      case _: UncheckedExecutionException => new ProcessOutput()
       case _: ProcessCanceledException => new ProcessOutput
     }
     processOutput.getStdoutLines.map(createBrowseInfo(_, removeParensFromOperator)).flatten
