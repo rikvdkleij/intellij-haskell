@@ -131,7 +131,8 @@ class HaskellReference(namedElement: HaskellNamedElement, textRange: TextRange) 
   private def createResolveResultsByUsingLineColumnInfo(projectIdentifierInfo: ProjectIdentifierInfo, identifier: String): Iterable[ResolveResult] = {
     (for {
       haskellFile <- findFile(projectIdentifierInfo.filePath)
-      startOffset <- LineColumnPosition.getOffset(haskellFile, LineColumnPosition(projectIdentifierInfo.lineNr, projectIdentifierInfo.colNr))
+      offset <- LineColumnPosition.getOffset(haskellFile, LineColumnPosition(projectIdentifierInfo.lineNr, projectIdentifierInfo.colNr))
+      startOffset = if (projectIdentifierInfo.typeSignature.startsWith("(")) offset + 1 else offset
       element <- Option(haskellFile.findElementAt(startOffset))
       namedElement <- {
         element match {
