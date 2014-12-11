@@ -29,8 +29,8 @@ control_character   = [\000 - \037]
 newline             = \r|\n|\r\n
 unispace            = \x05
 white_char          = [ \t\f] | {control_character} | {unispace}
-include_def         = "#"("if"|"ifdef"|"ifndef"|"define"|"elif"|"else"|"error"|"endif"|"include")[^\r\n]*
-white_space         = {white_char}+ | {include_def} | {comment}
+directive           = "#"("if"|"ifdef"|"ifndef"|"define"|"elif"|"else"|"error"|"endif"|"include"|"undef")[^\r\n]*
+white_space         = {white_char}+ | {directive}
 
 small               = [a-z_]          // ignoring any unicode lowercase letter for now
 large               = [A-Z]           // ignoring any unicode uppercase letter for now
@@ -125,6 +125,13 @@ qconid              = ({conid} {dot})* {conid}
 
 gconsym             = {colon} | {qconsym}
 
+quasi_quote_v_start = {left_bracket} {varid} {vertical_bar}
+quasi_quote_e_start = {left_bracket} "e"? {vertical_bar}
+quasi_quote_d_start = {left_bracket} "d" {vertical_bar}
+quasi_quote_t_start = {left_bracket} "t" {vertical_bar}
+quasi_quote_p_start = {left_bracket} "p" {vertical_bar}
+quasi_quote_end     = {vertical_bar} {right_bracket}
+
 %%
 
 <TEX> {
@@ -134,7 +141,7 @@ gconsym             = {colon} | {qconsym}
 }
 
 <NCOMMENT> {
-    {ncomment_start} {newline}? {
+    {ncomment_start} ({newline}| {white_char} | {vertical_bar} | {small} | {large} | {digit})? {
         commentDepth++;
     }
 
@@ -160,7 +167,7 @@ gconsym             = {colon} | {qconsym}
     .|{white_char}|{newline} {}
 }
 
-{ncomment_start} {
+{ncomment_start} ({vertical_bar} | {newline} | {white_char} | {small} | {large} | {digit}) {
     yybegin(NCOMMENT);
     commentDepth = 0;
     commentStart = getTokenStart();
@@ -169,8 +176,12 @@ gconsym             = {colon} | {qconsym}
     {newline}             { return HS_NEWLINE; }
     {comment}             { return HS_COMMENT; }
     {white_space}         { return com.intellij.psi.TokenType.WHITE_SPACE; }
+
     {pragma_start}        { return HS_PRAGMA_START; }
     {pragma_end}          { return HS_PRAGMA_END; }
+
+    {ncomment_start}      { return HS_NCOMMENT_START; }
+    {ncomment_end}        { return HS_NCOMMENT_END; }
 
     // not listed as reserved identifier but have meaning in certain context,
     // let's say specialreservedid
@@ -251,5 +262,12 @@ gconsym             = {colon} | {qconsym}
 
     "\\end{code}"         { yybegin(TEX); return HS_NCOMMENT; }
     "\\section"           { yybegin(TEX); return HS_NCOMMENT; }
+
+    {quasi_quote_e_start} { return HS_QUASI_QUOTE_E_START; }
+    {quasi_quote_d_start} { return HS_QUASI_QUOTE_D_START; }
+    {quasi_quote_t_start} { return HS_QUASI_QUOTE_T_START; }
+    {quasi_quote_p_start} { return HS_QUASI_QUOTE_P_START; }
+    {quasi_quote_v_start} { return HS_QUASI_QUOTE_V_START; }
+    {quasi_quote_end}     { return HS_QUASI_QUOTE_END; }
 
 .                         { return com.intellij.psi.TokenType.BAD_CHARACTER; }

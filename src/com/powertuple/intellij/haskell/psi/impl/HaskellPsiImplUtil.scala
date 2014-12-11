@@ -152,7 +152,7 @@ object HaskellPsiImplUtil {
         case _: HaskellClassDeclaration => Class
         case _: HaskellInstanceDeclaration => Instance
         case _: HaskellDefaultDeclaration => Default
-        case _: HaskellTypeSignature => TypeSignature
+        case _: HaskellTypeSignatureDeclaration => TypeSignature
         case _: HaskellForeignDeclaration => Foreign
         case _: HaskellTypeFamilyDeclaration => TypeFamily
         case _: HaskellTypeInstanceDeclaration => TypeInstance
@@ -202,7 +202,7 @@ object HaskellPsiImplUtil {
       case nt: HaskellNewtypeDeclaration => removeCommentsAndAfterWhereOrEqual(nt)
       case cd: HaskellClassDeclaration => removeCommentsAndAfterWhereOrEqual(cd)
       case id: HaskellInstanceDeclaration => removeCommentsAndAfterWhereOrEqual(id)
-      case ts: HaskellTypeSignature => removeCommentsAndAfterWhereOrEqual(ts)
+      case ts: HaskellTypeSignatureDeclaration => removeCommentsAndAfterWhereOrEqual(ts)
       case tf: HaskellTypeFamilyDeclaration => removeCommentsAndAfterWhereOrEqual(tf)
       case de => removeComments(de)
     }).map(_.getText.trim).mkString(" ").replaceAll("\\s+", " ")
@@ -212,14 +212,10 @@ object HaskellPsiImplUtil {
     declarationElement.getIdentifierElements.map(_.getName).mkString(" ")
   }
 
-  def getIdentifierElements(typeSignature: HaskellTypeSignature): Seq[HaskellNamedElement] = {
+  def getIdentifierElements(typeSignature: HaskellTypeSignatureDeclaration): Seq[HaskellNamedElement] = {
     Option(typeSignature.getVars).map(_.getQvarList.map(_.getIdentifierElement).toSeq).
         orElse(Option(typeSignature.getOps).map(_.getOpList.map(_.getIdentifierElement).toSeq)).
         getOrElse(Seq())
-  }
-
-  def getIdentifierElements(typeSignatureDeclaration: HaskellTypeSignatureDeclaration): Seq[HaskellNamedElement] = {
-    typeSignatureDeclaration.getTypeSignature.getIdentifierElements
   }
 
   def getIdentifierElements(dataDeclaration: HaskellDataDeclaration): Seq[HaskellNamedElement] = {
@@ -239,7 +235,7 @@ object HaskellPsiImplUtil {
 
   def getIdentifierElements(classDeclaration: HaskellClassDeclaration): Seq[HaskellNamedElement] = {
     Seq(classDeclaration.getQconId) ++
-        Option(classDeclaration.getCdeclList).map(_.map(c => Option(c.getTypeSignature)).flatten.flatMap(_.getIdentifierElements)).getOrElse(Seq())
+        Option(classDeclaration.getCdeclList).map(_.map(c => Option(c.getTypeSignatureDeclaration)).flatten.flatMap(_.getIdentifierElements)).getOrElse(Seq())
   }
 
   def getIdentifierElements(instanceDeclaration: HaskellInstanceDeclaration): Seq[HaskellNamedElement] = {

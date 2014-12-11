@@ -18,8 +18,8 @@ package com.powertuple.intellij.haskell.highlighter
 
 import com.intellij.lexer.Lexer
 import com.intellij.openapi.editor.DefaultLanguageHighlighterColors
-import com.intellij.openapi.editor.colors.{CodeInsightColors, TextAttributesKey}
 import com.intellij.openapi.editor.colors.TextAttributesKey.createTextAttributesKey
+import com.intellij.openapi.editor.colors.{CodeInsightColors, TextAttributesKey}
 import com.intellij.openapi.fileTypes.SyntaxHighlighterBase
 import com.intellij.psi.TokenType
 import com.intellij.psi.tree.IElementType
@@ -41,7 +41,8 @@ object HaskellSyntaxHighlighter {
   final val Constructor = createTextAttributesKey("HS_CONSTRUCTOR", DefaultLanguageHighlighterColors.INSTANCE_FIELD)
   final val Operator = createTextAttributesKey("HS_OPERATOR", CodeInsightColors.TYPE_PARAMETER_NAME_ATTRIBUTES)
   final val ReservedSymbol = createTextAttributesKey("HS_SYMBOL", DefaultLanguageHighlighterColors.INSTANCE_METHOD)
-  final val Default = createTextAttributesKey("HS_DEFAULT", DefaultLanguageHighlighterColors.CONSTANT)
+  final val Pragma = createTextAttributesKey("HS_PRAGMA", DefaultLanguageHighlighterColors.PREDEFINED_SYMBOL)
+  final val Default = createTextAttributesKey("HS_DEFAULT", DefaultLanguageHighlighterColors.DOC_COMMENT_MARKUP)
 }
 
 class HaskellSyntaxHighlighter extends SyntaxHighlighterBase {
@@ -60,6 +61,7 @@ class HaskellSyntaxHighlighter extends SyntaxHighlighterBase {
 
     elementType match {
       case TokenType.BAD_CHARACTER => pack(Illegal)
+      case et if PRAGMA_START_END_IDS.contains(et) => pack(Pragma)
       case et if et == HS_COMMENT => pack(Comment)
       case et if et == HS_NCOMMENT => pack(BlockComment)
       case et if et == HS_STRING_LITERAL || et == HS_CHARACTER_LITERAL => pack(String)
@@ -69,7 +71,7 @@ class HaskellSyntaxHighlighter extends SyntaxHighlighterBase {
       case et if et == HS_LEFT_BRACKET || et == HS_RIGHT_BRACKET => pack(Bracket)
       case et if ALL_RESERVED_IDS.contains(et) => pack(Keyword)
       case et if SYMBOLS_RES_OP.contains(et) => pack(ReservedSymbol)
-      case et if OPERATORS.contains(et)  => pack(Operator)
+      case et if OPERATORS.contains(et) => pack(Operator)
       case et if et == HS_QVARID_ID => pack(Variable)
       case et if et == HS_QCONID_ID => pack(Constructor)
       case _ => pack(Default)

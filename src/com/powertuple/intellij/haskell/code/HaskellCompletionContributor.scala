@@ -49,7 +49,10 @@ class HaskellCompletionContributor extends CompletionContributor {
 
   private final val ReservedIds = HaskellParserDefinition.ALL_RESERVED_IDS.getTypes.map(_.asInstanceOf[HaskellTokenType].getName).toSeq
   private final val SpecialReservedIds = Seq("forall", "safe", "unsafe")
-  private final val PragmaIds = Seq("{-#", "LANGUAGE", "#-}", "{-# LANGUAGE")
+  private final val PragmaStartEndIds = Seq("{-#", "#-}")
+  private final val FileHeaderPragmaIds = Seq("LANGUAGE", "OPTIONS_HADDOCK", "INCLUDE", "OPTIONS", "OPTIONS_GHC", "ANN")
+  private final val ModulePragmaIds = Seq("ANN", "DEPRECATED", "WARING", "INLINE", "NOINLINE", "NOTINLINE", "INLINABEL", "LINE", "RULES",
+    "SPECIALIZE", "SPECIALISE", "MINIMAL", "SOURCE", "UNPACK", "NOUNPACK")
   private final val InsideImportClauses = Seq("as", "hiding", "qualified")
   private final val CommentIds = Seq("{-", "-}", "--")
 
@@ -72,16 +75,19 @@ class HaskellCompletionContributor extends CompletionContributor {
         case Some(p) if isImportModuleDeclarationInProgress(p) =>
           resultSet.addAllElements(findModulesToImport(project))
           resultSet.addAllElements(getInsideImportClauses)
-        case Some(p) if isPragmaInProgress(p) =>
+        case Some(p) if isFileHeaderPragmaInProgress(p) =>
           resultSet.addAllElements(getLanguageExtensions(project))
-          resultSet.addAllElements(getPragmaIds)
+          resultSet.addAllElements(getPragmaStartEndIds)
+          resultSet.addAllElements(getFileHeaderPragmaIds)
         case Some(p) if isNCommentInProgress(p) =>
-          resultSet.addAllElements(getPragmaIds)
+          resultSet.addAllElements(getPragmaStartEndIds)
           resultSet.addAllElements(getCommentIds)
-        case _ =>
+        case Some(p) if isPragmaInProgress(p) =>
+          resultSet.addAllElements(getModulePragmaIds)
+        case p =>
           resultSet.addAllElements(getReservedIds)
           resultSet.addAllElements(getSpecialReservedIds)
-          resultSet.addAllElements(getPragmaIds)
+          resultSet.addAllElements(getPragmaStartEndIds)
           resultSet.addAllElements(getCommentIds)
           resultSet.addAllElements(getIdsFromFullScopeImportedModules(project, file))
           resultSet.addAllElements(getIdsFromHidingIdsImportedModules(project, file))
@@ -122,7 +128,11 @@ class HaskellCompletionContributor extends CompletionContributor {
     if (c < ' ' || c == '\n' || c == '\r') {
       text
     } else {
-      getTextUntilNoChar(fileText, offset - 1, c.toString + text)
+      if (offset > 0) {
+        getTextUntilNoChar(fileText, offset - 1, c.toString + text)
+      } else {
+        c.toString + text
+      }
     }
   }
 
@@ -159,9 +169,13 @@ class HaskellCompletionContributor extends CompletionContributor {
     InsideImportClauses.map(c => LookupElementBuilder.create(c + " ").withTailText(" clause", true))
   }
 
-  private def isPragmaInProgress(position: PsiElement): Boolean = {
-    Option(TreeUtil.findParent(position.getNode, HaskellTypes.HS_LANGUAGE_PRAGMAS)).orElse(
+  private def isFileHeaderPragmaInProgress(position: PsiElement): Boolean = {
+    Option(TreeUtil.findParent(position.getNode, HaskellTypes.HS_FILE_HEADER)).orElse(
       Option(TreeUtil.findParent(position.getNode, HaskellTypes.HS_LANGUAGE_PRAGMA))).isDefined
+  }
+
+  private def isPragmaInProgress(position: PsiElement): Boolean = {
+    Option(TreeUtil.findSiblingBackward(position.getNode, HS_PRAGMA_START)).isDefined
   }
 
   private def isNCommentInProgress(position: PsiElement): Boolean = {
@@ -172,8 +186,16 @@ class HaskellCompletionContributor extends CompletionContributor {
     GhcMod.listLanguageExtensions(project).map(n => LookupElementBuilder.create(n + " ").withIcon(HaskellIcons.HaskellSmallBlueLogo).withTailText(" language extension", true))
   }
 
-  private def getPragmaIds: Seq[LookupElementBuilder] = {
-    PragmaIds.map(p => LookupElementBuilder.create(p + " ").withIcon(HaskellIcons.HaskellSmallBlueLogo).withTailText(" pragma", true))
+  private def getPragmaStartEndIds: Seq[LookupElementBuilder] = {
+    PragmaStartEndIds.map(p => LookupElementBuilder.create(p + " ").withIcon(HaskellIcons.HaskellSmallBlueLogo).withTailText(" pragma", true))
+  }
+
+  private def getFileHeaderPragmaIds: Seq[LookupElementBuilder] = {
+    FileHeaderPragmaIds.map(p => LookupElementBuilder.create(p + " ").withIcon(HaskellIcons.HaskellSmallBlueLogo).withTailText(" pragma", true))
+  }
+
+  private def getModulePragmaIds: Seq[LookupElementBuilder] = {
+    ModulePragmaIds.map(p => LookupElementBuilder.create(p + " ").withIcon(HaskellIcons.HaskellSmallBlueLogo).withTailText(" pragma", true))
   }
 
   private def getCommentIds: Seq[LookupElementBuilder] = {

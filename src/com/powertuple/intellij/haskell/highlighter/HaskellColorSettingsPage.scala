@@ -42,6 +42,7 @@ object HaskellColorSettingsPage {
     new AttributesDescriptor("Constructor", Constructor),
     new AttributesDescriptor("Operator", Operator),
     new AttributesDescriptor("Reserved symbol", ReservedSymbol),
+    new AttributesDescriptor("Pragma", Pragma),
     new AttributesDescriptor("Default", Default))
   private final val AttributesKeyMap = Map[String, TextAttributesKey]()
 }
@@ -74,7 +75,8 @@ class HaskellColorSettingsPage extends ColorSettingsPage {
 
   @NotNull
   def getDemoText: String = {
-    "module ModuleName\n" +
+    "{-# LANGUAGE CPP #-}\n" +
+        "module ModuleName\n" +
         "import ImportModuleName\n" +
         "\"string literal\"\n" +
         "'c'\n" +

@@ -53,11 +53,11 @@ object HaskellFindUtil {
   }
 
   private def findDeclarationElementsByConditionOnName(project: Project, includeNonProjectItems: Boolean, condition: String => Boolean) = {
-    findDeclarationElements(project, includeNonProjectItems).filter(de => de.getIdentifierElements.map(_.getName.toLowerCase).exists(n => condition(n)))
+    findDeclarationElements(project, includeNonProjectItems).filter(de => de.getIdentifierElements.map(n => normalize(n.getName)).exists(n => condition(n)))
   }
 
   private def findNamedElementsByConditionOnName(project: Project, includeNonProjectItems: Boolean, condition: String => Boolean) = {
-    findNamedElements(project, includeNonProjectItems).filter(ne => condition(ne.getName.toLowerCase))
+    findNamedElements(project, includeNonProjectItems).filter(ne => condition(normalize(ne.getName)))
   }
 
   private def getHaskellFiles(project: Project, includeNonProjectItems: Boolean) = {
