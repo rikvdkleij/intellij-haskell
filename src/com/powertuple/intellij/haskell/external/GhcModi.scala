@@ -46,7 +46,7 @@ class GhcModi(val settings: HaskellSettings, val project: Project) extends Proje
   private val OK = "OK"
 
   private final val TimeOut = 5000L
-  private final val GhcModiErrorIndicator = "NG BUG:"
+  private final val GhcModiErrorIndicator = "NG"
 
   private var ghcModiProblemTime: Option[Long] = None
 
@@ -143,6 +143,7 @@ class GhcModi(val settings: HaskellSettings, val project: Project) extends Proje
 
   def exit() {
     try {
+      execute("quit")
       if (stdin != null) {
         stdin.close()
       }
