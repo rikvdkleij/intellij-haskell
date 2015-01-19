@@ -14,12 +14,15 @@
  * limitations under the License.
  */
 
-package com.powertuple.intellij.haskell.psi
+package com.powertuple.intellij.haskell.refactor
 
-import com.intellij.navigation.NavigationItem
-import com.intellij.psi.PsiNameIdentifierOwner
-import com.intellij.psi.search.SearchScope
+import com.intellij.lang.refactoring.RefactoringSupportProvider
+import com.intellij.psi.PsiElement
+import com.powertuple.intellij.haskell.psi.HaskellNamedElement
 
-trait HaskellNamedElement extends HaskellCompositeElement with PsiNameIdentifierOwner with NavigationItem {
-  def getUseScope: SearchScope
+class HaskellRefactoringSupportProvider extends RefactoringSupportProvider {
+
+  override def isMemberInplaceRenameAvailable(element: PsiElement, context: PsiElement): Boolean = {
+    element.isInstanceOf[HaskellNamedElement]
+  }
 }

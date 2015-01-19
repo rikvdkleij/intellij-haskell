@@ -1,5 +1,5 @@
 /*
- * Copyright 2014 Rik van der Kleij
+ * Copyright 2015 Rik van der Kleij
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -37,7 +37,7 @@ class GhcModi(val settings: HaskellSettings, val project: Project) extends Proje
   private final val ExecutorService = Executors.newSingleThreadExecutor
   implicit private final val ExecContext = ExecutionContext.fromExecutorService(ExecutorService)
 
-  private final val LineSeparatorInBytes = OSUtil.LineSeparator.getBytes
+  private final val LineSeparatorInBytes = OSUtil.LineSeparator
 
   private[this] var outputStream: OutputStream = _
   private[this] val stdOutListBuffer = ListBuffer[String]()
@@ -70,7 +70,7 @@ class GhcModi(val settings: HaskellSettings, val project: Project) extends Proje
           while (stdOutListBuffer.lastOption != Some(OK) && !stdOutListBuffer.headOption.exists(_.startsWith(GhcModiErrorIndicator))) {
             // wait for result
           }
-          stdOutListBuffer.toSeq
+          stdOutListBuffer.toIterable
         }
         val stdOutput = Await.result(waitForStdOutput, 5.second)
 
@@ -171,4 +171,4 @@ class GhcModi(val settings: HaskellSettings, val project: Project) extends Proje
   override def getComponentName: String = "ghc-modi"
 }
 
-case class GhcModiOutput(outputLines: Seq[String] = Seq())
+case class GhcModiOutput(outputLines: Iterable[String] = Iterable())

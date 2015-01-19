@@ -1,5 +1,5 @@
 /*
- * Copyright 2014 Rik van der Kleij
+ * Copyright 2015 Rik van der Kleij
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,35 +18,52 @@ package com.powertuple.intellij.haskell.psi
 
 import com.intellij.lang.ASTNode
 import com.intellij.openapi.project.Project
+import com.intellij.psi.codeStyle.CodeStyleSettingsManager
 import com.intellij.psi.util.PsiTreeUtil
-import com.intellij.psi.{PsiElement, PsiFileFactory, PsiWhiteSpace}
+import com.intellij.psi.{PsiFileFactory, PsiWhiteSpace}
 import com.powertuple.intellij.haskell.util.OSUtil
-import com.powertuple.intellij.haskell.{HaskellFile, HaskellLanguage}
+import com.powertuple.intellij.haskell.{HaskellFile, HaskellFileType, HaskellLanguage}
 
 object HaskellElementFactory {
-  def createQvarId(project: Project, name: String): ASTNode = {
+  def createVarId(project: Project, name: String): ASTNode = {
     val haskellFile = createFileFromText(project, name)
-    PsiTreeUtil.findChildOfType(haskellFile, classOf[HaskellQvarId]).getNode
+    PsiTreeUtil.findChildOfType(haskellFile, classOf[HaskellVarId]).getNode
   }
 
-  def createQconId(project: Project, name: String): ASTNode = {
+
+  def createConId(project: Project, name: String): ASTNode = {
     val haskellFile = createFileFromText(project, name)
-    PsiTreeUtil.findChildOfType(haskellFile, classOf[HaskellQconId]).getNode
+    PsiTreeUtil.findChildOfType(haskellFile, classOf[HaskellConId]).getNode
   }
 
-  def createQvarSym(project: Project, name: String): ASTNode = {
+  def createVarSym(project: Project, name: String): ASTNode = {
     val haskellFile = createFileFromText(project, name)
-    PsiTreeUtil.findChildOfType(haskellFile, classOf[HaskellQvarSym]).getNode
+    PsiTreeUtil.findChildOfType(haskellFile, classOf[HaskellVarSym]).getNode
   }
 
-  def createGconSym(project: Project, name: String): ASTNode = {
+  def createVarDotSym(project: Project, name: String): ASTNode = {
     val haskellFile = createFileFromText(project, name)
-    PsiTreeUtil.findChildOfType(haskellFile, classOf[HaskellGconSym]).getNode
+    PsiTreeUtil.findChildOfType(haskellFile, classOf[HaskellVarDotSym]).getNode
+  }
+
+  def createConSym(project: Project, name: String): ASTNode = {
+    val haskellFile = createFileFromText(project, name)
+    PsiTreeUtil.findChildOfType(haskellFile, classOf[HaskellConSym]).getNode
   }
 
   def createExpression(project: Project, expression: String): HaskellExpression = {
     val haskellFile = createFileFromText(project, expression)
     PsiTreeUtil.findChildOfType(haskellFile, classOf[HaskellExpression])
+  }
+
+  def createQVarConOp(project: Project, qVarConOp: String): HaskellQVarConOpElement = {
+    val haskellFile = createFileFromText(project, qVarConOp)
+    PsiTreeUtil.findChildOfType(haskellFile, classOf[HaskellQVarConOpElement])
+  }
+
+  def createBody(project: Project, body: String): HaskellModuleBody = {
+    val haskellFile = createFileFromText(project, body)
+    PsiTreeUtil.findChildOfType(haskellFile, classOf[HaskellModuleBody])
   }
 
   def createTopDeclaration(project: Project, declaration: String): HaskellTopDeclaration = {
@@ -59,13 +76,28 @@ object HaskellElementFactory {
     PsiTreeUtil.findChildOfType(haskellFile, classOf[HaskellLanguagePragma])
   }
 
-  def createWhiteSpace(project: Project) = {
-    val haskellFile = createFileFromText(project, " ")
+  def createWhiteSpace(project: Project, space: String = " ") = {
+    val haskellFile = createFileFromText(project, space)
     PsiTreeUtil.findChildOfType(haskellFile, classOf[PsiWhiteSpace])
   }
 
+  def createTab(project: Project) = {
+    val tabSize = CodeStyleSettingsManager.getInstance().getCurrentSettings.getTabSize(HaskellFileType.INSTANCE)
+    createWhiteSpace(project, " " * tabSize)
+  }
+
   def createNewLine(project: Project) = {
-    createFileFromText(project, OSUtil.LineSeparator).getFirstChild
+    createFileFromText(project, OSUtil.LineSeparator.toString).getFirstChild
+  }
+
+  def createQualifier(project: Project, qualifier: String) = {
+    val haskellFile = createFileFromText(project, qualifier + ".dummy")
+    PsiTreeUtil.findChildOfType(haskellFile, classOf[HaskellQualifier]).getNode
+  }
+
+  def createModId(project: Project, name: String) = {
+    val haskellFile = createFileFromText(project, name)
+    PsiTreeUtil.findChildOfType(haskellFile, classOf[HaskellModId]).getNode
   }
 
   private def createFileFromText(project: Project, text: String): HaskellFile = {

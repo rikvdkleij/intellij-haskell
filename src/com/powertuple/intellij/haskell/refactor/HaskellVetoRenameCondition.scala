@@ -1,5 +1,5 @@
 /*
- * Copyright 2014 Rik van der Kleij
+ * Copyright 2015 Rik van der Kleij
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,15 +14,14 @@
  * limitations under the License.
  */
 
-package com.powertuple.intellij.haskell
+package com.powertuple.intellij.haskell.refactor
 
-import com.intellij.lang.refactoring.RefactoringSupportProvider
+import com.intellij.openapi.util.Condition
 import com.intellij.psi.PsiElement
-import com.powertuple.intellij.haskell.psi.HaskellNamedElement
 
-class HaskellRefactoringSupportProvider extends RefactoringSupportProvider {
+class HaskellVetoRenameCondition extends Condition[PsiElement] {
 
-  override def isMemberInplaceRenameAvailable(element: PsiElement, context: PsiElement): Boolean = {
-    element.isInstanceOf[HaskellNamedElement]
+  override def value(element: PsiElement): Boolean = {
+    true
   }
 }

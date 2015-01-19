@@ -1,5 +1,5 @@
 /*
- * Copyright 2014 Rik van der Kleij
+ * Copyright 2015 Rik van der Kleij
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -72,8 +72,8 @@ class HaskellSyntaxHighlighter extends SyntaxHighlighterBase {
       case et if ALL_RESERVED_IDS.contains(et) => pack(Keyword)
       case et if SYMBOLS_RES_OP.contains(et) => pack(ReservedSymbol)
       case et if OPERATORS.contains(et) => pack(Operator)
-      case et if et == HS_QVARID_ID => pack(Variable)
-      case et if et == HS_QCONID_ID => pack(Constructor)
+      case et if et == HS_VARID_ID => pack(Variable)
+      case et if et == HS_CONID_ID => pack(Constructor)
       case _ => pack(Default)
     }
   }

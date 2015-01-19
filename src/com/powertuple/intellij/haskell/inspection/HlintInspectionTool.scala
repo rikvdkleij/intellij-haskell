@@ -1,5 +1,5 @@
 /*
- * Copyright 2014 Rik van der Kleij
+ * Copyright 2015 Rik van der Kleij
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,7 +17,7 @@
 package com.powertuple.intellij.haskell.inspection
 
 import com.intellij.codeInspection._
-import com.intellij.psi.{PsiElement, PsiFile}
+import com.intellij.psi.{TokenType, PsiElement, PsiFile}
 import com.powertuple.intellij.haskell.HaskellNotificationGroup
 import com.powertuple.intellij.haskell.external.{Hlint, HlintInfo}
 import com.powertuple.intellij.haskell.psi.HaskellTypes.{HS_COMMENT, HS_NCOMMENT, HS_NEWLINE, HS_SNL}
@@ -52,11 +52,11 @@ class HlintInspectionTool extends LocalInspectionTool {
   private def findStartHaskellElement(psiFile: PsiFile, hlintInfo: HlintInfo) = {
     val startOffset = LineColumnPosition.getOffset(psiFile, LineColumnPosition(hlintInfo.startLine, hlintInfo.startColumn))
     val element = startOffset.flatMap(offset => Option(psiFile.findElementAt(offset)))
-    element.filter(HlintInspectionTool.NotHaskellIdentifiers.contains(_))
+    element.filterNot(HlintInspectionTool.NotHaskellIdentifiers.contains(_))
   }
 
   private def findEndHaskellElement(psiFile: PsiFile, hlintInfo: HlintInfo): Option[PsiElement] = {
-    val endOffset = if (hlintInfo.endLine > hlintInfo.startLine && hlintInfo.endColumn > hlintInfo.startColumn) {
+    val endOffset = if (hlintInfo.endLine >= hlintInfo.startLine && hlintInfo.endColumn > hlintInfo.startColumn) {
       LineColumnPosition.getOffset(psiFile, LineColumnPosition(hlintInfo.endLine, hlintInfo.endColumn - 1))
     } else {
       LineColumnPosition.getOffset(psiFile, LineColumnPosition(hlintInfo.endLine, hlintInfo.endColumn))
@@ -82,5 +82,5 @@ class HlintInspectionTool extends LocalInspectionTool {
 }
 
 object HlintInspectionTool {
-  val NotHaskellIdentifiers = Seq(HS_NEWLINE, HS_SNL, HS_COMMENT, HS_NCOMMENT)
+  val NotHaskellIdentifiers = Seq(HS_NEWLINE, HS_SNL, HS_COMMENT, HS_NCOMMENT, TokenType.WHITE_SPACE)
 }

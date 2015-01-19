@@ -1,5 +1,5 @@
 /*
- * Copyright 2014 Rik van der Kleij
+ * Copyright 2015 Rik van der Kleij
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -45,13 +45,13 @@ object HaskellFormattingModelBuilder {
         after(HS_LEFT_BRACE).spacing(0, 0, 0, settings.KEEP_LINE_BREAKS, settings.KEEP_BLANK_LINES_IN_CODE).
         before(HS_RIGHT_BRACE).spacing(0, 0, 0, settings.KEEP_LINE_BREAKS, settings.KEEP_BLANK_LINES_IN_CODE).
         after(HS_RIGHT_BRACE).spacing(0, 1, 0, settings.KEEP_LINE_BREAKS, settings.KEEP_BLANK_LINES_IN_CODE).
+        around(HS_DOT).spacing(0, 1, 0, settings.KEEP_LINE_BREAKS, settings.KEEP_BLANK_LINES_IN_CODE).
         around(HaskellParserDefinition.RESERVED_IDS).spaces(1).
         around(TokenSet.create(HS_TTYPE)).spaces(1).
-        after(HS_VARS).spaces(1).
-        after(HS_QVAR).spaces(1).
-        before(HS_QVAROP).spaces(1).
-        after(HS_QCON).spaces(1).
-        after(HS_QCONOP).spaces(1).
+        around(HS_QVAR).spacing(0, 1, 0, settings.KEEP_LINE_BREAKS, settings.KEEP_BLANK_LINES_IN_CODE).
+        around(HS_QCON).spacing(0, 1, 0, settings.KEEP_LINE_BREAKS, settings.KEEP_BLANK_LINES_IN_CODE).
+        around(HS_QVAR_OP).spacing(0, 1, 0, settings.KEEP_LINE_BREAKS, settings.KEEP_BLANK_LINES_IN_CODE).
+        around(HS_QCON_OP).spacing(0, 1, 0, settings.KEEP_LINE_BREAKS, settings.KEEP_BLANK_LINES_IN_CODE).
         after(HS_VERTICAL_BAR).spaces(1).
         around(HS_EXPORT).spaces(0).
         around(TokenSet.create(HS_COLON_COLON, HS_DOUBLE_RIGHT_ARROW, HS_EQUAL, HS_LEFT_ARROW, HS_RIGHT_ARROW)).spaces(1)

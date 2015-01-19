@@ -1,5 +1,5 @@
 /*
- * Copyright 2014 Rik van der Kleij
+ * Copyright 2015 Rik van der Kleij
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -27,9 +27,9 @@ object HaskellNamedElementManipulator {
 
 class HaskellNamedElementManipulator extends AbstractElementManipulator[HaskellNamedElement] {
   def handleContentChange(psi: HaskellNamedElement, range: TextRange, newContent: String): HaskellNamedElement = {
-    val oldText: String = psi.getText
-    val newText: String = oldText.substring(0, range.getStartOffset) + newContent + oldText.substring(range.getEndOffset)
-    psi.setName(newText).asInstanceOf[HaskellNamedElement]
+    val oldName = psi.getName
+    val newName = oldName.substring(0, range.getStartOffset) + newContent + oldName.substring(range.getEndOffset)
+    psi.setName(newName).asInstanceOf[HaskellNamedElement]
   }
 
   override def getRangeInElement(element: HaskellNamedElement): TextRange = {

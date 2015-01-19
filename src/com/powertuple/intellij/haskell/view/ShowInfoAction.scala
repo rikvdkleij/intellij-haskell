@@ -1,5 +1,5 @@
 /*
- * Copyright 2014 Rik van der Kleij
+ * Copyright 2015 Rik van der Kleij
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -54,7 +54,7 @@ class ShowInfoAction extends AnAction {
 
   private def createInfoText(identifierInfo: IdentifierInfo): String = {
     identifierInfo match {
-      case pei: ProjectIdentifierInfo => s"${pei.typeSignature}  -- ${pei.filePath}"
+      case pei: ProjectIdentifierInfo => s"${pei.typeSignature}   -- ${pei.filePath.getOrElse("File not found")}"
       case lei: LibraryIdentifierInfo => s"${lei.typeSignature}   -- ${lei.module}"
       case bei: BuiltInIdentifierInfo => s"${bei.typeSignature}   -- ${bei.module}  BUILT-IN"
     }

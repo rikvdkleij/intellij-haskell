@@ -1,7 +1,7 @@
 <idea-plugin version="2">
     <id>com.powertuple.intellij.haskell</id>
     <name>IntelliJ-Haskell</name>
-    <version>0.6.beta4</version>
+    <version>0.6.beta5</version>
     <vendor email="rikvdkleij@gmail.com">PowerTuple</vendor>
 
     <description><![CDATA[
@@ -79,7 +79,7 @@
                                        implementationClass="com.powertuple.intellij.haskell.highlighter.HaskellSyntaxHighlighterFactory"/>
         <lang.braceMatcher language="Haskell"
                            implementationClass="com.powertuple.intellij.haskell.highlighter.HaskellBraceMatcher"/>
-        <lang.commenter language="Haskell" implementationClass="com.powertuple.intellij.haskell.HaskellCommenter"/>
+        <lang.commenter language="Haskell" implementationClass="com.powertuple.intellij.haskell.code.HaskellCommenter"/>
 
         <externalAnnotator language="Haskell"
                            implementationClass="com.powertuple.intellij.haskell.annotator.GhcModiExternalAnnotator"/>
@@ -96,9 +96,9 @@
                 implementation="com.powertuple.intellij.haskell.code.formatter.settings.HaskellLanguageCodeStyleSettingsProvider"/>
 
 
-        <psi.referenceContributor implementation="com.powertuple.intellij.haskell.HaskellReferenceContributor"/>
+        <psi.referenceContributor implementation="com.powertuple.intellij.haskell.psi.HaskellReferenceContributor"/>
 
-        <lang.elementManipulator forClass="com.powertuple.intellij.haskell.psi.impl.HaskellNamedElementImpl"
+        <lang.elementManipulator forClass="com.powertuple.intellij.haskell.psi.HaskellNamedElement"
                                  implementationClass="com.powertuple.intellij.haskell.psi.HaskellNamedElementManipulator"/>
 
 
@@ -110,10 +110,10 @@
                                 implementationClass="com.powertuple.intellij.haskell.navigate.HaskellTargetElementEvaluator"/>
 
         <lang.namesValidator language="Haskell"
-                             implementationClass="com.powertuple.intellij.haskell.HaskellNamesValidator"/>
+                             implementationClass="com.powertuple.intellij.haskell.refactor.HaskellNamesValidator"/>
         <lang.refactoringSupport language="Haskell"
-                                 implementationClass="com.powertuple.intellij.haskell.HaskellRefactoringSupportProvider"/>
-        <renamePsiElementProcessor implementation="com.powertuple.intellij.haskell.HaskellRenameVariableProcessor"/>
+                                 implementationClass="com.powertuple.intellij.haskell.refactor.HaskellRefactoringSupportProvider"/>
+        <renamePsiElementProcessor implementation="com.powertuple.intellij.haskell.refactor.HaskellRenameVariableProcessor"/>
 
         <lang.documentationProvider language="Haskell"
                                     implementationClass="com.powertuple.intellij.haskell.view.HaskellDocumentationProvider"/>
@@ -135,6 +135,9 @@
         <localInspection language="Haskell" shortName="HLintInspection" displayName="Inspection by HLint"
                          groupName="Haskell" enabledByDefault="false" level="WARNING"
                          implementationClass="com.powertuple.intellij.haskell.inspection.HlintInspectionTool"/>
+
+        <vetoRenameCondition implementation="com.powertuple.intellij.haskell.refactor.HaskellVetoRenameCondition" />
+        <lang.importOptimizer language="Haskell" implementationClass="com.powertuple.intellij.haskell.code.HaskellImportOptimizer"/>
     </extensions>
 
     <application-components>
@@ -181,7 +184,7 @@
         </action>
 
         <action id="Haskell.ShowErrorDescription"
-                class="com.powertuple.intellij.haskell.view.ShowErrorDescriptionAction"
+                class="com.powertuple.intellij.haskell.view.ShowProblemMessageAction"
                 text="Show error" description="Show error/warning description">
             <keyboard-shortcut first-keystroke="ctrl F10" keymap="$default"/>
             <keyboard-shortcut first-keystroke="meta F10" keymap="Mac OS X"/>

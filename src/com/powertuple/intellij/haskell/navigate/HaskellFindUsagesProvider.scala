@@ -1,5 +1,5 @@
 /*
- * Copyright 2014 Rik van der Kleij
+ * Copyright 2015 Rik van der Kleij
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,6 +19,7 @@ package com.powertuple.intellij.haskell.navigate
 import com.intellij.lang.cacheBuilder.{WordOccurrence, WordsScanner}
 import com.intellij.lang.findUsages.FindUsagesProvider
 import com.intellij.psi.PsiElement
+import com.intellij.psi.tree.IElementType
 import com.intellij.util.Processor
 import com.powertuple.intellij.haskell.HaskellLexer
 import com.powertuple.intellij.haskell.psi.HaskellTypes._
@@ -33,30 +34,45 @@ class HaskellFindUsagesProvider extends FindUsagesProvider {
       def processWords(fileText: CharSequence, processor: Processor[WordOccurrence]) {
         val lexer = new HaskellLexer
         lexer.start(fileText)
-        processTokens(lexer, fileText, processor)
+        processTokens(lexer, fileText, processor, null)
       }
     }
   }
 
   @tailrec
-  private def processTokens(lexer: HaskellLexer, fileText: CharSequence, processor: Processor[WordOccurrence]) {
+  private def processTokens(lexer: HaskellLexer, fileText: CharSequence, processor: Processor[WordOccurrence], prevIdTokenType: IElementType) {
     val tokenType = lexer.getTokenType
     if (tokenType != null) {
-      if (tokenType == HS_QVARID_ID || tokenType == HS_QCONID_ID || tokenType == HS_QVARSYM_ID || tokenType == HS_GCONSYM_ID) {
-        val o: WordOccurrence = new WordOccurrence(fileText, lexer.getTokenStart, lexer.getTokenEnd, WordOccurrence.Kind.CODE)
-        processor.process(o)
+      if (tokenType == HS_VARID_ID || tokenType == HS_CONID_ID || tokenType == HS_VARSYM_ID || tokenType == HS_CONSYM_ID || tokenType == HS_DOT) {
+        val wo: WordOccurrence =
+          if (tokenType == HS_VARSYM_ID && prevIdTokenType == HS_DOT) {
+            new WordOccurrence(fileText, lexer.getTokenStart - 1, lexer.getTokenEnd, WordOccurrence.Kind.CODE)
+          } else {
+            new WordOccurrence(fileText, lexer.getTokenStart, lexer.getTokenEnd, WordOccurrence.Kind.CODE)
+          }
+        processor.process(wo)
+        lexer.advance()
+        processTokens(lexer, fileText, processor, tokenType)
+      } else {
+        lexer.advance()
+        processTokens(lexer, fileText, processor, null)
       }
-      lexer.advance()
-      processTokens(lexer, fileText, processor)
     }
   }
 
   override def getType(psiElement: PsiElement): String = {
     psiElement.getNode.getElementType match {
-      case HS_QVAR_ID => "variable"
-      case HS_QCON_ID => "constructor"
-      case HS_QVAR_SYM => "variable operator"
-      case HS_GCON_SYM => "constructor operator"
+      case HS_VAR_ID => "variable"
+      case HS_QVAR_ID => "qualified variable"
+      case HS_CON_ID => "constructor"
+      case HS_QCON_ID => "qualified constructor"
+      case HS_VAR_SYM => " variable operator"
+      case HS_VAR_DOT_SYM => "variable operator"
+      case HS_QVAR_SYM => "qualified variable operator"
+      case HS_CON_SYM => "constructor operator"
+      case HS_QCON_SYM => "qualified constructor operator"
+      case HS_QUALIFIER => "qualifier"
+      case HS_MOD_ID => "module"
       case _ => psiElement.getText
     }
   }

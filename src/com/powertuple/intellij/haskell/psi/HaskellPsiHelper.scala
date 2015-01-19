@@ -16,10 +16,14 @@
 
 package com.powertuple.intellij.haskell.psi
 
-import com.intellij.navigation.NavigationItem
-import com.intellij.psi.PsiNameIdentifierOwner
-import com.intellij.psi.search.SearchScope
+import com.intellij.psi.PsiFile
+import com.intellij.psi.util.PsiTreeUtil
 
-trait HaskellNamedElement extends HaskellCompositeElement with PsiNameIdentifierOwner with NavigationItem {
-  def getUseScope: SearchScope
+import scala.collection.JavaConversions._
+
+object HaskellPsiHelper {
+
+  def findImportDeclarations(psiFile: PsiFile): Iterable[HaskellImportDeclaration] = {
+    PsiTreeUtil.findChildrenOfType(psiFile, classOf[HaskellImportDeclaration]).toIterable
+  }
 }

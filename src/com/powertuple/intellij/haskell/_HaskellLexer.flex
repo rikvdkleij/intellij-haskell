@@ -105,32 +105,25 @@ backquote           = "`"
 left_brace          = "{"
 right_brace         = "}"
 
-//special symbol
-dot_dot_parens      = "(..)"
 quote               = "'"
 
-symbol_no_colon     = {equal} | {at} | {backslash} | {vertical_bar} | {tilde} | {exclamation_mark} | {hash} | {dollar} | {percentage} | {ampersand} | {star} | {plus} | {dot} | {slash} | {lt} | {gt} | {question_mark} | {caret} | {dash}
+symbol_no_colon_dot = {equal} | {at} | {backslash} | {vertical_bar} | {tilde} | {exclamation_mark} | {hash} | {dollar} | {percentage} | {ampersand} | {star} |
+                        {plus} | {slash} | {lt} | {gt} | {question_mark} | {caret} | {dash}
 
-varid               = {small} ({small} | {large} | {digit} | {quote})* {hash}*
-varsym              = {symbol_no_colon} ({symbol_no_colon} | {colon})*
+var_id              = {small} ({small} | {large} | {digit} | {quote})* {hash}*
+varsym_id           = {symbol_no_colon_dot} ({symbol_no_colon_dot} | {dot} | {colon})*
 
-conid               = {large} ({small} | {large} | {digit} | {quote})* {hash}*
-consym              = {quote}? {colon} ({symbol_no_colon} | {colon})*
+con_id              = {large} ({small} | {large} | {digit} | {quote})* {hash}*
+consym_id           = {quote}? {colon} ({symbol_no_colon_dot} | {dot} | {colon})*
 
-qvarsym             = ({conid} {dot})* {varsym}
-qconsym             = ({conid} {dot})* {consym}
-
-qvarid              = ({conid} {dot})* {varid}
-qconid              = ({conid} {dot})* {conid}
-
-gconsym             = {colon} | {qconsym}
-
-quasi_quote_v_start = {left_bracket} {varid} {vertical_bar}
+quasi_quote_v_start = {left_bracket} {var_id} {vertical_bar}
 quasi_quote_e_start = {left_bracket} "e"? {vertical_bar}
 quasi_quote_d_start = {left_bracket} "d" {vertical_bar}
 quasi_quote_t_start = {left_bracket} "t" {vertical_bar}
 quasi_quote_p_start = {left_bracket} "p" {vertical_bar}
 quasi_quote_end     = {vertical_bar} {right_bracket}
+
+shebang_line        = {hash} {exclamation_mark} [^\r\n]*
 
 %%
 
@@ -215,14 +208,12 @@ quasi_quote_end     = {vertical_bar} {right_bracket}
     "where"               { return HS_WHERE; }
     "_"                   { return HS_UNDERSCORE; }
 
-    {dot_dot_parens}      { return HS_DOT_DOT_PARENS; }
-
     // identifiers
-    {qvarid}              { return HS_QVARID_ID; }
-    {qconid}              { return HS_QCONID_ID; }
+    {var_id}              { return HS_VARID_ID; }
+    {con_id}              { return HS_CONID_ID; }
 
-    {character_literal}   { return HS_CHARACTER_LITERAL;  }
-    {string_literal}      { return HS_STRING_LITERAL;  }
+    {character_literal}   { return HS_CHARACTER_LITERAL; }
+    {string_literal}      { return HS_STRING_LITERAL; }
 
     // reservedop and no symbol, except dot_dot because this one is handled as symbol
     {colon_colon}         { return HS_COLON_COLON; }
@@ -236,16 +227,19 @@ quasi_quote_end     = {vertical_bar} {right_bracket}
     {octal}               { return HS_OCTAL; }
     {float}               { return HS_FLOAT; }
 
-    // symbol and reservedop, except colon because this one is handled as symbol
+    // symbol and reservedop
     {equal}               { return HS_EQUAL; }
     {at}                  { return HS_AT; }
     {backslash}           { return HS_BACKSLASH; }
     {vertical_bar}        { return HS_VERTICAL_BAR; }
     {tilde}               { return HS_TILDE; }
 
+    // symbols
+    {dot}                 { return HS_DOT; }
+
     // symbol identifiers
-    {qvarsym}             { return HS_QVARSYM_ID; }
-    {gconsym}             { return HS_GCONSYM_ID; }
+    {varsym_id}           { return HS_VARSYM_ID; }
+    {consym_id}           { return HS_CONSYM_ID; }
 
     // special
     {left_paren}          { return HS_LEFT_PAREN; }
@@ -269,5 +263,7 @@ quasi_quote_end     = {vertical_bar} {right_bracket}
     {quasi_quote_p_start} { return HS_QUASI_QUOTE_P_START; }
     {quasi_quote_v_start} { return HS_QUASI_QUOTE_V_START; }
     {quasi_quote_end}     { return HS_QUASI_QUOTE_END; }
+
+    {shebang_line}        { return HS_SHEBANG_LINE; }
 
 .                         { return com.intellij.psi.TokenType.BAD_CHARACTER; }

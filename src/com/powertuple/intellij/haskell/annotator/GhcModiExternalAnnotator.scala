@@ -1,5 +1,5 @@
 /*
- * Copyright 2014 Rik van der Kleij
+ * Copyright 2015 Rik van der Kleij
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -27,18 +27,22 @@ import com.intellij.openapi.util.TextRange
 import com.intellij.psi.PsiFile
 import com.intellij.psi.impl.source.tree.TreeUtil
 import com.intellij.psi.util.PsiTreeUtil
+import com.powertuple.intellij.haskell.code.HaskellImportOptimizer
 import com.powertuple.intellij.haskell.external._
 import com.powertuple.intellij.haskell.psi._
-import com.powertuple.intellij.haskell.util.{FileUtil, LineColumnPosition, OSUtil}
+import com.powertuple.intellij.haskell.util.{FileUtil, HaskellElementCondition, LineColumnPosition, OSUtil}
 import com.powertuple.intellij.haskell.{HaskellFile, HaskellFileType}
 
 import scala.annotation.tailrec
+import scala.collection.Iterable
 import scala.collection.JavaConversions._
 
-class GhcModiExternalAnnotator extends ExternalAnnotator[GhcModInitialInfo, GhcModiCheckResult] {
+class GhcModiExternalAnnotator extends ExternalAnnotator[GhcModInitialInfo, GhcModCheckResult] {
 
   private final val NoTypeSignaturePattern = """Warning: Top-level binding with no type signature: (.+)""".r
-  private final val UseLanguageExtensionPattern = """.* Perhaps you intended to use (\w+) .*""".r
+  private final val UseLanguageExtensionPattern = """.*Perhaps you intended to use (\w+) .*""".r
+  private final val PerhapsYouMeantPattern = """.*Perhaps you meant(.*)""".r
+  private final val SuggestionPattern = """‘([^‘’]+)’ \(([^\(]+)\)""".r
 
   /**
    * Returning null will cause doAnnotate() not to be called by Intellij API.
@@ -52,22 +56,26 @@ class GhcModiExternalAnnotator extends ExternalAnnotator[GhcModInitialInfo, GhcM
     }
   }
 
-  override def doAnnotate(initialInfoGhcMod: GhcModInitialInfo): GhcModiCheckResult = {
-    GhcModiCheck.check(initialInfoGhcMod.psiFile.getProject, initialInfoGhcMod.filePath)
+  override def doAnnotate(initialInfoGhcMod: GhcModInitialInfo): GhcModCheckResult = {
+    GhcModCheck.check(initialInfoGhcMod.psiFile.getProject, initialInfoGhcMod.filePath)
   }
 
-  override def apply(psiFile: PsiFile, ghcModResult: GhcModiCheckResult, holder: AnnotationHolder) {
+  override def apply(psiFile: PsiFile, ghcModResult: GhcModCheckResult, holder: AnnotationHolder) {
     if (ghcModResult.problems.nonEmpty && psiFile.isValid) {
       for (annotation <- createAnnotations(ghcModResult, psiFile)) {
         annotation match {
-          case ErrorAnnotation(textRange, message, None) => holder.createErrorAnnotation(textRange, message)
-          case ErrorAnnotation(textRange, message, Some(intentionAction)) => holder.createErrorAnnotation(textRange, message).registerFix(intentionAction)
-          case WarningAnnotation(textRange, message, None) => holder.createWarningAnnotation(textRange, message)
-          case WarningAnnotation(textRange, message, Some(intentionAction)) => holder.createWarningAnnotation(textRange, message).registerFix(intentionAction)
+          case ErrorAnnotation(textRange, message) => holder.createErrorAnnotation(textRange, message)
+          case ErrorAnnotationWithIntentionActions(textRange, message, intentionActions) =>
+            val annotation = holder.createErrorAnnotation(textRange, message)
+            intentionActions.map(annotation.registerFix(_))
+          case WarningAnnotation(textRange, message) => holder.createWarningAnnotation(textRange, message)
+          case WarningAnnotationWithIntentionActions(textRange, message, intentionActions) =>
+            val annotation = holder.createWarningAnnotation(textRange, message)
+            intentionActions.map(annotation.registerFix(_))
         }
       }
     }
-   markFileDirty(psiFile)
+    markFileDirty(psiFile)
   }
 
   private def markFileDirty(psiFile: PsiFile) {
@@ -76,29 +84,36 @@ class GhcModiExternalAnnotator extends ExternalAnnotator[GhcModInitialInfo, GhcM
     fileStatusMap.markFileScopeDirty(document, new TextRange(0, document.getTextLength), document.getTextLength)
   }
 
-  private[annotator] def createAnnotations(ghcModiCheckResult: GhcModiCheckResult, psiFile: PsiFile): Seq[Annotation] = {
-    (for (
-      problem <- ghcModiCheckResult.problems.filter(_.filePath == psiFile.getOriginalFile.getVirtualFile.getPath)
-    ) yield {
+  private[annotator] def createAnnotations(ghcModiCheckResult: GhcModCheckResult, psiFile: PsiFile): Iterable[Annotation] = {
+    val problems = ghcModiCheckResult.problems.filter(_.filePath == psiFile.getOriginalFile.getVirtualFile.getPath)
+    problems.map { problem =>
       val textRange = getProblemTextRange(psiFile, problem)
       textRange.map { tr =>
-        val problemDescription = problem.description.trim.replace(OSUtil.LineSeparator, " ")
-        if (problemDescription.startsWith("Warning:")) {
-          problemDescription match {
-            case NoTypeSignaturePattern(typeSignature) => WarningAnnotation(tr, problem.description, Some(new TypeSignatureIntentionAction(typeSignature)))
-            case _ => WarningAnnotation(tr, problem.description, None)
+        val normalizedMessage = problem.getNormalizedMessage
+        if (normalizedMessage.startsWith("Warning:")) {
+          normalizedMessage match {
+            case NoTypeSignaturePattern(typeSignature) => WarningAnnotationWithIntentionActions(tr, problem.message, Iterable(new TypeSignatureIntentionAction(typeSignature)))
+            case HaskellImportOptimizer.WarningRedundantImport() => WarningAnnotationWithIntentionActions(tr, problem.message, Iterable(new OptimizeImportIntentionAction))
+            case _ => WarningAnnotation(tr, problem.message)
           }
         } else {
-          problemDescription match {
-            case UseLanguageExtensionPattern(languageExtension) => ErrorAnnotation(tr, problem.description, Some(new LanguageExtensionIntentionAction(languageExtension)))
-            case _ => ErrorAnnotation(tr, problem.description, None)
+          normalizedMessage match {
+            case UseLanguageExtensionPattern(languageExtension) => ErrorAnnotationWithIntentionActions(tr, problem.message, Iterable(new LanguageExtensionIntentionAction(languageExtension)))
+            case PerhapsYouMeantPattern(suggestions) =>
+              val intentionActions = SuggestionPattern.findAllMatchIn(suggestions).map(s => {
+                val suggestion = s.group(1)
+                val message = s.group(2)
+                new PerhapsYouMeantIntentionAction(suggestion, message)
+              }).toIterable
+              ErrorAnnotationWithIntentionActions(tr, problem.message, intentionActions)
+            case _ => ErrorAnnotation(tr, problem.message)
           }
         }
       }
-    }).flatten
+    }.flatten
   }
 
-  private def getProblemTextRange(psiFile: PsiFile, problem: GhcModiProblem): Option[TextRange] = {
+  private def getProblemTextRange(psiFile: PsiFile, problem: GhcModProblem): Option[TextRange] = {
     val ghcModiOffset = LineColumnPosition.getOffset(psiFile, LineColumnPosition(problem.lineNr, problem.columnNr))
     ghcModiOffset match {
       case Some(offset) => Some(findTextRange(psiFile, offset))
@@ -108,7 +123,8 @@ class GhcModiExternalAnnotator extends ExternalAnnotator[GhcModInitialInfo, GhcM
 
   private def findTextRange(psiFile: PsiFile, offset: Int): TextRange = {
     Option(psiFile.findElementAt(offset)) match {
-      case Some(e) => e.getTextRange
+      case Some(e: HaskellNamedElement) => e.getTextRange
+      case Some(e) => Option(PsiTreeUtil.findFirstParent(e, HaskellElementCondition.QVarConOpElementCondition)).map(_.getTextRange).getOrElse(e.getTextRange)
       case None => findTextRangeLastElement(offset, psiFile).getOrElse(TextRange.create(0, 0))
     }
   }
@@ -129,11 +145,19 @@ class GhcModiExternalAnnotator extends ExternalAnnotator[GhcModInitialInfo, GhcM
 
 case class GhcModInitialInfo(psiFile: PsiFile, filePath: String)
 
-abstract class Annotation
+sealed trait Annotation {
+  def textRange: TextRange
 
-case class ErrorAnnotation(textRange: TextRange, message: String, languageExtensionIntentionAction: Option[LanguageExtensionIntentionAction]) extends Annotation
+  def message: String
+}
 
-case class WarningAnnotation(textRange: TextRange, message: String, typeSignatureIntentionAction: Option[TypeSignatureIntentionAction]) extends Annotation
+case class ErrorAnnotation(textRange: TextRange, message: String) extends Annotation
+
+case class ErrorAnnotationWithIntentionActions(textRange: TextRange, message: String, baseIntentionActions: Iterable[HaskellBaseIntentionAction]) extends Annotation
+
+case class WarningAnnotation(textRange: TextRange, message: String) extends Annotation
+
+case class WarningAnnotationWithIntentionActions(textRange: TextRange, message: String, baseIntentionActions: Iterable[HaskellBaseIntentionAction]) extends Annotation
 
 abstract class HaskellBaseIntentionAction extends BaseIntentionAction {
   override def isAvailable(project: Project, editor: Editor, file: PsiFile): Boolean = {
@@ -152,7 +176,8 @@ class TypeSignatureIntentionAction(typeSignature: String) extends HaskellBaseInt
       case Some(e) =>
         val topDeclaration = TreeUtil.findParent(e.getNode, HaskellTypes.HS_TOP_DECLARATION).getPsi
         val moduleBody = topDeclaration.getParent
-        moduleBody.addBefore(HaskellElementFactory.createTopDeclaration(project, typeSignature + OSUtil.LineSeparator), topDeclaration)
+        val topTypeSignature = moduleBody.addBefore(HaskellElementFactory.createTopDeclaration(project, typeSignature), topDeclaration)
+        moduleBody.addAfter(HaskellElementFactory.createNewLine(project), topTypeSignature)
       case None => ()
     }
   }
@@ -164,12 +189,11 @@ class LanguageExtensionIntentionAction(languageExtension: String) extends Haskel
   override def getFamilyName: String = "Add language extension"
 
   override def invoke(project: Project, editor: Editor, file: PsiFile): Unit = {
-    val languagePragma = HaskellElementFactory.createLanguagePragma(project, OSUtil.LineSeparator + s"{-# LANGUAGE $languageExtension #-}" + OSUtil.LineSeparator)
+    val languagePragma = HaskellElementFactory.createLanguagePragma(project, s"{-# LANGUAGE $languageExtension #-} ${OSUtil.LineSeparator}")
     Option(PsiTreeUtil.findChildOfType(file, classOf[HaskellFileHeader])) match {
       case Some(fh) =>
         val lastPragma = PsiTreeUtil.findChildrenOfType(fh, classOf[HaskellFileHeaderPragma]).lastOption.orNull
-        val newLine = fh.addAfter(HaskellElementFactory.createNewLine(project), lastPragma)
-        fh.addAfter(languagePragma, newLine)
+        fh.addAfter(languagePragma, lastPragma)
       case None => Option(file.getFirstChild) match {
         case Some(c) =>
           val lp = file.addBefore(languagePragma, c)
@@ -177,5 +201,36 @@ class LanguageExtensionIntentionAction(languageExtension: String) extends Haskel
         case None => file.add(languagePragma)
       }
     }
+  }
+}
+
+class PerhapsYouMeantIntentionAction(suggestion: String, message: String) extends HaskellBaseIntentionAction {
+  setText(s"Perhaps you meant: $suggestion  ($message)")
+
+  override def getFamilyName: String = "Perhaps you meant"
+
+  override def invoke(project: Project, editor: Editor, file: PsiFile): Unit = {
+    val offset = editor.getCaretModel.getOffset
+    Option(file.findElementAt(offset)).flatMap(e => Option(PsiTreeUtil.findFirstParent(e, HaskellElementCondition.QVarConOpElementCondition))) match {
+      case Some(e) =>
+        if (e.getText.startsWith("`") && e.getText.endsWith("`")) {
+          e.replace(HaskellElementFactory.createQVarConOp(project, s"`$suggestion`"))
+        } else if (e.getText.startsWith("(") && e.getText.endsWith(")")) {
+          e.replace(HaskellElementFactory.createQVarConOp(project, s"($suggestion)"))
+        } else {
+          e.replace(HaskellElementFactory.createQVarConOp(project, suggestion))
+        }
+      case None => ()
+    }
+  }
+}
+
+class OptimizeImportIntentionAction extends HaskellBaseIntentionAction {
+  setText("Optimize imports")
+
+  override def getFamilyName: String = "Optimize imports"
+
+  override def invoke(project: Project, editor: Editor, file: PsiFile): Unit = {
+    new HaskellImportOptimizer().processFile(file).run()
   }
 }

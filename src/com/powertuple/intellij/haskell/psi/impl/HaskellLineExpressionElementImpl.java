@@ -14,12 +14,15 @@
  * limitations under the License.
  */
 
-package com.powertuple.intellij.haskell.psi
+package com.powertuple.intellij.haskell.psi.impl;
 
-import com.intellij.navigation.NavigationItem
-import com.intellij.psi.PsiNameIdentifierOwner
-import com.intellij.psi.search.SearchScope
+import com.intellij.extapi.psi.ASTWrapperPsiElement;
+import com.intellij.lang.ASTNode;
+import com.powertuple.intellij.haskell.psi.HaskellLineExpressionElement;
+import org.jetbrains.annotations.NotNull;
 
-trait HaskellNamedElement extends HaskellCompositeElement with PsiNameIdentifierOwner with NavigationItem {
-  def getUseScope: SearchScope
+public abstract class HaskellLineExpressionElementImpl extends ASTWrapperPsiElement implements HaskellLineExpressionElement {
+    public HaskellLineExpressionElementImpl(@NotNull ASTNode node) {
+        super(node);
+    }
 }

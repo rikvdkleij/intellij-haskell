@@ -1,5 +1,5 @@
 /*
- * Copyright 2014 Rik van der Kleij
+ * Copyright 2015 Rik van der Kleij
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -87,7 +87,8 @@ class HaskellFormattingBlock(node: ASTNode, alignment: Option[Alignment], spacin
     if (node.getElementType == HS_MODULE_BODY) {
       node.getChildren(null).length > 0
     } else {
-      (node.getElementType == HS_NEWLINE && previousNode != null && previousNode.getElementType == TokenType.WHITE_SPACE) ||
+      node.getElementType == HS_NEWLINE && previousNode != null && previousNode.getElementType == TokenType.WHITE_SPACE ||
+          node.getElementType == TokenType.WHITE_SPACE && previousNode != null && previousNode.getElementType == HS_NEWLINE ||
           node.getElementType != TokenType.WHITE_SPACE && node.getElementType != HS_NEWLINE
     }
   }
@@ -131,7 +132,7 @@ object IndentProcessor {
       case HS_LEFT_PAREN | HS_LEFT_BRACE | HS_LEFT_BRACKET
         if TreeUtil.findParent(child, HaskellTypes.HS_LINE_EXPRESSION) != null |
             TreeUtil.findParent(child, HaskellTypes.HS_MODULE_DECLARATION) != null |
-            TreeUtil.findParent(child, HaskellTypes.HS_IMPORT_DECLARATION) != null => getNormalIndent
+            TreeUtil.findParent(child, HaskellTypes.HS_IMPORT_DECLARATION) != null => getContinuationIndent
       case _ => getNoneIndent
     }
   }

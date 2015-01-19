@@ -19,12 +19,13 @@ package com.powertuple.intellij.haskell.external
 import java.util.concurrent.{Callable, Executors, TimeUnit}
 
 import com.google.common.cache.{CacheBuilder, CacheLoader}
-import com.google.common.util.concurrent.{UncheckedExecutionException, ListenableFuture, ListenableFutureTask}
+import com.google.common.util.concurrent.{ListenableFuture, ListenableFutureTask, UncheckedExecutionException}
 import com.intellij.openapi.progress.ProcessCanceledException
 import com.intellij.openapi.project.Project
 import com.intellij.psi.PsiFile
+import com.intellij.psi.util.PsiTreeUtil
 import com.powertuple.intellij.haskell.psi._
-import com.powertuple.intellij.haskell.util.FileUtil
+import com.powertuple.intellij.haskell.util.{FileUtil, HaskellElementCondition, HaskellFindUtil}
 
 import scala.annotation.tailrec
 import scala.collection.mutable.ListBuffer
@@ -58,7 +59,7 @@ object GhcModiInfo {
             val task = ListenableFutureTask.create(new Callable[GhcModiOutput]() {
               def call() = {
                 val newInfo = findInfoFor(namedElementInfo)
-                if (newInfo.outputLines.head == NoInfoIndicator) {
+                if (newInfo.outputLines.isEmpty || newInfo.outputLines.head == NoInfoIndicator) {
                   oldInfo
                 } else {
                   newInfo
@@ -71,27 +72,30 @@ object GhcModiInfo {
         }
       )
 
-  def findInfoFor(psiFile: PsiFile, namedElement: HaskellNamedElement): Seq[IdentifierInfo] = {
-    val ghcModiOutput = try {
-      InfoCache.get(NamedElementInfo(FileUtil.getFilePath(psiFile), getIdentifier(namedElement), psiFile.getProject))
-    }
-    catch {
-      case _: UncheckedExecutionException => GhcModiOutput()
-      case _: ProcessCanceledException => GhcModiOutput()
+  def findInfoFor(psiFile: PsiFile, namedElement: HaskellNamedElement): Iterable[IdentifierInfo] = {
+    val ghcModiOutput = findIdentifier(namedElement).map { id =>
+      try {
+        InfoCache.get(NamedElementInfo(FileUtil.getFilePath(psiFile), id, psiFile.getProject))
+      }
+      catch {
+        case _: UncheckedExecutionException => GhcModiOutput()
+        case _: ProcessCanceledException => GhcModiOutput()
+      }
     }
 
     (for {
-      outputLine <- ghcModiOutput.outputLines.headOption
+      output <- ghcModiOutput
+      outputLine <- output.outputLines.headOption
       identifierInfos <- createIdentifierInfos(outputLine, psiFile.getProject)
-    } yield identifierInfos).getOrElse(Seq())
+    } yield identifierInfos).getOrElse(Iterable())
   }
 
-  private def createIdentifierInfos(outputLine: String, project: Project): Option[Seq[IdentifierInfo]] = {
+  private def createIdentifierInfos(outputLine: String, project: Project): Option[Iterable[IdentifierInfo]] = {
     if (outputLine == NoInfoIndicator) {
       None
     } else {
       val outputLines = outputLine.split("\u0000")
-      val outputInfos = createInfoPerDefinition(outputLines, ListBuffer()).map(_.mkString)
+      val outputInfos = createInfoPerDefinition(outputLines, ListBuffer()).map(_.map(_.trim).mkString(" "))
       Some(outputInfos.flatMap(s => createIdentifierInfo(s, project)))
     }
   }
@@ -109,36 +113,63 @@ object GhcModiInfo {
 
   private def createIdentifierInfo(outputInfo: String, project: Project): Option[IdentifierInfo] = {
     outputInfo match {
-      case GhcModiInfoPattern(typeSignature, filePath, lineNr, colNr) => Some(ProjectIdentifierInfo(typeSignature.trim, filePath, lineNr.toInt, colNr.toInt))
-      case GhcModiInfoLibraryPathPattern(typeSignature, libraryName, module) => if (libraryName == "ghc-prim" || libraryName == "integer-gmp") {
-        Some(BuiltInIdentifierInfo(typeSignature.trim, libraryName, "GHC.Base"))
-      }
-      else {
-        FileUtil.findModuleFilePath(module, project).map(LibraryIdentifierInfo(typeSignature.trim, _, module))
-      }
-      case GhcModiInfoLibraryPattern(typeSignature, module) => FileUtil.findModuleFilePath(module, project).map(LibraryIdentifierInfo(typeSignature, _, module))
+      case GhcModiInfoPattern(typeSignature, filePath, lineNr, colNr) => Some(ProjectIdentifierInfo(typeSignature, Some(filePath), lineNr.toInt, colNr.toInt))
+      case GhcModiInfoLibraryPathPattern(typeSignature, libraryName, module) =>
+        if (libraryName == "ghc-prim" || libraryName == "integer-gmp") {
+          Some(BuiltInIdentifierInfo(typeSignature, libraryName, "GHC.Base"))
+        }
+        else {
+          createLibraryIdentifierInfo(module, typeSignature, project)
+        }
+      case GhcModiInfoLibraryPattern(typeSignature, module) =>
+        createLibraryIdentifierInfo(module, typeSignature, project)
       case _ => None
     }
   }
 
-  private def getIdentifier(namedElement: HaskellNamedElement) = {
-    namedElement match {
-      case _: HaskellQvarId | _: HaskellQconId => namedElement.getName
-      case _: HaskellQvarSym | _: HaskellGconSym => s"(${namedElement.getName})"
+  private def findIdentifier(namedElement: HaskellNamedElement): Option[String] = {
+    val qVarConOp = Option(PsiTreeUtil.findFirstParent(namedElement, HaskellElementCondition.QVarConOpElementCondition)).map(_.asInstanceOf[HaskellQVarConOpElement])
+    // Workaround for https://github.com/kazu-yamamoto/ghc-mod/issues/432
+    qVarConOp.map { qvco =>
+      qvco.getQualifier match {
+        case Some(q) =>
+          val importedQualifiedModules = getImportedQualifiedModules(namedElement.getContainingFile)
+          val projectModuleNames = HaskellFindUtil.findProjectModules(namedElement.getProject).map(_.getModuleName)
+          if (importedQualifiedModules.find(qi => qi.qualifier == q).map(_.moduleName).exists(m => projectModuleNames.exists(_ == m))) {
+            qvco.getIdentifierElement.getName
+          } else {
+            qvco.getName
+          }
+        case None => qvco.getIdentifierElement.getName
+      }
+    }
+  }
+
+  private case class QualifiedImport(qualifier: String, moduleName: String)
+
+  private def getImportedQualifiedModules(psiFile: PsiFile): Iterable[QualifiedImport] = {
+    val importDeclarations = HaskellPsiHelper.findImportDeclarations(psiFile)
+    importDeclarations.map(i => Option(i.getImportQualifiedAs).map(qa => QualifiedImport(qa.getQualifier.getName, i.getModuleName))).flatten
+  }
+
+  private def createLibraryIdentifierInfo(module: String, typeSignature: String, project: Project) = {
+    FileUtil.findModuleFilePath(module, project) match {
+      case Some(fp) => Some(LibraryIdentifierInfo(typeSignature, Some(fp), module))
+      case None => Some(LibraryIdentifierInfo(typeSignature, None, module))
     }
   }
 }
 
-sealed abstract class IdentifierInfo {
+sealed trait IdentifierInfo {
   def typeSignature: String
 }
 
 trait FileInfo {
-  def filePath: String
+  def filePath: Option[String]
 }
 
-case class ProjectIdentifierInfo(typeSignature: String, filePath: String, lineNr: Int, colNr: Int) extends IdentifierInfo with FileInfo
+case class ProjectIdentifierInfo(typeSignature: String, filePath: Option[String], lineNr: Int, colNr: Int) extends IdentifierInfo with FileInfo
 
-case class LibraryIdentifierInfo(typeSignature: String, filePath: String, module: String) extends IdentifierInfo with FileInfo
+case class LibraryIdentifierInfo(typeSignature: String, filePath: Option[String], module: String) extends IdentifierInfo with FileInfo
 
 case class BuiltInIdentifierInfo(typeSignature: String, libraryName: String, module: String) extends IdentifierInfo

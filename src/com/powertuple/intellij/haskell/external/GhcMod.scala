@@ -1,5 +1,5 @@
 /*
- * Copyright 2014 Rik van der Kleij
+ * Copyright 2015 Rik van der Kleij
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,7 +19,7 @@ package com.powertuple.intellij.haskell.external
 import java.util.concurrent.{Callable, Executors, TimeUnit}
 
 import com.google.common.cache.{CacheBuilder, CacheLoader}
-import com.google.common.util.concurrent.{UncheckedExecutionException, ListenableFuture, ListenableFutureTask}
+import com.google.common.util.concurrent.{ListenableFuture, ListenableFutureTask, UncheckedExecutionException}
 import com.intellij.execution.process.ProcessOutput
 import com.intellij.openapi.progress.ProcessCanceledException
 import com.intellij.openapi.project.Project
@@ -30,6 +30,8 @@ import scala.collection.JavaConversions._
 object GhcMod {
 
   private case class ModuleInfo(projectBasePath: String, moduleName: String)
+
+  private case class ModuleList(projectBasePath: String)
 
   private val executor = Executors.newCachedThreadPool()
 
@@ -53,7 +55,12 @@ object GhcMod {
           override def reload(moduleInfo: ModuleInfo, oldValue: ProcessOutput): ListenableFuture[ProcessOutput] = {
             val task = ListenableFutureTask.create(new Callable[ProcessOutput]() {
               def call() = {
-                getProcessOutput(moduleInfo)
+                val newValue = getProcessOutput(moduleInfo)
+                if (newValue.getStdoutLines.isEmpty) {
+                  oldValue
+                } else {
+                  newValue
+                }
               }
             })
             executor.execute(task)
@@ -62,27 +69,62 @@ object GhcMod {
         }
       )
 
-  def browseInfo(project: Project, moduleName: String, removeParensFromOperator: Boolean): Seq[BrowseInfo] = {
+  private final val ModuleListCache = CacheBuilder.newBuilder()
+      .refreshAfterWrite(60, TimeUnit.SECONDS)
+      .build(
+        new CacheLoader[ModuleList, ProcessOutput]() {
+          private def getProcessOutput(moduleList: ModuleList): ProcessOutput = {
+            ExternalProcess.getProcessOutput(
+              moduleList.projectBasePath,
+              HaskellSettings.getInstance().getState.ghcModPath,
+              Seq("list")
+            )
+          }
+
+          override def load(moduleList: ModuleList): ProcessOutput = {
+            getProcessOutput(moduleList)
+          }
+
+          override def reload(moduleList: ModuleList, oldValue: ProcessOutput): ListenableFuture[ProcessOutput] = {
+            val task = ListenableFutureTask.create(new Callable[ProcessOutput]() {
+              def call() = {
+                val newValue = getProcessOutput(moduleList)
+                if (newValue.getStdoutLines.isEmpty) {
+                  oldValue
+                } else {
+                  newValue
+                }
+              }
+            })
+            executor.execute(task)
+            task
+          }
+        }
+      )
+
+  def browseInfo(project: Project, moduleName: String, removeParensFromOperator: Boolean): Iterable[BrowseInfo] = {
     val processOutput = try {
       BrowseInfoCache.get(ModuleInfo(project.getBasePath, moduleName))
     }
     catch {
-      case _: UncheckedExecutionException => new ProcessOutput()
+      case _: UncheckedExecutionException => new ProcessOutput
       case _: ProcessCanceledException => new ProcessOutput
     }
     processOutput.getStdoutLines.map(createBrowseInfo(_, removeParensFromOperator)).flatten
   }
 
-  def listAvailableModules(project: Project): Seq[String] = {
-    val output = ExternalProcess.getProcessOutput(
-      project.getBasePath,
-      HaskellSettings.getInstance().getState.ghcModPath,
-      Seq("list")
-    )
-    output.getStdoutLines
+  def listAvailableModules(project: Project): Iterable[String] = {
+    val processOutput = try {
+      ModuleListCache.get(ModuleList(project.getBasePath))
+    }
+    catch {
+      case _: UncheckedExecutionException => new ProcessOutput
+      case _: ProcessCanceledException => new ProcessOutput
+    }
+    processOutput.getStdoutLines
   }
 
-  def listLanguageExtensions(project: Project): Seq[String] = {
+  def listLanguageExtensions(project: Project): Iterable[String] = {
     val output = ExternalProcess.getProcessOutput(
       project.getBasePath,
       HaskellSettings.getInstance().getState.ghcModPath,

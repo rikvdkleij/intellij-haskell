@@ -1,5 +1,5 @@
 /*
- * Copyright 2014 Rik van der Kleij
+ * Copyright 2015 Rik van der Kleij
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,11 +18,20 @@ package com.powertuple.intellij.haskell.util
 
 import com.intellij.openapi.util.Condition
 import com.intellij.psi.PsiElement
-import com.powertuple.intellij.haskell.psi.{HaskellDeclarationElement, HaskellImportDeclaration, HaskellModuleDeclaration, HaskellNamedElement}
+import com.powertuple.intellij.haskell.psi._
 
 object HaskellElementCondition {
 
-  final val ImportDeclarationCondition = new Condition[PsiElement]() {
+  final val ImportModuleCondition = new Condition[PsiElement]() {
+    override def value(psiElement: PsiElement): Boolean = {
+      psiElement match {
+        case _: HaskellImportModule => true
+        case _ => false
+      }
+    }
+  }
+
+  final val ImportModuleDeclarationCondition = new Condition[PsiElement]() {
     override def value(psiElement: PsiElement): Boolean = {
       psiElement match {
         case _: HaskellImportDeclaration => true
@@ -49,10 +58,31 @@ object HaskellElementCondition {
     }
   }
 
+  final val QVarConOpElementCondition = new Condition[PsiElement]() {
+    override def value(psiElement: PsiElement): Boolean = {
+      psiElement match {
+        case _: HaskellQVarConOpElement => true
+        case _ => false
+      }
+    }
+  }
+
   final val DeclarationElementCondition = new Condition[PsiElement]() {
     override def value(psiElement: PsiElement): Boolean = {
       psiElement match {
         case _: HaskellDeclarationElement => true
+        case _ => false
+      }
+    }
+  }
+
+  final val QualifiedElementCondition = new Condition[PsiElement]() {
+    override def value(psiElement: PsiElement): Boolean = {
+      psiElement match {
+        case _: HaskellQvarId => true
+        case _: HaskellQvarSym => true
+        case _: HaskellQconId => true
+        case _: HaskellQconSym => true
         case _ => false
       }
     }

@@ -26,7 +26,7 @@ class HlintSpec extends FunSpec with Matchers with GivenWhenThen {
 
     val hlintInfo2 = hlintInfos(1)
     hlintInfo2.endLine shouldEqual 34
-    hlintInfo2.to shouldEqual "True"
+    hlintInfo2.to shouldEqual Some("True")
     hlintInfo2.note should have size 0
   }
 }

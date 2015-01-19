@@ -1,5 +1,5 @@
 /*
- * Copyright 2014 Rik van der Kleij
+ * Copyright 2015 Rik van der Kleij
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,14 +14,13 @@
  * limitations under the License.
  */
 
-package com.powertuple.intellij.haskell
+package com.powertuple.intellij.haskell.psi
 
 import com.intellij.openapi.util.TextRange
 import com.intellij.patterns.PlatformPatterns
 import com.intellij.psi._
 import com.intellij.util.ProcessingContext
 import com.powertuple.intellij.haskell.navigate.HaskellReference
-import com.powertuple.intellij.haskell.psi._
 import org.jetbrains.annotations.NotNull
 
 class HaskellReferenceContributor extends PsiReferenceContributor {

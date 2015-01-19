@@ -1,5 +1,5 @@
 /*
- * Copyright 2014 Rik van der Kleij
+ * Copyright 2015 Rik van der Kleij
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -22,11 +22,11 @@ import com.powertuple.intellij.haskell.util.HaskellFindUtil
 
 class HaskellDeclarationContributor extends ChooseByNameContributor {
 
-  def getNames(project: Project, includeNonProjectItems: Boolean): Array[String] = {
+  override def getNames(project: Project, includeNonProjectItems: Boolean): Array[String] = {
     HaskellFindUtil.findDeclarationElements(project, includeNonProjectItems).flatMap(_.getIdentifierElements.map(_.getName)).toArray
   }
 
-  def getItemsByName(name: String, pattern: String, project: Project, includeNonProjectItems: Boolean): Array[NavigationItem] = {
+  override def getItemsByName(name: String, pattern: String, project: Project, includeNonProjectItems: Boolean): Array[NavigationItem] = {
     HaskellFindUtil.findDeclarationElements(project, pattern, includeNonProjectItems).toArray
   }
 }

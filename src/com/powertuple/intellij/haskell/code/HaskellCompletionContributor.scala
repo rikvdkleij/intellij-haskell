@@ -1,5 +1,5 @@
 /*
- * Copyright 2014 Rik van der Kleij
+ * Copyright 2015 Rik van der Kleij
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -30,7 +30,7 @@ import com.intellij.util.ProcessingContext
 import com.powertuple.intellij.haskell.external.{BrowseInfo, GhcMod}
 import com.powertuple.intellij.haskell.psi.HaskellTypes._
 import com.powertuple.intellij.haskell.psi._
-import com.powertuple.intellij.haskell.util.LineColumnPosition
+import com.powertuple.intellij.haskell.util.{LineColumnPosition, OSUtil}
 import com.powertuple.intellij.haskell.{HaskellIcons, HaskellParserDefinition}
 
 import scala.annotation.tailrec
@@ -65,18 +65,19 @@ class HaskellCompletionContributor extends CompletionContributor {
 
       val resultSet = getNonEmptyElement(parameters.getOriginalPosition).orElse(getNonEmptyElement(parameters.getPosition)) match {
         case Some(e) if PlainPrefixElementTypes.contains(e.getNode.getElementType) | e.getText.startsWith("{") | e.getText.startsWith("#") | e.getText.startsWith("-") => originalResultSet.withPrefixMatcher(new PlainPrefixMatcher(getTextAtCaret(parameters.getEditor, file)))
+        case Some(e) if e.getNode.getElementType == HS_CONID_ID && getTextAtCaret(parameters.getEditor, file).endsWith(".") => originalResultSet.withPrefixMatcher(new PlainPrefixMatcher(getTextAtCaret(parameters.getEditor, file)))
         case _ => originalResultSet
       }
 
       val completionPosition = Option(parameters.getOriginalPosition).orElse(Option(parameters.getPosition))
       completionPosition match {
         case Some(p) if isImportSpecInProgress(p) =>
-          resultSet.addAllElements(findIdsForInImportModuleSpec(project, p))
+          resultSet.addAllElements(findIdsForInImportModuleSpec(project, p).toSeq)
         case Some(p) if isImportModuleDeclarationInProgress(p) =>
-          resultSet.addAllElements(findModulesToImport(project))
+          resultSet.addAllElements(findModulesToImport(project).toSeq)
           resultSet.addAllElements(getInsideImportClauses)
         case Some(p) if isFileHeaderPragmaInProgress(p) =>
-          resultSet.addAllElements(getLanguageExtensions(project))
+          resultSet.addAllElements(getLanguageExtensions(project).toSeq)
           resultSet.addAllElements(getPragmaStartEndIds)
           resultSet.addAllElements(getFileHeaderPragmaIds)
         case Some(p) if isNCommentInProgress(p) =>
@@ -84,14 +85,16 @@ class HaskellCompletionContributor extends CompletionContributor {
           resultSet.addAllElements(getCommentIds)
         case Some(p) if isPragmaInProgress(p) =>
           resultSet.addAllElements(getModulePragmaIds)
+          resultSet.addAllElements(getPragmaStartEndIds)
         case p =>
+          val importDeclarations = findImportDeclarations(file)
           resultSet.addAllElements(getReservedIds)
           resultSet.addAllElements(getSpecialReservedIds)
           resultSet.addAllElements(getPragmaStartEndIds)
           resultSet.addAllElements(getCommentIds)
-          resultSet.addAllElements(getIdsFromFullScopeImportedModules(project, file))
-          resultSet.addAllElements(getIdsFromHidingIdsImportedModules(project, file))
-          resultSet.addAllElements(getIdsFromSpecIdsImportedModules(project, file))
+          resultSet.addAllElements(getIdsFromFullScopeImportedModules(project, file, importDeclarations))
+          resultSet.addAllElements(getIdsFromHidingIdsImportedModules(project, file, importDeclarations))
+          resultSet.addAllElements(getIdsFromSpecIdsImportedModules(project, file, importDeclarations))
       }
     }
   })
@@ -105,12 +108,14 @@ class HaskellCompletionContributor extends CompletionContributor {
       case Some(lcp) => if (lcp.columnNr == 1) {
         getNonEmptyElement(file.findElementAt(startOffset))
       } else {
-        getNonEmptyElement(file.findElementAt(startOffset)).orElse(getNonEmptyElement(file.findElementAt(startOffset - 1)))
+        getNonEmptyElement(file.findElementAt(startOffset - 1)).orElse(getNonEmptyElement(file.findElementAt(startOffset)))
       }
       case _ => None
     }
 
     caretElement match {
+      case Some(e) if e.getNode.getElementType == HS_DOT && Option(file.findElementAt(e.getTextOffset - 1)).exists(_.getNode.getElementType == HS_CONID_ID) =>
+        context.setDummyIdentifier(file.findElementAt(e.getTextOffset - 1).getText + ".")
       case Some(e) if PlainPrefixElementTypes.contains(e.getNode.getElementType) => context.setDummyIdentifier(getTextAtCaret(context.getEditor, file))
       case Some(e) if e.getText.trim.size > 0 => context.setDummyIdentifier(e.getText.trim)
       case _ => context.setDummyIdentifier("a")
@@ -125,7 +130,7 @@ class HaskellCompletionContributor extends CompletionContributor {
   @tailrec
   private def getTextUntilNoChar(fileText: String, offset: Int, text: String): String = {
     val c = fileText.charAt(offset)
-    if (c < ' ' || c == '\n' || c == '\r') {
+    if (c < ' ' || c == OSUtil.LineSeparator || c == '\r') {
       text
     } else {
       if (offset > 0) {
@@ -149,10 +154,10 @@ class HaskellCompletionContributor extends CompletionContributor {
             Option(TreeUtil.findSiblingBackward(position.getNode, HS_LEFT_PAREN)).isDefined)
   }
 
-  private def findIdsForInImportModuleSpec(project: Project, position: PsiElement): Seq[LookupElementBuilder] = {
+  private def findIdsForInImportModuleSpec(project: Project, position: PsiElement) = {
     (for {
       importDeclaration <- Option(TreeUtil.findParent(position.getNode, HS_IMPORT_DECLARATION))
-      moduleName <- Option(PsiTreeUtil.findChildOfType(importDeclaration.getPsi, classOf[HaskellImportModule])).map(_.getQconId.getName)
+      moduleName <- Option(PsiTreeUtil.findChildOfType(importDeclaration.getPsi, classOf[HaskellImportModule])).map(_.getModId.getText)
     } yield GhcMod.browseInfo(project, moduleName, removeParensFromOperator = false)).map(_.map(createLookUpElementForBrowseInfo)).getOrElse(Seq())
   }
 
@@ -186,26 +191,25 @@ class HaskellCompletionContributor extends CompletionContributor {
     GhcMod.listLanguageExtensions(project).map(n => LookupElementBuilder.create(n + " ").withIcon(HaskellIcons.HaskellSmallBlueLogo).withTailText(" language extension", true))
   }
 
-  private def getPragmaStartEndIds: Seq[LookupElementBuilder] = {
+  private def getPragmaStartEndIds = {
     PragmaStartEndIds.map(p => LookupElementBuilder.create(p + " ").withIcon(HaskellIcons.HaskellSmallBlueLogo).withTailText(" pragma", true))
   }
 
-  private def getFileHeaderPragmaIds: Seq[LookupElementBuilder] = {
+  private def getFileHeaderPragmaIds = {
     FileHeaderPragmaIds.map(p => LookupElementBuilder.create(p + " ").withIcon(HaskellIcons.HaskellSmallBlueLogo).withTailText(" pragma", true))
   }
 
-  private def getModulePragmaIds: Seq[LookupElementBuilder] = {
+  private def getModulePragmaIds = {
     ModulePragmaIds.map(p => LookupElementBuilder.create(p + " ").withIcon(HaskellIcons.HaskellSmallBlueLogo).withTailText(" pragma", true))
   }
 
-  private def getCommentIds: Seq[LookupElementBuilder] = {
+  private def getCommentIds = {
     CommentIds.map(p => LookupElementBuilder.create(p + " ").withIcon(HaskellIcons.HaskellSmallBlueLogo).withTailText(" comment", true))
   }
 
-  private def getImportedModulesWithFullScope(psiFile: PsiFile): Iterable[ImportFullSpec] = {
-    val importDeclarations = findImportDeclarations(psiFile)
+  private def getImportedModulesWithFullScope(psiFile: PsiFile, importDeclarations: Iterable[HaskellImportDeclaration]): Iterable[ImportFullSpec] = {
     val moduleNames = importDeclarations.filter(i => Option(i.getImportSpec).isEmpty).
-        map(i => ImportFullSpec(i.getModuleName, Option(i.getImportQualified).isDefined, Option(i.getImportQualifiedAs).map(_.getQconId).map(_.getName)))
+        map(i => ImportFullSpec(i.getModuleName, Option(i.getImportQualified).isDefined, Option(i.getImportQualifiedAs).map(_.getQualifier).map(_.getName)))
     if (importDeclarations.exists(_.getModuleName == "Prelude")) {
       moduleNames
     } else {
@@ -213,8 +217,7 @@ class HaskellCompletionContributor extends CompletionContributor {
     }
   }
 
-  private def getImportedModulesWithHidingIdsSpec(psiFile: PsiFile): Iterable[ImportHidingIdsSpec] = {
-    val importDeclarations = findImportDeclarations(psiFile)
+  private def getImportedModulesWithHidingIdsSpec(psiFile: PsiFile, importDeclarations: Iterable[HaskellImportDeclaration]): Iterable[ImportHidingIdsSpec] = {
     for {
       importDeclaration <- importDeclarations.filter(i => Option(i.getImportSpec).flatMap(is => Option(is.getImportHidingSpec)).isDefined)
       importIdList = importDeclaration.getImportSpec.getImportHidingSpec.getImportIdList
@@ -222,12 +225,11 @@ class HaskellCompletionContributor extends CompletionContributor {
       importDeclaration.getModuleName,
       importIdList.map(id => Option(id.getQvar).map(_.getName).getOrElse(id.getQcon.getName)),
       Option(importDeclaration.getImportQualified).isDefined,
-      Option(importDeclaration.getImportQualifiedAs).map(_.getQconId).map(_.getName)
+      Option(importDeclaration.getImportQualifiedAs).map(_.getQualifier).map(_.getName)
     )
   }
 
-  private def getImportedModulesWithSpecIds(psiFile: PsiFile): Iterable[ImportIdsSpec] = {
-    val importDeclarations = findImportDeclarations(psiFile)
+  private def getImportedModulesWithSpecIds(psiFile: PsiFile, importDeclarations: Iterable[HaskellImportDeclaration]): Iterable[ImportIdsSpec] = {
     for {
       importDeclaration <- importDeclarations.filter(i => Option(i.getImportSpec).flatMap(is => Option(is.getImportIdsSpec)).isDefined)
       importIdList = importDeclaration.getImportSpec.getImportIdsSpec.getImportIdList
@@ -235,12 +237,12 @@ class HaskellCompletionContributor extends CompletionContributor {
       importDeclaration.getModuleName,
       importIdList.map(id => Option(id.getQvar).map(_.getName).getOrElse(id.getQcon.getName)),
       Option(importDeclaration.getImportQualified).isDefined,
-      Option(importDeclaration.getImportQualifiedAs).map(_.getQconId).map(_.getName)
+      Option(importDeclaration.getImportQualifiedAs).map(_.getQualifier).map(_.getName)
     )
   }
 
-  private def getIdsFromFullScopeImportedModules(project: Project, file: PsiFile) = {
-    val importFullSpecs = getImportedModulesWithFullScope(file).toSeq
+  private def getIdsFromFullScopeImportedModules(project: Project, file: PsiFile, importDeclarations: Iterable[HaskellImportDeclaration]) = {
+    val importFullSpecs = getImportedModulesWithFullScope(file, importDeclarations).toSeq
 
     val browseInfosWithImportSpecFutures = importFullSpecs.
         map(ifs => Future {
@@ -250,8 +252,8 @@ class HaskellCompletionContributor extends CompletionContributor {
     Await.result(Future.sequence(browseInfosWithImportSpecFutures), Duration.create(5, TimeUnit.SECONDS)).flatten
   }
 
-  private def getIdsFromHidingIdsImportedModules(project: Project, file: PsiFile) = {
-    val importHidingIdsSpec = getImportedModulesWithHidingIdsSpec(file).toSeq
+  private def getIdsFromHidingIdsImportedModules(project: Project, file: PsiFile, importDeclarations: Iterable[HaskellImportDeclaration]) = {
+    val importHidingIdsSpec = getImportedModulesWithHidingIdsSpec(file, importDeclarations).toSeq
 
     val browseInfosWithImportHidingIdsSpecFutures = importHidingIdsSpec.
         map(ihis => Future {
@@ -261,8 +263,8 @@ class HaskellCompletionContributor extends CompletionContributor {
     Await.result(Future.sequence(browseInfosWithImportHidingIdsSpecFutures), Duration.create(5, TimeUnit.SECONDS)).flatten
   }
 
-  private def getIdsFromSpecIdsImportedModules(project: Project, file: PsiFile) = {
-    val importIdsSpec = getImportedModulesWithSpecIds(file).toSeq
+  private def getIdsFromSpecIdsImportedModules(project: Project, file: PsiFile, importDeclarations: Iterable[HaskellImportDeclaration]) = {
+    val importIdsSpec = getImportedModulesWithSpecIds(file, importDeclarations).toSeq
 
     val browseInfosWithImportIdsSpecFutures = importIdsSpec.
         map(iis => Future {
@@ -272,15 +274,15 @@ class HaskellCompletionContributor extends CompletionContributor {
     Await.result(Future.sequence(browseInfosWithImportIdsSpecFutures), Duration.create(5, TimeUnit.SECONDS)).flatten
   }
 
-  private def createLookupElements(importSpec: ImportSpec, browseInfos: Seq[BrowseInfo]): Seq[LookupElementBuilder] = {
+  private def createLookupElements(importSpec: ImportSpec, browseInfos: Iterable[BrowseInfo]): Iterable[LookupElementBuilder] = {
     browseInfos.flatMap(bi => createLookupElements(bi, importSpec))
   }
 
-  private def createLookupElements(browseInfo: BrowseInfo, importSpec: ImportSpec): Seq[LookupElementBuilder] = {
+  private def createLookupElements(browseInfo: BrowseInfo, importSpec: ImportSpec): Iterable[LookupElementBuilder] = {
     if (importSpec.qualified)
-      Seq(createQualifiedLookUpElementForBrowseInfo(browseInfo, importSpec.as))
+      Iterable(createQualifiedLookUpElementForBrowseInfo(browseInfo, importSpec.as))
     else
-      Seq(createQualifiedLookUpElementForBrowseInfo(browseInfo, importSpec.as), createLookUpElementForBrowseInfo(browseInfo))
+      Iterable(createQualifiedLookUpElementForBrowseInfo(browseInfo, importSpec.as), createLookUpElementForBrowseInfo(browseInfo))
   }
 
   private def getReservedIds = {
@@ -292,7 +294,7 @@ class HaskellCompletionContributor extends CompletionContributor {
   }
 
   private def findImportDeclarations(psiFile: PsiFile) = {
-    PsiTreeUtil.findChildrenOfType(psiFile, classOf[HaskellImportDeclaration])
+    HaskellPsiHelper.findImportDeclarations(psiFile)
   }
 
   private def createLookUpElementForBrowseInfo(browseInfo: BrowseInfo) = {
@@ -324,6 +326,7 @@ class HaskellCompletionContributor extends CompletionContributor {
       case Some(d) if d.startsWith("type family ") => TypeFamily
       case Some(d) if d.startsWith("type instance ") => TypeInstance
       case Some(d) if d.startsWith("type ") => Type
+      case Some(d) if d.startsWith("module ") => Module
       case _ => TypeSignature
     }
   }
@@ -338,14 +341,14 @@ class HaskellCompletionContributor extends CompletionContributor {
 
   private case class ImportFullSpec(moduleName: String, qualified: Boolean, as: Option[String]) extends ImportSpec
 
-  private case class ImportHidingIdsSpec(moduleName: String, ids: Seq[String], qualified: Boolean, as: Option[String]) extends ImportSpec
+  private case class ImportHidingIdsSpec(moduleName: String, ids: Iterable[String], qualified: Boolean, as: Option[String]) extends ImportSpec
 
-  private case class ImportIdsSpec(moduleName: String, ids: Seq[String], qualified: Boolean, as: Option[String]) extends ImportSpec
+  private case class ImportIdsSpec(moduleName: String, ids: Iterable[String], qualified: Boolean, as: Option[String]) extends ImportSpec
 
-  private case class BrowseInfosForImportFullSpec(importSpec: ImportSpec, browseInfos: Seq[BrowseInfo])
+  private case class BrowseInfosForImportFullSpec(importSpec: ImportSpec, browseInfos: Iterable[BrowseInfo])
 
-  private case class BrowseInfosForImportHidingIdsSpec(importSpec: ImportHidingIdsSpec, browseInfos: Seq[BrowseInfo])
+  private case class BrowseInfosForImportHidingIdsSpec(importSpec: ImportHidingIdsSpec, browseInfos: Iterable[BrowseInfo])
 
-  private case class BrowseInfosForImportIdsSpec(importSpec: ImportIdsSpec, browseInfos: Seq[BrowseInfo])
+  private case class BrowseInfosForImportIdsSpec(importSpec: ImportIdsSpec, browseInfos: Iterable[BrowseInfo])
 
 }

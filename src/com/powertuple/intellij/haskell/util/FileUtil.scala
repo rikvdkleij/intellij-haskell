@@ -1,5 +1,5 @@
 /*
- * Copyright 2014 Rik van der Kleij
+ * Copyright 2015 Rik van der Kleij
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -54,8 +54,8 @@ object FileUtil {
     moduleFilePath match {
       case Some(p) => Some(p)
       case None =>
-        if (GhcMod.listAvailableModules(project).contains(module)) {
-          HaskellNotificationGroup.notifyWarning(s"Could not find source code for `$module`. Please add source code of package to 'Project Settings/Libraries'")
+        if (GhcMod.listAvailableModules(project).exists(_ == module)) {
+          HaskellEditorUtil.createLabelMessage(s"Could not find source code for `$module`. Please add source for package to 'Project Settings/Libraries'", project)
         } else {
           ()
         }
@@ -100,16 +100,16 @@ object LineColumnPosition {
   def fromOffset(psiFile: PsiFile, offset: Int): Option[LineColumnPosition] = {
     val fdm = FileDocumentManager.getInstance
     for {
-      file <- Option(psiFile.getVirtualFile)
+      file <- Option(psiFile.getOriginalFile.getVirtualFile)
       doc <- Option(fdm.getDocument(file))
-      li = doc.getLineNumber(offset)
+      li <- if (offset < doc.getTextLength) Some(doc.getLineNumber(offset)) else None
     } yield LineColumnPosition(li + 1, offset - doc.getLineStartOffset(li) + 1)
   }
 
   def getOffset(psiFile: PsiFile, lineColPos: LineColumnPosition): Option[Int] = {
     val fdm = FileDocumentManager.getInstance
     for {
-      file <- Option(psiFile.getVirtualFile)
+      file <- Option(psiFile.getOriginalFile.getVirtualFile)
       doc <- Option(fdm.getDocument(file))
       lineIndex <- getLineIndex(lineColPos.lineNr, doc)
       startOffsetLine = doc.getLineStartOffset(lineIndex)

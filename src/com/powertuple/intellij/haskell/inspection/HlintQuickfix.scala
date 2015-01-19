@@ -22,6 +22,7 @@ import com.intellij.openapi.project.Project
 import com.intellij.psi.util.PsiTreeUtil
 import com.intellij.psi.{PsiElement, PsiFile}
 import com.powertuple.intellij.haskell.psi.{HaskellElementFactory, HaskellTypes}
+import com.powertuple.intellij.haskell.util.OSUtil
 
 import scala.annotation.tailrec
 
@@ -45,11 +46,28 @@ class HlintQuickfix(startElement: PsiElement, endElement: PsiElement, toSuggesti
           parent.deleteChildRange(se, ee)
         }
       } else {
-        parent.deleteChildRange(findParentBelowParent(se.getNextSibling, parent).getOrElse(se), ee)
-        if (se.getNode.getElementType == HaskellTypes.HS_LEFT_PAREN) {
-          parent.addBefore(HaskellElementFactory.createWhiteSpace(project), se)
+        if (se.getChildren.headOption.exists(_.getText != startElement.getText)) {
+          // In this case se is parent of startElement (so line expression), for example when startElement is in different line expression
+          // than line expression of endElement. Common parent is in this case complete expression itself.
+
+          // Delete line expression after line expression of start element
+          parent.deleteChildRange(findNextHaskellElement(se), ee)
+
+          // Delete elements after start element is same line expression
+          val startElementParent = startElement.getParent
+          Option(startElement.getNextSibling).map(next => startElementParent.deleteChildRange(next, startElementParent.getLastChild))
+
+          // Add new line with tab and replace start element by HLint suggestion
+          startElementParent.addBefore(HaskellElementFactory.createNewLine(project), startElement)
+          startElementParent.addBefore(HaskellElementFactory.createTab(project), startElement)
+          startElement.replace(HaskellElementFactory.createBody(project, toSuggestion))
+        } else {
+          parent.deleteChildRange(findParentBelowParent(se.getNextSibling, parent).getOrElse(se), ee)
+          if (se.getNode.getElementType == HaskellTypes.HS_LEFT_PAREN) {
+            parent.addBefore(HaskellElementFactory.createWhiteSpace(project), se)
+          }
+          se.replace(HaskellElementFactory.createBody(project, toSuggestion))
         }
-        se.replace(HaskellElementFactory.createExpression(project, toSuggestion))
       }
     }
     UndoUtil.markPsiFileForUndo(file)
@@ -67,11 +85,20 @@ class HlintQuickfix(startElement: PsiElement, endElement: PsiElement, toSuggesti
   }
 
   private def formatNote(note: Seq[String]) = {
-    val formattedNote = note.map(n => if (n.size > 1 && n.head == '"' && n.last == '"') n.substring(1, n.size - 1) else n).mkString("\n")
+    val formattedNote = note.map(n => if (n.size > 1 && n.head == '"' && n.last == '"') n.substring(1, n.size - 1) else n).mkString(OSUtil.LineSeparator.toString)
     if (formattedNote.trim.isEmpty) {
       ""
     } else {
       "   -- " + formattedNote
+    }
+  }
+
+  private def findNextHaskellElement(element: PsiElement): PsiElement = {
+    val next = element.getNextSibling
+    if (HlintInspectionTool.NotHaskellIdentifiers.contains(next.getNode.getElementType)) {
+      findNextHaskellElement(next)
+    } else {
+      next
     }
   }
 }

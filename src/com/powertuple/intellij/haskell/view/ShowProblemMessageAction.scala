@@ -1,5 +1,5 @@
 /*
- * Copyright 2014 Rik van der Kleij
+ * Copyright 2015 Rik van der Kleij
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -22,7 +22,7 @@ import com.intellij.openapi.actionSystem.{AnAction, AnActionEvent, CommonDataKey
 import com.intellij.xml.util.{XmlUtil, HtmlUtil}
 import com.powertuple.intellij.haskell.util.HaskellEditorUtil
 
-class ShowErrorDescriptionAction extends AnAction {
+class ShowProblemMessageAction extends AnAction {
 
   override def update(actionEvent: AnActionEvent) {
     HaskellEditorUtil.enableAndShowIfInHaskellFile(actionEvent)
@@ -36,9 +36,9 @@ class ShowErrorDescriptionAction extends AnAction {
       offset = editor.getCaretModel.getOffset
       codeAnalyzer <- Option(DaemonCodeAnalyzer.getInstance(project).asInstanceOf[DaemonCodeAnalyzerImpl])
       info <- Option(codeAnalyzer.findHighlightByOffset(editor.getDocument, offset, false))
-      description = info.getDescription
+      message = info.getDescription
     } yield {
-      HaskellEditorUtil.showHint(editor, XmlUtil.escape(description).replace(" ", "&nbsp;"))
+      HaskellEditorUtil.showHint(editor, XmlUtil.escape(message).replace(" ", "&nbsp;"))
     }
   }
 }

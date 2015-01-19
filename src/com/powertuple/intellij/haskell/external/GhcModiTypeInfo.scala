@@ -1,5 +1,5 @@
 /*
- * Copyright 2014 Rik van der Kleij
+ * Copyright 2015 Rik van der Kleij
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,14 +19,15 @@ package com.powertuple.intellij.haskell.external
 import java.util.concurrent.{Callable, Executors, TimeUnit}
 
 import com.google.common.cache.{CacheBuilder, CacheLoader}
-import com.google.common.util.concurrent.{UncheckedExecutionException, ListenableFuture, ListenableFutureTask}
+import com.google.common.util.concurrent.{ListenableFuture, ListenableFutureTask, UncheckedExecutionException}
 import com.intellij.openapi.editor.SelectionModel
 import com.intellij.openapi.progress.ProcessCanceledException
 import com.intellij.openapi.project.Project
+import com.intellij.psi.util.PsiTreeUtil
 import com.intellij.psi.{PsiElement, PsiFile}
 import com.powertuple.intellij.haskell.HaskellNotificationGroup
 import com.powertuple.intellij.haskell.psi._
-import com.powertuple.intellij.haskell.util.{FileUtil, LineColumnPosition}
+import com.powertuple.intellij.haskell.util.{FileUtil, HaskellElementCondition, LineColumnPosition}
 
 import scala.util.{Failure, Success, Try}
 
@@ -68,33 +69,24 @@ object GhcModiTypeInfo {
       )
 
   def findTypeInfoFor(psiFile: PsiFile, psiElement: PsiElement): Option[TypeInfo] = {
-    val textOffSet = psiElement.getNode.getElementType match {
-      case HaskellTypes.HS_QVARID_ID | HaskellTypes.HS_QCONID_ID => psiElement.getTextOffset
-      case HaskellTypes.HS_QVARSYM_ID | HaskellTypes.HS_GCONSYM_ID =>
-        if (Option(psiElement.getParent).map(_.getPrevSibling).map(_.getText).contains("(") &&
-            Option(psiElement.getParent).map(_.getNextSibling).map(_.getText).contains(")")) {
-          psiElement.getTextOffset - 1
-        } else {
-          psiElement.getTextOffset
-        }
-      case _ => psiElement.getTextOffset
+    val textOffset = psiElement match {
+      case e: HaskellQVarConOpElement => e.getTextOffset
+      case e => Option(PsiTreeUtil.findFirstParent(e, HaskellElementCondition.QVarConOpElementCondition)).map(_.getTextOffset).getOrElse(e.getTextOffset)
     }
 
-    val startPositionExpression = LineColumnPosition.fromOffset(psiFile, textOffSet) match {
+    val startPositionExpression = LineColumnPosition.fromOffset(psiFile, textOffset) match {
       case Some(lcp) => Some(lcp)
       case None => HaskellNotificationGroup.notifyError(s"Could not find start position for ${psiElement.getText}"); None
     }
 
     for {
       spe <- startPositionExpression
-      typeInfos <- findGhcModiInfos(psiFile, spe)
+      typeInfos <- findGhcModiTypeInfos(psiFile, spe)
       typeInfo <- typeInfos.find(ty => ty.startLine == spe.lineNr && ty.startColumn == spe.columnNr)
     } yield typeInfo
   }
 
   def findTypeInfoForSelection(psiFile: PsiFile, selectionModel: SelectionModel): Option[TypeInfo] = {
-    FileUtil.saveFile(psiFile)
-
     val selectionStart = LineColumnPosition.fromOffset(psiFile, selectionModel.getSelectionStart) match {
       case Some(lcp) => Some(lcp)
       case None => HaskellNotificationGroup.notifyError(s"Could not find start of selection"); None
@@ -108,12 +100,12 @@ object GhcModiTypeInfo {
     for {
       ss <- selectionStart
       se <- selectionEnd
-      typeInfos <- findGhcModiInfos(psiFile, ss)
+      typeInfos <- findGhcModiTypeInfos(psiFile, ss)
       typeInfo <- typeInfos.find(ty => ty.startLine == ss.lineNr && ty.startColumn == ss.columnNr && ty.endLine == se.lineNr && ty.endColumn == se.columnNr)
     } yield typeInfo
   }
 
-  private def findGhcModiInfos(psiFile: PsiFile, startPositionExpression: LineColumnPosition): Option[Seq[TypeInfo]] = {
+  private def findGhcModiTypeInfos(psiFile: PsiFile, startPositionExpression: LineColumnPosition): Option[Iterable[TypeInfo]] = {
     val filePath = FileUtil.getFilePath(psiFile)
     val ghcModiOutput = try {
       TypeInfoCache.get(ElementTypeInfo(filePath, startPositionExpression.lineNr, startPositionExpression.columnNr, psiFile.getProject))
@@ -128,7 +120,7 @@ object GhcModiTypeInfo {
     }
   }
 
-  private[external] def ghcModiOutputToTypeInfo(ghcModiOutput: Seq[String]): Try[Seq[TypeInfo]] = Try {
+  private[external] def ghcModiOutputToTypeInfo(ghcModiOutput: Iterable[String]): Try[Iterable[TypeInfo]] = Try {
     for (outputLine <- ghcModiOutput) yield {
       outputLine match {
         case GhcModiTypeInfoPattern(startLn, startCol, endLine, endCol, typeSignature) =>

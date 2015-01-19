@@ -1,5 +1,5 @@
 /*
- * Copyright 2014 Rik van der Kleij
+ * Copyright 2015 Rik van der Kleij
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,16 +18,15 @@ package com.powertuple.intellij.haskell.navigate
 
 import com.intellij.codeInsight.TargetElementEvaluatorEx
 import com.intellij.psi.{PsiElement, PsiFile, PsiReference}
-import com.powertuple.intellij.haskell.HaskellParserDefinition
 
 class HaskellTargetElementEvaluator extends TargetElementEvaluatorEx {
   def isIdentifierPart(element: PsiFile, text: CharSequence, offset: Int): Boolean = {
     import com.powertuple.intellij.haskell.psi.HaskellTypes._
     element.findElementAt(offset).getNode.getElementType match {
-      case HS_QVARID_ID => true
-      case HS_QCONID_ID => true
-      case HS_QVARSYM_ID => true
-      case HS_GCONSYM_ID => true
+      case HS_VARID_ID => true
+      case HS_CONID_ID => true
+      case HS_VARSYM_ID => true
+      case HS_CONSYM_ID => true
       case _ => false
     }
   }
