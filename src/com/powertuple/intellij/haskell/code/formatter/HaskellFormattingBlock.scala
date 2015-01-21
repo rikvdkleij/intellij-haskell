@@ -129,7 +129,6 @@ object IndentProcessor {
       case HS_IDECL | HS_CDECL => getNormalIndent
       case HS_CONSTR_1 | HS_CONSTR_2 | HS_CONSTR_3 | HS_CONSTR_4 => getNormalIndent
       case HS_COMMENT | HS_NCOMMENT => getNoneIndent
-      case HS_LINE_EXPRESSION => getNormalIndent
       case HS_LEFT_PAREN | HS_LEFT_BRACE | HS_LEFT_BRACKET
         if TreeUtil.findParent(child, HaskellTypes.HS_LINE_EXPRESSION) != null |
             TreeUtil.findParent(child, HaskellTypes.HS_MODULE_DECLARATION) != null |
