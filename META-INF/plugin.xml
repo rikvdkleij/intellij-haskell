@@ -16,6 +16,7 @@
             <li>Improved syntax highlighting</li>
             <li>Added Haskell module</li>
             <li>Support for qualified identifiers</li>
+            <li>Optimize imports</li>
         </ul>
         <p>0.5</p>
         <ul>

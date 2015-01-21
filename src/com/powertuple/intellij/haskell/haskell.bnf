@@ -76,7 +76,7 @@ private body                ::= import_declarations top_declarations
 private import_declarations ::= (import_declaration onl)*
 private top_declarations    ::= (top_declaration onl)*
 
-import_declaration          ::= IMPORT osnl source_pragma? osnl import_qualified? osnl import_module osnl import_qualified_as? osnl import_spec? NEWLINE  {methods=[getModuleName]}
+import_declaration          ::= IMPORT osnl source_pragma? osnl import_qualified? osnl import_module osnl import_qualified_as? osnl import_spec? NEWLINE?  {methods=[getModuleName]}
 import_module               ::= mod_id
 import_qualified            ::= "qualified"
 import_qualified_as         ::= "as" qualifier
