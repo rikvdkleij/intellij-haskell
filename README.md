@@ -36,18 +36,10 @@ Any feedback is welcome!!
 - Inspection by HLint;
 - Quick fixes for HLint suggestions;
 - View error, action to view formatted message from ghc-mod. Especially useful in case message consists of multiple lines (Ctrl-F10, Meta-F10 on Mac OSX);
-- Intention actions for adding language extension pragma and type signature to code;
+- Intention actions (suggested by ghc-mod);
             
 A lot of features are with the help of ghc-mod(i)!!
 
-# TODO:
-- Integration of stylish-haskell; 
-- Integration of hsimport;
-- Smart completion if that is achievable :-)
-- Hole driven development support;
-- Add more quick fixes/intention actions;
-- Improve code formatting (maybe use `hindent` or `haskell-formatter` as helper);
-- Build project inside IntelliJ;
 
 # Getting started: 
 - Cabal install latest versions of ghc-mod and haskell-docs;
@@ -71,3 +63,4 @@ A lot of features are with the help of ghc-mod(i)!!
 - During testing on Mac OSX Yosemite Beta I noticed problem with ghc-modi: PATH environment variable asked from within IntelliJ was not the same as the global one. I had to create workaround only for Mac OSX :-( 
     This workaround will add path of `GHC SDK` to PATH environment variable which is passed to ghc-modi process. Other solutions are welcome!
 - Windows is not supported. Maybe it will work okay but I can not test it;
+- Created workaround for ghc-mod issue #432;
