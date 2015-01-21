@@ -139,6 +139,8 @@
 
         <vetoRenameCondition implementation="com.powertuple.intellij.haskell.refactor.HaskellVetoRenameCondition" />
         <lang.importOptimizer language="Haskell" implementationClass="com.powertuple.intellij.haskell.code.HaskellImportOptimizer"/>
+
+        <framework.type implementation="com.powertuple.intellij.haskell.framework.HaskellFrameworkType"/>
     </extensions>
 
     <application-components>

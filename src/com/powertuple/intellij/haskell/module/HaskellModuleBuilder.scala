@@ -1,5 +1,5 @@
 /*
- * Copyright 2014 Rik van der Kleij
+ * Copyright 2015 Rik van der Kleij
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -25,7 +25,7 @@ import com.intellij.openapi.roots.ModifiableRootModel
 import com.powertuple.intellij.haskell.HaskellIcons
 import com.powertuple.intellij.haskell.sdk.HaskellSdkType
 
-class HaskellModuleBuilder extends JavaModuleBuilder with SourcePathsBuilder with ModuleBuilderListener {
+class HaskellModuleBuilder extends JavaModuleBuilder with ModuleBuilderListener {
 
   override def moduleCreated(module: Module): Unit = {}
 
