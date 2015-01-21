@@ -33,9 +33,10 @@ object HaskellFindUtil {
   def findDeclarationElements(project: Project, name: String, includeNonProjectItems: Boolean): Iterable[HaskellDeclarationElement] = {
     val normalizedName = normalize(name)
     if (name.endsWith(" ")) {
-      findDeclarationElementsByConditionOnName(project, includeNonProjectItems, (n: String) => n == normalizedName)
+      findDeclarationElementsByConditionOnName(project, includeNonProjectItems, (ie: String) => ie == normalizedName)
     } else {
-      findDeclarationElementsByConditionOnName(project, includeNonProjectItems, (n: String) => n.contains(normalizedName))
+      val names = normalizedName.split(' ')
+      findDeclarationElementsByConditionOnName(project, includeNonProjectItems, (ie: String) => names.forall(n => ie.contains(n)))
     }
   }
 
@@ -46,9 +47,10 @@ object HaskellFindUtil {
   def findNamedElements(project: Project, name: String, includeNonProjectItems: Boolean): Iterable[HaskellNamedElement] = {
     val normalizedName = normalize(name)
     if (name.endsWith(" ")) {
-      findNamedElementsByConditionOnName(project, includeNonProjectItems, (n: String) => n == normalizedName)
+      findNamedElementsByConditionOnName(project, includeNonProjectItems, (ne: String) => ne == normalizedName)
     } else {
-      findNamedElementsByConditionOnName(project, includeNonProjectItems, (n: String) => n.contains(normalizedName))
+      val names = normalizedName.split(' ')
+      findNamedElementsByConditionOnName(project, includeNonProjectItems, (ne: String) => names.forall(n => ne.contains(n)))
     }
   }
 
