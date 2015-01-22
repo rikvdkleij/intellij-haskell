@@ -104,14 +104,6 @@ class HaskellFormattingBlock(node: ASTNode, alignment: Option[Alignment], spacin
   override def getSpacing(child1: Block, child2: Block): Spacing = {
     spacingBuilder.getSpacing(this, child1, child2)
   }
-
-  override def getChildAttributes(newChildIndex: Int): ChildAttributes = {
-    new ChildAttributes(Indent.getNoneIndent, getFirstChildAlignment)
-  }
-
-  private def getFirstChildAlignment: Alignment = {
-    getSubBlocks.find(_.getAlignment != null).map(_.getAlignment).orNull
-  }
 }
 
 object IndentProcessor {
