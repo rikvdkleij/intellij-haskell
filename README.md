@@ -46,7 +46,7 @@ A lot of features are with the help of ghc-mod(i)!!
 - Set file paths to ghc-mod, ghc-modi, hlint and haskell-docs in `Settings/Haskell`.
 - Be sure in `Settings/Filetypes` that `Haskell language file` is registered with pattern `*.hs` and `Literate Haskell language file` with pattern `*.lhs`; 
 - First install and build your project in a Cabal sandbox (be sure that Haddock documentation is generated, see [haskell-docs](https://github.com/chrisdone/haskell-docs)). 
-- After project is build in sandbox, create Haskell project in IntelliJ by using `File`/`New Project` from IntelliJ menu;
+- After project is built in sandbox, create Haskell project in IntelliJ by using `File`/`New Project` from IntelliJ menu;
 - In `New Project` wizard create `GHC SDK` by selecting path to GHC binaries, e.g. `\usr\local\bin`;
 - Select in `Project settings`/`Modules` which folders to exclude (like .cabal-sandbox and dist) and which folders are `Source` and `Test` (normally src and test).
 - To get nice navigation features: add for libraries and Prelude(base, ghc-prim and integer-gmp packages) the source root directories to project in `Project Settings`/`Libraries`. `cabal get` is useful for getting source code of package.
