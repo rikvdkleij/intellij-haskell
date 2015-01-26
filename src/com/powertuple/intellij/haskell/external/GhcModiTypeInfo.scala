@@ -34,6 +34,8 @@ import scala.util.{Failure, Success, Try}
 object GhcModiTypeInfo {
   private final val GhcModiTypeInfoPattern = """([\d]+) ([\d]+) ([\d]+) ([\d]+) "(.+)"""".r
 
+  private final val NoInfoIndicator = "Cannot show info"
+
   private final val Executor = Executors.newCachedThreadPool()
 
   private case class ElementTypeInfo(filePath: String, lineNr: Int, columnNr: Int, project: Project)
@@ -108,7 +110,14 @@ object GhcModiTypeInfo {
   private def findGhcModiTypeInfos(psiFile: PsiFile, startPositionExpression: LineColumnPosition): Option[Iterable[TypeInfo]] = {
     val filePath = FileUtil.getFilePath(psiFile)
     val ghcModiOutput = try {
-      TypeInfoCache.get(ElementTypeInfo(filePath, startPositionExpression.lineNr, startPositionExpression.columnNr, psiFile.getProject))
+      val key = ElementTypeInfo(filePath, startPositionExpression.lineNr, startPositionExpression.columnNr, psiFile.getProject)
+      val output = TypeInfoCache.get(key)
+      if (output.outputLines.isEmpty) {
+        TypeInfoCache.refresh(key)
+        TypeInfoCache.get(key)
+      } else {
+        output
+      }
     }
     catch {
       case _: UncheckedExecutionException => GhcModiOutput()

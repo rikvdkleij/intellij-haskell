@@ -75,7 +75,14 @@ object GhcModiInfo {
   def findInfoFor(psiFile: PsiFile, namedElement: HaskellNamedElement): Iterable[IdentifierInfo] = {
     val ghcModiOutput = findIdentifier(namedElement).map { id =>
       try {
-        InfoCache.get(NamedElementInfo(FileUtil.getFilePath(psiFile), id, psiFile.getProject))
+        val key = NamedElementInfo(FileUtil.getFilePath(psiFile), id, psiFile.getProject)
+        val output = InfoCache.get(key)
+        if (output.outputLines.isEmpty || output.outputLines.head == NoInfoIndicator) {
+          InfoCache.refresh(key)
+          InfoCache.get(key)
+        } else {
+          output
+        }
       }
       catch {
         case _: UncheckedExecutionException => GhcModiOutput()
