@@ -46,13 +46,14 @@ A lot of features are with the help of ghc-mod(i)!!
 - Set file paths to ghc-mod, ghc-modi, hlint and haskell-docs in `Settings/Haskell`.
 - Be sure in `Settings/Filetypes` that `Haskell language file` is registered with pattern `*.hs` and `Literate Haskell language file` with pattern `*.lhs`; 
 - First install and build your project in a Cabal sandbox (be sure that Haddock documentation is generated, see [haskell-docs](https://github.com/chrisdone/haskell-docs)). 
-- After project is build in sandbox, create Haskell project in IntelliJ by using `File`/`Open` from IntelliJ menu;
-- Create `GHC SDK` in Project Setting by selecting path to GHC binaries, e.g. `\usr\local\bin`;
+- After project is build in sandbox, create Haskell project in IntelliJ by using `File`/`New Project` from IntelliJ menu;
+- In `New Project` wizard create `GHC SDK` by selecting path to GHC binaries, e.g. `\usr\local\bin`;
 - Select in `Project settings`/`Modules` which folders to exclude (like .cabal-sandbox and dist) and which folders are `Source` and `Test` (normally src and test).
-- To get nice navigation features: add for libraries, Prelude(base, ghc-prim and integer-gmp packages) the source root directories to project in `Project Settings`/`Libraries`. `cabal get` is useful for getting source code of package.
+- To get nice navigation features: add for libraries and Prelude(base, ghc-prim and integer-gmp packages) the source root directories to project in `Project Settings`/`Libraries`. `cabal get` is useful for getting source code of package.
     To get source code of libraries in `Project view`, create for example a directory `lib` inside project root directory and put source roots there;
 
 # Remarks
+- In Navigation dialog dots can not be used. Workaround is by using spaces instead of dots, so when you want to go to `Control.Lens`, type `Control Lens`;
 - IntelliJ has a nice terminal plugin, useful for executing the Cabal commands;
 - ghc-mod can not help in library files and if Haskell source file contains not completely valid Haskell (e.g. while typing). In that case I try to solve request by using AST-tree (IntelliJ calls it PSI-tree). 
 - Because of ghc-mod issue #275 ghc-mod is used (instead of ghc-modi) for checking syntax of Haskell file;
