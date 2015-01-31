@@ -357,7 +357,7 @@ object HaskellPsiImplUtil {
         Option(dataDeclaration.getConstr2List).map(_.map(c => c.getQconOp.getIdentifierElement)).getOrElse(Seq()) ++
         Option(dataDeclaration.getConstr3List).map(_.map(c => c.getQcon.getIdentifierElement)).getOrElse(Seq()) ++
         Option(dataDeclaration.getConstr4List).map(_.flatMap(c => Seq(c.getGconSym.getIdentifierElement, c.getQcon.getIdentifierElement))).getOrElse(Seq()) ++
-        Option(dataDeclaration.getDataDeclarationDeriving).map(e => PsiTreeUtil.findChildrenOfType(e, classOf[HaskellQcon]).map(_.getIdentifierElement)).getOrElse(Seq())
+        Option(dataDeclaration.getDataDeclarationDeriving).map(_.getTtypeList).map(_.flatMap(e => PsiTreeUtil.findChildrenOfType(e, classOf[HaskellQcon]).map(_.getIdentifierElement))).getOrElse(Seq())
   }
 
   def getIdentifierElements(typeDeclaration: HaskellTypeDeclaration): Seq[HaskellNamedElement] = {

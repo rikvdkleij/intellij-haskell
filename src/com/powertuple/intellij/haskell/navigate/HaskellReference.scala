@@ -302,7 +302,7 @@ object HaskellReference {
 
   import com.powertuple.intellij.haskell.psi.HaskellTypes._
 
-  private final val IgnoringTypes = Seq(TokenType.WHITE_SPACE, HS_QVAR, HS_RIGHT_PAREN, HS_COMMA)
-  private final val IndicatingLhsTypes = Seq(HS_EQUAL, HS_VERTICAL_BAR, HS_LEFT_ARROW)
+  private final val IgnoringTypes = Seq(TokenType.WHITE_SPACE, HS_QVAR, HS_RIGHT_PAREN, HS_COMMA, HS_RIGHT_BRACKET)
+  private final val IndicatingLhsTypes = Seq(HS_EQUAL, HS_VERTICAL_BAR, HS_LEFT_ARROW, HS_RIGHT_ARROW)
   private final val LhsConstructors = Seq(HS_QCON, HS_QCON_OP)
 }

@@ -75,8 +75,8 @@ class HaskellFormattingBlock(node: ASTNode, alignment: Option[Alignment], spacin
       case HS_VERTICAL_BAR | HS_EQUAL => Some(alignments(1))
       case HS_EXPORT => Some(alignments(2))
       case HS_IF | HS_THEN | HS_ELSE => Some(alignments(3))
-      case HS_DO | HS_WHERE => Some(alignments(4))
-      case HS_EXPORTS | HS_WHERE => Some(alignments(5))
+      case HS_DO | HS_WHERE if parent.getElementType != HS_MODULE_DECLARATION => Some(alignments(4))
+      case HS_EXPORTS | HS_WHERE if parent.getElementType != HS_MODULE_DECLARATION => Some(alignments(5))
       case HS_LINE_EXPRESSION | HS_LAST_LINE_EXPRESSION => Some(alignments(6))
       case HS_CONSTR_1 | HS_CONSTR_2 | HS_CONSTR_3 | HS_CONSTR_4 => Some(alignments(7))
       case _ => None
@@ -88,9 +88,19 @@ class HaskellFormattingBlock(node: ASTNode, alignment: Option[Alignment], spacin
       node.getChildren(null).length > 0
     }
     else {
-      node.getElementType == HS_NEWLINE && previousNode != null && previousNode.getElementType == TokenType.WHITE_SPACE ||
+      (node.getElementType != HS_NEWLINE && previousNode != null && previousNode.getElementType != HS_NEWLINE) &&
+          (node.getElementType == TokenType.WHITE_SPACE && previousNode != null && previousNode.getElementType == HS_NEWLINE) ||
+          (node.getElementType == HS_NEWLINE && previousNode != null && previousNode.getElementType == TokenType.WHITE_SPACE) ||
           node.getElementType != TokenType.WHITE_SPACE && node.getElementType != HS_NEWLINE
     }
+  }
+
+  override def getChildAttributes(newChildIndex: Int): ChildAttributes = {
+    new ChildAttributes(Indent.getNoneIndent, getFirstChildAlignment)
+  }
+
+  private def getFirstChildAlignment: Alignment = {
+    getSubBlocks.find(_.getAlignment != null).map(_.getAlignment).orNull
   }
 
   override def getIndent: Indent = {
@@ -113,15 +123,17 @@ object IndentProcessor {
 
     val childType = child.getElementType
     childType match {
-      case HS_MODULE_BODY | HS_MODULE_DECLARATION | HS_TOP_DECLARATION | HS_IMPORT_DECLARATION | HS_FIRST_LINE_EXPRESSION => getAbsoluteNoneIndent
-      case HS_LAST_LINE_EXPRESSION if child.getTreePrev == null => getAbsoluteNoneIndent
+      case HS_MODULE_BODY | HS_MODULE_DECLARATION | HS_IMPORT_DECLARATION => getAbsoluteNoneIndent
       case HS_MODULE => getAbsoluteNoneIndent
       case HS_DO | HS_WHERE | HS_IF | HS_CASE | HS_DERIVING => getNormalIndent
       case HS_EQUAL | HS_QVAR_SYM => getNormalIndent
       case HS_VERTICAL_BAR => getNormalIndent
       case HS_IDECL | HS_CDECL => getNormalIndent
       case HS_CONSTR_1 | HS_CONSTR_2 | HS_CONSTR_3 | HS_CONSTR_4 => getNormalIndent
-      case HS_LINE_EXPRESSION | HS_LAST_LINE_EXPRESSION => getNormalIndent
+      case HS_EXPRESSION if child.getTreeParent.getElementType == HS_TOP_DECLARATION => getAbsoluteNoneIndent
+      case HS_EXPRESSION => getNormalIndent
+      case HS_LAST_LINE_EXPRESSION | HS_FIRST_LINE_EXPRESSION | HS_LINE_EXPRESSION if Option(child.getTreeParent).map(_.getTreeParent).exists(_.getElementType == HS_TOP_DECLARATION) => getNoneIndent
+      case HS_LINE_EXPRESSION => getNormalIndent
       case HS_COMMENT | HS_NCOMMENT => getNoneIndent
       case HS_LEFT_PAREN | HS_LEFT_BRACE | HS_LEFT_BRACKET
         if TreeUtil.findParent(child, HaskellTypes.HS_LINE_EXPRESSION) != null |

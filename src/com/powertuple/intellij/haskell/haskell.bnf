@@ -76,7 +76,7 @@ private body                ::= import_declarations top_declarations
 private import_declarations ::= (import_declaration onl)*
 private top_declarations    ::= (top_declaration onl)*
 
-import_declaration          ::= IMPORT osnl source_pragma? osnl import_qualified? osnl import_module osnl import_qualified_as? osnl import_spec? NEWLINE?  {methods=[getModuleName]}
+import_declaration          ::= IMPORT osnl source_pragma? osnl import_qualified? osnl import_module osnl import_qualified_as? osnl import_spec? NEWLINE  {methods=[getModuleName]}
 import_module               ::= mod_id
 import_qualified            ::= "qualified"
 import_qualified_as         ::= "as" qualifier
@@ -102,17 +102,18 @@ type_declaration            ::=  TYPE osnl simpletype osnl COLON_COLON osnl ttyp
                                   TYPE osnl simpletype
 
 data_declaration            ::= DATA osnl INSTANCE? osnl (context osnl DOUBLE_RIGHT_ARROW)? osnl simpletype osnl EQUAL osnl constrs osnl data_declaration_deriving? |
-                                  DATA osnl INSTANCE? osnl (context osnl DOUBLE_RIGHT_ARROW)? osnl simpletype osnl WHERE osnl cdecls osnl data_declaration_deriving? |
+                                  DATA osnl INSTANCE? osnl (context osnl DOUBLE_RIGHT_ARROW)? osnl simpletype osnl WHERE cdecls osnl data_declaration_deriving? |
                                   DATA osnl INSTANCE? osnl (context osnl DOUBLE_RIGHT_ARROW)? osnl simpletype (EQUAL expression)?
-data_declaration_deriving   ::= DERIVING ttype
+data_declaration_deriving   ::= (DERIVING ttype osnl)+
 
 newtype_declaration         ::= NEWTYPE osnl (context osnl DOUBLE_RIGHT_ARROW)? osnl simpletype osnl EQUAL osnl newconstr osnl (DERIVING osnl ttype)?
 class_declaration           ::= (CLASS osnl (scontext osnl DOUBLE_RIGHT_ARROW)? osnl qcon osnl
                                   (qvar | LEFT_PAREN type_signature_declaration RIGHT_PAREN)*
-                                  (osnl VERTICAL_BAR osnl ttype (osnl COMMA osnl ttype)*)? osnl WHERE? osnl cdecls? |
-                                  CLASS osnl context osnl DOUBLE_RIGHT_ARROW osnl qcon osnl qvar osnl WHERE? osnl cdecls?) // seen in Control.Lens.Internal.Indexed
+                                  (osnl VERTICAL_BAR osnl ttype (osnl COMMA osnl ttype)*)? osnl WHERE? cdecls? |
+                                  CLASS osnl context osnl DOUBLE_RIGHT_ARROW osnl qcon osnl qvar osnl WHERE? cdecls?) // seen in Control.Lens.Internal.Indexed
 
-instance_declaration        ::= INSTANCE osnl (scontext osnl DOUBLE_RIGHT_ARROW)? osnl qcon osnl inst osnl WHERE? osnl idecls?
+instance_declaration        ::= INSTANCE osnl (scontext osnl DOUBLE_RIGHT_ARROW)? osnl qcon osnl inst osnl WHERE idecls
+                                  | INSTANCE osnl (scontext osnl DOUBLE_RIGHT_ARROW)? osnl qcon osnl inst
 default_declaration         ::= DEFAULT osnl (LEFT_PAREN (ttype (COMMA ttype)*)? RIGHT_PAREN | type_signature_declaration)
 type_instance_declaration   ::= TYPE_INSTANCE osnl expression
 type_signature_declaration  ::= vars osnl COLON_COLON osnl ((ttype | context) DOUBLE_RIGHT_ARROW)? osnl ttype | fixity (DECIMAL)? ops
@@ -164,10 +165,10 @@ cname                       ::= qvar | qcon
 
 private constrs             ::= constr (osnl VERTICAL_BAR osnl constr)*
 private constr              ::= (constr1 | constr2 | constr3 | constr4)
-constr1                     ::= qcon onl unpack_nounpack_pragma? onl LEFT_BRACE onl (onl fielddecl (onl COMMA? onl fielddecl)*)? onl RIGHT_BRACE
-constr2                     ::= sub_constr2 osnl unpack_nounpack_pragma? qcon_op osnl sub_constr2
-constr3                     ::= qcon osnl (unpack_nounpack_pragma? qvar_op? osnl atype osnl)*
-constr4                     ::= qvar gcon_sym unpack_nounpack_pragma? qcon  // added because second data constructor in: data [] a = [] | a : [a] in Types.hs in ghc-prim
+constr1                     ::= unpack_nounpack_pragma? qcon onl unpack_nounpack_pragma? onl LEFT_BRACE onl (onl fielddecl (onl COMMA? onl fielddecl)*)? onl RIGHT_BRACE
+constr2                     ::= unpack_nounpack_pragma? sub_constr2 osnl unpack_nounpack_pragma? qcon_op osnl sub_constr2
+constr3                     ::= unpack_nounpack_pragma? qcon osnl (unpack_nounpack_pragma? qvar_op? osnl atype osnl)*
+constr4                     ::= unpack_nounpack_pragma? qvar gcon_sym unpack_nounpack_pragma? qcon  // added because second data constructor in: data [] a = [] | a : [a] in Types.hs in ghc-prim
 sub_constr2                 ::= (btype | qvar_op atype)
 
 fielddecl                   ::= vars COLON_COLON unpack_nounpack_pragma? (ttype | qvar_op atype)
@@ -236,22 +237,22 @@ private export3             ::= MODULE mod_id
 
 newconstr                   ::= qcon atype | qcon osnl LEFT_BRACE? osnl qvar COLON_COLON ttype osnl RIGHT_BRACE?
 
-private cdecls              ::= cdecl+
+private cdecls              ::= cdecl+ | expression
 cdecl                       ::= minimal_pragma | type_signature_declaration | cidecl
 
-private idecls              ::= idecl+
-idecl                       ::= cidecl
+private idecls              ::= idecl+ | expression
+idecl                       ::= onl cidecl
 
 private cidecl              ::= inline_pragma | noinline_pragma | specialize_pragma | type_declaration | instance_declaration | default_declaration |
-                                  newtype_declaration | data_declaration | general_id+
+                                  newtype_declaration | data_declaration
 
 expression                  ::= first_line_expression (line_expression)* last_line_expression | last_line_expression
-first_line_expression       ::= general_id+ snl
-line_expression             ::= general_id+ snl
-last_line_expression        ::= general_id+ osnl
+first_line_expression       ::= NEWLINE* general_id+ snl
+line_expression             ::= NEWLINE* general_id+ snl
+last_line_expression        ::= NEWLINE* general_id+ osnl
 
 private general_id          ::= (qvar_op | qcon_op | qvar | qcon | LEFT_PAREN | RIGHT_PAREN | FLOAT | DO | WHERE | IF | THEN | ELSE |
-                                  COLON_COLON | DOUBLE_RIGHT_ARROW | ttype | context | RIGHT_ARROW | IN | CASE | OF | LET |
+                                  COLON_COLON | DOUBLE_RIGHT_ARROW | RIGHT_ARROW | IN | CASE | OF | LET |
                                   SEMICOLON | LEFT_ARROW | LEFT_BRACKET | RIGHT_BRACKET | literal | LEFT_BRACE | RIGHT_BRACE |
                                   COMMA | UNDERSCORE | symbol_reserved_op | QUOTE | BACKQUOTE | fixity)
 

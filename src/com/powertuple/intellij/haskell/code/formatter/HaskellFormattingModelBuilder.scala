@@ -54,7 +54,8 @@ object HaskellFormattingModelBuilder {
         around(HS_QCON_OP).spacing(0, 1, 0, settings.KEEP_LINE_BREAKS, settings.KEEP_BLANK_LINES_IN_CODE).
         after(HS_VERTICAL_BAR).spaces(1).
         around(HS_EXPORT).spaces(0).
-        around(TokenSet.create(HS_COLON_COLON, HS_DOUBLE_RIGHT_ARROW, HS_EQUAL, HS_LEFT_ARROW, HS_RIGHT_ARROW)).spaces(1)
+        around(TokenSet.create(HS_COLON_COLON, HS_DOUBLE_RIGHT_ARROW, HS_LEFT_ARROW, HS_RIGHT_ARROW)).spaces(1).
+        after(TokenSet.create(HS_EQUAL)).spaces(1)
   }
 }
 
