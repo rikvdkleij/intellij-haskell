@@ -65,3 +65,13 @@ A lot of features are with the help of ghc-mod(i)!!
     This workaround will add path of `GHC SDK` to PATH environment variable which is passed to ghc-modi process. Other solutions are welcome!
 - Windows is not supported. Maybe it will work okay but I can not test it;
 - Created workaround for ghc-mod issue #432;
+
+# How to build
+1. Clone this project;
+1. Clone IntelliJ Communitiy Edition (optional, it's needed to navigate to IntelliJ source code). Check out right tag by looking to version number;
+1. Install/enable plugins: Plugin Devkit, Grammar-Kit and PsiViewer;
+1. Open this project and check/change paths of `IntelliJ Platform Plugin SDK`. Also check/change path to it's sources (use root directory from step 2);
+1. Navigate to `_HaskellLexer.flex` and run `Run Flex Generator`. This will generate `_HaskellLexer.java`;
+1. Navigate to `haskell.bnf` and run `Generate Parser Code`. This will generate parser Java files in `gen` directory;
+1. Select `Make project` from `Build` menu;
+1. To run/debug this plugin select `intellij-haskell` in `Configurations`;
