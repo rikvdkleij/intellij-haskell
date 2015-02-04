@@ -71,6 +71,7 @@ A lot of features are with the help of ghc-mod(i)!!
 1. Clone IntelliJ Communitiy Edition (optional, it's needed to navigate to IntelliJ source code). Check out right tag by looking to version number;
 1. Install/enable plugins: Plugin Devkit, Grammar-Kit and PsiViewer;
 1. Open this project and check/change paths of `IntelliJ Platform Plugin SDK`. Also check/change path to it's sources (use root directory from step 2);
+1. Check/change paths to Scala dependencies: scala-sdk, scalatest and spray-json;
 1. Navigate to `_HaskellLexer.flex` and run `Run Flex Generator`. This will generate `_HaskellLexer.java`;
 1. Navigate to `haskell.bnf` and run `Generate Parser Code`. This will generate parser Java files in `gen` directory;
 1. Select `Make project` from `Build` menu;
