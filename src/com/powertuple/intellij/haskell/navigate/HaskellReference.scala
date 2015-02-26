@@ -182,14 +182,20 @@ class HaskellReference(element: HaskellNamedElement, textRange: TextRange) exten
     }
   }
 
-  // Skipping white space
-  private def nextElementInExpression(element: PsiElement) = {
-    Option(element.getNextSibling).flatMap(e => Option(e.getNextSibling))
+  private def nextElementInExpression(element: PsiElement): Option[PsiElement] = {
+     element.getNode.getElementType match {
+       case HS_EXPRESSION => None
+       case TokenType.WHITE_SPACE => Option(element.getNextSibling).flatMap(nextElementInExpression)
+       case _ => Option(element.getNextSibling)
+    }
   }
 
-  // Skipping white space
-  private def prevElementInExpression(element: PsiElement) = {
-    Option(element.getPrevSibling).flatMap(e => Option(e.getPrevSibling))
+  private def prevElementInExpression(element: PsiElement): Option[PsiElement] = {
+    element.getNode.getElementType match {
+      case HS_EXPRESSION => None
+      case TokenType.WHITE_SPACE => Option(element.getPrevSibling).flatMap(prevElementInExpression)
+      case _ => Option(element.getPrevSibling)
+    }
   }
 
   private def findLocalLhsElements(identifier: String) = {
