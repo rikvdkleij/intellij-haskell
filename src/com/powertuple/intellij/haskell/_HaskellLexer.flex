@@ -134,7 +134,7 @@ shebang_line        = {hash} {exclamation_mark} [^\r\n]*
 }
 
 <NCOMMENT> {
-    {ncomment_start} ({newline}| {white_char} | {vertical_bar} | {small} | {large} | {digit})? {
+    {ncomment_start} ({newline}| {white_char} | {vertical_bar} | {small} | {large} | {digit} | {dash})? {
         commentDepth++;
     }
 
@@ -160,7 +160,7 @@ shebang_line        = {hash} {exclamation_mark} [^\r\n]*
     .|{white_char}|{newline} {}
 }
 
-{ncomment_start} ({vertical_bar} | {newline} | {white_char} | {small} | {large} | {digit}) {
+{ncomment_start} ({vertical_bar} | {newline} | {white_char} | {small} | {large} | {digit} | {dash}) {
     yybegin(NCOMMENT);
     commentDepth = 0;
     commentStart = getTokenStart();
