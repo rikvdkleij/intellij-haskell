@@ -25,7 +25,7 @@ import com.intellij.openapi.project.Project
 import com.intellij.patterns.PlatformPatterns
 import com.intellij.psi.impl.source.tree.TreeUtil
 import com.intellij.psi.util.PsiTreeUtil
-import com.intellij.psi.{PsiElement, PsiFile}
+import com.intellij.psi.{TokenType, PsiElement, PsiFile}
 import com.intellij.util.ProcessingContext
 import com.powertuple.intellij.haskell.external.{BrowseInfo, GhcMod}
 import com.powertuple.intellij.haskell.psi.HaskellTypes._
@@ -86,15 +86,23 @@ class HaskellCompletionContributor extends CompletionContributor {
         case Some(p) if isPragmaInProgress(p) =>
           resultSet.addAllElements(getModulePragmaIds)
           resultSet.addAllElements(getPragmaStartEndIds)
-        case p =>
+        case Some(p) =>
           val importDeclarations = findImportDeclarations(file)
-          resultSet.addAllElements(getReservedIds)
-          resultSet.addAllElements(getSpecialReservedIds)
-          resultSet.addAllElements(getPragmaStartEndIds)
-          resultSet.addAllElements(getCommentIds)
-          resultSet.addAllElements(getIdsFromFullScopeImportedModules(project, file, importDeclarations))
-          resultSet.addAllElements(getIdsFromHidingIdsImportedModules(project, file, importDeclarations))
-          resultSet.addAllElements(getIdsFromSpecIdsImportedModules(project, file, importDeclarations))
+          getQualifiedIdentifierInProgress(p) match {
+            case Some(qid) =>
+              val fullScopeIds = getIdsFromFullScopeImportedModules(project, file, importDeclarations, Some(qid))
+              val specIdsScopeIds = getIdsFromSpecIdsImportedModules(project, file, importDeclarations, Some(qid))
+              resultSet.addAllElements(if (fullScopeIds.isEmpty) specIdsScopeIds else fullScopeIds)
+            case _ =>
+              resultSet.addAllElements(getReservedIds)
+              resultSet.addAllElements(getSpecialReservedIds)
+              resultSet.addAllElements(getPragmaStartEndIds)
+              resultSet.addAllElements(getCommentIds)
+              resultSet.addAllElements(getIdsFromFullScopeImportedModules(project, file, importDeclarations))
+              resultSet.addAllElements(getIdsFromHidingIdsImportedModules(project, file, importDeclarations))
+              resultSet.addAllElements(getIdsFromSpecIdsImportedModules(project, file, importDeclarations))
+          }
+        case _ => ()
       }
     }
   })
@@ -114,8 +122,6 @@ class HaskellCompletionContributor extends CompletionContributor {
     }
 
     caretElement match {
-      case Some(e) if e.getNode.getElementType == HS_DOT && Option(file.findElementAt(e.getTextOffset - 1)).exists(_.getNode.getElementType == HS_CONID_ID) =>
-        context.setDummyIdentifier(file.findElementAt(e.getTextOffset - 1).getText + ".")
       case Some(e) if PlainPrefixElementTypes.contains(e.getNode.getElementType) => context.setDummyIdentifier(getTextAtCaret(context.getEditor, file))
       case Some(e) if e.getText.trim.size > 0 => context.setDummyIdentifier(e.getText.trim)
       case _ => context.setDummyIdentifier("a")
@@ -183,6 +189,21 @@ class HaskellCompletionContributor extends CompletionContributor {
     Option(TreeUtil.findSiblingBackward(position.getNode, HS_PRAGMA_START)).isDefined
   }
 
+  private def getQualifiedIdentifierInProgress(position: PsiElement): Option[String] = {
+    if (position.getNode.getElementType == HS_NEWLINE || position.getNode.getElementType == TokenType.WHITE_SPACE) {
+      Option(position.getPrevSibling).flatMap(ps => {
+        val qcon = Option(PsiTreeUtil.findChildOfType(ps, classOf[HaskellQcon]))
+        if (qcon.exists(qcon => Option(TreeUtil.findLastLeaf(qcon.getNextSibling.getNode)).exists(_.getElementType == HS_DOT))) {
+          qcon.map(_.getName)
+        } else {
+          None
+        }
+      })
+    } else {
+      None
+    }
+  }
+
   private def isNCommentInProgress(position: PsiElement): Boolean = {
     position.getNode.getElementType == HS_NCOMMENT
   }
@@ -241,13 +262,13 @@ class HaskellCompletionContributor extends CompletionContributor {
     )
   }
 
-  private def getIdsFromFullScopeImportedModules(project: Project, file: PsiFile, importDeclarations: Iterable[HaskellImportDeclaration]) = {
+  private def getIdsFromFullScopeImportedModules(project: Project, file: PsiFile, importDeclarations: Iterable[HaskellImportDeclaration], qualifier: Option[String] = None) = {
     val importFullSpecs = getImportedModulesWithFullScope(file, importDeclarations).toSeq
 
     val browseInfosWithImportSpecFutures = importFullSpecs.
         map(ifs => Future {
       BrowseInfosForImportFullSpec(ifs, GhcMod.browseInfo(project, ifs.moduleName, removeParensFromOperator = true))
-    }.map(bifs => createLookupElements(bifs.importSpec, bifs.browseInfos)))
+    }.map(bifs => createLookupElements(bifs.importSpec, bifs.browseInfos, qualifier)))
 
     Await.result(Future.sequence(browseInfosWithImportSpecFutures), Duration.create(5, TimeUnit.SECONDS)).flatten
   }
@@ -258,31 +279,36 @@ class HaskellCompletionContributor extends CompletionContributor {
     val browseInfosWithImportHidingIdsSpecFutures = importHidingIdsSpec.
         map(ihis => Future {
       BrowseInfosForImportHidingIdsSpec(ihis, GhcMod.browseInfo(project, ihis.moduleName, removeParensFromOperator = true))
-    }.map(bihis => createLookupElements(bihis.importSpec, bihis.browseInfos.filterNot(bi => bihis.importSpec.ids.contains(bi.name)))))
+    }.map(bihis => createLookupElements(bihis.importSpec, bihis.browseInfos.filterNot(bi => bihis.importSpec.ids.contains(bi.name)), None)))
 
     Await.result(Future.sequence(browseInfosWithImportHidingIdsSpecFutures), Duration.create(5, TimeUnit.SECONDS)).flatten
   }
 
-  private def getIdsFromSpecIdsImportedModules(project: Project, file: PsiFile, importDeclarations: Iterable[HaskellImportDeclaration]) = {
+  private def getIdsFromSpecIdsImportedModules(project: Project, file: PsiFile, importDeclarations: Iterable[HaskellImportDeclaration], qualifier: Option[String] = None) = {
     val importIdsSpec = getImportedModulesWithSpecIds(file, importDeclarations).toSeq
 
     val browseInfosWithImportIdsSpecFutures = importIdsSpec.
         map(iis => Future {
       BrowseInfosForImportIdsSpec(iis, GhcMod.browseInfo(project, iis.moduleName, removeParensFromOperator = true))
-    }.map(biis => createLookupElements(biis.importSpec, biis.browseInfos.filter(bi => biis.importSpec.ids.contains(bi.name)))))
+    }.map(biis => createLookupElements(biis.importSpec, biis.browseInfos.filter(bi => biis.importSpec.ids.contains(bi.name)), qualifier)))
 
     Await.result(Future.sequence(browseInfosWithImportIdsSpecFutures), Duration.create(5, TimeUnit.SECONDS)).flatten
   }
 
-  private def createLookupElements(importSpec: ImportSpec, browseInfos: Iterable[BrowseInfo]): Iterable[LookupElementBuilder] = {
-    browseInfos.flatMap(bi => createLookupElements(bi, importSpec))
+  private def createLookupElements(importSpec: ImportSpec, browseInfos: Iterable[BrowseInfo], qualifier: Option[String]): Iterable[LookupElementBuilder] = {
+    browseInfos.flatMap(bi => createLookupElements(bi, importSpec, qualifier))
   }
 
-  private def createLookupElements(browseInfo: BrowseInfo, importSpec: ImportSpec): Iterable[LookupElementBuilder] = {
-    if (importSpec.qualified)
-      Iterable(createQualifiedLookUpElementForBrowseInfo(browseInfo, importSpec.as))
-    else
-      Iterable(createQualifiedLookUpElementForBrowseInfo(browseInfo, importSpec.as), createLookUpElementForBrowseInfo(browseInfo))
+  private def createLookupElements(browseInfo: BrowseInfo, importSpec: ImportSpec, qualifier: Option[String]): Iterable[LookupElementBuilder] = {
+    (qualifier, importSpec.as) match {
+      case (Some(q), Some(as)) if q == as => Iterable(createLookUpElementForBrowseInfo(browseInfo))
+      case (None, _) =>
+        if (importSpec.qualified)
+          Iterable(createQualifiedLookUpElementForBrowseInfo(browseInfo, importSpec.as))
+        else
+          Iterable(createQualifiedLookUpElementForBrowseInfo(browseInfo, importSpec.as), createLookUpElementForBrowseInfo(browseInfo))
+      case _ => Iterable()
+    }
   }
 
   private def getReservedIds = {
