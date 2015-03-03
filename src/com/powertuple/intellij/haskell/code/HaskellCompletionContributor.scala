@@ -24,8 +24,9 @@ import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.project.Project
 import com.intellij.patterns.PlatformPatterns
 import com.intellij.psi.impl.source.tree.TreeUtil
+import com.intellij.psi.tree.IElementType
 import com.intellij.psi.util.PsiTreeUtil
-import com.intellij.psi.{TokenType, PsiElement, PsiFile}
+import com.intellij.psi.{PsiElement, PsiFile, TokenType}
 import com.intellij.util.ProcessingContext
 import com.powertuple.intellij.haskell.external.{BrowseInfo, GhcMod}
 import com.powertuple.intellij.haskell.psi.HaskellTypes._
@@ -190,7 +191,8 @@ class HaskellCompletionContributor extends CompletionContributor {
   }
 
   private def getQualifiedIdentifierInProgress(position: PsiElement): Option[String] = {
-    if (position.getNode.getElementType == HS_NEWLINE || position.getNode.getElementType == TokenType.WHITE_SPACE) {
+    val elementType = position.getNode.getElementType
+    if (elementType == HS_NEWLINE || elementType == TokenType.WHITE_SPACE) {
       Option(position.getPrevSibling).flatMap(ps => {
         val qcon = Option(PsiTreeUtil.findChildOfType(ps, classOf[HaskellQcon]))
         if (qcon.exists(qcon => Option(TreeUtil.findLastLeaf(qcon.getNextSibling.getNode)).exists(_.getElementType == HS_DOT))) {
@@ -296,19 +298,17 @@ class HaskellCompletionContributor extends CompletionContributor {
   }
 
   private def createLookupElements(importSpec: ImportSpec, browseInfos: Iterable[BrowseInfo], qualifier: Option[String]): Iterable[LookupElementBuilder] = {
-    browseInfos.flatMap(bi => createLookupElements(bi, importSpec, qualifier))
-  }
-
-  private def createLookupElements(browseInfo: BrowseInfo, importSpec: ImportSpec, qualifier: Option[String]): Iterable[LookupElementBuilder] = {
-    (qualifier, importSpec.as) match {
-      case (Some(q), Some(as)) if q == as => Iterable(createLookUpElementForBrowseInfo(browseInfo))
-      case (None, _) =>
-        if (importSpec.qualified)
-          Iterable(createQualifiedLookUpElementForBrowseInfo(browseInfo, importSpec.as))
-        else
-          Iterable(createQualifiedLookUpElementForBrowseInfo(browseInfo, importSpec.as), createLookUpElementForBrowseInfo(browseInfo))
-      case _ => Iterable()
-    }
+    browseInfos.flatMap(bi => {
+      (qualifier, importSpec.as) match {
+        case (Some(q), Some(as)) if q == as => Iterable(createLookUpElementForBrowseInfo(bi))
+        case (None, _) =>
+          if (importSpec.qualified)
+            Iterable(createQualifiedLookUpElementForBrowseInfo(bi, importSpec.as))
+          else
+            Iterable(createQualifiedLookUpElementForBrowseInfo(bi, importSpec.as), createLookUpElementForBrowseInfo(bi))
+        case _ => Iterable()
+      }
+    })
   }
 
   private def getReservedIds = {
