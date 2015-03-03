@@ -24,14 +24,13 @@ import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.project.Project
 import com.intellij.patterns.PlatformPatterns
 import com.intellij.psi.impl.source.tree.TreeUtil
-import com.intellij.psi.tree.IElementType
 import com.intellij.psi.util.PsiTreeUtil
 import com.intellij.psi.{PsiElement, PsiFile, TokenType}
 import com.intellij.util.ProcessingContext
 import com.powertuple.intellij.haskell.external.{BrowseInfo, GhcMod}
 import com.powertuple.intellij.haskell.psi.HaskellTypes._
 import com.powertuple.intellij.haskell.psi._
-import com.powertuple.intellij.haskell.util.{LineColumnPosition, OSUtil}
+import com.powertuple.intellij.haskell.util.{HaskellElementCondition, LineColumnPosition, OSUtil}
 import com.powertuple.intellij.haskell.{HaskellIcons, HaskellParserDefinition}
 
 import scala.annotation.tailrec
@@ -123,6 +122,8 @@ class HaskellCompletionContributor extends CompletionContributor {
     }
 
     caretElement match {
+      case Some(e) if e.getNode.getElementType == HS_CONID_ID && Option(e.getNextSibling).map(_.getNode.getElementType == HS_DOT).isDefined =>
+        context.setDummyIdentifier(file.findElementAt(e.getTextOffset - 1).getText + ".")
       case Some(e) if PlainPrefixElementTypes.contains(e.getNode.getElementType) => context.setDummyIdentifier(getTextAtCaret(context.getEditor, file))
       case Some(e) if e.getText.trim.size > 0 => context.setDummyIdentifier(e.getText.trim)
       case _ => context.setDummyIdentifier("a")
@@ -191,18 +192,26 @@ class HaskellCompletionContributor extends CompletionContributor {
   }
 
   private def getQualifiedIdentifierInProgress(position: PsiElement): Option[String] = {
-    val elementType = position.getNode.getElementType
-    if (elementType == HS_NEWLINE || elementType == TokenType.WHITE_SPACE) {
-      Option(position.getPrevSibling).flatMap(ps => {
-        val qcon = Option(PsiTreeUtil.findChildOfType(ps, classOf[HaskellQcon]))
-        if (qcon.exists(qcon => Option(TreeUtil.findLastLeaf(qcon.getNextSibling.getNode)).exists(_.getElementType == HS_DOT))) {
-          qcon.map(_.getName)
+    val qualifiedElement = Option(PsiTreeUtil.findFirstParent(position, HaskellElementCondition.QualifiedElementCondition))
+    qualifiedElement match {
+      case Some(e: HaskellQvarId) => Some(e.getQualifier.getName)
+      case Some(e: HaskellQconId) => Some(e.getQconIdQualifier.getText)
+      case Some(e: HaskellQvarSym) => Some(e.getQualifier.getName)
+      case Some(e: HaskellQconSym) => Some(e.getQualifier.getName)
+      case _ =>
+        val elementType = position.getNode.getElementType
+        if (elementType == HS_NEWLINE || elementType == TokenType.WHITE_SPACE || elementType == HS_DOT) {
+          Option(position.getPrevSibling).flatMap(ps => {
+            val qcon = Option(PsiTreeUtil.findChildOfType(ps, classOf[HaskellQcon]))
+            if (qcon.exists(qcon => Option(TreeUtil.findLastLeaf(qcon.getNextSibling.getNode)).exists(_.getElementType == HS_DOT))) {
+              qcon.map(_.getName)
+            } else {
+              None
+            }
+          })
         } else {
           None
         }
-      })
-    } else {
-      None
     }
   }
 

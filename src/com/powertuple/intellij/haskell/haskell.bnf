@@ -136,7 +136,8 @@ var_id                      ::= VARID_ID
 qvar_id                     ::= qualifier DOT var_id
 
 con_id                      ::= CONID_ID | LEFT_BRACKET var_id? RIGHT_BRACKET | LEFT_PAREN COMMA* RIGHT_PAREN
-qcon_id                     ::= (CONID_ID DOT)+ con_id
+qcon_id                     ::= qcon_id_qualifier con_id
+qcon_id_qualifier           ::= (CONID_ID DOT)+
 
 var_sym                     ::= VARSYM_ID | TILDE     // added tilde because: data (~) a b = Eq# ((~#) a b) in Types.hs in ghc-prim
 qvar_sym                    ::= qualifier DOT var_sym
