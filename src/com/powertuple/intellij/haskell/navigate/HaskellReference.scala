@@ -70,9 +70,13 @@ class HaskellReference(element: HaskellNamedElement, textRange: TextRange) exten
   }
 
   override def getVariants: Array[AnyRef] = {
-    val localLookupElements = findLocalNamedElements.flatMap(createLookupElements)
-    val declarationLookupElements = findDeclarationElementsInFile(file).filterNot(_.getIdentifierElements.contains(myElement)).flatMap(createLookupElements)
-    (localLookupElements ++ declarationLookupElements).toArray
+    if (element.getNode.getElementType != HS_VAR_DOT_SYM) {
+      val localLookupElements = findLocalNamedElements.flatMap(createLookupElements)
+      val declarationLookupElements = findDeclarationElementsInFile(file).filterNot(_.getIdentifierElements.contains(myElement)).flatMap(createLookupElements)
+      (localLookupElements ++ declarationLookupElements).toArray
+    } else {
+      Array()
+    }
   }
 
   private def resolveResults(project: Project, identifier: String) = {
