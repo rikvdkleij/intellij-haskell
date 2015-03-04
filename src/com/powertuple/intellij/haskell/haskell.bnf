@@ -250,9 +250,9 @@ private cidecl              ::= inline_pragma | noinline_pragma | specialize_pra
                                   newtype_declaration | data_declaration
 
 expression                  ::= first_line_expression (line_expression)* last_line_expression | last_line_expression
-first_line_expression       ::= NEWLINE* general_id+ snl
+first_line_expression       ::= general_id+ snl
 line_expression             ::= NEWLINE* general_id+ snl
-last_line_expression        ::= NEWLINE* general_id+ osnl
+last_line_expression        ::= general_id+ osnl
 
 private general_id          ::= (qvar_op | qcon_op | qvar | qcon | LEFT_PAREN | RIGHT_PAREN | FLOAT | DO | WHERE | IF | THEN | ELSE |
                                   COLON_COLON | DOUBLE_RIGHT_ARROW | RIGHT_ARROW | IN | CASE | OF | LET |
