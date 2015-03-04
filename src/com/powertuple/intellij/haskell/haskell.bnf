@@ -69,11 +69,13 @@ nounpack_pragma             ::= PRAGMA_START onl "NOUNPACK" onl PRAGMA_END
 unpack_nounpack_pragma      ::= unpack_pragma | nounpack_pragma
 general_pragma_content      ::= (general_id | NEWLINE | MODULE | INSTANCE)*
 
+cfiles_pragma               ::= PRAGMA_START onl "CFILES" general_pragma_content PRAGMA_END
+
 module_body                 ::= module_declaration+ onl body | body
 module_declaration          ::= MODULE mod_id onl deprecated_warn_pragma? onl WHERE? onl (onl exports)? onl WHERE? onl
 
 private body                ::= import_declarations top_declarations
-private import_declarations ::= (import_declaration onl)*
+private import_declarations ::= ((import_declaration | cfiles_pragma) onl)*
 private top_declarations    ::= (top_declaration onl)*
 
 import_declaration          ::= IMPORT osnl source_pragma? osnl import_qualified? osnl import_module osnl import_qualified_as? osnl import_spec? NEWLINE  {methods=[getModuleName]}
@@ -95,7 +97,7 @@ dot_dot_parens              ::= LEFT_PAREN DOT DOT RIGHT_PAREN
 
 top_declaration             ::= type_declaration | data_declaration | newtype_declaration | class_declaration | instance_declaration | default_declaration |
                                   foreign_declaration | type_family_declaration | deriving_declaration | type_instance_declaration | type_signature_declaration |
-                                  other_pragma | quasi_quote | qq_expression | expression
+                                  other_pragma | quasi_quote | qq_expression | expression | cfiles_pragma
 
 type_declaration            ::=  TYPE osnl simpletype osnl COLON_COLON osnl ttype |
                                   TYPE osnl simpletype osnl (EQUAL | WHERE)? osnl (ttype | type_signature_declaration)? (DOUBLE_RIGHT_ARROW ttype)? |
@@ -104,7 +106,7 @@ type_declaration            ::=  TYPE osnl simpletype osnl COLON_COLON osnl ttyp
 data_declaration            ::= DATA osnl INSTANCE? osnl (context osnl DOUBLE_RIGHT_ARROW)? osnl simpletype osnl EQUAL osnl constrs osnl data_declaration_deriving? |
                                   DATA osnl INSTANCE? osnl (context osnl DOUBLE_RIGHT_ARROW)? osnl simpletype osnl WHERE cdecls osnl data_declaration_deriving? |
                                   DATA osnl INSTANCE? osnl (context osnl DOUBLE_RIGHT_ARROW)? osnl simpletype (EQUAL expression)?
-data_declaration_deriving   ::= (DERIVING ttype osnl)+
+data_declaration_deriving   ::= DERIVING ttype | DERIVING LEFT_PAREN ttype (osnl COMMA osnl ttype)+ RIGHT_PAREN
 
 newtype_declaration         ::= NEWTYPE osnl (context osnl DOUBLE_RIGHT_ARROW)? osnl simpletype osnl EQUAL osnl newconstr osnl (DERIVING osnl ttype)?
 class_declaration           ::= (CLASS osnl (scontext osnl DOUBLE_RIGHT_ARROW)? osnl qcon osnl
@@ -172,7 +174,7 @@ constr3                     ::= unpack_nounpack_pragma? qcon osnl (unpack_nounpa
 constr4                     ::= unpack_nounpack_pragma? qvar gcon_sym unpack_nounpack_pragma? qcon  // added because second data constructor in: data [] a = [] | a : [a] in Types.hs in ghc-prim
 sub_constr2                 ::= (btype | qvar_op atype)
 
-fielddecl                   ::= vars COLON_COLON unpack_nounpack_pragma? (ttype | qvar_op atype)
+fielddecl                   ::= vars (COLON_COLON unpack_nounpack_pragma? (ttype | qvar_op atype))?
 
 private atype               ::= qvar (qvar | ttype | LEFT_PAREN type_signature_declaration RIGHT_PAREN)* (DOUBLE_RIGHT_ARROW ttype)? |  // this is forall declaration, so first qvar is 'forall'
                                   LEFT_PAREN qvar TILDE qvar RIGHT_PAREN (DOUBLE_RIGHT_ARROW ttype)? |
