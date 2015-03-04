@@ -126,10 +126,10 @@ object GhcModiInfo {
           Some(BuiltInIdentifierInfo(typeSignature, libraryName, "GHC.Base"))
         }
         else {
-          createLibraryIdentifierInfo(module, typeSignature, project)
+          Option(createLibraryIdentifierInfo(module, typeSignature, project))
         }
       case GhcModiInfoLibraryPattern(typeSignature, module) =>
-        createLibraryIdentifierInfo(module, typeSignature, project)
+        Option(createLibraryIdentifierInfo(module, typeSignature, project))
       case _ => None
     }
   }
@@ -160,10 +160,7 @@ object GhcModiInfo {
   }
 
   private def createLibraryIdentifierInfo(module: String, typeSignature: String, project: Project) = {
-    FileUtil.findModuleFilePath(module, project) match {
-      case Some(fp) => Some(LibraryIdentifierInfo(typeSignature, Some(fp), module))
-      case None => Some(LibraryIdentifierInfo(typeSignature, None, module))
-    }
+    LibraryIdentifierInfo(typeSignature, FileUtil.findModuleFilePath(module, project), module)
   }
 }
 
