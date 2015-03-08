@@ -16,7 +16,7 @@
 
 package com.powertuple.intellij.haskell.psi
 
-import com.intellij.psi.PsiFile
+import com.intellij.psi.{PsiElement, PsiFile}
 import com.intellij.psi.util.PsiTreeUtil
 
 import scala.collection.JavaConversions._
@@ -25,5 +25,13 @@ object HaskellPsiHelper {
 
   def findImportDeclarations(psiFile: PsiFile): Iterable[HaskellImportDeclaration] = {
     PsiTreeUtil.findChildrenOfType(psiFile, classOf[HaskellImportDeclaration]).toIterable
+  }
+
+
+  def findHaskellNamedElement(psiElement: PsiElement): Option[HaskellNamedElement] = {
+    psiElement.getParent match {
+      case hne: HaskellNamedElement => Some(hne)
+      case _ => None
+    }
   }
 }

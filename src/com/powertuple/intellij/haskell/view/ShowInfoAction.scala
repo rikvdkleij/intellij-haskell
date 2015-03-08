@@ -20,7 +20,7 @@ import com.intellij.openapi.actionSystem.{AnAction, AnActionEvent, CommonDataKey
 import com.intellij.psi.PsiElement
 import com.intellij.psi.util.PsiUtilBase
 import com.powertuple.intellij.haskell.external._
-import com.powertuple.intellij.haskell.psi.HaskellNamedElement
+import com.powertuple.intellij.haskell.psi.{HaskellPsiHelper, HaskellNamedElement}
 import com.powertuple.intellij.haskell.util.HaskellEditorUtil
 
 class ShowInfoAction extends AnAction {
@@ -37,19 +37,12 @@ class ShowInfoAction extends AnAction {
       offset = editor.getCaretModel.getOffset
       project = psiFile.getProject
       psiElement <- Option(psiFile.findElementAt(offset))
-      namedElement <- findHaskellNamedElement(psiElement)
+      namedElement <- HaskellPsiHelper.findHaskellNamedElement(psiElement)
     } yield
       GhcModiInfo.findInfoFor(psiFile, namedElement) match {
         case Seq(identifierInfos@_*) if identifierInfos.nonEmpty => HaskellEditorUtil.createInfoBallon(identifierInfos.map(createInfoText).mkString("<br>"), editor)
         case _ => HaskellEditorUtil.showHint(editor, s"Could not determine info for ${namedElement.getName}")
       }
-  }
-
-  private def findHaskellNamedElement(psiElement: PsiElement) = {
-    psiElement.getParent match {
-      case hne: HaskellNamedElement => Some(hne)
-      case _ => None
-    }
   }
 
   private def createInfoText(identifierInfo: IdentifierInfo): String = {
