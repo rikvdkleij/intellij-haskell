@@ -168,7 +168,12 @@ class HaskellReference(element: HaskellNamedElement, textRange: TextRange) exten
   }
 
   private def findFile(filePath: String): Option[HaskellFile] = {
-    val file = Option(LocalFileSystem.getInstance().findFileByPath(filePath))
+    val file = if (filePath.startsWith("/")) {
+      Option(LocalFileSystem.getInstance().findFileByPath(filePath))
+    } else {
+      Option(LocalFileSystem.getInstance().findFileByPath(element.getProject.getBasePath + "/" + filePath))
+    }
+
     file match {
       case Some(f) => Option(PsiManager.getInstance(myElement.getProject).findFile(f)).map(_.asInstanceOf[HaskellFile])
       case None => None
