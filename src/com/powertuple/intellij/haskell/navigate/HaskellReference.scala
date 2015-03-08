@@ -189,16 +189,14 @@ class HaskellReference(element: HaskellNamedElement, textRange: TextRange) exten
   private def nextElementInExpression(element: PsiElement): Option[PsiElement] = {
      element.getNode.getElementType match {
        case HS_EXPRESSION => None
-       case TokenType.WHITE_SPACE => Option(element.getNextSibling).flatMap(nextElementInExpression)
-       case _ => Option(element.getNextSibling)
+       case _ => Option(element.getNextSibling).flatMap(ns => Option(ns.getNextSibling)) // skip white space
     }
   }
 
   private def prevElementInExpression(element: PsiElement): Option[PsiElement] = {
     element.getNode.getElementType match {
       case HS_EXPRESSION => None
-      case TokenType.WHITE_SPACE => Option(element.getPrevSibling).flatMap(prevElementInExpression)
-      case _ => Option(element.getPrevSibling)
+      case _ => Option(element.getPrevSibling).flatMap(ps => Option(ps.getPrevSibling)) // skip white space
     }
   }
 
