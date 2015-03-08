@@ -23,6 +23,7 @@ import com.google.common.util.concurrent.{ListenableFuture, ListenableFutureTask
 import com.intellij.openapi.editor.SelectionModel
 import com.intellij.openapi.progress.ProcessCanceledException
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.roots.libraries.LibraryUtil
 import com.intellij.psi.util.PsiTreeUtil
 import com.intellij.psi.{PsiElement, PsiFile}
 import com.powertuple.intellij.haskell.HaskellNotificationGroup
@@ -71,6 +72,10 @@ object GhcModiTypeInfo {
       )
 
   def findTypeInfoFor(psiFile: PsiFile, psiElement: PsiElement): Option[TypeInfo] = {
+    if (FileUtil.isLibraryFile(psiFile)) {
+      return None
+    }
+
     val textOffset = psiElement match {
       case e: HaskellQVarConOpElement => e.getTextOffset
       case e => Option(PsiTreeUtil.findFirstParent(e, HaskellElementCondition.QVarConOpElementCondition)).map(_.getTextOffset).getOrElse(e.getTextOffset)

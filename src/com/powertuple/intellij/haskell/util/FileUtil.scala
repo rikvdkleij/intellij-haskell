@@ -19,6 +19,7 @@ package com.powertuple.intellij.haskell.util
 import com.intellij.openapi.editor.Document
 import com.intellij.openapi.fileEditor.FileDocumentManager
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.roots.libraries.LibraryUtil
 import com.intellij.psi.search.GlobalSearchScope
 import com.intellij.psi.{PsiDirectory, PsiFile}
 import com.intellij.util.ui.UIUtil
@@ -65,6 +66,10 @@ object FileUtil {
 
   def getFilePath(psiFile: PsiFile): String = {
     psiFile.getOriginalFile.getVirtualFile.getPath
+  }
+
+  def isLibraryFile(psiFile: PsiFile): Boolean = {
+    LibraryUtil.findLibraryEntry(psiFile.getVirtualFile, psiFile.getProject) != null
   }
 
   private def getNameAndPathForModule(module: String) = {

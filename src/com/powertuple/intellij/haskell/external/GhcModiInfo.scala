@@ -20,12 +20,15 @@ import java.util.concurrent.{Callable, Executors, TimeUnit}
 
 import com.google.common.cache.{CacheBuilder, CacheLoader}
 import com.google.common.util.concurrent.{ListenableFuture, ListenableFutureTask, UncheckedExecutionException}
+import com.intellij.openapi.module.ModuleManager
 import com.intellij.openapi.progress.ProcessCanceledException
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.roots.libraries.LibraryUtil
 import com.intellij.psi.PsiFile
+import com.intellij.psi.search.GlobalSearchScope
 import com.intellij.psi.util.PsiTreeUtil
 import com.powertuple.intellij.haskell.psi._
-import com.powertuple.intellij.haskell.util.{FileUtil, HaskellElementCondition, HaskellFindUtil}
+import com.powertuple.intellij.haskell.util.{HaskellFileIndex, FileUtil, HaskellElementCondition, HaskellFindUtil}
 
 import scala.annotation.tailrec
 import scala.collection.mutable.ListBuffer
@@ -73,6 +76,10 @@ object GhcModiInfo {
       )
 
   def findInfoFor(psiFile: PsiFile, namedElement: HaskellNamedElement): Iterable[IdentifierInfo] = {
+    if (FileUtil.isLibraryFile(psiFile)) {
+      return Iterable()
+    }
+
     val ghcModiOutput = findIdentifier(namedElement).map { id =>
       try {
         val key = NamedElementInfo(FileUtil.getFilePath(psiFile), id, psiFile.getProject)

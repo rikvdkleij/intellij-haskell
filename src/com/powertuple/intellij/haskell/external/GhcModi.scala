@@ -74,10 +74,7 @@ class GhcModi(val settings: HaskellSettings, val project: Project) extends Proje
         }
         val stdOutput = Await.result(waitForStdOutput, 5.second)
 
-        if (stdErrListBuffer.nonEmpty) {
-          HaskellNotificationGroup.notifyError(s"ghc-modi error output: ${stdErrListBuffer.mkString}")
-          GhcModiOutput()
-        } else if (stdOutput.headOption.exists(_.startsWith(GhcModiErrorIndicator))) {
+        if (stdOutput.headOption.exists(_.startsWith(GhcModiErrorIndicator))) {
           HaskellNotificationGroup.notifyError(s"ghc-modi error output: ${stdOutput.mkString(" ")}")
           GhcModiOutput()
         } else {

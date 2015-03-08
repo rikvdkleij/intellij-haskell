@@ -51,6 +51,9 @@ A lot of features are with the help of ghc-mod(i)!!
 - Select in `Project settings`/`Modules` which folders to exclude (like .cabal-sandbox and dist) and which folders are `Source` and `Test` (normally src and test).
 - To get nice navigation features: add for libraries and Prelude(base, ghc-prim and integer-gmp packages) the source root directories to project in `Project Settings`/`Libraries`. `cabal get` is useful for getting source code of package.
     To get source code of libraries in `Project view`, create for example a directory `lib` inside project root directory and put source roots there;
+- When you get an error like `NG BUG: GMECabalCompAssignment [(Left "lib/directory-1.2.1.0/System/Directory.hs",fromList [])]`, add the source root (in this example `lib/directory-1.2.1.0`) to `Project Settings`/`Libraries` because
+    ghc-mod(i) does not support Haskell files which are not part of project itself;
+- Be sure all module names are directly of indirectly listed in Cabal file;
 
 # Remarks
 - In Navigation dialog dots can not be used. Workaround is by using spaces instead of dots, so when you want to go to `Control.Lens`, type `Control Lens`;
