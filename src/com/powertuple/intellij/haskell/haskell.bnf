@@ -144,7 +144,7 @@ qcon_id_qualifier           ::= (CONID_ID DOT)+
 var_sym                     ::= VARSYM_ID | TILDE     // added tilde because: data (~) a b = Eq# ((~#) a b) in Types.hs in ghc-prim
 qvar_sym                    ::= qualifier DOT var_sym
 
-var_dot_sym                 ::= DOT+ VARSYM_ID | DOT
+var_dot_sym                 ::= DOT DOT | DOT+ VARSYM_ID | DOT
 qvar_dot_sym                ::= qualifier DOT var_dot_sym
 
 con_sym                     ::= CONSYM_ID
