@@ -53,7 +53,7 @@ A lot of features are with the help of ghc-mod(i)!!
     To get source code of libraries in `Project view`, create for example a directory `lib` inside project root directory and put source roots there;
 - When you get an error like `NG BUG: GMECabalCompAssignment [(Left "lib/directory-1.2.1.0/System/Directory.hs",fromList [])]`, add the source root (in this example `lib/directory-1.2.1.0`) to `Project Settings`/`Libraries` because
     ghc-mod(i) does not support Haskell files which are not part of project itself;
-- Be sure all module names are directly of indirectly listed in Cabal file;
+- Be sure all module names are directly or indirectly listed in Cabal file;
 
 # Remarks
 - In Navigation dialog dots can not be used. Workaround is by using spaces instead of dots, so when you want to go to `Control.Lens`, type `Control Lens`;
