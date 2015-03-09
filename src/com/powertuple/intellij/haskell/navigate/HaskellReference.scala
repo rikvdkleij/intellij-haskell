@@ -247,8 +247,10 @@ class HaskellReference(element: HaskellNamedElement, textRange: TextRange) exten
   private def isNextSiblingLhsIndicator(e: PsiElement): Boolean = {
     val nextSibling = Option(e.getNextSibling)
     nextSibling match {
-      case Some(ns) if IndicatingLhsTypes.contains(ns.getNode.getElementType) => true
-      case Some(ns) if IgnoringTypes.contains(ns.getNode.getElementType) => isNextSiblingLhsIndicator(ns)
+      case Some(ns) if IndicatingLhsTypes.contains(ns.getNode.getElementType) =>
+        true
+      case Some(ns) if IgnoringTypes.contains(ns.getNode.getElementType) =>
+        isNextSiblingLhsIndicator(ns)
       case Some(ns) if ns.getNode.getElementType == HS_SNL =>
         val nextLineExpressionFirstChild = for {
           p <- Option(ns.getParent)
@@ -261,7 +263,8 @@ class HaskellReference(element: HaskellNamedElement, textRange: TextRange) exten
           case Some(nle) if IgnoringTypes.contains(nle.getNode.getElementType) => isNextSiblingLhsIndicator(nle)
           case _ => false
         }
-      case _ => false
+      case _ =>
+        false
     }
   }
 
@@ -315,7 +318,7 @@ object HaskellReference {
 
   import com.powertuple.intellij.haskell.psi.HaskellTypes._
 
-  private final val IgnoringTypes = Seq(TokenType.WHITE_SPACE, HS_QVAR, HS_RIGHT_PAREN, HS_COMMA, HS_RIGHT_BRACKET)
+  private final val IgnoringTypes = Seq(TokenType.WHITE_SPACE, HS_QVAR, HS_LEFT_PAREN, HS_RIGHT_PAREN, HS_COMMA, HS_RIGHT_BRACKET, HS_QCON, HS_QCON_OP)
   private final val IndicatingLhsTypes = Seq(HS_EQUAL, HS_VERTICAL_BAR, HS_LEFT_ARROW, HS_RIGHT_ARROW)
   private final val LhsConstructors = Seq(HS_QCON, HS_QCON_OP)
 }
