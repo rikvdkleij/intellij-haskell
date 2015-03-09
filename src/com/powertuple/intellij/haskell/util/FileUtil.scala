@@ -69,7 +69,7 @@ object FileUtil {
   }
 
   def isLibraryFile(psiFile: PsiFile): Boolean = {
-    LibraryUtil.findLibraryEntry(psiFile.getVirtualFile, psiFile.getProject) != null
+    Option(psiFile.getVirtualFile).flatMap(vf => Option(LibraryUtil.findLibraryEntry(vf, psiFile.getProject))).isDefined
   }
 
   private def getNameAndPathForModule(module: String) = {
