@@ -72,6 +72,14 @@ object FileUtil {
     Option(psiFile.getVirtualFile).flatMap(vf => Option(LibraryUtil.findLibraryEntry(vf, psiFile.getProject))).isDefined
   }
 
+  def makeFilePathAbsolute(filePath: String, project: Project): String = {
+    if (filePath.startsWith("/")) {
+      filePath
+    } else {
+      project.getBasePath + "/" + filePath
+    }
+  }
+
   private def getNameAndPathForModule(module: String) = {
     module.split('.').toList.reverse match {
       case n :: d => Some(n, d)

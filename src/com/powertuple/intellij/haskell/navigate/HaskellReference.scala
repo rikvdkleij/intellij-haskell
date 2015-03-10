@@ -168,16 +168,8 @@ class HaskellReference(element: HaskellNamedElement, textRange: TextRange) exten
   }
 
   private def findFile(filePath: String): Option[HaskellFile] = {
-    val file = if (filePath.startsWith("/")) {
-      Option(LocalFileSystem.getInstance().findFileByPath(filePath))
-    } else {
-      Option(LocalFileSystem.getInstance().findFileByPath(element.getProject.getBasePath + "/" + filePath))
-    }
-
-    file match {
-      case Some(f) => Option(PsiManager.getInstance(myElement.getProject).findFile(f)).map(_.asInstanceOf[HaskellFile])
-      case None => None
-    }
+    val file = Option(LocalFileSystem.getInstance().findFileByPath(FileUtil.makeFilePathAbsolute(filePath, myElement.getProject)))
+    file.flatMap(f => Option(PsiManager.getInstance(myElement.getProject).findFile(f)).map(_.asInstanceOf[HaskellFile]))
   }
 
   private def resolveDeclarationReferencesInFile(file: PsiFile, identifier: String): Iterable[HaskellNamedElement] = {

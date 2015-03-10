@@ -18,7 +18,7 @@ package com.powertuple.intellij.haskell.external
 
 import com.intellij.openapi.project.Project
 import com.powertuple.intellij.haskell.settings.HaskellSettings
-import com.powertuple.intellij.haskell.util.OSUtil
+import com.powertuple.intellij.haskell.util.{FileUtil, OSUtil}
 
 import scala.collection.JavaConversions._
 
@@ -34,14 +34,14 @@ object GhcModCheck {
     if (output.isEmpty) {
       new GhcModCheckResult(Iterable())
     } else {
-      new GhcModCheckResult(output.map(parseOutputLine))
+      new GhcModCheckResult(output.map(o => parseOutputLine(o, project)))
     }
   }
 
-  private[external] def parseOutputLine(ghcModOutput: String): GhcModProblem = {
+  private[external] def parseOutputLine(ghcModOutput: String, project: Project): GhcModProblem = {
     val ghcModProblemPattern = """(.+):([\d]+):([\d]+):(.+)""".r
     val ghcModProblemPattern(filePath, lineNr, columnNr, message) = ghcModOutput
-    new GhcModProblem(filePath, lineNr.toInt, columnNr.toInt, message.replace('\u0000', OSUtil.LineSeparator))
+    new GhcModProblem(FileUtil.makeFilePathAbsolute(filePath, project), lineNr.toInt, columnNr.toInt, message.replace('\u0000', OSUtil.LineSeparator))
   }
 }
 
