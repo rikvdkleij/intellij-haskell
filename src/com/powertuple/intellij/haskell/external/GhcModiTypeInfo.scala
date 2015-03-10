@@ -81,32 +81,17 @@ object GhcModiTypeInfo {
       case e => Option(PsiTreeUtil.findFirstParent(e, HaskellElementCondition.QVarConOpElementCondition)).map(_.getTextOffset).getOrElse(e.getTextOffset)
     }
 
-    val startPositionExpression = LineColumnPosition.fromOffset(psiFile, textOffset) match {
-      case Some(lcp) => Some(lcp)
-      case None => HaskellNotificationGroup.notifyError(s"Could not find start position for ${psiElement.getText}"); None
-    }
-
     for {
-      spe <- startPositionExpression
+      spe <- LineColumnPosition.fromOffset(psiFile, textOffset)
       typeInfos <- findGhcModiTypeInfos(psiFile, spe)
       typeInfo <- typeInfos.find(ty => ty.startLine == spe.lineNr && ty.startColumn == spe.columnNr)
     } yield typeInfo
   }
 
   def findTypeInfoForSelection(psiFile: PsiFile, selectionModel: SelectionModel): Option[TypeInfo] = {
-    val selectionStart = LineColumnPosition.fromOffset(psiFile, selectionModel.getSelectionStart) match {
-      case Some(lcp) => Some(lcp)
-      case None => HaskellNotificationGroup.notifyError(s"Could not find start of selection"); None
-    }
-
-    val selectionEnd = LineColumnPosition.fromOffset(psiFile, selectionModel.getSelectionEnd) match {
-      case Some(lcp) => Some(lcp)
-      case None => HaskellNotificationGroup.notifyError(s"Could not find end of selection"); None
-    }
-
     for {
-      ss <- selectionStart
-      se <- selectionEnd
+      ss <- LineColumnPosition.fromOffset(psiFile, selectionModel.getSelectionStart)
+      se <- LineColumnPosition.fromOffset(psiFile, selectionModel.getSelectionEnd)
       typeInfos <- findGhcModiTypeInfos(psiFile, ss)
       typeInfo <- typeInfos.find(ty => ty.startLine == ss.lineNr && ty.startColumn == ss.columnNr && ty.endLine == se.lineNr && ty.endColumn == se.columnNr)
     } yield typeInfo
