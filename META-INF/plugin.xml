@@ -9,6 +9,12 @@
     ]]></description>
 
     <change-notes><![CDATA[
+        <p>0.8</p>
+        <ul>
+            <li>Bug fixes</li>
+            <li>Improvements</li>
+            <li>Support for upcoming version of ghc-mod with Cabal-helper</li>
+        </ul>
         <p>0.7</p>
         <ul>
             <li>Improved parser and formatting</li>
