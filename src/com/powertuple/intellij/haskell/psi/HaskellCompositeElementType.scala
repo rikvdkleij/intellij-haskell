@@ -20,4 +20,4 @@ import com.intellij.psi.tree.IElementType
 import com.powertuple.intellij.haskell.HaskellLanguage
 import org.jetbrains.annotations.{NonNls, NotNull}
 
-class HaskellCompositeElementType(@NotNull @NonNls debugName: String) extends IElementType(debugName, HaskellLanguage.Instance)
+class HaskellCompositeElementType(@NotNull @NonNls debugName: String) extends IElementType(debugName, HaskellLanguage.Instance, false)

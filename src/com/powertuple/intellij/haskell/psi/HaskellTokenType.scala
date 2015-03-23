@@ -19,7 +19,7 @@ import com.intellij.psi.tree.IElementType
 import com.powertuple.intellij.haskell.HaskellLanguage
 import org.jetbrains.annotations.{NonNls, NotNull}
 
-class HaskellTokenType(@NotNull @NonNls debugName: String) extends IElementType(debugName, HaskellLanguage.Instance) {
+class HaskellTokenType(@NotNull @NonNls debugName: String) extends IElementType(debugName, HaskellLanguage.Instance, false) {
 
   override def toString: String = {
     "HaskellTokenType." + super.toString
