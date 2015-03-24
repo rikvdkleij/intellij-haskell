@@ -71,7 +71,7 @@
     </change-notes>
 
     <!-- please see http://confluence.jetbrains.com/display/IDEADEV/Build+Number+Ranges for description -->
-    <idea-version since-build="139.0" until-build="139.9999"/>
+    <idea-version since-build="139.0" until-build="141.9999"/>
 
     <extensions defaultExtensionNs="com.intellij">
         <sdkType implementation="com.powertuple.intellij.haskell.sdk.HaskellSdkType"/>
