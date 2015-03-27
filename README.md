@@ -52,7 +52,8 @@ A lot of features are with the help of ghc-mod(i)!!
 - Be sure all module names are directly or indirectly listed in Cabal file;
 
 # Remarks
-- ghc-mod does not support GHC < 7.10 and Cabal 1.22. See for more info the [ghc-mod wiki](https://github.com/kazu-yamamoto/ghc-mod/wiki);
+- ghc-mod does not support GHC < 7.10 and Cabal 1.22. See for more info the [ghc-mod wiki](https://github.com/kazu-yamamoto/ghc-mod/wiki). So in
+    case you are using for example GHC 7.8.4, you will have to use Cabal 1.20.x;
 - In Navigation dialog dots can not be used. Workaround is by using spaces instead of dots, so when you want to go to `Control.Lens`, type `Control Lens`;
 - IntelliJ has a nice terminal plugin, useful for executing the Cabal commands;
 - ghc-mod can not help in library files and if Haskell source file contains not completely valid Haskell (e.g. while typing). In that case I try to solve request by using AST-tree (IntelliJ calls it PSI-tree). 
