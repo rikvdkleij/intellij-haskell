@@ -1,21 +1,17 @@
 # IntelliJ plugin for Haskell
 
-Some months ago I started his project because I was learning Haskell and I was missing the nice features of IntelliJ IDEA. First approach
- was to use default way of creating IntelliJ plugin by defining grammar and lexer according to
-  [Haskell report](http://www.haskell.org/onlinereport/haskell2010/haskellch10.html). That did not workout because I could not define all 
-  the recursiveness. 
-  Decided to use grammar and lexer definitions only for tokenizing and parsing Haskell code, so not for syntax checking the code. This is needed for syntax highlighting, all kind of navigation and so on.
-  Further Haskell language support is done with the support of the external tools: ghc-mod and haskell-docs.
+When I was learning Haskell, I was missing the nice features of IntelliJ IDEA. First approach
+was to use default way of creating IntelliJ plugin by defining grammar and lexer according to
+[Haskell report](http://www.haskell.org/onlinereport/haskell2010/haskellch10.html). That did not workout because I could not define all 
+the recursiveness. 
+Decided to use grammar and lexer definitions only for tokenizing and parsing Haskell code, so not for syntax checking the code. This is needed for syntax highlighting, all kind of navigation and so on.
+Further Haskell language support is done with the support of the external tools: ghc-mod and haskell-docs.
 
-In the meantime also Atsky started to create [Haskell-idea-plugin](https://github.com/Atsky/haskell-idea-plugin) based on ideah plugin in Kotlin. 
- Looking to their recent changes, they are more focusing on Cabal and debugging support.
- 
 This plugin is written mainly in Scala and is not mentioned to support GHC/Cabal directly. This plugin support sandbox projects
 and expects that the Cabal init/install/build is done on command-line.
 
-From version 0.5 IntelliJ 14 is supported.
-
 Any feedback is welcome!!
+
 
 # Features
 - Syntax highlighting (which can be customized);
@@ -56,6 +52,7 @@ A lot of features are with the help of ghc-mod(i)!!
 - Be sure all module names are directly or indirectly listed in Cabal file;
 
 # Remarks
+- ghc-mod does not support GHC < 7.10 and Cabal 1.22. See for more info the [ghc-mod wiki](https://github.com/kazu-yamamoto/ghc-mod/wiki);
 - In Navigation dialog dots can not be used. Workaround is by using spaces instead of dots, so when you want to go to `Control.Lens`, type `Control Lens`;
 - IntelliJ has a nice terminal plugin, useful for executing the Cabal commands;
 - ghc-mod can not help in library files and if Haskell source file contains not completely valid Haskell (e.g. while typing). In that case I try to solve request by using AST-tree (IntelliJ calls it PSI-tree). 
@@ -68,6 +65,7 @@ A lot of features are with the help of ghc-mod(i)!!
     This workaround will add path of `GHC SDK` to PATH environment variable which is passed to ghc-modi process. Other solutions are welcome!
 - Windows is not supported. Maybe it will work okay but I can not test it;
 - Created workaround for ghc-mod issue #432;
+- I found an issue in IntelliJ 14.1, see https://youtrack.jetbrains.com/issue/IDEA-138236. Hopefully they will fix it soon;
 
 # How to build
 1. Clone this project;
