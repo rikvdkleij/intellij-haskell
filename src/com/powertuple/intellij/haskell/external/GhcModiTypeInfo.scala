@@ -23,12 +23,12 @@ import com.google.common.util.concurrent.{ListenableFuture, ListenableFutureTask
 import com.intellij.openapi.editor.SelectionModel
 import com.intellij.openapi.progress.ProcessCanceledException
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.roots.libraries.LibraryUtil
 import com.intellij.psi.util.PsiTreeUtil
 import com.intellij.psi.{PsiElement, PsiFile}
 import com.powertuple.intellij.haskell.HaskellNotificationGroup
 import com.powertuple.intellij.haskell.psi._
 import com.powertuple.intellij.haskell.util.{FileUtil, HaskellElementCondition, LineColumnPosition}
+import com.powertuple.intellij.haskell.util.HaskellEditorUtil.escapeString
 
 import scala.util.{Failure, Success, Try}
 
@@ -130,9 +130,9 @@ object GhcModiTypeInfo {
 
   private def shortenTypeSignature(typeSignature: String) = {
     if (typeSignature.length > 80) {
-      typeSignature.split("->").mkString("->\n")
+      escapeString(typeSignature).split("->").mkString("->\n")
     } else {
-      typeSignature
+      escapeString(typeSignature)
     }
   }
 }

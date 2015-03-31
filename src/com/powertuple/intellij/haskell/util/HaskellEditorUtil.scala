@@ -29,6 +29,7 @@ import com.intellij.openapi.wm.WindowManager
 import com.intellij.ui.LightweightHint
 import com.intellij.ui.awt.RelativePoint
 import com.intellij.util.ui.{PositionTracker, UIUtil}
+import com.intellij.xml.util.XmlStringUtil
 import com.powertuple.intellij.haskell.HaskellFile
 
 object HaskellEditorUtil {
@@ -100,5 +101,9 @@ object HaskellEditorUtil {
 
   def createLabelMessage(message: String, project: Project) {
     WindowManager.getInstance().getStatusBar(project).setInfo(message)
+  }
+
+  def escapeString(s: String) = {
+    XmlStringUtil.escapeString(s)
   }
 }

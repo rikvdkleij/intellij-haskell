@@ -20,15 +20,13 @@ import java.util.concurrent.{Callable, Executors, TimeUnit}
 
 import com.google.common.cache.{CacheBuilder, CacheLoader}
 import com.google.common.util.concurrent.{ListenableFuture, ListenableFutureTask, UncheckedExecutionException}
-import com.intellij.openapi.module.ModuleManager
 import com.intellij.openapi.progress.ProcessCanceledException
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.roots.libraries.LibraryUtil
 import com.intellij.psi.PsiFile
-import com.intellij.psi.search.GlobalSearchScope
 import com.intellij.psi.util.PsiTreeUtil
 import com.powertuple.intellij.haskell.psi._
-import com.powertuple.intellij.haskell.util.{HaskellFileIndex, FileUtil, HaskellElementCondition, HaskellFindUtil}
+import com.powertuple.intellij.haskell.util.HaskellEditorUtil.escapeString
+import com.powertuple.intellij.haskell.util.{FileUtil, HaskellElementCondition, HaskellFindUtil}
 
 import scala.annotation.tailrec
 import scala.collection.mutable.ListBuffer
@@ -127,16 +125,16 @@ object GhcModiInfo {
 
   private def createIdentifierInfo(outputInfo: String, project: Project): Option[IdentifierInfo] = {
     outputInfo match {
-      case GhcModiInfoPattern(typeSignature, filePath, lineNr, colNr) => Some(ProjectIdentifierInfo(typeSignature, Some(filePath), lineNr.toInt, colNr.toInt))
+      case GhcModiInfoPattern(typeSignature, filePath, lineNr, colNr) => Some(ProjectIdentifierInfo(escapeString(typeSignature), Some(filePath), lineNr.toInt, colNr.toInt))
       case GhcModiInfoLibraryPathPattern(typeSignature, libraryName, module) =>
         if (libraryName == "ghc-prim" || libraryName == "integer-gmp") {
-          Some(BuiltInIdentifierInfo(typeSignature, libraryName, "GHC.Base"))
+          Some(BuiltInIdentifierInfo(escapeString(typeSignature), libraryName, "GHC.Base"))
         }
         else {
-          Option(createLibraryIdentifierInfo(module, typeSignature, project))
+          Option(createLibraryIdentifierInfo(module, escapeString(typeSignature), project))
         }
       case GhcModiInfoLibraryPattern(typeSignature, module) =>
-        Option(createLibraryIdentifierInfo(module, typeSignature, project))
+        Option(createLibraryIdentifierInfo(module, escapeString(typeSignature), project))
       case _ => None
     }
   }
