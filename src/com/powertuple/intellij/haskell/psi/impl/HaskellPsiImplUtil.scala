@@ -353,7 +353,7 @@ object HaskellPsiImplUtil {
 
   def getIdentifierElements(dataDeclaration: HaskellDataDeclaration): Seq[HaskellNamedElement] = {
     dataDeclaration.getSimpletype.getIdentifierElements ++
-        Option(dataDeclaration.getConstr1List).map(_.map(c => c.getQcon.getIdentifierElement)).getOrElse(Seq()) ++
+        Option(dataDeclaration.getConstr1List).map(_.flatMap(c => Seq(c.getQcon.getIdentifierElement) ++ c.getFielddeclList.flatMap(_.getVars.getQvarList.map(_.getIdentifierElement)))).getOrElse(Seq()) ++
         Option(dataDeclaration.getConstr2List).map(_.map(c => c.getQconOp.getIdentifierElement)).getOrElse(Seq()) ++
         Option(dataDeclaration.getConstr3List).map(_.map(c => c.getQcon.getIdentifierElement)).getOrElse(Seq()) ++
         Option(dataDeclaration.getConstr4List).map(_.flatMap(c => Seq(c.getGconSym.getIdentifierElement, c.getQcon.getIdentifierElement))).getOrElse(Seq()) ++
@@ -365,7 +365,9 @@ object HaskellPsiImplUtil {
   }
 
   def getIdentifierElements(newtypeDeclaration: HaskellNewtypeDeclaration): Seq[HaskellNamedElement] = {
-    newtypeDeclaration.getSimpletype.getIdentifierElements ++ Seq(newtypeDeclaration.getNewconstr.getQcon.getIdentifierElement)
+    newtypeDeclaration.getSimpletype.getIdentifierElements ++
+        Option(newtypeDeclaration.getNewconstr.getQcon).map(_.getIdentifierElement) ++
+        Option(newtypeDeclaration.getNewconstr.getNewconstrFielddecl).map(_.getQvar.getIdentifierElement).toSeq
   }
 
   def getIdentifierElements(classDeclaration: HaskellClassDeclaration): Seq[HaskellNamedElement] = {

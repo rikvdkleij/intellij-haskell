@@ -238,7 +238,8 @@ private export1             ::= TYPE? onl (qvar | qvar_op)
 private export2             ::= qcon onl (dot_dot_parens | LEFT_PAREN onl (cname onl (onl COMMA onl cname)*)? onl RIGHT_PAREN)?
 private export3             ::= MODULE mod_id
 
-newconstr                   ::= qcon atype | qcon osnl LEFT_BRACE? osnl qvar COLON_COLON ttype osnl RIGHT_BRACE?
+newconstr                   ::= qcon atype | newconstr_fielddecl
+newconstr_fielddecl         ::= qcon osnl LEFT_BRACE? osnl qvar COLON_COLON ttype osnl RIGHT_BRACE?
 
 private cdecls              ::= cdecl+ | expression
 cdecl                       ::= minimal_pragma | type_signature_declaration | cidecl
