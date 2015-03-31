@@ -57,7 +57,7 @@ inline_pragma               ::= PRAGMA_START onl "INLINE" general_pragma_content
 noinline_pragma             ::= PRAGMA_START onl ("NOINLINE" | "NOTINLINE") general_id+ PRAGMA_END
 specialize_pragma           ::= PRAGMA_START onl ("SPECIALIZE" | "SPECIALISE") general_pragma_content PRAGMA_END
 
-inlinable_pragma            ::= PRAGMA_START onl ("INLINABLE" | "INLINEABLE" general_pragma_content PRAGMA_END
+inlinable_pragma            ::= PRAGMA_START onl ("INLINABLE" | "INLINEABLE") general_pragma_content PRAGMA_END
 ann_pragma                  ::= PRAGMA_START onl "ANN" general_pragma_content PRAGMA_END
 line_pragma                 ::= PRAGMA_START onl "LINE" general_pragma_content PRAGMA_END
 rules_pragma                ::= PRAGMA_START onl "RULES" general_pragma_content PRAGMA_END
