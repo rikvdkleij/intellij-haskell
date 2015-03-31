@@ -54,7 +54,7 @@ comment             = ("--"[^\r\n]* | "\\begin{code}")
 ncomment_start      = "{-"
 ncomment_end        = "-}"
 
-gap                 = \\{white_char}*\\
+gap                 = \\({white_char}|{newline})*\\
 cntrl               = {large} | [@\[\\\]\^_]
 charesc             = [abfnrtv\\\"\'&]
 ascii               = ("^"{cntrl})|(NUL)|(SOH)|(STX)|(ETX)|(EOT)|(ENQ)|(ACK)|(BEL)|(BS)|(HT)|(LF)|(VT)|(FF)|(CR)|(SO)|(SI)|(DLE)|(DC1)|(DC2)|(DC3)|(DC4)|(NAK)|(SYN)|(ETB)|(CAN)|(EM)|(SUB)|(ESC)|(FS)|(GS)|(RS)|(US)|(SP)|(DEL)
