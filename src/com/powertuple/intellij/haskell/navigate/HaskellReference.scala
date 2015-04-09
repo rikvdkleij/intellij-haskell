@@ -19,6 +19,7 @@ package com.powertuple.intellij.haskell.navigate
 import com.intellij.codeInsight.lookup.LookupElementBuilder
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.TextRange
+import com.intellij.openapi.util.text.StringUtil
 import com.intellij.openapi.vfs.LocalFileSystem
 import com.intellij.psi._
 import com.intellij.psi.util.PsiTreeUtil
@@ -105,7 +106,7 @@ class HaskellReference(element: HaskellNamedElement, textRange: TextRange) exten
 
   private def createLookupElements(compositeElement: HaskellCompositeElement): Seq[LookupElementBuilder] = {
     compositeElement match {
-      case ne: HaskellNamedElement if ne != null => Seq(LookupElementBuilder.create(ne.getName).withTypeText(GhcModiTypeInfo.findTypeInfoFor(ne.getContainingFile, ne).map(_.typeSignature).getOrElse("")).withIcon(HaskellIcons.HaskellSmallBlueLogo))
+      case ne: HaskellNamedElement if ne != null => Seq(LookupElementBuilder.create(ne.getName).withTypeText(GhcModiTypeInfo.findTypeInfoFor(ne.getContainingFile, ne).map(ti => StringUtil.unescapeXml(ti.typeSignature)).getOrElse("")).withIcon(HaskellIcons.HaskellSmallBlueLogo))
       case de: HaskellDeclarationElement => for {
         ne <- de.getIdentifierElements.toSeq
         leb <- Option(ne) match {
@@ -178,7 +179,7 @@ class HaskellReference(element: HaskellNamedElement, textRange: TextRange) exten
 
   private def findLocalNamedElements: Iterable[HaskellNamedElement] = {
     Option(PsiTreeUtil.getParentOfType(myElement, classOf[HaskellExpression])) match {
-      case Some(p) => PsiTreeUtil.findChildrenOfType(p, classOf[HaskellNamedElement]).filterNot(_ == myElement).toIterable
+      case Some(p) => PsiTreeUtil.findChildrenOfType(p, classOf[HaskellNamedElement]).filterNot(_ == myElement)
       case None => Iterable()
     }
   }
