@@ -35,14 +35,12 @@ import scala.util.{Failure, Success, Try}
 object GhcModiTypeInfo {
   private final val GhcModiTypeInfoPattern = """([\d]+) ([\d]+) ([\d]+) ([\d]+) "(.+)"""".r
 
-  private final val NoInfoIndicator = "Cannot show info"
-
   private final val Executor = Executors.newCachedThreadPool()
 
   private case class ElementTypeInfo(filePath: String, lineNr: Int, columnNr: Int, project: Project)
 
   private final val TypeInfoCache = CacheBuilder.newBuilder()
-      .refreshAfterWrite(10, TimeUnit.SECONDS)
+      .refreshAfterWrite(1, TimeUnit.SECONDS)
       .build(
         new CacheLoader[ElementTypeInfo, GhcModiOutput]() {
           private def findTypeInfoFor(elementTypeInfo: ElementTypeInfo): GhcModiOutput = {

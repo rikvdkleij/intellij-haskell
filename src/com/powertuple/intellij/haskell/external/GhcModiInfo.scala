@@ -44,7 +44,7 @@ object GhcModiInfo {
   private case class NamedElementInfo(filePath: String, identifier: String, project: Project)
 
   private final val InfoCache = CacheBuilder.newBuilder()
-      .refreshAfterWrite(10, TimeUnit.SECONDS)
+      .refreshAfterWrite(1, TimeUnit.SECONDS)
       .build(
         new CacheLoader[NamedElementInfo, GhcModiOutput]() {
           private def findInfoFor(namedElementInfo: NamedElementInfo): GhcModiOutput = {
