@@ -20,7 +20,6 @@ import java.util.concurrent.{Executors, TimeUnit}
 
 import com.intellij.codeInsight.completion._
 import com.intellij.codeInsight.lookup.LookupElementBuilder
-import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.project.Project
 import com.intellij.patterns.PlatformPatterns
 import com.intellij.psi.impl.source.tree.TreeUtil
@@ -30,10 +29,9 @@ import com.intellij.util.ProcessingContext
 import com.powertuple.intellij.haskell.external.{BrowseInfo, GhcMod}
 import com.powertuple.intellij.haskell.psi.HaskellTypes._
 import com.powertuple.intellij.haskell.psi._
-import com.powertuple.intellij.haskell.util.{HaskellElementCondition, LineColumnPosition, OSUtil}
+import com.powertuple.intellij.haskell.util.{HaskellElementCondition, LineColumnPosition}
 import com.powertuple.intellij.haskell.{HaskellIcons, HaskellParserDefinition}
 
-import scala.annotation.tailrec
 import scala.collection.JavaConversions._
 import scala.concurrent.duration.Duration
 import scala.concurrent.{Await, ExecutionContext, Future}
@@ -49,14 +47,12 @@ class HaskellCompletionContributor extends CompletionContributor {
 
   private final val ReservedIds = HaskellParserDefinition.ALL_RESERVED_IDS.getTypes.map(_.asInstanceOf[HaskellTokenType].getName).toSeq
   private final val SpecialReservedIds = Seq("forall", "safe", "unsafe")
-  private final val PragmaStartEndIds = Seq("{-#", "#-}")
+  private final val PragmaStartEndIds = Seq("{-# ", "#-}")
   private final val FileHeaderPragmaIds = Seq("LANGUAGE", "OPTIONS_HADDOCK", "INCLUDE", "OPTIONS", "OPTIONS_GHC", "ANN")
   private final val ModulePragmaIds = Seq("ANN", "DEPRECATED", "WARING", "INLINE", "NOINLINE", "NOTINLINE", "INLINABEL", "LINE", "RULES",
     "SPECIALIZE", "SPECIALISE", "MINIMAL", "SOURCE", "UNPACK", "NOUNPACK")
   private final val InsideImportClauses = Seq("as", "hiding", "qualified")
   private final val CommentIds = Seq("{-", "-}", "--")
-
-  private final val PlainPrefixElementTypes = Seq(HS_COMMENT, HS_NCOMMENT, HS_PRAGMA_START, HS_PRAGMA_END)
 
   extend(CompletionType.BASIC, PlatformPatterns.psiElement(), new CompletionProvider[CompletionParameters] {
     def addCompletions(parameters: CompletionParameters, context: ProcessingContext, originalResultSet: CompletionResultSet) {
@@ -64,8 +60,6 @@ class HaskellCompletionContributor extends CompletionContributor {
       val file = parameters.getOriginalFile
 
       val resultSet = getNonEmptyElement(parameters.getOriginalPosition).orElse(getNonEmptyElement(parameters.getPosition)) match {
-        case Some(e) if PlainPrefixElementTypes.contains(e.getNode.getElementType) | e.getText.startsWith("{") | e.getText.startsWith("#") | e.getText.startsWith("-") => originalResultSet.withPrefixMatcher(new PlainPrefixMatcher(getTextAtCaret(parameters.getEditor, file)))
-        case Some(e) if e.getNode.getElementType == HS_CONID_ID && getTextAtCaret(parameters.getEditor, file).endsWith(".") => originalResultSet.withPrefixMatcher(new PlainPrefixMatcher(getTextAtCaret(parameters.getEditor, file)))
         case _ => originalResultSet
       }
 
@@ -122,30 +116,8 @@ class HaskellCompletionContributor extends CompletionContributor {
     }
 
     caretElement match {
-      case Some(e) if e.getNode.getElementType == HS_CONID_ID && Option(e.getNextSibling).map(_.getNode.getElementType == HS_DOT).isDefined =>
-        context.setDummyIdentifier(file.findElementAt(e.getTextOffset - 1).getText + ".")
-      case Some(e) if PlainPrefixElementTypes.contains(e.getNode.getElementType) => context.setDummyIdentifier(getTextAtCaret(context.getEditor, file))
-      case Some(e) if e.getText.trim.size > 0 => context.setDummyIdentifier(e.getText.trim)
+      case Some(e) if e.getText.trim.length > 0 => context.setDummyIdentifier(e.getText.trim)
       case _ => context.setDummyIdentifier("a")
-    }
-  }
-
-  private def getTextAtCaret(editor: Editor, file: PsiFile): String = {
-    val caretOffset = editor.getCaretModel.getOffset
-    getTextUntilNoChar(file.getText, if (caretOffset > 0) caretOffset - 1 else caretOffset, "")
-  }
-
-  @tailrec
-  private def getTextUntilNoChar(fileText: String, offset: Int, text: String): String = {
-    val c = fileText.charAt(offset)
-    if (c < ' ' || c == OSUtil.LineSeparator || c == '\r') {
-      text
-    } else {
-      if (offset > 0) {
-        getTextUntilNoChar(fileText, offset - 1, c.toString + text)
-      } else {
-        c.toString + text
-      }
     }
   }
 
@@ -179,12 +151,13 @@ class HaskellCompletionContributor extends CompletionContributor {
   }
 
   private def getInsideImportClauses = {
-    InsideImportClauses.map(c => LookupElementBuilder.create(c + " ").withTailText(" clause", true))
+    InsideImportClauses.map(c => LookupElementBuilder.create(c).withTailText(" clause", true))
   }
 
   private def isFileHeaderPragmaInProgress(position: PsiElement): Boolean = {
-    Option(TreeUtil.findParent(position.getNode, HaskellTypes.HS_FILE_HEADER)).orElse(
-      Option(TreeUtil.findParent(position.getNode, HaskellTypes.HS_LANGUAGE_PRAGMA))).isDefined
+    Option(TreeUtil.findParent(position.getNode, HaskellTypes.HS_FILE_HEADER_PRAGMA)).isDefined ||
+        Option(TreeUtil.findSiblingBackward(position.getNode, HS_COMMA)).isDefined &&
+            Option(TreeUtil.findSibling(position.getNode, HS_PRAGMA_END)).isDefined
   }
 
   private def isPragmaInProgress(position: PsiElement): Boolean = {
@@ -220,23 +193,23 @@ class HaskellCompletionContributor extends CompletionContributor {
   }
 
   private def getLanguageExtensions(project: Project) = {
-    GhcMod.listLanguageExtensions(project).map(n => LookupElementBuilder.create(n + " ").withIcon(HaskellIcons.HaskellSmallBlueLogo).withTailText(" language extension", true))
+    GhcMod.listLanguageExtensions(project).map(n => LookupElementBuilder.create(n).withIcon(HaskellIcons.HaskellSmallBlueLogo).withTailText(" language extension", true))
   }
 
   private def getPragmaStartEndIds = {
-    PragmaStartEndIds.map(p => LookupElementBuilder.create(p + " ").withIcon(HaskellIcons.HaskellSmallBlueLogo).withTailText(" pragma", true))
+    PragmaStartEndIds.map(p => LookupElementBuilder.create(p).withIcon(HaskellIcons.HaskellSmallBlueLogo).withTailText(" pragma", true))
   }
 
   private def getFileHeaderPragmaIds = {
-    FileHeaderPragmaIds.map(p => LookupElementBuilder.create(p + " ").withIcon(HaskellIcons.HaskellSmallBlueLogo).withTailText(" pragma", true))
+    FileHeaderPragmaIds.map(p => LookupElementBuilder.create(p).withIcon(HaskellIcons.HaskellSmallBlueLogo).withTailText(" pragma", true))
   }
 
   private def getModulePragmaIds = {
-    ModulePragmaIds.map(p => LookupElementBuilder.create(p + " ").withIcon(HaskellIcons.HaskellSmallBlueLogo).withTailText(" pragma", true))
+    ModulePragmaIds.map(p => LookupElementBuilder.create(p).withIcon(HaskellIcons.HaskellSmallBlueLogo).withTailText(" pragma", true))
   }
 
   private def getCommentIds = {
-    CommentIds.map(p => LookupElementBuilder.create(p + " ").withIcon(HaskellIcons.HaskellSmallBlueLogo).withTailText(" comment", true))
+    CommentIds.map(p => LookupElementBuilder.create(p).withIcon(HaskellIcons.HaskellSmallBlueLogo).withTailText(" comment", true))
   }
 
   private def getImportedModulesWithFullScope(psiFile: PsiFile, importDeclarations: Iterable[HaskellImportDeclaration]): Iterable[ImportFullSpec] = {
@@ -321,11 +294,11 @@ class HaskellCompletionContributor extends CompletionContributor {
   }
 
   private def getReservedIds = {
-    ReservedIds.map(r => LookupElementBuilder.create(r + " ").withIcon(HaskellIcons.HaskellSmallBlueLogo).withTailText(" keyword", true))
+    ReservedIds.map(r => LookupElementBuilder.create(r).withIcon(HaskellIcons.HaskellSmallBlueLogo).withTailText(" keyword", true))
   }
 
   private def getSpecialReservedIds = {
-    SpecialReservedIds.map(sr => LookupElementBuilder.create(sr + " ").withIcon(HaskellIcons.HaskellSmallBlueLogo).withTailText(" special keyword", true))
+    SpecialReservedIds.map(sr => LookupElementBuilder.create(sr).withIcon(HaskellIcons.HaskellSmallBlueLogo).withTailText(" special keyword", true))
   }
 
   private def findImportDeclarations(psiFile: PsiFile) = {
