@@ -88,7 +88,6 @@ class HaskellFormattingBlock(node: ASTNode, alignment: Option[Alignment], spacin
       node.getChildren(null).length > 0
     }
     else {
-      (node.getElementType != HS_NEWLINE && previousNode != null && previousNode.getElementType != HS_NEWLINE) &&
           (node.getElementType == TokenType.WHITE_SPACE && previousNode != null && previousNode.getElementType == HS_NEWLINE) ||
           (node.getElementType == HS_NEWLINE && previousNode != null && previousNode.getElementType == TokenType.WHITE_SPACE) ||
           node.getElementType != TokenType.WHITE_SPACE && node.getElementType != HS_NEWLINE
