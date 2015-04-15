@@ -106,7 +106,7 @@ type_declaration            ::=  TYPE osnl simpletype osnl COLON_COLON osnl ttyp
 data_declaration            ::= DATA osnl INSTANCE? osnl (context osnl DOUBLE_RIGHT_ARROW)? osnl simpletype osnl EQUAL osnl constrs osnl data_declaration_deriving? |
                                   DATA osnl INSTANCE? osnl (context osnl DOUBLE_RIGHT_ARROW)? osnl simpletype osnl WHERE cdecls osnl data_declaration_deriving? |
                                   DATA osnl INSTANCE? osnl (context osnl DOUBLE_RIGHT_ARROW)? osnl simpletype (EQUAL expression)?
-data_declaration_deriving   ::= DERIVING ttype | DERIVING LEFT_PAREN ttype (osnl COMMA osnl ttype)+ RIGHT_PAREN
+data_declaration_deriving   ::= (DERIVING ttype osnl | DERIVING LEFT_PAREN ttype (osnl COMMA osnl ttype)+ RIGHT_PAREN osnl)+
 
 newtype_declaration         ::= NEWTYPE osnl (context osnl DOUBLE_RIGHT_ARROW)? osnl simpletype osnl EQUAL osnl newconstr osnl (DERIVING osnl ttype)?
 class_declaration           ::= (CLASS osnl (scontext osnl DOUBLE_RIGHT_ARROW)? osnl qcon osnl
