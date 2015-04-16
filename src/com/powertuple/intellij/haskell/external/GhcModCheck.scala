@@ -17,12 +17,15 @@
 package com.powertuple.intellij.haskell.external
 
 import com.intellij.openapi.project.Project
+import com.powertuple.intellij.haskell.HaskellNotificationGroup
 import com.powertuple.intellij.haskell.settings.HaskellSettings
 import com.powertuple.intellij.haskell.util.{FileUtil, OSUtil}
 
 import scala.collection.JavaConversions._
 
 object GhcModCheck {
+
+  private val ghcModProblemPattern = """(.+):([\d]+):([\d]+):(.+)""".r
 
   def check(project: Project, filePath: String): GhcModCheckResult = {
     val output = ExternalProcess.getProcessOutput(
@@ -34,14 +37,15 @@ object GhcModCheck {
     if (output.isEmpty) {
       new GhcModCheckResult(Iterable())
     } else {
-      new GhcModCheckResult(output.map(o => parseOutputLine(o, project)))
+      new GhcModCheckResult(output.flatMap(o => parseOutputLine(o, project)))
     }
   }
 
-  private[external] def parseOutputLine(ghcModOutput: String, project: Project): GhcModProblem = {
-    val ghcModProblemPattern = """(.+):([\d]+):([\d]+):(.+)""".r
-    val ghcModProblemPattern(filePath, lineNr, columnNr, message) = ghcModOutput
-    new GhcModProblem(FileUtil.makeFilePathAbsolute(filePath, project), lineNr.toInt, columnNr.toInt, message.replace('\u0000', OSUtil.LineSeparator))
+  private[external] def parseOutputLine(ghcModOutput: String, project: Project): Option[GhcModProblem] = {
+    ghcModOutput match {
+      case ghcModProblemPattern(filePath, lineNr, columnNr, message) => Some(new GhcModProblem(FileUtil.makeFilePathAbsolute(filePath, project), lineNr.toInt, columnNr.toInt, message.replace('\u0000', OSUtil.LineSeparator)))
+      case _ => HaskellNotificationGroup.notifyError(ghcModOutput); None
+    }
   }
 }
 
