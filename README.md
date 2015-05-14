@@ -66,7 +66,7 @@ A lot of features are with the help of ghc-mod(i)!!
     This workaround will add path of `GHC SDK` to PATH environment variable which is passed to ghc-modi process. Other solutions are welcome!
 - Windows is not supported. Maybe it will work okay but I can not test it;
 - Created workaround for ghc-mod issue #432;
-- I found an issue in IntelliJ 14.1, see https://youtrack.jetbrains.com/issue/IDEA-138236. Hopefully they will fix it soon;
+- <del> I found an issue in IntelliJ 14.1, see https://youtrack.jetbrains.com/issue/IDEA-138236. Hopefully they will fix it soon; </del>
 
 # How to build
 1. Clone this project;
