@@ -1,5 +1,5 @@
 /*
- * Copyright 2014 Rik van der Kleij
+ * Copyright 2015 Rik van der Kleij
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,10 +17,10 @@
 package com.powertuple.intellij.haskell.view
 
 import com.intellij.openapi.actionSystem.{AnAction, AnActionEvent, CommonDataKeys}
-import com.intellij.psi.PsiElement
+import com.intellij.openapi.util.text.StringUtil
 import com.intellij.psi.util.PsiUtilBase
 import com.powertuple.intellij.haskell.external.GhcModiTypeInfo
-import com.powertuple.intellij.haskell.psi.{HaskellPsiHelper, HaskellNamedElement}
+import com.powertuple.intellij.haskell.psi.HaskellPsiHelper
 import com.powertuple.intellij.haskell.util.HaskellEditorUtil
 
 class ShowTypeAction extends AnAction {
@@ -43,10 +43,10 @@ class ShowTypeAction extends AnAction {
           case Some(ti) => HaskellEditorUtil.showHint(editor, ti.typeSignature)
           case None => HaskellEditorUtil.showHint(editor, "Could not determine type for selection")
         }
-        case _ => Option(psiFile.findElementAt(offset)).flatMap(e => HaskellPsiHelper.findHaskellNamedElement(e)).map { psiElement =>
+        case _ => Option(psiFile.findElementAt(offset)).flatMap(e => HaskellPsiHelper.findHaskellNamedElement(e)).foreach { psiElement =>
           GhcModiTypeInfo.findTypeInfoFor(psiFile, psiElement) match {
             case Some(ti) => HaskellEditorUtil.showHint(editor, ti.typeSignature)
-            case None => HaskellEditorUtil.showHint(editor, s"Could not determine type for ${psiElement.getText}")
+            case None => HaskellEditorUtil.showHint(editor, s"Could not determine type for ${StringUtil.escapeXml(psiElement.getText)}")
           }
         }
       }

@@ -17,10 +17,10 @@
 package com.powertuple.intellij.haskell.view
 
 import com.intellij.openapi.actionSystem.{AnAction, AnActionEvent, CommonDataKeys}
-import com.intellij.psi.PsiElement
+import com.intellij.openapi.util.text.StringUtil
 import com.intellij.psi.util.PsiUtilBase
 import com.powertuple.intellij.haskell.external._
-import com.powertuple.intellij.haskell.psi.{HaskellPsiHelper, HaskellNamedElement}
+import com.powertuple.intellij.haskell.psi.HaskellPsiHelper
 import com.powertuple.intellij.haskell.util.HaskellEditorUtil
 
 class ShowInfoAction extends AnAction {
@@ -39,10 +39,10 @@ class ShowInfoAction extends AnAction {
       psiElement <- Option(psiFile.findElementAt(offset))
       namedElement <- HaskellPsiHelper.findHaskellNamedElement(psiElement)
     } yield
-      GhcModiInfo.findInfoFor(psiFile, namedElement) match {
-        case Seq(identifierInfos@_*) if identifierInfos.nonEmpty => HaskellEditorUtil.createInfoBallon(identifierInfos.map(createInfoText).mkString("<br>"), editor)
-        case _ => HaskellEditorUtil.showHint(editor, s"Could not determine info for ${namedElement.getName}")
-      }
+    GhcModiInfo.findInfoFor(psiFile, namedElement) match {
+      case Seq(identifierInfos@_*) if identifierInfos.nonEmpty => HaskellEditorUtil.createInfoBallon(identifierInfos.map(createInfoText).mkString("<br>"), editor)
+      case _ => HaskellEditorUtil.showHint(editor, s"Could not determine info for ${StringUtil.escapeXml(namedElement.getName)}")
+    }
   }
 
   private def createInfoText(identifierInfo: IdentifierInfo): String = {

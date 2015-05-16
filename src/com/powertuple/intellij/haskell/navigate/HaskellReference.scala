@@ -99,7 +99,7 @@ class HaskellReference(element: HaskellNamedElement, textRange: TextRange) exten
   private def displayLabelInfoMessageIfResultsContainsBuiltInDefinition(resolveResultsByGhcMod: Iterable[ResolveResult], project: Project) {
     val firstBuiltInResolveResult = resolveResultsByGhcMod.find(_.isInstanceOf[BuiltInResolveResult])
     firstBuiltInResolveResult match {
-      case Some(birs: BuiltInResolveResult) => HaskellEditorUtil.createLabelMessage(s"${birs.typeSignature} is built-in: ${birs.libraryName}:${birs.module}", project)
+      case Some(birs: BuiltInResolveResult) => HaskellEditorUtil.createLabelMessage(s"${StringUtil.unescapeXml(birs.typeSignature)} is built-in: ${birs.libraryName}:${birs.module}", project)
       case _ => ()
     }
   }
