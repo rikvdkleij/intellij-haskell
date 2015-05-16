@@ -25,7 +25,7 @@ import com.intellij.openapi.roots.ModifiableRootModel
 import com.powertuple.intellij.haskell.HaskellIcons
 import com.powertuple.intellij.haskell.sdk.HaskellSdkType
 
-class HaskellModuleBuilder extends JavaModuleBuilder with ModuleBuilderListener {
+class HaskellModuleBuilder extends ModuleBuilder with ModuleBuilderListener {
 
   override def moduleCreated(module: Module): Unit = {}
 
@@ -39,6 +39,5 @@ class HaskellModuleBuilder extends JavaModuleBuilder with ModuleBuilderListener 
 
   override def setupRootModel(rootModel: ModifiableRootModel) {
     addListener(this)
-    super.setupRootModel(rootModel)
   }
 }
