@@ -48,10 +48,6 @@ class GhcModiExternalAnnotator extends ExternalAnnotator[GhcModInitialInfo, GhcM
    * Returning null will cause doAnnotate() not to be called by Intellij API.
    */
   override def collectInformation(psiFile: PsiFile): GhcModInitialInfo = {
-    if (FileUtil.isLibraryFile(psiFile)) {
-      return null
-    }
-
     (psiFile, Option(psiFile.getVirtualFile)) match {
       case (_, None) => null // can be case if file is in memory only (just created file)
       case (_, Some(f)) if f.getFileType != HaskellFileType.INSTANCE => null
@@ -71,11 +67,11 @@ class GhcModiExternalAnnotator extends ExternalAnnotator[GhcModInitialInfo, GhcM
           case ErrorAnnotation(textRange, message) => holder.createErrorAnnotation(textRange, message)
           case ErrorAnnotationWithIntentionActions(textRange, message, intentionActions) =>
             val annotation = holder.createErrorAnnotation(textRange, message)
-            intentionActions.map(annotation.registerFix(_))
+            intentionActions.foreach(annotation.registerFix)
           case WarningAnnotation(textRange, message) => holder.createWarningAnnotation(textRange, message)
           case WarningAnnotationWithIntentionActions(textRange, message, intentionActions) =>
             val annotation = holder.createWarningAnnotation(textRange, message)
-            intentionActions.map(annotation.registerFix(_))
+            intentionActions.foreach(annotation.registerFix)
         }
       }
     }

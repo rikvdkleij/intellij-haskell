@@ -70,10 +70,6 @@ object GhcModiTypeInfo {
       )
 
   def findTypeInfoFor(psiFile: PsiFile, psiElement: PsiElement): Option[TypeInfo] = {
-    if (FileUtil.isLibraryFile(psiFile)) {
-      return None
-    }
-
     val textOffset = psiElement match {
       case e: HaskellQVarConOpElement => e.getTextOffset
       case e => Option(PsiTreeUtil.findFirstParent(e, HaskellElementCondition.QVarConOpElementCondition)).map(_.getTextOffset).getOrElse(e.getTextOffset)
