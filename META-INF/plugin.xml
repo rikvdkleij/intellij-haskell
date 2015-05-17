@@ -112,7 +112,7 @@
                 implementation="com.powertuple.intellij.haskell.code.formatter.settings.HaskellLanguageCodeStyleSettingsProvider"/>
 
 
-        <psi.referenceContributor implementation="com.powertuple.intellij.haskell.psi.HaskellReferenceContributor"/>
+        <psi.referenceContributor language="Haskell" implementation="com.powertuple.intellij.haskell.psi.HaskellReferenceContributor"/>
 
         <lang.elementManipulator forClass="com.powertuple.intellij.haskell.psi.HaskellNamedElement"
                                  implementationClass="com.powertuple.intellij.haskell.psi.HaskellNamedElementManipulator"/>
