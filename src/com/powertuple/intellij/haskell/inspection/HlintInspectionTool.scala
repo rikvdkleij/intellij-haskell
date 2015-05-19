@@ -21,7 +21,7 @@ import com.intellij.psi.{TokenType, PsiElement, PsiFile}
 import com.powertuple.intellij.haskell.HaskellNotificationGroup
 import com.powertuple.intellij.haskell.external.{Hlint, HlintInfo}
 import com.powertuple.intellij.haskell.psi.HaskellTypes.{HS_COMMENT, HS_NCOMMENT, HS_NEWLINE, HS_SNL}
-import com.powertuple.intellij.haskell.settings.HaskellSettings
+import com.powertuple.intellij.haskell.settings.{HaskellSettingsState, HaskellSettings}
 import com.powertuple.intellij.haskell.util.LineColumnPosition
 
 import scala.annotation.tailrec
@@ -29,7 +29,7 @@ import scala.annotation.tailrec
 class HlintInspectionTool extends LocalInspectionTool {
   override def checkFile(psiFile: PsiFile, manager: InspectionManager, isOnTheFly: Boolean): Array[ProblemDescriptor] = {
     val problemsHolder = new ProblemsHolder(manager, psiFile, isOnTheFly)
-    if (HaskellSettings.getInstance().getState.hlintPath.isEmpty) {
+    if (HaskellSettingsState.getHlintPath.isEmpty) {
       HaskellNotificationGroup.notifyWarning("Can not run HLint. Configure path to HLint in Haskell Settings")
       problemsHolder.getResultsArray
     } else {

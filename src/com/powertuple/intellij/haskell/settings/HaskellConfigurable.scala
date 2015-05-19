@@ -1,5 +1,5 @@
 /*
- * Copyright 2014 Rik van der Kleij
+ * Copyright 2015 Rik van der Kleij
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -34,6 +34,7 @@ class HaskellConfigurable extends Configurable {
   private val ghcModiPathField = new TextFieldWithBrowseButton
   private val haskellDocsPathField = new TextFieldWithBrowseButton
   private val hlintPathField = new TextFieldWithBrowseButton
+  private val cabalPathField = new TextFieldWithBrowseButton
 
   override def getDisplayName: String = {
     "Haskell"
@@ -41,10 +42,7 @@ class HaskellConfigurable extends Configurable {
 
   override def isModified: Boolean = this.isModifiedByUser
 
-  private val GhcMod = "ghc-mod"
-  private val GhcModi = "ghc-modi"
-  private val HaskellDocs = "haskell-docs"
-  private val Hlint = "hlint"
+  import HaskellConfigurable._
 
   override def createComponent: JComponent = {
 
@@ -72,6 +70,12 @@ class HaskellConfigurable extends Configurable {
       null,
       FileChooserDescriptorFactory.createSingleLocalFileDescriptor())
 
+    cabalPathField.addBrowseFolderListener(
+      s"Select $Cabal",
+      null,
+      null,
+      FileChooserDescriptorFactory.createSingleLocalFileDescriptor())
+
     val settingsPanel = new JPanel(new GridBagLayout())
 
     val listener: DocumentAdapter = new DocumentAdapter() {
@@ -84,6 +88,7 @@ class HaskellConfigurable extends Configurable {
     haskellDocsPathField.getTextField.getDocument.addDocumentListener(listener)
     ghcModiPathField.getTextField.getDocument.addDocumentListener(listener)
     hlintPathField.getTextField.getDocument.addDocumentListener(listener)
+    cabalPathField.getTextField.getDocument.addDocumentListener(listener)
 
     val base = new GridBagConstraints {
       insets = new Insets(2, 0, 2, 3)
@@ -124,6 +129,7 @@ class HaskellConfigurable extends Configurable {
     addLabeledControl(2, GhcModi, ghcModiPathField)
     addLabeledControl(1, HaskellDocs, haskellDocsPathField)
     addLabeledControl(3, Hlint, hlintPathField)
+    addLabeledControl(4, Cabal, cabalPathField)
 
     settingsPanel.add(new JPanel(), base.setConstraints(
       gridx = 0,
@@ -142,8 +148,9 @@ class HaskellConfigurable extends Configurable {
     state.ghcModiPath = ghcModiPathField.getText
     state.haskellDocsPath = haskellDocsPathField.getText
     state.hlintPath = hlintPathField.getText
+    state.cabalPath = cabalPathField.getText
 
-    GhcModiManager.doRestart()
+    GhcModiManager.setInRestartState()
 
     isModifiedByUser = false
   }
@@ -157,8 +164,9 @@ class HaskellConfigurable extends Configurable {
     Seq((GhcMod, ghcModPathField.getText),
       (GhcModi, ghcModiPathField.getText),
       (HaskellDocs, haskellDocsPathField.getText),
-      (Hlint, hlintPathField.getText)
-    ).foreach({ case (c, p) => validate(c, p)})
+      (Hlint, hlintPathField.getText),
+      (Cabal, cabalPathField.getText)
+    ).foreach({ case (c, p) => validate(c, p) })
   }
 
   override def disposeUIResources() {
@@ -172,7 +180,16 @@ class HaskellConfigurable extends Configurable {
     ghcModiPathField.getTextField.setText(state.ghcModiPath)
     haskellDocsPathField.getTextField.setText(state.haskellDocsPath)
     hlintPathField.getTextField.setText(state.hlintPath)
+    cabalPathField.getTextField.setText(state.cabalPath)
 
     isModifiedByUser = false
   }
+}
+
+object HaskellConfigurable {
+  val GhcMod = "ghc-mod"
+  val GhcModi = "ghc-modi"
+  val HaskellDocs = "haskell-docs"
+  val Hlint = "hlint"
+  val Cabal = "cabal"
 }

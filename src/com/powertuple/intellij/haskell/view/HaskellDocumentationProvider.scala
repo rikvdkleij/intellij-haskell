@@ -25,7 +25,7 @@ import com.intellij.psi.{PsiElement, PsiFile}
 import com.powertuple.intellij.haskell.HaskellNotificationGroup
 import com.powertuple.intellij.haskell.external._
 import com.powertuple.intellij.haskell.psi.{HaskellModuleDeclaration, HaskellNamedElement}
-import com.powertuple.intellij.haskell.settings.HaskellSettings
+import com.powertuple.intellij.haskell.settings.{HaskellSettingsState, HaskellSettings}
 
 import scala.io.Source
 import scala.util.{Failure, Success, Try}
@@ -46,26 +46,31 @@ class HaskellDocumentationProvider extends AbstractDocumentationProvider {
   }
 
   private def getHaskellDoc(namedElement: HaskellNamedElement): String = {
-    val identifier = namedElement.getName
-    val file = namedElement.getContainingFile
-    val project = file.getProject
-    val identifierInfo = GhcModiInfo.findInfoFor(file, namedElement).headOption
-    val haskellDocs = HaskellSettings.getInstance().getState.haskellDocsPath
-    val arguments = (identifierInfo, getSandboxPackageDbPath(project), getModuleName(file)) match {
-      case (Some(lei: LibraryIdentifierInfo), Some(dbPath), _) => Seq("-g", s"-package-db=$dbPath", lei.module, identifier)
-      case (Some(pei: ProjectIdentifierInfo), Some(dbPath), _) => Seq("-g", s"-package-db=$dbPath", PsiTreeUtil.findChildOfType(file, classOf[HaskellModuleDeclaration]).getModuleName, identifier)
-      case (Some(bei: BuiltInIdentifierInfo), _, _) => Seq("Prelude", identifier)
-      case (Some(lei: LibraryIdentifierInfo), None, _) => Seq(lei.module, identifier)
-      case (None, Some(dbPath), Some(moduleName)) => Seq("-g", s"-package-db=$dbPath", getModuleName(file).get, identifier)
-      case (_, None, _) => HaskellNotificationGroup.notifyInfo(s"Can not determine haskell-docs GHC option `package-db` for $identifier"); Seq()
-      case (_, _, _) => HaskellNotificationGroup.notifyInfo(s"Can not determine haskell-docs arguments <module-name> for $identifier"); Seq()
-    }
+    val haskellDocs = HaskellSettingsState.getHaskellDocsPath
+    haskellDocs match {
+      case Some(hd) => {
+        val identifier = namedElement.getName
+        val file = namedElement.getContainingFile
+        val project = file.getProject
+        val identifierInfo = GhcModiInfo.findInfoFor(file, namedElement).headOption
+        val arguments = (identifierInfo, getSandboxPackageDbPath(project), getModuleName(file)) match {
+          case (Some(lei: LibraryIdentifierInfo), Some(dbPath), _) => Seq("-g", s"-package-db=$dbPath", lei.module, identifier)
+          case (Some(pei: ProjectIdentifierInfo), Some(dbPath), _) => Seq("-g", s"-package-db=$dbPath", PsiTreeUtil.findChildOfType(file, classOf[HaskellModuleDeclaration]).getModuleName, identifier)
+          case (Some(bei: BuiltInIdentifierInfo), _, _) => Seq("Prelude", identifier)
+          case (Some(lei: LibraryIdentifierInfo), None, _) => Seq(lei.module, identifier)
+          case (None, Some(dbPath), Some(moduleName)) => Seq("-g", s"-package-db=$dbPath", getModuleName(file).get, identifier)
+          case (_, None, _) => HaskellNotificationGroup.notifyInfo(s"Can not determine haskell-docs GHC option `package-db` for $identifier"); Seq()
+          case (_, _, _) => HaskellNotificationGroup.notifyInfo(s"Can not determine haskell-docs arguments <module-name> for $identifier"); Seq()
+        }
 
-    val stdOutputput = ExternalProcess.getProcessOutput(project.getBasePath, haskellDocs, arguments).getStdout
-    if (stdOutputput.isEmpty) {
-      "No documentation found."
-    } else {
-      Pattern.compile("$", Pattern.MULTILINE).matcher(stdOutputput).replaceAll("<br>").replace(" ", "&nbsp;")
+        val stdOutputput = ExternalProcess.getProcessOutput(project.getBasePath, hd, arguments).getStdout
+        if (stdOutputput.isEmpty) {
+          "No documentation found."
+        } else {
+          Pattern.compile("$", Pattern.MULTILINE).matcher(stdOutputput).replaceAll("<br>").replace(" ", "&nbsp;")
+        }
+      }
+      case None => ""
     }
   }
 

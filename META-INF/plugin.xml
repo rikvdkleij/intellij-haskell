@@ -209,6 +209,11 @@
             <keyboard-shortcut first-keystroke="meta F10" keymap="Mac OS X 10.5+"/>
             <add-to-group group-id="CodeEditorViewGroup" anchor="last"/>
         </action>
+
+        <action id="Haskell.DownloadLibSources" class="com.powertuple.intellij.haskell.view.AddDependencies"
+                text="Add Haskell package dependencies" description="Download Haskell package sources and add them as source libraries to module">
+            <add-to-group group-id="ToolsMenu" anchor="last"/>
+        </action>
     </actions>
 
 </idea-plugin>

@@ -23,7 +23,7 @@ import com.google.common.util.concurrent.{ListenableFuture, ListenableFutureTask
 import com.intellij.execution.process.ProcessOutput
 import com.intellij.openapi.progress.ProcessCanceledException
 import com.intellij.openapi.project.Project
-import com.powertuple.intellij.haskell.settings.HaskellSettings
+import com.powertuple.intellij.haskell.settings.{HaskellSettingsState, HaskellSettings}
 
 import scala.collection.JavaConversions._
 
@@ -39,27 +39,33 @@ object GhcMod {
       .refreshAfterWrite(10, TimeUnit.SECONDS)
       .build(
         new CacheLoader[ModuleInfo, ProcessOutput]() {
-          private def getProcessOutput(moduleInfo: ModuleInfo): ProcessOutput = {
-            ExternalProcess.getProcessOutput(
-              moduleInfo.projectBasePath,
-              HaskellSettings.getInstance().getState.ghcModPath,
-              Seq("browse", "-d", "-q", "-o") ++ Seq(moduleInfo.moduleName),
-              4900
-            )
+          private def getProcessOutput(moduleInfo: ModuleInfo): Option[ProcessOutput] = {
+            val ghcModPath = getGhcModPath
+            ghcModPath.map { p =>
+              ExternalProcess.getProcessOutput(
+                moduleInfo.projectBasePath,
+                p,
+                Seq("browse", "-d", "-q", "-o") ++ Seq(moduleInfo.moduleName),
+                4900
+              )
+            }
           }
 
           override def load(moduleInfo: ModuleInfo): ProcessOutput = {
-            getProcessOutput(moduleInfo)
+            getProcessOutput(moduleInfo).getOrElse(new ProcessOutput())
           }
 
           override def reload(moduleInfo: ModuleInfo, oldValue: ProcessOutput): ListenableFuture[ProcessOutput] = {
             val task = ListenableFutureTask.create(new Callable[ProcessOutput]() {
               def call() = {
                 val newValue = getProcessOutput(moduleInfo)
-                if (newValue.getStdoutLines.isEmpty) {
-                  oldValue
-                } else {
-                  newValue
+                newValue match {
+                  case None => oldValue
+                  case Some(v) => if (v.getStdoutLines.isEmpty) {
+                    oldValue
+                  } else {
+                    v
+                  }
                 }
               }
             })
@@ -74,11 +80,14 @@ object GhcMod {
       .build(
         new CacheLoader[ModuleList, ProcessOutput]() {
           private def getProcessOutput(moduleList: ModuleList): ProcessOutput = {
-            ExternalProcess.getProcessOutput(
-              moduleList.projectBasePath,
-              HaskellSettings.getInstance().getState.ghcModPath,
-              Seq("list")
-            )
+            val ghcModPath = getGhcModPath
+            ghcModPath.map { p =>
+              ExternalProcess.getProcessOutput(
+                moduleList.projectBasePath,
+                p,
+                Seq("list")
+              )
+            }.getOrElse(new ProcessOutput())
           }
 
           override def load(moduleList: ModuleList): ProcessOutput = {
@@ -125,12 +134,19 @@ object GhcMod {
   }
 
   def listLanguageExtensions(project: Project): Iterable[String] = {
-    val output = ExternalProcess.getProcessOutput(
-      project.getBasePath,
-      HaskellSettings.getInstance().getState.ghcModPath,
-      Seq("lang")
-    )
-    output.getStdoutLines
+    val ghcModPath = getGhcModPath
+    ghcModPath.map { p =>
+      val output = ExternalProcess.getProcessOutput(
+        project.getBasePath,
+        p,
+        Seq("lang")
+      )
+      output.getStdoutLines.toIterable
+    }.getOrElse(Iterable())
+  }
+
+  private def getGhcModPath = {
+    HaskellSettingsState.getGhcModPath
   }
 
   private def createBrowseInfo(info: String, removeParensFromOperator: Boolean): Option[BrowseInfo] = {

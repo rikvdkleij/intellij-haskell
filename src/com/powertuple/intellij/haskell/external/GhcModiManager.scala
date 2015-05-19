@@ -1,5 +1,5 @@
 /*
- * Copyright 2014 Rik van der Kleij
+ * Copyright 2015 Rik van der Kleij
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -21,19 +21,27 @@ import com.intellij.openapi.project.Project
 
 object GhcModiManager {
 
-  private var restart = false
+  private var restartState = false
 
-  def doRestart() {
-    restart = true
+  def setInRestartState(): Unit = synchronized {
+    restartState = true
   }
 
-  def getGhcModi(project: Project): GhcModi = {
-    if (restart) {
-      val ghcModi = ServiceManager.getService(project, classOf[GhcModi])
-      ghcModi.exit()
-      ghcModi
-    } else {
-      ServiceManager.getService(project, classOf[GhcModi])
+  def doRestart(project: Project) = synchronized {
+    val ghcModi = getGhcModiService(project)
+    ghcModi.exit()
+    ghcModi.startGhcModi()
+  }
+
+  def getGhcModi(project: Project) = synchronized {
+    if (restartState) {
+      doRestart(project)
+      restartState = false
     }
+    getGhcModiService(project)
+  }
+
+  private def getGhcModiService(project: Project) = {
+    ServiceManager.getService(project, classOf[GhcModi])
   }
 }

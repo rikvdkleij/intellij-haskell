@@ -23,8 +23,8 @@ import com.intellij.openapi.components.ProjectComponent
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.roots.ProjectRootManager
 import com.powertuple.intellij.haskell.HaskellNotificationGroup
-import com.powertuple.intellij.haskell.settings.HaskellSettings
-import com.powertuple.intellij.haskell.util.OSUtil
+import com.powertuple.intellij.haskell.settings.HaskellSettingsState
+import com.powertuple.intellij.haskell.util.{HaskellProjecUtil, OSUtil}
 
 import scala.collection.mutable.ListBuffer
 import scala.concurrent.duration._
@@ -32,7 +32,7 @@ import scala.concurrent.{Await, ExecutionContext, Future}
 import scala.io._
 import scala.sys.process._
 
-class GhcModi(val settings: HaskellSettings, val project: Project) extends ProjectComponent {
+class GhcModi(val project: Project) extends ProjectComponent {
 
   private final val ExecutorService = Executors.newSingleThreadExecutor
   implicit private final val ExecContext = ExecutionContext.fromExecutorService(ExecutorService)
@@ -47,7 +47,6 @@ class GhcModi(val settings: HaskellSettings, val project: Project) extends Proje
 
   private final val TimeOut = 5000L
   private final val GhcModiErrorIndicator = "NG"
-
   private var ghcModiProblemTime: Option[Long] = None
 
   def execute(command: String): GhcModiOutput = synchronized {
@@ -61,10 +60,7 @@ class GhcModi(val settings: HaskellSettings, val project: Project) extends Proje
 
     if (outputStream != null) {
       try {
-        stdOutListBuffer.clear()
-        outputStream.write(command.getBytes)
-        outputStream.write(LineSeparatorInBytes)
-        outputStream.flush()
+        writeToOutputstream(command)
 
         val waitForStdOutput = Future {
           while (stdOutListBuffer.lastOption != Some(OK) && !stdOutListBuffer.headOption.exists(_.startsWith(GhcModiErrorIndicator))) {
@@ -85,7 +81,6 @@ class GhcModi(val settings: HaskellSettings, val project: Project) extends Proje
         case e: Exception =>
           HaskellNotificationGroup.notifyError(s"Error in communication with ghc-modi: ${e.getMessage}. Check if GHC SDK is set and ghc-modi is okay. ghc-modi will not be called for 5 seconds. Command was: $command")
           setGhcModiProblemTime()
-          exit()
           GhcModiOutput()
       }
     } else {
@@ -93,31 +88,58 @@ class GhcModi(val settings: HaskellSettings, val project: Project) extends Proje
     }
   }
 
-  private def startGhcModi() {
-    if (!settings.getState.ghcModiPath.isEmpty) {
-      try {
-        val process = getEnvParameters match {
-          case None => Process(settings.getState.ghcModiPath, new File(project.getBasePath))
-          case Some(ep) => Process(settings.getState.ghcModiPath, new File(project.getBasePath), ep)
+  def startGhcModi(): Unit = synchronized {
+    HaskellSettingsState.getGhcModiPath match {
+      case Some(p) =>
+        HaskellNotificationGroup.notifyInfo(s"ghc-modi is invoked to startup for project ${project.getName}")
+        try {
+          val process = getEnvParameters match {
+            case None => Process(p, new File(project.getBasePath))
+            case Some(ep) => Process(p, new File(project.getBasePath), ep)
+          }
+          process.run(
+            new ProcessIO(
+              stdin => outputStream = stdin,
+              stdout => Source.fromInputStream(stdout).getLines.foreach(stdOutListBuffer.+=),
+              stderr => Source.fromInputStream(stderr).getLines.foreach(stdErrListBuffer.+=)
+            ))
         }
-        process.run(
-          new ProcessIO(
-            stdin => outputStream = stdin,
-            stdout => Source.fromInputStream(stdout).getLines.foreach(stdOutListBuffer.+=),
-            stderr => Source.fromInputStream(stderr).getLines.foreach(stdErrListBuffer.+=)
-          ))
+        catch {
+          case e: Exception =>
+            HaskellNotificationGroup.notifyError("Could not start ghc-modi. Make sure you have set right path to ghc-modi in settings.")
+            setGhcModiProblemTime()
+        }
+      case None => {
+        HaskellNotificationGroup.notifyError(s"ghc-modi could not be started for project ${project.getName} because ghc-modi path is not set")
       }
-      catch {
-        case e: Exception =>
-          HaskellNotificationGroup.notifyError("Can not start ghc-modi. Make sure you have set right path to ghc-modi in settings.")
-          setGhcModiProblemTime()
-          return
-      }
-      HaskellNotificationGroup.notifyInfo(s"ghc-modi is called to startup for project ${project.getName}")
-    } else {
-      HaskellNotificationGroup.notifyError(s"ghc-modi is not started for project ${project.getName} because ghc-modi path is not defined")
-      outputStream = null
     }
+  }
+
+  def exit() = synchronized {
+    if (outputStream != null) {
+      try {
+        HaskellNotificationGroup.notifyInfo(s"ghc-modi is invoked to shutdown for project ${project.getName}")
+        writeToOutputstream("quit")
+        if (stdin != null) {
+          stdin.close()
+        }
+        if (stdout != null) {
+          stdout.close()
+        }
+        if (stderr != null) {
+          stderr.close()
+        }
+      } finally {
+        outputStream = null
+      }
+    }
+  }
+
+  private def writeToOutputstream(command: String) = {
+    stdOutListBuffer.clear()
+    outputStream.write(command.getBytes)
+    outputStream.write(LineSeparatorInBytes)
+    outputStream.flush()
   }
 
   private def setGhcModiProblemTime() = {
@@ -138,28 +160,13 @@ class GhcModi(val settings: HaskellSettings, val project: Project) extends Proje
     }
   }
 
-  def exit() {
-    try {
-      execute("quit")
-      if (stdin != null) {
-        stdin.close()
-      }
-      if (stdout != null) {
-        stdout.close()
-      }
-      if (stderr != null) {
-        stderr.close()
-      }
-    } finally {
-      outputStream = null
+  override def projectOpened(): Unit = {
+    if (HaskellProjecUtil.isHaskellProject(project)) {
+      startGhcModi()
     }
   }
 
-  override def projectOpened(): Unit = {}
-
-  override def projectClosed(): Unit = {
-    exit()
-  }
+  override def projectClosed(): Unit = exit()
 
   override def initComponent(): Unit = {}
 

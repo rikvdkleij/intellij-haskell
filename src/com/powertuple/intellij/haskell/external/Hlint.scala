@@ -1,5 +1,5 @@
 /*
- * Copyright 2014 Rik van der Kleij
+ * Copyright 2015 Rik van der Kleij
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,18 +17,23 @@
 package com.powertuple.intellij.haskell.external
 
 import com.intellij.psi.PsiFile
-import com.powertuple.intellij.haskell.settings.HaskellSettings
+import com.powertuple.intellij.haskell.settings.{HaskellSettingsState, HaskellSettings}
 import spray.json.{DefaultJsonProtocol, _}
 
 object Hlint {
 
   def check(psiFile: PsiFile): Seq[HlintInfo] = {
-    val output = ExternalProcess.getProcessOutput(
-      psiFile.getProject.getBasePath,
-      HaskellSettings.getInstance().getState.hlintPath,
-      Seq(psiFile.getVirtualFile.getPath, "-j")
-    )
-    deserializeHlintInfo(output.getStdout)
+    val hlintPath = HaskellSettingsState.getHlintPath
+    hlintPath match {
+      case Some(p) =>
+        val output = ExternalProcess.getProcessOutput(
+          psiFile.getProject.getBasePath,
+          p,
+          Seq(psiFile.getVirtualFile.getPath, "-j")
+        )
+        deserializeHlintInfo(output.getStdout)
+      case None => Seq()
+    }
   }
 
   object HlintJsonProtocol extends DefaultJsonProtocol {

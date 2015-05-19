@@ -1,5 +1,5 @@
 /*
- * Copyright 2014 Rik van der Kleij
+ * Copyright 2015 Rik van der Kleij
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,10 +19,13 @@ package com.powertuple.intellij.haskell.module
 import javax.swing.Icon
 
 import com.intellij.ide.util.projectWizard.{ModuleWizardStep, ProjectJdkForModuleStep, WizardContext}
-import com.intellij.openapi.module.{ModuleType, ModuleTypeManager}
+import com.intellij.openapi.module.{Module, ModuleType, ModuleTypeManager, ModuleUtil}
+import com.intellij.openapi.project.Project
 import com.intellij.openapi.roots.ui.configuration.ModulesProvider
 import com.powertuple.intellij.haskell.HaskellIcons
 import com.powertuple.intellij.haskell.sdk.HaskellSdkType
+
+import scala.collection.JavaConversions._
 
 class HaskellModuleType extends ModuleType[HaskellModuleBuilder](HaskellModuleType.Id) {
 
@@ -52,5 +55,9 @@ object HaskellModuleType {
 
   def getInstance: HaskellModuleType = {
     ModuleTypeManager.getInstance.findByID(Id).asInstanceOf[HaskellModuleType]
+  }
+
+  def findModules(project: Project): Seq[Module] = {
+    ModuleUtil.getModulesOfType(project, HaskellModuleType.getInstance).toSeq
   }
 }
