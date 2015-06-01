@@ -14,6 +14,9 @@ Any feedback is welcome!!
 
 
 # Features
+
+![Screenshot](./img/screenshot-quicksort.png)
+
 - Syntax highlighting (which can be customized);
 - Error/warning highlighting;
 - Find Usages of identifiers;
