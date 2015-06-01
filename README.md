@@ -1,14 +1,14 @@
 # IntelliJ plugin for Haskell
 
-When I was learning Haskell, I was missing the nice features of IntelliJ IDEA. First approach
-was to use default way of creating IntelliJ plugin by defining grammar and lexer according to
-[Haskell report](http://www.haskell.org/onlinereport/haskell2010/haskellch10.html). That did not workout because I could not define all 
-the recursiveness. 
-Decided to use grammar and lexer definitions only for tokenizing and parsing Haskell code, so not for syntax checking the code. This is needed for syntax highlighting, all kind of navigation and so on.
-Further Haskell language support is done with the support of the external tools: ghc-mod and haskell-docs.
+When I was learning Haskell, I missed the nice features of IntelliJ IDEA. My first approach
+was to use default way of creating an IntelliJ plugin by defining a grammar and a lexer according to
+[Haskell report](http://www.haskell.org/onlinereport/haskell2010/haskellch10.html). That didn't work out because I could not define all 
+the recursion. 
+Then I decided to use grammar and lexer definitions only for tokenizing and parsing Haskell code, and not for syntax checking the code. This is needed for syntax highlighting, all kinds of navigation and so on.
+Further Haskell language support is provided with the support of external tools: ghc-mod and haskell-docs.
 
-This plugin is written mainly in Scala and is not mentioned to support GHC/Cabal directly. This plugin support sandbox projects
-and expects that the Cabal init/install/build is done on command-line.
+This plugin is written mainly in Scala and is not meant to support GHC/Cabal directly. It supports sandbox projects
+and expects that Cabal init/install/build is done on the command line.
 
 Any feedback is welcome!!
 
@@ -16,10 +16,10 @@ Any feedback is welcome!!
 # Features
 - Syntax highlighting (which can be customized);
 - Error/warning highlighting;
-- Find Usages of identifiers;
-- Resolving references of identifiers (also to library code if library source code is added to project and resolves inside import declaration);
+- Find usages of identifiers;
+- Resolve references to identifiers (also to library code if library source code is added to project and resolves inside import declaration);
 - Code completion by resolving references;
-- Inplace rename identifiers (in which global rename first shows preview so refactoring scope can be adjusted).
+- In-place rename identifiers (in which global rename first shows preview so refactoring scope can be adjusted).
 - View type info from (selected) expression;
 - View expression info;
 - View quick documentation;
@@ -39,13 +39,13 @@ A lot of features are with the help of ghc-mod(i)!!
 
 # Getting started: 
 - Cabal install latest versions of ghc-mod and haskell-docs;
-- Set file paths to ghc-mod, ghc-modi, hlint and haskell-docs in `Settings/Haskell`.
-- Be sure in `Settings/Filetypes` that `Haskell language file` is registered with pattern `*.hs` and `Literate Haskell language file` with pattern `*.lhs`; 
-- First install and build your project in a Cabal sandbox (be sure that Haddock documentation is generated, see [haskell-docs](https://github.com/chrisdone/haskell-docs)). 
-- After project is built in sandbox, create Haskell project in IntelliJ by using `File`/`New Project` from IntelliJ menu;
-- In `New Project` wizard create `GHC SDK` by selecting path to GHC binaries, e.g. `\usr\local\bin`;
-- Select in `Project settings`/`Modules` which folders to exclude (like .cabal-sandbox and dist) and which folders are `Source` and `Test` (normally src and test).
-- To get nice navigation features: add for libraries and Prelude(base, ghc-prim and integer-gmp packages) the source root directories to project in `Project Settings`/`Libraries`. `cabal get` is useful for getting source code of package.
+- Set file paths to `ghc-mod`, `ghc-modi`, `hlint` and `haskell-docs` in the menu `Other Settings/Haskell`.
+- Be sure in `Editor/Filetypes` that `Haskell language file` is registered with pattern `*.hs` and `Literate Haskell language file` with pattern `*.lhs`; 
+- First install and build your project in a Cabal sandbox. (Make sure that Haddock documentation is generated, see [haskell-docs](https://github.com/chrisdone/haskell-docs)). 
+- After the project is built in the sandbox, create a Haskell project in IntelliJ by using `File`/`New`/`Project...` from the IntelliJ menu;
+- In the `New Project` wizard create `GHC SDK` by selecting path to GHC binaries, e.g. `/usr/local/bin`;
+- Select in `Project settings`/`Modules` which folders to exclude (like `.cabal-sandbox` and `dist`) and which folders are `Source` and `Test` (normally `src` and `test`).
+- To get nice navigation features: add for libraries and Prelude (base, ghc-prim and integer-gmp packages) the source root directories to project in `Project Settings`/`Libraries`. `cabal get` is useful for getting source code of package.
     To get source code of libraries in `Project view`, create for example a directory `lib` inside project root directory and put source roots there;
 - When you get an error like `NG BUG: GMECabalCompAssignment [(Left "lib/directory-1.2.1.0/System/Directory.hs",fromList [])]`, add the source root (in this example `lib/directory-1.2.1.0`) to `Project Settings`/`Libraries` because
     ghc-mod(i) does not support Haskell files which are not part of project itself;
