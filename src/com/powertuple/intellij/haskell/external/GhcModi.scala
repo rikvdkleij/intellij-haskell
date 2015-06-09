@@ -91,7 +91,7 @@ class GhcModi(val project: Project) extends ProjectComponent {
   def startGhcModi(): Unit = synchronized {
     HaskellSettingsState.getGhcModiPath match {
       case Some(p) =>
-        HaskellNotificationGroup.notifyInfo(s"ghc-modi is invoked to startup for project ${project.getName}")
+        HaskellNotificationGroup.notifyInfo(s"Starting ghc-modi for project ${project.getName}.")
         try {
           val process = getEnvParameters match {
             case None => Process(p, new File(project.getBasePath))
@@ -118,7 +118,7 @@ class GhcModi(val project: Project) extends ProjectComponent {
   def exit() = synchronized {
     if (outputStream != null) {
       try {
-        HaskellNotificationGroup.notifyInfo(s"ghc-modi is invoked to shutdown for project ${project.getName}")
+        HaskellNotificationGroup.notifyInfo(s"Shutting down ghc-modi for project ${project.getName}.")
         try {
           writeToOutputstream("quit")
         }
