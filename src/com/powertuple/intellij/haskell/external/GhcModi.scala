@@ -63,7 +63,7 @@ class GhcModi(val project: Project) extends ProjectComponent {
         writeToOutputstream(command)
 
         val waitForStdOutput = Future {
-          while (stdOutListBuffer.lastOption != Some(OK) && !stdOutListBuffer.headOption.exists(_.startsWith(GhcModiErrorIndicator))) {
+          while (!stdOutListBuffer.lastOption.contains(OK) && !stdOutListBuffer.headOption.exists(_.startsWith(GhcModiErrorIndicator))) {
             // wait for result
           }
           stdOutListBuffer.toIterable
@@ -119,7 +119,13 @@ class GhcModi(val project: Project) extends ProjectComponent {
     if (outputStream != null) {
       try {
         HaskellNotificationGroup.notifyInfo(s"ghc-modi is invoked to shutdown for project ${project.getName}")
-        writeToOutputstream("quit")
+        try {
+          writeToOutputstream("quit")
+        }
+        catch {
+          case e :Exception =>
+            HaskellNotificationGroup.notifyError(s"Error while shutting down ghc-modi for project ${project.getName}. Error message: ${e.getMessage}")
+        }
         if (stdin != null) {
           stdin.close()
         }
