@@ -96,7 +96,7 @@ object HaskellElementFactory {
   }
 
   def createModId(project: Project, name: String) = {
-    val haskellFile = createFileFromText(project, name)
+    val haskellFile = createFileFromText(project, "module " + name)
     PsiTreeUtil.findChildOfType(haskellFile, classOf[HaskellModId]).getNode
   }
 

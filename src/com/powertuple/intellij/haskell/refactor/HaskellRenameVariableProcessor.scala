@@ -21,6 +21,7 @@ import com.intellij.refactoring.listeners.RefactoringElementListener
 import com.intellij.refactoring.rename.RenamePsiElementProcessor
 import com.intellij.usageView.UsageInfo
 import com.intellij.util.IncorrectOperationException
+import com.powertuple.intellij.haskell.HaskellFile
 import com.powertuple.intellij.haskell.navigate.{HaskellFileResolveResult, HaskellGlobalResolveResult}
 import com.powertuple.intellij.haskell.psi.HaskellNamedElement
 import com.powertuple.intellij.haskell.util.FileUtil
@@ -30,25 +31,24 @@ class HaskellRenameVariableProcessor extends RenamePsiElementProcessor {
   private var isShowPreviewForced: Boolean = _
 
   override def prepareRenaming(element: PsiElement, newName: String, allRenames: java.util.Map[PsiElement, String]): Unit = {
-    isShowPreviewForced = element.getReference.resolve() match {
-      case _: HaskellGlobalResolveResult | _: HaskellFileResolveResult => true
-      case _ => false
+    if (element.isInstanceOf[HaskellNamedElement]) {
+      isShowPreviewForced = element.getReference.resolve() match {
+        case _: HaskellGlobalResolveResult | _: HaskellFileResolveResult => true
+        case _ => false
+      }
     }
   }
 
-  override def canProcessElement(element: PsiElement): Boolean = element.isInstanceOf[HaskellNamedElement]
+  override def canProcessElement(element: PsiElement): Boolean = {
+    element.isInstanceOf[HaskellNamedElement] || element.isInstanceOf[HaskellFile]
+  }
 
   override def forcesShowPreview(): Boolean = {
     isShowPreviewForced
   }
 
   override def renameElement(element: PsiElement, newName: String, usages: Array[UsageInfo], listener: RefactoringElementListener): Unit = {
-    try {
-      super.renameElement(element, newName, usages, listener)
-    }
-    catch {
-      case _: Throwable => throw new IncorrectOperationException("Invalid identifier name")
-    }
+    super.renameElement(element, newName, usages, listener)
     FileUtil.saveAllFiles()
   }
 }

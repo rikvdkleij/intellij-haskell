@@ -21,7 +21,7 @@ import com.intellij.lang.findUsages.FindUsagesProvider
 import com.intellij.psi.PsiElement
 import com.intellij.psi.tree.IElementType
 import com.intellij.util.Processor
-import com.powertuple.intellij.haskell.HaskellLexer
+import com.powertuple.intellij.haskell.{HaskellFile, HaskellLexer}
 import com.powertuple.intellij.haskell.psi.HaskellTypes._
 import com.powertuple.intellij.haskell.psi._
 
@@ -80,6 +80,7 @@ class HaskellFindUsagesProvider extends FindUsagesProvider {
   override def getDescriptiveName(element: PsiElement): String = {
     val name = element match {
       case hv: HaskellNamedElement => hv.getName
+      case hv: HaskellFile => hv.getName
       case _ => element.getText
     }
     Option(name) getOrElse "anonymous"
