@@ -65,6 +65,7 @@ class GhcModi(val project: Project) extends ProjectComponent {
         val waitForStdOutput = Future {
           while (!stdOutListBuffer.lastOption.contains(OK) && !stdOutListBuffer.headOption.exists(_.startsWith(GhcModiErrorIndicator))) {
             // wait for result
+            Thread.sleep(5)
           }
           stdOutListBuffer.toIterable
         }
