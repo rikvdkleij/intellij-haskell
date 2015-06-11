@@ -22,7 +22,9 @@ object HaskellSettingsState {
   private def state = HaskellSettings.getInstance().getState
 
   def getGhcModPath: Option[String] = {
-    createOptionPath(state.ghcModPath, HaskellConfigurable.GhcMod)
+    val path = findPath(state.ghcModPath)
+    notifyIfPathIsNotSet(path, HaskellConfigurable.GhcMod)
+    path
   }
 
   def setGhcModPath(ghcModPath: String) {
@@ -30,7 +32,9 @@ object HaskellSettingsState {
   }
 
   def getGhcModiPath: Option[String] = {
-    createOptionPath(state.ghcModiPath, HaskellConfigurable.GhcModi)
+    val path = findPath(state.ghcModiPath)
+    notifyIfPathIsNotSet(path, HaskellConfigurable.GhcModi)
+    path
   }
 
   def setGhcModiPath(ghcModiPath: String) {
@@ -38,7 +42,9 @@ object HaskellSettingsState {
   }
 
   def getHaskellDocsPath: Option[String] = {
-    createOptionPath(state.haskellDocsPath, HaskellConfigurable.HaskellDocs)
+    val path = findPath(state.haskellDocsPath)
+    notifyIfPathIsNotSet(path, HaskellConfigurable.HaskellDocs)
+    path
   }
 
   def setHaskellDocsPath(haskellDocsPath: String) {
@@ -46,7 +52,9 @@ object HaskellSettingsState {
   }
 
   def getHlintPath: Option[String] = {
-    createOptionPath(state.hlintPath, HaskellConfigurable.Hlint)
+    val path = findPath(state.hlintPath)
+    notifyIfPathIsNotSet(path, HaskellConfigurable.Hlint)
+    path
   }
 
   def setHlintPath(hlintPath: String) {
@@ -54,24 +62,22 @@ object HaskellSettingsState {
   }
 
   def getCabalPath: Option[String] = {
-    createOptionPath(state.cabalPath, HaskellConfigurable.Cabal)
+    val path = findPath(state.cabalPath)
+    notifyIfPathIsNotSet(path, HaskellConfigurable.Cabal)
+    path
   }
 
   def setCabalPath(cabalPath: String) {
     state.cabalPath = cabalPath
   }
 
-  private def notifyPathIsNotSet(name: String) {
-    HaskellNotificationGroup.notifyError("Path to " + name + " is not set")
+  private def notifyIfPathIsNotSet(path: Option[String], name: String) {
+    if (path.isEmpty) {
+      HaskellNotificationGroup.notifyError("Path to " + name + " is not set")
+    }
   }
 
-  private def createOptionPath(path: String, name: String): Option[String] = {
-    if (path.isEmpty) {
-      notifyPathIsNotSet(name)
-      None
-    }
-    else {
-      Option(path)
-    }
+  private def findPath(path: String): Option[String] = {
+    Option(path).filterNot(_.isEmpty)
   }
 }
