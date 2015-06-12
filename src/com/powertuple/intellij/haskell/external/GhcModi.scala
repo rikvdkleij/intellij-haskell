@@ -117,28 +117,28 @@ class GhcModi(val project: Project) extends ProjectComponent {
   }
 
   def exit() = synchronized {
-    if (outputStream != null) {
+    try {
+      HaskellNotificationGroup.notifyInfo(s"Shutting down ghc-modi for project ${project.getName}.")
       try {
-        HaskellNotificationGroup.notifyInfo(s"Shutting down ghc-modi for project ${project.getName}.")
-        try {
+        if (outputStream != null) {
           writeToOutputstream("quit")
         }
-        catch {
-          case e :Exception =>
-            HaskellNotificationGroup.notifyError(s"Error while shutting down ghc-modi for project ${project.getName}. Error message: ${e.getMessage}")
-        }
-        if (stdin != null) {
-          stdin.close()
-        }
-        if (stdout != null) {
-          stdout.close()
-        }
-        if (stderr != null) {
-          stderr.close()
-        }
-      } finally {
-        outputStream = null
       }
+      catch {
+        case e: Exception =>
+          HaskellNotificationGroup.notifyError(s"Error while shutting down ghc-modi for project ${project.getName}. Error message: ${e.getMessage}")
+      }
+      if (stdin != null) {
+        stdin.close()
+      }
+      if (stdout != null) {
+        stdout.close()
+      }
+      if (stderr != null) {
+        stderr.close()
+      }
+    } finally {
+      outputStream = null
     }
   }
 
