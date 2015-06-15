@@ -28,7 +28,7 @@ import com.intellij.openapi.vfs.VfsUtil
 import com.intellij.util.Consumer
 import com.powertuple.intellij.haskell.HaskellNotificationGroup
 import com.powertuple.intellij.haskell.external.{GhcModiManager, ExternalProcess}
-import com.powertuple.intellij.haskell.settings.HaskellSettingsState
+import com.powertuple.intellij.haskell.settings.{CabalInfo, HaskellSettingsState}
 import com.powertuple.intellij.haskell.util.HaskellProjecUtil
 
 import scala.collection.JavaConversions._
@@ -42,8 +42,8 @@ class AddDependencies extends AnAction {
   override def update(e: AnActionEvent): Unit = e.getPresentation.setEnabledAndVisible(HaskellProjecUtil.isHaskellProject(e.getProject))
 
   override def actionPerformed(e: AnActionEvent): Unit = {
-    HaskellSettingsState.getCabalPath match {
-      case Some(cabalPath) =>
+    HaskellSettingsState.getCabalInfo(e.getProject) match {
+      case Some(cabalInfo) =>
         val project = e.getProject
 
         ProgressManager.getInstance().run(new Task.Backgroundable(project, "Downloading Haskell package sources and adding them as source libraries to module") {
@@ -51,10 +51,10 @@ class AddDependencies extends AnAction {
             val libPath = new File(project.getBasePath + File.separator + libName)
             FileUtil.delete(libPath)
             FileUtil.createDirectory(libPath)
-            ExternalProcess.getProcessOutput(project.getBasePath, cabalPath, Seq("freeze"))
-            readCabalConfig(project, cabalPath).map(cl => getHaskellPackages(cl)).foreach(packages => {
+            ExternalProcess.getProcessOutput(project.getBasePath, cabalInfo.path, getCabalFreezeArguments(cabalInfo))
+            readCabalConfig(project, cabalInfo.path).map(cl => getHaskellPackages(cl)).foreach(packages => {
               progressIndicator.setFraction(initialProgressStep)
-              downloadHaskellPackageSources(project, cabalPath, packages, progressIndicator)
+              downloadHaskellPackageSources(project, cabalInfo.path, packages, progressIndicator)
               progressIndicator.setFraction(0.9)
               addDependenciesAsLibrariesToModule(project, packages, libPath.getAbsolutePath)
             })
@@ -63,6 +63,15 @@ class AddDependencies extends AnAction {
         })
       case None => HaskellNotificationGroup.notifyError("Could not download sources because path to Cabal is not set")
     }
+  }
+
+  private def getCabalFreezeArguments(cabalInfo: CabalInfo) = {
+    Seq("freeze") ++ (
+      if (cabalInfo.version > "1.22") {
+        Seq("--enable-tests")
+      } else {
+        Seq()
+      })
   }
 
   private def readCabalConfig(project: Project, cabalPath: String): Option[Seq[String]] = {
@@ -118,4 +127,5 @@ class AddDependencies extends AnAction {
   }
 
   case class HaskellPackage(name: String, version: String, fileName: String)
+
 }

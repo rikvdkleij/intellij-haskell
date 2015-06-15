@@ -16,7 +16,11 @@
 
 package com.powertuple.intellij.haskell.settings
 
+import java.io.File
+
+import com.intellij.openapi.project.Project
 import com.powertuple.intellij.haskell.HaskellNotificationGroup
+import com.powertuple.intellij.haskell.external.ExternalProcess
 
 object HaskellSettingsState {
   private def state = HaskellSettings.getInstance().getState
@@ -61,14 +65,22 @@ object HaskellSettingsState {
     state.hlintPath = hlintPath
   }
 
-  def getCabalPath: Option[String] = {
+  def getCabalInfo(project: Project): Option[CabalInfo] = {
     val path = findPath(state.cabalPath)
     notifyIfPathIsNotSet(path, HaskellConfigurable.Cabal)
-    path
+    path.map(p => CabalInfo(p, getCabalVersion(project, p)))
   }
 
   def setCabalPath(cabalPath: String) {
     state.cabalPath = cabalPath
+  }
+
+  private def getCabalVersion(project: Project, cabalPath: String): String = {
+    ExternalProcess.getProcessOutput(
+      project.getBasePath,
+      cabalPath,
+      Seq("--numeric-version")
+    ).getStdout
   }
 
   private def notifyIfPathIsNotSet(path: Option[String], name: String) {
@@ -81,3 +93,5 @@ object HaskellSettingsState {
     Option(path).filterNot(_.isEmpty)
   }
 }
+
+case class CabalInfo(path: String, version: String)
