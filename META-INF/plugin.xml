@@ -181,6 +181,10 @@
                 text="Show Type" description="Show type of (selected) expression">
 
             <keyboard-shortcut first-keystroke="alt EQUALS" keymap="$default"/>
+            <keyboard-shortcut first-keystroke="alt EQUALS" keymap="Mac OS X" remove="true"/>
+            <keyboard-shortcut first-keystroke="alt EQUALS" keymap="Mac OS X 10.5+" remove="true"/>
+            <keyboard-shortcut first-keystroke="ctrl alt p" keymap="Mac OS X"/>
+            <keyboard-shortcut first-keystroke="ctrl alt p" keymap="Mac OS X 10.5+"/>
             <add-to-group group-id="CodeEditorViewGroup" anchor="last"/>
         </action>
 
@@ -188,6 +192,10 @@
                 text="Show Info" description="Show info about identifier in context of file">
 
             <keyboard-shortcut first-keystroke="alt shift EQUALS" keymap="$default"/>
+            <keyboard-shortcut first-keystroke="alt shift EQUALS" keymap="Mac OS X" remove="true"/>
+            <keyboard-shortcut first-keystroke="alt shift EQUALS" keymap="Mac OS X 10.5+" remove="true"/>
+            <keyboard-shortcut first-keystroke="ctrl shift p" keymap="Mac OS X" />
+            <keyboard-shortcut first-keystroke="ctrl shift p" keymap="Mac OS X 10.5+"/>
             <add-to-group group-id="CodeEditorViewGroup" anchor="last"/>
         </action>
 
