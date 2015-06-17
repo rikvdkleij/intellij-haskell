@@ -1,7 +1,7 @@
 <idea-plugin version="2">
     <id>com.powertuple.intellij.haskell</id>
     <name>IntelliJ-Haskell</name>
-    <version>0.9-beta</version>
+    <version>0.9</version>
     <vendor email="rikvdkleij@gmail.com">PowerTuple</vendor>
 
     <description><![CDATA[
@@ -9,9 +9,12 @@
     ]]></description>
 
     <change-notes><![CDATA[
-        <p>0.9-beta</p>
+        <p>0.9</p>
         <ul>
-            <li>Added feature to download Haskell package sources and add them as source libraries to module"</li>
+            <li>Added feature to automatically download sources of project dependencies and add them as source libraries to module</li>
+            <li>Support for renaming Haskell module</li>
+            <li>Bug fixes</li>
+            <li>Improvements</li>
         </ul>
         <p>0.81</p>
         <ul>
