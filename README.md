@@ -39,7 +39,7 @@ A lot of features are with the help of ghc-mod(i)!!
 
 # Getting started: 
 - Cabal install latest versions of ghc-mod and haskell-docs;
-- Set file paths to `ghc-mod`, `ghc-modi`, `hlint` and `haskell-docs` in the menu `Other Settings/Haskell`.
+- Set file paths to `ghc-mod`, `ghc-modi`, `hlint`, `cabal` and `haskell-docs` in the menu `Other Settings/Haskell`.
 - Be sure in `Editor/Filetypes` that `Haskell language file` is registered with pattern `*.hs` and `Literate Haskell language file` with pattern `*.lhs`; 
 - First install and build your project in a Cabal sandbox. (Make sure that Haddock documentation is generated, see [haskell-docs](https://github.com/chrisdone/haskell-docs)). 
 - After the project is built in the sandbox, create a Haskell project in IntelliJ by using `File`/`New`/`Project...` from the IntelliJ menu;
@@ -48,11 +48,9 @@ A lot of features are with the help of ghc-mod(i)!!
 - In last page of wizard select path to root of project;
 - Add `Content Root` to Haskell module in `Project Settings`/`Modules`/`Sources` by selecting root folder of Haskell sandbox project;
 - Select in `Project settings`/`Modules` which folders to exclude (like `.cabal-sandbox` and `dist`) and which folders are `Source` and `Test` (normally `src` and `test`).
-- To get nice navigation features: add for libraries and Prelude (base, ghc-prim and integer-gmp packages) the source root directories to project in `Project Settings`/`Libraries`. `cabal get` is useful for getting source code of package.
-    To get source code of libraries in `Project view`, create for example a directory `lib` inside project root directory and put source roots there;
-- When you get an error like `NG BUG: GMECabalCompAssignment [(Left "lib/directory-1.2.1.0/System/Directory.hs",fromList [])]`, add the source root (in this example `lib/directory-1.2.1.0`) to `Project Settings`/`Libraries` because
-    ghc-mod(i) does not support Haskell files which are not part of project itself;
-- Be sure all module names are directly or indirectly listed in Cabal file;
+- Use `Tools`/`Add Haskell package dependencies` to download all sources of dependencies. They will be added as source libraries to module. If you use Cabal 1.22 also test dependencies will be downloaded. 
+    This option gives you nice navigation features through libraries. Sources are downloaded to folder `ideaHaskellLib` inside root of project 
+
 
 # Remarks
 - ghc-mod does not support GHC < 7.10 and Cabal 1.22. See for more info the [ghc-mod wiki](https://github.com/kazu-yamamoto/ghc-mod/wiki). So in
@@ -70,6 +68,10 @@ A lot of features are with the help of ghc-mod(i)!!
 - Windows is not supported. Maybe it will work okay but I can not test it;
 - Created workaround for ghc-mod issue #432;
 - <del> I found an issue in IntelliJ 14.1, see https://youtrack.jetbrains.com/issue/IDEA-138236. Hopefully they will fix it soon; </del>
+- When you get an error like `NG BUG: GMECabalCompAssignment [(Left "lib/directory-1.2.1.0/System/Directory.hs",fromList [])]`, add the source root (in this example `lib/directory-1.2.1.0`) to `Project Settings`/`Libraries` because
+    ghc-mod(i) does not support Haskell files which are not part of project itself;
+- Be sure all module names are directly or indirectly listed in Cabal file;
+
 
 # How to build
 1. Clone this project;
