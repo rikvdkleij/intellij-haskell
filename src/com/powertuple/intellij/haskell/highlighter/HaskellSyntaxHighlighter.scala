@@ -42,7 +42,7 @@ object HaskellSyntaxHighlighter {
   final val Operator = createTextAttributesKey("HS_OPERATOR", CodeInsightColors.TYPE_PARAMETER_NAME_ATTRIBUTES)
   final val ReservedSymbol = createTextAttributesKey("HS_SYMBOL", DefaultLanguageHighlighterColors.INSTANCE_METHOD)
   final val Pragma = createTextAttributesKey("HS_PRAGMA", DefaultLanguageHighlighterColors.PREDEFINED_SYMBOL)
-  final val Default = createTextAttributesKey("HS_DEFAULT", DefaultLanguageHighlighterColors.DOC_COMMENT_MARKUP)
+  final val Default = createTextAttributesKey("HS_DEFAULT", DefaultLanguageHighlighterColors.COMMA)
 }
 
 class HaskellSyntaxHighlighter extends SyntaxHighlighterBase {
