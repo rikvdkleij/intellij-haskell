@@ -74,6 +74,7 @@ class HaskellSyntaxHighlighter extends SyntaxHighlighterBase {
       case et if OPERATORS.contains(et) => pack(Operator)
       case et if et == HS_VARID_ID => pack(Variable)
       case et if et == HS_CONID_ID => pack(Constructor)
+      case et if WHITE_SPACES.contains(et) => pack(null)
       case _ => pack(Default)
     }
   }
