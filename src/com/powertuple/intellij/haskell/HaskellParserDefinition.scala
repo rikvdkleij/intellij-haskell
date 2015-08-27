@@ -27,7 +27,7 @@ import com.powertuple.intellij.haskell.psi.HaskellTypes._
 import org.jetbrains.annotations.NotNull
 
 object HaskellParserDefinition {
-  final val WHITE_SPACES = TokenSet.create(TokenType.WHITE_SPACE, HS_NEWLINE)
+  final val WHITE_SPACES = TokenSet.create(TokenType.WHITE_SPACE)
   final val COMMENTS = TokenSet.create(HS_COMMENT, HS_NCOMMENT)
   final val PRAGMA_START_END_IDS = TokenSet.create(HS_PRAGMA_START, HS_PRAGMA_END)
   final val RESERVED_IDS = TokenSet.create(HS_CASE, HS_CLASS, HS_DATA, HS_DEFAULT, HS_DERIVING, HS_DO, HS_ELSE, HS_IF, HS_IMPORT,
