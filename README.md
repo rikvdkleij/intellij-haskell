@@ -53,8 +53,8 @@ A lot of features are with the help of ghc-mod(i)!!
 
 
 # Remarks
-- ghc-mod does not support GHC < 7.10 and Cabal 1.22. See for more info the [ghc-mod wiki](https://github.com/kazu-yamamoto/ghc-mod/wiki). So in
-    case you are using for example GHC 7.8.4, you will have to use Cabal 1.20.x;
+- <del> ghc-mod does not support GHC < 7.10 and Cabal 1.22. See for more info the [ghc-mod wiki](https://github.com/kazu-yamamoto/ghc-mod/wiki). So in
+    case you are using for example GHC 7.8.4, you will have to use Cabal 1.20.x </del>;
 - In Navigation dialog dots can not be used. Workaround is by using spaces instead of dots, so when you want to go to `Control.Lens`, type `Control Lens`;
 - IntelliJ has a nice terminal plugin, useful for executing the Cabal commands;
 - ghc-mod can not help in library files and if Haskell source file contains not completely valid Haskell (e.g. while typing). In that case I try to solve request by using AST-tree (IntelliJ calls it PSI-tree). 
@@ -74,12 +74,16 @@ A lot of features are with the help of ghc-mod(i)!!
 
 
 # How to build
-1. Clone this project;
-1. Clone IntelliJ Communitiy Edition (optional, it's needed to navigate to IntelliJ source code). Check out right tag by looking to version number;
 1. Install/enable plugins: Plugin Devkit, Grammar-Kit and PsiViewer;
-1. Open this project and check/change paths of `IntelliJ Platform Plugin SDK`. Also check/change path to it's sources (use root directory from step 2);
-1. Check/change paths to Scala dependencies: scala-sdk, scalatest and spray-json;
-1. Navigate to `_HaskellLexer.flex` and run `Run Flex Generator`. This will generate `_HaskellLexer.java`;
-1. Navigate to `haskell.bnf` and run `Generate Parser Code`. This will generate parser Java files in `gen` directory;
-1. Select `Make project` from `Build` menu;
-1. To run/debug this plugin select `intellij-haskell` in `Configurations`;
+1. Clone this project;
+1. Go to root of project and run sbt;
+1. Run task `updateIdea`;
+1. Run task `compile`;
+1. Import this project as sbt project in IntelliJ;
+1. Select `File`/`New` / `Module from existing sources` and select `intellij-haskell.iml` inside `intellij-haskell` folder;
+
+
+# Development remarks
+1. To run plugin inside IntelliJ, navigate to `Run` / `Edit configurations` and create `plugin` configuration for `intellij-haskell`;
+1. After making changes to `_HaskellLexer.flex`, run `Run Flex Generator`. This will generate `_HaskellLexer.java`;
+1. After making changes to `haskell.bnf`, run `Generate Parser Code`. This will generate parser Java files in `gen` directory;

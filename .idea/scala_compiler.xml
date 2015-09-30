@@ -1,9 +1,10 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <project version="4">
   <component name="ScalaCompilerConfiguration">
-    <parameters>
-      <parameter value="-feature" />
-      <parameter value="-target:jvm-1.6" />
-    </parameters>
+    <profile name="SBT 1" modules="intellijHaskell">
+      <parameters>
+        <parameter value="-target:jvm-1.6" />
+      </parameters>
+    </profile>
   </component>
 </project>

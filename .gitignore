@@ -1,13 +1,3 @@
-/gen
-/dist
-/out
-/target
-/.idea/workspace.xml
-/.idea/vcs.xml
-/.idea/rik.xml
-/.idea/dictionaries/rik.xml
-*~
-.idea/inspectionProfiles
-/src/com/powertuple/intellij/haskell/_HaskellLexer.java
-idea-flex.skeleton
-JFlex.jar
+target
+.idea
+idea
