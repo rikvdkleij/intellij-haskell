@@ -73,17 +73,23 @@ A lot of features are with the help of ghc-mod(i)!!
 - Be sure all module names are directly or indirectly listed in Cabal file;
 
 
-# How to build
+# How to build project
 1. Install/enable plugins: Plugin Devkit, Grammar-Kit and PsiViewer;
 1. Clone this project;
 1. Go to root of project and run sbt;
 1. Run task `updateIdea`;
 1. Run task `compile`;
 1. Import this project as sbt project in IntelliJ;
+1. Select `Build` / `Make project`;
+
+# How to prepare plugin for deployment
 1. Select `File`/`New` / `Module from existing sources` and select `intellij-haskell.iml` inside `intellij-haskell` folder;
+1. Be sure `unmanaged-jars` dependency is set to `provided` inside `Project settings` / `Modules` / `Dependencies`. (btw, setting `provided` inside sbt file gives error); 
+1. Right click on top of `intellij-haskell` plugin module and select `Prepare Plugin Module 'intellij-haskell' for deployment`; 
 
 
 # Development remarks
 1. To run plugin inside IntelliJ, navigate to `Run` / `Edit configurations` and create `plugin` configuration for `intellij-haskell`;
 1. After making changes to `_HaskellLexer.flex`, run `Run Flex Generator`. This will generate `_HaskellLexer.java`;
 1. After making changes to `haskell.bnf`, run `Generate Parser Code`. This will generate parser Java files in `gen` directory;
+1. Add `sources.zip` inside `idea` / [`idea build #`] to `Project settings` / `Modules` / `Dependencies` / `unmanaged-jars` to see IntelliJ sources;
