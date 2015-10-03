@@ -1,6 +1,6 @@
 lazy val commonSettings = Seq(
   organization := "com.powertuple",
-  version := "0.9.0",
+  version := "0.95",
   scalaVersion := "2.11.7"
 )
 
@@ -12,7 +12,6 @@ lazy val intellijHaskell = (project in file(".")).
   settings(commonSettings: _*).
   settings(
     name := "IntelliJ Haskell",
-    version := "0.95",
     javacOptions in Global ++= Seq("-source", "1.6", "-target", "1.6"),
     scalacOptions in Global += "-target:jvm-1.6",
     libraryDependencies += scalaTest,
@@ -21,4 +20,4 @@ lazy val intellijHaskell = (project in file(".")).
     unmanagedJars in Compile += baseDirectory.value / "idea"
   )
 
-ideaBuild in ThisBuild := "142.5047.6"
+ideaBuild in ThisBuild := "142.5239.7"
