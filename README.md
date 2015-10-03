@@ -39,15 +39,15 @@ A lot of features are with the help of ghc-mod(i)!!
 
 # Getting started: 
 - Cabal install latest versions of ghc-mod and haskell-docs;
-- Set file paths to `ghc-mod`, `ghc-modi`, `hlint`, `cabal` and `haskell-docs` in the menu `Other Settings/Haskell`.
+- Set file paths to `ghc-mod`, `ghc-modi`, `hlint`, `cabal` and `haskell-docs` in the menu `Settings`/`Other Settings`/`Haskell`.
 - Be sure in `Editor/Filetypes` that `Haskell language file` is registered with pattern `*.hs` and `Literate Haskell language file` with pattern `*.lhs`; 
 - First install and build your project in a Cabal sandbox. (Make sure that Haddock documentation is generated, see [haskell-docs](https://github.com/chrisdone/haskell-docs)). 
 - After the project is built in the sandbox, create a Haskell project in IntelliJ by using `File`/`New`/`Project...` from the IntelliJ menu;
 - In the `New Project` wizard select `Haskell module` and check `Haskell` in `Additional Libraries and Frameworks`;
 - In next page of wizard create `GHC SDK` by selecting path to GHC binaries, e.g. `/usr/local/bin`;
 - In last page of wizard select path to root of project;
-- Add `Content Root` to Haskell module in `Project Settings`/`Modules`/`Sources` by selecting root folder of Haskell sandbox project;
-- Select in `Project settings`/`Modules` which folders to exclude (like `.cabal-sandbox` and `dist`) and which folders are `Source` and `Test` (normally `src` and `test`).
+- Add `Content Root` to Haskell module in `Project structure`/`Project Settings`/`Modules`/`Sources` by selecting root folder of Haskell sandbox project;
+- Select in `Project structure`/`Project settings`/`Modules` which folders to exclude (like `.cabal-sandbox` and `dist`) and which folders are `Source` and `Test` (normally `src` and `test`).
 - Use `Tools`/`Add Haskell package dependencies` to download all sources of dependencies. They will be added as source libraries to module. If you use Cabal 1.22 also test dependencies will be downloaded. 
     This option gives you nice navigation features through libraries. Sources are downloaded to folder `ideaHaskellLib` inside root of project 
 
@@ -80,16 +80,23 @@ A lot of features are with the help of ghc-mod(i)!!
 1. Run task `updateIdea`;
 1. Run task `compile`;
 1. Import this project as sbt project in IntelliJ;
-1. Select `Build` / `Make project`;
+1. Select `Build`/`Make project`;
+
 
 # How to prepare plugin for deployment
-1. Select `File`/`New` / `Module from existing sources` and select `intellij-haskell.iml` inside `intellij-haskell` folder;
-1. Be sure `unmanaged-jars` dependency is set to `provided` inside `Project settings` / `Modules` / `Dependencies`. (btw, setting `provided` inside sbt file gives error); 
+1. Right click on top of `intellij-haskell.iml` inside `intellij-haskell` folder;
+1. Select `Import module`;
+1. Be sure `unmanaged-jars` dependency is set to `provided` inside `Project structure`/`Project settings`/`Modules`/`Dependencies` (btw, setting `provided` inside sbt file gives error); 
 1. Right click on top of `intellij-haskell` plugin module and select `Prepare Plugin Module 'intellij-haskell' for deployment`; 
 
 
+# How to run/debug plugin inside IntelliJ
+1. Set Plugin SDK settings right inside `Project structure`/`Platform settings`/`SDKs`. For example to, set  SDK home path to `idea/142.5239.7` inside project root folder;
+1. Set `Module-SDK` right for `intellij-haskell` plugin module inside `Project structure`/`Project structure`/`Project settings`/`Modules`; 
+1. To run plugin inside IntelliJ, first run configuration has to be created. Navigate to `Run`/`Edit configurations` and create `plugin` configuration for `intellij-haskell`;
+
+
 # Development remarks
-1. To run plugin inside IntelliJ, navigate to `Run` / `Edit configurations` and create `plugin` configuration for `intellij-haskell`;
 1. After making changes to `_HaskellLexer.flex`, run `Run Flex Generator`. This will generate `_HaskellLexer.java`;
 1. After making changes to `haskell.bnf`, run `Generate Parser Code`. This will generate parser Java files in `gen` directory;
-1. Add `sources.zip` inside `idea` / [`idea build #`] to `Project settings` / `Modules` / `Dependencies` / `unmanaged-jars` to see IntelliJ sources;
+1. Add `sources.zip` inside `idea`/[`idea build #`] to `Project structure`/`Project settings`/`Modules`/`Dependencies`/`unmanaged-jars` to see IntelliJ sources;
