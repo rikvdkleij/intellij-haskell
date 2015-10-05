@@ -76,9 +76,9 @@ A lot of features are with the help of ghc-mod(i)!!
 # How to build project
 1. Install/enable plugins: Plugin Devkit, Grammar-Kit and PsiViewer;
 1. Clone this project;
-1. Go to root of project and run sbt;
-1. Run task `updateIdea`;
-1. Run task `compile`;
+1. Go to root of project and start sbt console;
+1. Run task `updateIdea` inside sbt console;
+1. Run task `compile` inside sbt console;
 1. Import this project as sbt project in IntelliJ;
 1. Select `Build`/`Make project`;
 
