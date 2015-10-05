@@ -16,7 +16,6 @@
 
 package com.powertuple.intellij.haskell.external
 
-import com.intellij.openapi.components.ServiceManager
 import com.intellij.openapi.project.Project
 
 object GhcModiManager {
@@ -42,6 +41,6 @@ object GhcModiManager {
   }
 
   private def getGhcModiService(project: Project) = {
-    ServiceManager.getService(project, classOf[GhcModi])
+    project.getComponent(classOf[GhcModi])
   }
 }
