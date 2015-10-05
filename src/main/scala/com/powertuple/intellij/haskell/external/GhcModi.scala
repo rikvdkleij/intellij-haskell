@@ -90,12 +90,12 @@ class GhcModi(val project: Project) extends ProjectComponent {
   }
 
   def startGhcModi(): Unit = synchronized {
-    HaskellSettingsState.getGhcModiPath match {
+    HaskellSettingsState.getGhcModPath match {
       case Some(p) =>
-        HaskellNotificationGroup.notifyInfo(s"Starting ghc-modi for project ${project.getName}.")
+        HaskellNotificationGroup.notifyInfo(s"Starting ghc-mod in interactive mode for project ${project.getName}.")
         try {
           val process = getEnvParameters match {
-            case None => Process(p, new File(project.getBasePath))
+            case None => Process(p + " legacy-interactive", new File(project.getBasePath))
             case Some(ep) => Process(p, new File(project.getBasePath), ep)
           }
           process.run(
