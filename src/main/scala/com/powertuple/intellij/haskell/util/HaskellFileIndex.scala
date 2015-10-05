@@ -109,7 +109,11 @@ object HaskellFileIndex {
 
   private def getFilesForType(fileType: FileType, project: Project, searchScope: GlobalSearchScope) = {
     val psiManager = PsiManager.getInstance(project)
-    FileBasedIndex.getInstance.getContainingFiles(FileTypeIndex.NAME, fileType, searchScope).flatMap(convertToHaskellFile(_, psiManager))
+    ApplicationManager.getApplication.runReadAction(new Computable[Iterable[HaskellFile]] {
+      override def compute() = {
+        FileBasedIndex.getInstance.getContainingFiles(FileTypeIndex.NAME, fileType, searchScope).flatMap(convertToHaskellFile(_, psiManager))
+      }
+    })
   }
 
   private def getByName(project: Project, name: String, searchScope: GlobalSearchScope): Iterable[HaskellFile] = {
