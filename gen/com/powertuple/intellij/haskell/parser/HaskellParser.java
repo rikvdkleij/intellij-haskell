@@ -2907,7 +2907,7 @@ public class HaskellParser implements PsiParser, LightPsiParser {
   }
 
   /* ********************************************************** */
-  // PRAGMA_START onl "INCLUDE" general_pragma_content PRAGMA_END NEWLINE
+  // PRAGMA_START onl "INCLUDE" general_pragma_content PRAGMA_END
   public static boolean include_pragma(PsiBuilder b, int l) {
     if (!recursion_guard_(b, l, "include_pragma")) return false;
     if (!nextTokenIs(b, HS_PRAGMA_START)) return false;
@@ -2917,7 +2917,7 @@ public class HaskellParser implements PsiParser, LightPsiParser {
     r = r && onl(b, l + 1);
     r = r && consumeToken(b, "INCLUDE");
     r = r && general_pragma_content(b, l + 1);
-    r = r && consumeTokens(b, 0, HS_PRAGMA_END, HS_NEWLINE);
+    r = r && consumeToken(b, HS_PRAGMA_END);
     exit_section_(b, m, HS_INCLUDE_PRAGMA, r);
     return r;
   }
@@ -3605,7 +3605,7 @@ public class HaskellParser implements PsiParser, LightPsiParser {
   }
 
   /* ********************************************************** */
-  // PRAGMA_START onl "LANGUAGE" onl qcon (onl COMMA onl qcon)* onl PRAGMA_END NEWLINE
+  // PRAGMA_START onl "LANGUAGE" onl qcon (onl COMMA onl qcon)* onl PRAGMA_END
   public static boolean language_pragma(PsiBuilder b, int l) {
     if (!recursion_guard_(b, l, "language_pragma")) return false;
     if (!nextTokenIs(b, HS_PRAGMA_START)) return false;
@@ -3618,7 +3618,7 @@ public class HaskellParser implements PsiParser, LightPsiParser {
     r = r && qcon(b, l + 1);
     r = r && language_pragma_5(b, l + 1);
     r = r && onl(b, l + 1);
-    r = r && consumeTokens(b, 0, HS_PRAGMA_END, HS_NEWLINE);
+    r = r && consumeToken(b, HS_PRAGMA_END);
     exit_section_(b, m, HS_LANGUAGE_PRAGMA, r);
     return r;
   }
@@ -4163,7 +4163,7 @@ public class HaskellParser implements PsiParser, LightPsiParser {
   }
 
   /* ********************************************************** */
-  // PRAGMA_START onl ("OPTIONS_GHC" | "OPTIONS") general_pragma_content PRAGMA_END NEWLINE
+  // PRAGMA_START onl ("OPTIONS_GHC" | "OPTIONS") general_pragma_content PRAGMA_END
   public static boolean options_ghc_pragma(PsiBuilder b, int l) {
     if (!recursion_guard_(b, l, "options_ghc_pragma")) return false;
     if (!nextTokenIs(b, HS_PRAGMA_START)) return false;
@@ -4173,7 +4173,7 @@ public class HaskellParser implements PsiParser, LightPsiParser {
     r = r && onl(b, l + 1);
     r = r && options_ghc_pragma_2(b, l + 1);
     r = r && general_pragma_content(b, l + 1);
-    r = r && consumeTokens(b, 0, HS_PRAGMA_END, HS_NEWLINE);
+    r = r && consumeToken(b, HS_PRAGMA_END);
     exit_section_(b, m, HS_OPTIONS_GHC_PRAGMA, r);
     return r;
   }

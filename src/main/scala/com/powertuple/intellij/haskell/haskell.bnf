@@ -44,9 +44,9 @@ program                     ::= onl file_header? onl module_body
 
 file_header                 ::= SHEBANG_LINE? onl (file_header_pragma onl)+
 file_header_pragma          ::= language_pragma | options_ghc_pragma | include_pragma | haddock_pragma | ann_pragma | dummy_header_pragma
-language_pragma             ::= PRAGMA_START onl "LANGUAGE" onl qcon (onl COMMA onl qcon)* onl PRAGMA_END NEWLINE
-options_ghc_pragma          ::= PRAGMA_START onl ("OPTIONS_GHC" | "OPTIONS") general_pragma_content PRAGMA_END NEWLINE
-include_pragma              ::= PRAGMA_START onl "INCLUDE" general_pragma_content PRAGMA_END NEWLINE
+language_pragma             ::= PRAGMA_START onl "LANGUAGE" onl qcon (onl COMMA onl qcon)* onl PRAGMA_END
+options_ghc_pragma          ::= PRAGMA_START onl ("OPTIONS_GHC" | "OPTIONS") general_pragma_content PRAGMA_END
+include_pragma              ::= PRAGMA_START onl "INCLUDE" general_pragma_content PRAGMA_END
 haddock_pragma              ::= PRAGMA_START onl "OPTIONS_HADDOCK" general_pragma_content PRAGMA_END
 dummy_header_pragma         ::= PRAGMA_START CONID_ID? PRAGMA_END? NEWLINE
 
