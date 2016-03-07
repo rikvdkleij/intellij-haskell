@@ -46,14 +46,6 @@ octal               = 0[oO]{octit}+
 
 float               = [-+]?([0-9]+(\\.[0-9]*)?|\\.[0-9]+)([eE][-+]?[0-9]+)?
 
-pragma_start        = "{-#"
-pragma_end          = "#-}"
-
-comment             = ("--"[^\r\n]* | "\\begin{code}")
-
-ncomment_start      = "{-"
-ncomment_end        = "-}"
-
 gap                 = \\({white_char}|{newline})*\\
 cntrl               = {large} | [@\[\\\]\^_]
 charesc             = [abfnrtv\\\"\'&]
@@ -125,6 +117,15 @@ quasi_quote_end     = {vertical_bar} {right_bracket}
 
 shebang_line        = {hash} {exclamation_mark} [^\r\n]*
 
+pragma_start        = "{-#"
+pragma_end          = "#-}"
+
+comment             = {dash}{dash}
+ncomment_start      = "{-"
+ncomment_end        = "-}"
+
+comment             = ({dash}{dash}[^\r\n]* | "\\begin{code}") {newline}
+
 %%
 
 <TEX> {
@@ -134,7 +135,7 @@ shebang_line        = {hash} {exclamation_mark} [^\r\n]*
 }
 
 <NCOMMENT> {
-    {ncomment_start} ({newline}| {white_char} | {vertical_bar} | {small} | {large} | {digit} | {dash})? {
+    {ncomment_start} {
         commentDepth++;
     }
 
@@ -160,7 +161,7 @@ shebang_line        = {hash} {exclamation_mark} [^\r\n]*
     .|{white_char}|{newline} {}
 }
 
-{ncomment_start} ({vertical_bar} | {newline} | {white_char} | {small} | {large} | {digit} | {dash}) {
+{ncomment_start}({white_char} | {newline} | [^#\-\}]) {
     yybegin(NCOMMENT);
     commentDepth = 0;
     commentStart = getTokenStart();
@@ -170,11 +171,11 @@ shebang_line        = {hash} {exclamation_mark} [^\r\n]*
     {comment}             { return HS_COMMENT; }
     {white_space}         { return com.intellij.psi.TokenType.WHITE_SPACE; }
 
+    {ncomment_start}      { return HS_NCOMMENT_START; }
+    {ncomment_end}        { return HS_NCOMMENT_END; }
     {pragma_start}        { return HS_PRAGMA_START; }
     {pragma_end}          { return HS_PRAGMA_END; }
 
-    {ncomment_start}      { return HS_NCOMMENT_START; }
-    {ncomment_end}        { return HS_NCOMMENT_END; }
 
     // not listed as reserved identifier but have meaning in certain context,
     // let's say specialreservedid

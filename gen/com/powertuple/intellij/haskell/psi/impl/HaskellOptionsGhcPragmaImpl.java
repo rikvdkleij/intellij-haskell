@@ -22,9 +22,9 @@ public class HaskellOptionsGhcPragmaImpl extends HaskellCompositeElementImpl imp
   }
 
   @Override
-  @NotNull
+  @Nullable
   public HaskellGeneralPragmaContent getGeneralPragmaContent() {
-    return findNotNullChildByClass(HaskellGeneralPragmaContent.class);
+    return findChildByClass(HaskellGeneralPragmaContent.class);
   }
 
 }

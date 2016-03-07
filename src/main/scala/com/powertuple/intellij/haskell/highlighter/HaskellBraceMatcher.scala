@@ -18,8 +18,7 @@ package com.powertuple.intellij.haskell.highlighter
 
 import com.intellij.lang.{BracePair, PairedBraceMatcher}
 import com.intellij.psi.PsiFile
-import com.intellij.psi.tree.{TokenSet, IElementType}
-import com.powertuple.intellij.haskell.HaskellParserDefinition
+import com.intellij.psi.tree.IElementType
 import com.powertuple.intellij.haskell.psi.HaskellTypes
 
 object HaskellBraceMatcher {

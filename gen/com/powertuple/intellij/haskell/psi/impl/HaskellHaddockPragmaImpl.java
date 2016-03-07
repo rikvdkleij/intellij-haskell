@@ -22,9 +22,9 @@ public class HaskellHaddockPragmaImpl extends HaskellCompositeElementImpl implem
   }
 
   @Override
-  @NotNull
+  @Nullable
   public HaskellGeneralPragmaContent getGeneralPragmaContent() {
-    return findNotNullChildByClass(HaskellGeneralPragmaContent.class);
+    return findChildByClass(HaskellGeneralPragmaContent.class);
   }
 
 }

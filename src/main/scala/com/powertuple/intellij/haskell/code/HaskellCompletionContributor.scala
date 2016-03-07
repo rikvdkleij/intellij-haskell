@@ -20,6 +20,7 @@ import java.util.concurrent.{Executors, TimeUnit}
 
 import com.intellij.codeInsight.completion._
 import com.intellij.codeInsight.lookup.LookupElementBuilder
+import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.project.Project
 import com.intellij.patterns.PlatformPatterns
 import com.intellij.psi.impl.source.tree.TreeUtil
@@ -29,30 +30,31 @@ import com.intellij.util.ProcessingContext
 import com.powertuple.intellij.haskell.external.{BrowseInfo, GhcMod}
 import com.powertuple.intellij.haskell.psi.HaskellTypes._
 import com.powertuple.intellij.haskell.psi._
-import com.powertuple.intellij.haskell.util.{HaskellElementCondition, LineColumnPosition}
+import com.powertuple.intellij.haskell.util.{HaskellElementCondition, LineColumnPosition, OSUtil}
 import com.powertuple.intellij.haskell.{HaskellIcons, HaskellParserDefinition}
 
+import scala.annotation.tailrec
 import scala.collection.JavaConversions._
 import scala.concurrent.duration.Duration
 import scala.concurrent.{Await, ExecutionContext, Future}
 
-object HaskellCompletionContributor {
-  private final val ExecutorService = Executors.newCachedThreadPool()
-  implicit private final val ExecContext = ExecutionContext.fromExecutorService(ExecutorService)
-}
-
 class HaskellCompletionContributor extends CompletionContributor {
 
-  import com.powertuple.intellij.haskell.code.HaskellCompletionContributor._
+  private final val ExecutorService = Executors.newCachedThreadPool()
+  implicit private final val ExecContext = ExecutionContext.fromExecutorService(ExecutorService)
 
   private final val ReservedIds = HaskellParserDefinition.ALL_RESERVED_IDS.getTypes.map(_.asInstanceOf[HaskellTokenType].getName).toSeq
   private final val SpecialReservedIds = Seq("forall", "safe", "unsafe")
-  private final val PragmaStartEndIds = Seq("{-# ", "#-}")
+  private final val PragmaStartId = "{-#"
+  private final val PragmaEndId = "#-}"
+  private final val PragmaStartEndIds = Seq("{-#", "#-}")
   private final val FileHeaderPragmaIds = Seq("LANGUAGE", "OPTIONS_HADDOCK", "INCLUDE", "OPTIONS", "OPTIONS_GHC", "ANN")
   private final val ModulePragmaIds = Seq("ANN", "DEPRECATED", "WARING", "INLINE", "NOINLINE", "NOTINLINE", "INLINABEL", "LINE", "RULES",
     "SPECIALIZE", "SPECIALISE", "MINIMAL", "SOURCE", "UNPACK", "NOUNPACK")
   private final val InsideImportClauses = Seq("as", "hiding", "qualified")
   private final val CommentIds = Seq("{-", "-}", "--")
+
+  private final val PlainPrefixElementTypes = Seq(HS_COMMENT, HS_NCOMMENT, HS_PRAGMA_START, HS_PRAGMA_END)
 
   extend(CompletionType.BASIC, PlatformPatterns.psiElement(), new CompletionProvider[CompletionParameters] {
     def addCompletions(parameters: CompletionParameters, context: ProcessingContext, originalResultSet: CompletionResultSet) {
@@ -60,26 +62,28 @@ class HaskellCompletionContributor extends CompletionContributor {
       val file = parameters.getOriginalFile
 
       val resultSet = getNonEmptyElement(parameters.getOriginalPosition).orElse(getNonEmptyElement(parameters.getPosition)) match {
+        case Some(e) if PlainPrefixElementTypes.contains(e.getNode.getElementType) | e.getText.startsWith("{") | e.getText.startsWith("#") | e.getText.startsWith("-") => originalResultSet.withPrefixMatcher(new PlainPrefixMatcher(getTextAtCaret(parameters.getEditor, file)))
+        case Some(e) if e.getNode.getElementType == HS_CONID_ID && getTextAtCaret(parameters.getEditor, file).endsWith(".") => originalResultSet.withPrefixMatcher(new PlainPrefixMatcher(getTextAtCaret(parameters.getEditor, file)))
         case _ => originalResultSet
       }
 
       val completionPosition = Option(parameters.getOriginalPosition).orElse(Option(parameters.getPosition))
       completionPosition match {
+        case Some(p) if isPragmaInProgress(p) =>
+          resultSet.addAllElements(getModulePragmaIds)
+          resultSet.addAllElements(getPragmaStartEndIds)
+        case Some(p) if isFileHeaderPragmaInProgress(p) =>
+          resultSet.addAllElements(getLanguageExtensions(project).toSeq)
+          resultSet.addAllElements(getPragmaStartEndIds)
+          resultSet.addAllElements(getFileHeaderPragmaIds)
         case Some(p) if isImportSpecInProgress(p) =>
           resultSet.addAllElements(findIdsForInImportModuleSpec(project, p).toSeq)
         case Some(p) if isImportModuleDeclarationInProgress(p) =>
           resultSet.addAllElements(findModulesToImport(project).toSeq)
           resultSet.addAllElements(getInsideImportClauses)
-        case Some(p) if isFileHeaderPragmaInProgress(p) =>
-          resultSet.addAllElements(getLanguageExtensions(project).toSeq)
-          resultSet.addAllElements(getPragmaStartEndIds)
-          resultSet.addAllElements(getFileHeaderPragmaIds)
         case Some(p) if isNCommentInProgress(p) =>
           resultSet.addAllElements(getPragmaStartEndIds)
           resultSet.addAllElements(getCommentIds)
-        case Some(p) if isPragmaInProgress(p) =>
-          resultSet.addAllElements(getModulePragmaIds)
-          resultSet.addAllElements(getPragmaStartEndIds)
         case Some(p) =>
           val importDeclarations = findImportDeclarations(file)
           getQualifiedIdentifierInProgress(p) match {
@@ -116,8 +120,30 @@ class HaskellCompletionContributor extends CompletionContributor {
     }
 
     caretElement match {
-      case Some(e) if e.getText.trim.length > 0 => context.setDummyIdentifier(e.getText.trim)
+      case Some(e) if e.getNode.getElementType == HS_CONID_ID && Option(e.getNextSibling).map(_.getNode.getElementType == HS_DOT).isDefined =>
+        context.setDummyIdentifier(file.findElementAt(e.getTextOffset - 1).getText + ".")
+      case Some(e) if PlainPrefixElementTypes.contains(e.getNode.getElementType) => context.setDummyIdentifier(getTextAtCaret(context.getEditor, file))
+      case Some(e) if e.getText.trim.nonEmpty => context.setDummyIdentifier(e.getText.trim)
       case _ => context.setDummyIdentifier("a")
+    }
+  }
+
+  private def getTextAtCaret(editor: Editor, file: PsiFile): String = {
+    val caretOffset = editor.getCaretModel.getOffset
+    getTextUntilNoChar(file.getText, if (caretOffset > 0) caretOffset - 1 else caretOffset, "")
+  }
+
+  @tailrec
+  private def getTextUntilNoChar(fileText: String, offset: Int, text: String): String = {
+    val c = fileText.charAt(offset)
+    if (c < ' ' || c == OSUtil.LineSeparator || c == '\r') {
+      text
+    } else {
+      if (offset > 0) {
+        getTextUntilNoChar(fileText, offset - 1, c.toString + text)
+      } else {
+        c.toString + text
+      }
     }
   }
 
@@ -130,8 +156,8 @@ class HaskellCompletionContributor extends CompletionContributor {
 
   private def isImportSpecInProgress(position: PsiElement): Boolean = {
     Option(TreeUtil.findParent(position.getNode, HS_IMPORT_ID)).isDefined ||
-        (Option(TreeUtil.findParent(position.getNode, HS_IMPORT_SPEC)).isDefined &&
-            Option(TreeUtil.findSiblingBackward(position.getNode, HS_LEFT_PAREN)).isDefined)
+      (Option(TreeUtil.findParent(position.getNode, HS_IMPORT_SPEC)).isDefined &&
+        Option(TreeUtil.findSiblingBackward(position.getNode, HS_LEFT_PAREN)).isDefined)
   }
 
   private def findIdsForInImportModuleSpec(project: Project, position: PsiElement) = {
@@ -143,7 +169,7 @@ class HaskellCompletionContributor extends CompletionContributor {
 
   private def isImportModuleDeclarationInProgress(position: PsiElement): Boolean = {
     Option(TreeUtil.findSiblingBackward(position.getNode, HS_IMPORT)).
-        orElse(Option(TreeUtil.findParent(position.getNode, HS_IMPORT_DECLARATION))).isDefined
+      orElse(Option(TreeUtil.findParent(position.getNode, HS_IMPORT_DECLARATION))).isDefined
   }
 
   private def findModulesToImport(project: Project) = {
@@ -156,8 +182,8 @@ class HaskellCompletionContributor extends CompletionContributor {
 
   private def isFileHeaderPragmaInProgress(position: PsiElement): Boolean = {
     Option(TreeUtil.findParent(position.getNode, HaskellTypes.HS_FILE_HEADER_PRAGMA)).isDefined ||
-        Option(TreeUtil.findSiblingBackward(position.getNode, HS_COMMA)).isDefined &&
-            Option(TreeUtil.findSibling(position.getNode, HS_PRAGMA_END)).isDefined
+      Option(TreeUtil.findSiblingBackward(position.getNode, HS_COMMA)).isDefined &&
+        Option(TreeUtil.findSibling(position.getNode, HS_PRAGMA_END)).isDefined
   }
 
   private def isPragmaInProgress(position: PsiElement): Boolean = {
@@ -166,25 +192,23 @@ class HaskellCompletionContributor extends CompletionContributor {
 
   private def getQualifiedIdentifierInProgress(position: PsiElement): Option[String] = {
     val qualifiedElement = Option(PsiTreeUtil.findFirstParent(position, HaskellElementCondition.QualifiedElementCondition))
-    qualifiedElement match {
-      case Some(e: HaskellQvarId) => Some(e.getQualifier.getName)
-      case Some(e: HaskellQconId) => Some(e.getQconIdQualifier.getText)
-      case Some(e: HaskellQvarSym) => Some(e.getQualifier.getName)
-      case Some(e: HaskellQconSym) => Some(e.getQualifier.getName)
-      case _ =>
-        val elementType = position.getNode.getElementType
-        if (elementType == HS_NEWLINE || elementType == TokenType.WHITE_SPACE || elementType == HS_DOT) {
-          Option(position.getPrevSibling).flatMap(ps => {
-            val qcon = Option(PsiTreeUtil.findChildOfType(ps, classOf[HaskellQcon]))
-            if (qcon.exists(qcon => Option(TreeUtil.findLastLeaf(qcon.getNextSibling.getNode)).exists(_.getElementType == HS_DOT))) {
-              qcon.map(_.getName)
-            } else {
-              None
-            }
-          })
-        } else {
-          None
-        }
+    qualifiedElement.map(qe => {
+      qe match {
+        case qe: HaskellQvarId => qe.getQualifier.getName
+        case qe: HaskellQconId => qe.getQconIdQualifier.getText
+        case qe: HaskellQvarSym => qe.getQualifier.getName
+        case qe: HaskellQconSym => qe.getQualifier.getName
+      }
+    }).orElse {
+      val elementType = position.getNode.getElementType
+      if (elementType == HS_NEWLINE || elementType == TokenType.WHITE_SPACE || elementType == HS_DOT) {
+        Option(position.getPrevSibling).flatMap(ps => {
+          val qcon = Option(PsiTreeUtil.findChildOfType(ps, classOf[HaskellQcon]))
+          qcon.filter(qc => Option(qc.getNextSibling).map(_.getNode).flatMap(n => Option(TreeUtil.findLastLeaf(n))).exists(_.getElementType == HS_DOT)).map(_.getName)
+        })
+      } else {
+        None
+      }
     }
   }
 
@@ -198,6 +222,10 @@ class HaskellCompletionContributor extends CompletionContributor {
 
   private def getPragmaStartEndIds = {
     PragmaStartEndIds.map(p => LookupElementBuilder.create(p).withIcon(HaskellIcons.HaskellSmallBlueLogo).withTailText(" pragma", true))
+  }
+
+  private def getPragmaStartId = {
+    LookupElementBuilder.create(PragmaStartId).withIcon(HaskellIcons.HaskellSmallBlueLogo).withTailText(" pragma", true)
   }
 
   private def getFileHeaderPragmaIds = {
@@ -214,7 +242,7 @@ class HaskellCompletionContributor extends CompletionContributor {
 
   private def getImportedModulesWithFullScope(psiFile: PsiFile, importDeclarations: Iterable[HaskellImportDeclaration]): Iterable[ImportFullSpec] = {
     val moduleNames = importDeclarations.filter(i => Option(i.getImportSpec).isEmpty).
-        map(i => ImportFullSpec(i.getModuleName, Option(i.getImportQualified).isDefined, Option(i.getImportQualifiedAs).map(_.getQualifier).map(_.getName)))
+      map(i => ImportFullSpec(i.getModuleName, Option(i.getImportQualified).isDefined, Option(i.getImportQualifiedAs).map(_.getQualifier).map(_.getName)))
     if (importDeclarations.exists(_.getModuleName == "Prelude")) {
       moduleNames
     } else {
@@ -250,9 +278,9 @@ class HaskellCompletionContributor extends CompletionContributor {
     val importFullSpecs = getImportedModulesWithFullScope(file, importDeclarations).toSeq
 
     val browseInfosWithImportSpecFutures = importFullSpecs.
-        map(ifs => Future {
-      BrowseInfosForImportFullSpec(ifs, GhcMod.browseInfo(project, ifs.moduleName, removeParensFromOperator = true))
-    }.map(bifs => createLookupElements(bifs.importSpec, bifs.browseInfos, qualifier)))
+      map(ifs => Future {
+        BrowseInfosForImportFullSpec(ifs, GhcMod.browseInfo(project, ifs.moduleName, removeParensFromOperator = true))
+      }.map(bi => createLookupElements(bi.importSpec, bi.browseInfos, qualifier)))
 
     Await.result(Future.sequence(browseInfosWithImportSpecFutures), Duration.create(5, TimeUnit.SECONDS)).flatten
   }
@@ -261,9 +289,9 @@ class HaskellCompletionContributor extends CompletionContributor {
     val importHidingIdsSpec = getImportedModulesWithHidingIdsSpec(file, importDeclarations).toSeq
 
     val browseInfosWithImportHidingIdsSpecFutures = importHidingIdsSpec.
-        map(ihis => Future {
-      BrowseInfosForImportHidingIdsSpec(ihis, GhcMod.browseInfo(project, ihis.moduleName, removeParensFromOperator = true))
-    }.map(bihis => createLookupElements(bihis.importSpec, bihis.browseInfos.filterNot(bi => bihis.importSpec.ids.contains(bi.name)), None)))
+      map(bi => Future {
+        BrowseInfosForImportHidingIdsSpec(bi, GhcMod.browseInfo(project, bi.moduleName, removeParensFromOperator = true))
+      }.map(bis => createLookupElements(bis.importSpec, bis.browseInfos.filterNot(bi => bis.importSpec.ids.contains(bi.name)), None)))
 
     Await.result(Future.sequence(browseInfosWithImportHidingIdsSpecFutures), Duration.create(5, TimeUnit.SECONDS)).flatten
   }
@@ -272,9 +300,9 @@ class HaskellCompletionContributor extends CompletionContributor {
     val importIdsSpec = getImportedModulesWithSpecIds(file, importDeclarations).toSeq
 
     val browseInfosWithImportIdsSpecFutures = importIdsSpec.
-        map(iis => Future {
-      BrowseInfosForImportIdsSpec(iis, GhcMod.browseInfo(project, iis.moduleName, removeParensFromOperator = true))
-    }.map(biis => createLookupElements(biis.importSpec, biis.browseInfos.filter(bi => biis.importSpec.ids.contains(bi.name)), qualifier)))
+      map(iis => Future {
+        BrowseInfosForImportIdsSpec(iis, GhcMod.browseInfo(project, iis.moduleName, removeParensFromOperator = true))
+      }.map(bis => createLookupElements(bis.importSpec, bis.browseInfos.filter(bi => bis.importSpec.ids.contains(bi.name)), qualifier)))
 
     Await.result(Future.sequence(browseInfosWithImportIdsSpecFutures), Duration.create(5, TimeUnit.SECONDS)).flatten
   }

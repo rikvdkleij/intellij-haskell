@@ -29,7 +29,6 @@ public interface HaskellTypes {
   IElementType HS_DEPRECATED_WARN_PRAGMA = new HaskellCompositeElementType("HS_DEPRECATED_WARN_PRAGMA");
   IElementType HS_DERIVING_DECLARATION = new HaskellCompositeElementType("HS_DERIVING_DECLARATION");
   IElementType HS_DOT_DOT_PARENS = new HaskellCompositeElementType("HS_DOT_DOT_PARENS");
-  IElementType HS_DUMMY_HEADER_PRAGMA = new HaskellCompositeElementType("HS_DUMMY_HEADER_PRAGMA");
   IElementType HS_EXPORT = new HaskellCompositeElementType("HS_EXPORT");
   IElementType HS_EXPORTS = new HaskellCompositeElementType("HS_EXPORTS");
   IElementType HS_EXPRESSION = new HaskellCompositeElementType("HS_EXPRESSION");
@@ -79,6 +78,7 @@ public interface HaskellTypes {
   IElementType HS_OPTIONS_GHC_PRAGMA = new HaskellCompositeElementType("HS_OPTIONS_GHC_PRAGMA");
   IElementType HS_OTHER_PRAGMA = new HaskellCompositeElementType("HS_OTHER_PRAGMA");
   IElementType HS_PARALLEL_ARRAY_TYPE = new HaskellCompositeElementType("HS_PARALLEL_ARRAY_TYPE");
+  IElementType HS_PRAGMA_RECOVER = new HaskellCompositeElementType("HS_PRAGMA_RECOVER");
   IElementType HS_QCON = new HaskellCompositeElementType("HS_QCON");
   IElementType HS_QCON_ID = new HaskellCompositeElementType("HS_QCON_ID");
   IElementType HS_QCON_ID_QUALIFIER = new HaskellCompositeElementType("HS_QCON_ID_QUALIFIER");
@@ -254,9 +254,6 @@ public interface HaskellTypes {
       else if (type == HS_DOT_DOT_PARENS) {
         return new HaskellDotDotParensImpl(node);
       }
-      else if (type == HS_DUMMY_HEADER_PRAGMA) {
-        return new HaskellDummyHeaderPragmaImpl(node);
-      }
       else if (type == HS_EXPORT) {
         return new HaskellExportImpl(node);
       }
@@ -403,6 +400,9 @@ public interface HaskellTypes {
       }
       else if (type == HS_PARALLEL_ARRAY_TYPE) {
         return new HaskellParallelArrayTypeImpl(node);
+      }
+      else if (type == HS_PRAGMA_RECOVER) {
+        return new HaskellPragmaRecoverImpl(node);
       }
       else if (type == HS_QCON) {
         return new HaskellQconImpl(node);

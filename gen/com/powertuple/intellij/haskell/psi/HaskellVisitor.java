@@ -90,10 +90,6 @@ public class HaskellVisitor extends PsiElementVisitor {
     visitCompositeElement(o);
   }
 
-  public void visitDummyHeaderPragma(@NotNull HaskellDummyHeaderPragma o) {
-    visitCompositeElement(o);
-  }
-
   public void visitExport(@NotNull HaskellExport o) {
     visitCompositeElement(o);
   }
@@ -287,6 +283,10 @@ public class HaskellVisitor extends PsiElementVisitor {
   }
 
   public void visitParallelArrayType(@NotNull HaskellParallelArrayType o) {
+    visitCompositeElement(o);
+  }
+
+  public void visitPragmaRecover(@NotNull HaskellPragmaRecover o) {
     visitCompositeElement(o);
   }
 
