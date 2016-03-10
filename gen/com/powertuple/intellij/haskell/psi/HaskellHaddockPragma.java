@@ -7,7 +7,7 @@ import com.intellij.psi.PsiElement;
 
 public interface HaskellHaddockPragma extends HaskellCompositeElement {
 
-  @Nullable
+  @NotNull
   HaskellGeneralPragmaContent getGeneralPragmaContent();
 
 }

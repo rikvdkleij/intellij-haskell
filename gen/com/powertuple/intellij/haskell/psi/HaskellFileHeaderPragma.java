@@ -11,6 +11,9 @@ public interface HaskellFileHeaderPragma extends HaskellCompositeElement {
   HaskellAnnPragma getAnnPragma();
 
   @Nullable
+  HaskellDummyHeaderPragma getDummyHeaderPragma();
+
+  @Nullable
   HaskellHaddockPragma getHaddockPragma();
 
   @Nullable
