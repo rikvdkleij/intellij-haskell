@@ -1,10 +1,10 @@
 lazy val commonSettings = Seq(
   organization := "com.powertuple",
   version := "0.95",
-  scalaVersion := "2.11.7"
+  scalaVersion := "2.11.8"
 )
 
-val scalaTest = "org.scalatest" % "scalatest_2.11" % "2.2.4" % "test"
+val scalaTest = "org.scalatest" % "scalatest_2.11" % "2.2.6" % "test"
 val sprayJson = "io.spray" %% "spray-json" % "1.3.2"
 
 lazy val intellijHaskell = (project in file(".")).
@@ -20,4 +20,4 @@ lazy val intellijHaskell = (project in file(".")).
     unmanagedJars in Compile += baseDirectory.value / "idea"
   )
 
-ideaBuild in ThisBuild := "143.1184.17"
+ideaBuild in ThisBuild := "143.2287.1"
