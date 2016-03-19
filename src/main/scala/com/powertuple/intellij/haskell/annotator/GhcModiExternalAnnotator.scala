@@ -21,7 +21,6 @@ import com.intellij.codeInsight.daemon.impl.DaemonCodeAnalyzerImpl
 import com.intellij.codeInsight.intention.impl.BaseIntentionAction
 import com.intellij.lang.annotation.{AnnotationHolder, ExternalAnnotator}
 import com.intellij.openapi.editor.Editor
-import com.intellij.openapi.fileEditor.FileDocumentManager
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.TextRange
 import com.intellij.psi.PsiFile
@@ -44,24 +43,23 @@ class GhcModiExternalAnnotator extends ExternalAnnotator[GhcModInitialInfo, GhcM
   private final val PerhapsYouMeantPattern = """.*Perhaps you meant(.*)""".r
   private final val SuggestionPattern = """‘([^‘’]+)’ \(([^\(]+)\)""".r
 
-  /**
-   * Returning null will cause doAnnotate() not to be called by Intellij API.
-   */
   override def collectInformation(psiFile: PsiFile): GhcModInitialInfo = {
     (psiFile, Option(psiFile.getVirtualFile)) match {
       case (_, None) => null // can be case if file is in memory only (just created file)
       case (_, Some(f)) if f.getFileType != HaskellFileType.INSTANCE => null
       case (_, Some(f)) if f.getPath == null => null
-      case (_, Some(f)) => FileUtil.saveFile(psiFile); GhcModInitialInfo(psiFile, f.getPath)
+      case (_, Some(f)) =>
+        FileUtil.saveFile(psiFile)
+        GhcModInitialInfo(psiFile, f.getPath)
     }
   }
 
   override def doAnnotate(initialInfoGhcMod: GhcModInitialInfo): GhcModCheckResult = {
-    GhcModCheck.check(initialInfoGhcMod.psiFile.getProject, initialInfoGhcMod.filePath)
+    GhcModCheck.check(initialInfoGhcMod.psiFile.getProject, initialInfoGhcMod.psiFile.getVirtualFile.getPath)
   }
 
   override def apply(psiFile: PsiFile, ghcModResult: GhcModCheckResult, holder: AnnotationHolder) {
-    if (ghcModResult.problems.nonEmpty && psiFile.isValid) {
+    if (psiFile.isValid) {
       for (annotation <- createAnnotations(ghcModResult, psiFile)) {
         annotation match {
           case ErrorAnnotation(textRange, message) => holder.createErrorAnnotation(textRange, message)
@@ -75,18 +73,16 @@ class GhcModiExternalAnnotator extends ExternalAnnotator[GhcModInitialInfo, GhcM
         }
       }
     }
-//    markFileDirty(psiFile)
+    restartCodeAnalyser(psiFile)
   }
 
-//  private def markFileDirty(psiFile: PsiFile) {
-//    val fileStatusMap = DaemonCodeAnalyzer.getInstance(psiFile.getProject).asInstanceOf[DaemonCodeAnalyzerImpl].getFileStatusMap
-//    val document = FileDocumentManager.getInstance().getDocument(psiFile.getVirtualFile)
-//    fileStatusMap.markFileScopeDirty(document, new TextRange(0, document.getTextLength), document.getTextLength)
-//  }
+  private def restartCodeAnalyser(psiFile: PsiFile) {
+    DaemonCodeAnalyzer.getInstance(psiFile.getProject).asInstanceOf[DaemonCodeAnalyzerImpl].restart(psiFile)
+  }
 
   private[annotator] def createAnnotations(ghcModiCheckResult: GhcModCheckResult, psiFile: PsiFile): Iterable[Annotation] = {
     val problems = ghcModiCheckResult.problems.filter(_.filePath == psiFile.getOriginalFile.getVirtualFile.getPath)
-    problems.map { problem =>
+    problems.flatMap { problem =>
       val textRange = getProblemTextRange(psiFile, problem)
       textRange.map { tr =>
         val normalizedMessage = problem.getNormalizedMessage
@@ -110,7 +106,7 @@ class GhcModiExternalAnnotator extends ExternalAnnotator[GhcModInitialInfo, GhcM
           }
         }
       }
-    }.flatten
+    }
   }
 
   private def getProblemTextRange(psiFile: PsiFile, problem: GhcModProblem): Option[TextRange] = {

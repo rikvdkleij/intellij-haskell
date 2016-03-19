@@ -90,7 +90,7 @@ public class HaskellVisitor extends PsiElementVisitor {
     visitCompositeElement(o);
   }
 
-  public void visitDummyHeaderPragma(@NotNull HaskellDummyHeaderPragma o) {
+  public void visitDummyPragma(@NotNull HaskellDummyPragma o) {
     visitCompositeElement(o);
   }
 

@@ -29,8 +29,8 @@ public class HaskellFileHeaderPragmaImpl extends HaskellCompositeElementImpl imp
 
   @Override
   @Nullable
-  public HaskellDummyHeaderPragma getDummyHeaderPragma() {
-    return findChildByClass(HaskellDummyHeaderPragma.class);
+  public HaskellDummyPragma getDummyPragma() {
+    return findChildByClass(HaskellDummyPragma.class);
   }
 
   @Override

@@ -22,19 +22,19 @@ import com.powertuple.intellij.haskell.psi._
 
 object HaskellElementCondition {
 
-  final val ImportModuleCondition = new Condition[PsiElement]() {
+  final val ImportDeclarationCondition = new Condition[PsiElement]() {
     override def value(psiElement: PsiElement): Boolean = {
       psiElement match {
-        case _: HaskellImportModule => true
+        case _: HaskellImportDeclaration => true
         case _ => false
       }
     }
   }
 
-  final val ImportModuleDeclarationCondition = new Condition[PsiElement]() {
+  final val ImportSpecCondition = new Condition[PsiElement]() {
     override def value(psiElement: PsiElement): Boolean = {
       psiElement match {
-        case _: HaskellImportDeclaration => true
+        case _: HaskellImportSpec => true
         case _ => false
       }
     }
@@ -83,6 +83,15 @@ object HaskellElementCondition {
         case _: HaskellQvarSym => true
         case _: HaskellQconId => true
         case _: HaskellQconSym => true
+        case _ => false
+      }
+    }
+  }
+
+  final val FileHeaderCondition = new Condition[PsiElement]() {
+    override def value(psiElement: PsiElement): Boolean = {
+      psiElement match {
+        case _: HaskellFileHeader => true
         case _ => false
       }
     }

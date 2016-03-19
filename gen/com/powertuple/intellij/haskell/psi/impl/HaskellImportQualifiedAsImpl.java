@@ -22,9 +22,15 @@ public class HaskellImportQualifiedAsImpl extends HaskellCompositeElementImpl im
   }
 
   @Override
-  @NotNull
+  @Nullable
   public HaskellQualifier getQualifier() {
-    return findNotNullChildByClass(HaskellQualifier.class);
+    return findChildByClass(HaskellQualifier.class);
+  }
+
+  @Override
+  @NotNull
+  public HaskellVarId getVarId() {
+    return findNotNullChildByClass(HaskellVarId.class);
   }
 
 }

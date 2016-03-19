@@ -18,29 +18,28 @@ package com.powertuple.intellij.haskell.external
 
 import com.intellij.openapi.project.Project
 import com.powertuple.intellij.haskell.HaskellNotificationGroup
-import com.powertuple.intellij.haskell.settings.HaskellSettingsState
 import com.powertuple.intellij.haskell.util.{FileUtil, OSUtil}
-
-import scala.collection.JavaConversions._
 
 object GhcModCheck {
 
   private val ghcModProblemPattern = """(.+):([\d]+):([\d]+):(.+)""".r
 
   def check(project: Project, filePath: String): GhcModCheckResult = {
-    val ghcModPath = HaskellSettingsState.getGhcModPath
-    val output = ghcModPath.map { p =>
-      ExternalProcess.getProcessOutput(
-        project.getBasePath,
-        p,
-        Seq("check", filePath)
-      )
-    }.map(_.getStdoutLines)
+    val output = GhcModiManager.getGhcModi(project).execute("check " + filePath)
+    //    val ghcModPath = HaskellSettingsState.getGhcModPath
+    //    val output = ghcModPath.map { p =>
+    //      ExternalProcess.getProcessOutput(
+    //        project.getBasePath,
+    //        p,
+    //        Seq("check", filePath)
+    //      )
+    //    }.map(_.getStdoutLines)
 
-    output match {
-      case None => new GhcModCheckResult(Iterable())
-      case Some(o) => new GhcModCheckResult(o.flatMap(l => parseOutputLine(l, project)))
-    }
+    new GhcModCheckResult(output.outputLines.flatMap(l => parseOutputLine(l, project)))
+    //    match {
+    //      case None => new GhcModCheckResult(Iterable())
+    //      case Some(o) => new GhcModCheckResult(o.flatMap(l => parseOutputLine(l, project)))
+    //    }
   }
 
   private[external] def parseOutputLine(ghcModOutput: String, project: Project): Option[GhcModProblem] = {

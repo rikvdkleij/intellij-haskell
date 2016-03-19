@@ -16,32 +16,32 @@
 
 package com.powertuple.intellij.haskell.util
 
+import com.intellij.openapi.application.{ApplicationManager, ModalityState}
 import com.intellij.openapi.editor.Document
 import com.intellij.openapi.fileEditor.FileDocumentManager
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.roots.libraries.LibraryUtil
 import com.intellij.psi.search.GlobalSearchScope
 import com.intellij.psi.{PsiDirectory, PsiFile}
-import com.intellij.util.ui.UIUtil
 import com.powertuple.intellij.haskell.HaskellNotificationGroup
 import com.powertuple.intellij.haskell.external.GhcMod
 
 object FileUtil {
 
   def saveFile(psiFile: PsiFile) {
-    UIUtil.invokeLaterIfNeeded(new Runnable {
+    ApplicationManager.getApplication.invokeLater(new Runnable {
       override def run() {
         FileDocumentManager.getInstance.saveDocument(FileDocumentManager.getInstance().getDocument(psiFile.getVirtualFile))
       }
-    })
+    }, ModalityState.NON_MODAL)
   }
 
   def saveAllFiles() {
-    UIUtil.invokeLaterIfNeeded(new Runnable {
+    ApplicationManager.getApplication.invokeLater(new Runnable {
       override def run() {
         FileDocumentManager.getInstance.saveAllDocuments()
       }
-    })
+    }, ModalityState.NON_MODAL)
   }
 
   def findModuleFilePath(module: String, project: Project): Option[String] = {

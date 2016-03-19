@@ -20,133 +20,99 @@ import java.util.concurrent.{Callable, Executors, TimeUnit}
 
 import com.google.common.cache.{CacheBuilder, CacheLoader}
 import com.google.common.util.concurrent.{ListenableFuture, ListenableFutureTask, UncheckedExecutionException}
-import com.intellij.execution.process.ProcessOutput
 import com.intellij.openapi.progress.ProcessCanceledException
 import com.intellij.openapi.project.Project
-import com.powertuple.intellij.haskell.settings.{HaskellSettingsState, HaskellSettings}
-
-import scala.collection.JavaConversions._
 
 object GhcMod {
 
-  private case class ModuleInfo(projectBasePath: String, moduleName: String)
+  private case class ModuleInfo(project: Project, moduleName: String)
 
-  private case class ModuleList(projectBasePath: String)
+  private case class ModuleList(project: Project)
 
   private val executor = Executors.newCachedThreadPool()
 
   private final val BrowseInfoCache = CacheBuilder.newBuilder()
-      .refreshAfterWrite(10, TimeUnit.SECONDS)
-      .build(
-        new CacheLoader[ModuleInfo, ProcessOutput]() {
-          private def getProcessOutput(moduleInfo: ModuleInfo): Option[ProcessOutput] = {
-            val ghcModPath = getGhcModPath
-            ghcModPath.map { p =>
-              ExternalProcess.getProcessOutput(
-                moduleInfo.projectBasePath,
-                p,
-                Seq("browse", "-d", "-q", "-o") ++ Seq(moduleInfo.moduleName),
-                4900
-              )
-            }
-          }
-
-          override def load(moduleInfo: ModuleInfo): ProcessOutput = {
-            getProcessOutput(moduleInfo).getOrElse(new ProcessOutput())
-          }
-
-          override def reload(moduleInfo: ModuleInfo, oldValue: ProcessOutput): ListenableFuture[ProcessOutput] = {
-            val task = ListenableFutureTask.create(new Callable[ProcessOutput]() {
-              def call() = {
-                val newValue = getProcessOutput(moduleInfo)
-                newValue match {
-                  case None => oldValue
-                  case Some(v) => if (v.getStdoutLines.isEmpty) {
-                    oldValue
-                  } else {
-                    v
-                  }
-                }
-              }
-            })
-            executor.execute(task)
-            task
-          }
+    .refreshAfterWrite(10, TimeUnit.SECONDS)
+    .build(
+      new CacheLoader[ModuleInfo, GhcModiOutput]() {
+        private def getProcessOutput(moduleInfo: ModuleInfo): GhcModiOutput = {
+          GhcModiManager.getGhcModi(moduleInfo.project).execute("browse -d -q -o " + moduleInfo.moduleName)
         }
-      )
+
+        override def load(moduleInfo: ModuleInfo): GhcModiOutput = {
+          getProcessOutput(moduleInfo)
+        }
+
+        override def reload(moduleInfo: ModuleInfo, oldValue: GhcModiOutput): ListenableFuture[GhcModiOutput] = {
+          val task = ListenableFutureTask.create(new Callable[GhcModiOutput]() {
+            def call() = {
+              val newValue = getProcessOutput(moduleInfo)
+              if (newValue.outputLines.isEmpty) {
+                oldValue
+              } else {
+                newValue
+              }
+            }
+          })
+          executor.execute(task)
+          task
+        }
+      }
+    )
 
   private final val ModuleListCache = CacheBuilder.newBuilder()
-      .refreshAfterWrite(60, TimeUnit.SECONDS)
-      .build(
-        new CacheLoader[ModuleList, ProcessOutput]() {
-          private def getProcessOutput(moduleList: ModuleList): ProcessOutput = {
-            val ghcModPath = getGhcModPath
-            ghcModPath.map { p =>
-              ExternalProcess.getProcessOutput(
-                moduleList.projectBasePath,
-                p,
-                Seq("list")
-              )
-            }.getOrElse(new ProcessOutput())
-          }
-
-          override def load(moduleList: ModuleList): ProcessOutput = {
-            getProcessOutput(moduleList)
-          }
-
-          override def reload(moduleList: ModuleList, oldValue: ProcessOutput): ListenableFuture[ProcessOutput] = {
-            val task = ListenableFutureTask.create(new Callable[ProcessOutput]() {
-              def call() = {
-                val newValue = getProcessOutput(moduleList)
-                if (newValue.getStdoutLines.isEmpty) {
-                  oldValue
-                } else {
-                  newValue
-                }
-              }
-            })
-            executor.execute(task)
-            task
-          }
+    .refreshAfterWrite(60, TimeUnit.SECONDS)
+    .build(
+      new CacheLoader[ModuleList, GhcModiOutput]() {
+        private def getProcessOutput(moduleList: ModuleList): GhcModiOutput = {
+          GhcModiManager.getGhcModi(moduleList.project).execute("list")
         }
-      )
+
+        override def load(moduleList: ModuleList): GhcModiOutput = {
+          getProcessOutput(moduleList)
+        }
+
+        override def reload(moduleList: ModuleList, oldValue: GhcModiOutput): ListenableFuture[GhcModiOutput] = {
+          val task = ListenableFutureTask.create(new Callable[GhcModiOutput]() {
+            def call() = {
+              val newValue = getProcessOutput(moduleList)
+              if (newValue.outputLines.isEmpty) {
+                oldValue
+              } else {
+                newValue
+              }
+            }
+          })
+          executor.execute(task)
+          task
+        }
+      }
+    )
 
   def browseInfo(project: Project, moduleName: String, removeParensFromOperator: Boolean): Iterable[BrowseInfo] = {
     val processOutput = try {
-      BrowseInfoCache.get(ModuleInfo(project.getBasePath, moduleName))
+      BrowseInfoCache.get(ModuleInfo(project, moduleName))
     }
     catch {
-      case _: UncheckedExecutionException => new ProcessOutput
-      case _: ProcessCanceledException => new ProcessOutput
+      case _: UncheckedExecutionException => GhcModiOutput()
+      case _: ProcessCanceledException => GhcModiOutput()
     }
-    processOutput.getStdoutLines.map(createBrowseInfo(_, removeParensFromOperator)).flatten
+    processOutput.outputLines.flatMap(createBrowseInfo(_, removeParensFromOperator))
   }
 
   def listAvailableModules(project: Project): Iterable[String] = {
     val processOutput = try {
-      ModuleListCache.get(ModuleList(project.getBasePath))
+      ModuleListCache.get(ModuleList(project))
     }
     catch {
-      case _: UncheckedExecutionException => new ProcessOutput
-      case _: ProcessCanceledException => new ProcessOutput
+      case _: UncheckedExecutionException => GhcModiOutput()
+      case _: ProcessCanceledException => GhcModiOutput()
     }
-    processOutput.getStdoutLines
+    processOutput.outputLines
   }
 
   def listLanguageExtensions(project: Project): Iterable[String] = {
-    val ghcModPath = getGhcModPath
-    ghcModPath.map { p =>
-      val output = ExternalProcess.getProcessOutput(
-        project.getBasePath,
-        p,
-        Seq("lang")
-      )
-      output.getStdoutLines.toIterable
-    }.getOrElse(Iterable())
-  }
-
-  private def getGhcModPath = {
-    HaskellSettingsState.getGhcModPath
+    GhcModiManager.getGhcModi(project).execute("lang").outputLines
   }
 
   private def createBrowseInfo(info: String, removeParensFromOperator: Boolean): Option[BrowseInfo] = {

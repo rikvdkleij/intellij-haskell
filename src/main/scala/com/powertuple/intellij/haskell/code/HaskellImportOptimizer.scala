@@ -36,8 +36,8 @@ class HaskellImportOptimizer extends ImportOptimizer {
           case _ => false
         })
 
-        val redundantImportModuleOffsets = redundantImports.map(p => LineColumnPosition.getOffset(file, LineColumnPosition(p.lineNr, p.columnNr))).flatten
-        val redundantModuleDeclarations = redundantImportModuleOffsets.map(offset => file.findElementAt(offset)).map(e => PsiTreeUtil.findFirstParent(e, HaskellElementCondition.ImportModuleDeclarationCondition))
+        val redundantImportModuleOffsets = redundantImports.flatMap(p => LineColumnPosition.getOffset(file, LineColumnPosition(p.lineNr, p.columnNr)))
+        val redundantModuleDeclarations = redundantImportModuleOffsets.map(offset => file.findElementAt(offset)).map(e => PsiTreeUtil.findFirstParent(e, HaskellElementCondition.ImportDeclarationCondition))
         redundantModuleDeclarations.foreach { me =>
           me.delete()
         }

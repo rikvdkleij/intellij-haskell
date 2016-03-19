@@ -7,7 +7,10 @@ import com.intellij.psi.PsiElement;
 
 public interface HaskellImportQualifiedAs extends HaskellCompositeElement {
 
-  @NotNull
+  @Nullable
   HaskellQualifier getQualifier();
+
+  @NotNull
+  HaskellVarId getVarId();
 
 }

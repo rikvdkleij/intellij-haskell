@@ -29,7 +29,7 @@ public interface HaskellTypes {
   IElementType HS_DEPRECATED_WARN_PRAGMA = new HaskellCompositeElementType("HS_DEPRECATED_WARN_PRAGMA");
   IElementType HS_DERIVING_DECLARATION = new HaskellCompositeElementType("HS_DERIVING_DECLARATION");
   IElementType HS_DOT_DOT_PARENS = new HaskellCompositeElementType("HS_DOT_DOT_PARENS");
-  IElementType HS_DUMMY_HEADER_PRAGMA = new HaskellCompositeElementType("HS_DUMMY_HEADER_PRAGMA");
+  IElementType HS_DUMMY_PRAGMA = new HaskellCompositeElementType("HS_DUMMY_PRAGMA");
   IElementType HS_EXPORT = new HaskellCompositeElementType("HS_EXPORT");
   IElementType HS_EXPORTS = new HaskellCompositeElementType("HS_EXPORTS");
   IElementType HS_EXPRESSION = new HaskellCompositeElementType("HS_EXPRESSION");
@@ -254,8 +254,8 @@ public interface HaskellTypes {
       else if (type == HS_DOT_DOT_PARENS) {
         return new HaskellDotDotParensImpl(node);
       }
-      else if (type == HS_DUMMY_HEADER_PRAGMA) {
-        return new HaskellDummyHeaderPragmaImpl(node);
+      else if (type == HS_DUMMY_PRAGMA) {
+        return new HaskellDummyPragmaImpl(node);
       }
       else if (type == HS_EXPORT) {
         return new HaskellExportImpl(node);

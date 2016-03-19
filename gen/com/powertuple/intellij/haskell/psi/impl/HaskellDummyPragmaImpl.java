@@ -10,14 +10,14 @@ import com.intellij.psi.util.PsiTreeUtil;
 import static com.powertuple.intellij.haskell.psi.HaskellTypes.*;
 import com.powertuple.intellij.haskell.psi.*;
 
-public class HaskellDummyHeaderPragmaImpl extends HaskellCompositeElementImpl implements HaskellDummyHeaderPragma {
+public class HaskellDummyPragmaImpl extends HaskellCompositeElementImpl implements HaskellDummyPragma {
 
-  public HaskellDummyHeaderPragmaImpl(ASTNode node) {
+  public HaskellDummyPragmaImpl(ASTNode node) {
     super(node);
   }
 
   public void accept(@NotNull PsiElementVisitor visitor) {
-    if (visitor instanceof HaskellVisitor) ((HaskellVisitor)visitor).visitDummyHeaderPragma(this);
+    if (visitor instanceof HaskellVisitor) ((HaskellVisitor)visitor).visitDummyPragma(this);
     else super.accept(visitor);
   }
 

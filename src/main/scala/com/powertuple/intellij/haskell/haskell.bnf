@@ -43,15 +43,15 @@
 program                     ::= onl SHEBANG_LINE? onl file_header? onl module_body
 
 file_header                 ::= (file_header_pragma onl)+
-file_header_pragma          ::= language_pragma | options_ghc_pragma | include_pragma | haddock_pragma | ann_pragma | dummy_header_pragma
-language_pragma             ::= PRAGMA_START onl "LANGUAGE" onl qcon (onl COMMA onl qcon)* onl PRAGMA_END NEWLINE?
+file_header_pragma          ::= language_pragma | options_ghc_pragma | include_pragma | haddock_pragma | ann_pragma | dummy_pragma
+language_pragma             ::= PRAGMA_START onl "LANGUAGE" onl qcon (onl COMMA onl qcon?)* onl PRAGMA_END NEWLINE?
 options_ghc_pragma          ::= PRAGMA_START onl ("OPTIONS_GHC" | "OPTIONS") general_pragma_content PRAGMA_END NEWLINE?
 include_pragma              ::= PRAGMA_START onl "INCLUDE" general_pragma_content PRAGMA_END NEWLINE?
 haddock_pragma              ::= PRAGMA_START onl "OPTIONS_HADDOCK" general_pragma_content PRAGMA_END NEWLINE?
-dummy_header_pragma         ::= PRAGMA_START CONID_ID? PRAGMA_END? NEWLINE?
+dummy_pragma                ::= PRAGMA_START CONID_ID? PRAGMA_END? NEWLINE?
 
 other_pragma                ::= ann_pragma | deprecated_warn_pragma | noinline_pragma | inlinable_pragma | line_pragma | rules_pragma |
-                                  specialize_pragma | inline_pragma | minimal_pragma
+                                  specialize_pragma | inline_pragma | minimal_pragma | dummy_pragma
 deprecated_warn_pragma      ::= PRAGMA_START onl ("DEPRECATED" | "WARNING") general_pragma_content PRAGMA_END
 inline_pragma               ::= PRAGMA_START onl "INLINE" general_pragma_content PRAGMA_END
 noinline_pragma             ::= PRAGMA_START onl ("NOINLINE" | "NOTINLINE") general_id+ PRAGMA_END
@@ -79,10 +79,10 @@ private body                ::= import_declarations top_declarations
 private import_declarations ::= ((import_declaration | cfiles_pragma) onl)*
 private top_declarations    ::= (top_declaration onl)*
 
-import_declaration          ::= IMPORT osnl source_pragma? osnl import_qualified? osnl import_module osnl import_qualified_as? osnl import_spec? NEWLINE  {methods=[getModuleName]}
+import_declaration          ::= IMPORT osnl source_pragma? osnl import_qualified? osnl import_module osnl import_qualified_as? osnl import_spec? onl     {methods=[getModuleName]}
 import_module               ::= mod_id
-import_qualified            ::= "qualified"
-import_qualified_as         ::= "as" qualifier
+import_qualified            ::= var_id
+import_qualified_as         ::= var_id qualifier?
 import_spec                 ::= import_ids_spec |
                                   import_hiding_spec |
                                   import_empty_spec

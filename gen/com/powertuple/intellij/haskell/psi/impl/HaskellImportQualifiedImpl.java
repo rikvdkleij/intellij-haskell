@@ -21,4 +21,10 @@ public class HaskellImportQualifiedImpl extends HaskellCompositeElementImpl impl
     else super.accept(visitor);
   }
 
+  @Override
+  @NotNull
+  public HaskellVarId getVarId() {
+    return findNotNullChildByClass(HaskellVarId.class);
+  }
+
 }

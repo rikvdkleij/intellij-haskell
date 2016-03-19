@@ -2,7 +2,7 @@
     <id>com.powertuple.intellij.haskell</id>
     <name>IntelliJ-Haskell</name>
     <version>0.95</version>
-    <vendor email="rikvdkleij@gmail.com">PowerTuple</vendor>
+    <vendor email="rikvdkleij@gmail.com">Rik van der Kleij</vendor>
 
     <description><![CDATA[
         Haskell support.

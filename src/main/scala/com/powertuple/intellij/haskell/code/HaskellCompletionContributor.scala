@@ -19,7 +19,7 @@ package com.powertuple.intellij.haskell.code
 import java.util.concurrent.{Executors, TimeUnit}
 
 import com.intellij.codeInsight.completion._
-import com.intellij.codeInsight.lookup.LookupElementBuilder
+import com.intellij.codeInsight.lookup.{LookupElement, LookupElementBuilder}
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.project.Project
 import com.intellij.patterns.PlatformPatterns
@@ -69,15 +69,17 @@ class HaskellCompletionContributor extends CompletionContributor {
 
       val completionPosition = Option(parameters.getOriginalPosition).orElse(Option(parameters.getPosition))
       completionPosition match {
-        case Some(p) if isPragmaInProgress(p) =>
-          resultSet.addAllElements(getModulePragmaIds)
-          resultSet.addAllElements(getPragmaStartEndIds)
         case Some(p) if isFileHeaderPragmaInProgress(p) =>
           resultSet.addAllElements(getLanguageExtensions(project).toSeq)
           resultSet.addAllElements(getPragmaStartEndIds)
           resultSet.addAllElements(getFileHeaderPragmaIds)
+        case Some(p) if isPragmaInProgress(p) =>
+          resultSet.addAllElements(getModulePragmaIds)
+          resultSet.addAllElements(getPragmaStartEndIds)
         case Some(p) if isImportSpecInProgress(p) =>
           resultSet.addAllElements(findIdsForInImportModuleSpec(project, p).toSeq)
+        case Some(p) if isImportQualifiedAsInProgress(p) =>
+          resultSet.addAllElements(Seq[LookupElementBuilder]())
         case Some(p) if isImportModuleDeclarationInProgress(p) =>
           resultSet.addAllElements(findModulesToImport(project).toSeq)
           resultSet.addAllElements(getInsideImportClauses)
@@ -120,7 +122,7 @@ class HaskellCompletionContributor extends CompletionContributor {
     }
 
     caretElement match {
-      case Some(e) if e.getNode.getElementType == HS_CONID_ID && Option(e.getNextSibling).map(_.getNode.getElementType == HS_DOT).isDefined =>
+      case Some(e) if e.getNode.getElementType == HS_CONID_ID && Option(e.getNextSibling).exists(_.getNode.getElementType == HS_DOT) =>
         context.setDummyIdentifier(file.findElementAt(e.getTextOffset - 1).getText + ".")
       case Some(e) if PlainPrefixElementTypes.contains(e.getNode.getElementType) => context.setDummyIdentifier(getTextAtCaret(context.getEditor, file))
       case Some(e) if e.getText.trim.nonEmpty => context.setDummyIdentifier(e.getText.trim)
@@ -155,9 +157,7 @@ class HaskellCompletionContributor extends CompletionContributor {
   }
 
   private def isImportSpecInProgress(position: PsiElement): Boolean = {
-    Option(TreeUtil.findParent(position.getNode, HS_IMPORT_ID)).isDefined ||
-      (Option(TreeUtil.findParent(position.getNode, HS_IMPORT_SPEC)).isDefined &&
-        Option(TreeUtil.findSiblingBackward(position.getNode, HS_LEFT_PAREN)).isDefined)
+    Option(PsiTreeUtil.findFirstParent(position, HaskellElementCondition.ImportSpecCondition)).isDefined
   }
 
   private def findIdsForInImportModuleSpec(project: Project, position: PsiElement) = {
@@ -168,8 +168,13 @@ class HaskellCompletionContributor extends CompletionContributor {
   }
 
   private def isImportModuleDeclarationInProgress(position: PsiElement): Boolean = {
-    Option(TreeUtil.findSiblingBackward(position.getNode, HS_IMPORT)).
-      orElse(Option(TreeUtil.findParent(position.getNode, HS_IMPORT_DECLARATION))).isDefined
+    Option(PsiTreeUtil.findFirstParent(position, HaskellElementCondition.ImportDeclarationCondition)).isDefined ||
+      Option(TreeUtil.findSiblingBackward(position.getNode, HS_IMPORT)).isDefined
+  }
+
+  private def isImportQualifiedAsInProgress(position: PsiElement): Boolean = {
+    Option(TreeUtil.findSiblingBackward(position.getNode, HS_IMPORT_QUALIFIED_AS)).isDefined
+//    Option(PsiTreeUtil.findFirstParent(position, HaskellElementCondition.ImportQualifiedAsCondition)).isDefined
   }
 
   private def findModulesToImport(project: Project) = {
@@ -181,9 +186,7 @@ class HaskellCompletionContributor extends CompletionContributor {
   }
 
   private def isFileHeaderPragmaInProgress(position: PsiElement): Boolean = {
-    Option(TreeUtil.findParent(position.getNode, HaskellTypes.HS_FILE_HEADER_PRAGMA)).isDefined ||
-      Option(TreeUtil.findSiblingBackward(position.getNode, HS_COMMA)).isDefined &&
-        Option(TreeUtil.findSibling(position.getNode, HS_PRAGMA_END)).isDefined
+    Option(PsiTreeUtil.findFirstParent(position, HaskellElementCondition.FileHeaderCondition)).isDefined
   }
 
   private def isPragmaInProgress(position: PsiElement): Boolean = {

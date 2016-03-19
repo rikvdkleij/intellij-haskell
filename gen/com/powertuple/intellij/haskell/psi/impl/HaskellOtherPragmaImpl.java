@@ -35,6 +35,12 @@ public class HaskellOtherPragmaImpl extends HaskellCompositeElementImpl implemen
 
   @Override
   @Nullable
+  public HaskellDummyPragma getDummyPragma() {
+    return findChildByClass(HaskellDummyPragma.class);
+  }
+
+  @Override
+  @Nullable
   public HaskellInlinablePragma getInlinablePragma() {
     return findChildByClass(HaskellInlinablePragma.class);
   }
