@@ -1,6 +1,6 @@
 lazy val commonSettings = Seq(
   organization := "com.powertuple",
-  version := "0.95",
+  version := "0.91",
   scalaVersion := "2.11.8"
 )
 
@@ -20,4 +20,4 @@ lazy val intellijHaskell = (project in file(".")).
     unmanagedJars in Compile += baseDirectory.value / "idea"
   )
 
-ideaBuild in ThisBuild := "143.2287.1"
+ideaBuild in ThisBuild := "145.258.11"
