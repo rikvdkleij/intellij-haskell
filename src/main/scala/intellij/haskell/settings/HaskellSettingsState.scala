@@ -16,8 +16,6 @@
 
 package intellij.haskell.settings
 
-import java.io.File
-
 import com.intellij.openapi.project.Project
 import intellij.haskell.HaskellNotificationGroup
 import intellij.haskell.external.ExternalProcess
@@ -33,10 +31,6 @@ object HaskellSettingsState {
 
   def setGhcModPath(ghcModPath: String) {
     state.ghcModPath = ghcModPath
-  }
-
-  def setGhcModiPath(ghcModiPath: String) {
-    state.ghcModiPath = ghcModiPath
   }
 
   def getHaskellDocsPath: Option[String] = {
