@@ -27,7 +27,7 @@ import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.vfs.VfsUtil
 import com.intellij.util.Consumer
 import intellij.haskell.HaskellNotificationGroup
-import intellij.haskell.external.{GhcModProcessManager, ExternalProcess}
+import intellij.haskell.external.{ExternalProcess, GhcModProcessManager}
 import intellij.haskell.settings.{CabalInfo, HaskellSettingsState}
 import intellij.haskell.util.HaskellProjecUtil
 
@@ -51,6 +51,7 @@ class AddDependencies extends AnAction {
             val libPath = new File(project.getBasePath + File.separator + libName)
             FileUtil.delete(libPath)
             FileUtil.createDirectory(libPath)
+            ExternalProcess.getProcessOutput(project.getBasePath, cabalInfo.path, Seq("update"))
             ExternalProcess.getProcessOutput(project.getBasePath, cabalInfo.path, getCabalFreezeArguments(cabalInfo))
             readCabalConfig(project, cabalInfo.path).map(cl => getHaskellPackages(cl)).foreach(packages => {
               progressIndicator.setFraction(initialProgressStep)
