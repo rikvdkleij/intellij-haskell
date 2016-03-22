@@ -16,8 +16,12 @@ public class HaskellScontextImpl extends HaskellCompositeElementImpl implements 
     super(node);
   }
 
+  public void accept(@NotNull HaskellVisitor visitor) {
+    visitor.visitScontext(this);
+  }
+
   public void accept(@NotNull PsiElementVisitor visitor) {
-    if (visitor instanceof HaskellVisitor) ((HaskellVisitor)visitor).visitScontext(this);
+    if (visitor instanceof HaskellVisitor) accept((HaskellVisitor)visitor);
     else super.accept(visitor);
   }
 

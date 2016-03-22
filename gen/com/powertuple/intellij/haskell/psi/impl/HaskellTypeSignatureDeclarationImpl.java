@@ -18,8 +18,12 @@ public class HaskellTypeSignatureDeclarationImpl extends HaskellCompositeElement
     super(node);
   }
 
+  public void accept(@NotNull HaskellVisitor visitor) {
+    visitor.visitTypeSignatureDeclaration(this);
+  }
+
   public void accept(@NotNull PsiElementVisitor visitor) {
-    if (visitor instanceof HaskellVisitor) ((HaskellVisitor)visitor).visitTypeSignatureDeclaration(this);
+    if (visitor instanceof HaskellVisitor) accept((HaskellVisitor)visitor);
     else super.accept(visitor);
   }
 

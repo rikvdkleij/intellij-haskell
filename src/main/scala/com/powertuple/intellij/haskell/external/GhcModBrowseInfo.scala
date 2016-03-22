@@ -1,5 +1,5 @@
 /*
- * Copyright 2015 Rik van der Kleij
+ * Copyright 2016 Rik van der Kleij
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -23,59 +23,28 @@ import com.google.common.util.concurrent.{ListenableFuture, ListenableFutureTask
 import com.intellij.openapi.progress.ProcessCanceledException
 import com.intellij.openapi.project.Project
 
-object GhcMod {
+object GhcModBrowseInfo {
 
   private case class ModuleInfo(project: Project, moduleName: String)
-
-  private case class ModuleList(project: Project)
 
   private val executor = Executors.newCachedThreadPool()
 
   private final val BrowseInfoCache = CacheBuilder.newBuilder()
     .refreshAfterWrite(10, TimeUnit.SECONDS)
     .build(
-      new CacheLoader[ModuleInfo, GhcModiOutput]() {
-        private def getProcessOutput(moduleInfo: ModuleInfo): GhcModiOutput = {
-          GhcModiManager.getGhcModi(moduleInfo.project).execute("browse -d -q -o " + moduleInfo.moduleName)
+      new CacheLoader[ModuleInfo, GhcModOutput]() {
+        private def getProcessOutput(moduleInfo: ModuleInfo): GhcModOutput = {
+          GhcModProcessManager.getGhcModProcess(moduleInfo.project).execute("browse -d -q -o " + moduleInfo.moduleName)
         }
 
-        override def load(moduleInfo: ModuleInfo): GhcModiOutput = {
+        override def load(moduleInfo: ModuleInfo): GhcModOutput = {
           getProcessOutput(moduleInfo)
         }
 
-        override def reload(moduleInfo: ModuleInfo, oldValue: GhcModiOutput): ListenableFuture[GhcModiOutput] = {
-          val task = ListenableFutureTask.create(new Callable[GhcModiOutput]() {
+        override def reload(moduleInfo: ModuleInfo, oldValue: GhcModOutput): ListenableFuture[GhcModOutput] = {
+          val task = ListenableFutureTask.create(new Callable[GhcModOutput]() {
             def call() = {
               val newValue = getProcessOutput(moduleInfo)
-              if (newValue.outputLines.isEmpty) {
-                oldValue
-              } else {
-                newValue
-              }
-            }
-          })
-          executor.execute(task)
-          task
-        }
-      }
-    )
-
-  private final val ModuleListCache = CacheBuilder.newBuilder()
-    .refreshAfterWrite(60, TimeUnit.SECONDS)
-    .build(
-      new CacheLoader[ModuleList, GhcModiOutput]() {
-        private def getProcessOutput(moduleList: ModuleList): GhcModiOutput = {
-          GhcModiManager.getGhcModi(moduleList.project).execute("list")
-        }
-
-        override def load(moduleList: ModuleList): GhcModiOutput = {
-          getProcessOutput(moduleList)
-        }
-
-        override def reload(moduleList: ModuleList, oldValue: GhcModiOutput): ListenableFuture[GhcModiOutput] = {
-          val task = ListenableFutureTask.create(new Callable[GhcModiOutput]() {
-            def call() = {
-              val newValue = getProcessOutput(moduleList)
               if (newValue.outputLines.isEmpty) {
                 oldValue
               } else {
@@ -94,25 +63,10 @@ object GhcMod {
       BrowseInfoCache.get(ModuleInfo(project, moduleName))
     }
     catch {
-      case _: UncheckedExecutionException => GhcModiOutput()
-      case _: ProcessCanceledException => GhcModiOutput()
+      case _: UncheckedExecutionException => GhcModOutput()
+      case _: ProcessCanceledException => GhcModOutput()
     }
     processOutput.outputLines.flatMap(createBrowseInfo(_, removeParensFromOperator))
-  }
-
-  def listAvailableModules(project: Project): Iterable[String] = {
-    val processOutput = try {
-      ModuleListCache.get(ModuleList(project))
-    }
-    catch {
-      case _: UncheckedExecutionException => GhcModiOutput()
-      case _: ProcessCanceledException => GhcModiOutput()
-    }
-    processOutput.outputLines
-  }
-
-  def listLanguageExtensions(project: Project): Iterable[String] = {
-    GhcModiManager.getGhcModi(project).execute("lang").outputLines
   }
 
   private def createBrowseInfo(info: String, removeParensFromOperator: Boolean): Option[BrowseInfo] = {

@@ -1,5 +1,5 @@
 /*
- * Copyright 2015 Rik van der Kleij
+ * Copyright 2016 Rik van der Kleij
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,11 +17,11 @@
 package com.powertuple.intellij.haskell.inspection
 
 import com.intellij.codeInspection._
-import com.intellij.psi.{TokenType, PsiElement, PsiFile}
+import com.intellij.psi.{PsiElement, PsiFile, TokenType}
 import com.powertuple.intellij.haskell.HaskellNotificationGroup
 import com.powertuple.intellij.haskell.external.{Hlint, HlintInfo}
 import com.powertuple.intellij.haskell.psi.HaskellTypes.{HS_COMMENT, HS_NCOMMENT, HS_NEWLINE, HS_SNL}
-import com.powertuple.intellij.haskell.settings.{HaskellSettingsState, HaskellSettings}
+import com.powertuple.intellij.haskell.settings.HaskellSettingsState
 import com.powertuple.intellij.haskell.util.LineColumnPosition
 
 import scala.annotation.tailrec

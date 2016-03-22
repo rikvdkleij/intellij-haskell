@@ -16,8 +16,12 @@ public class HaskellInstImpl extends HaskellCompositeElementImpl implements Hask
     super(node);
   }
 
+  public void accept(@NotNull HaskellVisitor visitor) {
+    visitor.visitInst(this);
+  }
+
   public void accept(@NotNull PsiElementVisitor visitor) {
-    if (visitor instanceof HaskellVisitor) ((HaskellVisitor)visitor).visitInst(this);
+    if (visitor instanceof HaskellVisitor) accept((HaskellVisitor)visitor);
     else super.accept(visitor);
   }
 

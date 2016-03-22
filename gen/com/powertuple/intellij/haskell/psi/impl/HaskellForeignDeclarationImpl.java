@@ -18,8 +18,12 @@ public class HaskellForeignDeclarationImpl extends HaskellCompositeElementImpl i
     super(node);
   }
 
+  public void accept(@NotNull HaskellVisitor visitor) {
+    visitor.visitForeignDeclaration(this);
+  }
+
   public void accept(@NotNull PsiElementVisitor visitor) {
-    if (visitor instanceof HaskellVisitor) ((HaskellVisitor)visitor).visitForeignDeclaration(this);
+    if (visitor instanceof HaskellVisitor) accept((HaskellVisitor)visitor);
     else super.accept(visitor);
   }
 

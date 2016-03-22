@@ -19,8 +19,12 @@ public class HaskellVarIdImpl extends HaskellNamedElementImpl implements Haskell
     super(node);
   }
 
+  public void accept(@NotNull HaskellVisitor visitor) {
+    visitor.visitVarId(this);
+  }
+
   public void accept(@NotNull PsiElementVisitor visitor) {
-    if (visitor instanceof HaskellVisitor) ((HaskellVisitor)visitor).visitVarId(this);
+    if (visitor instanceof HaskellVisitor) accept((HaskellVisitor)visitor);
     else super.accept(visitor);
   }
 

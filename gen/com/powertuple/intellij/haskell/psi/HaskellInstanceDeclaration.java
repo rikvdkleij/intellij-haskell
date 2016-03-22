@@ -24,6 +24,9 @@ public interface HaskellInstanceDeclaration extends HaskellDeclarationElement {
   @Nullable
   HaskellScontext getScontext();
 
+  @NotNull
+  List<HaskellVarId> getVarIdList();
+
   String getName();
 
   ItemPresentation getPresentation();

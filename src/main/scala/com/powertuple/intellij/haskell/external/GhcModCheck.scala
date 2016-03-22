@@ -25,7 +25,7 @@ object GhcModCheck {
   private val ghcModProblemPattern = """(.+):([\d]+):([\d]+):(.+)""".r
 
   def check(project: Project, filePath: String): GhcModCheckResult = {
-    val output = GhcModiManager.getGhcModi(project).execute("check " + filePath)
+    val output = GhcModProcessManager.getGhcModProcess(project).execute("check " + filePath)
     //    val ghcModPath = HaskellSettingsState.getGhcModPath
     //    val output = ghcModPath.map { p =>
     //      ExternalProcess.getProcessOutput(

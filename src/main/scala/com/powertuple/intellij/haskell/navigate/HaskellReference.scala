@@ -37,7 +37,7 @@ import scala.collection.JavaConversions._
 class HaskellReference(element: HaskellNamedElement, textRange: TextRange) extends PsiPolyVariantReferenceBase[HaskellNamedElement](element, textRange) {
 
   private val file = myElement.getContainingFile
-  private lazy val typeInfo = GhcModiTypeInfo.findTypeInfoFor(file, myElement)
+  private lazy val typeInfo = GhcModTypeInfo.findTypeInfoFor(file, myElement)
 
   private class BuiltInResolveResult(val typeSignature: String, val libraryName: String, val module: String) extends ResolveResult {
     override def getElement: PsiElement = null
@@ -106,7 +106,7 @@ class HaskellReference(element: HaskellNamedElement, textRange: TextRange) exten
 
   private def createLookupElements(compositeElement: HaskellCompositeElement): Seq[LookupElementBuilder] = {
     compositeElement match {
-      case ne: HaskellNamedElement if ne != null => Seq(LookupElementBuilder.create(ne.getName).withTypeText(GhcModiTypeInfo.findTypeInfoFor(ne.getContainingFile, ne).map(ti => StringUtil.unescapeXml(ti.typeSignature)).getOrElse("")).withIcon(HaskellIcons.HaskellSmallBlueLogo))
+      case ne: HaskellNamedElement if ne != null => Seq(LookupElementBuilder.create(ne.getName).withTypeText(GhcModTypeInfo.findTypeInfoFor(ne.getContainingFile, ne).map(ti => StringUtil.unescapeXml(ti.typeSignature)).getOrElse("")).withIcon(HaskellIcons.HaskellSmallBlueLogo))
       case de: HaskellDeclarationElement => for {
         ne <- de.getIdentifierElements.toSeq
         leb <- Option(ne) match {
@@ -293,7 +293,7 @@ class HaskellReference(element: HaskellNamedElement, textRange: TextRange) exten
   }
 
   private def getIdentifierInfos(psiFile: PsiFile, namedElement: HaskellNamedElement): Iterable[IdentifierInfo] = {
-    GhcModiInfo.findInfoFor(psiFile, namedElement)
+    GhcModInfo.findInfoFor(psiFile, namedElement)
   }
 
   private def findQVarConOpElementParent(element: PsiElement) = {

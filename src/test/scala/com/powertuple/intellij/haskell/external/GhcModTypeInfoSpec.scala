@@ -18,12 +18,12 @@ package com.powertuple.intellij.haskell.external
 
 import org.scalatest.{BeforeAndAfterEach, FunSpec, GivenWhenThen, Matchers}
 
-class GhcModiTypeInfoSpec extends FunSpec with Matchers with GivenWhenThen with BeforeAndAfterEach {
+class GhcModTypeInfoSpec extends FunSpec with Matchers with GivenWhenThen with BeforeAndAfterEach {
 
-  val ghcModiTypeInfo = GhcModiTypeInfo
+  val ghcModiTypeInfo = GhcModTypeInfo
 
-  describe("Parsing ghc-modi type info output") {
-    Given("type info output of ghc-modi")
+  describe("Parsing ghc-mod type info output") {
+    Given("type info output of ghc-mod")
     val output = List(
       """12 10 12 19 "[Integer] -> [Integer]"""",
       """12 10 12 25 "[Integer]"""",

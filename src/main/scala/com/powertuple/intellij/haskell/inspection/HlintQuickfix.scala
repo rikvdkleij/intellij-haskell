@@ -1,5 +1,5 @@
 /*
- * Copyright 2014 Rik van der Kleij
+ * Copyright 2016 Rik van der Kleij
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -55,7 +55,7 @@ class HlintQuickfix(startElement: PsiElement, endElement: PsiElement, toSuggesti
 
           // Delete elements after start element is same line expression
           val startElementParent = startElement.getParent
-          Option(startElement.getNextSibling).map(next => startElementParent.deleteChildRange(next, startElementParent.getLastChild))
+          Option(startElement.getNextSibling).foreach(next => startElementParent.deleteChildRange(next, startElementParent.getLastChild))
 
           // Add new line with tab and replace start element by HLint suggestion
           startElementParent.addBefore(HaskellElementFactory.createNewLine(project), startElement)
@@ -85,7 +85,7 @@ class HlintQuickfix(startElement: PsiElement, endElement: PsiElement, toSuggesti
   }
 
   private def formatNote(note: Seq[String]) = {
-    val formattedNote = note.map(n => if (n.size > 1 && n.head == '"' && n.last == '"') n.substring(1, n.size - 1) else n).mkString(OSUtil.LineSeparator.toString)
+    val formattedNote = note.map(n => if (n.length > 1 && n.head == '"' && n.last == '"') n.substring(1, n.length - 1) else n).mkString(OSUtil.LineSeparator.toString)
     if (formattedNote.trim.isEmpty) {
       ""
     } else {

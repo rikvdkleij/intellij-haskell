@@ -27,7 +27,7 @@ import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.vfs.VfsUtil
 import com.intellij.util.Consumer
 import com.powertuple.intellij.haskell.HaskellNotificationGroup
-import com.powertuple.intellij.haskell.external.{GhcModiManager, ExternalProcess}
+import com.powertuple.intellij.haskell.external.{GhcModProcessManager, ExternalProcess}
 import com.powertuple.intellij.haskell.settings.{CabalInfo, HaskellSettingsState}
 import com.powertuple.intellij.haskell.util.HaskellProjecUtil
 
@@ -58,7 +58,7 @@ class AddDependencies extends AnAction {
               progressIndicator.setFraction(0.9)
               addDependenciesAsLibrariesToModule(project, packages, libPath.getAbsolutePath)
             })
-            GhcModiManager.doRestart(project)
+            GhcModProcessManager.doRestart(project)
           }
         })
       case None => HaskellNotificationGroup.notifyError("Could not download sources because path to Cabal is not set")

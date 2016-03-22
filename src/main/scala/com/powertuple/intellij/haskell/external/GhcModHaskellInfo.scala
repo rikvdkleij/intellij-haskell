@@ -1,5 +1,5 @@
 /*
- * Copyright 2015 Rik van der Kleij
+ * Copyright 2016 Rik van der Kleij
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,29 +18,9 @@ package com.powertuple.intellij.haskell.external
 
 import com.intellij.openapi.project.Project
 
-object GhcModiManager {
+object GhcModHaskellInfo {
 
-  private var restartState = false
-
-  def setInRestartState(): Unit = synchronized {
-    restartState = true
-  }
-
-  def doRestart(project: Project) = synchronized {
-    val ghcModi = getGhcModiService(project)
-    ghcModi.exit()
-    ghcModi.startGhcModi()
-  }
-
-  def getGhcModi(project: Project) = synchronized {
-    if (restartState) {
-      doRestart(project)
-      restartState = false
-    }
-    getGhcModiService(project)
-  }
-
-  private def getGhcModiService(project: Project) = {
-    project.getComponent(classOf[GhcModi])
+  def listLanguageExtensions(project: Project): Iterable[String] = {
+    GhcModProcessManager.getGhcModProcess(project).execute("lang").outputLines
   }
 }

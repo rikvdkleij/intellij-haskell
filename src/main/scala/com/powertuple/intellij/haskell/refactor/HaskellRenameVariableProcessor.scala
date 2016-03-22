@@ -1,5 +1,5 @@
 /*
- * Copyright 2015 Rik van der Kleij
+ * Copyright 2016 Rik van der Kleij
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -20,7 +20,6 @@ import com.intellij.psi.PsiElement
 import com.intellij.refactoring.listeners.RefactoringElementListener
 import com.intellij.refactoring.rename.RenamePsiElementProcessor
 import com.intellij.usageView.UsageInfo
-import com.intellij.util.IncorrectOperationException
 import com.powertuple.intellij.haskell.HaskellFile
 import com.powertuple.intellij.haskell.navigate.{HaskellFileResolveResult, HaskellGlobalResolveResult}
 import com.powertuple.intellij.haskell.psi.HaskellNamedElement

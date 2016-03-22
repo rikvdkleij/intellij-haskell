@@ -39,7 +39,7 @@ class ShowInfoAction extends AnAction {
       psiElement <- Option(psiFile.findElementAt(offset))
       namedElement <- HaskellPsiHelper.findHaskellNamedElement(psiElement)
     } yield
-    GhcModiInfo.findInfoFor(psiFile, namedElement) match {
+    GhcModInfo.findInfoFor(psiFile, namedElement) match {
       case Seq(identifierInfos@_*) if identifierInfos.nonEmpty => HaskellEditorUtil.createInfoBallon(identifierInfos.map(createInfoText).mkString("<br>"), editor)
       case _ => HaskellEditorUtil.showHint(editor, s"Could not determine info for ${StringUtil.escapeXml(namedElement.getName)}")
     }

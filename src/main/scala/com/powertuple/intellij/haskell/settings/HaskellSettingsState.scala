@@ -35,12 +35,6 @@ object HaskellSettingsState {
     state.ghcModPath = ghcModPath
   }
 
-  def getGhcModiPath: Option[String] = {
-    val path = findPath(state.ghcModiPath)
-    notifyIfPathIsNotSet(path, HaskellConfigurable.GhcModi)
-    path
-  }
-
   def setGhcModiPath(ghcModiPath: String) {
     state.ghcModiPath = ghcModiPath
   }

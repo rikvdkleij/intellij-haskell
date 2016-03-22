@@ -18,8 +18,12 @@ public class HaskellInstanceDeclarationImpl extends HaskellCompositeElementImpl 
     super(node);
   }
 
+  public void accept(@NotNull HaskellVisitor visitor) {
+    visitor.visitInstanceDeclaration(this);
+  }
+
   public void accept(@NotNull PsiElementVisitor visitor) {
-    if (visitor instanceof HaskellVisitor) ((HaskellVisitor)visitor).visitInstanceDeclaration(this);
+    if (visitor instanceof HaskellVisitor) accept((HaskellVisitor)visitor);
     else super.accept(visitor);
   }
 
@@ -51,6 +55,12 @@ public class HaskellInstanceDeclarationImpl extends HaskellCompositeElementImpl 
   @Nullable
   public HaskellScontext getScontext() {
     return findChildByClass(HaskellScontext.class);
+  }
+
+  @Override
+  @NotNull
+  public List<HaskellVarId> getVarIdList() {
+    return PsiTreeUtil.getChildrenOfTypeAsList(this, HaskellVarId.class);
   }
 
   public String getName() {

@@ -1,5 +1,5 @@
 /*
- * Copyright 2015 Rik van der Kleij
+ * Copyright 2016 Rik van der Kleij
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -24,14 +24,13 @@ import com.intellij.openapi.fileChooser.FileChooserDescriptorFactory
 import com.intellij.openapi.options.{Configurable, ConfigurationException}
 import com.intellij.openapi.ui.TextFieldWithBrowseButton
 import com.intellij.ui.DocumentAdapter
-import com.powertuple.intellij.haskell.external.GhcModiManager
+import com.powertuple.intellij.haskell.external.GhcModProcessManager
 
 import scala.language.{existentials, reflectiveCalls}
 
 class HaskellConfigurable extends Configurable {
   private var isModifiedByUser = false
   private val ghcModPathField = new TextFieldWithBrowseButton
-  private val ghcModiPathField = new TextFieldWithBrowseButton
   private val haskellDocsPathField = new TextFieldWithBrowseButton
   private val hlintPathField = new TextFieldWithBrowseButton
   private val cabalPathField = new TextFieldWithBrowseButton
@@ -48,12 +47,6 @@ class HaskellConfigurable extends Configurable {
 
     ghcModPathField.addBrowseFolderListener(
       s"Select $GhcMod",
-      null,
-      null,
-      FileChooserDescriptorFactory.createSingleLocalFileDescriptor())
-
-    ghcModiPathField.addBrowseFolderListener(
-      s"Select $GhcModi",
       null,
       null,
       FileChooserDescriptorFactory.createSingleLocalFileDescriptor())
@@ -86,7 +79,6 @@ class HaskellConfigurable extends Configurable {
 
     ghcModPathField.getTextField.getDocument.addDocumentListener(listener)
     haskellDocsPathField.getTextField.getDocument.addDocumentListener(listener)
-    ghcModiPathField.getTextField.getDocument.addDocumentListener(listener)
     hlintPathField.getTextField.getDocument.addDocumentListener(listener)
     cabalPathField.getTextField.getDocument.addDocumentListener(listener)
 
@@ -126,7 +118,6 @@ class HaskellConfigurable extends Configurable {
     }
 
     addLabeledControl(0, GhcMod, ghcModPathField)
-    addLabeledControl(2, GhcModi, ghcModiPathField)
     addLabeledControl(1, HaskellDocs, haskellDocsPathField)
     addLabeledControl(3, Hlint, hlintPathField)
     addLabeledControl(4, Cabal, cabalPathField)
@@ -145,12 +136,11 @@ class HaskellConfigurable extends Configurable {
 
     val state = HaskellSettings.getInstance().getState
     state.ghcModPath = ghcModPathField.getText
-    state.ghcModiPath = ghcModiPathField.getText
     state.haskellDocsPath = haskellDocsPathField.getText
     state.hlintPath = hlintPathField.getText
     state.cabalPath = cabalPathField.getText
 
-    GhcModiManager.setInRestartState()
+    GhcModProcessManager.setInRestartState()
 
     isModifiedByUser = false
   }
@@ -162,7 +152,6 @@ class HaskellConfigurable extends Configurable {
       }
     }
     Seq((GhcMod, ghcModPathField.getText),
-      (GhcModi, ghcModiPathField.getText),
       (HaskellDocs, haskellDocsPathField.getText),
       (Hlint, hlintPathField.getText),
       (Cabal, cabalPathField.getText)
@@ -177,7 +166,6 @@ class HaskellConfigurable extends Configurable {
   override def reset() {
     val state = HaskellSettings.getInstance().getState
     ghcModPathField.getTextField.setText(state.ghcModPath)
-    ghcModiPathField.getTextField.setText(state.ghcModiPath)
     haskellDocsPathField.getTextField.setText(state.haskellDocsPath)
     hlintPathField.getTextField.setText(state.hlintPath)
     cabalPathField.getTextField.setText(state.cabalPath)
@@ -188,7 +176,6 @@ class HaskellConfigurable extends Configurable {
 
 object HaskellConfigurable {
   val GhcMod = "ghc-mod"
-  val GhcModi = "ghc-modi"
   val HaskellDocs = "haskell-docs"
   val Hlint = "hlint"
   val Cabal = "cabal"

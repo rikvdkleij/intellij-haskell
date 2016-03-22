@@ -1,5 +1,5 @@
 /*
- * Copyright 2015 Rik van der Kleij
+ * Copyright 2016 Rik van der Kleij
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -24,7 +24,7 @@ import com.intellij.openapi.roots.libraries.LibraryUtil
 import com.intellij.psi.search.GlobalSearchScope
 import com.intellij.psi.{PsiDirectory, PsiFile}
 import com.powertuple.intellij.haskell.HaskellNotificationGroup
-import com.powertuple.intellij.haskell.external.GhcMod
+import com.powertuple.intellij.haskell.external.GhcModModulesInfo
 
 object FileUtil {
 
@@ -55,7 +55,7 @@ object FileUtil {
     moduleFilePath match {
       case Some(p) => Some(p)
       case None =>
-        if (GhcMod.listAvailableModules(project).exists(_ == module)) {
+        if (GhcModModulesInfo.listAvailableModules(project).exists(_ == module)) {
           HaskellEditorUtil.createLabelMessage(s"Could not find source code for `$module`. Please add source for package to 'Project Settings/Libraries'", project)
         } else {
           ()

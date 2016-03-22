@@ -1,5 +1,5 @@
 /*
- * Copyright 2015 Rik van der Kleij
+ * Copyright 2016 Rik van der Kleij
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -32,8 +32,8 @@ import com.powertuple.intellij.haskell.util.HaskellEditorUtil.escapeString
 
 import scala.util.{Failure, Success, Try}
 
-object GhcModiTypeInfo {
-  private final val GhcModiTypeInfoPattern = """([\d]+) ([\d]+) ([\d]+) ([\d]+) "(.+)"""".r
+object GhcModTypeInfo {
+  private final val GhcModTypeInfoPattern = """([\d]+) ([\d]+) ([\d]+) ([\d]+) "(.+)"""".r
 
   private final val Executor = Executors.newCachedThreadPool()
 
@@ -42,18 +42,18 @@ object GhcModiTypeInfo {
   private final val TypeInfoCache = CacheBuilder.newBuilder()
       .refreshAfterWrite(1, TimeUnit.SECONDS)
       .build(
-        new CacheLoader[ElementTypeInfo, GhcModiOutput]() {
-          private def findTypeInfoFor(elementTypeInfo: ElementTypeInfo): GhcModiOutput = {
+        new CacheLoader[ElementTypeInfo, GhcModOutput]() {
+          private def findTypeInfoFor(elementTypeInfo: ElementTypeInfo): GhcModOutput = {
             val cmd = s"type ${elementTypeInfo.filePath} ${elementTypeInfo.lineNr} ${elementTypeInfo.columnNr}"
-            GhcModiManager.getGhcModi(elementTypeInfo.project).execute(cmd)
+            GhcModProcessManager.getGhcModProcess(elementTypeInfo.project).execute(cmd)
           }
 
-          override def load(elementTypeInfo: ElementTypeInfo): GhcModiOutput = {
+          override def load(elementTypeInfo: ElementTypeInfo): GhcModOutput = {
             findTypeInfoFor(elementTypeInfo)
           }
 
-          override def reload(elementTypeInfo: ElementTypeInfo, oldInfo: GhcModiOutput): ListenableFuture[GhcModiOutput] = {
-            val task = ListenableFutureTask.create(new Callable[GhcModiOutput]() {
+          override def reload(elementTypeInfo: ElementTypeInfo, oldInfo: GhcModOutput): ListenableFuture[GhcModOutput] = {
+            val task = ListenableFutureTask.create(new Callable[GhcModOutput]() {
               def call() = {
                 val newInfo = findTypeInfoFor(elementTypeInfo)
                 if (newInfo.outputLines.isEmpty) {
@@ -104,8 +104,8 @@ object GhcModiTypeInfo {
       }
     }
     catch {
-      case _: UncheckedExecutionException => GhcModiOutput()
-      case _: ProcessCanceledException => GhcModiOutput()
+      case _: UncheckedExecutionException => GhcModOutput()
+      case _: ProcessCanceledException => GhcModOutput()
     }
     ghcModiOutputToTypeInfo(ghcModiOutput.outputLines) match {
       case Success(typeInfos) => Some(typeInfos)
@@ -116,7 +116,7 @@ object GhcModiTypeInfo {
   private[external] def ghcModiOutputToTypeInfo(ghcModiOutput: Iterable[String]): Try[Iterable[TypeInfo]] = Try {
     for (outputLine <- ghcModiOutput) yield {
       outputLine match {
-        case GhcModiTypeInfoPattern(startLn, startCol, endLine, endCol, typeSignature) =>
+        case GhcModTypeInfoPattern(startLn, startCol, endLine, endCol, typeSignature) =>
           TypeInfo(startLn.toInt, startCol.toInt, endLine.toInt, endCol.toInt, shortenTypeSignature(typeSignature))
       }
     }

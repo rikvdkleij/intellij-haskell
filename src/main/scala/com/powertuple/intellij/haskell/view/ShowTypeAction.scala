@@ -19,7 +19,7 @@ package com.powertuple.intellij.haskell.view
 import com.intellij.openapi.actionSystem.{AnAction, AnActionEvent, CommonDataKeys}
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.psi.util.PsiUtilBase
-import com.powertuple.intellij.haskell.external.GhcModiTypeInfo
+import com.powertuple.intellij.haskell.external.GhcModTypeInfo
 import com.powertuple.intellij.haskell.psi.HaskellPsiHelper
 import com.powertuple.intellij.haskell.util.HaskellEditorUtil
 
@@ -39,12 +39,12 @@ class ShowTypeAction extends AnAction {
     } yield {
       val selectionModel = Option(editor.getSelectionModel)
       selectionModel match {
-        case Some(sm) if Option(sm.getSelectedText).isDefined => GhcModiTypeInfo.findTypeInfoForSelection(psiFile, sm) match {
+        case Some(sm) if Option(sm.getSelectedText).isDefined => GhcModTypeInfo.findTypeInfoForSelection(psiFile, sm) match {
           case Some(ti) => HaskellEditorUtil.showHint(editor, ti.typeSignature)
           case None => HaskellEditorUtil.showHint(editor, "Could not determine type for selection")
         }
         case _ => Option(psiFile.findElementAt(offset)).flatMap(e => HaskellPsiHelper.findHaskellNamedElement(e)).foreach { psiElement =>
-          GhcModiTypeInfo.findTypeInfoFor(psiFile, psiElement) match {
+          GhcModTypeInfo.findTypeInfoFor(psiFile, psiElement) match {
             case Some(ti) => HaskellEditorUtil.showHint(editor, ti.typeSignature)
             case None => HaskellEditorUtil.showHint(editor, s"Could not determine type for ${StringUtil.escapeXml(psiElement.getText)}")
           }

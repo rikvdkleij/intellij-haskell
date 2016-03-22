@@ -1,5 +1,5 @@
 /*
- * Copyright 2015 Rik van der Kleij
+ * Copyright 2016 Rik van der Kleij
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -32,7 +32,7 @@ import scala.concurrent.{Await, ExecutionContext, Future}
 import scala.io._
 import scala.sys.process._
 
-class GhcModi(val project: Project) extends ProjectComponent {
+class GhcModProcess(val project: Project) extends ProjectComponent {
 
   private final val ExecutorService = Executors.newSingleThreadExecutor
   implicit private final val ExecContext = ExecutionContext.fromExecutorService(ExecutorService)
@@ -46,50 +46,50 @@ class GhcModi(val project: Project) extends ProjectComponent {
   private val OK = "OK"
 
   private final val TimeOut = 5000L
-  private final val GhcModiErrorIndicator = "NG"
-  private var ghcModiProblemTime: Option[Long] = None
+  private final val GhcModErrorIndicator = "NG"
+  private var ghcModProblemTime: Option[Long] = None
 
-  def execute(command: String): GhcModiOutput = synchronized {
-    if (ghcModiProblemTime.exists(gmpt => System.currentTimeMillis - gmpt < TimeOut)) {
-      return GhcModiOutput()
+  def execute(command: String): GhcModOutput = synchronized {
+    if (ghcModProblemTime.exists(problemTime => System.currentTimeMillis - problemTime < TimeOut)) {
+      return GhcModOutput()
     }
 
     if (outputStream == null) {
-      startGhcModi()
+      start()
     }
 
     if (outputStream != null) {
       try {
-        writeToOutputstream(command)
+        writeToOutputStream(command)
 
         val waitForStdOutput = Future {
-          while (!stdOutListBuffer.lastOption.contains(OK) && !stdOutListBuffer.headOption.exists(_.startsWith(GhcModiErrorIndicator))) {
+          while (!stdOutListBuffer.lastOption.contains(OK) && !stdOutListBuffer.headOption.exists(_.startsWith(GhcModErrorIndicator))) {
             // wait for result
             Thread.sleep(5)
           }
-          stdOutListBuffer.toIterable
+          stdOutListBuffer
         }
         val stdOutput = Await.result(waitForStdOutput, 5.second)
 
-        if (stdOutput.headOption.exists(_.startsWith(GhcModiErrorIndicator))) {
-          HaskellNotificationGroup.notifyError(s"ghc-modi error output: ${stdOutput.mkString(" ")}")
-          GhcModiOutput()
+        if (stdOutput.headOption.exists(_.startsWith(GhcModErrorIndicator))) {
+          HaskellNotificationGroup.notifyError(s"ghc-mod error output: ${stdOutput.mkString(" ")}")
+          GhcModOutput()
         } else {
-          GhcModiOutput(stdOutput.init)
+          GhcModOutput(stdOutput.init)
         }
       }
       catch {
         case e: Exception =>
-          HaskellNotificationGroup.notifyError(s"Error in communication with ghc-modi: ${e.getMessage}. Check if GHC SDK is set and ghc-modi is okay. ghc-modi will not be called for 5 seconds. Command was: $command")
-          setGhcModiProblemTime()
-          GhcModiOutput()
+          HaskellNotificationGroup.notifyError(s"Error in communication with ghc-mod: ${e.getMessage}. Check if GHC SDK is set and ghc-mod is okay. ghc-mod will not be called for 5 seconds. Command was: $command")
+          setGhcModProblemTime()
+          GhcModOutput()
       }
     } else {
-      GhcModiOutput()
+      GhcModOutput()
     }
   }
 
-  def startGhcModi(): Unit = synchronized {
+  def start(): Unit = synchronized {
     HaskellSettingsState.getGhcModPath match {
       case Some(p) =>
         HaskellNotificationGroup.notifyInfo(s"Starting ghc-mod in interactive mode for project ${project.getName}.")
@@ -107,26 +107,26 @@ class GhcModi(val project: Project) extends ProjectComponent {
         }
         catch {
           case e: Exception =>
-            HaskellNotificationGroup.notifyError("Could not start ghc-modi. Make sure you have set right path to ghc-modi in settings.")
-            setGhcModiProblemTime()
+            HaskellNotificationGroup.notifyError("Could not start ghc-mod in interactive mode. Make sure you have set right path to ghc-mod in settings.")
+            setGhcModProblemTime()
         }
       case None => {
-        HaskellNotificationGroup.notifyError(s"ghc-modi could not be started for project ${project.getName} because ghc-modi path is not set")
+        HaskellNotificationGroup.notifyError(s"ghc-mod could not be started in interactive mode for project ${project.getName} because ghc-mod path is not set")
       }
     }
   }
 
   def exit() = synchronized {
     try {
-      HaskellNotificationGroup.notifyInfo(s"Shutting down ghc-modi for project ${project.getName}.")
+      HaskellNotificationGroup.notifyInfo(s"Shutting down ghc-mod for project ${project.getName}.")
       try {
         if (outputStream != null) {
-          writeToOutputstream("quit")
+          writeToOutputStream("quit")
         }
       }
       catch {
         case e: Exception =>
-          HaskellNotificationGroup.notifyError(s"Error while shutting down ghc-modi for project ${project.getName}. Error message: ${e.getMessage}")
+          HaskellNotificationGroup.notifyError(s"Error while shutting down ghc-mod for project ${project.getName}. Error message: ${e.getMessage}")
       }
       if (stdin != null) {
         stdin.close()
@@ -142,15 +142,15 @@ class GhcModi(val project: Project) extends ProjectComponent {
     }
   }
 
-  private def writeToOutputstream(command: String) = {
+  private def writeToOutputStream(command: String) = {
     stdOutListBuffer.clear()
     outputStream.write(command.getBytes)
     outputStream.write(LineSeparatorInBytes)
     outputStream.flush()
   }
 
-  private def setGhcModiProblemTime() = {
-    ghcModiProblemTime = Some(System.currentTimeMillis)
+  private def setGhcModProblemTime() = {
+    ghcModProblemTime = Some(System.currentTimeMillis)
   }
 
   private def getEnvParameters: Option[(String, String)] = {
@@ -169,7 +169,7 @@ class GhcModi(val project: Project) extends ProjectComponent {
 
   override def projectOpened(): Unit = {
     if (HaskellProjecUtil.isHaskellProject(project)) {
-      startGhcModi()
+      start()
     }
   }
 
@@ -179,7 +179,7 @@ class GhcModi(val project: Project) extends ProjectComponent {
 
   override def disposeComponent(): Unit = {}
 
-  override def getComponentName: String = "ghc-modi"
+  override def getComponentName: String = "ghc-mod"
 }
 
-case class GhcModiOutput(outputLines: Iterable[String] = Iterable())
+case class GhcModOutput(outputLines: Iterable[String] = Iterable())

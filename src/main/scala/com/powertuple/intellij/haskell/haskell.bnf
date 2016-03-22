@@ -104,10 +104,12 @@ type_declaration            ::=  TYPE osnl simpletype osnl COLON_COLON osnl ttyp
                                   TYPE osnl simpletype osnl (EQUAL | WHERE)? osnl (ttype | type_signature_declaration)? (DOUBLE_RIGHT_ARROW ttype)? |
                                   TYPE osnl simpletype
 
-data_declaration            ::= DATA osnl ctype_pragma? osnl INSTANCE? osnl (context osnl DOUBLE_RIGHT_ARROW)? osnl simpletype osnl EQUAL osnl constrs osnl data_declaration_deriving? |
+data_declaration            ::= DATA osnl simpletype osnl data_declaration_deriving |
+                                  DATA osnl ctype_pragma? osnl INSTANCE? osnl (context osnl DOUBLE_RIGHT_ARROW)? osnl simpletype osnl EQUAL osnl constrs osnl data_declaration_deriving? |
                                   DATA osnl INSTANCE? osnl (context osnl DOUBLE_RIGHT_ARROW)? osnl simpletype osnl WHERE cdecls osnl data_declaration_deriving? |
                                   DATA osnl INSTANCE? osnl (context osnl DOUBLE_RIGHT_ARROW)? osnl simpletype (EQUAL expression)?
-data_declaration_deriving   ::= (DERIVING ttype osnl | DERIVING LEFT_PAREN ttype (osnl COMMA osnl ttype)+ RIGHT_PAREN osnl)+
+
+data_declaration_deriving   ::= (DERIVING ttype osnl | DERIVING LEFT_PAREN ttype (osnl COMMA osnl ttype)* RIGHT_PAREN osnl)+
 
 newtype_declaration         ::= NEWTYPE osnl ctype_pragma? osnl (context osnl DOUBLE_RIGHT_ARROW)? osnl simpletype osnl EQUAL osnl newconstr osnl (DERIVING osnl ttype)?
 class_declaration           ::= (CLASS osnl (scontext osnl DOUBLE_RIGHT_ARROW)? osnl qcon osnl
@@ -115,8 +117,8 @@ class_declaration           ::= (CLASS osnl (scontext osnl DOUBLE_RIGHT_ARROW)? 
                                   (osnl VERTICAL_BAR osnl ttype (osnl COMMA osnl ttype)*)? osnl WHERE? cdecls? |
                                   CLASS osnl context osnl DOUBLE_RIGHT_ARROW osnl qcon osnl qvar osnl WHERE? cdecls?) // seen in Control.Lens.Internal.Indexed
 
-instance_declaration        ::= INSTANCE osnl (scontext osnl DOUBLE_RIGHT_ARROW)? osnl qcon osnl inst osnl WHERE idecls
-                                  | INSTANCE osnl (scontext osnl DOUBLE_RIGHT_ARROW)? osnl qcon osnl inst
+instance_declaration        ::= INSTANCE osnl (var_id+ DOT)? osnl (scontext osnl DOUBLE_RIGHT_ARROW)? osnl qcon osnl inst osnl WHERE idecls
+                                  |  INSTANCE osnl (var_id+ DOT)? osnl (scontext osnl DOUBLE_RIGHT_ARROW)? osnl qcon osnl inst
 default_declaration         ::= DEFAULT osnl (LEFT_PAREN (ttype (COMMA ttype)*)? RIGHT_PAREN | type_signature_declaration)
 type_instance_declaration   ::= TYPE_INSTANCE osnl expression
 type_signature_declaration  ::= vars osnl COLON_COLON osnl ((ttype | context) DOUBLE_RIGHT_ARROW)? osnl ttype | fixity (DECIMAL)? ops

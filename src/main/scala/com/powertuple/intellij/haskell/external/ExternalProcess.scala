@@ -20,6 +20,8 @@ import com.intellij.execution.configurations.GeneralCommandLine
 import com.intellij.execution.process.CapturingProcessHandler
 import com.intellij.execution.process.ProcessOutput
 import java.io.File
+import java.nio.charset.Charset
+
 import scala.collection.JavaConversions._
 
 object ExternalProcess {
@@ -41,7 +43,7 @@ object ExternalProcess {
   }
 
   def execute(cmd: GeneralCommandLine, timeout: Int): ProcessOutput = {
-    val processHandler: CapturingProcessHandler = new CapturingProcessHandler(cmd.createProcess)
+    val processHandler: CapturingProcessHandler = new CapturingProcessHandler(cmd)
     if (timeout < 0) processHandler.runProcess else processHandler.runProcess(timeout, false)
   }
 }

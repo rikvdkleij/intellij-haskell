@@ -1,5 +1,5 @@
 /*
- * Copyright 2015 Rik van der Kleij
+ * Copyright 2016 Rik van der Kleij
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -36,7 +36,7 @@ import scala.annotation.tailrec
 import scala.collection.Iterable
 import scala.collection.JavaConversions._
 
-class GhcModiExternalAnnotator extends ExternalAnnotator[GhcModInitialInfo, GhcModCheckResult] {
+class GhcModExternalAnnotator extends ExternalAnnotator[GhcModInitialInfo, GhcModCheckResult] {
 
   private final val NoTypeSignaturePattern = """Warning: Top-level binding with no type signature: (.+)""".r
   private final val UseLanguageExtensionPattern = """.*Perhaps you intended to use (\w+) .*""".r
@@ -80,8 +80,8 @@ class GhcModiExternalAnnotator extends ExternalAnnotator[GhcModInitialInfo, GhcM
     DaemonCodeAnalyzer.getInstance(psiFile.getProject).asInstanceOf[DaemonCodeAnalyzerImpl].restart(psiFile)
   }
 
-  private[annotator] def createAnnotations(ghcModiCheckResult: GhcModCheckResult, psiFile: PsiFile): Iterable[Annotation] = {
-    val problems = ghcModiCheckResult.problems.filter(_.filePath == psiFile.getOriginalFile.getVirtualFile.getPath)
+  private[annotator] def createAnnotations(ghcModCheckResult: GhcModCheckResult, psiFile: PsiFile): Iterable[Annotation] = {
+    val problems = ghcModCheckResult.problems.filter(_.filePath == psiFile.getOriginalFile.getVirtualFile.getPath)
     problems.flatMap { problem =>
       val textRange = getProblemTextRange(psiFile, problem)
       textRange.map { tr =>
@@ -110,8 +110,8 @@ class GhcModiExternalAnnotator extends ExternalAnnotator[GhcModInitialInfo, GhcM
   }
 
   private def getProblemTextRange(psiFile: PsiFile, problem: GhcModProblem): Option[TextRange] = {
-    val ghcModiOffset = LineColumnPosition.getOffset(psiFile, LineColumnPosition(problem.lineNr, problem.columnNr))
-    ghcModiOffset match {
+    val ghcModOffset = LineColumnPosition.getOffset(psiFile, LineColumnPosition(problem.lineNr, problem.columnNr))
+    ghcModOffset match {
       case Some(offset) => Some(findTextRange(psiFile, offset))
       case None => None
     }

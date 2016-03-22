@@ -111,7 +111,7 @@
         <lang.commenter language="Haskell" implementationClass="com.powertuple.intellij.haskell.code.HaskellCommenter"/>
 
         <externalAnnotator language="Haskell"
-                           implementationClass="com.powertuple.intellij.haskell.annotator.GhcModiExternalAnnotator"/>
+                           implementationClass="com.powertuple.intellij.haskell.annotator.GhcModExternalAnnotator"/>
 
         <applicationConfigurable instance="com.powertuple.intellij.haskell.settings.HaskellConfigurable"/>
 
@@ -176,7 +176,7 @@
 
     <project-components>
         <component>
-            <implementation-class>com.powertuple.intellij.haskell.external.GhcModi</implementation-class>
+            <implementation-class>com.powertuple.intellij.haskell.external.GhcModProcess</implementation-class>
         </component>
 
         <component>

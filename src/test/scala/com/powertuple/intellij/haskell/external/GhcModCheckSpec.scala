@@ -25,7 +25,7 @@ class GhcModCheckSpec extends FunSpec with Matchers with GivenWhenThen with Befo
     Given("output of ghc-mod check")
     val output = "/file/path/HaskellFile.hs:1:11:parse error on input\u0000     and so on"
 
-    When("parsed to ghc-modi problem")
+    When("parsed to ghc-mod problem")
     val ghcModProblem = GhcModCheck.parseOutputLine(output, null).get
 
     Then("it should contain right data")

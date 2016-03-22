@@ -42,18 +42,18 @@ object HaskellPsiImplUtil {
 
   def getIdentifierElement(qvar: HaskellQvar): HaskellNamedElement = {
     Option(qvar.getVarId).
-        orElse(Option(qvar.getVarSym)).
-        orElse(Option(qvar.getVarDotSym)).
-        orElse(Option(qvar.getQvarId).map(_.getVarId)).
-        orElse(Option(qvar.getQvarSym).map(_.getVarSym)).
-        orElse(Option(qvar.getQvarDotSym).map(_.getVarDotSym)).
-        getOrElse(throw new Exception(s"Identifier for $qvar should exist"))
+      orElse(Option(qvar.getVarSym)).
+      orElse(Option(qvar.getVarDotSym)).
+      orElse(Option(qvar.getQvarId).map(_.getVarId)).
+      orElse(Option(qvar.getQvarSym).map(_.getVarSym)).
+      orElse(Option(qvar.getQvarDotSym).map(_.getVarDotSym)).
+      getOrElse(throw new Exception(s"Identifier for $qvar should exist"))
   }
 
   def getQualifier(qvar: HaskellQvar): Option[String] = {
     Option(qvar.getQvarDotSym).map(_.getQualifier.getName).
-        orElse(Option(qvar.getQvarId).map(_.getQualifier.getName)).
-        orElse(Option(qvar.getQvarSym).map(_.getQualifier.getName))
+      orElse(Option(qvar.getQvarId).map(_.getQualifier.getName)).
+      orElse(Option(qvar.getQvarSym).map(_.getQualifier.getName))
   }
 
 
@@ -72,10 +72,10 @@ object HaskellPsiImplUtil {
 
   def getIdentifierElement(qcon: HaskellQcon): HaskellNamedElement = {
     Option(qcon.getConId).
-        orElse(Option(qcon.getConSym)).
-        orElse(Option(qcon.getQconId).map(_.getIdentifierElement)).
-        orElse(Option(qcon.getGconSym).map(_.getIdentifierElement)).
-        getOrElse(throw new Exception(s"Identifier for $qcon should exist"))
+      orElse(Option(qcon.getConSym)).
+      orElse(Option(qcon.getQconId).map(_.getIdentifierElement)).
+      orElse(Option(qcon.getGconSym).map(_.getIdentifierElement)).
+      getOrElse(throw new Exception(s"Identifier for $qcon should exist"))
   }
 
   private def getQualifierForQConId(qconId: HaskellQconId) = {
@@ -84,7 +84,7 @@ object HaskellPsiImplUtil {
 
   def getQualifier(qcon: HaskellQcon): Option[String] = {
     Option(qcon.getQconId).map(getQualifierForQConId).
-        orElse(Option(qcon.getGconSym).flatMap(qs => Option(qs.getQconSym).map(_.getQualifier.getName)))
+      orElse(Option(qcon.getGconSym).flatMap(qs => Option(qs.getQconSym).map(_.getQualifier.getName)))
   }
 
 
@@ -103,18 +103,18 @@ object HaskellPsiImplUtil {
 
   def getIdentifierElement(qvarOp: HaskellQvarOp): HaskellNamedElement = {
     Option(qvarOp.getVarId).
-        orElse(Option(qvarOp.getVarSym)).
-        orElse(Option(qvarOp.getVarDotSym)).
-        orElse(Option(qvarOp.getQvarId).map(_.getVarId)).
-        orElse(Option(qvarOp.getQvarSym).map(_.getVarSym)).
-        orElse(Option(qvarOp.getQvarDotSym).map(_.getVarDotSym)).
-        getOrElse(throw new Exception(s"Identifier for $qvarOp should exist"))
+      orElse(Option(qvarOp.getVarSym)).
+      orElse(Option(qvarOp.getVarDotSym)).
+      orElse(Option(qvarOp.getQvarId).map(_.getVarId)).
+      orElse(Option(qvarOp.getQvarSym).map(_.getVarSym)).
+      orElse(Option(qvarOp.getQvarDotSym).map(_.getVarDotSym)).
+      getOrElse(throw new Exception(s"Identifier for $qvarOp should exist"))
   }
 
   def getQualifier(qvarOp: HaskellQvarOp): Option[String] = {
     Option(qvarOp.getQvarDotSym).map(_.getQualifier.getName).
-        orElse(Option(qvarOp.getQvarId).map(_.getQualifier.getName)).
-        orElse(Option(qvarOp.getQvarSym).map(_.getQualifier.getName))
+      orElse(Option(qvarOp.getQvarId).map(_.getQualifier.getName)).
+      orElse(Option(qvarOp.getQvarSym).map(_.getQualifier.getName))
   }
 
 
@@ -124,15 +124,15 @@ object HaskellPsiImplUtil {
 
   def getIdentifierElement(qconOp: HaskellQconOp): HaskellNamedElement = {
     Option(qconOp.getConId).
-        orElse(Option(qconOp.getConSym)).
-        orElse(Option(qconOp.getQconId).map(_.getIdentifierElement)).
-        orElse(Option(qconOp.getGconSym).map(_.getIdentifierElement)).
-        getOrElse(throw new Exception(s"Identifier for $qconOp should exist"))
+      orElse(Option(qconOp.getConSym)).
+      orElse(Option(qconOp.getQconId).map(_.getIdentifierElement)).
+      orElse(Option(qconOp.getGconSym).map(_.getIdentifierElement)).
+      getOrElse(throw new Exception(s"Identifier for $qconOp should exist"))
   }
 
   def getQualifier(qconOp: HaskellQconOp): Option[String] = {
     Option(qconOp.getQconId).map(getQualifierForQConId).
-        orElse(Option(qconOp.getGconSym).flatMap(qs => Option(qs.getQconSym).map(_.getQualifier.getName)))
+      orElse(Option(qconOp.getGconSym).flatMap(qs => Option(qs.getQconSym).map(_.getQualifier.getName)))
   }
 
 
@@ -142,8 +142,8 @@ object HaskellPsiImplUtil {
 
   def getIdentifierElement(op: HaskellOp): HaskellNamedElement = {
     Option(op.getQvarOp).map(_.getIdentifierElement).
-        orElse(Option(op.getQconOp).map(_.getIdentifierElement)).
-        getOrElse(throw new Exception(s"Identifier for $op should exist"))
+      orElse(Option(op.getQconOp).map(_.getIdentifierElement)).
+      getOrElse(throw new Exception(s"Identifier for $op should exist"))
   }
 
 
@@ -153,8 +153,8 @@ object HaskellPsiImplUtil {
 
   def getIdentifierElement(gconSym: HaskellGconSym): HaskellNamedElement = {
     Option(gconSym.getQconSym).map(_.getConSym).
-        orElse(Option(gconSym.getConSym)).
-        getOrElse(throw new Exception(s"Identifier for $gconSym should exist"))
+      orElse(Option(gconSym.getConSym)).
+      getOrElse(throw new Exception(s"Identifier for $gconSym should exist"))
   }
 
 
@@ -267,7 +267,8 @@ object HaskellPsiImplUtil {
   }
 
   private abstract class HaskellItemPresentation(haskellElement: PsiElement) extends ItemPresentation {
-    override def getLocationString: String = {
+
+    def getLocationString: String = {
       val node = haskellElement.getContainingFile.getNode.getPsi
       Option(PsiTreeUtil.findChildOfType(node, classOf[HaskellModuleDeclaration])).map(_.getModId.getName).getOrElse("")
     }
@@ -347,17 +348,17 @@ object HaskellPsiImplUtil {
 
   def getIdentifierElements(typeSignature: HaskellTypeSignatureDeclaration): Seq[HaskellNamedElement] = {
     Option(typeSignature.getVars).map(_.getQvarList.map(_.getIdentifierElement)).
-        orElse(Option(typeSignature.getOps).map(_.getOpList.map(_.getIdentifierElement))).
-        getOrElse(Seq())
+      orElse(Option(typeSignature.getOps).map(_.getOpList.map(_.getIdentifierElement))).
+      getOrElse(Seq())
   }
 
   def getIdentifierElements(dataDeclaration: HaskellDataDeclaration): Seq[HaskellNamedElement] = {
     dataDeclaration.getSimpletype.getIdentifierElements ++
-        Option(dataDeclaration.getConstr1List).map(_.flatMap(c => Seq(c.getQcon.getIdentifierElement) ++ c.getFielddeclList.flatMap(_.getVars.getQvarList.map(_.getIdentifierElement)))).getOrElse(Seq()) ++
-        Option(dataDeclaration.getConstr2List).map(_.map(c => c.getQconOp.getIdentifierElement)).getOrElse(Seq()) ++
-        Option(dataDeclaration.getConstr3List).map(_.map(c => c.getQcon.getIdentifierElement)).getOrElse(Seq()) ++
-        Option(dataDeclaration.getConstr4List).map(_.flatMap(c => Seq(c.getGconSym.getIdentifierElement, c.getQcon.getIdentifierElement))).getOrElse(Seq()) ++
-        Option(dataDeclaration.getDataDeclarationDeriving).map(_.getTtypeList).map(_.flatMap(e => PsiTreeUtil.findChildrenOfType(e, classOf[HaskellQcon]).map(_.getIdentifierElement))).getOrElse(Seq())
+      Option(dataDeclaration.getConstr1List).map(_.flatMap(c => Seq(c.getQcon.getIdentifierElement) ++ c.getFielddeclList.flatMap(_.getVars.getQvarList.map(_.getIdentifierElement)))).getOrElse(Seq()) ++
+      Option(dataDeclaration.getConstr2List).map(_.map(c => c.getQconOp.getIdentifierElement)).getOrElse(Seq()) ++
+      Option(dataDeclaration.getConstr3List).map(_.map(c => c.getQcon.getIdentifierElement)).getOrElse(Seq()) ++
+      Option(dataDeclaration.getConstr4List).map(_.flatMap(c => Seq(c.getGconSym.getIdentifierElement, c.getQcon.getIdentifierElement))).getOrElse(Seq()) ++
+      Option(dataDeclaration.getDataDeclarationDeriving).map(_.getTtypeList).map(_.flatMap(e => PsiTreeUtil.findChildrenOfType(e, classOf[HaskellQcon]).map(_.getIdentifierElement))).getOrElse(Seq())
   }
 
   def getIdentifierElements(typeDeclaration: HaskellTypeDeclaration): Seq[HaskellNamedElement] = {
@@ -366,29 +367,29 @@ object HaskellPsiImplUtil {
 
   def getIdentifierElements(newtypeDeclaration: HaskellNewtypeDeclaration): Seq[HaskellNamedElement] = {
     newtypeDeclaration.getSimpletype.getIdentifierElements ++
-        Option(newtypeDeclaration.getNewconstr.getQcon).map(_.getIdentifierElement) ++
-        Option(newtypeDeclaration.getNewconstr.getNewconstrFielddecl).map(_.getQvar.getIdentifierElement).toSeq
+      Option(newtypeDeclaration.getNewconstr.getQcon).map(_.getIdentifierElement) ++
+      Option(newtypeDeclaration.getNewconstr.getNewconstrFielddecl).map(_.getQvar.getIdentifierElement).toSeq
   }
 
   def getIdentifierElements(classDeclaration: HaskellClassDeclaration): Seq[HaskellNamedElement] = {
     Seq(classDeclaration.getQcon.getIdentifierElement) ++
-        Option(classDeclaration.getCdeclList).map(_.flatMap(c => Option(c.getTypeSignatureDeclaration)).flatMap(_.getIdentifierElements)).getOrElse(Seq())
+      Option(classDeclaration.getCdeclList).map(_.flatMap(c => Option(c.getTypeSignatureDeclaration)).flatMap(_.getIdentifierElements)).getOrElse(Seq())
   }
 
   def getIdentifierElements(instanceDeclaration: HaskellInstanceDeclaration): Seq[HaskellNamedElement] = {
     val inst = instanceDeclaration.getInst
     Seq(instanceDeclaration.getQcon.getIdentifierElement) ++
-        Option(inst.getGtycon).flatMap(g => Option(g.getQcon).map(_.getIdentifierElement)).toSeq ++
-        Option(inst.getInstvarList).map(_.map(iv => Option(iv.getGconSym).map(_.getIdentifierElement).
-            orElse(Option(iv.getQcon).map(_.getIdentifierElement))).flatten).getOrElse(Seq())
+      Option(inst.getGtycon).flatMap(g => Option(g.getQcon).map(_.getIdentifierElement)).toSeq ++
+      Option(inst.getInstvarList).map(_.flatMap(iv => Option(iv.getGconSym).map(_.getIdentifierElement).
+        orElse(Option(iv.getQcon).map(_.getIdentifierElement)))).getOrElse(Seq())
   }
 
   def getIdentifierElements(typeFamilyDeclaration: HaskellTypeFamilyDeclaration): Seq[HaskellNamedElement] = {
     val familyType = typeFamilyDeclaration.getTypeFamilyType
     Option(familyType.getTypeFamilyType1List).map(_.map(_.getQcon.getIdentifierElement)).
-        orElse(Option(familyType.getTypeFamilyType2List).map(_.map(_.getQvarOp.getIdentifierElement))).
-        orElse(Option(familyType.getVarsList).map(_.flatMap(_.getQvarList.map(_.getIdentifierElement)))).
-        getOrElse(Seq())
+      orElse(Option(familyType.getTypeFamilyType2List).map(_.map(_.getQvarOp.getIdentifierElement))).
+      orElse(Option(familyType.getVarsList).map(_.flatMap(_.getQvarList.map(_.getIdentifierElement)))).
+      getOrElse(Seq())
   }
 
   def getIdentifierElements(derivingDeclaration: HaskellDerivingDeclaration): Seq[HaskellNamedElement] = {
@@ -401,9 +402,9 @@ object HaskellPsiImplUtil {
 
   def getIdentifierElements(simpleType: HaskellSimpletype): Seq[HaskellNamedElement] = {
     Option(simpleType.getQcon).map(_.getIdentifierElement).
-        orElse(Option(simpleType.getQvar).map(_.getIdentifierElement)).
-        orElse(Option(simpleType.getQvarOp).map(_.getIdentifierElement)).
-        orElse(Option(simpleType.getGconSym).map(_.getIdentifierElement)).toSeq
+      orElse(Option(simpleType.getQvar).map(_.getIdentifierElement)).
+      orElse(Option(simpleType.getQvarOp).map(_.getIdentifierElement)).
+      orElse(Option(simpleType.getGconSym).map(_.getIdentifierElement)).toSeq
   }
 
   def getIdentifierElements(defaultDeclaration: HaskellDefaultDeclaration): Seq[HaskellNamedElement] = {

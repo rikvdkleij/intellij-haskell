@@ -31,7 +31,7 @@ import com.powertuple.intellij.haskell.util.{FileUtil, HaskellElementCondition, 
 import scala.annotation.tailrec
 import scala.collection.mutable.ListBuffer
 
-object GhcModiInfo {
+object GhcModInfo {
 
   private final val GhcModiInfoPattern = """(.+)-- Defined at (.+):([\d]+):([\d]+)""".r
   private final val GhcModiInfoLibraryPathPattern = """(.+)-- Defined in ‘([\w\.\-]+):([\w\.\-]+)’""".r
@@ -46,18 +46,18 @@ object GhcModiInfo {
   private final val InfoCache = CacheBuilder.newBuilder()
       .refreshAfterWrite(1, TimeUnit.SECONDS)
       .build(
-        new CacheLoader[NamedElementInfo, GhcModiOutput]() {
-          private def findInfoFor(namedElementInfo: NamedElementInfo): GhcModiOutput = {
+        new CacheLoader[NamedElementInfo, GhcModOutput]() {
+          private def findInfoFor(namedElementInfo: NamedElementInfo): GhcModOutput = {
             val cmd = s"info ${namedElementInfo.filePath} ${namedElementInfo.identifier}"
-            GhcModiManager.getGhcModi(namedElementInfo.project).execute(cmd)
+            GhcModProcessManager.getGhcModProcess(namedElementInfo.project).execute(cmd)
           }
 
-          override def load(namedElementInfo: NamedElementInfo): GhcModiOutput = {
+          override def load(namedElementInfo: NamedElementInfo): GhcModOutput = {
             findInfoFor(namedElementInfo)
           }
 
-          override def reload(namedElementInfo: NamedElementInfo, oldInfo: GhcModiOutput): ListenableFuture[GhcModiOutput] = {
-            val task = ListenableFutureTask.create(new Callable[GhcModiOutput]() {
+          override def reload(namedElementInfo: NamedElementInfo, oldInfo: GhcModOutput): ListenableFuture[GhcModOutput] = {
+            val task = ListenableFutureTask.create(new Callable[GhcModOutput]() {
               def call() = {
                 val newInfo = findInfoFor(namedElementInfo)
                 if (newInfo.outputLines.isEmpty || newInfo.outputLines.head == NoInfoIndicator) {
@@ -74,7 +74,7 @@ object GhcModiInfo {
       )
 
   def findInfoFor(psiFile: PsiFile, namedElement: HaskellNamedElement): Iterable[IdentifierInfo] = {
-    val ghcModiOutput = findIdentifier(namedElement).map { id =>
+    val ghcModOutput = findIdentifier(namedElement).map { id =>
       try {
         val key = NamedElementInfo(FileUtil.getFilePath(psiFile), id, psiFile.getProject)
         val output = InfoCache.get(key)
@@ -86,13 +86,13 @@ object GhcModiInfo {
         }
       }
       catch {
-        case _: UncheckedExecutionException => GhcModiOutput()
-        case _: ProcessCanceledException => GhcModiOutput()
+        case _: UncheckedExecutionException => GhcModOutput()
+        case _: ProcessCanceledException => GhcModOutput()
       }
     }
 
     (for {
-      output <- ghcModiOutput
+      output <- ghcModOutput
       outputLine <- output.outputLines.headOption
       identifierInfos <- createIdentifierInfos(outputLine, psiFile.getProject)
     } yield identifierInfos).getOrElse(Iterable())
@@ -157,7 +157,7 @@ object GhcModiInfo {
 
   private def getImportedQualifiedModules(psiFile: PsiFile): Iterable[QualifiedImport] = {
     val importDeclarations = HaskellPsiHelper.findImportDeclarations(psiFile)
-    importDeclarations.map(i => Option(i.getImportQualifiedAs).map(qa => QualifiedImport(qa.getQualifier.getName, i.getModuleName))).flatten
+    importDeclarations.flatMap(i => Option(i.getImportQualifiedAs).map(qa => QualifiedImport(qa.getQualifier.getName, i.getModuleName)))
   }
 
   private def createLibraryIdentifierInfo(module: String, typeSignature: String, project: Project) = {
