@@ -1,5 +1,4 @@
 lazy val commonSettings = Seq(
-  organization := "com.powertuple",
   version := "0.91",
   scalaVersion := "2.11.8"
 )
