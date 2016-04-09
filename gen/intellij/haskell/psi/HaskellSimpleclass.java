@@ -14,10 +14,10 @@ public interface HaskellSimpleclass extends HaskellCompositeElement {
   List<HaskellQcon> getQconList();
 
   @NotNull
-  List<HaskellQvar> getQvarList();
+  List<HaskellQconOp> getQconOpList();
 
-  @Nullable
-  HaskellQvarOp getQvarOp();
+  @NotNull
+  List<HaskellQvar> getQvarList();
 
   @NotNull
   List<HaskellSimpleclassTildePart> getSimpleclassTildePartList();
@@ -26,6 +26,6 @@ public interface HaskellSimpleclass extends HaskellCompositeElement {
   List<HaskellTtype> getTtypeList();
 
   @NotNull
-  List<HaskellTypeSignatureDeclaration> getTypeSignatureDeclarationList();
+  List<HaskellTypeSignature> getTypeSignatureList();
 
 }

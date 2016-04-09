@@ -19,13 +19,10 @@ public interface HaskellNewconstr extends HaskellCompositeElement {
   @NotNull
   List<HaskellQvar> getQvarList();
 
-  @Nullable
-  HaskellQvarOp getQvarOp();
-
   @NotNull
   List<HaskellTtype> getTtypeList();
 
   @NotNull
-  List<HaskellTypeSignatureDeclaration> getTypeSignatureDeclarationList();
+  List<HaskellTypeSignature> getTypeSignatureList();
 
 }

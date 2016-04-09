@@ -45,20 +45,14 @@ public class HaskellTtypeImpl extends HaskellCompositeElementImpl implements Has
 
   @Override
   @NotNull
-  public List<HaskellQvarOp> getQvarOpList() {
-    return PsiTreeUtil.getChildrenOfTypeAsList(this, HaskellQvarOp.class);
-  }
-
-  @Override
-  @NotNull
   public List<HaskellTtype> getTtypeList() {
     return PsiTreeUtil.getChildrenOfTypeAsList(this, HaskellTtype.class);
   }
 
   @Override
   @NotNull
-  public List<HaskellTypeSignatureDeclaration> getTypeSignatureDeclarationList() {
-    return PsiTreeUtil.getChildrenOfTypeAsList(this, HaskellTypeSignatureDeclaration.class);
+  public List<HaskellTypeSignature> getTypeSignatureList() {
+    return PsiTreeUtil.getChildrenOfTypeAsList(this, HaskellTypeSignature.class);
   }
 
 }

@@ -17,7 +17,7 @@
 package intellij.haskell.external
 
 import com.intellij.psi.PsiFile
-import intellij.haskell.settings.{HaskellSettingsState, HaskellSettings}
+import intellij.haskell.settings.HaskellSettingsState
 import spray.json.{DefaultJsonProtocol, _}
 
 object Hlint {
@@ -29,7 +29,7 @@ object Hlint {
         val output = ExternalProcess.getProcessOutput(
           psiFile.getProject.getBasePath,
           p,
-          Seq(psiFile.getVirtualFile.getPath, "-j")
+          Seq("--json", psiFile.getVirtualFile.getPath)
         )
         deserializeHlintInfo(output.getStdout)
       case None => Seq()

@@ -23,7 +23,7 @@ public interface HaskellConstr3 extends HaskellCompositeElement {
   List<HaskellTtype> getTtypeList();
 
   @NotNull
-  List<HaskellTypeSignatureDeclaration> getTypeSignatureDeclarationList();
+  List<HaskellTypeSignature> getTypeSignatureList();
 
   @NotNull
   List<HaskellUnpackNounpackPragma> getUnpackNounpackPragmaList();

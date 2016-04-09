@@ -27,16 +27,20 @@ import scala.collection.JavaConversions._
 object HaskellFindUtil {
 
   def findDeclarationElements(project: Project, includeNonProjectItems: Boolean): Iterable[HaskellDeclarationElement] = {
-    getHaskellFiles(project, includeNonProjectItems).flatMap(f => PsiTreeUtil.findChildrenOfType(f, classOf[HaskellDeclarationElement]))
+    getHaskellFiles(project, includeNonProjectItems).flatMap(f => HaskellPsiHelper.findTopDeclarations(f))
   }
 
   def findDeclarationElements(project: Project, name: String, includeNonProjectItems: Boolean): Iterable[HaskellDeclarationElement] = {
     val normalizedName = normalize(name)
     if (name.endsWith(" ")) {
-      findDeclarationElementsByConditionOnName(project, includeNonProjectItems, (ie: String) => ie == normalizedName)
+      findDeclarationElementsByConditionOnName(project, includeNonProjectItems, (ne: String) => ne.startsWith(normalizedName))
     } else {
       val names = normalizedName.split(' ')
-      findDeclarationElementsByConditionOnName(project, includeNonProjectItems, (ie: String) => names.forall(n => ie.contains(n)))
+      if (names.length == 1) {
+        findDeclarationElementsByConditionOnName(project, includeNonProjectItems, (ne: String) => ne.contains(names.head))
+      } else {
+        findDeclarationElementsByConditionOnName(project, includeNonProjectItems, (ne: String) => names.forall(n => ne.contains(n)))
+      }
     }
   }
 
@@ -47,10 +51,14 @@ object HaskellFindUtil {
   def findNamedElements(project: Project, name: String, includeNonProjectItems: Boolean): Iterable[HaskellNamedElement] = {
     val normalizedName = normalize(name)
     if (name.endsWith(" ")) {
-      findNamedElementsByConditionOnName(project, includeNonProjectItems, (ne: String) => ne == normalizedName)
+      findNamedElementsByConditionOnName(project, includeNonProjectItems, (ne: String) => ne.startsWith(normalizedName))
     } else {
       val names = normalizedName.split(' ')
-      findNamedElementsByConditionOnName(project, includeNonProjectItems, (ne: String) => names.forall(n => ne.contains(n)))
+      if (names.length == 1) {
+        findNamedElementsByConditionOnName(project, includeNonProjectItems, (ne: String) => ne.contains(names.head))
+      } else {
+        findNamedElementsByConditionOnName(project, includeNonProjectItems, (ne: String) => names.forall(n => ne.contains(n)))
+      }
     }
   }
 

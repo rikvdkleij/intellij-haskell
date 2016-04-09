@@ -9,14 +9,17 @@ import scala.collection.Seq;
 
 public interface HaskellInstanceDeclaration extends HaskellDeclarationElement {
 
-  @Nullable
-  HaskellExpression getExpression();
+  @NotNull
+  List<HaskellExpression> getExpressionList();
 
   @NotNull
   List<HaskellIdecl> getIdeclList();
 
   @NotNull
   HaskellInst getInst();
+
+  @Nullable
+  HaskellOverlapPragma getOverlapPragma();
 
   @NotNull
   HaskellQcon getQcon();

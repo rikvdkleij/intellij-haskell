@@ -1,5 +1,5 @@
 /*
- * Copyright 2014 Rik van der Kleij
+ * Copyright 2016 Rik van der Kleij
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -35,10 +35,13 @@ object HaskellParserDefinition {
   final val SPECIAL_RESERVED_IDS = TokenSet.create(HS_TYPE_FAMILY, HS_FOREIGN_IMPORT, HS_FOREIGN_EXPORT, HS_TYPE_INSTANCE)
   final val ALL_RESERVED_IDS = TokenSet.orSet(RESERVED_IDS, SPECIAL_RESERVED_IDS)
   final val RESERVED_OPERATORS = TokenSet.create(HS_COLON_COLON, HS_EQUAL, HS_BACKSLASH, HS_VERTICAL_BAR, HS_LEFT_ARROW,
-    HS_RIGHT_ARROW, HS_AT, HS_TILDE, HS_DOUBLE_RIGHT_ARROW)
+    HS_RIGHT_ARROW, HS_AT, HS_TILDE, HS_DOUBLE_RIGHT_ARROW, HS_COLON)
   final val OPERATORS = TokenSet.orSet(RESERVED_OPERATORS, TokenSet.create(HS_VARSYM_ID, HS_CONSYM_ID), TokenSet.create(HS_DOT))
   final val NUMBERS = TokenSet.create(HS_DECIMAL, HS_FLOAT, HS_HEXADECIMAL, HS_OCTAL)
   final val SYMBOLS_RES_OP = TokenSet.create(HS_EQUAL, HS_AT, HS_BACKSLASH, HS_VERTICAL_BAR, HS_TILDE)
+
+  final val FileNodeType = new IFileElementType(Language.findInstance(classOf[HaskellLanguage]))
+  final val HaskellParser = new HaskellParser
 }
 
 class HaskellParserDefinition extends ParserDefinition {
@@ -49,11 +52,11 @@ class HaskellParserDefinition extends ParserDefinition {
   }
 
   def createParser(project: Project): PsiParser = {
-    new HaskellParser
+    HaskellParserDefinition.HaskellParser
   }
 
   def getFileNodeType: IFileElementType = {
-    new IFileElementType(Language.findInstance(classOf[HaskellLanguage]))
+    HaskellParserDefinition.FileNodeType
   }
 
   @NotNull

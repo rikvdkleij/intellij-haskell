@@ -39,14 +39,14 @@ public class HaskellSimpleclassImpl extends HaskellCompositeElementImpl implemen
 
   @Override
   @NotNull
-  public List<HaskellQvar> getQvarList() {
-    return PsiTreeUtil.getChildrenOfTypeAsList(this, HaskellQvar.class);
+  public List<HaskellQconOp> getQconOpList() {
+    return PsiTreeUtil.getChildrenOfTypeAsList(this, HaskellQconOp.class);
   }
 
   @Override
-  @Nullable
-  public HaskellQvarOp getQvarOp() {
-    return findChildByClass(HaskellQvarOp.class);
+  @NotNull
+  public List<HaskellQvar> getQvarList() {
+    return PsiTreeUtil.getChildrenOfTypeAsList(this, HaskellQvar.class);
   }
 
   @Override
@@ -63,8 +63,8 @@ public class HaskellSimpleclassImpl extends HaskellCompositeElementImpl implemen
 
   @Override
   @NotNull
-  public List<HaskellTypeSignatureDeclaration> getTypeSignatureDeclarationList() {
-    return PsiTreeUtil.getChildrenOfTypeAsList(this, HaskellTypeSignatureDeclaration.class);
+  public List<HaskellTypeSignature> getTypeSignatureList() {
+    return PsiTreeUtil.getChildrenOfTypeAsList(this, HaskellTypeSignature.class);
   }
 
 }

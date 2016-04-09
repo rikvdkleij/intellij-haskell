@@ -35,8 +35,8 @@ public class HaskellDefaultDeclarationImpl extends HaskellCompositeElementImpl i
 
   @Override
   @Nullable
-  public HaskellTypeSignatureDeclaration getTypeSignatureDeclaration() {
-    return findChildByClass(HaskellTypeSignatureDeclaration.class);
+  public HaskellTypeSignature getTypeSignature() {
+    return findChildByClass(HaskellTypeSignature.class);
   }
 
   public String getName() {

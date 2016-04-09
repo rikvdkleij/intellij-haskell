@@ -18,7 +18,7 @@ public interface HaskellSimpletype extends HaskellCompositeElement {
   HaskellQcon getQcon();
 
   @Nullable
-  HaskellQvar getQvar();
+  HaskellQconOp getQconOp();
 
   @Nullable
   HaskellQvarOp getQvarOp();
@@ -27,7 +27,10 @@ public interface HaskellSimpletype extends HaskellCompositeElement {
   HaskellTtype getTtype();
 
   @NotNull
-  List<HaskellTypeSignatureDeclaration> getTypeSignatureDeclarationList();
+  List<HaskellTypeSignature> getTypeSignatureList();
+
+  @NotNull
+  List<HaskellVarId> getVarIdList();
 
   Seq<HaskellNamedElement> getIdentifierElements();
 

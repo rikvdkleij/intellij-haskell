@@ -49,6 +49,7 @@ class HaskellDocumentationProvider extends AbstractDocumentationProvider {
             case (pei: ProjectIdentifierInfo, _) => Seq(PsiTreeUtil.findChildOfType(file, classOf[HaskellModuleDeclaration]).getModuleName, identifier)
             case (bei: BuiltInIdentifierInfo, _) => Seq("Prelude", identifier)
             case (_, Some(moduleName)) => Seq(getModuleName(file).get, identifier)
+            case (_, None) => Seq()
           }
         }
 

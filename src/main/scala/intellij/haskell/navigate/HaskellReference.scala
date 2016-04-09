@@ -1,5 +1,5 @@
 /*
- * Copyright 2014 Rik van der Kleij
+ * Copyright 2016 Rik van der Kleij
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -28,25 +28,30 @@ import intellij.haskell.navigate.HaskellReference._
 import intellij.haskell.psi.HaskellTypes._
 import intellij.haskell.psi._
 import intellij.haskell.util.HaskellElementCondition._
-import intellij.haskell.util.{FileUtil, HaskellEditorUtil, HaskellElementCondition, LineColumnPosition}
+import intellij.haskell.util.{FileUtil, LineColumnPosition}
 import intellij.haskell.{HaskellFile, HaskellIcons}
 
+import scala.Option.option2Iterable
 import scala.annotation.tailrec
 import scala.collection.JavaConversions._
 
 class HaskellReference(element: HaskellNamedElement, textRange: TextRange) extends PsiPolyVariantReferenceBase[HaskellNamedElement](element, textRange) {
 
-  private val file = myElement.getContainingFile
+  private lazy val file = myElement.getContainingFile
   private lazy val typeInfo = GhcModTypeInfo.findTypeInfoFor(file, myElement)
 
-  private class BuiltInResolveResult(val typeSignature: String, val libraryName: String, val module: String) extends ResolveResult {
+  private abstract class NoElementToReferResolveResult(val declaration: String) extends ResolveResult {
     override def getElement: PsiElement = null
 
     override def isValidResult: Boolean = false
   }
 
+  private class BuiltInResolveResult(declaration: String, val libraryName: String, val module: String) extends NoElementToReferResolveResult(declaration)
+
+  private class NoResolveResult(declaration: String) extends NoElementToReferResolveResult(declaration)
+
   override def multiResolve(incompleteCode: Boolean): Array[ResolveResult] = {
-    val project = file.getProject
+    val project = myElement.getProject
     val result = myElement match {
       case me: HaskellModId =>
         (for {
@@ -54,8 +59,8 @@ class HaskellReference(element: HaskellNamedElement, textRange: TextRange) exten
           file <- findFile(filePath)
         } yield new HaskellFileResolveResult(file.getOriginalElement)).toArray
       case qe: HaskellQualifier =>
-        val importDeclaration = PsiTreeUtil.findChildrenOfType(file, classOf[HaskellImportDeclaration]).find(imd => Option(imd.getImportQualifiedAs).exists(_.getQualifier.getName == qe.getName))
-        importDeclaration.map(e => Array(new HaskellGlobalResolveResult(e.getImportQualifiedAs.getQualifier))).getOrElse(Array())
+        val importDeclaration = PsiTreeUtil.findChildrenOfType(file, classOf[HaskellImportDeclaration]).find(imd => Option(imd.getImportQualifiedAs).flatMap(qas => Option(qas.getQualifier)).exists(_.getName == qe.getName))
+        importDeclaration.map(e => Array(new HaskellLocalResolveResult(e.getImportQualifiedAs.getQualifier))).getOrElse(Array())
       case ne: HaskellNamedElement =>
         resolveResults(project, ne.getName).toArray
       case _ => Array()
@@ -67,40 +72,27 @@ class HaskellReference(element: HaskellNamedElement, textRange: TextRange) exten
     val psiManager = getElement.getManager
     val resolveResults = multiResolve(false)
     resolveResults.exists(rr => psiManager.areElementsEquivalent(rr.getElement, element)) ||
-        resolveResults.exists(rr => Option(rr.getElement).exists(_.getText == element.getText))
+      resolveResults.exists(rr => Option(rr.getElement).exists(_.getText == element.getText))
   }
 
   override def getVariants: Array[AnyRef] = {
-    if (element.getNode.getElementType != HS_VAR_DOT_SYM) {
-      val localLookupElements = findLocalNamedElements.flatMap(createLookupElements)
-      val declarationLookupElements = findDeclarationElementsInFile(file).filterNot(_.getIdentifierElements.contains(myElement)).flatMap(createLookupElements)
-      (localLookupElements ++ declarationLookupElements).toArray
-    } else {
-      Array()
-    }
+    val localLookupElements = findLocalNamedElements.flatMap(createLookupElements)
+    val declarationLookupElements = findDeclarationElementsInFile(file).filterNot(_.getIdentifierElements.contains(myElement)).flatMap(createLookupElements)
+    (localLookupElements ++ declarationLookupElements).toArray
   }
 
   private def resolveResults(project: Project, identifier: String) = {
     val globalResolveResults = getIdentifierInfos(file, myElement).flatMap {
-      case pii: ProjectIdentifierInfo => resolveProjectReference(pii, identifier).map(new HaskellGlobalResolveResult(_)).toIterable
-      case lii: LibraryIdentifierInfo => lii.filePath.flatMap(findFile).map(resolveDeclarationReferencesInFile(_, identifier).map(new HaskellGlobalResolveResult(_))).getOrElse(Iterable())
-      case bii: BuiltInIdentifierInfo => Iterable(createBuiltInResolveResult(bii, file))
+      case pi: ProjectIdentifierInfo => resolveProjectReference(pi, identifier).map(new HaskellProjectResolveResult(_)).toIterable
+      case li: LibraryIdentifierInfo => li.filePath.flatMap(findFile).map(f => resolveDeclarationReferencesInFile(f, li).map(de => new HaskellLibraryResolveResult(de.getIdentifierElements.head))).getOrElse(Iterable())
+      case bi: BuiltInIdentifierInfo => Iterable(new BuiltInResolveResult(bi.declaration, bi.libraryName, bi.module))
+      case gi: NoLocationIdentifierInfo => Iterable(new NoResolveResult(gi.declaration))
     }
-
-    displayLabelInfoMessageIfResultsContainsBuiltInDefinition(globalResolveResults, project)
 
     if (globalResolveResults.isEmpty) {
       findLocalLhsElements(identifier).map(e => new HaskellLocalResolveResult(e)).toIterable
     } else {
-      globalResolveResults
-    }
-  }
-
-  private def displayLabelInfoMessageIfResultsContainsBuiltInDefinition(resolveResultsByGhcMod: Iterable[ResolveResult], project: Project) {
-    val firstBuiltInResolveResult = resolveResultsByGhcMod.find(_.isInstanceOf[BuiltInResolveResult])
-    firstBuiltInResolveResult match {
-      case Some(birs: BuiltInResolveResult) => HaskellEditorUtil.createLabelMessage(s"${StringUtil.unescapeXml(birs.typeSignature)} is built-in: ${birs.libraryName}:${birs.module}", project)
-      case _ => ()
+      globalResolveResults.toSeq.distinct
     }
   }
 
@@ -135,12 +127,12 @@ class HaskellReference(element: HaskellNamedElement, textRange: TextRange) exten
 
   private def findNamedElementFromDeclaration(psiElement: PsiElement, identifier: String) = {
     Option(PsiTreeUtil.findFirstParent(psiElement, DeclarationElementCondition)).
-        map(_.asInstanceOf[HaskellDeclarationElement]).flatMap(declaration => {
+      map(_.asInstanceOf[HaskellDeclarationElement]).flatMap(declaration => {
       (typeInfo, declaration) match {
-        case (None, dd: HaskellDataConstructorDeclarationElement) if dd.getSimpleType.getText == identifier =>
-          dd.getIdentifierElements.find(_.getName == identifier).headOption
+        case (None, dd: HaskellDataConstructorDeclarationElement) if dd.getDataTypeConstructor.getName == identifier =>
+          Some(dd.getDataTypeConstructor)
         case (Some(_), dd: HaskellDataConstructorDeclarationElement) if dd.getIdentifierElements.exists(_.getName == identifier) =>
-          Some(dd.getIdentifierElements.filter(_.getName == identifier).max)
+          Some(dd.getIdentifierElements.filter(_.getName == identifier).last)
         case (_, d) => d.getIdentifierElements.find(_.getName == identifier)
       }
     })
@@ -157,15 +149,11 @@ class HaskellReference(element: HaskellNamedElement, textRange: TextRange) exten
           case ne: HaskellNamedElement => Some(ne)
           case qvcoe: HaskellQVarConOpElement => Some(qvcoe.getIdentifierElement)
           case e => findQVarConOpElementParent(e).map(_.getIdentifierElement).
-              orElse(PsiTreeUtil.findChildrenOfType(haskellFile, classOf[HaskellQVarConOpElement]).find(_.getTextOffset == offset).map(_.getIdentifierElement)).
-              orElse(findNamedElementFromDeclaration(e, identifier))
+            orElse(PsiTreeUtil.findChildrenOfType(haskellFile, classOf[HaskellQVarConOpElement]).find(_.getTextOffset == offset).map(_.getIdentifierElement)).
+            orElse(findNamedElementFromDeclaration(e, identifier))
         }
       }
     } yield namedElement
-  }
-
-  private def createBuiltInResolveResult(builtInIdentifierInfo: BuiltInIdentifierInfo, psiFile: PsiFile): ResolveResult = {
-    new BuiltInResolveResult(builtInIdentifierInfo.typeSignature, builtInIdentifierInfo.libraryName, builtInIdentifierInfo.module)
   }
 
   private def findFile(filePath: String): Option[HaskellFile] = {
@@ -173,8 +161,17 @@ class HaskellReference(element: HaskellNamedElement, textRange: TextRange) exten
     file.flatMap(f => Option(PsiManager.getInstance(myElement.getProject).findFile(f)).map(_.asInstanceOf[HaskellFile]))
   }
 
-  private def resolveDeclarationReferencesInFile(file: PsiFile, identifier: String): Iterable[HaskellNamedElement] = {
-    findNamedElementsEqualToIdentifier(findDeclarationElementsInFile(file).flatMap(_.getIdentifierElements), identifier)
+  private def resolveDeclarationReferencesInFile(file: PsiFile, libInfo: LibraryIdentifierInfo): Iterable[HaskellDeclarationElement] = {
+    val libInfoIds = splitDeclarationInTokens(libInfo.declaration.replace("[overlappable]", " ").replace("[overlapping]", " ").replace("[incoherent]", " "))
+      .map(id => id.trim.split('.').lastOption.getOrElse(id.trim))
+    findDeclarationElementsInFile(file).filter(de => {
+      val declarationText = splitDeclarationInTokens(de.getPresentation.getPresentableText)
+      libInfoIds.forall(id => declarationText.contains(id))
+    })
+  }
+
+  private def splitDeclarationInTokens(declaration: String) = {
+    declaration.replaceAll("\\(|\\)|=&gt;|-&gt;|,|\\.\\.\\.", " ").split(" ").map(_.trim).filterNot(_.isEmpty)
   }
 
   private def findLocalNamedElements: Iterable[HaskellNamedElement] = {
@@ -185,9 +182,9 @@ class HaskellReference(element: HaskellNamedElement, textRange: TextRange) exten
   }
 
   private def nextElementInExpression(element: PsiElement): Option[PsiElement] = {
-     element.getNode.getElementType match {
-       case HS_EXPRESSION => None
-       case _ => Option(element.getNextSibling).flatMap(ns => Option(ns.getNextSibling)) // skip white space
+    element.getNode.getElementType match {
+      case HS_EXPRESSION => None
+      case _ => Option(element.getNextSibling).flatMap(ns => Option(ns.getNextSibling)) // skip white space
     }
   }
 
@@ -231,8 +228,8 @@ class HaskellReference(element: HaskellNamedElement, textRange: TextRange) exten
     val sameNameElements = localElements.filter(_.getIdentifierElement.getName == identifier)
     val result = sameNameElements.find { e =>
       isNextSiblingLhsIndicator(e) ||
-          isDirectSiblingConstructor(e) ||
-          isPreviousDirectSiblingBackslash(e)
+        isDirectSiblingConstructor(e) ||
+        isPreviousDirectSiblingBackslash(e)
     }
     result.map(_.getIdentifierElement)
   }
@@ -285,11 +282,7 @@ class HaskellReference(element: HaskellNamedElement, textRange: TextRange) exten
   }
 
   private def findDeclarationElementsInFile(file: PsiFile): Iterable[HaskellDeclarationElement] = {
-    PsiTreeUtil.findChildrenOfType(file, classOf[HaskellDeclarationElement])
-  }
-
-  private def findNamedElementsEqualToIdentifier(namedElements: Iterable[HaskellNamedElement], identifier: String): Iterable[HaskellNamedElement] = {
-    namedElements.filter(_.getName == identifier)
+    HaskellPsiHelper.findTopDeclarations(file)
   }
 
   private def getIdentifierInfos(psiFile: PsiFile, namedElement: HaskellNamedElement): Iterable[IdentifierInfo] = {
@@ -297,11 +290,13 @@ class HaskellReference(element: HaskellNamedElement, textRange: TextRange) exten
   }
 
   private def findQVarConOpElementParent(element: PsiElement) = {
-    Option(PsiTreeUtil.findFirstParent(element, HaskellElementCondition.QVarConOpElementCondition)).map(_.asInstanceOf[HaskellQVarConOpElement])
+    Option(PsiTreeUtil.findFirstParent(element, QVarConOpElementCondition)).map(_.asInstanceOf[HaskellQVarConOpElement])
   }
 }
 
-class HaskellGlobalResolveResult(val element: HaskellNamedElement) extends PsiElementResolveResult(element)
+class HaskellProjectResolveResult(val element: HaskellNamedElement) extends PsiElementResolveResult(element)
+
+class HaskellLibraryResolveResult(val element: HaskellNamedElement) extends PsiElementResolveResult(element)
 
 class HaskellFileResolveResult(val element: PsiElement) extends PsiElementResolveResult(element)
 

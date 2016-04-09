@@ -103,7 +103,7 @@ symbol_no_colon_dot = {equal} | {at} | {backslash} | {vertical_bar} | {tilde} | 
                         {plus} | {slash} | {lt} | {gt} | {question_mark} | {caret} | {dash}
 
 var_id              = {small} ({small} | {large} | {digit} | {quote})* {hash}*
-varsym_id           = {symbol_no_colon_dot} ({symbol_no_colon_dot} | {dot} | {colon})*
+varsym_id           = ({symbol_no_colon_dot} | {dot}) ({symbol_no_colon_dot} | {dot} | {colon})*
 
 con_id              = {large} ({small} | {large} | {digit} | {quote})* {hash}*
 consym_id           = {quote}? {colon} ({symbol_no_colon_dot} | {dot} | {colon})*
@@ -221,6 +221,7 @@ comment             = ({dash}{dash}[^\r\n]* | "\\begin{code}") {newline}
     {left_arrow}          { return HS_LEFT_ARROW; }
     {right_arrow}         { return HS_RIGHT_ARROW; }
     {double_right_arrow}  { return HS_DOUBLE_RIGHT_ARROW; }
+    {colon}               { return HS_COLON; }
 
     // number
     {decimal}             { return HS_DECIMAL; }

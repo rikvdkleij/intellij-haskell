@@ -1,5 +1,5 @@
 /*
- * Copyright 2014 Rik van der Kleij
+ * Copyright 2016 Rik van der Kleij
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -24,9 +24,8 @@ import com.intellij.lang.PsiStructureViewFactory
 import com.intellij.navigation.ItemPresentation
 import com.intellij.openapi.editor.Editor
 import com.intellij.pom.Navigatable
-import com.intellij.psi.util.PsiTreeUtil
 import com.intellij.psi.{PsiElement, PsiFile}
-import intellij.haskell.psi.HaskellDeclarationElement
+import intellij.haskell.psi.{HaskellDeclarationElement, HaskellPsiHelper}
 import intellij.haskell.{HaskellFile, HaskellIcons}
 
 class HaskellStructureViewFactory extends PsiStructureViewFactory {
@@ -72,11 +71,11 @@ private class HaskellStructureViewTreeElement(val element: PsiElement, val typeS
     this
   }
 
+
   def getChildren: Array[TreeElement] = {
-    import scala.collection.JavaConversions._
 
     (element match {
-      case hf: HaskellFile => PsiTreeUtil.findChildrenOfType(element, classOf[HaskellDeclarationElement]).toSeq
+      case hf: HaskellFile => HaskellPsiHelper.findTopDeclarations(hf)
       case _ => Seq()
     }).map(declarationElement => new HaskellStructureViewTreeElement(declarationElement, declarationElement.getText)).toArray
   }
@@ -90,7 +89,7 @@ private class HaskellStructureViewTreeElement(val element: PsiElement, val typeS
   }
 
   override def getIcon(unused: Boolean): Icon = {
-     element match {
+    element match {
       case hde: HaskellDeclarationElement => hde.getPresentation.getIcon(unused)
       case pf: PsiFile => HaskellIcons.Module
       case _ => null

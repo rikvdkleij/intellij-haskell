@@ -38,9 +38,9 @@ public class HaskellFielddeclImpl extends HaskellCompositeElementImpl implements
   }
 
   @Override
-  @NotNull
-  public List<HaskellQvarOp> getQvarOpList() {
-    return PsiTreeUtil.getChildrenOfTypeAsList(this, HaskellQvarOp.class);
+  @Nullable
+  public HaskellQvarOp getQvarOp() {
+    return findChildByClass(HaskellQvarOp.class);
   }
 
   @Override
@@ -51,8 +51,8 @@ public class HaskellFielddeclImpl extends HaskellCompositeElementImpl implements
 
   @Override
   @NotNull
-  public List<HaskellTypeSignatureDeclaration> getTypeSignatureDeclarationList() {
-    return PsiTreeUtil.getChildrenOfTypeAsList(this, HaskellTypeSignatureDeclaration.class);
+  public List<HaskellTypeSignature> getTypeSignatureList() {
+    return PsiTreeUtil.getChildrenOfTypeAsList(this, HaskellTypeSignature.class);
   }
 
   @Override

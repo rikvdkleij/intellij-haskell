@@ -24,7 +24,7 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.roots.ProjectRootManager
 import intellij.haskell.HaskellNotificationGroup
 import intellij.haskell.settings.HaskellSettingsState
-import intellij.haskell.util.{HaskellProjecUtil, OSUtil}
+import intellij.haskell.util.{HaskellProjectUtil, OSUtil}
 
 import scala.collection.mutable.ListBuffer
 import scala.concurrent.duration._
@@ -94,9 +94,10 @@ class GhcModProcess(val project: Project) extends ProjectComponent {
       case Some(p) =>
         HaskellNotificationGroup.notifyInfo(s"Starting ghc-mod in interactive mode for project ${project.getName}.")
         try {
+          val command = p + " legacy-interactive"
           val process = getEnvParameters match {
-            case None => Process(p + " legacy-interactive", new File(project.getBasePath))
-            case Some(ep) => Process(p, new File(project.getBasePath), ep)
+            case None => Process(command, new File(project.getBasePath))
+            case Some(ep) => Process(command, new File(project.getBasePath), ep)
           }
           process.run(
             new ProcessIO(
@@ -168,7 +169,7 @@ class GhcModProcess(val project: Project) extends ProjectComponent {
   }
 
   override def projectOpened(): Unit = {
-    if (HaskellProjecUtil.isHaskellProject(project)) {
+    if (HaskellProjectUtil.isHaskellProject(project)) {
       start()
     }
   }

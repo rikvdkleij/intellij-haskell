@@ -17,12 +17,9 @@ public interface HaskellClazz extends HaskellCompositeElement {
   List<HaskellQvar> getQvarList();
 
   @NotNull
-  List<HaskellQvarOp> getQvarOpList();
-
-  @NotNull
   List<HaskellTtype> getTtypeList();
 
   @NotNull
-  List<HaskellTypeSignatureDeclaration> getTypeSignatureDeclarationList();
+  List<HaskellTypeSignature> getTypeSignatureList();
 
 }

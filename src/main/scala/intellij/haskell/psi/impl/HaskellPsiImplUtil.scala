@@ -1,5 +1,5 @@
 /*
- * Copyright 2014 Rik van der Kleij
+ * Copyright 2016 Rik van der Kleij
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -25,12 +25,13 @@ import com.intellij.psi.impl.source.resolve.reference.ReferenceProvidersRegistry
 import com.intellij.psi.search.{LocalSearchScope, SearchScope}
 import com.intellij.psi.tree.IElementType
 import com.intellij.psi.util.{PsiTreeUtil, PsiUtilCore}
-import com.intellij.psi.{PsiElement, PsiReference}
+import com.intellij.psi.{PsiElement, PsiReference, TokenType}
 import com.intellij.util.ArrayUtil
 import intellij.haskell.HaskellIcons
-import intellij.haskell.navigate.{HaskellFileResolveResult, HaskellGlobalResolveResult, HaskellLocalResolveResult, HaskellReference}
+import intellij.haskell.navigate._
+import intellij.haskell.psi.HaskellTypes._
 import intellij.haskell.psi._
-import intellij.haskell.util.HaskellElementCondition
+import intellij.haskell.util.HaskellElementCondition.DeclarationElementCondition
 
 import scala.collection.JavaConversions._
 
@@ -43,16 +44,13 @@ object HaskellPsiImplUtil {
   def getIdentifierElement(qvar: HaskellQvar): HaskellNamedElement = {
     Option(qvar.getVarId).
       orElse(Option(qvar.getVarSym)).
-      orElse(Option(qvar.getVarDotSym)).
       orElse(Option(qvar.getQvarId).map(_.getVarId)).
-      orElse(Option(qvar.getQvarSym).map(_.getVarSym)).
-      orElse(Option(qvar.getQvarDotSym).map(_.getVarDotSym)).
+      orElse(Option(qvar.getQvarSym.getVarSym)).
       getOrElse(throw new Exception(s"Identifier for $qvar should exist"))
   }
 
   def getQualifier(qvar: HaskellQvar): Option[String] = {
-    Option(qvar.getQvarDotSym).map(_.getQualifier.getName).
-      orElse(Option(qvar.getQvarId).map(_.getQualifier.getName)).
+    Option(qvar.getQvarId).map(_.getQualifier.getName).
       orElse(Option(qvar.getQvarSym).map(_.getQualifier.getName))
   }
 
@@ -74,8 +72,9 @@ object HaskellPsiImplUtil {
     Option(qcon.getConId).
       orElse(Option(qcon.getConSym)).
       orElse(Option(qcon.getQconId).map(_.getIdentifierElement)).
-      orElse(Option(qcon.getGconSym).map(_.getIdentifierElement)).
+      orElse(Option(qcon.getGconSym.getIdentifierElement)).
       getOrElse(throw new Exception(s"Identifier for $qcon should exist"))
+
   }
 
   private def getQualifierForQConId(qconId: HaskellQconId) = {
@@ -104,16 +103,13 @@ object HaskellPsiImplUtil {
   def getIdentifierElement(qvarOp: HaskellQvarOp): HaskellNamedElement = {
     Option(qvarOp.getVarId).
       orElse(Option(qvarOp.getVarSym)).
-      orElse(Option(qvarOp.getVarDotSym)).
       orElse(Option(qvarOp.getQvarId).map(_.getVarId)).
-      orElse(Option(qvarOp.getQvarSym).map(_.getVarSym)).
-      orElse(Option(qvarOp.getQvarDotSym).map(_.getVarDotSym)).
+      orElse(Option(qvarOp.getQvarSym.getVarSym)).
       getOrElse(throw new Exception(s"Identifier for $qvarOp should exist"))
   }
 
   def getQualifier(qvarOp: HaskellQvarOp): Option[String] = {
-    Option(qvarOp.getQvarDotSym).map(_.getQualifier.getName).
-      orElse(Option(qvarOp.getQvarId).map(_.getQualifier.getName)).
+    Option(qvarOp.getQvarId).map(_.getQualifier.getName).
       orElse(Option(qvarOp.getQvarSym).map(_.getQualifier.getName))
   }
 
@@ -126,7 +122,7 @@ object HaskellPsiImplUtil {
     Option(qconOp.getConId).
       orElse(Option(qconOp.getConSym)).
       orElse(Option(qconOp.getQconId).map(_.getIdentifierElement)).
-      orElse(Option(qconOp.getGconSym).map(_.getIdentifierElement)).
+      orElse(Option(qconOp.getGconSym.getIdentifierElement)).
       getOrElse(throw new Exception(s"Identifier for $qconOp should exist"))
   }
 
@@ -142,7 +138,7 @@ object HaskellPsiImplUtil {
 
   def getIdentifierElement(op: HaskellOp): HaskellNamedElement = {
     Option(op.getQvarOp).map(_.getIdentifierElement).
-      orElse(Option(op.getQconOp).map(_.getIdentifierElement)).
+      orElse(Option(op.getQconOp.getIdentifierElement)).
       getOrElse(throw new Exception(s"Identifier for $op should exist"))
   }
 
@@ -199,21 +195,6 @@ object HaskellPsiImplUtil {
     val newVarSym = HaskellElementFactory.createVarSym(varSym.getProject, newName)
     varSym.getNode.getTreeParent.replaceChild(varSym.getNode, newVarSym)
     varSym
-  }
-
-
-  def getName(varDotSym: HaskellVarDotSym): String = {
-    varDotSym.getText
-  }
-
-  def getNameIdentifier(varDotSym: HaskellVarDotSym): HaskellNamedElement = {
-    varDotSym
-  }
-
-  def setName(varDotSym: HaskellVarDotSym, newName: String): PsiElement = {
-    val newVarDotSym = HaskellElementFactory.createVarDotSym(varDotSym.getProject, newName)
-    varDotSym.getNode.getTreeParent.replaceChild(varDotSym.getNode, newVarDotSym)
-    varDotSym
   }
 
 
@@ -282,7 +263,7 @@ object HaskellPsiImplUtil {
         case _: HaskellClassDeclaration => Class
         case _: HaskellInstanceDeclaration => Instance
         case _: HaskellDefaultDeclaration => Default
-        case _: HaskellTypeSignatureDeclaration => TypeSignature
+        case _: HaskellTypeSignature => TypeSignature
         case _: HaskellForeignDeclaration => Foreign
         case _: HaskellTypeFamilyDeclaration => TypeFamily
         case _: HaskellTypeInstanceDeclaration => TypeInstance
@@ -293,15 +274,17 @@ object HaskellPsiImplUtil {
   }
 
   def getPresentation(namedElement: HaskellNamedElement): ItemPresentation = {
-    val declarationElement = Option(PsiTreeUtil.findFirstParent(namedElement, HaskellElementCondition.DeclarationElementCondition)).getOrElse(namedElement)
 
-    new HaskellItemPresentation(declarationElement) {
+    new HaskellItemPresentation(namedElement) {
+      val declarationElement = Option(PsiTreeUtil.findFirstParent(namedElement, DeclarationElementCondition).asInstanceOf[HaskellDeclarationElement])
 
       def getPresentableText: String = {
-        declarationElement match {
-          case de: HaskellDeclarationElement => getDeclarationInfo(de)
-          case _ => namedElement.getName
-        }
+        declarationElement.map(e =>
+          if (e.getIdentifierElements.map(_.getName).contains(namedElement.getName)) {
+            getDeclarationInfo(e)
+          } else {
+            namedElement.getName + " in " + getDeclarationInfo(e)
+          }).getOrElse(namedElement.getName)
       }
 
       override def getIcon(unused: Boolean): Icon = {
@@ -314,6 +297,7 @@ object HaskellPsiImplUtil {
   }
 
   def getPresentation(declarationElement: HaskellDeclarationElement): ItemPresentation = {
+
     new HaskellItemPresentation(declarationElement) {
 
       def getPresentableText: String = {
@@ -324,41 +308,41 @@ object HaskellPsiImplUtil {
 
   private def getDeclarationInfo(declarationElement: HaskellDeclarationElement): String = {
     val removeAfter = (nodes: Array[ASTNode], tokens: Seq[IElementType]) => nodes.takeWhile(e => !tokens.contains(e.getElementType))
-    val removeInside = (de: HaskellDeclarationElement, tokens: Seq[IElementType]) => de.getNode.getChildren(null).filterNot(e => tokens.contains(e.getElementType))
-    val removeComments = (de: HaskellDeclarationElement) => removeInside(de, Seq(HaskellTypes.HS_COMMENT, HaskellTypes.HS_NCOMMENT))
-    val removeCommentsAndAfterWhereOrEqual = (de: HaskellDeclarationElement) => removeAfter(removeComments(de), Seq(HaskellTypes.HS_WHERE, HaskellTypes.HS_EQUAL))
-    val removeCommentsAndAfterModId = (de: HaskellDeclarationElement) => removeAfter(removeComments(de), Seq(HaskellTypes.HS_EXPORTS, HaskellTypes.HS_WHERE))
+    val removeInside = (de: HaskellCompositeElement, tokens: Seq[IElementType]) => de.getNode.getChildren(null).filterNot(e => tokens.contains(e.getElementType))
+    val removeCommentsAndPragmas = (de: HaskellCompositeElement) => removeInside(de, Seq(HS_COMMENT, HS_NCOMMENT, HS_OVERLAP_PRAGMA, HS_CTYPE_PRAGMA, HS_UNPACK_PRAGMA, HS_NOUNPACK_PRAGMA, HS_INLINE_PRAGMA, HS_INLINABLE_PRAGMA, HS_NOINLINE_PRAGMA, HS_SPECIALIZE_PRAGMA))
+    val removeCommentsAndPragmasAndAfterWhereOrEqual = (de: HaskellDeclarationElement) => removeAfter(removeCommentsAndPragmas(de), Seq(HS_WHERE, HS_EQUAL))
+    val removeCommentsAndPragmasAndAfterModId = (de: HaskellDeclarationElement) => removeAfter(removeCommentsAndPragmas(de), Seq(HS_EXPORTS, HS_WHERE))
 
     (declarationElement match {
-      case md: HaskellModuleDeclaration => removeCommentsAndAfterModId(md)
-      case td: HaskellTypeDeclaration => removeCommentsAndAfterWhereOrEqual(td)
-      case nt: HaskellNewtypeDeclaration => removeCommentsAndAfterWhereOrEqual(nt)
-      case cd: HaskellClassDeclaration => removeCommentsAndAfterWhereOrEqual(cd)
-      case id: HaskellInstanceDeclaration => removeCommentsAndAfterWhereOrEqual(id)
-      case ts: HaskellTypeSignatureDeclaration => removeCommentsAndAfterWhereOrEqual(ts)
-      case tf: HaskellDataDeclaration => removeCommentsAndAfterWhereOrEqual(tf)
-      case tf: HaskellTypeFamilyDeclaration => removeCommentsAndAfterWhereOrEqual(tf)
-      case de => removeComments(de)
-    }).map(_.getText.trim).mkString(" ").replaceAll("\\s+", " ")
+      case md: HaskellModuleDeclaration => removeCommentsAndPragmasAndAfterModId(md)
+      case td: HaskellTypeDeclaration => removeCommentsAndPragmas(td)
+      case nt: HaskellNewtypeDeclaration => removeCommentsAndPragmasAndAfterWhereOrEqual(nt)
+      case cd: HaskellClassDeclaration => removeCommentsAndPragmasAndAfterWhereOrEqual(cd)
+      case id: HaskellInstanceDeclaration => removeCommentsAndPragmasAndAfterWhereOrEqual(id)
+      case ts: HaskellTypeSignature => removeCommentsAndPragmas(ts)
+      case tf: HaskellDataDeclaration => removeCommentsAndPragmas(tf)
+      case tf: HaskellTypeFamilyDeclaration => removeCommentsAndPragmasAndAfterWhereOrEqual(tf)
+      case de => removeCommentsAndPragmas(de)
+    }).map(e => if (e.getElementType == TokenType.WHITE_SPACE) " " else e.getText.trim).mkString(" ").replaceAll("\\s+", " ")
   }
 
   def getName(declarationElement: HaskellDeclarationElement): String = {
     declarationElement.getPresentation.getPresentableText
   }
 
-  def getIdentifierElements(typeSignature: HaskellTypeSignatureDeclaration): Seq[HaskellNamedElement] = {
+
+  def getIdentifierElements(typeSignature: HaskellTypeSignature): Seq[HaskellNamedElement] = {
     Option(typeSignature.getVars).map(_.getQvarList.map(_.getIdentifierElement)).
       orElse(Option(typeSignature.getOps).map(_.getOpList.map(_.getIdentifierElement))).
       getOrElse(Seq())
   }
 
   def getIdentifierElements(dataDeclaration: HaskellDataDeclaration): Seq[HaskellNamedElement] = {
-    dataDeclaration.getSimpletype.getIdentifierElements ++
+    dataDeclaration.getSimpletypeList.flatMap(_.getIdentifierElements) ++
       Option(dataDeclaration.getConstr1List).map(_.flatMap(c => Seq(c.getQcon.getIdentifierElement) ++ c.getFielddeclList.flatMap(_.getVars.getQvarList.map(_.getIdentifierElement)))).getOrElse(Seq()) ++
       Option(dataDeclaration.getConstr2List).map(_.map(c => c.getQconOp.getIdentifierElement)).getOrElse(Seq()) ++
       Option(dataDeclaration.getConstr3List).map(_.map(c => c.getQcon.getIdentifierElement)).getOrElse(Seq()) ++
-      Option(dataDeclaration.getConstr4List).map(_.flatMap(c => Seq(c.getGconSym.getIdentifierElement, c.getQcon.getIdentifierElement))).getOrElse(Seq()) ++
-      Option(dataDeclaration.getDataDeclarationDeriving).map(_.getTtypeList).map(_.flatMap(e => PsiTreeUtil.findChildrenOfType(e, classOf[HaskellQcon]).map(_.getIdentifierElement))).getOrElse(Seq())
+      Option(dataDeclaration.getConstr4List).map(_.flatMap(c => Seq(c.getGconSym.getIdentifierElement, c.getQcon.getIdentifierElement))).getOrElse(Seq())
   }
 
   def getIdentifierElements(typeDeclaration: HaskellTypeDeclaration): Seq[HaskellNamedElement] = {
@@ -366,14 +350,11 @@ object HaskellPsiImplUtil {
   }
 
   def getIdentifierElements(newtypeDeclaration: HaskellNewtypeDeclaration): Seq[HaskellNamedElement] = {
-    newtypeDeclaration.getSimpletype.getIdentifierElements ++
-      Option(newtypeDeclaration.getNewconstr.getQcon).map(_.getIdentifierElement) ++
-      Option(newtypeDeclaration.getNewconstr.getNewconstrFielddecl).map(_.getQvar.getIdentifierElement).toSeq
+    newtypeDeclaration.getSimpletype.getIdentifierElements
   }
 
   def getIdentifierElements(classDeclaration: HaskellClassDeclaration): Seq[HaskellNamedElement] = {
-    Seq(classDeclaration.getQcon.getIdentifierElement) ++
-      Option(classDeclaration.getCdeclList).map(_.flatMap(c => Option(c.getTypeSignatureDeclaration)).flatMap(_.getIdentifierElements)).getOrElse(Seq())
+    Seq(classDeclaration.getQcon.getIdentifierElement)
   }
 
   def getIdentifierElements(instanceDeclaration: HaskellInstanceDeclaration): Seq[HaskellNamedElement] = {
@@ -402,7 +383,7 @@ object HaskellPsiImplUtil {
 
   def getIdentifierElements(simpleType: HaskellSimpletype): Seq[HaskellNamedElement] = {
     Option(simpleType.getQcon).map(_.getIdentifierElement).
-      orElse(Option(simpleType.getQvar).map(_.getIdentifierElement)).
+      orElse(Option(simpleType.getQconOp).map(_.getIdentifierElement)).
       orElse(Option(simpleType.getQvarOp).map(_.getIdentifierElement)).
       orElse(Option(simpleType.getGconSym).map(_.getIdentifierElement)).toSeq
   }
@@ -419,22 +400,24 @@ object HaskellPsiImplUtil {
     Seq(moduleDeclaration.getModId)
   }
 
+
   def getModuleName(importDeclaration: HaskellImportDeclaration): String = {
-    importDeclaration.getImportModule.getModId.getText
+    importDeclaration.getImportModule.getModId.getName
   }
 
   def getModuleName(declarationElement: HaskellDeclarationElement): String = {
     declarationElement.getPresentation.getLocationString
   }
 
-  def getSimpleType(dataConstructorDeclaration: HaskellDataConstructorDeclarationElement): HaskellNamedElement = {
+
+  def getDataTypeConstructor(dataConstructorDeclaration: HaskellDataConstructorDeclarationElement): HaskellNamedElement = {
     dataConstructorDeclaration.getIdentifierElements.head
   }
 
   def getUseScope(namedElement: HaskellNamedElement): SearchScope = {
     val resolvedResult = Option(namedElement.getReference.asInstanceOf[HaskellReference]).flatMap(_.multiResolve(false).headOption)
     resolvedResult match {
-      case Some(_: HaskellGlobalResolveResult) | Some(_: HaskellFileResolveResult) => ResolveScopeManager.getElementUseScope(namedElement)
+      case Some(_: HaskellProjectResolveResult) | Some(_: HaskellLibraryResolveResult) | Some(_: HaskellFileResolveResult) => ResolveScopeManager.getElementUseScope(namedElement)
       case Some(lrr: HaskellLocalResolveResult) =>
         Option(PsiTreeUtil.getParentOfType(namedElement, classOf[HaskellExpression])) match {
           case Some(e) if findFirstChild(e).exists(_.getIdentifierElement.getName == namedElement.getName) => ResolveScopeManager.getElementUseScope(namedElement)

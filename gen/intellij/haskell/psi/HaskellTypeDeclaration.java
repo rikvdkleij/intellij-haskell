@@ -9,6 +9,12 @@ import scala.collection.Seq;
 
 public interface HaskellTypeDeclaration extends HaskellDeclarationElement {
 
+  @Nullable
+  HaskellExpression getExpression();
+
+  @Nullable
+  HaskellKindSignature getKindSignature();
+
   @NotNull
   HaskellSimpletype getSimpletype();
 
@@ -16,7 +22,7 @@ public interface HaskellTypeDeclaration extends HaskellDeclarationElement {
   HaskellTtype getTtype();
 
   @Nullable
-  HaskellTypeSignatureDeclaration getTypeSignatureDeclaration();
+  HaskellTypeSignature getTypeSignature();
 
   String getName();
 

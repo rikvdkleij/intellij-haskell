@@ -28,9 +28,9 @@ public class HaskellInstanceDeclarationImpl extends HaskellCompositeElementImpl 
   }
 
   @Override
-  @Nullable
-  public HaskellExpression getExpression() {
-    return findChildByClass(HaskellExpression.class);
+  @NotNull
+  public List<HaskellExpression> getExpressionList() {
+    return PsiTreeUtil.getChildrenOfTypeAsList(this, HaskellExpression.class);
   }
 
   @Override
@@ -43,6 +43,12 @@ public class HaskellInstanceDeclarationImpl extends HaskellCompositeElementImpl 
   @NotNull
   public HaskellInst getInst() {
     return findNotNullChildByClass(HaskellInst.class);
+  }
+
+  @Override
+  @Nullable
+  public HaskellOverlapPragma getOverlapPragma() {
+    return findChildByClass(HaskellOverlapPragma.class);
   }
 
   @Override

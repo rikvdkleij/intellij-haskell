@@ -130,7 +130,6 @@
         <lang.elementManipulator forClass="intellij.haskell.psi.HaskellNamedElement"
                                  implementationClass="intellij.haskell.psi.HaskellNamedElementManipulator"/>
 
-
         <fileBasedIndex implementation="intellij.haskell.util.HaskellFileIndex"/>
 
         <lang.findUsagesProvider language="Haskell"

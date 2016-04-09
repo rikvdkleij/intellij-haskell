@@ -40,24 +40,6 @@ object HaskellElementCondition {
     }
   }
 
-  final val ModuleDeclarationCondition = new Condition[PsiElement]() {
-    override def value(psiElement: PsiElement): Boolean = {
-      psiElement match {
-        case _: HaskellModuleDeclaration => true
-        case _ => false
-      }
-    }
-  }
-
-  final val NamedElementCondition = new Condition[PsiElement]() {
-    override def value(psiElement: PsiElement): Boolean = {
-      psiElement match {
-        case _: HaskellNamedElement => true
-        case _ => false
-      }
-    }
-  }
-
   final val QVarConOpElementCondition = new Condition[PsiElement]() {
     override def value(psiElement: PsiElement): Boolean = {
       psiElement match {

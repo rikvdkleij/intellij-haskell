@@ -50,12 +50,6 @@ public class HaskellNewconstrImpl extends HaskellCompositeElementImpl implements
   }
 
   @Override
-  @Nullable
-  public HaskellQvarOp getQvarOp() {
-    return findChildByClass(HaskellQvarOp.class);
-  }
-
-  @Override
   @NotNull
   public List<HaskellTtype> getTtypeList() {
     return PsiTreeUtil.getChildrenOfTypeAsList(this, HaskellTtype.class);
@@ -63,8 +57,8 @@ public class HaskellNewconstrImpl extends HaskellCompositeElementImpl implements
 
   @Override
   @NotNull
-  public List<HaskellTypeSignatureDeclaration> getTypeSignatureDeclarationList() {
-    return PsiTreeUtil.getChildrenOfTypeAsList(this, HaskellTypeSignatureDeclaration.class);
+  public List<HaskellTypeSignature> getTypeSignatureList() {
+    return PsiTreeUtil.getChildrenOfTypeAsList(this, HaskellTypeSignature.class);
   }
 
 }

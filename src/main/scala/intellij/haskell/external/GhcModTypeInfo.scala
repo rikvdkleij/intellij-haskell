@@ -40,7 +40,7 @@ object GhcModTypeInfo {
   private case class ElementTypeInfo(filePath: String, lineNr: Int, columnNr: Int, project: Project)
 
   private final val TypeInfoCache = CacheBuilder.newBuilder()
-      .refreshAfterWrite(1, TimeUnit.SECONDS)
+      .refreshAfterWrite(3, TimeUnit.SECONDS)
       .build(
         new CacheLoader[ElementTypeInfo, GhcModOutput]() {
           private def findTypeInfoFor(elementTypeInfo: ElementTypeInfo): GhcModOutput = {

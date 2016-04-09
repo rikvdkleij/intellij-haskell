@@ -21,9 +21,9 @@ import com.intellij.lang.findUsages.FindUsagesProvider
 import com.intellij.psi.PsiElement
 import com.intellij.psi.tree.IElementType
 import com.intellij.util.Processor
-import intellij.haskell.{HaskellFile, HaskellLexer}
 import intellij.haskell.psi.HaskellTypes._
 import intellij.haskell.psi._
+import intellij.haskell.{HaskellFile, HaskellLexer}
 
 import scala.annotation.tailrec
 
@@ -67,7 +67,6 @@ class HaskellFindUsagesProvider extends FindUsagesProvider {
       case HS_CON_ID => "constructor"
       case HS_QCON_ID => "qualified constructor"
       case HS_VAR_SYM => " variable operator"
-      case HS_VAR_DOT_SYM => "variable operator"
       case HS_QVAR_SYM => "qualified variable operator"
       case HS_CON_SYM => "constructor operator"
       case HS_QCON_SYM => "qualified constructor operator"

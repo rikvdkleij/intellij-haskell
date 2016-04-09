@@ -30,6 +30,8 @@ public interface HaskellNewtypeDeclaration extends HaskellDataConstructorDeclara
 
   Seq<HaskellNamedElement> getIdentifierElements();
 
-  HaskellNamedElement getSimpleType();
+  String getModuleName();
+
+  HaskellNamedElement getDataTypeConstructor();
 
 }

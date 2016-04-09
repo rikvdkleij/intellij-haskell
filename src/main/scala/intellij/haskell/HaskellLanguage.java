@@ -1,5 +1,5 @@
 /*
- * Copyright 2014 Rik van der Kleij
+ * Copyright 2016 Rik van der Kleij
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -22,7 +22,7 @@ public class HaskellLanguage extends Language {
 
     public static final HaskellLanguage Instance = new HaskellLanguage();
 
-    protected HaskellLanguage() {
+    private HaskellLanguage() {
         super("Haskell");
     }
 

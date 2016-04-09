@@ -40,9 +40,9 @@ public class HaskellClassDeclarationImpl extends HaskellCompositeElementImpl imp
   }
 
   @Override
-  @Nullable
-  public HaskellExpression getExpression() {
-    return findChildByClass(HaskellExpression.class);
+  @NotNull
+  public List<HaskellExpression> getExpressionList() {
+    return PsiTreeUtil.getChildrenOfTypeAsList(this, HaskellExpression.class);
   }
 
   @Override
@@ -71,8 +71,8 @@ public class HaskellClassDeclarationImpl extends HaskellCompositeElementImpl imp
 
   @Override
   @NotNull
-  public List<HaskellTypeSignatureDeclaration> getTypeSignatureDeclarationList() {
-    return PsiTreeUtil.getChildrenOfTypeAsList(this, HaskellTypeSignatureDeclaration.class);
+  public List<HaskellTypeSignature> getTypeSignatureList() {
+    return PsiTreeUtil.getChildrenOfTypeAsList(this, HaskellTypeSignature.class);
   }
 
   public String getName() {

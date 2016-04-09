@@ -16,15 +16,16 @@
 
 package intellij.haskell.psi
 
-import com.intellij.psi.{PsiElement, PsiFile}
 import com.intellij.psi.util.PsiTreeUtil
+import com.intellij.psi.{PsiElement, PsiFile}
+import intellij.haskell.psi.HaskellTypes.HS_TOP_DECLARATION
 
 import scala.collection.JavaConversions._
 
 object HaskellPsiHelper {
 
   def findImportDeclarations(psiFile: PsiFile): Iterable[HaskellImportDeclaration] = {
-    PsiTreeUtil.findChildrenOfType(psiFile, classOf[HaskellImportDeclaration]).toIterable
+    PsiTreeUtil.findChildrenOfType(psiFile, classOf[HaskellImportDeclaration])
   }
 
 
@@ -33,5 +34,9 @@ object HaskellPsiHelper {
       case hne: HaskellNamedElement => Some(hne)
       case _ => None
     }
+  }
+
+  def findTopDeclarations(psiElement: PsiElement): Iterable[HaskellDeclarationElement] = {
+    PsiTreeUtil.findChildrenOfType(psiElement, classOf[HaskellDeclarationElement]).filter(_.getParent.getNode.getElementType == HS_TOP_DECLARATION)
   }
 }

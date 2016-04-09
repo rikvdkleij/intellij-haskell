@@ -29,7 +29,7 @@ import com.intellij.util.Consumer
 import intellij.haskell.HaskellNotificationGroup
 import intellij.haskell.external.{ExternalProcess, GhcModProcessManager}
 import intellij.haskell.settings.{CabalInfo, HaskellSettingsState}
-import intellij.haskell.util.HaskellProjecUtil
+import intellij.haskell.util.HaskellProjectUtil
 
 import scala.collection.JavaConversions._
 
@@ -39,7 +39,7 @@ class AddDependencies extends AnAction {
   private val PackageInCabalConfigPattern = """.* ([\w\-]+)\s*==\s*([\d\.]+),?""".r
   private val initialProgressStep = 0.1
 
-  override def update(e: AnActionEvent): Unit = e.getPresentation.setEnabledAndVisible(HaskellProjecUtil.isHaskellProject(e.getProject))
+  override def update(e: AnActionEvent): Unit = e.getPresentation.setEnabledAndVisible(HaskellProjectUtil.isHaskellProject(e.getProject))
 
   override def actionPerformed(e: AnActionEvent): Unit = {
     HaskellSettingsState.getCabalInfo(e.getProject) match {

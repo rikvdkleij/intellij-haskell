@@ -1,5 +1,5 @@
 /*
- * Copyright 2014 Rik van der Kleij
+ * Copyright 2016 Rik van der Kleij
 
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,11 +16,11 @@
 
 package intellij.haskell.external
 
-import com.intellij.execution.configurations.GeneralCommandLine
-import com.intellij.execution.process.CapturingProcessHandler
-import com.intellij.execution.process.ProcessOutput
 import java.io.File
-import java.nio.charset.Charset
+
+import com.intellij.execution.configurations.GeneralCommandLine
+import com.intellij.execution.configurations.GeneralCommandLine.ParentEnvironmentType
+import com.intellij.execution.process.{CapturingProcessHandler, ProcessOutput}
 
 import scala.collection.JavaConversions._
 
@@ -35,6 +35,7 @@ object ExternalProcess {
     cmd.withWorkDirectory(workDir)
     cmd.setExePath(commandPath)
     cmd.addParameters(arguments)
+    cmd.withParentEnvironmentType(ParentEnvironmentType.SYSTEM)
     execute(cmd, timeout)
   }
 

@@ -16,12 +16,12 @@
 
 package intellij.haskell.refactor
 
-import com.intellij.psi.PsiElement
+import com.intellij.psi.{PsiElement, PsiPolyVariantReference}
 import com.intellij.refactoring.listeners.RefactoringElementListener
 import com.intellij.refactoring.rename.RenamePsiElementProcessor
 import com.intellij.usageView.UsageInfo
 import intellij.haskell.HaskellFile
-import intellij.haskell.navigate.{HaskellFileResolveResult, HaskellGlobalResolveResult}
+import intellij.haskell.navigate.{HaskellFileResolveResult, HaskellLibraryResolveResult, HaskellProjectResolveResult}
 import intellij.haskell.psi.HaskellNamedElement
 import intellij.haskell.util.FileUtil
 
@@ -31,8 +31,10 @@ class HaskellRenameVariableProcessor extends RenamePsiElementProcessor {
 
   override def prepareRenaming(element: PsiElement, newName: String, allRenames: java.util.Map[PsiElement, String]): Unit = {
     if (element.isInstanceOf[HaskellNamedElement]) {
-      isShowPreviewForced = element.getReference.resolve() match {
-        case _: HaskellGlobalResolveResult | _: HaskellFileResolveResult => true
+      val resolvedElement = Option(element.getReference).flatMap(_.asInstanceOf[PsiPolyVariantReference].multiResolve(false).headOption)
+      isShowPreviewForced = resolvedElement match {
+        case Some(_: HaskellProjectResolveResult) | Some(_: HaskellLibraryResolveResult) | Some(_: HaskellFileResolveResult) => true
+        case None => true
         case _ => false
       }
     }

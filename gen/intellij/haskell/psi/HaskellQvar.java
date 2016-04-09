@@ -9,16 +9,10 @@ import scala.Option;
 public interface HaskellQvar extends HaskellQVarConOpElement {
 
   @Nullable
-  HaskellQvarDotSym getQvarDotSym();
-
-  @Nullable
   HaskellQvarId getQvarId();
 
   @Nullable
   HaskellQvarSym getQvarSym();
-
-  @Nullable
-  HaskellVarDotSym getVarDotSym();
 
   @Nullable
   HaskellVarId getVarId();

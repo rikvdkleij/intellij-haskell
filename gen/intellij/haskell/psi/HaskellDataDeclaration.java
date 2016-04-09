@@ -33,11 +33,17 @@ public interface HaskellDataDeclaration extends HaskellDataConstructorDeclaratio
   @Nullable
   HaskellDataDeclarationDeriving getDataDeclarationDeriving();
 
+  @NotNull
+  List<HaskellExpression> getExpressionList();
+
   @Nullable
-  HaskellExpression getExpression();
+  HaskellKindSignature getKindSignature();
 
   @NotNull
-  HaskellSimpletype getSimpletype();
+  List<HaskellQvar> getQvarList();
+
+  @NotNull
+  List<HaskellSimpletype> getSimpletypeList();
 
   String getName();
 
@@ -45,6 +51,8 @@ public interface HaskellDataDeclaration extends HaskellDataConstructorDeclaratio
 
   Seq<HaskellNamedElement> getIdentifierElements();
 
-  HaskellNamedElement getSimpleType();
+  String getModuleName();
+
+  HaskellNamedElement getDataTypeConstructor();
 
 }

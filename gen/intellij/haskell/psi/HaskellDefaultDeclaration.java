@@ -13,7 +13,7 @@ public interface HaskellDefaultDeclaration extends HaskellDeclarationElement {
   List<HaskellTtype> getTtypeList();
 
   @Nullable
-  HaskellTypeSignatureDeclaration getTypeSignatureDeclaration();
+  HaskellTypeSignature getTypeSignature();
 
   String getName();
 

@@ -39,17 +39,18 @@ class ShowInfoAction extends AnAction {
       psiElement <- Option(psiFile.findElementAt(offset))
       namedElement <- HaskellPsiHelper.findHaskellNamedElement(psiElement)
     } yield
-    GhcModInfo.findInfoFor(psiFile, namedElement) match {
-      case Seq(identifierInfos@_*) if identifierInfos.nonEmpty => HaskellEditorUtil.createInfoBallon(identifierInfos.map(createInfoText).mkString("<br>"), editor)
-      case _ => HaskellEditorUtil.showHint(editor, s"Could not determine info for ${StringUtil.escapeXml(namedElement.getName)}")
-    }
+      GhcModInfo.findInfoFor(psiFile, namedElement) match {
+        case Seq(identifierInfos@_*) if identifierInfos.nonEmpty => HaskellEditorUtil.createInfoBallon(identifierInfos.map(createInfoText).mkString("<br>"), editor)
+        case _ => HaskellEditorUtil.showHint(editor, s"Could not determine info for ${StringUtil.escapeXml(namedElement.getName)}")
+      }
   }
 
   private def createInfoText(identifierInfo: IdentifierInfo): String = {
     identifierInfo match {
-      case pei: ProjectIdentifierInfo => s"${pei.typeSignature}   -- ${pei.filePath.getOrElse("File not found")}"
-      case lei: LibraryIdentifierInfo => s"${lei.typeSignature}   -- ${lei.module}"
-      case bei: BuiltInIdentifierInfo => s"${bei.typeSignature}   -- ${bei.module}  BUILT-IN"
+      case pi: ProjectIdentifierInfo => s"${pi.declaration}   -- ${pi.filePath.getOrElse("File not found")}"
+      case li: LibraryIdentifierInfo => s"${li.declaration}   -- ${li.module}"
+      case bi: BuiltInIdentifierInfo => s"${bi.declaration}   -- ${bi.module}  BUILT-IN"
+      case gi: NoLocationIdentifierInfo => s"${gi.declaration}"
     }
   }
 }

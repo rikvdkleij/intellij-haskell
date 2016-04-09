@@ -76,15 +76,27 @@ public class HaskellDataDeclarationImpl extends HaskellCompositeElementImpl impl
   }
 
   @Override
+  @NotNull
+  public List<HaskellExpression> getExpressionList() {
+    return PsiTreeUtil.getChildrenOfTypeAsList(this, HaskellExpression.class);
+  }
+
+  @Override
   @Nullable
-  public HaskellExpression getExpression() {
-    return findChildByClass(HaskellExpression.class);
+  public HaskellKindSignature getKindSignature() {
+    return findChildByClass(HaskellKindSignature.class);
   }
 
   @Override
   @NotNull
-  public HaskellSimpletype getSimpletype() {
-    return findNotNullChildByClass(HaskellSimpletype.class);
+  public List<HaskellQvar> getQvarList() {
+    return PsiTreeUtil.getChildrenOfTypeAsList(this, HaskellQvar.class);
+  }
+
+  @Override
+  @NotNull
+  public List<HaskellSimpletype> getSimpletypeList() {
+    return PsiTreeUtil.getChildrenOfTypeAsList(this, HaskellSimpletype.class);
   }
 
   public String getName() {
@@ -99,8 +111,12 @@ public class HaskellDataDeclarationImpl extends HaskellCompositeElementImpl impl
     return HaskellPsiImplUtil.getIdentifierElements(this);
   }
 
-  public HaskellNamedElement getSimpleType() {
-    return HaskellPsiImplUtil.getSimpleType(this);
+  public String getModuleName() {
+    return HaskellPsiImplUtil.getModuleName(this);
+  }
+
+  public HaskellNamedElement getDataTypeConstructor() {
+    return HaskellPsiImplUtil.getDataTypeConstructor(this);
   }
 
 }

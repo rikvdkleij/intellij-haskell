@@ -41,11 +41,6 @@ object HaskellElementFactory {
     PsiTreeUtil.findChildOfType(haskellFile, classOf[HaskellVarSym]).getNode
   }
 
-  def createVarDotSym(project: Project, name: String): ASTNode = {
-    val haskellFile = createFileFromText(project, name)
-    PsiTreeUtil.findChildOfType(haskellFile, classOf[HaskellVarDotSym]).getNode
-  }
-
   def createConSym(project: Project, name: String): ASTNode = {
     val haskellFile = createFileFromText(project, name)
     PsiTreeUtil.findChildOfType(haskellFile, classOf[HaskellConSym]).getNode

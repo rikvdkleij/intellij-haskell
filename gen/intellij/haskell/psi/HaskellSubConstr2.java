@@ -13,13 +13,13 @@ public interface HaskellSubConstr2 extends HaskellCompositeElement {
   @NotNull
   List<HaskellQvar> getQvarList();
 
-  @NotNull
-  List<HaskellQvarOp> getQvarOpList();
+  @Nullable
+  HaskellQvarOp getQvarOp();
 
   @NotNull
   List<HaskellTtype> getTtypeList();
 
   @NotNull
-  List<HaskellTypeSignatureDeclaration> getTypeSignatureDeclarationList();
+  List<HaskellTypeSignature> getTypeSignatureList();
 
 }

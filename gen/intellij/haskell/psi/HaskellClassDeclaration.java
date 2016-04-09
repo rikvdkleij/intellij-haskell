@@ -15,8 +15,8 @@ public interface HaskellClassDeclaration extends HaskellDeclarationElement {
   @Nullable
   HaskellContext getContext();
 
-  @Nullable
-  HaskellExpression getExpression();
+  @NotNull
+  List<HaskellExpression> getExpressionList();
 
   @NotNull
   HaskellQcon getQcon();
@@ -31,7 +31,7 @@ public interface HaskellClassDeclaration extends HaskellDeclarationElement {
   List<HaskellTtype> getTtypeList();
 
   @NotNull
-  List<HaskellTypeSignatureDeclaration> getTypeSignatureDeclarationList();
+  List<HaskellTypeSignature> getTypeSignatureList();
 
   String getName();
 
