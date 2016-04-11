@@ -104,7 +104,7 @@ object HaskellFileIndex {
 
     haskellFilesFuture.onFailure { case e => HaskellNotificationGroup.notifyError(s"Error while getting all (Literate) Haskell files from file index: ${e.getMessage}")}
 
-    Await.result(haskellFilesFuture, Duration.create(1, TimeUnit.SECONDS))
+    Await.result(haskellFilesFuture, Duration.create(2, TimeUnit.SECONDS))
   }
 
   private def getFilesForType(fileType: FileType, project: Project, searchScope: GlobalSearchScope) = {

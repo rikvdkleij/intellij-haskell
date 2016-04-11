@@ -55,4 +55,10 @@ public class HaskellTtypeImpl extends HaskellCompositeElementImpl implements Has
     return PsiTreeUtil.getChildrenOfTypeAsList(this, HaskellTypeSignature.class);
   }
 
+  @Override
+  @NotNull
+  public List<HaskellVarSym> getVarSymList() {
+    return PsiTreeUtil.getChildrenOfTypeAsList(this, HaskellVarSym.class);
+  }
+
 }

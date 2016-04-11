@@ -162,10 +162,10 @@ class HaskellReference(element: HaskellNamedElement, textRange: TextRange) exten
   }
 
   private def resolveDeclarationReferencesInFile(file: PsiFile, libInfo: LibraryIdentifierInfo): Iterable[HaskellDeclarationElement] = {
-    val libInfoIds = splitDeclarationInTokens(libInfo.declaration.replace("[overlappable]", " ").replace("[overlapping]", " ").replace("[incoherent]", " "))
+    val libInfoIds = splitDeclarationInTokens(libInfo.declaration.replaceAll("\\[overlappable\\]|\\[overlapping\\]|\\[incoherent\\]|forall[\\s|\\w|::|\\(|\\)]+\\.|:: [\\w|\\*|\\-&gt;]+", " "))
       .map(id => id.trim.split('.').lastOption.getOrElse(id.trim))
     findDeclarationElementsInFile(file).filter(de => {
-      val declarationText = splitDeclarationInTokens(de.getPresentation.getPresentableText)
+      val declarationText = splitDeclarationInTokens(de.getText)
       libInfoIds.forall(id => declarationText.contains(id))
     })
   }

@@ -26,6 +26,9 @@ public interface HaskellFielddecl extends HaskellCompositeElement {
   HaskellUnpackNounpackPragma getUnpackNounpackPragma();
 
   @NotNull
+  List<HaskellVarSym> getVarSymList();
+
+  @NotNull
   HaskellVars getVars();
 
 }

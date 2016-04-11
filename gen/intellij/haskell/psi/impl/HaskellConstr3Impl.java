@@ -67,4 +67,10 @@ public class HaskellConstr3Impl extends HaskellCompositeElementImpl implements H
     return PsiTreeUtil.getChildrenOfTypeAsList(this, HaskellUnpackNounpackPragma.class);
   }
 
+  @Override
+  @NotNull
+  public List<HaskellVarSym> getVarSymList() {
+    return PsiTreeUtil.getChildrenOfTypeAsList(this, HaskellVarSym.class);
+  }
+
 }

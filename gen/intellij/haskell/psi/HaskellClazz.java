@@ -22,4 +22,7 @@ public interface HaskellClazz extends HaskellCompositeElement {
   @NotNull
   List<HaskellTypeSignature> getTypeSignatureList();
 
+  @NotNull
+  List<HaskellVarSym> getVarSymList();
+
 }

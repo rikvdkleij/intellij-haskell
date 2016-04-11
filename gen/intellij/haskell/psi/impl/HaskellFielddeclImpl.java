@@ -63,6 +63,12 @@ public class HaskellFielddeclImpl extends HaskellCompositeElementImpl implements
 
   @Override
   @NotNull
+  public List<HaskellVarSym> getVarSymList() {
+    return PsiTreeUtil.getChildrenOfTypeAsList(this, HaskellVarSym.class);
+  }
+
+  @Override
+  @NotNull
   public HaskellVars getVars() {
     return findNotNullChildByClass(HaskellVars.class);
   }

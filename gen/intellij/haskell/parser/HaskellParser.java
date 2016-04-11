@@ -376,7 +376,7 @@ public class HaskellParser implements PsiParser, LightPsiParser {
   /* ********************************************************** */
   // "forall" (qvar | ttype | LEFT_PAREN type_signature RIGHT_PAREN)+ DOT |  // forall
   //                                   LEFT_PAREN qvar TILDE qvar RIGHT_PAREN (DOUBLE_RIGHT_ARROW ttype)? |
-  //                                   LEFT_PAREN osnl ttype (osnl COMMA osnl ttype)+ osnl RIGHT_PAREN |
+  //                                   LEFT_PAREN osnl var_sym? osnl ttype (osnl COMMA osnl ttype)+ osnl var_sym? osnl RIGHT_PAREN |
   //                                   QUOTE? LEFT_BRACKET osnl ttype osnl RIGHT_BRACKET |
   //                                   LEFT_PAREN osnl ttype+ osnl RIGHT_PAREN |
   //                                   gtycon | qvar
@@ -480,31 +480,42 @@ public class HaskellParser implements PsiParser, LightPsiParser {
     return r;
   }
 
-  // LEFT_PAREN osnl ttype (osnl COMMA osnl ttype)+ osnl RIGHT_PAREN
+  // LEFT_PAREN osnl var_sym? osnl ttype (osnl COMMA osnl ttype)+ osnl var_sym? osnl RIGHT_PAREN
   private static boolean atype_2(PsiBuilder b, int l) {
     if (!recursion_guard_(b, l, "atype_2")) return false;
     boolean r;
     Marker m = enter_section_(b);
     r = consumeToken(b, HS_LEFT_PAREN);
     r = r && osnl(b, l + 1);
+    r = r && atype_2_2(b, l + 1);
+    r = r && osnl(b, l + 1);
     r = r && ttype(b, l + 1);
-    r = r && atype_2_3(b, l + 1);
+    r = r && atype_2_5(b, l + 1);
+    r = r && osnl(b, l + 1);
+    r = r && atype_2_7(b, l + 1);
     r = r && osnl(b, l + 1);
     r = r && consumeToken(b, HS_RIGHT_PAREN);
     exit_section_(b, m, null, r);
     return r;
   }
 
+  // var_sym?
+  private static boolean atype_2_2(PsiBuilder b, int l) {
+    if (!recursion_guard_(b, l, "atype_2_2")) return false;
+    var_sym(b, l + 1);
+    return true;
+  }
+
   // (osnl COMMA osnl ttype)+
-  private static boolean atype_2_3(PsiBuilder b, int l) {
-    if (!recursion_guard_(b, l, "atype_2_3")) return false;
+  private static boolean atype_2_5(PsiBuilder b, int l) {
+    if (!recursion_guard_(b, l, "atype_2_5")) return false;
     boolean r;
     Marker m = enter_section_(b);
-    r = atype_2_3_0(b, l + 1);
+    r = atype_2_5_0(b, l + 1);
     int c = current_position_(b);
     while (r) {
-      if (!atype_2_3_0(b, l + 1)) break;
-      if (!empty_element_parsed_guard_(b, "atype_2_3", c)) break;
+      if (!atype_2_5_0(b, l + 1)) break;
+      if (!empty_element_parsed_guard_(b, "atype_2_5", c)) break;
       c = current_position_(b);
     }
     exit_section_(b, m, null, r);
@@ -512,8 +523,8 @@ public class HaskellParser implements PsiParser, LightPsiParser {
   }
 
   // osnl COMMA osnl ttype
-  private static boolean atype_2_3_0(PsiBuilder b, int l) {
-    if (!recursion_guard_(b, l, "atype_2_3_0")) return false;
+  private static boolean atype_2_5_0(PsiBuilder b, int l) {
+    if (!recursion_guard_(b, l, "atype_2_5_0")) return false;
     boolean r;
     Marker m = enter_section_(b);
     r = osnl(b, l + 1);
@@ -522,6 +533,13 @@ public class HaskellParser implements PsiParser, LightPsiParser {
     r = r && ttype(b, l + 1);
     exit_section_(b, m, null, r);
     return r;
+  }
+
+  // var_sym?
+  private static boolean atype_2_7(PsiBuilder b, int l) {
+    if (!recursion_guard_(b, l, "atype_2_7")) return false;
+    var_sym(b, l + 1);
+    return true;
   }
 
   // QUOTE? LEFT_BRACKET osnl ttype osnl RIGHT_BRACKET

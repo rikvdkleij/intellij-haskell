@@ -320,7 +320,7 @@ object HaskellPsiImplUtil {
       case cd: HaskellClassDeclaration => removeCommentsAndPragmasAndAfterWhereOrEqual(cd)
       case id: HaskellInstanceDeclaration => removeCommentsAndPragmasAndAfterWhereOrEqual(id)
       case ts: HaskellTypeSignature => removeCommentsAndPragmas(ts)
-      case tf: HaskellDataDeclaration => removeCommentsAndPragmas(tf)
+      case tf: HaskellDataDeclaration => removeCommentsAndPragmasAndAfterWhereOrEqual(tf)
       case tf: HaskellTypeFamilyDeclaration => removeCommentsAndPragmasAndAfterWhereOrEqual(tf)
       case de => removeCommentsAndPragmas(de)
     }).map(e => if (e.getElementType == TokenType.WHITE_SPACE) " " else e.getText.trim).mkString(" ").replaceAll("\\s+", " ")

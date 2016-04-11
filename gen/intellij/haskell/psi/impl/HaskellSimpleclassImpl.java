@@ -67,4 +67,10 @@ public class HaskellSimpleclassImpl extends HaskellCompositeElementImpl implemen
     return PsiTreeUtil.getChildrenOfTypeAsList(this, HaskellTypeSignature.class);
   }
 
+  @Override
+  @NotNull
+  public List<HaskellVarSym> getVarSymList() {
+    return PsiTreeUtil.getChildrenOfTypeAsList(this, HaskellVarSym.class);
+  }
+
 }

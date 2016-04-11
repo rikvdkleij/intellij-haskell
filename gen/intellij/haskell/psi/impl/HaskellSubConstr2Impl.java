@@ -55,4 +55,10 @@ public class HaskellSubConstr2Impl extends HaskellCompositeElementImpl implement
     return PsiTreeUtil.getChildrenOfTypeAsList(this, HaskellTypeSignature.class);
   }
 
+  @Override
+  @NotNull
+  public List<HaskellVarSym> getVarSymList() {
+    return PsiTreeUtil.getChildrenOfTypeAsList(this, HaskellVarSym.class);
+  }
+
 }

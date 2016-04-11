@@ -28,4 +28,7 @@ public interface HaskellConstr3 extends HaskellCompositeElement {
   @NotNull
   List<HaskellUnpackNounpackPragma> getUnpackNounpackPragmaList();
 
+  @NotNull
+  List<HaskellVarSym> getVarSymList();
+
 }

@@ -61,4 +61,10 @@ public class HaskellNewconstrImpl extends HaskellCompositeElementImpl implements
     return PsiTreeUtil.getChildrenOfTypeAsList(this, HaskellTypeSignature.class);
   }
 
+  @Override
+  @NotNull
+  public List<HaskellVarSym> getVarSymList() {
+    return PsiTreeUtil.getChildrenOfTypeAsList(this, HaskellVarSym.class);
+  }
+
 }

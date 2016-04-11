@@ -22,4 +22,7 @@ public interface HaskellTtype extends HaskellCompositeElement {
   @NotNull
   List<HaskellTypeSignature> getTypeSignatureList();
 
+  @NotNull
+  List<HaskellVarSym> getVarSymList();
+
 }

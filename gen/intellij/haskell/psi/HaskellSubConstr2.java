@@ -22,4 +22,7 @@ public interface HaskellSubConstr2 extends HaskellCompositeElement {
   @NotNull
   List<HaskellTypeSignature> getTypeSignatureList();
 
+  @NotNull
+  List<HaskellVarSym> getVarSymList();
+
 }
