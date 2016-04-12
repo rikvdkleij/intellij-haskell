@@ -24,13 +24,17 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.roots.ProjectRootManager
 import intellij.haskell.HaskellNotificationGroup
 import intellij.haskell.settings.HaskellSettingsState
-import intellij.haskell.util.{HaskellProjectUtil, OSUtil}
+import intellij.haskell.util._
 
 import scala.collection.mutable.ListBuffer
 import scala.concurrent.duration._
 import scala.concurrent.{Await, ExecutionContext, Future}
 import scala.io._
 import scala.sys.process._
+
+object GhcModProcess {
+  final val CheckCommand = "check"
+}
 
 class GhcModProcess(val project: Project) extends ProjectComponent {
 

@@ -33,8 +33,8 @@ public class HaskellTtypeImpl extends HaskellCompositeElementImpl implements Has
 
   @Override
   @Nullable
-  public HaskellParallelArrayType getParallelArrayType() {
-    return findChildByClass(HaskellParallelArrayType.class);
+  public HaskellListType getListType() {
+    return findChildByClass(HaskellListType.class);
   }
 
   @Override
@@ -53,6 +53,12 @@ public class HaskellTtypeImpl extends HaskellCompositeElementImpl implements Has
   @NotNull
   public List<HaskellTypeSignature> getTypeSignatureList() {
     return PsiTreeUtil.getChildrenOfTypeAsList(this, HaskellTypeSignature.class);
+  }
+
+  @Override
+  @NotNull
+  public List<HaskellVarId> getVarIdList() {
+    return PsiTreeUtil.getChildrenOfTypeAsList(this, HaskellVarId.class);
   }
 
   @Override

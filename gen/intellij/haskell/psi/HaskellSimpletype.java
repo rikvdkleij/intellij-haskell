@@ -12,9 +12,6 @@ public interface HaskellSimpletype extends HaskellCompositeElement {
   HaskellGconSym getGconSym();
 
   @Nullable
-  HaskellParallelArrayType getParallelArrayType();
-
-  @Nullable
   HaskellQcon getQcon();
 
   @Nullable

@@ -18,31 +18,21 @@ package intellij.haskell.external
 
 import com.intellij.openapi.project.Project
 import intellij.haskell.HaskellNotificationGroup
-import intellij.haskell.settings.HaskellSettingsState
+import intellij.haskell.annotator.GhcModInitialInfo
 import intellij.haskell.util.{FileUtil, OSUtil}
-
-import scala.collection.JavaConversions._
 
 object GhcModCheck {
 
-  private val ghcModProblemPattern = """(.+):([\d]+):([\d]+):(.+)""".r
+  private final val GhcModProblemPattern = """(.+):([\d]+):([\d]+):(.+)""".r
 
-  def check(project: Project, filePath: String): GhcModCheckResult = {
-    val ghcModPath = HaskellSettingsState.getGhcModPath
-    val output = ghcModPath.map { p =>
-      ExternalProcess.getProcessOutput(
-        project.getBasePath,
-        p,
-        Seq("check", filePath)
-      )
-    }.map(_.getStdoutLines.toIterable).getOrElse(Iterable())
-
-    new GhcModCheckResult(output.flatMap(l => parseOutputLine(l, project)))
+  def check(project: Project, ghcModInitialInfo: GhcModInitialInfo): GhcModCheckResult = {
+    val output = GhcModProcessManager.getGhcModProcess(project).execute(GhcModProcess.CheckCommand + " " + ghcModInitialInfo.filePath)
+    new GhcModCheckResult(output.outputLines.flatMap(l => parseOutputLine(l, project)))
   }
 
   private[external] def parseOutputLine(ghcModOutput: String, project: Project): Option[GhcModProblem] = {
     ghcModOutput match {
-      case ghcModProblemPattern(filePath, lineNr, columnNr, message) => Some(new GhcModProblem(FileUtil.makeFilePathAbsolute(filePath, project), lineNr.toInt, columnNr.toInt, message.replace('\u0000', OSUtil.LineSeparator)))
+      case GhcModProblemPattern(filePath, lineNr, columnNr, message) => Some(new GhcModProblem(FileUtil.makeFilePathAbsolute(filePath, project), lineNr.toInt, columnNr.toInt, message.replace('\u0000', OSUtil.LineSeparator)))
       case _ => HaskellNotificationGroup.notifyError(ghcModOutput); None
     }
   }

@@ -84,7 +84,7 @@ class HaskellReference(element: HaskellNamedElement, textRange: TextRange) exten
   private def resolveResults(project: Project, identifier: String) = {
     val globalResolveResults = getIdentifierInfos(file, myElement).flatMap {
       case pi: ProjectIdentifierInfo => resolveProjectReference(pi, identifier).map(new HaskellProjectResolveResult(_)).toIterable
-      case li: LibraryIdentifierInfo => li.filePath.flatMap(findFile).map(f => resolveDeclarationReferencesInFile(f, li).map(de => new HaskellLibraryResolveResult(de.getIdentifierElements.head))).getOrElse(Iterable())
+      case li: LibraryIdentifierInfo => li.filePath.flatMap(findFile).map(f => resolveDeclarationReferencesInFile(f, li, identifier).map(de => new HaskellLibraryResolveResult(de))).getOrElse(Iterable())
       case bi: BuiltInIdentifierInfo => Iterable(new BuiltInResolveResult(bi.declaration, bi.libraryName, bi.module))
       case gi: NoLocationIdentifierInfo => Iterable(new NoResolveResult(gi.declaration))
     }
@@ -161,17 +161,13 @@ class HaskellReference(element: HaskellNamedElement, textRange: TextRange) exten
     file.flatMap(f => Option(PsiManager.getInstance(myElement.getProject).findFile(f)).map(_.asInstanceOf[HaskellFile]))
   }
 
-  private def resolveDeclarationReferencesInFile(file: PsiFile, libInfo: LibraryIdentifierInfo): Iterable[HaskellDeclarationElement] = {
-    val libInfoIds = splitDeclarationInTokens(libInfo.declaration.replaceAll("\\[overlappable\\]|\\[overlapping\\]|\\[incoherent\\]|forall[\\s|\\w|::|\\(|\\)]+\\.|:: [\\w|\\*|\\-&gt;]+", " "))
-      .map(id => id.trim.split('.').lastOption.getOrElse(id.trim))
-    findDeclarationElementsInFile(file).filter(de => {
-      val declarationText = splitDeclarationInTokens(de.getText)
-      libInfoIds.forall(id => declarationText.contains(id))
-    })
-  }
-
-  private def splitDeclarationInTokens(declaration: String) = {
-    declaration.replaceAll("\\(|\\)|=&gt;|-&gt;|,|\\.\\.\\.", " ").split(" ").map(_.trim).filterNot(_.isEmpty)
+  private def resolveDeclarationReferencesInFile(file: PsiFile, libInfo: LibraryIdentifierInfo, identifier: String): Iterable[HaskellNamedElement] = {
+    val namedElementInDeclarations = findDeclarationElementsInFile(file).flatMap(de => de.getIdentifierElements.find(ne => ne.getName == identifier))
+    if (namedElementInDeclarations.isEmpty) {
+      PsiTreeUtil.findChildrenOfType(file, classOf[HaskellNamedElement]).find(_.getName == identifier)
+    } else {
+      namedElementInDeclarations
+    }
   }
 
   private def findLocalNamedElements: Iterable[HaskellNamedElement] = {

@@ -234,6 +234,10 @@ public class HaskellVisitor extends PsiElementVisitor {
     visitCompositeElement(o);
   }
 
+  public void visitListType(@NotNull HaskellListType o) {
+    visitCompositeElement(o);
+  }
+
   public void visitLiteral(@NotNull HaskellLiteral o) {
     visitCompositeElement(o);
   }
@@ -291,10 +295,6 @@ public class HaskellVisitor extends PsiElementVisitor {
   }
 
   public void visitOverlapPragma(@NotNull HaskellOverlapPragma o) {
-    visitCompositeElement(o);
-  }
-
-  public void visitParallelArrayType(@NotNull HaskellParallelArrayType o) {
     visitCompositeElement(o);
   }
 

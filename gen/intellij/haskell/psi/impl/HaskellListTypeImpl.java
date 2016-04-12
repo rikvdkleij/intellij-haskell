@@ -10,14 +10,14 @@ import com.intellij.psi.util.PsiTreeUtil;
 import static intellij.haskell.psi.HaskellTypes.*;
 import intellij.haskell.psi.*;
 
-public class HaskellParallelArrayTypeImpl extends HaskellCompositeElementImpl implements HaskellParallelArrayType {
+public class HaskellListTypeImpl extends HaskellCompositeElementImpl implements HaskellListType {
 
-  public HaskellParallelArrayTypeImpl(ASTNode node) {
+  public HaskellListTypeImpl(ASTNode node) {
     super(node);
   }
 
   public void accept(@NotNull HaskellVisitor visitor) {
-    visitor.visitParallelArrayType(this);
+    visitor.visitListType(this);
   }
 
   public void accept(@NotNull PsiElementVisitor visitor) {

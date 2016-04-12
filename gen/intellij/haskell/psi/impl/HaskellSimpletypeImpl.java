@@ -34,12 +34,6 @@ public class HaskellSimpletypeImpl extends HaskellCompositeElementImpl implement
 
   @Override
   @Nullable
-  public HaskellParallelArrayType getParallelArrayType() {
-    return findChildByClass(HaskellParallelArrayType.class);
-  }
-
-  @Override
-  @Nullable
   public HaskellQcon getQcon() {
     return findChildByClass(HaskellQcon.class);
   }

@@ -20,6 +20,7 @@ import com.intellij.lang.ImportOptimizer
 import com.intellij.psi.PsiFile
 import com.intellij.psi.util.PsiTreeUtil
 import intellij.haskell.HaskellFile
+import intellij.haskell.annotator.GhcModInitialInfo
 import intellij.haskell.external.GhcModCheck
 import intellij.haskell.util.{HaskellElementCondition, LineColumnPosition}
 
@@ -30,7 +31,7 @@ class HaskellImportOptimizer extends ImportOptimizer {
   override def processFile(file: PsiFile): Runnable = {
     new Runnable {
       override def run(): Unit = {
-        val problems = GhcModCheck.check(file.getProject, file.getVirtualFile.getCanonicalPath).problems
+        val problems = GhcModCheck.check(file.getProject, GhcModInitialInfo(file, file.getVirtualFile.getCanonicalPath)).problems
         val redundantImports = problems.filter(p => p.getNormalizedMessage match {
           case HaskellImportOptimizer.WarningRedundantImport() => true
           case _ => false

@@ -11,7 +11,7 @@ public interface HaskellTtype extends HaskellCompositeElement {
   List<HaskellGtycon> getGtyconList();
 
   @Nullable
-  HaskellParallelArrayType getParallelArrayType();
+  HaskellListType getListType();
 
   @NotNull
   List<HaskellQvar> getQvarList();
@@ -21,6 +21,9 @@ public interface HaskellTtype extends HaskellCompositeElement {
 
   @NotNull
   List<HaskellTypeSignature> getTypeSignatureList();
+
+  @NotNull
+  List<HaskellVarId> getVarIdList();
 
   @NotNull
   List<HaskellVarSym> getVarSymList();

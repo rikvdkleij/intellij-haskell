@@ -16,8 +16,6 @@
 
 package intellij.haskell.annotator
 
-import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer
-import com.intellij.codeInsight.daemon.impl.DaemonCodeAnalyzerImpl
 import com.intellij.codeInsight.intention.impl.BaseIntentionAction
 import com.intellij.lang.annotation.{AnnotationHolder, ExternalAnnotator}
 import com.intellij.openapi.editor.Editor
@@ -43,19 +41,18 @@ class GhcModExternalAnnotator extends ExternalAnnotator[GhcModInitialInfo, GhcMo
   private final val PerhapsYouMeantPattern = """.*Perhaps you meant(.*)""".r
   private final val SuggestionPattern = """‘([^‘’]+)’ \(([^\(]+)\)""".r
 
-  override def collectInformation(psiFile: PsiFile): GhcModInitialInfo = {
+  override def collectInformation(psiFile: PsiFile, editor: Editor, hasErrors: Boolean): GhcModInitialInfo = {
     (psiFile, Option(psiFile.getVirtualFile)) match {
       case (_, None) => null // can be case if file is in memory only (just created file)
       case (_, Some(f)) if f.getFileType != HaskellFileType.INSTANCE => null
       case (_, Some(f)) if f.getPath == null => null
-      case (_, Some(f)) =>
-        FileUtil.saveFile(psiFile)
-        GhcModInitialInfo(psiFile, f.getPath)
+      case (_, Some(f)) => GhcModInitialInfo(psiFile, f.getPath)
     }
   }
 
   override def doAnnotate(initialInfoGhcMod: GhcModInitialInfo): GhcModCheckResult = {
-    GhcModCheck.check(initialInfoGhcMod.psiFile.getProject, initialInfoGhcMod.psiFile.getVirtualFile.getPath)
+    FileUtil.saveFile(initialInfoGhcMod.psiFile)
+    GhcModCheck.check(initialInfoGhcMod.psiFile.getProject, initialInfoGhcMod)
   }
 
   override def apply(psiFile: PsiFile, ghcModResult: GhcModCheckResult, holder: AnnotationHolder) {
@@ -73,11 +70,6 @@ class GhcModExternalAnnotator extends ExternalAnnotator[GhcModInitialInfo, GhcMo
         }
       }
     }
-    restartCodeAnalyser(psiFile)
-  }
-
-  private def restartCodeAnalyser(psiFile: PsiFile) {
-    DaemonCodeAnalyzer.getInstance(psiFile.getProject).asInstanceOf[DaemonCodeAnalyzerImpl].restart(psiFile)
   }
 
   private[annotator] def createAnnotations(ghcModCheckResult: GhcModCheckResult, psiFile: PsiFile): Iterable[Annotation] = {

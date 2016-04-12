@@ -65,6 +65,7 @@ public interface HaskellTypes {
   IElementType HS_LAST_LINE_EXPRESSION = new HaskellCompositeElementType("HS_LAST_LINE_EXPRESSION");
   IElementType HS_LINE_EXPRESSION = new HaskellCompositeElementType("HS_LINE_EXPRESSION");
   IElementType HS_LINE_PRAGMA = new HaskellCompositeElementType("HS_LINE_PRAGMA");
+  IElementType HS_LIST_TYPE = new HaskellCompositeElementType("HS_LIST_TYPE");
   IElementType HS_LITERAL = new HaskellCompositeElementType("HS_LITERAL");
   IElementType HS_MINIMAL_PRAGMA = new HaskellCompositeElementType("HS_MINIMAL_PRAGMA");
   IElementType HS_MODULE_BODY = new HaskellCompositeElementType("HS_MODULE_BODY");
@@ -80,7 +81,6 @@ public interface HaskellTypes {
   IElementType HS_OPTIONS_GHC_PRAGMA = new HaskellCompositeElementType("HS_OPTIONS_GHC_PRAGMA");
   IElementType HS_OTHER_PRAGMA = new HaskellCompositeElementType("HS_OTHER_PRAGMA");
   IElementType HS_OVERLAP_PRAGMA = new HaskellCompositeElementType("HS_OVERLAP_PRAGMA");
-  IElementType HS_PARALLEL_ARRAY_TYPE = new HaskellCompositeElementType("HS_PARALLEL_ARRAY_TYPE");
   IElementType HS_QCON = new HaskellCompositeElementType("HS_QCON");
   IElementType HS_QCON_ID = new HaskellCompositeElementType("HS_QCON_ID");
   IElementType HS_QCON_ID_QUALIFIER = new HaskellCompositeElementType("HS_QCON_ID_QUALIFIER");
@@ -363,6 +363,9 @@ public interface HaskellTypes {
       else if (type == HS_LINE_PRAGMA) {
         return new HaskellLinePragmaImpl(node);
       }
+      else if (type == HS_LIST_TYPE) {
+        return new HaskellListTypeImpl(node);
+      }
       else if (type == HS_LITERAL) {
         return new HaskellLiteralImpl(node);
       }
@@ -407,9 +410,6 @@ public interface HaskellTypes {
       }
       else if (type == HS_OVERLAP_PRAGMA) {
         return new HaskellOverlapPragmaImpl(node);
-      }
-      else if (type == HS_PARALLEL_ARRAY_TYPE) {
-        return new HaskellParallelArrayTypeImpl(node);
       }
       else if (type == HS_QCON) {
         return new HaskellQconImpl(node);

@@ -106,7 +106,8 @@ type_declaration            ::=  TYPE osnl simpletype osnl COLON_COLON osnl ttyp
                                   TYPE osnl simpletype osnl LEFT_PAREN osnl kind_signature osnl RIGHT_PAREN EQUAL osnl ttype |
                                   TYPE osnl simpletype
 
-data_declaration            ::=  DATA osnl simpletype osnl LEFT_PAREN osnl kind_signature osnl RIGHT_PAREN osnl qvar* osnl data_declaration_deriving? |
+data_declaration            ::=  DATA osnl simpletype osnl (LEFT_PAREN osnl kind_signature osnl RIGHT_PAREN)+ osnl qvar* osnl data_declaration_deriving? |
+                                  DATA osnl (LEFT_PAREN osnl kind_signature osnl RIGHT_PAREN)+ osnl simpletype osnl qvar* osnl data_declaration_deriving? |
                                   DATA osnl ctype_pragma? osnl INSTANCE? osnl (context osnl DOUBLE_RIGHT_ARROW)? osnl simpletype osnl EQUAL osnl constrs osnl data_declaration_deriving? |
                                   DATA osnl INSTANCE? osnl (context osnl DOUBLE_RIGHT_ARROW)? osnl simpletype osnl WHERE osnl cdecls osnl data_declaration_deriving? |
                                   DATA osnl INSTANCE? osnl (context osnl DOUBLE_RIGHT_ARROW)? osnl simpletype+ osnl (EQUAL osnl expression | EQUAL osnl simpletype+)? osnl data_declaration_deriving?
@@ -123,7 +124,7 @@ class_declaration           ::= (CLASS osnl (scontext osnl DOUBLE_RIGHT_ARROW)? 
                                   (osnl VERTICAL_BAR osnl ttype (osnl COMMA osnl ttype)*)? osnl WHERE? osnl cdecls? |
                                   CLASS osnl context osnl DOUBLE_RIGHT_ARROW osnl qcon osnl qvar osnl WHERE? osnl cdecls?) // seen in Control.Lens.Internal.Indexed
 
-instance_declaration        ::= INSTANCE osnl overlap_pragma? osnl (var_id+ DOT)? osnl (scontext osnl DOUBLE_RIGHT_ARROW)? osnl qcon osnl inst osnl WHERE osnl idecls
+instance_declaration        ::= INSTANCE osnl (overlap_pragma | "OVERLAPPABLE_" | "OVERLAPPING_")? osnl (var_id+ DOT)? osnl (scontext osnl DOUBLE_RIGHT_ARROW)? osnl qcon osnl inst osnl WHERE osnl idecls
                                   |  INSTANCE osnl overlap_pragma? osnl (var_id+ DOT)? osnl (scontext osnl DOUBLE_RIGHT_ARROW)? osnl qcon osnl inst
 default_declaration         ::= DEFAULT osnl (LEFT_PAREN (ttype (COMMA ttype)*)? RIGHT_PAREN | type_signature)
 type_instance_declaration   ::= TYPE_INSTANCE osnl expression
@@ -190,18 +191,17 @@ private atype               ::= "forall" (qvar | ttype | LEFT_PAREN type_signatu
                                   gtycon | qvar
 
 
-ttype                       ::= btype (osnl RIGHT_ARROW osnl ttype)? | parallel_array_type
+ttype                       ::= btype (osnl RIGHT_ARROW osnl ttype)? | list_type var_id*
 
 private btype               ::= atype+      // generalization because left recursive is not supported
 
 simpletype                  ::= qcon_op var_id* |
                                   qcon var_id* |
                                   ttype |
-                                  parallel_array_type var_id |
                                   var_id* osnl (LEFT_PAREN qvar_op RIGHT_PAREN | LEFT_PAREN gcon_sym RIGHT_PAREN) osnl var_id* |
                                   qcon osnl var_id* osnl (LEFT_PAREN type_signature RIGHT_PAREN)+ osnl var_id*  {methods=[getIdentifierElements]}
 
-parallel_array_type         ::= LEFT_BRACKET COLON_COLON RIGHT_BRACKET
+list_type                   ::= LEFT_BRACKET (COLON_COLON | VARSYM_ID) RIGHT_BRACKET
 
 type_family_type            ::= (type_family_type1 | type_family_type2 | LEFT_PAREN? vars COLON_COLON? osnl (context DOUBLE_RIGHT_ARROW)? osnl ttype? RIGHT_PAREN?)+ (COLON_COLON osnl ttype)?
 type_family_type1           ::= qcon

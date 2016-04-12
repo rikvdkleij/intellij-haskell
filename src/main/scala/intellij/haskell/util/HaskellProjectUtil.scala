@@ -17,11 +17,17 @@
 package intellij.haskell.util
 
 import com.intellij.openapi.project.Project
+import intellij.haskell.external.ExternalProcess
 import intellij.haskell.module.HaskellModuleType
+import intellij.haskell.settings.HaskellSettingsState
 
 object HaskellProjectUtil {
 
   def isHaskellProject(project: Project): Boolean = {
     HaskellModuleType.findModules(project).nonEmpty
+  }
+
+  def cleanBuild(project: Project) {
+    HaskellSettingsState.getStackInfo(project).map(si => ExternalProcess.getProcessOutput(project.getBasePath, si.path, Seq("clean")))
   }
 }

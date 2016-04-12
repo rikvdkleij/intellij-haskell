@@ -82,9 +82,9 @@ public class HaskellDataDeclarationImpl extends HaskellCompositeElementImpl impl
   }
 
   @Override
-  @Nullable
-  public HaskellKindSignature getKindSignature() {
-    return findChildByClass(HaskellKindSignature.class);
+  @NotNull
+  public List<HaskellKindSignature> getKindSignatureList() {
+    return PsiTreeUtil.getChildrenOfTypeAsList(this, HaskellKindSignature.class);
   }
 
   @Override

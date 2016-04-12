@@ -36,8 +36,8 @@ public interface HaskellDataDeclaration extends HaskellDataConstructorDeclaratio
   @NotNull
   List<HaskellExpression> getExpressionList();
 
-  @Nullable
-  HaskellKindSignature getKindSignature();
+  @NotNull
+  List<HaskellKindSignature> getKindSignatureList();
 
   @NotNull
   List<HaskellQvar> getQvarList();
