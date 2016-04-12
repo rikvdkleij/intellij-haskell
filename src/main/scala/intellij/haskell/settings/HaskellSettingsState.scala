@@ -53,20 +53,20 @@ object HaskellSettingsState {
     state.hlintPath = hlintPath
   }
 
-  def getCabalInfo(project: Project): Option[CabalInfo] = {
-    val path = findPath(state.cabalPath)
-    notifyIfPathIsNotSet(path, HaskellConfigurable.Cabal)
-    path.map(p => CabalInfo(p, getCabalVersion(project, p)))
+  def getStackInfo(project: Project): Option[StackInfo] = {
+    val path = findPath(state.stackPath)
+    notifyIfPathIsNotSet(path, HaskellConfigurable.Stack)
+    path.map(p => StackInfo(p, getStackVersion(project, p)))
   }
 
-  def setCabalPath(cabalPath: String) {
-    state.cabalPath = cabalPath
+  def setStackPath(stackPath: String) {
+    state.stackPath = stackPath
   }
 
-  private def getCabalVersion(project: Project, cabalPath: String): String = {
+  private def getStackVersion(project: Project, stackPath: String): String = {
     ExternalProcess.getProcessOutput(
       project.getBasePath,
-      cabalPath,
+      stackPath,
       Seq("--numeric-version")
     ).getStdout
   }
@@ -82,4 +82,4 @@ object HaskellSettingsState {
   }
 }
 
-case class CabalInfo(path: String, version: String)
+case class StackInfo(path: String, version: String)

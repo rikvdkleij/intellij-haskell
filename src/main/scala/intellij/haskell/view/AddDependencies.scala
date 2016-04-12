@@ -28,77 +28,55 @@ import com.intellij.openapi.vfs.VfsUtil
 import com.intellij.util.Consumer
 import intellij.haskell.HaskellNotificationGroup
 import intellij.haskell.external.{ExternalProcess, GhcModProcessManager}
-import intellij.haskell.settings.{CabalInfo, HaskellSettingsState}
+import intellij.haskell.settings.HaskellSettingsState
 import intellij.haskell.util.HaskellProjectUtil
 
 import scala.collection.JavaConversions._
 
 class AddDependencies extends AnAction {
 
-  private val libName = "ideaHaskellLib"
-  private val PackageInCabalConfigPattern = """.* ([\w\-]+)\s*==\s*([\d\.]+),?""".r
-  private val initialProgressStep = 0.1
+  private final val LibName = "ideaHaskellLib"
+  private final val DependencyPattern = """([\w\-]+)\s([\d\.]+)""".r
+  private final val InitialProgressStep = 0.1
 
   override def update(e: AnActionEvent): Unit = e.getPresentation.setEnabledAndVisible(HaskellProjectUtil.isHaskellProject(e.getProject))
 
   override def actionPerformed(e: AnActionEvent): Unit = {
-    HaskellSettingsState.getCabalInfo(e.getProject) match {
-      case Some(cabalInfo) =>
+    HaskellSettingsState.getStackInfo(e.getProject) match {
+      case Some(stackInfo) =>
         val project = e.getProject
 
         ProgressManager.getInstance().run(new Task.Backgroundable(project, "Downloading Haskell package sources and adding them as source libraries to module") {
           def run(progressIndicator: ProgressIndicator) {
-            val libPath = new File(project.getBasePath + File.separator + libName)
+            val libPath = new File(project.getBasePath + File.separator + LibName)
             FileUtil.delete(libPath)
             FileUtil.createDirectory(libPath)
-            ExternalProcess.getProcessOutput(project.getBasePath, cabalInfo.path, Seq("update"))
-            ExternalProcess.getProcessOutput(project.getBasePath, cabalInfo.path, getCabalFreezeArguments(cabalInfo))
-            readCabalConfig(project, cabalInfo.path).map(cl => getHaskellPackages(cl)).foreach(packages => {
-              progressIndicator.setFraction(initialProgressStep)
-              downloadHaskellPackageSources(project, cabalInfo.path, packages, progressIndicator)
-              progressIndicator.setFraction(0.9)
-              addDependenciesAsLibrariesToModule(project, packages, libPath.getAbsolutePath)
-            })
+            val dependencyLines = ExternalProcess.getProcessOutput(project.getBasePath, stackInfo.path, Seq("list-dependencies")).getStdoutLines
+            val packageInfos = getPackageInfos(dependencyLines)
+            progressIndicator.setFraction(InitialProgressStep)
+            downloadHaskellPackageSources(project, stackInfo.path, packageInfos, progressIndicator)
+            progressIndicator.setFraction(0.9)
+            addPackagesAsLibrariesToModule(project, packageInfos, libPath.getAbsolutePath)
             GhcModProcessManager.doRestart(project)
           }
         })
-      case None => HaskellNotificationGroup.notifyError("Could not download sources because path to Cabal is not set")
+      case None => HaskellNotificationGroup.notifyError("Could not download sources because path to Stack is not set")
     }
   }
 
-  private def getCabalFreezeArguments(cabalInfo: CabalInfo) = {
-    Seq("freeze") ++ (
-      if (cabalInfo.version > "1.22") {
-        Seq("--enable-tests")
-      } else {
-        Seq()
-      })
-  }
-
-  private def readCabalConfig(project: Project, cabalPath: String): Option[Seq[String]] = {
-    try {
-      Option(FileUtil.loadLines(project.getBasePath + File.separator + "cabal.config"))
-    } catch {
-      case e: Exception =>
-        HaskellNotificationGroup.notifyError(s"Could not read cabal.config file. Error: ${e.getMessage}")
-        None
+  private def getPackageInfos(dependencyLines: Seq[String]) = {
+    dependencyLines.flatMap {
+      case DependencyPattern(name, version) => Option(HaskellPackageInfo(name, version, s"$name-$version"))
+      case x => HaskellNotificationGroup.notifyWarning(s"Could not determine package for line [$x] in output of `stack list-dependencies`"); None
     }
   }
 
-  private def getHaskellPackages(cabalConfigLines: Seq[String]) = {
-    cabalConfigLines.flatMap {
-      case PackageInCabalConfigPattern(name, version) => Option(HaskellPackage(name, version, s"$name-$version"))
-      case x => HaskellNotificationGroup.notifyWarning(s"Could not determine package for line [$x] in cabal.config file"); None
-    }
-  }
-
-  private def downloadHaskellPackageSources(project: Project, cabalPath: String, haskellPackages: Seq[HaskellPackage], progressIndicator: ProgressIndicator) {
+  private def downloadHaskellPackageSources(project: Project, stackPath: String, haskellPackages: Seq[HaskellPackageInfo], progressIndicator: ProgressIndicator) {
     val step = 0.8 / haskellPackages.size
-    var progressFraction = initialProgressStep
+    var progressFraction = InitialProgressStep
     haskellPackages.foreach { p =>
       val fullName = p.name + "-" + p.version
-      ExternalProcess.getProcessOutput(project.getBasePath, cabalPath, Seq("get", "-d", libName, fullName))
-      ExternalProcess.getProcessOutput(project.getBasePath, cabalPath, Seq("sandbox", "add-source", libName + File.separator + fullName))
+      ExternalProcess.getProcessOutput(project.getBasePath + File.separator + LibName, stackPath, Seq("unpack", fullName))
       progressFraction = progressFraction + step
       progressIndicator.setFraction(progressFraction)
     }
@@ -108,7 +86,7 @@ class AddDependencies extends AnAction {
     VfsUtil.getUrlForLibraryRoot(new File(path))
   }
 
-  private def addDependenciesAsLibrariesToModule(project: Project, haskellPackages: Seq[HaskellPackage], libPath: String) {
+  private def addPackagesAsLibrariesToModule(project: Project, haskellPackages: Seq[HaskellPackageInfo], libPath: String) {
     ModuleManager.getInstance(project).getModules.headOption match {
       case Some(m) =>
         ModuleRootModificationUtil.updateModel(m, new Consumer[ModifiableRootModel] {
@@ -127,6 +105,6 @@ class AddDependencies extends AnAction {
     }
   }
 
-  case class HaskellPackage(name: String, version: String, fileName: String)
+  private case class HaskellPackageInfo(name: String, version: String, fileName: String)
 
 }

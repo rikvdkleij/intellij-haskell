@@ -33,7 +33,7 @@ class HaskellConfigurable extends Configurable {
   private val ghcModPathField = new TextFieldWithBrowseButton
   private val haskellDocsPathField = new TextFieldWithBrowseButton
   private val hlintPathField = new TextFieldWithBrowseButton
-  private val cabalPathField = new TextFieldWithBrowseButton
+  private val stackPathField = new TextFieldWithBrowseButton
 
   override def getDisplayName: String = {
     "Haskell"
@@ -63,8 +63,8 @@ class HaskellConfigurable extends Configurable {
       null,
       FileChooserDescriptorFactory.createSingleLocalFileDescriptor())
 
-    cabalPathField.addBrowseFolderListener(
-      s"Select $Cabal",
+    stackPathField.addBrowseFolderListener(
+      s"Select $Stack",
       null,
       null,
       FileChooserDescriptorFactory.createSingleLocalFileDescriptor())
@@ -80,7 +80,7 @@ class HaskellConfigurable extends Configurable {
     ghcModPathField.getTextField.getDocument.addDocumentListener(listener)
     haskellDocsPathField.getTextField.getDocument.addDocumentListener(listener)
     hlintPathField.getTextField.getDocument.addDocumentListener(listener)
-    cabalPathField.getTextField.getDocument.addDocumentListener(listener)
+    stackPathField.getTextField.getDocument.addDocumentListener(listener)
 
     val base = new GridBagConstraints {
       insets = new Insets(2, 0, 2, 3)
@@ -120,7 +120,7 @@ class HaskellConfigurable extends Configurable {
     addLabeledControl(0, GhcMod, ghcModPathField)
     addLabeledControl(1, HaskellDocs, haskellDocsPathField)
     addLabeledControl(3, Hlint, hlintPathField)
-    addLabeledControl(4, Cabal, cabalPathField)
+    addLabeledControl(4, Stack, stackPathField)
 
     settingsPanel.add(new JPanel(), base.setConstraints(
       gridx = 0,
@@ -138,7 +138,7 @@ class HaskellConfigurable extends Configurable {
     state.ghcModPath = ghcModPathField.getText
     state.haskellDocsPath = haskellDocsPathField.getText
     state.hlintPath = hlintPathField.getText
-    state.cabalPath = cabalPathField.getText
+    state.stackPath = stackPathField.getText
 
     GhcModProcessManager.setInRestartState()
 
@@ -154,7 +154,7 @@ class HaskellConfigurable extends Configurable {
     Seq((GhcMod, ghcModPathField.getText),
       (HaskellDocs, haskellDocsPathField.getText),
       (Hlint, hlintPathField.getText),
-      (Cabal, cabalPathField.getText)
+      (Stack, stackPathField.getText)
     ).foreach({ case (c, p) => validate(c, p) })
   }
 
@@ -168,7 +168,7 @@ class HaskellConfigurable extends Configurable {
     ghcModPathField.getTextField.setText(state.ghcModPath)
     haskellDocsPathField.getTextField.setText(state.haskellDocsPath)
     hlintPathField.getTextField.setText(state.hlintPath)
-    cabalPathField.getTextField.setText(state.cabalPath)
+    stackPathField.getTextField.setText(state.stackPath)
 
     isModifiedByUser = false
   }
@@ -178,5 +178,5 @@ object HaskellConfigurable {
   val GhcMod = "ghc-mod"
   val HaskellDocs = "haskell-docs"
   val Hlint = "hlint"
-  val Cabal = "cabal"
+  val Stack = "stack"
 }
