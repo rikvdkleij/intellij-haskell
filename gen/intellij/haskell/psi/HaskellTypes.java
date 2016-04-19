@@ -15,6 +15,7 @@ public interface HaskellTypes {
   IElementType HS_CLAZZ = new HaskellCompositeElementType("HS_CLAZZ");
   IElementType HS_CNAME = new HaskellCompositeElementType("HS_CNAME");
   IElementType HS_COMMENTS = new HaskellCompositeElementType("HS_COMMENTS");
+  IElementType HS_CONSTANT_FOLDED_PRAGMA = new HaskellCompositeElementType("HS_CONSTANT_FOLDED_PRAGMA");
   IElementType HS_CONSTR_1 = new HaskellCompositeElementType("HS_CONSTR_1");
   IElementType HS_CONSTR_2 = new HaskellCompositeElementType("HS_CONSTR_2");
   IElementType HS_CONSTR_3 = new HaskellCompositeElementType("HS_CONSTR_3");
@@ -213,6 +214,9 @@ public interface HaskellTypes {
       }
       else if (type == HS_COMMENTS) {
         return new HaskellCommentsImpl(node);
+      }
+      else if (type == HS_CONSTANT_FOLDED_PRAGMA) {
+        return new HaskellConstantFoldedPragmaImpl(node);
       }
       else if (type == HS_CONSTR_1) {
         return new HaskellConstr1Impl(node);

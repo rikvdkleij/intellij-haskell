@@ -29,7 +29,7 @@ control_character   = [\000 - \037]
 newline             = \r|\n|\r\n
 unispace            = \x05
 white_char          = [ \t\f] | {control_character} | {unispace}
-directive           = "#"("if"|"ifdef"|"ifndef"|"define"|"elif"|"else"|"error"|"endif"|"include"|"undef")[^\r\n]*
+directive           = "#"("if"|"ifdef"|"ifndef"|"define"|"elif"|"else"|"error"|"endif"|"include"|"undef")  ("\\" (\r|\n|\r\n) | [^\r\n])*
 white_space         = {white_char}+ | {directive}
 
 small               = [a-z_]          // ignoring any unicode lowercase letter for now

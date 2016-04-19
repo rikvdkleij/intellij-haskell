@@ -33,6 +33,12 @@ public class HaskellOtherPragmaImpl extends HaskellCompositeElementImpl implemen
 
   @Override
   @Nullable
+  public HaskellConstantFoldedPragma getConstantFoldedPragma() {
+    return findChildByClass(HaskellConstantFoldedPragma.class);
+  }
+
+  @Override
+  @Nullable
   public HaskellDeprecatedWarnPragma getDeprecatedWarnPragma() {
     return findChildByClass(HaskellDeprecatedWarnPragma.class);
   }

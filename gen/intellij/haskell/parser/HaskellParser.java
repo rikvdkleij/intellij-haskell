@@ -50,6 +50,9 @@ public class HaskellParser implements PsiParser, LightPsiParser {
     else if (t == HS_CON_SYM) {
       r = con_sym(b, 0);
     }
+    else if (t == HS_CONSTANT_FOLDED_PRAGMA) {
+      r = constant_folded_pragma(b, 0);
+    }
     else if (t == HS_CONSTR_1) {
       r = constr1(b, 0);
     }
@@ -1103,6 +1106,24 @@ public class HaskellParser implements PsiParser, LightPsiParser {
   }
 
   /* ********************************************************** */
+  // PRAGMA_START onl "CONSTANT_FOLDED" onl general_pragma_content onl PRAGMA_END
+  public static boolean constant_folded_pragma(PsiBuilder b, int l) {
+    if (!recursion_guard_(b, l, "constant_folded_pragma")) return false;
+    if (!nextTokenIs(b, HS_PRAGMA_START)) return false;
+    boolean r;
+    Marker m = enter_section_(b);
+    r = consumeToken(b, HS_PRAGMA_START);
+    r = r && onl(b, l + 1);
+    r = r && consumeToken(b, "CONSTANT_FOLDED");
+    r = r && onl(b, l + 1);
+    r = r && general_pragma_content(b, l + 1);
+    r = r && onl(b, l + 1);
+    r = r && consumeToken(b, HS_PRAGMA_END);
+    exit_section_(b, m, HS_CONSTANT_FOLDED_PRAGMA, r);
+    return r;
+  }
+
+  /* ********************************************************** */
   // constr1 | constr2 | constr3 | constr4
   static boolean constr(PsiBuilder b, int l) {
     if (!recursion_guard_(b, l, "constr")) return false;
@@ -1430,7 +1451,7 @@ public class HaskellParser implements PsiParser, LightPsiParser {
   }
 
   /* ********************************************************** */
-  // PRAGMA_START onl "CTYPE" general_pragma_content PRAGMA_END
+  // PRAGMA_START onl "CTYPE" onl general_pragma_content onl PRAGMA_END
   public static boolean ctype_pragma(PsiBuilder b, int l) {
     if (!recursion_guard_(b, l, "ctype_pragma")) return false;
     if (!nextTokenIs(b, HS_PRAGMA_START)) return false;
@@ -1439,7 +1460,9 @@ public class HaskellParser implements PsiParser, LightPsiParser {
     r = consumeToken(b, HS_PRAGMA_START);
     r = r && onl(b, l + 1);
     r = r && consumeToken(b, "CTYPE");
+    r = r && onl(b, l + 1);
     r = r && general_pragma_content(b, l + 1);
+    r = r && onl(b, l + 1);
     r = r && consumeToken(b, HS_PRAGMA_END);
     exit_section_(b, m, HS_CTYPE_PRAGMA, r);
     return r;
@@ -4249,7 +4272,7 @@ public class HaskellParser implements PsiParser, LightPsiParser {
   }
 
   /* ********************************************************** */
-  // PRAGMA_START onl "MINIMAL" general_pragma_content PRAGMA_END
+  // PRAGMA_START onl "MINIMAL" onl general_pragma_content onl PRAGMA_END
   public static boolean minimal_pragma(PsiBuilder b, int l) {
     if (!recursion_guard_(b, l, "minimal_pragma")) return false;
     if (!nextTokenIs(b, HS_PRAGMA_START)) return false;
@@ -4258,7 +4281,9 @@ public class HaskellParser implements PsiParser, LightPsiParser {
     r = consumeToken(b, HS_PRAGMA_START);
     r = r && onl(b, l + 1);
     r = r && consumeToken(b, "MINIMAL");
+    r = r && onl(b, l + 1);
     r = r && general_pragma_content(b, l + 1);
+    r = r && onl(b, l + 1);
     r = r && consumeToken(b, HS_PRAGMA_END);
     exit_section_(b, m, HS_MINIMAL_PRAGMA, r);
     return r;
@@ -4773,7 +4798,7 @@ public class HaskellParser implements PsiParser, LightPsiParser {
 
   /* ********************************************************** */
   // ann_pragma | deprecated_warn_pragma | noinline_pragma | inlinable_pragma | line_pragma | rules_pragma |
-  //                                   specialize_pragma | inline_pragma | minimal_pragma | overlap_pragma | dummy_pragma
+  //                                   specialize_pragma | inline_pragma | minimal_pragma | overlap_pragma | constant_folded_pragma | dummy_pragma
   public static boolean other_pragma(PsiBuilder b, int l) {
     if (!recursion_guard_(b, l, "other_pragma")) return false;
     if (!nextTokenIs(b, HS_PRAGMA_START)) return false;
@@ -4789,6 +4814,7 @@ public class HaskellParser implements PsiParser, LightPsiParser {
     if (!r) r = inline_pragma(b, l + 1);
     if (!r) r = minimal_pragma(b, l + 1);
     if (!r) r = overlap_pragma(b, l + 1);
+    if (!r) r = constant_folded_pragma(b, l + 1);
     if (!r) r = dummy_pragma(b, l + 1);
     exit_section_(b, m, HS_OTHER_PRAGMA, r);
     return r;

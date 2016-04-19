@@ -42,6 +42,10 @@ public class HaskellVisitor extends PsiElementVisitor {
     visitNamedElement(o);
   }
 
+  public void visitConstantFoldedPragma(@NotNull HaskellConstantFoldedPragma o) {
+    visitCompositeElement(o);
+  }
+
   public void visitConstr1(@NotNull HaskellConstr1 o) {
     visitCompositeElement(o);
   }

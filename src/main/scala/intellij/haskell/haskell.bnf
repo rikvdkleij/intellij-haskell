@@ -51,7 +51,7 @@ haddock_pragma              ::= PRAGMA_START onl "OPTIONS_HADDOCK" general_pragm
 dummy_pragma                ::= PRAGMA_START CONID_ID? PRAGMA_END? NEWLINE?
 
 other_pragma                ::= ann_pragma | deprecated_warn_pragma | noinline_pragma | inlinable_pragma | line_pragma | rules_pragma |
-                                  specialize_pragma | inline_pragma | minimal_pragma | overlap_pragma | dummy_pragma
+                                  specialize_pragma | inline_pragma | minimal_pragma | overlap_pragma | constant_folded_pragma | dummy_pragma
 deprecated_warn_pragma      ::= PRAGMA_START onl ("DEPRECATED" | "WARNING") general_pragma_content PRAGMA_END
 inline_pragma               ::= PRAGMA_START onl "INLINE" general_pragma_content PRAGMA_END
 noinline_pragma             ::= PRAGMA_START onl ("NOINLINE" | "NOTINLINE") general_id+ PRAGMA_END
@@ -63,11 +63,12 @@ line_pragma                 ::= PRAGMA_START onl "LINE" general_pragma_content P
 rules_pragma                ::= PRAGMA_START onl "RULES" general_pragma_content PRAGMA_END
 
 source_pragma               ::= PRAGMA_START onl "SOURCE" onl PRAGMA_END
-minimal_pragma              ::= PRAGMA_START onl "MINIMAL" general_pragma_content PRAGMA_END
+minimal_pragma              ::= PRAGMA_START onl "MINIMAL" onl general_pragma_content onl PRAGMA_END
 unpack_pragma               ::= PRAGMA_START onl "UNPACK" onl PRAGMA_END
 nounpack_pragma             ::= PRAGMA_START onl "NOUNPACK" onl PRAGMA_END
-ctype_pragma                ::= PRAGMA_START onl "CTYPE" general_pragma_content PRAGMA_END
+ctype_pragma                ::= PRAGMA_START onl "CTYPE" onl general_pragma_content onl PRAGMA_END
 overlap_pragma              ::= PRAGMA_START onl ("OVERLAPPABLE" | "OVERLAPPING") onl PRAGMA_END
+constant_folded_pragma      ::= PRAGMA_START onl "CONSTANT_FOLDED" onl general_pragma_content onl PRAGMA_END
 unpack_nounpack_pragma      ::= unpack_pragma | nounpack_pragma
 general_pragma_content      ::= (general_id | NEWLINE | MODULE | INSTANCE)*
 
