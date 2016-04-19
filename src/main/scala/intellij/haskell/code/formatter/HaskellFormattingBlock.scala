@@ -71,7 +71,7 @@ class HaskellFormattingBlock(node: ASTNode, alignment: Option[Alignment], spacin
     val childType: IElementType = child.getElementType
 
     childType match {
-      case HS_LEFT_PAREN | HS_RIGHT_PAREN | HS_LEFT_BRACE | HS_RIGHT_BRACE | HS_LEFT_BRACKET | HS_RIGHT_BRACKET | HS_COMMA => Some(alignments(0))
+      case HS_LEFT_PAREN | HS_RIGHT_PAREN | HS_LEFT_BRACE | HS_RIGHT_BRACE | HS_LEFT_BRACKET | HS_RIGHT_BRACKET | HS_COMMA => Some(alignments.head)
       case HS_VERTICAL_BAR | HS_EQUAL => Some(alignments(1))
       case HS_EXPORT => Some(alignments(2))
       case HS_IF | HS_THEN | HS_ELSE => Some(alignments(3))

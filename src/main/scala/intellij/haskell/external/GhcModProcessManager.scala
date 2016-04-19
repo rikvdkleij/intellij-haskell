@@ -30,23 +30,39 @@ object GhcModProcessManager {
 
   def doRestart(project: Project) {
     synchronized {
-      val ghcModProcess = getGhcModComponent(project)
-      ghcModProcess.exit()
-      ghcModProcess.start()
+      val ghcModProcesses = Seq(getGhcModCheckComponent(project), getGhcModCheckComponent(project))
+      ghcModProcesses.foreach { p =>
+        p.exit()
+        p.start()
+      }
     }
   }
 
-  def getGhcModProcess(project: Project) = {
+  def getGhcModCheckProcess(project: Project) = {
     synchronized {
       if (restartState) {
         doRestart(project)
         restartState = false
       }
-      getGhcModComponent(project)
+      getGhcModCheckComponent(project)
     }
   }
 
-  private def getGhcModComponent(project: Project) = {
-    project.getComponent(classOf[GhcModProcess])
+  def getGhcModInfoProcess(project: Project) = {
+    synchronized {
+      if (restartState) {
+        doRestart(project)
+        restartState = false
+      }
+      getGhcModInfoComponent(project)
+    }
+  }
+
+  private def getGhcModCheckComponent(project: Project) = {
+    project.getComponent(classOf[GhcModCheckProcess])
+  }
+
+  private def getGhcModInfoComponent(project: Project) = {
+    project.getComponent(classOf[GhcModInfoProcess])
   }
 }

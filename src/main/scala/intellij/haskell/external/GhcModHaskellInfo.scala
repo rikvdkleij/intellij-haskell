@@ -21,6 +21,6 @@ import com.intellij.openapi.project.Project
 object GhcModHaskellInfo {
 
   def listLanguageExtensions(project: Project): Iterable[String] = {
-    GhcModProcessManager.getGhcModProcess(project).execute("lang").outputLines
+    GhcModProcessManager.getGhcModInfoProcess(project).execute("lang").outputLines
   }
 }

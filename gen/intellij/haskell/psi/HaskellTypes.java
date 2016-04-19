@@ -38,6 +38,7 @@ public interface HaskellTypes {
   IElementType HS_FILE_HEADER_PRAGMA = new HaskellCompositeElementType("HS_FILE_HEADER_PRAGMA");
   IElementType HS_FIRST_LINE_EXPRESSION = new HaskellCompositeElementType("HS_FIRST_LINE_EXPRESSION");
   IElementType HS_FIXITY = new HaskellCompositeElementType("HS_FIXITY");
+  IElementType HS_FIXITY_DECLARATION = new HaskellCompositeElementType("HS_FIXITY_DECLARATION");
   IElementType HS_FOREIGN_DECLARATION = new HaskellCompositeElementType("HS_FOREIGN_DECLARATION");
   IElementType HS_GCON_SYM = new HaskellCompositeElementType("HS_GCON_SYM");
   IElementType HS_GENERAL_PRAGMA_CONTENT = new HaskellCompositeElementType("HS_GENERAL_PRAGMA_CONTENT");
@@ -281,6 +282,9 @@ public interface HaskellTypes {
       }
       else if (type == HS_FIXITY) {
         return new HaskellFixityImpl(node);
+      }
+      else if (type == HS_FIXITY_DECLARATION) {
+        return new HaskellFixityDeclarationImpl(node);
       }
       else if (type == HS_FOREIGN_DECLARATION) {
         return new HaskellForeignDeclarationImpl(node);

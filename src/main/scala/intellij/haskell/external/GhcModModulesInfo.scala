@@ -34,7 +34,7 @@ object GhcModModulesInfo {
     .build(
       new CacheLoader[ModuleList, GhcModOutput]() {
         private def getProcessOutput(moduleList: ModuleList): GhcModOutput = {
-          GhcModProcessManager.getGhcModProcess(moduleList.project).execute("list")
+          GhcModProcessManager.getGhcModInfoProcess(moduleList.project).execute("list")
         }
 
         override def load(moduleList: ModuleList): GhcModOutput = {

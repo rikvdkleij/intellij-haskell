@@ -26,9 +26,9 @@ public class HaskellImportDeclarationImpl extends HaskellCompositeElementImpl im
   }
 
   @Override
-  @NotNull
+  @Nullable
   public HaskellImportModule getImportModule() {
-    return findNotNullChildByClass(HaskellImportModule.class);
+    return findChildByClass(HaskellImportModule.class);
   }
 
   @Override

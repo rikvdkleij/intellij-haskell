@@ -25,7 +25,7 @@ import com.intellij.openapi.roots.ModifiableRootModel
 import intellij.haskell.HaskellIcons
 import intellij.haskell.sdk.HaskellSdkType
 
-class HaskellModuleBuilder extends ModuleBuilder with ModuleBuilderListener {
+class HaskellModuleBuilder extends JavaModuleBuilder with SourcePathsBuilder with ModuleBuilderListener {
 
   override def moduleCreated(module: Module): Unit = {}
 
@@ -38,6 +38,7 @@ class HaskellModuleBuilder extends ModuleBuilder with ModuleBuilderListener {
   override def getNodeIcon: Icon = HaskellIcons.HaskellSmallLogo
 
   override def setupRootModel(rootModel: ModifiableRootModel) {
+    super.setupRootModel(rootModel)
     addListener(this)
   }
 }

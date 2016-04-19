@@ -113,6 +113,9 @@ public class HaskellParser implements PsiParser, LightPsiParser {
     else if (t == HS_FIXITY) {
       r = fixity(b, 0);
     }
+    else if (t == HS_FIXITY_DECLARATION) {
+      r = fixity_declaration(b, 0);
+    }
     else if (t == HS_FOREIGN_DECLARATION) {
       r = foreign_declaration(b, 0);
     }
@@ -2517,6 +2520,26 @@ public class HaskellParser implements PsiParser, LightPsiParser {
   }
 
   /* ********************************************************** */
+  // fixity (DECIMAL)? ops
+  public static boolean fixity_declaration(PsiBuilder b, int l) {
+    if (!recursion_guard_(b, l, "fixity_declaration")) return false;
+    boolean r;
+    Marker m = enter_section_(b, l, _NONE_, HS_FIXITY_DECLARATION, "<fixity declaration>");
+    r = fixity(b, l + 1);
+    r = r && fixity_declaration_1(b, l + 1);
+    r = r && ops(b, l + 1);
+    exit_section_(b, l, m, r, false, null);
+    return r;
+  }
+
+  // (DECIMAL)?
+  private static boolean fixity_declaration_1(PsiBuilder b, int l) {
+    if (!recursion_guard_(b, l, "fixity_declaration_1")) return false;
+    consumeToken(b, HS_DECIMAL);
+    return true;
+  }
+
+  /* ********************************************************** */
   // (FOREIGN_IMPORT | FOREIGN_EXPORT) osnl expression
   public static boolean foreign_declaration(PsiBuilder b, int l) {
     if (!recursion_guard_(b, l, "foreign_declaration")) return false;
@@ -2796,7 +2819,7 @@ public class HaskellParser implements PsiParser, LightPsiParser {
   }
 
   /* ********************************************************** */
-  // IMPORT osnl source_pragma? osnl import_qualified? osnl import_module osnl import_qualified_as? osnl import_spec? onl
+  // IMPORT osnl source_pragma? osnl import_qualified? osnl import_module? osnl import_qualified_as? osnl import_spec? onl
   public static boolean import_declaration(PsiBuilder b, int l) {
     if (!recursion_guard_(b, l, "import_declaration")) return false;
     if (!nextTokenIs(b, HS_IMPORT)) return false;
@@ -2808,7 +2831,7 @@ public class HaskellParser implements PsiParser, LightPsiParser {
     r = r && osnl(b, l + 1);
     r = r && import_declaration_4(b, l + 1);
     r = r && osnl(b, l + 1);
-    r = r && import_module(b, l + 1);
+    r = r && import_declaration_6(b, l + 1);
     r = r && osnl(b, l + 1);
     r = r && import_declaration_8(b, l + 1);
     r = r && osnl(b, l + 1);
@@ -2829,6 +2852,13 @@ public class HaskellParser implements PsiParser, LightPsiParser {
   private static boolean import_declaration_4(PsiBuilder b, int l) {
     if (!recursion_guard_(b, l, "import_declaration_4")) return false;
     import_qualified(b, l + 1);
+    return true;
+  }
+
+  // import_module?
+  private static boolean import_declaration_6(PsiBuilder b, int l) {
+    if (!recursion_guard_(b, l, "import_declaration_6")) return false;
+    import_module(b, l + 1);
     return true;
   }
 
@@ -4325,7 +4355,7 @@ public class HaskellParser implements PsiParser, LightPsiParser {
   }
 
   /* ********************************************************** */
-  // MODULE mod_id onl deprecated_warn_pragma? onl WHERE? onl (onl exports)? onl WHERE? onl
+  // MODULE mod_id onl deprecated_warn_pragma? onl WHERE? onl (onl exports)? onl WHERE? onl expression? onl
   public static boolean module_declaration(PsiBuilder b, int l) {
     if (!recursion_guard_(b, l, "module_declaration")) return false;
     if (!nextTokenIs(b, HS_MODULE)) return false;
@@ -4341,6 +4371,8 @@ public class HaskellParser implements PsiParser, LightPsiParser {
     r = r && module_declaration_7(b, l + 1);
     r = r && onl(b, l + 1);
     r = r && module_declaration_9(b, l + 1);
+    r = r && onl(b, l + 1);
+    r = r && module_declaration_11(b, l + 1);
     r = r && onl(b, l + 1);
     exit_section_(b, m, HS_MODULE_DECLARATION, r);
     return r;
@@ -4382,6 +4414,13 @@ public class HaskellParser implements PsiParser, LightPsiParser {
   private static boolean module_declaration_9(PsiBuilder b, int l) {
     if (!recursion_guard_(b, l, "module_declaration_9")) return false;
     consumeToken(b, HS_WHERE);
+    return true;
+  }
+
+  // expression?
+  private static boolean module_declaration_11(PsiBuilder b, int l) {
+    if (!recursion_guard_(b, l, "module_declaration_11")) return false;
+    expression(b, l + 1);
     return true;
   }
 
@@ -5990,7 +6029,7 @@ public class HaskellParser implements PsiParser, LightPsiParser {
   /* ********************************************************** */
   // type_declaration | data_declaration | newtype_declaration | class_declaration | instance_declaration | default_declaration |
   //                                   foreign_declaration | type_family_declaration | deriving_declaration | type_instance_declaration | type_signature |
-  //                                   other_pragma | quasi_quote | qq_expression | expression | cfiles_pragma
+  //                                   other_pragma | quasi_quote | qq_expression | expression | cfiles_pragma | fixity_declaration
   public static boolean top_declaration(PsiBuilder b, int l) {
     if (!recursion_guard_(b, l, "top_declaration")) return false;
     boolean r;
@@ -6011,6 +6050,7 @@ public class HaskellParser implements PsiParser, LightPsiParser {
     if (!r) r = qq_expression(b, l + 1);
     if (!r) r = expression(b, l + 1);
     if (!r) r = cfiles_pragma(b, l + 1);
+    if (!r) r = fixity_declaration(b, l + 1);
     exit_section_(b, l, m, r, false, null);
     return r;
   }
@@ -6474,7 +6514,8 @@ public class HaskellParser implements PsiParser, LightPsiParser {
   }
 
   /* ********************************************************** */
-  // vars osnl COLON_COLON osnl ((ttype | context) DOUBLE_RIGHT_ARROW)? osnl ttype | fixity (DECIMAL)? ops
+  // vars osnl COLON_COLON osnl ((ttype | context) DOUBLE_RIGHT_ARROW)? osnl ttype |
+  //                                   var_id osnl LEFT_PAREN osnl vars osnl COMMA osnl scontext osnl DOUBLE_RIGHT_ARROW osnl ttype osnl RIGHT_PAREN
   public static boolean type_signature(PsiBuilder b, int l) {
     if (!recursion_guard_(b, l, "type_signature")) return false;
     boolean r;
@@ -6530,23 +6571,28 @@ public class HaskellParser implements PsiParser, LightPsiParser {
     return r;
   }
 
-  // fixity (DECIMAL)? ops
+  // var_id osnl LEFT_PAREN osnl vars osnl COMMA osnl scontext osnl DOUBLE_RIGHT_ARROW osnl ttype osnl RIGHT_PAREN
   private static boolean type_signature_1(PsiBuilder b, int l) {
     if (!recursion_guard_(b, l, "type_signature_1")) return false;
     boolean r;
     Marker m = enter_section_(b);
-    r = fixity(b, l + 1);
-    r = r && type_signature_1_1(b, l + 1);
-    r = r && ops(b, l + 1);
+    r = var_id(b, l + 1);
+    r = r && osnl(b, l + 1);
+    r = r && consumeToken(b, HS_LEFT_PAREN);
+    r = r && osnl(b, l + 1);
+    r = r && vars(b, l + 1);
+    r = r && osnl(b, l + 1);
+    r = r && consumeToken(b, HS_COMMA);
+    r = r && osnl(b, l + 1);
+    r = r && scontext(b, l + 1);
+    r = r && osnl(b, l + 1);
+    r = r && consumeToken(b, HS_DOUBLE_RIGHT_ARROW);
+    r = r && osnl(b, l + 1);
+    r = r && ttype(b, l + 1);
+    r = r && osnl(b, l + 1);
+    r = r && consumeToken(b, HS_RIGHT_PAREN);
     exit_section_(b, m, null, r);
     return r;
-  }
-
-  // (DECIMAL)?
-  private static boolean type_signature_1_1(PsiBuilder b, int l) {
-    if (!recursion_guard_(b, l, "type_signature_1_1")) return false;
-    consumeToken(b, HS_DECIMAL);
-    return true;
   }
 
   /* ********************************************************** */

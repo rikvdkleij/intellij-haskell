@@ -74,13 +74,13 @@ general_pragma_content      ::= (general_id | NEWLINE | MODULE | INSTANCE)*
 cfiles_pragma               ::= PRAGMA_START onl "CFILES" general_pragma_content PRAGMA_END
 
 module_body                 ::= module_declaration+ onl body | body
-module_declaration          ::= MODULE mod_id onl deprecated_warn_pragma? onl WHERE? onl (onl exports)? onl WHERE? onl
+module_declaration          ::= MODULE mod_id onl deprecated_warn_pragma? onl WHERE? onl (onl exports)? onl WHERE? onl expression? onl
 
 private body                ::= import_declarations top_declarations
 private import_declarations ::= ((import_declaration | cfiles_pragma) onl)*
 private top_declarations    ::= (top_declaration onl)*
 
-import_declaration          ::= IMPORT osnl source_pragma? osnl import_qualified? osnl import_module osnl import_qualified_as? osnl import_spec? onl     {methods=[getModuleName]}
+import_declaration          ::= IMPORT osnl source_pragma? osnl import_qualified? osnl import_module? osnl import_qualified_as? osnl import_spec? onl     {methods=[getModuleName]}
 import_module               ::= mod_id
 import_qualified            ::= var_id
 import_qualified_as         ::= var_id qualifier?
@@ -97,7 +97,7 @@ dot_dot_parens              ::= LEFT_PAREN VARSYM_ID RIGHT_PAREN
 
 top_declaration             ::= type_declaration | data_declaration | newtype_declaration | class_declaration | instance_declaration | default_declaration |
                                   foreign_declaration | type_family_declaration | deriving_declaration | type_instance_declaration | type_signature |
-                                  other_pragma | quasi_quote | qq_expression | expression | cfiles_pragma
+                                  other_pragma | quasi_quote | qq_expression | expression | cfiles_pragma | fixity_declaration
 
 type_declaration            ::=  TYPE osnl simpletype osnl COLON_COLON osnl ttype |
                                   TYPE osnl simpletype osnl (EQUAL | WHERE) osnl ttype (DOUBLE_RIGHT_ARROW ttype)? |
@@ -128,7 +128,10 @@ instance_declaration        ::= INSTANCE osnl (overlap_pragma | "OVERLAPPABLE_" 
                                   |  INSTANCE osnl overlap_pragma? osnl (var_id+ DOT)? osnl (scontext osnl DOUBLE_RIGHT_ARROW)? osnl qcon osnl inst
 default_declaration         ::= DEFAULT osnl (LEFT_PAREN (ttype (COMMA ttype)*)? RIGHT_PAREN | type_signature)
 type_instance_declaration   ::= TYPE_INSTANCE osnl expression
-type_signature              ::= vars osnl COLON_COLON osnl ((ttype | context) DOUBLE_RIGHT_ARROW)? osnl ttype | fixity (DECIMAL)? ops
+type_signature              ::= vars osnl COLON_COLON osnl ((ttype | context) DOUBLE_RIGHT_ARROW)? osnl ttype |
+                                  var_id osnl LEFT_PAREN osnl vars osnl COMMA osnl scontext osnl DOUBLE_RIGHT_ARROW osnl ttype osnl RIGHT_PAREN   // seen in  Test.Hspec.Expectations: with_loc(shouldBe, (Show a, Eq a) => a -> a -> Expectation)
+fixity_declaration          ::= fixity (DECIMAL)? ops
+
 foreign_declaration         ::= (FOREIGN_IMPORT | FOREIGN_EXPORT) osnl expression
 type_family_declaration     ::= TYPE_FAMILY osnl type_family_type osnl WHERE? osnl expression?
 deriving_declaration        ::= DERIVING INSTANCE (scontext osnl DOUBLE_RIGHT_ARROW)? osnl qcon osnl inst

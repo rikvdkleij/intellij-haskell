@@ -26,7 +26,11 @@ object GhcModCheck {
   private final val GhcModProblemPattern = """(.+):([\d]+):([\d]+):(.+)""".r
 
   def check(project: Project, ghcModInitialInfo: GhcModInitialInfo): GhcModCheckResult = {
-    val output = GhcModProcessManager.getGhcModProcess(project).execute(GhcModProcess.CheckCommand + " " + ghcModInitialInfo.filePath)
+    if (FileUtil.isLibraryFile(ghcModInitialInfo.psiFile)) {
+      return GhcModCheckResult()
+    }
+
+    val output = GhcModProcessManager.getGhcModCheckProcess(project).execute("check " + ghcModInitialInfo.filePath)
     new GhcModCheckResult(output.outputLines.flatMap(l => parseOutputLine(l, project)))
   }
 
@@ -40,9 +44,13 @@ object GhcModCheck {
 
 case class GhcModCheckResult(problems: Iterable[GhcModProblem] = Iterable())
 
-case class GhcModProblem(filePath: String, lineNr: Int, columnNr: Int, message: String) {
+case class GhcModProblem(filePath: String, lineNr: Int, columnNr: Int, private val message: String) {
 
-  def getNormalizedMessage: String = {
-    message.trim.replace(OSUtil.LineSeparator, ' ')
+  def normalizedMessage: String = {
+    message.trim.replace(OSUtil.LineSeparator, ' ').replaceAll("\\s+", " ")
+  }
+
+  def htmlMessage: String = {
+    message.replace("\n", "<br>").replace(" ", "&nbsp;")
   }
 }

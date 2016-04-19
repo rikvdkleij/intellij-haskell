@@ -32,11 +32,7 @@ import scala.concurrent.{Await, ExecutionContext, Future}
 import scala.io._
 import scala.sys.process._
 
-object GhcModProcess {
-  final val CheckCommand = "check"
-}
-
-class GhcModProcess(val project: Project) extends ProjectComponent {
+abstract class GhcModProcess(val project: Project) extends ProjectComponent {
 
   private final val ExecutorService = Executors.newSingleThreadExecutor
   implicit private final val ExecContext = ExecutionContext.fromExecutorService(ExecutorService)
@@ -47,7 +43,7 @@ class GhcModProcess(val project: Project) extends ProjectComponent {
   private[this] val stdOutListBuffer = ListBuffer[String]()
   private[this] val stdErrListBuffer = ListBuffer[String]()
 
-  private val OK = "OK"
+  private final val OK = "OK"
 
   private final val TimeOut = 5000L
   private final val GhcModErrorIndicator = "NG"
@@ -96,7 +92,6 @@ class GhcModProcess(val project: Project) extends ProjectComponent {
   def start(): Unit = synchronized {
     HaskellSettingsState.getGhcModPath match {
       case Some(p) =>
-        HaskellNotificationGroup.notifyInfo(s"Starting ghc-mod in interactive mode for project ${project.getName}.")
         try {
           val command = p + " legacy-interactive"
           val process = getEnvParameters match {
@@ -123,7 +118,6 @@ class GhcModProcess(val project: Project) extends ProjectComponent {
 
   def exit() = synchronized {
     try {
-      HaskellNotificationGroup.notifyInfo(s"Shutting down ghc-mod for project ${project.getName}.")
       try {
         if (outputStream != null) {
           writeToOutputStream("quit")
@@ -183,8 +177,6 @@ class GhcModProcess(val project: Project) extends ProjectComponent {
   override def initComponent(): Unit = {}
 
   override def disposeComponent(): Unit = {}
-
-  override def getComponentName: String = "ghc-mod"
 }
 
 case class GhcModOutput(outputLines: Iterable[String] = Iterable())

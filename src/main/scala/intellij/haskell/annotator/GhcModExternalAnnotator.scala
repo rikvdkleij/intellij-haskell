@@ -16,8 +16,10 @@
 
 package intellij.haskell.annotator
 
+import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer
+import com.intellij.codeInsight.daemon.impl.DaemonCodeAnalyzerImpl
 import com.intellij.codeInsight.intention.impl.BaseIntentionAction
-import com.intellij.lang.annotation.{AnnotationHolder, ExternalAnnotator}
+import com.intellij.lang.annotation.{AnnotationHolder, ExternalAnnotator, HighlightSeverity}
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.TextRange
@@ -27,7 +29,7 @@ import com.intellij.psi.util.PsiTreeUtil
 import intellij.haskell.code.HaskellImportOptimizer
 import intellij.haskell.external._
 import intellij.haskell.psi._
-import intellij.haskell.util.{FileUtil, HaskellElementCondition, LineColumnPosition, OSUtil}
+import intellij.haskell.util._
 import intellij.haskell.{HaskellFile, HaskellFileType}
 
 import scala.annotation.tailrec
@@ -59,17 +61,22 @@ class GhcModExternalAnnotator extends ExternalAnnotator[GhcModInitialInfo, GhcMo
     if (psiFile.isValid) {
       for (annotation <- createAnnotations(ghcModResult, psiFile)) {
         annotation match {
-          case ErrorAnnotation(textRange, message) => holder.createErrorAnnotation(textRange, message)
-          case ErrorAnnotationWithIntentionActions(textRange, message, intentionActions) =>
-            val annotation = holder.createErrorAnnotation(textRange, message)
+          case ErrorAnnotation(textRange, message, htmlMessage) => holder.createAnnotation(HighlightSeverity.ERROR, textRange, message, htmlMessage)
+          case ErrorAnnotationWithIntentionActions(textRange, message, htmlMessage, intentionActions) =>
+            val annotation = holder.createAnnotation(HighlightSeverity.ERROR, textRange, message, htmlMessage)
             intentionActions.foreach(annotation.registerFix)
-          case WarningAnnotation(textRange, message) => holder.createWarningAnnotation(textRange, message)
-          case WarningAnnotationWithIntentionActions(textRange, message, intentionActions) =>
-            val annotation = holder.createWarningAnnotation(textRange, message)
+          case WarningAnnotation(textRange, message, htmlMessage) => holder.createAnnotation(HighlightSeverity.WARNING, textRange, message, htmlMessage)
+          case WarningAnnotationWithIntentionActions(textRange, message, htmlMessage, intentionActions) =>
+            val annotation = holder.createAnnotation(HighlightSeverity.WARNING, textRange, message, htmlMessage)
             intentionActions.foreach(annotation.registerFix)
         }
       }
     }
+    restartCodeAnalyser(psiFile)
+  }
+
+  private def restartCodeAnalyser(psiFile: PsiFile) {
+    DaemonCodeAnalyzer.getInstance(psiFile.getProject).asInstanceOf[DaemonCodeAnalyzerImpl].restart(psiFile)
   }
 
   private[annotator] def createAnnotations(ghcModCheckResult: GhcModCheckResult, psiFile: PsiFile): Iterable[Annotation] = {
@@ -77,24 +84,24 @@ class GhcModExternalAnnotator extends ExternalAnnotator[GhcModInitialInfo, GhcMo
     problems.flatMap { problem =>
       val textRange = getProblemTextRange(psiFile, problem)
       textRange.map { tr =>
-        val normalizedMessage = problem.getNormalizedMessage
+        val normalizedMessage = problem.normalizedMessage
         if (normalizedMessage.startsWith("Warning:")) {
           normalizedMessage match {
-            case NoTypeSignaturePattern(typeSignature) => WarningAnnotationWithIntentionActions(tr, problem.message, Iterable(new TypeSignatureIntentionAction(typeSignature)))
-            case HaskellImportOptimizer.WarningRedundantImport() => WarningAnnotationWithIntentionActions(tr, problem.message, Iterable(new OptimizeImportIntentionAction))
-            case _ => WarningAnnotation(tr, problem.message)
+            case NoTypeSignaturePattern(typeSignature) => WarningAnnotationWithIntentionActions(tr, problem.normalizedMessage, problem.htmlMessage, Iterable(new TypeSignatureIntentionAction(typeSignature)))
+            case HaskellImportOptimizer.WarningRedundantImport() => WarningAnnotationWithIntentionActions(tr, problem.normalizedMessage, problem.htmlMessage, Iterable(new OptimizeImportIntentionAction))
+            case _ => WarningAnnotation(tr, problem.normalizedMessage, problem.htmlMessage)
           }
         } else {
           normalizedMessage match {
-            case UseLanguageExtensionPattern(languageExtension) => ErrorAnnotationWithIntentionActions(tr, problem.message, Iterable(new LanguageExtensionIntentionAction(languageExtension)))
+            case UseLanguageExtensionPattern(languageExtension) => ErrorAnnotationWithIntentionActions(tr, problem.normalizedMessage, problem.htmlMessage, Iterable(new LanguageExtensionIntentionAction(languageExtension)))
             case PerhapsYouMeantPattern(suggestions) =>
               val intentionActions = SuggestionPattern.findAllMatchIn(suggestions).map(s => {
                 val suggestion = s.group(1)
                 val message = s.group(2)
                 new PerhapsYouMeantIntentionAction(suggestion, message)
               }).toIterable
-              ErrorAnnotationWithIntentionActions(tr, problem.message, intentionActions)
-            case _ => ErrorAnnotation(tr, problem.message)
+              ErrorAnnotationWithIntentionActions(tr, problem.normalizedMessage, problem.htmlMessage, intentionActions)
+            case _ => ErrorAnnotation(tr, problem.normalizedMessage, problem.htmlMessage)
           }
         }
       }
@@ -139,13 +146,13 @@ sealed trait Annotation {
   def message: String
 }
 
-case class ErrorAnnotation(textRange: TextRange, message: String) extends Annotation
+case class ErrorAnnotation(textRange: TextRange, message: String, htmlMessage: String) extends Annotation
 
-case class ErrorAnnotationWithIntentionActions(textRange: TextRange, message: String, baseIntentionActions: Iterable[HaskellBaseIntentionAction]) extends Annotation
+case class ErrorAnnotationWithIntentionActions(textRange: TextRange, message: String, htmlMessage: String, baseIntentionActions: Iterable[HaskellBaseIntentionAction]) extends Annotation
 
-case class WarningAnnotation(textRange: TextRange, message: String) extends Annotation
+case class WarningAnnotation(textRange: TextRange, message: String, htmlMessage: String) extends Annotation
 
-case class WarningAnnotationWithIntentionActions(textRange: TextRange, message: String, baseIntentionActions: Iterable[HaskellBaseIntentionAction]) extends Annotation
+case class WarningAnnotationWithIntentionActions(textRange: TextRange, message: String, htmlMessage: String, baseIntentionActions: Iterable[HaskellBaseIntentionAction]) extends Annotation
 
 abstract class HaskellBaseIntentionAction extends BaseIntentionAction {
   override def isAvailable(project: Project, editor: Editor, file: PsiFile): Boolean = {

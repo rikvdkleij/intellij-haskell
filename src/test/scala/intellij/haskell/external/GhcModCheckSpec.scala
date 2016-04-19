@@ -31,6 +31,6 @@ class GhcModCheckSpec extends FunSpec with Matchers with GivenWhenThen with Befo
     Then("it should contain right data")
     ghcModProblem.lineNr should equal(1)
     ghcModProblem.columnNr should equal(11)
-    ghcModProblem.message should equal(s"parse error on input${OSUtil.LineSeparator}     and so on")
+    ghcModProblem.normalizedMessage should equal(s"parse error on input and so on")
   }
 }

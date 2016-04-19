@@ -333,7 +333,6 @@ object HaskellPsiImplUtil {
 
   def getIdentifierElements(typeSignature: HaskellTypeSignature): Seq[HaskellNamedElement] = {
     Option(typeSignature.getVars).map(_.getQvarList.map(_.getIdentifierElement)).
-      orElse(Option(typeSignature.getOps).map(_.getOpList.map(_.getIdentifierElement))).
       getOrElse(Seq())
   }
 

@@ -13,15 +13,15 @@ public interface HaskellTypeSignature extends HaskellDeclarationElement {
   HaskellContext getContext();
 
   @Nullable
-  HaskellFixity getFixity();
-
-  @Nullable
-  HaskellOps getOps();
+  HaskellScontext getScontext();
 
   @NotNull
   List<HaskellTtype> getTtypeList();
 
   @Nullable
+  HaskellVarId getVarId();
+
+  @NotNull
   HaskellVars getVars();
 
   String getName();

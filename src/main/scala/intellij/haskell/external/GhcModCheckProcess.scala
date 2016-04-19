@@ -14,24 +14,10 @@
  * limitations under the License.
  */
 
-package intellij.haskell
+package intellij.haskell.external
 
-import com.intellij.notification.NotificationGroup
-import com.intellij.openapi.ui.MessageType
+import com.intellij.openapi.project.Project
 
-object HaskellNotificationGroup {
-
-  private val Group = NotificationGroup.logOnlyGroup("Haskell")
-
-  def notifyError(message: String) {
-    Group.createNotification(message, MessageType.ERROR).notify(null)
-  }
-
-  def notifyWarning(message: String) {
-    Group.createNotification(message, MessageType.WARNING).notify(null)
-  }
-
-  def notifyInfo(message: String) {
-    Group.createNotification(message, MessageType.INFO).notify(null)
-  }
+class GhcModCheckProcess(project: Project) extends GhcModProcess(project) {
+  override def getComponentName: String = "intellij-haskell-ghc-mod-check"
 }

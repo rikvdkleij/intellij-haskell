@@ -120,11 +120,9 @@ shebang_line        = {hash} {exclamation_mark} [^\r\n]*
 pragma_start        = "{-#"
 pragma_end          = "#-}"
 
-comment             = {dash}{dash}
+comment             = ({dash}{dash}[^\r\n]* | "\\begin{code}") {newline}?
 ncomment_start      = "{-"
 ncomment_end        = "-}"
-
-comment             = ({dash}{dash}[^\r\n]* | "\\begin{code}") {newline}
 
 %%
 

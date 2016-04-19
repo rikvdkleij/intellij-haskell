@@ -63,6 +63,12 @@ public class HaskellTopDeclarationImpl extends HaskellCompositeElementImpl imple
 
   @Override
   @Nullable
+  public HaskellFixityDeclaration getFixityDeclaration() {
+    return findChildByClass(HaskellFixityDeclaration.class);
+  }
+
+  @Override
+  @Nullable
   public HaskellForeignDeclaration getForeignDeclaration() {
     return findChildByClass(HaskellForeignDeclaration.class);
   }

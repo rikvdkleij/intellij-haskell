@@ -95,16 +95,17 @@
 
         <moduleType id="HASKELL_MODULE" implementationClass="intellij.haskell.module.HaskellModuleType"/>
 
-        <moduleConfigurationEditorProvider implementation="intellij.haskell.settings.HaskellModuleEditorsProvider" order="first"/>
+        <moduleConfigurationEditorProvider implementation="intellij.haskell.settings.HaskellModuleEditorsProvider"
+                                           order="first"/>
 
         <internalFileTemplate name="Haskell"/>
 
         <fileTypeFactory implementation="intellij.haskell.HaskellLanguageFileTypeFactory"/>
-        <lang.parserDefinition language="Haskell"
-                               implementationClass="intellij.haskell.HaskellParserDefinition"/>
+
+        <lang.parserDefinition language="Haskell" implementationClass="intellij.haskell.HaskellParserDefinition"/>
 
         <colorSettingsPage implementation="intellij.haskell.highlighter.HaskellColorSettingsPage"/>
-        <lang.syntaxHighlighterFactory key="Haskell"
+        <lang.syntaxHighlighterFactory language="Haskell"
                                        implementationClass="intellij.haskell.highlighter.HaskellSyntaxHighlighterFactory"/>
         <lang.braceMatcher language="Haskell"
                            implementationClass="intellij.haskell.highlighter.HaskellBraceMatcher"/>
@@ -119,6 +120,7 @@
 
         <lang.formatter language="Haskell"
                         implementationClass="intellij.haskell.code.formatter.HaskellFormattingModelBuilder"/>
+
         <codeStyleSettingsProvider
                 implementation="intellij.haskell.code.formatter.settings.HaskellCodeStyleSettingsProvider"/>
         <langCodeStyleSettingsProvider
@@ -175,9 +177,11 @@
 
     <project-components>
         <component>
-            <implementation-class>intellij.haskell.external.GhcModProcess</implementation-class>
+            <implementation-class>intellij.haskell.external.GhcModInfoProcess</implementation-class>
         </component>
-
+        <component>
+            <implementation-class>intellij.haskell.external.GhcModCheckProcess</implementation-class>
+        </component>
         <component>
             <implementation-class>intellij.haskell.view.HaskellDocumentationProvider
             </implementation-class>
@@ -202,7 +206,7 @@
             <keyboard-shortcut first-keystroke="alt shift EQUALS" keymap="$default"/>
             <keyboard-shortcut first-keystroke="alt shift EQUALS" keymap="Mac OS X" remove="true"/>
             <keyboard-shortcut first-keystroke="alt shift EQUALS" keymap="Mac OS X 10.5+" remove="true"/>
-            <keyboard-shortcut first-keystroke="ctrl shift p" keymap="Mac OS X" />
+            <keyboard-shortcut first-keystroke="ctrl shift p" keymap="Mac OS X"/>
             <keyboard-shortcut first-keystroke="ctrl shift p" keymap="Mac OS X 10.5+"/>
             <add-to-group group-id="CodeEditorViewGroup" anchor="last"/>
         </action>
@@ -222,7 +226,8 @@
         </action>
 
         <action id="Haskell.DownloadLibSources" class="intellij.haskell.view.AddDependencies"
-                text="Add Haskell package dependencies" description="Download Haskell package sources and add them as source libraries to module">
+                text="Add Haskell package dependencies"
+                description="Download Haskell package sources and add them as source libraries to module">
             <add-to-group group-id="ToolsMenu" anchor="last"/>
         </action>
     </actions>

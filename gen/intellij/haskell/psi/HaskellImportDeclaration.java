@@ -7,7 +7,7 @@ import com.intellij.psi.PsiElement;
 
 public interface HaskellImportDeclaration extends HaskellCompositeElement {
 
-  @NotNull
+  @Nullable
   HaskellImportModule getImportModule();
 
   @Nullable

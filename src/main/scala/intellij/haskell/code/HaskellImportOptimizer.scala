@@ -32,7 +32,7 @@ class HaskellImportOptimizer extends ImportOptimizer {
     new Runnable {
       override def run(): Unit = {
         val problems = GhcModCheck.check(file.getProject, GhcModInitialInfo(file, file.getVirtualFile.getCanonicalPath)).problems
-        val redundantImports = problems.filter(p => p.getNormalizedMessage match {
+        val redundantImports = problems.filter(p => p.normalizedMessage match {
           case HaskellImportOptimizer.WarningRedundantImport() => true
           case _ => false
         })

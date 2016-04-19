@@ -126,6 +126,10 @@ public class HaskellVisitor extends PsiElementVisitor {
     visitCompositeElement(o);
   }
 
+  public void visitFixityDeclaration(@NotNull HaskellFixityDeclaration o) {
+    visitCompositeElement(o);
+  }
+
   public void visitForeignDeclaration(@NotNull HaskellForeignDeclaration o) {
     visitDeclarationElement(o);
   }

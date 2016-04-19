@@ -34,7 +34,7 @@ object GhcModBrowseInfo {
     .build(
       new CacheLoader[ModuleInfo, GhcModOutput]() {
         private def getProcessOutput(moduleInfo: ModuleInfo): GhcModOutput = {
-          GhcModProcessManager.getGhcModProcess(moduleInfo.project).execute("browse -d -q -o " + moduleInfo.moduleName)
+          GhcModProcessManager.getGhcModInfoProcess(moduleInfo.project).execute("browse -d -q -o " + moduleInfo.moduleName)
         }
 
         override def load(moduleInfo: ModuleInfo): GhcModOutput = {
@@ -70,7 +70,7 @@ object GhcModBrowseInfo {
   }
 
   private def createBrowseInfo(info: String, removeParensFromOperator: Boolean): Option[BrowseInfo] = {
-    info.split("::") match {
+    info.split("::", 2) match {
       case Array(qn, d) =>
         val (m, n) = getModuleAndName(qn, removeParensFromOperator)
         Some(BrowseInfo(n, m, Some(d)))

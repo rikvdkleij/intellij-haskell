@@ -49,7 +49,7 @@ object GhcModInfo {
       new CacheLoader[NamedElementInfo, GhcModOutput]() {
         private def findInfoFor(namedElementInfo: NamedElementInfo): GhcModOutput = {
           val cmd = s"info ${namedElementInfo.filePath} ${namedElementInfo.identifier}"
-          GhcModProcessManager.getGhcModProcess(namedElementInfo.project).execute(cmd)
+          GhcModProcessManager.getGhcModInfoProcess(namedElementInfo.project).execute(cmd)
         }
 
         override def load(namedElementInfo: NamedElementInfo): GhcModOutput = {

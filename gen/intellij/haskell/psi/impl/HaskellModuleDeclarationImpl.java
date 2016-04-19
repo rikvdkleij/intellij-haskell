@@ -40,6 +40,12 @@ public class HaskellModuleDeclarationImpl extends HaskellCompositeElementImpl im
   }
 
   @Override
+  @Nullable
+  public HaskellExpression getExpression() {
+    return findChildByClass(HaskellExpression.class);
+  }
+
+  @Override
   @NotNull
   public HaskellModId getModId() {
     return findNotNullChildByClass(HaskellModId.class);

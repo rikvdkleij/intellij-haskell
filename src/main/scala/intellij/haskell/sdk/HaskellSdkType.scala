@@ -1,5 +1,5 @@
 /*
- * Copyright 2014 Rik van der Kleij
+ * Copyright 2016 Rik van der Kleij
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -27,8 +27,8 @@ import intellij.haskell.external.ExternalProcess
 import org.jdom.Element
 
 /**
- * Created GHC SDK because inspection tool forces to use a SDK.
- */
+  * Created GHC SDK because inspection tool forces to use a SDK.
+  */
 class HaskellSdkType extends SdkType("GHC SDK") {
 
   override def suggestHomePath(): String = "/usr/local/bin"

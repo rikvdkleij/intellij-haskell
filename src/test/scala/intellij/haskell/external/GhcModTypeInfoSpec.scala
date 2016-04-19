@@ -30,7 +30,7 @@ class GhcModTypeInfoSpec extends FunSpec with Matchers with GivenWhenThen with B
       """12 1 12 25 "[Integer]"""")
 
     When("converted to list of type info")
-    val typeInfos = ghcModiTypeInfo.ghcModiOutputToTypeInfo(output).get.toSeq
+    val typeInfos = ghcModiTypeInfo.ghcModOutputToTypeInfo(output).get.toSeq
 
     Then("it should contain right info")
     typeInfos should have length 3

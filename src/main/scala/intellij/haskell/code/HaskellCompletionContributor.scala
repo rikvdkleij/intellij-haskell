@@ -25,12 +25,12 @@ import com.intellij.openapi.project.Project
 import com.intellij.patterns.PlatformPatterns
 import com.intellij.psi.impl.source.tree.TreeUtil
 import com.intellij.psi.util.PsiTreeUtil
-import com.intellij.psi.{PsiElement, PsiFile, TokenType}
+import com.intellij.psi.{PsiElement, PsiFile}
 import com.intellij.util.ProcessingContext
 import intellij.haskell.external.{BrowseInfo, GhcModBrowseInfo, GhcModHaskellInfo, GhcModModulesInfo}
 import intellij.haskell.psi.HaskellTypes._
 import intellij.haskell.psi._
-import intellij.haskell.util.{HaskellElementCondition, LineColumnPosition, OSUtil}
+import intellij.haskell.util.{HaskellElementCondition, OSUtil}
 import intellij.haskell.{HaskellIcons, HaskellParserDefinition}
 
 import scala.annotation.tailrec
@@ -105,29 +105,6 @@ class HaskellCompletionContributor extends CompletionContributor {
     }
   })
 
-  override def beforeCompletion(context: CompletionInitializationContext) {
-    val file = context.getFile
-    val startOffset = context.getStartOffset
-
-    val lineColumnPosition = LineColumnPosition.fromOffset(file, startOffset)
-    val caretElement = lineColumnPosition match {
-      case Some(lcp) => if (lcp.columnNr == 1) {
-        getNonEmptyElement(file.findElementAt(startOffset))
-      } else {
-        getNonEmptyElement(file.findElementAt(startOffset - 1)).orElse(getNonEmptyElement(file.findElementAt(startOffset)))
-      }
-      case _ => None
-    }
-
-    caretElement match {
-      case Some(e) if e.getNode.getElementType == HS_CONID_ID && Option(e.getNextSibling).exists(_.getNode.getElementType == HS_DOT) =>
-        context.setDummyIdentifier(file.findElementAt(e.getTextOffset - 1).getText + ".")
-      case Some(e) if PlainPrefixElementTypes.contains(e.getNode.getElementType) => context.setDummyIdentifier(getTextAtCaret(context.getEditor, file))
-      case Some(e) if e.getText.trim.nonEmpty => context.setDummyIdentifier(e.getText.trim)
-      case _ => context.setDummyIdentifier("a")
-    }
-  }
-
   private def getTextAtCaret(editor: Editor, file: PsiFile): String = {
     val caretOffset = editor.getCaretModel.getOffset
     getTextUntilNoChar(file.getText, if (caretOffset > 0) caretOffset - 1 else caretOffset, "")
@@ -172,7 +149,6 @@ class HaskellCompletionContributor extends CompletionContributor {
 
   private def isImportQualifiedAsInProgress(position: PsiElement): Boolean = {
     Option(TreeUtil.findSiblingBackward(position.getNode, HS_IMPORT_QUALIFIED_AS)).isDefined
-    //    Option(PsiTreeUtil.findFirstParent(position, HaskellElementCondition.ImportQualifiedAsCondition)).isDefined
   }
 
   private def findModulesToImport(project: Project) = {
@@ -195,15 +171,14 @@ class HaskellCompletionContributor extends CompletionContributor {
     val qualifiedElement = Option(PsiTreeUtil.findFirstParent(position, HaskellElementCondition.QualifiedElementCondition))
     qualifiedElement.map {
       case qe: HaskellQvarId => qe.getQualifier.getName
-      case qe: HaskellQconId => qe.getQconIdQualifier.getText
+      case qe: HaskellQconId => qe.getQconIdQualifier.getText.init // init to remove trailing dot
       case qe: HaskellQvarSym => qe.getQualifier.getName
       case qe: HaskellQconSym => qe.getQualifier.getName
     }.orElse {
       val elementType = position.getNode.getElementType
-      if (elementType == HS_NEWLINE || elementType == TokenType.WHITE_SPACE || elementType == HS_DOT) {
+      if (elementType == HS_DOT) {
         Option(position.getPrevSibling).flatMap(ps => {
-          val qcon = Option(PsiTreeUtil.findChildOfType(ps, classOf[HaskellQcon]))
-          qcon.filter(qc => Option(qc.getNextSibling).map(_.getNode).flatMap(n => Option(TreeUtil.findLastLeaf(n))).exists(_.getElementType == HS_DOT)).map(_.getName)
+          Option(PsiTreeUtil.findChildOfType(ps, classOf[HaskellQcon])).flatMap(_.getQualifier)
         })
       } else {
         None

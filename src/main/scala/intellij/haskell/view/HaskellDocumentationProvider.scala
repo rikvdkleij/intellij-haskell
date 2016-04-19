@@ -57,7 +57,7 @@ class HaskellDocumentationProvider extends AbstractDocumentationProvider {
         }
 
         arguments.map(args => ExternalProcess.getProcessOutput(project.getBasePath, hd, args).getStdout).filterNot(_.trim.isEmpty).map(output =>
-          Pattern.compile("$", Pattern.MULTILINE).matcher(output).replaceAll("<br>").replace(" ", "&nbsp;")
+          s"<pre>${Pattern.compile("$", Pattern.MULTILINE).matcher(output).replaceAll("<br>").replace(" ", "&nbsp;")}</pre>"
         )
       case None =>
         HaskellNotificationGroup.notifyError("Path to `haskell-docs` not set")

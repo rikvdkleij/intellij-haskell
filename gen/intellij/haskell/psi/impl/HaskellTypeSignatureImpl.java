@@ -35,14 +35,8 @@ public class HaskellTypeSignatureImpl extends HaskellCompositeElementImpl implem
 
   @Override
   @Nullable
-  public HaskellFixity getFixity() {
-    return findChildByClass(HaskellFixity.class);
-  }
-
-  @Override
-  @Nullable
-  public HaskellOps getOps() {
-    return findChildByClass(HaskellOps.class);
+  public HaskellScontext getScontext() {
+    return findChildByClass(HaskellScontext.class);
   }
 
   @Override
@@ -53,8 +47,14 @@ public class HaskellTypeSignatureImpl extends HaskellCompositeElementImpl implem
 
   @Override
   @Nullable
+  public HaskellVarId getVarId() {
+    return findChildByClass(HaskellVarId.class);
+  }
+
+  @Override
+  @NotNull
   public HaskellVars getVars() {
-    return findChildByClass(HaskellVars.class);
+    return findNotNullChildByClass(HaskellVars.class);
   }
 
   public String getName() {

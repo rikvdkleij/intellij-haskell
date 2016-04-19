@@ -19,7 +19,6 @@ package intellij.haskell.view
 import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer
 import com.intellij.codeInsight.daemon.impl.DaemonCodeAnalyzerImpl
 import com.intellij.openapi.actionSystem.{AnAction, AnActionEvent, CommonDataKeys}
-import com.intellij.xml.util.{XmlUtil, HtmlUtil}
 import intellij.haskell.util.HaskellEditorUtil
 
 class ShowProblemMessageAction extends AnAction {
@@ -36,9 +35,9 @@ class ShowProblemMessageAction extends AnAction {
       offset = editor.getCaretModel.getOffset
       codeAnalyzer <- Option(DaemonCodeAnalyzer.getInstance(project).asInstanceOf[DaemonCodeAnalyzerImpl])
       info <- Option(codeAnalyzer.findHighlightByOffset(editor.getDocument, offset, false))
-      message = info.getDescription
+      message = info.getToolTip
     } yield {
-      HaskellEditorUtil.showHint(editor, XmlUtil.escape(message).replace(" ", "&nbsp;"))
+      HaskellEditorUtil.showHint(editor, message)
     }
   }
 }

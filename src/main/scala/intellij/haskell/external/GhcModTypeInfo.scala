@@ -45,7 +45,7 @@ object GhcModTypeInfo {
         new CacheLoader[ElementTypeInfo, GhcModOutput]() {
           private def findTypeInfoFor(elementTypeInfo: ElementTypeInfo): GhcModOutput = {
             val cmd = s"type ${elementTypeInfo.filePath} ${elementTypeInfo.lineNr} ${elementTypeInfo.columnNr}"
-            GhcModProcessManager.getGhcModProcess(elementTypeInfo.project).execute(cmd)
+            GhcModProcessManager.getGhcModInfoProcess(elementTypeInfo.project).execute(cmd)
           }
 
           override def load(elementTypeInfo: ElementTypeInfo): GhcModOutput = {
@@ -77,7 +77,7 @@ object GhcModTypeInfo {
 
     for {
       spe <- LineColumnPosition.fromOffset(psiFile, textOffset)
-      typeInfos <- findGhcModiTypeInfos(psiFile, spe)
+      typeInfos <- findGhcModTypeInfos(psiFile, spe)
       typeInfo <- typeInfos.find(ty => ty.startLine == spe.lineNr && ty.startColumn == spe.columnNr)
     } yield typeInfo
   }
@@ -86,12 +86,12 @@ object GhcModTypeInfo {
     for {
       ss <- LineColumnPosition.fromOffset(psiFile, selectionModel.getSelectionStart)
       se <- LineColumnPosition.fromOffset(psiFile, selectionModel.getSelectionEnd)
-      typeInfos <- findGhcModiTypeInfos(psiFile, ss)
+      typeInfos <- findGhcModTypeInfos(psiFile, ss)
       typeInfo <- typeInfos.find(ty => ty.startLine == ss.lineNr && ty.startColumn == ss.columnNr && ty.endLine == se.lineNr && ty.endColumn == se.columnNr)
     } yield typeInfo
   }
 
-  private def findGhcModiTypeInfos(psiFile: PsiFile, startPositionExpression: LineColumnPosition): Option[Iterable[TypeInfo]] = {
+  private def findGhcModTypeInfos(psiFile: PsiFile, startPositionExpression: LineColumnPosition): Option[Iterable[TypeInfo]] = {
     val filePath = FileUtil.getFilePath(psiFile)
     val ghcModiOutput = try {
       val key = ElementTypeInfo(filePath, startPositionExpression.lineNr, startPositionExpression.columnNr, psiFile.getProject)
@@ -107,13 +107,13 @@ object GhcModTypeInfo {
       case _: UncheckedExecutionException => GhcModOutput()
       case _: ProcessCanceledException => GhcModOutput()
     }
-    ghcModiOutputToTypeInfo(ghcModiOutput.outputLines) match {
+    ghcModOutputToTypeInfo(ghcModiOutput.outputLines) match {
       case Success(typeInfos) => Some(typeInfos)
       case Failure(error) => HaskellNotificationGroup.notifyError(s"Could not determine type. Error: $error.getMessage"); None
     }
   }
 
-  private[external] def ghcModiOutputToTypeInfo(ghcModiOutput: Iterable[String]): Try[Iterable[TypeInfo]] = Try {
+  private[external] def ghcModOutputToTypeInfo(ghcModiOutput: Iterable[String]): Try[Iterable[TypeInfo]] = Try {
     for (outputLine <- ghcModiOutput) yield {
       outputLine match {
         case GhcModTypeInfoPattern(startLn, startCol, endLine, endCol, typeSignature) =>

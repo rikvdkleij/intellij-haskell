@@ -26,6 +26,9 @@ public interface HaskellTopDeclaration extends HaskellCompositeElement {
   HaskellExpression getExpression();
 
   @Nullable
+  HaskellFixityDeclaration getFixityDeclaration();
+
+  @Nullable
   HaskellForeignDeclaration getForeignDeclaration();
 
   @Nullable

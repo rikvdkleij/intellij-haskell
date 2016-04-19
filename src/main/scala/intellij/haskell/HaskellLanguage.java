@@ -17,6 +17,7 @@
 package intellij.haskell;
 
 import com.intellij.lang.Language;
+import org.jetbrains.annotations.NotNull;
 
 public class HaskellLanguage extends Language {
 
@@ -26,6 +27,7 @@ public class HaskellLanguage extends Language {
         super("Haskell");
     }
 
+    @NotNull
     @Override
     public String getDisplayName() {
         return "Haskell language";

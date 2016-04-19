@@ -15,6 +15,9 @@ public interface HaskellModuleDeclaration extends HaskellDeclarationElement {
   @Nullable
   HaskellExports getExports();
 
+  @Nullable
+  HaskellExpression getExpression();
+
   @NotNull
   HaskellModId getModId();
 
