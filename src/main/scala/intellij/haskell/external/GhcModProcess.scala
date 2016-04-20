@@ -21,11 +21,12 @@ import java.util.concurrent.Executors
 
 import com.intellij.openapi.components.ProjectComponent
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.roots.ProjectRootManager
+import com.intellij.util.EnvironmentUtil
 import intellij.haskell.HaskellNotificationGroup
 import intellij.haskell.settings.HaskellSettingsState
 import intellij.haskell.util._
 
+import scala.collection.JavaConversions._
 import scala.collection.mutable.ListBuffer
 import scala.concurrent.duration._
 import scala.concurrent.{Await, ExecutionContext, Future}
@@ -96,7 +97,7 @@ abstract class GhcModProcess(val project: Project) extends ProjectComponent {
           val command = p + " legacy-interactive"
           val process = getEnvParameters match {
             case None => Process(command, new File(project.getBasePath))
-            case Some(ep) => Process(command, new File(project.getBasePath), ep)
+            case Some(ep) => Process(command, new File(project.getBasePath), ep.toArray: _*)
           }
           process.run(
             new ProcessIO(
@@ -152,15 +153,9 @@ abstract class GhcModProcess(val project: Project) extends ProjectComponent {
     ghcModProblemTime = Some(System.currentTimeMillis)
   }
 
-  private def getEnvParameters: Option[(String, String)] = {
-    // Workaround because of bug in Yosemite :-(
+  private def getEnvParameters: Option[java.util.Map[String, String]] = {
     if (OSUtil.isOSX) {
-      for {
-        pm <- Option(ProjectRootManager.getInstance(project))
-        ps <- Option(pm.getProjectSdk)
-        ghcDir <- Option(ps.getHomePath)
-        pathEnv = System.getenv("PATH")
-      } yield ("PATH", pathEnv + ":" + ghcDir)
+      Option(EnvironmentUtil.getEnvironmentMap)
     } else {
       None
     }

@@ -35,7 +35,7 @@ object ExternalProcess {
     cmd.withWorkDirectory(workDir)
     cmd.setExePath(commandPath)
     cmd.addParameters(arguments)
-    cmd.withParentEnvironmentType(ParentEnvironmentType.SYSTEM)
+    cmd.withParentEnvironmentType(ParentEnvironmentType.CONSOLE)
     execute(cmd, timeout)
   }
 
