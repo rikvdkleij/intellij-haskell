@@ -45,7 +45,7 @@ A lot of features are implemented with help of ghc-mod!!
 - In the `New Project` wizard select `Haskell module` and check `Haskell` in `Additional Libraries and Frameworks`;
 - In next page of wizard create `GHC SDK` by selecting path to GHC binaries, e.g. `/usr/local/bin`;
 - Select in `Project structure`/`Project settings`/`Modules` which folders to exclude (like `.stack-work` and `dist`) and which folders are `Source` and `Test` (normally `src` and `test`).
-- Use `Tools`/`Add Haskell package dependencies` to download all sources of dependencies. They will be added as source libraries to module. If you use Cabal 1.22 also test dependencies will be downloaded. 
+- Use `Tools`/`Add Haskell package dependencies` to download all sources of dependencies. They will be added as source libraries to module.
     This option gives you nice navigation features through libraries. Sources are downloaded to folder `ideaHaskellLib` inside root of project 
 
 
