@@ -1,7 +1,7 @@
 <idea-plugin version="2">
     <id>intellij.haskell</id>
     <name>IntelliJ-Haskell</name>
-    <version>0.91</version>
+    <version>0.92</version>
     <vendor email="rikvdkleij@gmail.com">Rik van der Kleij</vendor>
 
     <description><![CDATA[
@@ -9,6 +9,12 @@
     ]]></description>
 
     <change-notes><![CDATA[
+        <p>0.92</p>
+        <ul>
+            <li>Replaced Cabal by Stack</li>
+            <li>Improvements</li>
+            <li>Bug fixes (especially for OSX)</li>
+        </ul>
         <p>0.91</p>
         <ul>
             <li>Support for IntelliJ 15 and 2016.1</li>

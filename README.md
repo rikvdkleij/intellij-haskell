@@ -7,8 +7,7 @@ the recursion.
 Then I decided to use grammar and lexer definitions only for tokenizing and parsing Haskell code, and not for syntax checking the code. This is needed for syntax highlighting, all kinds of navigation and so on.
 Further Haskell language support is provided with the support of external tools: ghc-mod and haskell-docs.
 
-This plugin is written mainly in Scala and is not meant to support GHC/Cabal/Stack directly. It supports Cabal sandbox and Stack projects
-and expects that builds and such are done on the command line.
+It supports Stack projects and expects that creating and building of Haskell projects is done on the command line.
 
 Any feedback is welcome!!
 
@@ -17,7 +16,7 @@ Any feedback is welcome!!
 - Syntax highlighting (which can be customized);
 - Error/warning highlighting;
 - Find usages of identifiers;
-- Resolve references to identifiers (also to library code if library source code is added to project and resolves inside import declaration);
+- Resolve references to identifiers (also in libraries if packages source code are available by using `Tools` /`Add Haskell package dependencies`);
 - Code completion by resolving references;
 - In-place rename identifiers (in which global rename first shows preview so refactoring scope can be adjusted).
 - View type info from (selected) expression;
@@ -39,15 +38,13 @@ A lot of features are implemented with help of ghc-mod!!
 
 # Getting started: 
 - Install latest versions of ghc-mod and haskell-docs;
-- Set file paths to `ghc-mod`, `hlint`, `cabal` and `haskell-docs` in the menu `Settings`/`Other Settings`/`Haskell`.
+- Set file paths to `ghc-mod`, `hlint`, `stack` and `haskell-docs` in the menu `Settings`/`Other Settings`/`Haskell`.
 - Be sure in `Editor/Filetypes` that `Haskell language file` is registered with pattern `*.hs` and `Literate Haskell language file` with pattern `*.lhs`; 
 - First install and build your project. Preferably with Stack. (Make sure that Haddock documentation is generated, see [haskell-docs](https://github.com/chrisdone/haskell-docs)).
 - After the project is built, create a Haskell project in IntelliJ by using `File`/`New`/`Project...` from the IntelliJ menu;
 - In the `New Project` wizard select `Haskell module` and check `Haskell` in `Additional Libraries and Frameworks`;
 - In next page of wizard create `GHC SDK` by selecting path to GHC binaries, e.g. `/usr/local/bin`;
-- In last page of wizard select path to root of project;
-- Add `Content Root` to Haskell module in `Project structure`/`Project Settings`/`Modules`/`Sources` by selecting root folder of Haskell project;
-- Select in `Project structure`/`Project settings`/`Modules` which folders to exclude (like `.cabal-sandbox` and `dist`) and which folders are `Source` and `Test` (normally `src` and `test`).
+- Select in `Project structure`/`Project settings`/`Modules` which folders to exclude (like `.stack-work` and `dist`) and which folders are `Source` and `Test` (normally `src` and `test`).
 - Use `Tools`/`Add Haskell package dependencies` to download all sources of dependencies. They will be added as source libraries to module. If you use Cabal 1.22 also test dependencies will be downloaded. 
     This option gives you nice navigation features through libraries. Sources are downloaded to folder `ideaHaskellLib` inside root of project 
 
