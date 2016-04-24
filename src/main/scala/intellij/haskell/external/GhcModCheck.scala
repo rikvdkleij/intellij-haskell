@@ -19,7 +19,10 @@ package intellij.haskell.external
 import com.intellij.openapi.project.Project
 import intellij.haskell.HaskellNotificationGroup
 import intellij.haskell.annotator.GhcModInitialInfo
+import intellij.haskell.settings.HaskellSettingsState
 import intellij.haskell.util.{FileUtil, OSUtil}
+
+import scala.collection.JavaConversions._
 
 object GhcModCheck {
 
@@ -30,8 +33,16 @@ object GhcModCheck {
       return GhcModCheckResult()
     }
 
-    val output = GhcModProcessManager.getGhcModCheckProcess(project).execute("check " + ghcModInitialInfo.filePath)
-    new GhcModCheckResult(output.outputLines.flatMap(l => parseOutputLine(l, project)))
+    val ghcModPath = HaskellSettingsState.getGhcModPath
+    val output = ghcModPath.map { p =>
+      ExternalProcess.getProcessOutput(
+        project.getBasePath,
+        p,
+        Seq("check", ghcModInitialInfo.filePath)
+      )
+    }.map(_.getStdoutLines.toIterable).getOrElse(Iterable())
+
+    new GhcModCheckResult(output.flatMap(l => parseOutputLine(l, project)))
   }
 
   private[external] def parseOutputLine(ghcModOutput: String, project: Project): Option[GhcModProblem] = {

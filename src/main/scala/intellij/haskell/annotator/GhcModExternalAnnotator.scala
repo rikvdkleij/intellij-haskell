@@ -52,6 +52,8 @@ class GhcModExternalAnnotator extends ExternalAnnotator[GhcModInitialInfo, GhcMo
     }
   }
 
+
+
   override def doAnnotate(initialInfoGhcMod: GhcModInitialInfo): GhcModCheckResult = {
     FileUtil.saveFile(initialInfoGhcMod.psiFile)
     GhcModCheck.check(initialInfoGhcMod.psiFile.getProject, initialInfoGhcMod)

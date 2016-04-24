@@ -1,7 +1,7 @@
 <idea-plugin version="2">
     <id>intellij.haskell</id>
     <name>IntelliJ-Haskell</name>
-    <version>0.92</version>
+    <version>0.94</version>
     <vendor email="rikvdkleij@gmail.com">Rik van der Kleij</vendor>
 
     <description><![CDATA[
@@ -9,6 +9,10 @@
     ]]></description>
 
     <change-notes><![CDATA[
+        <p>0.93</p>
+        <ul>
+            <li>Replaced ghc-mod legacy-interactive `check` by `ghc-mod check`</li>
+        </ul>
         <p>0.92</p>
         <ul>
             <li>Replaced Cabal by Stack</li>
