@@ -169,7 +169,7 @@
         <typedHandler implementation="intellij.haskell.code.HaskellTypedHandler" id="HaskellFile"/>
 
         <localInspection language="Haskell" shortName="HLintInspection" displayName="Inspection by HLint"
-                         groupName="Haskell" enabledByDefault="false" level="WARNING"
+                         groupName="Haskell" enabledByDefault="true" level="WARNING"
                          implementationClass="intellij.haskell.inspection.HlintInspectionTool"/>
 
         <lang.importOptimizer language="Haskell" implementationClass="intellij.haskell.code.HaskellImportOptimizer"/>
