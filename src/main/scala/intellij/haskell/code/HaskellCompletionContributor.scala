@@ -54,7 +54,7 @@ class HaskellCompletionContributor extends CompletionContributor {
 
   private final val PlainPrefixElementTypes = Seq(HS_COMMENT, HS_NCOMMENT, HS_PRAGMA_START, HS_PRAGMA_END)
 
-  extend(CompletionType.BASIC, PlatformPatterns.psiElement(), new CompletionProvider[CompletionParameters] {
+  val provider = new CompletionProvider[CompletionParameters] {
     def addCompletions(parameters: CompletionParameters, context: ProcessingContext, originalResultSet: CompletionResultSet) {
       val project = parameters.getPosition.getProject
       val file = parameters.getOriginalFile
@@ -103,7 +103,11 @@ class HaskellCompletionContributor extends CompletionContributor {
         case _ => ()
       }
     }
-  })
+  }
+
+  Seq(HS_VARID_ID, HS_CONID_ID, HS_VARSYM_ID, HS_CONSYM_ID).foreach(t =>
+    extend(CompletionType.BASIC, PlatformPatterns.psiElement().withElementType(t), provider)
+  )
 
   private def getTextAtCaret(editor: Editor, file: PsiFile): String = {
     val caretOffset = editor.getCaretModel.getOffset
