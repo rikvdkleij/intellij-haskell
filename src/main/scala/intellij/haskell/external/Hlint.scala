@@ -31,7 +31,26 @@ object Hlint {
           p,
           Seq("--json", psiFile.getVirtualFile.getPath)
         )
-        deserializeHlintInfo(output.getStdout)
+        val infos = deserializeHlintInfo(output.getStdout)
+        infos.map((info: HlintInfo) => {
+          val found = info.from
+          val suggest = info.to.getOrElse("")
+          val hint = List(info.hint, "Found:", found, "Why not:", suggest).mkString("\n")
+          HlintInfo(
+            info.module,
+            info.decl,
+            info.severity,
+            hint,
+            info.file,
+            info.startLine,
+            info.startColumn,
+            info.endLine,
+            info.endColumn,
+            info.from,
+            info.to,
+            info.note
+          )
+        })
       case None => Seq()
     }
   }
