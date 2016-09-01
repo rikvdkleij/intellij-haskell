@@ -1,16 +1,17 @@
 // This is a generated file. Not intended for manual editing.
 package intellij.haskell.psi.impl;
 
-import java.util.List;
-import org.jetbrains.annotations.*;
 import com.intellij.lang.ASTNode;
-import com.intellij.psi.PsiElement;
+import com.intellij.navigation.ItemPresentation;
 import com.intellij.psi.PsiElementVisitor;
 import com.intellij.psi.util.PsiTreeUtil;
-import static intellij.haskell.psi.HaskellTypes.*;
 import intellij.haskell.psi.*;
-import com.intellij.navigation.ItemPresentation;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
+import scala.Option;
 import scala.collection.Seq;
+
+import java.util.List;
 
 public class HaskellClassDeclarationImpl extends HaskellCompositeElementImpl implements HaskellClassDeclaration {
 
@@ -34,12 +35,6 @@ public class HaskellClassDeclarationImpl extends HaskellCompositeElementImpl imp
   }
 
   @Override
-  @Nullable
-  public HaskellContext getContext() {
-    return findChildByClass(HaskellContext.class);
-  }
-
-  @Override
   @NotNull
   public List<HaskellExpression> getExpressionList() {
     return PsiTreeUtil.getChildrenOfTypeAsList(this, HaskellExpression.class);
@@ -47,14 +42,8 @@ public class HaskellClassDeclarationImpl extends HaskellCompositeElementImpl imp
 
   @Override
   @NotNull
-  public HaskellQcon getQcon() {
-    return findNotNullChildByClass(HaskellQcon.class);
-  }
-
-  @Override
-  @NotNull
-  public List<HaskellQvar> getQvarList() {
-    return PsiTreeUtil.getChildrenOfTypeAsList(this, HaskellQvar.class);
+  public List<HaskellQName> getQNameList() {
+    return PsiTreeUtil.getChildrenOfTypeAsList(this, HaskellQName.class);
   }
 
   @Override
@@ -69,12 +58,6 @@ public class HaskellClassDeclarationImpl extends HaskellCompositeElementImpl imp
     return PsiTreeUtil.getChildrenOfTypeAsList(this, HaskellTtype.class);
   }
 
-  @Override
-  @NotNull
-  public List<HaskellTypeSignature> getTypeSignatureList() {
-    return PsiTreeUtil.getChildrenOfTypeAsList(this, HaskellTypeSignature.class);
-  }
-
   public String getName() {
     return HaskellPsiImplUtil.getName(this);
   }
@@ -85,6 +68,10 @@ public class HaskellClassDeclarationImpl extends HaskellCompositeElementImpl imp
 
   public Seq<HaskellNamedElement> getIdentifierElements() {
     return HaskellPsiImplUtil.getIdentifierElements(this);
+  }
+
+  public Option<String> getModuleName() {
+    return HaskellPsiImplUtil.getModuleName(this);
   }
 
 }

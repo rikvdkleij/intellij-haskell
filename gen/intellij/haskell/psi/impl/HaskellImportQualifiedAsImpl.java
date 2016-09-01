@@ -1,14 +1,12 @@
 // This is a generated file. Not intended for manual editing.
 package intellij.haskell.psi.impl;
 
-import java.util.List;
-import org.jetbrains.annotations.*;
 import com.intellij.lang.ASTNode;
-import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiElementVisitor;
-import com.intellij.psi.util.PsiTreeUtil;
-import static intellij.haskell.psi.HaskellTypes.*;
-import intellij.haskell.psi.*;
+import intellij.haskell.psi.HaskellImportQualifiedAs;
+import intellij.haskell.psi.HaskellQualifier;
+import intellij.haskell.psi.HaskellVisitor;
+import org.jetbrains.annotations.NotNull;
 
 public class HaskellImportQualifiedAsImpl extends HaskellCompositeElementImpl implements HaskellImportQualifiedAs {
 
@@ -26,15 +24,9 @@ public class HaskellImportQualifiedAsImpl extends HaskellCompositeElementImpl im
   }
 
   @Override
-  @Nullable
-  public HaskellQualifier getQualifier() {
-    return findChildByClass(HaskellQualifier.class);
-  }
-
-  @Override
   @NotNull
-  public HaskellVarId getVarId() {
-    return findNotNullChildByClass(HaskellVarId.class);
+  public HaskellQualifier getQualifier() {
+    return findNotNullChildByClass(HaskellQualifier.class);
   }
 
 }

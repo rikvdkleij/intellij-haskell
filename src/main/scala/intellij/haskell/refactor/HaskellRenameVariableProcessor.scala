@@ -16,40 +16,27 @@
 
 package intellij.haskell.refactor
 
-import com.intellij.psi.{PsiElement, PsiPolyVariantReference}
+import com.intellij.psi.search.GlobalSearchScope
+import com.intellij.psi.search.searches.ReferencesSearch
+import com.intellij.psi.{PsiElement, PsiReference}
 import com.intellij.refactoring.listeners.RefactoringElementListener
 import com.intellij.refactoring.rename.RenamePsiElementProcessor
 import com.intellij.usageView.UsageInfo
-import intellij.haskell.HaskellFile
-import intellij.haskell.navigate.{HaskellFileResolveResult, HaskellLibraryResolveResult, HaskellProjectResolveResult}
-import intellij.haskell.psi.HaskellNamedElement
-import intellij.haskell.util.FileUtil
+import intellij.haskell.util.{HaskellFileIndex, HaskellFileUtil}
+
+import scala.collection.JavaConversions._
 
 class HaskellRenameVariableProcessor extends RenamePsiElementProcessor {
 
-  private var isShowPreviewForced: Boolean = _
-
-  override def prepareRenaming(element: PsiElement, newName: String, allRenames: java.util.Map[PsiElement, String]): Unit = {
-    if (element.isInstanceOf[HaskellNamedElement]) {
-      val resolvedElement = Option(element.getReference).flatMap(_.asInstanceOf[PsiPolyVariantReference].multiResolve(false).headOption)
-      isShowPreviewForced = resolvedElement match {
-        case Some(_: HaskellProjectResolveResult) | Some(_: HaskellLibraryResolveResult) | Some(_: HaskellFileResolveResult) => true
-        case None => true
-        case _ => false
-      }
-    }
-  }
-
-  override def canProcessElement(element: PsiElement): Boolean = {
-    element.isInstanceOf[HaskellNamedElement] || element.isInstanceOf[HaskellFile]
-  }
-
-  override def forcesShowPreview(): Boolean = {
-    isShowPreviewForced
-  }
+  override def canProcessElement(element: PsiElement): Boolean = true
 
   override def renameElement(element: PsiElement, newName: String, usages: Array[UsageInfo], listener: RefactoringElementListener): Unit = {
     super.renameElement(element, newName, usages, listener)
-    FileUtil.saveAllFiles()
+    HaskellFileUtil.saveAllFiles()
+  }
+
+  override def findReferences(element: PsiElement): java.util.Collection[PsiReference] = {
+    val project = element.getProject
+    ReferencesSearch.search(element, GlobalSearchScope.filesScope(project, HaskellFileIndex.findProjectHaskellFiles(project).map(_.getVirtualFile))).findAll
   }
 }

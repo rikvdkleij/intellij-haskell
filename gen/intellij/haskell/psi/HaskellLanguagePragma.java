@@ -1,13 +1,13 @@
 // This is a generated file. Not intended for manual editing.
 package intellij.haskell.psi;
 
+import org.jetbrains.annotations.NotNull;
+
 import java.util.List;
-import org.jetbrains.annotations.*;
-import com.intellij.psi.PsiElement;
 
 public interface HaskellLanguagePragma extends HaskellCompositeElement {
 
   @NotNull
-  List<HaskellQcon> getQconList();
+  List<HaskellQName> getQNameList();
 
 }

@@ -4,8 +4,8 @@
   <component name="NewModuleRootManager" inherit-compiler-output="true">
     <exclude-output />
     <content url="file://$MODULE_DIR$" />
-    <orderEntry type="jdk" jdkName="IntelliJ IDEA IU-145.597.3" jdkType="IDEA JDK" />
+    <orderEntry type="inheritedJdk" />
     <orderEntry type="sourceFolder" forTests="false" />
-    <orderEntry type="module" module-name="intellijHaskell" exported="" />
+    <orderEntry type="module" module-name="intellijHaskell" />
   </component>
 </module>

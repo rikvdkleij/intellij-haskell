@@ -24,16 +24,13 @@ import com.intellij.openapi.fileChooser.FileChooserDescriptorFactory
 import com.intellij.openapi.options.{Configurable, ConfigurationException}
 import com.intellij.openapi.ui.TextFieldWithBrowseButton
 import com.intellij.ui.DocumentAdapter
-import intellij.haskell.external.GhcModProcessManager
 
 import scala.language.{existentials, reflectiveCalls}
 
 class HaskellConfigurable extends Configurable {
   private var isModifiedByUser = false
-  private val ghcModPathField = new TextFieldWithBrowseButton
   private val haskellDocsPathField = new TextFieldWithBrowseButton
   private val hlintPathField = new TextFieldWithBrowseButton
-  private val stackPathField = new TextFieldWithBrowseButton
 
   override def getDisplayName: String = {
     "Haskell"
@@ -44,12 +41,6 @@ class HaskellConfigurable extends Configurable {
   import HaskellConfigurable._
 
   override def createComponent: JComponent = {
-
-    ghcModPathField.addBrowseFolderListener(
-      s"Select $GhcMod",
-      null,
-      null,
-      FileChooserDescriptorFactory.createSingleLocalFileDescriptor())
 
     haskellDocsPathField.addBrowseFolderListener(
       s"Select $HaskellDocs",
@@ -63,12 +54,6 @@ class HaskellConfigurable extends Configurable {
       null,
       FileChooserDescriptorFactory.createSingleLocalFileDescriptor())
 
-    stackPathField.addBrowseFolderListener(
-      s"Select $Stack",
-      null,
-      null,
-      FileChooserDescriptorFactory.createSingleLocalFileDescriptor())
-
     val settingsPanel = new JPanel(new GridBagLayout())
 
     val listener: DocumentAdapter = new DocumentAdapter() {
@@ -77,10 +62,8 @@ class HaskellConfigurable extends Configurable {
       }
     }
 
-    ghcModPathField.getTextField.getDocument.addDocumentListener(listener)
     haskellDocsPathField.getTextField.getDocument.addDocumentListener(listener)
     hlintPathField.getTextField.getDocument.addDocumentListener(listener)
-    stackPathField.getTextField.getDocument.addDocumentListener(listener)
 
     val base = new GridBagConstraints {
       insets = new Insets(2, 0, 2, 3)
@@ -117,10 +100,8 @@ class HaskellConfigurable extends Configurable {
       ))
     }
 
-    addLabeledControl(0, GhcMod, ghcModPathField)
     addLabeledControl(1, HaskellDocs, haskellDocsPathField)
     addLabeledControl(3, Hlint, hlintPathField)
-    addLabeledControl(4, Stack, stackPathField)
 
     settingsPanel.add(new JPanel(), base.setConstraints(
       gridx = 0,
@@ -135,14 +116,8 @@ class HaskellConfigurable extends Configurable {
     validatePaths()
 
     val state = HaskellSettings.getInstance().getState
-    state.ghcModPath = ghcModPathField.getText
     state.haskellDocsPath = haskellDocsPathField.getText
     state.hlintPath = hlintPathField.getText
-    state.stackPath = stackPathField.getText
-
-    GhcModProcessManager.setInRestartState()
-
-    isModifiedByUser = false
   }
 
   private def validatePaths() {
@@ -151,10 +126,7 @@ class HaskellConfigurable extends Configurable {
         throw new ConfigurationException(s"Invalid path to $command")
       }
     }
-    Seq((GhcMod, ghcModPathField.getText),
-      (HaskellDocs, haskellDocsPathField.getText),
-      (Hlint, hlintPathField.getText),
-      (Stack, stackPathField.getText)
+    Seq((HaskellDocs, haskellDocsPathField.getText), (Hlint, hlintPathField.getText)
     ).foreach({ case (c, p) => validate(c, p) })
   }
 
@@ -165,18 +137,12 @@ class HaskellConfigurable extends Configurable {
 
   override def reset() {
     val state = HaskellSettings.getInstance().getState
-    ghcModPathField.getTextField.setText(state.ghcModPath)
     haskellDocsPathField.getTextField.setText(state.haskellDocsPath)
     hlintPathField.getTextField.setText(state.hlintPath)
-    stackPathField.getTextField.setText(state.stackPath)
-
-    isModifiedByUser = false
   }
 }
 
 object HaskellConfigurable {
-  val GhcMod = "ghc-mod"
   val HaskellDocs = "haskell-docs"
   val Hlint = "hlint"
-  val Stack = "stack"
 }

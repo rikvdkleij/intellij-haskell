@@ -1,5 +1,5 @@
 /*
- * Copyright 2014 Rik van der Kleij
+ * Copyright 2016 Rik van der Kleij
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -34,4 +34,6 @@ object HaskellIcons {
   final val TypeSignature = IconLoader.getIcon("/icons/type_signature.png")
   final val Instance = IconLoader.getIcon("/icons/instance.png")
   final val Foreign = IconLoader.getIcon("/icons/foreign.png")
+
+  final val CabalLogo = IconLoader.getIcon("/icons/cabal.png")
 }

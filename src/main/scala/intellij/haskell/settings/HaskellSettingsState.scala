@@ -16,22 +16,10 @@
 
 package intellij.haskell.settings
 
-import com.intellij.openapi.project.Project
 import intellij.haskell.HaskellNotificationGroup
-import intellij.haskell.external.ExternalProcess
 
 object HaskellSettingsState {
   private def state = HaskellSettings.getInstance().getState
-
-  def getGhcModPath: Option[String] = {
-    val path = findPath(state.ghcModPath)
-    notifyIfPathIsNotSet(path, HaskellConfigurable.GhcMod)
-    path
-  }
-
-  def setGhcModPath(ghcModPath: String) {
-    state.ghcModPath = ghcModPath
-  }
 
   def getHaskellDocsPath: Option[String] = {
     val path = findPath(state.haskellDocsPath)
@@ -43,7 +31,7 @@ object HaskellSettingsState {
     state.haskellDocsPath = haskellDocsPath
   }
 
-  def getHlintPath: Option[String] = {
+  def getHLintPath: Option[String] = {
     val path = findPath(state.hlintPath)
     notifyIfPathIsNotSet(path, HaskellConfigurable.Hlint)
     path
@@ -53,33 +41,13 @@ object HaskellSettingsState {
     state.hlintPath = hlintPath
   }
 
-  def getStackInfo(project: Project): Option[StackInfo] = {
-    val path = findPath(state.stackPath)
-    notifyIfPathIsNotSet(path, HaskellConfigurable.Stack)
-    path.map(p => StackInfo(p, getStackVersion(project, p)))
-  }
-
-  def setStackPath(stackPath: String) {
-    state.stackPath = stackPath
-  }
-
-  private def getStackVersion(project: Project, stackPath: String): String = {
-    ExternalProcess.getProcessOutput(
-      project.getBasePath,
-      stackPath,
-      Seq("--numeric-version")
-    ).getStdout
-  }
-
   private def notifyIfPathIsNotSet(path: Option[String], name: String) {
     if (path.isEmpty) {
-      HaskellNotificationGroup.notifyError("Path to " + name + " is not set")
+      HaskellNotificationGroup.notifyBalloonError("Path to `" + name + "` is not set")
     }
   }
 
   private def findPath(path: String): Option[String] = {
-    Option(path).filterNot(_.isEmpty)
+    Option(path).filterNot(_.trim.isEmpty)
   }
 }
-
-case class StackInfo(path: String, version: String)

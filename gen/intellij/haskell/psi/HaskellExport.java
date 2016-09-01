@@ -1,9 +1,10 @@
 // This is a generated file. Not intended for manual editing.
 package intellij.haskell.psi;
 
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
+
 import java.util.List;
-import org.jetbrains.annotations.*;
-import com.intellij.psi.PsiElement;
 
 public interface HaskellExport extends HaskellCompositeElement {
 
@@ -11,18 +12,15 @@ public interface HaskellExport extends HaskellCompositeElement {
   List<HaskellCname> getCnameList();
 
   @Nullable
+  HaskellConid getConid();
+
+  @Nullable
   HaskellDotDotParens getDotDotParens();
 
   @Nullable
-  HaskellModId getModId();
+  HaskellModid getModid();
 
   @Nullable
-  HaskellQcon getQcon();
-
-  @Nullable
-  HaskellQvar getQvar();
-
-  @Nullable
-  HaskellQvarOp getQvarOp();
+  HaskellQCon getQCon();
 
 }

@@ -18,12 +18,9 @@ package intellij.haskell.module
 
 import javax.swing.Icon
 
-import com.intellij.ide.util.projectWizard.{ModuleWizardStep, ProjectJdkForModuleStep, WizardContext}
 import com.intellij.openapi.module.{Module, ModuleType, ModuleTypeManager, ModuleUtil}
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.roots.ui.configuration.ModulesProvider
 import intellij.haskell.HaskellIcons
-import intellij.haskell.sdk.HaskellSdkType
 
 import scala.collection.JavaConversions._
 
@@ -38,16 +35,6 @@ class HaskellModuleType extends ModuleType[HaskellModuleBuilder](HaskellModuleTy
   override def getNodeIcon(isOpened: Boolean): Icon = HaskellIcons.HaskellSmallLogo
 
   override def getBigIcon: Icon = HaskellIcons.HaskellLogo
-
-  override def createWizardSteps(wizardContext: WizardContext, moduleBuilder: HaskellModuleBuilder, modulesProvider: ModulesProvider): Array[ModuleWizardStep] = {
-    Array[ModuleWizardStep](new ProjectJdkForModuleStep(wizardContext, HaskellSdkType.getInstance) {
-
-      override def updateDataModel() {
-        super.updateDataModel()
-        moduleBuilder.setModuleJdk(getJdk)
-      }
-    })
-  }
 }
 
 object HaskellModuleType {
@@ -57,7 +44,7 @@ object HaskellModuleType {
     ModuleTypeManager.getInstance.findByID(Id).asInstanceOf[HaskellModuleType]
   }
 
-  def findModules(project: Project): Seq[Module] = {
-    ModuleUtil.getModulesOfType(project, HaskellModuleType.getInstance).toSeq
+  def findHaskellProjectModules(project: Project): Iterable[Module] = {
+    ModuleUtil.getModulesOfType(project, HaskellModuleType.getInstance)
   }
 }

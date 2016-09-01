@@ -1,16 +1,17 @@
 // This is a generated file. Not intended for manual editing.
 package intellij.haskell.psi.impl;
 
-import java.util.List;
-import org.jetbrains.annotations.*;
 import com.intellij.lang.ASTNode;
-import com.intellij.psi.PsiElement;
+import com.intellij.navigation.ItemPresentation;
 import com.intellij.psi.PsiElementVisitor;
 import com.intellij.psi.util.PsiTreeUtil;
-import static intellij.haskell.psi.HaskellTypes.*;
 import intellij.haskell.psi.*;
-import com.intellij.navigation.ItemPresentation;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
+import scala.Option;
 import scala.collection.Seq;
+
+import java.util.List;
 
 public class HaskellDataDeclarationImpl extends HaskellCompositeElementImpl implements HaskellDataDeclaration {
 
@@ -89,14 +90,20 @@ public class HaskellDataDeclarationImpl extends HaskellCompositeElementImpl impl
 
   @Override
   @NotNull
-  public List<HaskellQvar> getQvarList() {
-    return PsiTreeUtil.getChildrenOfTypeAsList(this, HaskellQvar.class);
+  public List<HaskellQName> getQNameList() {
+    return PsiTreeUtil.getChildrenOfTypeAsList(this, HaskellQName.class);
+  }
+
+  @Override
+  @Nullable
+  public HaskellScontext getScontext() {
+    return findChildByClass(HaskellScontext.class);
   }
 
   @Override
   @NotNull
-  public List<HaskellSimpletype> getSimpletypeList() {
-    return PsiTreeUtil.getChildrenOfTypeAsList(this, HaskellSimpletype.class);
+  public HaskellSimpletype getSimpletype() {
+    return findNotNullChildByClass(HaskellSimpletype.class);
   }
 
   public String getName() {
@@ -111,7 +118,7 @@ public class HaskellDataDeclarationImpl extends HaskellCompositeElementImpl impl
     return HaskellPsiImplUtil.getIdentifierElements(this);
   }
 
-  public String getModuleName() {
+  public Option<String> getModuleName() {
     return HaskellPsiImplUtil.getModuleName(this);
   }
 

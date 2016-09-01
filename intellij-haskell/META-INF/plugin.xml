@@ -1,7 +1,7 @@
 <idea-plugin version="2">
     <id>intellij.haskell</id>
     <name>IntelliJ-Haskell</name>
-    <version>0.94</version>
+    <version>1.0.0-beta</version>
     <vendor email="rikvdkleij@gmail.com">Rik van der Kleij</vendor>
 
     <description><![CDATA[
@@ -9,6 +9,12 @@
     ]]></description>
 
     <change-notes><![CDATA[
+        <p>1.0.0-beta</p>
+        <ul>
+            <li>Replaced ghc-mod by `stack repl` and intero</li>
+            <li>Big rewrite/refactor of code</li>
+            <li>Support for IntelliJ 2016.2</li>
+        </ul>
         <p>0.93</p>
         <ul>
             <li>Replaced ghc-mod legacy-interactive `check` by `ghc-mod check`</li>
@@ -98,12 +104,15 @@
     </change-notes>
 
     <!-- please see http://confluence.jetbrains.com/display/IDEADEV/Build+Number+Ranges for description -->
-    <idea-version since-build="142.0" until-build="145.9999"/>
+    <idea-version since-build="142.0" until-build="162.*"/>
 
     <extensions defaultExtensionNs="com.intellij">
         <sdkType implementation="intellij.haskell.sdk.HaskellSdkType"/>
 
         <moduleType id="HASKELL_MODULE" implementationClass="intellij.haskell.module.HaskellModuleType"/>
+
+        <projectImportProvider implementation="intellij.haskell.module.StackProjectImportProvider"/>
+        <projectImportBuilder implementation="intellij.haskell.module.StackProjectImportBuilder"/>
 
         <moduleConfigurationEditorProvider implementation="intellij.haskell.settings.HaskellModuleEditorsProvider"
                                            order="first"/>
@@ -119,22 +128,19 @@
                                        implementationClass="intellij.haskell.highlighter.HaskellSyntaxHighlighterFactory"/>
         <lang.braceMatcher language="Haskell"
                            implementationClass="intellij.haskell.highlighter.HaskellBraceMatcher"/>
-        <lang.commenter language="Haskell" implementationClass="intellij.haskell.code.HaskellCommenter"/>
+        <lang.commenter language="Haskell" implementationClass="intellij.haskell.editor.HaskellCommenter"/>
 
         <externalAnnotator language="Haskell"
-                           implementationClass="intellij.haskell.annotator.GhcModExternalAnnotator"/>
+                           implementationClass="intellij.haskell.annotator.HaskellAnnotator"/>
 
         <applicationConfigurable instance="intellij.haskell.settings.HaskellConfigurable"/>
 
         <applicationService serviceImplementation="intellij.haskell.settings.HaskellSettings"/>
 
-        <lang.formatter language="Haskell"
-                        implementationClass="intellij.haskell.code.formatter.HaskellFormattingModelBuilder"/>
-
         <codeStyleSettingsProvider
-                implementation="intellij.haskell.code.formatter.settings.HaskellCodeStyleSettingsProvider"/>
+                implementation="intellij.haskell.editor.formatter.settings.HaskellCodeStyleSettingsProvider"/>
         <langCodeStyleSettingsProvider
-                implementation="intellij.haskell.code.formatter.settings.HaskellLanguageCodeStyleSettingsProvider"/>
+                implementation="intellij.haskell.editor.formatter.settings.HaskellLanguageCodeStyleSettingsProvider"/>
 
 
         <psi.referenceContributor language="Haskell" implementation="intellij.haskell.psi.HaskellReferenceContributor"/>
@@ -145,40 +151,43 @@
         <fileBasedIndex implementation="intellij.haskell.util.HaskellFileIndex"/>
 
         <lang.findUsagesProvider language="Haskell"
-                                 implementationClass="intellij.haskell.navigate.HaskellFindUsagesProvider"/>
-        <targetElementEvaluator language="Haskell"
-                                implementationClass="intellij.haskell.navigate.HaskellTargetElementEvaluator"/>
+                                 implementationClass="intellij.haskell.navigation.HaskellFindUsagesProvider"/>
 
         <lang.namesValidator language="Haskell"
                              implementationClass="intellij.haskell.refactor.HaskellNamesValidator"/>
         <lang.refactoringSupport language="Haskell"
                                  implementationClass="intellij.haskell.refactor.HaskellRefactoringSupportProvider"/>
         <renamePsiElementProcessor implementation="intellij.haskell.refactor.HaskellRenameVariableProcessor"/>
+        <vetoRenameCondition  implementation="intellij.haskell.refactor.HaskellVetoRenameCondition" />
 
         <lang.documentationProvider language="Haskell"
-                                    implementationClass="intellij.haskell.view.HaskellDocumentationProvider"/>
+                                    implementationClass="intellij.haskell.external.HaskellDocumentationProvider"/>
 
         <completion.contributor language="Haskell"
-                                implementationClass="intellij.haskell.code.HaskellCompletionContributor"/>
-        <lookup.charFilter implementation="intellij.haskell.code.HaskellCompletionCharFilter"/>
+                                implementationClass="intellij.haskell.editor.HaskellCompletionContributor"/>
+        <lookup.charFilter implementation="intellij.haskell.editor.HaskellCompletionCharFilter"/>
 
-        <gotoClassContributor implementation="intellij.haskell.navigate.HaskellDeclarationContributor"/>
+        <gotoClassContributor implementation="intellij.haskell.navigation.HaskellDeclarationContributor"/>
         <gotoSymbolContributor
-                implementation="intellij.haskell.navigate.HaskellNamedElementContributor"/>
+                implementation="intellij.haskell.navigation.HaskellNamedElementContributor"/>
         <lang.psiStructureViewFactory language="Haskell"
-                                      implementationClass="intellij.haskell.navigate.HaskellStructureViewFactory"/>
+                                      implementationClass="intellij.haskell.navigation.HaskellStructureViewFactory"/>
 
-        <quoteHandler fileType="Haskell file" className="intellij.haskell.code.HaskellQuoteHandler"/>
+        <quoteHandler fileType="Haskell file" className="intellij.haskell.editor.HaskellQuoteHandler"/>
 
-        <typedHandler implementation="intellij.haskell.code.HaskellTypedHandler" id="HaskellFile"/>
+        <typedHandler implementation="intellij.haskell.editor.HaskellTypedHandler" id="HaskellFile"/>
 
         <localInspection language="Haskell" shortName="HLintInspection" displayName="Inspection by HLint"
                          groupName="Haskell" enabledByDefault="false" level="WARNING"
-                         implementationClass="intellij.haskell.inspection.HlintInspectionTool"/>
+                         implementationClass="intellij.haskell.inspection.HLintInspectionTool"/>
 
-        <lang.importOptimizer language="Haskell" implementationClass="intellij.haskell.code.HaskellImportOptimizer"/>
+        <lang.importOptimizer language="Haskell" implementationClass="intellij.haskell.editor.HaskellImportOptimizer"/>
 
         <framework.type implementation="intellij.haskell.framework.HaskellFrameworkType"/>
+
+        <!-- Cabal support -->
+        <fileTypeFactory implementation="intellij.haskell.cabal.CabalFileTypeFactory"/>
+        <lang.commenter language="Cabal" implementationClass="intellij.haskell.cabal.CabalCommenter"/>
     </extensions>
 
     <application-components>
@@ -187,19 +196,23 @@
 
     <project-components>
         <component>
-            <implementation-class>intellij.haskell.external.GhcModInfoProcess</implementation-class>
+            <implementation-class>intellij.haskell.external.repl.process.GlobalStackReplProcess</implementation-class>
         </component>
         <component>
-            <implementation-class>intellij.haskell.external.GhcModCheckProcess</implementation-class>
+            <implementation-class>intellij.haskell.external.repl.process.ProjectStackReplProcess</implementation-class>
         </component>
         <component>
-            <implementation-class>intellij.haskell.view.HaskellDocumentationProvider
+            <implementation-class>intellij.haskell.external.repl.StackReplsManager</implementation-class>
+        </component>
+
+        <component>
+            <implementation-class>intellij.haskell.external.HaskellDocumentationProvider
             </implementation-class>
         </component>
     </project-components>
 
     <actions>
-        <action id="Haskell.ShowType" class="intellij.haskell.view.ShowTypeAction"
+        <action id="Haskell.ShowType" class="intellij.haskell.action.ShowTypeAction"
                 text="Show Type" description="Show type of (selected) expression">
 
             <keyboard-shortcut first-keystroke="alt EQUALS" keymap="$default"/>
@@ -210,7 +223,7 @@
             <add-to-group group-id="CodeEditorViewGroup" anchor="last"/>
         </action>
 
-        <action id="Haskell.ShowInfo" class="intellij.haskell.view.ShowInfoAction"
+        <action id="Haskell.ShowInfo" class="intellij.haskell.action.ShowNameInfoAction"
                 text="Show Info" description="Show info about identifier in context of file">
 
             <keyboard-shortcut first-keystroke="alt shift EQUALS" keymap="$default"/>
@@ -221,13 +234,13 @@
             <add-to-group group-id="CodeEditorViewGroup" anchor="last"/>
         </action>
 
-        <action id="Haskell.HaskellFile" class="intellij.haskell.view.CreateHaskellFileAction"
+        <action id="Haskell.HaskellFile" class="intellij.haskell.action.CreateHaskellFileAction"
                 text="Haskell Module" description="Create new Haskell module">
             <add-to-group group-id="NewGroup" anchor="before" relative-to-action="NewFile"/>
         </action>
 
         <action id="Haskell.ShowErrorDescription"
-                class="intellij.haskell.view.ShowProblemMessageAction"
+                class="intellij.haskell.action.ShowProblemMessageAction"
                 text="Show error" description="Show error/warning description">
             <keyboard-shortcut first-keystroke="ctrl F10" keymap="$default"/>
             <keyboard-shortcut first-keystroke="meta F10" keymap="Mac OS X"/>
@@ -235,9 +248,15 @@
             <add-to-group group-id="CodeEditorViewGroup" anchor="last"/>
         </action>
 
-        <action id="Haskell.DownloadLibSources" class="intellij.haskell.view.AddDependencies"
-                text="Add Haskell package dependencies"
-                description="Download Haskell package sources and add them as source libraries to module">
+        <action id="Haskell.DownloadLibSources" class="intellij.haskell.action.DownloadLibrarySources"
+                text="Download Haskell library sources"
+                description="Download Haskell library sources and add them as source libraries to project">
+            <add-to-group group-id="ToolsMenu" anchor="last"/>
+        </action>
+
+        <action id="Haskell.RestartStackRepl" class="intellij.haskell.action.RestartStackRepls"
+                text="Restart Haskell Stack repls"
+                description="Restart Haskell Stack repls and refresh cache">
             <add-to-group group-id="ToolsMenu" anchor="last"/>
         </action>
     </actions>

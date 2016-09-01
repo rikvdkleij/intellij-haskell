@@ -1,16 +1,17 @@
 // This is a generated file. Not intended for manual editing.
 package intellij.haskell.psi.impl;
 
-import java.util.List;
-import org.jetbrains.annotations.*;
 import com.intellij.lang.ASTNode;
-import com.intellij.psi.PsiElement;
+import com.intellij.navigation.ItemPresentation;
 import com.intellij.psi.PsiElementVisitor;
 import com.intellij.psi.util.PsiTreeUtil;
-import static intellij.haskell.psi.HaskellTypes.*;
 import intellij.haskell.psi.*;
-import com.intellij.navigation.ItemPresentation;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
+import scala.Option;
 import scala.collection.Seq;
+
+import java.util.List;
 
 public class HaskellInstanceDeclarationImpl extends HaskellCompositeElementImpl implements HaskellInstanceDeclaration {
 
@@ -53,8 +54,8 @@ public class HaskellInstanceDeclarationImpl extends HaskellCompositeElementImpl 
 
   @Override
   @NotNull
-  public HaskellQcon getQcon() {
-    return findNotNullChildByClass(HaskellQcon.class);
+  public List<HaskellQName> getQNameList() {
+    return PsiTreeUtil.getChildrenOfTypeAsList(this, HaskellQName.class);
   }
 
   @Override
@@ -65,8 +66,8 @@ public class HaskellInstanceDeclarationImpl extends HaskellCompositeElementImpl 
 
   @Override
   @NotNull
-  public List<HaskellVarId> getVarIdList() {
-    return PsiTreeUtil.getChildrenOfTypeAsList(this, HaskellVarId.class);
+  public List<HaskellVarCon> getVarConList() {
+    return PsiTreeUtil.getChildrenOfTypeAsList(this, HaskellVarCon.class);
   }
 
   public String getName() {
@@ -79,6 +80,10 @@ public class HaskellInstanceDeclarationImpl extends HaskellCompositeElementImpl 
 
   public Seq<HaskellNamedElement> getIdentifierElements() {
     return HaskellPsiImplUtil.getIdentifierElements(this);
+  }
+
+  public Option<String> getModuleName() {
+    return HaskellPsiImplUtil.getModuleName(this);
   }
 
 }

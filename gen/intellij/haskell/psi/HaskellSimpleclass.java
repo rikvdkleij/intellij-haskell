@@ -1,34 +1,17 @@
 // This is a generated file. Not intended for manual editing.
 package intellij.haskell.psi;
 
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
+
 import java.util.List;
-import org.jetbrains.annotations.*;
-import com.intellij.psi.PsiElement;
 
 public interface HaskellSimpleclass extends HaskellCompositeElement {
 
+  @NotNull
+  List<HaskellQName> getQNameList();
+
   @Nullable
-  HaskellGtycon getGtycon();
-
-  @NotNull
-  List<HaskellQcon> getQconList();
-
-  @NotNull
-  List<HaskellQconOp> getQconOpList();
-
-  @NotNull
-  List<HaskellQvar> getQvarList();
-
-  @NotNull
-  List<HaskellSimpleclassTildePart> getSimpleclassTildePartList();
-
-  @NotNull
-  List<HaskellTtype> getTtypeList();
-
-  @NotNull
-  List<HaskellTypeSignature> getTypeSignatureList();
-
-  @NotNull
-  List<HaskellVarSym> getVarSymList();
+  HaskellTtype getTtype();
 
 }

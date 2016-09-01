@@ -23,7 +23,7 @@ public class HaskellLanguage extends Language {
 
     public static final HaskellLanguage Instance = new HaskellLanguage();
 
-    private HaskellLanguage() {
+    public HaskellLanguage() {
         super("Haskell");
     }
 

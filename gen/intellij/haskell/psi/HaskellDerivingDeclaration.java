@@ -1,10 +1,10 @@
 // This is a generated file. Not intended for manual editing.
 package intellij.haskell.psi;
 
-import java.util.List;
-import org.jetbrains.annotations.*;
-import com.intellij.psi.PsiElement;
 import com.intellij.navigation.ItemPresentation;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
+import scala.Option;
 import scala.collection.Seq;
 
 public interface HaskellDerivingDeclaration extends HaskellDeclarationElement {
@@ -13,7 +13,7 @@ public interface HaskellDerivingDeclaration extends HaskellDeclarationElement {
   HaskellInst getInst();
 
   @NotNull
-  HaskellQcon getQcon();
+  HaskellQName getQName();
 
   @Nullable
   HaskellScontext getScontext();
@@ -23,5 +23,7 @@ public interface HaskellDerivingDeclaration extends HaskellDeclarationElement {
   ItemPresentation getPresentation();
 
   Seq<HaskellNamedElement> getIdentifierElements();
+
+  Option<String> getModuleName();
 
 }

@@ -1,16 +1,17 @@
 // This is a generated file. Not intended for manual editing.
 package intellij.haskell.psi.impl;
 
-import java.util.List;
-import org.jetbrains.annotations.*;
 import com.intellij.lang.ASTNode;
-import com.intellij.psi.PsiElement;
+import com.intellij.navigation.ItemPresentation;
 import com.intellij.psi.PsiElementVisitor;
 import com.intellij.psi.util.PsiTreeUtil;
-import static intellij.haskell.psi.HaskellTypes.*;
 import intellij.haskell.psi.*;
-import com.intellij.navigation.ItemPresentation;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
+import scala.Option;
 import scala.collection.Seq;
+
+import java.util.List;
 
 public class HaskellTypeSignatureImpl extends HaskellCompositeElementImpl implements HaskellTypeSignature {
 
@@ -34,6 +35,12 @@ public class HaskellTypeSignatureImpl extends HaskellCompositeElementImpl implem
   }
 
   @Override
+  @NotNull
+  public List<HaskellQNames> getQNamesList() {
+    return PsiTreeUtil.getChildrenOfTypeAsList(this, HaskellQNames.class);
+  }
+
+  @Override
   @Nullable
   public HaskellScontext getScontext() {
     return findChildByClass(HaskellScontext.class);
@@ -41,20 +48,8 @@ public class HaskellTypeSignatureImpl extends HaskellCompositeElementImpl implem
 
   @Override
   @NotNull
-  public List<HaskellTtype> getTtypeList() {
-    return PsiTreeUtil.getChildrenOfTypeAsList(this, HaskellTtype.class);
-  }
-
-  @Override
-  @Nullable
-  public HaskellVarId getVarId() {
-    return findChildByClass(HaskellVarId.class);
-  }
-
-  @Override
-  @NotNull
-  public HaskellVars getVars() {
-    return findNotNullChildByClass(HaskellVars.class);
+  public HaskellTtype getTtype() {
+    return findNotNullChildByClass(HaskellTtype.class);
   }
 
   public String getName() {
@@ -67,6 +62,10 @@ public class HaskellTypeSignatureImpl extends HaskellCompositeElementImpl implem
 
   public Seq<HaskellNamedElement> getIdentifierElements() {
     return HaskellPsiImplUtil.getIdentifierElements(this);
+  }
+
+  public Option<String> getModuleName() {
+    return HaskellPsiImplUtil.getModuleName(this);
   }
 
 }

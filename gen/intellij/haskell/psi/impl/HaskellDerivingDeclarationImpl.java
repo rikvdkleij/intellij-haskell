@@ -1,15 +1,13 @@
 // This is a generated file. Not intended for manual editing.
 package intellij.haskell.psi.impl;
 
-import java.util.List;
-import org.jetbrains.annotations.*;
 import com.intellij.lang.ASTNode;
-import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiElementVisitor;
-import com.intellij.psi.util.PsiTreeUtil;
-import static intellij.haskell.psi.HaskellTypes.*;
-import intellij.haskell.psi.*;
 import com.intellij.navigation.ItemPresentation;
+import com.intellij.psi.PsiElementVisitor;
+import intellij.haskell.psi.*;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
+import scala.Option;
 import scala.collection.Seq;
 
 public class HaskellDerivingDeclarationImpl extends HaskellCompositeElementImpl implements HaskellDerivingDeclaration {
@@ -35,8 +33,8 @@ public class HaskellDerivingDeclarationImpl extends HaskellCompositeElementImpl 
 
   @Override
   @NotNull
-  public HaskellQcon getQcon() {
-    return findNotNullChildByClass(HaskellQcon.class);
+  public HaskellQName getQName() {
+    return findNotNullChildByClass(HaskellQName.class);
   }
 
   @Override
@@ -55,6 +53,10 @@ public class HaskellDerivingDeclarationImpl extends HaskellCompositeElementImpl 
 
   public Seq<HaskellNamedElement> getIdentifierElements() {
     return HaskellPsiImplUtil.getIdentifierElements(this);
+  }
+
+  public Option<String> getModuleName() {
+    return HaskellPsiImplUtil.getModuleName(this);
   }
 
 }

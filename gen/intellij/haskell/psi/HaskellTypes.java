@@ -1,9 +1,9 @@
 // This is a generated file. Not intended for manual editing.
 package intellij.haskell.psi;
 
-import com.intellij.psi.tree.IElementType;
-import com.intellij.psi.PsiElement;
 import com.intellij.lang.ASTNode;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.tree.IElementType;
 import intellij.haskell.psi.impl.*;
 
 public interface HaskellTypes {
@@ -15,14 +15,16 @@ public interface HaskellTypes {
   IElementType HS_CLAZZ = new HaskellCompositeElementType("HS_CLAZZ");
   IElementType HS_CNAME = new HaskellCompositeElementType("HS_CNAME");
   IElementType HS_COMMENTS = new HaskellCompositeElementType("HS_COMMENTS");
+  IElementType HS_CON = new HaskellCompositeElementType("HS_CON");
+  IElementType HS_CONID = new HaskellCompositeElementType("HS_CONID");
+  IElementType HS_CONOP = new HaskellCompositeElementType("HS_CONOP");
   IElementType HS_CONSTANT_FOLDED_PRAGMA = new HaskellCompositeElementType("HS_CONSTANT_FOLDED_PRAGMA");
   IElementType HS_CONSTR_1 = new HaskellCompositeElementType("HS_CONSTR_1");
   IElementType HS_CONSTR_2 = new HaskellCompositeElementType("HS_CONSTR_2");
   IElementType HS_CONSTR_3 = new HaskellCompositeElementType("HS_CONSTR_3");
   IElementType HS_CONSTR_4 = new HaskellCompositeElementType("HS_CONSTR_4");
+  IElementType HS_CONSYM = new HaskellCompositeElementType("HS_CONSYM");
   IElementType HS_CONTEXT = new HaskellCompositeElementType("HS_CONTEXT");
-  IElementType HS_CON_ID = new HaskellCompositeElementType("HS_CON_ID");
-  IElementType HS_CON_SYM = new HaskellCompositeElementType("HS_CON_SYM");
   IElementType HS_CTYPE_PRAGMA = new HaskellCompositeElementType("HS_CTYPE_PRAGMA");
   IElementType HS_DATA_DECLARATION = new HaskellCompositeElementType("HS_DATA_DECLARATION");
   IElementType HS_DATA_DECLARATION_DERIVING = new HaskellCompositeElementType("HS_DATA_DECLARATION_DERIVING");
@@ -37,22 +39,20 @@ public interface HaskellTypes {
   IElementType HS_FIELDDECL = new HaskellCompositeElementType("HS_FIELDDECL");
   IElementType HS_FILE_HEADER = new HaskellCompositeElementType("HS_FILE_HEADER");
   IElementType HS_FILE_HEADER_PRAGMA = new HaskellCompositeElementType("HS_FILE_HEADER_PRAGMA");
-  IElementType HS_FIRST_LINE_EXPRESSION = new HaskellCompositeElementType("HS_FIRST_LINE_EXPRESSION");
-  IElementType HS_FIXITY = new HaskellCompositeElementType("HS_FIXITY");
   IElementType HS_FIXITY_DECLARATION = new HaskellCompositeElementType("HS_FIXITY_DECLARATION");
   IElementType HS_FOREIGN_DECLARATION = new HaskellCompositeElementType("HS_FOREIGN_DECLARATION");
-  IElementType HS_GCON_SYM = new HaskellCompositeElementType("HS_GCON_SYM");
   IElementType HS_GENERAL_PRAGMA_CONTENT = new HaskellCompositeElementType("HS_GENERAL_PRAGMA_CONTENT");
   IElementType HS_GTYCON = new HaskellCompositeElementType("HS_GTYCON");
   IElementType HS_HADDOCK_PRAGMA = new HaskellCompositeElementType("HS_HADDOCK_PRAGMA");
   IElementType HS_IDECL = new HaskellCompositeElementType("HS_IDECL");
   IElementType HS_IMPORT_DECLARATION = new HaskellCompositeElementType("HS_IMPORT_DECLARATION");
+  IElementType HS_IMPORT_DECLARATIONS = new HaskellCompositeElementType("HS_IMPORT_DECLARATIONS");
   IElementType HS_IMPORT_EMPTY_SPEC = new HaskellCompositeElementType("HS_IMPORT_EMPTY_SPEC");
   IElementType HS_IMPORT_HIDING = new HaskellCompositeElementType("HS_IMPORT_HIDING");
   IElementType HS_IMPORT_HIDING_SPEC = new HaskellCompositeElementType("HS_IMPORT_HIDING_SPEC");
   IElementType HS_IMPORT_ID = new HaskellCompositeElementType("HS_IMPORT_ID");
   IElementType HS_IMPORT_IDS_SPEC = new HaskellCompositeElementType("HS_IMPORT_IDS_SPEC");
-  IElementType HS_IMPORT_MODULE = new HaskellCompositeElementType("HS_IMPORT_MODULE");
+  IElementType HS_IMPORT_PACKAGE_NAME = new HaskellCompositeElementType("HS_IMPORT_PACKAGE_NAME");
   IElementType HS_IMPORT_QUALIFIED = new HaskellCompositeElementType("HS_IMPORT_QUALIFIED");
   IElementType HS_IMPORT_QUALIFIED_AS = new HaskellCompositeElementType("HS_IMPORT_QUALIFIED_AS");
   IElementType HS_IMPORT_SPEC = new HaskellCompositeElementType("HS_IMPORT_SPEC");
@@ -64,43 +64,38 @@ public interface HaskellTypes {
   IElementType HS_INSTVAR = new HaskellCompositeElementType("HS_INSTVAR");
   IElementType HS_KIND_SIGNATURE = new HaskellCompositeElementType("HS_KIND_SIGNATURE");
   IElementType HS_LANGUAGE_PRAGMA = new HaskellCompositeElementType("HS_LANGUAGE_PRAGMA");
-  IElementType HS_LAST_LINE_EXPRESSION = new HaskellCompositeElementType("HS_LAST_LINE_EXPRESSION");
-  IElementType HS_LINE_EXPRESSION = new HaskellCompositeElementType("HS_LINE_EXPRESSION");
   IElementType HS_LINE_PRAGMA = new HaskellCompositeElementType("HS_LINE_PRAGMA");
   IElementType HS_LIST_TYPE = new HaskellCompositeElementType("HS_LIST_TYPE");
-  IElementType HS_LITERAL = new HaskellCompositeElementType("HS_LITERAL");
   IElementType HS_MINIMAL_PRAGMA = new HaskellCompositeElementType("HS_MINIMAL_PRAGMA");
+  IElementType HS_MODID = new HaskellCompositeElementType("HS_MODID");
   IElementType HS_MODULE_BODY = new HaskellCompositeElementType("HS_MODULE_BODY");
   IElementType HS_MODULE_DECLARATION = new HaskellCompositeElementType("HS_MODULE_DECLARATION");
-  IElementType HS_MOD_ID = new HaskellCompositeElementType("HS_MOD_ID");
   IElementType HS_NEWCONSTR = new HaskellCompositeElementType("HS_NEWCONSTR");
   IElementType HS_NEWCONSTR_FIELDDECL = new HaskellCompositeElementType("HS_NEWCONSTR_FIELDDECL");
   IElementType HS_NEWTYPE_DECLARATION = new HaskellCompositeElementType("HS_NEWTYPE_DECLARATION");
   IElementType HS_NOINLINE_PRAGMA = new HaskellCompositeElementType("HS_NOINLINE_PRAGMA");
   IElementType HS_NOUNPACK_PRAGMA = new HaskellCompositeElementType("HS_NOUNPACK_PRAGMA");
-  IElementType HS_OP = new HaskellCompositeElementType("HS_OP");
-  IElementType HS_OPS = new HaskellCompositeElementType("HS_OPS");
+  IElementType HS_OPTIONS_GHC_OPTION = new HaskellCompositeElementType("HS_OPTIONS_GHC_OPTION");
   IElementType HS_OPTIONS_GHC_PRAGMA = new HaskellCompositeElementType("HS_OPTIONS_GHC_PRAGMA");
   IElementType HS_OTHER_PRAGMA = new HaskellCompositeElementType("HS_OTHER_PRAGMA");
   IElementType HS_OVERLAP_PRAGMA = new HaskellCompositeElementType("HS_OVERLAP_PRAGMA");
-  IElementType HS_QCON = new HaskellCompositeElementType("HS_QCON");
-  IElementType HS_QCON_ID = new HaskellCompositeElementType("HS_QCON_ID");
-  IElementType HS_QCON_ID_QUALIFIER = new HaskellCompositeElementType("HS_QCON_ID_QUALIFIER");
-  IElementType HS_QCON_OP = new HaskellCompositeElementType("HS_QCON_OP");
-  IElementType HS_QCON_SYM = new HaskellCompositeElementType("HS_QCON_SYM");
   IElementType HS_QQ_EXPRESSION = new HaskellCompositeElementType("HS_QQ_EXPRESSION");
   IElementType HS_QUALIFIER = new HaskellCompositeElementType("HS_QUALIFIER");
   IElementType HS_QUASI_QUOTE = new HaskellCompositeElementType("HS_QUASI_QUOTE");
-  IElementType HS_QVAR = new HaskellCompositeElementType("HS_QVAR");
-  IElementType HS_QVAR_ID = new HaskellCompositeElementType("HS_QVAR_ID");
-  IElementType HS_QVAR_OP = new HaskellCompositeElementType("HS_QVAR_OP");
-  IElementType HS_QVAR_SYM = new HaskellCompositeElementType("HS_QVAR_SYM");
+  IElementType HS_Q_CON = new HaskellCompositeElementType("HS_Q_CON");
+  IElementType HS_Q_CON_QUALIFIER = new HaskellCompositeElementType("HS_Q_CON_QUALIFIER");
+  IElementType HS_Q_CON_QUALIFIER_1 = new HaskellCompositeElementType("HS_Q_CON_QUALIFIER_1");
+  IElementType HS_Q_CON_QUALIFIER_2 = new HaskellCompositeElementType("HS_Q_CON_QUALIFIER_2");
+  IElementType HS_Q_CON_QUALIFIER_3 = new HaskellCompositeElementType("HS_Q_CON_QUALIFIER_3");
+  IElementType HS_Q_CON_QUALIFIER_4 = new HaskellCompositeElementType("HS_Q_CON_QUALIFIER_4");
+  IElementType HS_Q_NAME = new HaskellCompositeElementType("HS_Q_NAME");
+  IElementType HS_Q_NAMES = new HaskellCompositeElementType("HS_Q_NAMES");
+  IElementType HS_Q_VAR_CON = new HaskellCompositeElementType("HS_Q_VAR_CON");
   IElementType HS_RULES_PRAGMA = new HaskellCompositeElementType("HS_RULES_PRAGMA");
+  IElementType HS_SCC_PRAGMA = new HaskellCompositeElementType("HS_SCC_PRAGMA");
   IElementType HS_SCONTEXT = new HaskellCompositeElementType("HS_SCONTEXT");
   IElementType HS_SIMPLECLASS = new HaskellCompositeElementType("HS_SIMPLECLASS");
-  IElementType HS_SIMPLECLASS_TILDE_PART = new HaskellCompositeElementType("HS_SIMPLECLASS_TILDE_PART");
   IElementType HS_SIMPLETYPE = new HaskellCompositeElementType("HS_SIMPLETYPE");
-  IElementType HS_SNL = new HaskellCompositeElementType("HS_SNL");
   IElementType HS_SOURCE_PRAGMA = new HaskellCompositeElementType("HS_SOURCE_PRAGMA");
   IElementType HS_SPECIALIZE_PRAGMA = new HaskellCompositeElementType("HS_SPECIALIZE_PRAGMA");
   IElementType HS_SUB_CONSTR_2 = new HaskellCompositeElementType("HS_SUB_CONSTR_2");
@@ -109,15 +104,15 @@ public interface HaskellTypes {
   IElementType HS_TYPE_DECLARATION = new HaskellCompositeElementType("HS_TYPE_DECLARATION");
   IElementType HS_TYPE_FAMILY_DECLARATION = new HaskellCompositeElementType("HS_TYPE_FAMILY_DECLARATION");
   IElementType HS_TYPE_FAMILY_TYPE = new HaskellCompositeElementType("HS_TYPE_FAMILY_TYPE");
-  IElementType HS_TYPE_FAMILY_TYPE_1 = new HaskellCompositeElementType("HS_TYPE_FAMILY_TYPE_1");
-  IElementType HS_TYPE_FAMILY_TYPE_2 = new HaskellCompositeElementType("HS_TYPE_FAMILY_TYPE_2");
   IElementType HS_TYPE_INSTANCE_DECLARATION = new HaskellCompositeElementType("HS_TYPE_INSTANCE_DECLARATION");
   IElementType HS_TYPE_SIGNATURE = new HaskellCompositeElementType("HS_TYPE_SIGNATURE");
   IElementType HS_UNPACK_NOUNPACK_PRAGMA = new HaskellCompositeElementType("HS_UNPACK_NOUNPACK_PRAGMA");
   IElementType HS_UNPACK_PRAGMA = new HaskellCompositeElementType("HS_UNPACK_PRAGMA");
-  IElementType HS_VARS = new HaskellCompositeElementType("HS_VARS");
-  IElementType HS_VAR_ID = new HaskellCompositeElementType("HS_VAR_ID");
-  IElementType HS_VAR_SYM = new HaskellCompositeElementType("HS_VAR_SYM");
+  IElementType HS_VAR = new HaskellCompositeElementType("HS_VAR");
+  IElementType HS_VARID = new HaskellCompositeElementType("HS_VARID");
+  IElementType HS_VAROP = new HaskellCompositeElementType("HS_VAROP");
+  IElementType HS_VARSYM = new HaskellCompositeElementType("HS_VARSYM");
+  IElementType HS_VAR_CON = new HaskellCompositeElementType("HS_VAR_CON");
 
   IElementType HS_AT = new HaskellTokenType("AT");
   IElementType HS_BACKQUOTE = new HaskellTokenType("BACKQUOTE");
@@ -125,18 +120,18 @@ public interface HaskellTypes {
   IElementType HS_CASE = new HaskellTokenType("CASE");
   IElementType HS_CHARACTER_LITERAL = new HaskellTokenType("CHARACTER_LITERAL");
   IElementType HS_CLASS = new HaskellTokenType("CLASS");
-  IElementType HS_COLON = new HaskellTokenType("COLON");
   IElementType HS_COLON_COLON = new HaskellTokenType("COLON_COLON");
   IElementType HS_COMMA = new HaskellTokenType("COMMA");
   IElementType HS_COMMENT = new HaskellTokenType("COMMENT");
-  IElementType HS_CONID_ID = new HaskellTokenType("CONID_ID");
   IElementType HS_CONSYM_ID = new HaskellTokenType("CONSYM_ID");
+  IElementType HS_CON_ID = new HaskellTokenType("CON_ID");
   IElementType HS_DATA = new HaskellTokenType("DATA");
   IElementType HS_DECIMAL = new HaskellTokenType("DECIMAL");
   IElementType HS_DEFAULT = new HaskellTokenType("DEFAULT");
   IElementType HS_DERIVING = new HaskellTokenType("DERIVING");
   IElementType HS_DO = new HaskellTokenType("DO");
   IElementType HS_DOT = new HaskellTokenType("DOT");
+  IElementType HS_DOT_DOT = new HaskellTokenType("DOT_DOT");
   IElementType HS_DOUBLE_RIGHT_ARROW = new HaskellTokenType("DOUBLE_RIGHT_ARROW");
   IElementType HS_ELSE = new HaskellTokenType("ELSE");
   IElementType HS_EQUAL = new HaskellTokenType("EQUAL");
@@ -186,8 +181,8 @@ public interface HaskellTypes {
   IElementType HS_TYPE_FAMILY = new HaskellTokenType("TYPE_FAMILY");
   IElementType HS_TYPE_INSTANCE = new HaskellTokenType("TYPE_INSTANCE");
   IElementType HS_UNDERSCORE = new HaskellTokenType("UNDERSCORE");
-  IElementType HS_VARID_ID = new HaskellTokenType("VARID_ID");
   IElementType HS_VARSYM_ID = new HaskellTokenType("VARSYM_ID");
+  IElementType HS_VAR_ID = new HaskellTokenType("VAR_ID");
   IElementType HS_VERTICAL_BAR = new HaskellTokenType("VERTICAL_BAR");
   IElementType HS_WHERE = new HaskellTokenType("WHERE");
 
@@ -215,6 +210,15 @@ public interface HaskellTypes {
       else if (type == HS_COMMENTS) {
         return new HaskellCommentsImpl(node);
       }
+      else if (type == HS_CON) {
+        return new HaskellConImpl(node);
+      }
+      else if (type == HS_CONID) {
+        return new HaskellConidImpl(node);
+      }
+      else if (type == HS_CONOP) {
+        return new HaskellConopImpl(node);
+      }
       else if (type == HS_CONSTANT_FOLDED_PRAGMA) {
         return new HaskellConstantFoldedPragmaImpl(node);
       }
@@ -230,14 +234,11 @@ public interface HaskellTypes {
       else if (type == HS_CONSTR_4) {
         return new HaskellConstr4Impl(node);
       }
+      else if (type == HS_CONSYM) {
+        return new HaskellConsymImpl(node);
+      }
       else if (type == HS_CONTEXT) {
         return new HaskellContextImpl(node);
-      }
-      else if (type == HS_CON_ID) {
-        return new HaskellConIdImpl(node);
-      }
-      else if (type == HS_CON_SYM) {
-        return new HaskellConSymImpl(node);
       }
       else if (type == HS_CTYPE_PRAGMA) {
         return new HaskellCtypePragmaImpl(node);
@@ -281,20 +282,11 @@ public interface HaskellTypes {
       else if (type == HS_FILE_HEADER_PRAGMA) {
         return new HaskellFileHeaderPragmaImpl(node);
       }
-      else if (type == HS_FIRST_LINE_EXPRESSION) {
-        return new HaskellFirstLineExpressionImpl(node);
-      }
-      else if (type == HS_FIXITY) {
-        return new HaskellFixityImpl(node);
-      }
       else if (type == HS_FIXITY_DECLARATION) {
         return new HaskellFixityDeclarationImpl(node);
       }
       else if (type == HS_FOREIGN_DECLARATION) {
         return new HaskellForeignDeclarationImpl(node);
-      }
-      else if (type == HS_GCON_SYM) {
-        return new HaskellGconSymImpl(node);
       }
       else if (type == HS_GENERAL_PRAGMA_CONTENT) {
         return new HaskellGeneralPragmaContentImpl(node);
@@ -311,6 +303,9 @@ public interface HaskellTypes {
       else if (type == HS_IMPORT_DECLARATION) {
         return new HaskellImportDeclarationImpl(node);
       }
+      else if (type == HS_IMPORT_DECLARATIONS) {
+        return new HaskellImportDeclarationsImpl(node);
+      }
       else if (type == HS_IMPORT_EMPTY_SPEC) {
         return new HaskellImportEmptySpecImpl(node);
       }
@@ -326,8 +321,8 @@ public interface HaskellTypes {
       else if (type == HS_IMPORT_IDS_SPEC) {
         return new HaskellImportIdsSpecImpl(node);
       }
-      else if (type == HS_IMPORT_MODULE) {
-        return new HaskellImportModuleImpl(node);
+      else if (type == HS_IMPORT_PACKAGE_NAME) {
+        return new HaskellImportPackageNameImpl(node);
       }
       else if (type == HS_IMPORT_QUALIFIED) {
         return new HaskellImportQualifiedImpl(node);
@@ -362,32 +357,23 @@ public interface HaskellTypes {
       else if (type == HS_LANGUAGE_PRAGMA) {
         return new HaskellLanguagePragmaImpl(node);
       }
-      else if (type == HS_LAST_LINE_EXPRESSION) {
-        return new HaskellLastLineExpressionImpl(node);
-      }
-      else if (type == HS_LINE_EXPRESSION) {
-        return new HaskellLineExpressionImpl(node);
-      }
       else if (type == HS_LINE_PRAGMA) {
         return new HaskellLinePragmaImpl(node);
       }
       else if (type == HS_LIST_TYPE) {
         return new HaskellListTypeImpl(node);
       }
-      else if (type == HS_LITERAL) {
-        return new HaskellLiteralImpl(node);
-      }
       else if (type == HS_MINIMAL_PRAGMA) {
         return new HaskellMinimalPragmaImpl(node);
+      }
+      else if (type == HS_MODID) {
+        return new HaskellModidImpl(node);
       }
       else if (type == HS_MODULE_BODY) {
         return new HaskellModuleBodyImpl(node);
       }
       else if (type == HS_MODULE_DECLARATION) {
         return new HaskellModuleDeclarationImpl(node);
-      }
-      else if (type == HS_MOD_ID) {
-        return new HaskellModIdImpl(node);
       }
       else if (type == HS_NEWCONSTR) {
         return new HaskellNewconstrImpl(node);
@@ -404,11 +390,8 @@ public interface HaskellTypes {
       else if (type == HS_NOUNPACK_PRAGMA) {
         return new HaskellNounpackPragmaImpl(node);
       }
-      else if (type == HS_OP) {
-        return new HaskellOpImpl(node);
-      }
-      else if (type == HS_OPS) {
-        return new HaskellOpsImpl(node);
+      else if (type == HS_OPTIONS_GHC_OPTION) {
+        return new HaskellOptionsGhcOptionImpl(node);
       }
       else if (type == HS_OPTIONS_GHC_PRAGMA) {
         return new HaskellOptionsGhcPragmaImpl(node);
@@ -419,21 +402,6 @@ public interface HaskellTypes {
       else if (type == HS_OVERLAP_PRAGMA) {
         return new HaskellOverlapPragmaImpl(node);
       }
-      else if (type == HS_QCON) {
-        return new HaskellQconImpl(node);
-      }
-      else if (type == HS_QCON_ID) {
-        return new HaskellQconIdImpl(node);
-      }
-      else if (type == HS_QCON_ID_QUALIFIER) {
-        return new HaskellQconIdQualifierImpl(node);
-      }
-      else if (type == HS_QCON_OP) {
-        return new HaskellQconOpImpl(node);
-      }
-      else if (type == HS_QCON_SYM) {
-        return new HaskellQconSymImpl(node);
-      }
       else if (type == HS_QQ_EXPRESSION) {
         return new HaskellQqExpressionImpl(node);
       }
@@ -443,20 +411,38 @@ public interface HaskellTypes {
       else if (type == HS_QUASI_QUOTE) {
         return new HaskellQuasiQuoteImpl(node);
       }
-      else if (type == HS_QVAR) {
-        return new HaskellQvarImpl(node);
+      else if (type == HS_Q_CON) {
+        return new HaskellQConImpl(node);
       }
-      else if (type == HS_QVAR_ID) {
-        return new HaskellQvarIdImpl(node);
+      else if (type == HS_Q_CON_QUALIFIER) {
+        return new HaskellQConQualifierImpl(node);
       }
-      else if (type == HS_QVAR_OP) {
-        return new HaskellQvarOpImpl(node);
+      else if (type == HS_Q_CON_QUALIFIER_1) {
+        return new HaskellQConQualifier1Impl(node);
       }
-      else if (type == HS_QVAR_SYM) {
-        return new HaskellQvarSymImpl(node);
+      else if (type == HS_Q_CON_QUALIFIER_2) {
+        return new HaskellQConQualifier2Impl(node);
+      }
+      else if (type == HS_Q_CON_QUALIFIER_3) {
+        return new HaskellQConQualifier3Impl(node);
+      }
+      else if (type == HS_Q_CON_QUALIFIER_4) {
+        return new HaskellQConQualifier4Impl(node);
+      }
+      else if (type == HS_Q_NAME) {
+        return new HaskellQNameImpl(node);
+      }
+      else if (type == HS_Q_NAMES) {
+        return new HaskellQNamesImpl(node);
+      }
+      else if (type == HS_Q_VAR_CON) {
+        return new HaskellQVarConImpl(node);
       }
       else if (type == HS_RULES_PRAGMA) {
         return new HaskellRulesPragmaImpl(node);
+      }
+      else if (type == HS_SCC_PRAGMA) {
+        return new HaskellSccPragmaImpl(node);
       }
       else if (type == HS_SCONTEXT) {
         return new HaskellScontextImpl(node);
@@ -464,14 +450,8 @@ public interface HaskellTypes {
       else if (type == HS_SIMPLECLASS) {
         return new HaskellSimpleclassImpl(node);
       }
-      else if (type == HS_SIMPLECLASS_TILDE_PART) {
-        return new HaskellSimpleclassTildePartImpl(node);
-      }
       else if (type == HS_SIMPLETYPE) {
         return new HaskellSimpletypeImpl(node);
-      }
-      else if (type == HS_SNL) {
-        return new HaskellSnlImpl(node);
       }
       else if (type == HS_SOURCE_PRAGMA) {
         return new HaskellSourcePragmaImpl(node);
@@ -497,12 +477,6 @@ public interface HaskellTypes {
       else if (type == HS_TYPE_FAMILY_TYPE) {
         return new HaskellTypeFamilyTypeImpl(node);
       }
-      else if (type == HS_TYPE_FAMILY_TYPE_1) {
-        return new HaskellTypeFamilyType1Impl(node);
-      }
-      else if (type == HS_TYPE_FAMILY_TYPE_2) {
-        return new HaskellTypeFamilyType2Impl(node);
-      }
       else if (type == HS_TYPE_INSTANCE_DECLARATION) {
         return new HaskellTypeInstanceDeclarationImpl(node);
       }
@@ -515,14 +489,20 @@ public interface HaskellTypes {
       else if (type == HS_UNPACK_PRAGMA) {
         return new HaskellUnpackPragmaImpl(node);
       }
-      else if (type == HS_VARS) {
-        return new HaskellVarsImpl(node);
+      else if (type == HS_VAR) {
+        return new HaskellVarImpl(node);
       }
-      else if (type == HS_VAR_ID) {
-        return new HaskellVarIdImpl(node);
+      else if (type == HS_VARID) {
+        return new HaskellVaridImpl(node);
       }
-      else if (type == HS_VAR_SYM) {
-        return new HaskellVarSymImpl(node);
+      else if (type == HS_VAROP) {
+        return new HaskellVaropImpl(node);
+      }
+      else if (type == HS_VARSYM) {
+        return new HaskellVarsymImpl(node);
+      }
+      else if (type == HS_VAR_CON) {
+        return new HaskellVarConImpl(node);
       }
       throw new AssertionError("Unknown element type: " + type);
     }

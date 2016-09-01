@@ -1,14 +1,15 @@
 // This is a generated file. Not intended for manual editing.
 package intellij.haskell.psi.impl;
 
-import java.util.List;
-import org.jetbrains.annotations.*;
 import com.intellij.lang.ASTNode;
-import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiElementVisitor;
 import com.intellij.psi.util.PsiTreeUtil;
-import static intellij.haskell.psi.HaskellTypes.*;
-import intellij.haskell.psi.*;
+import intellij.haskell.psi.HaskellOptionsGhcOption;
+import intellij.haskell.psi.HaskellOptionsGhcPragma;
+import intellij.haskell.psi.HaskellVisitor;
+import org.jetbrains.annotations.NotNull;
+
+import java.util.List;
 
 public class HaskellOptionsGhcPragmaImpl extends HaskellCompositeElementImpl implements HaskellOptionsGhcPragma {
 
@@ -27,8 +28,8 @@ public class HaskellOptionsGhcPragmaImpl extends HaskellCompositeElementImpl imp
 
   @Override
   @NotNull
-  public HaskellGeneralPragmaContent getGeneralPragmaContent() {
-    return findNotNullChildByClass(HaskellGeneralPragmaContent.class);
+  public List<HaskellOptionsGhcOption> getOptionsGhcOptionList() {
+    return PsiTreeUtil.getChildrenOfTypeAsList(this, HaskellOptionsGhcOption.class);
   }
 
 }

@@ -1,8 +1,8 @@
 // This is a generated file. Not intended for manual editing.
 package intellij.haskell.psi;
 
-import org.jetbrains.annotations.*;
 import com.intellij.psi.PsiElementVisitor;
+import org.jetbrains.annotations.NotNull;
 
 public class HaskellVisitor extends PsiElementVisitor {
 
@@ -27,19 +27,23 @@ public class HaskellVisitor extends PsiElementVisitor {
   }
 
   public void visitCname(@NotNull HaskellCname o) {
-    visitCompositeElement(o);
+    visitQualifiedNameElement(o);
   }
 
   public void visitComments(@NotNull HaskellComments o) {
     visitCompositeElement(o);
   }
 
-  public void visitConId(@NotNull HaskellConId o) {
+  public void visitCon(@NotNull HaskellCon o) {
+    visitCNameElement(o);
+  }
+
+  public void visitConid(@NotNull HaskellConid o) {
     visitNamedElement(o);
   }
 
-  public void visitConSym(@NotNull HaskellConSym o) {
-    visitNamedElement(o);
+  public void visitConop(@NotNull HaskellConop o) {
+    visitCNameElement(o);
   }
 
   public void visitConstantFoldedPragma(@NotNull HaskellConstantFoldedPragma o) {
@@ -60,6 +64,10 @@ public class HaskellVisitor extends PsiElementVisitor {
 
   public void visitConstr4(@NotNull HaskellConstr4 o) {
     visitCompositeElement(o);
+  }
+
+  public void visitConsym(@NotNull HaskellConsym o) {
+    visitNamedElement(o);
   }
 
   public void visitContext(@NotNull HaskellContext o) {
@@ -122,24 +130,12 @@ public class HaskellVisitor extends PsiElementVisitor {
     visitCompositeElement(o);
   }
 
-  public void visitFirstLineExpression(@NotNull HaskellFirstLineExpression o) {
-    visitLineExpressionElement(o);
-  }
-
-  public void visitFixity(@NotNull HaskellFixity o) {
-    visitCompositeElement(o);
-  }
-
   public void visitFixityDeclaration(@NotNull HaskellFixityDeclaration o) {
     visitCompositeElement(o);
   }
 
   public void visitForeignDeclaration(@NotNull HaskellForeignDeclaration o) {
     visitDeclarationElement(o);
-  }
-
-  public void visitGconSym(@NotNull HaskellGconSym o) {
-    visitCompositeElement(o);
   }
 
   public void visitGeneralPragmaContent(@NotNull HaskellGeneralPragmaContent o) {
@@ -159,6 +155,10 @@ public class HaskellVisitor extends PsiElementVisitor {
   }
 
   public void visitImportDeclaration(@NotNull HaskellImportDeclaration o) {
+    visitCompositeElement(o);
+  }
+
+  public void visitImportDeclarations(@NotNull HaskellImportDeclarations o) {
     visitCompositeElement(o);
   }
 
@@ -182,7 +182,7 @@ public class HaskellVisitor extends PsiElementVisitor {
     visitCompositeElement(o);
   }
 
-  public void visitImportModule(@NotNull HaskellImportModule o) {
+  public void visitImportPackageName(@NotNull HaskellImportPackageName o) {
     visitCompositeElement(o);
   }
 
@@ -230,14 +230,6 @@ public class HaskellVisitor extends PsiElementVisitor {
     visitCompositeElement(o);
   }
 
-  public void visitLastLineExpression(@NotNull HaskellLastLineExpression o) {
-    visitLineExpressionElement(o);
-  }
-
-  public void visitLineExpression(@NotNull HaskellLineExpression o) {
-    visitLineExpressionElement(o);
-  }
-
   public void visitLinePragma(@NotNull HaskellLinePragma o) {
     visitCompositeElement(o);
   }
@@ -246,15 +238,11 @@ public class HaskellVisitor extends PsiElementVisitor {
     visitCompositeElement(o);
   }
 
-  public void visitLiteral(@NotNull HaskellLiteral o) {
-    visitCompositeElement(o);
-  }
-
   public void visitMinimalPragma(@NotNull HaskellMinimalPragma o) {
     visitCompositeElement(o);
   }
 
-  public void visitModId(@NotNull HaskellModId o) {
+  public void visitModid(@NotNull HaskellModid o) {
     visitNamedElement(o);
   }
 
@@ -286,11 +274,7 @@ public class HaskellVisitor extends PsiElementVisitor {
     visitCompositeElement(o);
   }
 
-  public void visitOp(@NotNull HaskellOp o) {
-    visitCompositeElement(o);
-  }
-
-  public void visitOps(@NotNull HaskellOps o) {
+  public void visitOptionsGhcOption(@NotNull HaskellOptionsGhcOption o) {
     visitCompositeElement(o);
   }
 
@@ -306,23 +290,39 @@ public class HaskellVisitor extends PsiElementVisitor {
     visitCompositeElement(o);
   }
 
-  public void visitQcon(@NotNull HaskellQcon o) {
-    visitQVarConOpElement(o);
-  }
-
-  public void visitQconId(@NotNull HaskellQconId o) {
+  public void visitQCon(@NotNull HaskellQCon o) {
     visitCompositeElement(o);
   }
 
-  public void visitQconIdQualifier(@NotNull HaskellQconIdQualifier o) {
+  public void visitQConQualifier(@NotNull HaskellQConQualifier o) {
     visitCompositeElement(o);
   }
 
-  public void visitQconOp(@NotNull HaskellQconOp o) {
-    visitQVarConOpElement(o);
+  public void visitQConQualifier1(@NotNull HaskellQConQualifier1 o) {
+    visitQualifierElement(o);
   }
 
-  public void visitQconSym(@NotNull HaskellQconSym o) {
+  public void visitQConQualifier2(@NotNull HaskellQConQualifier2 o) {
+    visitQualifierElement(o);
+  }
+
+  public void visitQConQualifier3(@NotNull HaskellQConQualifier3 o) {
+    visitQualifierElement(o);
+  }
+
+  public void visitQConQualifier4(@NotNull HaskellQConQualifier4 o) {
+    visitQualifierElement(o);
+  }
+
+  public void visitQName(@NotNull HaskellQName o) {
+    visitQualifiedNameElement(o);
+  }
+
+  public void visitQNames(@NotNull HaskellQNames o) {
+    visitCompositeElement(o);
+  }
+
+  public void visitQVarCon(@NotNull HaskellQVarCon o) {
     visitCompositeElement(o);
   }
 
@@ -331,30 +331,18 @@ public class HaskellVisitor extends PsiElementVisitor {
   }
 
   public void visitQualifier(@NotNull HaskellQualifier o) {
-    visitNamedElement(o);
+    visitQualifierElement(o);
   }
 
   public void visitQuasiQuote(@NotNull HaskellQuasiQuote o) {
     visitCompositeElement(o);
   }
 
-  public void visitQvar(@NotNull HaskellQvar o) {
-    visitQVarConOpElement(o);
-  }
-
-  public void visitQvarId(@NotNull HaskellQvarId o) {
-    visitCompositeElement(o);
-  }
-
-  public void visitQvarOp(@NotNull HaskellQvarOp o) {
-    visitQVarConOpElement(o);
-  }
-
-  public void visitQvarSym(@NotNull HaskellQvarSym o) {
-    visitCompositeElement(o);
-  }
-
   public void visitRulesPragma(@NotNull HaskellRulesPragma o) {
+    visitCompositeElement(o);
+  }
+
+  public void visitSccPragma(@NotNull HaskellSccPragma o) {
     visitCompositeElement(o);
   }
 
@@ -366,15 +354,7 @@ public class HaskellVisitor extends PsiElementVisitor {
     visitCompositeElement(o);
   }
 
-  public void visitSimpleclassTildePart(@NotNull HaskellSimpleclassTildePart o) {
-    visitCompositeElement(o);
-  }
-
   public void visitSimpletype(@NotNull HaskellSimpletype o) {
-    visitCompositeElement(o);
-  }
-
-  public void visitSnl(@NotNull HaskellSnl o) {
     visitCompositeElement(o);
   }
 
@@ -410,14 +390,6 @@ public class HaskellVisitor extends PsiElementVisitor {
     visitCompositeElement(o);
   }
 
-  public void visitTypeFamilyType1(@NotNull HaskellTypeFamilyType1 o) {
-    visitCompositeElement(o);
-  }
-
-  public void visitTypeFamilyType2(@NotNull HaskellTypeFamilyType2 o) {
-    visitCompositeElement(o);
-  }
-
   public void visitTypeInstanceDeclaration(@NotNull HaskellTypeInstanceDeclaration o) {
     visitDeclarationElement(o);
   }
@@ -434,15 +406,27 @@ public class HaskellVisitor extends PsiElementVisitor {
     visitCompositeElement(o);
   }
 
-  public void visitVarId(@NotNull HaskellVarId o) {
+  public void visitVar(@NotNull HaskellVar o) {
+    visitCNameElement(o);
+  }
+
+  public void visitVarCon(@NotNull HaskellVarCon o) {
+    visitCompositeElement(o);
+  }
+
+  public void visitVarid(@NotNull HaskellVarid o) {
     visitNamedElement(o);
   }
 
-  public void visitVarSym(@NotNull HaskellVarSym o) {
+  public void visitVarop(@NotNull HaskellVarop o) {
+    visitCNameElement(o);
+  }
+
+  public void visitVarsym(@NotNull HaskellVarsym o) {
     visitNamedElement(o);
   }
 
-  public void visitVars(@NotNull HaskellVars o) {
+  public void visitCNameElement(@NotNull HaskellCNameElement o) {
     visitCompositeElement(o);
   }
 
@@ -454,15 +438,15 @@ public class HaskellVisitor extends PsiElementVisitor {
     visitCompositeElement(o);
   }
 
-  public void visitLineExpressionElement(@NotNull HaskellLineExpressionElement o) {
-    visitCompositeElement(o);
-  }
-
   public void visitNamedElement(@NotNull HaskellNamedElement o) {
     visitCompositeElement(o);
   }
 
-  public void visitQVarConOpElement(@NotNull HaskellQVarConOpElement o) {
+  public void visitQualifiedNameElement(@NotNull HaskellQualifiedNameElement o) {
+    visitCompositeElement(o);
+  }
+
+  public void visitQualifierElement(@NotNull HaskellQualifierElement o) {
     visitCompositeElement(o);
   }
 

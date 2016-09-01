@@ -1,9 +1,10 @@
 // This is a generated file. Not intended for manual editing.
 package intellij.haskell.psi;
 
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
+
 import java.util.List;
-import org.jetbrains.annotations.*;
-import com.intellij.psi.PsiElement;
 
 public interface HaskellInst extends HaskellCompositeElement {
 
@@ -14,7 +15,7 @@ public interface HaskellInst extends HaskellCompositeElement {
   List<HaskellInstvar> getInstvarList();
 
   @Nullable
-  HaskellQvar getQvar();
+  HaskellQName getQName();
 
   @Nullable
   HaskellTtype getTtype();

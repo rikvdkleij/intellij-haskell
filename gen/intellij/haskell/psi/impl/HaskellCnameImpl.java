@@ -1,14 +1,12 @@
 // This is a generated file. Not intended for manual editing.
 package intellij.haskell.psi.impl;
 
-import java.util.List;
-import org.jetbrains.annotations.*;
 import com.intellij.lang.ASTNode;
-import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiElementVisitor;
-import com.intellij.psi.util.PsiTreeUtil;
-import static intellij.haskell.psi.HaskellTypes.*;
 import intellij.haskell.psi.*;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
+import scala.Option;
 
 public class HaskellCnameImpl extends HaskellCompositeElementImpl implements HaskellCname {
 
@@ -27,26 +25,42 @@ public class HaskellCnameImpl extends HaskellCompositeElementImpl implements Has
 
   @Override
   @Nullable
-  public HaskellQcon getQcon() {
-    return findChildByClass(HaskellQcon.class);
+  public HaskellCon getCon() {
+    return findChildByClass(HaskellCon.class);
   }
 
   @Override
   @Nullable
-  public HaskellQconOp getQconOp() {
-    return findChildByClass(HaskellQconOp.class);
+  public HaskellConop getConop() {
+    return findChildByClass(HaskellConop.class);
   }
 
   @Override
   @Nullable
-  public HaskellQvar getQvar() {
-    return findChildByClass(HaskellQvar.class);
+  public HaskellVar getVar() {
+    return findChildByClass(HaskellVar.class);
   }
 
   @Override
   @Nullable
-  public HaskellQvarOp getQvarOp() {
-    return findChildByClass(HaskellQvarOp.class);
+  public HaskellVarop getVarop() {
+    return findChildByClass(HaskellVarop.class);
+  }
+
+  public String getName() {
+    return HaskellPsiImplUtil.getName(this);
+  }
+
+  public HaskellNamedElement getIdentifierElement() {
+    return HaskellPsiImplUtil.getIdentifierElement(this);
+  }
+
+  public Option<String> getQualifierName() {
+    return HaskellPsiImplUtil.getQualifierName(this);
+  }
+
+  public String getNameWithoutParens() {
+    return HaskellPsiImplUtil.getNameWithoutParens(this);
   }
 
 }

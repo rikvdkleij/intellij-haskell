@@ -27,6 +27,9 @@ public class HaskellParserUtil extends GeneratedParserUtilBase {
         return (builder.rawLookup(0) == HS_NEWLINE && builder.rawLookup(1) == TokenType.WHITE_SPACE) ||
                 builder.rawLookup(0) == HS_NEWLINE && builder.rawLookup(1) == HS_NEWLINE && builder.rawLookup(2) == TokenType.WHITE_SPACE ||
                 builder.rawLookup(0) == HS_NEWLINE && builder.rawLookup(1) == HS_NEWLINE && builder.rawLookup(2) == HS_NEWLINE && builder.rawLookup(3) == TokenType.WHITE_SPACE ||
-                builder.rawLookup(0) == HS_NEWLINE && builder.rawLookup(1) == HS_NEWLINE && builder.rawLookup(2) == HS_NEWLINE && builder.rawLookup(3) == HS_NEWLINE && builder.rawLookup(4) == TokenType.WHITE_SPACE;
+                builder.rawLookup(0) == HS_NEWLINE && builder.rawLookup(1) == HS_NEWLINE && builder.rawLookup(2) == HS_NEWLINE && builder.rawLookup(3) == HS_NEWLINE && builder.rawLookup(4) == TokenType.WHITE_SPACE ||
+                builder.rawLookup(0) == HS_NEWLINE && builder.rawLookup(1) == HS_NEWLINE && builder.rawLookup(2) == HS_NEWLINE && builder.rawLookup(3) == HS_NEWLINE && builder.rawLookup(4) == HS_NEWLINE && builder.rawLookup(5) == TokenType.WHITE_SPACE ||
+                builder.rawLookup(0) == HS_NEWLINE && builder.rawLookup(1) == HS_NEWLINE && builder.rawLookup(2) == HS_NEWLINE && builder.rawLookup(3) == HS_NEWLINE && builder.rawLookup(4) == HS_NEWLINE && builder.rawLookup(5) == HS_NEWLINE && builder.rawLookup(6) == TokenType.WHITE_SPACE ||
+                builder.rawLookup(0) == HS_NEWLINE && builder.rawLookup(1) == HS_NEWLINE && builder.rawLookup(2) == HS_NEWLINE && builder.rawLookup(3) == HS_NEWLINE && builder.rawLookup(4) == HS_NEWLINE && builder.rawLookup(5) == HS_NEWLINE && builder.rawLookup(6) == HS_NEWLINE && builder.rawLookup(7) == TokenType.WHITE_SPACE;
     }
 }

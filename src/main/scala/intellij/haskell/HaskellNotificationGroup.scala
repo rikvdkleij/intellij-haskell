@@ -21,17 +21,27 @@ import com.intellij.openapi.ui.MessageType
 
 object HaskellNotificationGroup {
 
-  private val Group = NotificationGroup.logOnlyGroup("Haskell")
+  private val LogOnlyGroup = NotificationGroup.logOnlyGroup("LogOnly Haskell")
+  private val BalloonGroup = NotificationGroup.balloonGroup("Balllon Haskell")
 
-  def notifyError(message: String) {
-    Group.createNotification(message, MessageType.ERROR).notify(null)
+
+  def logError(message: String) {
+    LogOnlyGroup.createNotification(message, MessageType.ERROR).notify(null)
   }
 
-  def notifyWarning(message: String) {
-    Group.createNotification(message, MessageType.WARNING).notify(null)
+  def logWarning(message: String) {
+    LogOnlyGroup.createNotification(message, MessageType.WARNING).notify(null)
   }
 
-  def notifyInfo(message: String) {
-    Group.createNotification(message, MessageType.INFO).notify(null)
+  def logInfo(message: String) {
+    LogOnlyGroup.createNotification(message, MessageType.INFO).notify(null)
+  }
+
+  def notifyBalloonWarning(message: String) {
+    BalloonGroup.createNotification(message, MessageType.WARNING).notify(null)
+  }
+
+  def notifyBalloonError(message: String) {
+    BalloonGroup.createNotification(message, MessageType.ERROR).notify(null)
   }
 }

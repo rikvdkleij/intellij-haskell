@@ -23,7 +23,7 @@ import static intellij.haskell.psi.HaskellTypes.*;
     private int commentDepth;
 %}
 
-%xstate NCOMMENT, TEX
+%xstate NCOMMENT
 
 control_character   = [\000 - \037]
 newline             = \r|\n|\r\n
@@ -62,7 +62,7 @@ hash                = "#"
 dollar              = "$"
 percentage          = "%"
 ampersand           = "&"
-star                = "*"
+star                = "*" | "★"
 plus                = "+"
 dot                 = "."
 slash               = "/"
@@ -80,11 +80,11 @@ vertical_bar        = "|"
 tilde               = "~"
 colon               = ":"
 
-// reservedop and not symbol, '..' is handled as two dots as symbol, see also special symbol (..)
 colon_colon         = "::"
 left_arrow          = "<-" | "\u2190"
 right_arrow         = "->" | "\u2192"
 double_right_arrow  = "=>" | "\u21D2"
+dot_dot             = ".."
 
  // special
 left_paren          = "("
@@ -102,8 +102,8 @@ quote               = "'"
 symbol_no_colon_dot = {equal} | {at} | {backslash} | {vertical_bar} | {tilde} | {exclamation_mark} | {hash} | {dollar} | {percentage} | {ampersand} | {star} |
                         {plus} | {slash} | {lt} | {gt} | {question_mark} | {caret} | {dash}
 
-var_id              = {small} ({small} | {large} | {digit} | {quote})* {hash}*
-varsym_id           = ({symbol_no_colon_dot} | {dot}) ({symbol_no_colon_dot} | {dot} | {colon})*
+var_id              = {question_mark}? {small} ({small} | {large} | {digit} | {quote})* {hash}*
+varsym_id           = {symbol_no_colon_dot} ({symbol_no_colon_dot} | {dot} | {colon})*
 
 con_id              = {large} ({small} | {large} | {digit} | {quote})* {hash}*
 consym_id           = {quote}? {colon} ({symbol_no_colon_dot} | {dot} | {colon})*
@@ -120,17 +120,11 @@ shebang_line        = {hash} {exclamation_mark} [^\r\n]*
 pragma_start        = "{-#"
 pragma_end          = "#-}"
 
-comment             = ({dash}{dash}[^\r\n]* | "\\begin{code}") {newline}?
+comment             = {dash}{dash}[^\r\n]* | "\\begin{code}"
 ncomment_start      = "{-"
 ncomment_end        = "-}"
 
 %%
-
-<TEX> {
-    [^\\]+            { return HS_NCOMMENT; }
-    "\\begin{code}"   { yybegin(YYINITIAL); return HS_NCOMMENT; }
-    \\+*              { return HS_NCOMMENT; }
-}
 
 <NCOMMENT> {
     {ncomment_start} {
@@ -159,7 +153,7 @@ ncomment_end        = "-}"
     .|{white_char}|{newline} {}
 }
 
-{ncomment_start}({white_char} | {newline} | [^#\-\}]) {
+{ncomment_start}({white_char} | {newline} | "-" | [^#\-\}]) {
     yybegin(NCOMMENT);
     commentDepth = 0;
     commentStart = getTokenStart();
@@ -173,7 +167,6 @@ ncomment_end        = "-}"
     {ncomment_end}        { return HS_NCOMMENT_END; }
     {pragma_start}        { return HS_PRAGMA_START; }
     {pragma_end}          { return HS_PRAGMA_END; }
-
 
     // not listed as reserved identifier but have meaning in certain context,
     // let's say specialreservedid
@@ -208,18 +201,17 @@ ncomment_end        = "-}"
     "_"                   { return HS_UNDERSCORE; }
 
     // identifiers
-    {var_id}              { return HS_VARID_ID; }
-    {con_id}              { return HS_CONID_ID; }
+    {var_id}              { return HS_VAR_ID; }
+    {con_id}              { return HS_CON_ID; }
 
     {character_literal}   { return HS_CHARACTER_LITERAL; }
     {string_literal}      { return HS_STRING_LITERAL; }
 
-    // reservedop and no symbol, except dot_dot because this one is handled as symbol
+    // reservedop and no symbol, except dot_dot because that one is handled as symbol
     {colon_colon}         { return HS_COLON_COLON; }
     {left_arrow}          { return HS_LEFT_ARROW; }
     {right_arrow}         { return HS_RIGHT_ARROW; }
     {double_right_arrow}  { return HS_DOUBLE_RIGHT_ARROW; }
-    {colon}               { return HS_COLON; }
 
     // number
     {decimal}             { return HS_DECIMAL; }
@@ -234,12 +226,13 @@ ncomment_end        = "-}"
     {vertical_bar}        { return HS_VERTICAL_BAR; }
     {tilde}               { return HS_TILDE; }
 
-    // symbols
-    {dot}                 { return HS_DOT; }
+    {dot_dot}             { return HS_DOT_DOT; }
 
     // symbol identifiers
     {varsym_id}           { return HS_VARSYM_ID; }
     {consym_id}           { return HS_CONSYM_ID; }
+
+    {dot}                 { return HS_DOT; }
 
     // special
     {left_paren}          { return HS_LEFT_PAREN; }
@@ -253,9 +246,6 @@ ncomment_end        = "-}"
     {right_brace}         { return HS_RIGHT_BRACE; }
 
     {quote}               { return HS_QUOTE; }
-
-    "\\end{code}"         { yybegin(TEX); return HS_NCOMMENT; }
-    "\\section"           { yybegin(TEX); return HS_NCOMMENT; }
 
     {quasi_quote_e_start} { return HS_QUASI_QUOTE_E_START; }
     {quasi_quote_d_start} { return HS_QUASI_QUOTE_D_START; }

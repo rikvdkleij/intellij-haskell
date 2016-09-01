@@ -1,14 +1,16 @@
 // This is a generated file. Not intended for manual editing.
 package intellij.haskell.psi.impl;
 
-import java.util.List;
-import org.jetbrains.annotations.*;
 import com.intellij.lang.ASTNode;
-import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiElementVisitor;
 import com.intellij.psi.util.PsiTreeUtil;
-import static intellij.haskell.psi.HaskellTypes.*;
-import intellij.haskell.psi.*;
+import intellij.haskell.psi.HaskellConstr4;
+import intellij.haskell.psi.HaskellQName;
+import intellij.haskell.psi.HaskellUnpackNounpackPragma;
+import intellij.haskell.psi.HaskellVisitor;
+import org.jetbrains.annotations.NotNull;
+
+import java.util.List;
 
 public class HaskellConstr4Impl extends HaskellCompositeElementImpl implements HaskellConstr4 {
 
@@ -27,20 +29,8 @@ public class HaskellConstr4Impl extends HaskellCompositeElementImpl implements H
 
   @Override
   @NotNull
-  public HaskellGconSym getGconSym() {
-    return findNotNullChildByClass(HaskellGconSym.class);
-  }
-
-  @Override
-  @NotNull
-  public HaskellQcon getQcon() {
-    return findNotNullChildByClass(HaskellQcon.class);
-  }
-
-  @Override
-  @NotNull
-  public HaskellQvar getQvar() {
-    return findNotNullChildByClass(HaskellQvar.class);
+  public List<HaskellQName> getQNameList() {
+    return PsiTreeUtil.getChildrenOfTypeAsList(this, HaskellQName.class);
   }
 
   @Override

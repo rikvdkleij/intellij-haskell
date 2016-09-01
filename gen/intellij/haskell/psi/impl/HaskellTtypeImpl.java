@@ -1,14 +1,14 @@
 // This is a generated file. Not intended for manual editing.
 package intellij.haskell.psi.impl;
 
-import java.util.List;
-import org.jetbrains.annotations.*;
 import com.intellij.lang.ASTNode;
-import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiElementVisitor;
 import com.intellij.psi.util.PsiTreeUtil;
-import static intellij.haskell.psi.HaskellTypes.*;
 import intellij.haskell.psi.*;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
+
+import java.util.List;
 
 public class HaskellTtypeImpl extends HaskellCompositeElementImpl implements HaskellTtype {
 
@@ -26,12 +26,6 @@ public class HaskellTtypeImpl extends HaskellCompositeElementImpl implements Has
   }
 
   @Override
-  @NotNull
-  public List<HaskellGtycon> getGtyconList() {
-    return PsiTreeUtil.getChildrenOfTypeAsList(this, HaskellGtycon.class);
-  }
-
-  @Override
   @Nullable
   public HaskellListType getListType() {
     return findChildByClass(HaskellListType.class);
@@ -39,8 +33,8 @@ public class HaskellTtypeImpl extends HaskellCompositeElementImpl implements Has
 
   @Override
   @NotNull
-  public List<HaskellQvar> getQvarList() {
-    return PsiTreeUtil.getChildrenOfTypeAsList(this, HaskellQvar.class);
+  public List<HaskellQName> getQNameList() {
+    return PsiTreeUtil.getChildrenOfTypeAsList(this, HaskellQName.class);
   }
 
   @Override
@@ -53,18 +47,6 @@ public class HaskellTtypeImpl extends HaskellCompositeElementImpl implements Has
   @NotNull
   public List<HaskellTypeSignature> getTypeSignatureList() {
     return PsiTreeUtil.getChildrenOfTypeAsList(this, HaskellTypeSignature.class);
-  }
-
-  @Override
-  @NotNull
-  public List<HaskellVarId> getVarIdList() {
-    return PsiTreeUtil.getChildrenOfTypeAsList(this, HaskellVarId.class);
-  }
-
-  @Override
-  @NotNull
-  public List<HaskellVarSym> getVarSymList() {
-    return PsiTreeUtil.getChildrenOfTypeAsList(this, HaskellVarSym.class);
   }
 
 }

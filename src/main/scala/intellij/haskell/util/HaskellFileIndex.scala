@@ -1,5 +1,5 @@
 /*
- * Copyright 2014 Rik van der Kleij
+ * Copyright 2016 Rik van der Kleij
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,25 +17,18 @@
 package intellij.haskell.util
 
 import java.io.{DataInput, DataOutput}
-import java.util.concurrent.{Executors, TimeUnit}
 
-import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.fileTypes.FileType
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.util.Computable
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.psi.search.{FileTypeIndex, GlobalSearchScope}
-import com.intellij.psi.{PsiFile, PsiManager}
-import com.intellij.util.CommonProcessors
 import com.intellij.util.indexing.FileBasedIndex.InputFilter
 import com.intellij.util.indexing._
 import com.intellij.util.io.{DataExternalizer, EnumeratorStringDescriptor, KeyDescriptor}
-import intellij.haskell.{HaskellFile, HaskellFileType, HaskellNotificationGroup, LiterateHaskellFileType}
-import gnu.trove.THashSet
+import intellij.haskell.module.HaskellModuleType
+import intellij.haskell.{HaskellFile, HaskellFileType}
 
 import scala.collection.JavaConversions._
-import scala.concurrent.duration.Duration
-import scala.concurrent.{Await, ExecutionContext, Future}
 
 class HaskellFileIndex extends ScalaScalarIndexExtension[String] {
 
@@ -58,7 +51,7 @@ class HaskellFileIndex extends ScalaScalarIndexExtension[String] {
   private class HaskellDataIndexer extends DataIndexer[String, Unit, FileContent] {
 
     def map(inputData: FileContent): java.util.Map[String, Unit] = {
-      Map(inputData.getFile.getNameWithoutExtension ->())
+      Map(inputData.getFile.getNameWithoutExtension -> ())
     }
   }
 
@@ -66,73 +59,36 @@ class HaskellFileIndex extends ScalaScalarIndexExtension[String] {
 
 object HaskellFileIndex {
 
-  private final val ExecutorService = Executors.newCachedThreadPool()
-  implicit private final val ExecContext = ExecutionContext.fromExecutorService(ExecutorService)
-
   private final val HaskellFileIndex: ID[String, Unit] = ID.create("HaskellFileIndex")
   private final val IndexVersion = 1
   private final val Descriptor = new EnumeratorStringDescriptor
   private final val HaskellModuleFilter = new FileBasedIndex.InputFilter {
 
     def acceptInput(file: VirtualFile): Boolean = {
-      file.getFileType == HaskellFileType.INSTANCE || file.getFileType == LiterateHaskellFileType.INSTANCE
+      file.getFileType == HaskellFileType.INSTANCE
     }
   }
 
-  def getAllNames(project: Project, searchScope: GlobalSearchScope): collection.Set[String] = {
-    val allKeys: java.util.Set[String] = new THashSet[String]
-    FileBasedIndex.getInstance.processAllKeys(HaskellFileIndex, new CommonProcessors.CollectProcessor[String](allKeys), searchScope, null)
-    allKeys
-  }
-
-  def getFilesByName(project: Project, name: String, searchScope: GlobalSearchScope): Iterable[HaskellFile] = {
+  def findFilesByName(project: Project, name: String, searchScope: GlobalSearchScope): Iterable[HaskellFile] = {
     getByName(project, name, searchScope)
   }
 
-  def getAllHaskellFiles(project: Project, searchScope: GlobalSearchScope): Iterable[HaskellFile] = {
-    val hsFiles = Future {
-      getFilesForType(HaskellFileType.INSTANCE, project, searchScope)
-    }
-    val lhsFiles = Future {
-      getFilesForType(LiterateHaskellFileType.INSTANCE, project, searchScope)
-    }
+  def findHaskellFiles(project: Project, searchScope: GlobalSearchScope): Iterable[HaskellFile] = {
+    getFilesForType(HaskellFileType.INSTANCE, project, searchScope)
+  }
 
-    val haskellFilesFuture = for {
-      hf <- hsFiles
-      lhsf <- lhsFiles
-    } yield hf ++ lhsf
-
-    haskellFilesFuture.onFailure { case e => HaskellNotificationGroup.notifyError(s"Error while getting all (Literate) Haskell files from file index: ${e.getMessage}")}
-
-    Await.result(haskellFilesFuture, Duration.create(2, TimeUnit.SECONDS))
+  def findProjectHaskellFiles(project: Project): Iterable[HaskellFile] = {
+    findHaskellFiles(project, HaskellModuleType.findHaskellProjectModules(project).map(GlobalSearchScope.moduleScope).reduce(_.uniteWith(_)))
   }
 
   private def getFilesForType(fileType: FileType, project: Project, searchScope: GlobalSearchScope) = {
-    val psiManager = PsiManager.getInstance(project)
-    ApplicationManager.getApplication.runReadAction(new Computable[Iterable[HaskellFile]] {
-      override def compute() = {
-        FileBasedIndex.getInstance.getContainingFiles(FileTypeIndex.NAME, fileType, searchScope).flatMap(convertToHaskellFile(_, psiManager))
-      }
-    })
+    val virtualFiles = FileBasedIndex.getInstance.getContainingFiles(FileTypeIndex.NAME, fileType, searchScope)
+    HaskellFileUtil.convertToHaskellFiles(virtualFiles, project)
   }
 
   private def getByName(project: Project, name: String, searchScope: GlobalSearchScope): Iterable[HaskellFile] = {
-    val psiManager = PsiManager.getInstance(project)
     val virtualFiles = getVirtualFilesByName(project, name, searchScope)
-
-    virtualFiles.flatMap(convertToHaskellFile(_, psiManager))
-  }
-
-  private def convertToHaskellFile(virtualFile: VirtualFile, psiManager: PsiManager): Option[HaskellFile] = {
-    val psiFile = ApplicationManager.getApplication.runReadAction(new Computable[PsiFile] {
-      override def compute(): PsiFile = {
-        psiManager.findFile(virtualFile)
-      }
-    })
-    psiFile match {
-      case f: HaskellFile => Some(f)
-      case _ => None
-    }
+    HaskellFileUtil.convertToHaskellFiles(virtualFiles, project)
   }
 
   private def getVirtualFilesByName(project: Project, name: String, searchScope: GlobalSearchScope) = {
@@ -141,9 +97,9 @@ object HaskellFileIndex {
 }
 
 /**
- * A specialization of FileBasedIndexExtension allowing to create a mapping [DataObject -> List of files containing this object]
- *
- */
+  * A specialization of FileBasedIndexExtension allowing to create a mapping [DataObject -> List of files containing this object]
+  *
+  */
 object ScalaScalarIndexExtension {
   final val VoidDataExternalizer: DataExternalizer[Unit] = new ScalaScalarIndexExtension.UnitDataExternalizer
 

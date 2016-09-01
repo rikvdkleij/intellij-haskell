@@ -1,15 +1,15 @@
 // This is a generated file. Not intended for manual editing.
 package intellij.haskell.psi.impl;
 
-import java.util.List;
-import org.jetbrains.annotations.*;
 import com.intellij.lang.ASTNode;
-import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiElementVisitor;
-import com.intellij.psi.util.PsiTreeUtil;
-import static intellij.haskell.psi.HaskellTypes.*;
-import intellij.haskell.psi.*;
 import com.intellij.navigation.ItemPresentation;
+import com.intellij.psi.PsiElementVisitor;
+import intellij.haskell.psi.HaskellExpression;
+import intellij.haskell.psi.HaskellNamedElement;
+import intellij.haskell.psi.HaskellTypeInstanceDeclaration;
+import intellij.haskell.psi.HaskellVisitor;
+import org.jetbrains.annotations.NotNull;
+import scala.Option;
 import scala.collection.Seq;
 
 public class HaskellTypeInstanceDeclarationImpl extends HaskellCompositeElementImpl implements HaskellTypeInstanceDeclaration {
@@ -43,6 +43,10 @@ public class HaskellTypeInstanceDeclarationImpl extends HaskellCompositeElementI
 
   public Seq<HaskellNamedElement> getIdentifierElements() {
     return HaskellPsiImplUtil.getIdentifierElements(this);
+  }
+
+  public Option<String> getModuleName() {
+    return HaskellPsiImplUtil.getModuleName(this);
   }
 
 }

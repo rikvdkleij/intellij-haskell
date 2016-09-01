@@ -20,7 +20,7 @@ import com.intellij.openapi.util.TextRange
 import com.intellij.patterns.PlatformPatterns
 import com.intellij.psi._
 import com.intellij.util.ProcessingContext
-import intellij.haskell.navigate.HaskellReference
+import intellij.haskell.navigation.HaskellReference
 import org.jetbrains.annotations.NotNull
 
 class HaskellReferenceContributor extends PsiReferenceContributor {
@@ -30,10 +30,8 @@ class HaskellReferenceContributor extends PsiReferenceContributor {
       @NotNull
       def getReferencesByElement(@NotNull element: PsiElement, @NotNull context: ProcessingContext): Array[PsiReference] = {
         element match {
-          case namedElement: HaskellNamedElement =>
-            Array(new HaskellReference(namedElement, TextRange.from(0, element.getTextLength)))
-          case _ =>
-            PsiReference.EMPTY_ARRAY
+          case ne: HaskellNamedElement => Array(new HaskellReference(ne, TextRange.from(0, element.getTextLength)))
+          case _ => PsiReference.EMPTY_ARRAY
         }
       }
     })

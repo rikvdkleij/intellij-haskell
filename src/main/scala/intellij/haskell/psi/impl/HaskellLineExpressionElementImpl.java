@@ -16,13 +16,12 @@
 
 package intellij.haskell.psi.impl;
 
-import com.intellij.extapi.psi.ASTWrapperPsiElement;
 import com.intellij.lang.ASTNode;
 import intellij.haskell.psi.HaskellLineExpressionElement;
 import org.jetbrains.annotations.NotNull;
 
-public abstract class HaskellLineExpressionElementImpl extends ASTWrapperPsiElement implements HaskellLineExpressionElement {
-    public HaskellLineExpressionElementImpl(@NotNull ASTNode node) {
+public abstract class HaskellLineExpressionElementImpl extends HaskellCompositeElementImpl implements HaskellLineExpressionElement {
+    HaskellLineExpressionElementImpl(@NotNull ASTNode node) {
         super(node);
     }
 }
