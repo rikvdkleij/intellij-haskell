@@ -50,7 +50,7 @@ abstract class StackReplProcess(val project: Project, val extraCommandOptions: S
   private final val Timeout = 1.seconds
 
   // Only experience with Linux and OSX for now
-  private final val DelayBetweenReads = if (OSUtil.isOSX || OSUtil.isWindows) 80 else 30
+  private final val DelayBetweenReads = if (OSUtil.isOSX || OSUtil.isWindows) 80 else 40
 
   protected def execute(command: String, waitCondition: Option[WaitCondition] = Some(StdOutput)): StackReplOutput = synchronized {
 
