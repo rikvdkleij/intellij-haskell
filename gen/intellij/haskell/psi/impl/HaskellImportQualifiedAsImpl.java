@@ -1,12 +1,14 @@
 // This is a generated file. Not intended for manual editing.
 package intellij.haskell.psi.impl;
 
+import java.util.List;
+import org.jetbrains.annotations.*;
 import com.intellij.lang.ASTNode;
+import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiElementVisitor;
-import intellij.haskell.psi.HaskellImportQualifiedAs;
-import intellij.haskell.psi.HaskellQualifier;
-import intellij.haskell.psi.HaskellVisitor;
-import org.jetbrains.annotations.NotNull;
+import com.intellij.psi.util.PsiTreeUtil;
+import static intellij.haskell.psi.HaskellTypes.*;
+import intellij.haskell.psi.*;
 
 public class HaskellImportQualifiedAsImpl extends HaskellCompositeElementImpl implements HaskellImportQualifiedAs {
 
