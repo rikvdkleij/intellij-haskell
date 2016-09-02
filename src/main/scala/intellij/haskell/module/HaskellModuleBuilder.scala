@@ -78,9 +78,12 @@ class HaskellModuleBuilder extends ModuleBuilder with SourcePathsBuilder with Mo
         }
       }
 
-      val stackWorkFolder = new File(rootModel.getProject.getBasePath, ".stack-work")
-      stackWorkFolder.mkdir()
-      contentEntry.addExcludeFolder(".stack-work")
+      val excludeFolderPath = getExcludeFolderPath
+      excludeFolderPath.mkdir()
+      val excludeFolderFile = Option(LocalFileSystem.getInstance.refreshAndFindFileByPath(FileUtil.toSystemIndependentName(excludeFolderPath.getAbsolutePath)))
+      excludeFolderFile.foreach { f =>
+        contentEntry.addExcludeFolder(f)
+      }
     }
   }
 
@@ -132,6 +135,10 @@ class HaskellModuleBuilder extends ModuleBuilder with SourcePathsBuilder with Mo
   override def getCustomOptionsStep(context: WizardContext, parentDisposable: Disposable): ModuleWizardStep = {
     isNewProject = true
     new HaskellModuleWizardStep(context, this)
+  }
+
+  private def getExcludeFolderPath = {
+    new File(getContentEntryPath, ".stack-work")
   }
 
   private def getTestSourcePath = {
