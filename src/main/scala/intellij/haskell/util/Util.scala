@@ -23,4 +23,8 @@ object Util {
   def escapeString(s: String) = {
     XmlStringUtil.escapeString(s, false, false)
   }
+
+  def removeAllSpaces(s: String) = {
+    s.replaceAll("""\s+""", "")
+  }
 }
