@@ -1,15 +1,15 @@
 // This is a generated file. Not intended for manual editing.
 package intellij.haskell.parser;
 
+import com.intellij.lang.ASTNode;
+import com.intellij.lang.LightPsiParser;
 import com.intellij.lang.PsiBuilder;
 import com.intellij.lang.PsiBuilder.Marker;
-import static intellij.haskell.psi.HaskellTypes.*;
-import static intellij.haskell.psi.HaskellParserUtil.*;
-import com.intellij.psi.tree.IElementType;
-import com.intellij.lang.ASTNode;
-import com.intellij.psi.tree.TokenSet;
 import com.intellij.lang.PsiParser;
-import com.intellij.lang.LightPsiParser;
+import com.intellij.psi.tree.IElementType;
+
+import static intellij.haskell.psi.HaskellParserUtil.*;
+import static intellij.haskell.psi.HaskellTypes.*;
 
 @SuppressWarnings({"SimplifiableIfStatement", "UnusedAssignment"})
 public class HaskellParser implements PsiParser, LightPsiParser {
@@ -4588,52 +4588,68 @@ public class HaskellParser implements PsiParser, LightPsiParser {
   }
 
   /* ********************************************************** */
-  // LEFT_BRACE? RIGHT_BRACE? SEMICOLON? BACKSLASH? &<<containsSpaces>> NEWLINE
+  // (LEFT_BRACE? RIGHT_BRACE? SEMICOLON? BACKSLASH? &<<containsSpaces>> NEWLINE)+
   static boolean nls(PsiBuilder b, int l) {
     if (!recursion_guard_(b, l, "nls")) return false;
     boolean r;
     Marker m = enter_section_(b);
     r = nls_0(b, l + 1);
-    r = r && nls_1(b, l + 1);
-    r = r && nls_2(b, l + 1);
-    r = r && nls_3(b, l + 1);
-    r = r && nls_4(b, l + 1);
+    int c = current_position_(b);
+    while (r) {
+      if (!nls_0(b, l + 1)) break;
+      if (!empty_element_parsed_guard_(b, "nls", c)) break;
+      c = current_position_(b);
+    }
+    exit_section_(b, m, null, r);
+    return r;
+  }
+
+  // LEFT_BRACE? RIGHT_BRACE? SEMICOLON? BACKSLASH? &<<containsSpaces>> NEWLINE
+  private static boolean nls_0(PsiBuilder b, int l) {
+    if (!recursion_guard_(b, l, "nls_0")) return false;
+    boolean r;
+    Marker m = enter_section_(b);
+    r = nls_0_0(b, l + 1);
+    r = r && nls_0_1(b, l + 1);
+    r = r && nls_0_2(b, l + 1);
+    r = r && nls_0_3(b, l + 1);
+    r = r && nls_0_4(b, l + 1);
     r = r && consumeToken(b, HS_NEWLINE);
     exit_section_(b, m, null, r);
     return r;
   }
 
   // LEFT_BRACE?
-  private static boolean nls_0(PsiBuilder b, int l) {
-    if (!recursion_guard_(b, l, "nls_0")) return false;
+  private static boolean nls_0_0(PsiBuilder b, int l) {
+    if (!recursion_guard_(b, l, "nls_0_0")) return false;
     consumeToken(b, HS_LEFT_BRACE);
     return true;
   }
 
   // RIGHT_BRACE?
-  private static boolean nls_1(PsiBuilder b, int l) {
-    if (!recursion_guard_(b, l, "nls_1")) return false;
+  private static boolean nls_0_1(PsiBuilder b, int l) {
+    if (!recursion_guard_(b, l, "nls_0_1")) return false;
     consumeToken(b, HS_RIGHT_BRACE);
     return true;
   }
 
   // SEMICOLON?
-  private static boolean nls_2(PsiBuilder b, int l) {
-    if (!recursion_guard_(b, l, "nls_2")) return false;
+  private static boolean nls_0_2(PsiBuilder b, int l) {
+    if (!recursion_guard_(b, l, "nls_0_2")) return false;
     consumeToken(b, HS_SEMICOLON);
     return true;
   }
 
   // BACKSLASH?
-  private static boolean nls_3(PsiBuilder b, int l) {
-    if (!recursion_guard_(b, l, "nls_3")) return false;
+  private static boolean nls_0_3(PsiBuilder b, int l) {
+    if (!recursion_guard_(b, l, "nls_0_3")) return false;
     consumeToken(b, HS_BACKSLASH);
     return true;
   }
 
   // &<<containsSpaces>>
-  private static boolean nls_4(PsiBuilder b, int l) {
-    if (!recursion_guard_(b, l, "nls_4")) return false;
+  private static boolean nls_0_4(PsiBuilder b, int l) {
+    if (!recursion_guard_(b, l, "nls_0_4")) return false;
     boolean r;
     Marker m = enter_section_(b, l, _AND_);
     r = containsSpaces(b, l + 1);
@@ -4993,7 +5009,7 @@ public class HaskellParser implements PsiParser, LightPsiParser {
   }
 
   /* ********************************************************** */
-  // PRAGMA_START onl ("OVERLAPPABLE" | "OVERLAPPING") onl PRAGMA_END
+  // PRAGMA_START onl ("OVERLAPPABLE" | "OVERLAPPING" | "OVERLAPS") onl PRAGMA_END
   public static boolean overlap_pragma(PsiBuilder b, int l) {
     if (!recursion_guard_(b, l, "overlap_pragma")) return false;
     if (!nextTokenIs(b, HS_PRAGMA_START)) return false;
@@ -5008,13 +5024,14 @@ public class HaskellParser implements PsiParser, LightPsiParser {
     return r;
   }
 
-  // "OVERLAPPABLE" | "OVERLAPPING"
+  // "OVERLAPPABLE" | "OVERLAPPING" | "OVERLAPS"
   private static boolean overlap_pragma_2(PsiBuilder b, int l) {
     if (!recursion_guard_(b, l, "overlap_pragma_2")) return false;
     boolean r;
     Marker m = enter_section_(b);
     r = consumeToken(b, "OVERLAPPABLE");
     if (!r) r = consumeToken(b, "OVERLAPPING");
+    if (!r) r = consumeToken(b, "OVERLAPS");
     exit_section_(b, m, null, r);
     return r;
   }

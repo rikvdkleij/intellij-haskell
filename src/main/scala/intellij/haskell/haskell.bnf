@@ -76,7 +76,7 @@ minimal_pragma              ::= PRAGMA_START onl "MINIMAL" onl general_pragma_co
 unpack_pragma               ::= PRAGMA_START onl "UNPACK" onl PRAGMA_END
 nounpack_pragma             ::= PRAGMA_START onl "NOUNPACK" onl PRAGMA_END
 ctype_pragma                ::= PRAGMA_START onl "CTYPE" onl general_pragma_content onl PRAGMA_END
-overlap_pragma              ::= PRAGMA_START onl ("OVERLAPPABLE" | "OVERLAPPING") onl PRAGMA_END
+overlap_pragma              ::= PRAGMA_START onl ("OVERLAPPABLE" | "OVERLAPPING" | "OVERLAPS") onl PRAGMA_END
 constant_folded_pragma      ::= PRAGMA_START onl "CONSTANT_FOLDED" onl general_pragma_content onl PRAGMA_END
 unpack_nounpack_pragma      ::= unpack_pragma | nounpack_pragma
 scc_pragma                  ::= PRAGMA_START onl "SCC" onl general_pragma_content onl PRAGMA_END
@@ -159,7 +159,7 @@ private literal             ::= DECIMAL | HEXADECIMAL | OCTAL | FLOAT | CHARACTE
 
 private onl                 ::= NEWLINE*                                                                             // optional new lines
 private onls                ::= (LEFT_BRACE? RIGHT_BRACE? SEMICOLON? BACKSLASH? &<<containsSpaces>> NEWLINE)*        // optional multiple new line and spaces
-private nls                 ::= (LEFT_BRACE? RIGHT_BRACE? SEMICOLON? BACKSLASH? &<<containsSpaces>> NEWLINE)         // one new line and spaces
+private nls                 ::= (LEFT_BRACE? RIGHT_BRACE? SEMICOLON? BACKSLASH? &<<containsSpaces>> NEWLINE)+        // multiple new lines and spaces
 
 comments                    ::= COMMENT | NCOMMENT | NCOMMENT_START | NCOMMENT_END  // rule is necessary to refer to various comment types in code
 
