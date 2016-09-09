@@ -20,7 +20,6 @@ import java.io.File
 
 import com.intellij.ide.util.projectWizard.{ModuleWizardStep, WizardContext}
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.ui.Messages
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.projectImport.ProjectImportProvider
 
@@ -31,13 +30,10 @@ class StackProjectImportProvider(builder: StackProjectImportBuilder) extends Pro
 
   override def canImport(fileOrDirectory: VirtualFile, project: Project): Boolean = {
     val file = new File(fileOrDirectory.getPath)
-    if (!file.isDirectory) {
-      Messages.showInfoMessage(project, "Please select directory of project", "Select directory")
-      false
+    if (file.isDirectory) {
+      file.listFiles().contains("stack.yaml")
     } else {
-      val canImport = file.listFiles().exists(_.getName.endsWith(".cabal"))
-      if (!canImport) Messages.showInfoMessage(project, "Cannot import Haskell stack project from " + file.getPath, "Cabal file has to exist")
-      canImport
+      false
     }
   }
 }
