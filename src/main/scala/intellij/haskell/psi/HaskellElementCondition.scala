@@ -66,6 +66,15 @@ object HaskellElementCondition {
     }
   }
 
+  final val ModuleDeclarationCondition = new Condition[PsiElement]() {
+    override def value(psiElement: PsiElement): Boolean = {
+      psiElement match {
+        case _: HaskellModuleDeclaration => true
+        case _ => false
+      }
+    }
+  }
+
   final val ExpressionCondition = new Condition[PsiElement]() {
     override def value(psiElement: PsiElement): Boolean = {
       psiElement match {

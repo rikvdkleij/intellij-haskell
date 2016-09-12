@@ -46,10 +46,13 @@ class HaskellReference(element: HaskellNamedElement, textRange: TextRange) exten
         } else {
           resolveResults.toArray
         }
-      case ne: HaskellNamedElement =>
+      case ne: HaskellNamedElement
+        if HaskellPsiUtil.findTopDeclarationParent(ne).isDefined |
+          HaskellPsiUtil.findModuleDeclarationParent(ne).isDefined |
+          HaskellPsiUtil.findImportDeclarationParent(ne).isDefined =>
         val isProjectFile = HaskellProjectUtil.isProjectFile(psiFile)
         findResolveResults(ne, isProjectFile, project).toArray
-      case _ => Array()
+      case _ => Array[ResolveResult]()
     }
     result.asInstanceOf[Array[ResolveResult]]
   }
