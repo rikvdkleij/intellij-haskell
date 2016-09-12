@@ -35,16 +35,16 @@ class ProjectStackReplProcess(project: Project) extends StackReplProcess(project
   }
 
   def findNameInfo(psiFile: PsiFile, name: String): StackReplOutput = {
-    checkFileIsLoadedAndExecute(psiFile, _ => execute(s":info $name", waitCondition = Some(StdOutputForInfo)))
+    checkFileIsLoadedAndExecute(psiFile, _ => execute(s":info $name"))
   }
 
   def load(psiFile: PsiFile): StackReplOutput = {
     val filePath = HaskellFileUtil.getFilePath(psiFile)
-    execute(":load " + filePath, waitCondition = Some(StdErrForLoad))
+    execute(":load " + filePath)
   }
 
   def load(moduleName: String): StackReplOutput = {
-    execute(":load " + moduleName, waitCondition = Some(StdErrForLoad))
+    execute(":load " + moduleName)
   }
 
   def getModuleIdentifiers(moduleName: String): StackReplOutput = synchronized {
@@ -58,7 +58,7 @@ class ProjectStackReplProcess(project: Project) extends StackReplProcess(project
   }
 
   def findAllAvailableLibraryModules: StackReplOutput = synchronized {
-    execute(":load", waitCondition = None)
+    execute(":load")
     loadedPsiFile = None
     execute(""":complete repl "import " """)
   }

@@ -22,14 +22,14 @@ class GlobalStackReplProcess(project: Project) extends StackReplProcess(project,
   override def getComponentName: String = "global-stack-repl"
 
   def getModuleIdentifiers(moduleName: String): StackReplOutput = synchronized {
-    execute(":module " + moduleName, waitCondition = None)
+    execute(":module " + moduleName)
     execute(":browse! " + moduleName)
   }
 
   def findNameInfo(moduleName: String, name: String): StackReplOutput = synchronized {
-    val output = execute(s":module $moduleName", waitCondition = None)
+    val output = execute(s":module $moduleName")
     if (output.stdErrLines.isEmpty) {
-      execute(s":info $name", waitCondition = Some(StdOutputForInfo))
+      execute(s":info $name")
     } else {
       StackReplOutput()
     }

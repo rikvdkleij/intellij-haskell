@@ -49,34 +49,11 @@ abstract class StackReplProcess(val project: Project, val extraCommandOptions: S
 
   private final val Timeout = 1.seconds
 
-  // Only experience with Linux and OSX for now
-  private final val DelayBetweenReads = if (OSUtil.isOSX || OSUtil.isWindows) 80 else 40
+  private final val EndOfOutputIndicator = "^IntellijHaskell^"
 
-  protected def execute(command: String, waitCondition: Option[WaitCondition] = Some(StdOutput)): StackReplOutput = synchronized {
+  private final val DelayBetweenReads = 10
 
-    var previousWait = true
-
-    def waitForOutput(stdOutResult: java.util.List[String], stdErrResult: java.util.List[String]): Boolean = {
-      val wait = waitCondition match {
-        case Some(StdOutput) =>
-          if (getStdErr.isEmpty && stdErrResult.isEmpty)
-            stdOutResult.isEmpty || !getStdOut.isEmpty
-          else
-            !getStdErr.isEmpty
-        case Some(StdOutputForInfo) =>
-          if (getStdErr.isEmpty && stdErrResult.isEmpty)
-            !getStdOut.isEmpty || !(stdOutResult.lastOption.exists(_.contains("--")) || stdOutResult.lastOption.exists(_.startsWith("infix")))
-          else
-            !getStdErr.isEmpty
-        case Some(StdErrForLoad) => (!stdOutResult.lastOption.exists(l => l.contains("Collecting type info") || l.contains("Failed"))) || !getStdErr.isEmpty
-        case _ => !getStdErr.isEmpty
-      }
-
-      // Wait one more time in case wait is false and previous wait is true. So do not wait longer if wait is two times false directly after each other
-      val waitResult = wait || previousWait
-      previousWait = wait
-      waitResult
-    }
+  protected def execute(command: String): StackReplOutput = synchronized {
 
     if (!available) {
       logInfo(s"Stack repl is not yet available. Command was: $command")
@@ -98,7 +75,7 @@ abstract class StackReplProcess(val project: Project, val extraCommandOptions: S
 
       val deadline = Timeout.fromNow
 
-      while (deadline.hasTimeLeft && waitForOutput(stdOutResult, stdErrResult)) {
+      while (deadline.hasTimeLeft && (stdOutResult.isEmpty || !stdOutResult.lastOption.exists(_.startsWith(EndOfOutputIndicator)))) {
         getStdOut.drainTo(stdOutResult)
         getStdErr.drainTo(stdErrResult)
 
@@ -178,6 +155,8 @@ abstract class StackReplProcess(val project: Project, val extraCommandOptions: S
         getStdOut.drainTo(stdOutResult)
         getStdErr.drainTo(stdErrResult)
 
+        writeToOutputStream(s""":set prompt "$EndOfOutputIndicator\\n"""")
+
         available = true
 
         logInfo("Stack repl is started.")
@@ -241,9 +220,10 @@ abstract class StackReplProcess(val project: Project, val extraCommandOptions: S
   }
 
   private def removePrompt(output: Seq[String]): Seq[String] = {
-    output.headOption.map(e => e.replaceFirst("""([\\*\w\s\\.]+>)+""", "")) match {
-      case Some(e) => e +: output.tail
-      case None => output
+    if (output.isEmpty) {
+      output
+    } else {
+      output.init
     }
   }
 
@@ -293,15 +273,6 @@ abstract class StackReplProcess(val project: Project, val extraCommandOptions: S
   override def initComponent(): Unit = {}
 
   override def disposeComponent(): Unit = {}
-
-  protected abstract class WaitCondition
-
-  protected case object StdOutput extends WaitCondition
-
-  protected case object StdOutputForInfo extends WaitCondition
-
-  protected case object StdErrForLoad extends WaitCondition
-
 }
 
 case class StackReplOutput(stdOutLines: Seq[String] = Seq(), stdErrLines: Seq[String] = Seq())
