@@ -255,8 +255,13 @@ object HaskellPsiImplUtil {
 
       def getPresentableText: String = {
         declarationElement.map(e => {
-          val info = StackReplsComponentsManager.findNameInfo(namedElement).headOption.map(_.declaration).getOrElse(getDeclarationInfo(e))
+          val declarationInfo = getDeclarationInfo(e)
+          if (declarationInfo.contains(namedElement.getName)) {
+            declarationInfo
+          } else {
+            val info = StackReplsComponentsManager.findNameInfo(namedElement).headOption.map(_.declaration).getOrElse(declarationInfo)
           s"${namedElement.getName} `in`  $info"
+          }
         }).orElse(HaskellPsiUtil.findImportDeclarationParent(namedElement).flatMap(_.getModuleName).map(n => s"import $n")).
           orElse(HaskellPsiUtil.findExpressionParent(namedElement).map(_.getText)).
           orElse(HaskellPsiUtil.findTopDeclarationParent(namedElement).map(_.getText)).
