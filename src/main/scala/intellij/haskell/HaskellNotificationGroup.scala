@@ -17,31 +17,34 @@
 package intellij.haskell
 
 import com.intellij.notification.NotificationGroup
-import com.intellij.openapi.ui.MessageType
+import com.intellij.openapi.ui.MessageType._
 
 object HaskellNotificationGroup {
 
-  private val LogOnlyGroup = NotificationGroup.logOnlyGroup("LogOnly Haskell")
-  private val BalloonGroup = NotificationGroup.balloonGroup("Balllon Haskell")
-
+  private val LogOnlyGroup = NotificationGroup.logOnlyGroup("Log only Haskell")
+  private val BalloonGroup = NotificationGroup.balloonGroup("Balloon Haskell")
 
   def logError(message: String) {
-    LogOnlyGroup.createNotification(message, MessageType.ERROR).notify(null)
+    LogOnlyGroup.createNotification(message, ERROR).notify(null)
   }
 
   def logWarning(message: String) {
-    LogOnlyGroup.createNotification(message, MessageType.WARNING).notify(null)
+    LogOnlyGroup.createNotification(message, WARNING).notify(null)
   }
 
   def logInfo(message: String) {
-    LogOnlyGroup.createNotification(message, MessageType.INFO).notify(null)
-  }
-
-  def notifyBalloonWarning(message: String) {
-    BalloonGroup.createNotification(message, MessageType.WARNING).notify(null)
+    LogOnlyGroup.createNotification(message, INFO).notify(null)
   }
 
   def notifyBalloonError(message: String) {
-    BalloonGroup.createNotification(message, MessageType.ERROR).notify(null)
+    BalloonGroup.createNotification(message, ERROR).notify(null)
+  }
+
+  def notifyBalloonWarning(message: String) {
+    BalloonGroup.createNotification(message, WARNING).notify(null)
+  }
+
+  def notifyBalloonInfo(message: String) {
+    BalloonGroup.createNotification(message, INFO).notify(null)
   }
 }
