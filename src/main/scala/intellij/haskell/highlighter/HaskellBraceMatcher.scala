@@ -27,7 +27,6 @@ object HaskellBraceMatcher {
     new BracePair(HaskellTypes.HS_PRAGMA_START, HaskellTypes.HS_PRAGMA_END, true),
     new BracePair(HaskellTypes.HS_LEFT_BRACE, HaskellTypes.HS_RIGHT_BRACE, true),
     new BracePair(HaskellTypes.HS_NCOMMENT_START, HaskellTypes.HS_NCOMMENT_END, true),
-    new BracePair(HaskellTypes.HS_BACKQUOTE, HaskellTypes.HS_BACKQUOTE, false),
     new BracePair(HaskellTypes.HS_LEFT_BRACKET, HaskellTypes.HS_RIGHT_BRACKET, false))
 }
 
