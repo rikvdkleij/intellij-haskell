@@ -610,14 +610,12 @@ public class HaskellParser implements PsiParser, LightPsiParser {
   }
 
   /* ********************************************************** */
-  // minimal_pragma | type_signature | cidecl
+  // cidecl
   public static boolean cdecl(PsiBuilder b, int l) {
     if (!recursion_guard_(b, l, "cdecl")) return false;
     boolean r;
     Marker m = enter_section_(b, l, _NONE_, HS_CDECL, "<cdecl>");
-    r = minimal_pragma(b, l + 1);
-    if (!r) r = type_signature(b, l + 1);
-    if (!r) r = cidecl(b, l + 1);
+    r = cidecl(b, l + 1);
     exit_section_(b, l, m, r, false, null);
     return r;
   }
@@ -696,13 +694,14 @@ public class HaskellParser implements PsiParser, LightPsiParser {
   }
 
   /* ********************************************************** */
-  // inline_pragma | noinline_pragma | specialize_pragma | type_declaration | instance_declaration | default_declaration |
-  //                                   newtype_declaration | data_declaration
+  // type_signature | inline_pragma | noinline_pragma | specialize_pragma | type_declaration | instance_declaration | default_declaration |
+  //                                   newtype_declaration | data_declaration | minimal_pragma
   static boolean cidecl(PsiBuilder b, int l) {
     if (!recursion_guard_(b, l, "cidecl")) return false;
     boolean r;
     Marker m = enter_section_(b);
-    r = inline_pragma(b, l + 1);
+    r = type_signature(b, l + 1);
+    if (!r) r = inline_pragma(b, l + 1);
     if (!r) r = noinline_pragma(b, l + 1);
     if (!r) r = specialize_pragma(b, l + 1);
     if (!r) r = type_declaration(b, l + 1);
@@ -710,6 +709,7 @@ public class HaskellParser implements PsiParser, LightPsiParser {
     if (!r) r = default_declaration(b, l + 1);
     if (!r) r = newtype_declaration(b, l + 1);
     if (!r) r = data_declaration(b, l + 1);
+    if (!r) r = minimal_pragma(b, l + 1);
     exit_section_(b, m, null, r);
     return r;
   }

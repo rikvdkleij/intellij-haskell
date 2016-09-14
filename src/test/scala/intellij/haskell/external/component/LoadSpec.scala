@@ -25,7 +25,7 @@ class LoadSpec extends FunSpec with Matchers with GivenWhenThen with BeforeAndAf
     val output = "/file/path/HaskellFile.hs:1:11:parse error on input     and so on"
 
     When("parsed to problem")
-    val problem = LoadComponent.parseLoadOutputLine("/file/path/HaskellFile.hs", output).asInstanceOf[LoadProblemInCurrentFile]
+    val problem = LoadComponent.parseErrorOutputLine("/file/path/HaskellFile.hs", output).asInstanceOf[LoadProblemInCurrentFile]
 
     Then("it should contain right data")
     problem.lineNr should equal(1)

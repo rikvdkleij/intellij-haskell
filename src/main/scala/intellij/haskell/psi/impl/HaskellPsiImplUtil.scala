@@ -23,6 +23,7 @@ import com.intellij.psi.impl.source.resolve.reference.ReferenceProvidersRegistry
 import com.intellij.psi.util.PsiTreeUtil
 import com.intellij.psi.{PsiElement, PsiReference, TokenType}
 import com.intellij.util.ArrayUtil
+import intellij.haskell.external.component.StackReplsComponentsManager
 import intellij.haskell.psi.HaskellTypes._
 import intellij.haskell.psi._
 import intellij.haskell.{HaskellFileType, HaskellIcons}
@@ -253,12 +254,10 @@ object HaskellPsiImplUtil {
       val declarationElement = HaskellPsiUtil.findDeclarationElementParent(namedElement)
 
       def getPresentableText: String = {
-        declarationElement.map(e =>
-          if (e.getIdentifierElements.map(_.getName).contains(namedElement.getName)) {
-            getDeclarationInfo(e)
-          } else {
-            namedElement.getName + " `in` " + getDeclarationInfo(e)
-          }).orElse(HaskellPsiUtil.findImportDeclarationParent(namedElement).flatMap(_.getModuleName).map(n => s"import $n")).
+        declarationElement.map(e => {
+          val info = StackReplsComponentsManager.findNameInfo(namedElement).headOption.map(_.declaration).getOrElse(getDeclarationInfo(e))
+          s"${namedElement.getName} `in`  $info"
+        }).orElse(HaskellPsiUtil.findImportDeclarationParent(namedElement).flatMap(_.getModuleName).map(n => s"import $n")).
           orElse(HaskellPsiUtil.findExpressionParent(namedElement).map(_.getText)).
           orElse(HaskellPsiUtil.findTopDeclarationParent(namedElement).map(_.getText)).
           map(_.replaceAll("""\s+""", " ")).
@@ -319,15 +318,12 @@ object HaskellPsiImplUtil {
   }
 
   def getIdentifierElements(classDeclaration: HaskellClassDeclaration): Seq[HaskellNamedElement] = {
-    Seq(classDeclaration.getQNameList.head.getIdentifierElement) ++
-      classDeclaration.getCdeclList.flatMap(cd => Option(cd.getTypeSignature).map(_.getIdentifierElements).getOrElse(Seq()) ++
-        Option(cd.getTypeDeclaration).map(_.getIdentifierElements).getOrElse(Seq()))
+    Seq(classDeclaration.getQNameList.head.getIdentifierElement)
   }
 
   def getIdentifierElements(instanceDeclaration: HaskellInstanceDeclaration): Seq[HaskellNamedElement] = {
     Seq(instanceDeclaration.getQNameList.head.getIdentifierElement) ++
-      Option(instanceDeclaration.getInst.getGtycon).map(g => findTypes(g)).getOrElse(Seq()) ++
-      instanceDeclaration.getInst.getInstvarList.flatMap(g => findTypes(g))
+      Option(instanceDeclaration.getInst).map(inst => findTypes(inst)).getOrElse(Seq())
   }
 
   def getIdentifierElements(typeFamilyDeclaration: HaskellTypeFamilyDeclaration): Seq[HaskellNamedElement] = {
@@ -381,6 +377,12 @@ object HaskellPsiImplUtil {
   }
 
   private def findTypes(element: PsiElement) = {
-    PsiTreeUtil.findChildrenOfAnyType(element, Seq(classOf[HaskellConid], classOf[HaskellConsym]): _*).toSeq.distinct
+    val elements = PsiTreeUtil.findChildrenOfAnyType(element, Seq(classOf[HaskellConid], classOf[HaskellConsym], classOf[HaskellTtype]): _*).toSeq.distinct
+
+    elements.flatMap {
+      case e: HaskellTtype => e.getQNameList.map(_.getIdentifierElement)
+      case e: HaskellNamedElement => Seq(e)
+      case _ => Seq()
+    }
   }
 }

@@ -39,11 +39,11 @@ object StackReplsComponentsManager {
   }
 
   def findImportedModuleIdentifiers(project: Project, moduleName: String) = {
-    findIterableIfCacheIsPreloaded(project, BrowseModuleComponent.findImportedModuleIdentifiers(project, moduleName))
+    findIfCacheIsPreloaded(project, BrowseModuleComponent.findImportedModuleIdentifiers(project, moduleName))
   }
 
   def findAllTopLevelModuleIdentifiers(project: Project, moduleName: String) = {
-    findIterableIfCacheIsPreloaded(project, BrowseModuleComponent.findAllTopLevelModuleIdentifiers(project, moduleName))
+    findIfCacheIsPreloaded(project, BrowseModuleComponent.findAllTopLevelModuleIdentifiers(project, moduleName))
   }
 
   def findDefinitionLocation(psiElement: PsiElement): Option[DefinitionLocation] = {
@@ -62,19 +62,8 @@ object StackReplsComponentsManager {
     findIfCacheIsPreloaded(project, GlobalProjectInfoComponent.findGlobalProjectInfo(project))
   }
 
-  // TODO: Consider to pass refresh action to load so refresh starts earlier
   def loadHaskellFile(psiFile: PsiFile, refreshCache: Boolean): LoadResult = {
-    val loadResult = LoadComponent.load(psiFile)
-
-    if (refreshCache && !loadResult.loadFailed) {
-      ApplicationManager.getApplication.executeOnPooledThread(new Runnable {
-        override def run(): Unit = {
-          refreshCachesAfterLoad(psiFile.getProject, psiFile)
-        }
-      })
-    }
-
-    loadResult
+    LoadComponent.load(psiFile, refreshCache, refreshCachesAfterLoad(psiFile))
   }
 
   def invalidateModuleIdentifierCaches(project: Project) = {
@@ -113,8 +102,10 @@ object StackReplsComponentsManager {
     TypeInfoComponent.findTypeInfoForSelection(psiFile, selectionModel)
   }
 
-  private def refreshCachesAfterLoad(project: Project, psiFile: PsiFile): Unit = {
-    findModuleName(psiFile).foreach(mn => BrowseModuleComponent.refreshForModule(project, mn))
+  private def refreshCachesAfterLoad(psiFile: PsiFile): Unit = {
+    val project = psiFile.getProject
+
+    findModuleName(psiFile).foreach(BrowseModuleComponent.refreshForModule(project, _))
 
     NameInfoComponent.refresh(psiFile)
     ProjectModulesComponent.refresh(project)
@@ -133,7 +124,7 @@ object StackReplsComponentsManager {
     prodModuleNames.flatMap(mn => BrowseModuleComponent.findImportedModuleIdentifiers(project, mn))
   }
 
-  private def findIterableIfCacheIsPreloaded[A](project: Project, f: => Iterable[A]) = {
+  private def findIfCacheIsPreloaded[A](project: Project, f: => Iterable[A]) = {
     isCachePreloaded.getOrElse(project, false).option(f).getOrElse(Iterable())
   }
 

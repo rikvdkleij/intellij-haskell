@@ -50,7 +50,7 @@ class StackReplsManager(project: Project) extends ProjectComponent {
   override def initComponent(): Unit = {}
 
   override def projectOpened(): Unit = {
-    ProgressManager.getInstance().run(new Task.Backgroundable(project, s"[$getComponentName] Starting Stack repls, building project and preloading cache") {
+    ProgressManager.getInstance().run(new Task.Backgroundable(project, s"[$getComponentName] Starting Stack repls, building project and preloading cache", false) {
 
       def run(progressIndicator: ProgressIndicator) {
         if (HaskellProjectUtil.isHaskellStackProject(project)) {

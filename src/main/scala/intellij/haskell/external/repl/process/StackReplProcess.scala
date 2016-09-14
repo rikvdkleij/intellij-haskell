@@ -39,20 +39,19 @@ abstract class StackReplProcess(val project: Project, val extraCommandOptions: S
 
   private[this] var available = false
 
-  private[this] val outputStream = new SyncVar[OutputStream]()
+  private[this] val outputStream = new SyncVar[OutputStream]
 
-  private[this] val stdOut = new SyncVar[LinkedBlockingDeque[String]]()
-  stdOut.put(new LinkedBlockingDeque[String])
+  private[this] val stdOut = new LinkedBlockingDeque[String]
 
-  private[this] val stdErr = new SyncVar[LinkedBlockingDeque[String]]()
-  stdErr.put(new LinkedBlockingDeque[String])
+  private[this] val stdErr = new LinkedBlockingDeque[String]
 
   private final val Timeout = 1.seconds
 
   private final val EndOfOutputIndicator = "^IntellijHaskell^"
 
-  private final val DelayBetweenReads = 10
+  private final val DelayBetweenReads = 10.millis
 
+  // TODO: In case no result because error of not available return None so non valid results can be invalidated
   protected def execute(command: String): StackReplOutput = synchronized {
 
     if (!available) {
@@ -66,25 +65,26 @@ abstract class StackReplProcess(val project: Project, val extraCommandOptions: S
     }
 
     try {
-      getStdOut.clear()
-      getStdErr.clear()
-      writeToOutputStream(command)
+      stdOut.clear()
+      stdErr.clear()
 
       val stdOutResult = new ArrayBuffer[String]
       val stdErrResult = new ArrayBuffer[String]
 
+      writeToOutputStream(command)
+
       val deadline = Timeout.fromNow
 
       while (deadline.hasTimeLeft && (stdOutResult.isEmpty || !stdOutResult.lastOption.exists(_.startsWith(EndOfOutputIndicator)))) {
-        getStdOut.drainTo(stdOutResult)
-        getStdErr.drainTo(stdErrResult)
+        stdOut.drainTo(stdOutResult)
+        stdErr.drainTo(stdErrResult)
 
         // We have to wait...
-        Thread.sleep(DelayBetweenReads)
+        Thread.sleep(DelayBetweenReads._1)
       }
 
-      getStdOut.drainTo(stdOutResult)
-      getStdErr.drainTo(stdErrResult)
+      stdOut.drainTo(stdOutResult)
+      stdErr.drainTo(stdErrResult)
 
       if (deadline.isOverdue()) {
         logError(s"No result from Stack repl within $Timeout. Command was: $command")
@@ -126,34 +126,34 @@ abstract class StackReplProcess(val project: Project, val extraCommandOptions: S
         process.run(
           new ProcessIO(
             in => outputStream.put(in),
-            (out: InputStream) => getStdOut.addAll(Source.fromInputStream(out).getLines.toSeq),
-            (err: InputStream) => getStdErr.addAll(Source.fromInputStream(err).getLines.toSeq)
+            (out: InputStream) => Source.fromInputStream(out).getLines.foreach(stdOut.add),
+            (err: InputStream) => Source.fromInputStream(err).getLines.foreach(stdErr.add)
           ))
 
-        getStdOut.clear()
-        getStdErr.clear()
+        stdOut.clear()
+        stdErr.clear()
 
         val stdOutResult = new ArrayBuffer[String]
         val stdErrResult = new ArrayBuffer[String]
 
-        while (stdOutResult.isEmpty || !getStdOut.isEmpty || !getStdErr.isEmpty) {
-          if (getStdOut.nonEmpty) {
-            logInfo(getStdOut.mkString("\n"))
+        while (stdOutResult.isEmpty || !stdOut.isEmpty || !stdErr.isEmpty) {
+          if (stdOut.nonEmpty) {
+            logInfo(stdOut.mkString("\n"))
           }
 
-          if (getStdErr.nonEmpty) {
-            logInfo(getStdErr.mkString("\n"))
+          if (stdErr.nonEmpty) {
+            logInfo(stdErr.mkString("\n"))
           }
 
-          getStdOut.drainTo(stdOutResult)
-          getStdErr.drainTo(stdErrResult)
+          stdOut.drainTo(stdOutResult)
+          stdErr.drainTo(stdErrResult)
 
           // We have to wait...
           Thread.sleep(200)
         }
 
-        getStdOut.drainTo(stdOutResult)
-        getStdErr.drainTo(stdErrResult)
+        stdOut.drainTo(stdOutResult)
+        stdErr.drainTo(stdErrResult)
 
         writeToOutputStream(s""":set prompt "$EndOfOutputIndicator\\n"""")
 
@@ -172,7 +172,7 @@ abstract class StackReplProcess(val project: Project, val extraCommandOptions: S
 
   def exit(): Unit = {
     if (!available) {
-      logError("Stack repl can not be stopped because it's already stopped or busy with stopping")
+      logWarning("Stack repl can not be stopped because it's already stopped or busy with stopping")
       return
     }
 
@@ -207,12 +207,12 @@ abstract class StackReplProcess(val project: Project, val extraCommandOptions: S
     logInfo("Stack repl is stopped.")
   }
 
-  private def getStdErr = stdErr.get
-
-  private def getStdOut = stdOut.get
-
   private def logError(message: String) = {
     HaskellNotificationGroup.logError(s"[$getComponentName] $message")
+  }
+
+  private def logWarning(message: String) = {
+    HaskellNotificationGroup.logWarning(s"[$getComponentName] $message")
   }
 
   private def logInfo(message: String) = {

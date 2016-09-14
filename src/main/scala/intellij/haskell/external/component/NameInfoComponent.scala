@@ -131,16 +131,16 @@ private[component] object NameInfoComponent {
 }
 
 sealed trait NameInfo {
-  private final val QualifierPattern = """([A-Z][A-Za-z\-\']+\.)+"""
+  private final val PackageQualifierPattern = """([a-z\-]+\-[\.0-9]+\:)?([A-Z][A-Za-z\-\']+\.)+"""
 
   def declaration: String
 
-  def unqualifiedDeclaration = declaration.replaceAll(QualifierPattern, "")
+  def unqualifiedDeclaration = declaration.replaceAll(PackageQualifierPattern, "")
 
   def escapedDeclaration = escapeString(declaration)
 }
 
-case class ProjectNameInfo(declaration: String, filePath: String, lineNr: Int, colNr: Int) extends NameInfo
+case class ProjectNameInfo(declaration: String, filePath: String, lineNr: Int, columnNr: Int) extends NameInfo
 
 case class LibraryNameInfo(declaration: String, moduleName: String) extends NameInfo
 

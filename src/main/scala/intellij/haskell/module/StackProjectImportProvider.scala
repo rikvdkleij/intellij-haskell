@@ -31,7 +31,7 @@ class StackProjectImportProvider(builder: StackProjectImportBuilder) extends Pro
   override def canImport(fileOrDirectory: VirtualFile, project: Project): Boolean = {
     val file = new File(fileOrDirectory.getPath)
     if (file.isDirectory) {
-      file.listFiles().contains("stack.yaml")
+      file.listFiles().map(_.getName).contains("stack.yaml")
     } else {
       false
     }

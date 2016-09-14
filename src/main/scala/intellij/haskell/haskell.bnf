@@ -260,13 +260,13 @@ newconstr                   ::= q_name atype | newconstr_fielddecl
 newconstr_fielddecl         ::= q_name onls LEFT_BRACE? onls q_name onls COLON_COLON onls ttype onls RIGHT_BRACE?
 
 private cdecls              ::= (cdecl | expression) (onls (cdecl | expression))*
-cdecl                       ::= minimal_pragma | type_signature | cidecl
+cdecl                       ::= cidecl
 
 private idecls              ::= (idecl | expression) (onls (idecl | expression))*
 idecl                       ::= cidecl
 
-private cidecl              ::= inline_pragma | noinline_pragma | specialize_pragma | type_declaration | instance_declaration | default_declaration |
-                                  newtype_declaration | data_declaration
+private cidecl              ::= type_signature | inline_pragma | noinline_pragma | specialize_pragma | type_declaration | instance_declaration | default_declaration |
+                                  newtype_declaration | data_declaration | minimal_pragma
 
 expression                  ::= line_expression+ last_line_expression | last_line_expression
 private line_expression     ::= general_id+ nls

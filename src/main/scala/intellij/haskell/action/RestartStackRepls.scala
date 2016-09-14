@@ -17,7 +17,8 @@
 package intellij.haskell.action
 
 import com.intellij.openapi.actionSystem.{AnAction, AnActionEvent}
-import com.intellij.openapi.progress.{ProgressIndicator, ProgressManager, Task}
+import com.intellij.openapi.progress.Task.Backgroundable
+import com.intellij.openapi.progress.{ProgressIndicator, ProgressManager}
 import com.intellij.openapi.project.Project
 import intellij.haskell.HaskellNotificationGroup
 import intellij.haskell.external._
@@ -47,7 +48,7 @@ class RestartStackRepls extends AnAction {
       case None => ()
       case Some(project) =>
         restarting.put(true)
-        ProgressManager.getInstance().run(new Task.Backgroundable(project, "Busy with restarting Stack repls") {
+        ProgressManager.getInstance().run(new Backgroundable(project, "Busy with restarting Stack repls", false) {
           def run(progressIndicator: ProgressIndicator) {
             try {
               val projectRepl = StackReplsManager.getProjectRepl(project)

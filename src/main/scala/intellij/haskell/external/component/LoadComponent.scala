@@ -16,6 +16,7 @@
 
 package intellij.haskell.external.component
 
+import com.intellij.openapi.application.ApplicationManager
 import com.intellij.psi.PsiFile
 import intellij.haskell.external.repl.StackReplsManager
 import intellij.haskell.util.{HaskellFileUtil, OSUtil, Util}
@@ -24,27 +25,37 @@ private[component] object LoadComponent {
 
   private final val ProblemPattern = """(.+):([\d]+):([\d]+):(.+)""".r
 
-  def load(psiFile: PsiFile): LoadResult = {
+  def load(psiFile: PsiFile, refreshCache: Boolean, postLoadAction: => Unit): LoadResult = {
     val project = psiFile.getProject
     val loadOutput = StackReplsManager.getProjectRepl(project).load(psiFile)
 
-    val isLoadFailed = loadOutput.stdOutLines.lastOption.exists(_.contains("Failed, "))
+    val loadFailed = loadOutput.stdOutLines.lastOption.exists(_.contains("Failed, "))
+    if (refreshCache && !loadFailed) {
+      ApplicationManager.getApplication.executeOnPooledThread(new Runnable {
+        override def run(): Unit = {
+          postLoadAction
+        }
+      })
+    }
 
     val filePath = HaskellFileUtil.makeFilePathAbsolute(HaskellFileUtil.getFilePath(psiFile), project)
-    val loadProblems = loadOutput.stdErrLines.distinct.map(l => parseLoadOutputLine(filePath, l))
-    val currentFileProblems = loadProblems.flatMap(lp => toLoadProblemInCurrentFile(lp))
+
+    // `distinct` because of https://github.com/commercialhaskell/intero/issues/258
+    val loadProblems = loadOutput.stdErrLines.distinct.map(l => parseErrorOutputLine(filePath, l))
+
+    val currentFileProblems = loadProblems.flatMap(convertToLoadProblemInCurrentFile)
     val otherFileProblems = loadProblems.diff(currentFileProblems)
-    LoadResult(currentFileProblems, otherFileProblems, isLoadFailed)
+    LoadResult(currentFileProblems, otherFileProblems, loadFailed)
   }
 
-  private def toLoadProblemInCurrentFile(loadProblem: LoadProblem) = {
+  private def convertToLoadProblemInCurrentFile(loadProblem: LoadProblem) = {
     loadProblem match {
       case lp: LoadProblemInCurrentFile => Some(lp)
       case _ => None
     }
   }
 
-  private[component] def parseLoadOutputLine(filePath: String, outputLine: String): LoadProblem = {
+  private[component] def parseErrorOutputLine(filePath: String, outputLine: String): LoadProblem = {
     outputLine match {
       case ProblemPattern(problemFilePath, lineNr, columnNr, message) =>
         val displayMessage = (if (message.startsWith("    ")) {

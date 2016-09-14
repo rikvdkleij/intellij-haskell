@@ -107,7 +107,6 @@ private[component] object BrowseModuleComponent {
       }
     )
 
-  // TODO: Consider to invalidate key if no value
   def findImportedModuleIdentifiers(project: Project, moduleName: String): Iterable[ModuleIdentifier] = {
     try {
       Cache.get(Key(project, moduleName, allTopLevel = false))
@@ -118,7 +117,6 @@ private[component] object BrowseModuleComponent {
     }
   }
 
-  // TODO: Consider to invalidate key if no value
   def findAllTopLevelModuleIdentifiers(project: Project, moduleName: String): Iterable[ModuleIdentifier] = {
     try {
       Cache.get(Key(project, moduleName, allTopLevel = true))

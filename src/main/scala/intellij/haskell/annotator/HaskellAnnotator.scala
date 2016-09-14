@@ -42,7 +42,10 @@ import scala.collection.JavaConversions._
 class HaskellAnnotator extends ExternalAnnotator[PsiFile, LoadResult] {
 
   private final val NoTypeSignaturePattern = """Warning: Top-level binding with no type signature: (.+)""".r
-  private final val UseLanguageExtensionPattern = """Error: Perhaps you intended to use (\w+) .*""".r
+  private final val UseLanguageExtensionPattern = """Error:.*Perhaps you intended to use (\w+).*""".r
+  private final val UseLanguageExtensionPattern2 = """Error:.*Use (\w+) to allow.*""".r
+  private final val UseLanguageExtensionPattern3 = """Error:.*You need (\w+) to.*""".r
+  private final val UseLanguageExtensionPattern4 = """Error:.*Try enabling (\w+).*""".r
   private final val PerhapsYouMeantPattern = """Error: Perhaps you meant(.*)""".r
   private final val DefinedButNotUsedPattern = """Warning: Defined but not used: ‘(.*)’""".r
   private final val NotInScopePattern = """Error: Not in scope.+ ‘(.*)’""".r
@@ -108,7 +111,10 @@ class HaskellAnnotator extends ExternalAnnotator[PsiFile, LoadResult] {
           }
         } else {
           normalizedMessage match {
-            case UseLanguageExtensionPattern(languageExtension) => ErrorAnnotationWithIntentionActions(tr, problem.normalizedMessage, problem.htmlMessage, Iterable(new LanguageExtensionIntentionAction(languageExtension)))
+            case UseLanguageExtensionPattern(languageExtension) => createLanguageExtensionIntentionAction(problem, tr, languageExtension)
+            case UseLanguageExtensionPattern2(languageExtension) => createLanguageExtensionIntentionAction(problem, tr, languageExtension)
+            case UseLanguageExtensionPattern3(languageExtension) => createLanguageExtensionIntentionAction(problem, tr, languageExtension)
+            case UseLanguageExtensionPattern4(languageExtension) => createLanguageExtensionIntentionAction(problem, tr, languageExtension)
             case PerhapsYouMeantPattern(suggestions) =>
               val intentionActions = SuggestionPattern.findAllMatchIn(suggestions).map(s => {
                 val suggestion = s.group(1)
@@ -132,6 +138,10 @@ class HaskellAnnotator extends ExternalAnnotator[PsiFile, LoadResult] {
         }
       }
     }
+  }
+
+  private def createLanguageExtensionIntentionAction(problem: LoadProblemInCurrentFile, tr: TextRange, languageExtension: String): ErrorAnnotationWithIntentionActions = {
+    ErrorAnnotationWithIntentionActions(tr, problem.normalizedMessage, problem.htmlMessage, Iterable(new LanguageExtensionIntentionAction(languageExtension)))
   }
 
   private def getProblemTextRange(psiFile: PsiFile, problem: LoadProblemInCurrentFile): Option[TextRange] = {
