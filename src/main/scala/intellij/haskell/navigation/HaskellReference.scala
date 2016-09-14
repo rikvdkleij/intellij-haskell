@@ -52,7 +52,7 @@ class HaskellReference(element: HaskellNamedElement, textRange: TextRange) exten
           HaskellPsiUtil.findModuleDeclarationParent(ne).isDefined |
           HaskellPsiUtil.findImportDeclarationParent(ne).isDefined =>
         val isProjectFile = HaskellProjectUtil.isProjectFile(psiFile)
-        findResolveResults(ne, isProjectFile, project).toArray
+        findResolveResults(ne, isProjectFile, project).toArray.distinct
       case _ => Array[ResolveResult]()
     }
     result.asInstanceOf[Array[ResolveResult]]
