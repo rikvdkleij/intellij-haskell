@@ -260,7 +260,7 @@ object HaskellPsiImplUtil {
             declarationInfo
           } else {
             val info = StackReplsComponentsManager.findNameInfo(namedElement).headOption.map(_.declaration).getOrElse(declarationInfo)
-          s"${namedElement.getName} `in`  $info"
+            s"${namedElement.getName} `in`  $info"
           }
         }).orElse(HaskellPsiUtil.findImportDeclarationParent(namedElement).flatMap(_.getModuleName).map(n => s"import $n")).
           orElse(HaskellPsiUtil.findExpressionParent(namedElement).map(_.getText)).
@@ -281,7 +281,6 @@ object HaskellPsiImplUtil {
   def getPresentation(declarationElement: HaskellDeclarationElement): ItemPresentation = {
 
     new HaskellItemPresentation(declarationElement) {
-
       def getPresentableText: String = {
         getDeclarationInfo(declarationElement)
       }
@@ -291,11 +290,15 @@ object HaskellPsiImplUtil {
   private final val EndOfDeclarationInfoIndicators = Seq(HS_NEWLINE, HS_EQUAL, HS_WHERE)
 
   private def getDeclarationInfo(declarationElement: HaskellDeclarationElement): String = {
-    val info = declarationElement match {
+    (declarationElement match {
       case md: HaskellModuleDeclaration => s"module ${md.getModid.getName}"
-      case de => de.getNode.getChildren(null).takeWhile(n => !EndOfDeclarationInfoIndicators.contains(n.getElementType)).filterNot(_.getElementType == TokenType.WHITE_SPACE).map(_.getText.trim).mkString(" ")
-    }
-    info.replaceAll("""\{\-(.+)\-\}""", " ").replaceAll("""\-\-(.+)""", "").replaceAll("""\s+""", " ")
+      case cd: HaskellClassDeclaration => declarationElement.getIdentifierElements.headOption.flatMap(ne => StackReplsComponentsManager.findNameInfo(ne).headOption.map(_.declaration)).getOrElse(getTruncatedInfo(declarationElement))
+      case de => getTruncatedInfo(declarationElement)
+    }).replaceAll("""\{\-(.+)\-\}""", " ").replaceAll("""\-\-(.+)""", "").replaceAll("""\s+""", " ")
+  }
+
+  private def getTruncatedInfo(declarationElement: HaskellDeclarationElement) = {
+    declarationElement.getNode.getChildren(null).takeWhile(n => !EndOfDeclarationInfoIndicators.contains(n.getElementType)).filterNot(_.getElementType == TokenType.WHITE_SPACE).map(_.getText.trim).mkString(" ")
   }
 
   def getName(declarationElement: HaskellDeclarationElement): String = {
@@ -323,11 +326,13 @@ object HaskellPsiImplUtil {
   }
 
   def getIdentifierElements(classDeclaration: HaskellClassDeclaration): Seq[HaskellNamedElement] = {
-    Seq(classDeclaration.getQNameList.head.getIdentifierElement)
+    Seq(classDeclaration.getQNameList.head.getIdentifierElement) ++
+      Option(classDeclaration.getCidecls).map(_.getTypeSignatureList.flatMap(_.getIdentifierElements)).getOrElse(Seq()) ++
+      Option(classDeclaration.getCidecls).map(_.getTypeDeclarationList.flatMap(_.getIdentifierElements)).getOrElse(Seq())
   }
 
   def getIdentifierElements(instanceDeclaration: HaskellInstanceDeclaration): Seq[HaskellNamedElement] = {
-    Seq(instanceDeclaration.getQNameList.head.getIdentifierElement) ++
+    Seq(instanceDeclaration.getQName.getIdentifierElement) ++
       Option(instanceDeclaration.getInst).map(inst => findTypes(inst)).getOrElse(Seq())
   }
 

@@ -121,9 +121,12 @@ class HaskellReference(element: HaskellNamedElement, textRange: TextRange) exten
   private def findReferenceByLibraryNameInfo(libraryNameInfo: LibraryNameInfo, namedElement: HaskellNamedElement, project: Project): Iterable[HaskellNamedElement] = {
     HaskellProjectUtil.findFilesForModule(libraryNameInfo.moduleName, project).flatMap { f =>
       val topLevelDeclarationElements = HaskellPsiUtil.findTopLevelDeclarationElements(f)
-      val referenceByNameInfo = topLevelDeclarationElements.flatMap(_.getIdentifierElements).filter(_.getName == namedElement.getName).find(ne => StackReplsComponentsManager.findNameInfo(ne).exists(ni => removeAllSpaces(ni.unqualifiedDeclaration) == removeAllSpaces(libraryNameInfo.declaration)))
+      val referenceByNameInfo = topLevelDeclarationElements.flatMap(_.getIdentifierElements).
+        filter(_.getName == namedElement.getName).
+        filter(ne => StackReplsComponentsManager.findNameInfo(ne).exists(ni => removeAllSpaces(ni.unqualifiedDeclaration) == removeAllSpaces(libraryNameInfo.declaration)))
+
       if (referenceByNameInfo.isEmpty) {
-        topLevelDeclarationElements.filter(de => de.getIdentifierElements.forall(e => libraryNameInfo.unqualifiedDeclaration.contains(e.getName))).flatMap(_.getIdentifierElements.headOption)
+        topLevelDeclarationElements.filter(de => de.getIdentifierElements.forall(e => libraryNameInfo.unqualifiedDeclaration.contains(e.getName))).flatMap(_.getIdentifierElements).filter(_.getName == namedElement.getName)
       } else {
         referenceByNameInfo
       }

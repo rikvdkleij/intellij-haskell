@@ -38,12 +38,12 @@ object StackReplsComponentsManager {
     final def option[A](a: => A): Option[A] = if (b) Some(a) else None
   }
 
-  def findImportedModuleIdentifiers(project: Project, moduleName: String) = {
-    findIfCacheIsPreloaded(project, BrowseModuleComponent.findImportedModuleIdentifiers(project, moduleName))
+  def findImportedModuleIdentifiers(project: Project, moduleName: String, psiFile: PsiFile) = {
+    findIfCacheIsPreloaded(project, BrowseModuleComponent.findImportedModuleIdentifiers(project, moduleName, Some(psiFile)))
   }
 
-  def findAllTopLevelModuleIdentifiers(project: Project, moduleName: String) = {
-    findIfCacheIsPreloaded(project, BrowseModuleComponent.findAllTopLevelModuleIdentifiers(project, moduleName))
+  def findAllTopLevelModuleIdentifiers(project: Project, moduleName: String, psiFile: PsiFile) = {
+    findIfCacheIsPreloaded(project, BrowseModuleComponent.findAllTopLevelModuleIdentifiers(project, moduleName, Some(psiFile)))
   }
 
   def findDefinitionLocation(psiElement: PsiElement): Option[DefinitionLocation] = {
@@ -116,12 +116,12 @@ object StackReplsComponentsManager {
 
   private def preloadAllLibraryModuleIdentifiers(project: Project): Unit = {
     val libraryModuleNames = GlobalProjectInfoComponent.findGlobalProjectInfo(project).availableInTestLibraryModuleNames
-    libraryModuleNames.flatMap(mn => BrowseModuleComponent.findImportedModuleIdentifiers(project, mn))
+    libraryModuleNames.flatMap(mn => BrowseModuleComponent.findImportedModuleIdentifiers(project, mn, None))
   }
 
   private def preloadAllProjectModuleIdentifiers(project: Project): Unit = {
     val prodModuleNames = ProjectModulesComponent.findAvailableModules(project).prodModuleNames
-    prodModuleNames.flatMap(mn => BrowseModuleComponent.findImportedModuleIdentifiers(project, mn))
+    prodModuleNames.flatMap(mn => BrowseModuleComponent.findImportedModuleIdentifiers(project, mn, None))
   }
 
   private def findIfCacheIsPreloaded[A](project: Project, f: => Iterable[A]) = {

@@ -108,7 +108,7 @@ varsym_id           = {symbol_no_colon_dot} ({symbol_no_colon_dot} | {dot} | {co
 con_id              = {large} ({small} | {large} | {digit} | {quote})* {hash}*
 consym_id           = {quote}? {colon} ({symbol_no_colon_dot} | {dot} | {colon})*
 
-quasi_quote_v_start = {left_bracket} {var_id} {vertical_bar}
+quasi_quote_v_start = {left_bracket} ({var_id} | {con_id} | {dot})+ {vertical_bar}
 quasi_quote_e_start = {left_bracket} "e"? {vertical_bar}
 quasi_quote_d_start = {left_bracket} "d" {vertical_bar}
 quasi_quote_t_start = {left_bracket} "t" {vertical_bar}

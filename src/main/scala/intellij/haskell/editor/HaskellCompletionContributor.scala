@@ -145,7 +145,7 @@ class HaskellCompletionContributor extends CompletionContributor {
           resultSet.addAllElements(getIdsFromSpecIdsImportedModules(project, psiFile, importDeclarations).toStream)
 
           val moduleName = HaskellPsiUtil.findModuleName(psiFile)
-          val topLevelLookupElements = moduleName.map(mn => findAllTopLevelModuleIdentifiers(project, mn).
+          val topLevelLookupElements = moduleName.map(mn => findAllTopLevelModuleIdentifiers(project, mn, psiFile).
             map(mi => createTopLevelLookupElement(mi)).toStream).getOrElse(Stream())
           resultSet.addAllElements(topLevelLookupElements)
 
@@ -238,7 +238,7 @@ class HaskellCompletionContributor extends CompletionContributor {
   private def findAvailableIdsForImportModuleSpec(project: Project, element: PsiElement, psiFile: PsiFile) = {
     (for {
       moduleName <- HaskellPsiUtil.findImportDeclarationParent(element).flatMap(_.getModuleName)
-    } yield findImportedModuleIdentifiers(project, moduleName).map(m => createLookupElement(m, addParens = true))).getOrElse(Stream())
+    } yield findImportedModuleIdentifiers(project, moduleName, psiFile).map(m => createLookupElement(m, addParens = true))).getOrElse(Stream())
   }
 
   private def findAvailableModules(project: Project, psiFile: PsiFile) = {
@@ -327,7 +327,7 @@ class HaskellCompletionContributor extends CompletionContributor {
     val importInfos = getFullImportedModules(psiFile, importDeclarations)
 
     val lookupElements = importInfos.map(importInfo => Future {
-      val moduleIdentifiers = findImportedModuleIdentifiers(project, importInfo.moduleName)
+      val moduleIdentifiers = findImportedModuleIdentifiers(project, importInfo.moduleName, psiFile)
       createLookupElements(importInfo, moduleIdentifiers)
     })
     Await.result(Future.sequence(lookupElements), Duration.create(2, TimeUnit.SECONDS)).flatten
@@ -337,7 +337,7 @@ class HaskellCompletionContributor extends CompletionContributor {
     val importInfos = getImportedModulesWithHidingIdsSpec(psiFile, importDeclarations)
 
     val lookupElements = importInfos.map(importInfo => Future {
-      val moduleIdentifiers = findImportedModuleIdentifiers(project, importInfo.moduleName)
+      val moduleIdentifiers = findImportedModuleIdentifiers(project, importInfo.moduleName, psiFile)
       createLookupElements(importInfo, moduleIdentifiers.filterNot(bi => importInfo.ids.contains(bi.name)))
     })
     Await.result(Future.sequence(lookupElements), Duration.create(2, TimeUnit.SECONDS)).flatten
@@ -347,7 +347,7 @@ class HaskellCompletionContributor extends CompletionContributor {
     val importInfos = getImportedModulesWithSpecIds(psiFile, importDeclarations)
 
     val lookupElements = importInfos.map(importInfo => Future {
-      val moduleIdentifiers = findImportedModuleIdentifiers(project, importInfo.moduleName)
+      val moduleIdentifiers = findImportedModuleIdentifiers(project, importInfo.moduleName, psiFile)
       createLookupElements(importInfo, moduleIdentifiers.filter(mi => importInfo.ids.exists(id => if (mi.isOperator) s"(${mi.name})" == id else id == mi.name)))
     })
     Await.result(Future.sequence(lookupElements), Duration.create(2, TimeUnit.SECONDS)).flatten

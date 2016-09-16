@@ -1,8 +1,8 @@
 // This is a generated file. Not intended for manual editing.
 package intellij.haskell.psi;
 
-import org.jetbrains.annotations.*;
 import com.intellij.psi.PsiElementVisitor;
+import org.jetbrains.annotations.NotNull;
 
 public class HaskellVisitor extends PsiElementVisitor {
 
@@ -10,11 +10,11 @@ public class HaskellVisitor extends PsiElementVisitor {
     visitCompositeElement(o);
   }
 
-  public void visitCdecl(@NotNull HaskellCdecl o) {
+  public void visitCfilesPragma(@NotNull HaskellCfilesPragma o) {
     visitCompositeElement(o);
   }
 
-  public void visitCfilesPragma(@NotNull HaskellCfilesPragma o) {
+  public void visitCidecls(@NotNull HaskellCidecls o) {
     visitCompositeElement(o);
   }
 
@@ -150,10 +150,6 @@ public class HaskellVisitor extends PsiElementVisitor {
     visitCompositeElement(o);
   }
 
-  public void visitIdecl(@NotNull HaskellIdecl o) {
-    visitCompositeElement(o);
-  }
-
   public void visitImportDeclaration(@NotNull HaskellImportDeclaration o) {
     visitCompositeElement(o);
   }
@@ -207,6 +203,10 @@ public class HaskellVisitor extends PsiElementVisitor {
   }
 
   public void visitInlinePragma(@NotNull HaskellInlinePragma o) {
+    visitCompositeElement(o);
+  }
+
+  public void visitInsideQqExpression(@NotNull HaskellInsideQqExpression o) {
     visitCompositeElement(o);
   }
 
@@ -326,7 +326,7 @@ public class HaskellVisitor extends PsiElementVisitor {
     visitCompositeElement(o);
   }
 
-  public void visitQqExpression(@NotNull HaskellQqExpression o) {
+  public void visitQqTopLevelExpression(@NotNull HaskellQqTopLevelExpression o) {
     visitCompositeElement(o);
   }
 

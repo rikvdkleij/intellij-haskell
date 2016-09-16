@@ -22,6 +22,7 @@ import com.google.common.cache.{CacheBuilder, CacheLoader}
 import com.google.common.util.concurrent.{ListenableFuture, ListenableFutureTask, UncheckedExecutionException}
 import com.intellij.openapi.progress.ProcessCanceledException
 import com.intellij.openapi.project.Project
+import com.intellij.psi.PsiFile
 import intellij.haskell.external.repl.StackReplsManager
 
 import scala.collection.JavaConversions._
@@ -30,7 +31,7 @@ private[component] object BrowseModuleComponent {
 
   private final val PackageNameQualifierPattern = """([a-z\-]+[0-9\.]+:)?([A-Z][A-Za-z\-\']+\.)+"""
 
-  private case class Key(project: Project, moduleName: String, allTopLevel: Boolean)
+  private case class Key(project: Project, moduleName: String, psiFile: Option[PsiFile], allTopLevel: Boolean)
 
   private val executor = Executors.newCachedThreadPool()
 
@@ -57,11 +58,11 @@ private[component] object BrowseModuleComponent {
           val moduleName = key.moduleName
           if (ProjectModulesComponent.findAvailableModules(project).allModuleNames.contains(moduleName)) {
             if (key.allTopLevel) {
-              val outputLines = StackReplsManager.getProjectRepl(project).getAllTopLevelModuleIdentifiers(moduleName).stdOutLines
+              val outputLines = StackReplsManager.getProjectRepl(project).getAllTopLevelModuleIdentifiers(moduleName, key.psiFile).stdOutLines
               val definedLocallyLines = outputLines.takeWhile(l => !l.startsWith("-- imported via"))
               definedLocallyLines.flatMap(findModuleIdentifier(_, moduleName, project))
             } else {
-              StackReplsManager.getProjectRepl(project).getModuleIdentifiers(moduleName).stdOutLines.flatMap(findModuleIdentifier(_, moduleName, project))
+              StackReplsManager.getProjectRepl(project).getModuleIdentifiers(moduleName, key.psiFile).stdOutLines.flatMap(findModuleIdentifier(_, moduleName, project))
             }
           } else {
             StackReplsManager.getGlobalRepl(project).getModuleIdentifiers(moduleName).stdOutLines.flatMap(findModuleIdentifier(_, moduleName, project))
@@ -107,9 +108,9 @@ private[component] object BrowseModuleComponent {
       }
     )
 
-  def findImportedModuleIdentifiers(project: Project, moduleName: String): Iterable[ModuleIdentifier] = {
+  def findImportedModuleIdentifiers(project: Project, moduleName: String, psiFile: Option[PsiFile]): Iterable[ModuleIdentifier] = {
     try {
-      Cache.get(Key(project, moduleName, allTopLevel = false))
+      Cache.get(Key(project, moduleName, psiFile, allTopLevel = false))
     }
     catch {
       case _: UncheckedExecutionException => Iterable()
@@ -117,9 +118,9 @@ private[component] object BrowseModuleComponent {
     }
   }
 
-  def findAllTopLevelModuleIdentifiers(project: Project, moduleName: String): Iterable[ModuleIdentifier] = {
+  def findAllTopLevelModuleIdentifiers(project: Project, moduleName: String, psiFile: Option[PsiFile]): Iterable[ModuleIdentifier] = {
     try {
-      Cache.get(Key(project, moduleName, allTopLevel = true))
+      Cache.get(Key(project, moduleName, psiFile, allTopLevel = true))
     }
     catch {
       case _: UncheckedExecutionException => Iterable()

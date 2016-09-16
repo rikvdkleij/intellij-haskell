@@ -5,7 +5,7 @@ import org.jetbrains.annotations.NotNull;
 
 import java.util.List;
 
-public interface HaskellExpression extends HaskellCompositeElement {
+public interface HaskellQqTopLevelExpression extends HaskellCompositeElement {
 
   @NotNull
   List<HaskellQName> getQNameList();

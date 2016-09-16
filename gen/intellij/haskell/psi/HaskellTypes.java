@@ -1,16 +1,16 @@
 // This is a generated file. Not intended for manual editing.
 package intellij.haskell.psi;
 
-import com.intellij.psi.tree.IElementType;
-import com.intellij.psi.PsiElement;
 import com.intellij.lang.ASTNode;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.tree.IElementType;
 import intellij.haskell.psi.impl.*;
 
 public interface HaskellTypes {
 
   IElementType HS_ANN_PRAGMA = new HaskellCompositeElementType("HS_ANN_PRAGMA");
-  IElementType HS_CDECL = new HaskellCompositeElementType("HS_CDECL");
   IElementType HS_CFILES_PRAGMA = new HaskellCompositeElementType("HS_CFILES_PRAGMA");
+  IElementType HS_CIDECLS = new HaskellCompositeElementType("HS_CIDECLS");
   IElementType HS_CLASS_DECLARATION = new HaskellCompositeElementType("HS_CLASS_DECLARATION");
   IElementType HS_CLAZZ = new HaskellCompositeElementType("HS_CLAZZ");
   IElementType HS_CNAME = new HaskellCompositeElementType("HS_CNAME");
@@ -44,7 +44,6 @@ public interface HaskellTypes {
   IElementType HS_GENERAL_PRAGMA_CONTENT = new HaskellCompositeElementType("HS_GENERAL_PRAGMA_CONTENT");
   IElementType HS_GTYCON = new HaskellCompositeElementType("HS_GTYCON");
   IElementType HS_HADDOCK_PRAGMA = new HaskellCompositeElementType("HS_HADDOCK_PRAGMA");
-  IElementType HS_IDECL = new HaskellCompositeElementType("HS_IDECL");
   IElementType HS_IMPORT_DECLARATION = new HaskellCompositeElementType("HS_IMPORT_DECLARATION");
   IElementType HS_IMPORT_DECLARATIONS = new HaskellCompositeElementType("HS_IMPORT_DECLARATIONS");
   IElementType HS_IMPORT_EMPTY_SPEC = new HaskellCompositeElementType("HS_IMPORT_EMPTY_SPEC");
@@ -59,6 +58,7 @@ public interface HaskellTypes {
   IElementType HS_INCLUDE_PRAGMA = new HaskellCompositeElementType("HS_INCLUDE_PRAGMA");
   IElementType HS_INLINABLE_PRAGMA = new HaskellCompositeElementType("HS_INLINABLE_PRAGMA");
   IElementType HS_INLINE_PRAGMA = new HaskellCompositeElementType("HS_INLINE_PRAGMA");
+  IElementType HS_INSIDE_QQ_EXPRESSION = new HaskellCompositeElementType("HS_INSIDE_QQ_EXPRESSION");
   IElementType HS_INST = new HaskellCompositeElementType("HS_INST");
   IElementType HS_INSTANCE_DECLARATION = new HaskellCompositeElementType("HS_INSTANCE_DECLARATION");
   IElementType HS_INSTVAR = new HaskellCompositeElementType("HS_INSTVAR");
@@ -79,7 +79,7 @@ public interface HaskellTypes {
   IElementType HS_OPTIONS_GHC_PRAGMA = new HaskellCompositeElementType("HS_OPTIONS_GHC_PRAGMA");
   IElementType HS_OTHER_PRAGMA = new HaskellCompositeElementType("HS_OTHER_PRAGMA");
   IElementType HS_OVERLAP_PRAGMA = new HaskellCompositeElementType("HS_OVERLAP_PRAGMA");
-  IElementType HS_QQ_EXPRESSION = new HaskellCompositeElementType("HS_QQ_EXPRESSION");
+  IElementType HS_QQ_TOP_LEVEL_EXPRESSION = new HaskellCompositeElementType("HS_QQ_TOP_LEVEL_EXPRESSION");
   IElementType HS_QUALIFIER = new HaskellCompositeElementType("HS_QUALIFIER");
   IElementType HS_QUASI_QUOTE = new HaskellCompositeElementType("HS_QUASI_QUOTE");
   IElementType HS_Q_CON = new HaskellCompositeElementType("HS_Q_CON");
@@ -192,11 +192,11 @@ public interface HaskellTypes {
        if (type == HS_ANN_PRAGMA) {
         return new HaskellAnnPragmaImpl(node);
       }
-      else if (type == HS_CDECL) {
-        return new HaskellCdeclImpl(node);
-      }
       else if (type == HS_CFILES_PRAGMA) {
         return new HaskellCfilesPragmaImpl(node);
+      }
+      else if (type == HS_CIDECLS) {
+        return new HaskellCideclsImpl(node);
       }
       else if (type == HS_CLASS_DECLARATION) {
         return new HaskellClassDeclarationImpl(node);
@@ -297,9 +297,6 @@ public interface HaskellTypes {
       else if (type == HS_HADDOCK_PRAGMA) {
         return new HaskellHaddockPragmaImpl(node);
       }
-      else if (type == HS_IDECL) {
-        return new HaskellIdeclImpl(node);
-      }
       else if (type == HS_IMPORT_DECLARATION) {
         return new HaskellImportDeclarationImpl(node);
       }
@@ -341,6 +338,9 @@ public interface HaskellTypes {
       }
       else if (type == HS_INLINE_PRAGMA) {
         return new HaskellInlinePragmaImpl(node);
+      }
+      else if (type == HS_INSIDE_QQ_EXPRESSION) {
+        return new HaskellInsideQqExpressionImpl(node);
       }
       else if (type == HS_INST) {
         return new HaskellInstImpl(node);
@@ -402,8 +402,8 @@ public interface HaskellTypes {
       else if (type == HS_OVERLAP_PRAGMA) {
         return new HaskellOverlapPragmaImpl(node);
       }
-      else if (type == HS_QQ_EXPRESSION) {
-        return new HaskellQqExpressionImpl(node);
+      else if (type == HS_QQ_TOP_LEVEL_EXPRESSION) {
+        return new HaskellQqTopLevelExpressionImpl(node);
       }
       else if (type == HS_QUALIFIER) {
         return new HaskellQualifierImpl(node);

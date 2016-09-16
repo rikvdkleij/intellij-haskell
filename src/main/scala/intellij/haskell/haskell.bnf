@@ -93,7 +93,7 @@ module_declaration          ::= MODULE modid onl deprecated_warn_pragma? onl (ex
 
 private body                ::= import_declarations top_declarations NEWLINE*
 import_declarations         ::= ((import_declaration | cfiles_pragma) onl)*
-private top_declarations    ::= (top_declaration onl)*
+private top_declarations    ::= (top_declaration NEWLINE+)* top_declaration?
 
 import_declaration          ::= IMPORT onls source_pragma? import_package_name? onls import_qualified? onls modid onls import_qualified_as? onls import_spec? NEWLINE?   {methods=[getModuleName] pin=1}
 import_qualified            ::= VAR_ID      // "qualified"
@@ -112,7 +112,7 @@ import_package_name         ::= STRING_LITERAL
 
 top_declaration             ::= type_declaration | data_declaration | newtype_declaration | class_declaration | instance_declaration | default_declaration |
                                   foreign_declaration | type_family_declaration | deriving_declaration | type_instance_declaration | type_signature |
-                                  other_pragma | quasi_quote | qq_expression | expression | cfiles_pragma | fixity_declaration
+                                  other_pragma | quasi_quote | qq_top_level_expression | expression | cfiles_pragma | fixity_declaration
 
 type_declaration            ::= TYPE onls simpletype onls COLON_COLON onls ttype |
                                   TYPE onls simpletype onls (EQUAL | WHERE) onls (ttype | type_signature) (DOUBLE_RIGHT_ARROW ttype)? |
@@ -124,7 +124,7 @@ type_declaration            ::= TYPE onls simpletype onls COLON_COLON onls ttype
 data_declaration            ::= DATA onls ctype_pragma? onls INSTANCE? onls (context onls DOUBLE_RIGHT_ARROW)? onls simpletype onls (LEFT_PAREN onls kind_signature onls RIGHT_PAREN)* onls q_name* onls EQUAL
                                     onls (scontext onls DOUBLE_RIGHT_ARROW)? onls constrs onls data_declaration_deriving? |
                                   DATA onls (LEFT_PAREN onls kind_signature onls RIGHT_PAREN)* onls simpletype onls (LEFT_PAREN onls kind_signature onls RIGHT_PAREN)* onls q_name* onls data_declaration_deriving? |
-                                  DATA onls INSTANCE? onls (context onls DOUBLE_RIGHT_ARROW)? onls simpletype onls q_name* onls (WHERE | EQUAL) onls cdecls onls data_declaration_deriving?
+                                  DATA onls INSTANCE? onls (context onls DOUBLE_RIGHT_ARROW)? onls simpletype onls q_name* onls (WHERE | EQUAL) onls cidecls onls data_declaration_deriving?
 
 kind_signature              ::= q_name COLON_COLON ttype
 
@@ -133,11 +133,10 @@ data_declaration_deriving   ::= (DERIVING ttype onls | DERIVING LEFT_PAREN ttype
 newtype_declaration         ::= NEWTYPE onls INSTANCE? onls ctype_pragma? onls (context onls DOUBLE_RIGHT_ARROW)? onls simpletype onls EQUAL onls newconstr onls (DERIVING onls ttype)?
 
 class_declaration           ::= CLASS onls (scontext onls DOUBLE_RIGHT_ARROW)? onls q_name+ onls (q_name | LEFT_PAREN ttype (onls COMMA onls ttype)* RIGHT_PAREN)*
-                                    (onls VERTICAL_BAR onls ttype (onls COMMA onls ttype)*)? onls WHERE? onls cdecls? |
-                                  CLASS onls scontext onls DOUBLE_RIGHT_ARROW onls q_name+ onls WHERE? onls cdecls?  // seen in Control.Lens.Internal.Indexed
+                                    (onls VERTICAL_BAR onls ttype (onls COMMA onls ttype)*)? onls WHERE? onls cidecls? |
+                                  CLASS onls scontext onls DOUBLE_RIGHT_ARROW onls q_name+ onls WHERE? onls cidecls?  // seen in Control.Lens.Internal.Indexed
 
-instance_declaration        ::= INSTANCE onls (overlap_pragma | "OVERLAPPABLE_" | "OVERLAPPING_")? onls (var_con+ DOT)? onls (scontext onls DOUBLE_RIGHT_ARROW)? onls q_name onls inst onls WHERE onls idecls |
-                                  INSTANCE onls overlap_pragma? onls (q_name+ DOT)? onls (scontext onls DOUBLE_RIGHT_ARROW)? onls q_name onls inst
+instance_declaration        ::= INSTANCE onls (overlap_pragma | "OVERLAPPABLE_" | "OVERLAPPING_")? onls (var_con+ DOT)? onls (scontext onls DOUBLE_RIGHT_ARROW)? onls q_name onls inst onls (WHERE onls cidecls)?
 
 default_declaration         ::= DEFAULT onls (LEFT_PAREN (ttype (COMMA ttype)*)? RIGHT_PAREN | type_signature)
 
@@ -168,7 +167,7 @@ private modid_recover_rule  ::= DOT
 
 varid                       ::= VAR_ID
 conid                       ::= CON_ID
-varsym                      ::= VARSYM_ID | TILDE | DOT VARSYM_ID | DOT CONSYM_ID | DOT
+varsym                      ::= VARSYM_ID | TILDE | (DOT | DOT_DOT) VARSYM_ID | (DOT | DOT_DOT) CONSYM_ID | (DOT | DOT_DOT) EQUAL | DOT
 consym                      ::= CONSYM_ID
 
 cname                       ::= var | con | conop | varop
@@ -197,9 +196,9 @@ gtycon                      ::= QUOTE? q_name | LEFT_PAREN RIGHT_ARROW RIGHT_PAR
 private constrs             ::= constr (onls VERTICAL_BAR onls constr)*
 private constr              ::= (constr1 | constr2 | constr3 | constr4)
 constr1                     ::= unpack_nounpack_pragma? q_name onl unpack_nounpack_pragma? onl LEFT_BRACE onl (onl fielddecl (onl COMMA? onl fielddecl)*)? onl RIGHT_BRACE
-constr2                     ::= unpack_nounpack_pragma? q_name onls (unpack_nounpack_pragma? onls atype onls)*
+constr2                     ::= unpack_nounpack_pragma? (q_name | LEFT_PAREN RIGHT_PAREN | LEFT_BRACKET RIGHT_BRACKET) onls (unpack_nounpack_pragma? onls atype onls)*  // Base.hs: data () = () and GHC.Types.hs: data [] a = [] | a : [a]
 constr3                     ::= unpack_nounpack_pragma? sub_constr2 onls unpack_nounpack_pragma? q_name onls unpack_nounpack_pragma? onls sub_constr2
-constr4                     ::= unpack_nounpack_pragma? q_name+ unpack_nounpack_pragma? q_name  // added because second data constructor in: data [] a = [] | a : [a] in Types.hs in ghc-prim
+constr4                     ::= unpack_nounpack_pragma? q_name+ unpack_nounpack_pragma? q_name
 sub_constr2                 ::= (btype | q_name atype)
 
 fielddecl                   ::= q_names (COLON_COLON unpack_nounpack_pragma? (ttype | q_name atype))?
@@ -259,14 +258,10 @@ private export4             ::= MODULE modid
 newconstr                   ::= q_name atype | newconstr_fielddecl
 newconstr_fielddecl         ::= q_name onls LEFT_BRACE? onls q_name onls COLON_COLON onls ttype onls RIGHT_BRACE?
 
-private cdecls              ::= (cdecl | expression) (onls (cdecl | expression))*
-cdecl                       ::= cidecl
-
-private idecls              ::= (idecl | expression) (onls (idecl | expression))*
-idecl                       ::= cidecl
+cidecls                     ::= cidecl (onls cidecl)*
 
 private cidecl              ::= type_signature | inline_pragma | noinline_pragma | specialize_pragma | type_declaration | instance_declaration | default_declaration |
-                                  newtype_declaration | data_declaration | minimal_pragma
+                                  newtype_declaration | data_declaration | minimal_pragma | expression
 
 expression                  ::= line_expression+ last_line_expression | last_line_expression
 private line_expression     ::= general_id+ nls
@@ -275,13 +270,14 @@ private last_line_expression::= general_id+
 private general_id          ::= (q_name | LEFT_PAREN | RIGHT_PAREN | FLOAT | DO | WHERE | IF | THEN | ELSE |
                                   COLON_COLON | DOUBLE_RIGHT_ARROW | RIGHT_ARROW | IN | CASE | OF | LET |
                                   SEMICOLON | LEFT_ARROW | LEFT_BRACKET | RIGHT_BRACKET | literal | LEFT_BRACE | RIGHT_BRACE |
-                                  COMMA | UNDERSCORE | symbol_reserved_op | QUOTE | BACKQUOTE | fixity | DOT_DOT | scc_pragma)
+                                  COMMA | UNDERSCORE | symbol_reserved_op | QUOTE | BACKQUOTE | fixity | DOT_DOT | scc_pragma | quasi_quote)
 
 private symbol_reserved_op  ::= AT | BACKSLASH | VERTICAL_BAR | TILDE | EQUAL
 
-qq_expression               ::= general_id+ NEWLINE? quasi_quote
+qq_top_level_expression     ::= general_id+ NEWLINE? quasi_quote
 quasi_quote                 ::= QUASI_QUOTE_D_START NEWLINE? top_declarations NEWLINE? QUASI_QUOTE_END |
-                                  QUASI_QUOTE_E_START NEWLINE? expression NEWLINE? QUASI_QUOTE_END |
-                                  QUASI_QUOTE_T_START NEWLINE? simpletype NEWLINE? QUASI_QUOTE_END |
-                                  QUASI_QUOTE_P_START NEWLINE? expression NEWLINE? QUASI_QUOTE_END |
-                                  QUASI_QUOTE_V_START NEWLINE? expression NEWLINE? QUASI_QUOTE_END
+                                  QUASI_QUOTE_E_START NEWLINE? inside_qq_expression QUASI_QUOTE_END |
+                                  QUASI_QUOTE_T_START NEWLINE? simpletype QUASI_QUOTE_END |
+                                  QUASI_QUOTE_P_START NEWLINE? inside_qq_expression QUASI_QUOTE_END |
+                                  QUASI_QUOTE_V_START NEWLINE? inside_qq_expression QUASI_QUOTE_END
+inside_qq_expression        ::= (general_id | NEWLINE)*

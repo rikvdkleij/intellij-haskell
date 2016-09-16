@@ -45,7 +45,7 @@ abstract class StackReplProcess(val project: Project, val extraCommandOptions: S
 
   private[this] val stdErr = new LinkedBlockingDeque[String]
 
-  private final val Timeout = 1.seconds
+  private final val Timeout = 5.seconds
 
   private final val EndOfOutputIndicator = "^IntellijHaskell^"
 
@@ -88,11 +88,11 @@ abstract class StackReplProcess(val project: Project, val extraCommandOptions: S
 
       if (deadline.isOverdue()) {
         logError(s"No result from Stack repl within $Timeout. Command was: $command")
+      } else {
+        logInfo("command: " + command)
+        logInfo("stdOut: " + stdOutResult.mkString("\n"))
+        logInfo("errOut: " + stdErrResult.mkString("\n"))
       }
-
-      logInfo("command: " + command)
-      logInfo("stdOut: " + stdOutResult.mkString("\n"))
-      logInfo("errOut: " + stdErrResult.mkString("\n"))
 
       if (deadline.isOverdue()) {
         StackReplOutput()
@@ -117,7 +117,7 @@ abstract class StackReplProcess(val project: Project, val extraCommandOptions: S
     HaskellSdkType.getStackPath(project).foreach { stackPath =>
       try {
         val command = (Seq(stackPath, "repl", "--with-ghc", "intero", "--verbosity", "warn", "--fast", "--no-load",
-          "--force-dirty", "--ghc-options", "-v1", "--test", "--terminal") ++ extraCommandOptions).mkString(" ")
+          "--ghc-options", "-v1", "--test", "--terminal") ++ extraCommandOptions).mkString(" ")
         logInfo(s"Stack repl will be started with command: $command")
         val process = getEnvParameters match {
           case None => Process(command, new File(project.getBasePath))

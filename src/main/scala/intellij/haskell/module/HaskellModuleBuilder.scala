@@ -118,7 +118,7 @@ class HaskellModuleBuilder extends ModuleBuilder with SourcePathsBuilder with Mo
   override def getSourcePaths: java.util.List[Pair[String, String]] = {
     if (sourcePaths.isEmpty) {
       val paths = new java.util.ArrayList[Pair[String, String]]
-      Seq("src", "lib", "app", "library").foreach { dirName =>
+      Seq("src", "lib", "app", "library", "main").foreach { dirName =>
         val path = getContentEntryPath + File.separator + dirName
         val srcDir = new File(path)
         if (srcDir.isDirectory) {

@@ -1,23 +1,22 @@
 // This is a generated file. Not intended for manual editing.
 package intellij.haskell.psi.impl;
 
-import java.util.List;
-import org.jetbrains.annotations.*;
 import com.intellij.lang.ASTNode;
-import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiElementVisitor;
 import com.intellij.psi.util.PsiTreeUtil;
-import static intellij.haskell.psi.HaskellTypes.*;
 import intellij.haskell.psi.*;
+import org.jetbrains.annotations.NotNull;
 
-public class HaskellQqExpressionImpl extends HaskellCompositeElementImpl implements HaskellQqExpression {
+import java.util.List;
 
-  public HaskellQqExpressionImpl(ASTNode node) {
+public class HaskellQqTopLevelExpressionImpl extends HaskellCompositeElementImpl implements HaskellQqTopLevelExpression {
+
+  public HaskellQqTopLevelExpressionImpl(ASTNode node) {
     super(node);
   }
 
   public void accept(@NotNull HaskellVisitor visitor) {
-    visitor.visitQqExpression(this);
+    visitor.visitQqTopLevelExpression(this);
   }
 
   public void accept(@NotNull PsiElementVisitor visitor) {
@@ -33,8 +32,8 @@ public class HaskellQqExpressionImpl extends HaskellCompositeElementImpl impleme
 
   @Override
   @NotNull
-  public HaskellQuasiQuote getQuasiQuote() {
-    return findNotNullChildByClass(HaskellQuasiQuote.class);
+  public List<HaskellQuasiQuote> getQuasiQuoteList() {
+    return PsiTreeUtil.getChildrenOfTypeAsList(this, HaskellQuasiQuote.class);
   }
 
   @Override

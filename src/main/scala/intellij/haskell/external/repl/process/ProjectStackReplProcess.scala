@@ -26,35 +26,36 @@ class ProjectStackReplProcess(project: Project) extends StackReplProcess(project
 
   override def getComponentName: String = "project-stack-repl"
 
-  def findTypeInfoFor(psiFile: PsiFile, startLineNr: Int, startColumnNr: Int, endLineNr: Int, endColumnNr: Int, expression: String): StackReplOutput = {
+  def findTypeInfoFor(psiFile: PsiFile, startLineNr: Int, startColumnNr: Int, endLineNr: Int, endColumnNr: Int, expression: String): StackReplOutput = synchronized {
     checkFileIsLoadedAndExecute(psiFile, filePath => execute(s":type-at $filePath $startLineNr $startColumnNr $endLineNr $endColumnNr $expression"))
   }
 
-  def findLocationInfoFor(psiFile: PsiFile, startLineNr: Int, startColumnNr: Int, endLineNr: Int, endColumnNr: Int, expression: String): StackReplOutput = {
+  def findLocationInfoFor(psiFile: PsiFile, startLineNr: Int, startColumnNr: Int, endLineNr: Int, endColumnNr: Int, expression: String): StackReplOutput = synchronized {
     checkFileIsLoadedAndExecute(psiFile, filePath => execute(s":loc-at $filePath $startLineNr $startColumnNr $endLineNr $endColumnNr $expression"))
   }
 
-  def findNameInfo(psiFile: PsiFile, name: String): StackReplOutput = {
+  def findNameInfo(psiFile: PsiFile, name: String): StackReplOutput = synchronized {
     checkFileIsLoadedAndExecute(psiFile, _ => execute(s":info $name"))
   }
 
-  def load(psiFile: PsiFile): StackReplOutput = {
+  def load(psiFile: PsiFile): (StackReplOutput, Boolean) = synchronized {
     val filePath = HaskellFileUtil.getFilePath(psiFile)
-    execute(":load " + filePath)
+    val output = execute(":load " + filePath)
+    val loadFailed = output.stdOutLines.lastOption.exists(_.contains("Failed, "))
+    if (loadFailed) {
+      loadedPsiFile = None
+    } else {
+      loadedPsiFile = Some(psiFile)
+    }
+    (output, loadFailed)
   }
 
-  def load(moduleName: String): StackReplOutput = {
-    execute(":load " + moduleName)
+  def getModuleIdentifiers(moduleName: String, psiFile: Option[PsiFile]): StackReplOutput = synchronized {
+    checkFileIsLoadedAndExecute(psiFile, () => execute(s":browse! $moduleName"))
   }
 
-  def getModuleIdentifiers(moduleName: String): StackReplOutput = synchronized {
-    load(moduleName)
-    execute(":browse! " + moduleName)
-  }
-
-  def getAllTopLevelModuleIdentifiers(moduleName: String): StackReplOutput = synchronized {
-    load(moduleName)
-    execute(s":browse! *$moduleName")
+  def getAllTopLevelModuleIdentifiers(moduleName: String, psiFile: Option[PsiFile]): StackReplOutput = synchronized {
+    checkFileIsLoadedAndExecute(psiFile, () => execute(s":browse! *$moduleName"))
   }
 
   def findAllAvailableLibraryModules: StackReplOutput = synchronized {
@@ -64,12 +65,19 @@ class ProjectStackReplProcess(project: Project) extends StackReplProcess(project
   }
 
   private def checkFileIsLoadedAndExecute(psiFile: PsiFile, executeAction: String => StackReplOutput): StackReplOutput = {
-    val filePath = HaskellFileUtil.getFilePath(psiFile)
     if (!loadedPsiFile.contains(psiFile)) {
       load(psiFile)
     }
-    val output = executeAction(filePath)
-    loadedPsiFile = Some(psiFile)
-    output
+    val filePath = HaskellFileUtil.getFilePath(psiFile)
+    executeAction(filePath)
+  }
+
+  private def checkFileIsLoadedAndExecute(psiFile: Option[PsiFile], executeAction: () => StackReplOutput): StackReplOutput = {
+    psiFile.foreach(f =>
+      if (!loadedPsiFile.contains(f)) {
+        load(f)
+      }
+    )
+    executeAction()
   }
 }

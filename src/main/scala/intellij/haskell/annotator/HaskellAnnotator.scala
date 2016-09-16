@@ -130,7 +130,7 @@ class HaskellAnnotator extends ExternalAnnotator[PsiFile, LoadResult] {
                 findGlobalProjectInfo(project).map(_.availableInProdLibraryModuleNames).getOrElse(Iterable())
               }) ++ findAvailableProjectModules(project).prodModuleNames
 
-              val moduleIdentifiers = moduleNames.flatMap(mn => findImportedModuleIdentifiers(project, mn).filter(_.name == name))
+              val moduleIdentifiers = moduleNames.flatMap(mn => findImportedModuleIdentifiers(project, mn, psiFile).filter(_.name == name))
               val intentions = moduleIdentifiers.map(mi => new NotInScopeIntentionAction(mi.name, mi.moduleName, psiFile))
               ErrorAnnotationWithIntentionActions(tr, problem.normalizedMessage, problem.htmlMessage, intentions)
             case _ => ErrorAnnotation(tr, problem.normalizedMessage, problem.htmlMessage)

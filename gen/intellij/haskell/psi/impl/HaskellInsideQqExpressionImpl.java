@@ -9,14 +9,14 @@ import org.jetbrains.annotations.NotNull;
 
 import java.util.List;
 
-public class HaskellNoinlinePragmaImpl extends HaskellCompositeElementImpl implements HaskellNoinlinePragma {
+public class HaskellInsideQqExpressionImpl extends HaskellCompositeElementImpl implements HaskellInsideQqExpression {
 
-  public HaskellNoinlinePragmaImpl(ASTNode node) {
+  public HaskellInsideQqExpressionImpl(ASTNode node) {
     super(node);
   }
 
   public void accept(@NotNull HaskellVisitor visitor) {
-    visitor.visitNoinlinePragma(this);
+    visitor.visitInsideQqExpression(this);
   }
 
   public void accept(@NotNull PsiElementVisitor visitor) {

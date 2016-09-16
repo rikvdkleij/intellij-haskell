@@ -1,17 +1,17 @@
 // This is a generated file. Not intended for manual editing.
 package intellij.haskell.psi;
 
-import java.util.List;
-import org.jetbrains.annotations.*;
-import com.intellij.psi.PsiElement;
+import org.jetbrains.annotations.NotNull;
 
-public interface HaskellQqExpression extends HaskellCompositeElement {
+import java.util.List;
+
+public interface HaskellInsideQqExpression extends HaskellCompositeElement {
 
   @NotNull
   List<HaskellQName> getQNameList();
 
   @NotNull
-  HaskellQuasiQuote getQuasiQuote();
+  List<HaskellQuasiQuote> getQuasiQuoteList();
 
   @NotNull
   List<HaskellSccPragma> getSccPragmaList();

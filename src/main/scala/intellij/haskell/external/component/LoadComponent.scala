@@ -27,9 +27,8 @@ private[component] object LoadComponent {
 
   def load(psiFile: PsiFile, refreshCache: Boolean, postLoadAction: => Unit): LoadResult = {
     val project = psiFile.getProject
-    val loadOutput = StackReplsManager.getProjectRepl(project).load(psiFile)
+    val (loadOutput, loadFailed) = StackReplsManager.getProjectRepl(project).load(psiFile)
 
-    val loadFailed = loadOutput.stdOutLines.lastOption.exists(_.contains("Failed, "))
     if (refreshCache && !loadFailed) {
       ApplicationManager.getApplication.executeOnPooledThread(new Runnable {
         override def run(): Unit = {

@@ -22,8 +22,8 @@ class GlobalStackReplProcess(project: Project) extends StackReplProcess(project,
   override def getComponentName: String = "global-stack-repl"
 
   def getModuleIdentifiers(moduleName: String): StackReplOutput = synchronized {
-    execute(":module " + moduleName)
-    execute(":browse! " + moduleName)
+    execute(s":module $moduleName")
+    execute(s":browse! $moduleName")
   }
 
   def findNameInfo(moduleName: String, name: String): StackReplOutput = synchronized {
