@@ -100,7 +100,7 @@ private[component] object NameInfoComponent {
   def findNameInfo(psiElement: PsiElement): Iterable[NameInfo] = {
     val key = for {
       qne <- HaskellPsiUtil.findQualifiedNameElement(psiElement)
-      pf <- Option(qne.getContainingFile.getOriginalFile)
+      pf <- Option(qne.getContainingFile).map(_.getOriginalFile)
     } yield Key(pf, qne.getName.replaceAll("""\s+""", ""))
 
     (try {
