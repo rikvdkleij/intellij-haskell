@@ -24,8 +24,7 @@ import com.intellij.openapi.progress.ProcessCanceledException
 import com.intellij.openapi.project.Project
 import intellij.haskell.external.CommandLine
 import intellij.haskell.external.repl.StackReplsManager
-import intellij.haskell.external.repl.process.StackReplOutput
-import intellij.haskell.sdk.HaskellSdkType
+import intellij.haskell.util.StackUtil
 
 import scala.collection.JavaConversions._
 
@@ -37,14 +36,14 @@ private[component] object GlobalProjectInfoComponent {
 
   private final val Cache = CacheBuilder.newBuilder()
     .build(
-      new CacheLoader[Key, GlobalProjectInfo]() {
+      new CacheLoader[Key, Option[GlobalProjectInfo]]() {
 
-        override def load(key: Key): GlobalProjectInfo = {
+        override def load(key: Key): Option[GlobalProjectInfo] = {
           createGlobalProjectInfo(key)
         }
 
-        override def reload(key: Key, oldValue: GlobalProjectInfo): ListenableFuture[GlobalProjectInfo] = {
-          val task = ListenableFutureTask.create(new Callable[GlobalProjectInfo]() {
+        override def reload(key: Key, oldValue: Option[GlobalProjectInfo]): ListenableFuture[Option[GlobalProjectInfo]] = {
+          val task = ListenableFutureTask.create(new Callable[Option[GlobalProjectInfo]]() {
             def call() = {
               createGlobalProjectInfo(key)
             }
@@ -53,58 +52,48 @@ private[component] object GlobalProjectInfoComponent {
           task
         }
 
-        private def createGlobalProjectInfo(key: Key): GlobalProjectInfo = {
+        private def createGlobalProjectInfo(key: Key): Option[GlobalProjectInfo] = {
           val project = key.project
-          val allAvailableModuleNames = findTail(StackReplsManager.getProjectRepl(project).findAllAvailableLibraryModules)
-          val availableInProdModuleNames = allAvailableModuleNames.filterNot(_.startsWith("Test."))
-          GlobalProjectInfo(availableInProdModuleNames, allAvailableModuleNames, isNoImplicitPreludeGlobalActive(project), getLanguageExtensions(project))
-        }
-
-        private def findTail(output: StackReplOutput) = {
-          val lines = output.stdOutLines
-          if (lines.isEmpty) {
-            Iterable()
-          } else {
-            lines.tail.map(m => m.substring(1, m.length - 1))
+          StackReplsManager.getProjectRepl(project).findAllAvailableLibraryModules.flatMap { allModuleNames =>
+            val prodModuleNames = allModuleNames.filterNot(_.startsWith("Test."))
+            isNoImplicitPreludeGlobalActive(project).map(active => GlobalProjectInfo(prodModuleNames, allModuleNames, active, getLanguageExtensions(project)))
           }
         }
 
-        private def isNoImplicitPreludeGlobalActive(project: Project): Boolean = {
-          val languageFlags = StackReplsManager.getGlobalRepl(project).showActiveLanguageFlags().stdOutLines
-          languageFlags.exists(_.contains("-XNoImplicitPrelude"))
+        private def isNoImplicitPreludeGlobalActive(project: Project): Option[Boolean] = {
+          val languageFlags = StackReplsManager.getGlobalRepl(project).showActiveLanguageFlags().map(_.stdOutLines)
+          languageFlags.map(_.exists(_.contains("-XNoImplicitPrelude")))
         }
 
         private def getLanguageExtensions(project: Project): Iterable[String] = {
-          (for {
-            stackPath <- HaskellSdkType.getStackPath(project)
-            ghcPath <- findGhcPath(stackPath, project.getBasePath)
-          } yield ghcPath) match {
-            case None => Iterable()
-            case Some(ghcPath) => CommandLine.getProcessOutput(
+          findGhcPath(project).map(ghcPath => {
+            CommandLine.getProcessOutput(
               project.getBasePath,
               ghcPath,
               Seq("--supported-languages")
-            ).getStdoutLines
-          }
+            ).getStdoutLines.toIterable
+          }).getOrElse(Iterable())
         }
 
-        private def findGhcPath(stackPath: String, projectBasePath: String) = {
-          CommandLine.getProcessOutput(
-            projectBasePath,
-            stackPath,
-            Seq("path", "--compiler-exe")
-          ).getStdoutLines.headOption
+        private def findGhcPath(project: Project) = {
+          StackUtil.runCommand(Seq("path", "--compiler-exe"), project).getStdoutLines.headOption
         }
       }
     )
 
-  def findGlobalProjectInfo(project: Project): GlobalProjectInfo = {
+  def findGlobalProjectInfo(project: Project): Option[GlobalProjectInfo] = {
     try {
-      Cache.get(Key(project))
+      val key = Key(project)
+      Cache.get(key) match {
+        case result@Some(_) => result
+        case _ =>
+          Cache.invalidate(key)
+          None
+      }
     }
     catch {
-      case _: UncheckedExecutionException => GlobalProjectInfo()
-      case _: ProcessCanceledException => GlobalProjectInfo()
+      case _: UncheckedExecutionException => None
+      case _: ProcessCanceledException => None
     }
   }
 
@@ -113,7 +102,7 @@ private[component] object GlobalProjectInfoComponent {
   }
 }
 
-case class GlobalProjectInfo(availableInProdLibraryModuleNames: Iterable[String] = Iterable(),
-                             availableInTestLibraryModuleNames: Iterable[String] = Iterable(),
+case class GlobalProjectInfo(availableProductionLibraryModuleNames: Iterable[String] = Iterable(),
+                             allAvailableLibraryModuleNames: Iterable[String] = Iterable(),
                              noImplicitPreludeActive: Boolean = false,
                              languageExtensions: Iterable[String] = Iterable())

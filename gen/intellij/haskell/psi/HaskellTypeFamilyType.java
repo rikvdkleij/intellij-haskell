@@ -8,7 +8,7 @@ import com.intellij.psi.PsiElement;
 public interface HaskellTypeFamilyType extends HaskellCompositeElement {
 
   @NotNull
-  List<HaskellContext> getContextList();
+  List<HaskellCcontext> getCcontextList();
 
   @NotNull
   List<HaskellQName> getQNameList();

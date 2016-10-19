@@ -22,13 +22,13 @@ import com.intellij.psi.{PsiElement, PsiReference}
 import com.intellij.refactoring.listeners.RefactoringElementListener
 import com.intellij.refactoring.rename.RenamePsiElementProcessor
 import com.intellij.usageView.UsageInfo
-import intellij.haskell.util.{HaskellFileIndex, HaskellFileUtil}
+import intellij.haskell.util.{HaskellFileIndex, HaskellFileUtil, HaskellProjectUtil}
 
 import scala.collection.JavaConversions._
 
 class HaskellRenameVariableProcessor extends RenamePsiElementProcessor {
 
-  override def canProcessElement(element: PsiElement): Boolean = true
+  override def canProcessElement(element: PsiElement): Boolean = HaskellProjectUtil.isHaskellStackProject(element.getProject)
 
   override def renameElement(element: PsiElement, newName: String, usages: Array[UsageInfo], listener: RefactoringElementListener): Unit = {
     super.renameElement(element, newName, usages, listener)
@@ -37,6 +37,6 @@ class HaskellRenameVariableProcessor extends RenamePsiElementProcessor {
 
   override def findReferences(element: PsiElement): java.util.Collection[PsiReference] = {
     val project = element.getProject
-    ReferencesSearch.search(element, GlobalSearchScope.filesScope(project, HaskellFileIndex.findProjectHaskellFiles(project).map(_.getVirtualFile))).findAll
+    ReferencesSearch.search(element, GlobalSearchScope.filesScope(project, HaskellFileIndex.findProjectFiles(project))).findAll
   }
 }

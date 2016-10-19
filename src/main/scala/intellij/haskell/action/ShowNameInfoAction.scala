@@ -35,18 +35,21 @@ class ShowNameInfoAction extends AnAction {
       psiFile <- Option(PsiUtilBase.getPsiFileInEditor(editor, CommonDataKeys.PROJECT.getData(context)))
       offset = editor.getCaretModel.getOffset
       psiElement <- Option(psiFile.findElementAt(offset))
-    } yield
-      StackReplsComponentsManager.findNameInfo(psiElement) match {
-        case Seq(identifierInfos@_*) if identifierInfos.nonEmpty => HaskellEditorUtil.showInfoMessageBallon(identifierInfos.map(createInfoText).mkString("<br>"), editor)
-        case _ => HaskellEditorUtil.showHint(editor, s"Could not determine info for ${StringUtil.escapeXml(psiElement.getText)}")
+    } yield {
+      val nameInfos = StackReplsComponentsManager.findNameInfo(psiElement)
+      if (nameInfos.nonEmpty) {
+        HaskellEditorUtil.showList(nameInfos.toSeq.map(createInfoText), editor)
+      } else {
+        HaskellEditorUtil.showHint(editor, s"Could not determine info for ${StringUtil.escapeXml(psiElement.getText)}")
       }
+    }
   }
 
   private def createInfoText(nameInfo: NameInfo): String = {
     nameInfo match {
-      case pi: ProjectNameInfo => s"${pi.escapedDeclaration}   -- ${pi.filePath}"
-      case li: LibraryNameInfo => s"${li.escapedDeclaration}   -- ${li.moduleName}"
-      case bi: BuiltInNameInfo => s"${bi.escapedDeclaration}   -- ${bi.moduleName}  BUILT-IN"
+      case pi: ProjectNameInfo => s"${pi.declaration}   -- ${pi.filePath}"
+      case li: LibraryNameInfo => s"${li.shortenedDeclaration}   -- ${li.moduleName}"
+      case bi: BuiltInNameInfo => s"${bi.shortenedDeclaration}   -- ${bi.moduleName}  BUILT-IN"
     }
   }
 }

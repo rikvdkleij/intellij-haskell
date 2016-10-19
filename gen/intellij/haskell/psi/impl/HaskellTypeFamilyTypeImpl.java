@@ -27,8 +27,8 @@ public class HaskellTypeFamilyTypeImpl extends HaskellCompositeElementImpl imple
 
   @Override
   @NotNull
-  public List<HaskellContext> getContextList() {
-    return PsiTreeUtil.getChildrenOfTypeAsList(this, HaskellContext.class);
+  public List<HaskellCcontext> getCcontextList() {
+    return PsiTreeUtil.getChildrenOfTypeAsList(this, HaskellCcontext.class);
   }
 
   @Override

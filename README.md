@@ -5,20 +5,20 @@ was to use default way of creating an IntelliJ plugin by defining a grammar and 
 [Haskell report](http://www.haskell.org/onlinereport/haskell2010/haskellch10.html). That didn't work out because I could not define all 
 the recursion. 
 Then I decided to use grammar and lexer definitions only for tokenizing and parsing Haskell code, and not for syntax checking the code. This is needed for syntax highlighting, all kinds of navigation and so on.
-Further Haskell language support is provided with the support of external tools: ghc-mod and haskell-docs.
+Further Haskell language support is provided with the help of external tools.
 
-It supports Stack projects and expects that creating and building of Haskell projects is done on the command line.
-
+This plugin depends mainly on Stack and Intero. It can create new Stack projects (by using template `hspec`) and import exising Stack projects.
+ 
 Any feedback is welcome!!
 
 
 # Features
-- Syntax highlighting (which can be customized);
+- Syntax highlighting;
 - Error/warning highlighting;
 - Find usages of identifiers;
-- Resolve references to identifiers (also in libraries if packages source code are available by using `Tools` /`Add Haskell package dependencies`);
-- Code completion by resolving references;
-- In-place rename identifiers (in which global rename first shows preview so refactoring scope can be adjusted).
+- Resolve references to identifiers;
+- Code completion;
+- In-place rename identifiers;
 - View type info from (selected) expression;
 - View expression info;
 - View quick documentation;
@@ -26,35 +26,34 @@ Any feedback is welcome!!
 - Structure view;
 - Navigate to declaration (called `Class` in IntelliJ menu);
 - Navigate to identifier (called `Symbol` in IntelliJ menu);
-- Code completion by looking to import declarations;
-- Simple form of code formatting;
 - Inspection by HLint;
 - Quick fixes for HLint suggestions;
-- View error, action to view formatted message from ghc-mod. Especially useful in case message consists of multiple lines (Ctrl-F10, Meta-F10 on Mac OSX);
-- Intention actions (suggested by ghc-mod);
-            
-A lot of features are implemented with help of ghc-mod!!
+- View error, action to view formatted message. Especially useful in case message consists of multiple lines (Ctrl-F10, Meta-F10 on Mac OSX);
+- Intention actions (for example, to add language extension or add import);
 
 
 # Getting started: 
-- Install latest versions of ghc-mod and haskell-docs;
-- Set file paths to `ghc-mod`, `hlint`, `stack` and `haskell-docs` in the menu `Settings`/`Other Settings`/`Haskell`.
-- Be sure in `Editor/Filetypes` that `Haskell language file` is registered with pattern `*.hs` and `Literate Haskell language file` with pattern `*.lhs`; 
-- First install and build your project. Preferably with Stack. (Make sure that Haddock documentation is generated, see [haskell-docs](https://github.com/chrisdone/haskell-docs)).
-- After the project is built, create a Haskell project in IntelliJ by using `File`/`New`/`Project...` from the IntelliJ menu;
-- In the `New Project` wizard select `Haskell module` and check `Haskell` in `Additional Libraries and Frameworks`;
-- In next page of wizard create `GHC SDK` by selecting path to GHC binaries, e.g. `/usr/local/bin`;
-- Select in `Project structure`/`Project settings`/`Modules` which folders to exclude (like `.stack-work` and `dist`) and which folders are `Source` and `Test` (normally `src` and `test`).
-- Use `Tools`/`Add Haskell package dependencies` to download all sources of dependencies. They will be added as source libraries to module.
+- Install this plugin. Make sure no other Haskell plugin is installed in IntelliJ;
+- Install latest versions of [Stack](https://github.com/commercialhaskell/stack) and [Intero](https://github.com/commercialhaskell/intero). 
+    Make sure `intero` is on your PATH and build with same GHC-version as your project. 
+- Optionally install Hlint and Haskell-docs. Set file paths to `hlint` and `haskell-docs` in the menu `Settings`/`Other Settings`/`Haskell`.
+- Make sure your Stack project builds without errors. Preferably by using: `stack build --test --haddock --fast`;
+- After your project is built, import project in IntelliJ by using `File`/`New`/`Project from Existing Sources..` from the IntelliJ menu;
+- In the `New Project` wizard select `Import project from external module` and check `Haskell Stack importer`;
+- In next page of wizard configure `Project SDK` by configuring `Haskell Tool Stack` and selecting path to `stack`, e.g. `/usr/local/bin`;
+- Finish wizard;
+- Wizard will try to automatically confifure which folders are sources, test and which to exclude;
+- Check `Project structure`/`Project settings`/`Modules` which folders to exclude (like `.stack-work` and `dist`) and which folders are `Source` and `Test` (normally `src` and `test`).
+- Plugin will automatically download library sources (since Stack version 1.2.1 also for test dependencies). They will be added as source libraries to module.
     This option gives you nice navigation features through libraries. Sources are downloaded to folder `ideaHaskellLib` inside root of project 
+- After changes to dependencies you can download them again by using `Tools`/`Download Haskell library sources`. 
+- The `Event Log` will display what's going on in the background. Expecially useful when something fails;    
 
 
 # Remarks
-- In Navigation dialog dots can not be used. Workaround is by using spaces instead of dots, so when you want to go to `Control.Lens`, type `Control Lens`;
-- IntelliJ has a nice terminal plugin, useful for executing the Cabal/Stack commands;
-- Developed plugin on Ubuntu;
+- IntelliJ has a nice terminal plugin;
+- Developed plugin on Linux;
 - Windows is not supported. Maybe it will work okay but I can not test it;
-- Created workaround for ghc-mod issue #432;
 
 
 # How to build project

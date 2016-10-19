@@ -19,7 +19,7 @@ package intellij.haskell.action
 import com.intellij.openapi.actionSystem.{AnAction, AnActionEvent, CommonDataKeys}
 import com.intellij.psi.util.PsiUtilBase
 import intellij.haskell.external.component.StackReplsComponentsManager
-import intellij.haskell.util.{HaskellEditorUtil, Util}
+import intellij.haskell.util.{HaskellEditorUtil, StringUtil}
 
 class ShowTypeAction extends AnAction {
 
@@ -27,7 +27,7 @@ class ShowTypeAction extends AnAction {
     HaskellEditorUtil.enableAction(onlyForProjectFile = true, actionEvent)
   }
 
-  // TODO: Add smart enter for adding Hole
+  // TODO: Add "smart enter" for adding "hole"
   // TODO: In case of underscore use GHC error to display expected type
   def actionPerformed(actionEvent: AnActionEvent) {
     val context = actionEvent.getDataContext
@@ -40,13 +40,13 @@ class ShowTypeAction extends AnAction {
       val selectionModel = Option(editor.getSelectionModel)
       selectionModel match {
         case Some(sm) if Option(sm.getSelectedText).isDefined => StackReplsComponentsManager.findTypeInfoForSelection(psiFile, sm) match {
-          case Some(ti) => HaskellEditorUtil.showHint(editor, Util.escapeString(ti.typeSignature))
+          case Some(ti) => HaskellEditorUtil.showHint(editor, StringUtil.escapeString(ti.typeSignature))
           case None => HaskellEditorUtil.showHint(editor, "Could not determine type for selection")
         }
         case _ => Option(psiFile.findElementAt(offset)).foreach { psiElement =>
           StackReplsComponentsManager.findTypeInfoForElement(psiElement) match {
-            case Some(ti) => HaskellEditorUtil.showHint(editor, Util.escapeString(ti.typeSignature))
-            case None => HaskellEditorUtil.showHint(editor, s"Could not determine type for ${Util.escapeString(psiElement.getText)}")
+            case Some(ti) => HaskellEditorUtil.showHint(editor, StringUtil.escapeString(ti.typeSignature))
+            case None => HaskellEditorUtil.showHint(editor, s"Could not determine type for ${StringUtil.escapeString(psiElement.getText)}")
           }
         }
       }

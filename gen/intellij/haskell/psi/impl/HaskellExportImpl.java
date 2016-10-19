@@ -33,12 +33,6 @@ public class HaskellExportImpl extends HaskellCompositeElementImpl implements Ha
 
   @Override
   @Nullable
-  public HaskellConid getConid() {
-    return findChildByClass(HaskellConid.class);
-  }
-
-  @Override
-  @Nullable
   public HaskellDotDotParens getDotDotParens() {
     return findChildByClass(HaskellDotDotParens.class);
   }

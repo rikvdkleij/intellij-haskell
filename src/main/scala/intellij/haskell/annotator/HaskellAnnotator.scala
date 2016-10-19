@@ -41,14 +41,15 @@ import scala.collection.JavaConversions._
 
 class HaskellAnnotator extends ExternalAnnotator[PsiFile, LoadResult] {
 
-  private final val NoTypeSignaturePattern = """Warning: Top-level binding with no type signature: (.+)""".r
-  private final val UseLanguageExtensionPattern = """Error:.*Perhaps you intended to use (\w+).*""".r
-  private final val UseLanguageExtensionPattern2 = """Error:.*Use (\w+) to allow.*""".r
-  private final val UseLanguageExtensionPattern3 = """Error:.*You need (\w+) to.*""".r
-  private final val UseLanguageExtensionPattern4 = """Error:.*Try enabling (\w+).*""".r
-  private final val PerhapsYouMeantPattern = """Error: Perhaps you meant(.*)""".r
-  private final val DefinedButNotUsedPattern = """Warning: Defined but not used: ‘(.*)’""".r
-  private final val NotInScopePattern = """Error: Not in scope.+ ‘(.*)’""".r
+  private final val NoTypeSignaturePattern = """.* Top-level binding with no type signature: (.+)""".r
+  private final val UseLanguageExtensionPattern = """.* Perhaps you intended to use (\w+).*""".r
+  private final val UseLanguageExtensionPattern2 = """.* Use (\w+) to allow.*""".r
+  private final val UseLanguageExtensionPattern3 = """.* You need (\w+) to.*""".r
+  private final val UseLanguageExtensionPattern4 = """.* Try enabling (\w+).*""".r
+  private final val PerhapsYouMeantPattern = """.*Not in scope: (.*) Perhaps you meant(.*)""".r
+  private final val DefinedButNotUsedPattern = """.* Defined but not used: ‘(.*)’""".r
+  private final val NotInScopePattern = """.* Not in scope:[^‘]+‘(.*)’""".r
+  private final val NotInScopePattern2 = """.* not in scope: (.*)""".r
   private final val SuggestionPattern = """‘([^‘’]+)’ \(([^\(]+)\)""".r
 
   override def collectInformation(psiFile: PsiFile, editor: Editor, hasErrors: Boolean): PsiFile = {
@@ -101,47 +102,47 @@ class HaskellAnnotator extends ExternalAnnotator[PsiFile, LoadResult] {
     problems.flatMap { problem =>
       val textRange = getProblemTextRange(psiFile, problem)
       textRange.map { tr =>
-        val normalizedMessage = problem.normalizedMessage
-        if (normalizedMessage.startsWith("Warning:")) {
-          normalizedMessage match {
-            case NoTypeSignaturePattern(typeSignature) => WarningAnnotationWithIntentionActions(tr, problem.normalizedMessage, problem.htmlMessage, Iterable(new TypeSignatureIntentionAction(typeSignature)))
-            case HaskellImportOptimizer.WarningRedundantImport() => WarningAnnotationWithIntentionActions(tr, problem.normalizedMessage, problem.htmlMessage, Iterable(new OptimizeImportIntentionAction))
-            case DefinedButNotUsedPattern(n) => WarningAnnotationWithIntentionActions(tr, problem.normalizedMessage, problem.htmlMessage, Iterable(new DefinedButNotUsedIntentionAction(n)))
-            case _ => WarningAnnotation(tr, problem.normalizedMessage, problem.htmlMessage)
+        val plainMessage = problem.plainMessage
+        if (plainMessage.startsWith("warning:") || plainMessage.startsWith("Warning:")) {
+          plainMessage match {
+            case NoTypeSignaturePattern(typeSignature) => WarningAnnotationWithIntentionActions(tr, problem.plainMessage, problem.htmlMessage, Iterable(new TypeSignatureIntentionAction(typeSignature)))
+            case HaskellImportOptimizer.WarningRedundantImport() => WarningAnnotationWithIntentionActions(tr, problem.plainMessage, problem.htmlMessage, Iterable(new OptimizeImportIntentionAction))
+            case DefinedButNotUsedPattern(n) => WarningAnnotationWithIntentionActions(tr, problem.plainMessage, problem.htmlMessage, Iterable(new DefinedButNotUsedIntentionAction(n)))
+            case _ => WarningAnnotation(tr, problem.plainMessage, problem.htmlMessage)
           }
         } else {
-          normalizedMessage match {
+          plainMessage match {
             case UseLanguageExtensionPattern(languageExtension) => createLanguageExtensionIntentionAction(problem, tr, languageExtension)
             case UseLanguageExtensionPattern2(languageExtension) => createLanguageExtensionIntentionAction(problem, tr, languageExtension)
             case UseLanguageExtensionPattern3(languageExtension) => createLanguageExtensionIntentionAction(problem, tr, languageExtension)
             case UseLanguageExtensionPattern4(languageExtension) => createLanguageExtensionIntentionAction(problem, tr, languageExtension)
-            case PerhapsYouMeantPattern(suggestions) =>
+            case PerhapsYouMeantPattern(name, suggestions) =>
               val intentionActions = SuggestionPattern.findAllMatchIn(suggestions).map(s => {
                 val suggestion = s.group(1)
                 val message = s.group(2)
                 new PerhapsYouMeantIntentionAction(suggestion, message)
-              }).toIterable
-              ErrorAnnotationWithIntentionActions(tr, problem.normalizedMessage, problem.htmlMessage, intentionActions)
+              }).toStream ++ createNotInScopeIntentionActions(psiFile, name)
+              ErrorAnnotationWithIntentionActions(tr, problem.plainMessage, problem.htmlMessage, intentionActions)
             case NotInScopePattern(name) =>
-              val project = psiFile.getProject
-              val moduleNames = (if (HaskellProjectUtil.isProjectTestFile(psiFile)) {
-                findGlobalProjectInfo(project).map(_.availableInTestLibraryModuleNames).getOrElse(Iterable())
-              } else {
-                findGlobalProjectInfo(project).map(_.availableInProdLibraryModuleNames).getOrElse(Iterable())
-              }) ++ findAvailableProjectModules(project).prodModuleNames
-
-              val moduleIdentifiers = moduleNames.flatMap(mn => findImportedModuleIdentifiers(project, mn, psiFile).filter(_.name == name))
-              val intentions = moduleIdentifiers.map(mi => new NotInScopeIntentionAction(mi.name, mi.moduleName, psiFile))
-              ErrorAnnotationWithIntentionActions(tr, problem.normalizedMessage, problem.htmlMessage, intentions)
-            case _ => ErrorAnnotation(tr, problem.normalizedMessage, problem.htmlMessage)
+              ErrorAnnotationWithIntentionActions(tr, problem.plainMessage, problem.htmlMessage, createNotInScopeIntentionActions(psiFile, name))
+            case NotInScopePattern2(name) =>
+              ErrorAnnotationWithIntentionActions(tr, problem.plainMessage, problem.htmlMessage, createNotInScopeIntentionActions(psiFile, name.split("::").headOption.getOrElse(name).trim))
+            case _ => ErrorAnnotation(tr, problem.plainMessage, problem.htmlMessage)
           }
         }
       }
     }
   }
 
+  private def createNotInScopeIntentionActions(psiFile: PsiFile, name: String) = {
+    val project = psiFile.getProject
+    val moduleNames = findAvailableModuleNamesForModuleIdentifiers(psiFile.getProject).toStream
+    val moduleIdentifiers = moduleNames.flatMap(mn => findImportedModuleIdentifiers(project, mn).filter(_.name == name))
+    moduleIdentifiers.map(mi => new NotInScopeIntentionAction(mi.name, mi.moduleName, psiFile))
+  }
+
   private def createLanguageExtensionIntentionAction(problem: LoadProblemInCurrentFile, tr: TextRange, languageExtension: String): ErrorAnnotationWithIntentionActions = {
-    ErrorAnnotationWithIntentionActions(tr, problem.normalizedMessage, problem.htmlMessage, Iterable(new LanguageExtensionIntentionAction(languageExtension)))
+    ErrorAnnotationWithIntentionActions(tr, problem.plainMessage, problem.htmlMessage, Stream(new LanguageExtensionIntentionAction(languageExtension)))
   }
 
   private def getProblemTextRange(psiFile: PsiFile, problem: LoadProblemInCurrentFile): Option[TextRange] = {
@@ -184,7 +185,7 @@ object HaskellAnnotator {
         override def run(): Unit = {
           val openFiles = FileEditorManager.getInstance(project).getOpenFiles
           val openProjectFiles = openFiles.filter(vf => HaskellProjectUtil.isProjectFile(vf, project))
-          val openProjectPsiFiles = HaskellFileUtil.convertToHaskellFiles(openProjectFiles, project)
+          val openProjectPsiFiles = HaskellFileUtil.convertToHaskellFiles(openProjectFiles.toStream, project)
           openProjectPsiFiles.foreach(pf =>
             getDaemonCodeAnalyzer(project).restart(pf)
           )
@@ -202,7 +203,7 @@ private sealed trait Annotation {
 
 private case class ErrorAnnotation(textRange: TextRange, message: String, htmlMessage: String) extends Annotation
 
-private case class ErrorAnnotationWithIntentionActions(textRange: TextRange, message: String, htmlMessage: String, baseIntentionActions: Iterable[HaskellBaseIntentionAction]) extends Annotation
+private case class ErrorAnnotationWithIntentionActions(textRange: TextRange, message: String, htmlMessage: String, baseIntentionActions: Stream[HaskellBaseIntentionAction]) extends Annotation
 
 private case class WarningAnnotation(textRange: TextRange, message: String, htmlMessage: String) extends Annotation
 
@@ -288,6 +289,8 @@ class DefinedButNotUsedIntentionAction(name: String) extends HaskellBaseIntentio
   }
 }
 
+// TODO: Only add identifier and not complete module
+// TODO: Check when adding import module that is not already there for other identifier of module
 class NotInScopeIntentionAction(name: String, moduleName: String, psiFile: PsiFile) extends HaskellBaseIntentionAction {
   setText(s"Import `$name` of module `$moduleName`")
 
@@ -311,6 +314,7 @@ class NotInScopeIntentionAction(name: String, moduleName: String, psiFile: PsiFi
   }
 }
 
+// TODO: Pass warnings instead of calling load again
 class OptimizeImportIntentionAction extends HaskellBaseIntentionAction {
   setText("Optimize imports")
 

@@ -16,10 +16,8 @@
 
 package intellij.haskell.refactor
 
-import javax.naming.spi.ResolveResult
-
 import com.intellij.openapi.util.Condition
-import com.intellij.psi.{PsiElement, PsiFile, PsiPolyVariantReference}
+import com.intellij.psi.{PsiElement, PsiFile, PsiPolyVariantReference, ResolveResult}
 import intellij.haskell.util.HaskellProjectUtil
 
 class HaskellVetoRenameCondition extends Condition[PsiElement] {

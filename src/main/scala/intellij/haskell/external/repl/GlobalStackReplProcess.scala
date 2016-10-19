@@ -14,28 +14,29 @@
  * limitations under the License.
  */
 
-package intellij.haskell.external.repl.process
+package intellij.haskell.external.repl
 
 import com.intellij.openapi.project.Project
 
-class GlobalStackReplProcess(project: Project) extends StackReplProcess(project, Seq("--no-build", "--no-package-hiding")) {
+private[external] class GlobalStackReplProcess(project: Project) extends StackReplProcess(project, Seq("--no-package-hiding")) {
   override def getComponentName: String = "global-stack-repl"
 
-  def getModuleIdentifiers(moduleName: String): StackReplOutput = synchronized {
+  def getModuleIdentifiers(moduleName: String): Option[StackReplOutput] = synchronized {
     execute(s":module $moduleName")
     execute(s":browse! $moduleName")
   }
 
-  def findNameInfo(moduleName: String, name: String): StackReplOutput = synchronized {
+  def findNameInfo(moduleName: String, name: String): Option[StackReplOutput] = synchronized {
     val output = execute(s":module $moduleName")
-    if (output.stdErrLines.isEmpty) {
+    if (output.exists(_.stdErrLines.isEmpty)) {
       execute(s":info $name")
     } else {
-      StackReplOutput()
+      // Now no info means never info because it's library
+      Some(StackReplOutput())
     }
   }
 
-  def showActiveLanguageFlags(): StackReplOutput = {
+  def showActiveLanguageFlags(): Option[StackReplOutput] = synchronized {
     execute(":show language")
   }
 }

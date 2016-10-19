@@ -1,12 +1,16 @@
 // This is a generated file. Not intended for manual editing.
 package intellij.haskell.psi;
 
+import org.jetbrains.annotations.*;
 import com.intellij.psi.PsiElementVisitor;
-import org.jetbrains.annotations.NotNull;
 
 public class HaskellVisitor extends PsiElementVisitor {
 
   public void visitAnnPragma(@NotNull HaskellAnnPragma o) {
+    visitCompositeElement(o);
+  }
+
+  public void visitCcontext(@NotNull HaskellCcontext o) {
     visitCompositeElement(o);
   }
 
@@ -70,10 +74,6 @@ public class HaskellVisitor extends PsiElementVisitor {
     visitNamedElement(o);
   }
 
-  public void visitContext(@NotNull HaskellContext o) {
-    visitCompositeElement(o);
-  }
-
   public void visitCtypePragma(@NotNull HaskellCtypePragma o) {
     visitCompositeElement(o);
   }
@@ -83,6 +83,10 @@ public class HaskellVisitor extends PsiElementVisitor {
   }
 
   public void visitDataDeclarationDeriving(@NotNull HaskellDataDeclarationDeriving o) {
+    visitCompositeElement(o);
+  }
+
+  public void visitDdecls(@NotNull HaskellDdecls o) {
     visitCompositeElement(o);
   }
 
@@ -195,6 +199,10 @@ public class HaskellVisitor extends PsiElementVisitor {
   }
 
   public void visitIncludePragma(@NotNull HaskellIncludePragma o) {
+    visitCompositeElement(o);
+  }
+
+  public void visitIncoherentPragma(@NotNull HaskellIncoherentPragma o) {
     visitCompositeElement(o);
   }
 

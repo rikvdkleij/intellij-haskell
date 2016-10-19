@@ -46,11 +46,15 @@ object HaskellFileUtil {
       new File(project.getBasePath, filePath).getAbsolutePath
   }
 
-  def convertToHaskellFiles(virtualFiles: Iterable[VirtualFile], project: Project): Iterable[HaskellFile] = {
+  def convertToHaskellFiles(virtualFiles: Stream[VirtualFile], project: Project): Stream[HaskellFile] = {
     val psiManager = PsiManager.getInstance(project)
-    virtualFiles.flatMap(vf => Option(psiManager.findFile(vf)) match {
+    virtualFiles.flatMap(vf => convertToHaskellFile(vf, psiManager))
+  }
+
+  def convertToHaskellFile(virtualFile: VirtualFile, psiManager: PsiManager) = {
+    Option(psiManager.findFile(virtualFile)) match {
       case Some(pf: HaskellFile) => Some(pf)
       case _ => None
-    })
+    }
   }
 }

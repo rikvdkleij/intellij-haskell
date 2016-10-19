@@ -30,6 +30,6 @@ class LoadSpec extends FunSpec with Matchers with GivenWhenThen with BeforeAndAf
     Then("it should contain right data")
     problem.lineNr should equal(1)
     problem.columnNr should equal(11)
-    problem.normalizedMessage should equal(s"parse error on input and so on")
+    problem.plainMessage should equal(s"parse error on input and so on")
   }
 }

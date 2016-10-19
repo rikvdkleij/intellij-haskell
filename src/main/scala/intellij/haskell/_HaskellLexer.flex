@@ -108,13 +108,6 @@ varsym_id           = {symbol_no_colon_dot} ({symbol_no_colon_dot} | {dot} | {co
 con_id              = {large} ({small} | {large} | {digit} | {quote})* {hash}*
 consym_id           = {quote}? {colon} ({symbol_no_colon_dot} | {dot} | {colon})*
 
-quasi_quote_v_start = {left_bracket} ({var_id} | {con_id} | {dot})+ {vertical_bar}
-quasi_quote_e_start = {left_bracket} "e"? {vertical_bar}
-quasi_quote_d_start = {left_bracket} "d" {vertical_bar}
-quasi_quote_t_start = {left_bracket} "t" {vertical_bar}
-quasi_quote_p_start = {left_bracket} "p" {vertical_bar}
-quasi_quote_end     = {vertical_bar} {right_bracket}
-
 shebang_line        = {hash} {exclamation_mark} [^\r\n]*
 
 pragma_start        = "{-#"
@@ -246,13 +239,6 @@ ncomment_end        = "-}"
     {right_brace}         { return HS_RIGHT_BRACE; }
 
     {quote}               { return HS_QUOTE; }
-
-    {quasi_quote_e_start} { return HS_QUASI_QUOTE_E_START; }
-    {quasi_quote_d_start} { return HS_QUASI_QUOTE_D_START; }
-    {quasi_quote_t_start} { return HS_QUASI_QUOTE_T_START; }
-    {quasi_quote_p_start} { return HS_QUASI_QUOTE_P_START; }
-    {quasi_quote_v_start} { return HS_QUASI_QUOTE_V_START; }
-    {quasi_quote_end}     { return HS_QUASI_QUOTE_END; }
 
     {shebang_line}        { return HS_SHEBANG_LINE; }
 

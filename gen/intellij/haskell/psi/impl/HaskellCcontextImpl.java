@@ -10,14 +10,14 @@ import com.intellij.psi.util.PsiTreeUtil;
 import static intellij.haskell.psi.HaskellTypes.*;
 import intellij.haskell.psi.*;
 
-public class HaskellInsideQqExpressionImpl extends HaskellCompositeElementImpl implements HaskellInsideQqExpression {
+public class HaskellCcontextImpl extends HaskellCompositeElementImpl implements HaskellCcontext {
 
-  public HaskellInsideQqExpressionImpl(ASTNode node) {
+  public HaskellCcontextImpl(ASTNode node) {
     super(node);
   }
 
   public void accept(@NotNull HaskellVisitor visitor) {
-    visitor.visitInsideQqExpression(this);
+    visitor.visitCcontext(this);
   }
 
   public void accept(@NotNull PsiElementVisitor visitor) {
@@ -27,20 +27,8 @@ public class HaskellInsideQqExpressionImpl extends HaskellCompositeElementImpl i
 
   @Override
   @NotNull
-  public List<HaskellQName> getQNameList() {
-    return PsiTreeUtil.getChildrenOfTypeAsList(this, HaskellQName.class);
-  }
-
-  @Override
-  @NotNull
-  public List<HaskellQuasiQuote> getQuasiQuoteList() {
-    return PsiTreeUtil.getChildrenOfTypeAsList(this, HaskellQuasiQuote.class);
-  }
-
-  @Override
-  @NotNull
-  public List<HaskellSccPragma> getSccPragmaList() {
-    return PsiTreeUtil.getChildrenOfTypeAsList(this, HaskellSccPragma.class);
+  public List<HaskellClazz> getClazzList() {
+    return PsiTreeUtil.getChildrenOfTypeAsList(this, HaskellClazz.class);
   }
 
 }

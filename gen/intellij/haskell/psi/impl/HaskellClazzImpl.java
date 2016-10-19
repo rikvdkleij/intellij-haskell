@@ -32,9 +32,9 @@ public class HaskellClazzImpl extends HaskellCompositeElementImpl implements Has
   }
 
   @Override
-  @NotNull
-  public List<HaskellTtype> getTtypeList() {
-    return PsiTreeUtil.getChildrenOfTypeAsList(this, HaskellTtype.class);
+  @Nullable
+  public HaskellTtype getTtype() {
+    return findChildByClass(HaskellTtype.class);
   }
 
   @Override

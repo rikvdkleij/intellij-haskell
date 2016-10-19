@@ -10,14 +10,11 @@ import scala.collection.Seq;
 
 public interface HaskellTypeSignature extends HaskellDeclarationElement {
 
-  @Nullable
-  HaskellContext getContext();
+  @NotNull
+  List<HaskellCcontext> getCcontextList();
 
   @NotNull
   List<HaskellQNames> getQNamesList();
-
-  @Nullable
-  HaskellScontext getScontext();
 
   @NotNull
   HaskellTtype getTtype();

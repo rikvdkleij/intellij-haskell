@@ -16,17 +16,30 @@
 
 package intellij.haskell.navigation
 
-import com.intellij.navigation.{ChooseByNameContributor, NavigationItem}
+import com.intellij.navigation.NavigationItem
 import com.intellij.openapi.project.Project
-import intellij.haskell.util.HaskellProjectUtil
+import com.intellij.psi.PsiManager
+import intellij.haskell.psi.{HaskellNamedElement, HaskellPsiUtil}
+import intellij.haskell.util.StringUtil._
+import intellij.haskell.util.{HaskellFileUtil, HaskellProjectUtil, StringUtil}
 
-class HaskellNamedElementContributor extends ChooseByNameContributor {
+class HaskellNamedElementContributor extends HaskellChooseByNameContributor[HaskellNamedElement] {
 
-  def getNames(project: Project, includeNonProjectItems: Boolean): Array[String] = {
-    HaskellProjectUtil.findNamedElements(project, includeNonProjectItems).map(_.getName).toArray
+  private var simpleCache: Stream[HaskellNamedElement] = _
+
+  override def getNames(project: Project, includeNonProjectItems: Boolean): Array[String] = {
+    val psiManager = PsiManager.getInstance(project)
+    val namedElements = HaskellProjectUtil.findHaskellFiles(project, includeNonProjectItems).
+      flatMap(vf => HaskellFileUtil.convertToHaskellFile(vf, psiManager).map(f => HaskellPsiUtil.findNamedElements(f)).getOrElse(Stream()))
+    simpleCache = namedElements
+    namedElements.map(_.getName).toArray
   }
 
-  def getItemsByName(name: String, pattern: String, project: Project, includeNonProjectItems: Boolean): Array[NavigationItem] = {
-    HaskellProjectUtil.findNamedElementsByName(project, pattern, includeNonProjectItems).toArray
+  override def getItemsByName(name: String, pattern: String, project: Project, includeNonProjectItems: Boolean): Array[NavigationItem] = {
+    findElementsByName(project, pattern, includeNonProjectItems).toArray
+  }
+
+  protected def find(conditionOnLowerCase: String => Boolean) = {
+    simpleCache.filter(ne => conditionOnLowerCase(toLowerCase(ne.getName)))
   }
 }

@@ -10,8 +10,8 @@ public interface HaskellClazz extends HaskellCompositeElement {
   @NotNull
   List<HaskellQName> getQNameList();
 
-  @NotNull
-  List<HaskellTtype> getTtypeList();
+  @Nullable
+  HaskellTtype getTtype();
 
   @NotNull
   List<HaskellTypeSignature> getTypeSignatureList();

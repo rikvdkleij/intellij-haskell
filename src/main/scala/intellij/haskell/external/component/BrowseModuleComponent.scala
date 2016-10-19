@@ -24,27 +24,26 @@ import com.intellij.openapi.progress.ProcessCanceledException
 import com.intellij.openapi.project.Project
 import com.intellij.psi.PsiFile
 import intellij.haskell.external.repl.StackReplsManager
+import intellij.haskell.util.StringUtil
 
 import scala.collection.JavaConversions._
 
 private[component] object BrowseModuleComponent {
 
-  private final val PackageNameQualifierPattern = """([a-z\-]+[0-9\.]+:)?([A-Z][A-Za-z\-\']+\.)+"""
-
-  private case class Key(project: Project, moduleName: String, psiFile: Option[PsiFile], allTopLevel: Boolean)
+  private case class Key(project: Project, moduleName: String, psiFile: Option[PsiFile])
 
   private val executor = Executors.newCachedThreadPool()
 
   private final val Cache = CacheBuilder.newBuilder()
     .build(
-      new CacheLoader[Key, Iterable[ModuleIdentifier]]() {
+      new CacheLoader[Key, Option[Iterable[ModuleIdentifier]]]() {
 
-        override def load(key: Key): Iterable[ModuleIdentifier] = {
+        override def load(key: Key): Option[Iterable[ModuleIdentifier]] = {
           findModuleIdentifiers(key)
         }
 
-        override def reload(key: Key, oldValue: Iterable[ModuleIdentifier]): ListenableFuture[Iterable[ModuleIdentifier]] = {
-          val task = ListenableFutureTask.create(new Callable[Iterable[ModuleIdentifier]]() {
+        override def reload(key: Key, oldValue: Option[Iterable[ModuleIdentifier]]): ListenableFuture[Option[Iterable[ModuleIdentifier]]] = {
+          val task = ListenableFutureTask.create(new Callable[Option[Iterable[ModuleIdentifier]]]() {
             def call() = {
               findModuleIdentifiers(key)
             }
@@ -53,24 +52,27 @@ private[component] object BrowseModuleComponent {
           task
         }
 
-        private def findModuleIdentifiers(key: Key): Iterable[ModuleIdentifier] = {
+        private def findModuleIdentifiers(key: Key): Option[Iterable[ModuleIdentifier]] = {
           val project = key.project
           val moduleName = key.moduleName
-          if (ProjectModulesComponent.findAvailableModules(project).allModuleNames.contains(moduleName)) {
-            if (key.allTopLevel) {
-              val outputLines = StackReplsManager.getProjectRepl(project).getAllTopLevelModuleIdentifiers(moduleName, key.psiFile).stdOutLines
-              val definedLocallyLines = outputLines.takeWhile(l => !l.startsWith("-- imported via"))
-              definedLocallyLines.flatMap(findModuleIdentifier(_, moduleName, project))
+          GlobalProjectInfoComponent.findGlobalProjectInfo(project).flatMap(gpi => {
+            if (gpi.allAvailableLibraryModuleNames.contains(moduleName)) {
+              StackReplsManager.getGlobalRepl(project).getModuleIdentifiers(moduleName).map(_.stdOutLines.flatMap(findModuleIdentifier(_, moduleName, project)))
             } else {
-              StackReplsManager.getProjectRepl(project).getModuleIdentifiers(moduleName, key.psiFile).stdOutLines.flatMap(findModuleIdentifier(_, moduleName, project))
+              key.psiFile match {
+                case Some(f) =>
+                  StackReplsManager.getProjectRepl(project).getAllTopLevelModuleIdentifiers(moduleName, f) map { output =>
+                    val definedLocallyLines = output.stdOutLines.takeWhile(l => !l.startsWith("-- imported via"))
+                    definedLocallyLines.flatMap(findModuleIdentifier(_, moduleName, project))
+                  }
+                case _ => StackReplsManager.getProjectRepl(project).getModuleIdentifiers(moduleName).map(_.stdOutLines.flatMap(findModuleIdentifier(_, moduleName, project)))
+              }
             }
-          } else {
-            StackReplsManager.getGlobalRepl(project).getModuleIdentifiers(moduleName).stdOutLines.flatMap(findModuleIdentifier(_, moduleName, project))
-          }
+          })
         }
 
         private def findModuleIdentifier(outputLine: String, moduleName: String, project: Project): Option[ModuleIdentifier] = {
-          val declaration = outputLine.replaceAll(PackageNameQualifierPattern, "").replaceAll("""\s+""", " ").replaceAll("""\{\-(.+)\-\}""", "")
+          val declaration = StringUtil.shortenHaskellDeclaration(outputLine)
           val allTokens = declaration.split("""\s+""")
           if (allTokens.isEmpty || allTokens(0) == "--") {
             None
@@ -85,7 +87,7 @@ private[component] object BrowseModuleComponent {
             }
           } else if (allTokens(0) == "type" && allTokens(1) == "role") {
             createModuleIdentifier(allTokens(2), moduleName, declaration)
-          } else if (Seq("data", "type").contains(allTokens(0).trim)) {
+          } else if (Seq("data", "type", "newtype").contains(allTokens(0).trim)) {
             createModuleIdentifier(allTokens(1), moduleName, declaration)
           } else {
             val tokens = declaration.split("""::""")
@@ -108,9 +110,15 @@ private[component] object BrowseModuleComponent {
       }
     )
 
-  def findImportedModuleIdentifiers(project: Project, moduleName: String, psiFile: Option[PsiFile]): Iterable[ModuleIdentifier] = {
+  def findImportedModuleIdentifiers(project: Project, moduleName: String): Iterable[ModuleIdentifier] = {
     try {
-      Cache.get(Key(project, moduleName, psiFile, allTopLevel = false))
+      val key = Key(project, moduleName, None)
+      Cache.get(key) match {
+        case Some(result) => result
+        case _ =>
+          Cache.invalidate(key)
+          Iterable()
+      }
     }
     catch {
       case _: UncheckedExecutionException => Iterable()
@@ -118,9 +126,19 @@ private[component] object BrowseModuleComponent {
     }
   }
 
-  def findAllTopLevelModuleIdentifiers(project: Project, moduleName: String, psiFile: Option[PsiFile]): Iterable[ModuleIdentifier] = {
+  def findModuleNamesInCache(project: Project): Iterable[String] = {
+    Cache.asMap().map(_._1.moduleName)
+  }
+
+  def findAllTopLevelModuleIdentifiers(project: Project, moduleName: String, psiFile: PsiFile): Iterable[ModuleIdentifier] = {
     try {
-      Cache.get(Key(project, moduleName, psiFile, allTopLevel = true))
+      val key = Key(project, moduleName, Some(psiFile))
+      Cache.get(key) match {
+        case Some(result) => result
+        case _ =>
+          Cache.invalidate(key)
+          Iterable()
+      }
     }
     catch {
       case _: UncheckedExecutionException => Iterable()
@@ -128,17 +146,13 @@ private[component] object BrowseModuleComponent {
     }
   }
 
-  def isCacheEmptyForModule(moduleName: String): Boolean = {
-    !Cache.asMap().exists(_._1.moduleName == moduleName)
-  }
-
-  def refreshForModule(project: Project, moduleName: String): Unit = {
-    val keys = Cache.asMap().filter(k => k._1.project == project && k._1.moduleName == moduleName).keys
+  def refreshForModule(project: Project, moduleName: String, psiFile: PsiFile): Unit = {
+    val keys = Cache.asMap().keySet().filter(k => k.project == project && k.moduleName == moduleName && k.psiFile.contains(psiFile))
     keys.foreach(k => Cache.refresh(k))
   }
 
-  def invalidate(): Unit = {
-    val keys = Cache.asMap().keys
+  def invalidate(project: Project): Unit = {
+    val keys = Cache.asMap().keys.filter(k => k.project == project)
     keys.foreach(k => Cache.invalidate(k))
   }
 }

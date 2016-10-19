@@ -1,18 +1,17 @@
 // This is a generated file. Not intended for manual editing.
 package intellij.haskell.psi;
 
+import java.util.List;
+import org.jetbrains.annotations.*;
+import com.intellij.psi.PsiElement;
 import com.intellij.navigation.ItemPresentation;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 import scala.Option;
 import scala.collection.Seq;
-
-import java.util.List;
 
 public interface HaskellDataDeclaration extends HaskellDataConstructorDeclarationElement {
 
   @Nullable
-  HaskellCidecls getCidecls();
+  HaskellCcontext getCcontext();
 
   @NotNull
   List<HaskellConstr1> getConstr1List();
@@ -27,13 +26,13 @@ public interface HaskellDataDeclaration extends HaskellDataConstructorDeclaratio
   List<HaskellConstr4> getConstr4List();
 
   @Nullable
-  HaskellContext getContext();
-
-  @Nullable
   HaskellCtypePragma getCtypePragma();
 
   @Nullable
   HaskellDataDeclarationDeriving getDataDeclarationDeriving();
+
+  @Nullable
+  HaskellDdecls getDdecls();
 
   @NotNull
   List<HaskellKindSignature> getKindSignatureList();
@@ -45,7 +44,7 @@ public interface HaskellDataDeclaration extends HaskellDataConstructorDeclaratio
   HaskellScontext getScontext();
 
   @NotNull
-  HaskellSimpletype getSimpletype();
+  List<HaskellSimpletype> getSimpletypeList();
 
   String getName();
 

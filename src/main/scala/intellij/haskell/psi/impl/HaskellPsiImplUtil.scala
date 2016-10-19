@@ -26,6 +26,7 @@ import com.intellij.util.ArrayUtil
 import intellij.haskell.external.component.StackReplsComponentsManager
 import intellij.haskell.psi.HaskellTypes._
 import intellij.haskell.psi._
+import intellij.haskell.util.StringUtil
 import intellij.haskell.{HaskellFileType, HaskellIcons}
 
 import scala.collection.JavaConversions._
@@ -259,12 +260,11 @@ object HaskellPsiImplUtil {
           if (declarationInfo.contains(namedElement.getName)) {
             declarationInfo
           } else {
-            val info = StackReplsComponentsManager.findNameInfo(namedElement).headOption.map(_.declaration).getOrElse(declarationInfo)
+            val info = findNameInfo(namedElement).getOrElse(declarationInfo)
             s"${namedElement.getName} `in`  $info"
           }
         }).orElse(HaskellPsiUtil.findImportDeclarationParent(namedElement).flatMap(_.getModuleName).map(n => s"import $n")).
-          orElse(HaskellPsiUtil.findExpressionParent(namedElement).map(_.getText)).
-          orElse(HaskellPsiUtil.findTopDeclarationParent(namedElement).map(_.getText)).
+          orElse(findNameInfo(namedElement)).
           map(_.replaceAll("""\s+""", " ")).
           getOrElse(namedElement.getName)
       }
@@ -287,14 +287,20 @@ object HaskellPsiImplUtil {
     }
   }
 
+  private def findNameInfo(namedElement: HaskellNamedElement) = {
+    StackReplsComponentsManager.findNameInfo(namedElement).headOption.map(_.declaration)
+  }
+
   private final val EndOfDeclarationInfoIndicators = Seq(HS_NEWLINE, HS_EQUAL, HS_WHERE)
 
   private def getDeclarationInfo(declarationElement: HaskellDeclarationElement): String = {
-    (declarationElement match {
+    val info = declarationElement match {
       case md: HaskellModuleDeclaration => s"module ${md.getModid.getName}"
-      case cd: HaskellClassDeclaration => declarationElement.getIdentifierElements.headOption.flatMap(ne => StackReplsComponentsManager.findNameInfo(ne).headOption.map(_.declaration)).getOrElse(getTruncatedInfo(declarationElement))
+      case cd: HaskellClassDeclaration => cd.getIdentifierElements.headOption.flatMap(findNameInfo).getOrElse(getTruncatedInfo(cd))
+      case dd: HaskellDataDeclaration => dd.getIdentifierElements.headOption.flatMap(findNameInfo).getOrElse(getTruncatedInfo(dd))
       case de => getTruncatedInfo(declarationElement)
-    }).replaceAll("""\{\-(.+)\-\}""", " ").replaceAll("""\-\-(.+)""", "").replaceAll("""\s+""", " ")
+    }
+    StringUtil.shortenHaskellDeclaration(info)
   }
 
   private def getTruncatedInfo(declarationElement: HaskellDeclarationElement) = {
@@ -310,11 +316,11 @@ object HaskellPsiImplUtil {
   }
 
   def getIdentifierElements(dataDeclaration: HaskellDataDeclaration): Seq[HaskellNamedElement] = {
-    dataDeclaration.getSimpletype.getIdentifierElements ++
-      Option(dataDeclaration.getConstr1List).map(_.flatMap(c => Seq(c.getQName.getIdentifierElement) ++ c.getFielddeclList.flatMap(_.getQNameList.map(_.getIdentifierElement)))).getOrElse(Seq()) ++
+    dataDeclaration.getSimpletypeList.headOption.map(_.getIdentifierElements).getOrElse(Seq()) ++
+      Option(dataDeclaration.getConstr1List).map(_.flatMap(c => Seq(c.getQName.getIdentifierElement) ++ c.getFielddeclList.flatMap(_.getQNameList.headOption.map(_.getIdentifierElement)))).getOrElse(Seq()) ++
       Option(dataDeclaration.getConstr3List).map(_.map(c => c.getQName.getIdentifierElement)).getOrElse(Seq()) ++
-      Option(dataDeclaration.getConstr2List).map(_.flatMap(c => c.getQNameList.map(_.getIdentifierElement) ++ c.getQNameList.map(_.getIdentifierElement))).getOrElse(Seq()) ++
-      Option(dataDeclaration.getConstr4List).map(_.flatMap(c => c.getQNameList.map(_.getIdentifierElement) ++ c.getQNameList.map(_.getIdentifierElement))).getOrElse(Seq())
+      Option(dataDeclaration.getConstr2List).map(_.flatMap(c => c.getQNameList.headOption.map(_.getIdentifierElement))).getOrElse(Seq()) ++
+      Option(dataDeclaration.getConstr4List).map(_.flatMap(c => c.getQNameList.headOption.map(_.getIdentifierElement))).getOrElse(Seq())
   }
 
   def getIdentifierElements(typeDeclaration: HaskellTypeDeclaration): Seq[HaskellNamedElement] = {
@@ -326,7 +332,7 @@ object HaskellPsiImplUtil {
   }
 
   def getIdentifierElements(classDeclaration: HaskellClassDeclaration): Seq[HaskellNamedElement] = {
-    Seq(classDeclaration.getQNameList.head.getIdentifierElement) ++
+    classDeclaration.getQNameList.headOption.map(_.getIdentifierElement).toSeq ++
       Option(classDeclaration.getCidecls).map(_.getTypeSignatureList.flatMap(_.getIdentifierElements)).getOrElse(Seq()) ++
       Option(classDeclaration.getCidecls).map(_.getTypeDeclarationList.flatMap(_.getIdentifierElements)).getOrElse(Seq())
   }

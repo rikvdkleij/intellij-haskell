@@ -19,57 +19,33 @@ package intellij.haskell.external
 import java.util.regex.Pattern
 
 import com.intellij.lang.documentation.AbstractDocumentationProvider
-import com.intellij.openapi.project.Project
-import com.intellij.psi.util.PsiTreeUtil
-import com.intellij.psi.{PsiElement, PsiFile}
-import intellij.haskell.HaskellNotificationGroup
-import intellij.haskell.external.component._
-import intellij.haskell.psi.{HaskellModuleDeclaration, HaskellNamedElement}
-import intellij.haskell.sdk.HaskellSdkType
+import com.intellij.psi.PsiElement
+import intellij.haskell.external.component.{BuiltInNameInfo, LibraryNameInfo, ProjectNameInfo, StackReplsComponentsManager}
+import intellij.haskell.psi.{HaskellPsiUtil, HaskellQualifiedNameElement}
 import intellij.haskell.settings.HaskellSettingsState
-
-import scala.collection.JavaConversions._
+import intellij.haskell.util.StackUtil
 
 class HaskellDocumentationProvider extends AbstractDocumentationProvider {
 
   override def generateDoc(psiElement: PsiElement, originalPsiElement: PsiElement): String = {
-    originalPsiElement.getParent match {
-      case hne: HaskellNamedElement => getHaskellDoc(hne).getOrElse("No documentation found")
-      case e => s"No documentation because this is not Haskell identifier: ${e.getText}"
+    HaskellPsiUtil.findQualifiedNameElement(originalPsiElement) match {
+      case Some(hne) => getHaskellDoc(hne).getOrElse("No documentation found")
+      case _ => s"No documentation because this is not Haskell identifier: ${psiElement.getText}"
     }
   }
 
-  private def getHaskellDoc(namedElement: HaskellNamedElement): Option[String] = {
-    HaskellSettingsState.getHaskellDocsPath.flatMap { hd =>
-      val identifier = namedElement.getName
-      val file = namedElement.getContainingFile
-      val project = file.getProject
-      val identifierInfo = StackReplsComponentsManager.findNameInfo(namedElement).headOption
-      val arguments = identifierInfo.map { ii =>
-        (ii, getModuleName(file), getPackageDbOption(project)) match {
-          case (lei: LibraryNameInfo, _, Some(dbPathOption)) => Seq("-g", dbPathOption, lei.moduleName, identifier)
-          case (pei: ProjectNameInfo, _, Some(dbPathOption)) => Seq("-g", dbPathOption, PsiTreeUtil.findChildOfType(file, classOf[HaskellModuleDeclaration]).getModuleName.get, identifier)
-          case (bei: BuiltInNameInfo, _, _) => Seq("Prelude", identifier)
-          case (_, Some(moduleName), Some(dbPathOption)) => Seq("-g", dbPathOption, moduleName, identifier)
-          case (_, _, _) => Seq()
-        }
+  private def getHaskellDoc(namedElement: HaskellQualifiedNameElement): Option[String] = {
+    HaskellSettingsState.getHaskellDocsPath.flatMap { hdp =>
+      val name = namedElement.getIdentifierElement.getName
+      val nameInfo = StackReplsComponentsManager.findNameInfo(namedElement).headOption
+      val arguments = nameInfo.flatMap {
+        case (lei: LibraryNameInfo) => Some(Seq(lei.moduleName, name))
+        case (pei: ProjectNameInfo) => HaskellPsiUtil.findModuleName(namedElement.getContainingFile).map(mn => Seq(mn, name))
+        case (bei: BuiltInNameInfo) => Some(Seq("Prelude", name))
       }
 
-      arguments.map(args => CommandLine.getProcessOutput(project.getBasePath, hd, args).getStdout).filterNot(_.trim.isEmpty).map(output =>
-        "<p>" + s"${Pattern.compile("$", Pattern.MULTILINE).matcher(output).replaceAll("<br>").replace(" ", "&nbsp;")}" + "</p>"
-      )
+      arguments.map(args => StackUtil.runCommand(Seq("exec", "--", hdp) ++ args, namedElement.getContainingFile.getProject).getStdout).
+        map(output => s"${Pattern.compile("$", Pattern.MULTILINE).matcher(output).replaceAll("<br>").replace(" ", "&nbsp;")}")
     }
-  }
-
-  private def getModuleName(psiFile: PsiFile) = {
-    Option(PsiTreeUtil.findChildOfType(psiFile, classOf[HaskellModuleDeclaration])).flatMap(_.getModuleName)
-  }
-
-  private def getPackageDbOption(project: Project) = {
-    val path = HaskellSdkType.getStackPath(project).flatMap(sp => CommandLine.getProcessOutput(project.getBasePath, sp, Seq("path", "--local-pkg-db")).getStdoutLines.headOption)
-    if (path.isEmpty) {
-      HaskellNotificationGroup.logWarning("Could not determine locale package db with `stack path --local-pkg-db`")
-    }
-    path
   }
 }

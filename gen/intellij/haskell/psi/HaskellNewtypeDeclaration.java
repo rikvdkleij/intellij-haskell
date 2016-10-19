@@ -11,7 +11,7 @@ import scala.collection.Seq;
 public interface HaskellNewtypeDeclaration extends HaskellDataConstructorDeclarationElement {
 
   @Nullable
-  HaskellContext getContext();
+  HaskellCcontext getCcontext();
 
   @Nullable
   HaskellCtypePragma getCtypePragma();

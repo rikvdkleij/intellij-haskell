@@ -29,21 +29,15 @@ public class HaskellTypeSignatureImpl extends HaskellCompositeElementImpl implem
   }
 
   @Override
-  @Nullable
-  public HaskellContext getContext() {
-    return findChildByClass(HaskellContext.class);
+  @NotNull
+  public List<HaskellCcontext> getCcontextList() {
+    return PsiTreeUtil.getChildrenOfTypeAsList(this, HaskellCcontext.class);
   }
 
   @Override
   @NotNull
   public List<HaskellQNames> getQNamesList() {
     return PsiTreeUtil.getChildrenOfTypeAsList(this, HaskellQNames.class);
-  }
-
-  @Override
-  @Nullable
-  public HaskellScontext getScontext() {
-    return findChildByClass(HaskellScontext.class);
   }
 
   @Override

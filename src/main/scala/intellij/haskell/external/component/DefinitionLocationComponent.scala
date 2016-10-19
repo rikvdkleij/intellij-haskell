@@ -16,17 +16,16 @@
 
 package intellij.haskell.external.component
 
-import java.util.concurrent.{Callable, Executors}
+import java.util.concurrent.{Callable, Executors, TimeUnit}
 
 import com.google.common.cache.{CacheBuilder, CacheLoader}
 import com.google.common.util.concurrent.{ListenableFuture, ListenableFutureTask, UncheckedExecutionException}
 import com.intellij.openapi.progress.ProcessCanceledException
+import com.intellij.openapi.project.Project
 import com.intellij.psi.{PsiElement, PsiFile}
-import intellij.haskell.external.repl.StackReplsManager
+import intellij.haskell.external.repl.{StackReplOutput, StackReplsManager}
 import intellij.haskell.psi._
 import intellij.haskell.util.LineColumnPosition
-
-import scala.collection.JavaConversions._
 
 private[component] object DefinitionLocationComponent {
   private final val Executor = Executors.newCachedThreadPool()
@@ -35,29 +34,63 @@ private[component] object DefinitionLocationComponent {
 
   private case class Key(startLineNr: Int, startColumnNr: Int, endLineNr: Int, endColumnNr: Int, expression: String, psiFile: PsiFile)
 
-  private final val Cache = CacheBuilder.newBuilder()
-    .build(
-      new CacheLoader[Key, Option[DefinitionLocation]]() {
+  private type Result = Either[String, Option[DefinitionLocation]]
 
-        override def load(key: Key): Option[DefinitionLocation] = {
+  private final val Cache = CacheBuilder.newBuilder()
+    .refreshAfterWrite(5, TimeUnit.SECONDS)
+    .expireAfterWrite(10, TimeUnit.MINUTES)
+    .build(
+      new CacheLoader[Key, Result]() {
+
+        override def load(key: Key): Result = {
           createDefinitionLocation(key)
         }
 
-        override def reload(key: Key, oldInfo: Option[DefinitionLocation]): ListenableFuture[Option[DefinitionLocation]] = {
-          val task = ListenableFutureTask.create(new Callable[Option[DefinitionLocation]]() {
+        override def reload(key: Key, oldInfo: Result): ListenableFuture[Result] = {
+          val task = ListenableFutureTask.create(new Callable[Result]() {
             def call() = {
-              createDefinitionLocation(key)
+              val newInfo = createDefinitionLocation(key)
+              newInfo match {
+                case Right(o) if o.isDefined => newInfo
+                case _ => oldInfo
+              }
             }
           })
           Executor.execute(task)
           task
         }
 
-        private def createDefinitionLocation(key: Key): Option[DefinitionLocation] = {
+        // See https://github.com/commercialhaskell/intero/issues/260
+        // and https://github.com/commercialhaskell/intero/issues/182
+        private def createDefinitionLocation(key: Key): Result = {
           val psiFile = key.psiFile
           val project = psiFile.getProject
-          val output = StackReplsManager.getProjectRepl(project).findLocationInfoFor(psiFile, key.startLineNr, key.startColumnNr, key.endLineNr, key.endColumnNr + 1, key.expression)
-          output.stdOutLines.headOption.flatMap(l => createDefinitionLocationInfo(l))
+          (findLocationInfoFor(key, psiFile, project, endColumnExcluded = false) match {
+            case Some(output1) =>
+              val headOption = output1.stdOutLines.headOption
+              if (headOption.contains("Couldn't resolve to any modules.") || headOption.contains("No matching export in any local modules.")) {
+                findLocationInfoFor(key, psiFile, project, endColumnExcluded = true) match {
+                  case Some(output2) => Right(output2)
+                  case _ => Left("No info available")
+                }
+              } else {
+                Right(output1)
+              }
+            case _ => Left("No info available")
+          }).right.map(_.stdOutLines.headOption.flatMap(l => createDefinitionLocationInfo(l)))
+        }
+
+        private def findLocationInfoFor(key: Key, psiFile: PsiFile, project: Project, endColumnExcluded: Boolean): Option[StackReplOutput] = {
+          val endColumnNr = if (endColumnExcluded) key.endColumnNr else key.endColumnNr - 1
+          StackReplsManager.getProjectRepl(project).findLocationInfoFor(psiFile, key.startLineNr, key.startColumnNr, key.endLineNr, endColumnNr, key.expression)
+        }
+
+        // TODO: Extend with `package:module name` pattern
+        private def createDefinitionLocationInfo(output: String): Option[DefinitionLocation] = {
+          output match {
+            case LocAtPattern(filePath, startLineNr, startColumnNr, endLineNr, endColumnNr) => Some(DefinitionLocation(filePath.trim, startLineNr.toInt, startColumnNr.toInt, endLineNr.toInt, endColumnNr.toInt))
+            case _ => None
+          }
         }
       }
     )
@@ -69,31 +102,24 @@ private[component] object DefinitionLocationComponent {
       textOffset = qne.getTextOffset
       psiFile <- Option(psiElement.getContainingFile)
       sp <- LineColumnPosition.fromOffset(psiFile, textOffset)
-      ep <- LineColumnPosition.fromOffset(psiFile, textOffset + qne.getText.length - 1)
-      typeInfo <- find(psiFile, sp, ep, qne.getName)
-    } yield typeInfo
-  }
-
-  def invalidate(psiFile: PsiFile): Unit = {
-    val keys = Cache.asMap().filter(_._1.psiFile == psiFile).keys
-    keys.foreach(k => Cache.invalidate(k))
+      ep <- LineColumnPosition.fromOffset(psiFile, textOffset + qne.getText.length)
+      location <- find(psiFile, sp, ep, qne.getName)
+    } yield location
   }
 
   private def find(psiFile: PsiFile, startPosition: LineColumnPosition, endPosition: LineColumnPosition, expression: String): Option[DefinitionLocation] = {
     val key = Key(startPosition.lineNr, startPosition.columnNr, endPosition.lineNr, endPosition.columnNr, expression, psiFile)
     try {
-      Cache.get(key)
+      Cache.get(key) match {
+        case Right(result) => result
+        case _ =>
+          Cache.invalidate(key)
+          None
+      }
     }
     catch {
       case _: UncheckedExecutionException => None
       case _: ProcessCanceledException => None
-    }
-  }
-
-  private def createDefinitionLocationInfo(output: String): Option[DefinitionLocation] = {
-    output match {
-      case LocAtPattern(filePath, startLineNr, startColumnNr, endLineNr, endColumnNr) => Some(DefinitionLocation(filePath.trim, startLineNr.toInt, startColumnNr.toInt, endLineNr.toInt, endColumnNr.toInt))
-      case _ => None
     }
   }
 }

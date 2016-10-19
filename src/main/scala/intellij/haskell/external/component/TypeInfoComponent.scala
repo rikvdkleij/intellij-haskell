@@ -16,7 +16,7 @@
 
 package intellij.haskell.external.component
 
-import java.util.concurrent.{Callable, Executors}
+import java.util.concurrent.{Callable, Executors, TimeUnit}
 
 import com.google.common.cache.{CacheBuilder, CacheLoader}
 import com.google.common.util.concurrent.{ListenableFuture, ListenableFutureTask, UncheckedExecutionException}
@@ -27,35 +27,44 @@ import intellij.haskell.external.repl.StackReplsManager
 import intellij.haskell.psi._
 import intellij.haskell.util.LineColumnPosition
 
-import scala.collection.JavaConversions._
-
 private[component] object TypeInfoComponent {
+
   private final val Executor = Executors.newCachedThreadPool()
 
   private case class Key(psiFile: PsiFile, startLineNr: Int, startColumnNr: Int, endLineNr: Int, endColumnNr: Int, expression: String)
 
-  private final val Cache = CacheBuilder.newBuilder()
-    .build(
-      new CacheLoader[Key, Option[TypeInfo]]() {
+  private type Result = Either[String, Option[TypeInfo]]
 
-        override def load(key: Key): Option[TypeInfo] = {
+  private final val Cache = CacheBuilder.newBuilder()
+    .refreshAfterWrite(5, TimeUnit.SECONDS)
+    .expireAfterWrite(10, TimeUnit.MINUTES)
+    .build(
+      new CacheLoader[Key, Result]() {
+
+        override def load(key: Key): Result = {
           createTypeInfo(key)
         }
 
-        override def reload(key: Key, oldInfo: Option[TypeInfo]): ListenableFuture[Option[TypeInfo]] = {
-          val task = ListenableFutureTask.create(new Callable[Option[TypeInfo]]() {
+        override def reload(key: Key, oldInfo: Result): ListenableFuture[Result] = {
+          val task = ListenableFutureTask.create(new Callable[Result]() {
             def call() = {
-              createTypeInfo(key)
+              val newInfo = createTypeInfo(key)
+              newInfo match {
+                case Right(o) if o.isDefined => newInfo
+                case _ => oldInfo
+              }
             }
           })
           Executor.execute(task)
           task
         }
 
-        private def createTypeInfo(key: Key): Option[TypeInfo] = {
+        private def createTypeInfo(key: Key): Result = {
           val project = key.psiFile.getProject
-          val output = StackReplsManager.getProjectRepl(project).findTypeInfoFor(key.psiFile, key.startLineNr, key.startColumnNr, key.endLineNr, key.endColumnNr, key.expression)
-          output.stdOutLines.headOption.filterNot(_.trim.isEmpty).map(ti => TypeInfo(ti))
+          StackReplsManager.getProjectRepl(project).findTypeInfoFor(key.psiFile, key.startLineNr, key.startColumnNr, key.endLineNr, key.endColumnNr, key.expression) match {
+            case Some(output) => Right(output.stdOutLines.headOption.filterNot(_.trim.isEmpty).map(ti => TypeInfo(ti)))
+            case _ => Left("No type info available")
+          }
         }
       }
     )
@@ -79,15 +88,15 @@ private[component] object TypeInfoComponent {
     } yield typeInfo
   }
 
-  def invalidate(psiFile: PsiFile): Unit = {
-    val keys = Cache.asMap().filter(_._1.psiFile == psiFile).keys
-    keys.foreach(k => Cache.invalidate(k))
-  }
-
   private def findTypeInfo(psiFile: PsiFile, startPosition: LineColumnPosition, endPosition: LineColumnPosition, expression: String): Option[TypeInfo] = {
     val key = Key(psiFile, startPosition.lineNr, startPosition.columnNr, endPosition.lineNr, endPosition.columnNr, expression)
     try {
-      Cache.get(key)
+      Cache.get(key) match {
+        case Right(result) => result
+        case _ =>
+          Cache.invalidate(key)
+          None
+      }
     }
     catch {
       case _: UncheckedExecutionException => None

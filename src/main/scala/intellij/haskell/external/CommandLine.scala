@@ -20,14 +20,16 @@ import java.io.File
 
 import com.intellij.execution.configurations.GeneralCommandLine
 import com.intellij.execution.configurations.GeneralCommandLine.ParentEnvironmentType
-import com.intellij.execution.process.{CapturingProcessHandler, ProcessOutput}
+import com.intellij.execution.process._
+import com.intellij.openapi.util.Key
+import intellij.haskell.HaskellNotificationGroup
 
 import scala.collection.JavaConversions._
 
 object CommandLine {
-  val StandardTimeout = 1000
+  private final val StandardTimeoutInMillis = 1000
 
-  def getProcessOutput(workDir: String, commandPath: String, arguments: Seq[String], timeout: Int = StandardTimeout): ProcessOutput = {
+  def getProcessOutput(workDir: String, commandPath: String, arguments: Seq[String], timeoutInMillis: Int = StandardTimeoutInMillis, captureOutputToLog: Boolean = false): ProcessOutput = {
     if (!new File(workDir).isDirectory || !new File(commandPath).canExecute) {
       new ProcessOutput
     }
@@ -36,15 +38,41 @@ object CommandLine {
     cmd.setExePath(commandPath)
     cmd.addParameters(arguments)
     cmd.withParentEnvironmentType(ParentEnvironmentType.CONSOLE)
-    execute(cmd, timeout)
+    execute(cmd, timeoutInMillis, captureOutputToLog)
   }
 
-  def execute(cmd: GeneralCommandLine): ProcessOutput = {
-    execute(cmd, StandardTimeout)
+  def execute(cmd: GeneralCommandLine, captureOutputToLog: Boolean): ProcessOutput = {
+    execute(cmd, StandardTimeoutInMillis, captureOutputToLog)
   }
 
-  def execute(cmd: GeneralCommandLine, timeout: Int): ProcessOutput = {
-    val processHandler: CapturingProcessHandler = new CapturingProcessHandler(cmd)
-    if (timeout < 0) processHandler.runProcess else processHandler.runProcess(timeout, false)
+  def execute(cmd: GeneralCommandLine, timeout: Int, captureOutputToLog: Boolean): ProcessOutput = {
+    val processHandler = if (captureOutputToLog) {
+      new CapturingProcessHandler(cmd) {
+        override protected def createProcessAdapter(processOutput: ProcessOutput): CapturingProcessAdapter = new CapturingProcessToLog(processOutput)
+      }
+    } else {
+      new CapturingProcessHandler(cmd)
+    }
+
+    processHandler.runProcess(timeout, false)
   }
+
+  private class CapturingProcessToLog(val output: ProcessOutput) extends CapturingProcessAdapter {
+
+    override def onTextAvailable(event: ProcessEvent, outputType: Key[_]) {
+      addOutput(event.getText, outputType)
+    }
+
+    private def addOutput(text: String, outputType: Key[_]) {
+      if (!text.trim.isEmpty) {
+        if (outputType == ProcessOutputTypes.STDOUT) {
+          HaskellNotificationGroup.logInfo(text)
+        }
+        else if (outputType == ProcessOutputTypes.STDERR) {
+          HaskellNotificationGroup.logError(text)
+        }
+      }
+    }
+  }
+
 }

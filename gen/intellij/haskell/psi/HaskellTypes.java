@@ -1,14 +1,15 @@
 // This is a generated file. Not intended for manual editing.
 package intellij.haskell.psi;
 
-import com.intellij.lang.ASTNode;
-import com.intellij.psi.PsiElement;
 import com.intellij.psi.tree.IElementType;
+import com.intellij.psi.PsiElement;
+import com.intellij.lang.ASTNode;
 import intellij.haskell.psi.impl.*;
 
 public interface HaskellTypes {
 
   IElementType HS_ANN_PRAGMA = new HaskellCompositeElementType("HS_ANN_PRAGMA");
+  IElementType HS_CCONTEXT = new HaskellCompositeElementType("HS_CCONTEXT");
   IElementType HS_CFILES_PRAGMA = new HaskellCompositeElementType("HS_CFILES_PRAGMA");
   IElementType HS_CIDECLS = new HaskellCompositeElementType("HS_CIDECLS");
   IElementType HS_CLASS_DECLARATION = new HaskellCompositeElementType("HS_CLASS_DECLARATION");
@@ -24,10 +25,10 @@ public interface HaskellTypes {
   IElementType HS_CONSTR_3 = new HaskellCompositeElementType("HS_CONSTR_3");
   IElementType HS_CONSTR_4 = new HaskellCompositeElementType("HS_CONSTR_4");
   IElementType HS_CONSYM = new HaskellCompositeElementType("HS_CONSYM");
-  IElementType HS_CONTEXT = new HaskellCompositeElementType("HS_CONTEXT");
   IElementType HS_CTYPE_PRAGMA = new HaskellCompositeElementType("HS_CTYPE_PRAGMA");
   IElementType HS_DATA_DECLARATION = new HaskellCompositeElementType("HS_DATA_DECLARATION");
   IElementType HS_DATA_DECLARATION_DERIVING = new HaskellCompositeElementType("HS_DATA_DECLARATION_DERIVING");
+  IElementType HS_DDECLS = new HaskellCompositeElementType("HS_DDECLS");
   IElementType HS_DEFAULT_DECLARATION = new HaskellCompositeElementType("HS_DEFAULT_DECLARATION");
   IElementType HS_DEPRECATED_WARN_PRAGMA = new HaskellCompositeElementType("HS_DEPRECATED_WARN_PRAGMA");
   IElementType HS_DERIVING_DECLARATION = new HaskellCompositeElementType("HS_DERIVING_DECLARATION");
@@ -56,6 +57,7 @@ public interface HaskellTypes {
   IElementType HS_IMPORT_QUALIFIED_AS = new HaskellCompositeElementType("HS_IMPORT_QUALIFIED_AS");
   IElementType HS_IMPORT_SPEC = new HaskellCompositeElementType("HS_IMPORT_SPEC");
   IElementType HS_INCLUDE_PRAGMA = new HaskellCompositeElementType("HS_INCLUDE_PRAGMA");
+  IElementType HS_INCOHERENT_PRAGMA = new HaskellCompositeElementType("HS_INCOHERENT_PRAGMA");
   IElementType HS_INLINABLE_PRAGMA = new HaskellCompositeElementType("HS_INLINABLE_PRAGMA");
   IElementType HS_INLINE_PRAGMA = new HaskellCompositeElementType("HS_INLINE_PRAGMA");
   IElementType HS_INSIDE_QQ_EXPRESSION = new HaskellCompositeElementType("HS_INSIDE_QQ_EXPRESSION");
@@ -161,12 +163,6 @@ public interface HaskellTypes {
   IElementType HS_OF = new HaskellTokenType("OF");
   IElementType HS_PRAGMA_END = new HaskellTokenType("PRAGMA_END");
   IElementType HS_PRAGMA_START = new HaskellTokenType("PRAGMA_START");
-  IElementType HS_QUASI_QUOTE_D_START = new HaskellTokenType("QUASI_QUOTE_D_START");
-  IElementType HS_QUASI_QUOTE_END = new HaskellTokenType("QUASI_QUOTE_END");
-  IElementType HS_QUASI_QUOTE_E_START = new HaskellTokenType("QUASI_QUOTE_E_START");
-  IElementType HS_QUASI_QUOTE_P_START = new HaskellTokenType("QUASI_QUOTE_P_START");
-  IElementType HS_QUASI_QUOTE_T_START = new HaskellTokenType("QUASI_QUOTE_T_START");
-  IElementType HS_QUASI_QUOTE_V_START = new HaskellTokenType("QUASI_QUOTE_V_START");
   IElementType HS_QUOTE = new HaskellTokenType("QUOTE");
   IElementType HS_RIGHT_ARROW = new HaskellTokenType("RIGHT_ARROW");
   IElementType HS_RIGHT_BRACE = new HaskellTokenType("RIGHT_BRACE");
@@ -191,6 +187,9 @@ public interface HaskellTypes {
       IElementType type = node.getElementType();
        if (type == HS_ANN_PRAGMA) {
         return new HaskellAnnPragmaImpl(node);
+      }
+      else if (type == HS_CCONTEXT) {
+        return new HaskellCcontextImpl(node);
       }
       else if (type == HS_CFILES_PRAGMA) {
         return new HaskellCfilesPragmaImpl(node);
@@ -237,9 +236,6 @@ public interface HaskellTypes {
       else if (type == HS_CONSYM) {
         return new HaskellConsymImpl(node);
       }
-      else if (type == HS_CONTEXT) {
-        return new HaskellContextImpl(node);
-      }
       else if (type == HS_CTYPE_PRAGMA) {
         return new HaskellCtypePragmaImpl(node);
       }
@@ -248,6 +244,9 @@ public interface HaskellTypes {
       }
       else if (type == HS_DATA_DECLARATION_DERIVING) {
         return new HaskellDataDeclarationDerivingImpl(node);
+      }
+      else if (type == HS_DDECLS) {
+        return new HaskellDdeclsImpl(node);
       }
       else if (type == HS_DEFAULT_DECLARATION) {
         return new HaskellDefaultDeclarationImpl(node);
@@ -332,6 +331,9 @@ public interface HaskellTypes {
       }
       else if (type == HS_INCLUDE_PRAGMA) {
         return new HaskellIncludePragmaImpl(node);
+      }
+      else if (type == HS_INCOHERENT_PRAGMA) {
+        return new HaskellIncoherentPragmaImpl(node);
       }
       else if (type == HS_INLINABLE_PRAGMA) {
         return new HaskellInlinablePragmaImpl(node);

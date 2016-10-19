@@ -5,15 +5,9 @@ import java.util.List;
 import org.jetbrains.annotations.*;
 import com.intellij.psi.PsiElement;
 
-public interface HaskellInst extends HaskellCompositeElement {
+public interface HaskellCcontext extends HaskellCompositeElement {
 
   @NotNull
-  List<HaskellGtycon> getGtyconList();
-
-  @NotNull
-  List<HaskellInstvar> getInstvarList();
-
-  @Nullable
-  HaskellTtype getTtype();
+  List<HaskellClazz> getClazzList();
 
 }

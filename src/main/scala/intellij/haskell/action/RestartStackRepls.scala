@@ -21,68 +21,61 @@ import com.intellij.openapi.progress.Task.Backgroundable
 import com.intellij.openapi.progress.{ProgressIndicator, ProgressManager}
 import com.intellij.openapi.project.Project
 import intellij.haskell.HaskellNotificationGroup
-import intellij.haskell.external._
 import intellij.haskell.external.component.StackReplsComponentsManager
 import intellij.haskell.external.repl.StackReplsManager
-import intellij.haskell.sdk.HaskellSdkType
-import intellij.haskell.util.HaskellProjectUtil
-
-import scala.concurrent.SyncVar
+import intellij.haskell.util.{HaskellProjectUtil, StackUtil}
 
 class RestartStackRepls extends AnAction {
 
-  val restarting: SyncVar[Boolean] = new SyncVar()
+  private var restarting = false
 
   override def update(e: AnActionEvent): Unit = {
     e.getPresentation.setVisible(HaskellProjectUtil.isHaskellStackProject(e.getProject))
-    e.getPresentation.setEnabled(!restarting.isSet)
+    e.getPresentation.setEnabled(!restarting)
   }
 
   override def actionPerformed(e: AnActionEvent): Unit = {
-    if (restarting.isSet) {
+    if (restarting) {
       HaskellNotificationGroup.notifyBalloonWarning("Stack repls are already restarting")
       return
     }
 
-    Option(e.getProject) match {
-      case None => ()
-      case Some(project) =>
-        restarting.put(true)
-        ProgressManager.getInstance().run(new Backgroundable(project, "Busy with restarting Stack repls", false) {
-          def run(progressIndicator: ProgressIndicator) {
-            try {
-              val projectRepl = StackReplsManager.getProjectRepl(project)
-              val globalRepl = StackReplsManager.getGlobalRepl(project)
+    Option(e.getProject) foreach { project =>
+      restarting = true
+      ProgressManager.getInstance().run(new Backgroundable(project, "Busy with restarting Stack repls", false) {
+        def run(progressIndicator: ProgressIndicator) {
+          try {
+            val projectRepl = StackReplsManager.getProjectRepl(project)
+            val globalRepl = StackReplsManager.getGlobalRepl(project)
 
-              progressIndicator.setText("Busy with stopping Stack repls")
-              globalRepl.exit()
-              projectRepl.exit()
+            progressIndicator.setText("Busy with stopping Stack repls")
+            globalRepl.exit()
+            projectRepl.exit()
 
-              progressIndicator.setText("Busy with cleaning up")
-              cleanLocalPackages(project)
-              StackReplsComponentsManager.invalidateModuleIdentifierCaches(project)
+            progressIndicator.setText("Busy with cleaning up")
+            cleanLocalPackages(project)
+            StackReplsComponentsManager.invalidateModuleIdentifierCaches(project)
 
-              progressIndicator.setText("Busy with starting Stack repls and building project")
-              globalRepl.start()
-              projectRepl.start()
+            Thread.sleep(1000)
 
-              progressIndicator.setText("Busy with preloading cache")
-              StackReplsComponentsManager.preloadModuleIdentifiersCaches(project)
-            } finally {
-              restarting.take(100)
-            }
+            progressIndicator.setText("Busy with building project and starting Stack repls")
+            projectRepl.start()
+            globalRepl.start()
+
+            progressIndicator.setText("Busy with preloading cache")
+            StackReplsComponentsManager.preloadModuleIdentifiersCaches(project)
+
+            progressIndicator.setText("Restarting global repl to release memory")
+            globalRepl.restart()
+          } finally {
+            restarting = false
           }
-        })
+        }
+      })
     }
   }
 
   private def cleanLocalPackages(project: Project): Unit = {
-    HaskellSdkType.getStackPath(project).foreach { stackPath =>
-      CommandLine.getProcessOutput(
-        project.getBasePath,
-        stackPath,
-        Seq("clean")
-      )
-    }
+    StackUtil.runCommand(Seq("clean"), project)
   }
 }

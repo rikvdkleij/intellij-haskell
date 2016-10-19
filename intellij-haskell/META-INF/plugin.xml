@@ -11,9 +11,9 @@
     <change-notes><![CDATA[
         <p>1.0.0-beta</p>
         <ul>
-            <li>Replaced ghc-mod by `stack repl` and intero</li>
+            <li>Replaced ghc-mod by Stack and Intero</li>
             <li>Big rewrite/refactor of code</li>
-            <li>Support for IntelliJ 2016.2</li>
+            <li>Support for IntelliJ 2016.*</li>
         </ul>
         <p>0.93</p>
         <ul>
@@ -104,7 +104,7 @@
     </change-notes>
 
     <!-- please see http://confluence.jetbrains.com/display/IDEADEV/Build+Number+Ranges for description -->
-    <idea-version since-build="142.0" until-build="162.*"/>
+    <idea-version since-build="142.0"/>
 
     <extensions defaultExtensionNs="com.intellij">
         <sdkType implementation="intellij.haskell.sdk.HaskellSdkType"/>
@@ -158,7 +158,7 @@
         <lang.refactoringSupport language="Haskell"
                                  implementationClass="intellij.haskell.refactor.HaskellRefactoringSupportProvider"/>
         <renamePsiElementProcessor implementation="intellij.haskell.refactor.HaskellRenameVariableProcessor"/>
-        <vetoRenameCondition  implementation="intellij.haskell.refactor.HaskellVetoRenameCondition" />
+        <vetoRenameCondition implementation="intellij.haskell.refactor.HaskellVetoRenameCondition" />
 
         <lang.documentationProvider language="Haskell"
                                     implementationClass="intellij.haskell.external.HaskellDocumentationProvider"/>
@@ -196,10 +196,10 @@
 
     <project-components>
         <component>
-            <implementation-class>intellij.haskell.external.repl.process.GlobalStackReplProcess</implementation-class>
+            <implementation-class>intellij.haskell.external.repl.GlobalStackReplProcess</implementation-class>
         </component>
         <component>
-            <implementation-class>intellij.haskell.external.repl.process.ProjectStackReplProcess</implementation-class>
+            <implementation-class>intellij.haskell.external.repl.ProjectStackReplProcess</implementation-class>
         </component>
         <component>
             <implementation-class>intellij.haskell.external.repl.StackReplsManager</implementation-class>

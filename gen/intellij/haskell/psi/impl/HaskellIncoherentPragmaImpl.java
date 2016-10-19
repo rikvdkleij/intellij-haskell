@@ -10,25 +10,19 @@ import com.intellij.psi.util.PsiTreeUtil;
 import static intellij.haskell.psi.HaskellTypes.*;
 import intellij.haskell.psi.*;
 
-public class HaskellContextImpl extends HaskellCompositeElementImpl implements HaskellContext {
+public class HaskellIncoherentPragmaImpl extends HaskellCompositeElementImpl implements HaskellIncoherentPragma {
 
-  public HaskellContextImpl(ASTNode node) {
+  public HaskellIncoherentPragmaImpl(ASTNode node) {
     super(node);
   }
 
   public void accept(@NotNull HaskellVisitor visitor) {
-    visitor.visitContext(this);
+    visitor.visitIncoherentPragma(this);
   }
 
   public void accept(@NotNull PsiElementVisitor visitor) {
     if (visitor instanceof HaskellVisitor) accept((HaskellVisitor)visitor);
     else super.accept(visitor);
-  }
-
-  @Override
-  @NotNull
-  public List<HaskellClazz> getClazzList() {
-    return PsiTreeUtil.getChildrenOfTypeAsList(this, HaskellClazz.class);
   }
 
 }

@@ -20,4 +20,4 @@ import com.intellij.codeInsight.editorActions.SimpleTokenSetQuoteHandler
 import com.intellij.psi.TokenType
 import intellij.haskell.psi.HaskellTypes
 
-class HaskellQuoteHandler extends SimpleTokenSetQuoteHandler(HaskellTypes.HS_STRING_LITERAL, HaskellTypes.HS_QUOTE, HaskellTypes.HS_BACKQUOTE, TokenType.BAD_CHARACTER)
+class HaskellQuoteHandler extends SimpleTokenSetQuoteHandler(HaskellTypes.HS_STRING_LITERAL, HaskellTypes.HS_BACKQUOTE, TokenType.BAD_CHARACTER)

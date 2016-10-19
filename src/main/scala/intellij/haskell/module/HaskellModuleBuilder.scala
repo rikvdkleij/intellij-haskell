@@ -33,6 +33,7 @@ import com.intellij.openapi.vfs.{LocalFileSystem, VfsUtil}
 import com.intellij.util.Consumer
 import intellij.haskell.external.CommandLine
 import intellij.haskell.sdk.HaskellSdkType
+import intellij.haskell.util.StackUtil
 import intellij.haskell.{HaskellIcons, HaskellNotificationGroup}
 
 import scala.collection.JavaConversions._
@@ -137,6 +138,7 @@ class HaskellModuleBuilder extends ModuleBuilder with SourcePathsBuilder with Mo
     new HaskellModuleWizardStep(context, this)
   }
 
+  // TODO: Add dist folder
   private def getExcludeFolderPath = {
     new File(getContentEntryPath, ".stack-work")
   }
@@ -196,7 +198,7 @@ object HaskellModuleBuilder {
           val libPath = new File(project.getBasePath + File.separator + LibName)
           FileUtil.delete(libPath)
           FileUtil.createDirectory(libPath)
-          val dependencyLines = CommandLine.getProcessOutput(project.getBasePath, sp, Seq("list-dependencies")).getStdoutLines
+          val dependencyLines = StackUtil.runCommand(Seq("list-dependencies", "--test"), project).getStdoutLines
           val packages = getPackages(dependencyLines)
           progressIndicator.setFraction(InitialProgressStep)
           val downloadedPackages = downloadHaskellPackageSources(project, sp, packages, progressIndicator)
@@ -210,7 +212,7 @@ object HaskellModuleBuilder {
   private def getPackages(dependencyLines: Seq[String]) = {
     val packageInfos = dependencyLines.flatMap {
       case DependencyPattern(name, version) => Option(HaskellPackageInfo(name, version, s"$name-$version"))
-      case x => HaskellNotificationGroup.logWarning(s"Could not determine package for line [$x] in output of `stack list-dependencies`"); None
+      case x => HaskellNotificationGroup.logWarning(s"Could not determine package for line [$x] in output of `stack list-dependencies --test`"); None
     }
 
     if (packageInfos.exists(_.name == GhcPrim)) {

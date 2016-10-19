@@ -1,17 +1,17 @@
 // This is a generated file. Not intended for manual editing.
 package intellij.haskell.psi.impl;
 
+import java.util.List;
+import org.jetbrains.annotations.*;
 import com.intellij.lang.ASTNode;
-import com.intellij.navigation.ItemPresentation;
+import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiElementVisitor;
 import com.intellij.psi.util.PsiTreeUtil;
+import static intellij.haskell.psi.HaskellTypes.*;
 import intellij.haskell.psi.*;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
+import com.intellij.navigation.ItemPresentation;
 import scala.Option;
 import scala.collection.Seq;
-
-import java.util.List;
 
 public class HaskellDataDeclarationImpl extends HaskellCompositeElementImpl implements HaskellDataDeclaration {
 
@@ -30,8 +30,8 @@ public class HaskellDataDeclarationImpl extends HaskellCompositeElementImpl impl
 
   @Override
   @Nullable
-  public HaskellCidecls getCidecls() {
-    return findChildByClass(HaskellCidecls.class);
+  public HaskellCcontext getCcontext() {
+    return findChildByClass(HaskellCcontext.class);
   }
 
   @Override
@@ -60,12 +60,6 @@ public class HaskellDataDeclarationImpl extends HaskellCompositeElementImpl impl
 
   @Override
   @Nullable
-  public HaskellContext getContext() {
-    return findChildByClass(HaskellContext.class);
-  }
-
-  @Override
-  @Nullable
   public HaskellCtypePragma getCtypePragma() {
     return findChildByClass(HaskellCtypePragma.class);
   }
@@ -74,6 +68,12 @@ public class HaskellDataDeclarationImpl extends HaskellCompositeElementImpl impl
   @Nullable
   public HaskellDataDeclarationDeriving getDataDeclarationDeriving() {
     return findChildByClass(HaskellDataDeclarationDeriving.class);
+  }
+
+  @Override
+  @Nullable
+  public HaskellDdecls getDdecls() {
+    return findChildByClass(HaskellDdecls.class);
   }
 
   @Override
@@ -96,8 +96,8 @@ public class HaskellDataDeclarationImpl extends HaskellCompositeElementImpl impl
 
   @Override
   @NotNull
-  public HaskellSimpletype getSimpletype() {
-    return findNotNullChildByClass(HaskellSimpletype.class);
+  public List<HaskellSimpletype> getSimpletypeList() {
+    return PsiTreeUtil.getChildrenOfTypeAsList(this, HaskellSimpletype.class);
   }
 
   public String getName() {

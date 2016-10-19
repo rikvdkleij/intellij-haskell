@@ -17,34 +17,50 @@
 package intellij.haskell.external.component
 
 import com.intellij.openapi.application.ApplicationManager
+import com.intellij.openapi.util.Computable
 import com.intellij.psi.PsiFile
 import intellij.haskell.external.repl.StackReplsManager
-import intellij.haskell.util.{HaskellFileUtil, OSUtil, Util}
+import intellij.haskell.psi.HaskellPsiUtil
+import intellij.haskell.util.{HaskellFileUtil, OSUtil, StringUtil}
 
 private[component] object LoadComponent {
 
   private final val ProblemPattern = """(.+):([\d]+):([\d]+):(.+)""".r
 
-  def load(psiFile: PsiFile, refreshCache: Boolean, postLoadAction: => Unit): LoadResult = {
+  def load(psiFile: PsiFile, refreshCache: Boolean): LoadResult = {
     val project = psiFile.getProject
-    val (loadOutput, loadFailed) = StackReplsManager.getProjectRepl(project).load(psiFile)
 
-    if (refreshCache && !loadFailed) {
-      ApplicationManager.getApplication.executeOnPooledThread(new Runnable {
-        override def run(): Unit = {
-          postLoadAction
+    StackReplsManager.getProjectRepl(project).load(psiFile) match {
+      case Some((loadOutput, loadFailed)) =>
+        if (refreshCache && !loadFailed) {
+          ApplicationManager.getApplication.executeOnPooledThread(new Runnable {
+            override def run(): Unit = {
+              findModuleName(psiFile).foreach(BrowseModuleComponent.refreshForModule(project, _, psiFile))
+              NameInfoComponent.refresh(psiFile)
+            }
+          })
         }
-      })
+
+        val filePath = HaskellFileUtil.makeFilePathAbsolute(HaskellFileUtil.getFilePath(psiFile), project)
+
+        // `distinct` because of https://github.com/commercialhaskell/intero/issues/258
+        val loadProblems = loadOutput.stdErrLines.distinct.map(l => parseErrorOutputLine(filePath, l))
+
+        val currentFileProblems = loadProblems.flatMap(convertToLoadProblemInCurrentFile)
+        val otherFileProblems = loadProblems.diff(currentFileProblems)
+        LoadResult(currentFileProblems, otherFileProblems, loadFailed)
+      case _ => LoadResult()
     }
+  }
 
-    val filePath = HaskellFileUtil.makeFilePathAbsolute(HaskellFileUtil.getFilePath(psiFile), project)
-
-    // `distinct` because of https://github.com/commercialhaskell/intero/issues/258
-    val loadProblems = loadOutput.stdErrLines.distinct.map(l => parseErrorOutputLine(filePath, l))
-
-    val currentFileProblems = loadProblems.flatMap(convertToLoadProblemInCurrentFile)
-    val otherFileProblems = loadProblems.diff(currentFileProblems)
-    LoadResult(currentFileProblems, otherFileProblems, loadFailed)
+  private def findModuleName(psiFile: PsiFile) = {
+    ApplicationManager.getApplication.runReadAction {
+      new Computable[Option[String]] {
+        override def compute(): Option[String] = {
+          HaskellPsiUtil.findModuleName(psiFile)
+        }
+      }
+    }
   }
 
   private def convertToLoadProblemInCurrentFile(loadProblem: LoadProblem) = {
@@ -75,17 +91,17 @@ private[component] object LoadComponent {
 case class LoadResult(currentFileProblems: Iterable[LoadProblemInCurrentFile] = Iterable(), otherFileProblems: Iterable[LoadProblem] = Iterable(), loadFailed: Boolean = false)
 
 sealed abstract class LoadProblem(private val message: String) {
-  def normalizedMessage: String = {
+  def plainMessage: String = {
     message.trim.replace(OSUtil.LineSeparator, ' ').replaceAll("\\s+", " ")
   }
 
   def htmlMessage: String = {
-    Util.escapeString(message.replace(' ', '\u00A0'))
+    StringUtil.escapeString(message.replace(' ', '\u00A0'))
   }
 }
 
-case class LoadProblemInCurrentFile(filePath: String, lineNr: Int, columnNr: Int, private val message: String) extends LoadProblem(message)
+case class LoadProblemInCurrentFile private(filePath: String, lineNr: Int, columnNr: Int, private val message: String) extends LoadProblem(message)
 
-case class LoadProblemInOtherFile(filePath: String, lineNr: Int, columnNr: Int, private val message: String) extends LoadProblem(message)
+case class LoadProblemInOtherFile private(filePath: String, lineNr: Int, columnNr: Int, private val message: String) extends LoadProblem(message)
 
-case class LoadProblemWithoutLocation(private val message: String) extends LoadProblem(message)
+case class LoadProblemWithoutLocation private(private val message: String) extends LoadProblem(message)

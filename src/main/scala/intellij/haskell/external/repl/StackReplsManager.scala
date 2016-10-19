@@ -20,7 +20,6 @@ import com.intellij.openapi.components.ProjectComponent
 import com.intellij.openapi.progress.{ProgressIndicator, ProgressManager, Task}
 import com.intellij.openapi.project.Project
 import intellij.haskell.external.component.StackReplsComponentsManager
-import intellij.haskell.external.repl.process.{GlobalStackReplProcess, ProjectStackReplProcess}
 import intellij.haskell.util.HaskellProjectUtil
 
 object StackReplsManager {
@@ -54,12 +53,15 @@ class StackReplsManager(project: Project) extends ProjectComponent {
 
       def run(progressIndicator: ProgressIndicator) {
         if (HaskellProjectUtil.isHaskellStackProject(project)) {
-          progressIndicator.setText("Busy with starting Stack repls and building project")
+          progressIndicator.setText("Busy with building project and starting Stack repls")
           StackReplsManager.getProjectRepl(project).start()
           StackReplsManager.getGlobalRepl(project).start()
 
           progressIndicator.setText("Busy with preloading cache")
           StackReplsComponentsManager.preloadModuleIdentifiersCaches(project)
+
+          progressIndicator.setText("Restarting global repl to release memory")
+          StackReplsManager.getGlobalRepl(project).restart()
         }
       }
     })

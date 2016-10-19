@@ -16,7 +16,6 @@
 
 package intellij.haskell.refactor
 
-
 import com.intellij.lang.refactoring.RefactoringSupportProvider
 import com.intellij.psi.{PsiElement, PsiFile, PsiPolyVariantReference, ResolveResult}
 import intellij.haskell.util.HaskellProjectUtil
@@ -28,8 +27,7 @@ class HaskellRefactoringSupportProvider extends RefactoringSupportProvider {
   }
 
   private def definedInProjectFile(element: PsiElement) = {
-    val resolveResult = Option(element.getReference).flatMap(_.asInstanceOf[PsiPolyVariantReference].multiResolve(false).headOption)
-    resolveResult match {
+    Option(element.getReference).flatMap(_.asInstanceOf[PsiPolyVariantReference].multiResolve(false).headOption) match {
       case Some(rr: ResolveResult) => HaskellProjectUtil.isProjectFile(rr.getElement.getContainingFile)
       case _ => false
     }

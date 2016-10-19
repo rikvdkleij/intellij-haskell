@@ -5,9 +5,6 @@ import java.util.List;
 import org.jetbrains.annotations.*;
 import com.intellij.psi.PsiElement;
 
-public interface HaskellContext extends HaskellCompositeElement {
-
-  @NotNull
-  List<HaskellClazz> getClazzList();
+public interface HaskellIncoherentPragma extends HaskellCompositeElement {
 
 }

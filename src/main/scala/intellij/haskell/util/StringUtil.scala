@@ -18,13 +18,19 @@ package intellij.haskell.util
 
 import com.intellij.xml.util.XmlStringUtil
 
-object Util {
+object StringUtil {
+
+  private final val PackageQualifierPattern = """([a-z\-]+\-[\.0-9]+\:)?([A-Z][A-Za-z\-\']+\.)+"""
+
+  def toLowerCase(s: String): String = {
+    s.trim.toLowerCase
+  }
 
   def escapeString(s: String) = {
     XmlStringUtil.escapeString(s, false, false)
   }
 
-  def removeAllSpaces(s: String) = {
-    s.replaceAll("""\s+""", "")
+  def shortenHaskellDeclaration(declaration: String) = {
+    declaration.replaceAll(PackageQualifierPattern, "").replaceAll("""\{\-[^\}]+\-\}""", " ").replaceAll("""\-\-.+""", " ").replaceAll("""\s+""", " ")
   }
 }

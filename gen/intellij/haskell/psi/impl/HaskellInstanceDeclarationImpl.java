@@ -1,17 +1,17 @@
 // This is a generated file. Not intended for manual editing.
 package intellij.haskell.psi.impl;
 
+import java.util.List;
+import org.jetbrains.annotations.*;
 import com.intellij.lang.ASTNode;
-import com.intellij.navigation.ItemPresentation;
+import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiElementVisitor;
 import com.intellij.psi.util.PsiTreeUtil;
+import static intellij.haskell.psi.HaskellTypes.*;
 import intellij.haskell.psi.*;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
+import com.intellij.navigation.ItemPresentation;
 import scala.Option;
 import scala.collection.Seq;
-
-import java.util.List;
 
 public class HaskellInstanceDeclarationImpl extends HaskellCompositeElementImpl implements HaskellInstanceDeclaration {
 
@@ -32,6 +32,12 @@ public class HaskellInstanceDeclarationImpl extends HaskellCompositeElementImpl 
   @Nullable
   public HaskellCidecls getCidecls() {
     return findChildByClass(HaskellCidecls.class);
+  }
+
+  @Override
+  @Nullable
+  public HaskellIncoherentPragma getIncoherentPragma() {
+    return findChildByClass(HaskellIncoherentPragma.class);
   }
 
   @Override

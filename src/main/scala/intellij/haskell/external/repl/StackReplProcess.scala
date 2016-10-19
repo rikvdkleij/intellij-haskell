@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package intellij.haskell.external.repl.process
+package intellij.haskell.external.repl
 
 import java.io._
 import java.util.concurrent.LinkedBlockingDeque
@@ -33,7 +33,7 @@ import scala.concurrent.duration._
 import scala.io._
 import scala.sys.process._
 
-abstract class StackReplProcess(val project: Project, val extraCommandOptions: Seq[String] = Seq()) extends ProjectComponent {
+private[repl] abstract class StackReplProcess(val project: Project, val extraStartOptions: Seq[String] = Seq(), val beforeStartDoBuild: Boolean = false) extends ProjectComponent {
 
   private final val LineSeparatorInBytes = OSUtil.LineSeparator
 
@@ -45,23 +45,25 @@ abstract class StackReplProcess(val project: Project, val extraCommandOptions: S
 
   private[this] val stdErr = new LinkedBlockingDeque[String]
 
-  private final val Timeout = 5.seconds
+  private final val LoadTimeout = 5.seconds
+  private final val DefaultTimeout = 2.seconds
+
+  private final val BuildTimeout = 30.minutes
 
   private final val EndOfOutputIndicator = "^IntellijHaskell^"
 
   private final val DelayBetweenReads = 10.millis
 
-  // TODO: In case no result because error of not available return None so non valid results can be invalidated
-  protected def execute(command: String): StackReplOutput = synchronized {
+  protected def execute(command: String): Option[StackReplOutput] = {
 
     if (!available) {
-      logInfo(s"Stack repl is not yet available. Command was: $command")
-      return StackReplOutput()
+      logWarning(s"Stack repl is not yet available. Command was: $command")
+      return None
     }
 
     if (!outputStream.isSet) {
       logError("Can not write to Stack repl. Check if your Haskell/Stack environment is working okay")
-      return StackReplOutput()
+      return None
     }
 
     try {
@@ -73,21 +75,21 @@ abstract class StackReplProcess(val project: Project, val extraCommandOptions: S
 
       writeToOutputStream(command)
 
-      val deadline = Timeout.fromNow
-
+      val timeout = if (command.startsWith(":load")) LoadTimeout else DefaultTimeout
+      val deadline = timeout.fromNow
       while (deadline.hasTimeLeft && (stdOutResult.isEmpty || !stdOutResult.lastOption.exists(_.startsWith(EndOfOutputIndicator)))) {
         stdOut.drainTo(stdOutResult)
         stdErr.drainTo(stdErrResult)
 
         // We have to wait...
-        Thread.sleep(DelayBetweenReads._1)
+        Thread.sleep(DelayBetweenReads.toMillis)
       }
 
       stdOut.drainTo(stdOutResult)
       stdErr.drainTo(stdErrResult)
 
       if (deadline.isOverdue()) {
-        logError(s"No result from Stack repl within $Timeout. Command was: $command")
+        logError(s"No result from Stack repl within $timeout. Command was: $command")
       } else {
         logInfo("command: " + command)
         logInfo("stdOut: " + stdOutResult.mkString("\n"))
@@ -95,30 +97,52 @@ abstract class StackReplProcess(val project: Project, val extraCommandOptions: S
       }
 
       if (deadline.isOverdue()) {
-        StackReplOutput()
+        None
       } else {
-        StackReplOutput(convertOutputToOneMessagePerLine(removePrompt(stdOutResult)), convertOutputToOneMessagePerLine(stdErrResult))
+        Some(StackReplOutput(convertOutputToOneMessagePerLine(removePrompt(stdOutResult)), convertOutputToOneMessagePerLine(stdErrResult)))
       }
     }
     catch {
       case e: Exception =>
         logError(s"Error in communication with Stack repl: ${e.getMessage}. Check if your Haskell/Stack environment is working okay. Command was: $command")
         exit()
-        StackReplOutput()
+        None
     }
   }
 
   def start(): Unit = {
+
+    def writeOutputToLogInfo(): Unit = {
+      if (stdOut.nonEmpty) {
+        logInfo(stdOut.mkString("\n"))
+      }
+
+      if (stdErr.nonEmpty) {
+        logInfo(stdErr.mkString("\n"))
+      }
+    }
+
     if (available) {
       logError("Stack repl can not be started because it's already running or busy with starting")
       return
     }
 
+    // TODO: Create action to rebuild project with first `stack clean full`
+    if (beforeStartDoBuild) {
+      val buildArguments = Seq("build", "--test", "--only-dependencies", "--haddock", "--fast")
+      logInfo("Build is starting")
+      logInfo(s"""Build command is `stack ${buildArguments.mkString(" ")}`""")
+      StackUtil.runCommand(buildArguments, project, BuildTimeout.toMillis, captureOutputToLog = true)
+      logInfo("Build is finished")
+    }
+
     HaskellSdkType.getStackPath(project).foreach { stackPath =>
       try {
-        val command = (Seq(stackPath, "repl", "--with-ghc", "intero", "--verbosity", "warn", "--fast", "--no-load",
-          "--ghc-options", "-v1", "--test", "--terminal") ++ extraCommandOptions).mkString(" ")
+        val command = (Seq(stackPath, "repl", "--with-ghc", "intero", "--verbosity", "warn", "--fast", "--no-load", "--no-build",
+          "--ghc-options", "-v1", "--terminal") ++ extraStartOptions).mkString(" ")
+
         logInfo(s"Stack repl will be started with command: $command")
+
         val process = getEnvParameters match {
           case None => Process(command, new File(project.getBasePath))
           case Some(ep) => Process(command, new File(project.getBasePath), ep.toArray: _*)
@@ -133,27 +157,16 @@ abstract class StackReplProcess(val project: Project, val extraCommandOptions: S
         stdOut.clear()
         stdErr.clear()
 
-        val stdOutResult = new ArrayBuffer[String]
-        val stdErrResult = new ArrayBuffer[String]
+        // We have to wait...
+        Thread.sleep(1000)
 
-        while (stdOutResult.isEmpty || !stdOut.isEmpty || !stdErr.isEmpty) {
-          if (stdOut.nonEmpty) {
-            logInfo(stdOut.mkString("\n"))
-          }
+        writeOutputToLogInfo()
 
-          if (stdErr.nonEmpty) {
-            logInfo(stdErr.mkString("\n"))
-          }
-
-          stdOut.drainTo(stdOutResult)
-          stdErr.drainTo(stdErrResult)
-
-          // We have to wait...
-          Thread.sleep(200)
-        }
-
-        stdOut.drainTo(stdOutResult)
-        stdErr.drainTo(stdErrResult)
+        // `enter` to pass prompt which asks for which module to load
+        // See Stack 1.2 issue https://github.com/commercialhaskell/stack/issues/2603
+        // TODO: Remove this because in Stack 1.2.1 fixed
+        writeToOutputStream("")
+        Thread.sleep(100)
 
         writeToOutputStream(s""":set prompt "$EndOfOutputIndicator\\n"""")
 
@@ -165,13 +178,13 @@ abstract class StackReplProcess(val project: Project, val extraCommandOptions: S
         case e: Exception =>
           logError("Could not start Stack repl. Make sure you have set right path to Stack in settings.")
           logError(s"Error message while trying to start Stack repl: ${e.getMessage}")
-          exit()
+          exit(forceExit = true)
       }
     }
   }
 
-  def exit(): Unit = {
-    if (!available) {
+  def exit(forceExit: Boolean = false): Unit = {
+    if (!forceExit && !available) {
       logWarning("Stack repl can not be stopped because it's already stopped or busy with stopping")
       return
     }
@@ -200,11 +213,20 @@ abstract class StackReplProcess(val project: Project, val extraCommandOptions: S
       }
     } finally {
       if (outputStream.isSet) {
-        outputStream.take(500)
+        try {
+          outputStream.take(100).close()
+        } catch {
+          case _: Exception => ()
+        }
       }
       available = false
     }
     logInfo("Stack repl is stopped.")
+  }
+
+  def restart() = {
+    exit()
+    start()
   }
 
   private def logError(message: String) = {

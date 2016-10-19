@@ -21,12 +21,13 @@ import java.io.{DataInput, DataOutput}
 import com.intellij.openapi.fileTypes.FileType
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.vfs.VirtualFile
-import com.intellij.psi.search.{FileTypeIndex, GlobalSearchScope}
+import com.intellij.psi.PsiFile
+import com.intellij.psi.search.{FileTypeIndex, GlobalSearchScope, GlobalSearchScopesCore}
 import com.intellij.util.indexing.FileBasedIndex.InputFilter
 import com.intellij.util.indexing._
 import com.intellij.util.io.{DataExternalizer, EnumeratorStringDescriptor, KeyDescriptor}
+import intellij.haskell.HaskellFileType
 import intellij.haskell.module.HaskellModuleType
-import intellij.haskell.{HaskellFile, HaskellFileType}
 
 import scala.collection.JavaConversions._
 
@@ -69,30 +70,40 @@ object HaskellFileIndex {
     }
   }
 
-  def findFilesByName(project: Project, name: String, searchScope: GlobalSearchScope): Iterable[HaskellFile] = {
-    getByName(project, name, searchScope)
+  def findFilesByName(project: Project, name: String, searchScope: GlobalSearchScope): Stream[VirtualFile] = {
+    getFilesByName(project, name, searchScope)
   }
 
-  def findHaskellFiles(project: Project, searchScope: GlobalSearchScope): Iterable[HaskellFile] = {
+  def findFiles(project: Project, searchScope: GlobalSearchScope): Stream[VirtualFile] = {
     getFilesForType(HaskellFileType.INSTANCE, project, searchScope)
   }
 
-  def findProjectHaskellFiles(project: Project): Iterable[HaskellFile] = {
-    findHaskellFiles(project, HaskellModuleType.findHaskellProjectModules(project).map(GlobalSearchScope.moduleScope).reduce(_.uniteWith(_)))
+  def findProjectFiles(project: Project): Stream[VirtualFile] = {
+    findFiles(project, HaskellModuleType.findHaskellProjectModules(project).map(GlobalSearchScope.moduleScope).reduce(_.uniteWith(_)))
+  }
+
+  def findProjectTestPsiFiles(project: Project): Stream[PsiFile] = {
+    HaskellFileUtil.convertToHaskellFiles(findProjectTestFiles(project), project)
+  }
+
+  def findProjectProductionPsiFiles(project: Project): Stream[PsiFile] = {
+    HaskellFileUtil.convertToHaskellFiles(findProjectProductionFiles(project), project)
+  }
+
+  private def findProjectProductionFiles(project: Project): Stream[VirtualFile] = {
+    findFiles(project, GlobalSearchScopesCore.projectProductionScope(project))
+  }
+
+  private def findProjectTestFiles(project: Project): Stream[VirtualFile] = {
+    findFiles(project, GlobalSearchScopesCore.projectTestScope(project))
   }
 
   private def getFilesForType(fileType: FileType, project: Project, searchScope: GlobalSearchScope) = {
-    val virtualFiles = FileBasedIndex.getInstance.getContainingFiles(FileTypeIndex.NAME, fileType, searchScope)
-    HaskellFileUtil.convertToHaskellFiles(virtualFiles, project)
+    FileBasedIndex.getInstance.getContainingFiles(FileTypeIndex.NAME, fileType, searchScope).toStream
   }
 
-  private def getByName(project: Project, name: String, searchScope: GlobalSearchScope): Iterable[HaskellFile] = {
-    val virtualFiles = getVirtualFilesByName(project, name, searchScope)
-    HaskellFileUtil.convertToHaskellFiles(virtualFiles, project)
-  }
-
-  private def getVirtualFilesByName(project: Project, name: String, searchScope: GlobalSearchScope) = {
-    FileBasedIndex.getInstance.getContainingFiles(HaskellFileIndex, name, searchScope)
+  private def getFilesByName(project: Project, name: String, searchScope: GlobalSearchScope) = {
+    FileBasedIndex.getInstance.getContainingFiles(HaskellFileIndex, name, searchScope).toStream
   }
 }
 

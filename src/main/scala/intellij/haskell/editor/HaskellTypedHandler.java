@@ -20,6 +20,7 @@ import com.intellij.codeInsight.CodeInsightSettings;
 import com.intellij.codeInsight.editorActions.TypedHandlerDelegate;
 import com.intellij.codeInsight.highlighting.BraceMatcher;
 import com.intellij.codeInsight.highlighting.BraceMatchingUtil;
+import com.intellij.openapi.application.TransactionGuard;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.ex.EditorEx;
 import com.intellij.openapi.editor.highlighter.HighlighterIterator;
@@ -45,7 +46,7 @@ public class HaskellTypedHandler extends TypedHandlerDelegate {
                 !CodeInsightSettings.getInstance().AUTOINSERT_PAIR_BRACKET) {
             return Result.CONTINUE;
         }
-        insertMatchedEndComment(project, editor, file, c);
+        TransactionGuard.getInstance().submitTransactionAndWait(() -> insertMatchedEndComment(project, editor, file, c));
         return Result.CONTINUE;
     }
 

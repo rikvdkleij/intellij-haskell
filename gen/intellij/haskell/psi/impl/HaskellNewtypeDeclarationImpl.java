@@ -30,8 +30,8 @@ public class HaskellNewtypeDeclarationImpl extends HaskellCompositeElementImpl i
 
   @Override
   @Nullable
-  public HaskellContext getContext() {
-    return findChildByClass(HaskellContext.class);
+  public HaskellCcontext getCcontext() {
+    return findChildByClass(HaskellCcontext.class);
   }
 
   @Override

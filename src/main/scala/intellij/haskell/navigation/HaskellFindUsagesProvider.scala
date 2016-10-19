@@ -68,12 +68,11 @@ class HaskellFindUsagesProvider extends FindUsagesProvider {
   }
 
   override def getDescriptiveName(element: PsiElement): String = {
-    val name = element match {
-      case hv: HaskellNamedElement => hv.getName
-      case hv: HaskellFile => hv.getName
+    element match {
+      case ne: HaskellNamedElement => ne.getName
+      case f: HaskellFile => f.getName
       case _ => element.getText
     }
-    Option(name) getOrElse "anonymous"
   }
 
   override def getHelpId(psiElement: PsiElement): String = null
@@ -86,10 +85,9 @@ class HaskellFindUsagesProvider extends FindUsagesProvider {
   }
 
   override def getNodeText(psiElement: PsiElement, useFullName: Boolean): String = {
-    val text = psiElement match {
-      case hv: HaskellNamedElement => hv.getName
+    psiElement match {
+      case ne: HaskellNamedElement => ne.getName
       case _ => psiElement.getText
     }
-    Option(text) getOrElse "anonymous"
   }
 }

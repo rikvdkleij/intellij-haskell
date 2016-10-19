@@ -16,37 +16,42 @@
 
 package intellij.haskell.external.component
 
-import java.util.concurrent.TimeUnit
-
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.editor.SelectionModel
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.util.Computable
 import com.intellij.psi.{PsiElement, PsiFile}
+import intellij.haskell.HaskellNotificationGroup
 import intellij.haskell.annotator.HaskellAnnotator
 import intellij.haskell.psi.HaskellPsiUtil
-
-import scala.collection.mutable
+import intellij.haskell.util.HaskellFileIndex
 
 object StackReplsComponentsManager {
-
-  private[this] final val PreloadTimeoutInMinutes = 10
-
-  private[this] val isCachePreloaded = mutable.Map[Project, Boolean]()
 
   implicit class RichBoolean(val b: Boolean) extends AnyVal {
     final def option[A](a: => A): Option[A] = if (b) Some(a) else None
   }
 
-  def findImportedModuleIdentifiers(project: Project, moduleName: String, psiFile: PsiFile) = {
-    findIfCacheIsPreloaded(project, BrowseModuleComponent.findImportedModuleIdentifiers(project, moduleName, Some(psiFile)))
+  def findAvailableModuleNamesForModuleIdentifiers(project: Project): Iterable[String] = {
+    BrowseModuleComponent.findModuleNamesInCache(project)
   }
 
-  def findAllTopLevelModuleIdentifiers(project: Project, moduleName: String, psiFile: PsiFile) = {
-    findIfCacheIsPreloaded(project, BrowseModuleComponent.findAllTopLevelModuleIdentifiers(project, moduleName, Some(psiFile)))
+  def findImportedModuleIdentifiers(project: Project, moduleName: String): Iterable[ModuleIdentifier] = {
+    BrowseModuleComponent.findImportedModuleIdentifiers(project, moduleName)
+  }
+
+  def findAllTopLevelModuleIdentifiers(project: Project, moduleName: String, psiFile: PsiFile): Iterable[ModuleIdentifier] = {
+    BrowseModuleComponent.findAllTopLevelModuleIdentifiers(project, moduleName, psiFile)
   }
 
   def findDefinitionLocation(psiElement: PsiElement): Option[DefinitionLocation] = {
+    // As a side effect we preload in background some extra info
+    ApplicationManager.getApplication.invokeLater(new Runnable {
+      override def run(): Unit = {
+        TypeInfoComponent.findTypeInfoForElement(psiElement)
+        NameInfoComponent.findNameInfo(psiElement)
+      }
+    })
+
     DefinitionLocationComponent.findDefinitionLocation(psiElement)
   }
 
@@ -54,43 +59,25 @@ object StackReplsComponentsManager {
     NameInfoComponent.findNameInfo(psiElement)
   }
 
-  def findAvailableProjectModules(project: Project): ProjectModules = {
-    ProjectModulesComponent.findAvailableModules(project)
+  def findAvailableModuleNames(psiFile: PsiFile): Stream[String] = {
+    AvailableModuleNamesComponent.findAvailableModuleNames(psiFile)
   }
 
   def findGlobalProjectInfo(project: Project): Option[GlobalProjectInfo] = {
-    findIfCacheIsPreloaded(project, GlobalProjectInfoComponent.findGlobalProjectInfo(project))
+    GlobalProjectInfoComponent.findGlobalProjectInfo(project)
   }
 
   def loadHaskellFile(psiFile: PsiFile, refreshCache: Boolean): LoadResult = {
-    LoadComponent.load(psiFile, refreshCache, refreshCachesAfterLoad(psiFile))
+    LoadComponent.load(psiFile, refreshCache)
   }
 
-  def invalidateModuleIdentifierCaches(project: Project) = {
-    isCachePreloaded.put(project, false)
-    BrowseModuleComponent.invalidate()
-    ProjectModulesComponent.invalidate(project)
+  def invalidateModuleIdentifierCaches(project: Project): Unit = {
+    BrowseModuleComponent.invalidate(project)
     GlobalProjectInfoComponent.invalidate(project)
   }
 
-  def preloadModuleIdentifiersCaches(project: Project) = {
-    val libraryModuleIdentifiersFuture = ApplicationManager.getApplication.executeOnPooledThread {
-      new Runnable {
-        override def run(): Unit = {
-          preloadAllLibraryModuleIdentifiers(project)
-        }
-      }
-    }
-    val projectModuleIdentifiersFuture = ApplicationManager.getApplication.executeOnPooledThread {
-      new Runnable {
-        override def run(): Unit = {
-          preloadAllProjectModuleIdentifiers(project)
-        }
-      }
-    }
-    libraryModuleIdentifiersFuture.get(PreloadTimeoutInMinutes, TimeUnit.MINUTES)
-    projectModuleIdentifiersFuture.get(PreloadTimeoutInMinutes, TimeUnit.MINUTES)
-    isCachePreloaded.put(project, true)
+  def preloadModuleIdentifiersCaches(project: Project): Unit = {
+    preloadAllLibraryModuleIdentifiers(project)
     HaskellAnnotator.restartDaemonCodeAnalyzerForOpenFiles(project)
   }
 
@@ -102,43 +89,24 @@ object StackReplsComponentsManager {
     TypeInfoComponent.findTypeInfoForSelection(psiFile, selectionModel)
   }
 
-  private def refreshCachesAfterLoad(psiFile: PsiFile): Unit = {
-    val project = psiFile.getProject
-
-    findModuleName(psiFile).foreach(BrowseModuleComponent.refreshForModule(project, _))
-
-    NameInfoComponent.refresh(psiFile)
-    ProjectModulesComponent.refresh(project)
-
-    TypeInfoComponent.invalidate(psiFile)
-    DefinitionLocationComponent.invalidate(psiFile)
-  }
-
   private def preloadAllLibraryModuleIdentifiers(project: Project): Unit = {
-    val libraryModuleNames = GlobalProjectInfoComponent.findGlobalProjectInfo(project).availableInTestLibraryModuleNames
-    libraryModuleNames.flatMap(mn => BrowseModuleComponent.findImportedModuleIdentifiers(project, mn, None))
-  }
+    val globalProjectInfo = GlobalProjectInfoComponent.findGlobalProjectInfo(project)
 
-  private def preloadAllProjectModuleIdentifiers(project: Project): Unit = {
-    val prodModuleNames = ProjectModulesComponent.findAvailableModules(project).prodModuleNames
-    prodModuleNames.flatMap(mn => BrowseModuleComponent.findImportedModuleIdentifiers(project, mn, None))
-  }
+    globalProjectInfo match {
+      case Some(info) =>
+        ApplicationManager.getApplication.invokeLater(new Runnable {
+          override def run(): Unit = {
+            val files = HaskellFileIndex.findProjectProductionPsiFiles(project)
+            val libraryModuleNames = files.flatMap(pf => HaskellPsiUtil.findImportDeclarations(pf).flatMap(_.getModuleName))
+            libraryModuleNames.foreach(mn => BrowseModuleComponent.findImportedModuleIdentifiers(project, mn))
+          }
+        })
 
-  private def findIfCacheIsPreloaded[A](project: Project, f: => Iterable[A]) = {
-    isCachePreloaded.getOrElse(project, false).option(f).getOrElse(Iterable())
-  }
-
-  private def findIfCacheIsPreloaded[A](project: Project, f: => A) = {
-    isCachePreloaded.getOrElse(project, false).option(f)
-  }
-
-  private def findModuleName(psiFile: PsiFile) = {
-    ApplicationManager.getApplication.runReadAction {
-      new Computable[Option[String]] {
-        override def compute(): Option[String] = {
-          HaskellPsiUtil.findModuleName(psiFile)
+        info.allAvailableLibraryModuleNames.foreach { mn =>
+          Thread.sleep(100) // Otherwise it will make IDE unresponsive
+          BrowseModuleComponent.findImportedModuleIdentifiers(project, mn)
         }
-      }
+      case _ => HaskellNotificationGroup.notifyBalloonWarning("Could not preload library identifiers cache because could not obtain global project info")
     }
   }
 }

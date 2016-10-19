@@ -51,7 +51,11 @@ object HaskellPsiUtil {
     PsiTreeUtil.findChildrenOfType(psiElement, classOf[HaskellNamedElement])
   }
 
-  def findTopLevelDeclarationElements(psiElement: PsiElement): Iterable[HaskellDeclarationElement] = {
+  def findQualifiedNamedElements(psiElement: PsiElement): Iterable[HaskellQualifiedNameElement] = {
+    PsiTreeUtil.findChildrenOfType(psiElement, classOf[HaskellQualifiedNameElement])
+  }
+
+  def findDeclarationElements(psiElement: PsiElement): Iterable[HaskellDeclarationElement] = {
     PsiTreeUtil.findChildrenOfType(psiElement, classOf[HaskellDeclarationElement]).filter(_.getParent.getNode.getElementType == HS_TOP_DECLARATION)
   }
 
@@ -88,13 +92,6 @@ object HaskellPsiUtil {
     psiElement match {
       case e: HaskellDeclarationElement => Some(e)
       case e => Option(PsiTreeUtil.findFirstParent(e, DeclarationElementCondition)).map(_.asInstanceOf[HaskellDeclarationElement])
-    }
-  }
-
-  def findExpressionParent(psiElement: PsiElement): Option[HaskellExpression] = {
-    psiElement match {
-      case e: HaskellExpression => Some(e)
-      case e => Option(PsiTreeUtil.findFirstParent(e, ExpressionCondition)).map(_.asInstanceOf[HaskellExpression])
     }
   }
 

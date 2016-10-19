@@ -21,4 +21,4 @@ lazy val intellijHaskell = (project in file(".")).
     unmanagedJars in Compile += baseDirectory.value / "idea"
   )
 
-ideaBuild in ThisBuild := "162.1447.26"
+ideaBuild in ThisBuild := "163.5219.11"

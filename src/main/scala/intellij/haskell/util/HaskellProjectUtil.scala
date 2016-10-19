@@ -17,14 +17,12 @@
 package intellij.haskell.util
 
 import com.intellij.openapi.module.ModuleManager
-import com.intellij.openapi.project.{Project, ProjectManager}
+import com.intellij.openapi.project.Project
 import com.intellij.openapi.roots.ProjectRootManager
 import com.intellij.openapi.vfs.{LocalFileSystem, VirtualFile}
 import com.intellij.psi.search.GlobalSearchScope
-import com.intellij.psi.{PsiDirectory, PsiFile, PsiManager}
-import intellij.haskell.external.component.StackReplsComponentsManager
+import com.intellij.psi.{PsiFile, PsiManager}
 import intellij.haskell.module.HaskellModuleType
-import intellij.haskell.psi.{HaskellDeclarationElement, HaskellNamedElement, HaskellPsiUtil}
 import intellij.haskell.sdk.HaskellSdkType
 import intellij.haskell.{HaskellFile, HaskellNotificationGroup}
 
@@ -34,21 +32,16 @@ object HaskellProjectUtil {
     HaskellModuleType.findHaskellProjectModules(project).nonEmpty && HaskellSdkType.getSdkHomePath(project) != null
   }
 
-  def findProjectByLocationHash(locationHash: String): Project = {
-    val project = ProjectManager.getInstance().getOpenProjects.find(_.getLocationHash == locationHash)
-    project match {
-      case Some(p) => p
-      case None => throw new IllegalStateException(s"Could not find open project for project location hash: $locationHash")
-    }
-  }
-
   def findFile(filePath: String, project: Project): Option[HaskellFile] = {
     val file = Option(LocalFileSystem.getInstance().findFileByPath(HaskellFileUtil.makeFilePathAbsolute(filePath, project)))
-    file.flatMap(f => Option(PsiManager.getInstance(project).findFile(f)).map(_.asInstanceOf[HaskellFile]))
+    file.flatMap(f => Option(PsiManager.getInstance(project).findFile(f)).flatMap {
+      case f: HaskellFile => Some(f)
+      case _ => None
+    })
   }
 
   def isProjectFile(psiFile: PsiFile): Boolean = {
-    ProjectRootManager.getInstance(psiFile.getProject).getFileIndex.isInSourceContent(psiFile.getVirtualFile)
+    isProjectFile(psiFile.getOriginalFile.getVirtualFile, psiFile.getProject)
   }
 
   def isProjectFile(virtualFile: VirtualFile, project: Project): Boolean = {
@@ -56,7 +49,11 @@ object HaskellProjectUtil {
   }
 
   def isProjectTestFile(psiFile: PsiFile): Boolean = {
-    ProjectRootManager.getInstance(psiFile.getProject).getFileIndex.isInTestSourceContent(psiFile.getVirtualFile)
+    isProjectTestFile(psiFile.getOriginalFile.getVirtualFile, psiFile.getProject)
+  }
+
+  def isProjectTestFile(virtualFile: VirtualFile, project: Project): Boolean = {
+    ProjectRootManager.getInstance(project).getFileIndex.isInTestSourceContent(virtualFile)
   }
 
   def findFilesForModule(moduleName: String, project: Project): Iterable[HaskellFile] = {
@@ -71,15 +68,12 @@ object HaskellProjectUtil {
       val (fileName, dirNames) = names
       val filePaths = for {
         file <- HaskellFileIndex.findFilesByName(project, fileName, GlobalSearchScope.allScope(project))
-        if checkDirNames(file.getContainingDirectory, dirNames)
-      } yield file.getVirtualFile.getPath
+        if checkDirNames(file.getParent, dirNames)
+      } yield file.getPath
 
       if (filePaths.isEmpty) {
-        if (StackReplsComponentsManager.findAvailableProjectModules(project).allModuleNames.exists(_ == moduleName)) {
-          HaskellEditorUtil.showStatusBarInfoMessage(s"Could not find source code for `$moduleName`.'", project)
-        } else {
-          HaskellEditorUtil.showStatusBarInfoMessage(s"Could not find source code for `$moduleName`. Please use `Download Haskell library sources` in `Tools` from menu. Test dependencieas are not supported yet, see https://github.com/commercialhaskell/stack/issues/1919", project)
-        }
+        // Test dependencies are supported since Stack 1.2.1, see https://github.com/commercialhaskell/stack/issues/1919
+        HaskellEditorUtil.showStatusBarInfoMessage(s"Could not find source code for `$moduleName`. Please use `Download Haskell library sources` in `Tools` from menu.", project)
         filePaths
       } else {
         filePaths
@@ -87,61 +81,13 @@ object HaskellProjectUtil {
     }).getOrElse(Iterable())
   }
 
-  def findDeclarationElements(project: Project, includeNonProjectItems: Boolean): Iterable[HaskellDeclarationElement] = {
-    getHaskellFiles(project, includeNonProjectItems).flatMap(f => HaskellPsiUtil.findTopLevelDeclarationElements(f))
-  }
-
-  def findDeclarationElementsByName(project: Project, name: String, includeNonProjectItems: Boolean): Iterable[HaskellDeclarationElement] = {
-    val normalizedName = normalize(name)
-    if (name.endsWith(" ")) {
-      findDeclarationElementsByConditionOnName(project, includeNonProjectItems, (ne: String) => ne.startsWith(normalizedName))
-    } else {
-      val names = normalizedName.split(' ')
-      if (names.length == 1) {
-        findDeclarationElementsByConditionOnName(project, includeNonProjectItems, (ne: String) => ne.contains(names.head))
-      } else {
-        findDeclarationElementsByConditionOnName(project, includeNonProjectItems, (ne: String) => names.exists(n => ne.contains(n)))
-      }
-    }
-  }
-
-  def findNamedElements(project: Project, includeNonProjectItems: Boolean): Iterable[HaskellNamedElement] = {
-    getHaskellFiles(project, includeNonProjectItems).flatMap(f => HaskellPsiUtil.findNamedElements(f))
-  }
-
-  def findNamedElementsByName(project: Project, name: String, includeNonProjectItems: Boolean): Iterable[HaskellNamedElement] = {
-    val normalizedName = normalize(name)
-    if (name.endsWith(" ")) {
-      findNamedElementsByConditionOnName(project, includeNonProjectItems, (ne: String) => ne.startsWith(normalizedName))
-    } else {
-      val names = normalizedName.split(' ')
-      if (names.length == 1) {
-        findNamedElementsByConditionOnName(project, includeNonProjectItems, (ne: String) => ne.contains(names.head))
-      } else {
-        findNamedElementsByConditionOnName(project, includeNonProjectItems, (ne: String) => names.exists(n => ne.contains(n)))
-      }
-    }
-  }
-
-  private def findDeclarationElementsByConditionOnName(project: Project, includeNonProjectItems: Boolean, condition: String => Boolean) = {
-    findDeclarationElements(project, includeNonProjectItems).filter(de => de.getIdentifierElements.map(n => normalize(n.getName)).exists(n => condition(n)))
-  }
-
-  private def findNamedElementsByConditionOnName(project: Project, includeNonProjectItems: Boolean, condition: String => Boolean) = {
-    findNamedElements(project, includeNonProjectItems).filter(ne => condition(normalize(ne.getName)))
-  }
-
-  private def getHaskellFiles(project: Project, includeNonProjectItems: Boolean) = {
+  def findHaskellFiles(project: Project, includeNonProjectItems: Boolean) = {
     val scope = if (includeNonProjectItems) {
       GlobalSearchScope.allScope(project)
     } else {
       ModuleManager.getInstance(project).getModules.map(GlobalSearchScope.moduleScope).reduce(_.uniteWith(_))
     }
-    HaskellFileIndex.findHaskellFiles(project, scope)
-  }
-
-  private def normalize(name: String): String = {
-    name.trim.toLowerCase
+    HaskellFileIndex.findFiles(project, scope)
   }
 
   private def getFileNameAndDirNamesForModule(module: String) = {
@@ -151,11 +97,11 @@ object HaskellProjectUtil {
     }
   }
 
-  private def checkDirNames(dir: PsiDirectory, dirNames: List[String]): Boolean = {
+  private def checkDirNames(dir: VirtualFile, dirNames: List[String]): Boolean = {
     dirNames match {
       case dirName :: parentDirName =>
         if (dir.getName == dirName)
-          checkDirNames(dir.getParentDirectory, parentDirName)
+          checkDirNames(dir.getParent, parentDirName)
         else
           false
       case _ => true
