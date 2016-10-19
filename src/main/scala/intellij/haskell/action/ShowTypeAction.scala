@@ -35,7 +35,7 @@ class ShowTypeAction extends AnAction {
       editor <- Option(CommonDataKeys.EDITOR.getData(context))
       psiFile <- Option(PsiUtilBase.getPsiFileInEditor(editor, CommonDataKeys.PROJECT.getData(context)))
       offset = editor.getCaretModel.getOffset
-      expression <- Option(psiFile.findElementAt(offset).getText)
+      expression <- Option(psiFile.findElementAt(offset)).map(_.getText)
     } yield {
       val selectionModel = Option(editor.getSelectionModel)
       selectionModel match {
