@@ -7,7 +7,7 @@ the recursion.
 Then I decided to use grammar and lexer definitions only for tokenizing and parsing Haskell code, and not for syntax checking the code. This is needed for syntax highlighting, all kinds of navigation and so on.
 Further Haskell language support is provided with the help of external tools.
 
-This plugin depends mainly on Stack and Intero. It can create new Stack projects (by using template `hspec`) and import exising Stack projects.
+This plugin depends mainly on Stack and Intero. It can create new Stack projects (by using template `hspec`) and import existing Stack projects.
  
 Any feedback is welcome!!
 
