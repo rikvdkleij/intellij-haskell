@@ -42,7 +42,7 @@ Any feedback is welcome!!
 - In the `New Project` wizard select `Import project from external module` and check `Haskell Stack importer`;
 - In next page of wizard configure `Project SDK` by configuring `Haskell Tool Stack` and selecting path to `stack`, e.g. `/usr/local/bin`;
 - Finish wizard;
-- Wizard will try to automatically confifure which folders are sources, test and which to exclude;
+- Wizard will try to automatically configure which folders are sources, test and which to exclude;
 - Check `Project structure`/`Project settings`/`Modules` which folders to exclude (like `.stack-work` and `dist`) and which folders are `Source` and `Test` (normally `src` and `test`).
 - Plugin will automatically download library sources (since Stack version 1.2.1 also for test dependencies). They will be added as source libraries to module.
     This option gives you nice navigation features through libraries. Sources are downloaded to folder `ideaHaskellLib` inside root of project 
