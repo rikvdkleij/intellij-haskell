@@ -48,9 +48,12 @@ Any feedback is welcome!!
     This option gives you nice navigation features through libraries. Sources are downloaded to folder `ideaHaskellLib` inside root of project 
 - After changes to dependencies you can download them again by using `Tools`/`Download Haskell library sources`. 
 - The `Event Log` will display what's going on in the background. Expecially useful when something fails;    
+- In the background for each Haskell project two Stack repls are running. You can restart them by `Tools`/`Restart Haskell Stack repls`. 
+    When you make large changes to `stack.yaml` or Cabal file, you have to restart IntelliJ project;
 
 
 # Remarks
+- Plugin does not support multi package projects;
 - IntelliJ has a nice terminal plugin;
 - Developed plugin on Linux;
 - Windows is not supported. Maybe it will work okay but I can not test it;
