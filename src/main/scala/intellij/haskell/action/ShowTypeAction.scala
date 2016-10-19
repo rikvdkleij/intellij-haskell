@@ -34,8 +34,6 @@ class ShowTypeAction extends AnAction {
     for {
       editor <- Option(CommonDataKeys.EDITOR.getData(context))
       psiFile <- Option(PsiUtilBase.getPsiFileInEditor(editor, CommonDataKeys.PROJECT.getData(context)))
-      offset = editor.getCaretModel.getOffset
-      expression <- Option(psiFile.findElementAt(offset)).map(_.getText)
     } yield {
       val selectionModel = Option(editor.getSelectionModel)
       selectionModel match {
@@ -43,7 +41,7 @@ class ShowTypeAction extends AnAction {
           case Some(ti) => HaskellEditorUtil.showHint(editor, StringUtil.escapeString(ti.typeSignature))
           case None => HaskellEditorUtil.showHint(editor, "Could not determine type for selection")
         }
-        case _ => Option(psiFile.findElementAt(offset)).foreach { psiElement =>
+        case _ => Option(psiFile.findElementAt(editor.getCaretModel.getOffset)).foreach { psiElement =>
           StackReplsComponentsManager.findTypeInfoForElement(psiElement) match {
             case Some(ti) => HaskellEditorUtil.showHint(editor, StringUtil.escapeString(ti.typeSignature))
             case None => HaskellEditorUtil.showHint(editor, s"Could not determine type for ${StringUtil.escapeString(psiElement.getText)}")

@@ -39,7 +39,7 @@ object LineColumnPosition {
     for {
       file <- Option(psiFile.getOriginalFile.getVirtualFile)
       doc <- Option(fdm.getDocument(file))
-      li <- if (offset < doc.getTextLength) Some(doc.getLineNumber(offset)) else None
+      li <- if (offset <= doc.getTextLength) Some(doc.getLineNumber(offset)) else None
     } yield LineColumnPosition(li + 1, offset - doc.getLineStartOffset(li) + 1)
   }
 
