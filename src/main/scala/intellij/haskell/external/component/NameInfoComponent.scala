@@ -123,8 +123,8 @@ private[component] object NameInfoComponent {
     val keysInCache = map.filter(_._1.psiFile == psiFile).keys
     val namedElementsInFile = findQualifiedNamedElements(psiFile)
     val validKeys = keysInCache.filter(k => namedElementsInFile.contains(k.name))
-    val keysToRefresh = validKeys.filter(k => map.get(k).exists(nis => nis.exists(nis => nis.isEmpty || nis.headOption.exists(_.isInstanceOf[ProjectNameInfo]))))
-    keysToRefresh.foreach(k => Cache.refresh(k))
+
+    validKeys.foreach(k => Cache.refresh(k))
 
     keysInCache.toSeq.diff(validKeys.toSeq).foreach(Cache.invalidate)
   }
