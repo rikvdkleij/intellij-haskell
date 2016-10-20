@@ -35,7 +35,7 @@ Any feedback is welcome!!
 # Getting started: 
 - Install this plugin. Make sure no other Haskell plugin is installed in IntelliJ;
 - Install latest versions of [Stack](https://github.com/commercialhaskell/stack) and [Intero](https://github.com/commercialhaskell/intero). 
-    Make sure `intero` is on your PATH and build with same GHC-version as your project. 
+    Make sure `intero` is on your PATH and build with same GHC-version as your project (see 5. in Remarks). 
 - Optionally install Hlint and Haskell-docs. Set file paths to `hlint` and `haskell-docs` in the menu `Settings`/`Other Settings`/`Haskell`.
 - Make sure your Stack project builds without errors. Preferably by using: `stack build --test --haddock --fast`;
 - After your project is built, import project in IntelliJ by using `File`/`New`/`Project from Existing Sources..` from the IntelliJ menu;
@@ -53,10 +53,15 @@ Any feedback is welcome!!
 
 
 # Remarks
-- Plugin does not support multi package projects;
-- IntelliJ has a nice terminal plugin;
-- Developed plugin on Linux;
-- Windows is not supported. Maybe it will work okay but I can not test it;
+1. Plugin does not support multi package projects;
+2. IntelliJ has a nice terminal plugin;
+3. Developed plugin on Linux. Also tested on OSX;
+4. Windows is not supported. Maybe it will work okay but I can not test it;
+5. When starting Stack repl gives error like this:
+    `/package.conf.d/package.cache: GHC.PackageDb.readPackageDb: inappropriate type (not enough bytes)`
+    Intero on your PATH is not built with same GHC-version as your project.
+    Check which Intero is on your PATH by running in root folder of your project: `stack exec -- which intero`.
+    If it is the wrong one, run in root folder of your project: `stack build intero`;
 
 
 # How to build project
