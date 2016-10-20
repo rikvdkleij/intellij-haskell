@@ -256,11 +256,12 @@ private[repl] abstract class StackReplProcess(val project: Project, val extraSta
   }
 
   private def getEnvParameters: Option[java.util.Map[String, String]] = {
-    if (OSUtil.isOSX) {
-      Option(EnvironmentUtil.getEnvironmentMap)
-    } else {
-      None
-    }
+    // TODO: Try to fix https://github.com/rikvdkleij/intellij-haskell/issues/49
+    //    if (OSUtil.isOSX) {
+    Option(EnvironmentUtil.getEnvironmentMap)
+    //    } else {
+    //      None
+    //    }
   }
 
   private def convertOutputToOneMessagePerLine(output: Seq[String]) = {
