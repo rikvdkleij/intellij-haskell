@@ -73,11 +73,13 @@ private[repl] abstract class StackReplProcess(val project: Project, val extraSta
       val stdOutResult = new ArrayBuffer[String]
       val stdErrResult = new ArrayBuffer[String]
 
+      def reachedEndOfOutput: Boolean = stdOutResult.lastOption.exists(_.startsWith(EndOfOutputIndicator))
+
       writeToOutputStream(command)
 
       val timeout = if (command.startsWith(":load")) LoadTimeout else DefaultTimeout
       val deadline = timeout.fromNow
-      while (deadline.hasTimeLeft && (stdOutResult.isEmpty || !stdOutResult.lastOption.exists(_.startsWith(EndOfOutputIndicator)))) {
+      while (deadline.hasTimeLeft && (stdOutResult.isEmpty || !reachedEndOfOutput)) {
         stdOut.drainTo(stdOutResult)
         stdErr.drainTo(stdErrResult)
 
@@ -88,7 +90,7 @@ private[repl] abstract class StackReplProcess(val project: Project, val extraSta
       stdOut.drainTo(stdOutResult)
       stdErr.drainTo(stdErrResult)
 
-      if (deadline.isOverdue()) {
+      if (!reachedEndOfOutput) {
         logError(s"No result from Stack repl within $timeout. Command was: $command")
       } else {
         logInfo("command: " + command)
@@ -96,7 +98,7 @@ private[repl] abstract class StackReplProcess(val project: Project, val extraSta
         logInfo("errOut: " + stdErrResult.mkString("\n"))
       }
 
-      if (deadline.isOverdue()) {
+      if (!reachedEndOfOutput) {
         None
       } else {
         Some(StackReplOutput(convertOutputToOneMessagePerLine(removePrompt(stdOutResult)), convertOutputToOneMessagePerLine(stdErrResult)))
