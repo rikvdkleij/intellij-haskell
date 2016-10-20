@@ -1,5 +1,7 @@
 # IntelliJ plugin for Haskell
 
+[![Join the chat at https://gitter.im/intellij-haskell/Lobby](https://badges.gitter.im/intellij-haskell/Lobby.svg)](https://gitter.im/intellij-haskell/Lobby?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge&utm_content=badge)
+
 When I was learning Haskell, I missed the nice features of IntelliJ IDEA. My first approach
 was to use default way of creating an IntelliJ plugin by defining a grammar and a lexer according to
 [Haskell report](http://www.haskell.org/onlinereport/haskell2010/haskellch10.html). That didn't work out because I could not define all 
