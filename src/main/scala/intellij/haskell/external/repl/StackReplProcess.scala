@@ -35,7 +35,7 @@ import scala.sys.process._
 
 private[repl] abstract class StackReplProcess(val project: Project, val extraStartOptions: Seq[String] = Seq(), val beforeStartDoBuild: Boolean = false) extends ProjectComponent {
 
-  private final val LineSeparatorInBytes = OSUtil.LineSeparator
+  private final val LineSeparatorInBytes = '\n'
 
   private[this] var available = false
 
