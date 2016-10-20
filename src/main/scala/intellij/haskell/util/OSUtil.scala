@@ -16,11 +16,9 @@
 
 package intellij.haskell.util
 
-import sun.security.action.GetPropertyAction
-
 object OSUtil {
 
-  final lazy val LineSeparator = java.security.AccessController.doPrivileged(new GetPropertyAction("line.separator")).toCharArray.head
+  final lazy val LineSeparator = System.lineSeparator()
 
   def isOSX: Boolean = {
     OsName.indexOf("mac") >= 0 || OsName.indexOf("darwin") >= 0

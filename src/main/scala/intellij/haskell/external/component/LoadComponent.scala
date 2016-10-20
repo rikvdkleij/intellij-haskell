@@ -92,7 +92,7 @@ case class LoadResult(currentFileProblems: Iterable[LoadProblemInCurrentFile] = 
 
 sealed abstract class LoadProblem(private val message: String) {
   def plainMessage: String = {
-    message.trim.replace(OSUtil.LineSeparator, ' ').replaceAll("\\s+", " ")
+    message.trim.replaceAll(OSUtil.LineSeparator, " ").replaceAll("\\s+", " ")
   }
 
   def htmlMessage: String = {
