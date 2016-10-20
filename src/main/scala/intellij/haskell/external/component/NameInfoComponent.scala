@@ -35,8 +35,8 @@ import scala.collection.JavaConversions._
 private[component] object NameInfoComponent {
 
   private final val ProjectInfoPattern = """(.+)-- Defined at (.+):([\d]+):([\d]+)""".r
-  private final val LibraryModuleInfoPattern = """(.+)-- Defined in ‘([\w\.\-]+):([\w\.\-]+)’""".r
-  private final val ModuleInfoPattern = """(.+)-- Defined in ‘([\w\.\-]+)’""".r
+  private final val LibraryModuleInfoPattern = """(.+)-- Defined in [`|‘]([\w\.\-]+):([\w\.\-]+)['|’]""".r
+  private final val ModuleInfoPattern = """(.+)-- Defined in [`|‘]([\w\.\-]+)['|’]""".r
 
   private final val Executor = Executors.newCachedThreadPool()
 
