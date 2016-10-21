@@ -87,20 +87,18 @@ private[repl] abstract class StackReplProcess(val project: Project, val extraSta
         Thread.sleep(DelayBetweenReads.toMillis)
       }
 
-      stdOut.drainTo(stdOutResult)
-      stdErr.drainTo(stdErrResult)
-
       if (!reachedEndOfOutput) {
         logError(s"No result from Stack repl within $timeout. Command was: $command")
+
+        None
       } else {
+        stdOut.drainTo(stdOutResult)
+        stdErr.drainTo(stdErrResult)
+
         logInfo("command: " + command)
         logInfo("stdOut: " + stdOutResult.mkString("\n"))
         logInfo("errOut: " + stdErrResult.mkString("\n"))
-      }
 
-      if (!reachedEndOfOutput) {
-        None
-      } else {
         Some(StackReplOutput(convertOutputToOneMessagePerLine(removePrompt(stdOutResult)), convertOutputToOneMessagePerLine(stdErrResult)))
       }
     }
