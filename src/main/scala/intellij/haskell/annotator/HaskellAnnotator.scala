@@ -46,13 +46,15 @@ class HaskellAnnotator extends ExternalAnnotator[PsiFile, LoadResult] {
   private final val UseLanguageExtensionPattern2 = """.* Use (\w+) to allow.*""".r
   private final val UseLanguageExtensionPattern3 = """.* You need (\w+) to.*""".r
   private final val UseLanguageExtensionPattern4 = """.* Try enabling (\w+).*""".r
-  private final val DefinedButNotUsedPattern = """.* Defined but not used: [‘|`](.*)[’|']""".r
-  private final val NotInScopePattern = """.* Not in scope:[^‘`]+[‘|`](.*)[’|']""".r
-  private final val NotInScopePattern2 = """.* not in scope: (.*)""".r
-  private final val PerhapsYouMeantThesePattern = """.*ot in scope: ([\w‘’'`]+) .*Perhaps you meant one of these: (.*)""".r
-  private final val PerhapsYouMeantPattern = """.*ot in scope: ([\w‘’'`]+) .*Perhaps you meant (.*)""".r
-  private final val PerhapsYouMeantImportedFromPattern = """.*[`|‘]([^‘’'`]*)['|’] \(imported from (.*)\)""".r
-  private final val PerhapsYouMeantLocalPattern = """.*[`|‘]([^‘’'`]*)['|’].*""".r
+  private final val DefinedButNotUsedPattern = """.* Defined but not used: [‘`](.+)[’']""".r
+  private final val NotInScopePattern = """.* Not in scope:[^‘`]+[‘`](.+)[’']""".r
+  private final val NotInScopePattern2 = """.* not in scope: (.+)""".r
+
+  private final val PerhapsYouMeantNamePattern = """.*[`‘]([^‘’'`]+)['’]""".r
+  private final val PerhapsYouMeantMultiplePattern = """.*ot in scope: (.+) Perhaps you meant one of these: (.+)""".r
+  private final val PerhapsYouMeantSinglePattern = """.*ot in scope: (.+) Perhaps you meant (.+)""".r
+  private final val PerhapsYouMeantImportedFromPattern = """.*[`‘]([^‘’'`]+)['’] \(imported from (.*)\)""".r
+  private final val PerhapsYouMeantLocalPattern = """.*[`‘]([^‘’'`]+)['’].*""".r
 
   override def collectInformation(psiFile: PsiFile, editor: Editor, hasErrors: Boolean): PsiFile = {
     (psiFile, Option(psiFile.getOriginalFile.getVirtualFile)) match {
@@ -108,7 +110,7 @@ class HaskellAnnotator extends ExternalAnnotator[PsiFile, LoadResult] {
         if (plainMessage.startsWith("warning:") || plainMessage.startsWith("Warning:")) {
           plainMessage match {
             case NoTypeSignaturePattern(typeSignature) => WarningAnnotationWithIntentionActions(tr, problem.plainMessage, problem.htmlMessage, Iterable(new TypeSignatureIntentionAction(typeSignature)))
-            case HaskellImportOptimizer.WarningRedundantImport() => WarningAnnotationWithIntentionActions(tr, problem.plainMessage, problem.htmlMessage, Iterable(new OptimizeImportIntentionAction))
+            case HaskellImportOptimizer.WarningRedundantImport(moduleName) => WarningAnnotationWithIntentionActions(tr, problem.plainMessage, problem.htmlMessage, Iterable(new OptimizeImportIntentionAction))
             case DefinedButNotUsedPattern(n) => WarningAnnotationWithIntentionActions(tr, problem.plainMessage, problem.htmlMessage, Iterable(new DefinedButNotUsedIntentionAction(n)))
             case _ => WarningAnnotation(tr, problem.plainMessage, problem.htmlMessage)
           }
@@ -118,11 +120,11 @@ class HaskellAnnotator extends ExternalAnnotator[PsiFile, LoadResult] {
             case UseLanguageExtensionPattern2(languageExtension) => createLanguageExtensionIntentionAction(problem, tr, languageExtension)
             case UseLanguageExtensionPattern3(languageExtension) => createLanguageExtensionIntentionAction(problem, tr, languageExtension)
             case UseLanguageExtensionPattern4(languageExtension) => createLanguageExtensionIntentionAction(problem, tr, languageExtension)
-            case PerhapsYouMeantThesePattern(notInScopeMessage, suggestionsList) =>
+            case PerhapsYouMeantMultiplePattern(notInScopeMessage, suggestionsList) =>
               val notInScopeName = extractName(notInScopeMessage)
               val annotations = suggestionsList.split(",").flatMap(s => extractPerhapsYouMeantAction(s))
               ErrorAnnotationWithIntentionActions(tr, problem.plainMessage, problem.htmlMessage, annotations.toStream ++ createNotInScopeIntentionActions(psiFile, notInScopeName))
-            case PerhapsYouMeantPattern(notInScopeMessage, suggestion) =>
+            case PerhapsYouMeantSinglePattern(notInScopeMessage, suggestion) =>
               val notInScopeName = extractName(notInScopeMessage)
               val annotation = extractPerhapsYouMeantAction(suggestion)
               ErrorAnnotationWithIntentionActions(tr, problem.plainMessage, problem.htmlMessage, annotation.toStream ++ createNotInScopeIntentionActions(psiFile, notInScopeName))
@@ -146,7 +148,10 @@ class HaskellAnnotator extends ExternalAnnotator[PsiFile, LoadResult] {
   }
 
   private def extractName(notInScopeMessage: String): String = {
-    notInScopeMessage.split("::").headOption.getOrElse(notInScopeMessage).trim.replaceAll("‘|’|'|`", "")
+    notInScopeMessage match {
+      case PerhapsYouMeantNamePattern(name) => name
+      case _ => notInScopeMessage.split("::").headOption.getOrElse(notInScopeMessage).trim.replaceAll("‘’'`•", "")
+    }
   }
 
   private def createNotInScopeIntentionActions(psiFile: PsiFile, name: String) = {

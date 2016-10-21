@@ -36,7 +36,7 @@ class HaskellImportOptimizer extends ImportOptimizer {
       override def run(): Unit = {
         val problems = StackReplsComponentsManager.loadHaskellFile(psiFile, refreshCache = false).currentFileProblems
         val redundantImports = problems.filter(p => p.plainMessage match {
-          case HaskellImportOptimizer.WarningRedundantImport() => true
+          case HaskellImportOptimizer.WarningRedundantImport(moduleName) => true
           case _ => false
         })
 
@@ -51,5 +51,5 @@ class HaskellImportOptimizer extends ImportOptimizer {
 }
 
 object HaskellImportOptimizer {
-  final val WarningRedundantImport = """Warning: The[ \w]*import of .+ is redundant.*""".r
+  final val WarningRedundantImport = """[W|w]arning.*The import of [`|‘]([^'’]+)['|’] is redundant.*""".r
 }
