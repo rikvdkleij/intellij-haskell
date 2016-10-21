@@ -127,7 +127,7 @@ private[component] object BrowseModuleComponent {
   }
 
   def findModuleNamesInCache(project: Project): Iterable[String] = {
-    Cache.asMap().map(_._1.moduleName)
+    Cache.asMap().filter(e => e._1.project == project).map(_._1.moduleName)
   }
 
   def findAllTopLevelModuleIdentifiers(project: Project, moduleName: String, psiFile: PsiFile): Iterable[ModuleIdentifier] = {
