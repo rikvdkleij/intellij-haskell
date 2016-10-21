@@ -35,7 +35,7 @@ import scala.sys.process._
 
 private[repl] abstract class StackReplProcess(val project: Project, val extraStartOptions: Seq[String] = Seq(), val beforeStartDoBuild: Boolean = false) extends ProjectComponent {
 
-  private final val LineSeparatorInBytes = '\n'
+  private final val LineSeparator = '\n'
 
   private[this] var available = false
 
@@ -251,7 +251,7 @@ private[repl] abstract class StackReplProcess(val project: Project, val extraSta
 
   private def writeToOutputStream(command: String) = {
     outputStream.get.write(command.getBytes)
-    outputStream.get.write(LineSeparatorInBytes)
+    outputStream.get.write(LineSeparator)
     outputStream.get.flush()
   }
 
