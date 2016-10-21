@@ -41,7 +41,7 @@ class HaskellSdkType extends SdkType("Haskel Tool Stack SDK") {
     stackPath.isDirectory && stackPath.listFiles.map(f => FileUtil.getNameWithoutExtension(f)).contains("stack")
   }
 
-  override def getPresentableName: String = "Stack binary"
+  override def getPresentableName: String = "Stack binary folder"
 
   override def saveAdditionalData(additionalData: SdkAdditionalData, additional: Element): Unit = {}
 
