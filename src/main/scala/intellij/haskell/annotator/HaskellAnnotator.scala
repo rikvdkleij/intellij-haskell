@@ -46,11 +46,13 @@ class HaskellAnnotator extends ExternalAnnotator[PsiFile, LoadResult] {
   private final val UseLanguageExtensionPattern2 = """.* Use (\w+) to allow.*""".r
   private final val UseLanguageExtensionPattern3 = """.* You need (\w+) to.*""".r
   private final val UseLanguageExtensionPattern4 = """.* Try enabling (\w+).*""".r
-  private final val PerhapsYouMeantPattern = """.*Not in scope: (.*) Perhaps you meant(.*)""".r
-  private final val DefinedButNotUsedPattern = """.* Defined but not used: ‘(.*)’""".r
-  private final val NotInScopePattern = """.* Not in scope:[^‘]+‘(.*)’""".r
+  private final val DefinedButNotUsedPattern = """.* Defined but not used: [‘|`](.*)[’|']""".r
+  private final val NotInScopePattern = """.* Not in scope:[^‘`]+[‘|`](.*)[’|']""".r
   private final val NotInScopePattern2 = """.* not in scope: (.*)""".r
-  private final val SuggestionPattern = """‘([^‘’]+)’ \(([^\(]+)\)""".r
+  private final val PerhapsYouMeantThesePattern = """.*ot in scope: ([\w‘’'`]+) .*Perhaps you meant one of these: (.*)""".r
+  private final val PerhapsYouMeantPattern = """.*ot in scope: ([\w‘’'`]+) .*Perhaps you meant (.*)""".r
+  private final val PerhapsYouMeantImportedFromPattern = """.*[`|‘]([^‘’'`]*)['|’] \(imported from (.*)\)""".r
+  private final val PerhapsYouMeantLocalPattern = """.*[`|‘]([^‘’'`]*)['|’].*""".r
 
   override def collectInformation(psiFile: PsiFile, editor: Editor, hasErrors: Boolean): PsiFile = {
     (psiFile, Option(psiFile.getOriginalFile.getVirtualFile)) match {
@@ -116,13 +118,14 @@ class HaskellAnnotator extends ExternalAnnotator[PsiFile, LoadResult] {
             case UseLanguageExtensionPattern2(languageExtension) => createLanguageExtensionIntentionAction(problem, tr, languageExtension)
             case UseLanguageExtensionPattern3(languageExtension) => createLanguageExtensionIntentionAction(problem, tr, languageExtension)
             case UseLanguageExtensionPattern4(languageExtension) => createLanguageExtensionIntentionAction(problem, tr, languageExtension)
-            case PerhapsYouMeantPattern(name, suggestions) =>
-              val intentionActions = SuggestionPattern.findAllMatchIn(suggestions).map(s => {
-                val suggestion = s.group(1)
-                val message = s.group(2)
-                new PerhapsYouMeantIntentionAction(suggestion, message)
-              }).toStream ++ createNotInScopeIntentionActions(psiFile, name)
-              ErrorAnnotationWithIntentionActions(tr, problem.plainMessage, problem.htmlMessage, intentionActions)
+            case PerhapsYouMeantThesePattern(notInScopeMessage, suggestionsList) =>
+              val notInScopeName = extractName(notInScopeMessage)
+              val annotations = suggestionsList.split(",").flatMap(s => extractPerhapsYouMeantAction(s))
+              ErrorAnnotationWithIntentionActions(tr, problem.plainMessage, problem.htmlMessage, annotations.toStream ++ createNotInScopeIntentionActions(psiFile, notInScopeName))
+            case PerhapsYouMeantPattern(notInScopeMessage, suggestion) =>
+              val notInScopeName = extractName(notInScopeMessage)
+              val annotation = extractPerhapsYouMeantAction(suggestion)
+              ErrorAnnotationWithIntentionActions(tr, problem.plainMessage, problem.htmlMessage, annotation.toStream ++ createNotInScopeIntentionActions(psiFile, notInScopeName))
             case NotInScopePattern(name) =>
               ErrorAnnotationWithIntentionActions(tr, problem.plainMessage, problem.htmlMessage, createNotInScopeIntentionActions(psiFile, name))
             case NotInScopePattern2(name) =>
@@ -132,6 +135,18 @@ class HaskellAnnotator extends ExternalAnnotator[PsiFile, LoadResult] {
         }
       }
     }
+  }
+
+  private def extractPerhapsYouMeantAction(suggestion: String): Option[PerhapsYouMeantIntentionAction] = {
+    suggestion match {
+      case message@PerhapsYouMeantImportedFromPattern(name, module) => Some(new PerhapsYouMeantIntentionAction(name, message))
+      case message@PerhapsYouMeantLocalPattern(name) => Some(new PerhapsYouMeantIntentionAction(name, message))
+      case _ => None
+    }
+  }
+
+  private def extractName(notInScopeMessage: String): String = {
+    notInScopeMessage.split("::").headOption.getOrElse(notInScopeMessage).trim.replaceAll("‘|’|'|`", "")
   }
 
   private def createNotInScopeIntentionActions(psiFile: PsiFile, name: String) = {
