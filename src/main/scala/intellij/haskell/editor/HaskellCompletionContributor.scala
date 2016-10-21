@@ -130,6 +130,7 @@ class HaskellCompletionContributor extends CompletionContributor {
           if (e.getParent.getNode.getElementType != HS_QUALIFIER) {
             resultSet.addAllElements(findAvailableModuleNames(project, psiFile).toStream)
             resultSet.addAllElements(getInsideImportClauses)
+            resultSet.addElement(createKeywordLookupElement("import"))
           }
         case Some(e) if isNCommentInProgress(e) =>
           resultSet.addAllElements(getPragmaStartEndIds)
@@ -398,7 +399,11 @@ class HaskellCompletionContributor extends CompletionContributor {
   }
 
   private def getReservedNames = {
-    Keywords.map(r => LookupElementBuilder.create(r).withIcon(HaskellIcons.HaskellSmallBlueLogo).withTailText(" keyword", true))
+    Keywords.map(createKeywordLookupElement)
+  }
+
+  private def createKeywordLookupElement(keyword: String) = {
+    LookupElementBuilder.create(keyword).withIcon(HaskellIcons.HaskellSmallBlueLogo).withTailText(" keyword", true)
   }
 
   private def getSpecialReservedIds = {
