@@ -21,24 +21,16 @@ import intellij.haskell.HaskellNotificationGroup
 object HaskellSettingsState {
   private def state = HaskellSettings.getInstance().getState
 
-  def getHaskellDocsPath: Option[String] = {
-    val path = findPath(state.haskellDocsPath)
-    notifyIfPathIsNotSet(path, HaskellConfigurable.HaskellDocs)
+  def getHindentPath: Option[String] = {
+    val path = findPath(state.hindentPath)
+    notifyIfPathIsNotSet(path, HaskellConfigurable.Hindent)
     path
   }
 
-  def setHaskellDocsPath(haskellDocsPath: String) {
-    state.haskellDocsPath = haskellDocsPath
-  }
-
-  def getHLintPath: Option[String] = {
-    val path = findPath(state.hlintPath)
-    notifyIfPathIsNotSet(path, HaskellConfigurable.Hlint)
+  def getStylishHaskellPath: Option[String] = {
+    val path = findPath(state.stylishHaskellPath)
+    notifyIfPathIsNotSet(path, HaskellConfigurable.StylishHaskell)
     path
-  }
-
-  def setHlintPath(hlintPath: String) {
-    state.hlintPath = hlintPath
   }
 
   private def notifyIfPathIsNotSet(path: Option[String], name: String) {

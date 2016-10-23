@@ -20,32 +20,43 @@ import java.util.regex.Pattern
 
 import com.intellij.lang.documentation.AbstractDocumentationProvider
 import com.intellij.psi.PsiElement
+import intellij.haskell.HaskellNotificationGroup
+import intellij.haskell.external.HaskellDocumentationProvider.HaskellDocsName
 import intellij.haskell.external.component.{BuiltInNameInfo, LibraryNameInfo, ProjectNameInfo, StackReplsComponentsManager}
 import intellij.haskell.psi.{HaskellPsiUtil, HaskellQualifiedNameElement}
-import intellij.haskell.settings.HaskellSettingsState
 import intellij.haskell.util.StackUtil
 
 class HaskellDocumentationProvider extends AbstractDocumentationProvider {
 
   override def generateDoc(psiElement: PsiElement, originalPsiElement: PsiElement): String = {
     HaskellPsiUtil.findQualifiedNameElement(originalPsiElement) match {
-      case Some(hne) => getHaskellDoc(hne).getOrElse("No documentation found")
+      case Some(ne) => findDocumentation(ne).getOrElse("No documentation found")
       case _ => s"No documentation because this is not Haskell identifier: ${psiElement.getText}"
     }
   }
 
-  private def getHaskellDoc(namedElement: HaskellQualifiedNameElement): Option[String] = {
-    HaskellSettingsState.getHaskellDocsPath.flatMap { hdp =>
-      val name = namedElement.getIdentifierElement.getName
-      val nameInfo = StackReplsComponentsManager.findNameInfo(namedElement).headOption
-      val arguments = nameInfo.flatMap {
-        case (lei: LibraryNameInfo) => Some(Seq(lei.moduleName, name))
-        case (pei: ProjectNameInfo) => HaskellPsiUtil.findModuleName(namedElement.getContainingFile).map(mn => Seq(mn, name))
-        case (bei: BuiltInNameInfo) => Some(Seq("Prelude", name))
-      }
-
-      arguments.map(args => StackUtil.runCommand(Seq("exec", "--", hdp) ++ args, namedElement.getContainingFile.getProject).getStdout).
-        map(output => s"${Pattern.compile("$", Pattern.MULTILINE).matcher(output).replaceAll("<br>").replace(" ", "&nbsp;")}")
+  private def findDocumentation(namedElement: HaskellQualifiedNameElement): Option[String] = {
+    val name = namedElement.getIdentifierElement.getName
+    val nameInfo = StackReplsComponentsManager.findNameInfo(namedElement).headOption
+    val arguments = nameInfo.flatMap {
+      case (lei: LibraryNameInfo) => Some(Seq(lei.moduleName, name))
+      case (pei: ProjectNameInfo) => HaskellPsiUtil.findModuleName(namedElement.getContainingFile).map(mn => Seq(mn, name))
+      case (bei: BuiltInNameInfo) => Some(Seq("Prelude", name))
     }
+
+    arguments.map(args => runHaskellDocs(namedElement, args)).
+      map(output => s"${Pattern.compile("$", Pattern.MULTILINE).matcher(output).replaceAll("<br>").replace(" ", "&nbsp;")}")
   }
+
+  private def runHaskellDocs(namedElement: HaskellQualifiedNameElement, args: Seq[String]): String = {
+    val output = StackUtil.runCommand(Seq("exec", "--", HaskellDocsName) ++ args, namedElement.getContainingFile.getProject)
+    if (output.getStderr.nonEmpty) {
+      HaskellNotificationGroup.logError(s"Error while running $HaskellDocsName: ${output.getStderr}")
+    }
+    output.getStdout
+  }
+}
+
+object HaskellDocumentationProvider {
+  final val HaskellDocsName = "haskell-docs"
 }

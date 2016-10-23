@@ -29,8 +29,8 @@ import scala.language.{existentials, reflectiveCalls}
 
 class HaskellConfigurable extends Configurable {
   private var isModifiedByUser = false
-  private val haskellDocsPathField = new TextFieldWithBrowseButton
-  private val hlintPathField = new TextFieldWithBrowseButton
+  private val hindentPathField = new TextFieldWithBrowseButton
+  private val stylishHaskellPathField = new TextFieldWithBrowseButton
 
   override def getDisplayName: String = {
     "Haskell"
@@ -42,14 +42,14 @@ class HaskellConfigurable extends Configurable {
 
   override def createComponent: JComponent = {
 
-    haskellDocsPathField.addBrowseFolderListener(
-      s"Select $HaskellDocs",
+    hindentPathField.addBrowseFolderListener(
+      s"Select $Hindent",
       null,
       null,
       FileChooserDescriptorFactory.createSingleLocalFileDescriptor())
 
-    hlintPathField.addBrowseFolderListener(
-      s"Select $Hlint",
+    stylishHaskellPathField.addBrowseFolderListener(
+      s"Select $StylishHaskell",
       null,
       null,
       FileChooserDescriptorFactory.createSingleLocalFileDescriptor())
@@ -62,8 +62,8 @@ class HaskellConfigurable extends Configurable {
       }
     }
 
-    haskellDocsPathField.getTextField.getDocument.addDocumentListener(listener)
-    hlintPathField.getTextField.getDocument.addDocumentListener(listener)
+    hindentPathField.getTextField.getDocument.addDocumentListener(listener)
+    stylishHaskellPathField.getTextField.getDocument.addDocumentListener(listener)
 
     val base = new GridBagConstraints {
       insets = new Insets(2, 0, 2, 3)
@@ -100,8 +100,8 @@ class HaskellConfigurable extends Configurable {
       ))
     }
 
-    addLabeledControl(1, HaskellDocs, haskellDocsPathField)
-    addLabeledControl(3, Hlint, hlintPathField)
+    addLabeledControl(1, Hindent, hindentPathField)
+    addLabeledControl(3, StylishHaskell, stylishHaskellPathField)
 
     settingsPanel.add(new JPanel(), base.setConstraints(
       gridx = 0,
@@ -116,8 +116,8 @@ class HaskellConfigurable extends Configurable {
     validatePaths()
 
     val state = HaskellSettings.getInstance().getState
-    state.haskellDocsPath = haskellDocsPathField.getText
-    state.hlintPath = hlintPathField.getText
+    state.hindentPath = hindentPathField.getText
+    state.stylishHaskellPath = stylishHaskellPathField.getText
   }
 
   private def validatePaths() {
@@ -126,7 +126,7 @@ class HaskellConfigurable extends Configurable {
         throw new ConfigurationException(s"Invalid path to $command")
       }
     }
-    Seq((HaskellDocs, haskellDocsPathField.getText), (Hlint, hlintPathField.getText)
+    Seq((Hindent, hindentPathField.getText), (StylishHaskell, stylishHaskellPathField.getText)
     ).foreach({ case (c, p) => validate(c, p) })
   }
 
@@ -137,12 +137,12 @@ class HaskellConfigurable extends Configurable {
 
   override def reset() {
     val state = HaskellSettings.getInstance().getState
-    haskellDocsPathField.getTextField.setText(state.haskellDocsPath)
-    hlintPathField.getTextField.setText(state.hlintPath)
+    hindentPathField.getTextField.setText(state.hindentPath)
+    stylishHaskellPathField.getTextField.setText(state.stylishHaskellPath)
   }
 }
 
 object HaskellConfigurable {
-  val HaskellDocs = "haskell-docs"
-  val Hlint = "hlint"
+  final val Hindent = "hindent"
+  final val StylishHaskell = "stylish-haskell"
 }

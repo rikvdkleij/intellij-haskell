@@ -65,14 +65,8 @@ object CommandLine {
 
     private def addOutput(text: String, outputType: Key[_]) {
       if (!text.trim.isEmpty) {
-        if (outputType == ProcessOutputTypes.STDOUT) {
-          HaskellNotificationGroup.logInfo(text)
-        }
-        else if (outputType == ProcessOutputTypes.STDERR) {
-          HaskellNotificationGroup.logError(text)
-        }
+        HaskellNotificationGroup.logInfo(text)
       }
     }
   }
-
 }

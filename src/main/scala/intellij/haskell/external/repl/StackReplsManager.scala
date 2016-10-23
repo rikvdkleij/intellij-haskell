@@ -20,7 +20,8 @@ import com.intellij.openapi.components.ProjectComponent
 import com.intellij.openapi.progress.{ProgressIndicator, ProgressManager, Task}
 import com.intellij.openapi.project.Project
 import intellij.haskell.external.component.StackReplsComponentsManager
-import intellij.haskell.util.HaskellProjectUtil
+import intellij.haskell.external.{HLintComponent, HaskellDocumentationProvider}
+import intellij.haskell.util.{HaskellProjectUtil, StackUtil}
 
 object StackReplsManager {
 
@@ -62,6 +63,9 @@ class StackReplsManager(project: Project) extends ProjectComponent {
 
           progressIndicator.setText("Restarting global repl to release memory")
           StackReplsManager.getGlobalRepl(project).restart()
+
+          StackUtil.executeBuild(project, Seq("build", HaskellDocumentationProvider.HaskellDocsName), "build of Haskell-docs")
+          StackUtil.executeBuild(project, Seq("build", HLintComponent.HlintName), "build of Hlint")
         }
       }
     })

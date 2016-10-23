@@ -90,9 +90,7 @@ object StackReplsComponentsManager {
   }
 
   private def preloadAllLibraryModuleIdentifiers(project: Project): Unit = {
-    val globalProjectInfo = GlobalProjectInfoComponent.findGlobalProjectInfo(project)
-
-    globalProjectInfo match {
+    GlobalProjectInfoComponent.findGlobalProjectInfo(project) match {
       case Some(info) =>
         ApplicationManager.getApplication.invokeLater(new Runnable {
           override def run(): Unit = {

@@ -24,7 +24,7 @@ import com.intellij.openapi.project.Project
 import com.intellij.util.EnvironmentUtil
 import intellij.haskell.HaskellNotificationGroup
 import intellij.haskell.sdk.HaskellSdkType
-import intellij.haskell.util._
+import intellij.haskell.util.StackUtil._
 
 import scala.collection.JavaConversions._
 import scala.collection.mutable.{ArrayBuffer, ListBuffer}
@@ -47,8 +47,6 @@ private[repl] abstract class StackReplProcess(val project: Project, val extraSta
 
   private final val LoadTimeout = 5.seconds
   private final val DefaultTimeout = 2.seconds
-
-  private final val BuildTimeout = 30.minutes
 
   private final val EndOfOutputIndicator = "^IntellijHaskell^"
 
@@ -129,11 +127,8 @@ private[repl] abstract class StackReplProcess(val project: Project, val extraSta
 
     // TODO: Create action to rebuild project with first `stack clean full`
     if (beforeStartDoBuild) {
-      val buildArguments = Seq("build", "--test", "--only-dependencies", "--haddock", "--fast")
-      logInfo("Build is starting")
-      logInfo(s"""Build command is `stack ${buildArguments.mkString(" ")}`""")
-      StackUtil.runCommand(buildArguments, project, BuildTimeout.toMillis, captureOutputToLog = true)
-      logInfo("Build is finished")
+      executeBuild(project, Seq("build", "intero"), "build of Intero")
+      executeBuild(project, Seq("build", "--test", "--only-dependencies", "--haddock", "--fast"), "build of dependencies")
     }
 
     HaskellSdkType.getStackPath(project).foreach { stackPath =>
@@ -182,6 +177,7 @@ private[repl] abstract class StackReplProcess(val project: Project, val extraSta
       }
     }
   }
+
 
   def exit(forceExit: Boolean = false): Unit = {
     if (!forceExit && !available) {

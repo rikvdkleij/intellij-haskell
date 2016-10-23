@@ -18,24 +18,20 @@ package intellij.haskell.external
 
 import com.intellij.psi.PsiFile
 import intellij.haskell.HaskellNotificationGroup
-import intellij.haskell.settings.HaskellSettingsState
+import intellij.haskell.util.StackUtil
 import spray.json.JsonParser.ParsingException
 import spray.json.{DefaultJsonProtocol, _}
 
 object HLintComponent {
 
+  final val HlintName = "hlint"
+
   def check(psiFile: PsiFile): Seq[HLintInfo] = {
-    val hlintPath = HaskellSettingsState.getHLintPath
-    hlintPath match {
-      case Some(p) =>
-        val output = CommandLine.getProcessOutput(
-          psiFile.getProject.getBasePath,
-          p,
-          Seq("--json", psiFile.getVirtualFile.getPath)
-        )
-        deserializeHLintInfo(output.getStdout)
-      case None => Seq()
+    val output = StackUtil.runCommand(Seq("exec", "--", HlintName, "--json", psiFile.getOriginalFile.getVirtualFile.getPath), psiFile.getProject)
+    if (output.getStderr.nonEmpty) {
+      HaskellNotificationGroup.logError(s"Error while running Hlint: ${output.getStderr}")
     }
+    deserializeHLintInfo(output.getStdout)
   }
 
   object HlintJsonProtocol extends DefaultJsonProtocol {
@@ -60,4 +56,3 @@ object HLintComponent {
 }
 
 case class HLintInfo(module: Option[String], decl: Option[String], severity: String, hint: String, file: String, startLine: Int, startColumn: Int, endLine: Int, endColumn: Int, from: String = "", to: Option[String], note: Seq[String])
-

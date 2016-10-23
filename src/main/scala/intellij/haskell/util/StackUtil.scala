@@ -18,12 +18,17 @@ package intellij.haskell.util
 
 import com.intellij.execution.process.ProcessOutput
 import com.intellij.openapi.project.Project
+import intellij.haskell.HaskellNotificationGroup
 import intellij.haskell.external.CommandLine
 import intellij.haskell.sdk.HaskellSdkType
+
+import scala.concurrent.duration._
 
 object StackUtil {
 
   private final val StandardTimeoutInMillis = 1000
+
+  private final val BuildTimeout = 30.minutes
 
   def runCommand(command: Seq[String], project: Project, timeoutInMillis: Long = StandardTimeoutInMillis, captureOutputToLog: Boolean = false): ProcessOutput = {
     HaskellSdkType.getStackPath(project).map { stackPath =>
@@ -35,5 +40,12 @@ object StackUtil {
         captureOutputToLog
       )
     }.getOrElse(throw new IllegalStateException("Expected path to Stack to be configured."))
+  }
+
+  def executeBuild(project: Project, buildArguments: Seq[String], message: String): Unit = {
+    HaskellNotificationGroup.logInfo(s"$message is starting")
+    HaskellNotificationGroup.logInfo(s"""Build command is `stack ${buildArguments.mkString(" ")}`""")
+    StackUtil.runCommand(buildArguments, project, BuildTimeout.toMillis, captureOutputToLog = true)
+    HaskellNotificationGroup.logInfo(s"$message is finished")
   }
 }
