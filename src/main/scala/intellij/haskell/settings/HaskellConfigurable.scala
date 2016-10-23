@@ -24,6 +24,7 @@ import com.intellij.openapi.fileChooser.FileChooserDescriptorFactory
 import com.intellij.openapi.options.{Configurable, ConfigurationException}
 import com.intellij.openapi.ui.TextFieldWithBrowseButton
 import com.intellij.ui.DocumentAdapter
+import intellij.haskell.util.OSUtil
 
 import scala.language.{existentials, reflectiveCalls}
 
@@ -122,7 +123,8 @@ class HaskellConfigurable extends Configurable {
 
   private def validatePaths() {
     def validate(command: String, path: String) = {
-      if (!path.endsWith(command) && !path.trim.isEmpty) {
+      val suffix = if (OSUtil.isWindows) command + ".exe" else command
+      if (!path.endsWith(suffix) && !path.trim.isEmpty) {
         throw new ConfigurationException(s"Invalid path to $command")
       }
     }
