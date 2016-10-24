@@ -18,25 +18,46 @@ package intellij.haskell.external.repl
 
 import com.intellij.openapi.project.Project
 
+// TODO: Refactor
 private[external] class GlobalStackReplProcess(project: Project) extends StackReplProcess(project, Seq("--no-package-hiding")) {
   override def getComponentName: String = "global-stack-repl"
 
+  private[this] var loadedModuleName: Option[String] = None
+
   def getModuleIdentifiers(moduleName: String): Option[StackReplOutput] = synchronized {
-    execute(s":module $moduleName")
-    execute(s":browse! $moduleName")
+    if (!loadedModuleName.contains(moduleName)) {
+      loadModule(moduleName)
+    }
+
+    if (loadedModuleName.contains(moduleName)) {
+      execute(s":browse! $moduleName")
+    } else {
+      None
+    }
   }
 
   def findNameInfo(moduleName: String, name: String): Option[StackReplOutput] = synchronized {
-    val output = execute(s":module $moduleName")
-    if (output.exists(_.stdErrLines.isEmpty)) {
+    if (!loadedModuleName.contains(moduleName)) {
+      loadModule(moduleName)
+    }
+
+    if (loadedModuleName.contains(moduleName)) {
       execute(s":info $name")
     } else {
-      // Now no info means never info because it's library
-      Some(StackReplOutput())
+      None
     }
   }
 
   def showActiveLanguageFlags(): Option[StackReplOutput] = synchronized {
     execute(":show language")
+  }
+
+  private def loadModule(moduleName: String) = {
+    val output = execute(s":module $moduleName")
+    if (output.exists(_.stdErrLines.isEmpty)) {
+      loadedModuleName = Some(moduleName)
+    } else {
+      loadedModuleName = None
+    }
   }
 }
