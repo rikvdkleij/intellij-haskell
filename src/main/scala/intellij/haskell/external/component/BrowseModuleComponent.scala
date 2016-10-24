@@ -57,7 +57,7 @@ private[component] object BrowseModuleComponent {
           val moduleName = key.moduleName
           GlobalProjectInfoComponent.findGlobalProjectInfo(project).flatMap(gpi => {
             if (gpi.allAvailableLibraryModuleNames.contains(moduleName)) {
-              StackReplsManager.getGlobalRepl(project).getModuleIdentifiers(moduleName).map(_.stdOutLines.flatMap(findModuleIdentifier(_, moduleName, project)))
+              StackReplsManager.getGlobalRepl(project).getModuleIdentifiers(moduleName).filter(_.stdOutLines.nonEmpty) map(_.stdOutLines.flatMap(findModuleIdentifier(_, moduleName, project)))
             } else {
               key.psiFile match {
                 case Some(f) =>
