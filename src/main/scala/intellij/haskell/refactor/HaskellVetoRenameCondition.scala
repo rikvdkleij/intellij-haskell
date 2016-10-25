@@ -25,7 +25,10 @@ class HaskellVetoRenameCondition extends Condition[PsiElement] {
     element match {
       case f: PsiFile => !HaskellProjectUtil.isProjectFile(f)
       case _ =>
-        val resolveResult = Option(element.getReference).flatMap(_.asInstanceOf[PsiPolyVariantReference].multiResolve(false).headOption)
+        val resolveResult = Option(element.getReference).flatMap(r => r match {
+          case r: PsiPolyVariantReference => r.multiResolve(false).headOption
+          case _ => None
+        })
         resolveResult match {
           case Some(rr: ResolveResult) => !HaskellProjectUtil.isProjectFile(rr.getElement.getContainingFile)
           case _ => true
