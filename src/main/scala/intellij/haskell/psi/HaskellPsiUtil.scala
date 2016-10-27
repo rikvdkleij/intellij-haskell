@@ -105,4 +105,11 @@ object HaskellPsiUtil {
       case e => Option(PsiTreeUtil.findFirstParent(e, ModuleDeclarationCondition)).map(_.asInstanceOf[HaskellModuleDeclaration])
     }
   }
+
+  def findExpressionParent(psiElement: PsiElement): Option[HaskellExpression] = {
+    psiElement match {
+      case e: HaskellExpression => Some(e)
+      case e => Option(PsiTreeUtil.findFirstParent(e, ExpressionCondition)).map(_.asInstanceOf[HaskellExpression])
+    }
+  }
 }

@@ -36,7 +36,7 @@ private[external] class ProjectStackReplProcess(project: Project) extends StackR
     checkFileIsLoadedAndExecuteWithFilePath(psiFile, filePath => execute(s":loc-at $filePath $startLineNr $startColumnNr $endLineNr $endColumnNr $expression"))
   }
 
-  def findNameInfo(psiFile: PsiFile, name: String): Option[StackReplOutput] = synchronized {
+  def findInfo(psiFile: PsiFile, name: String): Option[StackReplOutput] = synchronized {
     checkFileIsLoadedAndExecuteWithFilePath(psiFile, _ => execute(s":info $name"))
   }
 

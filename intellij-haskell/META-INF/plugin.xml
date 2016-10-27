@@ -182,7 +182,7 @@
         <typedHandler implementation="intellij.haskell.editor.HaskellTypedHandler" id="HaskellFile"/>
 
         <localInspection language="Haskell" shortName="HLintInspection" displayName="Inspection by HLint"
-                         groupName="Haskell" enabledByDefault="false" level="WARNING"
+                         groupName="Haskell" enabledByDefault="true" level="WARNING"
                          implementationClass="intellij.haskell.inspection.HLintInspectionTool"/>
 
         <lang.importOptimizer language="Haskell" implementationClass="intellij.haskell.editor.HaskellImportOptimizer"/>

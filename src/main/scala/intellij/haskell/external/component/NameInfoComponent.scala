@@ -16,7 +16,7 @@
 
 package intellij.haskell.external.component
 
-import java.util.concurrent.{Callable, Executors}
+import java.util.concurrent.{Callable, Executors, TimeUnit}
 
 import com.google.common.cache.{CacheBuilder, CacheLoader}
 import com.google.common.util.concurrent.{ListenableFuture, ListenableFutureTask, UncheckedExecutionException}
@@ -25,7 +25,7 @@ import com.intellij.openapi.progress.ProcessCanceledException
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Computable
 import com.intellij.psi.{PsiElement, PsiFile}
-import intellij.haskell.external.repl.StackReplsManager
+import intellij.haskell.external.repl.{StackReplOutput, StackReplsManager}
 import intellij.haskell.psi._
 import intellij.haskell.util.StringUtil.escapeString
 import intellij.haskell.util.{HaskellProjectUtil, StringUtil}
@@ -35,38 +35,63 @@ import scala.collection.JavaConversions._
 private[component] object NameInfoComponent {
 
   private final val ProjectInfoPattern = """(.+)-- Defined at (.+):([\d]+):([\d]+)""".r
-  private final val LibraryModuleInfoPattern = """(.+)-- Defined in [`|‘]([\w\.\-]+):([\w\.\-]+)['|’]""".r
-  private final val ModuleInfoPattern = """(.+)-- Defined in [`|‘]([\w\.\-]+)['|’]""".r
+  private final val LibraryModuleInfoPattern = """(.+)-- Defined in [`‘]([\w\.\-]+):([\w\.\-]+)['’]""".r
+  private final val ModuleInfoPattern = """(.+)-- Defined in [`‘]([\w\.\-]+)['’]""".r
 
   private final val Executor = Executors.newCachedThreadPool()
 
   private case class Key(psiFile: PsiFile, name: String)
 
-  private final val Cache = CacheBuilder.newBuilder()
-    .build(
-      new CacheLoader[Key, Option[Iterable[NameInfo]]]() {
+  private case class Result(nameInfos: Option[Iterable[NameInfo]], var toRefresh: Boolean = false)
 
-        override def load(key: Key): Option[Iterable[NameInfo]] = {
-          createNameInfos(key, key.psiFile.getProject)
+  private final val Cache = CacheBuilder.newBuilder()
+    .refreshAfterWrite(5, TimeUnit.SECONDS)
+    .expireAfterWrite(30, TimeUnit.MINUTES)
+    .build(
+      new CacheLoader[Key, Result] {
+
+        override def load(key: Key): Result = {
+          Result(findNameInfos(key, key.psiFile.getProject))
         }
 
-        override def reload(key: Key, oldInfo: Option[Iterable[NameInfo]]): ListenableFuture[Option[Iterable[NameInfo]]] = {
-          val task = ListenableFutureTask.create(new Callable[Option[Iterable[NameInfo]]]() {
+        override def reload(key: Key, oldResult: Result): ListenableFuture[Result] = {
+          val task = ListenableFutureTask.create(new Callable[Result]() {
             def call() = {
-              createNameInfos(key, key.psiFile.getProject)
+              if (oldResult.toRefresh && oldResult.nameInfos.isDefined) {
+                // Only elements of project file can be refreshed
+                findNameInfosInProjectFile(key, key.psiFile.getProject) match {
+                  case newResult@Some(nis) => Result(newResult)
+                  case _ => oldResult
+                }
+              } else {
+                oldResult
+              }
             }
           })
           Executor.execute(task)
           task
         }
 
-        private def createNameInfos(key: Key, project: Project): Option[Iterable[NameInfo]] = {
-          val output = if (HaskellProjectUtil.isProjectFile(key.psiFile)) {
-            StackReplsManager.getProjectRepl(project).findNameInfo(key.psiFile, key.name)
-          } else {
+        private def findNameInfosInProjectFile(key: Key, project: Project): Option[Iterable[NameInfo]] = {
+          val output = callProjectReplForInfo(key, project)
+          createNameInfos(project, output)
+        }
+
+        private def findNameInfos(key: Key, project: Project): Option[Iterable[NameInfo]] = {
+          val output = if (HaskellProjectUtil.isLibraryFile(key.psiFile)) {
             val moduleName = findModuleName(key.psiFile)
-            moduleName.flatMap(mn => StackReplsManager.getGlobalRepl(project).findNameInfo(mn, key.name))
+            moduleName.flatMap(mn => StackReplsManager.getGlobalRepl(project).findInfo(mn, key.name))
+          } else {
+            callProjectReplForInfo(key, project)
           }
+          createNameInfos(project, output)
+        }
+
+        private def callProjectReplForInfo(key: Key, project: Project): Option[StackReplOutput] = {
+          StackReplsManager.getProjectRepl(project).findInfo(key.psiFile, key.name)
+        }
+
+        private def createNameInfos(project: Project, output: Option[StackReplOutput]): Option[Iterable[NameInfo]] = {
           output.map(_.stdOutLines.flatMap(l => createNameInfo(l, project)))
         }
 
@@ -105,7 +130,7 @@ private[component] object NameInfoComponent {
 
     (try {
       key.map(k =>
-        Cache.get(k) match {
+        Cache.get(k).nameInfos match {
           case Some(nis) => nis
           case _ =>
             Cache.invalidate(k)
@@ -118,25 +143,9 @@ private[component] object NameInfoComponent {
     }).getOrElse(Iterable())
   }
 
-  def refresh(psiFile: PsiFile): Unit = {
-    val map = Cache.asMap().filter(_._1.psiFile == psiFile)
-    val keysInCache = map.filter(_._1.psiFile == psiFile).keys
-    val namedElementsInFile = findQualifiedNamedElements(psiFile)
-    val validKeys = keysInCache.filter(k => namedElementsInFile.contains(k.name))
-
-    validKeys.foreach(k => Cache.refresh(k))
-
-    keysInCache.toSeq.diff(validKeys.toSeq).foreach(Cache.invalidate)
-  }
-
-  private def findQualifiedNamedElements(psiFile: PsiFile) = {
-    ApplicationManager.getApplication.runReadAction {
-      new Computable[Iterable[String]] {
-        override def compute(): Iterable[String] = {
-          HaskellPsiUtil.findQualifiedNamedElements(psiFile).map(_.getName)
-        }
-      }
-    }
+  // TODO: Make distinction in type between project file and library file
+  def markAllToRefresh(psiFile: PsiFile): Unit = {
+    Cache.asMap().filter(_._1.psiFile == psiFile).values.foreach(_.toRefresh = true)
   }
 }
 

@@ -54,7 +54,7 @@ object CommandLine {
       new CapturingProcessHandler(cmd)
     }
 
-    processHandler.runProcess(timeout, false)
+    processHandler.runProcess(timeout, true)
   }
 
   private class CapturingProcessToLog(val output: ProcessOutput) extends CapturingProcessAdapter {
@@ -65,7 +65,11 @@ object CommandLine {
 
     private def addOutput(text: String, outputType: Key[_]) {
       if (!text.trim.isEmpty) {
-        HaskellNotificationGroup.logInfo(text)
+        if (outputType == ProcessOutputTypes.STDERR) {
+          HaskellNotificationGroup.logError(text)
+        } else {
+          HaskellNotificationGroup.logInfo(text)
+        }
       }
     }
   }

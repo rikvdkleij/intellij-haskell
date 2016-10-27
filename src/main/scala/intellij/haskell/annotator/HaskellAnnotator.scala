@@ -60,7 +60,7 @@ class HaskellAnnotator extends ExternalAnnotator[PsiFile, LoadResult] {
     (psiFile, Option(psiFile.getOriginalFile.getVirtualFile)) match {
       case (_, None) => null // can be in case if file is in memory only (just created file)
       case (_, Some(f)) if f.getFileType != HaskellFileType.INSTANCE => null
-      case (_, Some(f)) if !HaskellProjectUtil.isProjectFile(psiFile) => null
+      case (_, Some(f)) if HaskellProjectUtil.isLibraryFile(psiFile) => null
       case (_, Some(f)) => psiFile
     }
   }
@@ -204,7 +204,7 @@ object HaskellAnnotator {
       new Runnable {
         override def run(): Unit = {
           val openFiles = FileEditorManager.getInstance(project).getOpenFiles
-          val openProjectFiles = openFiles.filter(vf => HaskellProjectUtil.isProjectFile(vf, project))
+          val openProjectFiles = openFiles.filterNot(vf => HaskellProjectUtil.isLibraryFile(vf, project))
           val openProjectPsiFiles = HaskellFileUtil.convertToHaskellFiles(openProjectFiles.toStream, project)
           openProjectPsiFiles.foreach(pf =>
             getDaemonCodeAnalyzer(project).restart(pf)
@@ -309,15 +309,14 @@ class DefinedButNotUsedIntentionAction(name: String) extends HaskellBaseIntentio
   }
 }
 
-// TODO: Only add identifier and not complete module
-// TODO: Check when adding import module that is not already there for other identifier of module
-class NotInScopeIntentionAction(name: String, moduleName: String, psiFile: PsiFile) extends HaskellBaseIntentionAction {
-  setText(s"Import `$name` of module `$moduleName`")
+// TODO: Check when adding import module identifier that import of module is not already there for other identifier of module
+class NotInScopeIntentionAction(identifier: String, moduleName: String, psiFile: PsiFile) extends HaskellBaseIntentionAction {
+  setText(s"Import `$identifier` of module `$moduleName`")
 
   override def getFamilyName: String = "Perhaps you meant"
 
   override def invoke(project: Project, editor: Editor, file: PsiFile): Unit = {
-    HaskellElementFactory.createImportDeclaration(project, moduleName + "\n").foreach { importDeclarationElement =>
+    HaskellElementFactory.createImportDeclaration(project, moduleName, identifier).foreach { importDeclarationElement =>
       Option(PsiTreeUtil.findChildOfType(file, classOf[HaskellImportDeclarations])) match {
         case Some(ids) if ids.getImportDeclarationList.nonEmpty =>
           val lastImportDeclarationElement = PsiTreeUtil.findChildrenOfType(ids, classOf[HaskellImportDeclaration]).lastOption.orNull

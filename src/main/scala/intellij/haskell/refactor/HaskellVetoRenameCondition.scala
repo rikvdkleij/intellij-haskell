@@ -23,14 +23,14 @@ import intellij.haskell.util.HaskellProjectUtil
 class HaskellVetoRenameCondition extends Condition[PsiElement] {
   override def value(element: PsiElement): Boolean = {
     element match {
-      case f: PsiFile => !HaskellProjectUtil.isProjectFile(f)
+      case f: PsiFile => HaskellProjectUtil.isLibraryFile(f)
       case _ =>
         val resolveResult = Option(element.getReference).flatMap(r => r match {
           case r: PsiPolyVariantReference => r.multiResolve(false).headOption
           case _ => None
         })
         resolveResult match {
-          case Some(rr: ResolveResult) => !HaskellProjectUtil.isProjectFile(rr.getElement.getContainingFile)
+          case Some(rr: ResolveResult) => HaskellProjectUtil.isLibraryFile(rr.getElement.getContainingFile)
           case _ => true
         }
     }

@@ -51,7 +51,7 @@ object HaskellEditorUtil {
       val psiFile = CommonDataKeys.PSI_FILE.getData(dataContext)
       psiFile match {
         case _: HaskellFile if !onlyForProjectFile => enable()
-        case f: HaskellFile if onlyForProjectFile && HaskellProjectUtil.isProjectFile(psiFile) => enable()
+        case f: HaskellFile if onlyForProjectFile && !HaskellProjectUtil.isLibraryFile(psiFile) => enable()
         case _ => disable()
       }
     }

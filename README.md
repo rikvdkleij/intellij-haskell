@@ -30,8 +30,8 @@ Any feedback is welcome!!
 - Navigate to identifier (called `Symbol` in IntelliJ menu);
 - Inspection by HLint;
 - Quick fixes for HLint suggestions;
-- View error, action to view formatted message. Especially useful in case message consists of multiple lines (Ctrl-F10, Meta-F10 on Mac OSX);
-- Intention actions (for example, to add language extension or add import);
+- Show error action to view formatted message. Useful in case message consists of multiple lines (Ctrl-F10, Meta-F10 on Mac OSX);
+- Intention actions (for example, to add language extension or to add import of identifier);
 
 
 # Getting started: 
@@ -49,7 +49,7 @@ Any feedback is welcome!!
 - Plugin will automatically download library sources (since Stack version 1.2.1 also for test dependencies). They will be added as source libraries to module.
     This option gives you nice navigation features through libraries. Sources are downloaded to folder `ideaHaskellLib` inside root of project 
 - After changes to dependencies you can download them again by using `Tools`/`Download Haskell library sources`. 
-- The `Event Log` will display what's going on in the background. Expecially useful when something fails;    
+- The `Event Log` will display what's going on in the background. Useful when something fails;    
 - In the background for each Haskell project two Stack repls are running. You can restart them by `Tools`/`Restart Haskell Stack repls`. 
     When you make large changes to `stack.yaml` or Cabal file, you have to restart IntelliJ project;
 

@@ -89,8 +89,8 @@ object HaskellElementFactory {
     haskellModuleDeclaration.map(_.asInstanceOf[HaskellModuleDeclaration]).map(_.getModid)
   }
 
-  def createImportDeclaration(project: Project, moduleName: String): Option[HaskellImportDeclaration] = {
-    val haskellImportDeclaration = createElementFromText(project, "import " + moduleName, HS_IMPORT_DECLARATION)
+  def createImportDeclaration(project: Project, moduleName: String, identifier: String): Option[HaskellImportDeclaration] = {
+    val haskellImportDeclaration = createElementFromText(project, s"import $moduleName ($identifier) \n", HS_IMPORT_DECLARATION)
     haskellImportDeclaration.map(_.asInstanceOf[HaskellImportDeclaration])
   }
 

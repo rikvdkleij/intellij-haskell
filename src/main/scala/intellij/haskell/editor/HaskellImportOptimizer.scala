@@ -24,12 +24,10 @@ import intellij.haskell.external.component.StackReplsComponentsManager
 import intellij.haskell.psi.HaskellElementCondition
 import intellij.haskell.util.{HaskellProjectUtil, LineColumnPosition}
 
-// TODO: Support also identifier of import is redundant, for example warning message is:
-// `The import of ‘count’ from module ‘Data.Text’ is redundant`
 // TODO: Refactor so call to loadHaskellFile is not done if called from HaskellAnnotator
 class HaskellImportOptimizer extends ImportOptimizer {
 
-  override def supports(psiFile: PsiFile): Boolean = psiFile.isInstanceOf[HaskellFile] && HaskellProjectUtil.isProjectFile(psiFile)
+  override def supports(psiFile: PsiFile): Boolean = psiFile.isInstanceOf[HaskellFile] && !HaskellProjectUtil.isLibraryFile(psiFile)
 
   override def processFile(psiFile: PsiFile): Runnable = {
     new Runnable {

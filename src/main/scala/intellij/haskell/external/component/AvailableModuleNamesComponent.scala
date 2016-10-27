@@ -26,7 +26,17 @@ import intellij.haskell.util.{HaskellFileIndex, HaskellProjectUtil}
 private[component] object AvailableModuleNamesComponent {
 
   def findAvailableModuleNames(psiFile: PsiFile): Stream[String] = {
-    if (HaskellProjectUtil.isProjectFile(psiFile)) {
+    if (HaskellProjectUtil.isProjectTestFile(psiFile)) {
+      val libraryTestModuleNames = GlobalProjectInfoComponent.findGlobalProjectInfo(psiFile.getProject).map(_.allAvailableLibraryModuleNames).getOrElse(Stream())
+      val testModuleNames = ApplicationManager.getApplication.runReadAction {
+        new Computable[Stream[String]] {
+          override def compute(): Stream[String] = {
+            HaskellFileIndex.findProjectTestPsiFiles(psiFile.getProject).flatMap(HaskellPsiUtil.findModuleName)
+          }
+        }
+      }
+      testModuleNames ++ libraryTestModuleNames
+    } else {
       val libraryModuleNames = GlobalProjectInfoComponent.findGlobalProjectInfo(psiFile.getProject).map(_.availableProductionLibraryModuleNames).getOrElse(Stream())
       val prodModuleNames = ApplicationManager.getApplication.runReadAction {
         new Computable[Stream[String]] {
@@ -36,16 +46,6 @@ private[component] object AvailableModuleNamesComponent {
         }
       }
       prodModuleNames ++ libraryModuleNames
-    } else {
-      val libraryModuleNames = GlobalProjectInfoComponent.findGlobalProjectInfo(psiFile.getProject).map(_.allAvailableLibraryModuleNames).getOrElse(Stream())
-      val testModuleNames = ApplicationManager.getApplication.runReadAction {
-        new Computable[Stream[String]] {
-          override def compute(): Stream[String] = {
-            HaskellFileIndex.findProjectTestPsiFiles(psiFile.getProject).flatMap(HaskellPsiUtil.findModuleName)
-          }
-        }
-      }
-      testModuleNames ++ libraryModuleNames
     }
   }
 }

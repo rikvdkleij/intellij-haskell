@@ -36,7 +36,9 @@ private[component] object LoadComponent {
           ApplicationManager.getApplication.executeOnPooledThread(new Runnable {
             override def run(): Unit = {
               findModuleName(psiFile).foreach(BrowseModuleComponent.refreshForModule(project, _, psiFile))
-              NameInfoComponent.refresh(psiFile)
+              NameInfoComponent.markAllToRefresh(psiFile)
+              TypeInfoComponent.markAllToRefresh(psiFile)
+              DefinitionLocationComponent.markAllToRefresh(psiFile)
             }
           })
         }

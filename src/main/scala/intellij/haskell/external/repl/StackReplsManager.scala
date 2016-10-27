@@ -64,6 +64,7 @@ class StackReplsManager(project: Project) extends ProjectComponent {
           progressIndicator.setText("Restarting global repl to release memory")
           StackReplsManager.getGlobalRepl(project).restart()
 
+          // TODO stack build stylish-haskell hindent hlint intero haskell-docs apply-refact
           StackUtil.executeBuild(project, Seq("build", HaskellDocumentationProvider.HaskellDocsName), "build of Haskell-docs")
           StackUtil.executeBuild(project, Seq("build", HLintComponent.HlintName), "build of Hlint")
         }

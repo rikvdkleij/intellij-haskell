@@ -83,11 +83,11 @@ class HaskellReference(element: HaskellNamedElement, textRange: TextRange) exten
   }
 
   private def findResolveResults(namedElement: HaskellNamedElement, psiFile: PsiFile, project: Project) = {
-    if (HaskellProjectUtil.isProjectFile(psiFile)) {
+    if (HaskellProjectUtil.isLibraryFile(psiFile)) {
+      createResolveResultsByNameInfos(namedElement, project)
+    } else {
       val definitionLocationResolveResult = findReferenceByDefinitionLocation(namedElement, project).map(prr => Iterable(new HaskellProjectResolveResult(prr)))
       definitionLocationResolveResult.getOrElse(createResolveResultsByNameInfos(namedElement, project))
-    } else {
-      createResolveResultsByNameInfos(namedElement, project)
     }
   }
 

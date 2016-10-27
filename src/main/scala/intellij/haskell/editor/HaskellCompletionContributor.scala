@@ -81,7 +81,7 @@ class HaskellCompletionContributor extends CompletionContributor {
       val project = parameters.getPosition.getProject
       val psiFile = parameters.getOriginalFile
 
-      if (!HaskellProjectUtil.isProjectFile(psiFile)) {
+      if (HaskellProjectUtil.isLibraryFile(psiFile)) {
         return
       }
 

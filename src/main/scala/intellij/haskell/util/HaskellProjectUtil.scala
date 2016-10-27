@@ -40,12 +40,12 @@ object HaskellProjectUtil {
     })
   }
 
-  def isProjectFile(psiFile: PsiFile): Boolean = {
-    isProjectFile(psiFile.getOriginalFile.getVirtualFile, psiFile.getProject)
+  def isLibraryFile(psiFile: PsiFile): Boolean = {
+    isLibraryFile(psiFile.getContainingFile.getVirtualFile, psiFile.getProject)
   }
 
-  def isProjectFile(virtualFile: VirtualFile, project: Project): Boolean = {
-    ProjectRootManager.getInstance(project).getFileIndex.isInSourceContent(virtualFile)
+  def isLibraryFile(virtualFile: VirtualFile, project: Project): Boolean = {
+    ProjectRootManager.getInstance(project).getFileIndex.isInLibrarySource(virtualFile)
   }
 
   def isProjectTestFile(psiFile: PsiFile): Boolean = {

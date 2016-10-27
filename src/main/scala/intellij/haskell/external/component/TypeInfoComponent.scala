@@ -27,13 +27,15 @@ import intellij.haskell.external.repl.StackReplsManager
 import intellij.haskell.psi._
 import intellij.haskell.util.LineColumnPosition
 
+import scala.collection.JavaConversions._
+
 private[component] object TypeInfoComponent {
 
   private final val Executor = Executors.newCachedThreadPool()
 
   private case class Key(psiFile: PsiFile, startLineNr: Int, startColumnNr: Int, endLineNr: Int, endColumnNr: Int, expression: String)
 
-  private type Result = Either[String, Option[TypeInfo]]
+  private case class Result(typeInfo: Either[String, Option[TypeInfo]], var toRefresh: Boolean = false)
 
   private final val Cache = CacheBuilder.newBuilder()
     .refreshAfterWrite(5, TimeUnit.SECONDS)
@@ -45,13 +47,17 @@ private[component] object TypeInfoComponent {
           createTypeInfo(key)
         }
 
-        override def reload(key: Key, oldInfo: Result): ListenableFuture[Result] = {
+        override def reload(key: Key, oldResult: Result): ListenableFuture[Result] = {
           val task = ListenableFutureTask.create(new Callable[Result]() {
             def call() = {
-              val newInfo = createTypeInfo(key)
-              newInfo match {
-                case Right(o) if o.isDefined => newInfo
-                case _ => oldInfo
+              if (oldResult.toRefresh && oldResult.typeInfo.isRight) {
+                val newResult = createTypeInfo(key)
+                newResult.typeInfo match {
+                  case Right(ti) if ti.isDefined => newResult
+                  case _ => oldResult
+                }
+              } else {
+                oldResult
               }
             }
           })
@@ -61,10 +67,11 @@ private[component] object TypeInfoComponent {
 
         private def createTypeInfo(key: Key): Result = {
           val project = key.psiFile.getProject
-          StackReplsManager.getProjectRepl(project).findTypeInfoFor(key.psiFile, key.startLineNr, key.startColumnNr, key.endLineNr, key.endColumnNr, key.expression) match {
+          val typeInfo = StackReplsManager.getProjectRepl(project).findTypeInfoFor(key.psiFile, key.startLineNr, key.startColumnNr, key.endLineNr, key.endColumnNr, key.expression) match {
             case Some(output) => Right(output.stdOutLines.headOption.filterNot(_.trim.isEmpty).map(ti => TypeInfo(ti)))
             case _ => Left("No type info available")
           }
+          Result(typeInfo)
         }
       }
     )
@@ -88,10 +95,14 @@ private[component] object TypeInfoComponent {
     } yield typeInfo
   }
 
+  def markAllToRefresh(psiFile: PsiFile): Unit = {
+    Cache.asMap().filter(_._1.psiFile == psiFile).values.foreach(_.toRefresh = true)
+  }
+
   private def findTypeInfo(psiFile: PsiFile, startPosition: LineColumnPosition, endPosition: LineColumnPosition, expression: String): Option[TypeInfo] = {
     val key = Key(psiFile, startPosition.lineNr, startPosition.columnNr, endPosition.lineNr, endPosition.columnNr, expression)
     try {
-      Cache.get(key) match {
+      Cache.get(key).typeInfo match {
         case Right(result) => result
         case _ =>
           Cache.invalidate(key)

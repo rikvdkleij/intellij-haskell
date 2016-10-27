@@ -47,7 +47,9 @@ object StackReplsComponentsManager {
     // As a side effect we preload in background some extra info
     ApplicationManager.getApplication.invokeLater(new Runnable {
       override def run(): Unit = {
-        TypeInfoComponent.findTypeInfoForElement(psiElement)
+        if (HaskellPsiUtil.findExpressionParent(psiElement).isDefined) {
+          TypeInfoComponent.findTypeInfoForElement(psiElement)
+        }
         NameInfoComponent.findNameInfo(psiElement)
       }
     })

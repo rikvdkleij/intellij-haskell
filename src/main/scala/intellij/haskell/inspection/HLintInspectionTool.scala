@@ -24,10 +24,13 @@ import intellij.haskell.util.{HaskellProjectUtil, LineColumnPosition}
 
 import scala.annotation.tailrec
 
+// TODO: Use apply-refact
+// stack build apply-refact
+// stack exec -- hlint src/Lib.hs --refactor --refactor-options="--pos 31,7 --inplace"
 class HLintInspectionTool extends LocalInspectionTool {
 
   override def checkFile(psiFile: PsiFile, manager: InspectionManager, isOnTheFly: Boolean): Array[ProblemDescriptor] = {
-    if (!HaskellProjectUtil.isProjectFile(psiFile)) {
+    if (HaskellProjectUtil.isLibraryFile(psiFile)) {
       return Array()
     }
 

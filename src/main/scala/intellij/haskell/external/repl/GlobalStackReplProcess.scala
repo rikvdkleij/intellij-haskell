@@ -36,7 +36,7 @@ private[external] class GlobalStackReplProcess(project: Project) extends StackRe
     }
   }
 
-  def findNameInfo(moduleName: String, name: String): Option[StackReplOutput] = synchronized {
+  def findInfo(moduleName: String, name: String): Option[StackReplOutput] = synchronized {
     if (!loadedModuleName.contains(moduleName)) {
       loadModule(moduleName)
     }
@@ -44,7 +44,8 @@ private[external] class GlobalStackReplProcess(project: Project) extends StackRe
     if (loadedModuleName.contains(moduleName)) {
       execute(s":info $name")
     } else {
-      None
+      // No info means never info because it's library
+      Some(StackReplOutput())
     }
   }
 

@@ -26,6 +26,7 @@ import com.intellij.psi.{PsiElement, PsiFile}
 import intellij.haskell.external.repl.{StackReplOutput, StackReplsManager}
 import intellij.haskell.psi._
 import intellij.haskell.util.LineColumnPosition
+import scala.collection.JavaConversions._
 
 private[component] object DefinitionLocationComponent {
   private final val Executor = Executors.newCachedThreadPool()
@@ -34,7 +35,7 @@ private[component] object DefinitionLocationComponent {
 
   private case class Key(startLineNr: Int, startColumnNr: Int, endLineNr: Int, endColumnNr: Int, expression: String, psiFile: PsiFile)
 
-  private type Result = Either[String, Option[DefinitionLocation]]
+  private case class Result(location: Either[String, Option[DefinitionLocation]], var toRefresh: Boolean = false)
 
   private final val Cache = CacheBuilder.newBuilder()
     .refreshAfterWrite(5, TimeUnit.SECONDS)
@@ -46,13 +47,18 @@ private[component] object DefinitionLocationComponent {
           createDefinitionLocation(key)
         }
 
-        override def reload(key: Key, oldInfo: Result): ListenableFuture[Result] = {
+        override def reload(key: Key, oldResult: Result): ListenableFuture[Result] = {
           val task = ListenableFutureTask.create(new Callable[Result]() {
             def call() = {
-              val newInfo = createDefinitionLocation(key)
-              newInfo match {
-                case Right(o) if o.isDefined => newInfo
-                case _ => oldInfo
+              if (oldResult.toRefresh && oldResult.location.isRight) {
+                val newResult = createDefinitionLocation(key)
+                newResult.location match {
+                  case Right(o) if o.isDefined => newResult
+                  case _ => oldResult
+                }
+              }
+              else {
+                oldResult
               }
             }
           })
@@ -65,7 +71,7 @@ private[component] object DefinitionLocationComponent {
         private def createDefinitionLocation(key: Key): Result = {
           val psiFile = key.psiFile
           val project = psiFile.getProject
-          (findLocationInfoFor(key, psiFile, project, endColumnExcluded = false) match {
+          val location = (findLocationInfoFor(key, psiFile, project, endColumnExcluded = false) match {
             case Some(output1) =>
               val headOption = output1.stdOutLines.headOption
               if (headOption.contains("Couldn't resolve to any modules.") || headOption.contains("No matching export in any local modules.")) {
@@ -78,6 +84,7 @@ private[component] object DefinitionLocationComponent {
               }
             case _ => Left("No info available")
           }).right.map(_.stdOutLines.headOption.flatMap(l => createDefinitionLocationInfo(l)))
+          Result(location)
         }
 
         private def findLocationInfoFor(key: Key, psiFile: PsiFile, project: Project, endColumnExcluded: Boolean): Option[StackReplOutput] = {
@@ -107,10 +114,14 @@ private[component] object DefinitionLocationComponent {
     } yield location
   }
 
+  def markAllToRefresh(psiFile: PsiFile): Unit = {
+    Cache.asMap().filter(_._1.psiFile == psiFile).values.foreach(_.toRefresh = true)
+  }
+
   private def find(psiFile: PsiFile, startPosition: LineColumnPosition, endPosition: LineColumnPosition, expression: String): Option[DefinitionLocation] = {
     val key = Key(startPosition.lineNr, startPosition.columnNr, endPosition.lineNr, endPosition.columnNr, expression, psiFile)
     try {
-      Cache.get(key) match {
+      Cache.get(key).location match {
         case Right(result) => result
         case _ =>
           Cache.invalidate(key)
