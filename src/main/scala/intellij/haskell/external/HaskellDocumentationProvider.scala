@@ -38,6 +38,9 @@ class HaskellDocumentationProvider extends AbstractDocumentationProvider {
   private def findDocumentation(namedElement: HaskellQualifiedNameElement): Option[String] = {
     val name = namedElement.getIdentifierElement.getName
     val nameInfo = StackReplsComponentsManager.findNameInfo(namedElement).headOption
+    if (nameInfo.isEmpty) {
+      HaskellNotificationGroup.logWarning(s"No documenation because no info could be found for identifier: $name")
+    }
     val arguments = nameInfo.flatMap {
       case (lei: LibraryNameInfo) => Some(Seq(lei.moduleName, name))
       case (pei: ProjectNameInfo) => HaskellPsiUtil.findModuleName(namedElement.getContainingFile).map(mn => Seq(mn, name))
@@ -53,7 +56,7 @@ class HaskellDocumentationProvider extends AbstractDocumentationProvider {
     if (output.getStderr.nonEmpty) {
       HaskellNotificationGroup.logError(s"Error while running $HaskellDocsName: ${output.getStderr}")
       if (output.getStderr.toLowerCase.contains("couldn't find file: haskell-docs")) {
-        HaskellNotificationGroup.logWarning("Probably `haskell-docs` build is not yet finished or still has to be started")
+        HaskellNotificationGroup.notifyBalloonWarning("No documentation because `haskell-docs` build still has to be started or build is not finished yet")
       }
     }
     output.getStdout

@@ -31,7 +31,7 @@ object HLintComponent {
     if (output.getStderr.nonEmpty) {
       HaskellNotificationGroup.logError(s"Error while running Hlint: ${output.getStderr}")
       if (output.getStderr.toLowerCase.contains("couldn't find file: hlint")) {
-        HaskellNotificationGroup.logWarning("Probably `hlint` build is not yet finished or still has to be started")
+        HaskellNotificationGroup.notifyBalloonWarning("No Hlint suggestions because `hlint` build still has to be started or build is not finished yet")
       }
     }
     deserializeHLintInfo(output.getStdout)
