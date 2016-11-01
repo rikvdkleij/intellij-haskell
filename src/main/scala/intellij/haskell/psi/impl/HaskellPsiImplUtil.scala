@@ -328,7 +328,8 @@ object HaskellPsiImplUtil {
   }
 
   def getIdentifierElements(newtypeDeclaration: HaskellNewtypeDeclaration): Seq[HaskellNamedElement] = {
-    newtypeDeclaration.getSimpletype.getIdentifierElements
+    newtypeDeclaration.getSimpletype.getIdentifierElements ++ newtypeDeclaration.getNewconstr.getQNameList.headOption.map(_.getIdentifierElement).toSeq ++
+      Option(newtypeDeclaration.getNewconstr.getNewconstrFielddecl).map(_.getQNameList.map(_.getIdentifierElement)).getOrElse(Seq())
   }
 
   def getIdentifierElements(classDeclaration: HaskellClassDeclaration): Seq[HaskellNamedElement] = {
