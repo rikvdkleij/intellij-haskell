@@ -189,6 +189,8 @@
 
         <framework.type implementation="intellij.haskell.framework.HaskellFrameworkType"/>
 
+        <extendWordSelectionHandler implementation="intellij.haskell.editor.HaskellExtendWordSelectioner"/>
+
         <!-- Cabal support -->
         <fileTypeFactory implementation="intellij.haskell.cabal.CabalFileTypeFactory"/>
         <lang.commenter language="Cabal" implementationClass="intellij.haskell.cabal.CabalCommenter"/>
