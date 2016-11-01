@@ -57,7 +57,7 @@ class HaskellExtendWordSelectioner extends ExtendWordSelectionHandler {
         HaskellPsiUtil.findQualifiedNameElement(e) match {
           case None => e match {
             case e: PsiWhiteSpace => recur(e)
-            case e: PsiElement if e.getNode.getElementType == HS_NEWLINE => offsets
+            case e: PsiElement if e.getNode.getElementType == HS_NEWLINE | e.getNode.getElementType == HS_EQUAL => offsets
             case e: PsiElement if toSkip.contains(e.getNode.getElementType) => offsets
             case _ =>
               offsets += getOffset(e)
