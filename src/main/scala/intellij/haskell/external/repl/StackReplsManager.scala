@@ -50,10 +50,10 @@ class StackReplsManager(project: Project) extends ProjectComponent {
   override def initComponent(): Unit = {}
 
   override def projectOpened(): Unit = {
-    ProgressManager.getInstance().run(new Task.Backgroundable(project, s"[$getComponentName] Starting Stack repls, building project and preloading cache", false) {
+    if (HaskellProjectUtil.isHaskellStackProject(project)) {
+      ProgressManager.getInstance().run(new Task.Backgroundable(project, s"[$getComponentName] Starting Stack repls, building project and preloading cache", false) {
 
-      def run(progressIndicator: ProgressIndicator) {
-        if (HaskellProjectUtil.isHaskellStackProject(project)) {
+        def run(progressIndicator: ProgressIndicator) {
           progressIndicator.setText("Busy with building project and starting Stack repls")
           StackReplsManager.getProjectRepl(project).start()
           StackReplsManager.getGlobalRepl(project).start()
@@ -64,12 +64,11 @@ class StackReplsManager(project: Project) extends ProjectComponent {
           progressIndicator.setText("Restarting global repl to release memory")
           StackReplsManager.getGlobalRepl(project).restart()
 
-          // TODO stack build stylish-haskell hindent hlint intero haskell-docs apply-refact
-          StackUtil.executeBuild(project, Seq("build", HaskellDocumentationProvider.HaskellDocsName), "build of Haskell-docs")
-          StackUtil.executeBuild(project, Seq("build", HLintComponent.HlintName), "build of Hlint")
+          // TODO stack build apply-refact
+          StackUtil.executeBuild(project, Seq("build", HaskellDocumentationProvider.HaskellDocsName, HLintComponent.HlintName), "build of Haskell-docs, Hlint")
         }
-      }
-    })
+      })
+    }
   }
 
   override def disposeComponent(): Unit = {}

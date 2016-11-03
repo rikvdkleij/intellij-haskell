@@ -31,13 +31,10 @@ class HaskellLanguageCodeStyleSettingsProvider extends LanguageCodeStyleSettings
   }
 
   override def getDefaultCommonSettings: CommonCodeStyleSettings = {
-    val defaultSettings: CommonCodeStyleSettings = new CommonCodeStyleSettings(getLanguage)
+    val defaultSettings = new CommonCodeStyleSettings(getLanguage)
     defaultSettings.KEEP_BLANK_LINES_IN_CODE = 1
 
-    // TODO: Use hindent with `hindent --line-length ..` and value of right margin
-//    defaultSettings.getRootSettings.getRightMargin(null)
-
-    val indentOptions: CommonCodeStyleSettings.IndentOptions = defaultSettings.initIndentOptions
+    val indentOptions = defaultSettings.initIndentOptions
     indentOptions.INDENT_SIZE = 2
     indentOptions.CONTINUATION_INDENT_SIZE = 4
     indentOptions.TAB_SIZE = 2

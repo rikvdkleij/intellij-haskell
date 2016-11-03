@@ -31,15 +31,12 @@ object StackUtil {
   private final val BuildTimeout = 30.minutes
 
   def runCommand(command: Seq[String], project: Project, timeoutInMillis: Long = StandardTimeoutInMillis, captureOutputToLog: Boolean = false): ProcessOutput = {
-    HaskellSdkType.getStackPath(project).map { stackPath =>
-      CommandLine.getProcessOutput(
-        project.getBasePath,
-        stackPath,
-        command,
-        timeoutInMillis.toInt,
-        captureOutputToLog
-      )
-    }.getOrElse(throw new IllegalStateException("Expected path to Stack to be configured."))
+    CommandLine.runCommand(
+      project.getBasePath,
+      HaskellSdkType.getStackPath(project),
+      command,
+      timeoutInMillis.toInt,
+      captureOutputToLog)
   }
 
   def executeBuild(project: Project, buildArguments: Seq[String], message: String): Unit = {

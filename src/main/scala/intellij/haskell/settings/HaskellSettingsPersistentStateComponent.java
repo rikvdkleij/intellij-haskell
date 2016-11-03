@@ -28,14 +28,14 @@ import org.jetbrains.annotations.NotNull;
                 @Storage(file = "intellij-haskell.xml")
         }
 )
-public class HaskellSettings implements PersistentStateComponent<HaskellSettings.HaskellSettingsState> {
+public class HaskellSettingsPersistentStateComponent implements PersistentStateComponent<HaskellSettingsPersistentStateComponent.HaskellSettingsState> {
 
     private HaskellSettingsState haskellSettingsState = new HaskellSettingsState();
 
     @NotNull
-    public static HaskellSettings getInstance() {
-        final HaskellSettings haskellSettings = ServiceManager.getService(HaskellSettings.class);
-        return haskellSettings != null ? haskellSettings : new HaskellSettings();
+    public static HaskellSettingsPersistentStateComponent getInstance() {
+        final HaskellSettingsPersistentStateComponent haskellSettingsPersistentStateComponent = ServiceManager.getService(HaskellSettingsPersistentStateComponent.class);
+        return haskellSettingsPersistentStateComponent != null ? haskellSettingsPersistentStateComponent : new HaskellSettingsPersistentStateComponent();
     }
 
     @NotNull
@@ -47,7 +47,7 @@ public class HaskellSettings implements PersistentStateComponent<HaskellSettings
         this.haskellSettingsState = haskellSettingsState;
     }
 
-    public static class HaskellSettingsState {
+    static class HaskellSettingsState {
         public String hindentPath = "";
         public String stylishHaskellPath = "";
     }

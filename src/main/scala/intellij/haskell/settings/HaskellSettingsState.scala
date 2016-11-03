@@ -19,7 +19,7 @@ package intellij.haskell.settings
 import intellij.haskell.HaskellNotificationGroup
 
 object HaskellSettingsState {
-  private def state = HaskellSettings.getInstance().getState
+  private def state = HaskellSettingsPersistentStateComponent.getInstance().getState
 
   def getHindentPath: Option[String] = {
     val path = findPath(state.hindentPath)
@@ -35,7 +35,7 @@ object HaskellSettingsState {
 
   private def notifyIfPathIsNotSet(path: Option[String], name: String) {
     if (path.isEmpty) {
-      HaskellNotificationGroup.notifyBalloonError("Path to `" + name + "` is not set")
+      HaskellNotificationGroup.notifyBalloonError("Path to `" + name + "` is not set. See `Settings`/`Other Settings`/`Haskell`")
     }
   }
 

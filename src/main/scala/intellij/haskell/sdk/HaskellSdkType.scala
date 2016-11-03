@@ -24,8 +24,8 @@ import com.intellij.openapi.projectRoots._
 import com.intellij.openapi.projectRoots.impl.SdkConfigurationUtil
 import com.intellij.openapi.roots.{OrderRootType, ProjectRootManager}
 import com.intellij.openapi.util.io.FileUtil
+import intellij.haskell.HaskellIcons
 import intellij.haskell.external.CommandLine
-import intellij.haskell.{HaskellIcons, HaskellNotificationGroup}
 import org.jdom.Element
 
 class HaskellSdkType extends SdkType("Haskel Tool Stack SDK") {
@@ -68,7 +68,7 @@ object HaskellSdkType {
   }
 
   def getNumericVersion(sdkHome: String) = {
-    val output = CommandLine.getProcessOutput(
+    val output = CommandLine.runCommand(
       sdkHome,
       createPath(sdkHome),
       Seq("--numeric-version")
@@ -76,12 +76,9 @@ object HaskellSdkType {
     output.getStdout
   }
 
-  def getStackPath(project: Project): Option[String] = {
+  def getStackPath(project: Project): String = {
     val sdkHomePath = getSdkHomePath(project)
-    if (sdkHomePath.isEmpty) {
-      HaskellNotificationGroup.logError("Path to directory of `stack` binary has to be set in Project SDK setting")
-    }
-    sdkHomePath.map(p => createPath(p))
+    sdkHomePath.map(p => createPath(p)).getOrElse(throw new IllegalStateException("Path to directory of `stack` binary expected to be set in Project SDK setting"))
   }
 
   private def createPath(sdkHome: String) = {

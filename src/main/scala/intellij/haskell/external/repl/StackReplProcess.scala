@@ -24,6 +24,7 @@ import com.intellij.openapi.project.Project
 import com.intellij.util.EnvironmentUtil
 import intellij.haskell.HaskellNotificationGroup
 import intellij.haskell.sdk.HaskellSdkType
+import intellij.haskell.util.HaskellProjectUtil
 import intellij.haskell.util.StackUtil._
 
 import scala.collection.JavaConversions._
@@ -131,53 +132,51 @@ private[repl] abstract class StackReplProcess(val project: Project, val extraSta
       executeBuild(project, Seq("build", "--test", "--only-dependencies", "--haddock", "--fast"), "build of dependencies")
     }
 
-    HaskellSdkType.getStackPath(project).foreach { stackPath =>
-      try {
-        val command = (Seq(stackPath, "repl", "--with-ghc", "intero", "--verbosity", "warn", "--fast", "--no-load", "--no-build",
-          "--ghc-options", "-v1", "--terminal") ++ extraStartOptions).mkString(" ")
+    val stackPath = HaskellSdkType.getStackPath(project)
+    try {
+      val command = (Seq(stackPath, "repl", "--with-ghc", "intero", "--verbosity", "warn", "--fast", "--no-load", "--no-build",
+        "--ghc-options", "-v1", "--terminal") ++ extraStartOptions).mkString(" ")
 
-        logInfo(s"Stack repl will be started with command: $command")
+      logInfo(s"Stack repl will be started with command: $command")
 
-        val process = getEnvParameters match {
-          case None => Process(command, new File(project.getBasePath))
-          case Some(ep) => Process(command, new File(project.getBasePath), ep.toArray: _*)
-        }
-        process.run(
-          new ProcessIO(
-            in => outputStream.put(in),
-            (out: InputStream) => Source.fromInputStream(out).getLines.foreach(stdOut.add),
-            (err: InputStream) => Source.fromInputStream(err).getLines.foreach(stdErr.add)
-          ))
-
-        stdOut.clear()
-        stdErr.clear()
-
-        // We have to wait...
-        Thread.sleep(1000)
-
-        writeOutputToLogInfo()
-
-        // `enter` to pass prompt which asks for which module to load
-        // See Stack 1.2 issue https://github.com/commercialhaskell/stack/issues/2603
-        // TODO: Remove this because in Stack 1.2.1 fixed
-        writeToOutputStream("")
-        Thread.sleep(100)
-
-        writeToOutputStream(s""":set prompt "$EndOfOutputIndicator\\n"""")
-
-        available = true
-
-        logInfo("Stack repl is started.")
+      val process = Option(EnvironmentUtil.getEnvironmentMap) match {
+        case None => Process(command, new File(project.getBasePath))
+        case Some(envMap) => Process(command, new File(project.getBasePath), envMap.toArray: _*)
       }
-      catch {
-        case e: Exception =>
-          logError("Could not start Stack repl. Make sure you have set right path to Stack in settings.")
-          logError(s"Error message while trying to start Stack repl: ${e.getMessage}")
-          exit(forceExit = true)
-      }
+      process.run(
+        new ProcessIO(
+          in => outputStream.put(in),
+          (out: InputStream) => Source.fromInputStream(out).getLines.foreach(stdOut.add),
+          (err: InputStream) => Source.fromInputStream(err).getLines.foreach(stdErr.add)
+        ))
+
+      stdOut.clear()
+      stdErr.clear()
+
+      // We have to wait...
+      Thread.sleep(1000)
+
+      writeOutputToLogInfo()
+
+      // `enter` to pass prompt which asks for which module to load
+      // See Stack 1.2 issue https://github.com/commercialhaskell/stack/issues/2603
+      // TODO: Remove this because in Stack 1.2.1 fixed
+      writeToOutputStream("")
+      Thread.sleep(100)
+
+      writeToOutputStream(s""":set prompt "$EndOfOutputIndicator\\n"""")
+
+      available = true
+
+      logInfo("Stack repl is started.")
+    }
+    catch {
+      case e: Exception =>
+        logError("Could not start Stack repl. Make sure you have set right path to Stack in settings.")
+        logError(s"Error message while trying to start Stack repl: ${e.getMessage}")
+        exit(forceExit = true)
     }
   }
-
 
   def exit(forceExit: Boolean = false): Unit = {
     if (!forceExit && !available) {
@@ -251,15 +250,6 @@ private[repl] abstract class StackReplProcess(val project: Project, val extraSta
     outputStream.get.flush()
   }
 
-  private def getEnvParameters: Option[java.util.Map[String, String]] = {
-    // TODO: Try to fix https://github.com/rikvdkleij/intellij-haskell/issues/49
-    //    if (OSUtil.isOSX) {
-    Option(EnvironmentUtil.getEnvironmentMap)
-    //    } else {
-    //      None
-    //    }
-  }
-
   private def convertOutputToOneMessagePerLine(output: Seq[String]) = {
     joinIndentedLines(output.filterNot(_.isEmpty))
   }
@@ -287,7 +277,7 @@ private[repl] abstract class StackReplProcess(val project: Project, val extraSta
 
   override def projectOpened(): Unit = {}
 
-  override def projectClosed(): Unit = exit()
+  override def projectClosed(): Unit = if (HaskellProjectUtil.isHaskellStackProject(project)) exit()
 
   override def initComponent(): Unit = {}
 

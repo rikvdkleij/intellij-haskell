@@ -116,7 +116,7 @@ class HaskellConfigurable extends Configurable {
   override def apply() {
     validatePaths()
 
-    val state = HaskellSettings.getInstance().getState
+    val state = HaskellSettingsPersistentStateComponent.getInstance().getState
     state.hindentPath = hindentPathField.getText
     state.stylishHaskellPath = stylishHaskellPathField.getText
   }
@@ -138,7 +138,7 @@ class HaskellConfigurable extends Configurable {
   override def getHelpTopic: String = ""
 
   override def reset() {
-    val state = HaskellSettings.getInstance().getState
+    val state = HaskellSettingsPersistentStateComponent.getInstance().getState
     hindentPathField.getTextField.setText(state.hindentPath)
     stylishHaskellPathField.getTextField.setText(state.stylishHaskellPath)
   }

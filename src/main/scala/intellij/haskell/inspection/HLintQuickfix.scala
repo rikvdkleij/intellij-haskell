@@ -17,7 +17,7 @@
 package intellij.haskell.inspection
 
 import com.intellij.codeInspection.LocalQuickFixOnPsiElement
-import com.intellij.openapi.command.undo.UndoUtil
+import com.intellij.openapi.command.CommandProcessor
 import com.intellij.openapi.project.Project
 import com.intellij.psi.util.PsiTreeUtil
 import com.intellij.psi.{PsiElement, PsiFile}
@@ -34,25 +34,29 @@ class HLintQuickfix(startElement: PsiElement, endElement: PsiElement, toSuggesti
   }
 
   override def invoke(project: Project, file: PsiFile, startElement: PsiElement, endElement: PsiElement): Unit = {
-    val commonParent = PsiTreeUtil.findCommonParent(startElement, endElement)
-    for {
-      se <- findDirectChildOfCommonParent(startElement, commonParent)
-      ee <- findDirectChildOfCommonParent(endElement, commonParent)
-    } yield {
-      if (toSuggestion.isEmpty) {
-        if (Option(ee.getNextSibling).exists(e => e.getNode.getElementType == HaskellTypes.HS_NEWLINE)) {
-          commonParent.deleteChildRange(se, ee.getNextSibling)
-        } else {
-          commonParent.deleteChildRange(se, ee)
+    CommandProcessor.getInstance().executeCommand(project, new Runnable {
+      override def run(): Unit = {
+        val commonParent = PsiTreeUtil.findCommonParent(startElement, endElement)
+        for {
+          se <- findDirectChildOfCommonParent(startElement, commonParent)
+          ee <- findDirectChildOfCommonParent(endElement, commonParent)
+        } yield {
+          if (toSuggestion.isEmpty) {
+            if (Option(ee.getNextSibling).exists(e => e.getNode.getElementType == HaskellTypes.HS_NEWLINE)) {
+              commonParent.deleteChildRange(se, ee.getNextSibling)
+            } else {
+              commonParent.deleteChildRange(se, ee)
+            }
+          } else {
+            Option(se.getNextSibling).foreach { ns =>
+              commonParent.deleteChildRange(ns, ee)
+              se.replace(HaskellElementFactory.createBody(project, toSuggestion))
+            }
+          }
         }
-      } else {
-        Option(se.getNextSibling).foreach { ns =>
-          commonParent.deleteChildRange(ns, ee)
-          se.replace(HaskellElementFactory.createBody(project, toSuggestion))
-        }
+
       }
-    }
-    UndoUtil.markPsiFileForUndo(file)
+    }, null, null)
   }
 
   override def getFamilyName: String = "Inspection by HLint"

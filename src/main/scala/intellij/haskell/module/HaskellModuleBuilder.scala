@@ -94,9 +94,9 @@ class HaskellModuleBuilder extends ModuleBuilder with SourcePathsBuilder with Mo
 
         override def update(module: Module, rootModel: ModifiableRootModel): Unit = {
           val project = rootModel.getProject
-          CommandLine.getProcessOutput(
+          CommandLine.runCommand(
             project.getBasePath,
-            getStackPath(project),
+            HaskellSdkType.getStackPath(project),
             Seq("new", project.getName, "--bare", "hspec")
           )
         }
@@ -155,13 +155,6 @@ class HaskellModuleBuilder extends ModuleBuilder with SourcePathsBuilder with Mo
       None
     }
   }
-
-  private def getStackPath(project: Project) = {
-    HaskellSdkType.getStackPath(project) match {
-      case Some(p) => p
-      case _ => throw new IllegalStateException("Stack path has to be defined here")
-    }
-  }
 }
 
 class HaskellModuleWizardStep(wizardContext: WizardContext, haskellModuleBuilder: HaskellModuleBuilder) extends ProjectJdkForModuleStep(wizardContext, HaskellSdkType.getInstance) {
@@ -192,21 +185,19 @@ object HaskellModuleBuilder {
   def addLibrarySources(module: Module) = {
     val project = module.getProject
     val stackPath = HaskellSdkType.getStackPath(project)
-    stackPath.foreach { sp =>
-      ProgressManager.getInstance().run(new Task.Backgroundable(project, "Downloading Haskell library sources and adding them as source libraries to module") {
-        def run(progressIndicator: ProgressIndicator) {
-          val libDirectory = getIdeaHaskellLibDirectory(project)
-          FileUtil.delete(libDirectory)
-          FileUtil.createDirectory(libDirectory)
-          val dependencyLines = StackUtil.runCommand(Seq("list-dependencies", "--test"), project).getStdoutLines
-          val packages = getPackages(dependencyLines)
-          progressIndicator.setFraction(InitialProgressStep)
-          val downloadedPackages = downloadHaskellPackageSources(project, sp, packages, progressIndicator)
-          progressIndicator.setFraction(0.9)
-          addPackagesAsLibrariesToModule(module, downloadedPackages, libDirectory.getAbsolutePath)
-        }
-      })
-    }
+    ProgressManager.getInstance().run(new Task.Backgroundable(project, "Downloading Haskell library sources and adding them as source libraries to module") {
+      def run(progressIndicator: ProgressIndicator) {
+        val libDirectory = getIdeaHaskellLibDirectory(project)
+        FileUtil.delete(libDirectory)
+        FileUtil.createDirectory(libDirectory)
+        val dependencyLines = StackUtil.runCommand(Seq("list-dependencies", "--test"), project).getStdoutLines
+        val packages = getPackages(dependencyLines)
+        progressIndicator.setFraction(InitialProgressStep)
+        val downloadedPackages = downloadHaskellPackageSources(project, stackPath, packages, progressIndicator)
+        progressIndicator.setFraction(0.9)
+        addPackagesAsLibrariesToModule(module, downloadedPackages, libDirectory.getAbsolutePath)
+      }
+    })
   }
 
   private def getIdeaHaskellLibDirectory(project: Project): File = {
@@ -231,7 +222,7 @@ object HaskellModuleBuilder {
     var progressFraction = InitialProgressStep
     haskellPackages.flatMap { packageInfo =>
       val fullName = packageInfo.name + "-" + packageInfo.version
-      val stdErr = CommandLine.getProcessOutput(project.getBasePath + File.separator + LibName, stackPath, Seq("unpack", fullName), 10000).getStderrLines
+      val stdErr = CommandLine.runCommand(project.getBasePath + File.separator + LibName, stackPath, Seq("unpack", fullName), 10000).getStderrLines
       progressFraction = progressFraction + step
       progressIndicator.setFraction(progressFraction)
 

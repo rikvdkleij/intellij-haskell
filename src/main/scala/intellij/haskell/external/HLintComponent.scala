@@ -29,7 +29,6 @@ object HLintComponent {
   def check(psiFile: PsiFile): Seq[HLintInfo] = {
     val output = StackUtil.runCommand(Seq("exec", "--", HlintName, "--json", psiFile.getOriginalFile.getVirtualFile.getPath), psiFile.getProject)
     if (output.getStderr.nonEmpty) {
-      HaskellNotificationGroup.logError(s"Error while running Hlint: ${output.getStderr}")
       if (output.getStderr.toLowerCase.contains("couldn't find file: hlint")) {
         HaskellNotificationGroup.notifyBalloonWarning("No Hlint suggestions because `hlint` build still has to be started or build is not finished yet")
       }

@@ -29,7 +29,7 @@ import scala.collection.JavaConversions._
 object CommandLine {
   private final val StandardTimeoutInMillis = 1000
 
-  def getProcessOutput(workDir: String, commandPath: String, arguments: Seq[String], timeoutInMillis: Int = StandardTimeoutInMillis, captureOutputToLog: Boolean = false): ProcessOutput = {
+  def runCommand(workDir: String, commandPath: String, arguments: Seq[String], timeoutInMillis: Int = StandardTimeoutInMillis, captureOutputToLog: Boolean = false): ProcessOutput = {
     if (!new File(workDir).isDirectory || !new File(commandPath).canExecute) {
       new ProcessOutput
     }
@@ -41,11 +41,7 @@ object CommandLine {
     execute(cmd, timeoutInMillis, captureOutputToLog)
   }
 
-  def execute(cmd: GeneralCommandLine, captureOutputToLog: Boolean): ProcessOutput = {
-    execute(cmd, StandardTimeoutInMillis, captureOutputToLog)
-  }
-
-  def execute(cmd: GeneralCommandLine, timeout: Int, captureOutputToLog: Boolean): ProcessOutput = {
+  private def execute(cmd: GeneralCommandLine, timeout: Int, captureOutputToLog: Boolean): ProcessOutput = {
     val processHandler = if (captureOutputToLog) {
       new CapturingProcessHandler(cmd) {
         override protected def createProcessAdapter(processOutput: ProcessOutput): CapturingProcessAdapter = new CapturingProcessToLog(processOutput)
@@ -54,7 +50,15 @@ object CommandLine {
       new CapturingProcessHandler(cmd)
     }
 
-    processHandler.runProcess(timeout, true)
+    import scala.collection.JavaConversions._
+
+    val processOutput = processHandler.runProcess(timeout, true)
+    if (!captureOutputToLog && processOutput.getStderrLines.nonEmpty && (cmd.getExePath == "stack" && cmd.getParametersList.getList.headOption.contains("unpack"))) {
+      // 'stack unpack` writes logging to stdErr
+      HaskellNotificationGroup.logError(s"Error while running command: ${cmd.getCommandLineString}")
+      processOutput.getStderrLines.foreach(HaskellNotificationGroup.logError)
+    }
+    processOutput
   }
 
   private class CapturingProcessToLog(val output: ProcessOutput) extends CapturingProcessAdapter {
@@ -73,4 +77,5 @@ object CommandLine {
       }
     }
   }
+
 }

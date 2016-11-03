@@ -139,7 +139,7 @@
 
         <applicationConfigurable instance="intellij.haskell.settings.HaskellConfigurable"/>
 
-        <applicationService serviceImplementation="intellij.haskell.settings.HaskellSettings"/>
+        <applicationService serviceImplementation="intellij.haskell.settings.HaskellSettingsPersistentStateComponent"/>
 
         <codeStyleSettingsProvider
                 implementation="intellij.haskell.editor.formatter.settings.HaskellCodeStyleSettingsProvider"/>
@@ -264,6 +264,14 @@
                 text="Restart Haskell Stack repls"
                 description="Restart Haskell Stack repls and refresh cache">
             <add-to-group group-id="ToolsMenu" anchor="last"/>
+        </action>
+
+        <action id="Haskell.HindentFormat"
+                class="intellij.haskell.action.HindentFormatAction"
+                text="Reformat code with Hindent"
+                description="Format current file with Hindent">
+            <add-to-group group-id="CodeMenu" anchor="last"/>
+            <keyboard-shortcut first-keystroke="ctrl alt k" keymap="$default"/>
         </action>
     </actions>
 

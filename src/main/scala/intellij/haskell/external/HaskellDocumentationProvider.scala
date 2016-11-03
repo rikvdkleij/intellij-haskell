@@ -54,7 +54,6 @@ class HaskellDocumentationProvider extends AbstractDocumentationProvider {
   private def runHaskellDocs(namedElement: HaskellQualifiedNameElement, args: Seq[String]): String = {
     val output = StackUtil.runCommand(Seq("exec", "--", HaskellDocsName) ++ args, namedElement.getContainingFile.getProject)
     if (output.getStderr.nonEmpty) {
-      HaskellNotificationGroup.logError(s"Error while running $HaskellDocsName: ${output.getStderr}")
       if (output.getStderr.toLowerCase.contains("couldn't find file: haskell-docs")) {
         HaskellNotificationGroup.notifyBalloonWarning("No documentation because `haskell-docs` build still has to be started or build is not finished yet")
       }

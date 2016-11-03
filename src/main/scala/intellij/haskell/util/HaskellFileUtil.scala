@@ -19,6 +19,7 @@ package intellij.haskell.util
 import java.io.File
 
 import com.intellij.openapi.application.{ApplicationManager, ModalityState}
+import com.intellij.openapi.editor.Document
 import com.intellij.openapi.fileEditor.FileDocumentManager
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.vfs.VirtualFile
@@ -33,6 +34,23 @@ object HaskellFileUtil {
         FileDocumentManager.getInstance.saveAllDocuments()
       }
     }, ModalityState.NON_MODAL)
+  }
+
+  def saveFile(virtualFile: VirtualFile) {
+    ApplicationManager.getApplication.invokeAndWait(new Runnable {
+      override def run() {
+        findDocument(virtualFile).foreach(FileDocumentManager.getInstance.saveDocument)
+      }
+    }, ModalityState.NON_MODAL)
+  }
+
+  def findVirtualFile(psiFile: PsiFile): VirtualFile = {
+    psiFile.getOriginalFile.getVirtualFile
+  }
+
+  def findDocument(virtualFile: VirtualFile): Option[Document] = {
+    val fileDocumentManager = FileDocumentManager.getInstance()
+    Option(fileDocumentManager.getDocument(virtualFile))
   }
 
   def getFilePath(psiFile: PsiFile): String = {
