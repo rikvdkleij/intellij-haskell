@@ -25,6 +25,8 @@ import intellij.haskell.annotator.HaskellAnnotator
 import intellij.haskell.psi.HaskellPsiUtil
 import intellij.haskell.util.HaskellFileIndex
 
+import scala.collection.JavaConversions._
+
 object StackReplsComponentsManager {
 
   implicit class RichBoolean(val b: Boolean) extends AnyVal {
@@ -61,7 +63,7 @@ object StackReplsComponentsManager {
     NameInfoComponent.findNameInfo(psiElement)
   }
 
-  def findAvailableModuleNames(psiFile: PsiFile): Stream[String] = {
+  def findAvailableModuleNames(psiFile: PsiFile): Iterable[String] = {
     AvailableModuleNamesComponent.findAvailableModuleNames(psiFile)
   }
 

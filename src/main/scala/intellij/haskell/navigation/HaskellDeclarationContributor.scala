@@ -19,20 +19,23 @@ package intellij.haskell.navigation
 import com.intellij.navigation.NavigationItem
 import com.intellij.openapi.project.Project
 import com.intellij.psi.PsiManager
-import intellij.haskell.psi.{HaskellDeclarationElement, HaskellPsiUtil}
+import intellij.haskell.psi.{HaskellNamedElement, HaskellPsiUtil}
 import intellij.haskell.util.StringUtil._
 import intellij.haskell.util.{HaskellFileUtil, HaskellProjectUtil}
 
-class HaskellDeclarationContributor extends HaskellChooseByNameContributor[HaskellDeclarationElement] {
+import scala.collection.JavaConversions._
 
-  private var simpleCache: Stream[HaskellDeclarationElement] = _
+class HaskellDeclarationContributor extends HaskellChooseByNameContributor[HaskellNamedElement] {
+
+  private var simpleCache: Iterable[HaskellNamedElement] = _
 
   override def getNames(project: Project, includeNonProjectItems: Boolean): Array[String] = {
     val psiManager = PsiManager.getInstance(project)
     val declarationElements = HaskellProjectUtil.findHaskellFiles(project, includeNonProjectItems).flatMap(vf => HaskellFileUtil.convertToHaskellFile(vf, psiManager).
       map(f => HaskellPsiUtil.findDeclarationElements(f)).getOrElse(Stream()))
-    simpleCache = declarationElements
-    declarationElements.flatMap(de => de.getIdentifierElements.map(n => n.getName)).toArray
+    val elements = declarationElements.flatMap(_.getIdentifierElements)
+    simpleCache = elements
+    elements.map(n => n.getName).toArray
   }
 
   override def getItemsByName(name: String, pattern: String, project: Project, includeNonProjectItems: Boolean): Array[NavigationItem] = {
@@ -40,6 +43,6 @@ class HaskellDeclarationContributor extends HaskellChooseByNameContributor[Haske
   }
 
   protected def find(conditionOnLowerCase: String => Boolean) = {
-    simpleCache.filter(_.getIdentifierElements.exists(ne => conditionOnLowerCase(toLowerCase(ne.getName))))
+    simpleCache.filter(ne => conditionOnLowerCase(toLowerCase(ne.getName)))
   }
 }

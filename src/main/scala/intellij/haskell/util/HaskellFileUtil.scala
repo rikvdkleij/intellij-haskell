@@ -17,6 +17,7 @@
 package intellij.haskell.util
 
 import java.io.File
+import java.util
 
 import com.intellij.openapi.application.{ApplicationManager, ModalityState}
 import com.intellij.openapi.command.CommandProcessor
@@ -65,7 +66,8 @@ object HaskellFileUtil {
       new File(project.getBasePath, filePath).getAbsolutePath
   }
 
-  def convertToHaskellFiles(virtualFiles: Stream[VirtualFile], project: Project): Stream[HaskellFile] = {
+  def convertToHaskellFiles(virtualFiles: util.Collection[VirtualFile], project: Project): util.Collection[HaskellFile] = {
+    import scala.collection.JavaConversions._
     val psiManager = PsiManager.getInstance(project)
     virtualFiles.flatMap(vf => convertToHaskellFile(vf, psiManager))
   }

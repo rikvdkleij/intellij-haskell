@@ -36,5 +36,5 @@ abstract class HaskellChooseByNameContributor[T] extends ChooseByNameContributor
     }
   }
 
-  protected def find(conditionOnLowerCase: String => Boolean): Stream[T]
+  protected def find(conditionOnLowerCase: String => Boolean): Iterable[T]
 }

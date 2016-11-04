@@ -22,15 +22,16 @@ import com.intellij.psi.PsiFile
 import intellij.haskell.psi.HaskellPsiUtil
 import intellij.haskell.util.{HaskellFileIndex, HaskellProjectUtil}
 
-// TODO: Refactor
+import scala.collection.JavaConversions._
+
 private[component] object AvailableModuleNamesComponent {
 
-  def findAvailableModuleNames(psiFile: PsiFile): Stream[String] = {
+  def findAvailableModuleNames(psiFile: PsiFile): Iterable[String] = {
     if (HaskellProjectUtil.isProjectTestFile(psiFile)) {
       val libraryTestModuleNames = GlobalProjectInfoComponent.findGlobalProjectInfo(psiFile.getProject).map(_.allAvailableLibraryModuleNames).getOrElse(Stream())
       val testModuleNames = ApplicationManager.getApplication.runReadAction {
-        new Computable[Stream[String]] {
-          override def compute(): Stream[String] = {
+        new Computable[Iterable[String]] {
+          override def compute(): Iterable[String] = {
             HaskellFileIndex.findProjectTestPsiFiles(psiFile.getProject).flatMap(HaskellPsiUtil.findModuleName)
           }
         }
@@ -39,8 +40,8 @@ private[component] object AvailableModuleNamesComponent {
     } else {
       val libraryModuleNames = GlobalProjectInfoComponent.findGlobalProjectInfo(psiFile.getProject).map(_.availableProductionLibraryModuleNames).getOrElse(Stream())
       val prodModuleNames = ApplicationManager.getApplication.runReadAction {
-        new Computable[Stream[String]] {
-          override def compute(): Stream[String] = {
+        new Computable[Iterable[String]] {
+          override def compute(): Iterable[String] = {
             HaskellFileIndex.findProjectProductionPsiFiles(psiFile.getProject).flatMap(HaskellPsiUtil.findModuleName)
           }
         }

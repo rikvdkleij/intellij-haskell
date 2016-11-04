@@ -21,11 +21,13 @@ import com.intellij.openapi.project.Project
 import com.intellij.psi.PsiManager
 import intellij.haskell.psi.{HaskellNamedElement, HaskellPsiUtil}
 import intellij.haskell.util.StringUtil._
-import intellij.haskell.util.{HaskellFileUtil, HaskellProjectUtil, StringUtil}
+import intellij.haskell.util.{HaskellFileUtil, HaskellProjectUtil}
+
+import scala.collection.JavaConversions._
 
 class HaskellNamedElementContributor extends HaskellChooseByNameContributor[HaskellNamedElement] {
 
-  private var simpleCache: Stream[HaskellNamedElement] = _
+  private var simpleCache: Iterable[HaskellNamedElement] = _
 
   override def getNames(project: Project, includeNonProjectItems: Boolean): Array[String] = {
     val psiManager = PsiManager.getInstance(project)

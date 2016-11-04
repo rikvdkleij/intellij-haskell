@@ -17,17 +17,17 @@
 package intellij.haskell.util
 
 import java.io.{DataInput, DataOutput}
+import java.util
 
 import com.intellij.openapi.fileTypes.FileType
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.vfs.VirtualFile
-import com.intellij.psi.PsiFile
 import com.intellij.psi.search.{FileTypeIndex, GlobalSearchScope, GlobalSearchScopesCore}
 import com.intellij.util.indexing.FileBasedIndex.InputFilter
 import com.intellij.util.indexing._
 import com.intellij.util.io.{DataExternalizer, EnumeratorStringDescriptor, KeyDescriptor}
-import intellij.haskell.HaskellFileType
 import intellij.haskell.module.HaskellModuleType
+import intellij.haskell.{HaskellFile, HaskellFileType}
 
 import scala.collection.JavaConversions._
 
@@ -74,32 +74,32 @@ object HaskellFileIndex {
     getFilesByName(project, name, searchScope)
   }
 
-  def findFiles(project: Project, searchScope: GlobalSearchScope): Stream[VirtualFile] = {
+  def findFiles(project: Project, searchScope: GlobalSearchScope): util.Collection[VirtualFile] = {
     getFilesForType(HaskellFileType.INSTANCE, project, searchScope)
   }
 
-  def findProjectFiles(project: Project): Stream[VirtualFile] = {
+  def findProjectFiles(project: Project): util.Collection[VirtualFile] = {
     findFiles(project, HaskellModuleType.findHaskellProjectModules(project).map(GlobalSearchScope.moduleScope).reduce(_.uniteWith(_)))
   }
 
-  def findProjectTestPsiFiles(project: Project): Stream[PsiFile] = {
+  def findProjectTestPsiFiles(project: Project): util.Collection[HaskellFile] = {
     HaskellFileUtil.convertToHaskellFiles(findProjectTestFiles(project), project)
   }
 
-  def findProjectProductionPsiFiles(project: Project): Stream[PsiFile] = {
+  def findProjectProductionPsiFiles(project: Project): util.Collection[HaskellFile] = {
     HaskellFileUtil.convertToHaskellFiles(findProjectProductionFiles(project), project)
   }
 
-  private def findProjectProductionFiles(project: Project): Stream[VirtualFile] = {
+  private def findProjectProductionFiles(project: Project): util.Collection[VirtualFile] = {
     findFiles(project, GlobalSearchScopesCore.projectProductionScope(project))
   }
 
-  private def findProjectTestFiles(project: Project): Stream[VirtualFile] = {
+  private def findProjectTestFiles(project: Project): util.Collection[VirtualFile] = {
     findFiles(project, GlobalSearchScopesCore.projectTestScope(project))
   }
 
   private def getFilesForType(fileType: FileType, project: Project, searchScope: GlobalSearchScope) = {
-    FileBasedIndex.getInstance.getContainingFiles(FileTypeIndex.NAME, fileType, searchScope).toStream
+    FileBasedIndex.getInstance.getContainingFiles(FileTypeIndex.NAME, fileType, searchScope)
   }
 
   private def getFilesByName(project: Project, name: String, searchScope: GlobalSearchScope) = {
