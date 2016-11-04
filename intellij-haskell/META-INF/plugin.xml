@@ -1,14 +1,26 @@
 <idea-plugin version="2">
     <id>intellij.haskell</id>
     <name>IntelliJ-Haskell</name>
-    <version>1.0.0-beta2</version>
+    <version>1.0.0-beta3</version>
     <vendor email="rikvdkleij@gmail.com">Rik van der Kleij</vendor>
 
     <description><![CDATA[
         Haskell support.
+
+        Please read: <a href="https://github.com/rikvdkleij/intellij-haskell/blob/master/README.md">README</a>
     ]]></description>
 
     <change-notes><![CDATA[
+        <p>1.0.0-beta3</p>
+        <ul>
+            <li>Various improvements and fixes</li>
+            <li>Intero, HLint, Haskell-docs and Apply-refact are automatically build to prevent incompatibility issues.
+            <li>Added Hindent formatter</li>
+            <li>Added Stylish-haskell formatter</li>
+            <li>Added formatter which uses Hindent and then Stylish-haskell</li>
+            <li>Enabled HLint inspection by default</li>
+            <li>Improved application of HLint suggestions by using Refactor tool(package is apply-refact)</li>
+        </ul>
         <p>1.0.0-beta2</p>
         <ul>
             <li>Attempt to fix issue #49</li>
