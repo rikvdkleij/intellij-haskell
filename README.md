@@ -26,8 +26,8 @@ Any feedback is welcome!!
 - View quick documentation;
 - View quick definition;
 - Structure view;
-- Navigate to declaration (called `Class` in IntelliJ menu);
-- Navigate to identifier (called `Symbol` in IntelliJ menu);
+- Navigate to declaration (called `Navigate`/`Class` in IntelliJ menu);
+- Navigate to identifier (called `Navigate`/`Symbol` in IntelliJ menu);
 - Inspection by HLint;
 - Quick fixes for HLint suggestions;
 - Show error action to view formatted message. Useful in case message consists of multiple lines (Ctrl-F10, Meta-F10 on Mac OSX);
@@ -64,6 +64,7 @@ Any feedback is welcome!!
     Intero on your PATH is not built with same GHC-version as your project.
     Check which Intero is on your PATH by running in root folder of your project: `stack exec -- which intero`.
     If it is the wrong one, run in root folder of your project: `stack build intero`;
+6. When navigating to declaration (called `Class` in IntelliJ menu) goes slow, it helps to increase heap size of IntelliJ;    
 
 
 # How to build project
