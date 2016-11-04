@@ -14,17 +14,16 @@
  * limitations under the License.
  */
 
-package intellij.haskell.util
+package intellij.haskell.external.commandLine
 
 import com.intellij.execution.process.ProcessOutput
 import com.intellij.openapi.project.Project
 import intellij.haskell.HaskellNotificationGroup
-import intellij.haskell.external.CommandLine
 import intellij.haskell.sdk.HaskellSdkType
 
 import scala.concurrent.duration._
 
-object StackUtil {
+object StackCommandLine {
 
   private final val StandardTimeoutInMillis = 1000
 
@@ -42,7 +41,7 @@ object StackUtil {
   def executeBuild(project: Project, buildArguments: Seq[String], message: String): Unit = {
     HaskellNotificationGroup.logInfo(s"$message is starting")
     HaskellNotificationGroup.logInfo(s"""Build command is `stack ${buildArguments.mkString(" ")}`""")
-    StackUtil.runCommand(buildArguments, project, BuildTimeout.toMillis, captureOutputToLog = true)
+    StackCommandLine.runCommand(buildArguments, project, BuildTimeout.toMillis, captureOutputToLog = true)
     HaskellNotificationGroup.logInfo(s"$message is finished")
   }
 }

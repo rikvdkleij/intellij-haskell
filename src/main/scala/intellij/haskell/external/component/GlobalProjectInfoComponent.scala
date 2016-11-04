@@ -22,9 +22,8 @@ import com.google.common.cache.{CacheBuilder, CacheLoader}
 import com.google.common.util.concurrent.{ListenableFuture, ListenableFutureTask, UncheckedExecutionException}
 import com.intellij.openapi.progress.ProcessCanceledException
 import com.intellij.openapi.project.Project
-import intellij.haskell.external.CommandLine
+import intellij.haskell.external.commandLine.{CommandLine, StackCommandLine}
 import intellij.haskell.external.repl.StackReplsManager
-import intellij.haskell.util.StackUtil
 
 import scala.collection.JavaConversions._
 
@@ -76,7 +75,7 @@ private[component] object GlobalProjectInfoComponent {
         }
 
         private def findGhcPath(project: Project) = {
-          StackUtil.runCommand(Seq("path", "--compiler-exe"), project).getStdoutLines.headOption
+          StackCommandLine.runCommand(Seq("path", "--compiler-exe"), project).getStdoutLines.headOption
         }
       }
     )

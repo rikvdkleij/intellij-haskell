@@ -31,9 +31,8 @@ import com.intellij.openapi.util.Pair
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.vfs.{LocalFileSystem, VfsUtil}
 import com.intellij.util.Consumer
-import intellij.haskell.external.CommandLine
+import intellij.haskell.external.commandLine.{CommandLine, StackCommandLine}
 import intellij.haskell.sdk.HaskellSdkType
-import intellij.haskell.util.StackUtil
 import intellij.haskell.{HaskellIcons, HaskellNotificationGroup}
 
 import scala.collection.JavaConversions._
@@ -190,7 +189,7 @@ object HaskellModuleBuilder {
         val libDirectory = getIdeaHaskellLibDirectory(project)
         FileUtil.delete(libDirectory)
         FileUtil.createDirectory(libDirectory)
-        val dependencyLines = StackUtil.runCommand(Seq("list-dependencies", "--test"), project).getStdoutLines
+        val dependencyLines = StackCommandLine.runCommand(Seq("list-dependencies", "--test"), project).getStdoutLines
         val packages = getPackages(dependencyLines)
         progressIndicator.setFraction(InitialProgressStep)
         val downloadedPackages = downloadHaskellPackageSources(project, stackPath, packages, progressIndicator)

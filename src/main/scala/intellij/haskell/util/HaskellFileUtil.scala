@@ -19,6 +19,7 @@ package intellij.haskell.util
 import java.io.File
 
 import com.intellij.openapi.application.{ApplicationManager, ModalityState}
+import com.intellij.openapi.command.CommandProcessor
 import com.intellij.openapi.editor.Document
 import com.intellij.openapi.fileEditor.FileDocumentManager
 import com.intellij.openapi.project.Project
@@ -74,5 +75,18 @@ object HaskellFileUtil {
       case Some(pf: HaskellFile) => Some(pf)
       case _ => None
     }
+  }
+
+  def saveFileWithContent(project: Project, virtualFile: VirtualFile, sourceCode: String) = {
+    CommandProcessor.getInstance().executeCommand(project, new Runnable {
+      override def run(): Unit = {
+        ApplicationManager.getApplication.runWriteAction(new Runnable {
+          override def run(): Unit = {
+            val document = findDocument(virtualFile)
+            document.foreach(_.setText(sourceCode))
+          }
+        })
+      }
+    }, null, null)
   }
 }

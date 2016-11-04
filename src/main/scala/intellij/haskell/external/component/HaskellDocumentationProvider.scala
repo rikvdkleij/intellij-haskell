@@ -14,17 +14,16 @@
  * limitations under the License.
  */
 
-package intellij.haskell.external
+package intellij.haskell.external.component
 
 import java.util.regex.Pattern
 
 import com.intellij.lang.documentation.AbstractDocumentationProvider
 import com.intellij.psi.PsiElement
 import intellij.haskell.HaskellNotificationGroup
-import intellij.haskell.external.HaskellDocumentationProvider.HaskellDocsName
-import intellij.haskell.external.component.{BuiltInNameInfo, LibraryNameInfo, ProjectNameInfo, StackReplsComponentsManager}
+import intellij.haskell.external.commandLine.StackCommandLine
+import intellij.haskell.external.component.HaskellDocumentationProvider.HaskellDocsName
 import intellij.haskell.psi.{HaskellPsiUtil, HaskellQualifiedNameElement}
-import intellij.haskell.util.StackUtil
 
 class HaskellDocumentationProvider extends AbstractDocumentationProvider {
 
@@ -52,7 +51,7 @@ class HaskellDocumentationProvider extends AbstractDocumentationProvider {
   }
 
   private def runHaskellDocs(namedElement: HaskellQualifiedNameElement, args: Seq[String]): String = {
-    val output = StackUtil.runCommand(Seq("exec", "--", HaskellDocsName) ++ args, namedElement.getContainingFile.getProject)
+    val output = StackCommandLine.runCommand(Seq("exec", "--", HaskellDocsName) ++ args, namedElement.getContainingFile.getProject)
     if (output.getStderr.nonEmpty) {
       if (output.getStderr.toLowerCase.contains("couldn't find file: haskell-docs")) {
         HaskellNotificationGroup.notifyBalloonWarning("No documentation because `haskell-docs` build still has to be started or build is not finished yet")

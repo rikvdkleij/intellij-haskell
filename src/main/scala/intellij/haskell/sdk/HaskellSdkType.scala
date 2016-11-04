@@ -25,7 +25,7 @@ import com.intellij.openapi.projectRoots.impl.SdkConfigurationUtil
 import com.intellij.openapi.roots.{OrderRootType, ProjectRootManager}
 import com.intellij.openapi.util.io.FileUtil
 import intellij.haskell.HaskellIcons
-import intellij.haskell.external.CommandLine
+import intellij.haskell.external.commandLine.CommandLine
 import org.jdom.Element
 
 class HaskellSdkType extends SdkType("Haskel Tool Stack SDK") {

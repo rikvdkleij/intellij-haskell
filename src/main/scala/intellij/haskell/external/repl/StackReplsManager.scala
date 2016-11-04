@@ -16,12 +16,7 @@
 
 package intellij.haskell.external.repl
 
-import com.intellij.openapi.components.ProjectComponent
-import com.intellij.openapi.progress.{ProgressIndicator, ProgressManager, Task}
 import com.intellij.openapi.project.Project
-import intellij.haskell.external.component.StackReplsComponentsManager
-import intellij.haskell.external.{HLintComponent, HaskellDocumentationProvider}
-import intellij.haskell.util.{HaskellProjectUtil, StackUtil}
 
 object StackReplsManager {
 
@@ -42,34 +37,4 @@ object StackReplsManager {
   }
 }
 
-class StackReplsManager(project: Project) extends ProjectComponent {
-  override def getComponentName: String = "stack-repls-manager"
 
-  override def projectClosed(): Unit = {}
-
-  override def initComponent(): Unit = {}
-
-  override def projectOpened(): Unit = {
-    if (HaskellProjectUtil.isHaskellStackProject(project)) {
-      ProgressManager.getInstance().run(new Task.Backgroundable(project, s"[$getComponentName] Starting Stack repls, building project and preloading cache", false) {
-
-        def run(progressIndicator: ProgressIndicator) {
-          progressIndicator.setText("Busy with building project and starting Stack repls")
-          StackReplsManager.getProjectRepl(project).start()
-          StackReplsManager.getGlobalRepl(project).start()
-
-          progressIndicator.setText("Busy with preloading cache")
-          StackReplsComponentsManager.preloadModuleIdentifiersCaches(project)
-
-          progressIndicator.setText("Restarting global repl to release memory")
-          StackReplsManager.getGlobalRepl(project).restart()
-
-          // TODO stack build apply-refact
-          StackUtil.executeBuild(project, Seq("build", HaskellDocumentationProvider.HaskellDocsName, HLintComponent.HlintName), "build of Haskell-docs, Hlint")
-        }
-      })
-    }
-  }
-
-  override def disposeComponent(): Unit = {}
-}

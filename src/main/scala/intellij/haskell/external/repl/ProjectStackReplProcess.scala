@@ -20,7 +20,7 @@ import com.intellij.openapi.project.Project
 import com.intellij.psi.PsiFile
 import intellij.haskell.util.HaskellFileUtil
 
-private[external] class ProjectStackReplProcess(project: Project) extends StackReplProcess(project, Seq("--test"), true) {
+private[repl] class ProjectStackReplProcess(project: Project) extends StackReplProcess(project, Seq("--test"), true) {
 
   private case class LoadedPsiFileInfo(psiFile: PsiFile, loadFailed: Boolean)
 

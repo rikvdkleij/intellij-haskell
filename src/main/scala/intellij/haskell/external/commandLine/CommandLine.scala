@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package intellij.haskell.external
+package intellij.haskell.external.commandLine
 
 import java.io.File
 
@@ -53,7 +53,7 @@ object CommandLine {
     import scala.collection.JavaConversions._
 
     val processOutput = processHandler.runProcess(timeout, true)
-    if (!captureOutputToLog && processOutput.getStderrLines.nonEmpty && (cmd.getExePath == "stack" && cmd.getParametersList.getList.headOption.contains("unpack"))) {
+    if (!captureOutputToLog && processOutput.getStderrLines.nonEmpty && !(cmd.getExePath.endsWith("stack") && cmd.getParametersList.getList.headOption.contains("unpack"))) {
       // 'stack unpack` writes logging to stdErr
       HaskellNotificationGroup.logError(s"Error while running command: ${cmd.getCommandLineString}")
       processOutput.getStderrLines.foreach(HaskellNotificationGroup.logError)

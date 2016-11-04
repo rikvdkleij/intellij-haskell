@@ -18,15 +18,12 @@ package intellij.haskell.inspection
 
 import com.intellij.codeInspection._
 import com.intellij.psi.{PsiElement, PsiFile, TokenType}
-import intellij.haskell.external.{HLintComponent, HLintInfo}
+import intellij.haskell.external.component.{HLintComponent, HLintInfo}
 import intellij.haskell.psi.HaskellTypes.{HS_COMMENT, HS_NCOMMENT, HS_NEWLINE}
 import intellij.haskell.util.{HaskellProjectUtil, LineColumnPosition}
 
 import scala.annotation.tailrec
 
-// TODO: Use apply-refact
-// stack build apply-refact
-// stack exec -- hlint src/Lib.hs --refactor --refactor-options="--pos 31,7 --inplace"
 class HLintInspectionTool extends LocalInspectionTool {
 
   override def checkFile(psiFile: PsiFile, manager: InspectionManager, isOnTheFly: Boolean): Array[ProblemDescriptor] = {
@@ -43,7 +40,7 @@ class HLintInspectionTool extends LocalInspectionTool {
     } yield
       hi.to match {
         case Some(to) => problemsHolder.registerProblem(
-          new ProblemDescriptorBase(se, ee, hi.hint, Array(new HLintQuickfix(se, ee, to, hi.note)), findProblemHighlightType(hi), false, null, true, isOnTheFly)
+          new ProblemDescriptorBase(se, ee, hi.hint, Array(new HLintQuickfix(se, ee, hi.startLine, hi.startColumn, to, hi.note)), findProblemHighlightType(hi), false, null, true, isOnTheFly)
         )
         case None => problemsHolder.registerProblem(
           new ProblemDescriptorBase(se, ee, hi.hint, Array(), findProblemHighlightType(hi), false, null, true, isOnTheFly))

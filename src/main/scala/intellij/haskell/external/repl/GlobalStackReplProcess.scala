@@ -19,7 +19,7 @@ package intellij.haskell.external.repl
 import com.intellij.openapi.project.Project
 
 // TODO: Refactor
-private[external] class GlobalStackReplProcess(project: Project) extends StackReplProcess(project, Seq("--no-package-hiding")) {
+private[repl] class GlobalStackReplProcess(project: Project) extends StackReplProcess(project, Seq("--no-package-hiding")) {
   override def getComponentName: String = "global-stack-repl"
 
   private[this] var loadedModuleName: Option[String] = None

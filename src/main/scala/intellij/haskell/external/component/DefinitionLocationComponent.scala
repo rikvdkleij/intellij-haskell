@@ -26,6 +26,7 @@ import com.intellij.psi.{PsiElement, PsiFile}
 import intellij.haskell.external.repl.{StackReplOutput, StackReplsManager}
 import intellij.haskell.psi._
 import intellij.haskell.util.LineColumnPosition
+
 import scala.collection.JavaConversions._
 
 private[component] object DefinitionLocationComponent {

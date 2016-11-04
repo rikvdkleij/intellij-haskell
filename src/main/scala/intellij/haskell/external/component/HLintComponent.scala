@@ -14,11 +14,13 @@
  * limitations under the License.
  */
 
-package intellij.haskell.external
+package intellij.haskell.external.component
 
+import com.intellij.openapi.command.CommandProcessor
 import com.intellij.psi.PsiFile
 import intellij.haskell.HaskellNotificationGroup
-import intellij.haskell.util.StackUtil
+import intellij.haskell.external.commandLine.StackCommandLine
+import intellij.haskell.util.HaskellFileUtil
 import spray.json.JsonParser.ParsingException
 import spray.json.{DefaultJsonProtocol, _}
 
@@ -27,7 +29,7 @@ object HLintComponent {
   final val HlintName = "hlint"
 
   def check(psiFile: PsiFile): Seq[HLintInfo] = {
-    val output = StackUtil.runCommand(Seq("exec", "--", HlintName, "--json", psiFile.getOriginalFile.getVirtualFile.getPath), psiFile.getProject)
+    val output = StackCommandLine.runCommand(Seq("exec", "--", HlintName, "--json", psiFile.getOriginalFile.getVirtualFile.getPath), psiFile.getProject)
     if (output.getStderr.nonEmpty) {
       if (output.getStderr.toLowerCase.contains("couldn't find file: hlint")) {
         HaskellNotificationGroup.notifyBalloonWarning("No Hlint suggestions because `hlint` build still has to be started or build is not finished yet")
@@ -36,11 +38,27 @@ object HLintComponent {
     deserializeHLintInfo(output.getStdout)
   }
 
-  object HlintJsonProtocol extends DefaultJsonProtocol {
+  def applySuggestion(psiFile: PsiFile, startLineNr: Int, startColumnNr: Int): Unit = {
+    val project = psiFile.getProject
+    CommandProcessor.getInstance().executeCommand(project, new Runnable {
+      override def run(): Unit = {
+        val command = Seq("exec", "--", HLintComponent.HlintName, HaskellFileUtil.getFilePath(psiFile),
+          "--refactor",
+          "--refactor-options", s"--pos $startLineNr,$startColumnNr")
+        val processOutput = StackCommandLine.runCommand(command, project)
+        if (!processOutput.getStderrLines.isEmpty) {
+          HaskellNotificationGroup.notifyBalloonError("Error while applying HLint suggestion. See Event Log for errors")
+        }
+        HaskellFileUtil.saveFileWithContent(project, HaskellFileUtil.findVirtualFile(psiFile), processOutput.getStdout)
+      }
+    }, null, null)
+  }
+
+  private object HlintJsonProtocol extends DefaultJsonProtocol {
     implicit val hlintInfoFormat = jsonFormat12(HLintInfo)
   }
 
-  import intellij.haskell.external.HLintComponent.HlintJsonProtocol._
+  import intellij.haskell.external.component.HLintComponent.HlintJsonProtocol._
 
   private[external] def deserializeHLintInfo(hlintInfo: String) = {
     if (hlintInfo.trim.isEmpty || hlintInfo == "[]") {
@@ -50,7 +68,7 @@ object HLintComponent {
         hlintInfo.parseJson.convertTo[Seq[HLintInfo]]
       } catch {
         case e: ParsingException =>
-          HaskellNotificationGroup.logInfo(s"Error ${e.getMessage} while parsing $hlintInfo")
+          HaskellNotificationGroup.logError(s"Error ${e.getMessage} while parsing $hlintInfo")
           Seq()
       }
     }

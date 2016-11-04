@@ -21,11 +21,12 @@ import com.intellij.openapi.progress.Task.Backgroundable
 import com.intellij.openapi.progress.{ProgressIndicator, ProgressManager}
 import com.intellij.openapi.project.Project
 import intellij.haskell.HaskellNotificationGroup
+import intellij.haskell.external.commandLine.StackCommandLine
 import intellij.haskell.external.component.StackReplsComponentsManager
 import intellij.haskell.external.repl.StackReplsManager
-import intellij.haskell.util.{HaskellProjectUtil, StackUtil}
+import intellij.haskell.util.HaskellProjectUtil
 
-class RestartStackRepls extends AnAction {
+class RestartStackReplsAction extends AnAction {
 
   private var restarting = false
 
@@ -76,6 +77,6 @@ class RestartStackRepls extends AnAction {
   }
 
   private def cleanLocalPackages(project: Project): Unit = {
-    StackUtil.runCommand(Seq("clean"), project)
+    StackCommandLine.runCommand(Seq("clean"), project)
   }
 }

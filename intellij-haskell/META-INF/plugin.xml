@@ -165,7 +165,7 @@
         <vetoRenameCondition implementation="intellij.haskell.refactor.HaskellVetoRenameCondition" />
 
         <lang.documentationProvider language="Haskell"
-                                    implementationClass="intellij.haskell.external.HaskellDocumentationProvider"/>
+                                    implementationClass="intellij.haskell.external.component.HaskellDocumentationProvider"/>
 
         <completion.contributor language="Haskell"
                                 implementationClass="intellij.haskell.editor.HaskellCompletionContributor"/>
@@ -208,11 +208,11 @@
             <implementation-class>intellij.haskell.external.repl.ProjectStackReplProcess</implementation-class>
         </component>
         <component>
-            <implementation-class>intellij.haskell.external.repl.StackReplsManager</implementation-class>
+            <implementation-class>intellij.haskell.external.component.StackProjectComponent</implementation-class>
         </component>
 
         <component>
-            <implementation-class>intellij.haskell.external.HaskellDocumentationProvider
+            <implementation-class>intellij.haskell.external.component.HaskellDocumentationProvider
             </implementation-class>
         </component>
     </project-components>
@@ -260,7 +260,7 @@
             <add-to-group group-id="ToolsMenu" anchor="last"/>
         </action>
 
-        <action id="Haskell.RestartStackRepl" class="intellij.haskell.action.RestartStackRepls"
+        <action id="Haskell.RestartStackRepl" class="intellij.haskell.action.RestartStackReplsAction"
                 text="Restart Haskell Stack repls"
                 description="Restart Haskell Stack repls and refresh cache">
             <add-to-group group-id="ToolsMenu" anchor="last"/>

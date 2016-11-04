@@ -23,9 +23,9 @@ import com.intellij.openapi.components.ProjectComponent
 import com.intellij.openapi.project.Project
 import com.intellij.util.EnvironmentUtil
 import intellij.haskell.HaskellNotificationGroup
+import intellij.haskell.external.commandLine.StackCommandLine._
 import intellij.haskell.sdk.HaskellSdkType
 import intellij.haskell.util.HaskellProjectUtil
-import intellij.haskell.util.StackUtil._
 
 import scala.collection.JavaConversions._
 import scala.collection.mutable.{ArrayBuffer, ListBuffer}
