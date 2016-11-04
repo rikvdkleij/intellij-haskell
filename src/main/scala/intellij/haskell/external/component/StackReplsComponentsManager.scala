@@ -79,8 +79,10 @@ object StackReplsComponentsManager {
   }
 
   def preloadModuleIdentifiersCaches(project: Project): Unit = {
+    HaskellNotificationGroup.logInfo("Start to preload cache")
     preloadAllLibraryModuleIdentifiers(project)
     HaskellAnnotator.restartDaemonCodeAnalyzerForOpenFiles(project)
+    HaskellNotificationGroup.logInfo("Finished with preloading cache")
   }
 
   def findTypeInfoForElement(psiElement: PsiElement): Option[TypeInfo] = {

@@ -44,7 +44,7 @@ object CommandLine {
   private def execute(cmd: GeneralCommandLine, timeout: Int, captureOutputToLog: Boolean): ProcessOutput = {
     val processHandler = if (captureOutputToLog) {
       new CapturingProcessHandler(cmd) {
-        override protected def createProcessAdapter(processOutput: ProcessOutput): CapturingProcessAdapter = new CapturingProcessToLog(processOutput)
+        override protected def createProcessAdapter(processOutput: ProcessOutput): CapturingProcessAdapter = new CapturingProcessToLog(cmd, processOutput)
       }
     } else {
       new CapturingProcessHandler(cmd)
@@ -53,15 +53,13 @@ object CommandLine {
     import scala.collection.JavaConversions._
 
     val processOutput = processHandler.runProcess(timeout, true)
-    if (!captureOutputToLog && processOutput.getStderrLines.nonEmpty && !(cmd.getExePath.endsWith("stack") && cmd.getParametersList.getList.headOption.contains("unpack"))) {
-      // 'stack unpack` writes logging to stdErr
-      HaskellNotificationGroup.logError(s"Error while running command: ${cmd.getCommandLineString}")
-      processOutput.getStderrLines.foreach(HaskellNotificationGroup.logError)
+    if (!captureOutputToLog && processOutput.getStderrLines.nonEmpty) {
+      processOutput.getStderrLines.foreach(line => HaskellNotificationGroup.logWarning(s"${cmd.getCommandLineString}  -  $line"))
     }
     processOutput
   }
 
-  private class CapturingProcessToLog(val output: ProcessOutput) extends CapturingProcessAdapter {
+  private class CapturingProcessToLog(val cmd: GeneralCommandLine, val output: ProcessOutput) extends CapturingProcessAdapter {
 
     override def onTextAvailable(event: ProcessEvent, outputType: Key[_]) {
       addOutput(event.getText, outputType)
@@ -70,9 +68,9 @@ object CommandLine {
     private def addOutput(text: String, outputType: Key[_]) {
       if (!text.trim.isEmpty) {
         if (outputType == ProcessOutputTypes.STDERR) {
-          HaskellNotificationGroup.logError(text)
+          HaskellNotificationGroup.logWarning(s"${cmd.getCommandLineString}  -  $text")
         } else {
-          HaskellNotificationGroup.logInfo(text)
+          HaskellNotificationGroup.logInfo(s"${cmd.getCommandLineString}  -  $text")
         }
       }
     }

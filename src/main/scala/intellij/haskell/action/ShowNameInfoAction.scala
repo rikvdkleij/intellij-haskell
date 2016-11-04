@@ -18,7 +18,6 @@ package intellij.haskell.action
 
 import com.intellij.openapi.actionSystem.{AnAction, AnActionEvent, CommonDataKeys}
 import com.intellij.openapi.util.text.StringUtil
-import com.intellij.psi.util.PsiUtilBase
 import intellij.haskell.external.component._
 import intellij.haskell.util.HaskellEditorUtil
 
@@ -32,7 +31,7 @@ class ShowNameInfoAction extends AnAction {
     val context = actionEvent.getDataContext
     for {
       editor <- Option(CommonDataKeys.EDITOR.getData(context))
-      psiFile <- Option(PsiUtilBase.getPsiFileInEditor(editor, CommonDataKeys.PROJECT.getData(context)))
+      psiFile <- ActionUtil.findPsiFile(actionEvent)
       offset = editor.getCaretModel.getOffset
       psiElement <- Option(psiFile.findElementAt(offset))
     } yield {

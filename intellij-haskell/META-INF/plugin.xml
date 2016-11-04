@@ -268,10 +268,26 @@
 
         <action id="Haskell.HindentFormat"
                 class="intellij.haskell.action.HindentFormatAction"
-                text="Reformat code with Hindent"
-                description="Format current file with Hindent">
+                text="Reformat code with hindent"
+                description="Format current file with hindent">
             <add-to-group group-id="CodeMenu" anchor="last"/>
             <keyboard-shortcut first-keystroke="ctrl alt k" keymap="$default"/>
+        </action>
+
+        <action id="Haskell.StylishHaskellFormat"
+                class="intellij.haskell.action.HaskellFormatAction"
+                text="Reformat code with stylish-haskell"
+                description="Format current file with stylish-haskell">
+            <add-to-group group-id="CodeMenu" anchor="last"/>
+            <keyboard-shortcut first-keystroke="ctrl alt u" keymap="$default"/>
+        </action>
+
+        <action id="Haskell.HaskellFormat"
+                class="intellij.haskell.action.HaskellFormatAction"
+                text="Reformat code with hindent and then stylish-haskell"
+                description="Format current file with hindent and then stylish-haskell">
+            <add-to-group group-id="CodeMenu" anchor="last"/>
+            <keyboard-shortcut first-keystroke="ctrl alt SEMICOLON" keymap="$default"/>
         </action>
     </actions>
 

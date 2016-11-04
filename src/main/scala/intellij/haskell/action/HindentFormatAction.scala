@@ -16,13 +16,9 @@
 
 package intellij.haskell.action
 
-import com.intellij.openapi.actionSystem.{AnAction, AnActionEvent, CommonDataKeys}
-import com.intellij.openapi.application.ApplicationManager
-import com.intellij.openapi.command.CommandProcessor
-import com.intellij.openapi.project.Project
-import com.intellij.openapi.vfs.VirtualFile
+import com.intellij.openapi.actionSystem.{AnAction, AnActionEvent}
+import com.intellij.psi.PsiFile
 import com.intellij.psi.codeStyle._
-import com.intellij.psi.util.PsiUtilBase
 import intellij.haskell.settings.HaskellSettingsState
 import intellij.haskell.util.{HaskellEditorUtil, HaskellFileUtil}
 import intellij.haskell.{HaskellLanguage, HaskellNotificationGroup}
@@ -36,47 +32,36 @@ class HindentFormatAction extends AnAction {
   }
 
   override def actionPerformed(actionEvent: AnActionEvent): Unit = {
-    val context = actionEvent.getDataContext
-    val psiFile = for {
-      editor <- Option(CommonDataKeys.EDITOR.getData(context))
-      psiFile <- Option(PsiUtilBase.getPsiFileInEditor(editor, CommonDataKeys.PROJECT.getData(context)))
-    } yield psiFile
-
-    psiFile.foreach(pf => {
-      val lineLength = CodeStyleSettingsManager.getInstance(pf.getProject).getCurrentSettings.getRightMargin(HaskellLanguage.Instance)
-      val indentOptions = CodeStyleSettingsManager.getInstance(pf.getProject).getCurrentSettings.getCommonSettings(HaskellLanguage.Instance).getIndentOptions
-      val virtualFile = HaskellFileUtil.findVirtualFile(pf)
-
-      HaskellFileUtil.saveFile(virtualFile)
-
-      HaskellSettingsState.getHindentPath match {
-        case Some(hindentPath) =>
-          val command = Seq(hindentPath, "--line-length", lineLength.toString, "--indent-size", indentOptions.INDENT_SIZE.toString)
-
-          import scala.sys.process._
-          val processBuilder = command #< virtualFile.getInputStream
-          val formattedSourceCode = processBuilder.lineStream_!(new OnlyErrorProcessLogger).mkString("\n")
-
-          save(pf.getProject, virtualFile, formattedSourceCode)
-        case _ => HaskellNotificationGroup.logWarning("Can not format code because path to Hindent is not configured in IntelliJ")
-      }
+    ActionUtil.findPsiFile(actionEvent).foreach(psiFile => {
+      HindentFormatAction.format(psiFile)
     })
   }
+}
 
-  private def save(project: Project, virtualFile: VirtualFile, sourceCode: String) = {
-    CommandProcessor.getInstance().executeCommand(project, new Runnable {
-      override def run(): Unit = {
-        ApplicationManager.getApplication.runWriteAction(new Runnable {
-          override def run(): Unit = {
-            val document = HaskellFileUtil.findDocument(virtualFile)
-            document.foreach(_.setText(sourceCode))
-          }
-        })
-      }
-    }, null, null)
+object HindentFormatAction {
+  final val HindentName = "hindent"
+
+  private[action] def format(psiFile: PsiFile): Unit = {
+    val lineLength = CodeStyleSettingsManager.getInstance(psiFile.getProject).getCurrentSettings.getRightMargin(HaskellLanguage.Instance)
+    val indentOptions = CodeStyleSettingsManager.getInstance(psiFile.getProject).getCurrentSettings.getCommonSettings(HaskellLanguage.Instance).getIndentOptions
+    val virtualFile = HaskellFileUtil.findVirtualFile(psiFile)
+
+    HaskellFileUtil.saveFile(virtualFile)
+
+    HaskellSettingsState.getHindentPath match {
+      case Some(hindentPath) =>
+        val command = Seq(hindentPath, "--line-length", lineLength.toString, "--indent-size", indentOptions.INDENT_SIZE.toString)
+
+        import scala.sys.process._
+        val processBuilder = command #< virtualFile.getInputStream
+        val formattedSourceCode = processBuilder.lineStream_!(new OnlyErrorProcessLogger).mkString("\n")
+
+        HaskellFileUtil.saveFileWithContent(psiFile.getProject, virtualFile, formattedSourceCode)
+      case _ => HaskellNotificationGroup.logWarning("Can not format code because path to `hindent` is not configured in IntelliJ")
+    }
   }
 
-  class OnlyErrorProcessLogger extends ProcessLogger {
+  private class OnlyErrorProcessLogger extends ProcessLogger {
     override def out(s: => String): Unit = ()
 
     override def err(s: => String): Unit = HaskellNotificationGroup.logError(s)
@@ -84,8 +69,4 @@ class HindentFormatAction extends AnAction {
     override def buffer[T](f: => T): T = f
   }
 
-}
-
-object HindentFormatAction {
-  final val HindentName = "hindent"
 }

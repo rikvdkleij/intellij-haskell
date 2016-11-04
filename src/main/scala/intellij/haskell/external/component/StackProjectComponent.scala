@@ -16,6 +16,7 @@
 
 package intellij.haskell.external.component
 
+import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.components.ProjectComponent
 import com.intellij.openapi.progress.{ProgressIndicator, ProgressManager, Task}
 import com.intellij.openapi.project.Project
@@ -32,28 +33,27 @@ class StackProjectComponent(project: Project) extends ProjectComponent {
 
   override def projectOpened(): Unit = {
     if (HaskellProjectUtil.isHaskellStackProject(project)) {
-      ProgressManager.getInstance().run(new Task.Backgroundable(project, s"[$getComponentName] Starting Stack repls, building project and preloading cache", false) {
+      ProgressManager.getInstance().run(new Task.Backgroundable(project, s"[$getComponentName] Starting Stack repls, building project, building tools and preloading cache", false) {
 
         def run(progressIndicator: ProgressIndicator) {
           progressIndicator.setText("Busy with building project and starting Stack repls")
           StackReplsManager.getProjectRepl(project).start()
           StackReplsManager.getGlobalRepl(project).start()
 
+          ApplicationManager.getApplication.executeOnPooledThread(new Runnable {
+            override def run(): Unit = {
+              StackCommandLine.executeBuild(project, Seq("build", HaskellDocumentationProvider.HaskellDocsName, HLintComponent.HlintName, "apply-refact"), "Build of `haskell-docs`, `hlint` and `apply-refact`")
+            }
+          })
+
           progressIndicator.setText("Busy with preloading cache")
           StackReplsComponentsManager.preloadModuleIdentifiersCaches(project)
 
           progressIndicator.setText("Restarting global repl to release memory")
           StackReplsManager.getGlobalRepl(project).restart()
-
         }
       })
 
-      ProgressManager.getInstance().run(new Task.Backgroundable(project, s"[$getComponentName] Building Haskell tools", false) {
-
-        def run(progressIndicator: ProgressIndicator) {
-          StackCommandLine.executeBuild(project, Seq("build", HaskellDocumentationProvider.HaskellDocsName, HLintComponent.HlintName, "apply-refact"), "Build of `haskell-docs`, `hlint` and `apply-refact`")
-        }
-      })
     }
   }
 
