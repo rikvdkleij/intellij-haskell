@@ -16,6 +16,8 @@
 
 package intellij.haskell.external.component
 
+import java.util.concurrent.TimeUnit
+
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.components.ProjectComponent
 import com.intellij.openapi.progress.{ProgressIndicator, ProgressManager, Task}
@@ -40,17 +42,22 @@ class StackProjectComponent(project: Project) extends ProjectComponent {
           StackReplsManager.getProjectRepl(project).start()
           StackReplsManager.getGlobalRepl(project).start()
 
-          ApplicationManager.getApplication.executeOnPooledThread(new Runnable {
+          val buildToolsFuture = ApplicationManager.getApplication.executeOnPooledThread(new Runnable {
             override def run(): Unit = {
               StackCommandLine.executeBuild(project, Seq("build", HaskellDocumentationProvider.HaskellDocsName, HLintComponent.HlintName, "apply-refact"), "Build of `haskell-docs`, `hlint` and `apply-refact`")
             }
           })
 
-          progressIndicator.setText("Busy with preloading cache")
+          progressIndicator.setText("Busy with preloading cache and/or building tools")
           StackReplsComponentsManager.preloadModuleIdentifiersCaches(project)
 
           progressIndicator.setText("Restarting global repl to release memory")
           StackReplsManager.getGlobalRepl(project).restart()
+
+          if (!buildToolsFuture.isDone) {
+            progressIndicator.setText("Busy with building tools")
+            buildToolsFuture.get(15, TimeUnit.MINUTES)
+          }
         }
       })
 
