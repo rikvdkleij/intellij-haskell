@@ -23,8 +23,6 @@ import intellij.haskell.external.commandLine.CommandLine
 import intellij.haskell.settings.HaskellSettingsState
 import intellij.haskell.util.{HaskellEditorUtil, HaskellFileUtil}
 
-import scala.sys.process.ProcessLogger
-
 class StylishHaskellFormatAction extends AnAction {
 
   override def update(actionEvent: AnActionEvent) {
@@ -36,15 +34,6 @@ class StylishHaskellFormatAction extends AnAction {
       StylishHaskellFormatAction.format(psiFile)
     })
   }
-
-  class OnlyErrorProcessLogger extends ProcessLogger {
-    override def out(s: => String): Unit = ()
-
-    override def err(s: => String): Unit = HaskellNotificationGroup.logError(s)
-
-    override def buffer[T](f: => T): T = f
-  }
-
 }
 
 object StylishHaskellFormatAction {
@@ -60,11 +49,12 @@ object StylishHaskellFormatAction {
 
         val processOutput = CommandLine.runCommand(psiFile.getProject.getBasePath, stylishHaskellPath, Seq(HaskellFileUtil.getFilePath(psiFile)))
 
-        if (!processOutput.getStderrLines.isEmpty) {
+        if (processOutput.getStderrLines.isEmpty) {
+          HaskellFileUtil.saveFileWithContent(psiFile.getProject, virtualFile, processOutput.getStdout)
+        } else {
           HaskellNotificationGroup.notifyBalloonError(s"Error while formatting by `$StylishHaskellName`. See Event Log for errors")
         }
 
-        HaskellFileUtil.saveFileWithContent(psiFile.getProject, virtualFile, processOutput.getStdout)
       case _ => HaskellNotificationGroup.logWarning(s"Can not format code because path to `$StylishHaskellName` is not configured in IntelliJ")
     }
   }

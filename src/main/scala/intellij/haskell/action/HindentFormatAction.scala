@@ -54,17 +54,27 @@ object HindentFormatAction {
 
         import scala.sys.process._
         val processBuilder = command #< virtualFile.getInputStream
-        val formattedSourceCode = processBuilder.lineStream_!(new OnlyErrorProcessLogger).mkString("\n")
+        val processLogger: OnlyErrorProcessLogger = new OnlyErrorProcessLogger
+        val formattedSourceCode = processBuilder.lineStream_!(processLogger).mkString("\n")
 
-        HaskellFileUtil.saveFileWithContent(psiFile.getProject, virtualFile, formattedSourceCode)
+        if (processLogger.hasErrors) {
+          HaskellNotificationGroup.notifyBalloonError(s"Error while formatting by `$HindentName`. See Event Log for errors")
+        } else {
+          HaskellFileUtil.saveFileWithContent(psiFile.getProject, virtualFile, formattedSourceCode)
+        }
       case _ => HaskellNotificationGroup.logWarning("Can not format code because path to `hindent` is not configured in IntelliJ")
     }
   }
 
   private class OnlyErrorProcessLogger extends ProcessLogger {
+    var hasErrors = false
+
     override def out(s: => String): Unit = ()
 
-    override def err(s: => String): Unit = HaskellNotificationGroup.logError(s)
+    override def err(s: => String): Unit = {
+      hasErrors = true
+      HaskellNotificationGroup.logError(s)
+    }
 
     override def buffer[T](f: => T): T = f
   }
