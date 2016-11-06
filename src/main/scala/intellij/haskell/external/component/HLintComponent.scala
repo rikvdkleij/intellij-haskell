@@ -48,8 +48,9 @@ object HLintComponent {
         val processOutput = StackCommandLine.runCommand(command, project)
         if (!processOutput.getStderrLines.isEmpty) {
           HaskellNotificationGroup.notifyBalloonError("Error while applying HLint suggestion. See Event Log for errors")
+        } else {
+          HaskellFileUtil.saveFileWithContent(project, HaskellFileUtil.findVirtualFile(psiFile), processOutput.getStdout)
         }
-        HaskellFileUtil.saveFileWithContent(project, HaskellFileUtil.findVirtualFile(psiFile), processOutput.getStdout)
       }
     }, null, null)
   }
