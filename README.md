@@ -14,7 +14,7 @@ This plugin depends mainly on Stack and Intero. It can create new Stack projects
 Any feedback is welcome!!
 
 
-# Features
+# Features (1.0.0-beta3)
 - Syntax highlighting;
 - Error/warning highlighting;
 - Find usages of identifiers;
@@ -29,22 +29,24 @@ Any feedback is welcome!!
 - Navigate to declaration (called `Navigate`/`Class` in IntelliJ menu);
 - Navigate to identifier (called `Navigate`/`Symbol` in IntelliJ menu);
 - Inspection by HLint;
-- Quick fixes for HLint suggestions;
+- Quick fixes for HLint suggestions with help of Refactor tool (`apply-refact` package);
 - Show error action to view formatted message. Useful in case message consists of multiple lines (Ctrl-F10, Meta-F10 on Mac OSX);
-- Intention actions (for example, to add language extension or to add import of identifier);
+- Intention actions to add language extension (depends on compiler error), add top-level type signature (depends on compiler warning) or to add import of identifier;
 
 
-# Getting started: 
+# Getting started (1.0.0-beta3)
 - Install this plugin. Make sure no other Haskell plugin is installed in IntelliJ;
-- Install latest versions of [Stack](https://github.com/commercialhaskell/stack) and [Intero](https://github.com/commercialhaskell/intero). 
-    Make sure `intero` is on your PATH and build with same GHC-version as your project (see 5. in Remarks). 
-- Optionally install Hlint and Haskell-docs. Set file paths to `hlint` and `haskell-docs` in the menu `Settings`/`Other Settings`/`Haskell`.
+- Install latest version of [Stack](https://github.com/commercialhaskell/stack)
+- Install latest versions of [Hindent](https://github.com/chrisdone/hindent) and [Stylish-Haskell](https://github.com/jaspervdj/stylish-haskell). 
+    Notice that currently latest version of Hindent is not on Stackage LTS. You have to install version of Hindent > 5.0, for example by: `stack install --resolver nightly-2016-11-06 hindent`
+    Set file paths to `hindent` and `stylish-haskell` in the `Settings`/`Other Settings`/`Haskell`.
 - Make sure your Stack project builds without errors. Preferably by using: `stack build --test --haddock --fast`;
 - After your project is built, import project in IntelliJ by using `File`/`New`/`Project from Existing Sources..` from the IntelliJ menu;
 - In the `New Project` wizard select `Import project from external module` and check `Haskell Stack importer`;
-- In next page of wizard configure `Project SDK` by configuring `Haskell Tool Stack` and selecting path to `stack`, e.g. `/usr/local/bin`;
-- Finish wizard;
+- In next page of wizard configure `Project SDK` by configuring `Haskell Tool Stack` and selecting path to folder of `stack`, e.g. `/usr/local/bin`;
+- Finish wizard and project will be opened;
 - Wizard will try to automatically configure which folders are sources, test and which to exclude;
+- Plugin will automatically build Intero, Haskell-docs, HLint en Refactor to prevent incompatibility issues.
 - Check `Project structure`/`Project settings`/`Modules` which folders to exclude (like `.stack-work` and `dist`) and which folders are `Source` and `Test` (normally `src` and `test`).
 - Plugin will automatically download library sources (since Stack version 1.2.1 also for test dependencies). They will be added as source libraries to module.
     This option gives you nice navigation features through libraries. Sources are downloaded to folder `ideaHaskellLib` inside root of project 
@@ -59,12 +61,7 @@ Any feedback is welcome!!
 2. IntelliJ has a nice terminal plugin;
 3. Developed plugin on Linux. Also tested on OSX;
 4. Windows is not supported. Maybe it will work okay but I can not test it;
-5. When starting Stack repl gives error like this:
-    `/package.conf.d/package.cache: GHC.PackageDb.readPackageDb: inappropriate type (not enough bytes)`
-    Intero on your PATH is not built with same GHC-version as your project.
-    Check which Intero is on your PATH by running in root folder of your project: `stack exec -- which intero`.
-    If it is the wrong one, run in root folder of your project: `stack build intero`;
-6. When navigating to declaration (called `Class` in IntelliJ menu) goes slow, it helps to increase heap size of IntelliJ;    
+5. When navigating to declaration (called `Class` in IntelliJ menu) goes slow, it helps to increase heap size of IntelliJ;    
 
 
 # How to build project
