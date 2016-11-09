@@ -20,13 +20,12 @@ import com.intellij.codeInspection.LocalQuickFixOnPsiElement
 import com.intellij.openapi.project.Project
 import com.intellij.psi.{PsiElement, PsiFile}
 import intellij.haskell.external.component.HLintComponent
-import intellij.haskell.util.OSUtil
 
-class HLintQuickfix(startElement: PsiElement, endElement: PsiElement, startLineNr: Int, startColumnNr: Int, toSuggestion: String, note: Seq[String]) extends LocalQuickFixOnPsiElement(startElement, endElement) {
+class HLintQuickfix(startElement: PsiElement, endElement: PsiElement, startLineNr: Int, startColumnNr: Int, toSuggestion: String, hint: String) extends LocalQuickFixOnPsiElement(startElement, endElement) {
   override def getText: String = if (toSuggestion.isEmpty) {
     "Remove"
   } else {
-    s"Change to: $toSuggestion ${formatNote(note)}"
+    s"$hint, change to `$toSuggestion`"
   }
 
   override def invoke(project: Project, psiFile: PsiFile, startElement: PsiElement, endElement: PsiElement): Unit = {
@@ -34,13 +33,4 @@ class HLintQuickfix(startElement: PsiElement, endElement: PsiElement, startLineN
   }
 
   override def getFamilyName: String = "Inspection by HLint"
-
-  private def formatNote(note: Seq[String]) = {
-    val formattedNote = note.map(n => if (n.length > 1 && n.head == '"' && n.last == '"') n.substring(1, n.length - 1) else n).mkString(OSUtil.LineSeparator.toString)
-    if (formattedNote.trim.isEmpty) {
-      ""
-    } else {
-      "   -- " + formattedNote
-    }
-  }
 }
