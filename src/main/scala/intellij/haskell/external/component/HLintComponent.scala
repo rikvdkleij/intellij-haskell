@@ -46,10 +46,10 @@ object HLintComponent {
           "--refactor",
           "--refactor-options", s"--pos $startLineNr,$startColumnNr")
         val processOutput = StackCommandLine.runCommand(command, project)
-        if (!processOutput.getStderrLines.isEmpty) {
-          HaskellNotificationGroup.notifyBalloonError("Error while applying HLint suggestion. See Event Log for errors")
-        } else {
+        if (processOutput.getStderrLines.isEmpty) {
           HaskellFileUtil.saveFileWithContent(project, HaskellFileUtil.findVirtualFile(psiFile), processOutput.getStdout)
+        } else {
+          HaskellNotificationGroup.notifyBalloonError("Error while applying HLint suggestion. See Event Log for errors")
         }
       }
     }, null, null)
