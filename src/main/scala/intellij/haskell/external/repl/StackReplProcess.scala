@@ -34,7 +34,7 @@ import scala.concurrent.duration._
 import scala.io._
 import scala.sys.process._
 
-private[repl] abstract class StackReplProcess(val project: Project, val extraStartOptions: Seq[String] = Seq(), val beforeStartDoBuild: Boolean = false) extends ProjectComponent {
+private[repl] abstract class StackReplProcess(val project: Project, val extraStartOptions: Seq[String] = Seq(), val isProjectRepl: Boolean = false) extends ProjectComponent {
 
   private final val LineSeparator = '\n'
 
@@ -127,7 +127,7 @@ private[repl] abstract class StackReplProcess(val project: Project, val extraSta
     }
 
     // TODO: Create action to rebuild project with first `stack clean full`
-    if (beforeStartDoBuild) {
+    if (isProjectRepl) {
       executeBuild(project, Seq("build", "intero"), "build of Intero")
       executeBuild(project, Seq("build", "--test", "--only-dependencies", "--haddock", "--fast"), "build of dependencies")
     }
@@ -165,6 +165,11 @@ private[repl] abstract class StackReplProcess(val project: Project, val extraSta
       Thread.sleep(100)
 
       writeToOutputStream(s""":set prompt "$EndOfOutputIndicator\\n"""")
+
+      if (isProjectRepl) {
+        writeToOutputStream(":set -Wall")
+        writeToOutputStream(":set -fdefer-typed-holes")
+      }
 
       available = true
 
