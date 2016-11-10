@@ -46,8 +46,9 @@ class HaskellCompletionContributor extends CompletionContributor {
   private final val ExecutorService = Executors.newCachedThreadPool()
   implicit private final val ExecContext = ExecutionContext.fromExecutorService(ExecutorService)
 
-  private final val Keywords = Stream("data", "class", "instance", "type", "family", "module", "newtype", "let", "where", "if", "then", "else", "of",
-    "foreign", "case", "deriving", "infixr", "infixl", "infix", "in", "forall", "import")
+  private final val Keywords = Stream("case", "class", "data", "deriving", "do", "else", "family", "forall", "foreign", "if", "import", "in", "infix",
+    "infixl", "infixr", "instance", "let", "module", "newtype", "of", "then", "type", "where")
+
   private final val SpecialReservedIds = Stream("safe", "unsafe")
   private final val PragmaIds = Stream("{-#", "#-}")
   private final val FileHeaderPragmaIds = Stream("LANGUAGE", "OPTIONS_HADDOCK", "INCLUDE", "OPTIONS", "OPTIONS_GHC", "ANN")
@@ -111,7 +112,7 @@ class HaskellCompletionContributor extends CompletionContributor {
       ).flatMap(pt => if (pt.trim.isEmpty) None else Some(pt))
 
       val resultSet = prefixText match {
-        case Some(t) => originalResultSet.withPrefixMatcher(originalResultSet.getPrefixMatcher.cloneWithPrefix(t))
+        case Some(t) if !t.startsWith("`") => originalResultSet.withPrefixMatcher(originalResultSet.getPrefixMatcher.cloneWithPrefix(t))
         case _ => originalResultSet
       }
 
