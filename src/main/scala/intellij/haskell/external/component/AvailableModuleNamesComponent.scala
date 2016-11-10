@@ -27,22 +27,26 @@ import scala.collection.JavaConversions._
 private[component] object AvailableModuleNamesComponent {
 
   def findAvailableModuleNames(psiFile: PsiFile): Iterable[String] = {
+    val globalProjectInfo = GlobalProjectInfoComponent.findGlobalProjectInfo(psiFile.getProject)
+    val findProjectProductionModuleNames = () => HaskellFileIndex.findProjectProductionPsiFiles(psiFile.getProject).flatMap(HaskellPsiUtil.findModuleName)
+
     if (HaskellProjectUtil.isProjectTestFile(psiFile)) {
-      val libraryTestModuleNames = GlobalProjectInfoComponent.findGlobalProjectInfo(psiFile.getProject).map(_.allAvailableLibraryModuleNames).getOrElse(Stream())
+      val libraryTestModuleNames = globalProjectInfo.map(_.allAvailableLibraryModuleNames).getOrElse(Stream())
       val testModuleNames = ApplicationManager.getApplication.runReadAction {
         new Computable[Iterable[String]] {
           override def compute(): Iterable[String] = {
-            HaskellFileIndex.findProjectTestPsiFiles(psiFile.getProject).flatMap(HaskellPsiUtil.findModuleName)
+            HaskellFileIndex.findProjectTestPsiFiles(psiFile.getProject).flatMap(HaskellPsiUtil.findModuleName) ++
+              findProjectProductionModuleNames()
           }
         }
       }
       testModuleNames ++ libraryTestModuleNames
     } else {
-      val libraryModuleNames = GlobalProjectInfoComponent.findGlobalProjectInfo(psiFile.getProject).map(_.availableProductionLibraryModuleNames).getOrElse(Stream())
+      val libraryModuleNames = globalProjectInfo.map(_.availableProductionLibraryModuleNames).getOrElse(Stream())
       val prodModuleNames = ApplicationManager.getApplication.runReadAction {
         new Computable[Iterable[String]] {
           override def compute(): Iterable[String] = {
-            HaskellFileIndex.findProjectProductionPsiFiles(psiFile.getProject).flatMap(HaskellPsiUtil.findModuleName)
+            findProjectProductionModuleNames()
           }
         }
       }
