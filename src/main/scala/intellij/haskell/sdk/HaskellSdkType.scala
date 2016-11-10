@@ -73,7 +73,7 @@ object HaskellSdkType {
       createPath(sdkHome),
       Seq("--numeric-version")
     )
-    output.getStdout
+    output.map(_.getStdout).getOrElse("-")
   }
 
   def getStackPath(project: Project): String = {

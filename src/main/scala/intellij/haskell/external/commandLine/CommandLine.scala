@@ -29,7 +29,7 @@ import scala.collection.JavaConversions._
 object CommandLine {
   private final val StandardTimeoutInMillis = 1000
 
-  def runCommand(workDir: String, commandPath: String, arguments: Seq[String], timeoutInMillis: Int = StandardTimeoutInMillis, captureOutputToLog: Boolean = false): ProcessOutput = {
+  def runCommand(workDir: String, commandPath: String, arguments: Seq[String], timeoutInMillis: Int = StandardTimeoutInMillis, captureOutputToLog: Boolean = false): Option[ProcessOutput] = {
     if (!new File(workDir).isDirectory || !new File(commandPath).canExecute) {
       new ProcessOutput
     }
@@ -41,7 +41,7 @@ object CommandLine {
     execute(cmd, timeoutInMillis, captureOutputToLog)
   }
 
-  private def execute(cmd: GeneralCommandLine, timeout: Int, captureOutputToLog: Boolean): ProcessOutput = {
+  private def execute(cmd: GeneralCommandLine, timeout: Int, captureOutputToLog: Boolean): Option[ProcessOutput] = {
     val processHandler = if (captureOutputToLog) {
       new CapturingProcessHandler(cmd) {
         override protected def createProcessAdapter(processOutput: ProcessOutput): CapturingProcessAdapter = new CapturingProcessToLog(cmd, processOutput)
@@ -53,10 +53,15 @@ object CommandLine {
     import scala.collection.JavaConversions._
 
     val processOutput = processHandler.runProcess(timeout, true)
-    if (!captureOutputToLog && processOutput.getStderrLines.nonEmpty) {
+    if (processOutput.isTimeout) {
+      HaskellNotificationGroup.notifyBalloonWarning(s"Timeout while `${cmd.getCommandLineString}`")
+      None
+    } else if (!captureOutputToLog && processOutput.getStderrLines.nonEmpty) {
       processOutput.getStderrLines.foreach(line => HaskellNotificationGroup.logWarning(s"${cmd.getCommandLineString}  -  $line"))
+      Option(processOutput)
+    } else {
+      Option(processOutput)
     }
-    processOutput
   }
 
   private class CapturingProcessToLog(val cmd: GeneralCommandLine, val output: ProcessOutput) extends CapturingProcessAdapter {

@@ -65,17 +65,17 @@ private[component] object GlobalProjectInfoComponent {
         }
 
         private def getLanguageExtensions(project: Project): Iterable[String] = {
-          findGhcPath(project).map(ghcPath => {
+          findGhcPath(project).flatMap(ghcPath => {
             CommandLine.runCommand(
               project.getBasePath,
               ghcPath,
               Seq("--supported-languages")
-            ).getStdoutLines.toIterable
+            ).map(_.getStdoutLines.toIterable)
           }).getOrElse(Iterable())
         }
 
         private def findGhcPath(project: Project) = {
-          StackCommandLine.runCommand(Seq("path", "--compiler-exe"), project).getStdoutLines.headOption
+          StackCommandLine.runCommand(Seq("path", "--compiler-exe"), project).flatMap(_.getStdoutLines.headOption)
         }
       }
     )

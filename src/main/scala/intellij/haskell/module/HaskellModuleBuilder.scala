@@ -181,7 +181,7 @@ object HaskellModuleBuilder {
   private final val GhcPrimVersion = "0.5.0.0"
   private final val GhcPrim = "ghc-prim"
 
-  def addLibrarySources(module: Module) = {
+  def addLibrarySources(module: Module): Unit = {
     val project = module.getProject
     val stackPath = HaskellSdkType.getStackPath(project)
     ProgressManager.getInstance().run(new Task.Backgroundable(project, "Downloading Haskell library sources and adding them as source libraries to module") {
@@ -189,12 +189,13 @@ object HaskellModuleBuilder {
         val libDirectory = getIdeaHaskellLibDirectory(project)
         FileUtil.delete(libDirectory)
         FileUtil.createDirectory(libDirectory)
-        val dependencyLines = StackCommandLine.runCommand(Seq("list-dependencies", "--test"), project).getStdoutLines
-        val packages = getPackages(dependencyLines)
-        progressIndicator.setFraction(InitialProgressStep)
-        val downloadedPackages = downloadHaskellPackageSources(project, stackPath, packages, progressIndicator)
-        progressIndicator.setFraction(0.9)
-        addPackagesAsLibrariesToModule(module, downloadedPackages, libDirectory.getAbsolutePath)
+        StackCommandLine.runCommand(Seq("list-dependencies", "--test"), project).map(_.getStdoutLines).foreach(dependencyLines => {
+          val packages = getPackages(dependencyLines)
+          progressIndicator.setFraction(InitialProgressStep)
+          val downloadedPackages = downloadHaskellPackageSources(project, stackPath, packages, progressIndicator)
+          progressIndicator.setFraction(0.9)
+          addPackagesAsLibrariesToModule(module, downloadedPackages, libDirectory.getAbsolutePath)
+        })
       }
     })
   }
@@ -221,7 +222,7 @@ object HaskellModuleBuilder {
     var progressFraction = InitialProgressStep
     haskellPackages.flatMap { packageInfo =>
       val fullName = packageInfo.name + "-" + packageInfo.version
-      val stdErr = CommandLine.runCommand(project.getBasePath + File.separator + LibName, stackPath, Seq("unpack", fullName), 10000).getStderrLines
+      val stdErr = CommandLine.runCommand(project.getBasePath + File.separator + LibName, stackPath, Seq("unpack", fullName), 10000).map(_.getStderr)
       progressFraction = progressFraction + step
       progressIndicator.setFraction(progressFraction)
 

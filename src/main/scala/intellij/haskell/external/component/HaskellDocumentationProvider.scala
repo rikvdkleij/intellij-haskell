@@ -38,7 +38,7 @@ class HaskellDocumentationProvider extends AbstractDocumentationProvider {
     val name = namedElement.getIdentifierElement.getName
     val nameInfo = StackReplsComponentsManager.findNameInfo(namedElement).headOption
     if (nameInfo.isEmpty) {
-      HaskellNotificationGroup.logWarning(s"No documenation because no info could be found for identifier: $name")
+      HaskellNotificationGroup.logWarning(s"No documentation because no info could be found for identifier: $name")
     }
     val arguments = nameInfo.flatMap {
       case (lei: LibraryNameInfo) => Some(Seq(lei.moduleName, name))
@@ -46,18 +46,19 @@ class HaskellDocumentationProvider extends AbstractDocumentationProvider {
       case (bei: BuiltInNameInfo) => Some(Seq("Prelude", name))
     }
 
-    arguments.map(args => runHaskellDocs(namedElement, args)).
+    arguments.flatMap(args => runHaskellDocs(namedElement, args)).
       map(output => s"${Pattern.compile("$", Pattern.MULTILINE).matcher(output).replaceAll("<br>").replace(" ", "&nbsp;")}")
   }
 
-  private def runHaskellDocs(namedElement: HaskellQualifiedNameElement, args: Seq[String]): String = {
-    val output = StackCommandLine.runCommand(Seq("exec", "--", HaskellDocsName) ++ args, namedElement.getContainingFile.getProject)
-    if (output.getStderr.nonEmpty) {
-      if (output.getStderr.toLowerCase.contains("couldn't find file: haskell-docs")) {
-        HaskellNotificationGroup.notifyBalloonWarning("No documentation because `haskell-docs` build still has to be started or build is not finished yet")
+  private def runHaskellDocs(namedElement: HaskellQualifiedNameElement, args: Seq[String]): Option[String] = {
+    StackCommandLine.runCommand(Seq("exec", "--", HaskellDocsName) ++ args, namedElement.getContainingFile.getProject).map(output => {
+      if (output.getStderr.nonEmpty) {
+        if (output.getStderr.toLowerCase.contains("couldn't find file: haskell-docs")) {
+          HaskellNotificationGroup.notifyBalloonWarning("No documentation because `haskell-docs` build still has to be started or build is not finished yet")
+        }
       }
-    }
-    output.getStdout
+      output.getStdout
+    })
   }
 }
 

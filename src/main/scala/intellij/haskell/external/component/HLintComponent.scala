@@ -29,13 +29,14 @@ object HLintComponent {
   final val HlintName = "hlint"
 
   def check(psiFile: PsiFile): Seq[HLintInfo] = {
-    val output = StackCommandLine.runCommand(Seq("exec", "--", HlintName, "--json", psiFile.getOriginalFile.getVirtualFile.getPath), psiFile.getProject)
-    if (output.getStderr.nonEmpty) {
-      if (output.getStderr.toLowerCase.contains("couldn't find file: hlint")) {
-        HaskellNotificationGroup.notifyBalloonWarning("No Hlint suggestions because `hlint` build still has to be started or build is not finished yet")
+    StackCommandLine.runCommand(Seq("exec", "--", HlintName, "--json", psiFile.getOriginalFile.getVirtualFile.getPath), psiFile.getProject).map(output => {
+      if (output.getStderr.nonEmpty) {
+        if (output.getStderr.toLowerCase.contains("couldn't find file: hlint")) {
+          HaskellNotificationGroup.notifyBalloonWarning("No Hlint suggestions because `hlint` build still has to be started or build is not finished yet")
+        }
       }
-    }
-    deserializeHLintInfo(output.getStdout)
+      deserializeHLintInfo(output.getStdout)
+    }).getOrElse(Seq())
   }
 
   def applySuggestion(psiFile: PsiFile, startLineNr: Int, startColumnNr: Int): Unit = {
@@ -45,12 +46,13 @@ object HLintComponent {
         val command = Seq("exec", "--", HLintComponent.HlintName, HaskellFileUtil.getFilePath(psiFile),
           "--refactor",
           "--refactor-options", s"--pos $startLineNr,$startColumnNr")
-        val processOutput = StackCommandLine.runCommand(command, project)
-        if (processOutput.getStderrLines.isEmpty) {
-          HaskellFileUtil.saveFileWithContent(project, HaskellFileUtil.findVirtualFile(psiFile), processOutput.getStdout)
-        } else {
-          HaskellNotificationGroup.notifyBalloonError("Error while applying HLint suggestion. See Event Log for errors")
-        }
+        StackCommandLine.runCommand(command, project).foreach(processOutput => {
+          if (processOutput.getStderrLines.isEmpty) {
+            HaskellFileUtil.saveFileWithContent(project, HaskellFileUtil.findVirtualFile(psiFile), processOutput.getStdout)
+          } else {
+            HaskellNotificationGroup.notifyBalloonError("Error while applying HLint suggestion. See Event Log for errors")
+          }
+        })
       }
     }, null, null)
   }

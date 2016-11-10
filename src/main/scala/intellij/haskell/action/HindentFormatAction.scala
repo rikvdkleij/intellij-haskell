@@ -16,7 +16,10 @@
 
 package intellij.haskell.action
 
+import java.util.concurrent.{Callable, TimeUnit, TimeoutException}
+
 import com.intellij.openapi.actionSystem.{AnAction, AnActionEvent}
+import com.intellij.openapi.application.ApplicationManager
 import com.intellij.psi.PsiFile
 import com.intellij.psi.codeStyle._
 import intellij.haskell.settings.HaskellSettingsState
@@ -55,13 +58,25 @@ object HindentFormatAction {
         import scala.sys.process._
         val processBuilder = command #< virtualFile.getInputStream
         val processLogger: OnlyErrorProcessLogger = new OnlyErrorProcessLogger
-        val formattedSourceCode = processBuilder.lineStream_!(processLogger).mkString("\n")
+        val formatFuture = ApplicationManager.getApplication.executeOnPooledThread(new Callable[String] {
+          override def call(): String = {
+            processBuilder.lineStream_!(processLogger).mkString("\n")
+          }
+        })
 
+        val formattedSourceCode = try {
+          Option(formatFuture.get(500, TimeUnit.MILLISECONDS))
+        } catch {
+          case e: TimeoutException =>
+            HaskellNotificationGroup.logError(s"Timeout while formatting by `$HindentName`.")
+            None
+        }
         if (processLogger.hasErrors) {
           HaskellNotificationGroup.notifyBalloonError(s"Error while formatting by `$HindentName`. See Event Log for errors")
         } else {
-          HaskellFileUtil.saveFileWithContent(psiFile.getProject, virtualFile, formattedSourceCode)
+          formattedSourceCode.foreach(s => HaskellFileUtil.saveFileWithContent(psiFile.getProject, virtualFile, s))
         }
+
       case _ => HaskellNotificationGroup.logWarning("Can not format code because path to `hindent` is not configured in IntelliJ")
     }
   }

@@ -28,6 +28,7 @@ class HLintQuickfix(startElement: PsiElement, endElement: PsiElement, startLineN
     s"$hint, change to `$toSuggestion`"
   }
 
+  // TODO: Use HLint's `refactorings` output field to apply suggestion
   override def invoke(project: Project, psiFile: PsiFile, startElement: PsiElement, endElement: PsiElement): Unit = {
     HLintComponent.applySuggestion(psiFile, startLineNr, startColumnNr)
   }
