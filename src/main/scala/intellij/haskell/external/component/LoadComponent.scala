@@ -94,11 +94,15 @@ case class LoadResult(currentFileProblems: Iterable[LoadProblemInCurrentFile] = 
 
 sealed abstract class LoadProblem(private val message: String) {
   def plainMessage: String = {
-    message.trim.replaceAll(OSUtil.LineSeparator, " ").replaceAll("\\s+", " ")
+    message.split(OSUtil.LineSeparator).tail.mkString.trim.replaceAll("\\s+", " ")
   }
 
   def htmlMessage: String = {
-    StringUtil.escapeString(message.replace(' ', '\u00A0'))
+    StringUtil.escapeString(message.split(OSUtil.LineSeparator).tail.mkString("\n").trim.replace(' ', '\u00A0'))
+  }
+
+  def isWarning: Boolean = {
+    message.trim.startsWith("warning:") || message.trim.startsWith("Warning:")
   }
 }
 
