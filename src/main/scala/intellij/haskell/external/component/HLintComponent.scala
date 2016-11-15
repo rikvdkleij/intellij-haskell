@@ -48,7 +48,7 @@ object HLintComponent {
           "--refactor-options", s"--pos $startLineNr,$startColumnNr")
         StackCommandLine.runCommand(command, project).foreach(processOutput => {
           if (processOutput.getStderrLines.isEmpty) {
-            HaskellFileUtil.saveFileWithContent(project, HaskellFileUtil.findVirtualFile(psiFile), processOutput.getStdout)
+            HaskellFileUtil.saveFileWithNewContent(project, HaskellFileUtil.findVirtualFile(psiFile), processOutput.getStdout)
           } else {
             HaskellNotificationGroup.notifyBalloonError("Error while applying HLint suggestion. See Event Log for errors")
           }

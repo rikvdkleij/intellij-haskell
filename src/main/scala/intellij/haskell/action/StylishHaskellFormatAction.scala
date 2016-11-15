@@ -30,8 +30,8 @@ class StylishHaskellFormatAction extends AnAction {
   }
 
   override def actionPerformed(actionEvent: AnActionEvent): Unit = {
-    ActionUtil.findPsiFile(actionEvent).foreach(psiFile => {
-      StylishHaskellFormatAction.format(psiFile)
+    ActionUtil.findActionContext(actionEvent).foreach(actionContext => {
+      StylishHaskellFormatAction.format(actionContext.psiFile)
     })
   }
 }
@@ -50,7 +50,7 @@ object StylishHaskellFormatAction {
         val processOutput = CommandLine.runCommand(psiFile.getProject.getBasePath, stylishHaskellPath, Seq(HaskellFileUtil.getFilePath(psiFile)))
 
         processOutput.foreach(output => if (output.getStderrLines.isEmpty) {
-          HaskellFileUtil.saveFileWithContent(psiFile.getProject, virtualFile, output.getStdout)
+          HaskellFileUtil.saveFileWithNewContent(psiFile.getProject, virtualFile, output.getStdout)
         } else {
           HaskellNotificationGroup.notifyBalloonError(s"Error while formatting by `$StylishHaskellName`. See Event Log for errors")
         })

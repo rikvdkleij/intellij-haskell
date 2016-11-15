@@ -16,7 +16,7 @@
 
 package intellij.haskell.action
 
-import com.intellij.openapi.actionSystem.{AnAction, AnActionEvent, CommonDataKeys}
+import com.intellij.openapi.actionSystem.{AnAction, AnActionEvent}
 import intellij.haskell.external.component.StackReplsComponentsManager
 import intellij.haskell.util.{HaskellEditorUtil, StringUtil}
 
@@ -29,14 +29,12 @@ class ShowTypeAction extends AnAction {
   // TODO: Add "smart enter" for adding "hole"
   // TODO: In case of underscore use GHC error to display expected type
   def actionPerformed(actionEvent: AnActionEvent) {
-    val context = actionEvent.getDataContext
-    for {
-      editor <- Option(CommonDataKeys.EDITOR.getData(context))
-      psiFile <- ActionUtil.findPsiFile(actionEvent)
-    } yield {
-      val selectionModel = Option(editor.getSelectionModel)
+    ActionUtil.findActionContext(actionEvent).foreach(actionContext => {
+      val editor = actionContext.editor
+      val psiFile = actionContext.psiFile
+      val selectionModel = actionContext.selectionModel
       selectionModel match {
-        case Some(sm) if Option(sm.getSelectedText).isDefined => StackReplsComponentsManager.findTypeInfoForSelection(psiFile, sm) match {
+        case Some(sm) => StackReplsComponentsManager.findTypeInfoForSelection(psiFile, sm) match {
           case Some(ti) => HaskellEditorUtil.showHint(editor, StringUtil.escapeString(ti.typeSignature))
           case None => HaskellEditorUtil.showHint(editor, "Could not determine type for selection")
         }
@@ -47,6 +45,6 @@ class ShowTypeAction extends AnAction {
           }
         }
       }
-    }
+    })
   }
 }

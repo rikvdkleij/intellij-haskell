@@ -26,9 +26,17 @@ class HaskellFormatAction extends AnAction {
   }
 
   override def actionPerformed(actionEvent: AnActionEvent): Unit = {
-    ActionUtil.findPsiFile(actionEvent).foreach(psiFile => {
-      HindentFormatAction.format(psiFile)
-      StylishHaskellFormatAction.format(psiFile)
+    ActionUtil.findActionContext(actionEvent).foreach(actionContext => {
+      val editor = actionContext.editor
+      val psiFile = actionContext.psiFile
+      val selectionModel = actionContext.selectionModel
+      selectionModel match {
+        case Some(_) =>
+          HindentFormatAction.format(psiFile, selectionModel)
+        case None =>
+          HindentFormatAction.format(psiFile)
+          StylishHaskellFormatAction.format(psiFile)
+      }
     })
   }
 }

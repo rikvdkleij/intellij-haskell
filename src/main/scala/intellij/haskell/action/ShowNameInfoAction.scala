@@ -16,7 +16,7 @@
 
 package intellij.haskell.action
 
-import com.intellij.openapi.actionSystem.{AnAction, AnActionEvent, CommonDataKeys}
+import com.intellij.openapi.actionSystem.{AnAction, AnActionEvent}
 import com.intellij.openapi.util.text.StringUtil
 import intellij.haskell.external.component._
 import intellij.haskell.util.HaskellEditorUtil
@@ -28,20 +28,19 @@ class ShowNameInfoAction extends AnAction {
   }
 
   def actionPerformed(actionEvent: AnActionEvent) {
-    val context = actionEvent.getDataContext
-    for {
-      editor <- Option(CommonDataKeys.EDITOR.getData(context))
-      psiFile <- ActionUtil.findPsiFile(actionEvent)
-      offset = editor.getCaretModel.getOffset
-      psiElement <- Option(psiFile.findElementAt(offset))
-    } yield {
-      val nameInfos = StackReplsComponentsManager.findNameInfo(psiElement)
-      if (nameInfos.nonEmpty) {
-        HaskellEditorUtil.showList(nameInfos.toSeq.map(createInfoText), editor)
-      } else {
-        HaskellEditorUtil.showHint(editor, s"Could not determine info for ${StringUtil.escapeXml(psiElement.getText)}")
-      }
-    }
+    ActionUtil.findActionContext(actionEvent).foreach(actionContext => {
+      val editor = actionContext.editor
+      val psiFile = actionContext.psiFile
+      val offset = editor.getCaretModel.getOffset
+      Option(psiFile.findElementAt(offset)).foreach(psiElement => {
+        val nameInfos = StackReplsComponentsManager.findNameInfo(psiElement)
+        if (nameInfos.nonEmpty) {
+          HaskellEditorUtil.showList(nameInfos.toSeq.map(createInfoText), editor)
+        } else {
+          HaskellEditorUtil.showHint(editor, s"Could not determine info for ${StringUtil.escapeXml(psiElement.getText)}")
+        }
+      })
+    })
   }
 
   private def createInfoText(nameInfo: NameInfo): String = {

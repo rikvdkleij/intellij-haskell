@@ -16,7 +16,7 @@
 
 package intellij.haskell.action
 
-import com.intellij.openapi.actionSystem.{AnAction, AnActionEvent, CommonDataKeys}
+import com.intellij.openapi.actionSystem.{AnAction, AnActionEvent}
 import intellij.haskell.annotator.HaskellAnnotator
 import intellij.haskell.util.HaskellEditorUtil
 
@@ -27,15 +27,14 @@ class ShowProblemMessageAction extends AnAction {
   }
 
   override def actionPerformed(actionEvent: AnActionEvent): Unit = {
-    val context = actionEvent.getDataContext
-    for {
-      project <- Option(CommonDataKeys.PROJECT.getData(context))
-      editor <- Option(CommonDataKeys.EDITOR.getData(context))
-      offset = editor.getCaretModel.getOffset
-      info <- Option(HaskellAnnotator.getDaemonCodeAnalyzer(project).findHighlightByOffset(editor.getDocument, offset, false))
-      message = info.getToolTip
-    } yield {
-      HaskellEditorUtil.showHint(editor, message)
-    }
+    ActionUtil.findActionContext(actionEvent).foreach(actionContext => {
+      val project = actionContext.project
+      val editor = actionContext.editor
+      val offset = editor.getCaretModel.getOffset
+      Option(HaskellAnnotator.getDaemonCodeAnalyzer(project).findHighlightByOffset(editor.getDocument, offset, false)).foreach(info => {
+        val message = info.getToolTip
+        HaskellEditorUtil.showHint(editor, message)
+      })
+    })
   }
 }

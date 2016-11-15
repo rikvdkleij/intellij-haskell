@@ -21,7 +21,7 @@ import java.util
 
 import com.intellij.openapi.application.{ApplicationManager, ModalityState}
 import com.intellij.openapi.command.CommandProcessor
-import com.intellij.openapi.editor.Document
+import com.intellij.openapi.editor.{Document, SelectionModel}
 import com.intellij.openapi.fileEditor.FileDocumentManager
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.vfs.VirtualFile
@@ -79,13 +79,26 @@ object HaskellFileUtil {
     }
   }
 
-  def saveFileWithContent(project: Project, virtualFile: VirtualFile, sourceCode: String) = {
+  def saveFileWithNewContent(project: Project, virtualFile: VirtualFile, sourceCode: String) = {
     CommandProcessor.getInstance().executeCommand(project, new Runnable {
       override def run(): Unit = {
         ApplicationManager.getApplication.runWriteAction(new Runnable {
           override def run(): Unit = {
             val document = findDocument(virtualFile)
             document.foreach(_.setText(sourceCode))
+          }
+        })
+      }
+    }, null, null)
+  }
+
+  def saveFileWithPartlyNewContent(project: Project, virtualFile: VirtualFile, sourceCode: String, selectionModel: SelectionModel) = {
+    CommandProcessor.getInstance().executeCommand(project, new Runnable {
+      override def run(): Unit = {
+        ApplicationManager.getApplication.runWriteAction(new Runnable {
+          override def run(): Unit = {
+            val document = findDocument(virtualFile)
+            document.foreach(_.replaceString(selectionModel.getSelectionStart, selectionModel.getSelectionEnd, sourceCode))
           }
         })
       }

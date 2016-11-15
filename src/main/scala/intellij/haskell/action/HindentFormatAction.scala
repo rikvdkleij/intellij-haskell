@@ -16,10 +16,13 @@
 
 package intellij.haskell.action
 
+import java.io.ByteArrayInputStream
 import java.util.concurrent.{Callable, TimeUnit, TimeoutException}
 
 import com.intellij.openapi.actionSystem.{AnAction, AnActionEvent}
 import com.intellij.openapi.application.ApplicationManager
+import com.intellij.openapi.editor.SelectionModel
+import com.intellij.openapi.util.Computable
 import com.intellij.psi.PsiFile
 import com.intellij.psi.codeStyle._
 import intellij.haskell.settings.HaskellSettingsState
@@ -35,8 +38,9 @@ class HindentFormatAction extends AnAction {
   }
 
   override def actionPerformed(actionEvent: AnActionEvent): Unit = {
-    ActionUtil.findPsiFile(actionEvent).foreach(psiFile => {
-      HindentFormatAction.format(psiFile)
+    ActionUtil.findActionContext(actionEvent).foreach(actionContext => {
+      val psiFile = actionContext.psiFile
+      HindentFormatAction.format(psiFile, actionContext.selectionModel)
     })
   }
 }
@@ -44,7 +48,7 @@ class HindentFormatAction extends AnAction {
 object HindentFormatAction {
   final val HindentName = "hindent"
 
-  private[action] def format(psiFile: PsiFile): Unit = {
+  private[action] def format(psiFile: PsiFile, selectionModel: Option[SelectionModel] = None): Unit = {
     val lineLength = CodeStyleSettingsManager.getInstance(psiFile.getProject).getCurrentSettings.getRightMargin(HaskellLanguage.Instance)
     val indentOptions = CodeStyleSettingsManager.getInstance(psiFile.getProject).getCurrentSettings.getCommonSettings(HaskellLanguage.Instance).getIndentOptions
     val virtualFile = HaskellFileUtil.findVirtualFile(psiFile)
@@ -56,7 +60,11 @@ object HindentFormatAction {
         val command = Seq(hindentPath, "--line-length", lineLength.toString, "--indent-size", indentOptions.INDENT_SIZE.toString)
 
         import scala.sys.process._
-        val processBuilder = command #< virtualFile.getInputStream
+        val processBuilder = selectionModel match {
+          case Some(sm) => command #< new ByteArrayInputStream(getSelectedText(sm).getBytes("UTF-8"))
+          case None => command #< virtualFile.getInputStream
+        }
+
         val processLogger: OnlyErrorProcessLogger = new OnlyErrorProcessLogger
         val formatFuture = ApplicationManager.getApplication.executeOnPooledThread(new Callable[String] {
           override def call(): String = {
@@ -74,11 +82,21 @@ object HindentFormatAction {
         if (processLogger.hasErrors) {
           HaskellNotificationGroup.notifyBalloonError(s"Error while formatting by `$HindentName`. See Event Log for errors")
         } else {
-          formattedSourceCode.foreach(s => HaskellFileUtil.saveFileWithContent(psiFile.getProject, virtualFile, s))
+          formattedSourceCode.foreach(sourceCode => {
+            selectionModel match {
+              case Some(sm) => HaskellFileUtil.saveFileWithPartlyNewContent(psiFile.getProject, virtualFile, sourceCode, sm)
+              case None => HaskellFileUtil.saveFileWithNewContent(psiFile.getProject, virtualFile, sourceCode)
+            }
+          })
         }
-
       case _ => HaskellNotificationGroup.logWarning("Can not format code because path to `hindent` is not configured in IntelliJ")
     }
+  }
+
+  private def getSelectedText(selectionModel: SelectionModel) = {
+    ApplicationManager.getApplication.runReadAction(new Computable[String] {
+      override def compute(): String = selectionModel.getSelectedText
+    })
   }
 
   private class OnlyErrorProcessLogger extends ProcessLogger {
