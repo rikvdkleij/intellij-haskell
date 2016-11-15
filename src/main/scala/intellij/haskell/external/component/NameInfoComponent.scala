@@ -45,7 +45,7 @@ private[component] object NameInfoComponent {
   private case class Result(nameInfos: Option[Iterable[NameInfo]], var toRefresh: Boolean = false)
 
   private final val Cache = CacheBuilder.newBuilder()
-    .refreshAfterWrite(5, TimeUnit.SECONDS)
+    .refreshAfterWrite(2, TimeUnit.SECONDS)
     .expireAfterWrite(30, TimeUnit.MINUTES)
     .build(
       new CacheLoader[Key, Result] {

@@ -39,7 +39,7 @@ private[component] object DefinitionLocationComponent {
   private case class Result(location: Either[String, Option[DefinitionLocation]], var toRefresh: Boolean = false)
 
   private final val Cache = CacheBuilder.newBuilder()
-    .refreshAfterWrite(5, TimeUnit.SECONDS)
+    .refreshAfterWrite(2, TimeUnit.SECONDS)
     .expireAfterWrite(10, TimeUnit.MINUTES)
     .build(
       new CacheLoader[Key, Result]() {
