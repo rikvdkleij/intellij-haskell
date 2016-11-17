@@ -16,15 +16,16 @@
 
 package intellij.haskell.editor
 
+import com.intellij.codeInsight.daemon.impl.DaemonCodeAnalyzerImpl
 import com.intellij.lang.ImportOptimizer
+import com.intellij.lang.annotation.HighlightSeverity
 import com.intellij.psi.PsiFile
-import com.intellij.psi.util.PsiTreeUtil
 import intellij.haskell.HaskellFile
-import intellij.haskell.external.component.StackReplsComponentsManager
-import intellij.haskell.psi.HaskellElementCondition
-import intellij.haskell.util.{HaskellProjectUtil, LineColumnPosition}
+import intellij.haskell.psi.HaskellPsiUtil
+import intellij.haskell.util.{HaskellFileUtil, HaskellProjectUtil}
 
-// TODO: Refactor so call to loadHaskellFile is not done if called from HaskellAnnotator
+import scala.collection.JavaConversions._
+
 class HaskellImportOptimizer extends ImportOptimizer {
 
   override def supports(psiFile: PsiFile): Boolean = psiFile.isInstanceOf[HaskellFile] && !HaskellProjectUtil.isLibraryFile(psiFile)
@@ -32,22 +33,24 @@ class HaskellImportOptimizer extends ImportOptimizer {
   override def processFile(psiFile: PsiFile): Runnable = {
     new Runnable {
       override def run(): Unit = {
-        val problems = StackReplsComponentsManager.loadHaskellFile(psiFile, refreshCache = false).currentFileProblems
-        val redundantImports = problems.filter(p => p.plainMessage match {
+        val warnings = DaemonCodeAnalyzerImpl.getHighlights(HaskellFileUtil.findDocument(psiFile.getVirtualFile).get, HighlightSeverity.WARNING, psiFile.getProject)
+
+        val redundantImports = warnings.filter(_.getDescription match {
           case HaskellImportOptimizer.WarningRedundantImport(moduleName) => true
           case _ => false
         })
 
-        val redundantImportModuleOffsets = redundantImports.flatMap(p => LineColumnPosition.getOffset(psiFile, LineColumnPosition(p.lineNr, p.columnNr)))
-        val redundantModuleDeclarations = redundantImportModuleOffsets.map(offset => psiFile.findElementAt(offset)).map(e => PsiTreeUtil.findFirstParent(e, HaskellElementCondition.ImportDeclarationCondition))
-        redundantModuleDeclarations.foreach { me =>
-          me.delete()
-        }
+        redundantImports.map(_.getStartOffset).foreach(HaskellImportOptimizer.removeRedundantImport(psiFile, _))
       }
     }
   }
 }
 
 object HaskellImportOptimizer {
-  final val WarningRedundantImport = """[W|w]arning.*The import of [`|‘]([^'’]+)['|’] is redundant.*""".r
+  final val WarningRedundantImport = """The import of [`|‘]([^'’]+)['|’] is redundant.*""".r
+
+  def removeRedundantImport(psiFile: PsiFile, offset: Int) = {
+    val redundantImportDeclaration = Option(psiFile.findElementAt(offset)).flatMap(HaskellPsiUtil.findImportDeclarationParent)
+    redundantImportDeclaration.foreach(_.delete)
+  }
 }

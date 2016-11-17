@@ -70,7 +70,7 @@ class HaskellAnnotator extends ExternalAnnotator[PsiFile, LoadResult] {
 
   override def doAnnotate(psiFile: PsiFile): LoadResult = {
     HaskellFileUtil.saveAllFiles()
-    StackReplsComponentsManager.loadHaskellFile(psiFile, refreshCache = true)
+    StackReplsComponentsManager.loadHaskellFile(psiFile)
   }
 
   override def apply(psiFile: PsiFile, loadResult: LoadResult, holder: AnnotationHolder) {
@@ -130,7 +130,7 @@ class HaskellAnnotator extends ExternalAnnotator[PsiFile, LoadResult] {
             ErrorAnnotation(tr, problem.plainMessage, problem.htmlMessage)
           //
           case NoTypeSignaturePattern(typeSignature) => WarningAnnotationWithIntentionActions(tr, problem.plainMessage, problem.htmlMessage, Iterable(new TypeSignatureIntentionAction(typeSignature)))
-          case HaskellImportOptimizer.WarningRedundantImport(moduleName) => WarningAnnotationWithIntentionActions(tr, problem.plainMessage, problem.htmlMessage, Iterable(new OptimizeImportIntentionAction))
+          case HaskellImportOptimizer.WarningRedundantImport(moduleName) => WarningAnnotationWithIntentionActions(tr, problem.plainMessage, problem.htmlMessage, Iterable(new OptimizeImportIntentionAction(moduleName, tr.getStartOffset)))
           case DefinedButNotUsedPattern(n) => WarningAnnotationWithIntentionActions(tr, problem.plainMessage, problem.htmlMessage, Iterable(new DefinedButNotUsedIntentionAction(n)))
           case UseLanguageExtensionPattern(languageExtension) => createLanguageExtensionIntentionAction(problem, tr, languageExtension)
           case UseLanguageExtensionPattern2(languageExtension) => createLanguageExtensionIntentionAction(problem, tr, languageExtension)
@@ -342,13 +342,12 @@ class NotInScopeIntentionAction(identifier: String, moduleName: String, psiFile:
   }
 }
 
-// TODO: Pass warnings instead of calling load again
-class OptimizeImportIntentionAction extends HaskellBaseIntentionAction {
-  setText("Optimize imports")
+class OptimizeImportIntentionAction(moduleName: String, offset: Int) extends HaskellBaseIntentionAction {
+  setText(s"Remove redundant import for `$moduleName`")
 
   override def getFamilyName: String = "Optimize imports"
 
-  override def invoke(project: Project, editor: Editor, file: PsiFile): Unit = {
-    new HaskellImportOptimizer().processFile(file).run()
+  override def invoke(project: Project, editor: Editor, psiFile: PsiFile): Unit = {
+    HaskellImportOptimizer.removeRedundantImport(psiFile, offset)
   }
 }

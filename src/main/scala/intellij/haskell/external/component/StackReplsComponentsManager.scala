@@ -71,8 +71,8 @@ object StackReplsComponentsManager {
     GlobalProjectInfoComponent.findGlobalProjectInfo(project)
   }
 
-  def loadHaskellFile(psiFile: PsiFile, refreshCache: Boolean): LoadResult = {
-    LoadComponent.load(psiFile, refreshCache)
+  def loadHaskellFile(psiFile: PsiFile): LoadResult = {
+    LoadComponent.load(psiFile)
   }
 
   def invalidateModuleIdentifierCaches(project: Project): Unit = {
