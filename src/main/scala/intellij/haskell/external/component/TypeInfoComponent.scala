@@ -38,7 +38,7 @@ private[component] object TypeInfoComponent {
   private case class Result(typeInfo: Either[String, Option[TypeInfo]], var toRefresh: Boolean = false)
 
   private final val Cache = CacheBuilder.newBuilder()
-    .refreshAfterWrite(2, TimeUnit.SECONDS)
+    .refreshAfterWrite(1, TimeUnit.SECONDS)
     .expireAfterWrite(10, TimeUnit.MINUTES)
     .build(
       new CacheLoader[Key, Result]() {

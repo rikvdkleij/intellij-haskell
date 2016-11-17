@@ -30,15 +30,22 @@ private[component] object LoadComponent {
   def load(psiFile: PsiFile, refreshCache: Boolean): LoadResult = {
     val project = psiFile.getProject
 
+    if (refreshCache) {
+      ApplicationManager.getApplication.executeOnPooledThread(new Runnable {
+        override def run(): Unit = {
+          NameInfoComponent.markAllToRefresh(psiFile)
+          TypeInfoComponent.markAllToRefresh(psiFile)
+          DefinitionLocationComponent.markAllToRefresh(psiFile)
+        }
+      })
+    }
+
     StackReplsManager.getProjectRepl(project).load(psiFile) match {
       case Some((loadOutput, loadFailed)) =>
         if (refreshCache && !loadFailed) {
           ApplicationManager.getApplication.executeOnPooledThread(new Runnable {
             override def run(): Unit = {
               findModuleName(psiFile).foreach(BrowseModuleComponent.refreshForModule(project, _, psiFile))
-              NameInfoComponent.markAllToRefresh(psiFile)
-              TypeInfoComponent.markAllToRefresh(psiFile)
-              DefinitionLocationComponent.markAllToRefresh(psiFile)
             }
           })
         }

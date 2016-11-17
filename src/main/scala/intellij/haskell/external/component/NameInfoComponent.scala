@@ -60,7 +60,7 @@ private[component] object NameInfoComponent {
               if (oldResult.toRefresh && oldResult.nameInfos.isDefined) {
                 // Only elements of project file can be refreshed
                 findNameInfosInProjectFile(key, key.psiFile.getProject) match {
-                  case newResult@Some(nis) => Result(newResult)
+                  case newResult@Some(nis) if nis.nonEmpty => Result(newResult)
                   case _ => oldResult
                 }
               } else {

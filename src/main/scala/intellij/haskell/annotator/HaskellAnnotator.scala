@@ -41,7 +41,7 @@ import scala.collection.JavaConversions._
 
 class HaskellAnnotator extends ExternalAnnotator[PsiFile, LoadResult] {
 
-  private final val NoTypeSignaturePattern = """.* Top-level binding with no type signature: (.+)""".r
+  private final val NoTypeSignaturePattern = """Top-level binding with no type signature: (.+)""".r
   private final val UseLanguageExtensionPattern = """.* Perhaps you intended to use (\w+).*""".r
   private final val UseLanguageExtensionPattern2 = """.* Use (\w+) to allow.*""".r
   private final val UseLanguageExtensionPattern3 = """.* You need (\w+) to.*""".r
