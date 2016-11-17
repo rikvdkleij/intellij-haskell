@@ -18,16 +18,13 @@ package intellij.haskell.external.repl
 
 import com.intellij.openapi.project.Project
 
-// TODO: Refactor
 private[repl] class GlobalStackReplProcess(project: Project) extends StackReplProcess(project, Seq("--no-package-hiding")) {
   override def getComponentName: String = "global-stack-repl"
 
   private[this] var loadedModuleName: Option[String] = None
 
   def getModuleIdentifiers(moduleName: String): Option[StackReplOutput] = synchronized {
-    if (!loadedModuleName.contains(moduleName)) {
-      loadModule(moduleName)
-    }
+    loadModule(moduleName)
 
     if (loadedModuleName.contains(moduleName)) {
       execute(s":browse! $moduleName")
@@ -37,9 +34,7 @@ private[repl] class GlobalStackReplProcess(project: Project) extends StackReplPr
   }
 
   def findInfo(moduleName: String, name: String): Option[StackReplOutput] = synchronized {
-    if (!loadedModuleName.contains(moduleName)) {
-      loadModule(moduleName)
-    }
+    loadModule(moduleName)
 
     if (loadedModuleName.contains(moduleName)) {
       execute(s":info $name")
@@ -54,11 +49,13 @@ private[repl] class GlobalStackReplProcess(project: Project) extends StackReplPr
   }
 
   private def loadModule(moduleName: String) = {
-    val output = execute(s":module $moduleName")
-    if (output.exists(_.stdErrLines.isEmpty)) {
-      loadedModuleName = Some(moduleName)
-    } else {
-      loadedModuleName = None
+    if (!loadedModuleName.contains(moduleName)) {
+      val output = execute(s":module $moduleName")
+      if (output.exists(_.stdErrLines.isEmpty)) {
+        loadedModuleName = Some(moduleName)
+      } else {
+        loadedModuleName = None
+      }
     }
   }
 }
