@@ -1,7 +1,7 @@
 <idea-plugin version="2">
     <id>intellij.haskell</id>
     <name>IntelliJ-Haskell</name>
-    <version>1.0.0-beta3</version>
+    <version>1.0.0-beta4</version>
     <vendor email="rikvdkleij@gmail.com">Rik van der Kleij</vendor>
 
     <description><![CDATA[
@@ -11,6 +11,12 @@
     ]]></description>
 
     <change-notes><![CDATA[
+        <p>1.0.0-beta4</p>
+        <ul>
+            <li>Various improvements and fixes</li>
+            <li>Added Hoogle action</li>
+            <li>Support for Hindent formatting of selection</li>
+        </ul>
         <p>1.0.0-beta3</p>
         <ul>
             <li>Various improvements and fixes</li>
