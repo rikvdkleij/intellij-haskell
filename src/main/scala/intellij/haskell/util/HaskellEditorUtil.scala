@@ -108,7 +108,9 @@ object HaskellEditorUtil {
   def showList(messages: Seq[String], editor: Editor): Unit = {
     UIUtil.invokeLaterIfNeeded(new Runnable {
       override def run() {
-        val listPopupStep = new BaseListPopupStep[String]("info", messages)
+        val listPopupStep = new BaseListPopupStep[String]("info", messages) {
+          override def isSpeedSearchEnabled: Boolean = true
+        }
         val listPopup = JBPopupFactory.getInstance().createListPopup(listPopupStep)
         listPopup.showInBestPositionFor(editor)
       }

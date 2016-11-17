@@ -26,6 +26,8 @@ import intellij.haskell.external.commandLine.StackCommandLine
 import intellij.haskell.external.repl.StackReplsManager
 import intellij.haskell.util.HaskellProjectUtil
 
+import scala.concurrent.duration._
+
 class StackProjectComponent(project: Project) extends ProjectComponent {
   override def getComponentName: String = "stack-repls-manager"
 
@@ -48,14 +50,20 @@ class StackProjectComponent(project: Project) extends ProjectComponent {
             }
           })
 
+          val rebuildHoogleFuture = ApplicationManager.getApplication.executeOnPooledThread(new Runnable {
+            override def run(): Unit = {
+              StackCommandLine.runCommand(Seq("hoogle", "--rebuild"), project, timeoutInMillis = 10.minutes.toMillis)
+            }
+          })
+
           progressIndicator.setText("Busy with preloading cache and/or building tools")
           StackReplsComponentsManager.preloadModuleIdentifiersCaches(project)
 
           progressIndicator.setText("Restarting global repl to release memory")
           StackReplsManager.getGlobalRepl(project).restart()
 
-          if (!buildToolsFuture.isDone) {
-            progressIndicator.setText("Busy with building tools")
+          if (!buildToolsFuture.isDone || !rebuildHoogleFuture.isDone) {
+            progressIndicator.setText("Busy with building tools and/or rebuilding Hoogle database")
             buildToolsFuture.get(15, TimeUnit.MINUTES)
           }
         }

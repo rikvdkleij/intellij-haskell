@@ -27,7 +27,6 @@ class ShowTypeAction extends AnAction {
   }
 
   // TODO: Add "smart enter" for adding "hole"
-  // TODO: In case of underscore use GHC error to display expected type
   def actionPerformed(actionEvent: AnActionEvent) {
     ActionUtil.findActionContext(actionEvent).foreach(actionContext => {
       val editor = actionContext.editor

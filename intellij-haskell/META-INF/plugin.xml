@@ -301,6 +301,14 @@
             <add-to-group group-id="CodeMenu" anchor="last"/>
             <keyboard-shortcut first-keystroke="ctrl alt SEMICOLON" keymap="$default"/>
         </action>
+
+        <action id="Haskell.Hoogle"
+                class="intellij.haskell.action.HoogleAction"
+                text="Hoogle expression"
+                description="Hoogle for (selected) expression">
+            <add-to-group group-id="CodeEditorViewGroup" anchor="last"/>
+            <keyboard-shortcut first-keystroke="ctrl alt h" keymap="$default"/>
+        </action>
     </actions>
 
 </idea-plugin>
