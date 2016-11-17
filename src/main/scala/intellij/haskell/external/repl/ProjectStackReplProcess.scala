@@ -103,8 +103,8 @@ private[repl] class ProjectStackReplProcess(project: Project) extends StackReplP
           case None => None
         }
 
-      case Some(f) if loadedPsiFileInfo.isEmpty || loadedPsiFileInfo.exists(_.psiFile != psiFile) =>
-        load(f) match {
+      case Some(pf) if loadedPsiFileInfo.isEmpty || loadedPsiFileInfo.exists(_.psiFile != pf) =>
+        load(pf) match {
           case Some((lf, failed)) if !failed => executeAction
           case _ => None
         }
