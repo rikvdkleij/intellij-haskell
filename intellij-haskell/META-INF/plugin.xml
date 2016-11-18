@@ -212,6 +212,11 @@
         <!-- Cabal support -->
         <fileTypeFactory implementation="intellij.haskell.cabal.CabalFileTypeFactory"/>
         <lang.commenter language="Cabal" implementationClass="intellij.haskell.cabal.CabalCommenter"/>
+
+        <intentionAction>
+            <className>intellij.haskell.intention.AddParensIntention</className>
+            <category>Haskell</category>
+        </intentionAction>
     </extensions>
 
     <application-components>
