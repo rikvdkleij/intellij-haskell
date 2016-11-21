@@ -36,6 +36,7 @@ import intellij.haskell.sdk.HaskellSdkType
 import intellij.haskell.{HaskellIcons, HaskellNotificationGroup}
 
 import scala.collection.JavaConversions._
+import scala.concurrent.duration._
 
 class HaskellModuleBuilder extends ModuleBuilder with SourcePathsBuilder with ModuleBuilderListener {
 
@@ -78,7 +79,7 @@ class HaskellModuleBuilder extends ModuleBuilder with SourcePathsBuilder with Mo
         }
       }
 
-      val excludeFolderPath = getExcludeFolderPath
+      val excludeFolderPath = getStackWorkFolderPath
       excludeFolderPath.mkdir()
       val excludeFolderFile = Option(LocalFileSystem.getInstance.refreshAndFindFileByPath(FileUtil.toSystemIndependentName(excludeFolderPath.getAbsolutePath)))
       excludeFolderFile.foreach { f =>
@@ -93,10 +94,10 @@ class HaskellModuleBuilder extends ModuleBuilder with SourcePathsBuilder with Mo
 
         override def update(module: Module, rootModel: ModifiableRootModel): Unit = {
           val project = rootModel.getProject
-          CommandLine.runCommand(
-            project.getBasePath,
-            HaskellSdkType.getStackPath(project),
-            Seq("new", project.getName, "--bare", "hspec")
+          StackCommandLine.runCommand(
+            Seq("new", project.getName, "--bare", "hspec"),
+            project,
+            timeoutInMillis = 20.seconds.toMillis
           )
         }
       }
@@ -137,8 +138,7 @@ class HaskellModuleBuilder extends ModuleBuilder with SourcePathsBuilder with Mo
     new HaskellModuleWizardStep(context, this)
   }
 
-  // TODO: Add dist folder
-  private def getExcludeFolderPath = {
+  private def getStackWorkFolderPath = {
     new File(getContentEntryPath, ".stack-work")
   }
 
@@ -189,7 +189,7 @@ object HaskellModuleBuilder {
         val libDirectory = getIdeaHaskellLibDirectory(project)
         FileUtil.delete(libDirectory)
         FileUtil.createDirectory(libDirectory)
-        StackCommandLine.runCommand(Seq("list-dependencies", "--test"), project).map(_.getStdoutLines).foreach(dependencyLines => {
+        StackCommandLine.runCommand(Seq("list-dependencies", "--test"), project, timeoutInMillis = 10.seconds.toMillis).map(_.getStdoutLines).foreach(dependencyLines => {
           val packages = getPackages(dependencyLines)
           progressIndicator.setFraction(InitialProgressStep)
           val downloadedPackages = downloadHaskellPackageSources(project, stackPath, packages, progressIndicator)

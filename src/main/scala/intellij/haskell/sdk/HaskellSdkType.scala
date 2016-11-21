@@ -19,16 +19,17 @@ package intellij.haskell.sdk
 import java.io.File
 import javax.swing.Icon
 
+import com.intellij.openapi.fileChooser.FileChooserDescriptor
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.projectRoots._
 import com.intellij.openapi.projectRoots.impl.SdkConfigurationUtil
 import com.intellij.openapi.roots.{OrderRootType, ProjectRootManager}
-import com.intellij.openapi.util.io.FileUtil
+import com.intellij.openapi.vfs.VirtualFile
 import intellij.haskell.HaskellIcons
 import intellij.haskell.external.commandLine.CommandLine
 import org.jdom.Element
 
-class HaskellSdkType extends SdkType("Haskel Tool Stack SDK") {
+class HaskellSdkType extends SdkType("Haskell Tool Stack SDK") {
 
   override def suggestHomePath(): String = "/usr/bin"
 
@@ -38,10 +39,10 @@ class HaskellSdkType extends SdkType("Haskel Tool Stack SDK") {
 
   override def isValidSdkHome(path: String): Boolean = {
     val stackPath = new File(path)
-    stackPath.isDirectory && stackPath.listFiles.map(f => FileUtil.getNameWithoutExtension(f)).contains("stack")
+    stackPath.isFile && path.toLowerCase.contains("stack") && HaskellSdkType.getNumericVersion(path).isDefined
   }
 
-  override def getPresentableName: String = "Stack binary folder"
+  override def getPresentableName: String = "Stack binary"
 
   override def saveAdditionalData(additionalData: SdkAdditionalData, additional: Element): Unit = {}
 
@@ -53,7 +54,34 @@ class HaskellSdkType extends SdkType("Haskel Tool Stack SDK") {
 
   override def setupSdkPaths(sdk: Sdk): Unit = {}
 
-  override def getVersionString(sdkHome: String): String = HaskellSdkType.getNumericVersion(sdkHome)
+  override def getVersionString(sdkHome: String): String = {
+    if (isValidSdkHome(sdkHome)) {
+      HaskellSdkType.getNumericVersion(sdkHome).getOrElse("-")
+    } else {
+      "-"
+    }
+  }
+
+  override def getHomeChooserDescriptor: FileChooserDescriptor = {
+    val descriptor: FileChooserDescriptor = new FileChooserDescriptor(true, false, false, false, false, false) {
+      @throws[Exception]
+      override def validateSelectedFiles(files: Array[VirtualFile]) {
+        if (files.length != 0) {
+          val selectedPath: String = files(0).getPath
+          var valid = isValidSdkHome(selectedPath)
+          if (!valid) {
+            valid = isValidSdkHome(adjustSelectedSdkHome(selectedPath))
+            if (!valid) {
+              val message = "The selected file is not a valid Stack binary"
+              throw new Exception(message)
+            }
+          }
+        }
+      }
+    }
+    descriptor.setTitle("Select path to " + getPresentableName)
+    descriptor
+  }
 }
 
 object HaskellSdkType {
@@ -68,20 +96,16 @@ object HaskellSdkType {
   }
 
   def getNumericVersion(sdkHome: String) = {
-    val output = CommandLine.runCommand(
+    val workDir = new File(sdkHome).getParent
+    CommandLine.runCommand(
+      workDir,
       sdkHome,
-      createPath(sdkHome),
       Seq("--numeric-version")
-    )
-    output.map(_.getStdout).getOrElse("-")
+    ).map(_.getStdout)
   }
 
   def getStackPath(project: Project): String = {
     val sdkHomePath = getSdkHomePath(project)
-    sdkHomePath.map(p => createPath(p)).getOrElse(throw new IllegalStateException("Path to directory of `stack` binary expected to be set in Project SDK setting"))
-  }
-
-  private def createPath(sdkHome: String) = {
-    sdkHome + File.separator + "stack"
+    sdkHomePath.getOrElse(throw new IllegalStateException("Path to Haskell Stack binary expected to be set in Project SDK setting"))
   }
 }

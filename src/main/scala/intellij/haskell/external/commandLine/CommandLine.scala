@@ -29,7 +29,7 @@ import scala.collection.JavaConversions._
 object CommandLine {
   private final val StandardTimeoutInMillis = 1000
 
-  def runCommand(workDir: String, commandPath: String, arguments: Seq[String], timeoutInMillis: Int = StandardTimeoutInMillis, captureOutputToLog: Boolean = false): Option[ProcessOutput] = {
+  def runCommand(workDir: String, commandPath: String, arguments: Seq[String], timeoutInMillis: Long = StandardTimeoutInMillis, captureOutputToLog: Boolean = false): Option[ProcessOutput] = {
     if (!new File(workDir).isDirectory || !new File(commandPath).canExecute) {
       new ProcessOutput
     }
@@ -41,7 +41,7 @@ object CommandLine {
     execute(cmd, timeoutInMillis, captureOutputToLog)
   }
 
-  private def execute(cmd: GeneralCommandLine, timeout: Int, captureOutputToLog: Boolean): Option[ProcessOutput] = {
+  private def execute(cmd: GeneralCommandLine, timeout: Long, captureOutputToLog: Boolean): Option[ProcessOutput] = {
     val processHandler = if (captureOutputToLog) {
       new CapturingProcessHandler(cmd) {
         override protected def createProcessAdapter(processOutput: ProcessOutput): CapturingProcessAdapter = new CapturingProcessToLog(cmd, processOutput)
@@ -52,7 +52,7 @@ object CommandLine {
 
     import scala.collection.JavaConversions._
 
-    val processOutput = processHandler.runProcess(timeout, true)
+    val processOutput = processHandler.runProcess(timeout.toInt, true)
     if (processOutput.isTimeout) {
       HaskellNotificationGroup.notifyBalloonWarning(s"Timeout while `${cmd.getCommandLineString}`")
       None
