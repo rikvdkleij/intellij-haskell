@@ -45,12 +45,21 @@ class StackProjectComponent(project: Project) extends ProjectComponent {
           StackReplsManager.getProjectRepl(project).start()
           StackReplsManager.getGlobalRepl(project).start()
 
+          progressIndicator.setText("Busy with preloading cache, building tools and/or rebuilding Hoogle database")
+          val preloadCacheFuture = ApplicationManager.getApplication.executeOnPooledThread(new Runnable {
+            override def run(): Unit = {
+              StackReplsComponentsManager.preloadModuleIdentifiersCaches(project)
+
+              HaskellNotificationGroup.logInfo("Restarting global repl to release memory")
+              StackReplsManager.getGlobalRepl(project).restart()
+            }
+          })
+
           StackCommandLine.runCommand(Seq("exec", "--", "hoogle", "--numeric-version"), project) match {
             case Some(v) =>
               if (v.getStdout.trim > "5") {
                 HaskellNotificationGroup.logInfo("Hoogle version > 5 is already installed")
               } else {
-                progressIndicator.setText("Busy with building Hoogle")
                 StackCommandLine.executeBuild(project, Seq("build", "hoogle-5.0.4", "haskell-src-exts-1.18.2"), "Build of `hoogle`")
               }
             case _ => HaskellNotificationGroup.notifyBalloonWarning("Could not determine version of (maybe already installed) Hoogle. Version 5 of Hoogle will not be automatically build")
@@ -68,19 +77,13 @@ class StackProjectComponent(project: Project) extends ProjectComponent {
             }
           })
 
-          progressIndicator.setText("Busy with preloading cache and/or building tools")
-          StackReplsComponentsManager.preloadModuleIdentifiersCaches(project)
-
-          progressIndicator.setText("Restarting global repl to release memory")
-          StackReplsManager.getGlobalRepl(project).restart()
-
-          if (!buildToolsFuture.isDone || !rebuildHoogleFuture.isDone) {
-            progressIndicator.setText("Busy with building tools and/or rebuilding Hoogle database")
+          if (!buildToolsFuture.isDone || !rebuildHoogleFuture.isDone || !preloadCacheFuture.isDone) {
             buildToolsFuture.get(15, TimeUnit.MINUTES)
+            rebuildHoogleFuture.get(15, TimeUnit.MINUTES)
+            preloadCacheFuture.get(15, TimeUnit.MINUTES)
           }
         }
       })
-
     }
   }
 
