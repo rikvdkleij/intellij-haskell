@@ -22,6 +22,7 @@ import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.components.ProjectComponent
 import com.intellij.openapi.progress.{ProgressIndicator, ProgressManager, Task}
 import com.intellij.openapi.project.Project
+import intellij.haskell.HaskellNotificationGroup
 import intellij.haskell.external.commandLine.StackCommandLine
 import intellij.haskell.external.repl.StackReplsManager
 import intellij.haskell.util.HaskellProjectUtil
@@ -43,6 +44,17 @@ class StackProjectComponent(project: Project) extends ProjectComponent {
           progressIndicator.setText("Busy with building project and starting Stack repls")
           StackReplsManager.getProjectRepl(project).start()
           StackReplsManager.getGlobalRepl(project).start()
+
+          StackCommandLine.runCommand(Seq("exec", "--", "hoogle", "--numeric-version"), project) match {
+            case Some(v) =>
+              if (v.getStdout.trim > "5") {
+                HaskellNotificationGroup.logInfo("Hoogle version > 5 is already installed")
+              } else {
+                progressIndicator.setText("Busy with building Hoogle")
+                StackCommandLine.executeBuild(project, Seq("build", "hoogle-5.0.4", "haskell-src-exts-1.18.2"), "Build of `hoogle`")
+              }
+            case _ => HaskellNotificationGroup.notifyBalloonWarning("Could not determine version of (maybe already installed) Hoogle. Version 5 of Hoogle will not be automatically build")
+          }
 
           val buildToolsFuture = ApplicationManager.getApplication.executeOnPooledThread(new Runnable {
             override def run(): Unit = {
