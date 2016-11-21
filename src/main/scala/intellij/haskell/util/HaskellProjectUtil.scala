@@ -32,10 +32,7 @@ object HaskellProjectUtil {
     val haskellModuleExists = HaskellModuleType.findHaskellProjectModules(project).nonEmpty
     val sdkPathIsSet = HaskellSdkType.getSdkHomePath(project) != null
     if (haskellModuleExists && !sdkPathIsSet) {
-      HaskellNotificationGroup.notifyBalloonError("Path to Stack is not configured in this Haskell Stack project. Please do and restart project.")
-    }
-    if (!haskellModuleExists && sdkPathIsSet) {
-      HaskellNotificationGroup.notifyBalloonError("Path to Stack is configured but this project does not contain Haskell module. Please close this project and create new project by using `Project from Existing Sources...`.")
+      HaskellNotificationGroup.notifyBalloonError("Path to Stack binary is not configured in this Haskell Stack project. Please do and restart project.")
     }
     haskellModuleExists && sdkPathIsSet
   }
