@@ -16,15 +16,20 @@
 
 package intellij.haskell.psi
 
+import java.util
+
 import com.intellij.openapi.project.Project
 import com.intellij.psi.codeStyle.CodeStyleSettingsManager
 import com.intellij.psi.impl.PsiFileFactoryImpl
+import com.intellij.psi.impl.source.tree.LeafPsiElement
 import com.intellij.psi.tree.IElementType
 import com.intellij.psi.util.PsiTreeUtil
 import com.intellij.psi.{PsiFileFactory, PsiManager, PsiWhiteSpace}
 import intellij.haskell.psi.HaskellTypes._
 import intellij.haskell.util.OSUtil
 import intellij.haskell.{HaskellFile, HaskellFileType, HaskellLanguage}
+
+import scala.collection.JavaConversions._
 
 object HaskellElementFactory {
   def createVarid(project: Project, name: String): Option[HaskellVarid] = {
@@ -60,6 +65,19 @@ object HaskellElementFactory {
   def createLanguagePragma(project: Project, languagePragma: String): HaskellLanguagePragma = {
     val haskellFile = createFileFromText(project, languagePragma)
     PsiTreeUtil.findChildOfType(haskellFile, classOf[HaskellLanguagePragma])
+  }
+
+  def createLeafPsiElements(project: Project, code: String): util.Collection[LeafPsiElement] = {
+    val haskellFile = createFileFromText(project, code)
+    PsiTreeUtil.findChildrenOfType(haskellFile, classOf[LeafPsiElement])
+  }
+
+  def getLeftParenElement(project: Project): Option[LeafPsiElement] = {
+    createLeafPsiElements(project, "add = (1 + 2)").find(_.getNode.getElementType == HS_LEFT_PAREN)
+  }
+
+  def getRightParenElement(project: Project): Option[LeafPsiElement] = {
+    createLeafPsiElements(project, "add = (1 + 2)").find(_.getNode.getElementType == HS_RIGHT_PAREN)
   }
 
   def createWhiteSpace(project: Project, space: String = " ") = {
