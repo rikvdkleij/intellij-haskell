@@ -4,16 +4,19 @@ import com.intellij.codeInsight.intention.PsiElementBaseIntentionAction
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.project.Project
 import com.intellij.psi.PsiElement
-import intellij.haskell.psi.HaskellPsiUtil
 import intellij.haskell.psi.HaskellTypes._
+import intellij.haskell.psi.{HaskellElementFactory, HaskellPsiUtil}
 
 class AddParensIntention extends PsiElementBaseIntentionAction {
   override def invoke(project: Project, editor: Editor, psiElement: PsiElement): Unit = {
-    val left = HaskellPsiUtil.getLeftParenElement(project)
-    val right = HaskellPsiUtil.getRightParenElement(project)
-    val (start, end) = HaskellPsiUtil.getSelectionStartEnd(psiElement, editor)
-    start.getParent.addBefore(left, start)
-    end.getParent.addAfter(right, end)
+    for {
+      left <- HaskellElementFactory.getLeftParenElement(project)
+      right <- HaskellElementFactory.getRightParenElement(project)
+      (start, end) = HaskellPsiUtil.getSelectionStartEnd(psiElement, editor)
+    } yield {
+      start.getParent.addBefore(left, start)
+      end.getParent.addAfter(right, end)
+    }
   }
 
   override def isAvailable(project: Project, editor: Editor, psiElement: PsiElement): Boolean = {

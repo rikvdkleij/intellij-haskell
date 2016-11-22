@@ -26,7 +26,6 @@ import intellij.haskell.psi.HaskellElementCondition._
 import intellij.haskell.psi.HaskellTypes._
 
 import scala.collection.JavaConversions._
-import scala.reflect._
 
 object HaskellPsiUtil {
 
@@ -116,18 +115,6 @@ object HaskellPsiUtil {
       case e: HaskellExpression => Some(e)
       case e => Option(PsiTreeUtil.findFirstParent(e, ExpressionCondition)).map(_.asInstanceOf[HaskellExpression])
     }
-  }
-
-  def createParensFromText(project: Project, code: String): Iterable[PsiElement] = {
-    PsiTreeUtil.findChildrenOfType(PsiFileFactory.getInstance(project).createFileFromText("DUMMY.hs", HaskellLanguage.Instance, code), classOf[LeafPsiElement])
-  }
-
-  def getLeftParenElement(project: Project): PsiElement = {
-    createParensFromText(project, "add = (1 + 2)").filter(_.getNode.getElementType == HS_LEFT_PAREN).head
-  }
-
-  def getRightParenElement(project: Project): PsiElement = {
-    createParensFromText(project, "add = (1 + 2)").filter(_.getNode.getElementType == HS_RIGHT_PAREN).head
   }
 
   def getSelectionStartEnd(psiElement: PsiElement, editor: Editor): (PsiElement, PsiElement) = {
