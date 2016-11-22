@@ -7,7 +7,7 @@
     <description><![CDATA[
         Haskell support.
 
-        Please read: <a href="https://github.com/rikvdkleij/intellij-haskell/blob/master/README.md">README</a>
+        Please <a href="https://github.com/rikvdkleij/intellij-haskell/blob/master/README.md">README</a>
     ]]></description>
 
     <change-notes><![CDATA[
@@ -16,6 +16,7 @@
             <li>Various improvements and fixes</li>
             <li>Added Hoogle action</li>
             <li>Support for Hindent formatting of selection</li>
+            <li>Add and remove parens around expression</li>
         </ul>
         <p>1.0.0-beta3</p>
         <ul>
