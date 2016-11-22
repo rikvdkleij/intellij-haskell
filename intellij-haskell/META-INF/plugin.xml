@@ -16,7 +16,7 @@
             <li>Various improvements and fixes</li>
             <li>Added Hoogle action</li>
             <li>Support for Hindent formatting of selection</li>
-            <li>Add and remove parens around expression</li>
+            <li>Add and remove parens around expression (@zjhmale)</li>
         </ul>
         <p>1.0.0-beta3</p>
         <ul>
