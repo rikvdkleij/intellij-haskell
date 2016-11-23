@@ -9,14 +9,20 @@ import intellij.haskell.psi.HaskellTypes._
 
 class RemoveParensIntention extends PsiElementBaseIntentionAction {
   override def invoke(project: Project, editor: Editor, psiElement: PsiElement): Unit = {
-    val (start, end) = HaskellPsiUtil.getSelectionStartEnd(psiElement, editor)
-    start.delete()
-    end.delete()
+    for {
+      (start, end) <- HaskellPsiUtil.getSelectionStartEnd(psiElement, editor)
+    } yield {
+      start.delete()
+      end.delete()
+    }
   }
 
   override def isAvailable(project: Project, editor: Editor, psiElement: PsiElement): Boolean = {
-    val (start, end) = HaskellPsiUtil.getSelectionStartEnd(psiElement, editor)
-    psiElement.isWritable && start.getNode.getElementType == HS_LEFT_PAREN && end.getNode.getElementType == HS_RIGHT_PAREN
+    HaskellPsiUtil.getSelectionStartEnd(psiElement, editor) match {
+      case None => false
+      case Some((start, end)) =>
+        psiElement.isWritable && start.getNode.getElementType == HS_LEFT_PAREN && end.getNode.getElementType == HS_RIGHT_PAREN
+    }
   }
 
   override def getFamilyName: String = getText
