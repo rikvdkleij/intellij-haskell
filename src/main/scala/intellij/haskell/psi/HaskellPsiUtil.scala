@@ -17,11 +17,8 @@
 package intellij.haskell.psi
 
 import com.intellij.openapi.editor.Editor
-import com.intellij.openapi.project.Project
-import com.intellij.psi.impl.source.tree.LeafPsiElement
 import com.intellij.psi.util.PsiTreeUtil
-import com.intellij.psi.{PsiElement, PsiFile, PsiFileFactory}
-import intellij.haskell.HaskellLanguage
+import com.intellij.psi.{PsiElement, PsiFile}
 import intellij.haskell.psi.HaskellElementCondition._
 import intellij.haskell.psi.HaskellTypes._
 

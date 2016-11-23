@@ -25,6 +25,7 @@ import intellij.haskell.psi.HaskellPsiUtil
 import intellij.haskell.util.{HaskellFileUtil, HaskellProjectUtil}
 
 import scala.collection.JavaConversions._
+import scala.util.matching.Regex
 
 class HaskellImportOptimizer extends ImportOptimizer {
 
@@ -36,7 +37,7 @@ class HaskellImportOptimizer extends ImportOptimizer {
         val warnings = DaemonCodeAnalyzerImpl.getHighlights(HaskellFileUtil.findDocument(psiFile.getVirtualFile).get, HighlightSeverity.WARNING, psiFile.getProject)
 
         val redundantImports = warnings.filter(_.getDescription match {
-          case HaskellImportOptimizer.WarningRedundantImport(moduleName) => true
+          case HaskellImportOptimizer.WarningRedundantImport(_) => true
           case _ => false
         })
 
@@ -47,9 +48,9 @@ class HaskellImportOptimizer extends ImportOptimizer {
 }
 
 object HaskellImportOptimizer {
-  final val WarningRedundantImport = """The import of [`|‘]([^'’]+)['|’] is redundant.*""".r
+  final val WarningRedundantImport: Regex = """The (?:qualified )?import of [`|‘]([^'’]+)['|’] is redundant.*""".r
 
-  def removeRedundantImport(psiFile: PsiFile, offset: Int) = {
+  def removeRedundantImport(psiFile: PsiFile, offset: Int): Unit = {
     val redundantImportDeclaration = Option(psiFile.findElementAt(offset)).flatMap(HaskellPsiUtil.findImportDeclarationParent)
     redundantImportDeclaration.foreach(_.delete)
   }

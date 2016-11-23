@@ -206,7 +206,7 @@ object HaskellAnnotator {
     DaemonCodeAnalyzer.getInstance(project).asInstanceOf[DaemonCodeAnalyzerImpl]
   }
 
-  def restartDaemonCodeAnalyzerForOpenFiles(project: Project) = {
+  def restartDaemonCodeAnalyzerForOpenFiles(project: Project): Unit = {
     ApplicationManager.getApplication.invokeLater {
       new Runnable {
         override def run(): Unit = {

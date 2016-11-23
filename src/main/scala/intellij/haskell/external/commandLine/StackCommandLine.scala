@@ -25,7 +25,7 @@ import scala.concurrent.duration._
 
 object StackCommandLine {
 
-  private final val StandardTimeoutInMillis = 1000
+  private final val StandardTimeoutInMillis = 2000
 
   private final val BuildTimeout = 30.minutes
 
