@@ -183,20 +183,21 @@ object HaskellModuleBuilder {
 
   def addLibrarySources(module: Module): Unit = {
     val project = module.getProject
-    val stackPath = HaskellSdkType.getStackPath(project)
-    ProgressManager.getInstance().run(new Task.Backgroundable(project, "Downloading Haskell library sources and adding them as source libraries to module") {
-      def run(progressIndicator: ProgressIndicator) {
-        val libDirectory = getIdeaHaskellLibDirectory(project)
-        FileUtil.delete(libDirectory)
-        FileUtil.createDirectory(libDirectory)
-        StackCommandLine.runCommand(Seq("list-dependencies", "--test"), project, timeoutInMillis = 10.seconds.toMillis).map(_.getStdoutLines).foreach(dependencyLines => {
-          val packages = getPackages(dependencyLines)
-          progressIndicator.setFraction(InitialProgressStep)
-          val downloadedPackages = downloadHaskellPackageSources(project, stackPath, packages, progressIndicator)
-          progressIndicator.setFraction(0.9)
-          addPackagesAsLibrariesToModule(module, downloadedPackages, libDirectory.getAbsolutePath)
-        })
-      }
+    HaskellSdkType.getStackPath(project).foreach(stackPath => {
+      ProgressManager.getInstance().run(new Task.Backgroundable(project, "Downloading Haskell library sources and adding them as source libraries to module") {
+        def run(progressIndicator: ProgressIndicator) {
+          val libDirectory = getIdeaHaskellLibDirectory(project)
+          FileUtil.delete(libDirectory)
+          FileUtil.createDirectory(libDirectory)
+          StackCommandLine.runCommand(Seq("list-dependencies", "--test"), project, timeoutInMillis = 10.seconds.toMillis).map(_.getStdoutLines).foreach(dependencyLines => {
+            val packages = getPackages(dependencyLines)
+            progressIndicator.setFraction(InitialProgressStep)
+            val downloadedPackages = downloadHaskellPackageSources(project, stackPath, packages, progressIndicator)
+            progressIndicator.setFraction(0.9)
+            addPackagesAsLibrariesToModule(module, downloadedPackages, libDirectory.getAbsolutePath)
+          })
+        }
+      })
     })
   }
 

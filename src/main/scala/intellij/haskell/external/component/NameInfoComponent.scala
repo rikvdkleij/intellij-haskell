@@ -16,7 +16,7 @@
 
 package intellij.haskell.external.component
 
-import java.util.concurrent.{Callable, Executors, TimeUnit}
+import java.util.concurrent.{Callable, Executors}
 
 import com.google.common.cache.{CacheBuilder, CacheLoader}
 import com.google.common.util.concurrent.{ListenableFuture, ListenableFutureTask, UncheckedExecutionException}
@@ -45,8 +45,6 @@ private[component] object NameInfoComponent {
   private case class Result(nameInfos: Option[Iterable[NameInfo]], var toRefresh: Boolean = false)
 
   private final val Cache = CacheBuilder.newBuilder()
-    .refreshAfterWrite(2, TimeUnit.SECONDS)
-    .expireAfterWrite(30, TimeUnit.MINUTES)
     .build(
       new CacheLoader[Key, Result] {
 
@@ -56,7 +54,7 @@ private[component] object NameInfoComponent {
 
         override def reload(key: Key, oldResult: Result): ListenableFuture[Result] = {
           val task = ListenableFutureTask.create(new Callable[Result]() {
-            def call() = {
+            def call(): Result = {
               if (oldResult.toRefresh && oldResult.nameInfos.isDefined) {
                 // Only elements of project file can be refreshed
                 findNameInfosInProjectFile(key, key.psiFile.getProject) match {
@@ -145,7 +143,7 @@ private[component] object NameInfoComponent {
 
   // TODO: Make distinction in type between project file and library file
   def markAllToRefresh(psiFile: PsiFile): Unit = {
-    Cache.asMap().filter(_._1.psiFile == psiFile).values.foreach(_.toRefresh = true)
+    Cache.asMap().filter(_._1.psiFile == psiFile).keys.foreach(Cache.invalidate)
   }
 }
 
@@ -153,9 +151,9 @@ sealed trait NameInfo {
 
   def declaration: String
 
-  def shortenedDeclaration = StringUtil.shortenHaskellDeclaration(declaration)
+  def shortenedDeclaration: String = StringUtil.shortenHaskellDeclaration(declaration)
 
-  def escapedDeclaration = escapeString(declaration).replaceAll("""\s+""", " ")
+  def escapedDeclaration: String = escapeString(declaration).replaceAll("""\s+""", " ")
 }
 
 case class ProjectNameInfo(declaration: String, filePath: String, lineNr: Int, columnNr: Int) extends NameInfo

@@ -30,11 +30,11 @@ object HaskellProjectUtil {
 
   def isHaskellStackProject(project: Project): Boolean = {
     val haskellModuleExists = HaskellModuleType.findHaskellProjectModules(project).nonEmpty
-    val sdkPathIsSet = HaskellSdkType.getSdkHomePath(project) != null
-    if (haskellModuleExists && !sdkPathIsSet) {
+    val stackPath = HaskellSdkType.getStackPath(project)
+    if (haskellModuleExists && stackPath.isEmpty) {
       HaskellNotificationGroup.notifyBalloonError("Path to Stack binary is not configured in this Haskell Stack project. Please do and restart project.")
     }
-    haskellModuleExists && sdkPathIsSet
+    haskellModuleExists && stackPath.isDefined
   }
 
   def findFile(filePath: String, project: Project): Option[HaskellFile] = {

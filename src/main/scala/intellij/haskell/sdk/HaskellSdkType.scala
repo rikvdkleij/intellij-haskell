@@ -25,8 +25,8 @@ import com.intellij.openapi.projectRoots._
 import com.intellij.openapi.projectRoots.impl.SdkConfigurationUtil
 import com.intellij.openapi.roots.{OrderRootType, ProjectRootManager}
 import com.intellij.openapi.vfs.VirtualFile
-import intellij.haskell.HaskellIcons
 import intellij.haskell.external.commandLine.CommandLine
+import intellij.haskell.{HaskellIcons, HaskellNotificationGroup}
 import org.jdom.Element
 
 class HaskellSdkType extends SdkType("Haskell Tool Stack SDK") {
@@ -87,15 +87,11 @@ class HaskellSdkType extends SdkType("Haskell Tool Stack SDK") {
 object HaskellSdkType {
   def getInstance: HaskellSdkType = SdkType.findInstance(classOf[HaskellSdkType])
 
-  def getSdkHomePath(project: Project): Option[String] = {
-    Option(ProjectRootManager.getInstance(project).getProjectSdk).map(_.getHomePath)
-  }
-
   def findOrCreateSdk(): Sdk = {
     SdkConfigurationUtil.findOrCreateSdk(null, getInstance)
   }
 
-  def getNumericVersion(sdkHome: String) = {
+  def getNumericVersion(sdkHome: String): Option[String] = {
     val workDir = new File(sdkHome).getParent
     CommandLine.runCommand(
       workDir,
@@ -104,8 +100,13 @@ object HaskellSdkType {
     ).map(_.getStdout)
   }
 
-  def getStackPath(project: Project): String = {
-    val sdkHomePath = getSdkHomePath(project)
-    sdkHomePath.getOrElse(throw new IllegalStateException("Path to Haskell Stack binary expected to be set in Project SDK setting"))
+  def getStackPath(project: Project): Option[String] = {
+    val stackPath = Option(ProjectRootManager.getInstance(project).getProjectSdk).map(_.getHomePath)
+    stackPath match {
+      case Some(_) => stackPath
+      case None =>
+        HaskellNotificationGroup.notifyBalloonError("Path to Haskell Stack binary expected to be set in Project SDK setting. Please do and restart Project.")
+        None
+    }
   }
 }

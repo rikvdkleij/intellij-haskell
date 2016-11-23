@@ -16,7 +16,7 @@
 
 package intellij.haskell.external.component
 
-import java.util.concurrent.{Callable, Executors, TimeUnit}
+import java.util.concurrent.{Callable, Executors}
 
 import com.google.common.cache.{CacheBuilder, CacheLoader}
 import com.google.common.util.concurrent.{ListenableFuture, ListenableFutureTask, UncheckedExecutionException}
@@ -38,8 +38,6 @@ private[component] object TypeInfoComponent {
   private case class Result(typeInfo: Either[String, Option[TypeInfo]], var toRefresh: Boolean = false)
 
   private final val Cache = CacheBuilder.newBuilder()
-    .refreshAfterWrite(1, TimeUnit.SECONDS)
-    .expireAfterWrite(10, TimeUnit.MINUTES)
     .build(
       new CacheLoader[Key, Result]() {
 
@@ -49,7 +47,7 @@ private[component] object TypeInfoComponent {
 
         override def reload(key: Key, oldResult: Result): ListenableFuture[Result] = {
           val task = ListenableFutureTask.create(new Callable[Result]() {
-            def call() = {
+            def call(): Result = {
               if (oldResult.toRefresh && oldResult.typeInfo.isRight) {
                 val newResult = createTypeInfo(key)
                 newResult.typeInfo match {
@@ -96,7 +94,7 @@ private[component] object TypeInfoComponent {
   }
 
   def markAllToRefresh(psiFile: PsiFile): Unit = {
-    Cache.asMap().filter(_._1.psiFile == psiFile).values.foreach(_.toRefresh = true)
+    Cache.asMap().filter(_._1.psiFile == psiFile).keys.foreach(Cache.invalidate)
   }
 
   private def findTypeInfo(psiFile: PsiFile, startPosition: LineColumnPosition, endPosition: LineColumnPosition, expression: String): Option[TypeInfo] = {

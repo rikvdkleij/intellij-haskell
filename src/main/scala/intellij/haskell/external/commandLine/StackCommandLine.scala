@@ -30,12 +30,14 @@ object StackCommandLine {
   private final val BuildTimeout = 30.minutes
 
   def runCommand(command: Seq[String], project: Project, timeoutInMillis: Long = StandardTimeoutInMillis, captureOutputToLog: Boolean = false): Option[ProcessOutput] = {
-    CommandLine.runCommand(
-      project.getBasePath,
-      HaskellSdkType.getStackPath(project),
-      command,
-      timeoutInMillis.toInt,
-      captureOutputToLog)
+    HaskellSdkType.getStackPath(project).flatMap(stackPath => {
+      CommandLine.runCommand(
+        project.getBasePath,
+        stackPath,
+        command,
+        timeoutInMillis.toInt,
+        captureOutputToLog)
+    })
   }
 
   def executeBuild(project: Project, buildArguments: Seq[String], message: String): Unit = {

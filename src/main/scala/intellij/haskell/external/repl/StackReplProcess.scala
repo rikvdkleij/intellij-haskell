@@ -132,54 +132,55 @@ private[repl] abstract class StackReplProcess(val project: Project, val extraSta
       executeBuild(project, Seq("build", "--test", "--only-dependencies", "--haddock", "--fast"), "build of dependencies")
     }
 
-    val stackPath = HaskellSdkType.getStackPath(project)
-    try {
-      val command = (Seq(stackPath, "repl", "--with-ghc", "intero", "--verbosity", "warn", "--no-build", "--terminal") ++ extraStartOptions).mkString(" ")
+    HaskellSdkType.getStackPath(project).foreach(stackPath => {
+      try {
+        val command = (Seq(stackPath, "repl", "--with-ghc", "intero", "--verbosity", "warn", "--no-build", "--terminal") ++ extraStartOptions).mkString(" ")
 
-      logInfo(s"Stack repl will be started with command: $command")
+        logInfo(s"Stack repl will be started with command: $command")
 
-      val process = Option(EnvironmentUtil.getEnvironmentMap) match {
-        case None => Process(command, new File(project.getBasePath))
-        case Some(envMap) => Process(command, new File(project.getBasePath), envMap.toArray: _*)
+        val process = Option(EnvironmentUtil.getEnvironmentMap) match {
+          case None => Process(command, new File(project.getBasePath))
+          case Some(envMap) => Process(command, new File(project.getBasePath), envMap.toArray: _*)
+        }
+        process.run(
+          new ProcessIO(
+            in => outputStream.put(in),
+            (out: InputStream) => Source.fromInputStream(out).getLines.foreach(stdOut.add),
+            (err: InputStream) => Source.fromInputStream(err).getLines.foreach(stdErr.add)
+          ))
+
+        stdOut.clear()
+        stdErr.clear()
+
+        // We have to wait...
+        Thread.sleep(1000)
+
+        writeOutputToLogInfo()
+
+        // `enter` to pass prompt which asks for which module to load
+        // See Stack 1.2 issue https://github.com/commercialhaskell/stack/issues/2603
+        // TODO: Remove this because in Stack 1.2.1 fixed
+        writeToOutputStream("")
+        Thread.sleep(100)
+
+        writeToOutputStream(s""":set prompt "$EndOfOutputIndicator\\n"""")
+
+        if (isProjectRepl) {
+          writeToOutputStream(":set -Wall")
+          writeToOutputStream(":set -fdefer-typed-holes")
+        }
+
+        available = true
+
+        logInfo("Stack repl is started.")
       }
-      process.run(
-        new ProcessIO(
-          in => outputStream.put(in),
-          (out: InputStream) => Source.fromInputStream(out).getLines.foreach(stdOut.add),
-          (err: InputStream) => Source.fromInputStream(err).getLines.foreach(stdErr.add)
-        ))
-
-      stdOut.clear()
-      stdErr.clear()
-
-      // We have to wait...
-      Thread.sleep(1000)
-
-      writeOutputToLogInfo()
-
-      // `enter` to pass prompt which asks for which module to load
-      // See Stack 1.2 issue https://github.com/commercialhaskell/stack/issues/2603
-      // TODO: Remove this because in Stack 1.2.1 fixed
-      writeToOutputStream("")
-      Thread.sleep(100)
-
-      writeToOutputStream(s""":set prompt "$EndOfOutputIndicator\\n"""")
-
-      if (isProjectRepl) {
-        writeToOutputStream(":set -Wall")
-        writeToOutputStream(":set -fdefer-typed-holes")
+      catch {
+        case e: Exception =>
+          logError("Could not start Stack repl. Make sure you have set right path to Stack in settings.")
+          logError(s"Error message while trying to start Stack repl: ${e.getMessage}")
+          exit(forceExit = true)
       }
-
-      available = true
-
-      logInfo("Stack repl is started.")
-    }
-    catch {
-      case e: Exception =>
-        logError("Could not start Stack repl. Make sure you have set right path to Stack in settings.")
-        logError(s"Error message while trying to start Stack repl: ${e.getMessage}")
-        exit(forceExit = true)
-    }
+    })
   }
 
   def exit(forceExit: Boolean = false): Unit = {
@@ -223,7 +224,7 @@ private[repl] abstract class StackReplProcess(val project: Project, val extraSta
     logInfo("Stack repl is stopped.")
   }
 
-  def restart() = {
+  def restart(): Unit = {
     exit()
     start()
   }
@@ -272,7 +273,7 @@ private[repl] abstract class StackReplProcess(val project: Project, val extraSta
             lb += new StringBuilder(2, s)
           }).map(_.toString)
       } catch {
-        case e: NoSuchElementException =>
+        case _: NoSuchElementException =>
           HaskellNotificationGroup.notifyBalloonWarning(s"Could not join indented lines. Probably first line started with spaces. Unexpected input was: ${lines.mkString(", ")}")
           Seq()
       }
