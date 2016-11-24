@@ -16,6 +16,8 @@
 
 package intellij.haskell.util
 
+import java.io.File
+
 import com.intellij.openapi.module.ModuleManager
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.roots.ProjectRootManager
@@ -93,6 +95,10 @@ object HaskellProjectUtil {
       ModuleManager.getInstance(project).getModules.map(GlobalSearchScope.moduleScope).reduce(_.uniteWith(_))
     }
     HaskellFileIndex.findFiles(project, scope)
+  }
+
+  def findPackageName(project: Project): Option[String] = {
+    new File(project.getBasePath).listFiles.find(_.getName.endsWith(".cabal")).map(_.getName.replaceFirst(".cabal", ""))
   }
 
   private def getFileNameAndDirNamesForModule(module: String) = {

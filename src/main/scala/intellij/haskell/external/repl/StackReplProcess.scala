@@ -168,6 +168,15 @@ private[repl] abstract class StackReplProcess(val project: Project, val extraSta
         if (isProjectRepl) {
           writeToOutputStream(":set -Wall")
           writeToOutputStream(":set -fdefer-typed-holes")
+
+          HaskellProjectUtil.findPackageName(project) match {
+            case Some(name) =>
+              val packageModuleName = s"Paths_${name.replaceAll("-", "_")}"
+              logInfo(s"Package module `$packageModuleName` will be loaded")
+              writeToOutputStream(s":load $packageModuleName")
+            case None =>
+              logInfo(s"Package module will not be loaded")
+          }
         }
 
         available = true
