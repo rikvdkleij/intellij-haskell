@@ -26,7 +26,7 @@ import com.intellij.psi.{PsiComment, PsiElement, PsiWhiteSpace}
 import intellij.haskell.psi.HaskellTypes._
 import intellij.haskell.psi.{HaskellPsiUtil, HaskellQualifiedNameElement}
 
-import scala.collection.JavaConversions._
+import scala.collection.JavaConverters._
 import scala.collection.mutable.ListBuffer
 
 class HaskellExtendWordSelectioner extends ExtendWordSelectionHandler {
@@ -44,7 +44,7 @@ class HaskellExtendWordSelectioner extends ExtendWordSelectionHandler {
       Iterable(HS_RIGHT_PAREN, HS_RIGHT_BRACE, HS_RIGHT_BRACKET))
     val lastEndOffset = nextEndOffsets.lastOption.getOrElse(e.getTextRange.getEndOffset)
 
-    nextEndOffsets.map(eo => new TextRange(startOffset, eo)) ++ prevStartOffsets.map(so => new TextRange(so, lastEndOffset))
+    (nextEndOffsets.map(eo => new TextRange(startOffset, eo)) ++ prevStartOffsets.map(so => new TextRange(so, lastEndOffset))).asJava
   }
 
   private def getOffsets(element: Option[PsiElement], offsets: ListBuffer[Int], getSibling: PsiElement => PsiElement, getOffset: PsiElement => Int, toSkip: Iterable[IElementType]): ListBuffer[Int] = {
@@ -59,7 +59,7 @@ class HaskellExtendWordSelectioner extends ExtendWordSelectionHandler {
             case e: PsiWhiteSpace => recur(e)
             case e: PsiElement if e.getNode.getElementType == HS_COMMA => recur(e)
             case e: PsiElement if e.getNode.getElementType == HS_NEWLINE | e.getNode.getElementType == HS_EQUAL | e.getNode.getElementType == HS_LEFT_ARROW => offsets
-            case e: PsiElement if toSkip.contains(e.getNode.getElementType) => offsets
+            case e: PsiElement if toSkip.exists(_ == e.getNode.getElementType) => offsets
             case _ =>
               offsets += getOffset(e)
               recur(e)

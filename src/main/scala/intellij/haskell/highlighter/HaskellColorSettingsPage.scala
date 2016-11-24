@@ -25,7 +25,7 @@ import intellij.haskell.HaskellIcons
 import intellij.haskell.highlighter.HaskellSyntaxHighlighter._
 import org.jetbrains.annotations.NotNull
 
-import scala.collection.JavaConversions._
+import scala.collection.JavaConverters._
 
 object HaskellColorSettingsPage {
   private final val Attrs = Array[AttributesDescriptor](
@@ -93,6 +93,6 @@ class HaskellColorSettingsPage extends ColorSettingsPage {
 
   @NotNull
   def getAdditionalHighlightingTagToDescriptorMap: java.util.Map[String, TextAttributesKey] = {
-    HaskellColorSettingsPage.AttributesKeyMap
+    HaskellColorSettingsPage.AttributesKeyMap.asJava
   }
 }

@@ -24,7 +24,7 @@ import intellij.haskell.HaskellFile
 import intellij.haskell.psi.HaskellPsiUtil
 import intellij.haskell.util.{HaskellFileUtil, HaskellProjectUtil}
 
-import scala.collection.JavaConversions._
+import scala.collection.JavaConverters._
 import scala.util.matching.Regex
 
 class HaskellImportOptimizer extends ImportOptimizer {
@@ -32,17 +32,15 @@ class HaskellImportOptimizer extends ImportOptimizer {
   override def supports(psiFile: PsiFile): Boolean = psiFile.isInstanceOf[HaskellFile] && !HaskellProjectUtil.isLibraryFile(psiFile)
 
   override def processFile(psiFile: PsiFile): Runnable = {
-    new Runnable {
-      override def run(): Unit = {
-        val warnings = DaemonCodeAnalyzerImpl.getHighlights(HaskellFileUtil.findDocument(psiFile.getVirtualFile).get, HighlightSeverity.WARNING, psiFile.getProject)
+    () => {
+      val warnings = DaemonCodeAnalyzerImpl.getHighlights(HaskellFileUtil.findDocument(psiFile.getVirtualFile).get, HighlightSeverity.WARNING, psiFile.getProject)
 
-        val redundantImports = warnings.filter(_.getDescription match {
-          case HaskellImportOptimizer.WarningRedundantImport(_) => true
-          case _ => false
-        })
+      val redundantImports = warnings.asScala.filter(_.getDescription match {
+        case HaskellImportOptimizer.WarningRedundantImport(_) => true
+        case _ => false
+      })
 
-        redundantImports.map(_.getStartOffset).foreach(HaskellImportOptimizer.removeRedundantImport(psiFile, _))
-      }
+      redundantImports.map(_.getStartOffset).foreach(HaskellImportOptimizer.removeRedundantImport(psiFile, _))
     }
   }
 }

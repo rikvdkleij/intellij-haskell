@@ -30,12 +30,11 @@ import com.intellij.openapi.ui.Messages
 import com.intellij.openapi.util.Pair
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.vfs.{LocalFileSystem, VfsUtil}
-import com.intellij.util.Consumer
 import intellij.haskell.external.commandLine.{CommandLine, StackCommandLine}
 import intellij.haskell.sdk.HaskellSdkType
 import intellij.haskell.{HaskellIcons, HaskellNotificationGroup}
 
-import scala.collection.JavaConversions._
+import scala.collection.JavaConverters._
 import scala.concurrent.duration._
 
 class HaskellModuleBuilder extends ModuleBuilder with SourcePathsBuilder with ModuleBuilderListener {
@@ -65,7 +64,7 @@ class HaskellModuleBuilder extends ModuleBuilder with SourcePathsBuilder with Mo
     val contentEntry = doAddContentEntry(rootModel)
 
     if (contentEntry != null) {
-      getSourcePaths.foreach { path =>
+      getSourcePaths.asScala.foreach { path =>
         val folder = Option(LocalFileSystem.getInstance.refreshAndFindFileByPath(FileUtil.toSystemIndependentName(path.first)))
         folder.foreach { f =>
           contentEntry.addSourceFolder(f, false, path.second)
@@ -190,7 +189,7 @@ object HaskellModuleBuilder {
           FileUtil.delete(libDirectory)
           FileUtil.createDirectory(libDirectory)
           StackCommandLine.runCommand(Seq("list-dependencies", "--test"), project, timeoutInMillis = 10.seconds.toMillis).map(_.getStdoutLines).foreach(dependencyLines => {
-            val packages = getPackages(dependencyLines)
+            val packages = getPackages(dependencyLines.asScala)
             progressIndicator.setFraction(InitialProgressStep)
             val downloadedPackages = downloadHaskellPackageSources(project, stackPath, packages, progressIndicator)
             progressIndicator.setFraction(0.9)
@@ -241,16 +240,14 @@ object HaskellModuleBuilder {
   }
 
   private def addPackagesAsLibrariesToModule(module: Module, haskellPackages: Seq[HaskellPackageInfo], libPath: String) {
-    ModuleRootModificationUtil.updateModel(module, new Consumer[ModifiableRootModel] {
-      override def consume(t: ModifiableRootModel): Unit = {
-        val libraryTable = t.getModuleLibraryTable
-        libraryTable.getLibraries.foreach(l => libraryTable.removeLibrary(l))
-        haskellPackages.foreach { hp =>
-          val library = libraryTable.createLibrary(hp.name)
-          val model = library.getModifiableModel
-          model.addRoot(getUrlByPath(libPath + File.separator + hp.dirName), OrderRootType.SOURCES)
-          model.commit()
-        }
+    ModuleRootModificationUtil.updateModel(module, (t: ModifiableRootModel) => {
+      val libraryTable = t.getModuleLibraryTable
+      libraryTable.getLibraries.foreach(l => libraryTable.removeLibrary(l))
+      haskellPackages.foreach { hp =>
+        val library = libraryTable.createLibrary(hp.name)
+        val model = library.getModifiableModel
+        model.addRoot(getUrlByPath(libPath + File.separator + hp.dirName), OrderRootType.SOURCES)
+        model.commit()
       }
     })
   }

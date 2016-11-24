@@ -23,8 +23,7 @@ import intellij.haskell.psi.{HaskellNamedElement, HaskellPsiUtil}
 import intellij.haskell.util.StringUtil._
 import intellij.haskell.util.{HaskellFileUtil, HaskellProjectUtil}
 
-import scala.collection.JavaConversions._
-
+// TODO: Consider to use Stub index instead of File-based index
 class HaskellDeclarationContributor extends HaskellChooseByNameContributor[HaskellNamedElement] {
 
   private var simpleCache: Iterable[HaskellNamedElement] = _
@@ -42,7 +41,7 @@ class HaskellDeclarationContributor extends HaskellChooseByNameContributor[Haske
     findElementsByName(project, pattern, includeNonProjectItems).toArray
   }
 
-  protected def find(conditionOnLowerCase: String => Boolean) = {
+  protected def find(conditionOnLowerCase: String => Boolean): Iterable[HaskellNamedElement] = {
     simpleCache.filter(ne => conditionOnLowerCase(toLowerCase(ne.getName)))
   }
 }

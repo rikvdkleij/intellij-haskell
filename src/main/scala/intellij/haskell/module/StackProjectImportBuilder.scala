@@ -20,7 +20,6 @@ import java.io.File
 import java.util
 import javax.swing.Icon
 
-import com.intellij.ide.util.projectWizard.ModuleBuilder
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.module.{ModifiableModuleModel, Module, ModuleManager}
 import com.intellij.openapi.project.Project
@@ -30,7 +29,7 @@ import com.intellij.packaging.artifacts.ModifiableArtifactModel
 import com.intellij.projectImport.ProjectImportBuilder
 import intellij.haskell.HaskellIcons
 
-import scala.collection.JavaConversions._
+import scala.collection.JavaConverters._
 
 class StackProjectImportBuilder extends ProjectImportBuilder[Unit] {
   override def getName: String = "Haskell Stack importer"
@@ -56,16 +55,14 @@ class StackProjectImportBuilder extends ProjectImportBuilder[Unit] {
 
         haskellModuleBuilder.createModule(moduleModel)
         haskellModuleBuilder.commit(project)
-        haskellModuleBuilder.addModuleConfigurationUpdater(new ModuleBuilder.ModuleConfigurationUpdater {
-          override def update(module: Module, rootModel: ModifiableRootModel): Unit = {
-            haskellModuleBuilder.setupRootModel(rootModel)
-          }
+        haskellModuleBuilder.addModuleConfigurationUpdater((module: Module, rootModel: ModifiableRootModel) => {
+          haskellModuleBuilder.setupRootModel(rootModel)
         })
       }
     })
 
     haskellModuleBuilder.moduleCreated(moduleModel.getModules.head)
-    moduleModel.getModules.toSeq
+    moduleModel.getModules.toList.asJava
   }
 
   private def getModuleName: String = {

@@ -22,7 +22,7 @@ import com.intellij.openapi.module.{Module, ModuleType, ModuleTypeManager, Modul
 import com.intellij.openapi.project.Project
 import intellij.haskell.HaskellIcons
 
-import scala.collection.JavaConversions._
+import scala.collection.JavaConverters._
 
 class HaskellModuleType extends ModuleType[HaskellModuleBuilder](HaskellModuleType.Id) {
 
@@ -45,6 +45,6 @@ object HaskellModuleType {
   }
 
   def findHaskellProjectModules(project: Project): Iterable[Module] = {
-    ModuleUtil.getModulesOfType(project, HaskellModuleType.getInstance)
+    ModuleUtil.getModulesOfType(project, HaskellModuleType.getInstance).asScala
   }
 }

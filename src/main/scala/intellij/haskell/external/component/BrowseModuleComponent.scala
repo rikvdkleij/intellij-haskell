@@ -16,7 +16,7 @@
 
 package intellij.haskell.external.component
 
-import java.util.concurrent.{Callable, Executors}
+import java.util.concurrent.Executors
 
 import com.google.common.cache.{CacheBuilder, CacheLoader}
 import com.google.common.util.concurrent.{ListenableFuture, ListenableFutureTask, UncheckedExecutionException}
@@ -26,7 +26,7 @@ import com.intellij.psi.PsiFile
 import intellij.haskell.external.repl.StackReplsManager
 import intellij.haskell.util.StringUtil
 
-import scala.collection.JavaConversions._
+import scala.collection.JavaConverters._
 
 private[component] object BrowseModuleComponent {
 
@@ -43,10 +43,8 @@ private[component] object BrowseModuleComponent {
         }
 
         override def reload(key: Key, oldValue: Option[Iterable[ModuleIdentifier]]): ListenableFuture[Option[Iterable[ModuleIdentifier]]] = {
-          val task = ListenableFutureTask.create(new Callable[Option[Iterable[ModuleIdentifier]]]() {
-            def call() = {
-              findModuleIdentifiers(key)
-            }
+          val task = ListenableFutureTask.create[Option[Iterable[ModuleIdentifier]]](() => {
+            findModuleIdentifiers(key)
           })
           executor.execute(task)
           task
@@ -56,8 +54,8 @@ private[component] object BrowseModuleComponent {
           val project = key.project
           val moduleName = key.moduleName
           GlobalProjectInfoComponent.findGlobalProjectInfo(project).flatMap(gpi => {
-            if (gpi.allAvailableLibraryModuleNames.contains(moduleName)) {
-              StackReplsManager.getGlobalRepl(project).getModuleIdentifiers(moduleName).filter(_.stdOutLines.nonEmpty) map(_.stdOutLines.flatMap(findModuleIdentifier(_, moduleName, project)))
+            if (gpi.allAvailableLibraryModuleNames.exists(_ == moduleName)) {
+              StackReplsManager.getGlobalRepl(project).getModuleIdentifiers(moduleName).filter(_.stdOutLines.nonEmpty) map (_.stdOutLines.flatMap(findModuleIdentifier(_, moduleName, project)))
             } else {
               key.psiFile match {
                 case Some(f) =>
@@ -127,7 +125,7 @@ private[component] object BrowseModuleComponent {
   }
 
   def findModuleNamesInCache(project: Project): Iterable[String] = {
-    Cache.asMap().filter(e => e._1.project == project).map(_._1.moduleName)
+    Cache.asMap().asScala.filter(e => e._1.project == project).map(_._1.moduleName)
   }
 
   def findAllTopLevelModuleIdentifiers(project: Project, moduleName: String, psiFile: PsiFile): Iterable[ModuleIdentifier] = {
@@ -147,12 +145,12 @@ private[component] object BrowseModuleComponent {
   }
 
   def refreshForModule(project: Project, moduleName: String, psiFile: PsiFile): Unit = {
-    val keys = Cache.asMap().keySet().filter(k => k.project == project && k.moduleName == moduleName && k.psiFile.contains(psiFile))
+    val keys = Cache.asMap().keySet().asScala.filter(k => k.project == project && k.moduleName == moduleName && k.psiFile.contains(psiFile))
     keys.foreach(k => Cache.refresh(k))
   }
 
   def invalidate(project: Project): Unit = {
-    val keys = Cache.asMap().keys.filter(k => k.project == project)
+    val keys = Cache.asMap().asScala.keys.filter(k => k.project == project)
     keys.foreach(k => Cache.invalidate(k))
   }
 }

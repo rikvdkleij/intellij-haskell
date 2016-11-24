@@ -16,7 +16,7 @@
 
 package intellij.haskell.external.component
 
-import java.util.concurrent.{Callable, Executors}
+import java.util.concurrent.Executors
 
 import com.google.common.cache.{CacheBuilder, CacheLoader}
 import com.google.common.util.concurrent.{ListenableFuture, ListenableFutureTask, UncheckedExecutionException}
@@ -30,7 +30,7 @@ import intellij.haskell.psi._
 import intellij.haskell.util.StringUtil.escapeString
 import intellij.haskell.util.{HaskellProjectUtil, StringUtil}
 
-import scala.collection.JavaConversions._
+import scala.collection.JavaConverters._
 
 private[component] object NameInfoComponent {
 
@@ -53,17 +53,15 @@ private[component] object NameInfoComponent {
         }
 
         override def reload(key: Key, oldResult: Result): ListenableFuture[Result] = {
-          val task = ListenableFutureTask.create(new Callable[Result]() {
-            def call(): Result = {
-              if (oldResult.toRefresh && oldResult.nameInfos.isDefined) {
-                // Only elements of project file can be refreshed
-                findNameInfosInProjectFile(key, key.psiFile.getProject) match {
-                  case newResult@Some(nis) if nis.nonEmpty => Result(newResult)
-                  case _ => oldResult
-                }
-              } else {
-                oldResult
+          val task = ListenableFutureTask.create[Result](() => {
+            if (oldResult.toRefresh && oldResult.nameInfos.isDefined) {
+              // Only elements of project file can be refreshed
+              findNameInfosInProjectFile(key, key.psiFile.getProject) match {
+                case newResult@Some(nis) if nis.nonEmpty => Result(newResult)
+                case _ => oldResult
               }
+            } else {
+              oldResult
             }
           })
           Executor.execute(task)
@@ -143,7 +141,7 @@ private[component] object NameInfoComponent {
 
   // TODO: Make distinction in type between project file and library file
   def markAllToRefresh(psiFile: PsiFile): Unit = {
-    Cache.asMap().filter(_._1.psiFile == psiFile).keys.foreach(Cache.invalidate)
+    Cache.asMap().asScala.filter(_._1.psiFile == psiFile).keys.foreach(Cache.invalidate)
   }
 }
 

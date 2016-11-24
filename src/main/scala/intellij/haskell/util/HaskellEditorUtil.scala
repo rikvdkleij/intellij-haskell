@@ -32,7 +32,7 @@ import com.intellij.ui.awt.RelativePoint
 import com.intellij.util.ui.{PositionTracker, UIUtil}
 import intellij.haskell.HaskellFile
 
-import scala.collection.JavaConversions._
+import scala.collection.JavaConverters._
 
 object HaskellEditorUtil {
 
@@ -51,12 +51,12 @@ object HaskellEditorUtil {
       val psiFile = CommonDataKeys.PSI_FILE.getData(dataContext)
       psiFile match {
         case _: HaskellFile if !onlyForProjectFile => enable()
-        case f: HaskellFile if onlyForProjectFile && !HaskellProjectUtil.isLibraryFile(psiFile) => enable()
+        case _: HaskellFile if onlyForProjectFile && !HaskellProjectUtil.isLibraryFile(psiFile) => enable()
         case _ => disable()
       }
     }
     catch {
-      case e: Exception => disable()
+      case _: Exception => disable()
     }
   }
 
@@ -81,39 +81,35 @@ object HaskellEditorUtil {
   }
 
   def showInfoMessageBallon(message: String, editor: Editor, inCenterOfEditor: Boolean): Unit = {
-    UIUtil.invokeLaterIfNeeded(new Runnable {
-      override def run() {
-        val balloon = JBPopupFactory.getInstance().createHtmlTextBalloonBuilder(message, MessageType.INFO, null).setCloseButtonEnabled(true).setHideOnAction(true).createBalloon()
-        if (inCenterOfEditor) {
-          balloon.showInCenterOf(editor.getComponent)
-        } else {
-          balloon.show(new PositionTracker[Balloon](editor.getContentComponent) {
-            def recalculateLocation(balloon: Balloon): RelativePoint = {
-              val popupFactory = JBPopupFactory.getInstance
-              val target: RelativePoint = popupFactory.guessBestPopupLocation(editor)
-              val screenPoint: Point = target.getScreenPoint
-              var y: Int = screenPoint.y
-              if (target.getPoint.getY > editor.getLineHeight + balloon.getPreferredSize.getHeight) {
-                y -= editor.getLineHeight
-              }
-              val relativePoint = new RelativePoint(new Point(screenPoint.x, y))
-              relativePoint
+    UIUtil.invokeLaterIfNeeded(() => {
+      val balloon = JBPopupFactory.getInstance().createHtmlTextBalloonBuilder(message, MessageType.INFO, null).setCloseButtonEnabled(true).setHideOnAction(true).createBalloon()
+      if (inCenterOfEditor) {
+        balloon.showInCenterOf(editor.getComponent)
+      } else {
+        balloon.show(new PositionTracker[Balloon](editor.getContentComponent) {
+          def recalculateLocation(balloon: Balloon): RelativePoint = {
+            val popupFactory = JBPopupFactory.getInstance
+            val target: RelativePoint = popupFactory.guessBestPopupLocation(editor)
+            val screenPoint: Point = target.getScreenPoint
+            var y: Int = screenPoint.y
+            if (target.getPoint.getY > editor.getLineHeight + balloon.getPreferredSize.getHeight) {
+              y -= editor.getLineHeight
             }
-          }, Balloon.Position.above)
-        }
+            val relativePoint = new RelativePoint(new Point(screenPoint.x, y))
+            relativePoint
+          }
+        }, Balloon.Position.above)
       }
     })
   }
 
   def showList(messages: Seq[String], editor: Editor): Unit = {
-    UIUtil.invokeLaterIfNeeded(new Runnable {
-      override def run() {
-        val listPopupStep = new BaseListPopupStep[String]("info", messages) {
-          override def isSpeedSearchEnabled: Boolean = true
-        }
-        val listPopup = JBPopupFactory.getInstance().createListPopup(listPopupStep)
-        listPopup.showInBestPositionFor(editor)
+    UIUtil.invokeLaterIfNeeded(() => {
+      val listPopupStep = new BaseListPopupStep[String]("info", messages.asJava) {
+        override def isSpeedSearchEnabled: Boolean = true
       }
+      val listPopup = JBPopupFactory.getInstance().createListPopup(listPopupStep)
+      listPopup.showInBestPositionFor(editor)
     })
   }
 

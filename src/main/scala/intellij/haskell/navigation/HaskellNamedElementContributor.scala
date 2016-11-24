@@ -23,8 +23,6 @@ import intellij.haskell.psi.{HaskellNamedElement, HaskellPsiUtil}
 import intellij.haskell.util.StringUtil._
 import intellij.haskell.util.{HaskellFileUtil, HaskellProjectUtil}
 
-import scala.collection.JavaConversions._
-
 class HaskellNamedElementContributor extends HaskellChooseByNameContributor[HaskellNamedElement] {
 
   private var simpleCache: Iterable[HaskellNamedElement] = _
@@ -41,7 +39,7 @@ class HaskellNamedElementContributor extends HaskellChooseByNameContributor[Hask
     findElementsByName(project, pattern, includeNonProjectItems).toArray
   }
 
-  protected def find(conditionOnLowerCase: String => Boolean) = {
+  protected def find(conditionOnLowerCase: String => Boolean): Iterable[HaskellNamedElement] = {
     simpleCache.filter(ne => conditionOnLowerCase(toLowerCase(ne.getName)))
   }
 }

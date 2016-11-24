@@ -22,16 +22,16 @@ import com.intellij.psi.{PsiElement, PsiFile}
 import intellij.haskell.psi.HaskellElementCondition._
 import intellij.haskell.psi.HaskellTypes._
 
-import scala.collection.JavaConversions._
+import scala.collection.JavaConverters._
 
 object HaskellPsiUtil {
 
   def findImportDeclarations(psiFile: PsiFile): Iterable[HaskellImportDeclaration] = {
-    PsiTreeUtil.findChildrenOfType(psiFile.getOriginalFile, classOf[HaskellImportDeclaration])
+    PsiTreeUtil.findChildrenOfType(psiFile.getOriginalFile, classOf[HaskellImportDeclaration]).asScala
   }
 
   def findLanguageExtensions(psiFile: PsiFile): Iterable[HaskellLanguagePragma] = {
-    PsiTreeUtil.findChildrenOfType(psiFile.getOriginalFile, classOf[HaskellLanguagePragma])
+    PsiTreeUtil.findChildrenOfType(psiFile.getOriginalFile, classOf[HaskellLanguagePragma]).asScala
   }
 
   def findNamedElement(psiElement: PsiElement): Option[HaskellNamedElement] = {
@@ -49,15 +49,15 @@ object HaskellPsiUtil {
   }
 
   def findNamedElements(psiElement: PsiElement): Iterable[HaskellNamedElement] = {
-    PsiTreeUtil.findChildrenOfType(psiElement, classOf[HaskellNamedElement])
+    PsiTreeUtil.findChildrenOfType(psiElement, classOf[HaskellNamedElement]).asScala
   }
 
   def findQualifiedNamedElements(psiElement: PsiElement): Iterable[HaskellQualifiedNameElement] = {
-    PsiTreeUtil.findChildrenOfType(psiElement, classOf[HaskellQualifiedNameElement])
+    PsiTreeUtil.findChildrenOfType(psiElement, classOf[HaskellQualifiedNameElement]).asScala
   }
 
   def findDeclarationElements(psiElement: PsiElement): Iterable[HaskellDeclarationElement] = {
-    PsiTreeUtil.findChildrenOfType(psiElement, classOf[HaskellDeclarationElement]).filter(_.getParent.getNode.getElementType == HS_TOP_DECLARATION)
+    PsiTreeUtil.findChildrenOfType(psiElement, classOf[HaskellDeclarationElement]).asScala.filter(_.getParent.getNode.getElementType == HS_TOP_DECLARATION)
   }
 
   def findModuleDeclaration(psiFile: PsiFile): Option[HaskellModuleDeclaration] = {
@@ -97,7 +97,7 @@ object HaskellPsiUtil {
   }
 
   def findTopLevelTypeSignatures(element: PsiElement): Iterable[HaskellTypeSignature] = {
-    PsiTreeUtil.findChildrenOfType(element, classOf[HaskellTypeSignature]).filter(_.getParent.getNode.getElementType == HS_TOP_DECLARATION)
+    PsiTreeUtil.findChildrenOfType(element, classOf[HaskellTypeSignature]).asScala.filter(_.getParent.getNode.getElementType == HS_TOP_DECLARATION)
   }
 
   def findModuleDeclarationParent(psiElement: PsiElement): Option[HaskellModuleDeclaration] = {

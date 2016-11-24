@@ -24,7 +24,7 @@ import com.intellij.refactoring.rename.RenamePsiElementProcessor
 import com.intellij.usageView.UsageInfo
 import intellij.haskell.util.{HaskellFileIndex, HaskellFileUtil, HaskellProjectUtil}
 
-import scala.collection.JavaConversions._
+import scala.collection.JavaConverters._
 
 class HaskellRenameVariableProcessor extends RenamePsiElementProcessor {
 
@@ -37,6 +37,6 @@ class HaskellRenameVariableProcessor extends RenamePsiElementProcessor {
 
   override def findReferences(element: PsiElement): java.util.Collection[PsiReference] = {
     val project = element.getProject
-    ReferencesSearch.search(element, GlobalSearchScope.filesScope(project, HaskellFileIndex.findProjectFiles(project))).findAll
+    ReferencesSearch.search(element, GlobalSearchScope.filesScope(project, HaskellFileIndex.findProjectFiles(project).asJavaCollection)).findAll
   }
 }

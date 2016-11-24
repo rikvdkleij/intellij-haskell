@@ -25,8 +25,6 @@ import intellij.haskell.annotator.HaskellAnnotator
 import intellij.haskell.psi.HaskellPsiUtil
 import intellij.haskell.util.HaskellFileIndex
 
-import scala.collection.JavaConversions._
-
 object StackReplsComponentsManager {
 
   implicit class RichBoolean(val b: Boolean) extends AnyVal {
@@ -47,13 +45,11 @@ object StackReplsComponentsManager {
 
   def findDefinitionLocation(psiElement: PsiElement): Option[DefinitionLocation] = {
     // As a side effect we preload in background some extra info
-    ApplicationManager.getApplication.invokeLater(new Runnable {
-      override def run(): Unit = {
-        if (HaskellPsiUtil.findExpressionParent(psiElement).isDefined) {
-          TypeInfoComponent.findTypeInfoForElement(psiElement)
-        }
-        NameInfoComponent.findNameInfo(psiElement)
+    ApplicationManager.getApplication.invokeLater(() => {
+      if (HaskellPsiUtil.findExpressionParent(psiElement).isDefined) {
+        TypeInfoComponent.findTypeInfoForElement(psiElement)
       }
+      NameInfoComponent.findNameInfo(psiElement)
     })
 
     DefinitionLocationComponent.findDefinitionLocation(psiElement)
@@ -98,12 +94,10 @@ object StackReplsComponentsManager {
   private def preloadAllLibraryModuleIdentifiers(project: Project): Unit = {
     GlobalProjectInfoComponent.findGlobalProjectInfo(project) match {
       case Some(info) =>
-        ApplicationManager.getApplication.invokeLater(new Runnable {
-          override def run(): Unit = {
-            val files = HaskellFileIndex.findProjectProductionPsiFiles(project)
-            val libraryModuleNames = files.flatMap(pf => HaskellPsiUtil.findImportDeclarations(pf).flatMap(_.getModuleName))
-            libraryModuleNames.foreach(mn => BrowseModuleComponent.findImportedModuleIdentifiers(project, mn))
-          }
+        ApplicationManager.getApplication.invokeLater(() => {
+          val files = HaskellFileIndex.findProjectProductionPsiFiles(project)
+          val libraryModuleNames = files.flatMap(pf => HaskellPsiUtil.findImportDeclarations(pf).flatMap(_.getModuleName))
+          libraryModuleNames.foreach(mn => BrowseModuleComponent.findImportedModuleIdentifiers(project, mn))
         })
 
         info.allAvailableLibraryModuleNames.foreach { mn =>

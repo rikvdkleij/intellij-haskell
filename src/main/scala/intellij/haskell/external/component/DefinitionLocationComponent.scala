@@ -16,7 +16,7 @@
 
 package intellij.haskell.external.component
 
-import java.util.concurrent.{Callable, Executors}
+import java.util.concurrent.Executors
 
 import com.google.common.cache.{CacheBuilder, CacheLoader}
 import com.google.common.util.concurrent.{ListenableFuture, ListenableFutureTask, UncheckedExecutionException}
@@ -27,7 +27,7 @@ import intellij.haskell.external.repl.{StackReplOutput, StackReplsManager}
 import intellij.haskell.psi._
 import intellij.haskell.util.LineColumnPosition
 
-import scala.collection.JavaConversions._
+import scala.collection.JavaConverters._
 
 private[component] object DefinitionLocationComponent {
   private final val Executor = Executors.newCachedThreadPool()
@@ -47,18 +47,16 @@ private[component] object DefinitionLocationComponent {
         }
 
         override def reload(key: Key, oldResult: Result): ListenableFuture[Result] = {
-          val task = ListenableFutureTask.create(new Callable[Result]() {
-            def call(): Result = {
-              if (oldResult.toRefresh && oldResult.location.isRight) {
-                val newResult = createDefinitionLocation(key)
-                newResult.location match {
-                  case Right(o) if o.isDefined => newResult
-                  case _ => oldResult
-                }
+          val task = ListenableFutureTask.create[Result](() => {
+            if (oldResult.toRefresh && oldResult.location.isRight) {
+              val newResult = createDefinitionLocation(key)
+              newResult.location match {
+                case Right(o) if o.isDefined => newResult
+                case _ => oldResult
               }
-              else {
-                oldResult
-              }
+            }
+            else {
+              oldResult
             }
           })
           Executor.execute(task)
@@ -114,7 +112,7 @@ private[component] object DefinitionLocationComponent {
   }
 
   def markAllToRefresh(psiFile: PsiFile): Unit = {
-    Cache.asMap().filter(_._1.psiFile == psiFile).keys.foreach(Cache.invalidate)
+    Cache.asMap().asScala.filter(_._1.psiFile == psiFile).keys.foreach(Cache.invalidate)
   }
 
   private def find(psiFile: PsiFile, startPosition: LineColumnPosition, endPosition: LineColumnPosition, expression: String): Option[DefinitionLocation] = {

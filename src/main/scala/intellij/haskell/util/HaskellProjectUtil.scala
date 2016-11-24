@@ -86,7 +86,7 @@ object HaskellProjectUtil {
     }).getOrElse(Iterable())
   }
 
-  def findHaskellFiles(project: Project, includeNonProjectItems: Boolean) = {
+  def findHaskellFiles(project: Project, includeNonProjectItems: Boolean): Iterable[VirtualFile] = {
     val scope = if (includeNonProjectItems) {
       GlobalSearchScope.allScope(project)
     } else {

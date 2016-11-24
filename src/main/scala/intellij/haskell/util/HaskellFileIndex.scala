@@ -29,7 +29,7 @@ import com.intellij.util.io.{DataExternalizer, EnumeratorStringDescriptor, KeyDe
 import intellij.haskell.module.HaskellModuleType
 import intellij.haskell.{HaskellFile, HaskellFileType}
 
-import scala.collection.JavaConversions._
+import scala.collection.JavaConverters._
 
 class HaskellFileIndex extends ScalaScalarIndexExtension[String] {
 
@@ -52,7 +52,9 @@ class HaskellFileIndex extends ScalaScalarIndexExtension[String] {
   private class HaskellDataIndexer extends DataIndexer[String, Unit, FileContent] {
 
     def map(inputData: FileContent): java.util.Map[String, Unit] = {
-      Map(inputData.getFile.getNameWithoutExtension -> ())
+      val map = new util.HashMap[String, Unit]
+      map.put(inputData.getFile.getNameWithoutExtension, ())
+      map
     }
   }
 
@@ -70,40 +72,40 @@ object HaskellFileIndex {
     }
   }
 
-  def findFilesByName(project: Project, name: String, searchScope: GlobalSearchScope): Stream[VirtualFile] = {
+  def findFilesByName(project: Project, name: String, searchScope: GlobalSearchScope): Iterable[VirtualFile] = {
     getFilesByName(project, name, searchScope)
   }
 
-  def findFiles(project: Project, searchScope: GlobalSearchScope): util.Collection[VirtualFile] = {
+  def findFiles(project: Project, searchScope: GlobalSearchScope): Iterable[VirtualFile] = {
     getFilesForType(HaskellFileType.INSTANCE, project, searchScope)
   }
 
-  def findProjectFiles(project: Project): util.Collection[VirtualFile] = {
+  def findProjectFiles(project: Project): Iterable[VirtualFile] = {
     findFiles(project, HaskellModuleType.findHaskellProjectModules(project).map(GlobalSearchScope.moduleScope).reduce(_.uniteWith(_)))
   }
 
-  def findProjectTestPsiFiles(project: Project): util.Collection[HaskellFile] = {
+  def findProjectTestPsiFiles(project: Project): Iterable[HaskellFile] = {
     HaskellFileUtil.convertToHaskellFiles(findProjectTestFiles(project), project)
   }
 
-  def findProjectProductionPsiFiles(project: Project): util.Collection[HaskellFile] = {
+  def findProjectProductionPsiFiles(project: Project): Iterable[HaskellFile] = {
     HaskellFileUtil.convertToHaskellFiles(findProjectProductionFiles(project), project)
   }
 
-  private def findProjectProductionFiles(project: Project): util.Collection[VirtualFile] = {
+  private def findProjectProductionFiles(project: Project): Iterable[VirtualFile] = {
     findFiles(project, GlobalSearchScopesCore.projectProductionScope(project))
   }
 
-  private def findProjectTestFiles(project: Project): util.Collection[VirtualFile] = {
+  private def findProjectTestFiles(project: Project): Iterable[VirtualFile] = {
     findFiles(project, GlobalSearchScopesCore.projectTestScope(project))
   }
 
-  private def getFilesForType(fileType: FileType, project: Project, searchScope: GlobalSearchScope) = {
-    FileBasedIndex.getInstance.getContainingFiles(FileTypeIndex.NAME, fileType, searchScope)
+  private def getFilesForType(fileType: FileType, project: Project, searchScope: GlobalSearchScope): Iterable[VirtualFile] = {
+    FileBasedIndex.getInstance.getContainingFiles(FileTypeIndex.NAME, fileType, searchScope).asScala
   }
 
-  private def getFilesByName(project: Project, name: String, searchScope: GlobalSearchScope) = {
-    FileBasedIndex.getInstance.getContainingFiles(HaskellFileIndex, name, searchScope).toStream
+  private def getFilesByName(project: Project, name: String, searchScope: GlobalSearchScope): Iterable[VirtualFile] = {
+    FileBasedIndex.getInstance.getContainingFiles(HaskellFileIndex, name, searchScope).asScala
   }
 }
 

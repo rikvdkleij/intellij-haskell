@@ -22,8 +22,6 @@ import com.intellij.psi.PsiFile
 import intellij.haskell.psi.HaskellPsiUtil
 import intellij.haskell.util.{HaskellFileIndex, HaskellProjectUtil}
 
-import scala.collection.JavaConversions._
-
 private[component] object AvailableModuleNamesComponent {
 
   def findAvailableModuleNames(psiFile: PsiFile): Iterable[String] = {

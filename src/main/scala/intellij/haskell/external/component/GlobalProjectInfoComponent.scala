@@ -16,7 +16,7 @@
 
 package intellij.haskell.external.component
 
-import java.util.concurrent.{Callable, Executors}
+import java.util.concurrent.Executors
 
 import com.google.common.cache.{CacheBuilder, CacheLoader}
 import com.google.common.util.concurrent.{ListenableFuture, ListenableFutureTask, UncheckedExecutionException}
@@ -25,7 +25,7 @@ import com.intellij.openapi.project.Project
 import intellij.haskell.external.commandLine.{CommandLine, StackCommandLine}
 import intellij.haskell.external.repl.StackReplsManager
 
-import scala.collection.JavaConversions._
+import scala.collection.JavaConverters._
 
 private[component] object GlobalProjectInfoComponent {
 
@@ -42,10 +42,8 @@ private[component] object GlobalProjectInfoComponent {
         }
 
         override def reload(key: Key, oldValue: Option[GlobalProjectInfo]): ListenableFuture[Option[GlobalProjectInfo]] = {
-          val task = ListenableFutureTask.create(new Callable[Option[GlobalProjectInfo]]() {
-            def call() = {
-              createGlobalProjectInfo(key)
-            }
+          val task = ListenableFutureTask.create[Option[GlobalProjectInfo]](() => {
+            createGlobalProjectInfo(key)
           })
           executor.execute(task)
           task
@@ -70,12 +68,12 @@ private[component] object GlobalProjectInfoComponent {
               project.getBasePath,
               ghcPath,
               Seq("--supported-languages")
-            ).map(_.getStdoutLines.toIterable)
+            ).map(_.getStdoutLines.asScala)
           }).getOrElse(Iterable())
         }
 
         private def findGhcPath(project: Project) = {
-          StackCommandLine.runCommand(Seq("path", "--compiler-exe"), project).flatMap(_.getStdoutLines.headOption)
+          StackCommandLine.runCommand(Seq("path", "--compiler-exe"), project).flatMap(_.getStdoutLines.asScala.headOption)
         }
       }
     )

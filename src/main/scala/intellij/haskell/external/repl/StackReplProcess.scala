@@ -27,7 +27,7 @@ import intellij.haskell.external.commandLine.StackCommandLine._
 import intellij.haskell.sdk.HaskellSdkType
 import intellij.haskell.util.HaskellProjectUtil
 
-import scala.collection.JavaConversions._
+import scala.collection.JavaConverters._
 import scala.collection.mutable.{ArrayBuffer, ListBuffer}
 import scala.concurrent.SyncVar
 import scala.concurrent.duration._
@@ -79,8 +79,8 @@ private[repl] abstract class StackReplProcess(val project: Project, val extraSta
       val timeout = if (command.startsWith(":load")) LoadTimeout else DefaultTimeout
       val deadline = timeout.fromNow
       while (deadline.hasTimeLeft && (stdOutResult.isEmpty || !reachedEndOfOutput)) {
-        stdOut.drainTo(stdOutResult)
-        stdErr.drainTo(stdErrResult)
+        stdOut.drainTo(stdOutResult.asJava)
+        stdErr.drainTo(stdErrResult.asJava)
 
         // We have to wait...
         Thread.sleep(DelayBetweenReads.toMillis)
@@ -91,8 +91,8 @@ private[repl] abstract class StackReplProcess(val project: Project, val extraSta
 
         None
       } else {
-        stdOut.drainTo(stdOutResult)
-        stdErr.drainTo(stdErrResult)
+        stdOut.drainTo(stdOutResult.asJava)
+        stdErr.drainTo(stdErrResult.asJava)
 
         logInfo("command: " + command)
         logInfo("stdOut: " + stdOutResult.mkString("\n"))
@@ -112,12 +112,12 @@ private[repl] abstract class StackReplProcess(val project: Project, val extraSta
   def start(): Unit = {
 
     def writeOutputToLogInfo(): Unit = {
-      if (stdOut.nonEmpty) {
-        logInfo(stdOut.mkString("\n"))
+      if (!stdOut.isEmpty) {
+        logInfo(stdOut.asScala.mkString("\n"))
       }
 
-      if (stdErr.nonEmpty) {
-        logInfo(stdErr.mkString("\n"))
+      if (!stdErr.isEmpty) {
+        logInfo(stdErr.asScala.mkString("\n"))
       }
     }
 
@@ -140,7 +140,7 @@ private[repl] abstract class StackReplProcess(val project: Project, val extraSta
 
         val process = Option(EnvironmentUtil.getEnvironmentMap) match {
           case None => Process(command, new File(project.getBasePath))
-          case Some(envMap) => Process(command, new File(project.getBasePath), envMap.toArray: _*)
+          case Some(envMap) => Process(command, new File(project.getBasePath), envMap.asScala.toArray: _*)
         }
         process.run(
           new ProcessIO(

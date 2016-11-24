@@ -37,7 +37,7 @@ import intellij.haskell.{HaskellFile, HaskellFileType, HaskellNotificationGroup}
 
 import scala.annotation.tailrec
 import scala.collection.Iterable
-import scala.collection.JavaConversions._
+import scala.collection.JavaConverters._
 
 class HaskellAnnotator extends ExternalAnnotator[PsiFile, LoadResult] {
 
@@ -63,8 +63,8 @@ class HaskellAnnotator extends ExternalAnnotator[PsiFile, LoadResult] {
     (psiFile, Option(psiFile.getOriginalFile.getVirtualFile)) match {
       case (_, None) => null // can be in case if file is in memory only (just created file)
       case (_, Some(f)) if f.getFileType != HaskellFileType.INSTANCE => null
-      case (_, Some(f)) if HaskellProjectUtil.isLibraryFile(psiFile) => null
-      case (_, Some(f)) => psiFile
+      case (_, Some(_)) if HaskellProjectUtil.isLibraryFile(psiFile) => null
+      case (_, Some(_)) => psiFile
     }
   }
 
@@ -124,9 +124,9 @@ class HaskellAnnotator extends ExternalAnnotator[PsiFile, LoadResult] {
             ErrorAnnotationWithIntentionActions(tr, problem.plainMessage, problem.htmlMessage, createNotInScopeIntentionActions(psiFile, name))
           case NotInScopePattern2(name) =>
             ErrorAnnotationWithIntentionActions(tr, problem.plainMessage, problem.htmlMessage, createNotInScopeIntentionActions(psiFile, name.split("::").headOption.getOrElse(name).trim))
-          case HolePattern(typeSignature) =>
+          case HolePattern(_typeSignature) =>
             ErrorAnnotation(tr, problem.plainMessage, problem.htmlMessage)
-          case HolePattern2(name, typeOfName) =>
+          case HolePattern2(_name, _typeOfName) =>
             ErrorAnnotation(tr, problem.plainMessage, problem.htmlMessage)
           //
           case NoTypeSignaturePattern(typeSignature) => WarningAnnotationWithIntentionActions(tr, problem.plainMessage, problem.htmlMessage, Iterable(new TypeSignatureIntentionAction(typeSignature)))
@@ -208,16 +208,14 @@ object HaskellAnnotator {
 
   def restartDaemonCodeAnalyzerForOpenFiles(project: Project): Unit = {
     ApplicationManager.getApplication.invokeLater {
-      new Runnable {
-        override def run(): Unit = {
-          if (!project.isDisposed) {
-            val openFiles = FileEditorManager.getInstance(project).getOpenFiles
-            val openProjectFiles = openFiles.filterNot(vf => HaskellProjectUtil.isLibraryFile(vf, project))
-            val openProjectPsiFiles = HaskellFileUtil.convertToHaskellFiles(openProjectFiles.toStream, project)
-            openProjectPsiFiles.foreach(pf =>
-              getDaemonCodeAnalyzer(project).restart(pf)
-            )
-          }
+      () => {
+        if (!project.isDisposed) {
+          val openFiles = FileEditorManager.getInstance(project).getOpenFiles
+          val openProjectFiles = openFiles.filterNot(vf => HaskellProjectUtil.isLibraryFile(vf, project))
+          val openProjectPsiFiles = HaskellFileUtil.convertToHaskellFiles(openProjectFiles.toStream, project)
+          openProjectPsiFiles.foreach(pf =>
+            getDaemonCodeAnalyzer(project).restart(pf)
+          )
         }
       }
     }
@@ -274,7 +272,7 @@ class LanguageExtensionIntentionAction(languageExtension: String) extends Haskel
     val languagePragmaElement = HaskellElementFactory.createLanguagePragma(project, s"{-# LANGUAGE $languageExtension #-} ${OSUtil.LineSeparator}")
     Option(PsiTreeUtil.findChildOfType(file, classOf[HaskellFileHeader])) match {
       case Some(fh) =>
-        val lastPragmaElement = PsiTreeUtil.findChildrenOfType(fh, classOf[HaskellFileHeaderPragma]).lastOption.orNull
+        val lastPragmaElement = PsiTreeUtil.findChildrenOfType(fh, classOf[HaskellFileHeaderPragma]).asScala.lastOption.orNull
         fh.addAfter(languagePragmaElement, lastPragmaElement)
       case None => Option(file.getFirstChild) match {
         case Some(c) =>
@@ -327,9 +325,9 @@ class NotInScopeIntentionAction(identifier: String, moduleName: String, psiFile:
   override def invoke(project: Project, editor: Editor, file: PsiFile): Unit = {
     HaskellElementFactory.createImportDeclaration(project, moduleName, identifier).foreach { importDeclarationElement =>
       Option(PsiTreeUtil.findChildOfType(file, classOf[HaskellImportDeclarations])) match {
-        case Some(ids) if ids.getImportDeclarationList.nonEmpty =>
-          val lastImportDeclarationElement = PsiTreeUtil.findChildrenOfType(ids, classOf[HaskellImportDeclaration]).lastOption.orNull
-          ids.addAfter(importDeclarationElement, lastImportDeclarationElement)
+        case Some(ids) if !ids.getImportDeclarationList.isEmpty =>
+          val lastImportDeclaration = HaskellPsiUtil.findImportDeclarations(psiFile).lastOption.orNull
+          ids.addAfter(importDeclarationElement, lastImportDeclaration)
         case _ =>
           HaskellPsiUtil.findModuleDeclaration(psiFile) match {
             case Some(md) =>

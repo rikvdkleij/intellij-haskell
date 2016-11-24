@@ -24,7 +24,7 @@ import com.intellij.execution.process._
 import com.intellij.openapi.util.Key
 import intellij.haskell.HaskellNotificationGroup
 
-import scala.collection.JavaConversions._
+import scala.collection.JavaConverters._
 
 object CommandLine {
   private final val StandardTimeoutInMillis = 1000
@@ -36,7 +36,7 @@ object CommandLine {
     val cmd = new GeneralCommandLine
     cmd.withWorkDirectory(workDir)
     cmd.setExePath(commandPath)
-    cmd.addParameters(arguments)
+    cmd.addParameters(arguments.asJava)
     cmd.withParentEnvironmentType(ParentEnvironmentType.CONSOLE)
     execute(cmd, timeoutInMillis, captureOutputToLog)
   }
@@ -50,14 +50,12 @@ object CommandLine {
       new CapturingProcessHandler(cmd)
     }
 
-    import scala.collection.JavaConversions._
-
     val processOutput = processHandler.runProcess(timeout.toInt, true)
     if (processOutput.isTimeout) {
       HaskellNotificationGroup.notifyBalloonWarning(s"Timeout while `${cmd.getCommandLineString}`")
       None
-    } else if (!captureOutputToLog && processOutput.getStderrLines.nonEmpty) {
-      processOutput.getStderrLines.foreach(line => HaskellNotificationGroup.logWarning(s"${cmd.getCommandLineString}  -  $line"))
+    } else if (!captureOutputToLog && !processOutput.getStderrLines.isEmpty) {
+      processOutput.getStderrLines.asScala.foreach(line => HaskellNotificationGroup.logWarning(s"${cmd.getCommandLineString}  -  $line"))
       Option(processOutput)
     } else {
       Option(processOutput)

@@ -24,12 +24,12 @@ import com.intellij.psi.impl.PsiFileFactoryImpl
 import com.intellij.psi.impl.source.tree.LeafPsiElement
 import com.intellij.psi.tree.IElementType
 import com.intellij.psi.util.PsiTreeUtil
-import com.intellij.psi.{PsiFileFactory, PsiManager, PsiWhiteSpace}
+import com.intellij.psi.{PsiElement, PsiFileFactory, PsiManager, PsiWhiteSpace}
 import intellij.haskell.psi.HaskellTypes._
 import intellij.haskell.util.OSUtil
 import intellij.haskell.{HaskellFile, HaskellFileType, HaskellLanguage}
 
-import scala.collection.JavaConversions._
+import scala.collection.JavaConverters._
 
 object HaskellElementFactory {
   def createVarid(project: Project, name: String): Option[HaskellVarid] = {
@@ -73,32 +73,32 @@ object HaskellElementFactory {
   }
 
   def getLeftParenElement(project: Project): Option[LeafPsiElement] = {
-    createLeafPsiElements(project, "add = (1 + 2)").find(_.getNode.getElementType == HS_LEFT_PAREN)
+    createLeafPsiElements(project, "add = (1 + 2)").asScala.find(_.getNode.getElementType == HS_LEFT_PAREN)
   }
 
   def getRightParenElement(project: Project): Option[LeafPsiElement] = {
-    createLeafPsiElements(project, "add = (1 + 2)").find(_.getNode.getElementType == HS_RIGHT_PAREN)
+    createLeafPsiElements(project, "add = (1 + 2)").asScala.find(_.getNode.getElementType == HS_RIGHT_PAREN)
   }
 
-  def createWhiteSpace(project: Project, space: String = " ") = {
+  def createWhiteSpace(project: Project, space: String = " "): PsiWhiteSpace = {
     val haskellFile = createFileFromText(project, space)
     PsiTreeUtil.findChildOfType(haskellFile, classOf[PsiWhiteSpace])
   }
 
-  def createTab(project: Project) = {
+  def createTab(project: Project): PsiWhiteSpace = {
     val tabSize = CodeStyleSettingsManager.getInstance().getCurrentSettings.getTabSize(HaskellFileType.INSTANCE)
     createWhiteSpace(project, " " * tabSize)
   }
 
-  def createNewLine(project: Project) = {
+  def createNewLine(project: Project): PsiElement = {
     createFileFromText(project, OSUtil.LineSeparator.toString).getFirstChild
   }
 
-  def createQualifier(project: Project, qualifier: String) = {
+  def createQualifier(project: Project, qualifier: String): Option[HaskellQualifier] = {
     createElementFromText(project, qualifier, HS_QUALIFIER).map(_.asInstanceOf[HaskellQualifier])
   }
 
-  def createQConQualifier(project: Project, qConQualifier: String) = {
+  def createQConQualifier(project: Project, qConQualifier: String): Option[HaskellQConQualifier] = {
     createElementFromText(project, qConQualifier, HS_Q_CON_QUALIFIER).map(_.asInstanceOf[HaskellQConQualifier])
   }
 

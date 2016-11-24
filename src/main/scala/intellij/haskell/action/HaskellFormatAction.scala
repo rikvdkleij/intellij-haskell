@@ -27,7 +27,6 @@ class HaskellFormatAction extends AnAction {
 
   override def actionPerformed(actionEvent: AnActionEvent): Unit = {
     ActionUtil.findActionContext(actionEvent).foreach(actionContext => {
-      val editor = actionContext.editor
       val psiFile = actionContext.psiFile
       val selectionModel = actionContext.selectionModel
       selectionModel match {

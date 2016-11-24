@@ -21,7 +21,7 @@ import com.intellij.openapi.util.text.StringUtil
 import intellij.haskell.external.commandLine.StackCommandLine
 import intellij.haskell.util.HaskellEditorUtil
 
-import scala.collection.JavaConversions._
+import scala.collection.JavaConverters._
 
 class HoogleAction extends AnAction {
 
@@ -37,7 +37,7 @@ class HoogleAction extends AnAction {
 
       val selectionModel = actionContext.selectionModel
       selectionModel.map(_.getSelectedText).orElse(Option(psiFile.findElementAt(offset)).map(_.getText)).foreach(text => {
-        StackCommandLine.runCommand(Seq("hoogle", "--", s""""$text"""", "--count=100"), psiFile.getProject).map(_.getStdoutLines) match {
+        StackCommandLine.runCommand(Seq("hoogle", "--", s""""$text"""", "--count=100"), psiFile.getProject).map(_.getStdoutLines.asScala) match {
           case Some(lines) => HaskellEditorUtil.showList(lines, editor)
           case _ => HaskellEditorUtil.showHint(editor, s"No Hoogle result for ${StringUtil.escapeXml(text)}")
         }
