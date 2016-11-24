@@ -12,7 +12,7 @@ class AddParensIntention extends PsiElementBaseIntentionAction {
     for {
       left <- HaskellElementFactory.getLeftParenElement(project)
       right <- HaskellElementFactory.getRightParenElement(project)
-      (start, end) = HaskellPsiUtil.getSelectionStartEnd(psiElement, editor)
+      (start, end) <- HaskellPsiUtil.getSelectionStartEnd(psiElement, editor)
     } yield {
       start.getParent.addBefore(left, start)
       end.getParent.addAfter(right, end)
@@ -20,8 +20,11 @@ class AddParensIntention extends PsiElementBaseIntentionAction {
   }
 
   override def isAvailable(project: Project, editor: Editor, psiElement: PsiElement): Boolean = {
-    val (start, end) = HaskellPsiUtil.getSelectionStartEnd(psiElement, editor)
-    psiElement.isWritable && start.getNode.getElementType != HS_LEFT_PAREN && end.getNode.getElementType != HS_RIGHT_PAREN
+    HaskellPsiUtil.getSelectionStartEnd(psiElement, editor) match {
+      case None => false
+      case Some((start, end)) =>
+        psiElement.isWritable && start.getNode.getElementType != HS_LEFT_PAREN && end.getNode.getElementType != HS_RIGHT_PAREN
+    }
   }
 
   override def getFamilyName: String = getText
