@@ -134,7 +134,7 @@ private[repl] abstract class StackReplProcess(val project: Project, val extraSta
 
     HaskellSdkType.getStackPath(project).foreach(stackPath => {
       try {
-        val command = (Seq(stackPath, "repl", "--with-ghc", "intero", "--verbosity", "warn", "--no-build", "--terminal") ++ extraStartOptions).mkString(" ")
+        val command = (Seq(stackPath, "repl", "--with-ghc", "intero", "--verbosity", "warn", "--no-build", "--terminal", "--no-load") ++ extraStartOptions).mkString(" ")
 
         logInfo(s"Stack repl will be started with command: $command")
 
