@@ -35,7 +35,7 @@ private[component] object TypeInfoComponent {
 
   private case class Key(psiFile: PsiFile, startLineNr: Int, startColumnNr: Int, endLineNr: Int, endColumnNr: Int, expression: String)
 
-  private case class Result(typeInfo: Either[String, Option[TypeInfo]], var toRefresh: Boolean = false)
+  private case class Result(typeInfo: Either[String, Option[TypeInfo]])
 
   private final val Cache = CacheBuilder.newBuilder()
     .build(
@@ -47,14 +47,10 @@ private[component] object TypeInfoComponent {
 
         override def reload(key: Key, oldResult: Result): ListenableFuture[Result] = {
           val task = ListenableFutureTask.create[Result](() => {
-            if (oldResult.toRefresh && oldResult.typeInfo.isRight) {
-              val newResult = createTypeInfo(key)
-              newResult.typeInfo match {
-                case Right(ti) if ti.isDefined => newResult
-                case _ => oldResult
-              }
-            } else {
-              oldResult
+            val newResult = createTypeInfo(key)
+            newResult.typeInfo match {
+              case Right(ti) if ti.isDefined => newResult
+              case _ => oldResult
             }
           })
           Executor.execute(task)
@@ -91,7 +87,7 @@ private[component] object TypeInfoComponent {
     } yield typeInfo
   }
 
-  def markAllToRefresh(psiFile: PsiFile): Unit = {
+  def invalidate(psiFile: PsiFile): Unit = {
     Cache.asMap().asScala.filter(_._1.psiFile == psiFile).keys.foreach(Cache.invalidate)
   }
 

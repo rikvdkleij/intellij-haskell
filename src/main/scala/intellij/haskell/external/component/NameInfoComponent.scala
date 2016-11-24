@@ -42,7 +42,7 @@ private[component] object NameInfoComponent {
 
   private case class Key(psiFile: PsiFile, name: String)
 
-  private case class Result(nameInfos: Option[Iterable[NameInfo]], var toRefresh: Boolean = false)
+  private case class Result(nameInfos: Option[Iterable[NameInfo]])
 
   private final val Cache = CacheBuilder.newBuilder()
     .build(
@@ -54,14 +54,9 @@ private[component] object NameInfoComponent {
 
         override def reload(key: Key, oldResult: Result): ListenableFuture[Result] = {
           val task = ListenableFutureTask.create[Result](() => {
-            if (oldResult.toRefresh && oldResult.nameInfos.isDefined) {
-              // Only elements of project file can be refreshed
-              findNameInfosInProjectFile(key, key.psiFile.getProject) match {
-                case newResult@Some(nis) if nis.nonEmpty => Result(newResult)
-                case _ => oldResult
-              }
-            } else {
-              oldResult
+            findNameInfosInProjectFile(key, key.psiFile.getProject) match {
+              case newResult@Some(nis) if nis.nonEmpty => Result(newResult)
+              case _ => oldResult
             }
           })
           Executor.execute(task)
@@ -139,8 +134,7 @@ private[component] object NameInfoComponent {
     }).getOrElse(Iterable())
   }
 
-  // TODO: Make distinction in type between project file and library file
-  def markAllToRefresh(psiFile: PsiFile): Unit = {
+  def invalidate(psiFile: PsiFile): Unit = {
     Cache.asMap().asScala.filter(_._1.psiFile == psiFile).keys.foreach(Cache.invalidate)
   }
 }

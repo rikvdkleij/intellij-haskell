@@ -36,7 +36,7 @@ private[component] object DefinitionLocationComponent {
 
   private case class Key(startLineNr: Int, startColumnNr: Int, endLineNr: Int, endColumnNr: Int, expression: String, psiFile: PsiFile)
 
-  private case class Result(location: Either[String, Option[DefinitionLocation]], var toRefresh: Boolean = false)
+  private case class Result(location: Either[String, Option[DefinitionLocation]])
 
   private final val Cache = CacheBuilder.newBuilder()
     .build(
@@ -48,15 +48,10 @@ private[component] object DefinitionLocationComponent {
 
         override def reload(key: Key, oldResult: Result): ListenableFuture[Result] = {
           val task = ListenableFutureTask.create[Result](() => {
-            if (oldResult.toRefresh && oldResult.location.isRight) {
-              val newResult = createDefinitionLocation(key)
-              newResult.location match {
-                case Right(o) if o.isDefined => newResult
-                case _ => oldResult
-              }
-            }
-            else {
-              oldResult
+            val newResult = createDefinitionLocation(key)
+            newResult.location match {
+              case Right(o) if o.isDefined => newResult
+              case _ => oldResult
             }
           })
           Executor.execute(task)
@@ -111,7 +106,7 @@ private[component] object DefinitionLocationComponent {
     } yield location
   }
 
-  def markAllToRefresh(psiFile: PsiFile): Unit = {
+  def invalidate(psiFile: PsiFile): Unit = {
     Cache.asMap().asScala.filter(_._1.psiFile == psiFile).keys.foreach(Cache.invalidate)
   }
 

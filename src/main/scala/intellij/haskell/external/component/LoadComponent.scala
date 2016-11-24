@@ -32,9 +32,9 @@ private[component] object LoadComponent {
 
     ApplicationManager.getApplication.executeOnPooledThread(new Runnable {
       override def run(): Unit = {
-        NameInfoComponent.markAllToRefresh(psiFile)
-        TypeInfoComponent.markAllToRefresh(psiFile)
-        DefinitionLocationComponent.markAllToRefresh(psiFile)
+        NameInfoComponent.invalidate(psiFile)
+        TypeInfoComponent.invalidate(psiFile)
+        DefinitionLocationComponent.invalidate(psiFile)
       }
     })
 
