@@ -25,11 +25,11 @@ import scala.concurrent.duration._
 
 object StackCommandLine {
 
-  private final val StandardTimeoutInMillis = 2000
+  private final val DefaultTimeout = 2.seconds.toMillis
 
   private final val BuildTimeout = 30.minutes
 
-  def runCommand(command: Seq[String], project: Project, timeoutInMillis: Long = StandardTimeoutInMillis, captureOutputToLog: Boolean = false): Option[ProcessOutput] = {
+  def runCommand(command: Seq[String], project: Project, timeoutInMillis: Long = DefaultTimeout, captureOutputToLog: Boolean = false): Option[ProcessOutput] = {
     HaskellSdkType.getStackPath(project).flatMap(stackPath => {
       CommandLine.runCommand(
         project.getBasePath,
