@@ -63,31 +63,6 @@ object HaskellProjectUtil {
     ProjectRootManager.getInstance(project).getFileIndex.isInTestSourceContent(virtualFile)
   }
 
-  def findFilesForModule(moduleName: String, project: Project): Iterable[HaskellFile] = {
-    for {
-      fp <- findFilePathsForModule(moduleName, project)
-      f <- findFile(fp, project)
-    } yield f
-  }
-
-  def findFilePathsForModule(moduleName: String, project: Project): Iterable[String] = {
-    getFileNameAndDirNamesForModule(moduleName).map(names => {
-      val (fileName, dirNames) = names
-      val filePaths = for {
-        file <- HaskellFileIndex.findFilesByName(project, fileName, GlobalSearchScope.allScope(project))
-        if checkDirNames(file.getParent, dirNames)
-      } yield file.getPath
-
-      if (filePaths.isEmpty) {
-        // Test dependencies are supported since Stack 1.2.1, see https://github.com/commercialhaskell/stack/issues/1919
-        HaskellEditorUtil.showStatusBarInfoMessage(s"Could not find source code for `$moduleName`. Please use `Download Haskell library sources` in `Tools` from menu.", project)
-        filePaths
-      } else {
-        filePaths
-      }
-    }).getOrElse(Iterable())
-  }
-
   def findHaskellFiles(project: Project, includeNonProjectItems: Boolean): Iterable[VirtualFile] = {
     val scope = if (includeNonProjectItems) {
       GlobalSearchScope.allScope(project)
@@ -97,25 +72,8 @@ object HaskellProjectUtil {
     HaskellFileIndex.findFiles(project, scope)
   }
 
-  def findPackageName(project: Project): Option[String] = {
+  def findCabalPackageName(project: Project): Option[String] = {
     new File(project.getBasePath).listFiles.find(_.getName.endsWith(".cabal")).map(_.getName.replaceFirst(".cabal", ""))
   }
 
-  private def getFileNameAndDirNamesForModule(module: String) = {
-    module.split('.').toList.reverse match {
-      case n :: d => Some(n, d)
-      case _ => HaskellNotificationGroup.logError(s"Could not determine directory names for $module"); None
-    }
-  }
-
-  private def checkDirNames(dir: VirtualFile, dirNames: List[String]): Boolean = {
-    dirNames match {
-      case dirName :: parentDirName =>
-        if (dir.getName == dirName)
-          checkDirNames(dir.getParent, parentDirName)
-        else
-          false
-      case _ => true
-    }
-  }
 }

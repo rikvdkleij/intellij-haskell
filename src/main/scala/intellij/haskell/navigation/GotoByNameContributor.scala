@@ -23,18 +23,16 @@ import intellij.haskell.psi.{HaskellNamedElement, HaskellPsiUtil}
 import intellij.haskell.util.StringUtil._
 import intellij.haskell.util.{HaskellFileUtil, HaskellProjectUtil}
 
-// TODO: Consider to use Stub index instead of File-based index
-class HaskellDeclarationContributor extends HaskellChooseByNameContributor[HaskellNamedElement] {
+class GotoByNameContributor extends HaskellChooseByNameContributor[HaskellNamedElement] {
 
   private var simpleCache: Iterable[HaskellNamedElement] = _
 
   override def getNames(project: Project, includeNonProjectItems: Boolean): Array[String] = {
     val psiManager = PsiManager.getInstance(project)
-    val declarationElements = HaskellProjectUtil.findHaskellFiles(project, includeNonProjectItems).flatMap(vf => HaskellFileUtil.convertToHaskellFile(vf, psiManager).
-      map(f => HaskellPsiUtil.findDeclarationElements(f)).getOrElse(Stream()))
-    val elements = declarationElements.flatMap(_.getIdentifierElements)
-    simpleCache = elements
-    elements.map(n => n.getName).toArray
+    val namedElements = HaskellProjectUtil.findHaskellFiles(project, includeNonProjectItems).
+      flatMap(vf => HaskellFileUtil.convertToHaskellFile(vf, psiManager).map(f => HaskellPsiUtil.findNamedElements(f)).getOrElse(Stream()))
+    simpleCache = namedElements
+    namedElements.map(_.getName).toArray
   }
 
   override def getItemsByName(name: String, pattern: String, project: Project, includeNonProjectItems: Boolean): Array[NavigationItem] = {

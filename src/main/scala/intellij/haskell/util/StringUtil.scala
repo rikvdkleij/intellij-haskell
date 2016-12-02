@@ -26,11 +26,19 @@ object StringUtil {
     s.trim.toLowerCase
   }
 
-  def escapeString(s: String) = {
+  def escapeString(s: String): String = {
     XmlStringUtil.escapeString(s, false, false)
   }
 
-  def shortenHaskellDeclaration(declaration: String) = {
+  def shortenHaskellDeclaration(declaration: String): String = {
     declaration.replaceAll(PackageQualifierPattern, "").replaceAll("""\{\-[^\}]+\-\}""", " ").replaceAll("""\-\-.+""", " ").replaceAll("""\s+""", " ")
+  }
+
+  def removeOuterParens(name: String): String = {
+    if (name.startsWith("(") && name.endsWith(")")) {
+      name.substring(1, name.length - 1)
+    } else {
+      name
+    }
   }
 }

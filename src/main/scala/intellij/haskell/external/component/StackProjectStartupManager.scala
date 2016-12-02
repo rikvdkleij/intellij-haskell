@@ -29,7 +29,10 @@ import intellij.haskell.util.HaskellProjectUtil
 
 import scala.concurrent.duration._
 
-class StackProjectComponent(project: Project) extends ProjectComponent {
+class StackProjectStartupManager(project: Project) extends ProjectComponent {
+
+  var hoogleAvailable = false
+
   override def getComponentName: String = "stack-repls-manager"
 
   override def projectClosed(): Unit = {}
@@ -48,7 +51,7 @@ class StackProjectComponent(project: Project) extends ProjectComponent {
           progressIndicator.setText("Busy with preloading cache, building tools and/or rebuilding Hoogle database")
           val preloadCacheFuture = ApplicationManager.getApplication.executeOnPooledThread(new Runnable {
             override def run(): Unit = {
-              StackReplsComponentsManager.preloadModuleIdentifiersCaches(project)
+              HaskellComponentsManager.preloadModuleIdentifiersCaches(project)
 
               HaskellNotificationGroup.logInfo("Restarting global repl to release memory")
               StackReplsManager.getGlobalRepl(project).restart()
@@ -67,13 +70,17 @@ class StackProjectComponent(project: Project) extends ProjectComponent {
 
           val buildToolsFuture = ApplicationManager.getApplication.executeOnPooledThread(new Runnable {
             override def run(): Unit = {
-              StackCommandLine.executeBuild(project, Seq("build", HaskellDocumentationProvider.HaskellDocsName, HLintComponent.HlintName, "apply-refact"), "Build of `haskell-docs`, `hlint` and `apply-refact`")
+              StackCommandLine.executeBuild(project, Seq("build", HaskellDocumentationProvider.HaskellDocsName, HLintComponent.HlintName), "Build of `haskell-docs` and `hlint`")
             }
           })
 
           val rebuildHoogleFuture = ApplicationManager.getApplication.executeOnPooledThread(new Runnable {
             override def run(): Unit = {
-              StackCommandLine.runCommand(Seq("hoogle", "--rebuild"), project, timeoutInMillis = 10.minutes.toMillis)
+              try {
+                StackCommandLine.runCommand(Seq("hoogle", "--rebuild"), project, timeoutInMillis = 10.minutes.toMillis)
+              } finally {
+                hoogleAvailable = true
+              }
             }
           })
 

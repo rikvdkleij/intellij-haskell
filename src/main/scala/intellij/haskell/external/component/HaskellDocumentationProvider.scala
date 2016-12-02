@@ -36,7 +36,7 @@ class HaskellDocumentationProvider extends AbstractDocumentationProvider {
 
   private def findDocumentation(namedElement: HaskellQualifiedNameElement): Option[String] = {
     val name = namedElement.getIdentifierElement.getName
-    val nameInfo = StackReplsComponentsManager.findNameInfo(namedElement).headOption
+    val nameInfo = HaskellComponentsManager.findNameInfo(namedElement).headOption
     if (nameInfo.isEmpty) {
       HaskellNotificationGroup.logWarning(s"No documentation because no info could be found for identifier: $name")
     }

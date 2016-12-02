@@ -29,8 +29,8 @@ import com.intellij.psi.util.PsiTreeUtil
 import com.intellij.psi.{PsiElement, PsiFile, TokenType}
 import com.intellij.util.ProcessingContext
 import intellij.haskell.HaskellIcons
-import intellij.haskell.external.component.StackReplsComponentsManager._
-import intellij.haskell.external.component.{ModuleIdentifier, StackReplsComponentsManager}
+import intellij.haskell.external.component.HaskellComponentsManager._
+import intellij.haskell.external.component.{HaskellComponentsManager, ModuleIdentifier}
 import intellij.haskell.psi.HaskellElementCondition._
 import intellij.haskell.psi.HaskellPsiUtil._
 import intellij.haskell.psi.HaskellTypes._
@@ -202,7 +202,7 @@ class HaskellCompletionContributor extends CompletionContributor {
   }
 
   private def createLocalLookupElement(namedElement: HaskellNamedElement): LookupElementBuilder = {
-    LookupElementBuilder.create(namedElement.getName).withTypeText(StackReplsComponentsManager.findTypeInfoForElement(namedElement).map(ti => StringUtil.unescapeXml(ti.typeSignature)).getOrElse("")).withIcon(HaskellIcons.HaskellSmallBlueLogo)
+    LookupElementBuilder.create(namedElement.getName).withTypeText(HaskellComponentsManager.findTypeInfoForElement(namedElement).map(ti => StringUtil.unescapeXml(ti.typeSignature)).getOrElse("")).withIcon(HaskellIcons.HaskellSmallBlueLogo)
   }
 
   private def createTopLevelLookupElement(moduleIdentifier: ModuleIdentifier): LookupElementBuilder = {
@@ -251,7 +251,7 @@ class HaskellCompletionContributor extends CompletionContributor {
   }
 
   private def findAvailableModuleNames(project: Project, psiFile: PsiFile) = {
-    val moduleNames = StackReplsComponentsManager.findAvailableModuleNames(psiFile)
+    val moduleNames = HaskellComponentsManager.findAvailableModuleNames(psiFile)
     moduleNames.map(m => LookupElementBuilder.create(m).withTailText(" module", true))
   }
 

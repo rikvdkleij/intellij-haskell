@@ -22,7 +22,7 @@ import com.intellij.openapi.progress.{ProgressIndicator, ProgressManager}
 import com.intellij.openapi.project.Project
 import intellij.haskell.HaskellNotificationGroup
 import intellij.haskell.external.commandLine.StackCommandLine
-import intellij.haskell.external.component.StackReplsComponentsManager
+import intellij.haskell.external.component.HaskellComponentsManager
 import intellij.haskell.external.repl.StackReplsManager
 import intellij.haskell.util.HaskellProjectUtil
 
@@ -55,7 +55,7 @@ class RestartStackReplsAction extends AnAction {
 
             progressIndicator.setText("Busy with cleaning up")
             cleanLocalPackages(project)
-            StackReplsComponentsManager.invalidateModuleIdentifierCaches(project)
+            HaskellComponentsManager.invalidateGlobalCaches(project)
 
             Thread.sleep(1000)
 
@@ -64,7 +64,7 @@ class RestartStackReplsAction extends AnAction {
             globalRepl.start()
 
             progressIndicator.setText("Busy with preloading cache")
-            StackReplsComponentsManager.preloadModuleIdentifiersCaches(project)
+            HaskellComponentsManager.preloadModuleIdentifiersCaches(project)
 
             progressIndicator.setText("Restarting global repl to release memory")
             globalRepl.restart()

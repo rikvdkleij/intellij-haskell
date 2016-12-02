@@ -17,6 +17,7 @@
 package intellij.haskell.external.component
 
 import com.intellij.openapi.application.ApplicationManager
+import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Computable
 import com.intellij.psi.PsiFile
 import intellij.haskell.psi.HaskellPsiUtil
@@ -26,7 +27,6 @@ private[component] object AvailableModuleNamesComponent {
 
   def findAvailableModuleNames(psiFile: PsiFile): Iterable[String] = {
     val globalProjectInfo = GlobalProjectInfoComponent.findGlobalProjectInfo(psiFile.getProject)
-    val findProjectProductionModuleNames = () => HaskellFileIndex.findProjectProductionPsiFiles(psiFile.getProject).flatMap(HaskellPsiUtil.findModuleName)
 
     if (HaskellProjectUtil.isProjectTestFile(psiFile)) {
       val libraryTestModuleNames = globalProjectInfo.map(_.allAvailableLibraryModuleNames).getOrElse(Stream())
@@ -34,7 +34,7 @@ private[component] object AvailableModuleNamesComponent {
         new Computable[Iterable[String]] {
           override def compute(): Iterable[String] = {
             HaskellFileIndex.findProjectTestPsiFiles(psiFile.getProject).flatMap(HaskellPsiUtil.findModuleName) ++
-              findProjectProductionModuleNames()
+              findProjectProductionModuleNames(psiFile.getProject)
           }
         }
       }
@@ -44,11 +44,15 @@ private[component] object AvailableModuleNamesComponent {
       val prodModuleNames = ApplicationManager.getApplication.runReadAction {
         new Computable[Iterable[String]] {
           override def compute(): Iterable[String] = {
-            findProjectProductionModuleNames()
+            findProjectProductionModuleNames(psiFile.getProject)
           }
         }
       }
       prodModuleNames ++ libraryModuleNames
     }
+  }
+
+  def findProjectProductionModuleNames(project: Project): Iterable[String] = {
+    HaskellFileIndex.findProjectProductionPsiFiles(project).flatMap(HaskellPsiUtil.findModuleName)
   }
 }

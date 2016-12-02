@@ -16,11 +16,9 @@
 
 package intellij.haskell.external.component
 
-import com.intellij.openapi.command.CommandProcessor
 import com.intellij.psi.PsiFile
 import intellij.haskell.HaskellNotificationGroup
 import intellij.haskell.external.commandLine.StackCommandLine
-import intellij.haskell.util.HaskellFileUtil
 import spray.json.JsonParser.ParsingException
 import spray.json.{DefaultJsonProtocol, _}
 
@@ -39,26 +37,8 @@ object HLintComponent {
     }).getOrElse(Seq())
   }
 
-  def applySuggestion(psiFile: PsiFile, startLineNr: Int, startColumnNr: Int): Unit = {
-    val project = psiFile.getProject
-    CommandProcessor.getInstance().executeCommand(project, new Runnable {
-      override def run(): Unit = {
-        val command = Seq("exec", "--", HLintComponent.HlintName, HaskellFileUtil.getFilePath(psiFile),
-          "--refactor",
-          "--refactor-options", s"--pos $startLineNr,$startColumnNr")
-        StackCommandLine.runCommand(command, project).foreach(processOutput => {
-          if (processOutput.getStderrLines.isEmpty) {
-            HaskellFileUtil.saveFileWithNewContent(project, HaskellFileUtil.findVirtualFile(psiFile), processOutput.getStdout)
-          } else {
-            HaskellNotificationGroup.notifyBalloonError("Error while applying HLint suggestion. See Event Log for errors")
-          }
-        })
-      }
-    }, null, null)
-  }
-
   private object HlintJsonProtocol extends DefaultJsonProtocol {
-    implicit val hlintInfoFormat = jsonFormat12(HLintInfo)
+    implicit val hlintInfoFormat: RootJsonFormat[HLintInfo] = jsonFormat12(HLintInfo)
   }
 
   import intellij.haskell.external.component.HLintComponent.HlintJsonProtocol._

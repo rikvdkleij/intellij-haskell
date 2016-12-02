@@ -40,7 +40,7 @@ class HLintInspectionTool extends LocalInspectionTool {
     } yield
       hi.to match {
         case Some(to) => problemsHolder.registerProblem(
-          new ProblemDescriptorBase(se, ee, hi.hint, Array(new HLintQuickfix(se, ee, hi.startLine, hi.startColumn, to, hi.hint)), findProblemHighlightType(hi), false, null, true, isOnTheFly)
+          new ProblemDescriptorBase(se, ee, hi.hint, Array(new HLintQuickfix(se, ee, hi.startLine, hi.startColumn, to, hi.hint, hi.note)), findProblemHighlightType(hi), false, null, true, isOnTheFly)
         )
         case None => problemsHolder.registerProblem(
           new ProblemDescriptorBase(se, ee, hi.hint, Array(), findProblemHighlightType(hi), false, null, true, isOnTheFly))

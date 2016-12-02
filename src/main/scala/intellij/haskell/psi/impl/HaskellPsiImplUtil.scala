@@ -23,7 +23,7 @@ import com.intellij.psi.impl.source.resolve.reference.ReferenceProvidersRegistry
 import com.intellij.psi.util.PsiTreeUtil
 import com.intellij.psi.{PsiElement, PsiReference, TokenType}
 import com.intellij.util.ArrayUtil
-import intellij.haskell.external.component.StackReplsComponentsManager
+import intellij.haskell.external.component.HaskellComponentsManager
 import intellij.haskell.psi.HaskellTypes._
 import intellij.haskell.psi._
 import intellij.haskell.util.StringUtil
@@ -288,7 +288,7 @@ object HaskellPsiImplUtil {
   }
 
   private def findNameInfo(namedElement: HaskellNamedElement) = {
-    StackReplsComponentsManager.findNameInfo(namedElement).headOption.map(_.declaration)
+    HaskellComponentsManager.findNameInfo(namedElement).headOption.map(_.declaration)
   }
 
   private final val EndOfDeclarationInfoIndicators = Seq(HS_NEWLINE, HS_EQUAL, HS_WHERE)

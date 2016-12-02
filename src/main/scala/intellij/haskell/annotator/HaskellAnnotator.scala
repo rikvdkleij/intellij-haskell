@@ -29,7 +29,7 @@ import com.intellij.psi.PsiFile
 import com.intellij.psi.impl.source.tree.TreeUtil
 import com.intellij.psi.util.PsiTreeUtil
 import intellij.haskell.editor.HaskellImportOptimizer
-import intellij.haskell.external.component.StackReplsComponentsManager._
+import intellij.haskell.external.component.HaskellComponentsManager._
 import intellij.haskell.external.component._
 import intellij.haskell.psi._
 import intellij.haskell.util._
@@ -70,7 +70,7 @@ class HaskellAnnotator extends ExternalAnnotator[PsiFile, LoadResult] {
 
   override def doAnnotate(psiFile: PsiFile): LoadResult = {
     HaskellFileUtil.saveAllFiles()
-    StackReplsComponentsManager.loadHaskellFile(psiFile)
+    HaskellComponentsManager.loadHaskellFile(psiFile)
   }
 
   override def apply(psiFile: PsiFile, loadResult: LoadResult, holder: AnnotationHolder) {
@@ -147,7 +147,7 @@ class HaskellAnnotator extends ExternalAnnotator[PsiFile, LoadResult] {
 
   private def extractPerhapsYouMeantAction(suggestion: String): Option[PerhapsYouMeantIntentionAction] = {
     suggestion match {
-      case message@PerhapsYouMeantImportedFromPattern(name, module) => Some(new PerhapsYouMeantIntentionAction(name, message))
+      case message@PerhapsYouMeantImportedFromPattern(name, _module) => Some(new PerhapsYouMeantIntentionAction(name, message))
       case message@PerhapsYouMeantLocalPattern(name) => Some(new PerhapsYouMeantIntentionAction(name, message))
       case _ => None
     }
@@ -160,10 +160,8 @@ class HaskellAnnotator extends ExternalAnnotator[PsiFile, LoadResult] {
     }
   }
 
-  private def createNotInScopeIntentionActions(psiFile: PsiFile, name: String) = {
-    val project = psiFile.getProject
-    val moduleNames = findAvailableModuleNamesForModuleIdentifiers(psiFile.getProject).toStream
-    val moduleIdentifiers = moduleNames.flatMap(mn => findImportedModuleIdentifiers(project, mn).filter(_.name == name))
+  private def createNotInScopeIntentionActions(psiFile: PsiFile, name: String): Iterable[NotInScopeIntentionAction] = {
+    val moduleIdentifiers = findPreloadedModuleIdentifiers(psiFile.getProject).filter(_.name == name)
     moduleIdentifiers.map(mi => new NotInScopeIntentionAction(mi.name, mi.moduleName, psiFile))
   }
 
@@ -230,7 +228,7 @@ private sealed trait Annotation {
 
 private case class ErrorAnnotation(textRange: TextRange, message: String, htmlMessage: String) extends Annotation
 
-private case class ErrorAnnotationWithIntentionActions(textRange: TextRange, message: String, htmlMessage: String, baseIntentionActions: Stream[HaskellBaseIntentionAction]) extends Annotation
+private case class ErrorAnnotationWithIntentionActions(textRange: TextRange, message: String, htmlMessage: String, baseIntentionActions: Iterable[HaskellBaseIntentionAction]) extends Annotation
 
 private case class WarningAnnotation(textRange: TextRange, message: String, htmlMessage: String) extends Annotation
 

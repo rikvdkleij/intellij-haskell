@@ -20,19 +20,20 @@ import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.editor.SelectionModel
 import com.intellij.openapi.project.Project
 import com.intellij.psi.{PsiElement, PsiFile}
-import intellij.haskell.HaskellNotificationGroup
 import intellij.haskell.annotator.HaskellAnnotator
 import intellij.haskell.psi.HaskellPsiUtil
 import intellij.haskell.util.HaskellFileIndex
+import intellij.haskell.{HaskellFile, HaskellNotificationGroup}
 
-object StackReplsComponentsManager {
+object HaskellComponentsManager {
 
   implicit class RichBoolean(val b: Boolean) extends AnyVal {
     final def option[A](a: => A): Option[A] = if (b) Some(a) else None
   }
 
-  def findAvailableModuleNamesForModuleIdentifiers(project: Project): Iterable[String] = {
-    BrowseModuleComponent.findModuleNamesInCache(project)
+  def findPreloadedModuleIdentifiers(project: Project): Iterable[ModuleIdentifier] = {
+    val moduleNames = BrowseModuleComponent.findModuleNamesInCache(project)
+    moduleNames.flatMap(mn => findImportedModuleIdentifiers(project, mn))
   }
 
   def findImportedModuleIdentifiers(project: Project, moduleName: String): Iterable[ModuleIdentifier] = {
@@ -59,6 +60,10 @@ object StackReplsComponentsManager {
     NameInfoComponent.findNameInfo(psiElement)
   }
 
+  def findPreludeNameInfo(project: Project, name: String): Iterable[NameInfo] = {
+    NameInfoComponent.findPreludeNameInfo(project, name)
+  }
+
   def findAvailableModuleNames(psiFile: PsiFile): Iterable[String] = {
     AvailableModuleNamesComponent.findAvailableModuleNames(psiFile)
   }
@@ -71,9 +76,12 @@ object StackReplsComponentsManager {
     LoadComponent.load(psiFile)
   }
 
-  def invalidateModuleIdentifierCaches(project: Project): Unit = {
-    BrowseModuleComponent.invalidate(project)
+  def invalidateGlobalCaches(project: Project): Unit = {
     GlobalProjectInfoComponent.invalidate(project)
+    BrowseModuleComponent.invalidate(project)
+    NameInfoComponent.invalidateAll(project)
+    NameInfoComponent.invalidatePreludeInfo(project)
+    ModuleFileComponent.invalidate(project)
   }
 
   def preloadModuleIdentifiersCaches(project: Project): Unit = {
@@ -89,6 +97,10 @@ object StackReplsComponentsManager {
 
   def findTypeInfoForSelection(psiFile: PsiFile, selectionModel: SelectionModel): Option[TypeInfo] = {
     TypeInfoComponent.findTypeInfoForSelection(psiFile, selectionModel)
+  }
+
+  def findHaskellFiles(project: Project, moduleName: String): Iterable[HaskellFile] = {
+    ModuleFileComponent.findHaskellFiles(project, moduleName)
   }
 
   private def preloadAllLibraryModuleIdentifiers(project: Project): Unit = {

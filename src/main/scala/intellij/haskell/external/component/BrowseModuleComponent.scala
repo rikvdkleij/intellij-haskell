@@ -100,7 +100,7 @@ private[component] object BrowseModuleComponent {
 
         private def createModuleIdentifier(name: String, moduleName: String, declaration: String) = {
           if (name.startsWith("(")) {
-            Some(ModuleIdentifier(name.substring(1, name.length - 1), moduleName, declaration, isOperator = true))
+            Some(ModuleIdentifier(StringUtil.removeOuterParens(name), moduleName, declaration, isOperator = true))
           } else {
             Some(ModuleIdentifier(name, moduleName, declaration, isOperator = false))
           }

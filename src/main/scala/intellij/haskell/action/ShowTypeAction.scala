@@ -17,7 +17,7 @@
 package intellij.haskell.action
 
 import com.intellij.openapi.actionSystem.{AnAction, AnActionEvent}
-import intellij.haskell.external.component.StackReplsComponentsManager
+import intellij.haskell.external.component.HaskellComponentsManager
 import intellij.haskell.util.{HaskellEditorUtil, StringUtil}
 
 class ShowTypeAction extends AnAction {
@@ -33,12 +33,12 @@ class ShowTypeAction extends AnAction {
       val psiFile = actionContext.psiFile
       val selectionModel = actionContext.selectionModel
       selectionModel match {
-        case Some(sm) => StackReplsComponentsManager.findTypeInfoForSelection(psiFile, sm) match {
+        case Some(sm) => HaskellComponentsManager.findTypeInfoForSelection(psiFile, sm) match {
           case Some(ti) => HaskellEditorUtil.showHint(editor, StringUtil.escapeString(ti.typeSignature))
           case None => HaskellEditorUtil.showHint(editor, "Could not determine type for selection")
         }
         case _ => Option(psiFile.findElementAt(editor.getCaretModel.getOffset)).foreach { psiElement =>
-          StackReplsComponentsManager.findTypeInfoForElement(psiElement) match {
+          HaskellComponentsManager.findTypeInfoForElement(psiElement) match {
             case Some(ti) => HaskellEditorUtil.showHint(editor, StringUtil.escapeString(ti.typeSignature))
             case None => HaskellEditorUtil.showHint(editor, s"Could not determine type for ${StringUtil.escapeString(psiElement.getText)}")
           }

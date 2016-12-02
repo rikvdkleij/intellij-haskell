@@ -32,7 +32,7 @@ Any feedback is welcome!!
 - Quick fixes for HLint suggestions with help of Refactor tool (`apply-refact` package);
 - Show error action to view formatted message. Useful in case message consists of multiple lines (Ctrl-F10, Meta-F10 on Mac OSX);
 - Intention actions to add language extension (depends on compiler error), add top-level type signature (depends on compiler warning) or to add import of identifier;
-
+- Code formatting with Hindent and/or Stylish-haskell;
 
 # Getting started (1.0.0-beta3)
 - Install this plugin. Make sure no other Haskell plugin is installed in IntelliJ;

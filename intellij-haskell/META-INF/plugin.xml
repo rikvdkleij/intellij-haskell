@@ -14,7 +14,8 @@
         <p>1.0.0-beta4</p>
         <ul>
             <li>Various improvements and fixes</li>
-            <li>Added Hoogle action</li>
+            <li>Added Hoogle expression action</li>
+            <li>Added navigation by Hoogle action</li>
             <li>Support for Hindent formatting of selection</li>
             <li>Add and remove parens around expression (@zjhmale)</li>
         </ul>
@@ -181,7 +182,7 @@
         <lang.refactoringSupport language="Haskell"
                                  implementationClass="intellij.haskell.refactor.HaskellRefactoringSupportProvider"/>
         <renamePsiElementProcessor implementation="intellij.haskell.refactor.HaskellRenameVariableProcessor"/>
-        <vetoRenameCondition implementation="intellij.haskell.refactor.HaskellVetoRenameCondition" />
+        <vetoRenameCondition implementation="intellij.haskell.refactor.HaskellVetoRenameCondition"/>
 
         <lang.documentationProvider language="Haskell"
                                     implementationClass="intellij.haskell.external.component.HaskellDocumentationProvider"/>
@@ -190,9 +191,9 @@
                                 implementationClass="intellij.haskell.editor.HaskellCompletionContributor"/>
         <lookup.charFilter implementation="intellij.haskell.editor.HaskellCompletionCharFilter"/>
 
-        <gotoClassContributor implementation="intellij.haskell.navigation.HaskellDeclarationContributor"/>
+        <gotoClassContributor implementation="intellij.haskell.navigation.GotoByDeclarationContributor"/>
         <gotoSymbolContributor
-                implementation="intellij.haskell.navigation.HaskellNamedElementContributor"/>
+                implementation="intellij.haskell.navigation.GotoByNameContributor"/>
         <lang.psiStructureViewFactory language="Haskell"
                                       implementationClass="intellij.haskell.navigation.HaskellStructureViewFactory"/>
 
@@ -236,7 +237,7 @@
             <implementation-class>intellij.haskell.external.repl.ProjectStackReplProcess</implementation-class>
         </component>
         <component>
-            <implementation-class>intellij.haskell.external.component.StackProjectComponent</implementation-class>
+            <implementation-class>intellij.haskell.external.component.StackProjectStartupManager</implementation-class>
         </component>
 
         <component>
@@ -318,11 +319,19 @@
             <keyboard-shortcut first-keystroke="ctrl alt SEMICOLON" keymap="$default"/>
         </action>
 
-        <action id="Haskell.Hoogle"
+        <action id="Haskell.Hoogle.It"
                 class="intellij.haskell.action.HoogleAction"
-                text="Hoogle expression"
-                description="Hoogle for (selected) expression">
+                text="Hoogle for it"
+                description="Hoogle for (selected) words">
             <add-to-group group-id="CodeEditorViewGroup" anchor="last"/>
+            <keyboard-shortcut first-keystroke="shift ctrl h" keymap="$default"/>
+        </action>
+
+        <action id="Haskell.Hoogle.Navigation"
+                class="intellij.haskell.action.HoogleNavigationAction"
+                text="Navigation by Hoogle"
+                description="Navigation powered by Hoogle">
+            <add-to-group group-id="GoToMenu" anchor="last"/>
             <keyboard-shortcut first-keystroke="ctrl alt h" keymap="$default"/>
         </action>
     </actions>

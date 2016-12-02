@@ -17,22 +17,19 @@
 package intellij.haskell.external.repl
 
 import com.intellij.openapi.project.Project
+import intellij.haskell.external.component.StackProjectStartupManager
 
 object StackReplsManager {
 
-  def getProjectRepl(project: Project) = {
-    projectRepl(project)
+  def getStackProjectStartupManager(project: Project): StackProjectStartupManager = {
+    project.getComponent(classOf[StackProjectStartupManager])
   }
 
-  def getGlobalRepl(project: Project) = {
-    globalRepl(project)
-  }
-
-  private def projectRepl(project: Project) = {
+  def getProjectRepl(project: Project): ProjectStackReplProcess = {
     project.getComponent(classOf[ProjectStackReplProcess])
   }
 
-  private def globalRepl(project: Project) = {
+  def getGlobalRepl(project: Project): GlobalStackReplProcess = {
     project.getComponent(classOf[GlobalStackReplProcess])
   }
 }

@@ -169,7 +169,7 @@ private[repl] abstract class StackReplProcess(val project: Project, val extraSta
           writeToOutputStream(":set -Wall")
           writeToOutputStream(":set -fdefer-typed-holes")
 
-          HaskellProjectUtil.findPackageName(project) match {
+          HaskellProjectUtil.findCabalPackageName(project) match {
             case Some(name) =>
               val packageModuleName = s"Paths_${name.replaceAll("-", "_")}"
               logInfo(s"Package module `$packageModuleName` will be loaded")

@@ -40,7 +40,7 @@ class HaskellReference(element: HaskellNamedElement, textRange: TextRange) exten
     val result = myElement match {
       case mi: HaskellModid =>
         (for {
-          haskellFile <- HaskellProjectUtil.findFilesForModule(mi.getName, project)
+          haskellFile <- HaskellComponentsManager.findHaskellFiles(project, mi.getName)
         } yield new HaskellFileResolveResult(haskellFile)).toArray
       case qe: HaskellQualifierElement =>
         val importDeclarations = findImportDeclarations(psiFile)
@@ -79,7 +79,7 @@ class HaskellReference(element: HaskellNamedElement, textRange: TextRange) exten
   }
 
   private def findModuleFiles(importDeclarations: Iterable[HaskellImportDeclaration], qualifierElement: HaskellQualifierElement, project: Project) = {
-    importDeclarations.flatMap(id => Option(id.getModid)).find(mi => mi.getName == qualifierElement.getName).map(mi => HaskellProjectUtil.findFilesForModule(mi.getName, project)).getOrElse(Iterable())
+    importDeclarations.flatMap(id => Option(id.getModid)).find(mi => mi.getName == qualifierElement.getName).map(mi => HaskellComponentsManager.findHaskellFiles(project, mi.getName)).getOrElse(Iterable())
   }
 
   private def findResolveResults(namedElement: HaskellNamedElement, psiFile: PsiFile, project: Project) = {
@@ -92,15 +92,15 @@ class HaskellReference(element: HaskellNamedElement, textRange: TextRange) exten
   }
 
   private def createResolveResultsByNameInfos(namedElement: HaskellNamedElement, project: Project): Iterable[ResolveResult] = {
-    StackReplsComponentsManager.findNameInfo(namedElement).flatMap {
+    HaskellComponentsManager.findNameInfo(namedElement).flatMap {
       case pni: ProjectNameInfo => findReferenceByProjectNameInfo(pni, namedElement, project).map(new HaskellProjectResolveResult(_)).toIterable
-      case lni: LibraryNameInfo => findReferenceByLibraryNameInfo(lni, namedElement, project).map(ne => new HaskellLibraryResolveResult(ne))
+      case lni: LibraryNameInfo => HaskellReference.findNamedElementsByLibraryNameInfo(lni, namedElement.getName, project).map(ne => new HaskellLibraryResolveResult(ne))
       case bini: BuiltInNameInfo => Some(new BuiltInResolveResult(bini.declaration, bini.libraryName, bini.moduleName))
     }
   }
 
   private def findReferenceByDefinitionLocation(namedElement: HaskellNamedElement, project: Project): Option[HaskellNamedElement] = {
-    StackReplsComponentsManager.findDefinitionLocation(namedElement).flatMap(location => {
+    HaskellComponentsManager.findDefinitionLocation(namedElement).flatMap(location => {
       findReferenceByLocation(location.filePath, location.startLineNr, location.startColumnNr, namedElement, project)
     })
   }
@@ -119,18 +119,33 @@ class HaskellReference(element: HaskellNamedElement, textRange: TextRange) exten
     } yield namedElement
   }
 
-  private def findReferenceByLibraryNameInfo(libraryNameInfo: LibraryNameInfo, namedElement: HaskellNamedElement, project: Project): Iterable[HaskellNamedElement] = {
-    HaskellProjectUtil.findFilesForModule(libraryNameInfo.moduleName, project).flatMap { f =>
-      val topLevelDeclarationElements = findDeclarationElements(f)
-      val referenceByNameInfo = topLevelDeclarationElements.flatMap(_.getIdentifierElements).
-        filter(_.getName == namedElement.getName).
-        filter(ne => StackReplsComponentsManager.findNameInfo(ne).exists(ni => ni.shortenedDeclaration == libraryNameInfo.shortenedDeclaration))
+}
 
-      if (referenceByNameInfo.isEmpty) {
-        topLevelDeclarationElements.filter(de => de.getIdentifierElements.forall(e => libraryNameInfo.shortenedDeclaration.contains(e.getName))).flatMap(_.getIdentifierElements).filter(_.getName == namedElement.getName)
+object HaskellReference {
+
+  def findNamedElementsByLibraryNameInfo(libraryNameInfo: LibraryNameInfo, name: String, project: Project): Iterable[HaskellNamedElement] = {
+    HaskellComponentsManager.findHaskellFiles(project, libraryNameInfo.moduleName).flatMap { f =>
+      val declarationElements = findDeclarationElements(f)
+      val namedElementsByNameInfo = declarationElements.flatMap(_.getIdentifierElements).
+        filter(_.getName == name).
+        filter(ne => HaskellComponentsManager.findNameInfo(ne).exists(ni => ni.shortenedDeclaration == libraryNameInfo.shortenedDeclaration))
+
+      if (namedElementsByNameInfo.isEmpty) {
+        val namedElementsByDeclaration = declarationElements.filter(de => de.getIdentifierElements.forall(e => libraryNameInfo.shortenedDeclaration.contains(e.getName))).flatMap(_.getIdentifierElements).filter(_.getName == name)
+        if (namedElementsByDeclaration.isEmpty) {
+          declarationElements.flatMap(_.getIdentifierElements).filter(_.getName == name)
+        } else {
+          namedElementsByDeclaration
+        }
       } else {
-        referenceByNameInfo
+        namedElementsByNameInfo
       }
+    }
+  }
+
+  def findNamedElementsInModule(moduleName: String, name: String, project: Project): Iterable[HaskellNamedElement] = {
+    HaskellComponentsManager.findHaskellFiles(project, moduleName).flatMap { f =>
+      HaskellPsiUtil.findDeclarationElements(f).flatMap(_.getIdentifierElements).filter(_.getName == name)
     }
   }
 }

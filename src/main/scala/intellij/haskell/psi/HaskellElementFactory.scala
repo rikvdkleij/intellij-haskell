@@ -53,9 +53,8 @@ object HaskellElementFactory {
     PsiTreeUtil.findChildOfType(haskellFile, classOf[HaskellQualifiedNameElement])
   }
 
-  def createBody(project: Project, body: String): HaskellModuleBody = {
-    val haskellFile = createFileFromText(project, body)
-    PsiTreeUtil.findChildOfType(haskellFile, classOf[HaskellModuleBody])
+  def createBody(project: Project, body: String): Option[HaskellModuleBody] = {
+    createElementFromText(project, body, HS_MODULE_BODY).map(_.asInstanceOf[HaskellModuleBody])
   }
 
   def createTopDeclaration(project: Project, declaration: String): Option[HaskellTopDeclaration] = {

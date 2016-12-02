@@ -33,7 +33,7 @@ class ShowNameInfoAction extends AnAction {
       val psiFile = actionContext.psiFile
       val offset = editor.getCaretModel.getOffset
       Option(psiFile.findElementAt(offset)).foreach(psiElement => {
-        val nameInfos = StackReplsComponentsManager.findNameInfo(psiElement)
+        val nameInfos = HaskellComponentsManager.findNameInfo(psiElement)
         if (nameInfos.nonEmpty) {
           HaskellEditorUtil.showList(nameInfos.toSeq.map(createInfoText), editor)
         } else {

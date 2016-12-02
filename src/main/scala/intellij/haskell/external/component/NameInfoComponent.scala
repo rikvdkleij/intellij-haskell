@@ -42,6 +42,8 @@ private[component] object NameInfoComponent {
 
   private case class Key(psiFile: PsiFile, name: String)
 
+  private case class PreludeKey(project: Project, name: String)
+
   private case class Result(nameInfos: Option[Iterable[NameInfo]])
 
   private final val Cache = CacheBuilder.newBuilder()
@@ -64,7 +66,7 @@ private[component] object NameInfoComponent {
         }
 
         private def findNameInfosInProjectFile(key: Key, project: Project): Option[Iterable[NameInfo]] = {
-          val output = callProjectReplForInfo(key, project)
+          val output = findProjectInfo(key, project)
           createNameInfos(project, output)
         }
 
@@ -73,17 +75,13 @@ private[component] object NameInfoComponent {
             val moduleName = findModuleName(key.psiFile)
             moduleName.flatMap(mn => StackReplsManager.getGlobalRepl(project).findInfo(mn, key.name))
           } else {
-            callProjectReplForInfo(key, project)
+            findProjectInfo(key, project)
           }
           createNameInfos(project, output)
         }
 
-        private def callProjectReplForInfo(key: Key, project: Project): Option[StackReplOutput] = {
+        private def findProjectInfo(key: Key, project: Project): Option[StackReplOutput] = {
           StackReplsManager.getProjectRepl(project).findInfo(key.psiFile, key.name)
-        }
-
-        private def createNameInfos(project: Project, output: Option[StackReplOutput]): Option[Iterable[NameInfo]] = {
-          output.map(_.stdOutLines.flatMap(l => createNameInfo(l, project)))
         }
 
         private def findModuleName(psiFile: PsiFile) = {
@@ -95,23 +93,33 @@ private[component] object NameInfoComponent {
             }
           }
         }
-
-        private def createNameInfo(outputLine: String, project: Project): Option[NameInfo] = {
-          outputLine match {
-            case ProjectInfoPattern(declaration, filePath, lineNr, colNr) => Some(ProjectNameInfo(declaration, filePath, lineNr.toInt, colNr.toInt))
-            case LibraryModuleInfoPattern(declaration, libraryName, moduleName) =>
-              if (libraryName == "ghc-prim" || libraryName == "integer-gmp") {
-                Some(BuiltInNameInfo(declaration, libraryName, "GHC.Base"))
-              }
-              else {
-                Some(LibraryNameInfo(declaration, moduleName))
-              }
-            case ModuleInfoPattern(declaration, moduleName) => Some(LibraryNameInfo(declaration, moduleName))
-            case _ => None
-          }
-        }
       }
     )
+
+  private final val PreludeCache = CacheBuilder.newBuilder()
+    .build(
+      new CacheLoader[PreludeKey, Result] {
+
+        override def load(key: PreludeKey): Result = {
+          Result(findPreludeNameInfos(key))
+        }
+
+        override def reload(key: PreludeKey, oldResult: Result): ListenableFuture[Result] = {
+          val task = ListenableFutureTask.create[Result](() => {
+            findPreludeNameInfos(key) match {
+              case newResult@Some(nis) if nis.nonEmpty => Result(newResult)
+              case _ => oldResult
+            }
+          })
+          Executor.execute(task)
+          task
+        }
+
+        private def findPreludeNameInfos(key: PreludeKey): Option[Iterable[NameInfo]] = {
+          val output = StackReplsManager.getGlobalRepl(key.project).findInfo("Prelude", key.name)
+          createNameInfos(key.project, output)
+        }
+      })
 
   def findNameInfo(psiElement: PsiElement): Iterable[NameInfo] = {
     val key = for {
@@ -134,8 +142,52 @@ private[component] object NameInfoComponent {
     }).getOrElse(Iterable())
   }
 
+  def findPreludeNameInfo(project: Project, name: String): Iterable[NameInfo] = {
+    try {
+      val key = PreludeKey(project, name)
+      PreludeCache.get(key).nameInfos match {
+        case Some(nis) => nis
+        case _ =>
+          Cache.invalidate(key)
+          Iterable()
+      }
+    }
+    catch {
+      case _: UncheckedExecutionException => None
+      case _: ProcessCanceledException => None
+    }
+  }
+
   def invalidate(psiFile: PsiFile): Unit = {
     Cache.asMap().asScala.filter(_._1.psiFile == psiFile).keys.foreach(Cache.invalidate)
+  }
+
+  def invalidateAll(project: Project): Unit = {
+    Cache.asMap().asScala.map(_._1.psiFile).filter(_.getProject == project).foreach(invalidate)
+  }
+
+  def invalidatePreludeInfo(project: Project): Unit = {
+    PreludeCache.asMap().asScala.filter(_._1.project == project).keys.foreach(PreludeCache.invalidate)
+  }
+
+  private def createNameInfo(outputLine: String, project: Project): Option[NameInfo] = {
+    val result = outputLine match {
+      case ProjectInfoPattern(declaration, filePath, lineNr, colNr) => Some(ProjectNameInfo(declaration, filePath, lineNr.toInt, colNr.toInt))
+      case LibraryModuleInfoPattern(declaration, libraryName, moduleName) =>
+        if (libraryName == "ghc-prim" || libraryName == "integer-gmp") {
+          Some(BuiltInNameInfo(declaration, libraryName, "GHC.Base"))
+        }
+        else {
+          Some(LibraryNameInfo(declaration, moduleName))
+        }
+      case ModuleInfoPattern(declaration, moduleName) => Some(LibraryNameInfo(declaration, moduleName))
+      case _ => None
+    }
+    result
+  }
+
+  private def createNameInfos(project: Project, output: Option[StackReplOutput]): Option[Iterable[NameInfo]] = {
+    output.map(_.stdOutLines.flatMap(l => createNameInfo(l, project)))
   }
 }
 
