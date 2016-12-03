@@ -71,7 +71,8 @@ Any feedback is welcome!!
 1. Run task `compile` from the sbt console;
 1. Install/enable the following plugins in IntelliJ: Plugin Devkit, Grammar-Kit and PsiViewer;
 1. Import this project as an sbt project in IntelliJ;
-1. Select `Build`/`Make project`;
+1. Be sure `JVM SDK` inside `Languages & Frameworks`/`Scala Compiler Server` is set to `1.8`, since the Scala compiler version (2.12.0) which this plugin is currently using is not compatible with Java 7 or lower, Java 9 is not yet supported;
+1. Select `Build`/`Build Project`;
 
 
 # How to prepare plugin for deployment
