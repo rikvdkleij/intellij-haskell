@@ -33,7 +33,7 @@ class HaskellSdkType extends SdkType("Haskell Tool Stack SDK") {
 
   override def suggestHomePath(): String = "/usr/bin"
 
-  override def suggestSdkName(currentSdkName: String, sdkHome: String): String = "Haskell Tool Stack"
+  override def suggestSdkName(currentSdkName: String, sdkHome: String): String = "Haskell Tool Stack" + "-" + getVersionString(sdkHome)
 
   override def createAdditionalDataConfigurable(sdkModel: SdkModel, sdkModificator: SdkModificator): AdditionalDataConfigurable = null
 
@@ -56,9 +56,9 @@ class HaskellSdkType extends SdkType("Haskell Tool Stack SDK") {
 
   override def getVersionString(sdkHome: String): String = {
     if (isValidSdkHome(sdkHome)) {
-      HaskellSdkType.getNumericVersion(sdkHome).getOrElse("-")
+      HaskellSdkType.getNumericVersion(sdkHome).getOrElse("")
     } else {
-      "-"
+      ""
     }
   }
 
