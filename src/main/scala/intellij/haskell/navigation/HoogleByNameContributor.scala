@@ -49,7 +49,7 @@ class HoogleByNameContributor extends ChooseByNameContributor {
       case PackagePattern(packageName) => Iterable(NotFoundNavigationItem(packageName))
       case DeclarationPattern(moduleName, declaration) =>
         declaration.split("::").headOption.map(n => StringUtil.removeOuterParens(n.trim)).map(name => {
-          if (moduleName == "Prelude") {
+          if (moduleName == "Prelude" || moduleName == "Prelude.Compat") {
             HaskellComponentsManager.findPreludeNameInfo(project, name).flatMap {
               case nameInfo: LibraryNameInfo => HaskellReference.findNamedElementsByLibraryNameInfo(nameInfo, name, project)
               case _ => NotFoundResult(moduleName, declaration)
