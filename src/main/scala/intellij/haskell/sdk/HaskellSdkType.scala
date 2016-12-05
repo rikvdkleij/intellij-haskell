@@ -93,7 +93,8 @@ object HaskellSdkType {
 
   def getNumericVersion(sdkHome: String): Option[String] = {
     val workDir = new File(sdkHome).getParent
-    CommandLine.runCommand(
+    CommandLine.runProgram(
+      None,
       workDir,
       sdkHome,
       Seq("--numeric-version")
@@ -105,7 +106,7 @@ object HaskellSdkType {
     stackPath match {
       case Some(_) => stackPath
       case None =>
-        HaskellNotificationGroup.notifyBalloonError("Path to Haskell Stack binary expected to be set in Project SDK setting. Please do and restart Project.")
+        HaskellNotificationGroup.logErrorBalloonEvent(project, "Path to Haskell Stack binary is expected to be configured in Project SDK setting. Please do and restart Project.")
         None
     }
   }

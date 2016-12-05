@@ -25,25 +25,26 @@ import scala.concurrent.duration._
 
 object StackCommandLine {
 
-  private final val DefaultTimeout = 2.seconds.toMillis
+  private final val DefaultTimeout = 2.seconds
 
   private final val BuildTimeout = 30.minutes
 
-  def runCommand(command: Seq[String], project: Project, timeoutInMillis: Long = DefaultTimeout, captureOutputToLog: Boolean = false): Option[ProcessOutput] = {
+  def runCommand(command: Seq[String], project: Project, timeoutInMillis: Long = DefaultTimeout.toMillis, captureOutputToLog: Boolean = false, logErrorAsInfo: Boolean = false): Option[ProcessOutput] = {
     HaskellSdkType.getStackPath(project).flatMap(stackPath => {
-      CommandLine.runCommand(
+      CommandLine.runProgram(
+        Some(project),
         project.getBasePath,
         stackPath,
         command,
         timeoutInMillis.toInt,
-        captureOutputToLog)
+        captureOutputToLog,
+        logErrorAsInfo)
     })
   }
 
   def executeBuild(project: Project, buildArguments: Seq[String], message: String): Unit = {
-    HaskellNotificationGroup.logInfo(s"$message is starting")
-    HaskellNotificationGroup.logInfo(s"""Build command is `stack ${buildArguments.mkString(" ")}`""")
-    StackCommandLine.runCommand(buildArguments, project, BuildTimeout.toMillis, captureOutputToLog = true)
-    HaskellNotificationGroup.logInfo(s"$message is finished")
+    HaskellNotificationGroup.logInfoEvent(project, s"""Build of $message is starting with command `stack ${buildArguments.mkString(" ")}`""")
+    StackCommandLine.runCommand(buildArguments, project, BuildTimeout.toMillis, captureOutputToLog = true, logErrorAsInfo = true)
+    HaskellNotificationGroup.logInfoEvent(project, s"$message is finished")
   }
 }

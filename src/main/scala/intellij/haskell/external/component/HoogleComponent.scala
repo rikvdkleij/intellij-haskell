@@ -41,7 +41,7 @@ object HoogleComponent {
           }
         )
     } else {
-      HaskellNotificationGroup.notifyBalloonWarning("Stack Hoogle is not yet available")
+      HaskellNotificationGroup.logWarningBalloonEvent(project, "Stack Hoogle is not yet available")
       None
     }
   }

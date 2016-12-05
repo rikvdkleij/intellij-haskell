@@ -89,7 +89,7 @@ private[component] object ModuleFileComponent {
   }
 
   private def findFilePathsForModule(moduleName: String, project: Project): Iterable[String] = {
-    getFileNameAndDirNamesForModule(moduleName).map(names => {
+    getFileNameAndDirNamesForModule(project, moduleName).map(names => {
       val (fileName, dirNames) = names
       val filePaths = for {
         file <- HaskellFileIndex.findFilesByName(project, fileName, GlobalSearchScope.allScope(project))
@@ -106,10 +106,10 @@ private[component] object ModuleFileComponent {
     }).getOrElse(Iterable())
   }
 
-  private def getFileNameAndDirNamesForModule(module: String) = {
+  private def getFileNameAndDirNamesForModule(project: Project, module: String) = {
     module.split('.').toList.reverse match {
       case n :: d => Some(n, d)
-      case _ => HaskellNotificationGroup.logError(s"Could not determine directory names for $module"); None
+      case _ => HaskellNotificationGroup.logWarningEvent(project, s"Could not determine directory names for $module"); None
     }
   }
 

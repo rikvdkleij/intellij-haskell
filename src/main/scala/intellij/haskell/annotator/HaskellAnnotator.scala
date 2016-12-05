@@ -98,10 +98,11 @@ class HaskellAnnotator extends ExternalAnnotator[PsiFile, LoadResult] {
   private[annotator] def createAnnotations(loadResult: LoadResult, psiFile: PsiFile): Iterable[Annotation] = {
     val problems = loadResult.currentFileProblems.filter(_.filePath == psiFile.getOriginalFile.getVirtualFile.getPath)
 
+    val project = psiFile.getProject
     if (loadResult.loadFailed && loadResult.currentFileProblems.isEmpty) {
       loadResult.otherFileProblems.foreach {
-        case cpf: LoadProblemInOtherFile => HaskellNotificationGroup.notifyBalloonInfo(s"Error in file `${cpf.filePath}`: ${cpf.htmlMessage}")
-        case cpf: LoadProblemWithoutLocation => HaskellNotificationGroup.notifyBalloonInfo(s"Error ${cpf.htmlMessage}")
+        case cpf: LoadProblemInOtherFile => HaskellNotificationGroup.logInfoBalloonEvent(project, s"Error in file `${cpf.filePath}`: ${cpf.htmlMessage}")
+        case cpf: LoadProblemWithoutLocation => HaskellNotificationGroup.logInfoBalloonEvent(project, s"Error ${cpf.htmlMessage}")
         case _ => ()
       }
     }

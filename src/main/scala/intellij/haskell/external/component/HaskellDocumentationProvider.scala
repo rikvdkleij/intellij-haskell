@@ -19,6 +19,7 @@ package intellij.haskell.external.component
 import java.util.regex.Pattern
 
 import com.intellij.lang.documentation.AbstractDocumentationProvider
+import com.intellij.openapi.project.Project
 import com.intellij.psi.PsiElement
 import intellij.haskell.HaskellNotificationGroup
 import intellij.haskell.external.commandLine.StackCommandLine
@@ -29,16 +30,16 @@ class HaskellDocumentationProvider extends AbstractDocumentationProvider {
 
   override def generateDoc(psiElement: PsiElement, originalPsiElement: PsiElement): String = {
     HaskellPsiUtil.findQualifiedNameElement(originalPsiElement) match {
-      case Some(ne) => findDocumentation(ne).getOrElse("No documentation found")
+      case Some(ne) => findDocumentation(psiElement.getProject, ne).getOrElse("No documentation found")
       case _ => s"No documentation because this is not Haskell identifier: ${psiElement.getText}"
     }
   }
 
-  private def findDocumentation(namedElement: HaskellQualifiedNameElement): Option[String] = {
+  private def findDocumentation(project: Project, namedElement: HaskellQualifiedNameElement): Option[String] = {
     val name = namedElement.getIdentifierElement.getName
     val nameInfo = HaskellComponentsManager.findNameInfo(namedElement).headOption
     if (nameInfo.isEmpty) {
-      HaskellNotificationGroup.logWarning(s"No documentation because no info could be found for identifier: $name")
+      HaskellNotificationGroup.logWarningEvent(project, s"No documentation because no info could be found for identifier: $name")
     }
     val arguments = nameInfo.flatMap {
       case (lei: LibraryNameInfo) => Some(Seq(lei.moduleName, name))
@@ -54,7 +55,7 @@ class HaskellDocumentationProvider extends AbstractDocumentationProvider {
     StackCommandLine.runCommand(Seq("exec", "--", HaskellDocsName) ++ args, namedElement.getContainingFile.getProject).map(output => {
       if (output.getStderr.nonEmpty) {
         if (output.getStderr.toLowerCase.contains("couldn't find file: haskell-docs")) {
-          HaskellNotificationGroup.notifyBalloonWarning("No documentation because `haskell-docs` build still has to be started or build is not finished yet")
+          HaskellNotificationGroup.logWarningBalloonEvent(namedElement.getProject, "No documentation because `haskell-docs` build still has to be started or build is not finished yet")
         }
       }
       output.getStdout

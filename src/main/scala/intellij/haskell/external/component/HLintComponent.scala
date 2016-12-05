@@ -16,6 +16,7 @@
 
 package intellij.haskell.external.component
 
+import com.intellij.openapi.project.Project
 import com.intellij.psi.PsiFile
 import intellij.haskell.HaskellNotificationGroup
 import intellij.haskell.external.commandLine.StackCommandLine
@@ -27,13 +28,14 @@ object HLintComponent {
   final val HlintName = "hlint"
 
   def check(psiFile: PsiFile): Seq[HLintInfo] = {
-    StackCommandLine.runCommand(Seq("exec", "--", HlintName, "--json", psiFile.getOriginalFile.getVirtualFile.getPath), psiFile.getProject).map(output => {
+    val project = psiFile.getProject
+    StackCommandLine.runCommand(Seq("exec", "--", HlintName, "--json", psiFile.getOriginalFile.getVirtualFile.getPath), project).map(output => {
       if (output.getStderr.nonEmpty) {
         if (output.getStderr.toLowerCase.contains("couldn't find file: hlint")) {
-          HaskellNotificationGroup.notifyBalloonWarning("No Hlint suggestions because `hlint` build still has to be started or build is not finished yet")
+          HaskellNotificationGroup.logWarningBalloonEvent(project, "No Hlint suggestions because `hlint` build still has to be started or build is not finished yet")
         }
       }
-      deserializeHLintInfo(output.getStdout)
+      deserializeHLintInfo(project, output.getStdout)
     }).getOrElse(Seq())
   }
 
@@ -43,7 +45,7 @@ object HLintComponent {
 
   import intellij.haskell.external.component.HLintComponent.HlintJsonProtocol._
 
-  private[external] def deserializeHLintInfo(hlintInfo: String) = {
+  private[external] def deserializeHLintInfo(project: Project, hlintInfo: String) = {
     if (hlintInfo.trim.isEmpty || hlintInfo == "[]") {
       Seq()
     } else {
@@ -51,7 +53,7 @@ object HLintComponent {
         hlintInfo.parseJson.convertTo[Seq[HLintInfo]]
       } catch {
         case e: ParsingException =>
-          HaskellNotificationGroup.logError(s"Error ${e.getMessage} while parsing $hlintInfo")
+          HaskellNotificationGroup.logErrorEvent(project, s"Error ${e.getMessage} while parsing $hlintInfo")
           Seq()
       }
     }

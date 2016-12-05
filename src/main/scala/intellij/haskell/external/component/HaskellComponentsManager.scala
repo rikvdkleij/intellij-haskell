@@ -85,10 +85,10 @@ object HaskellComponentsManager {
   }
 
   def preloadModuleIdentifiersCaches(project: Project): Unit = {
-    HaskellNotificationGroup.logInfo("Start to preload cache")
+    HaskellNotificationGroup.logInfoEvent(project, "Start to preload cache")
     preloadAllLibraryModuleIdentifiers(project)
     HaskellAnnotator.restartDaemonCodeAnalyzerForOpenFiles(project)
-    HaskellNotificationGroup.logInfo("Finished with preloading cache")
+    HaskellNotificationGroup.logInfoEvent(project, "Finished with preloading cache")
   }
 
   def findTypeInfoForElement(psiElement: PsiElement): Option[TypeInfo] = {
@@ -116,7 +116,7 @@ object HaskellComponentsManager {
           Thread.sleep(100) // Otherwise it will make IDE unresponsive
           BrowseModuleComponent.findImportedModuleIdentifiers(project, mn)
         }
-      case _ => HaskellNotificationGroup.notifyBalloonWarning("Could not preload library identifiers cache because could not obtain global project info")
+      case _ => HaskellNotificationGroup.logWarningBalloonEvent(project, "Could not preload library identifiers cache because could not obtain global project info")
     }
   }
 }

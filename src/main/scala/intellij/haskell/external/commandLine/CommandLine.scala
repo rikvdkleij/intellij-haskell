@@ -16,11 +16,10 @@
 
 package intellij.haskell.external.commandLine
 
-import java.io.File
-
 import com.intellij.execution.configurations.GeneralCommandLine
 import com.intellij.execution.configurations.GeneralCommandLine.ParentEnvironmentType
 import com.intellij.execution.process._
+import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Key
 import intellij.haskell.HaskellNotificationGroup
 
@@ -29,22 +28,19 @@ import scala.collection.JavaConverters._
 object CommandLine {
   private final val StandardTimeoutInMillis = 1000
 
-  def runCommand(workDir: String, commandPath: String, arguments: Seq[String], timeoutInMillis: Long = StandardTimeoutInMillis, captureOutputToLog: Boolean = false): Option[ProcessOutput] = {
-    if (!new File(workDir).isDirectory || !new File(commandPath).canExecute) {
-      new ProcessOutput
-    }
-    val cmd = new GeneralCommandLine
-    cmd.withWorkDirectory(workDir)
-    cmd.setExePath(commandPath)
-    cmd.addParameters(arguments.asJava)
-    cmd.withParentEnvironmentType(ParentEnvironmentType.CONSOLE)
-    execute(cmd, timeoutInMillis, captureOutputToLog)
+  def runProgram(project: Option[Project], workDir: String, commandPath: String, arguments: Seq[String], timeoutInMillis: Long = StandardTimeoutInMillis, captureOutputToLog: Boolean = false, logErrorAsInfo: Boolean = false): Option[ProcessOutput] = {
+    val commandLine = new GeneralCommandLine
+    commandLine.withWorkDirectory(workDir)
+    commandLine.setExePath(commandPath)
+    commandLine.addParameters(arguments.asJava)
+    commandLine.withParentEnvironmentType(ParentEnvironmentType.CONSOLE)
+    run(project, commandLine, timeoutInMillis, captureOutputToLog, logErrorAsInfo)
   }
 
-  private def execute(cmd: GeneralCommandLine, timeout: Long, captureOutputToLog: Boolean): Option[ProcessOutput] = {
+  private def run(project: Option[Project], cmd: GeneralCommandLine, timeout: Long, captureOutputToLog: Boolean, logErrorAsInfo: Boolean): Option[ProcessOutput] = {
     val processHandler = if (captureOutputToLog) {
       new CapturingProcessHandler(cmd) {
-        override protected def createProcessAdapter(processOutput: ProcessOutput): CapturingProcessAdapter = new CapturingProcessToLog(cmd, processOutput)
+        override protected def createProcessAdapter(processOutput: ProcessOutput): CapturingProcessAdapter = new CapturingProcessToLog(project, cmd, processOutput, logErrorAsInfo)
       }
     } else {
       new CapturingProcessHandler(cmd)
@@ -52,17 +48,17 @@ object CommandLine {
 
     val processOutput = processHandler.runProcess(timeout.toInt, true)
     if (processOutput.isTimeout) {
-      HaskellNotificationGroup.notifyBalloonWarning(s"Timeout while `${cmd.getCommandLineString}`")
+      HaskellNotificationGroup.logErrorBalloonEvent(project, s"Timeout while executing `${cmd.getCommandLineString}`")
       None
     } else if (!captureOutputToLog && !processOutput.getStderrLines.isEmpty) {
-      processOutput.getStderrLines.asScala.foreach(line => HaskellNotificationGroup.logWarning(s"${cmd.getCommandLineString}  -  $line"))
+      HaskellNotificationGroup.logErrorEvent(project, s"Error while executing` ${cmd.getCommandLineString}`:  ${processOutput.getStderr}")
       Option(processOutput)
     } else {
       Option(processOutput)
     }
   }
 
-  private class CapturingProcessToLog(val cmd: GeneralCommandLine, val output: ProcessOutput) extends CapturingProcessAdapter {
+  private class CapturingProcessToLog(val project: Option[Project], val cmd: GeneralCommandLine, val output: ProcessOutput, val logErrorAsInfo: Boolean) extends CapturingProcessAdapter {
 
     override def onTextAvailable(event: ProcessEvent, outputType: Key[_]) {
       addOutput(event.getText, outputType)
@@ -70,10 +66,10 @@ object CommandLine {
 
     private def addOutput(text: String, outputType: Key[_]) {
       if (!text.trim.isEmpty) {
-        if (outputType == ProcessOutputTypes.STDERR) {
-          HaskellNotificationGroup.logWarning(s"${cmd.getCommandLineString}  -  $text")
+        if (outputType == ProcessOutputTypes.STDERR && !logErrorAsInfo) {
+          HaskellNotificationGroup.logErrorEvent(project, s"Error while executing `${cmd.getCommandLineString}`:  $text")
         } else {
-          HaskellNotificationGroup.logInfo(s"${cmd.getCommandLineString}  -  $text")
+          HaskellNotificationGroup.logInfoEvent(project, s"Info while executing `${cmd.getCommandLineString}`:  $text")
         }
       }
     }

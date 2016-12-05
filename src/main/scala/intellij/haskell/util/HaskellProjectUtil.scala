@@ -34,7 +34,7 @@ object HaskellProjectUtil {
     val haskellModuleExists = HaskellModuleType.findHaskellProjectModules(project).nonEmpty
     val stackPath = HaskellSdkType.getStackPath(project)
     if (haskellModuleExists && stackPath.isEmpty) {
-      HaskellNotificationGroup.notifyBalloonError("Path to Stack binary is not configured in this Haskell Stack project. Please do and restart project.")
+      HaskellNotificationGroup.logErrorBalloonEvent(project, "Path to Stack binary is not configured in this Haskell Stack project. Please do and restart project.")
     }
     haskellModuleExists && stackPath.isDefined
   }

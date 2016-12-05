@@ -35,7 +35,7 @@ object HaskellSettingsState {
 
   private def notifyIfPathIsNotSet(path: Option[String], name: String) {
     if (path.isEmpty) {
-      HaskellNotificationGroup.notifyBalloonError("Path to `" + name + "` is not set. See `Settings`/`Other Settings`/`Haskell`")
+      HaskellNotificationGroup.logErrorBalloonEvent("Path to `" + name + "` is not set. Please do in `Settings`/`Other Settings`/`Haskell`")
     }
   }
 

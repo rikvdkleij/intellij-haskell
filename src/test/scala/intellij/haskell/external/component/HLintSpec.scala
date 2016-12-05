@@ -29,7 +29,7 @@ class HLintSpec extends FunSpec with Matchers with GivenWhenThen {
       """
 
     When("converted to list of hlint infos")
-    val hlintInfos = HLintComponent.deserializeHLintInfo(output)
+    val hlintInfos = HLintComponent.deserializeHLintInfo(null, output)
 
     Then("it should contain right info")
 

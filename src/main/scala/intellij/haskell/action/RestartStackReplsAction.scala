@@ -37,7 +37,7 @@ class RestartStackReplsAction extends AnAction {
 
   override def actionPerformed(e: AnActionEvent): Unit = {
     if (restarting) {
-      HaskellNotificationGroup.notifyBalloonWarning("Stack repls are already restarting")
+      HaskellNotificationGroup.logWarningBalloonEvent(e.getProject, "Stack repls are already restarting")
       return
     }
 

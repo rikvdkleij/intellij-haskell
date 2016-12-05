@@ -64,7 +64,8 @@ private[component] object GlobalProjectInfoComponent {
 
         private def getLanguageExtensions(project: Project): Iterable[String] = {
           findGhcPath(project).flatMap(ghcPath => {
-            CommandLine.runCommand(
+            CommandLine.runProgram(
+              Some(project),
               project.getBasePath,
               ghcPath,
               Seq("--supported-languages")

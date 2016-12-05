@@ -16,7 +16,7 @@
 
 package intellij.haskell.action
 
-import java.io.ByteArrayInputStream
+import java.io.{BufferedReader, BufferedWriter, InputStreamReader, OutputStreamWriter}
 import java.util.concurrent.{Callable, TimeUnit, TimeoutException}
 
 import com.intellij.openapi.actionSystem.{AnAction, AnActionEvent}
@@ -29,7 +29,9 @@ import intellij.haskell.settings.HaskellSettingsState
 import intellij.haskell.util.{HaskellEditorUtil, HaskellFileUtil}
 import intellij.haskell.{HaskellLanguage, HaskellNotificationGroup}
 
-import scala.sys.process.ProcessLogger
+import scala.annotation.tailrec
+import scala.collection.JavaConverters._
+import scala.collection.mutable.ListBuffer
 
 class HindentFormatAction extends AnAction {
 
@@ -52,23 +54,19 @@ object HindentFormatAction {
     val lineLength = CodeStyleSettingsManager.getInstance(psiFile.getProject).getCurrentSettings.getRightMargin(HaskellLanguage.Instance)
     val indentOptions = CodeStyleSettingsManager.getInstance(psiFile.getProject).getCurrentSettings.getCommonSettings(HaskellLanguage.Instance).getIndentOptions
     val virtualFile = HaskellFileUtil.findVirtualFile(psiFile)
-
+    val project = psiFile.getProject
     HaskellFileUtil.saveFile(virtualFile)
 
     HaskellSettingsState.getHindentPath match {
       case Some(hindentPath) =>
         val command = Seq(hindentPath, "--line-length", lineLength.toString, "--indent-size", indentOptions.INDENT_SIZE.toString)
 
-        import scala.sys.process._
-        val processBuilder = selectionModel match {
-          case Some(sm) => command #< new ByteArrayInputStream(getSelectedText(sm).getBytes("UTF-8"))
-          case None => command #< virtualFile.getInputStream
-        }
-
-        val processLogger: OnlyErrorProcessLogger = new OnlyErrorProcessLogger
-        val formatFuture = ApplicationManager.getApplication.executeOnPooledThread(new Callable[String] {
-          override def call(): String = {
-            processBuilder.lineStream_!(processLogger).mkString("\n")
+        val formatFuture = ApplicationManager.getApplication.executeOnPooledThread(new Callable[Either[String, String]] {
+          override def call(): Either[String, String] = {
+            selectionModel match {
+              case Some(sm) => writeToHindent(command, getSelectedText(sm))
+              case None => writeToHindent(command, psiFile.getText)
+            }
           }
         })
 
@@ -76,20 +74,21 @@ object HindentFormatAction {
           Option(formatFuture.get(500, TimeUnit.MILLISECONDS))
         } catch {
           case e: TimeoutException =>
-            HaskellNotificationGroup.logError(s"Timeout while formatting by `$HindentName`.")
+            HaskellNotificationGroup.logErrorEvent(project, s"Timeout while formatting by `$HindentName`.")
             None
         }
-        if (processLogger.hasErrors) {
-          HaskellNotificationGroup.notifyBalloonError(s"Error while formatting by `$HindentName`. See Event Log for errors")
-        } else {
-          formattedSourceCode.foreach(sourceCode => {
+        formattedSourceCode.foreach {
+          case Left(e) =>
+            HaskellNotificationGroup.logErrorEvent(project, e)
+            HaskellNotificationGroup.logErrorBalloonEvent(project, s"Error while formatting by `$HindentName`. See Event Log for errors")
+          case Right(sourceCode) =>
             selectionModel match {
               case Some(sm) => HaskellFileUtil.saveFileWithPartlyNewContent(psiFile.getProject, virtualFile, sourceCode, sm)
               case None => HaskellFileUtil.saveFileWithNewContent(psiFile.getProject, virtualFile, sourceCode)
             }
-          })
         }
-      case _ => HaskellNotificationGroup.logWarning("Can not format code because path to `hindent` is not configured in IntelliJ")
+
+      case _ => HaskellNotificationGroup.logWarningEvent(project, "Can not format code because path to `hindent` is not configured in IntelliJ")
     }
   }
 
@@ -99,17 +98,43 @@ object HindentFormatAction {
     })
   }
 
-  private class OnlyErrorProcessLogger extends ProcessLogger {
-    var hasErrors = false
+  private def writeToHindent(command: Seq[String], sourceCode: String): Either[String, String] = {
+    val builder = new ProcessBuilder(command.asJava)
+    val process = builder.start()
 
-    override def out(s: => String): Unit = ()
+    val stdout = process.getInputStream
+    val stderr = process.getErrorStream
+    val stdin = process.getOutputStream
 
-    override def err(s: => String): Unit = {
-      hasErrors = true
-      HaskellNotificationGroup.logError(s)
+    val reader = new BufferedReader(new InputStreamReader(stdout))
+    val errorReader = new BufferedReader(new InputStreamReader(stderr))
+    val writer = new BufferedWriter(new OutputStreamWriter(stdin))
+
+    writer.write(sourceCode)
+    writer.flush()
+    writer.close()
+
+    val buffer = ListBuffer[String]()
+    val result = read(reader, buffer).mkString("\n")
+
+    val errorBuffer = ListBuffer[String]()
+    val errors = read(errorReader, errorBuffer).mkString("\n")
+    if (errors.isEmpty) {
+      Right(result)
+    } else {
+      Left(errors)
     }
-
-    override def buffer[T](f: => T): T = f
   }
 
+  @tailrec
+  private def read(reader: BufferedReader, buffer: ListBuffer[String]): ListBuffer[String] = {
+    val line = reader.readLine()
+    if (line == null) {
+      buffer
+    } else {
+      buffer += line
+      read(reader, buffer)
+    }
+  }
 }
+

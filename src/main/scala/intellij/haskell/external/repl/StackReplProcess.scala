@@ -98,7 +98,7 @@ private[repl] abstract class StackReplProcess(val project: Project, val extraSta
         logInfo("stdOut: " + stdOutResult.mkString("\n"))
         logInfo("errOut: " + stdErrResult.mkString("\n"))
 
-        Some(StackReplOutput(convertOutputToOneMessagePerLine(removePrompt(stdOutResult)), convertOutputToOneMessagePerLine(stdErrResult)))
+        Some(StackReplOutput(convertOutputToOneMessagePerLine(project, removePrompt(stdOutResult)), convertOutputToOneMessagePerLine(project, stdErrResult)))
       }
     }
     catch {
@@ -239,15 +239,15 @@ private[repl] abstract class StackReplProcess(val project: Project, val extraSta
   }
 
   private def logError(message: String) = {
-    HaskellNotificationGroup.logError(s"[$getComponentName] $message")
+    HaskellNotificationGroup.logErrorEvent(project, s"[$getComponentName] $message")
   }
 
   private def logWarning(message: String) = {
-    HaskellNotificationGroup.logWarning(s"[$getComponentName] $message")
+    HaskellNotificationGroup.logWarningEvent(project, s"[$getComponentName] $message")
   }
 
   private def logInfo(message: String) = {
-    HaskellNotificationGroup.logInfo(s"[$getComponentName] $message")
+    HaskellNotificationGroup.logInfoEvent(project, s"[$getComponentName] $message")
   }
 
   private def removePrompt(output: Seq[String]): Seq[String] = {
@@ -264,11 +264,11 @@ private[repl] abstract class StackReplProcess(val project: Project, val extraSta
     outputStream.get.flush()
   }
 
-  private def convertOutputToOneMessagePerLine(output: Seq[String]) = {
-    joinIndentedLines(output.filterNot(_.isEmpty))
+  private def convertOutputToOneMessagePerLine(project: Project, output: Seq[String]) = {
+    joinIndentedLines(project, output.filterNot(_.isEmpty))
   }
 
-  private def joinIndentedLines(lines: Seq[String]): Seq[String] = {
+  private def joinIndentedLines(project: Project, lines: Seq[String]): Seq[String] = {
     if (lines.size == 1) {
       lines
     } else {
@@ -283,7 +283,7 @@ private[repl] abstract class StackReplProcess(val project: Project, val extraSta
           }).map(_.toString)
       } catch {
         case _: NoSuchElementException =>
-          HaskellNotificationGroup.notifyBalloonWarning(s"Could not join indented lines. Probably first line started with spaces. Unexpected input was: ${lines.mkString(", ")}")
+          HaskellNotificationGroup.logErrorBalloonEvent(project, s"Could not join indented lines. Probably first line started with spaces. Unexpected input was: ${lines.mkString(", ")}")
           Seq()
       }
     }
