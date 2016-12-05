@@ -60,7 +60,6 @@ public interface HaskellTypes {
   IElementType HS_INCOHERENT_PRAGMA = new HaskellCompositeElementType("HS_INCOHERENT_PRAGMA");
   IElementType HS_INLINABLE_PRAGMA = new HaskellCompositeElementType("HS_INLINABLE_PRAGMA");
   IElementType HS_INLINE_PRAGMA = new HaskellCompositeElementType("HS_INLINE_PRAGMA");
-  IElementType HS_INSIDE_QQ_EXPRESSION = new HaskellCompositeElementType("HS_INSIDE_QQ_EXPRESSION");
   IElementType HS_INST = new HaskellCompositeElementType("HS_INST");
   IElementType HS_INSTANCE_DECLARATION = new HaskellCompositeElementType("HS_INSTANCE_DECLARATION");
   IElementType HS_INSTVAR = new HaskellCompositeElementType("HS_INSTVAR");
@@ -81,9 +80,7 @@ public interface HaskellTypes {
   IElementType HS_OPTIONS_GHC_PRAGMA = new HaskellCompositeElementType("HS_OPTIONS_GHC_PRAGMA");
   IElementType HS_OTHER_PRAGMA = new HaskellCompositeElementType("HS_OTHER_PRAGMA");
   IElementType HS_OVERLAP_PRAGMA = new HaskellCompositeElementType("HS_OVERLAP_PRAGMA");
-  IElementType HS_QQ_TOP_LEVEL_EXPRESSION = new HaskellCompositeElementType("HS_QQ_TOP_LEVEL_EXPRESSION");
   IElementType HS_QUALIFIER = new HaskellCompositeElementType("HS_QUALIFIER");
-  IElementType HS_QUASI_QUOTE = new HaskellCompositeElementType("HS_QUASI_QUOTE");
   IElementType HS_Q_CON = new HaskellCompositeElementType("HS_Q_CON");
   IElementType HS_Q_CON_QUALIFIER = new HaskellCompositeElementType("HS_Q_CON_QUALIFIER");
   IElementType HS_Q_CON_QUALIFIER_1 = new HaskellCompositeElementType("HS_Q_CON_QUALIFIER_1");
@@ -93,6 +90,7 @@ public interface HaskellTypes {
   IElementType HS_Q_NAME = new HaskellCompositeElementType("HS_Q_NAME");
   IElementType HS_Q_NAMES = new HaskellCompositeElementType("HS_Q_NAMES");
   IElementType HS_Q_VAR_CON = new HaskellCompositeElementType("HS_Q_VAR_CON");
+  IElementType HS_RESERVED_ID = new HaskellCompositeElementType("HS_RESERVED_ID");
   IElementType HS_RULES_PRAGMA = new HaskellCompositeElementType("HS_RULES_PRAGMA");
   IElementType HS_SCC_PRAGMA = new HaskellCompositeElementType("HS_SCC_PRAGMA");
   IElementType HS_SCONTEXT = new HaskellCompositeElementType("HS_SCONTEXT");
@@ -341,9 +339,6 @@ public interface HaskellTypes {
       else if (type == HS_INLINE_PRAGMA) {
         return new HaskellInlinePragmaImpl(node);
       }
-      else if (type == HS_INSIDE_QQ_EXPRESSION) {
-        return new HaskellInsideQqExpressionImpl(node);
-      }
       else if (type == HS_INST) {
         return new HaskellInstImpl(node);
       }
@@ -404,14 +399,8 @@ public interface HaskellTypes {
       else if (type == HS_OVERLAP_PRAGMA) {
         return new HaskellOverlapPragmaImpl(node);
       }
-      else if (type == HS_QQ_TOP_LEVEL_EXPRESSION) {
-        return new HaskellQqTopLevelExpressionImpl(node);
-      }
       else if (type == HS_QUALIFIER) {
         return new HaskellQualifierImpl(node);
-      }
-      else if (type == HS_QUASI_QUOTE) {
-        return new HaskellQuasiQuoteImpl(node);
       }
       else if (type == HS_Q_CON) {
         return new HaskellQConImpl(node);
@@ -439,6 +428,9 @@ public interface HaskellTypes {
       }
       else if (type == HS_Q_VAR_CON) {
         return new HaskellQVarConImpl(node);
+      }
+      else if (type == HS_RESERVED_ID) {
+        return new HaskellReservedIdImpl(node);
       }
       else if (type == HS_RULES_PRAGMA) {
         return new HaskellRulesPragmaImpl(node);

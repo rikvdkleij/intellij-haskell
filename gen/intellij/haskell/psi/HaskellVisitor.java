@@ -214,10 +214,6 @@ public class HaskellVisitor extends PsiElementVisitor {
     visitCompositeElement(o);
   }
 
-  public void visitInsideQqExpression(@NotNull HaskellInsideQqExpression o) {
-    visitCompositeElement(o);
-  }
-
   public void visitInst(@NotNull HaskellInst o) {
     visitCompositeElement(o);
   }
@@ -334,15 +330,11 @@ public class HaskellVisitor extends PsiElementVisitor {
     visitCompositeElement(o);
   }
 
-  public void visitQqTopLevelExpression(@NotNull HaskellQqTopLevelExpression o) {
-    visitCompositeElement(o);
-  }
-
   public void visitQualifier(@NotNull HaskellQualifier o) {
     visitQualifierElement(o);
   }
 
-  public void visitQuasiQuote(@NotNull HaskellQuasiQuote o) {
+  public void visitReservedId(@NotNull HaskellReservedId o) {
     visitCompositeElement(o);
   }
 

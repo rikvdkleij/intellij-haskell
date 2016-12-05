@@ -93,18 +93,6 @@ public class HaskellTopDeclarationImpl extends HaskellCompositeElementImpl imple
 
   @Override
   @Nullable
-  public HaskellQqTopLevelExpression getQqTopLevelExpression() {
-    return findChildByClass(HaskellQqTopLevelExpression.class);
-  }
-
-  @Override
-  @Nullable
-  public HaskellQuasiQuote getQuasiQuote() {
-    return findChildByClass(HaskellQuasiQuote.class);
-  }
-
-  @Override
-  @Nullable
   public HaskellTypeDeclaration getTypeDeclaration() {
     return findChildByClass(HaskellTypeDeclaration.class);
   }

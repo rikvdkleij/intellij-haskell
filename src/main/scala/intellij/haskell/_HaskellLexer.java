@@ -572,7 +572,7 @@ public class _HaskellLexer implements FlexLexer {
 
   /* user code: */
   public _HaskellLexer() {
-    this(null);
+    this((java.io.Reader)null);
   }
     private int commentStart;
     private int commentDepth;

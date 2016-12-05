@@ -33,8 +33,8 @@ public class HaskellNoinlinePragmaImpl extends HaskellCompositeElementImpl imple
 
   @Override
   @NotNull
-  public List<HaskellQuasiQuote> getQuasiQuoteList() {
-    return PsiTreeUtil.getChildrenOfTypeAsList(this, HaskellQuasiQuote.class);
+  public List<HaskellReservedId> getReservedIdList() {
+    return PsiTreeUtil.getChildrenOfTypeAsList(this, HaskellReservedId.class);
   }
 
   @Override

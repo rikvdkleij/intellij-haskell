@@ -10,37 +10,19 @@ import com.intellij.psi.util.PsiTreeUtil;
 import static intellij.haskell.psi.HaskellTypes.*;
 import intellij.haskell.psi.*;
 
-public class HaskellExpressionImpl extends HaskellCompositeElementImpl implements HaskellExpression {
+public class HaskellReservedIdImpl extends HaskellCompositeElementImpl implements HaskellReservedId {
 
-  public HaskellExpressionImpl(ASTNode node) {
+  public HaskellReservedIdImpl(ASTNode node) {
     super(node);
   }
 
   public void accept(@NotNull HaskellVisitor visitor) {
-    visitor.visitExpression(this);
+    visitor.visitReservedId(this);
   }
 
   public void accept(@NotNull PsiElementVisitor visitor) {
     if (visitor instanceof HaskellVisitor) accept((HaskellVisitor)visitor);
     else super.accept(visitor);
-  }
-
-  @Override
-  @NotNull
-  public List<HaskellQName> getQNameList() {
-    return PsiTreeUtil.getChildrenOfTypeAsList(this, HaskellQName.class);
-  }
-
-  @Override
-  @NotNull
-  public List<HaskellReservedId> getReservedIdList() {
-    return PsiTreeUtil.getChildrenOfTypeAsList(this, HaskellReservedId.class);
-  }
-
-  @Override
-  @NotNull
-  public List<HaskellSccPragma> getSccPragmaList() {
-    return PsiTreeUtil.getChildrenOfTypeAsList(this, HaskellSccPragma.class);
   }
 
 }

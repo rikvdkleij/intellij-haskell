@@ -113,7 +113,7 @@ import_package_name         ::= STRING_LITERAL
 
 top_declaration             ::= type_declaration | data_declaration | newtype_declaration | class_declaration | instance_declaration | default_declaration |
                                   foreign_declaration | type_family_declaration | deriving_declaration | type_instance_declaration | type_signature |
-                                  other_pragma | quasi_quote | qq_top_level_expression | expression | cfiles_pragma | fixity_declaration
+                                  other_pragma | expression | cfiles_pragma | fixity_declaration
 
 type_declaration            ::= TYPE onls simpletype onls COLON_COLON onls ttype |
                                   TYPE onls simpletype onls (EQUAL | WHERE) onls (ttype | type_signature) (DOUBLE_RIGHT_ARROW ttype)? |
@@ -266,15 +266,12 @@ expression                  ::= line_expression+ last_line_expression | last_lin
 private line_expression     ::= general_id+ nls
 private last_line_expression::= general_id+
 
-private general_id          ::= q_name | LEFT_PAREN | RIGHT_PAREN | FLOAT | DO | WHERE | IF | THEN | ELSE |
-                                  COLON_COLON | DOUBLE_RIGHT_ARROW | RIGHT_ARROW | IN | CASE | OF | LET |
+private general_id          ::= q_name | LEFT_PAREN | RIGHT_PAREN | FLOAT |
+                                  COLON_COLON | DOUBLE_RIGHT_ARROW | RIGHT_ARROW |
                                   SEMICOLON | LEFT_ARROW | LEFT_BRACKET | RIGHT_BRACKET | literal | LEFT_BRACE | RIGHT_BRACE |
-                                  COMMA | UNDERSCORE | symbol_reserved_op | QUOTE | BACKQUOTE | fixity | DOT_DOT | scc_pragma | quasi_quote
+                                  COMMA | symbol_reserved_op | QUOTE | BACKQUOTE | fixity | DOT_DOT | scc_pragma | reserved_id
 
 private symbol_reserved_op  ::= AT | BACKSLASH | VERTICAL_BAR | TILDE | EQUAL
 
-qq_top_level_expression     ::= general_id+ NEWLINE? quasi_quote
+reserved_id                 ::= CASE | CLASS | DATA | DEFAULT | DERIVING | DO | ELSE | IF | IMPORT | IN | INFIX | INFIXL | INFIXR | INSTANCE | LET | MODULE | NEWTYPE | OF | THEN | TYPE | WHERE | UNDERSCORE
 
-quasi_quote                 ::= LEFT_BRACKET q_name? VERTICAL_BAR NEWLINE? (top_declaration (NEWLINE top_declaration)* | inside_qq_expression | simpletype) NEWLINE? VERTICAL_BAR RIGHT_BRACKET
-
-inside_qq_expression        ::= (general_id | NEWLINE)+

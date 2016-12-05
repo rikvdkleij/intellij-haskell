@@ -179,9 +179,6 @@ public class HaskellParser implements PsiParser, LightPsiParser {
     else if (t == HS_INLINE_PRAGMA) {
       r = inline_pragma(b, 0);
     }
-    else if (t == HS_INSIDE_QQ_EXPRESSION) {
-      r = inside_qq_expression(b, 0);
-    }
     else if (t == HS_INST) {
       r = inst(b, 0);
     }
@@ -269,14 +266,11 @@ public class HaskellParser implements PsiParser, LightPsiParser {
     else if (t == HS_Q_VAR_CON) {
       r = q_var_con(b, 0);
     }
-    else if (t == HS_QQ_TOP_LEVEL_EXPRESSION) {
-      r = qq_top_level_expression(b, 0);
-    }
     else if (t == HS_QUALIFIER) {
       r = qualifier(b, 0);
     }
-    else if (t == HS_QUASI_QUOTE) {
-      r = quasi_quote(b, 0);
+    else if (t == HS_RESERVED_ID) {
+      r = reserved_id(b, 0);
     }
     else if (t == HS_RULES_PRAGMA) {
       r = rules_pragma(b, 0);
@@ -2732,10 +2726,10 @@ public class HaskellParser implements PsiParser, LightPsiParser {
   }
 
   /* ********************************************************** */
-  // q_name | LEFT_PAREN | RIGHT_PAREN | FLOAT | DO | WHERE | IF | THEN | ELSE |
-  //                                   COLON_COLON | DOUBLE_RIGHT_ARROW | RIGHT_ARROW | IN | CASE | OF | LET |
+  // q_name | LEFT_PAREN | RIGHT_PAREN | FLOAT |
+  //                                   COLON_COLON | DOUBLE_RIGHT_ARROW | RIGHT_ARROW |
   //                                   SEMICOLON | LEFT_ARROW | LEFT_BRACKET | RIGHT_BRACKET | literal | LEFT_BRACE | RIGHT_BRACE |
-  //                                   COMMA | UNDERSCORE | symbol_reserved_op | QUOTE | BACKQUOTE | fixity | DOT_DOT | scc_pragma | quasi_quote
+  //                                   COMMA | symbol_reserved_op | QUOTE | BACKQUOTE | fixity | DOT_DOT | scc_pragma | reserved_id
   static boolean general_id(PsiBuilder b, int l) {
     if (!recursion_guard_(b, l, "general_id")) return false;
     boolean r;
@@ -2744,18 +2738,9 @@ public class HaskellParser implements PsiParser, LightPsiParser {
     if (!r) r = consumeToken(b, HS_LEFT_PAREN);
     if (!r) r = consumeToken(b, HS_RIGHT_PAREN);
     if (!r) r = consumeToken(b, HS_FLOAT);
-    if (!r) r = consumeToken(b, HS_DO);
-    if (!r) r = consumeToken(b, HS_WHERE);
-    if (!r) r = consumeToken(b, HS_IF);
-    if (!r) r = consumeToken(b, HS_THEN);
-    if (!r) r = consumeToken(b, HS_ELSE);
     if (!r) r = consumeToken(b, HS_COLON_COLON);
     if (!r) r = consumeToken(b, HS_DOUBLE_RIGHT_ARROW);
     if (!r) r = consumeToken(b, HS_RIGHT_ARROW);
-    if (!r) r = consumeToken(b, HS_IN);
-    if (!r) r = consumeToken(b, HS_CASE);
-    if (!r) r = consumeToken(b, HS_OF);
-    if (!r) r = consumeToken(b, HS_LET);
     if (!r) r = consumeToken(b, HS_SEMICOLON);
     if (!r) r = consumeToken(b, HS_LEFT_ARROW);
     if (!r) r = consumeToken(b, HS_LEFT_BRACKET);
@@ -2764,14 +2749,13 @@ public class HaskellParser implements PsiParser, LightPsiParser {
     if (!r) r = consumeToken(b, HS_LEFT_BRACE);
     if (!r) r = consumeToken(b, HS_RIGHT_BRACE);
     if (!r) r = consumeToken(b, HS_COMMA);
-    if (!r) r = consumeToken(b, HS_UNDERSCORE);
     if (!r) r = symbol_reserved_op(b, l + 1);
     if (!r) r = consumeToken(b, HS_QUOTE);
     if (!r) r = consumeToken(b, HS_BACKQUOTE);
     if (!r) r = fixity(b, l + 1);
     if (!r) r = consumeToken(b, HS_DOT_DOT);
     if (!r) r = scc_pragma(b, l + 1);
-    if (!r) r = quasi_quote(b, l + 1);
+    if (!r) r = reserved_id(b, l + 1);
     exit_section_(b, m, null, r);
     return r;
   }
@@ -3512,34 +3496,6 @@ public class HaskellParser implements PsiParser, LightPsiParser {
     r = r && general_pragma_content(b, l + 1);
     r = r && consumeToken(b, HS_PRAGMA_END);
     exit_section_(b, m, HS_INLINE_PRAGMA, r);
-    return r;
-  }
-
-  /* ********************************************************** */
-  // (general_id | NEWLINE)+
-  public static boolean inside_qq_expression(PsiBuilder b, int l) {
-    if (!recursion_guard_(b, l, "inside_qq_expression")) return false;
-    boolean r;
-    Marker m = enter_section_(b, l, _NONE_, HS_INSIDE_QQ_EXPRESSION, "<inside qq expression>");
-    r = inside_qq_expression_0(b, l + 1);
-    int c = current_position_(b);
-    while (r) {
-      if (!inside_qq_expression_0(b, l + 1)) break;
-      if (!empty_element_parsed_guard_(b, "inside_qq_expression", c)) break;
-      c = current_position_(b);
-    }
-    exit_section_(b, l, m, r, false, null);
-    return r;
-  }
-
-  // general_id | NEWLINE
-  private static boolean inside_qq_expression_0(PsiBuilder b, int l) {
-    if (!recursion_guard_(b, l, "inside_qq_expression_0")) return false;
-    boolean r;
-    Marker m = enter_section_(b);
-    r = general_id(b, l + 1);
-    if (!r) r = consumeToken(b, HS_NEWLINE);
-    exit_section_(b, m, null, r);
     return r;
   }
 
@@ -5383,42 +5339,6 @@ public class HaskellParser implements PsiParser, LightPsiParser {
   }
 
   /* ********************************************************** */
-  // general_id+ NEWLINE? quasi_quote
-  public static boolean qq_top_level_expression(PsiBuilder b, int l) {
-    if (!recursion_guard_(b, l, "qq_top_level_expression")) return false;
-    boolean r;
-    Marker m = enter_section_(b, l, _NONE_, HS_QQ_TOP_LEVEL_EXPRESSION, "<qq top level expression>");
-    r = qq_top_level_expression_0(b, l + 1);
-    r = r && qq_top_level_expression_1(b, l + 1);
-    r = r && quasi_quote(b, l + 1);
-    exit_section_(b, l, m, r, false, null);
-    return r;
-  }
-
-  // general_id+
-  private static boolean qq_top_level_expression_0(PsiBuilder b, int l) {
-    if (!recursion_guard_(b, l, "qq_top_level_expression_0")) return false;
-    boolean r;
-    Marker m = enter_section_(b);
-    r = general_id(b, l + 1);
-    int c = current_position_(b);
-    while (r) {
-      if (!general_id(b, l + 1)) break;
-      if (!empty_element_parsed_guard_(b, "qq_top_level_expression_0", c)) break;
-      c = current_position_(b);
-    }
-    exit_section_(b, m, null, r);
-    return r;
-  }
-
-  // NEWLINE?
-  private static boolean qq_top_level_expression_1(PsiBuilder b, int l) {
-    if (!recursion_guard_(b, l, "qq_top_level_expression_1")) return false;
-    consumeToken(b, HS_NEWLINE);
-    return true;
-  }
-
-  /* ********************************************************** */
   // CON_ID (DOT CON_ID)*
   public static boolean qualifier(PsiBuilder b, int l) {
     if (!recursion_guard_(b, l, "qualifier")) return false;
@@ -5454,88 +5374,35 @@ public class HaskellParser implements PsiParser, LightPsiParser {
   }
 
   /* ********************************************************** */
-  // LEFT_BRACKET q_name? VERTICAL_BAR NEWLINE? (top_declaration (NEWLINE top_declaration)* | inside_qq_expression | simpletype) NEWLINE? VERTICAL_BAR RIGHT_BRACKET
-  public static boolean quasi_quote(PsiBuilder b, int l) {
-    if (!recursion_guard_(b, l, "quasi_quote")) return false;
-    if (!nextTokenIs(b, HS_LEFT_BRACKET)) return false;
+  // CASE | CLASS | DATA | DEFAULT | DERIVING | DO | ELSE | IF | IMPORT | IN | INFIX | INFIXL | INFIXR | INSTANCE | LET | MODULE | NEWTYPE | OF | THEN | TYPE | WHERE | UNDERSCORE
+  public static boolean reserved_id(PsiBuilder b, int l) {
+    if (!recursion_guard_(b, l, "reserved_id")) return false;
     boolean r;
-    Marker m = enter_section_(b);
-    r = consumeToken(b, HS_LEFT_BRACKET);
-    r = r && quasi_quote_1(b, l + 1);
-    r = r && consumeToken(b, HS_VERTICAL_BAR);
-    r = r && quasi_quote_3(b, l + 1);
-    r = r && quasi_quote_4(b, l + 1);
-    r = r && quasi_quote_5(b, l + 1);
-    r = r && consumeTokens(b, 0, HS_VERTICAL_BAR, HS_RIGHT_BRACKET);
-    exit_section_(b, m, HS_QUASI_QUOTE, r);
+    Marker m = enter_section_(b, l, _NONE_, HS_RESERVED_ID, "<reserved id>");
+    r = consumeToken(b, HS_CASE);
+    if (!r) r = consumeToken(b, HS_CLASS);
+    if (!r) r = consumeToken(b, HS_DATA);
+    if (!r) r = consumeToken(b, HS_DEFAULT);
+    if (!r) r = consumeToken(b, HS_DERIVING);
+    if (!r) r = consumeToken(b, HS_DO);
+    if (!r) r = consumeToken(b, HS_ELSE);
+    if (!r) r = consumeToken(b, HS_IF);
+    if (!r) r = consumeToken(b, HS_IMPORT);
+    if (!r) r = consumeToken(b, HS_IN);
+    if (!r) r = consumeToken(b, HS_INFIX);
+    if (!r) r = consumeToken(b, HS_INFIXL);
+    if (!r) r = consumeToken(b, HS_INFIXR);
+    if (!r) r = consumeToken(b, HS_INSTANCE);
+    if (!r) r = consumeToken(b, HS_LET);
+    if (!r) r = consumeToken(b, HS_MODULE);
+    if (!r) r = consumeToken(b, HS_NEWTYPE);
+    if (!r) r = consumeToken(b, HS_OF);
+    if (!r) r = consumeToken(b, HS_THEN);
+    if (!r) r = consumeToken(b, HS_TYPE);
+    if (!r) r = consumeToken(b, HS_WHERE);
+    if (!r) r = consumeToken(b, HS_UNDERSCORE);
+    exit_section_(b, l, m, r, false, null);
     return r;
-  }
-
-  // q_name?
-  private static boolean quasi_quote_1(PsiBuilder b, int l) {
-    if (!recursion_guard_(b, l, "quasi_quote_1")) return false;
-    q_name(b, l + 1);
-    return true;
-  }
-
-  // NEWLINE?
-  private static boolean quasi_quote_3(PsiBuilder b, int l) {
-    if (!recursion_guard_(b, l, "quasi_quote_3")) return false;
-    consumeToken(b, HS_NEWLINE);
-    return true;
-  }
-
-  // top_declaration (NEWLINE top_declaration)* | inside_qq_expression | simpletype
-  private static boolean quasi_quote_4(PsiBuilder b, int l) {
-    if (!recursion_guard_(b, l, "quasi_quote_4")) return false;
-    boolean r;
-    Marker m = enter_section_(b);
-    r = quasi_quote_4_0(b, l + 1);
-    if (!r) r = inside_qq_expression(b, l + 1);
-    if (!r) r = simpletype(b, l + 1);
-    exit_section_(b, m, null, r);
-    return r;
-  }
-
-  // top_declaration (NEWLINE top_declaration)*
-  private static boolean quasi_quote_4_0(PsiBuilder b, int l) {
-    if (!recursion_guard_(b, l, "quasi_quote_4_0")) return false;
-    boolean r;
-    Marker m = enter_section_(b);
-    r = top_declaration(b, l + 1);
-    r = r && quasi_quote_4_0_1(b, l + 1);
-    exit_section_(b, m, null, r);
-    return r;
-  }
-
-  // (NEWLINE top_declaration)*
-  private static boolean quasi_quote_4_0_1(PsiBuilder b, int l) {
-    if (!recursion_guard_(b, l, "quasi_quote_4_0_1")) return false;
-    int c = current_position_(b);
-    while (true) {
-      if (!quasi_quote_4_0_1_0(b, l + 1)) break;
-      if (!empty_element_parsed_guard_(b, "quasi_quote_4_0_1", c)) break;
-      c = current_position_(b);
-    }
-    return true;
-  }
-
-  // NEWLINE top_declaration
-  private static boolean quasi_quote_4_0_1_0(PsiBuilder b, int l) {
-    if (!recursion_guard_(b, l, "quasi_quote_4_0_1_0")) return false;
-    boolean r;
-    Marker m = enter_section_(b);
-    r = consumeToken(b, HS_NEWLINE);
-    r = r && top_declaration(b, l + 1);
-    exit_section_(b, m, null, r);
-    return r;
-  }
-
-  // NEWLINE?
-  private static boolean quasi_quote_5(PsiBuilder b, int l) {
-    if (!recursion_guard_(b, l, "quasi_quote_5")) return false;
-    consumeToken(b, HS_NEWLINE);
-    return true;
   }
 
   /* ********************************************************** */
@@ -5975,7 +5842,7 @@ public class HaskellParser implements PsiParser, LightPsiParser {
   /* ********************************************************** */
   // type_declaration | data_declaration | newtype_declaration | class_declaration | instance_declaration | default_declaration |
   //                                   foreign_declaration | type_family_declaration | deriving_declaration | type_instance_declaration | type_signature |
-  //                                   other_pragma | quasi_quote | qq_top_level_expression | expression | cfiles_pragma | fixity_declaration
+  //                                   other_pragma | expression | cfiles_pragma | fixity_declaration
   public static boolean top_declaration(PsiBuilder b, int l) {
     if (!recursion_guard_(b, l, "top_declaration")) return false;
     boolean r;
@@ -5992,8 +5859,6 @@ public class HaskellParser implements PsiParser, LightPsiParser {
     if (!r) r = type_instance_declaration(b, l + 1);
     if (!r) r = type_signature(b, l + 1);
     if (!r) r = other_pragma(b, l + 1);
-    if (!r) r = quasi_quote(b, l + 1);
-    if (!r) r = qq_top_level_expression(b, l + 1);
     if (!r) r = expression(b, l + 1);
     if (!r) r = cfiles_pragma(b, l + 1);
     if (!r) r = fixity_declaration(b, l + 1);

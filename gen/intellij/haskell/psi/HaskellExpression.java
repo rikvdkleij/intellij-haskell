@@ -11,7 +11,7 @@ public interface HaskellExpression extends HaskellCompositeElement {
   List<HaskellQName> getQNameList();
 
   @NotNull
-  List<HaskellQuasiQuote> getQuasiQuoteList();
+  List<HaskellReservedId> getReservedIdList();
 
   @NotNull
   List<HaskellSccPragma> getSccPragmaList();
