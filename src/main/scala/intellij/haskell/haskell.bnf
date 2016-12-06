@@ -156,9 +156,9 @@ deriving_declaration        ::= DERIVING INSTANCE (scontext onls DOUBLE_RIGHT_AR
 
 private literal             ::= DECIMAL | HEXADECIMAL | OCTAL | FLOAT | CHARACTER_LITERAL | STRING_LITERAL
 
-private onl                 ::= NEWLINE*                                                                             // optional new lines
-private onls                ::= (LEFT_BRACE? RIGHT_BRACE? SEMICOLON? BACKSLASH? &<<containsSpaces>> NEWLINE)*        // optional multiple new line and spaces
-private nls                 ::= (LEFT_BRACE? RIGHT_BRACE? SEMICOLON? BACKSLASH? &<<containsSpaces>> NEWLINE)+        // multiple new lines and spaces
+private onl                 ::= NEWLINE*                              // optional new lines
+private onls                ::= (&<<containsSpaces>> NEWLINE)*        // optional multiple new line and spaces
+private nls                 ::= (&<<containsSpaces>> NEWLINE)+        // multiple new lines and spaces
 
 comments                    ::= COMMENT | NCOMMENT | NCOMMENT_START | NCOMMENT_END  // rule is necessary to refer to various comment types in code
 
@@ -195,7 +195,7 @@ gtycon                      ::= QUOTE? q_name | LEFT_PAREN RIGHT_ARROW RIGHT_PAR
 
 private constrs             ::= ("forall" q_name DOT)? constr (onls VERTICAL_BAR onls constr)*
 private constr              ::= (constr1 | constr2 | constr3 | constr4)
-constr1                     ::= unpack_nounpack_pragma? q_name onl unpack_nounpack_pragma? onl LEFT_BRACE onl (onl fielddecl (onl COMMA? onl fielddecl)*)? onl RIGHT_BRACE
+constr1                     ::= unpack_nounpack_pragma? q_name onl unpack_nounpack_pragma? onls LEFT_BRACE onls (onl fielddecl (onls COMMA? onls fielddecl)*)? onls RIGHT_BRACE
 constr2                     ::= unpack_nounpack_pragma? (q_name | LEFT_PAREN q_name* RIGHT_PAREN | LEFT_BRACKET q_name* RIGHT_BRACKET) onls (unpack_nounpack_pragma? onls atype onls)*  // Base.hs: data () = () and GHC.Types.hs: data [] a = [] | a : [a]
 constr3                     ::= unpack_nounpack_pragma? sub_constr2 onls unpack_nounpack_pragma? q_name onls unpack_nounpack_pragma? onls sub_constr2
 constr4                     ::= unpack_nounpack_pragma? q_name+ unpack_nounpack_pragma? q_name
@@ -212,7 +212,7 @@ private atype               ::= "forall" (q_name | ttype | LEFT_PAREN type_signa
 
 ttype                       ::= btype (onls RIGHT_ARROW onls ttype)* | list_type q_name* | LEFT_PAREN RIGHT_ARROW RIGHT_PAREN
 
-private btype               ::= atype+      // generalization because left recursive is not supported
+private btype               ::= (atype onls)+      // generalization because left recursive is not supported
 
 simpletype                  ::= ttype | (q_name | LEFT_PAREN RIGHT_PAREN)+ |
                                   q_name* onls LEFT_PAREN q_name RIGHT_PAREN onls q_name* |

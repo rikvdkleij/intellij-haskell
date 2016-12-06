@@ -28,7 +28,7 @@ import static intellij.haskell.psi.HaskellTypes.*;
 control_character   = [\000 - \037]
 newline             = \r|\n|\r\n
 unispace            = \x05
-white_char          = [ \t\f] | {control_character} | {unispace}
+white_char          = [\ \t\f\x0B\ \x0D] | {control_character} | {unispace}   // second "space" is probably ^M, I could not find other solution then justing pasting it in to prevent bad character.
 directive           = "#"{white_char}*("if"|"ifdef"|"ifndef"|"define"|"elif"|"else"|"error"|"endif"|"include"|"undef")  ("\\" (\r|\n|\r\n) | [^\r\n])*
 white_space         = {white_char}+ | {directive}
 
@@ -242,4 +242,4 @@ ncomment_end        = "-}"
 
     {shebang_line}        { return HS_SHEBANG_LINE; }
 
-.                         { return com.intellij.psi.TokenType.BAD_CHARACTER; }
+    [^]                   { return com.intellij.psi.TokenType.BAD_CHARACTER; }

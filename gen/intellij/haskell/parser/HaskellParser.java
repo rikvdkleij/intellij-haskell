@@ -1,15 +1,15 @@
 // This is a generated file. Not intended for manual editing.
 package intellij.haskell.parser;
 
+import com.intellij.lang.ASTNode;
+import com.intellij.lang.LightPsiParser;
 import com.intellij.lang.PsiBuilder;
 import com.intellij.lang.PsiBuilder.Marker;
-import static intellij.haskell.psi.HaskellTypes.*;
-import static intellij.haskell.psi.HaskellParserUtil.*;
-import com.intellij.psi.tree.IElementType;
-import com.intellij.lang.ASTNode;
-import com.intellij.psi.tree.TokenSet;
 import com.intellij.lang.PsiParser;
-import com.intellij.lang.LightPsiParser;
+import com.intellij.psi.tree.IElementType;
+
+import static intellij.haskell.psi.HaskellParserUtil.*;
+import static intellij.haskell.psi.HaskellTypes.*;
 
 @SuppressWarnings({"SimplifiableIfStatement", "UnusedAssignment"})
 public class HaskellParser implements PsiParser, LightPsiParser {
@@ -715,18 +715,29 @@ public class HaskellParser implements PsiParser, LightPsiParser {
   }
 
   /* ********************************************************** */
-  // atype+
+  // (atype onls)+
   static boolean btype(PsiBuilder b, int l) {
     if (!recursion_guard_(b, l, "btype")) return false;
     boolean r;
     Marker m = enter_section_(b);
-    r = atype(b, l + 1);
+    r = btype_0(b, l + 1);
     int c = current_position_(b);
     while (r) {
-      if (!atype(b, l + 1)) break;
+      if (!btype_0(b, l + 1)) break;
       if (!empty_element_parsed_guard_(b, "btype", c)) break;
       c = current_position_(b);
     }
+    exit_section_(b, m, null, r);
+    return r;
+  }
+
+  // atype onls
+  private static boolean btype_0(PsiBuilder b, int l) {
+    if (!recursion_guard_(b, l, "btype_0")) return false;
+    boolean r;
+    Marker m = enter_section_(b);
+    r = atype(b, l + 1);
+    r = r && onls(b, l + 1);
     exit_section_(b, m, null, r);
     return r;
   }
@@ -1363,7 +1374,7 @@ public class HaskellParser implements PsiParser, LightPsiParser {
   }
 
   /* ********************************************************** */
-  // unpack_nounpack_pragma? q_name onl unpack_nounpack_pragma? onl LEFT_BRACE onl (onl fielddecl (onl COMMA? onl fielddecl)*)? onl RIGHT_BRACE
+  // unpack_nounpack_pragma? q_name onl unpack_nounpack_pragma? onls LEFT_BRACE onls (onl fielddecl (onls COMMA? onls fielddecl)*)? onls RIGHT_BRACE
   public static boolean constr1(PsiBuilder b, int l) {
     if (!recursion_guard_(b, l, "constr1")) return false;
     boolean r;
@@ -1372,11 +1383,11 @@ public class HaskellParser implements PsiParser, LightPsiParser {
     r = r && q_name(b, l + 1);
     r = r && onl(b, l + 1);
     r = r && constr1_3(b, l + 1);
-    r = r && onl(b, l + 1);
+    r = r && onls(b, l + 1);
     r = r && consumeToken(b, HS_LEFT_BRACE);
-    r = r && onl(b, l + 1);
+    r = r && onls(b, l + 1);
     r = r && constr1_7(b, l + 1);
-    r = r && onl(b, l + 1);
+    r = r && onls(b, l + 1);
     r = r && consumeToken(b, HS_RIGHT_BRACE);
     exit_section_(b, l, m, r, false, null);
     return r;
@@ -1396,14 +1407,14 @@ public class HaskellParser implements PsiParser, LightPsiParser {
     return true;
   }
 
-  // (onl fielddecl (onl COMMA? onl fielddecl)*)?
+  // (onl fielddecl (onls COMMA? onls fielddecl)*)?
   private static boolean constr1_7(PsiBuilder b, int l) {
     if (!recursion_guard_(b, l, "constr1_7")) return false;
     constr1_7_0(b, l + 1);
     return true;
   }
 
-  // onl fielddecl (onl COMMA? onl fielddecl)*
+  // onl fielddecl (onls COMMA? onls fielddecl)*
   private static boolean constr1_7_0(PsiBuilder b, int l) {
     if (!recursion_guard_(b, l, "constr1_7_0")) return false;
     boolean r;
@@ -1415,7 +1426,7 @@ public class HaskellParser implements PsiParser, LightPsiParser {
     return r;
   }
 
-  // (onl COMMA? onl fielddecl)*
+  // (onls COMMA? onls fielddecl)*
   private static boolean constr1_7_0_2(PsiBuilder b, int l) {
     if (!recursion_guard_(b, l, "constr1_7_0_2")) return false;
     int c = current_position_(b);
@@ -1427,14 +1438,14 @@ public class HaskellParser implements PsiParser, LightPsiParser {
     return true;
   }
 
-  // onl COMMA? onl fielddecl
+  // onls COMMA? onls fielddecl
   private static boolean constr1_7_0_2_0(PsiBuilder b, int l) {
     if (!recursion_guard_(b, l, "constr1_7_0_2_0")) return false;
     boolean r;
     Marker m = enter_section_(b);
-    r = onl(b, l + 1);
+    r = onls(b, l + 1);
     r = r && constr1_7_0_2_0_1(b, l + 1);
-    r = r && onl(b, l + 1);
+    r = r && onls(b, l + 1);
     r = r && fielddecl(b, l + 1);
     exit_section_(b, m, null, r);
     return r;
@@ -4580,9 +4591,10 @@ public class HaskellParser implements PsiParser, LightPsiParser {
   }
 
   /* ********************************************************** */
-  // (LEFT_BRACE? RIGHT_BRACE? SEMICOLON? BACKSLASH? &<<containsSpaces>> NEWLINE)+
+  // (&<<containsSpaces>> NEWLINE)+
   static boolean nls(PsiBuilder b, int l) {
     if (!recursion_guard_(b, l, "nls")) return false;
+    if (!nextTokenIs(b, HS_NEWLINE)) return false;
     boolean r;
     Marker m = enter_section_(b);
     r = nls_0(b, l + 1);
@@ -4596,52 +4608,20 @@ public class HaskellParser implements PsiParser, LightPsiParser {
     return r;
   }
 
-  // LEFT_BRACE? RIGHT_BRACE? SEMICOLON? BACKSLASH? &<<containsSpaces>> NEWLINE
+  // &<<containsSpaces>> NEWLINE
   private static boolean nls_0(PsiBuilder b, int l) {
     if (!recursion_guard_(b, l, "nls_0")) return false;
     boolean r;
     Marker m = enter_section_(b);
     r = nls_0_0(b, l + 1);
-    r = r && nls_0_1(b, l + 1);
-    r = r && nls_0_2(b, l + 1);
-    r = r && nls_0_3(b, l + 1);
-    r = r && nls_0_4(b, l + 1);
     r = r && consumeToken(b, HS_NEWLINE);
     exit_section_(b, m, null, r);
     return r;
   }
 
-  // LEFT_BRACE?
+  // &<<containsSpaces>>
   private static boolean nls_0_0(PsiBuilder b, int l) {
     if (!recursion_guard_(b, l, "nls_0_0")) return false;
-    consumeToken(b, HS_LEFT_BRACE);
-    return true;
-  }
-
-  // RIGHT_BRACE?
-  private static boolean nls_0_1(PsiBuilder b, int l) {
-    if (!recursion_guard_(b, l, "nls_0_1")) return false;
-    consumeToken(b, HS_RIGHT_BRACE);
-    return true;
-  }
-
-  // SEMICOLON?
-  private static boolean nls_0_2(PsiBuilder b, int l) {
-    if (!recursion_guard_(b, l, "nls_0_2")) return false;
-    consumeToken(b, HS_SEMICOLON);
-    return true;
-  }
-
-  // BACKSLASH?
-  private static boolean nls_0_3(PsiBuilder b, int l) {
-    if (!recursion_guard_(b, l, "nls_0_3")) return false;
-    consumeToken(b, HS_BACKSLASH);
-    return true;
-  }
-
-  // &<<containsSpaces>>
-  private static boolean nls_0_4(PsiBuilder b, int l) {
-    if (!recursion_guard_(b, l, "nls_0_4")) return false;
     boolean r;
     Marker m = enter_section_(b, l, _AND_);
     r = containsSpaces(b, l + 1);
@@ -4722,7 +4702,7 @@ public class HaskellParser implements PsiParser, LightPsiParser {
   }
 
   /* ********************************************************** */
-  // (LEFT_BRACE? RIGHT_BRACE? SEMICOLON? BACKSLASH? &<<containsSpaces>> NEWLINE)*
+  // (&<<containsSpaces>> NEWLINE)*
   static boolean onls(PsiBuilder b, int l) {
     if (!recursion_guard_(b, l, "onls")) return false;
     int c = current_position_(b);
@@ -4734,52 +4714,20 @@ public class HaskellParser implements PsiParser, LightPsiParser {
     return true;
   }
 
-  // LEFT_BRACE? RIGHT_BRACE? SEMICOLON? BACKSLASH? &<<containsSpaces>> NEWLINE
+  // &<<containsSpaces>> NEWLINE
   private static boolean onls_0(PsiBuilder b, int l) {
     if (!recursion_guard_(b, l, "onls_0")) return false;
     boolean r;
     Marker m = enter_section_(b);
     r = onls_0_0(b, l + 1);
-    r = r && onls_0_1(b, l + 1);
-    r = r && onls_0_2(b, l + 1);
-    r = r && onls_0_3(b, l + 1);
-    r = r && onls_0_4(b, l + 1);
     r = r && consumeToken(b, HS_NEWLINE);
     exit_section_(b, m, null, r);
     return r;
   }
 
-  // LEFT_BRACE?
+  // &<<containsSpaces>>
   private static boolean onls_0_0(PsiBuilder b, int l) {
     if (!recursion_guard_(b, l, "onls_0_0")) return false;
-    consumeToken(b, HS_LEFT_BRACE);
-    return true;
-  }
-
-  // RIGHT_BRACE?
-  private static boolean onls_0_1(PsiBuilder b, int l) {
-    if (!recursion_guard_(b, l, "onls_0_1")) return false;
-    consumeToken(b, HS_RIGHT_BRACE);
-    return true;
-  }
-
-  // SEMICOLON?
-  private static boolean onls_0_2(PsiBuilder b, int l) {
-    if (!recursion_guard_(b, l, "onls_0_2")) return false;
-    consumeToken(b, HS_SEMICOLON);
-    return true;
-  }
-
-  // BACKSLASH?
-  private static boolean onls_0_3(PsiBuilder b, int l) {
-    if (!recursion_guard_(b, l, "onls_0_3")) return false;
-    consumeToken(b, HS_BACKSLASH);
-    return true;
-  }
-
-  // &<<containsSpaces>>
-  private static boolean onls_0_4(PsiBuilder b, int l) {
-    if (!recursion_guard_(b, l, "onls_0_4")) return false;
     boolean r;
     Marker m = enter_section_(b, l, _AND_);
     r = containsSpaces(b, l + 1);
