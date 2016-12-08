@@ -181,7 +181,6 @@
                              implementationClass="intellij.haskell.refactor.HaskellNamesValidator"/>
         <lang.refactoringSupport language="Haskell"
                                  implementationClass="intellij.haskell.refactor.HaskellRefactoringSupportProvider"/>
-        <renamePsiElementProcessor implementation="intellij.haskell.refactor.HaskellRenameFileProcessor"/>
         <renamePsiElementProcessor implementation="intellij.haskell.refactor.HaskellRenameVariableProcessor"/>
         <vetoRenameCondition implementation="intellij.haskell.refactor.HaskellVetoRenameCondition"/>
 
