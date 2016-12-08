@@ -4700,27 +4700,16 @@ public class HaskellParser implements PsiParser, LightPsiParser {
   }
 
   /* ********************************************************** */
-  // (NEWLINE | COMMENT)*
+  // NEWLINE*
   static boolean onl(PsiBuilder b, int l) {
     if (!recursion_guard_(b, l, "onl")) return false;
     int c = current_position_(b);
     while (true) {
-      if (!onl_0(b, l + 1)) break;
+      if (!consumeToken(b, HS_NEWLINE)) break;
       if (!empty_element_parsed_guard_(b, "onl", c)) break;
       c = current_position_(b);
     }
     return true;
-  }
-
-  // NEWLINE | COMMENT
-  private static boolean onl_0(PsiBuilder b, int l) {
-    if (!recursion_guard_(b, l, "onl_0")) return false;
-    boolean r;
-    Marker m = enter_section_(b);
-    r = consumeToken(b, HS_NEWLINE);
-    if (!r) r = consumeToken(b, HS_COMMENT);
-    exit_section_(b, m, null, r);
-    return r;
   }
 
   /* ********************************************************** */
