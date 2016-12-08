@@ -30,6 +30,7 @@ class HaskellReferenceContributor extends PsiReferenceContributor {
       @NotNull
       def getReferencesByElement(@NotNull element: PsiElement, @NotNull context: ProcessingContext): Array[PsiReference] = {
         element match {
+          case _: HaskellModid => PsiReference.EMPTY_ARRAY
           case ne: HaskellNamedElement => Array(new HaskellReference(ne, TextRange.from(0, element.getTextLength)))
           case _ => PsiReference.EMPTY_ARRAY
         }
