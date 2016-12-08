@@ -17,6 +17,7 @@
 package intellij.haskell.util
 
 import com.intellij.xml.util.XmlStringUtil
+import intellij.haskell.external.component.DeclarationLineUtil
 
 object StringUtil {
 
@@ -35,7 +36,7 @@ object StringUtil {
   }
 
   def removeOuterParens(name: String): String = {
-    if (name.startsWith("(") && name.endsWith(")")) {
+    if (DeclarationLineUtil.isOperator(name)) {
       name.substring(1, name.length - 1)
     } else {
       name

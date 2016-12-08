@@ -42,7 +42,7 @@ private[component] object NameInfoComponent {
 
   private case class Key(psiFile: PsiFile, name: String)
 
-  private case class PreludeKey(project: Project, name: String)
+  private case class ModuleAndNameKey(project: Project, moduleName: String, name: String)
 
   private case class Result(nameInfos: Option[Iterable[NameInfo]])
 
@@ -96,17 +96,17 @@ private[component] object NameInfoComponent {
       }
     )
 
-  private final val PreludeCache = CacheBuilder.newBuilder()
+  private final val ModuleAndNameCache = CacheBuilder.newBuilder()
     .build(
-      new CacheLoader[PreludeKey, Result] {
+      new CacheLoader[ModuleAndNameKey, Result] {
 
-        override def load(key: PreludeKey): Result = {
-          Result(findPreludeNameInfos(key))
+        override def load(key: ModuleAndNameKey): Result = {
+          Result(findNameInfos(key))
         }
 
-        override def reload(key: PreludeKey, oldResult: Result): ListenableFuture[Result] = {
+        override def reload(key: ModuleAndNameKey, oldResult: Result): ListenableFuture[Result] = {
           val task = ListenableFutureTask.create[Result](() => {
-            findPreludeNameInfos(key) match {
+            findNameInfos(key) match {
               case newResult@Some(nis) if nis.nonEmpty => Result(newResult)
               case _ => oldResult
             }
@@ -115,8 +115,8 @@ private[component] object NameInfoComponent {
           task
         }
 
-        private def findPreludeNameInfos(key: PreludeKey): Option[Iterable[NameInfo]] = {
-          val output = StackReplsManager.getGlobalRepl(key.project).findInfo("Prelude", key.name)
+        private def findNameInfos(key: ModuleAndNameKey): Option[Iterable[NameInfo]] = {
+          val output = StackReplsManager.getGlobalRepl(key.project).findInfo(key.moduleName, key.name)
           createNameInfos(key.project, output)
         }
       })
@@ -142,10 +142,10 @@ private[component] object NameInfoComponent {
     }).getOrElse(Iterable())
   }
 
-  def findPreludeNameInfo(project: Project, name: String): Iterable[NameInfo] = {
+  def findNameInfoByModuleAndName(project: Project, moduleName: String, name: String): Iterable[NameInfo] = {
     try {
-      val key = PreludeKey(project, name)
-      PreludeCache.get(key).nameInfos match {
+      val key = ModuleAndNameKey(project, moduleName, name)
+      ModuleAndNameCache.get(key).nameInfos match {
         case Some(nis) => nis
         case _ =>
           Cache.invalidate(key)
@@ -164,10 +164,7 @@ private[component] object NameInfoComponent {
 
   def invalidateAll(project: Project): Unit = {
     Cache.asMap().asScala.map(_._1.psiFile).filter(_.getProject == project).foreach(invalidate)
-  }
-
-  def invalidatePreludeInfo(project: Project): Unit = {
-    PreludeCache.asMap().asScala.filter(_._1.project == project).keys.foreach(PreludeCache.invalidate)
+    ModuleAndNameCache.asMap().asScala.filter(_._1.project == project).keys.foreach(ModuleAndNameCache.invalidate)
   }
 
   private def createNameInfo(outputLine: String, project: Project): Option[NameInfo] = {

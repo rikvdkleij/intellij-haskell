@@ -60,8 +60,8 @@ object HaskellComponentsManager {
     NameInfoComponent.findNameInfo(psiElement)
   }
 
-  def findPreludeNameInfo(project: Project, name: String): Iterable[NameInfo] = {
-    NameInfoComponent.findPreludeNameInfo(project, name)
+  def findNameInfoByModuleAndName(project: Project, moduleName: String, name: String): Iterable[NameInfo] = {
+    NameInfoComponent.findNameInfoByModuleAndName(project, moduleName, name)
   }
 
   def findAvailableModuleNames(psiFile: PsiFile): Iterable[String] = {
@@ -80,7 +80,6 @@ object HaskellComponentsManager {
     GlobalProjectInfoComponent.invalidate(project)
     BrowseModuleComponent.invalidate(project)
     NameInfoComponent.invalidateAll(project)
-    NameInfoComponent.invalidatePreludeInfo(project)
     ModuleFileComponent.invalidate(project)
   }
 

@@ -110,13 +110,7 @@ class HaskellReference(element: HaskellNamedElement, textRange: TextRange) exten
   }
 
   private def findReferenceByLocation(filePath: String, lineNr: Integer, columnNr: Integer, namedElement: HaskellNamedElement, project: Project): Option[HaskellNamedElement] = {
-    for {
-      haskellFile <- HaskellProjectUtil.findFile(filePath, project)
-      offset <- LineColumnPosition.getOffset(haskellFile, LineColumnPosition(lineNr, columnNr))
-      element <- Option(haskellFile.findElementAt(offset))
-      namedElement <- findDeclarationElementParent(element).flatMap(_.getIdentifierElements.find(_.getName == namedElement.getName)).
-        orElse(findQualifiedNameElement(element).map(_.getIdentifierElement))
-    } yield namedElement
+    HaskellReference.findReferenceByLocation(filePath, lineNr, columnNr, namedElement.getName, project)
   }
 
 }
@@ -147,6 +141,16 @@ object HaskellReference {
     HaskellComponentsManager.findHaskellFiles(project, moduleName).flatMap { f =>
       HaskellPsiUtil.findDeclarationElements(f).flatMap(_.getIdentifierElements).filter(_.getName == name)
     }
+  }
+
+  def findReferenceByLocation(filePath: String, lineNr: Integer, columnNr: Integer, name: String, project: Project): Option[HaskellNamedElement] = {
+    for {
+      haskellFile <- HaskellProjectUtil.findFile(filePath, project)
+      offset <- LineColumnPosition.getOffset(haskellFile, LineColumnPosition(lineNr, columnNr))
+      element <- Option(haskellFile.findElementAt(offset))
+      namedElement <- findDeclarationElementParent(element).flatMap(_.getIdentifierElements.find(_.getName == name)).
+        orElse(findQualifiedNameElement(element).map(_.getIdentifierElement))
+    } yield namedElement
   }
 }
 

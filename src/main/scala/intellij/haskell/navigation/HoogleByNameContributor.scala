@@ -18,10 +18,9 @@ package intellij.haskell.navigation
 
 import com.intellij.navigation.{ChooseByNameContributor, ItemPresentation, NavigationItem}
 import com.intellij.openapi.project.Project
-import intellij.haskell.external.component.{HaskellComponentsManager, HoogleComponent, LibraryNameInfo}
-import intellij.haskell.util.{HaskellProjectUtil, StringUtil}
+import intellij.haskell.external.component._
+import intellij.haskell.util.HaskellProjectUtil
 
-// TODO: Consider to use Stub index instead of File-based index
 class HoogleByNameContributor extends ChooseByNameContributor {
 
   private final val DeclarationPattern = """([\w\.\-]+) (.*)""".r
@@ -48,19 +47,21 @@ class HoogleByNameContributor extends ChooseByNameContributor {
       case ModulePattern(moduleName) => HaskellComponentsManager.findHaskellFiles(project, moduleName)
       case PackagePattern(packageName) => Iterable(NotFoundNavigationItem(packageName))
       case DeclarationPattern(moduleName, declaration) =>
-        declaration.split("::").headOption.map(n => StringUtil.removeOuterParens(n.trim)).map(name => {
-          if (moduleName == "Prelude" || moduleName == "Prelude.Compat") {
-            HaskellComponentsManager.findPreludeNameInfo(project, name).flatMap {
-              case nameInfo: LibraryNameInfo => HaskellReference.findNamedElementsByLibraryNameInfo(nameInfo, name, project)
-              case _ => NotFoundResult(moduleName, declaration)
-            }
-          } else {
-            val namedElements = HaskellReference.findNamedElementsInModule(moduleName, name, project)
+        DeclarationLineUtil.findName(declaration).map(nd => {
+          val namedElementsByNameInfo = HaskellComponentsManager.findNameInfoByModuleAndName(project, moduleName, nd.name).flatMap {
+            case lni: LibraryNameInfo => HaskellReference.findNamedElementsByLibraryNameInfo(lni, nd.name, project)
+            case pni: ProjectNameInfo => HaskellReference.findReferenceByLocation(pni.filePath, pni.lineNr, pni.columnNr, nd.name, project).toIterable
+            case _ => Iterable()
+          }
+          if (namedElementsByNameInfo.isEmpty) {
+            val namedElements = HaskellReference.findNamedElementsInModule(moduleName, nd.name, project)
             if (namedElements.isEmpty) {
               NotFoundResult(moduleName, declaration)
             } else {
               namedElements
             }
+          } else {
+            namedElementsByNameInfo
           }
         }).getOrElse(NotFoundResult(moduleName, declaration))
       case d => Iterable(NotFoundNavigationItem(d))

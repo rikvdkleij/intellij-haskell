@@ -55,55 +55,26 @@ private[component] object BrowseModuleComponent {
           val moduleName = key.moduleName
           GlobalProjectInfoComponent.findGlobalProjectInfo(project).flatMap(gpi => {
             if (gpi.allAvailableLibraryModuleNames.exists(_ == moduleName)) {
-              StackReplsManager.getGlobalRepl(project).getModuleIdentifiers(moduleName).filter(_.stdOutLines.nonEmpty) map (_.stdOutLines.flatMap(findModuleIdentifier(_, moduleName, project)))
+              StackReplsManager.getGlobalRepl(project).getModuleIdentifiers(moduleName).filter(_.stdOutLines.nonEmpty) map (_.stdOutLines.flatMap(findModuleIdentifier(_, moduleName)))
             } else {
               key.psiFile match {
                 case Some(f) =>
                   StackReplsManager.getProjectRepl(project).getAllTopLevelModuleIdentifiers(moduleName, f) map { output =>
                     val definedLocallyLines = output.stdOutLines.takeWhile(l => !l.startsWith("-- imported via"))
-                    definedLocallyLines.flatMap(findModuleIdentifier(_, moduleName, project))
+                    definedLocallyLines.flatMap(findModuleIdentifier(_, moduleName))
                   }
-                case _ => StackReplsManager.getProjectRepl(project).getModuleIdentifiers(moduleName).map(_.stdOutLines.flatMap(findModuleIdentifier(_, moduleName, project)))
+                case _ => StackReplsManager.getProjectRepl(project).getModuleIdentifiers(moduleName).map(_.stdOutLines.flatMap(findModuleIdentifier(_, moduleName)))
               }
             }
           })
         }
 
-        private def findModuleIdentifier(outputLine: String, moduleName: String, project: Project): Option[ModuleIdentifier] = {
-          val declaration = StringUtil.shortenHaskellDeclaration(outputLine)
-          val allTokens = declaration.split("""\s+""")
-          if (allTokens.isEmpty || allTokens(0) == "--") {
-            None
-          } else if (Seq("class", "instance").contains(allTokens(0))) {
-            declaration.split("""where|=\s""").headOption.flatMap { d =>
-              val tokens = d.trim.split("""=>""")
-              if (tokens.size == 1) {
-                createModuleIdentifier(allTokens(1), moduleName, declaration)
-              } else {
-                createModuleIdentifier(tokens.last.trim.split("""\s+""")(0), moduleName, declaration)
-              }
-            }
-          } else if (allTokens(0) == "type" && allTokens(1) == "role") {
-            createModuleIdentifier(allTokens(2), moduleName, declaration)
-          } else if (Seq("data", "type", "newtype").contains(allTokens(0).trim)) {
-            createModuleIdentifier(allTokens(1), moduleName, declaration)
-          } else {
-            val tokens = declaration.split("""::""")
-            if (tokens.size > 1) {
-              val name = tokens(0).trim
-              createModuleIdentifier(name, moduleName, declaration)
-            } else {
-              None
-            }
-          }
+        private def findModuleIdentifier(declarationLine: String, moduleName: String): Option[ModuleIdentifier] = {
+          DeclarationLineUtil.findName(declarationLine).map(nd => createModuleIdentifier(nd.name, moduleName, nd.declaration))
         }
 
         private def createModuleIdentifier(name: String, moduleName: String, declaration: String) = {
-          if (name.startsWith("(")) {
-            Some(ModuleIdentifier(StringUtil.removeOuterParens(name), moduleName, declaration, isOperator = true))
-          } else {
-            Some(ModuleIdentifier(name, moduleName, declaration, isOperator = false))
-          }
+          ModuleIdentifier(StringUtil.removeOuterParens(name), moduleName, declaration, isOperator = DeclarationLineUtil.isOperator(name))
         }
       }
     )

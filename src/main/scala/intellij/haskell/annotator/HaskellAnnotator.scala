@@ -294,7 +294,7 @@ class PerhapsYouMeantIntentionAction(suggestion: String, message: String) extend
       case Some(e) =>
         if (e.getText.startsWith("`") && e.getText.endsWith("`")) {
           e.replace(HaskellElementFactory.createQualifiedNameElement(project, s"`$suggestion`"))
-        } else if (e.getText.startsWith("(") && e.getText.endsWith(")")) {
+        } else if (DeclarationLineUtil.isOperator(e.getText)) {
           e.replace(HaskellElementFactory.createQualifiedNameElement(project, s"($suggestion)"))
         } else {
           e.replace(HaskellElementFactory.createQualifiedNameElement(project, suggestion))
