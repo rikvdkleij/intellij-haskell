@@ -23,9 +23,13 @@ import com.intellij.openapi.command.CommandProcessor
 import com.intellij.openapi.editor.{Document, SelectionModel}
 import com.intellij.openapi.fileEditor.FileDocumentManager
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.roots.ProjectRootManager
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.psi.{PsiFile, PsiManager}
 import intellij.haskell.HaskellFile
+import org.jetbrains.annotations.Nullable
+
+import scala.annotation.tailrec
 
 object HaskellFileUtil {
 
@@ -93,5 +97,44 @@ object HaskellFileUtil {
         }
       })
     }, null, null)
+  }
+
+  /**
+    * Returns an array of directory names as the relative path to `file` from the source root.
+    * For example, given file "project/src/foo/bar/baz.hs" the result would be `{"foo", "bar"}`.
+    */
+  @Nullable
+  def getPathFromSourceRoot(project: Project, file: VirtualFile): Option[List[String]] = {
+    @tailrec
+    def loop(file: VirtualFile, rootPath: String, initial: List[String] = List()): List[String] = {
+      if (rootPath == file.getCanonicalPath) initial
+      else loop(file.getParent, rootPath, file.getName :: initial)
+    }
+
+    for {
+      root <- getSourceRoot(project, file)
+      rootPath <- Option(root.getCanonicalPath)
+    } yield loop(file, rootPath, List())
+  }
+
+  @Nullable
+  def getSourceRoot(project: Project, file: VirtualFile): Option[VirtualFile] = {
+    @tailrec
+    def loop(maybeFile: Option[VirtualFile], rootPath: String): Option[VirtualFile] = {
+      maybeFile match {
+        case None => None
+        case Some(f) => if (rootPath == f.getCanonicalPath) Some(f) else loop(Option(f.getParent), rootPath)
+      }
+    }
+    val result = for {
+      project <- Option(project)
+      file <- Option(file)
+    } yield ProjectRootManager.getInstance(project).getContentSourceRoots.view.map { root =>
+      for {
+        root <- Option(root)
+        rootPath <- Option(root.getCanonicalPath)
+      } yield loop(Some(file), rootPath)
+    }.headOption
+    result.flatten.flatten.flatten
   }
 }
