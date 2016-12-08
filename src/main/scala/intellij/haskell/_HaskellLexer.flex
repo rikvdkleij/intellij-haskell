@@ -32,7 +32,7 @@ white_char          = [\ \t\f\x0B\ \x0D] | {control_character} | {unispace}   /
 directive           = "#"{white_char}*("if"|"ifdef"|"ifndef"|"define"|"elif"|"else"|"error"|"endif"|"include"|"undef")  ("\\" (\r|\n|\r\n) | [^\r\n])*
 white_space         = {white_char}+ | {directive}
 
-small               = [a-z_]          // ignoring any unicode lowercase letter for now
+small               = [a-z_] | "α" | "β"          // ignoring any more unicode lowercase letter for now
 large               = [A-Z]           // ignoring any unicode uppercase letter for now
 
 digit               = [0-9]           // ignoring any unicode decimal digit for now
@@ -64,7 +64,7 @@ percentage          = "%"
 ampersand           = "&"
 star                = "*" | "★"
 plus                = "+"
-dot                 = "."
+dot                 = "." | "∘"
 slash               = "/"
 lt                  = "<"
 gt                  = ">"
@@ -80,10 +80,10 @@ vertical_bar        = "|"
 tilde               = "~"
 colon               = ":"
 
-colon_colon         = "::"
-left_arrow          = "<-" | "\u2190"
-right_arrow         = "->" | "\u2192"
-double_right_arrow  = "=>" | "\u21D2"
+colon_colon         = "::" | "∷"
+left_arrow          = "<-" | "←"
+right_arrow         = "->" | "→"
+double_right_arrow  = "=>" | "⇒"
 dot_dot             = ".."
 
  // special
@@ -100,7 +100,8 @@ right_brace         = "}"
 quote               = "'"
 
 symbol_no_colon_dot = {equal} | {at} | {backslash} | {vertical_bar} | {tilde} | {exclamation_mark} | {hash} | {dollar} | {percentage} | {ampersand} | {star} |
-                        {plus} | {slash} | {lt} | {gt} | {question_mark} | {caret} | {dash}
+                        {plus} | {slash} | {lt} | {gt} | {question_mark} | {caret} | {dash} | "⊜" | "≣" | "≤" | "≥"
+
 
 var_id              = {question_mark}? {small} ({small} | {large} | {digit} | {quote})* {hash}*
 varsym_id           = {symbol_no_colon_dot} ({symbol_no_colon_dot} | {dot} | {colon})*
