@@ -46,8 +46,27 @@ class HaskellCompletionContributor extends CompletionContributor {
   private final val ExecutorService = Executors.newCachedThreadPool()
   implicit private final val ExecContext = ExecutionContext.fromExecutorService(ExecutorService)
 
-  private final val Keywords = Stream("case", "class", "data", "deriving", "do", "else", "family", "forall", "foreign", "if", "import", "in", "infix",
-    "infixl", "infixr", "instance", "let", "module", "newtype", "of", "then", "type", "where")
+  private final val haskellWhere = Stream("where")
+  private final val haskellLet = Stream("let")
+  private final val haskellDeclKeywords = Stream("family", "data", "type", "module", "class", "instance", "newtype", "deriving", "in")
+  private final val haskellDefault = Stream("default")
+  private final val haskellImportKeywords = Stream("import", "qualified", "as", "hiding")
+  private final val haskellForeignKeywords = Stream("foreign", "export", "ccall", "safe", "unsafe", "interruptible", "capi", "prim")
+  private final val haskellKeyword = Stream("do", "case", "of")
+  private final val haskellStatic = Stream("static")
+  private final val haskellConditional = Stream("if", "then", "else")
+  private final val haskellInfix = Stream("infix", "infixl", "infixr")
+  private final val haskellBottom = Stream("undefined", "error")
+  private final val haskellTodo = Stream("TODO", "FIXME")
+  private final val haskellTypeRoles = Stream("phantom", "representational", "nominal")
+  private final val haskellForall = Stream("forall")
+  private final val haskellRecursiveDo = Stream("mdo", "rec")
+  private final val haskellArrowSyntax = Stream("proc")
+  private final val haskellPatternKeyword = Stream("pattern")
+
+  private final val Keywords = haskellWhere ++ haskellLet ++ haskellDeclKeywords ++ haskellDefault ++ haskellImportKeywords ++
+    haskellForeignKeywords ++ haskellKeyword ++ haskellStatic ++ haskellConditional ++ haskellInfix ++ haskellBottom ++
+    haskellTodo ++ haskellTypeRoles ++ haskellForall ++ haskellRecursiveDo ++ haskellArrowSyntax ++ haskellPatternKeyword
 
   private final val SpecialReservedIds = Stream("safe", "unsafe")
   private final val PragmaIds = Stream("{-#", "#-}")
