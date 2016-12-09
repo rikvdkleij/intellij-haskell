@@ -16,10 +16,10 @@
 
 package intellij.haskell.external.component
 
+import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.project.Project
 import intellij.haskell.HaskellNotificationGroup
 import intellij.haskell.external.commandLine.StackCommandLine
-import intellij.haskell.external.repl.StackReplsManager
 
 import scala.collection.JavaConverters._
 import scala.concurrent.duration._
@@ -28,8 +28,10 @@ object HoogleComponent {
 
   private val Timout = 10.seconds.toMillis
 
+  var hoogleAvailable = false
+
   def runHoogle(project: Project, pattern: String, count: Int = 100): Option[Seq[String]] = {
-    if (StackReplsManager.getStackProjectStartupManager(project).hoogleAvailable) {
+    if (hoogleAvailable) {
       StackCommandLine.runCommand(Seq("hoogle", "--", s""""$pattern"""", s"--count=$count"), project, timeoutInMillis = Timout).
         map(o =>
           if (o.getStdoutLines.isEmpty || o.getStdout.contains("No results found"))
@@ -44,5 +46,17 @@ object HoogleComponent {
       HaskellNotificationGroup.logWarningBalloonEvent(project, "Stack Hoogle is not yet available")
       None
     }
+  }
+
+  def rebuildHoogle(project: Project) = {
+    ApplicationManager.getApplication.executeOnPooledThread(new Runnable {
+      override def run(): Unit = {
+        try {
+          StackCommandLine.runCommand(Seq("hoogle", "--rebuild"), project, timeoutInMillis = 10.minutes.toMillis)
+        } finally {
+          hoogleAvailable = true
+        }
+      }
+    })
   }
 }

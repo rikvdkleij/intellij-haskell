@@ -106,7 +106,7 @@ object HaskellSdkType {
     stackPath match {
       case Some(_) => stackPath
       case None =>
-        HaskellNotificationGroup.logErrorBalloonEvent(project, "Path to Haskell Stack binary is expected to be configured in Project SDK setting. Please do and restart Project.")
+        HaskellNotificationGroup.logErrorBalloonEvent(project, "Path to Haskell Stack binary is not configured in Project SDK setting. Please do and restart Project.")
         None
     }
   }

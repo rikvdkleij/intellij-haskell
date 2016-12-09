@@ -27,11 +27,7 @@ import intellij.haskell.external.commandLine.StackCommandLine
 import intellij.haskell.external.repl.StackReplsManager
 import intellij.haskell.util.HaskellProjectUtil
 
-import scala.concurrent.duration._
-
 class StackProjectStartupManager(project: Project) extends ProjectComponent {
-
-  var hoogleAvailable = false
 
   override def getComponentName: String = "stack-repls-manager"
 
@@ -74,15 +70,7 @@ class StackProjectStartupManager(project: Project) extends ProjectComponent {
             }
           })
 
-          val rebuildHoogleFuture = ApplicationManager.getApplication.executeOnPooledThread(new Runnable {
-            override def run(): Unit = {
-              try {
-                StackCommandLine.runCommand(Seq("hoogle", "--rebuild"), project, timeoutInMillis = 10.minutes.toMillis)
-              } finally {
-                hoogleAvailable = true
-              }
-            }
-          })
+          val rebuildHoogleFuture = HoogleComponent.rebuildHoogle(project)
 
           if (!buildToolsFuture.isDone || !rebuildHoogleFuture.isDone || !preloadCacheFuture.isDone) {
             buildToolsFuture.get(15, TimeUnit.MINUTES)
