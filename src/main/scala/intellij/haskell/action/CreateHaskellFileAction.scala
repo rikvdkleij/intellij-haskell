@@ -18,7 +18,8 @@ package intellij.haskell.action
 
 import java.text.ParseException
 
-import com.intellij.ide.actions.{CreateFileAction, CreateFileFromTemplateAction, CreateFileFromTemplateDialog}
+import com.intellij.ide.actions.CreateFileFromTemplateDialog.Builder
+import com.intellij.ide.actions.{CreateFileAction, CreateFileFromTemplateAction}
 import com.intellij.ide.fileTemplates.{FileTemplate, FileTemplateManager, FileTemplateUtil}
 import com.intellij.ide.util.PropertiesComponent
 import com.intellij.openapi.fileEditor.FileEditorManager
@@ -35,7 +36,7 @@ object CreateHaskellFileAction {
 
 class CreateHaskellFileAction extends CreateFileFromTemplateAction(CreateHaskellFileAction.NEW_HASKELL_FILE, "", HaskellIcons.HaskellSmallLogo) with DumbAware {
 
-  override def buildDialog(project: Project, directory: PsiDirectory, builder: CreateFileFromTemplateDialog.Builder) {
+  override def buildDialog(project: Project, directory: PsiDirectory, builder: Builder): Unit = {
     builder.setTitle(CreateHaskellFileAction.NEW_HASKELL_FILE).addKind("Empty module", HaskellIcons.HaskellSmallLogo, "Haskell Module").setValidator(new InputValidatorEx {
 
       def checkInput(inputString: String): Boolean = {
@@ -55,7 +56,6 @@ class CreateHaskellFileAction extends CreateFileFromTemplateAction(CreateHaskell
       }
     })
   }
-
 
   override def createFileFromTemplate(originName: String, template: FileTemplate, originDir: PsiDirectory): PsiFile = {
     val pathItems = HaskellFileUtil.getPathFromSourceRoot(originDir.getProject, originDir.getVirtualFile).orNull
@@ -107,4 +107,5 @@ class CreateHaskellFileAction extends CreateFileFromTemplateAction(CreateHaskell
   protected def getActionName(directory: PsiDirectory, newName: String, templateName: String): String = {
     CreateHaskellFileAction.NEW_HASKELL_FILE
   }
+
 }
