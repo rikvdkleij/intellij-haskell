@@ -170,7 +170,6 @@ class HaskellAnnotator extends ExternalAnnotator[PsiFile, LoadResult] {
     ErrorAnnotationWithIntentionActions(tr, problem.plainMessage, problem.htmlMessage, Stream(new LanguageExtensionIntentionAction(languageExtension)))
   }
 
-  // TODO: If problem position is `(`, create text range up to including `)`
   private def getProblemTextRange(psiFile: PsiFile, problem: LoadProblemInCurrentFile): Option[TextRange] = {
     LineColumnPosition.getOffset(psiFile, LineColumnPosition(problem.lineNr, problem.columnNr)).map(offset => {
       findTextRange(psiFile, offset)
@@ -315,7 +314,6 @@ class DefinedButNotUsedIntentionAction(name: String) extends HaskellBaseIntentio
   }
 }
 
-// TODO: Check when adding import module identifier that import of module is not already there for other identifier of module
 class NotInScopeIntentionAction(identifier: String, moduleName: String, psiFile: PsiFile) extends HaskellBaseIntentionAction {
   setText(s"Import `$identifier` of module `$moduleName`")
 

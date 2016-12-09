@@ -26,7 +26,6 @@ class ShowTypeAction extends AnAction {
     HaskellEditorUtil.enableAction(onlyForProjectFile = true, actionEvent)
   }
 
-  // TODO: Add "smart enter" for adding "hole"
   def actionPerformed(actionEvent: AnActionEvent) {
     ActionUtil.findActionContext(actionEvent).foreach(actionContext => {
       val editor = actionContext.editor

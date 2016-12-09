@@ -84,7 +84,6 @@ private[component] object DefinitionLocationComponent {
           StackReplsManager.getProjectRepl(project).findLocationInfoFor(psiFile, key.startLineNr, key.startColumnNr, key.endLineNr, endColumnNr, key.expression)
         }
 
-        // TODO: Extend with `package:module name` pattern
         private def createDefinitionLocationInfo(output: String): Option[DefinitionLocation] = {
           output match {
             case LocAtPattern(filePath, startLineNr, startColumnNr, endLineNr, endColumnNr) => Some(DefinitionLocation(filePath.trim, startLineNr.toInt, startColumnNr.toInt, endLineNr.toInt, endColumnNr.toInt))

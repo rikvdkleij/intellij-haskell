@@ -126,7 +126,6 @@ private[repl] abstract class StackReplProcess(val project: Project, val extraSta
       return
     }
 
-    // TODO: Create action to rebuild project with first `stack clean full`
     if (isProjectRepl) {
       executeBuild(project, Seq("build", "intero"), "build of Intero")
       executeBuild(project, Seq("build", "--test", "--only-dependencies", "--haddock", "--fast"), "build of dependencies")
@@ -159,7 +158,6 @@ private[repl] abstract class StackReplProcess(val project: Project, val extraSta
 
         // `enter` to pass prompt which asks for which module to load
         // See Stack 1.2 issue https://github.com/commercialhaskell/stack/issues/2603
-        // TODO: Remove this because in Stack 1.2.1 fixed
         writeToOutputStream("")
         Thread.sleep(100)
 

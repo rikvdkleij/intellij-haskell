@@ -23,7 +23,6 @@ import intellij.haskell.psi.{HaskellNamedElement, HaskellPsiUtil}
 import intellij.haskell.util.StringUtil._
 import intellij.haskell.util.{HaskellFileUtil, HaskellProjectUtil}
 
-// TODO: Consider to use Stub index instead of File-based index
 class GotoByDeclarationContributor extends HaskellChooseByNameContributor[HaskellNamedElement] {
 
   private var simpleCache: Iterable[HaskellNamedElement] = _
