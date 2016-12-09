@@ -21,7 +21,7 @@ import com.intellij.openapi.util.Computable
 import com.intellij.psi.PsiFile
 import intellij.haskell.external.repl.StackReplsManager
 import intellij.haskell.psi.HaskellPsiUtil
-import intellij.haskell.util.{HaskellFileUtil, OSUtil, StringUtil}
+import intellij.haskell.util.{HaskellFileUtil, StringUtil}
 
 private[component] object LoadComponent {
 
@@ -80,11 +80,7 @@ private[component] object LoadComponent {
   private[component] def parseErrorOutputLine(filePath: String, outputLine: String): LoadProblem = {
     outputLine match {
       case ProblemPattern(problemFilePath, lineNr, columnNr, message) =>
-        val displayMessage = (if (message.startsWith("    ")) {
-          s"Error: $message"
-        } else {
-          message
-        }).replaceAll("""(\s\s\s\s+)""", OSUtil.LineSeparator + "$1")
+        val displayMessage = message.trim.replaceAll("""(\s\s\s\s+)""", "\n" + "$1")
         if (filePath == problemFilePath) {
           LoadProblemInCurrentFile(problemFilePath, lineNr.toInt, columnNr.toInt, displayMessage)
         } else {
@@ -99,11 +95,11 @@ case class LoadResult(currentFileProblems: Iterable[LoadProblemInCurrentFile] = 
 
 sealed abstract class LoadProblem(private val message: String) {
   def plainMessage: String = {
-    message.split(OSUtil.LineSeparator).tail.mkString.trim.replaceAll("\\s+", " ")
+    message.split("\n").mkString.replaceAll("\\s+", " ")
   }
 
   def htmlMessage: String = {
-    StringUtil.escapeString(message.split(OSUtil.LineSeparator).tail.mkString("\n").trim.replace(' ', '\u00A0'))
+    StringUtil.escapeString(message.replace(' ', '\u00A0'))
   }
 
   def isWarning: Boolean = {

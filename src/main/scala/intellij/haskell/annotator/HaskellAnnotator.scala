@@ -41,7 +41,7 @@ import scala.collection.JavaConverters._
 
 class HaskellAnnotator extends ExternalAnnotator[PsiFile, LoadResult] {
 
-  private final val NoTypeSignaturePattern = """Top-level binding with no type signature: (.+)""".r
+  private final val NoTypeSignaturePattern = """.* Top-level binding with no type signature: (.+)""".r
   private final val UseLanguageExtensionPattern = """.* Perhaps you intended to use (\w+).*""".r
   private final val UseLanguageExtensionPattern2 = """.* Use (\w+) to allow.*""".r
   private final val UseLanguageExtensionPattern3 = """.* You need (\w+) to.*""".r
@@ -57,7 +57,7 @@ class HaskellAnnotator extends ExternalAnnotator[PsiFile, LoadResult] {
   private final val PerhapsYouMeantLocalPattern = """.*[`‘]([^‘’'`]+)['’].*""".r
 
   private final val HolePattern = """.* Found hole: (.+) Where: .*""".r
-  private final val HolePattern2 = """Found hole [`‘]([^‘’'`]+)['’] with type: ([^ ]+) .*""".r
+  private final val HolePattern2 = """.* Found hole [`‘]([^‘’'`]+)['’] with type: ([^ ]+) .*""".r
 
   override def collectInformation(psiFile: PsiFile, editor: Editor, hasErrors: Boolean): PsiFile = {
     (psiFile, Option(psiFile.getOriginalFile.getVirtualFile)) match {

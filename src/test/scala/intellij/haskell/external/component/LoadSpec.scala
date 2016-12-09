@@ -20,16 +20,18 @@ import org.scalatest.{BeforeAndAfterEach, FunSpec, GivenWhenThen, Matchers}
 
 class LoadSpec extends FunSpec with Matchers with GivenWhenThen with BeforeAndAfterEach {
 
-  describe("Parsing `stack repl :load` output") {
-    Given("output load")
-    val output = "/file/path/HaskellFile.hs:1:11:parse error on input     and so on"
+  describe("LoadComponent") {
+    it("should parse `:load` output") {
+      Given("output load")
+      val output = "/file/path/HaskellFile.hs:1:11:parse error on input     and so on"
 
-    When("parsed to problem")
-    val problem = LoadComponent.parseErrorOutputLine("/file/path/HaskellFile.hs", output).asInstanceOf[LoadProblemInCurrentFile]
+      When("parsed to problem")
+      val problem = LoadComponent.parseErrorOutputLine("/file/path/HaskellFile.hs", output).asInstanceOf[LoadProblemInCurrentFile]
 
-    Then("it should contain right data")
-    problem.lineNr should equal(1)
-    problem.columnNr should equal(11)
-    problem.plainMessage should equal(s"parse error on input and so on")
+      Then("it should contain right data")
+      problem.lineNr should equal(1)
+      problem.columnNr should equal(11)
+      problem.plainMessage should equal(s"parse error on input and so on")
+    }
   }
 }
