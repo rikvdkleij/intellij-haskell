@@ -91,7 +91,6 @@ class CreateHaskellFileAction extends CreateFileFromTemplateAction(CreateHaskell
       }
     } catch {
       case e: ParseException => Messages.showErrorDialog(project, "Error parsing Velocity template: " + e.getMessage, "Create File from Template");
-      case e: Exception => throw e
     }
 
     null
