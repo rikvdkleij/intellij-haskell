@@ -4262,16 +4262,20 @@ public class HaskellParser implements PsiParser, LightPsiParser {
   }
 
   /* ********************************************************** */
-  // general_id*
+  // general_id+
   static boolean last_line_expression(PsiBuilder b, int l) {
     if (!recursion_guard_(b, l, "last_line_expression")) return false;
+    boolean r;
+    Marker m = enter_section_(b);
+    r = general_id(b, l + 1);
     int c = current_position_(b);
-    while (true) {
+    while (r) {
       if (!general_id(b, l + 1)) break;
       if (!empty_element_parsed_guard_(b, "last_line_expression", c)) break;
       c = current_position_(b);
     }
-    return true;
+    exit_section_(b, m, null, r);
+    return r;
   }
 
   /* ********************************************************** */
