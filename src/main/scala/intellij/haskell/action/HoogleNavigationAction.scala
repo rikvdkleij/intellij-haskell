@@ -38,14 +38,20 @@ import com.intellij.navigation.{ChooseByNameContributor, NavigationItem}
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.psi.PsiDocumentManager
 import intellij.haskell.navigation.{GotoByHoogleModel, HoogleByNameContributor}
-import intellij.haskell.util.HaskellEditorUtil
+import intellij.haskell.util.HaskellProjectUtil
 
 class HoogleNavigationAction extends GotoActionBase {
 
   private val contributors = Array[ChooseByNameContributor](new HoogleByNameContributor)
 
   override def update(actionEvent: AnActionEvent) {
-    HaskellEditorUtil.enableAction(onlyForProjectFile = false, actionEvent)
+    val presentation = actionEvent.getPresentation
+    ActionUtil.findActionContext(actionEvent).foreach(actionContext => {
+      val project = actionContext.project
+      val isHaskellProject = HaskellProjectUtil.isHaskellStackProject(project)
+      presentation.setEnabled(isHaskellProject)
+      presentation.setVisible(isHaskellProject)
+    })
   }
 
   def gotoActionPerformed(actionEvent: AnActionEvent) {
