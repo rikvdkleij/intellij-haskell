@@ -264,7 +264,7 @@ private cidecl              ::= type_signature | inline_pragma | noinline_pragma
 
 expression                  ::= line_expression+ last_line_expression | last_line_expression
 private line_expression     ::= general_id+ nls
-private last_line_expression::= general_id+
+private last_line_expression::= general_id*
 
 private general_id          ::= q_name | LEFT_PAREN | RIGHT_PAREN | FLOAT |
                                   COLON_COLON | DOUBLE_RIGHT_ARROW | RIGHT_ARROW |
