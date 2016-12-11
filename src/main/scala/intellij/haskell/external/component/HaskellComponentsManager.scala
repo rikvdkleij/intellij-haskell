@@ -112,8 +112,10 @@ object HaskellComponentsManager {
         })
 
         info.allAvailableLibraryModuleNames.foreach { mn =>
-          Thread.sleep(100) // Otherwise it will make IDE unresponsive
-          BrowseModuleComponent.findImportedModuleIdentifiers(project, mn)
+          if (!project.isDisposed) {
+            Thread.sleep(100) // Otherwise it will make IDE unresponsive
+            BrowseModuleComponent.findImportedModuleIdentifiers(project, mn)
+          }
         }
       case _ => HaskellNotificationGroup.logWarningBalloonEvent(project, "Could not preload library identifiers cache because could not obtain global project info")
     }
