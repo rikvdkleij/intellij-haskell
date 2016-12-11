@@ -142,7 +142,7 @@
         <moduleConfigurationEditorProvider implementation="intellij.haskell.settings.HaskellModuleEditorsProvider"
                                            order="first"/>
 
-        <internalFileTemplate name="Haskell"/>
+        <internalFileTemplate name="Haskell Module"/>
 
         <fileTypeFactory implementation="intellij.haskell.HaskellLanguageFileTypeFactory"/>
 
