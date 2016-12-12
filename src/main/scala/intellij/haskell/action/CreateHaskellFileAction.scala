@@ -58,48 +58,54 @@ class CreateHaskellFileAction extends CreateFileFromTemplateAction(CreateHaskell
   }
 
   override def createFileFromTemplate(originName: String, template: FileTemplate, originDir: PsiDirectory): PsiFile = {
-    val pathItems = HaskellFileUtil.getPathFromSourceRoot(originDir.getProject, originDir.getVirtualFile).orNull
+    val pathItems = HaskellFileUtil.getPathFromSourceRoot(originDir.getProject, originDir.getVirtualFile)
 
-    // Adapted from super definition.
-    val mkdirs = new CreateFileAction.MkDirs(originName, originDir)
-    val name = mkdirs.newName
-    val dir = mkdirs.directory
-    val project = dir.getProject
+    pathItems match {
+      case None => null
+      case Some(items) =>
+        // Adapted from super definition.
+        val mkdirs = new CreateFileAction.MkDirs(originName, originDir)
+        val name = mkdirs.newName
+        val dir = mkdirs.directory
+        val project = dir.getProject
 
-    val nameWithmodulePrefix = if (pathItems == null || invalidPathItems(pathItems) || pathItems.isEmpty) {
-      name
-    } else {
-      pathItems.mkString(".") + "." + name
-    }
-
-    try {
-      // Patch props with custom property.
-      val props = FileTemplateManager.getInstance(project).getDefaultProperties()
-      props.setProperty("NAME", nameWithmodulePrefix)
-      val element = FileTemplateUtil.createFromTemplate(template, name, props, dir)
-
-      val psiFile = element.getContainingFile
-
-      val virtualFile = psiFile.getVirtualFile
-      if (virtualFile != null) {
-        FileEditorManager.getInstance(project).openFile(virtualFile, true)
-        val defaultTemplateProperty = getDefaultTemplateProperty
-        if (defaultTemplateProperty != null) {
-          PropertiesComponent.getInstance(project).setValue(defaultTemplateProperty, template.getName)
+        val nameWithmodulePrefix = if (invalidPathItems(items) || items.isEmpty) {
+          name
+        } else {
+          items.mkString(".") + "." + name
         }
-        return psiFile
-      }
-    } catch {
-      case e: ParseException => Messages.showErrorDialog(project, "Error parsing Velocity template: " + e.getMessage, "Create File from Template");
-    }
 
-    null
+        // Patch props with custom property.
+        val props = FileTemplateManager.getInstance(project).getDefaultProperties()
+        props.setProperty("NAME", nameWithmodulePrefix)
+
+        val element = FileTemplateUtil.createFromTemplate(template, name, props, dir)
+        val psiFile = element.getContainingFile
+
+        try {
+          val virtualFile = Option(psiFile.getVirtualFile)
+
+          for {
+            vFile <- virtualFile
+          } yield {
+            FileEditorManager.getInstance(project).openFile(vFile, true)
+            for {
+              defaultTemplateProperty <- Option(getDefaultTemplateProperty)
+            } yield PropertiesComponent.getInstance(project).setValue(defaultTemplateProperty, template.getName)
+          }
+
+        } catch {
+          case e: ParseException => Messages.showErrorDialog(project, "Error parsing Haskell Module template: " + e.getMessage, "Create File from Template");
+        }
+
+        psiFile
+    }
   }
 
   /**
     * Returns true if any directory name starts with a lower case letter.
     */
-  def invalidPathItems(pathItems: List[String]): Boolean = {
+  private def invalidPathItems(pathItems: List[String]): Boolean = {
     pathItems.exists(s => s.isEmpty || !StringUtil.isCapitalized(s.substring(0, 1)))
   }
 
