@@ -25,7 +25,7 @@ import static intellij.haskell.psi.HaskellTypes.*;
 public class HaskellParserUtil extends GeneratedParserUtilBase {
 
     public static boolean containsSpaces(PsiBuilder builder, int level) {
-        return (builder.rawLookup(0) == HS_NEWLINE && (builder.rawLookup(1) == TokenType.WHITE_SPACE || builder.rawLookup(1) == HS_COMMENT) || builder.rawLookup(1) == HS_NCOMMENT) ||
+        return (builder.rawLookup(0) == HS_NEWLINE && (builder.rawLookup(1) == TokenType.WHITE_SPACE || builder.rawLookup(1) == HS_COMMENT) || builder.rawLookup(1) == HS_NCOMMENT || builder.rawLookup(1) == HS_DIRECTIVE) ||
                 (builder.rawLookup(0) == HS_NEWLINE && builder.rawLookup(1) == HS_NEWLINE && builder.rawLookup(2) == TokenType.WHITE_SPACE) ||
                 (builder.rawLookup(0) == HS_NEWLINE && builder.rawLookup(1) == HS_NEWLINE && builder.rawLookup(2) == HS_NEWLINE && builder.rawLookup(3) == TokenType.WHITE_SPACE) ||
                 (builder.rawLookup(0) == HS_NEWLINE && builder.rawLookup(1) == HS_NEWLINE && builder.rawLookup(2) == HS_NEWLINE && builder.rawLookup(3) == HS_NEWLINE && builder.rawLookup(4) == TokenType.WHITE_SPACE) ||

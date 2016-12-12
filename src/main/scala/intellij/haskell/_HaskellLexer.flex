@@ -30,7 +30,7 @@ newline             = \r|\n|\r\n
 unispace            = \x05
 white_char          = [\ \t\f\x0B\ \x0D] | {control_character} | {unispace}   // second "space" is probably ^M, I could not find other solution then justing pasting it in to prevent bad character.
 directive           = "#"{white_char}*("if"|"ifdef"|"ifndef"|"define"|"elif"|"else"|"error"|"endif"|"include"|"undef")  ("\\" (\r|\n|\r\n) | [^\r\n])*
-white_space         = {white_char}+ | {directive}
+white_space         = {white_char}+
 
 small               = [a-z_] | "α" | "β"          // ignoring any more unicode lowercase letter for now
 large               = [A-Z]           // ignoring any unicode uppercase letter for now
@@ -242,5 +242,7 @@ ncomment_end        = "-}"
     {quote}               { return HS_QUOTE; }
 
     {shebang_line}        { return HS_SHEBANG_LINE; }
+
+    {directive}           { return HS_DIRECTIVE; }
 
     [^]                   { return com.intellij.psi.TokenType.BAD_CHARACTER; }

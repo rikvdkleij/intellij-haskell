@@ -79,15 +79,15 @@ public class _HaskellLexer implements FlexLexer {
     "\1\5\1\37\1\40\3\5\1\41\4\5\1\42\2\5"+
     "\1\0\1\4\1\0\1\7\2\0\1\4\1\43\1\24"+
     "\1\44\4\0\1\21\1\0\1\45\1\0\1\46\1\23"+
-    "\1\25\1\21\1\22\1\47\4\5\1\50\1\51\1\2"+
-    "\6\0\1\52\1\53\11\5\1\54\2\5\1\55\1\0"+
-    "\1\55\1\0\1\56\1\57\1\60\36\0\2\61\1\62"+
-    "\4\5\2\50\1\2\7\0\6\5\1\63\1\64\2\5"+
-    "\1\65\30\0\1\66\1\67\2\5\1\2\3\0\1\70"+
-    "\6\5\1\71\2\0\1\5\1\72\1\0\1\73\1\74"+
-    "\1\5\1\75\4\5\3\0\1\76\2\5\1\77\1\5"+
-    "\1\100\3\0\1\101\1\0\1\102\21\0\1\103\2\0"+
-    "\1\43\3\0\1\104\1\105\1\106";
+    "\1\25\1\21\1\22\1\47\4\5\1\50\1\51\1\52"+
+    "\6\0\1\53\1\54\11\5\1\55\2\5\1\56\1\0"+
+    "\1\56\1\0\1\57\1\60\1\61\36\0\2\62\1\63"+
+    "\4\5\2\50\1\52\7\0\6\5\1\64\1\65\2\5"+
+    "\1\66\30\0\1\67\1\70\2\5\1\52\3\0\1\71"+
+    "\6\5\1\72\2\0\1\5\1\73\1\0\1\74\1\75"+
+    "\1\5\1\76\4\5\3\0\1\77\2\5\1\100\1\5"+
+    "\1\101\3\0\1\102\1\0\1\103\21\0\1\104\2\0"+
+    "\1\43\3\0\1\105\1\106\1\107";
 
   private static int [] zzUnpackAction() {
     int [] result = new int[287];
@@ -840,159 +840,159 @@ public class _HaskellLexer implements FlexLexer {
           case 1: 
             { return com.intellij.psi.TokenType.BAD_CHARACTER;
             }
-          case 71: break;
+          case 72: break;
           case 2: 
             { return com.intellij.psi.TokenType.WHITE_SPACE;
             }
-          case 72: break;
+          case 73: break;
           case 3: 
             { return HS_NEWLINE;
             }
-          case 73: break;
+          case 74: break;
           case 4: 
             { return HS_VARSYM_ID;
             }
-          case 74: break;
+          case 75: break;
           case 5: 
             { return HS_VAR_ID;
             }
-          case 75: break;
+          case 76: break;
           case 6: 
             { return HS_BACKSLASH;
             }
-          case 76: break;
+          case 77: break;
           case 7: 
             { return HS_CON_ID;
             }
-          case 77: break;
+          case 78: break;
           case 8: 
             { return HS_DECIMAL;
             }
-          case 78: break;
+          case 79: break;
           case 9: 
             { return HS_RIGHT_BRACKET;
             }
-          case 79: break;
+          case 80: break;
           case 10: 
             { return HS_UNDERSCORE;
             }
-          case 80: break;
+          case 81: break;
           case 11: 
             { return HS_QUOTE;
             }
-          case 81: break;
+          case 82: break;
           case 12: 
             { return HS_DOT;
             }
-          case 82: break;
+          case 83: break;
           case 13: 
             { return HS_EQUAL;
             }
-          case 83: break;
+          case 84: break;
           case 14: 
             { return HS_AT;
             }
-          case 84: break;
+          case 85: break;
           case 15: 
             { return HS_VERTICAL_BAR;
             }
-          case 85: break;
+          case 86: break;
           case 16: 
             { return HS_TILDE;
             }
-          case 86: break;
+          case 87: break;
           case 17: 
             { return HS_CONSYM_ID;
             }
-          case 87: break;
+          case 88: break;
           case 18: 
             { return HS_COLON_COLON;
             }
-          case 88: break;
+          case 89: break;
           case 19: 
             { return HS_LEFT_ARROW;
             }
-          case 89: break;
+          case 90: break;
           case 20: 
             { return HS_RIGHT_ARROW;
             }
-          case 90: break;
+          case 91: break;
           case 21: 
             { return HS_DOUBLE_RIGHT_ARROW;
             }
-          case 91: break;
+          case 92: break;
           case 22: 
             { return HS_LEFT_PAREN;
             }
-          case 92: break;
+          case 93: break;
           case 23: 
             { return HS_RIGHT_PAREN;
             }
-          case 93: break;
+          case 94: break;
           case 24: 
             { return HS_COMMA;
             }
-          case 94: break;
+          case 95: break;
           case 25: 
             { return HS_SEMICOLON;
             }
-          case 95: break;
+          case 96: break;
           case 26: 
             { return HS_LEFT_BRACKET;
             }
-          case 96: break;
+          case 97: break;
           case 27: 
             { return HS_BACKQUOTE;
             }
-          case 97: break;
+          case 98: break;
           case 28: 
             { return HS_LEFT_BRACE;
             }
-          case 98: break;
+          case 99: break;
           case 29: 
             { return HS_RIGHT_BRACE;
             }
-          case 99: break;
+          case 100: break;
           case 30: 
             { 
             }
-          case 100: break;
+          case 101: break;
           case 31: 
             { return HS_IF;
             }
-          case 101: break;
+          case 102: break;
           case 32: 
             { return HS_IN;
             }
-          case 102: break;
+          case 103: break;
           case 33: 
             { return HS_DO;
             }
-          case 103: break;
+          case 104: break;
           case 34: 
             { return HS_OF;
             }
-          case 104: break;
+          case 105: break;
           case 35: 
             { return HS_COMMENT;
             }
-          case 105: break;
+          case 106: break;
           case 36: 
             { return HS_NCOMMENT_END;
             }
-          case 106: break;
+          case 107: break;
           case 37: 
             { return HS_STRING_LITERAL;
             }
-          case 107: break;
+          case 108: break;
           case 38: 
             { return HS_DOT_DOT;
             }
-          case 108: break;
+          case 109: break;
           case 39: 
             { return HS_NCOMMENT_START;
             }
-          case 109: break;
+          case 110: break;
           case 40: 
             { if (commentDepth > 0) {
             commentDepth--;
@@ -1004,129 +1004,133 @@ public class _HaskellLexer implements FlexLexer {
              return HS_NCOMMENT;
         }
             }
-          case 110: break;
+          case 111: break;
           case 41: 
             { commentDepth++;
             }
-          case 111: break;
-          case 42: 
-            { return HS_PRAGMA_END;
-            }
           case 112: break;
-          case 43: 
-            { return HS_SHEBANG_LINE;
+          case 42: 
+            { return HS_DIRECTIVE;
             }
           case 113: break;
-          case 44: 
-            { return HS_LET;
+          case 43: 
+            { return HS_PRAGMA_END;
             }
           case 114: break;
-          case 45: 
-            { return HS_FLOAT;
+          case 44: 
+            { return HS_SHEBANG_LINE;
             }
           case 115: break;
-          case 46: 
-            { return HS_OCTAL;
+          case 45: 
+            { return HS_LET;
             }
           case 116: break;
-          case 47: 
-            { return HS_HEXADECIMAL;
+          case 46: 
+            { return HS_FLOAT;
             }
           case 117: break;
-          case 48: 
-            { return HS_CHARACTER_LITERAL;
+          case 47: 
+            { return HS_OCTAL;
             }
           case 118: break;
+          case 48: 
+            { return HS_HEXADECIMAL;
+            }
+          case 119: break;
           case 49: 
+            { return HS_CHARACTER_LITERAL;
+            }
+          case 120: break;
+          case 50: 
             { yybegin(NCOMMENT);
     commentDepth = 0;
     commentStart = getTokenStart();
             }
-          case 119: break;
-          case 50: 
+          case 121: break;
+          case 51: 
             { return HS_PRAGMA_START;
             }
-          case 120: break;
-          case 51: 
+          case 122: break;
+          case 52: 
             { return HS_DATA;
             }
-          case 121: break;
-          case 52: 
+          case 123: break;
+          case 53: 
             { return HS_ELSE;
             }
-          case 122: break;
-          case 53: 
+          case 124: break;
+          case 54: 
             { return HS_CASE;
             }
-          case 123: break;
-          case 54: 
+          case 125: break;
+          case 55: 
             { return HS_TYPE;
             }
-          case 124: break;
-          case 55: 
+          case 126: break;
+          case 56: 
             { return HS_THEN;
             }
-          case 125: break;
-          case 56: 
+          case 127: break;
+          case 57: 
             { return HS_INFIX;
             }
-          case 126: break;
-          case 57: 
+          case 128: break;
+          case 58: 
             { return HS_CLASS;
             }
-          case 127: break;
-          case 58: 
+          case 129: break;
+          case 59: 
             { return HS_WHERE;
             }
-          case 128: break;
-          case 59: 
+          case 130: break;
+          case 60: 
             { return HS_INFIXL;
             }
-          case 129: break;
-          case 60: 
+          case 131: break;
+          case 61: 
             { return HS_INFIXR;
             }
-          case 130: break;
-          case 61: 
+          case 132: break;
+          case 62: 
             { return HS_IMPORT;
             }
-          case 131: break;
-          case 62: 
+          case 133: break;
+          case 63: 
             { return HS_MODULE;
             }
-          case 132: break;
-          case 63: 
+          case 134: break;
+          case 64: 
             { return HS_DEFAULT;
             }
-          case 133: break;
-          case 64: 
+          case 135: break;
+          case 65: 
             { return HS_NEWTYPE;
             }
-          case 134: break;
-          case 65: 
+          case 136: break;
+          case 66: 
             { return HS_INSTANCE;
             }
-          case 135: break;
-          case 66: 
+          case 137: break;
+          case 67: 
             { return HS_DERIVING;
             }
-          case 136: break;
-          case 67: 
+          case 138: break;
+          case 68: 
             { return HS_TYPE_FAMILY;
             }
-          case 137: break;
-          case 68: 
+          case 139: break;
+          case 69: 
             { return HS_TYPE_INSTANCE;
             }
-          case 138: break;
-          case 69: 
+          case 140: break;
+          case 70: 
             { return HS_FOREIGN_IMPORT;
             }
-          case 139: break;
-          case 70: 
+          case 141: break;
+          case 71: 
             { return HS_FOREIGN_EXPORT;
             }
-          case 140: break;
+          case 142: break;
           default:
             zzScanError(ZZ_NO_MATCH);
           }

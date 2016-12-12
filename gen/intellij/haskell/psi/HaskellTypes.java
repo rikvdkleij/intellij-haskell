@@ -1,9 +1,9 @@
 // This is a generated file. Not intended for manual editing.
 package intellij.haskell.psi;
 
-import com.intellij.psi.tree.IElementType;
-import com.intellij.psi.PsiElement;
 import com.intellij.lang.ASTNode;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.tree.IElementType;
 import intellij.haskell.psi.impl.*;
 
 public interface HaskellTypes {
@@ -129,6 +129,7 @@ public interface HaskellTypes {
   IElementType HS_DECIMAL = new HaskellTokenType("DECIMAL");
   IElementType HS_DEFAULT = new HaskellTokenType("DEFAULT");
   IElementType HS_DERIVING = new HaskellTokenType("DERIVING");
+  IElementType HS_DIRECTIVE = new HaskellTokenType("DIRECTIVE");
   IElementType HS_DO = new HaskellTokenType("DO");
   IElementType HS_DOT = new HaskellTokenType("DOT");
   IElementType HS_DOT_DOT = new HaskellTokenType("DOT_DOT");
