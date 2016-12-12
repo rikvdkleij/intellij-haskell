@@ -124,14 +124,11 @@ object HaskellFileUtil {
       }
     }
 
-    val result = Option(file).flatMap { file =>
-      ProjectRootManager.getInstance(project).getContentSourceRoots.view.flatMap { root =>
-        for {
-          root <- Option(root)
-          rootPath <- Option(root.getCanonicalPath)
-        } yield loop(Some(file), rootPath)
-      }.headOption
-    }
+    val result = ProjectRootManager.getInstance(project).getContentSourceRoots.view.flatMap { root =>
+      for {
+        rootPath <- Option(root.getCanonicalPath)
+      } yield loop(Some(file), rootPath)
+    }.headOption
     result.flatten
   }
 }

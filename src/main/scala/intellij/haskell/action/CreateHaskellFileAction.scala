@@ -85,15 +85,12 @@ class CreateHaskellFileAction extends CreateFileFromTemplateAction(CreateHaskell
         try {
           val virtualFile = Option(psiFile.getVirtualFile)
 
-          for {
-            vFile <- virtualFile
-          } yield {
+          virtualFile.foreach(vFile => {
             FileEditorManager.getInstance(project).openFile(vFile, true)
-            for {
-              defaultTemplateProperty <- Option(getDefaultTemplateProperty)
-            } yield PropertiesComponent.getInstance(project).setValue(defaultTemplateProperty, template.getName)
-          }
-
+            Option(getDefaultTemplateProperty).foreach(defaultTemplateProperty => {
+              PropertiesComponent.getInstance(project).setValue(defaultTemplateProperty, template.getName)
+            })
+          })
         } catch {
           case e: ParseException => Messages.showErrorDialog(project, "Error parsing Haskell Module template: " + e.getMessage, "Create File from Template");
         }
