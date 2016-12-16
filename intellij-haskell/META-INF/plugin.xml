@@ -337,6 +337,13 @@
             <add-to-group group-id="GoToMenu" anchor="last"/>
             <keyboard-shortcut first-keystroke="ctrl alt h" keymap="$default"/>
         </action>
+
+        <action id="Haskell.Project.About"
+                class="intellij.haskell.action.AboutAction"
+                text="About Haskell project"
+                description="About Haskell GHC/tools used in project">
+            <add-to-group group-id="HelpMenu" anchor="last"/>
+        </action>
     </actions>
 
 </idea-plugin>
