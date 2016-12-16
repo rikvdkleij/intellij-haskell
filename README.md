@@ -46,8 +46,9 @@ Any feedback is welcome!!
 - In next page of wizard configure `Project SDK` by configuring `Haskell Tool Stack` and selecting path to folder of `stack`, e.g. `/usr/local/bin`;
 - Finish wizard and project will be opened;
 - Wizard will try to automatically configure which folders are sources, test and which to exclude;
-- Plugin will automatically build Intero, Haskell-docs, HLint en Refactor to prevent incompatibility issues.
-- Check `Project structure`/`Project settings`/`Modules` which folders to exclude (like `.stack-work` and `dist`) and which folders are `Source` and `Test` (normally `src` and `test`).
+- Plugin will automatically build Intero, Haskell-docs, HLint en Refactor to prevent incompatibility issues. Those tools are built against Stackage release defined in project's `stack.yaml`;
+  If you want to use later version of tool, you will have to build tool manually in project's folder by using `stack build`;
+- Check `Project structure`/`Project settings`/`Modules` which folders to exclude (like `.stack-work` and `dist`) and which folders are `Source` and `Test` (normally `src` and `test`);
 - Plugin will automatically download library sources (since Stack version 1.2.1 also for test dependencies). They will be added as source libraries to module.
     This option gives you nice navigation features through libraries. Sources are downloaded to folder `ideaHaskellLib` inside root of project 
 - After changes to dependencies you can download them again by using `Tools`/`Download Haskell library sources`. 
@@ -62,7 +63,6 @@ Any feedback is welcome!!
 3. Developed plugin on Linux. Also tested on OSX;
 4. Windows is not supported. Maybe it will work okay but I can not test it;
 5. When navigating to declaration (called `Class` in IntelliJ menu) goes slow, it helps to increase heap size of IntelliJ;    
-
 
 # How to build project
 1. Clone this project;
