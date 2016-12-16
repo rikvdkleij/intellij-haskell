@@ -25,9 +25,9 @@ class HaskellNamesValidator extends NamesValidator {
   override def isKeyword(name: String, project: Project): Boolean = {
     val lexer = new HaskellLexer
     lexer.start(name.toCharArray)
-    HaskellParserDefinition.RESERVED_IDS.contains(lexer.getTokenType) ||
-        HaskellParserDefinition.RESERVED_OPERATORS.contains(lexer.getTokenType) ||
-        HaskellParserDefinition.SYMBOLS_RES_OP.contains(lexer.getTokenType)
+    HaskellParserDefinition.ReservedIdS.contains(lexer.getTokenType) ||
+        HaskellParserDefinition.ReservedOperators.contains(lexer.getTokenType) ||
+        HaskellParserDefinition.SymbolsResOp.contains(lexer.getTokenType)
   }
 
   override def isIdentifier(name: String, project: Project): Boolean = {

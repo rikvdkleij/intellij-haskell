@@ -1,15 +1,13 @@
 // This is a generated file. Not intended for manual editing.
 package intellij.haskell.psi.impl;
 
-import java.util.List;
-import org.jetbrains.annotations.*;
 import com.intellij.lang.ASTNode;
-import com.intellij.psi.PsiElement;
+import com.intellij.navigation.ItemPresentation;
 import com.intellij.psi.PsiElementVisitor;
 import com.intellij.psi.util.PsiTreeUtil;
-import static intellij.haskell.psi.HaskellTypes.*;
 import intellij.haskell.psi.*;
-import com.intellij.navigation.ItemPresentation;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 import scala.Option;
 import scala.collection.Seq;
 
@@ -31,31 +29,31 @@ public class HaskellNewtypeDeclarationImpl extends HaskellCompositeElementImpl i
   @Override
   @Nullable
   public HaskellCcontext getCcontext() {
-    return findChildByClass(HaskellCcontext.class);
+    return PsiTreeUtil.getChildOfType(this, HaskellCcontext.class);
   }
 
   @Override
   @Nullable
   public HaskellCtypePragma getCtypePragma() {
-    return findChildByClass(HaskellCtypePragma.class);
+    return PsiTreeUtil.getChildOfType(this, HaskellCtypePragma.class);
   }
 
   @Override
   @NotNull
   public HaskellNewconstr getNewconstr() {
-    return findNotNullChildByClass(HaskellNewconstr.class);
+    return notNullChild(PsiTreeUtil.getChildOfType(this, HaskellNewconstr.class));
   }
 
   @Override
   @NotNull
   public HaskellSimpletype getSimpletype() {
-    return findNotNullChildByClass(HaskellSimpletype.class);
+    return notNullChild(PsiTreeUtil.getChildOfType(this, HaskellSimpletype.class));
   }
 
   @Override
   @Nullable
   public HaskellTtype getTtype() {
-    return findChildByClass(HaskellTtype.class);
+    return PsiTreeUtil.getChildOfType(this, HaskellTtype.class);
   }
 
   public String getName() {

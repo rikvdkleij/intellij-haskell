@@ -1,14 +1,15 @@
 // This is a generated file. Not intended for manual editing.
 package intellij.haskell.psi.impl;
 
-import java.util.List;
-import org.jetbrains.annotations.*;
 import com.intellij.lang.ASTNode;
-import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiElementVisitor;
 import com.intellij.psi.util.PsiTreeUtil;
-import static intellij.haskell.psi.HaskellTypes.*;
-import intellij.haskell.psi.*;
+import intellij.haskell.psi.HaskellConid;
+import intellij.haskell.psi.HaskellConop;
+import intellij.haskell.psi.HaskellConsym;
+import intellij.haskell.psi.HaskellVisitor;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 public class HaskellConopImpl extends HaskellCNameElementImpl implements HaskellConop {
 
@@ -28,13 +29,13 @@ public class HaskellConopImpl extends HaskellCNameElementImpl implements Haskell
   @Override
   @Nullable
   public HaskellConid getConid() {
-    return findChildByClass(HaskellConid.class);
+    return PsiTreeUtil.getChildOfType(this, HaskellConid.class);
   }
 
   @Override
   @Nullable
   public HaskellConsym getConsym() {
-    return findChildByClass(HaskellConsym.class);
+    return PsiTreeUtil.getChildOfType(this, HaskellConsym.class);
   }
 
   public String getName() {

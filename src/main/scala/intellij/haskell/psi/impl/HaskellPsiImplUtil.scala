@@ -21,14 +21,14 @@ import javax.swing._
 import com.intellij.navigation.ItemPresentation
 import com.intellij.psi.impl.source.resolve.reference.ReferenceProvidersRegistry
 import com.intellij.psi.util.PsiTreeUtil
-import com.intellij.psi.{PsiElement, PsiReference, TokenType}
+import com.intellij.psi.{PsiElement, PsiReference}
 import com.intellij.util.ArrayUtil
-import intellij.haskell.external.component.HaskellComponentsManager
 import intellij.haskell.psi.HaskellTypes._
 import intellij.haskell.psi._
-import intellij.haskell.util.StringUtil
+import intellij.haskell.util.{HaskellFileUtil, StringUtil}
 import intellij.haskell.{HaskellFileType, HaskellIcons}
 
+import scala.annotation.tailrec
 import scala.collection.JavaConverters._
 
 object HaskellPsiImplUtil {
@@ -223,7 +223,7 @@ object HaskellPsiImplUtil {
 
     def getLocationString: String = {
       val file = haskellElement.getContainingFile
-      HaskellPsiUtil.findModuleDeclaration(file).map(_.getModid.getName).getOrElse("Unknown module")
+      HaskellPsiUtil.findModuleDeclaration(file).flatMap(_.getModuleName).getOrElse("Unknown module")
     }
 
     def getIcon(unused: Boolean): Icon = {
@@ -252,28 +252,18 @@ object HaskellPsiImplUtil {
   def getPresentation(namedElement: HaskellNamedElement): ItemPresentation = {
 
     new HaskellItemPresentation(namedElement) {
-      private val declarationElement = HaskellPsiUtil.findDeclarationElementParent(namedElement)
 
       def getPresentableText: String = {
-        declarationElement.map(e => {
-          val declarationInfo = getDeclarationInfo(e)
-          if (declarationInfo.contains(namedElement.getName)) {
-            declarationInfo
-          } else {
-            val info = findNameInfo(namedElement).getOrElse(declarationInfo)
-            s"${namedElement.getName} `in`  $info"
-          }
-        }).orElse(HaskellPsiUtil.findImportDeclarationParent(namedElement).flatMap(_.getModuleName).map(n => s"import $n")).
-          orElse(findNameInfo(namedElement)).
-          map(_.replaceAll("""\s+""", " ")).
-          getOrElse(namedElement.getName)
+        HaskellPsiUtil.findHighestDeclarationElementParent(namedElement) match {
+          case Some(de) if de.getIdentifierElements.exists(_ == namedElement) => HaskellPsiUtil.findDeclarationElementParent(namedElement).
+            orElse(HaskellPsiUtil.findExpressionParent(namedElement)).map(ne => StringUtil.removeCommentsAndWhiteSpaces(ne.getText)).
+            getOrElse(s"${namedElement.getName} `in` ${getDeclarationInfo(de)}")
+          case _ => getContainingLineText(namedElement).getOrElse(namedElement.getName).trim
+        }
       }
 
       override def getIcon(unused: Boolean): Icon = {
-        declarationElement match {
-          case Some(de: HaskellDeclarationElement) => findIcon(de)
-          case _ => HaskellIcons.HaskellSmallBlueLogo
-        }
+        HaskellIcons.HaskellSmallBlueLogo
       }
     }
   }
@@ -287,24 +277,38 @@ object HaskellPsiImplUtil {
     }
   }
 
-  private def findNameInfo(namedElement: HaskellNamedElement) = {
-    HaskellComponentsManager.findNameInfo(namedElement).headOption.map(_.declaration)
-  }
-
-  private final val EndOfDeclarationInfoIndicators = Seq(HS_NEWLINE, HS_EQUAL, HS_WHERE)
-
   private def getDeclarationInfo(declarationElement: HaskellDeclarationElement): String = {
     val info = declarationElement match {
-      case md: HaskellModuleDeclaration => s"module ${md.getModid.getName}"
-      case cd: HaskellClassDeclaration => cd.getIdentifierElements.headOption.flatMap(findNameInfo).getOrElse(getTruncatedInfo(cd))
-      case dd: HaskellDataDeclaration => dd.getIdentifierElements.headOption.flatMap(findNameInfo).getOrElse(getTruncatedInfo(dd))
-      case de => getTruncatedInfo(de)
+      case md: HaskellModuleDeclaration => s"module  ${md.getModid.getName}"
+      case de => StringUtil.shortenHaskellDeclaration(de.getText)
     }
-    StringUtil.shortenHaskellDeclaration(info)
+    if (info.length > 50) {
+      getFirstLineDeclarationText(declarationElement) + " ..."
+    } else {
+      info
+    }
   }
 
-  private def getTruncatedInfo(declarationElement: HaskellDeclarationElement) = {
-    declarationElement.getNode.getChildren(null).takeWhile(n => !EndOfDeclarationInfoIndicators.contains(n.getElementType)).filterNot(_.getElementType == TokenType.WHITE_SPACE).map(_.getText.trim).mkString(" ")
+  private def getFirstLineDeclarationText(declarationElement: HaskellDeclarationElement) = {
+    StringUtil.removeCommentsAndWhiteSpaces(declarationElement.getNode.getChildren(null).takeWhile(n => n.getElementType != HS_WHERE && n.getElementType != HS_EQUAL).map(_.getText).mkString(" "))
+  }
+
+  private def getContainingLineText(namedElement: PsiElement) = {
+    for {
+      doc <- HaskellFileUtil.findDocument(namedElement.getContainingFile.getVirtualFile)
+      element <- HaskellPsiUtil.findQualifiedNameElement(namedElement)
+      start = findNewline(element, e => e.getPrevSibling).getTextOffset
+      end = findNewline(element, e => e.getNextSibling).getTextOffset
+    } yield StringUtil.removeCommentsAndWhiteSpaces(doc.getCharsSequence.subSequence(start, end).toString.trim)
+  }
+
+  @tailrec
+  def findNewline(psiElement: PsiElement, getSibling: PsiElement => PsiElement): PsiElement = {
+    Option(getSibling(psiElement)) match {
+      case None => psiElement
+      case Some(e) if e.getNode.getElementType == HS_NEWLINE => e
+      case Some(e) => findNewline(e, getSibling)
+    }
   }
 
   def getName(declarationElement: HaskellDeclarationElement): String = {
@@ -378,6 +382,10 @@ object HaskellPsiImplUtil {
 
   def getModuleName(declarationElement: HaskellDeclarationElement): Option[String] = {
     Option(declarationElement.getPresentation).map(_.getLocationString)
+  }
+
+  def getModuleName(moduleDeclaration: HaskellModuleDeclaration): Option[String] = {
+    Some(moduleDeclaration.getModid.getName)
   }
 
   def getDataTypeConstructor(dataConstructorDeclaration: HaskellDataConstructorDeclarationElement): HaskellNamedElement = {

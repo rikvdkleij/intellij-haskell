@@ -53,7 +53,7 @@ class HaskellReference(element: HaskellNamedElement, textRange: TextRange) exten
           resolveResults.toArray
         }
       case ne: HaskellNamedElement if findImportDeclarationParent(ne).isDefined =>
-        val importModuleName = findImportDeclarationParent(ne).flatMap(_.getModuleName)
+        val importModuleName = findImportDeclarationParent(ne).map(_.getModuleName)
         importModuleName.map(mn => createResolveResultsByNameInfos(ne, project).
           find(rr => findModuleName(rr.getElement.getContainingFile.getOriginalFile).contains(mn))).map(_.toArray).getOrElse(Array[ResolveResult]())
       case ne: HaskellNamedElement if findTopDeclarationParent(ne).isDefined | findModuleDeclarationParent(ne).isDefined =>
@@ -148,7 +148,7 @@ object HaskellReference {
       haskellFile <- HaskellProjectUtil.findFile(filePath, project)
       offset <- LineColumnPosition.getOffset(haskellFile, LineColumnPosition(lineNr, columnNr))
       element <- Option(haskellFile.findElementAt(offset))
-      namedElement <- findDeclarationElementParent(element).flatMap(_.getIdentifierElements.find(_.getName == name)).
+      namedElement <- findHighestDeclarationElementParent(element).flatMap(_.getIdentifierElements.find(_.getName == name)).
         orElse(findQualifiedNameElement(element).map(_.getIdentifierElement))
     } yield namedElement
   }

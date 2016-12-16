@@ -27,6 +27,7 @@ import intellij.haskell.HaskellLexer
 import intellij.haskell.psi.HaskellTypes._
 import org.jetbrains.annotations.NotNull
 
+//noinspection TypeAnnotation
 object HaskellSyntaxHighlighter {
   final val Illegal = createTextAttributesKey("HS_ILLEGAL", DefaultLanguageHighlighterColors.INVALID_STRING_ESCAPE)
   final val Comment = createTextAttributesKey("HS_COMMENT", DefaultLanguageHighlighterColors.LINE_COMMENT)
@@ -61,21 +62,21 @@ class HaskellSyntaxHighlighter extends SyntaxHighlighterBase {
 
     elementType match {
       case TokenType.BAD_CHARACTER => pack(Illegal)
-      case et if PRAGMA_START_END_IDS.contains(et) => pack(Pragma)
+      case et if PragmaStartEndIds.contains(et) => pack(Pragma)
       case et if et == HS_COMMENT => pack(Comment)
       case et if et == HS_NCOMMENT => pack(BlockComment)
       case et if et == HS_STRING_LITERAL || et == HS_CHARACTER_LITERAL => pack(String)
-      case et if NUMBERS.contains(et) => pack(Number)
+      case et if Numbers.contains(et) => pack(Number)
       case et if et == HS_LEFT_PAREN || et == HS_RIGHT_PAREN => pack(Parentheses)
       case et if et == HS_LEFT_BRACE || et == HS_RIGHT_BRACE => pack(Brace)
       case et if et == HS_LEFT_BRACKET || et == HS_RIGHT_BRACKET => pack(Bracket)
-      case et if ALL_RESERVED_IDS.contains(et) => pack(Keyword)
-      case et if SYMBOLS_RES_OP.contains(et) => pack(ReservedSymbol)
-      case et if OPERATORS.contains(et) => pack(Operator)
+      case et if AllReservedIds.contains(et) => pack(Keyword)
+      case et if SymbolsResOp.contains(et) => pack(ReservedSymbol)
+      case et if Operators.contains(et) => pack(Operator)
       case et if et == HS_VAR_ID => pack(Variable)
       case et if et == HS_CON_ID => pack(Constructor)
       case et if et == HS_MODID => pack(Constructor)
-      case et if WHITE_SPACES.contains(et) || et == HS_NEWLINE => pack(null)
+      case et if WhiteSpaces.contains(et) || et == HS_NEWLINE => pack(null)
       case _ => pack(Default)
     }
   }

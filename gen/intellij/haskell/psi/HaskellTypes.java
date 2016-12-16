@@ -17,18 +17,17 @@ public interface HaskellTypes {
   IElementType HS_CNAME = new HaskellCompositeElementType("HS_CNAME");
   IElementType HS_COMMENTS = new HaskellCompositeElementType("HS_COMMENTS");
   IElementType HS_CON = new HaskellCompositeElementType("HS_CON");
-  IElementType HS_CONID = new HaskellCompositeElementType("HS_CONID");
+  IElementType HS_CONID = HaskellElementTypeFactory.factory("HS_CONID");
   IElementType HS_CONOP = new HaskellCompositeElementType("HS_CONOP");
   IElementType HS_CONSTANT_FOLDED_PRAGMA = new HaskellCompositeElementType("HS_CONSTANT_FOLDED_PRAGMA");
   IElementType HS_CONSTR_1 = new HaskellCompositeElementType("HS_CONSTR_1");
   IElementType HS_CONSTR_2 = new HaskellCompositeElementType("HS_CONSTR_2");
   IElementType HS_CONSTR_3 = new HaskellCompositeElementType("HS_CONSTR_3");
   IElementType HS_CONSTR_4 = new HaskellCompositeElementType("HS_CONSTR_4");
-  IElementType HS_CONSYM = new HaskellCompositeElementType("HS_CONSYM");
+  IElementType HS_CONSYM = HaskellElementTypeFactory.factory("HS_CONSYM");
   IElementType HS_CTYPE_PRAGMA = new HaskellCompositeElementType("HS_CTYPE_PRAGMA");
   IElementType HS_DATA_DECLARATION = new HaskellCompositeElementType("HS_DATA_DECLARATION");
   IElementType HS_DATA_DECLARATION_DERIVING = new HaskellCompositeElementType("HS_DATA_DECLARATION_DERIVING");
-  IElementType HS_DDECLS = new HaskellCompositeElementType("HS_DDECLS");
   IElementType HS_DEFAULT_DECLARATION = new HaskellCompositeElementType("HS_DEFAULT_DECLARATION");
   IElementType HS_DEPRECATED_WARN_PRAGMA = new HaskellCompositeElementType("HS_DEPRECATED_WARN_PRAGMA");
   IElementType HS_DERIVING_DECLARATION = new HaskellCompositeElementType("HS_DERIVING_DECLARATION");
@@ -68,7 +67,7 @@ public interface HaskellTypes {
   IElementType HS_LINE_PRAGMA = new HaskellCompositeElementType("HS_LINE_PRAGMA");
   IElementType HS_LIST_TYPE = new HaskellCompositeElementType("HS_LIST_TYPE");
   IElementType HS_MINIMAL_PRAGMA = new HaskellCompositeElementType("HS_MINIMAL_PRAGMA");
-  IElementType HS_MODID = new HaskellCompositeElementType("HS_MODID");
+  IElementType HS_MODID = HaskellElementTypeFactory.factory("HS_MODID");
   IElementType HS_MODULE_BODY = new HaskellCompositeElementType("HS_MODULE_BODY");
   IElementType HS_MODULE_DECLARATION = new HaskellCompositeElementType("HS_MODULE_DECLARATION");
   IElementType HS_NEWCONSTR = new HaskellCompositeElementType("HS_NEWCONSTR");
@@ -109,9 +108,9 @@ public interface HaskellTypes {
   IElementType HS_UNPACK_NOUNPACK_PRAGMA = new HaskellCompositeElementType("HS_UNPACK_NOUNPACK_PRAGMA");
   IElementType HS_UNPACK_PRAGMA = new HaskellCompositeElementType("HS_UNPACK_PRAGMA");
   IElementType HS_VAR = new HaskellCompositeElementType("HS_VAR");
-  IElementType HS_VARID = new HaskellCompositeElementType("HS_VARID");
+  IElementType HS_VARID = HaskellElementTypeFactory.factory("HS_VARID");
   IElementType HS_VAROP = new HaskellCompositeElementType("HS_VAROP");
-  IElementType HS_VARSYM = new HaskellCompositeElementType("HS_VARSYM");
+  IElementType HS_VARSYM = HaskellElementTypeFactory.factory("HS_VARSYM");
   IElementType HS_VAR_CON = new HaskellCompositeElementType("HS_VAR_CON");
 
   IElementType HS_AT = new HaskellTokenType("AT");
@@ -243,9 +242,6 @@ public interface HaskellTypes {
       }
       else if (type == HS_DATA_DECLARATION_DERIVING) {
         return new HaskellDataDeclarationDerivingImpl(node);
-      }
-      else if (type == HS_DDECLS) {
-        return new HaskellDdeclsImpl(node);
       }
       else if (type == HS_DEFAULT_DECLARATION) {
         return new HaskellDefaultDeclarationImpl(node);

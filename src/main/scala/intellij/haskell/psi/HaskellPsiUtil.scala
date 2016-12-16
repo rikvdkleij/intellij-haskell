@@ -57,7 +57,7 @@ object HaskellPsiUtil {
   }
 
   def findDeclarationElements(psiElement: PsiElement): Iterable[HaskellDeclarationElement] = {
-    PsiTreeUtil.findChildrenOfType(psiElement, classOf[HaskellDeclarationElement]).asScala.filter(_.getParent.getNode.getElementType == HS_TOP_DECLARATION)
+    PsiTreeUtil.findChildrenOfType(psiElement, classOf[HaskellDeclarationElement]).asScala.filter(e => e.getParent.getNode.getElementType == HS_TOP_DECLARATION || e.getNode.getElementType == HS_MODULE_DECLARATION)
   }
 
   def findModuleDeclaration(psiFile: PsiFile): Option[HaskellModuleDeclaration] = {
@@ -86,6 +86,13 @@ object HaskellPsiUtil {
     psiElement match {
       case e: HaskellTopDeclaration => Some(e)
       case e => Option(PsiTreeUtil.findFirstParent(e, TopDeclarationElementCondition)).map(_.asInstanceOf[HaskellTopDeclaration])
+    }
+  }
+
+  def findHighestDeclarationElementParent(psiElement: PsiElement): Option[HaskellDeclarationElement] = {
+    psiElement match {
+      case e: HaskellDeclarationElement => Some(e)
+      case e => Option(PsiTreeUtil.findFirstParent(e, HighestDeclarationElementCondition)).map(_.asInstanceOf[HaskellDeclarationElement])
     }
   }
 

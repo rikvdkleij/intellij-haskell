@@ -1,13 +1,13 @@
 // This is a generated file. Not intended for manual editing.
 package intellij.haskell.psi;
 
-import java.util.List;
-import org.jetbrains.annotations.*;
-import com.intellij.psi.PsiElement;
 import com.intellij.navigation.ItemPresentation;
+import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiReference;
+import com.intellij.psi.StubBasedPsiElement;
+import intellij.haskell.psi.stubs.HaskellVaridStub;
 
-public interface HaskellVarid extends HaskellNamedElement {
+public interface HaskellVarid extends HaskellNamedElement, StubBasedPsiElement<HaskellVaridStub> {
 
   String getName();
 

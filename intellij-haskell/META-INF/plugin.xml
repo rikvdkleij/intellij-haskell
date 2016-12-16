@@ -224,6 +224,8 @@
             <className>intellij.haskell.intention.RemoveParensIntention</className>
             <category>Haskell</category>
         </intentionAction>
+
+        <stubIndex implementation="intellij.haskell.psi.stubs.index.HaskellAllNameIndex"/>
     </extensions>
 
     <application-components>

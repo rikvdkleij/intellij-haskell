@@ -30,12 +30,10 @@ import scala.annotation.tailrec
 class HaskellFindUsagesProvider extends FindUsagesProvider {
 
   override def getWordsScanner: WordsScanner = {
-    new WordsScanner {
-      def processWords(fileText: CharSequence, processor: Processor[WordOccurrence]) {
-        val lexer = new HaskellLexer
-        lexer.start(fileText)
-        processTokens(lexer, fileText, processor, null)
-      }
+    (fileText: CharSequence, processor: Processor[WordOccurrence]) => {
+      val lexer = new HaskellLexer
+      lexer.start(fileText)
+      processTokens(lexer, fileText, processor, null)
     }
   }
 

@@ -18,7 +18,7 @@ package intellij.haskell.psi.impl
 
 import com.intellij.extapi.psi.ASTWrapperPsiElement
 import com.intellij.lang.ASTNode
-import intellij.haskell.psi.HaskellCompositeElement
+import intellij.haskell.psi._
 
 class HaskellCompositeElementImpl(node: ASTNode) extends ASTWrapperPsiElement(node) with HaskellCompositeElement {
 
@@ -26,3 +26,11 @@ class HaskellCompositeElementImpl(node: ASTNode) extends ASTWrapperPsiElement(no
     getNode.getElementType.toString
   }
 }
+
+abstract class HaskellCNameElementImpl private[impl](node: ASTNode) extends HaskellCompositeElementImpl(node) with HaskellCNameElement
+
+abstract class HaskellLineExpressionElementImpl private[impl](node: ASTNode) extends HaskellCompositeElementImpl(node) with HaskellLineExpressionElement
+
+abstract class HaskellNamedElementImpl private[impl](node: ASTNode) extends HaskellCompositeElementImpl(node) with HaskellNamedElement
+
+abstract class HaskellQualifierElementImpl private[impl](node: ASTNode) extends HaskellNamedElementImpl(node) with HaskellQualifierElement

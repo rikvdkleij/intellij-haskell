@@ -1,14 +1,12 @@
 // This is a generated file. Not intended for manual editing.
 package intellij.haskell.psi.impl;
 
-import java.util.List;
-import org.jetbrains.annotations.*;
 import com.intellij.lang.ASTNode;
-import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiElementVisitor;
 import com.intellij.psi.util.PsiTreeUtil;
-import static intellij.haskell.psi.HaskellTypes.*;
 import intellij.haskell.psi.*;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 import scala.Option;
 
 public class HaskellCnameImpl extends HaskellCompositeElementImpl implements HaskellCname {
@@ -29,25 +27,25 @@ public class HaskellCnameImpl extends HaskellCompositeElementImpl implements Has
   @Override
   @Nullable
   public HaskellCon getCon() {
-    return findChildByClass(HaskellCon.class);
+    return PsiTreeUtil.getChildOfType(this, HaskellCon.class);
   }
 
   @Override
   @Nullable
   public HaskellConop getConop() {
-    return findChildByClass(HaskellConop.class);
+    return PsiTreeUtil.getChildOfType(this, HaskellConop.class);
   }
 
   @Override
   @Nullable
   public HaskellVar getVar() {
-    return findChildByClass(HaskellVar.class);
+    return PsiTreeUtil.getChildOfType(this, HaskellVar.class);
   }
 
   @Override
   @Nullable
   public HaskellVarop getVarop() {
-    return findChildByClass(HaskellVarop.class);
+    return PsiTreeUtil.getChildOfType(this, HaskellVarop.class);
   }
 
   public String getName() {

@@ -16,30 +16,23 @@
 
 package intellij.haskell.navigation
 
-import com.intellij.navigation.NavigationItem
+import com.intellij.navigation.{ChooseByNameContributor, NavigationItem}
 import com.intellij.openapi.project.Project
-import com.intellij.psi.PsiManager
-import intellij.haskell.psi.{HaskellNamedElement, HaskellPsiUtil}
-import intellij.haskell.util.StringUtil._
-import intellij.haskell.util.{HaskellFileUtil, HaskellProjectUtil}
+import com.intellij.psi.stubs.StubIndex
+import com.intellij.util.ArrayUtil
+import intellij.haskell.psi.HaskellNamedElement
+import intellij.haskell.psi.stubs.index.HaskellAllNameIndex
+import intellij.haskell.util.HaskellProjectUtil
 
-class GotoByNameContributor extends HaskellChooseByNameContributor[HaskellNamedElement] {
-
-  private var simpleCache: Iterable[HaskellNamedElement] = _
+class GotoByNameContributor extends ChooseByNameContributor {
 
   override def getNames(project: Project, includeNonProjectItems: Boolean): Array[String] = {
-    val psiManager = PsiManager.getInstance(project)
-    val namedElements = HaskellProjectUtil.findHaskellFiles(project, includeNonProjectItems).
-      flatMap(vf => HaskellFileUtil.convertToHaskellFile(vf, psiManager).map(f => HaskellPsiUtil.findNamedElements(f)).getOrElse(Stream()))
-    simpleCache = namedElements
-    namedElements.map(_.getName).toArray
+    ArrayUtil.toStringArray(StubIndex.getInstance.getAllKeys(HaskellAllNameIndex.Key, project))
   }
 
   override def getItemsByName(name: String, pattern: String, project: Project, includeNonProjectItems: Boolean): Array[NavigationItem] = {
-    findElementsByName(project, pattern, includeNonProjectItems).toArray
-  }
-
-  protected def find(conditionOnLowerCase: String => Boolean): Iterable[HaskellNamedElement] = {
-    simpleCache.filter(ne => conditionOnLowerCase(toLowerCase(ne.getName)))
+    val searchScope = HaskellProjectUtil.getSearchScope(project, includeNonProjectItems)
+    val namedElements = StubIndex.getElements(HaskellAllNameIndex.Key, name, project, searchScope, classOf[HaskellNamedElement])
+    namedElements.toArray(new Array[NavigationItem](namedElements.size))
   }
 }

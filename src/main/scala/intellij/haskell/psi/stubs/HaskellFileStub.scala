@@ -14,14 +14,9 @@
  * limitations under the License.
  */
 
-package intellij.haskell.psi.impl;
+package intellij.haskell.psi.stubs
 
-import com.intellij.lang.ASTNode;
-import intellij.haskell.psi.HaskellCNameElement;
-import org.jetbrains.annotations.NotNull;
+import com.intellij.psi.stubs.PsiFileStubImpl
+import intellij.haskell.HaskellFile
 
-public abstract class HaskellCNameElementImpl extends HaskellCompositeElementImpl implements HaskellCNameElement {
-    HaskellCNameElementImpl(@NotNull ASTNode node) {
-        super(node);
-    }
-}
+class HaskellFileStub(file: HaskellFile) extends PsiFileStubImpl[HaskellFile](file)

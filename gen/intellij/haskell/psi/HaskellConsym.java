@@ -1,13 +1,13 @@
 // This is a generated file. Not intended for manual editing.
 package intellij.haskell.psi;
 
-import java.util.List;
-import org.jetbrains.annotations.*;
-import com.intellij.psi.PsiElement;
 import com.intellij.navigation.ItemPresentation;
+import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiReference;
+import com.intellij.psi.StubBasedPsiElement;
+import intellij.haskell.psi.stubs.HaskellConsymStub;
 
-public interface HaskellConsym extends HaskellNamedElement {
+public interface HaskellConsym extends HaskellNamedElement, StubBasedPsiElement<HaskellConsymStub> {
 
   String getName();
 

@@ -32,7 +32,11 @@ object StringUtil {
   }
 
   def shortenHaskellDeclaration(declaration: String): String = {
-    declaration.replaceAll(PackageQualifierPattern, "").replaceAll("""\{\-[^\}]+\-\}""", " ").replaceAll("""\-\-.+""", " ").replaceAll("""\s+""", " ")
+    removeCommentsAndWhiteSpaces(declaration.replaceAll(PackageQualifierPattern, ""))
+  }
+
+  def removeCommentsAndWhiteSpaces(code: String): String = {
+    code.replaceAll("""\{\-[^\}]+\-\}""", " ").replaceAll("""\-\-.*""", " ").replaceAll("""\s+""", " ")
   }
 
   def removeOuterParens(name: String): String = {

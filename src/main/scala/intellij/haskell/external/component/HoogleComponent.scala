@@ -16,6 +16,8 @@
 
 package intellij.haskell.external.component
 
+import java.util.concurrent.Future
+
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.project.Project
 import intellij.haskell.HaskellNotificationGroup
@@ -48,7 +50,7 @@ object HoogleComponent {
     }
   }
 
-  def rebuildHoogle(project: Project) = {
+  def rebuildHoogle(project: Project): Future[_] = {
     ApplicationManager.getApplication.executeOnPooledThread(new Runnable {
       override def run(): Unit = {
         try {

@@ -1,14 +1,12 @@
 // This is a generated file. Not intended for manual editing.
 package intellij.haskell.psi.impl;
 
-import java.util.List;
-import org.jetbrains.annotations.*;
 import com.intellij.lang.ASTNode;
-import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiElementVisitor;
 import com.intellij.psi.util.PsiTreeUtil;
-import static intellij.haskell.psi.HaskellTypes.*;
 import intellij.haskell.psi.*;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 public class HaskellQVarConImpl extends HaskellCompositeElementImpl implements HaskellQVarCon {
 
@@ -28,31 +26,31 @@ public class HaskellQVarConImpl extends HaskellCompositeElementImpl implements H
   @Override
   @Nullable
   public HaskellConsym getConsym() {
-    return findChildByClass(HaskellConsym.class);
+    return PsiTreeUtil.getChildOfType(this, HaskellConsym.class);
   }
 
   @Override
   @Nullable
   public HaskellQCon getQCon() {
-    return findChildByClass(HaskellQCon.class);
+    return PsiTreeUtil.getChildOfType(this, HaskellQCon.class);
   }
 
   @Override
   @Nullable
   public HaskellQualifier getQualifier() {
-    return findChildByClass(HaskellQualifier.class);
+    return PsiTreeUtil.getChildOfType(this, HaskellQualifier.class);
   }
 
   @Override
   @Nullable
   public HaskellVarid getVarid() {
-    return findChildByClass(HaskellVarid.class);
+    return PsiTreeUtil.getChildOfType(this, HaskellVarid.class);
   }
 
   @Override
   @Nullable
   public HaskellVarsym getVarsym() {
-    return findChildByClass(HaskellVarsym.class);
+    return PsiTreeUtil.getChildOfType(this, HaskellVarsym.class);
   }
 
   public String getName() {

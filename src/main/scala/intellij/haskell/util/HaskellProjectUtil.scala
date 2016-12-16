@@ -64,16 +64,23 @@ object HaskellProjectUtil {
   }
 
   def findHaskellFiles(project: Project, includeNonProjectItems: Boolean): Iterable[VirtualFile] = {
-    val scope = if (includeNonProjectItems) {
+    val searchScope = if (includeNonProjectItems) {
       GlobalSearchScope.allScope(project)
     } else {
-      ModuleManager.getInstance(project).getModules.map(GlobalSearchScope.moduleScope).reduce(_.uniteWith(_))
+      getProjectModulesSearchScope(project)
     }
-    HaskellFileIndex.findFiles(project, scope)
+    HaskellFileIndex.findFiles(project, searchScope)
   }
 
   def findCabalPackageName(project: Project): Option[String] = {
     new File(project.getBasePath).listFiles.find(_.getName.endsWith(".cabal")).map(_.getName.replaceFirst(".cabal", ""))
   }
 
+  def getProjectModulesSearchScope(project: Project): GlobalSearchScope = {
+    ModuleManager.getInstance(project).getModules.map(GlobalSearchScope.moduleScope).reduce(_.uniteWith(_))
+  }
+
+  def getSearchScope(project: Project, includeNonProjectItems: Boolean): GlobalSearchScope = {
+    if (includeNonProjectItems) GlobalSearchScope.allScope(project) else HaskellProjectUtil.getProjectModulesSearchScope(project)
+  }
 }

@@ -1,14 +1,14 @@
 // This is a generated file. Not intended for manual editing.
 package intellij.haskell.psi.impl;
 
-import java.util.List;
-import org.jetbrains.annotations.*;
 import com.intellij.lang.ASTNode;
-import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiElementVisitor;
 import com.intellij.psi.util.PsiTreeUtil;
-import static intellij.haskell.psi.HaskellTypes.*;
 import intellij.haskell.psi.*;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
+
+import java.util.List;
 
 public class HaskellClazzImpl extends HaskellCompositeElementImpl implements HaskellClazz {
 
@@ -34,7 +34,7 @@ public class HaskellClazzImpl extends HaskellCompositeElementImpl implements Has
   @Override
   @Nullable
   public HaskellTtype getTtype() {
-    return findChildByClass(HaskellTtype.class);
+    return PsiTreeUtil.getChildOfType(this, HaskellTtype.class);
   }
 
   @Override

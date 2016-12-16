@@ -1,14 +1,12 @@
 // This is a generated file. Not intended for manual editing.
 package intellij.haskell.psi.impl;
 
-import java.util.List;
-import org.jetbrains.annotations.*;
 import com.intellij.lang.ASTNode;
-import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiElementVisitor;
 import com.intellij.psi.util.PsiTreeUtil;
-import static intellij.haskell.psi.HaskellTypes.*;
 import intellij.haskell.psi.*;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 public class HaskellUnpackNounpackPragmaImpl extends HaskellCompositeElementImpl implements HaskellUnpackNounpackPragma {
 
@@ -27,14 +25,20 @@ public class HaskellUnpackNounpackPragmaImpl extends HaskellCompositeElementImpl
 
   @Override
   @Nullable
+  public HaskellCtypePragma getCtypePragma() {
+    return PsiTreeUtil.getChildOfType(this, HaskellCtypePragma.class);
+  }
+
+  @Override
+  @Nullable
   public HaskellNounpackPragma getNounpackPragma() {
-    return findChildByClass(HaskellNounpackPragma.class);
+    return PsiTreeUtil.getChildOfType(this, HaskellNounpackPragma.class);
   }
 
   @Override
   @Nullable
   public HaskellUnpackPragma getUnpackPragma() {
-    return findChildByClass(HaskellUnpackPragma.class);
+    return PsiTreeUtil.getChildOfType(this, HaskellUnpackPragma.class);
   }
 
 }

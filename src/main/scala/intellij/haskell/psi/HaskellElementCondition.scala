@@ -57,6 +57,16 @@ object HaskellElementCondition {
     }
   }
 
+  final val HighestDeclarationElementCondition = new Condition[PsiElement]() {
+    override def value(psiElement: PsiElement): Boolean = {
+      psiElement match {
+        case _: HaskellModuleDeclaration => true
+        case e: HaskellDeclarationElement if e.getParent.getNode.getElementType == HaskellTypes.HS_TOP_DECLARATION => true
+        case _ => false
+      }
+    }
+  }
+
   final val TopDeclarationElementCondition = new Condition[PsiElement]() {
     override def value(psiElement: PsiElement): Boolean = {
       psiElement match {

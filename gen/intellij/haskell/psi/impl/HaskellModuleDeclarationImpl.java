@@ -1,15 +1,13 @@
 // This is a generated file. Not intended for manual editing.
 package intellij.haskell.psi.impl;
 
-import java.util.List;
-import org.jetbrains.annotations.*;
 import com.intellij.lang.ASTNode;
-import com.intellij.psi.PsiElement;
+import com.intellij.navigation.ItemPresentation;
 import com.intellij.psi.PsiElementVisitor;
 import com.intellij.psi.util.PsiTreeUtil;
-import static intellij.haskell.psi.HaskellTypes.*;
 import intellij.haskell.psi.*;
-import com.intellij.navigation.ItemPresentation;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 import scala.Option;
 import scala.collection.Seq;
 
@@ -31,19 +29,19 @@ public class HaskellModuleDeclarationImpl extends HaskellCompositeElementImpl im
   @Override
   @Nullable
   public HaskellDeprecatedWarnPragma getDeprecatedWarnPragma() {
-    return findChildByClass(HaskellDeprecatedWarnPragma.class);
+    return PsiTreeUtil.getChildOfType(this, HaskellDeprecatedWarnPragma.class);
   }
 
   @Override
   @Nullable
   public HaskellExports getExports() {
-    return findChildByClass(HaskellExports.class);
+    return PsiTreeUtil.getChildOfType(this, HaskellExports.class);
   }
 
   @Override
   @NotNull
   public HaskellModid getModid() {
-    return findNotNullChildByClass(HaskellModid.class);
+    return notNullChild(PsiTreeUtil.getChildOfType(this, HaskellModid.class));
   }
 
   public String getName() {

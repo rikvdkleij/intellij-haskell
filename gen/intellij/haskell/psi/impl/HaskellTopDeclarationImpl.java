@@ -1,14 +1,12 @@
 // This is a generated file. Not intended for manual editing.
 package intellij.haskell.psi.impl;
 
-import java.util.List;
-import org.jetbrains.annotations.*;
 import com.intellij.lang.ASTNode;
-import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiElementVisitor;
 import com.intellij.psi.util.PsiTreeUtil;
-import static intellij.haskell.psi.HaskellTypes.*;
 import intellij.haskell.psi.*;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 public class HaskellTopDeclarationImpl extends HaskellCompositeElementImpl implements HaskellTopDeclaration {
 
@@ -28,91 +26,91 @@ public class HaskellTopDeclarationImpl extends HaskellCompositeElementImpl imple
   @Override
   @Nullable
   public HaskellCfilesPragma getCfilesPragma() {
-    return findChildByClass(HaskellCfilesPragma.class);
+    return PsiTreeUtil.getChildOfType(this, HaskellCfilesPragma.class);
   }
 
   @Override
   @Nullable
   public HaskellClassDeclaration getClassDeclaration() {
-    return findChildByClass(HaskellClassDeclaration.class);
+    return PsiTreeUtil.getChildOfType(this, HaskellClassDeclaration.class);
   }
 
   @Override
   @Nullable
   public HaskellDataDeclaration getDataDeclaration() {
-    return findChildByClass(HaskellDataDeclaration.class);
+    return PsiTreeUtil.getChildOfType(this, HaskellDataDeclaration.class);
   }
 
   @Override
   @Nullable
   public HaskellDefaultDeclaration getDefaultDeclaration() {
-    return findChildByClass(HaskellDefaultDeclaration.class);
+    return PsiTreeUtil.getChildOfType(this, HaskellDefaultDeclaration.class);
   }
 
   @Override
   @Nullable
   public HaskellDerivingDeclaration getDerivingDeclaration() {
-    return findChildByClass(HaskellDerivingDeclaration.class);
+    return PsiTreeUtil.getChildOfType(this, HaskellDerivingDeclaration.class);
   }
 
   @Override
   @Nullable
   public HaskellExpression getExpression() {
-    return findChildByClass(HaskellExpression.class);
+    return PsiTreeUtil.getChildOfType(this, HaskellExpression.class);
   }
 
   @Override
   @Nullable
   public HaskellFixityDeclaration getFixityDeclaration() {
-    return findChildByClass(HaskellFixityDeclaration.class);
+    return PsiTreeUtil.getChildOfType(this, HaskellFixityDeclaration.class);
   }
 
   @Override
   @Nullable
   public HaskellForeignDeclaration getForeignDeclaration() {
-    return findChildByClass(HaskellForeignDeclaration.class);
+    return PsiTreeUtil.getChildOfType(this, HaskellForeignDeclaration.class);
   }
 
   @Override
   @Nullable
   public HaskellInstanceDeclaration getInstanceDeclaration() {
-    return findChildByClass(HaskellInstanceDeclaration.class);
+    return PsiTreeUtil.getChildOfType(this, HaskellInstanceDeclaration.class);
   }
 
   @Override
   @Nullable
   public HaskellNewtypeDeclaration getNewtypeDeclaration() {
-    return findChildByClass(HaskellNewtypeDeclaration.class);
+    return PsiTreeUtil.getChildOfType(this, HaskellNewtypeDeclaration.class);
   }
 
   @Override
   @Nullable
   public HaskellOtherPragma getOtherPragma() {
-    return findChildByClass(HaskellOtherPragma.class);
+    return PsiTreeUtil.getChildOfType(this, HaskellOtherPragma.class);
   }
 
   @Override
   @Nullable
   public HaskellTypeDeclaration getTypeDeclaration() {
-    return findChildByClass(HaskellTypeDeclaration.class);
+    return PsiTreeUtil.getChildOfType(this, HaskellTypeDeclaration.class);
   }
 
   @Override
   @Nullable
   public HaskellTypeFamilyDeclaration getTypeFamilyDeclaration() {
-    return findChildByClass(HaskellTypeFamilyDeclaration.class);
+    return PsiTreeUtil.getChildOfType(this, HaskellTypeFamilyDeclaration.class);
   }
 
   @Override
   @Nullable
   public HaskellTypeInstanceDeclaration getTypeInstanceDeclaration() {
-    return findChildByClass(HaskellTypeInstanceDeclaration.class);
+    return PsiTreeUtil.getChildOfType(this, HaskellTypeInstanceDeclaration.class);
   }
 
   @Override
   @Nullable
   public HaskellTypeSignature getTypeSignature() {
-    return findChildByClass(HaskellTypeSignature.class);
+    return PsiTreeUtil.getChildOfType(this, HaskellTypeSignature.class);
   }
 
 }

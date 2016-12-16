@@ -14,14 +14,24 @@
  * limitations under the License.
  */
 
-package intellij.haskell.psi.impl;
+package intellij.haskell.psi.stubs.index
 
-import com.intellij.lang.ASTNode;
-import intellij.haskell.psi.HaskellQualifierElement;
-import org.jetbrains.annotations.NotNull;
+import com.intellij.psi.stubs.{StringStubIndexExtension, StubIndexKey}
+import intellij.haskell.psi.HaskellNamedElement
 
-public abstract class HaskellQualifierElementImpl extends HaskellNamedElementImpl implements HaskellQualifierElement {
-    HaskellQualifierElementImpl(@NotNull ASTNode node) {
-        super(node);
-    }
+object HaskellAllNameIndex {
+
+  val Key: StubIndexKey[String, HaskellNamedElement] = StubIndexKey.createIndexKey("haskell.all.name")
+  val Version = 1
+}
+
+class HaskellAllNameIndex extends StringStubIndexExtension[HaskellNamedElement] {
+
+  override def getVersion: Int = {
+    super.getVersion + HaskellAllNameIndex.Version
+  }
+
+  def getKey: StubIndexKey[String, HaskellNamedElement] = {
+    HaskellAllNameIndex.Key
+  }
 }

@@ -14,14 +14,20 @@
  * limitations under the License.
  */
 
-package intellij.haskell.psi.impl;
+package intellij.haskell.psi.stubs;
 
-import com.intellij.lang.ASTNode;
-import intellij.haskell.psi.HaskellNamedElement;
-import org.jetbrains.annotations.NotNull;
+import com.intellij.psi.stubs.IStubElementType;
+import com.intellij.psi.stubs.NamedStubBase;
+import com.intellij.psi.stubs.StubElement;
+import com.intellij.util.io.StringRef;
+import intellij.haskell.psi.HaskellVarid;
 
-public abstract class HaskellNamedElementImpl extends HaskellCompositeElementImpl implements HaskellNamedElement {
-    public HaskellNamedElementImpl(@NotNull ASTNode node) {
-        super(node);
+public class HaskellVaridStub extends NamedStubBase<HaskellVarid> {
+    public HaskellVaridStub(StubElement parent, IStubElementType elementType, StringRef name) {
+        super(parent, elementType, name);
+    }
+
+    public HaskellVaridStub(StubElement parent, IStubElementType elementType, String name) {
+        super(parent, elementType, name);
     }
 }

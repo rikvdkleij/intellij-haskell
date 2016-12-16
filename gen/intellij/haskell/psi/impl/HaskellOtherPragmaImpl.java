@@ -1,14 +1,12 @@
 // This is a generated file. Not intended for manual editing.
 package intellij.haskell.psi.impl;
 
-import java.util.List;
-import org.jetbrains.annotations.*;
 import com.intellij.lang.ASTNode;
-import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiElementVisitor;
 import com.intellij.psi.util.PsiTreeUtil;
-import static intellij.haskell.psi.HaskellTypes.*;
 import intellij.haskell.psi.*;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 public class HaskellOtherPragmaImpl extends HaskellCompositeElementImpl implements HaskellOtherPragma {
 
@@ -28,73 +26,73 @@ public class HaskellOtherPragmaImpl extends HaskellCompositeElementImpl implemen
   @Override
   @Nullable
   public HaskellAnnPragma getAnnPragma() {
-    return findChildByClass(HaskellAnnPragma.class);
+    return PsiTreeUtil.getChildOfType(this, HaskellAnnPragma.class);
   }
 
   @Override
   @Nullable
   public HaskellConstantFoldedPragma getConstantFoldedPragma() {
-    return findChildByClass(HaskellConstantFoldedPragma.class);
+    return PsiTreeUtil.getChildOfType(this, HaskellConstantFoldedPragma.class);
   }
 
   @Override
   @Nullable
   public HaskellDeprecatedWarnPragma getDeprecatedWarnPragma() {
-    return findChildByClass(HaskellDeprecatedWarnPragma.class);
+    return PsiTreeUtil.getChildOfType(this, HaskellDeprecatedWarnPragma.class);
   }
 
   @Override
   @Nullable
   public HaskellDummyPragma getDummyPragma() {
-    return findChildByClass(HaskellDummyPragma.class);
+    return PsiTreeUtil.getChildOfType(this, HaskellDummyPragma.class);
   }
 
   @Override
   @Nullable
   public HaskellInlinablePragma getInlinablePragma() {
-    return findChildByClass(HaskellInlinablePragma.class);
+    return PsiTreeUtil.getChildOfType(this, HaskellInlinablePragma.class);
   }
 
   @Override
   @Nullable
   public HaskellInlinePragma getInlinePragma() {
-    return findChildByClass(HaskellInlinePragma.class);
+    return PsiTreeUtil.getChildOfType(this, HaskellInlinePragma.class);
   }
 
   @Override
   @Nullable
   public HaskellLinePragma getLinePragma() {
-    return findChildByClass(HaskellLinePragma.class);
+    return PsiTreeUtil.getChildOfType(this, HaskellLinePragma.class);
   }
 
   @Override
   @Nullable
   public HaskellMinimalPragma getMinimalPragma() {
-    return findChildByClass(HaskellMinimalPragma.class);
+    return PsiTreeUtil.getChildOfType(this, HaskellMinimalPragma.class);
   }
 
   @Override
   @Nullable
   public HaskellNoinlinePragma getNoinlinePragma() {
-    return findChildByClass(HaskellNoinlinePragma.class);
+    return PsiTreeUtil.getChildOfType(this, HaskellNoinlinePragma.class);
   }
 
   @Override
   @Nullable
   public HaskellOverlapPragma getOverlapPragma() {
-    return findChildByClass(HaskellOverlapPragma.class);
+    return PsiTreeUtil.getChildOfType(this, HaskellOverlapPragma.class);
   }
 
   @Override
   @Nullable
   public HaskellRulesPragma getRulesPragma() {
-    return findChildByClass(HaskellRulesPragma.class);
+    return PsiTreeUtil.getChildOfType(this, HaskellRulesPragma.class);
   }
 
   @Override
   @Nullable
   public HaskellSpecializePragma getSpecializePragma() {
-    return findChildByClass(HaskellSpecializePragma.class);
+    return PsiTreeUtil.getChildOfType(this, HaskellSpecializePragma.class);
   }
 
 }

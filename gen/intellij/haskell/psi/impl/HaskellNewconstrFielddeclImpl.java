@@ -1,14 +1,16 @@
 // This is a generated file. Not intended for manual editing.
 package intellij.haskell.psi.impl;
 
-import java.util.List;
-import org.jetbrains.annotations.*;
 import com.intellij.lang.ASTNode;
-import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiElementVisitor;
 import com.intellij.psi.util.PsiTreeUtil;
-import static intellij.haskell.psi.HaskellTypes.*;
-import intellij.haskell.psi.*;
+import intellij.haskell.psi.HaskellNewconstrFielddecl;
+import intellij.haskell.psi.HaskellQName;
+import intellij.haskell.psi.HaskellTtype;
+import intellij.haskell.psi.HaskellVisitor;
+import org.jetbrains.annotations.NotNull;
+
+import java.util.List;
 
 public class HaskellNewconstrFielddeclImpl extends HaskellCompositeElementImpl implements HaskellNewconstrFielddecl {
 
@@ -34,7 +36,7 @@ public class HaskellNewconstrFielddeclImpl extends HaskellCompositeElementImpl i
   @Override
   @NotNull
   public HaskellTtype getTtype() {
-    return findNotNullChildByClass(HaskellTtype.class);
+    return notNullChild(PsiTreeUtil.getChildOfType(this, HaskellTtype.class));
   }
 
 }

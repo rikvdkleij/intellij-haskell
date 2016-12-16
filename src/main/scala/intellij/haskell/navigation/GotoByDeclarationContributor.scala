@@ -16,31 +16,30 @@
 
 package intellij.haskell.navigation
 
-import com.intellij.navigation.NavigationItem
+import com.intellij.navigation.{GotoClassContributor, NavigationItem}
 import com.intellij.openapi.project.Project
-import com.intellij.psi.PsiManager
+import com.intellij.psi.stubs.StubIndex
+import com.intellij.util.ArrayUtil
+import intellij.haskell.psi.stubs.index.HaskellAllNameIndex
 import intellij.haskell.psi.{HaskellNamedElement, HaskellPsiUtil}
-import intellij.haskell.util.StringUtil._
-import intellij.haskell.util.{HaskellFileUtil, HaskellProjectUtil}
+import intellij.haskell.util.HaskellProjectUtil
 
-class GotoByDeclarationContributor extends HaskellChooseByNameContributor[HaskellNamedElement] {
+import scala.collection.JavaConverters._
 
-  private var simpleCache: Iterable[HaskellNamedElement] = _
+class GotoByDeclarationContributor extends GotoClassContributor {
 
   override def getNames(project: Project, includeNonProjectItems: Boolean): Array[String] = {
-    val psiManager = PsiManager.getInstance(project)
-    val declarationElements = HaskellProjectUtil.findHaskellFiles(project, includeNonProjectItems).flatMap(vf => HaskellFileUtil.convertToHaskellFile(vf, psiManager).
-      map(f => HaskellPsiUtil.findDeclarationElements(f)).getOrElse(Stream()))
-    val elements = declarationElements.flatMap(_.getIdentifierElements)
-    simpleCache = elements
-    elements.map(n => n.getName).toArray
+    ArrayUtil.toStringArray(StubIndex.getInstance.getAllKeys(HaskellAllNameIndex.Key, project))
   }
 
   override def getItemsByName(name: String, pattern: String, project: Project, includeNonProjectItems: Boolean): Array[NavigationItem] = {
-    findElementsByName(project, pattern, includeNonProjectItems).toArray
+    val searchScope = HaskellProjectUtil.getSearchScope(project, includeNonProjectItems)
+    val namedElements = StubIndex.getElements(HaskellAllNameIndex.Key, name, project, searchScope, classOf[HaskellNamedElement])
+    val declarations = namedElements.asScala.filter(ne => HaskellPsiUtil.findHighestDeclarationElementParent(ne).exists(_.getIdentifierElements.exists(_ == ne && name.toLowerCase.contains(pattern.toLowerCase))))
+    declarations.toArray
   }
 
-  protected def find(conditionOnLowerCase: String => Boolean): Iterable[HaskellNamedElement] = {
-    simpleCache.filter(ne => conditionOnLowerCase(toLowerCase(ne.getName)))
-  }
+  override def getQualifiedNameSeparator: String = "."
+
+  override def getQualifiedName(item: NavigationItem): String = null
 }

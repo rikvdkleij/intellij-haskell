@@ -1,15 +1,13 @@
 // This is a generated file. Not intended for manual editing.
 package intellij.haskell.psi.impl;
 
-import java.util.List;
-import org.jetbrains.annotations.*;
 import com.intellij.lang.ASTNode;
-import com.intellij.psi.PsiElement;
+import com.intellij.navigation.ItemPresentation;
 import com.intellij.psi.PsiElementVisitor;
 import com.intellij.psi.util.PsiTreeUtil;
-import static intellij.haskell.psi.HaskellTypes.*;
 import intellij.haskell.psi.*;
-import com.intellij.navigation.ItemPresentation;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 import scala.Option;
 import scala.collection.Seq;
 
@@ -31,13 +29,13 @@ public class HaskellTypeFamilyDeclarationImpl extends HaskellCompositeElementImp
   @Override
   @Nullable
   public HaskellExpression getExpression() {
-    return findChildByClass(HaskellExpression.class);
+    return PsiTreeUtil.getChildOfType(this, HaskellExpression.class);
   }
 
   @Override
   @NotNull
   public HaskellTypeFamilyType getTypeFamilyType() {
-    return findNotNullChildByClass(HaskellTypeFamilyType.class);
+    return notNullChild(PsiTreeUtil.getChildOfType(this, HaskellTypeFamilyType.class));
   }
 
   public String getName() {

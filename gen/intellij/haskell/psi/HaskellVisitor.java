@@ -1,8 +1,8 @@
 // This is a generated file. Not intended for manual editing.
 package intellij.haskell.psi;
 
-import org.jetbrains.annotations.*;
 import com.intellij.psi.PsiElementVisitor;
+import org.jetbrains.annotations.NotNull;
 
 public class HaskellVisitor extends PsiElementVisitor {
 
@@ -83,10 +83,6 @@ public class HaskellVisitor extends PsiElementVisitor {
   }
 
   public void visitDataDeclarationDeriving(@NotNull HaskellDataDeclarationDeriving o) {
-    visitCompositeElement(o);
-  }
-
-  public void visitDdecls(@NotNull HaskellDdecls o) {
     visitCompositeElement(o);
   }
 

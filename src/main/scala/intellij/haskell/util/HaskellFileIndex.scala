@@ -26,7 +26,6 @@ import com.intellij.psi.search.{FileTypeIndex, GlobalSearchScope, GlobalSearchSc
 import com.intellij.util.indexing.FileBasedIndex.InputFilter
 import com.intellij.util.indexing._
 import com.intellij.util.io.{DataExternalizer, EnumeratorStringDescriptor, KeyDescriptor}
-import intellij.haskell.module.HaskellModuleType
 import intellij.haskell.{HaskellFile, HaskellFileType}
 
 import scala.collection.JavaConverters._
@@ -81,7 +80,7 @@ object HaskellFileIndex {
   }
 
   def findProjectFiles(project: Project): Iterable[VirtualFile] = {
-    findFiles(project, HaskellModuleType.findHaskellProjectModules(project).map(GlobalSearchScope.moduleScope).reduce(_.uniteWith(_)))
+    findFiles(project, HaskellProjectUtil.getProjectModulesSearchScope(project))
   }
 
   def findProjectTestPsiFiles(project: Project): Iterable[HaskellFile] = {

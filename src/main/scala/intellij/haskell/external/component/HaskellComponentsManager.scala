@@ -113,7 +113,7 @@ object HaskellComponentsManager {
 
         info.allAvailableLibraryModuleNames.foreach { mn =>
           if (!project.isDisposed) {
-            Thread.sleep(100) // Otherwise it will make IDE unresponsive
+            Thread.sleep(200) // Otherwise it will make IDE unresponsive
             BrowseModuleComponent.findImportedModuleIdentifiers(project, mn)
           }
         }
