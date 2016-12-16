@@ -13,8 +13,9 @@
     <change-notes><![CDATA[
         <p>1.0.0-beta4</p>
         <ul>
-            <li>BREAKING CHANGE: Haskell Stack SDK has to be created by selecting Stack binary itself instead of containing folder</li>
             <li>Various improvements and fixes</li>
+            <li>BREAKING CHANGE: Haskell Stack SDK has to be created by selecting Stack binary itself instead of containing folder</li>
+            <li>Switched from file index to stub index for navigation. If after upgrading plugin IntelliJ indexing hangs, you have to choose `Invalidate Caches/Restart...` in `File`-menu</li>
             <li>Added Hoogle action</li>
             <li>Added navigation by Hoogle</li>
             <li>Support for Hindent formatting of selection</li>
