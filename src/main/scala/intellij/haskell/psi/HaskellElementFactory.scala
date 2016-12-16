@@ -111,6 +111,11 @@ object HaskellElementFactory {
     haskellImportDeclaration.map(_.asInstanceOf[HaskellImportDeclaration])
   }
 
+  def createImportDeclaration(project: Project, importDecl: String): Option[HaskellImportDeclaration] = {
+    val haskellImportDeclaration = createElementFromText(project, s"$importDecl \n", HS_IMPORT_DECLARATION)
+    haskellImportDeclaration.map(_.asInstanceOf[HaskellImportDeclaration])
+  }
+
   private def createFileFromText(project: Project, text: String): HaskellFile = {
     PsiFileFactory.getInstance(project).createFileFromText("a.hs", HaskellLanguage.Instance, text).asInstanceOf[HaskellFile]
   }
