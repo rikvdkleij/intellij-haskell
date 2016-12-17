@@ -21,6 +21,15 @@ import com.intellij.psi.PsiElement
 
 object HaskellElementCondition {
 
+  final val ImportDeclarationsCondition = new Condition[PsiElement]() {
+    override def value(psiElement: PsiElement): Boolean = {
+      psiElement match {
+        case _: HaskellImportDeclarations => true
+        case _ => false
+      }
+    }
+  }
+
   final val ImportDeclarationCondition = new Condition[PsiElement]() {
     override def value(psiElement: PsiElement): Boolean = {
       psiElement match {

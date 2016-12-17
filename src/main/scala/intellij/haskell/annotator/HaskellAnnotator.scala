@@ -365,10 +365,10 @@ class ImportAloneInstancesAction(importDecl: String) extends HaskellBaseIntentio
     Option(file.findElementAt(offset)) match {
       case Some(e) =>
         for {
-          importDeclarations <- Option(TreeUtil.findParent(e.getNode, HaskellTypes.HS_IMPORT_DECLARATIONS))
-          importDeclaration <- Option(TreeUtil.findParent(e.getNode, HaskellTypes.HS_IMPORT_DECLARATION))
+          importDeclarations <- HaskellPsiUtil.findImportDeclarationsParent(e)
+          importDeclaration <- HaskellPsiUtil.findImportDeclarationParent(e)
           importDeclElement <- HaskellElementFactory.createImportDeclaration(project, importDecl)
-        } yield importDeclarations.replaceChild(importDeclaration, importDeclElement.getNode)
+        } yield importDeclarations.getNode.replaceChild(importDeclaration.getNode, importDeclElement.getNode)
       case None => ()
     }
   }
