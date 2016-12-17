@@ -75,6 +75,13 @@ object HaskellPsiUtil {
     }
   }
 
+  def findImportDeclarationsParent(psiElement: PsiElement): Option[HaskellImportDeclarations] = {
+    psiElement match {
+      case e: HaskellImportDeclarations => Some(e)
+      case e => Option(PsiTreeUtil.findFirstParent(e, ImportDeclarationsCondition)).map(_.asInstanceOf[HaskellImportDeclarations])
+    }
+  }
+
   def findImportDeclarationParent(psiElement: PsiElement): Option[HaskellImportDeclaration] = {
     psiElement match {
       case e: HaskellImportDeclaration => Some(e)

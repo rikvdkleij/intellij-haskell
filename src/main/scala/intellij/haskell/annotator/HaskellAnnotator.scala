@@ -50,6 +50,7 @@ class HaskellAnnotator extends ExternalAnnotator[PsiFile, LoadResult] {
   private final val DefinedButNotUsedPattern = """.* Defined but not used: [‘`](.+)[’']""".r
   private final val NotInScopePattern = """.* Not in scope:[^‘`]+[‘`](.+)[’']""".r
   private final val NotInScopePattern2 = """.* not in scope: (.+)""".r
+  private final val UseAloneInstancesImportPattern = """.* To import instances alone, use: (.+)""".r
 
   private final val PerhapsYouMeantNamePattern = """.*[`‘]([^‘’'`]+)['’]""".r
   private final val PerhapsYouMeantMultiplePattern = """.*ot in scope: (.+) Perhaps you meant one of these: (.+)""".r
@@ -126,6 +127,7 @@ class HaskellAnnotator extends ExternalAnnotator[PsiFile, LoadResult] {
             ErrorAnnotationWithIntentionActions(tr, problem.plainMessage, problem.htmlMessage, createNotInScopeIntentionActions(psiFile, name))
           case NotInScopePattern2(name) =>
             ErrorAnnotationWithIntentionActions(tr, problem.plainMessage, problem.htmlMessage, createNotInScopeIntentionActions(psiFile, name.split("::").headOption.getOrElse(name).trim))
+          case UseAloneInstancesImportPattern(importDecl) => importAloneInstancesAction(problem, tr, importDecl)
           case HolePattern(_typeSignature) =>
             ErrorAnnotation(tr, problem.plainMessage, problem.htmlMessage)
           case HolePattern2(_name, _typeOfName) =>
@@ -170,6 +172,10 @@ class HaskellAnnotator extends ExternalAnnotator[PsiFile, LoadResult] {
 
   private def createLanguageExtensionIntentionAction(problem: LoadProblemInCurrentFile, tr: TextRange, languageExtension: String): ErrorAnnotationWithIntentionActions = {
     ErrorAnnotationWithIntentionActions(tr, problem.plainMessage, problem.htmlMessage, Stream(new LanguageExtensionIntentionAction(languageExtension)))
+  }
+
+  private def importAloneInstancesAction(problem: LoadProblemInCurrentFile, tr: TextRange, importDecl: String): WarningAnnotationWithIntentionActions = {
+    WarningAnnotationWithIntentionActions(tr, problem.plainMessage, problem.htmlMessage, Stream(new ImportAloneInstancesAction(importDecl)))
   }
 
   private def getProblemTextRange(psiFile: PsiFile, problem: LoadProblemInCurrentFile): Option[TextRange] = {
@@ -348,3 +354,23 @@ class OptimizeImportIntentionAction(moduleName: String, offset: Int) extends Has
     HaskellImportOptimizer.removeRedundantImport(psiFile, offset)
   }
 }
+
+class ImportAloneInstancesAction(importDecl: String) extends HaskellBaseIntentionAction {
+  setText(s"Import alone instance `$importDecl`")
+
+  override def getFamilyName: String = "Import alone instance"
+
+  override def invoke(project: Project, editor: Editor, file: PsiFile): Unit = {
+    val offset = editor.getCaretModel.getOffset
+    Option(file.findElementAt(offset)) match {
+      case Some(e) =>
+        for {
+          importDeclarations <- HaskellPsiUtil.findImportDeclarationsParent(e)
+          importDeclaration <- HaskellPsiUtil.findImportDeclarationParent(e)
+          importDeclElement <- HaskellElementFactory.createImportDeclaration(project, importDecl)
+        } yield importDeclarations.getNode.replaceChild(importDeclaration.getNode, importDeclElement.getNode)
+      case None => ()
+    }
+  }
+}
+
