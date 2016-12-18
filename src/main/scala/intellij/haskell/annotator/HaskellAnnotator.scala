@@ -51,6 +51,7 @@ class HaskellAnnotator extends ExternalAnnotator[PsiFile, LoadResult] {
   private final val NotInScopePattern = """.* Not in scope:[^‘`]+[‘`](.+)[’']""".r
   private final val NotInScopePattern2 = """.* not in scope: (.+)""".r
   private final val UseAloneInstancesImportPattern = """.* To import instances alone, use: (.+)""".r
+  private final val RedundantImportPattern = """.* The import of ‘(.*)’ from module ‘(.*)’ is redundant""".r
 
   private final val PerhapsYouMeantNamePattern = """.*[`‘]([^‘’'`]+)['’]""".r
   private final val PerhapsYouMeantMultiplePattern = """.*ot in scope: (.+) Perhaps you meant one of these: (.+)""".r
@@ -128,6 +129,7 @@ class HaskellAnnotator extends ExternalAnnotator[PsiFile, LoadResult] {
           case NotInScopePattern2(name) =>
             ErrorAnnotationWithIntentionActions(tr, problem.plainMessage, problem.htmlMessage, createNotInScopeIntentionActions(psiFile, name.split("::").headOption.getOrElse(name).trim))
           case UseAloneInstancesImportPattern(importDecl) => importAloneInstancesAction(problem, tr, importDecl)
+          case RedundantImportPattern(redundants, moduleName) => redundantImportAction(problem, tr, moduleName, redundants)
           case HolePattern(_typeSignature) =>
             ErrorAnnotation(tr, problem.plainMessage, problem.htmlMessage)
           case HolePattern2(_name, _typeOfName) =>
@@ -176,6 +178,10 @@ class HaskellAnnotator extends ExternalAnnotator[PsiFile, LoadResult] {
 
   private def importAloneInstancesAction(problem: LoadProblemInCurrentFile, tr: TextRange, importDecl: String): WarningAnnotationWithIntentionActions = {
     WarningAnnotationWithIntentionActions(tr, problem.plainMessage, problem.htmlMessage, Stream(new ImportAloneInstancesAction(importDecl)))
+  }
+
+  private def redundantImportAction(problem: LoadProblemInCurrentFile, tr: TextRange, moduleName: String, redundants: String): WarningAnnotationWithIntentionActions = {
+    WarningAnnotationWithIntentionActions(tr, problem.plainMessage, problem.htmlMessage, Stream(new RedundantImportAction(moduleName, redundants)))
   }
 
   private def getProblemTextRange(psiFile: PsiFile, problem: LoadProblemInCurrentFile): Option[TextRange] = {
@@ -374,3 +380,28 @@ class ImportAloneInstancesAction(importDecl: String) extends HaskellBaseIntentio
   }
 }
 
+class RedundantImportAction(moduleName: String, redundants: String) extends HaskellBaseIntentionAction {
+  setText(s"Redundant import `$moduleName` ($redundants)")
+
+  override def getFamilyName: String = "Redundant import"
+
+  def removeRedundants(spec: String, redundants: String): String = {
+    val specArr = spec.stripPrefix("(").stripSuffix(")").split(",").map(_.trim)
+    val redundantsArr = redundants.split(",").map(_.trim)
+    specArr.filter(e => !redundantsArr.contains(e.replace("(..)", ""))).mkString(", ")
+  }
+
+  override def invoke(project: Project, editor: Editor, file: PsiFile): Unit = {
+    val offset = editor.getCaretModel.getOffset
+    Option(file.findElementAt(offset)) match {
+      case Some(e) =>
+        for {
+          importDeclarations <- HaskellPsiUtil.findImportDeclarationsParent(e)
+          importDeclaration <- HaskellPsiUtil.findImportDeclarationParent(e)
+          importSpec <- Option(PsiTreeUtil.findChildOfType(importDeclaration, classOf[HaskellImportSpec]))
+          importDeclElement <- HaskellElementFactory.createImportDeclaration(project, moduleName, removeRedundants(importSpec.getText, redundants))
+        } yield importDeclarations.getNode.replaceChild(importDeclaration.getNode, importDeclElement.getNode)
+      case None => ()
+    }
+  }
+}
