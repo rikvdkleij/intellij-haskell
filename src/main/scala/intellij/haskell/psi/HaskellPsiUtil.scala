@@ -16,7 +16,9 @@
 
 package intellij.haskell.psi
 
+import com.intellij.lang.ASTNode
 import com.intellij.openapi.editor.Editor
+import com.intellij.psi.tree.{IElementType, TokenSet}
 import com.intellij.psi.util.PsiTreeUtil
 import com.intellij.psi.{PsiElement, PsiFile}
 import intellij.haskell.psi.HaskellElementCondition._
@@ -134,5 +136,23 @@ object HaskellPsiUtil {
       start <- Option(psiFile.findElementAt(editor.getSelectionModel.getSelectionStart))
       end <- Option(psiFile.findElementAt(editor.getSelectionModel.getSelectionEnd - 1))
     } yield (start, end)
+  }
+
+  def getChildOfType[T <: PsiElement](el: PsiElement, cls: Class[T]): Option[T] = {
+    Option(PsiTreeUtil.getChildOfType(el, cls))
+  }
+
+  def getChildNodes(el: PsiElement, typ: IElementType, typs: IElementType*): Array[ASTNode] = {
+    el.getNode.getChildren(TokenSet.create(typ +: typs: _*))
+  }
+
+  def streamChildren[T <: PsiElement](el: PsiElement, cls: Class[T]): Stream[T] = {
+    PsiTreeUtil.childIterator(el, cls).asScala.toStream
+  }
+
+  /** Analogous to PsiTreeUtil.findFirstParent */
+  def collectFirstParent[A]
+  (el: PsiElement)(f: PartialFunction[PsiElement, A]): Option[A] = {
+    Stream.iterate(el.getParent)(_.getParent).takeWhile(_ != null).collectFirst(f)
   }
 }
