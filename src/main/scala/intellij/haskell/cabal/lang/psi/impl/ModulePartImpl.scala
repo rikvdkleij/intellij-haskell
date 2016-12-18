@@ -9,10 +9,10 @@ import com.intellij.psi.{PsiDirectory, PsiElement, PsiManager, PsiReference}
 import com.intellij.psi.impl.source.tree.LeafPsiElement
 import com.intellij.psi.search.{FileTypeIndex, GlobalSearchScope}
 import com.intellij.util.indexing.FileBasedIndex
-import intellij.haskell.HaskellFileType
+import intellij.haskell.{HaskellFile, HaskellFileType, HaskellNotificationGroup}
 import intellij.haskell.cabal.CabalFileType
 import intellij.haskell.cabal.lang.psi._
-import intellij.haskell.HaskellFile
+import intellij.haskell.util.HaskellFileUtil
 import intellij.haskell.util.index.{HaskellFileIndex, HaskellModuleIndex}
 
 trait ModulePartImpl extends CabalNamedElementImpl {
@@ -63,6 +63,14 @@ trait ModulePartImpl extends CabalNamedElementImpl {
     val revPos = getParent.getChildren.reverse.indexOf(this)
     if (revPos == -1) throw new AssertionError(s"$getText not in parent (${getParent.getText})")
     // Iterate up the directory tree 'revPos' times.
+
+    val a = lastPart.resolve()
+
+    HaskellNotificationGroup.logWarningEvent(getProject, s"${a.getText} !!!!!!!!!!!!!!!!!!!!!")
+
+    val b = a.getContainingFile
+    val c = b.getContainingDirectory
+
     Stream.iterate(
       lastPart.resolve().getContainingFile.getContainingDirectory, revPos
     )(_.getParent).lastOption.filter(
@@ -79,7 +87,12 @@ trait ModulePartImpl extends CabalNamedElementImpl {
       case None => GlobalSearchScope.projectScope(getProject)
     }
     val files = HaskellModuleIndex.getFilesByModuleName(getProject, qualifiedName, scope)
-    files.iterator().asScala.map { file =>
+    //val files = HaskellFileUtil.convertToHaskellFiles(HaskellFileIndex.findFilesByName(getProject, "Command", scope), getProject).toList.asJava
+
+    HaskellNotificationGroup.logWarningEvent(getProject, s"$qualifiedName !!!!!!!!!!!!!!!!!!!!!")
+    HaskellNotificationGroup.logWarningEvent(getProject, s"files !!!!!!!!!!!!!!!!!!!!! -> ${files.size()}")
+
+    val a = files.iterator().asScala.map { file =>
       // Get the last "part" of the module decl if the name matches.
       file.getModuleElement.filter(_.getText == qualifiedName).flatMap(
         qconid => Option(qconid.getLastChild)
@@ -91,5 +104,9 @@ trait ModulePartImpl extends CabalNamedElementImpl {
       // If there are no matches, just guess at the first file found, if exists.
       if (files.size == 0) None else Option(files.get(0))
     }.orNull
+
+    HaskellNotificationGroup.logWarningEvent(getProject, s"psielement $a !!!!!!!!!!!!!!!!!!!!!")
+
+    a
   }
 }

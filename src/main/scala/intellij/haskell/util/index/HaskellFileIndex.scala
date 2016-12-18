@@ -20,14 +20,14 @@ import java.io.{DataInput, DataOutput}
 import java.util
 
 import com.intellij.openapi.fileTypes.FileType
-import com.intellij.openapi.project.Project
+import com.intellij.openapi.project.{Project, ProjectManager}
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.psi.search.{FileTypeIndex, GlobalSearchScope, GlobalSearchScopesCore}
 import com.intellij.util.indexing.FileBasedIndex.InputFilter
 import com.intellij.util.indexing._
 import com.intellij.util.io.{DataExternalizer, EnumeratorStringDescriptor, KeyDescriptor}
 import intellij.haskell.util.{HaskellFileUtil, HaskellProjectUtil}
-import intellij.haskell.{HaskellFile, HaskellFileType}
+import intellij.haskell.{HaskellFile, HaskellFileType, HaskellNotificationGroup}
 
 import scala.collection.JavaConverters._
 
@@ -54,6 +54,7 @@ class HaskellFileIndex extends ScalaScalarIndexExtension[String] {
     def map(inputData: FileContent): java.util.Map[String, Unit] = {
       val map = new util.HashMap[String, Unit]
       map.put(inputData.getFile.getNameWithoutExtension, ())
+      HaskellNotificationGroup.logWarningEvent(ProjectManager.getInstance.getDefaultProject, "file index !!!!!!!!!!!!!!!!!!!!!" + inputData.getFile.getNameWithoutExtension)
       map
     }
   }

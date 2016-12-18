@@ -1,5 +1,6 @@
 package intellij.haskell.util.index;
 
+import com.intellij.openapi.project.ProjectManager;
 import intellij.haskell.HaskellFileType;
 import intellij.haskell.HaskellFile;
 import com.intellij.openapi.project.Project;
@@ -12,6 +13,7 @@ import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.indexing.*;
 import com.intellij.util.io.EnumeratorStringDescriptor;
 import com.intellij.util.io.KeyDescriptor;
+import intellij.haskell.HaskellNotificationGroup;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Collection;
@@ -96,6 +98,7 @@ public class HaskellModuleIndex extends ScalarIndexExtension<String> {
             final String moduleName = psiFile instanceof HaskellFile
                     ? ((HaskellFile) psiFile).getModuleName().get()
                     : null;
+            HaskellNotificationGroup.logWarningEvent(ProjectManager.getInstance().getDefaultProject(), "module index !!!!!!!!!!!!!!!!!!!!!" + moduleName);
             if (moduleName == null) { return Collections.emptyMap(); }
             return Collections.singletonMap(moduleName, null);
         }
