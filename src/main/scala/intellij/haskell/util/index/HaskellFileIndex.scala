@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package intellij.haskell.util
+package intellij.haskell.util.index
 
 import java.io.{DataInput, DataOutput}
 import java.util
@@ -26,6 +26,7 @@ import com.intellij.psi.search.{FileTypeIndex, GlobalSearchScope, GlobalSearchSc
 import com.intellij.util.indexing.FileBasedIndex.InputFilter
 import com.intellij.util.indexing._
 import com.intellij.util.io.{DataExternalizer, EnumeratorStringDescriptor, KeyDescriptor}
+import intellij.haskell.util.{HaskellFileUtil, HaskellProjectUtil}
 import intellij.haskell.{HaskellFile, HaskellFileType}
 
 import scala.collection.JavaConverters._

@@ -22,7 +22,8 @@ import com.intellij.psi.{PsiElement, PsiReference}
 import com.intellij.refactoring.listeners.RefactoringElementListener
 import com.intellij.refactoring.rename.RenamePsiElementProcessor
 import com.intellij.usageView.UsageInfo
-import intellij.haskell.util.{HaskellFileIndex, HaskellFileUtil, HaskellProjectUtil}
+import intellij.haskell.util.index.HaskellFileIndex
+import intellij.haskell.util.{HaskellFileUtil, HaskellProjectUtil}
 
 import scala.collection.JavaConverters._
 

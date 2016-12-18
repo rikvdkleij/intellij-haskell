@@ -26,6 +26,7 @@ import com.intellij.psi.search.GlobalSearchScope
 import com.intellij.psi.{PsiFile, PsiManager}
 import intellij.haskell.module.HaskellModuleType
 import intellij.haskell.sdk.HaskellSdkType
+import intellij.haskell.util.index.HaskellFileIndex
 import intellij.haskell.{HaskellFile, HaskellNotificationGroup}
 
 object HaskellProjectUtil {

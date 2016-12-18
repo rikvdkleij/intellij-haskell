@@ -150,6 +150,8 @@
         <lang.parserDefinition language="Haskell" implementationClass="intellij.haskell.HaskellParserDefinition"/>
 
         <colorSettingsPage implementation="intellij.haskell.highlighter.HaskellColorSettingsPage"/>
+        <colorSettingsPage implementation="intellij.haskell.cabal.highlighting.CabalColorSettingsPage"/>
+
         <lang.syntaxHighlighterFactory language="Haskell"
                                        implementationClass="intellij.haskell.highlighter.HaskellSyntaxHighlighterFactory"/>
         <lang.braceMatcher language="Haskell"
@@ -174,7 +176,8 @@
         <lang.elementManipulator forClass="intellij.haskell.psi.HaskellNamedElement"
                                  implementationClass="intellij.haskell.psi.HaskellNamedElementManipulator"/>
 
-        <fileBasedIndex implementation="intellij.haskell.util.HaskellFileIndex"/>
+        <fileBasedIndex implementation="intellij.haskell.util.index.HaskellFileIndex"/>
+        <fileBasedIndex implementation="intellij.haskell.util.index.HaskellModuleIndex"/>
 
         <lang.findUsagesProvider language="Haskell"
                                  implementationClass="intellij.haskell.navigation.HaskellFindUsagesProvider"/>
@@ -216,6 +219,15 @@
         <!-- Cabal support -->
         <fileTypeFactory implementation="intellij.haskell.cabal.CabalFileTypeFactory"/>
         <lang.commenter language="Cabal" implementationClass="intellij.haskell.cabal.CabalCommenter"/>
+        <lang.syntaxHighlighterFactory language="Cabal"
+                                       implementationClass="intellij.haskell.cabal.highlighting.CabalSyntaxHighlighterFactory"/>
+        <lang.parserDefinition language="Cabal"
+                               implementationClass="intellij.haskell.cabal.lang.parser.CabalParserDefinition"/>
+        <annotator language="Cabal"
+                   implementationClass="intellij.haskell.cabal.highlighting.CabalAnnotator"/>
+        <completion.contributor
+                language="Cabal"
+                implementationClass="intellij.haskell.cabal.completion.CabalCompletionContributor" />
 
         <intentionAction>
             <className>intellij.haskell.intention.AddParensIntention</className>

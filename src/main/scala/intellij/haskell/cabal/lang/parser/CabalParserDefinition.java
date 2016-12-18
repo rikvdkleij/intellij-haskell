@@ -3,7 +3,7 @@ package intellij.haskell.cabal.lang.parser;
 import intellij.haskell.cabal.CabalLanguage;
 import intellij.haskell.cabal.lang.lexer.CabalParsingLexer;
 import intellij.haskell.cabal.lang.psi.CabalElementFactory;
-import intellij.haskell.cabal.lang.psi.CabalFile;
+import intellij.haskell.cabal.CabalFile;
 import intellij.haskell.cabal.lang.psi.CabalTypes;
 import com.intellij.lang.ASTNode;
 import com.intellij.lang.ParserDefinition;

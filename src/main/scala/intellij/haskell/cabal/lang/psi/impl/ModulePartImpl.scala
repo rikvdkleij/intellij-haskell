@@ -13,7 +13,7 @@ import intellij.haskell.HaskellFileType
 import intellij.haskell.cabal.CabalFileType
 import intellij.haskell.cabal.lang.psi._
 import intellij.haskell.HaskellFile
-import intellij.haskell.util.HaskellFileIndex
+import intellij.haskell.util.index.{HaskellFileIndex, HaskellModuleIndex}
 
 trait ModulePartImpl extends CabalNamedElementImpl {
 
@@ -81,7 +81,7 @@ trait ModulePartImpl extends CabalNamedElementImpl {
     val files = HaskellModuleIndex.getFilesByModuleName(getProject, qualifiedName, scope)
     files.iterator().asScala.map { file =>
       // Get the last "part" of the module decl if the name matches.
-      Option(file.getModuleElement).filter(_.getText == qualifiedName).flatMap(
+      file.getModuleElement.filter(_.getText == qualifiedName).flatMap(
         qconid => Option(qconid.getLastChild)
       )
     }.collectFirst {
