@@ -2,18 +2,15 @@ package intellij.haskell.cabal.lang.psi.impl
 
 import java.util.regex.Pattern
 
-import scala.collection.JavaConverters._
 import com.intellij.openapi.module.ModuleUtilCore
 import com.intellij.openapi.util.TextRange
-import com.intellij.psi.{PsiDirectory, PsiElement, PsiManager, PsiReference}
 import com.intellij.psi.impl.source.tree.LeafPsiElement
-import com.intellij.psi.search.{FileTypeIndex, FilenameIndex, GlobalSearchScope}
-import com.intellij.util.indexing.FileBasedIndex
-import intellij.haskell.{HaskellFile, HaskellFileType, HaskellNotificationGroup}
-import intellij.haskell.cabal.CabalFileType
+import com.intellij.psi.search.GlobalSearchScope
+import com.intellij.psi.{PsiDirectory, PsiElement, PsiReference}
 import intellij.haskell.cabal.lang.psi._
-import intellij.haskell.util.HaskellFileUtil
 import intellij.haskell.util.index.{HaskellFileIndex, HaskellModuleIndex}
+
+import scala.collection.JavaConverters._
 
 trait ModulePartImpl extends CabalNamedElementImpl {
 
@@ -64,13 +61,6 @@ trait ModulePartImpl extends CabalNamedElementImpl {
     if (revPos == -1) throw new AssertionError(s"$getText not in parent (${getParent.getText})")
     // Iterate up the directory tree 'revPos' times.
 
-    val a = lastPart.resolve()
-
-    HaskellNotificationGroup.logWarningEvent(getProject, s"${a.getText} !!!!!!!!!!!!!!!!!!!!!")
-
-    val b = a.getContainingFile
-    val c = b.getContainingDirectory
-
     Stream.iterate(
       lastPart.resolve().getContainingFile.getContainingDirectory, revPos
     )(_.getParent).lastOption.filter(
@@ -88,7 +78,7 @@ trait ModulePartImpl extends CabalNamedElementImpl {
     }
     val files = HaskellModuleIndex.getFilesByModuleName(getProject, qualifiedName, scope)
 
-    val a = files.iterator().asScala.map { file =>
+    files.map { file =>
       // Get the last "part" of the module decl if the name matches.
       file.getModuleElement.filter(_.getText == qualifiedName).flatMap(
         qconid => Option(qconid.getLastChild)
@@ -98,11 +88,7 @@ trait ModulePartImpl extends CabalNamedElementImpl {
       case Some(x) => x
     }.orElse {
       // If there are no matches, just guess at the first file found, if exists.
-      if (files.size == 0) None else Option(files.get(0))
+      if (files.isEmpty) None else Option(files.head)
     }.orNull
-
-    HaskellNotificationGroup.logWarningEvent(getProject, s"psielement $a !!!!!!!!!!!!!!!!!!!!!")
-
-    a
   }
 }

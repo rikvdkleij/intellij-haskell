@@ -54,7 +54,6 @@ class HaskellFileIndex extends ScalaScalarIndexExtension[String] {
     def map(inputData: FileContent): java.util.Map[String, Unit] = {
       val map = new util.HashMap[String, Unit]
       map.put(inputData.getFile.getNameWithoutExtension, ())
-      HaskellNotificationGroup.logWarningEvent(ProjectManager.getInstance.getDefaultProject, "file index !!!!!!!!!!!!!!!!!!!!!" + inputData.getFile.getNameWithoutExtension)
       map
     }
   }
