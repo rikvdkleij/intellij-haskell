@@ -227,6 +227,12 @@
         </intentionAction>
 
         <stubIndex implementation="intellij.haskell.psi.stubs.index.HaskellAllNameIndex"/>
+
+        <!-- Spelling support -->
+        <spellchecker.support language="Haskell"
+                              implementationClass="intellij.haskell.spellchecker.HaskellSpellcheckingStrategy"/>
+        <spellchecker.bundledDictionaryProvider
+                implementation="intellij.haskell.spellchecker.HaskellBundledDictionaryProvider"/>
     </extensions>
 
     <application-components>
