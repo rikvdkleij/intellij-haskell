@@ -22,13 +22,16 @@ import com.intellij.psi.{PsiElement, PsiReference}
 import com.intellij.refactoring.listeners.RefactoringElementListener
 import com.intellij.refactoring.rename.RenamePsiElementProcessor
 import com.intellij.usageView.UsageInfo
+import intellij.haskell.psi.HaskellNamedElement
 import intellij.haskell.util.{HaskellFileIndex, HaskellFileUtil, HaskellProjectUtil}
 
 import scala.collection.JavaConverters._
 
 class HaskellRenameVariableProcessor extends RenamePsiElementProcessor {
 
-  override def canProcessElement(element: PsiElement): Boolean = HaskellProjectUtil.isHaskellStackProject(element.getProject)
+  override def canProcessElement(element: PsiElement): Boolean = {
+    HaskellProjectUtil.isHaskellStackProject(element.getProject) && element.isInstanceOf[HaskellNamedElement]
+  }
 
   override def renameElement(element: PsiElement, newName: String, usages: Array[UsageInfo], listener: RefactoringElementListener): Unit = {
     super.renameElement(element, newName, usages, listener)
