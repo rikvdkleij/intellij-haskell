@@ -95,10 +95,9 @@ public class HaskellModuleIndex extends ScalarIndexExtension<String> {
         @Override
         public Map<String, Void> map(@NotNull FileContent inputData) {
             final PsiFile psiFile = inputData.getPsiFile();
-            final String moduleName = psiFile instanceof HaskellFile
+            final String moduleName = psiFile instanceof HaskellFile && ((HaskellFile) psiFile).getModuleName().nonEmpty()
                     ? ((HaskellFile) psiFile).getModuleName().get()
                     : null;
-            HaskellNotificationGroup.logWarningEvent(ProjectManager.getInstance().getDefaultProject(), "module index !!!!!!!!!!!!!!!!!!!!!" + moduleName);
             if (moduleName == null) { return Collections.emptyMap(); }
             return Collections.singletonMap(moduleName, null);
         }

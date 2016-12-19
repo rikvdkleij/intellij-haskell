@@ -7,7 +7,7 @@ import com.intellij.openapi.module.ModuleUtilCore
 import com.intellij.openapi.util.TextRange
 import com.intellij.psi.{PsiDirectory, PsiElement, PsiManager, PsiReference}
 import com.intellij.psi.impl.source.tree.LeafPsiElement
-import com.intellij.psi.search.{FileTypeIndex, GlobalSearchScope}
+import com.intellij.psi.search.{FileTypeIndex, FilenameIndex, GlobalSearchScope}
 import com.intellij.util.indexing.FileBasedIndex
 import intellij.haskell.{HaskellFile, HaskellFileType, HaskellNotificationGroup}
 import intellij.haskell.cabal.CabalFileType
@@ -87,10 +87,6 @@ trait ModulePartImpl extends CabalNamedElementImpl {
       case None => GlobalSearchScope.projectScope(getProject)
     }
     val files = HaskellModuleIndex.getFilesByModuleName(getProject, qualifiedName, scope)
-    //val files = HaskellFileUtil.convertToHaskellFiles(HaskellFileIndex.findFilesByName(getProject, "Command", scope), getProject).toList.asJava
-
-    HaskellNotificationGroup.logWarningEvent(getProject, s"$qualifiedName !!!!!!!!!!!!!!!!!!!!!")
-    HaskellNotificationGroup.logWarningEvent(getProject, s"files !!!!!!!!!!!!!!!!!!!!! -> ${files.size()}")
 
     val a = files.iterator().asScala.map { file =>
       // Get the last "part" of the module decl if the name matches.
