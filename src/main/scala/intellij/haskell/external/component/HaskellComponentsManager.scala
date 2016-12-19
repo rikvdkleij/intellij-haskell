@@ -22,7 +22,7 @@ import com.intellij.openapi.project.Project
 import com.intellij.psi.{PsiElement, PsiFile}
 import intellij.haskell.annotator.HaskellAnnotator
 import intellij.haskell.psi.HaskellPsiUtil
-import intellij.haskell.util.HaskellFileIndex
+import intellij.haskell.util.index.HaskellFileIndex
 import intellij.haskell.{HaskellFile, HaskellNotificationGroup}
 
 object HaskellComponentsManager {

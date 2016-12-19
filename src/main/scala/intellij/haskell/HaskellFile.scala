@@ -21,6 +21,7 @@ import javax.swing._
 import com.intellij.extapi.psi.PsiFileBase
 import com.intellij.openapi.fileTypes.{FileType, FileTypeConsumer, FileTypeFactory, LanguageFileType}
 import com.intellij.psi.FileViewProvider
+import intellij.haskell.psi.{HaskellModid, HaskellModuleDeclaration, HaskellPsiUtil}
 import org.jetbrains.annotations.NotNull
 
 class HaskellFile(viewProvider: FileViewProvider) extends PsiFileBase(viewProvider, HaskellLanguage.Instance) {
@@ -28,6 +29,14 @@ class HaskellFile(viewProvider: FileViewProvider) extends PsiFileBase(viewProvid
   @NotNull
   def getFileType: FileType = {
     HaskellFileType.INSTANCE
+  }
+
+  def getModuleName: Option[String] = {
+    getModuleElement.map(_.getText)
+  }
+
+  def getModuleElement: Option[HaskellModid] = {
+    HaskellPsiUtil.findModuleDeclaration(this).flatMap(decl => Option(decl.getModid))
   }
 
   override def toString: String = {

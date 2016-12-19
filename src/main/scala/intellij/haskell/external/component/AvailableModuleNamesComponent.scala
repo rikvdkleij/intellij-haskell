@@ -21,7 +21,8 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Computable
 import com.intellij.psi.PsiFile
 import intellij.haskell.psi.HaskellPsiUtil
-import intellij.haskell.util.{HaskellFileIndex, HaskellProjectUtil}
+import intellij.haskell.util.HaskellProjectUtil
+import intellij.haskell.util.index.HaskellFileIndex
 
 private[component] object AvailableModuleNamesComponent {
 

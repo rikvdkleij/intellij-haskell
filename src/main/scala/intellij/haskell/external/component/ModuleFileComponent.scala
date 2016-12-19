@@ -24,7 +24,8 @@ import com.intellij.openapi.progress.ProcessCanceledException
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.psi.search.GlobalSearchScope
-import intellij.haskell.util.{HaskellEditorUtil, HaskellFileIndex, HaskellProjectUtil}
+import intellij.haskell.util.index.HaskellFileIndex
+import intellij.haskell.util.{HaskellEditorUtil, HaskellProjectUtil}
 import intellij.haskell.{HaskellFile, HaskellNotificationGroup}
 
 import scala.collection.JavaConverters._
