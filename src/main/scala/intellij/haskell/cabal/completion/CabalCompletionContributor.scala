@@ -8,7 +8,7 @@ import com.intellij.util.ProcessingContext
 import intellij.haskell.cabal.CabalLanguage
 import intellij.haskell.cabal.lang.psi
 import intellij.haskell.cabal.lang.psi.CabalPsiUtil
-import com.haskforce.constants.GhcLanguageExtensions
+import intellij.haskell.util.GhcLanguageExtensions
 
 import scala.collection.JavaConverters._
 

@@ -1,4 +1,4 @@
-package com.haskforce.constants
+package intellij.haskell.util
 
 import java.util
 
