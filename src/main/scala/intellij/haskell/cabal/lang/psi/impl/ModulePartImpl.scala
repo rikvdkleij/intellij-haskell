@@ -88,7 +88,7 @@ trait ModulePartImpl extends CabalNamedElementImpl {
       case Some(x) => x
     }.orElse {
       // If there are no matches, just guess at the first file found, if exists.
-      if (files.isEmpty) None else Option(files.head)
+      files.headOption
     }.orNull
   }
 }

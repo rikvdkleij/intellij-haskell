@@ -31,14 +31,6 @@ class HaskellFile(viewProvider: FileViewProvider) extends PsiFileBase(viewProvid
     HaskellFileType.INSTANCE
   }
 
-  def getModuleName: Option[String] = {
-    getModuleElement.map(_.getText)
-  }
-
-  def getModuleElement: Option[HaskellModid] = {
-    HaskellPsiUtil.findModuleDeclaration(this).flatMap(decl => Option(decl.getModid))
-  }
-
   override def toString: String = {
     "Haskell file"
   }
