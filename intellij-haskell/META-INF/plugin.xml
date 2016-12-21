@@ -235,6 +235,8 @@
         <!-- Spell Checker -->
         <spellchecker.support language="Haskell"
                               implementationClass="intellij.haskell.spellchecker.HaskellSpellcheckingStrategy"/>
+        <spellchecker.support language="Cabal"
+                              implementationClass="intellij.haskell.spellchecker.CabalSpellcheckingStrategy"/>
         <spellchecker.bundledDictionaryProvider
                 implementation="intellij.haskell.spellchecker.HaskellBundledDictionaryProvider"/>
 
