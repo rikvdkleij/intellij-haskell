@@ -1,7 +1,6 @@
 package intellij.haskell.cabal.highlighting;
 
 import intellij.haskell.HaskellIcons;
-import intellij.haskell.cabal.highlighting.CabalSyntaxHighlighter;
 import com.intellij.openapi.editor.colors.TextAttributesKey;
 import com.intellij.openapi.fileTypes.SyntaxHighlighter;
 import com.intellij.openapi.options.colors.AttributesDescriptor;
@@ -18,10 +17,10 @@ import java.util.Map;
  */
 public class CabalColorSettingsPage implements ColorSettingsPage {
     private static final AttributesDescriptor[] DESCRIPTORS = new AttributesDescriptor[] {
-            new AttributesDescriptor("Keys", CabalSyntaxHighlighter.KEY),
-            new AttributesDescriptor("Colon", CabalSyntaxHighlighter.COLON),
-            new AttributesDescriptor("Sections", CabalSyntaxHighlighter.CONFIG),
-            new AttributesDescriptor("Comments", CabalSyntaxHighlighter.COMMENT)
+            new AttributesDescriptor("Keys", CabalSyntaxHighlighter.KEY()),
+            new AttributesDescriptor("Colon", CabalSyntaxHighlighter.COLON()),
+            new AttributesDescriptor("Sections", CabalSyntaxHighlighter.CONFIG()),
+            new AttributesDescriptor("Comments", CabalSyntaxHighlighter.COMMENT())
     };
 
     @Nullable
