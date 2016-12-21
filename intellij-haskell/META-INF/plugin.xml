@@ -133,102 +133,86 @@
     <idea-version since-build="142.0"/>
 
     <extensions defaultExtensionNs="com.intellij">
-        <sdkType implementation="intellij.haskell.sdk.HaskellSdkType"/>
-
-        <moduleType id="HASKELL_MODULE" implementationClass="intellij.haskell.module.HaskellModuleType"/>
-
-        <projectImportProvider implementation="intellij.haskell.module.StackProjectImportProvider"/>
-        <projectImportBuilder implementation="intellij.haskell.module.StackProjectImportBuilder"/>
-
-        <moduleConfigurationEditorProvider implementation="intellij.haskell.settings.HaskellModuleEditorsProvider"
-                                           order="first"/>
-
-        <internalFileTemplate name="Haskell Module"/>
-
+        <!-- File-type Factory -->
         <fileTypeFactory implementation="intellij.haskell.HaskellLanguageFileTypeFactory"/>
+        <fileTypeFactory implementation="intellij.haskell.cabal.CabalFileTypeFactory"/>
 
+        <!-- Parser -->
         <lang.parserDefinition language="Haskell" implementationClass="intellij.haskell.HaskellParserDefinition"/>
+        <lang.parserDefinition language="Cabal"
+                               implementationClass="intellij.haskell.cabal.lang.parser.CabalParserDefinition"/>
 
-        <colorSettingsPage implementation="intellij.haskell.highlighter.HaskellColorSettingsPage"/>
-        <colorSettingsPage implementation="intellij.haskell.cabal.highlighting.CabalColorSettingsPage"/>
-
+        <!-- Syntax Highlighter -->
         <lang.syntaxHighlighterFactory language="Haskell"
                                        implementationClass="intellij.haskell.highlighter.HaskellSyntaxHighlighterFactory"/>
+        <lang.syntaxHighlighterFactory language="Cabal"
+                                       implementationClass="intellij.haskell.cabal.highlighting.CabalSyntaxHighlighterFactory"/>
+
+        <!-- Refactoring support -->
+        <lang.refactoringSupport language="Haskell"
+                                 implementationClass="intellij.haskell.refactor.HaskellRefactoringSupportProvider"/>
+
+        <!-- Commenter -->
+        <lang.commenter language="Haskell" implementationClass="intellij.haskell.editor.HaskellCommenter"/>
+        <lang.commenter language="Cabal" implementationClass="intellij.haskell.cabal.CabalCommenter"/>
+
+        <!-- Matcher -->
         <lang.braceMatcher language="Haskell"
                            implementationClass="intellij.haskell.highlighter.HaskellBraceMatcher"/>
-        <lang.commenter language="Haskell" implementationClass="intellij.haskell.editor.HaskellCommenter"/>
+        <quoteHandler fileType="Haskell file" className="intellij.haskell.editor.HaskellQuoteHandler"/>
 
+        <!-- Doc-Provider -->
+        <lang.documentationProvider language="Haskell"
+                                    implementationClass="intellij.haskell.external.component.HaskellDocumentationProvider"/>
+
+        <!-- Structure View -->
+        <lang.psiStructureViewFactory language="Haskell"
+                                      implementationClass="intellij.haskell.navigation.HaskellStructureViewFactory"/>
+
+        <!-- Usages Provider -->
+        <lang.findUsagesProvider language="Haskell"
+                                 implementationClass="intellij.haskell.navigation.HaskellFindUsagesProvider"/>
+
+        <!-- Navigation -->
+        <gotoClassContributor implementation="intellij.haskell.navigation.GotoByDeclarationContributor"/>
+        <gotoSymbolContributor
+                implementation="intellij.haskell.navigation.GotoByNameContributor"/>
+
+        <!-- Annotator -->
         <externalAnnotator language="Haskell"
                            implementationClass="intellij.haskell.annotator.HaskellAnnotator"/>
+        <annotator language="Cabal"
+                   implementationClass="intellij.haskell.cabal.highlighting.CabalAnnotator"/>
 
-        <applicationConfigurable instance="intellij.haskell.settings.HaskellConfigurable"/>
+        <!-- Completion -->
+        <completion.contributor language="Haskell"
+                                implementationClass="intellij.haskell.editor.HaskellCompletionContributor"/>
+        <completion.contributor
+                language="Cabal"
+                implementationClass="intellij.haskell.cabal.completion.CabalCompletionContributor" />
+        <lookup.charFilter implementation="intellij.haskell.editor.HaskellCompletionCharFilter"/>
+        <psi.referenceContributor language="Haskell" implementation="intellij.haskell.psi.HaskellReferenceContributor"/>
 
-        <applicationService serviceImplementation="intellij.haskell.settings.HaskellSettingsPersistentStateComponent"/>
+        <!-- Handler -->
+        <typedHandler implementation="intellij.haskell.editor.HaskellTypedHandler" id="HaskellFile"/>
+        <extendWordSelectionHandler implementation="intellij.haskell.editor.HaskellExtendWordSelectioner"/>
 
+        <!-- Code Style -->
         <codeStyleSettingsProvider
                 implementation="intellij.haskell.editor.formatter.settings.HaskellCodeStyleSettingsProvider"/>
         <langCodeStyleSettingsProvider
                 implementation="intellij.haskell.editor.formatter.settings.HaskellLanguageCodeStyleSettingsProvider"/>
 
+        <!-- Color Setting -->
+        <colorSettingsPage implementation="intellij.haskell.highlighter.HaskellColorSettingsPage"/>
+        <colorSettingsPage implementation="intellij.haskell.cabal.highlighting.CabalColorSettingsPage"/>
 
-        <psi.referenceContributor language="Haskell" implementation="intellij.haskell.psi.HaskellReferenceContributor"/>
-
-        <lang.elementManipulator forClass="intellij.haskell.psi.HaskellNamedElement"
-                                 implementationClass="intellij.haskell.psi.HaskellNamedElementManipulator"/>
-
-        <fileBasedIndex implementation="intellij.haskell.util.index.HaskellFileIndex"/>
-        <fileBasedIndex implementation="intellij.haskell.util.index.HaskellModuleIndex"/>
-
-        <lang.findUsagesProvider language="Haskell"
-                                 implementationClass="intellij.haskell.navigation.HaskellFindUsagesProvider"/>
-
-        <lang.namesValidator language="Haskell"
-                             implementationClass="intellij.haskell.refactor.HaskellNamesValidator"/>
-        <lang.refactoringSupport language="Haskell"
-                                 implementationClass="intellij.haskell.refactor.HaskellRefactoringSupportProvider"/>
-        <renamePsiElementProcessor implementation="intellij.haskell.refactor.HaskellRenameVariableProcessor"/>
-        <vetoRenameCondition implementation="intellij.haskell.refactor.HaskellVetoRenameCondition"/>
-
-        <lang.documentationProvider language="Haskell"
-                                    implementationClass="intellij.haskell.external.component.HaskellDocumentationProvider"/>
-
-        <completion.contributor language="Haskell"
-                                implementationClass="intellij.haskell.editor.HaskellCompletionContributor"/>
-        <lookup.charFilter implementation="intellij.haskell.editor.HaskellCompletionCharFilter"/>
-
-        <gotoClassContributor implementation="intellij.haskell.navigation.GotoByDeclarationContributor"/>
-        <gotoSymbolContributor
-                implementation="intellij.haskell.navigation.GotoByNameContributor"/>
-        <lang.psiStructureViewFactory language="Haskell"
-                                      implementationClass="intellij.haskell.navigation.HaskellStructureViewFactory"/>
-
-        <quoteHandler fileType="Haskell file" className="intellij.haskell.editor.HaskellQuoteHandler"/>
-
-        <typedHandler implementation="intellij.haskell.editor.HaskellTypedHandler" id="HaskellFile"/>
-
+        <!-- Inspection -->
         <localInspection language="Haskell" shortName="HLintInspection" displayName="Inspection by HLint"
                          groupName="Haskell" enabledByDefault="true" level="WARNING"
                          implementationClass="intellij.haskell.inspection.HLintInspectionTool"/>
 
-        <lang.importOptimizer language="Haskell" implementationClass="intellij.haskell.editor.HaskellImportOptimizer"/>
-
-        <framework.type implementation="intellij.haskell.framework.HaskellFrameworkType"/>
-
-        <extendWordSelectionHandler implementation="intellij.haskell.editor.HaskellExtendWordSelectioner"/>
-
-        <!-- Cabal support -->
-        <fileTypeFactory implementation="intellij.haskell.cabal.CabalFileTypeFactory"/>
-        <lang.commenter language="Cabal" implementationClass="intellij.haskell.cabal.CabalCommenter"/>
-        <lang.syntaxHighlighterFactory language="Cabal"
-                                       implementationClass="intellij.haskell.cabal.highlighting.CabalSyntaxHighlighterFactory"/>
-        <lang.parserDefinition language="Cabal"
-                               implementationClass="intellij.haskell.cabal.lang.parser.CabalParserDefinition"/>
-        <annotator language="Cabal"
-                   implementationClass="intellij.haskell.cabal.highlighting.CabalAnnotator"/>
-        <completion.contributor
-                language="Cabal"
-                implementationClass="intellij.haskell.cabal.completion.CabalCompletionContributor" />
-
+        <!-- Intention -->
         <intentionAction>
             <className>intellij.haskell.intention.AddParensIntention</className>
             <category>Haskell</category>
@@ -238,13 +222,41 @@
             <category>Haskell</category>
         </intentionAction>
 
+        <!-- Stack -->
+        <sdkType implementation="intellij.haskell.sdk.HaskellSdkType"/>
+        <projectImportProvider implementation="intellij.haskell.module.StackProjectImportProvider"/>
+        <projectImportBuilder implementation="intellij.haskell.module.StackProjectImportBuilder"/>
+
+        <!-- Index -->
+        <fileBasedIndex implementation="intellij.haskell.util.index.HaskellFileIndex"/>
+        <fileBasedIndex implementation="intellij.haskell.util.index.HaskellModuleIndex"/>
         <stubIndex implementation="intellij.haskell.psi.stubs.index.HaskellAllNameIndex"/>
 
-        <!-- Spelling support -->
+        <!-- Spell Checker -->
         <spellchecker.support language="Haskell"
                               implementationClass="intellij.haskell.spellchecker.HaskellSpellcheckingStrategy"/>
         <spellchecker.bundledDictionaryProvider
                 implementation="intellij.haskell.spellchecker.HaskellBundledDictionaryProvider"/>
+
+        <!-- Configuration -->
+        <applicationConfigurable instance="intellij.haskell.settings.HaskellConfigurable"/>
+        <applicationService serviceImplementation="intellij.haskell.settings.HaskellSettingsPersistentStateComponent"/>
+        <framework.type implementation="intellij.haskell.framework.HaskellFrameworkType"/>
+        <lang.importOptimizer language="Haskell" implementationClass="intellij.haskell.editor.HaskellImportOptimizer"/>
+
+        <!-- Module -->
+        <internalFileTemplate name="Haskell Module"/>
+        <moduleType id="HASKELL_MODULE" implementationClass="intellij.haskell.module.HaskellModuleType"/>
+        <moduleConfigurationEditorProvider implementation="intellij.haskell.settings.HaskellModuleEditorsProvider"
+                                           order="first"/>
+
+        <!-- Name -->
+        <lang.elementManipulator forClass="intellij.haskell.psi.HaskellNamedElement"
+                                 implementationClass="intellij.haskell.psi.HaskellNamedElementManipulator"/>
+        <lang.namesValidator language="Haskell"
+                             implementationClass="intellij.haskell.refactor.HaskellNamesValidator"/>
+        <renamePsiElementProcessor implementation="intellij.haskell.refactor.HaskellRenameVariableProcessor"/>
+        <vetoRenameCondition implementation="intellij.haskell.refactor.HaskellVetoRenameCondition"/>
     </extensions>
 
     <application-components>
