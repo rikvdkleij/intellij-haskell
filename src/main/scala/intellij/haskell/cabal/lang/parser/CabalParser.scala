@@ -55,7 +55,7 @@ final class CabalPsiBuilder(builder: PsiBuilder)
   )
 
   def library(): Boolean = stanza(
-    "library", LIBRARY, LIBRARY_KEY, noStanzaArgs, libraryField
+    "library", LIBRARY, LIBRARY_KEY, noStanzaArgs, () => libraryField()
   )
 
   def libraryField(): Boolean = (
@@ -67,7 +67,7 @@ final class CabalPsiBuilder(builder: PsiBuilder)
 
   def executable(): Boolean = stanza(
     "executable", EXECUTABLE, EXECUTABLE_KEY,
-    stanzaNameArg(EXECUTABLE_NAME), executableField
+    () => stanzaNameArg(EXECUTABLE_NAME)(), () => executableField()
   )
 
   def executableField(): Boolean = (
@@ -77,48 +77,48 @@ final class CabalPsiBuilder(builder: PsiBuilder)
 
   def testSuite(): Boolean = stanza(
     "test-suite", TEST_SUITE, TEST_SUITE_KEY,
-    stanzaNameArg(TEST_SUITE_NAME), testSuiteField
+    () => stanzaNameArg(TEST_SUITE_NAME)(), () => testSuiteField()
   )
 
   def testSuiteField(): Boolean = (
     buildInfoField()
     || mainIs()
-    || field(TEST_SUITE_TYPE, TYPE_KEY, freeform)
+    || field(TEST_SUITE_TYPE, TYPE_KEY, () => freeform())
   )
 
   def benchmark(): Boolean = stanza(
     "benchmark", BENCHMARK, BENCHMARK_KEY,
-    stanzaNameArg(BENCHMARK_NAME), benchmarkField
+    () => stanzaNameArg(BENCHMARK_NAME)(), () => benchmarkField()
   )
 
   def benchmarkField(): Boolean = (
     buildInfoField()
     || mainIs()
-    || field(BENCHMARK_TYPE, TYPE_KEY, freeform)
+    || field(BENCHMARK_TYPE, TYPE_KEY, () => freeform())
   )
 
   def sourceRepo(): Boolean = stanza(
     "source-repository", SOURCE_REPO, SOURCE_REPO_KEY,
-    stanzaNameArg(SOURCE_REPO_NAME), sourceRepoField
+    () => stanzaNameArg(SOURCE_REPO_NAME)(), () => sourceRepoField()
   )
 
   def sourceRepoField(): Boolean = (
-    field(SOURCE_REPO_TYPE, TYPE_KEY, freeform)
-    || field(SOURCE_REPO_LOCATION, LOCATION_KEY, freeform)
-    || field(SOURCE_REPO_MODULE, MODULE_KEY, freeform)
-    || field(SOURCE_REPO_BRANCH, BRANCH_KEY, freeform)
-    || field(SOURCE_REPO_TAG, TAG_KEY, freeform)
-    || field(SOURCE_REPO_SUBDIR, SUBDIR_KEY, freeform)
+    field(SOURCE_REPO_TYPE, TYPE_KEY, () => freeform())
+    || field(SOURCE_REPO_LOCATION, LOCATION_KEY, () => freeform())
+    || field(SOURCE_REPO_MODULE, MODULE_KEY, () => freeform())
+    || field(SOURCE_REPO_BRANCH, BRANCH_KEY, () => freeform())
+    || field(SOURCE_REPO_TAG, TAG_KEY, () => freeform())
+    || field(SOURCE_REPO_SUBDIR, SUBDIR_KEY, () => freeform())
   )
 
   def flagDecl(): Boolean = stanza(
-    "flag", FLAG_DECL, FLAG, stanzaNameArg(FLAG_NAME), flagField
+    "flag", FLAG_DECL, FLAG, () => stanzaNameArg(FLAG_NAME)(), () => flagField()
   )
 
   def flagField(): Boolean = (
-    field(FLAG_DESCR, DESCRIPTION_KEY, freeform)
-    || field(FLAG_DEFAULT, DEFAULT_KEY, boolValue)
-    || field(FLAG_MANUAL, MANUAL_KEY, boolValue)
+    field(FLAG_DESCR, DESCRIPTION_KEY, () => freeform())
+    || field(FLAG_DEFAULT, DEFAULT_KEY, () => boolValue())
+    || field(FLAG_MANUAL, MANUAL_KEY, () => boolValue())
   )
 
   val noStanzaArgs = () => {}
@@ -275,7 +275,7 @@ final class CabalPsiBuilder(builder: PsiBuilder)
   }
 
   def boolExpr(): Unit = {
-    if (boolLit() || funcCall() || negation() || parens(boolExpr)) {
+    if (boolLit() || funcCall() || negation() || parens(() => boolExpr())) {
       if (oneOf(AND, OR)) {
         advanceLexer()
         boolExpr()
@@ -335,37 +335,37 @@ final class CabalPsiBuilder(builder: PsiBuilder)
     case _ => false
   }
 
-  def buildDepends() = field(BUILD_DEPENDS, BUILD_DEPENDS_KEY, dependencies)
-  def exposedModules() = field(EXPOSED_MODULES, EXPOSED_MODULES_KEY, moduleList)
-  def exposed() = field(EXPOSED, EXPOSED_KEY, freeform)
-  def reexportedModules() = field(REEXPORTED_MODULES, REEXPORTED_MODULES_KEY, reexportedField)
-  def mainIs(): Boolean = field(MAIN_IS, MAIN_IS_KEY, freeform)
+  def buildDepends() = field(BUILD_DEPENDS, BUILD_DEPENDS_KEY, () => dependencies())
+  def exposedModules() = field(EXPOSED_MODULES, EXPOSED_MODULES_KEY, () => moduleList())
+  def exposed() = field(EXPOSED, EXPOSED_KEY, () => freeform())
+  def reexportedModules() = field(REEXPORTED_MODULES, REEXPORTED_MODULES_KEY, () => reexportedField())
+  def mainIs(): Boolean = field(MAIN_IS, MAIN_IS_KEY, () => freeform())
 
   def topLevelField(): Boolean = (
-    field(PKG_NAME, NAME_KEY, freeform)
-    || field(PKG_VERSION, VERSION_KEY, freeform)
-    || field(CABAL_VERSION, CABAL_VERSION_KEY, freeform)
-    || field(BUILD_TYPE, BUILD_TYPE_KEY, freeform)
-    || field(LICENSE, LICENSE_KEY, freeform)
-    || field(LICENSE_FILE, LICENSE_FILE_KEY, freeform)
-    || field(LICENSE_FILES, LICENSE_FILES_KEY, freeform)
-    || field(COPYRIGHT, COPYRIGHT_KEY, freeform)
-    || field(AUTHOR, AUTHOR_KEY, freeform)
-    || field(MAINTAINER, MAINTAINER_KEY, freeform)
-    || field(STABILITY, STABILITY_KEY, freeform)
-    || field(HOMEPAGE, HOMEPAGE_KEY, freeform)
-    || field(BUG_REPORTS, BUG_REPORTS_KEY, freeform)
-    || field(PACKAGE_URL, PACKAGE_URL_KEY, freeform)
-    || field(SYNOPSIS, SYNOPSIS_KEY, freeform)
-    || field(DESCRIPTION, DESCRIPTION_KEY, freeform)
-    || field(CATEGORY, CATEGORY_KEY, freeform)
-    || field(TESTED_WITH, TESTED_WITH_KEY, freeform)
-    || field(DATA_FILES, DATA_FILES_KEY, freeform)
-    || field(DATA_DIR, DATA_DIR_KEY, freeform)
-    || field(EXTRA_SOURCE_FILES, EXTRA_SOURCE_FILES_KEY, freeform)
-    || field(EXTRA_DOC_FILES, EXTRA_DOC_FILES_KEY, freeform)
-    || field(EXTRA_TMP_FILES, EXTRA_TMP_FILES_KEY, freeform)
-    || field(CUSTOM_FIELD, CUSTOM_KEY, freeform)
+    field(PKG_NAME, NAME_KEY, () => freeform())
+    || field(PKG_VERSION, VERSION_KEY, () => freeform())
+    || field(CABAL_VERSION, CABAL_VERSION_KEY, () => freeform())
+    || field(BUILD_TYPE, BUILD_TYPE_KEY, () => freeform())
+    || field(LICENSE, LICENSE_KEY, () => freeform())
+    || field(LICENSE_FILE, LICENSE_FILE_KEY, () => freeform())
+    || field(LICENSE_FILES, LICENSE_FILES_KEY, () => freeform())
+    || field(COPYRIGHT, COPYRIGHT_KEY, () => freeform())
+    || field(AUTHOR, AUTHOR_KEY, () => freeform())
+    || field(MAINTAINER, MAINTAINER_KEY, () => freeform())
+    || field(STABILITY, STABILITY_KEY, () => freeform())
+    || field(HOMEPAGE, HOMEPAGE_KEY, () => freeform())
+    || field(BUG_REPORTS, BUG_REPORTS_KEY, () => freeform())
+    || field(PACKAGE_URL, PACKAGE_URL_KEY, () => freeform())
+    || field(SYNOPSIS, SYNOPSIS_KEY, () => freeform())
+    || field(DESCRIPTION, DESCRIPTION_KEY, () => freeform())
+    || field(CATEGORY, CATEGORY_KEY, () => freeform())
+    || field(TESTED_WITH, TESTED_WITH_KEY, () => freeform())
+    || field(DATA_FILES, DATA_FILES_KEY, () => freeform())
+    || field(DATA_DIR, DATA_DIR_KEY, () => freeform())
+    || field(EXTRA_SOURCE_FILES, EXTRA_SOURCE_FILES_KEY, () => freeform())
+    || field(EXTRA_DOC_FILES, EXTRA_DOC_FILES_KEY, () => freeform())
+    || field(EXTRA_TMP_FILES, EXTRA_TMP_FILES_KEY, () => freeform())
+    || field(CUSTOM_FIELD, CUSTOM_KEY, () => freeform())
     // These fields usually belong in their own stanzas, but it seems they can
     // appear at the top level if there are no other stanzas.
     || buildDepends()
@@ -378,33 +378,33 @@ final class CabalPsiBuilder(builder: PsiBuilder)
 
   def buildInfoField(): Boolean = (
     buildDepends()
-    || field(OTHER_MODULES, OTHER_MODULES_KEY, moduleList)
-    || field(DEFAULT_LANGUAGE, DEFAULT_LANGUAGE_KEY, freeform)
-    || field(OTHER_LANGUAGES, OTHER_LANGUAGES_KEY, identList)
-    || field(DEFAULT_EXTENSIONS, DEFAULT_EXTENSIONS_KEY, identList)
-    || field(OTHER_EXTENSIONS, OTHER_EXTENSIONS_KEY, identList)
-    || field(HS_SOURCE_DIR, HS_SOURCE_DIR_KEY, sourceDirs)
-    || field(HS_SOURCE_DIRS, HS_SOURCE_DIRS_KEY, sourceDirs)
-    || field(EXTENSIONS, EXTENSIONS_KEY, identList)
-    || field(BUILD_TOOLS, BUILD_TOOLS_KEY, freeform)
-    || field(BUILDABLE, BUILDABLE_KEY, freeform)
-    || field(GHC_OPTIONS, GHC_OPTIONS_KEY, ghcOptions)
-    || field(GHC_PROF_OPTIONS, GHC_PROF_OPTIONS_KEY, ghcOptions)
-    || field(GHC_SHARED_OPTIONS, GHC_SHARED_OPTIONS_KEY, ghcOptions)
-    || field(INCLUDES, INCLUDES_KEY, freeform)
-    || field(INSTALL_INCLUDES, INSTALL_INCLUDES_KEY, freeform)
-    || field(INCLUDE_DIRS, INCLUDE_DIRS_KEY, freeform)
-    || field(C_SOURCES, C_SOURCES_KEY, freeform)
-    || field(JS_SOURCES, JS_SOURCES_KEY, freeform)
-    || field(EXTRA_LIBRARIES, EXTRA_LIBRARIES_KEY, freeform)
-    || field(EXTRA_GHCI_LIBRARIES, EXTRA_GHCI_LIBRARIES_KEY, freeform)
-    || field(EXTRA_LIB_DIRS, EXTRA_LIB_DIRS_KEY, freeform)
-    || field(CC_OPTIONS, CC_OPTIONS_KEY, freeform)
-    || field(CPP_OPTIONS, CPP_OPTIONS_KEY, freeform)
-    || field(LD_OPTIONS, LD_OPTIONS_KEY, freeform)
-    || field(PKGCONFIG_DEPENDS, PKGCONFIG_DEPENDS_KEY, freeform)
-    || field(FRAMEWORKS, FRAMEWORKS_KEY, freeform)
-    || field(REQUIRED_SIGNATURES, REQUIRED_SIGNATURES_KEY, freeform)
+    || field(OTHER_MODULES, OTHER_MODULES_KEY, () => moduleList())
+    || field(DEFAULT_LANGUAGE, DEFAULT_LANGUAGE_KEY, () => freeform())
+    || field(OTHER_LANGUAGES, OTHER_LANGUAGES_KEY, () => identList())
+    || field(DEFAULT_EXTENSIONS, DEFAULT_EXTENSIONS_KEY, () => identList())
+    || field(OTHER_EXTENSIONS, OTHER_EXTENSIONS_KEY, () => identList())
+    || field(HS_SOURCE_DIR, HS_SOURCE_DIR_KEY, () => sourceDirs())
+    || field(HS_SOURCE_DIRS, HS_SOURCE_DIRS_KEY, () => sourceDirs())
+    || field(EXTENSIONS, EXTENSIONS_KEY, () => identList())
+    || field(BUILD_TOOLS, BUILD_TOOLS_KEY, () => freeform())
+    || field(BUILDABLE, BUILDABLE_KEY, () => freeform())
+    || field(GHC_OPTIONS, GHC_OPTIONS_KEY, () => ghcOptions())
+    || field(GHC_PROF_OPTIONS, GHC_PROF_OPTIONS_KEY, () => ghcOptions())
+    || field(GHC_SHARED_OPTIONS, GHC_SHARED_OPTIONS_KEY, () => ghcOptions())
+    || field(INCLUDES, INCLUDES_KEY, () => freeform())
+    || field(INSTALL_INCLUDES, INSTALL_INCLUDES_KEY, () => freeform())
+    || field(INCLUDE_DIRS, INCLUDE_DIRS_KEY, () => freeform())
+    || field(C_SOURCES, C_SOURCES_KEY, () => freeform())
+    || field(JS_SOURCES, JS_SOURCES_KEY, () => freeform())
+    || field(EXTRA_LIBRARIES, EXTRA_LIBRARIES_KEY, () => freeform())
+    || field(EXTRA_GHCI_LIBRARIES, EXTRA_GHCI_LIBRARIES_KEY, () => freeform())
+    || field(EXTRA_LIB_DIRS, EXTRA_LIB_DIRS_KEY, () => freeform())
+    || field(CC_OPTIONS, CC_OPTIONS_KEY, () => freeform())
+    || field(CPP_OPTIONS, CPP_OPTIONS_KEY, () => freeform())
+    || field(LD_OPTIONS, LD_OPTIONS_KEY, () => freeform())
+    || field(PKGCONFIG_DEPENDS, PKGCONFIG_DEPENDS_KEY, () => freeform())
+    || field(FRAMEWORKS, FRAMEWORKS_KEY, () => freeform())
+    || field(REQUIRED_SIGNATURES, REQUIRED_SIGNATURES_KEY, () => freeform())
   )
 
   /** Should be called after all valid fields have been tried. */
