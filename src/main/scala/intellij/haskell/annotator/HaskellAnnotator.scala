@@ -51,7 +51,7 @@ class HaskellAnnotator extends ExternalAnnotator[PsiFile, LoadResult] {
   private final val NotInScopePattern = """.* Not in scope:[^‘`]+[‘`](.+)[’']""".r
   private final val NotInScopePattern2 = """.* not in scope: (.+)""".r
   private final val UseAloneInstancesImportPattern = """.* To import instances alone, use: (.+)""".r
-  private final val RedundantImportPattern = """.* The import of ‘(.*)’ from module ‘(.*)’ is redundant""".r
+  private final val RedundantImportPattern = """.* The import of [‘`](.*)[’'] from module [‘`](.*)[’'] is redundant""".r
 
   private final val PerhapsYouMeantNamePattern = """.*[`‘]([^‘’'`]+)['’]""".r
   private final val PerhapsYouMeantMultiplePattern = """.*ot in scope: (.+) Perhaps you meant one of these: (.+)""".r
@@ -388,7 +388,7 @@ class RedundantImportAction(moduleName: String, redundants: String) extends Hask
   def removeRedundants(spec: String, redundants: String): String = {
     val specArr = spec.stripPrefix("(").stripSuffix(")").split(",").map(_.trim)
     val redundantsArr = redundants.split(",").map(_.trim)
-    specArr.filter(e => !redundantsArr.contains(e.replace("(..)", ""))).mkString(", ")
+    specArr.filterNot(e => redundantsArr.contains(e.replace("(..)", ""))).mkString(", ")
   }
 
   override def invoke(project: Project, editor: Editor, file: PsiFile): Unit = {
