@@ -1,16 +1,15 @@
 package intellij.haskell.cabal.completion
 
 import com.intellij.codeInsight.completion._
-import com.intellij.codeInsight.lookup.LookupElement
+import com.intellij.codeInsight.lookup.{LookupElement, LookupElementBuilder}
 import com.intellij.patterns.PlatformPatterns
 import com.intellij.psi.PsiElement
 import com.intellij.util.ProcessingContext
+import intellij.haskell.HaskellIcons
 import intellij.haskell.cabal.CabalLanguage
 import intellij.haskell.cabal.lang.psi
 import intellij.haskell.cabal.lang.psi.CabalPsiUtil
-import com.haskforce.constants.GhcLanguageExtensions
-
-import scala.collection.JavaConverters._
+import intellij.haskell.external.component.HaskellComponentsManager.findGlobalProjectInfo
 
 final class CabalCompletionContributor extends CompletionContributor {
 
@@ -22,20 +21,15 @@ final class CabalCompletionContributor extends CompletionContributor {
   )
 
   private def newProvider() = new CompletionProvider[CompletionParameters]() {
-    override def addCompletions
-        (parameters: CompletionParameters,
-         context: ProcessingContext,
-         result: CompletionResultSet)
-        : Unit
-        = new CompletionWrapper(parameters, context, result).run()
+    override def addCompletions(parameters: CompletionParameters,
+                                context: ProcessingContext,
+                                result: CompletionResultSet): Unit
+    = new CompletionWrapper(parameters, context, result).run()
   }
 
-  private class CompletionWrapper(
-    parameters: CompletionParameters,
-    context: ProcessingContext,
-    result: CompletionResultSet
-  ) {
-
+  private class CompletionWrapper(parameters: CompletionParameters,
+                                  context: ProcessingContext,
+                                  result: CompletionResultSet) {
     def run(): Unit = {
       if (completeExtensions()) return
     }
@@ -44,16 +38,23 @@ final class CabalCompletionContributor extends CompletionContributor {
 
     def completeExtensions(): Boolean = {
       CabalPsiUtil.getFieldContext(position).collect {
-        case el: psi.impl.ExtensionsImpl => filterExtensions(el).foreach { result.addElement }
+        case el: psi.impl.ExtensionsImpl => filterExtensions(el).foreach {
+          result.addElement
+        }
       }.isDefined
     }
 
     /** Skip already provided extensions or their negation. */
-    private def filterExtensions(el: psi.impl.ExtensionsImpl): Iterator[LookupElement] = {
-      val currentExts = el.getValue.toSet.flatMap(GhcLanguageExtensions.get)
-      val negExts = currentExts.flatMap(GhcLanguageExtensions.negate)
-      val skipExts = (currentExts ++ negExts).map(_.toString)
-      GhcLanguageExtensions.asLookupElements.iterator.filter(x => !skipExts.contains(x.getLookupString))
+    private def filterExtensions(el: psi.impl.ExtensionsImpl): Iterable[LookupElement] = {
+      val currentExts = el.getValue.toSet
+      val negExts = currentExts.map(v => if (v.startsWith("No")) v.substring(2) else "No" + v)
+      val skipExts = currentExts ++ negExts
+      findGlobalProjectInfo(position.getProject)
+        .map(_.languageExtensions
+          .filter(!skipExts.contains(_))
+          .map(n => LookupElementBuilder.create(n).withIcon(HaskellIcons.HaskellSmallLogo)))
+        .getOrElse(Iterable())
     }
   }
+
 }

@@ -9,14 +9,15 @@ import com.intellij.psi.search.GlobalSearchScope
 import com.intellij.psi.{PsiFile, PsiManager}
 import com.intellij.util.indexing._
 import com.intellij.util.io.EnumeratorStringDescriptor
+import intellij.haskell.psi.HaskellPsiUtil
 import intellij.haskell.{HaskellFile, HaskellFileType}
 
 object HaskellModuleIndex {
-  private val HASKELL_MODULE_INDEX: ID[String, Void] = ID.create("HaskellModuleIndex")
-  private val INDEX_VERSION = 0
-  private val KEY_DESCRIPTOR = new EnumeratorStringDescriptor
+  private val HaskellModuleIndex: ID[String, Void] = ID.create("HaskellModuleIndex")
+  private val IndexVersion = 0
+  private val KeyDescriptor = new EnumeratorStringDescriptor
 
-  val HASKELL_MODULE_FILTER = new FileBasedIndex.InputFilter() {
+  val HaskellModuleFilter = new FileBasedIndex.InputFilter() {
     override def acceptInput(file: VirtualFile): Boolean = {
       //noinspection ObjectEquality
       file.getFileType == HaskellFileType.INSTANCE && file.isInLocalFileSystem
@@ -37,7 +38,7 @@ object HaskellModuleIndex {
     }).filter(_ != null).toList
   }
 
-  def getVirtualFilesByModuleName(moduleName: String, searchScope: GlobalSearchScope): util.Collection[VirtualFile] = FileBasedIndex.getInstance.getContainingFiles(HASKELL_MODULE_INDEX, moduleName, searchScope)
+  def getVirtualFilesByModuleName(moduleName: String, searchScope: GlobalSearchScope): util.Collection[VirtualFile] = FileBasedIndex.getInstance.getContainingFiles(HaskellModuleIndex, moduleName, searchScope)
 }
 
 class HaskellModuleIndex extends ScalarIndexExtension[String] {
@@ -45,25 +46,23 @@ class HaskellModuleIndex extends ScalarIndexExtension[String] {
   class MyDataIndexer extends DataIndexer[String, Void, FileContent] {
     override def map(inputData: FileContent): util.Map[String, Void] = {
       val psiFile = inputData.getPsiFile
-      val moduleName = psiFile match {
-        case file: HaskellFile if file.getModuleName.nonEmpty => file.getModuleName.get
-        case _ => null
+      HaskellPsiUtil.findModuleDeclaration(psiFile).flatMap(decl => Option(decl.getModid)).map(_.getText) match {
+        case Some(n) => Collections.singletonMap(n, null)
+        case _ => Collections.emptyMap[String, Void]
       }
-      if (moduleName == null) return Collections.emptyMap[String, Void]
-      Collections.singletonMap(moduleName, null)
     }
   }
   private val INDEXER = new MyDataIndexer
 
   override def getIndexer = INDEXER
 
-  override def getName = HaskellModuleIndex.HASKELL_MODULE_INDEX
+  override def getName = HaskellModuleIndex.HaskellModuleIndex
 
-  override def getKeyDescriptor = HaskellModuleIndex.KEY_DESCRIPTOR
+  override def getKeyDescriptor = HaskellModuleIndex.KeyDescriptor
 
-  override def getInputFilter = HaskellModuleIndex.HASKELL_MODULE_FILTER
+  override def getInputFilter = HaskellModuleIndex.HaskellModuleFilter
 
   override def dependsOnFileContent = true
 
-  override def getVersion = HaskellModuleIndex.INDEX_VERSION
+  override def getVersion = HaskellModuleIndex.IndexVersion
 }

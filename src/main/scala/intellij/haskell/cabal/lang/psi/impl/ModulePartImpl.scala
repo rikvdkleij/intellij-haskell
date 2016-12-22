@@ -8,6 +8,7 @@ import com.intellij.psi.impl.source.tree.LeafPsiElement
 import com.intellij.psi.search.GlobalSearchScope
 import com.intellij.psi.{PsiDirectory, PsiElement, PsiReference}
 import intellij.haskell.cabal.lang.psi._
+import intellij.haskell.psi.HaskellPsiUtil
 import intellij.haskell.util.index.{HaskellFileIndex, HaskellModuleIndex}
 
 import scala.collection.JavaConverters._
@@ -39,7 +40,7 @@ trait ModulePartImpl extends CabalNamedElementImpl {
       case s => s + "."
     }
     HaskellFileIndex.findProjectProductionPsiFiles(getProject).flatMap { file =>
-      file.getModuleName match {
+      HaskellPsiUtil.findModuleDeclaration(file).flatMap(decl => Option(decl.getModid)).map(_.getText) match {
         case None => None
         case Some(name) if name.startsWith(text) =>
           DOT_REGEX.split(name).take(numParts + 1).lastOption
@@ -80,7 +81,7 @@ trait ModulePartImpl extends CabalNamedElementImpl {
 
     files.map { file =>
       // Get the last "part" of the module decl if the name matches.
-      file.getModuleElement.filter(_.getText == qualifiedName).flatMap(
+      HaskellPsiUtil.findModuleDeclaration(file).flatMap(decl => Option(decl.getModid)).filter(_.getText == qualifiedName).flatMap(
         qconid => Option(qconid.getLastChild)
       )
     }.collectFirst {
@@ -88,7 +89,7 @@ trait ModulePartImpl extends CabalNamedElementImpl {
       case Some(x) => x
     }.orElse {
       // If there are no matches, just guess at the first file found, if exists.
-      if (files.isEmpty) None else Option(files.head)
+      files.headOption
     }.orNull
   }
 }
