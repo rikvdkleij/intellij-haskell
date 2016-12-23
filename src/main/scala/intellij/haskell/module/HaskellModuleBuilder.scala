@@ -188,7 +188,7 @@ object HaskellModuleBuilder {
           val libDirectory = getIdeaHaskellLibDirectory(project)
           FileUtil.delete(libDirectory)
           FileUtil.createDirectory(libDirectory)
-          StackCommandLine.runCommand(Seq("list-dependencies", "--test"), project, timeoutInMillis = 10.seconds.toMillis).map(_.getStdoutLines).foreach(dependencyLines => {
+          StackCommandLine.runCommand(Seq("list-dependencies", "--test"), project, timeoutInMillis = 60.seconds.toMillis).map(_.getStdoutLines).foreach(dependencyLines => {
             val packageName = HaskellProjectUtil.findCabalPackageName(project)
             val packages = getPackages(project, dependencyLines.asScala).filterNot(p => packageName.contains(p.name))
             progressIndicator.setFraction(InitialProgressStep)
