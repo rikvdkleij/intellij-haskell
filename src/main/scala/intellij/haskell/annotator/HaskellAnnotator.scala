@@ -47,20 +47,20 @@ class HaskellAnnotator extends ExternalAnnotator[PsiFile, LoadResult] {
   private final val UseLanguageExtensionPattern3 = """.* You need (\w+) to.*""".r
   private final val UseLanguageExtensionPattern4 = """.* Try enabling (\w+).*""".r
   private final val UseLanguageExtensionPattern5 = """.* Did you mean to enable (\w+)\?""".r
-  private final val DefinedButNotUsedPattern = """.* Defined but not used: [‘`](.+)[’']""".r
-  private final val NotInScopePattern = """.* Not in scope:[^‘`]+[‘`](.+)[’']""".r
+  private final val DefinedButNotUsedPattern = """.* Defined but not used: [‘’'`](.+)[‘’'`]""".r
+  private final val NotInScopePattern = """.* Not in scope:[^‘’'`]+[‘’'`](.+)[‘’'`]""".r
   private final val NotInScopePattern2 = """.* not in scope: (.+)""".r
   private final val UseAloneInstancesImportPattern = """.* To import instances alone, use: (.+)""".r
-  private final val RedundantImportPattern = """.* The import of [‘`](.*)[’'] from module [‘`](.*)[’'] is redundant""".r
+  private final val RedundantImportPattern = """.* The import of [‘’'`](.*)[‘’'`] from module [‘’'`](.*)[‘’'`] is redundant""".r
 
-  private final val PerhapsYouMeantNamePattern = """.*[`‘]([^‘’'`]+)['’]""".r
+  private final val PerhapsYouMeantNamePattern = """.*[‘’'`]([^‘’'`]+)[‘’'`]""".r
   private final val PerhapsYouMeantMultiplePattern = """.*ot in scope: (.+) Perhaps you meant one of these: (.+)""".r
   private final val PerhapsYouMeantSinglePattern = """.*ot in scope: (.+) Perhaps you meant (.+)""".r
-  private final val PerhapsYouMeantImportedFromPattern = """.*[`‘]([^‘’'`]+)['’] \(imported from (.*)\)""".r
-  private final val PerhapsYouMeantLocalPattern = """.*[`‘]([^‘’'`]+)['’].*""".r
+  private final val PerhapsYouMeantImportedFromPattern = """.*[‘’'`]([^‘’'`]+)[‘’'`] \(imported from (.*)\)""".r
+  private final val PerhapsYouMeantLocalPattern = """.*[‘’'`]([^‘’'`]+)[‘’'`].*""".r
 
   private final val HolePattern = """.* Found hole: (.+) Where: .*""".r
-  private final val HolePattern2 = """.* Found hole [`‘]([^‘’'`]+)['’] with type: ([^ ]+) .*""".r
+  private final val HolePattern2 = """.* Found hole [‘’'`]([^‘’'`]+)[‘’'`] with type: ([^ ]+) .*""".r
 
   override def collectInformation(psiFile: PsiFile, editor: Editor, hasErrors: Boolean): PsiFile = {
     (psiFile, Option(psiFile.getOriginalFile.getVirtualFile)) match {
