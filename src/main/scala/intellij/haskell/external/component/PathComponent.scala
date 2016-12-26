@@ -9,7 +9,7 @@ import intellij.haskell.external.commandLine.{CommandLine, StackCommandLine}
 import scala.io.Source
 
 object PathComponent {
-  private final val PackagePattern = """.* (.*) [==|installed].*""".r
+  private final val PackageNamePattern = """.* (.*) [==|installed].*""".r
   private final val ResolverPattern = """.*/(lts-\d+\.\d+)/.*\n""".r
 
   def getIdeaPath(project: Project): String = {
@@ -39,7 +39,7 @@ object PathComponent {
   private def parseCabalConfigFile(configFilePath: String): Option[Iterable[String]] = {
     try {
       Some(Source.fromFile(configFilePath).getLines().filter(!_.startsWith("--")).map {
-        case PackagePattern(packageName) => packageName
+        case PackageNamePattern(packageName) => packageName
         case _ => ""
       }.filter(!_.isEmpty).toList)
     } catch {
