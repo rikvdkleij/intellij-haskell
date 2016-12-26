@@ -9,7 +9,7 @@ import intellij.haskell.external.commandLine.{CommandLine, StackCommandLine}
 import scala.io.Source
 
 object PathComponent {
-  private final val PackagePattern = """.* (.*) ==.*""".r
+  private final val PackagePattern = """.* (.*) [==|installed].*""".r
   private final val ResolverPattern = """.*/(lts-\d+\.\d+)/.*\n""".r
 
   def getAllAvailablePackageNames(project: Project): Option[Iterable[String]] = {
