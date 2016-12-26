@@ -21,7 +21,7 @@ object PathComponent {
         if (b) {
           parseCabalConfigFile(configFilePath)
         } else {
-          Some(Seq())
+          Some(List())
         }
       })
     } else {
@@ -34,7 +34,7 @@ object PathComponent {
       Some(Source.fromFile(configFilePath).getLines().filter(!_.startsWith("--")).map {
         case PackagePattern(packageName) => packageName
         case _ => ""
-      }.filter(!_.isEmpty).toSeq)
+      }.filter(!_.isEmpty).toList)
     } catch {
       case _: Exception => None
     }
