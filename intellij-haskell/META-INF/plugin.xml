@@ -330,7 +330,7 @@
 
         <action id="Haskell.DownloadCabalConfigFile" class="intellij.haskell.action.DownloadCabalConfigFile"
                 text="Download Cabal config file"
-                description="Download Cabal config file and refresh package names to global project info">
+                description="Download Cabal config file and refresh all available package names in global project info">
             <add-to-group group-id="ToolsMenu" anchor="last"/>
         </action>
 

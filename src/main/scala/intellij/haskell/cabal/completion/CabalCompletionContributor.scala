@@ -5,10 +5,10 @@ import com.intellij.codeInsight.lookup.{LookupElement, LookupElementBuilder}
 import com.intellij.patterns.PlatformPatterns
 import com.intellij.psi.PsiElement
 import com.intellij.util.ProcessingContext
-import intellij.haskell.{HaskellIcons, HaskellNotificationGroup}
+import intellij.haskell.HaskellIcons
 import intellij.haskell.cabal.CabalLanguage
 import intellij.haskell.cabal.lang.psi
-import intellij.haskell.cabal.lang.psi.{CabalPsiUtil, Dependency}
+import intellij.haskell.cabal.lang.psi.CabalPsiUtil
 import intellij.haskell.external.component.HaskellComponentsManager.findGlobalProjectInfo
 
 final class CabalCompletionContributor extends CompletionContributor {
