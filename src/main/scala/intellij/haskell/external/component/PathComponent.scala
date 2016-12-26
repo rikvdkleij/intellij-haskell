@@ -12,12 +12,19 @@ object PathComponent {
   private final val PackagePattern = """.* (.*) [==|installed].*""".r
   private final val ResolverPattern = """.*/(lts-\d+\.\d+)/.*\n""".r
 
+  def getIdeaPath(project: Project): String = {
+    project.getBasePath + File.separator + ".idea"
+  }
+
+  def getConfigFilePath(project: Project): String = {
+    getIdeaPath(project) + File.separator + "cabal.config"
+  }
+
   def getAllAvailablePackageNames(project: Project): Option[Iterable[String]] = {
-    val ideaPath = project.getBasePath + File.separator + ".idea"
-    val configFilePath = ideaPath + File.separator + "cabal.config"
+    val configFilePath = getConfigFilePath(project)
     val configFile = new File(configFilePath)
     if (!configFile.exists()) {
-      downloadCabalConfig(project, ideaPath).flatMap(b => {
+      downloadCabalConfig(project).flatMap(b => {
         if (b) {
           parseCabalConfigFile(configFilePath)
         } else {
@@ -40,10 +47,10 @@ object PathComponent {
     }
   }
 
-  private def downloadCabalConfig(project: Project, ideaPath: String): Option[Boolean] = {
+  def downloadCabalConfig(project: Project): Option[Boolean] = {
     getResolver(project).map(resolver => {
       val url = s"https://www.stackage.org/$resolver/cabal.config"
-      val stdErr = CommandLine.runProgram(Some(project), ideaPath, "wget", Seq("--no-check-certificate", url), 10000, captureOutputToLog = true, logErrorAsInfo = true).map(_.getStderr)
+      val stdErr = CommandLine.runProgram(Some(project), getIdeaPath(project), "wget", Seq("--no-check-certificate", url), 10000, captureOutputToLog = true, logErrorAsInfo = true).map(_.getStderr)
 
       if (stdErr.exists(_.contains("ERROR"))) {
         HaskellNotificationGroup.logErrorBalloonEvent(project, s"Can not download cabal config file for stack resolver $resolver.")
@@ -52,6 +59,14 @@ object PathComponent {
         true
       }
     })
+  }
+
+  def removeCabalConfig(project: Project): Unit = {
+    val configFilePath = getConfigFilePath(project)
+    val configFile = new File(configFilePath)
+    if (configFile.exists()) {
+      configFile.delete()
+    }
   }
 
   private def getResolver(project: Project): Option[String] = {

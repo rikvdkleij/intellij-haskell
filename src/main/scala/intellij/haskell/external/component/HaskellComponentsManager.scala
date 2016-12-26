@@ -72,6 +72,10 @@ object HaskellComponentsManager {
     GlobalProjectInfoComponent.findGlobalProjectInfo(project)
   }
 
+  def refreshGlobalProjectInfo(project: Project): Unit = {
+    GlobalProjectInfoComponent.refreshGlobalProjectInfo(project)
+  }
+
   def loadHaskellFile(psiFile: PsiFile): LoadResult = {
     LoadComponent.load(psiFile)
   }

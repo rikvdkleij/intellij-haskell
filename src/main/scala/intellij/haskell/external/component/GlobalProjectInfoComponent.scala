@@ -101,6 +101,10 @@ private[component] object GlobalProjectInfoComponent {
   def invalidate(project: Project): Unit = {
     Cache.invalidate(Key(project))
   }
+
+  def refreshGlobalProjectInfo(project: Project): Unit = {
+    Cache.refresh(Key(project))
+  }
 }
 
 case class GlobalProjectInfo(availableProductionLibraryModuleNames: Iterable[String] = Iterable(),
