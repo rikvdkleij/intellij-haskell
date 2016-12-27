@@ -343,6 +343,13 @@
                     description="Hoogle for (selected) words">
                 <keyboard-shortcut first-keystroke="shift ctrl h" keymap="$default"/>
             </action>
+
+            <action id="Haskell.GenerateExports"
+                    class="intellij.haskell.action.GenerateExportsAction"
+                    text="Generate Exports"
+                    description="Generate exports with haskell-tools for currently opened file">
+                <keyboard-shortcut first-keystroke="ctrl alt g" keymap="$default"/>
+            </action>
             <add-to-group group-id="CodeEditorViewGroup" anchor="last"/>
         </group>
 
