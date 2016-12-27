@@ -13,6 +13,10 @@ This plugin depends mainly on Stack and Intero. It can create new Stack projects
  
 Any feedback is welcome!!
 
+# Installing the plugin
+You can install this plugin using the [Jetbrains plugin repository](https://plugins.jetbrains.com/idea/plugin/8258-intellij-haskell):
+  `Settings`/`Plugins`/`Browse repositories`/`Intellij-Haskell`
+
 
 # Features (1.0.0-beta3)
 - Syntax highlighting;
