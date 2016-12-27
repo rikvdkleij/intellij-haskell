@@ -15,6 +15,7 @@ fmap
 foldable
 foldl
 foldr
+forall
 frac
 frob
 functor
@@ -23,6 +24,7 @@ hashmap
 hcollapse
 hlift
 homogenous
+hspec
 hsubparser
 intercalate
 laarhoven
