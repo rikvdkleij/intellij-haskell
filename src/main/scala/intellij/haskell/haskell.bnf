@@ -95,7 +95,7 @@ module_declaration          ::= MODULE modid onl deprecated_warn_pragma? onl (ex
 
 private body                ::= import_declarations top_declarations (NEWLINE | DIRECTIVE)*
 import_declarations         ::= ((import_declaration | cfiles_pragma | DIRECTIVE) onl)*
-private top_declarations    ::= (top_declaration NEWLINE+)* top_declaration?
+private top_declarations    ::= (top_declaration (NEWLINE | DIRECTIVE)+)* top_declaration?
 
 import_declaration          ::= IMPORT onls source_pragma? import_package_name? onls import_qualified? onls modid onls import_qualified_as? onls import_spec? NEWLINE?   {methods=[getModuleName] pin=1}
 import_qualified            ::= VAR_ID      // "qualified"
@@ -197,7 +197,7 @@ gtycon                      ::= QUOTE? q_name | LEFT_PAREN RIGHT_ARROW RIGHT_PAR
 private constrs             ::= (("forall" | "∀") q_name DOT)? constr (onls VERTICAL_BAR onls constr)*
 private constr              ::= (type_signature | constr1 | constr2 | constr3 | constr4)
 constr1                     ::= unpack_nounpack_pragma? q_name onls unpack_nounpack_pragma? onls LEFT_BRACE onls (fielddecl ((onls COMMA)? onls fielddecl)*)? onls RIGHT_BRACE
-constr2                     ::= unpack_nounpack_pragma? (q_name | LEFT_PAREN q_name* RIGHT_PAREN | LEFT_BRACKET q_name* RIGHT_BRACKET) onls (unpack_nounpack_pragma? onls atype onls)*  // Base.hs: data () = () and GHC.Types.hs: data [] a = [] | a : [a]
+constr2                     ::= unpack_nounpack_pragma? (q_name | LEFT_PAREN q_name* RIGHT_PAREN | LEFT_BRACKET q_name* RIGHT_BRACKET) onls (unpack_nounpack_pragma? onls atype)*  // Base.hs: data () = () and GHC.Types.hs: data [] a = [] | a : [a]
 constr3                     ::= unpack_nounpack_pragma? sub_constr2 onls unpack_nounpack_pragma? q_name onls unpack_nounpack_pragma? onls sub_constr2
 constr4                     ::= unpack_nounpack_pragma? q_name+ unpack_nounpack_pragma? q_name
 sub_constr2                 ::= (btype | q_name atype)
