@@ -255,8 +255,8 @@ object HaskellPsiImplUtil {
 
       def getPresentableText: String = {
         HaskellPsiUtil.findHighestDeclarationElementParent(namedElement) match {
-          case Some(de) if de.getIdentifierElements.exists(_ == namedElement) => HaskellPsiUtil.findDeclarationElementParent(namedElement).
-            orElse(HaskellPsiUtil.findExpressionParent(namedElement)).map(ne => StringUtil.removeCommentsAndWhiteSpaces(ne.getText)).
+          case Some(de) if de.getIdentifierElements.exists(_ == namedElement) => HaskellPsiUtil.findDeclarationElementParent(namedElement).map(de => getDeclarationInfo(de)).
+            orElse(HaskellPsiUtil.findExpressionParent(namedElement).map(e => StringUtil.removeCommentsAndWhiteSpaces(e.getText))).
             getOrElse(s"${namedElement.getName} `in` ${getDeclarationInfo(de)}")
           case _ => getContainingLineText(namedElement).getOrElse(namedElement.getName).trim
         }
