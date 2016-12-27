@@ -17,9 +17,12 @@
             <li>BREAKING CHANGE: Haskell Stack SDK has to be created by selecting Stack binary itself instead of containing folder</li>
             <li>Switched from file index to stub index for navigation. If after upgrading plugin IntelliJ indexing hangs, you have to choose `Invalidate Caches/Restart...` in `File`-menu</li>
             <li>Added Hoogle action</li>
-            <li>Added navigation by Hoogle</li>
+            <li>Added navigation powered by Hoogle</li>
             <li>Support for Hindent formatting of selection</li>
             <li>Add and remove parens around expression (@zjhmale)</li>
+            <li>Improved Cabal file support (@zjhmale)</li>
+            <li>Support for Stack 1.3</li>
+            <li>Added dialog in `Help` menu which shows all Haskell tools used by plugin</li>
         </ul>
         <p>1.0.0-beta3</p>
         <ul>
