@@ -14,7 +14,7 @@ object HaskellToolComponent {
   def generateExports(project: Project, moduleName: String): Unit = {
     StackCommandLine.runCommand(getCommandOptions(project, moduleName, "GenerateExports"), project).foreach(output => {
       if (output.getStderr.nonEmpty) {
-        if (output.getStderr.toLowerCase.contains("couldn't find file: ht-refact")) {
+        if (output.getStderr.toLowerCase.contains("executable named ht-refact not found on path")) {
           HaskellNotificationGroup.logWarningBalloonEvent(project, "Please use `cabal install haskell-tools-cli` to install haskell-tools command line interface first")
         }
       }
