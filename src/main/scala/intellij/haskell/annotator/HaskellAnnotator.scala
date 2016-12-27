@@ -48,7 +48,7 @@ class HaskellAnnotator extends ExternalAnnotator[PsiFile, LoadResult] {
   private final val UseLanguageExtensionPattern4 = """.* Try enabling (\w+).*""".r
   private final val UseLanguageExtensionPattern5 = """.* Did you mean to enable (\w+)\?""".r
   private final val DefinedButNotUsedPattern = """.* Defined but not used: [‘`](.+)[’']""".r
-  private final val NotInScopePattern = """.* Not in scope:[^‘`]+[‘`](.+)[’']""".r
+  private final val NotInScopePattern = """.*Not in scope:[^‘`]+[‘`](.+)[’']""".r
   private final val NotInScopePattern2 = """.* not in scope: (.+)""".r
   private final val UseAloneInstancesImportPattern = """.* To import instances alone, use: (.+)""".r
   private final val RedundantImportPattern = """.* The import of [‘`](.*)[’'] from module [‘`](.*)[’'] is redundant""".r
