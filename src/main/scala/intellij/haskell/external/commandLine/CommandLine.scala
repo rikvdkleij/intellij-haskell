@@ -48,10 +48,10 @@ object CommandLine {
 
     val processOutput = processHandler.runProcess(timeout.toInt, true)
     if (processOutput.isTimeout) {
-      HaskellNotificationGroup.logErrorBalloonEvent(project, s"Timeout while executing `${cmd.getCommandLineString}`")
+      HaskellNotificationGroup.logErrorBalloonEvent(project, s"Timeout while executing <b>${cmd.getCommandLineString}</b>")
       None
     } else if (!captureOutputToLog && !processOutput.getStderrLines.isEmpty) {
-      HaskellNotificationGroup.logErrorEvent(project, s"Error while executing` ${cmd.getCommandLineString}`:  ${processOutput.getStderr}")
+      HaskellNotificationGroup.logErrorEvent(project, s"Error while executing `${cmd.getCommandLineString}`:  ${processOutput.getStderr}")
       Option(processOutput)
     } else {
       Option(processOutput)

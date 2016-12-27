@@ -55,7 +55,7 @@ class HaskellDocumentationProvider extends AbstractDocumentationProvider {
     StackCommandLine.runCommand(Seq("exec", "--", HaskellDocsName) ++ args, namedElement.getContainingFile.getProject).map(output => {
       if (output.getStderr.nonEmpty) {
         if (output.getStderr.toLowerCase.contains("couldn't find file: haskell-docs")) {
-          HaskellNotificationGroup.logWarningBalloonEvent(namedElement.getProject, "No documentation because `haskell-docs` build still has to be started or build is not finished yet")
+          HaskellNotificationGroup.logWarningBalloonEvent(namedElement.getProject, s"No documentation because <b>$HaskellDocsName</b> build still has to be started or build is not finished yet")
         }
       }
       output.getStdout

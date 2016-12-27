@@ -80,7 +80,7 @@ object HindentFormatAction {
         formattedSourceCode.foreach {
           case Left(e) =>
             HaskellNotificationGroup.logErrorEvent(project, e)
-            HaskellNotificationGroup.logErrorBalloonEvent(project, s"Error while formatting by `$HindentName`. See Event Log for errors")
+            HaskellNotificationGroup.logErrorBalloonEvent(project, s"Error while formatting by <b>$HindentName</b>. See Event Log for errors")
           case Right(sourceCode) =>
             selectionModel match {
               case Some(sm) => HaskellFileUtil.saveFileWithPartlyNewContent(psiFile.getProject, virtualFile, sourceCode, sm)
@@ -88,7 +88,7 @@ object HindentFormatAction {
             }
         }
 
-      case _ => HaskellNotificationGroup.logWarningEvent(project, "Can not format code because path to `hindent` is not configured in IntelliJ")
+      case _ => HaskellNotificationGroup.logWarningEvent(project, s"Can not format code because path to `$HindentName` is not configured in IntelliJ")
     }
   }
 
