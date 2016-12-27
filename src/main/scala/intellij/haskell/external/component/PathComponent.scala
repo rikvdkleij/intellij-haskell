@@ -11,7 +11,8 @@ import scala.io.Source
 
 object PathComponent {
   private final val PackageNamePattern = """.* (.*) [==|installed].*""".r
-  private final val ResolverPattern = """.*/(lts-\d+\.\d+)/.*\n""".r
+  private final val LocalPkgdbResolverPattern = """.*/(lts-\d+\.\d+)/.*\n""".r
+  private final val CabalConfigFileResolverPattern = """.*/(lts-\d+\.\d+)""".r
 
   def getIdeaPath(project: Project): String = {
     project.getBasePath + File.separator + ".idea"
@@ -25,19 +26,36 @@ object PathComponent {
     val configFilePath = getConfigFilePath(project)
     val configFile = new File(configFilePath)
     if (!configFile.exists()) {
-      downloadCabalConfig(project).flatMap(b => {
+      downloadAndParseCabalConfigFile(project)
+    } else {
+      val needUpdate = for {
+        oldResolver <- getResolverFromCabalConfigFile(project)
+        newResolver <- getResolverFromLocalPkgdb(project)
+      } yield oldResolver != newResolver
+
+      needUpdate.flatMap(b => {
         if (b) {
-          parseCabalConfigFile(configFilePath)
+          removeCabalConfig(project)
+          downloadAndParseCabalConfigFile(project)
         } else {
-          Some(List())
+          parseCabalConfigFile(project)
         }
       })
-    } else {
-      parseCabalConfigFile(configFilePath)
     }
   }
 
-  private def parseCabalConfigFile(configFilePath: String): Option[Iterable[String]] = {
+  private def downloadAndParseCabalConfigFile(project: Project): Option[Iterable[String]] = {
+    downloadCabalConfig(project).flatMap(b => {
+      if (b) {
+        parseCabalConfigFile(project)
+      } else {
+        Some(List())
+      }
+    })
+  }
+
+  private def parseCabalConfigFile(project: Project): Option[Iterable[String]] = {
+    val configFilePath = getConfigFilePath(project)
     try {
       Some(Source.fromFile(configFilePath).getLines().filter(!_.startsWith("--")).map {
         case PackageNamePattern(packageName) => packageName
@@ -49,7 +67,7 @@ object PathComponent {
   }
 
   def downloadCabalConfig(project: Project): Option[Boolean] = {
-    getResolver(project).map(resolver => {
+    getResolverFromLocalPkgdb(project).map(resolver => {
       val url = s"https://www.stackage.org/$resolver/cabal.config"
       try {
         val processOutput = CommandLine.runProgram(Some(project), getIdeaPath(project), "wget", Seq("--no-check-certificate", url), 10000, captureOutputToLog = true, logErrorAsInfo = true)
@@ -77,12 +95,26 @@ object PathComponent {
     }
   }
 
-  private def getResolver(project: Project): Option[String] = {
+  private def getResolverFromLocalPkgdb(project: Project): Option[String] = {
     StackCommandLine.runCommand(Seq("path", "--local-pkg-db"), project).flatMap(output => {
       output.getStdout match {
-        case ResolverPattern(resolver) => Some(resolver)
+        case LocalPkgdbResolverPattern(resolver) => Some(resolver)
         case _ => None
       }
     })
   }
+
+  private def getResolverFromCabalConfigFile(project: Project): Option[String] = {
+    try {
+      Source.fromFile(getConfigFilePath(project)).getLines().toList.headOption.flatMap(l => {
+        l match {
+          case CabalConfigFileResolverPattern(resolver) => Some(resolver)
+          case _ => None
+        }
+      })
+    } catch {
+      case _: Exception => None
+    }
+  }
+
 }
