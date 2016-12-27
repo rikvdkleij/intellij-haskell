@@ -16,6 +16,8 @@ object HaskellToolComponent {
       if (output.getStderr.nonEmpty) {
         if (output.getStderr.toLowerCase.contains("executable named ht-refact not found on path")) {
           HaskellNotificationGroup.logWarningBalloonEvent(project, "Please use <b>cabal install haskell-tools-cli</b> to install haskell-tools command line interface first")
+        } else {
+          HaskellNotificationGroup.logErrorBalloonEvent(project, output.getStderr)
         }
       }
     })
