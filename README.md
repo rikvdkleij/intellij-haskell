@@ -18,7 +18,7 @@ You can install this plugin using the [Jetbrains plugin repository](https://plug
   `Settings`/`Plugins`/`Browse repositories`/`Intellij-Haskell`
 
 
-# Features (1.0.0-beta3)
+# Features (1.0.0-beta4)
 - Syntax highlighting;
 - Error/warning highlighting;
 - Find usages of identifiers;
@@ -32,13 +32,14 @@ You can install this plugin using the [Jetbrains plugin repository](https://plug
 - Structure view;
 - Navigate to declaration (called `Navigate`/`Class` in IntelliJ menu);
 - Navigate to identifier (called `Navigate`/`Symbol` in IntelliJ menu);
+- Navigate to declaration or identifier powered by Hoogle (called `Navigate`/`Navigation by Hoogle` in IntelliJ menu);
 - Inspection by HLint;
-- Quick fixes for HLint suggestions with help of Refactor tool (`apply-refact` package);
+- Quick fixes for HLint suggestions;
 - Show error action to view formatted message. Useful in case message consists of multiple lines (Ctrl-F10, Meta-F10 on Mac OSX);
 - Intention actions to add language extension (depends on compiler error), add top-level type signature (depends on compiler warning) or to add import of identifier;
-- Code formatting with Hindent and/or Stylish-haskell;
+- Code formatting with Hindent and/or Stylish-haskell. Formatting of selected code by Hindent;
 
-# Getting started (1.0.0-beta3)
+# Getting started (1.0.0-beta4)
 - Install this plugin. Make sure no other Haskell plugin is installed in IntelliJ;
 - Install latest version of [Stack](https://github.com/commercialhaskell/stack)
 - Install latest versions of [Hindent](https://github.com/chrisdone/hindent) and [Stylish-Haskell](https://github.com/jaspervdj/stylish-haskell). 
@@ -47,10 +48,10 @@ You can install this plugin using the [Jetbrains plugin repository](https://plug
 - Make sure your Stack project builds without errors. Preferably by using: `stack build --test --haddock --fast`;
 - After your project is built, import project in IntelliJ by using `File`/`New`/`Project from Existing Sources..` from the IntelliJ menu;
 - In the `New Project` wizard select `Import project from external module` and check `Haskell Stack importer`;
-- In next page of wizard configure `Project SDK` by configuring `Haskell Tool Stack` and selecting path to folder of `stack`, e.g. `/usr/local/bin`;
+- In next page of wizard configure `Project SDK` by configuring `Haskell Tool Stack` with selecting path to `stack` binary, e.g. `/usr/local/bin/stack`;
 - Finish wizard and project will be opened;
 - Wizard will try to automatically configure which folders are sources, test and which to exclude;
-- Plugin will automatically build Intero, Haskell-docs, HLint en Refactor to prevent incompatibility issues. Those tools are built against Stackage release defined in project's `stack.yaml`;
+- Plugin will automatically build Intero, Haskell-docs and HLint to prevent incompatibility issues. Those tools are built against Stackage release defined in project's `stack.yaml`;
   If you want to use later version of tool, you will have to build tool manually in project's folder by using `stack build`;
 - Check `Project structure`/`Project settings`/`Modules` which folders to exclude (like `.stack-work` and `dist`) and which folders are `Source` and `Test` (normally `src` and `test`);
 - Plugin will automatically download library sources (since Stack version 1.2.1 also for test dependencies). They will be added as source libraries to module.
@@ -65,8 +66,8 @@ You can install this plugin using the [Jetbrains plugin repository](https://plug
 1. Plugin does not support multi package projects;
 2. IntelliJ has a nice terminal plugin;
 3. Developed plugin on Linux. Also tested on OSX;
-4. Windows is not supported. Maybe it will work okay but I can not test it;
-5. When navigating to declaration (called `Class` in IntelliJ menu) goes slow, it helps to increase heap size of IntelliJ;    
+4. Windows is not supported;
+5. `About Haskell project` in `Help` menu shows which Haskell GHC/tools are used by plugin for project;
 
 # How to build project
 1. Clone this project;
