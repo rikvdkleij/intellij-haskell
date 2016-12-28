@@ -1149,7 +1149,7 @@ public class HaskellParser implements PsiParser, LightPsiParser {
   }
 
   /* ********************************************************** */
-  // ttype | q_name COLON_COLON q_name |
+  // q_name COLON_COLON q_name | ttype |
   //                                   q_name+ |
   //                                   q_name LEFT_PAREN q_name atype+ RIGHT_PAREN |
   //                                   q_name LEFT_PAREN q_name+ RIGHT_PAREN q_name*
@@ -1157,8 +1157,8 @@ public class HaskellParser implements PsiParser, LightPsiParser {
     if (!recursion_guard_(b, l, "clazz")) return false;
     boolean r;
     Marker m = enter_section_(b, l, _NONE_, HS_CLAZZ, "<clazz>");
-    r = ttype(b, l + 1);
-    if (!r) r = clazz_1(b, l + 1);
+    r = clazz_0(b, l + 1);
+    if (!r) r = ttype(b, l + 1);
     if (!r) r = clazz_2(b, l + 1);
     if (!r) r = clazz_3(b, l + 1);
     if (!r) r = clazz_4(b, l + 1);
@@ -1167,8 +1167,8 @@ public class HaskellParser implements PsiParser, LightPsiParser {
   }
 
   // q_name COLON_COLON q_name
-  private static boolean clazz_1(PsiBuilder b, int l) {
-    if (!recursion_guard_(b, l, "clazz_1")) return false;
+  private static boolean clazz_0(PsiBuilder b, int l) {
+    if (!recursion_guard_(b, l, "clazz_0")) return false;
     boolean r;
     Marker m = enter_section_(b);
     r = q_name(b, l + 1);

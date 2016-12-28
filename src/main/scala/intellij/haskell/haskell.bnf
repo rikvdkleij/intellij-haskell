@@ -227,7 +227,7 @@ type_family_type            ::= (q_name | LEFT_PAREN? q_names COLON_COLON? onls 
 ccontext                     ::= LEFT_PAREN onls clazz (onls COMMA onls clazz)* onls RIGHT_PAREN |
                                   clazz
 
-clazz                       ::=  ttype | q_name COLON_COLON q_name |
+clazz                       ::=  q_name COLON_COLON q_name | ttype |
                                   q_name+ |
                                   q_name LEFT_PAREN q_name atype+ RIGHT_PAREN |
                                   q_name LEFT_PAREN q_name+ RIGHT_PAREN q_name*
