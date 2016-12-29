@@ -234,6 +234,7 @@
         <fileBasedIndex implementation="intellij.haskell.util.index.HaskellFileIndex"/>
         <fileBasedIndex implementation="intellij.haskell.util.index.HaskellModuleIndex"/>
         <stubIndex implementation="intellij.haskell.psi.stubs.index.HaskellAllNameIndex"/>
+        <stubElementTypeHolder class="intellij.haskell.psi.HaskellTypes"/>
 
         <!-- Spell Checker -->
         <spellchecker.support language="Haskell"
