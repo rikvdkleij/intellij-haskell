@@ -1,6 +1,6 @@
 package intellij.haskell.external.component
 
-import java.io.File
+import java.io.{File, FileNotFoundException}
 import java.net.URL
 
 import com.intellij.openapi.project.Project
@@ -11,17 +11,13 @@ import org.apache.commons.io.FileUtils
 
 import scala.io.Source
 
-object PathComponent {
+object CabalConfigComponent {
   private final val PackageNamePattern = """.* (.*) [==|installed].*""".r
   private final val LocalPkgdbResolverPattern = """.*/(lts-\d+\.\d+)/.*\n""".r
   private final val CabalConfigFileResolverPattern = """.*/(lts-\d+\.\d+)""".r
 
-  def getIdeaPath(project: Project): String = {
-    project.getBasePath + File.separator + ".idea"
-  }
-
   def getConfigFilePath(project: Project): String = {
-    getIdeaPath(project) + File.separator + "cabal.config"
+    project.getBasePath + File.separator + "cabal.config"
   }
 
   def getAllAvailablePackageNames(project: Project): Option[Iterable[String]] = {
@@ -51,7 +47,7 @@ object PathComponent {
       if (b) {
         parseCabalConfigFile(project)
       } else {
-        Some(List())
+        None
       }
     })
   }
@@ -64,7 +60,9 @@ object PathComponent {
         case _ => ""
       }.filter(!_.isEmpty).toList)
     } catch {
-      case _: Exception => None
+      case _: Exception =>
+        HaskellNotificationGroup.logErrorEvent(project, s"Can not parse `cabal.config` file.")
+        None
     }
   }
 
@@ -80,6 +78,7 @@ object PathComponent {
         true
       } catch {
         case _: Exception =>
+          HaskellNotificationGroup.logErrorEvent(project, s"Can not download cabal config file for stack resolver `$resolver`.")
           HaskellNotificationGroup.logErrorBalloonEvent(project, s"Can not download cabal config file for stack resolver <b>$resolver</b>, please check your network environment.")
           false
       }

@@ -55,7 +55,7 @@ private[component] object GlobalProjectInfoComponent {
             val prodModuleNames = allModuleNames.filterNot(_.startsWith("Test."))
             for {
               active <- isNoImplicitPreludeGlobalActive(project)
-              packageNames <- PathComponent.getAllAvailablePackageNames(project)
+              packageNames <- CabalConfigComponent.getAllAvailablePackageNames(project)
             } yield GlobalProjectInfo(prodModuleNames, allModuleNames, active, getLanguageExtensions(project), packageNames)
           }
         }
@@ -100,10 +100,6 @@ private[component] object GlobalProjectInfoComponent {
 
   def invalidate(project: Project): Unit = {
     Cache.invalidate(Key(project))
-  }
-
-  def refreshGlobalProjectInfo(project: Project): Unit = {
-    Cache.refresh(Key(project))
   }
 }
 
