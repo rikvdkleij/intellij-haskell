@@ -1,4 +1,4 @@
-# IntelliJ plugin for Haskell
+# ![logo](logo/icon_intellij_haskell_32.png) IntelliJ plugin for Haskell
 
 [![Join the chat at https://gitter.im/intellij-haskell/Lobby](https://badges.gitter.im/intellij-haskell/Lobby.svg)](https://gitter.im/intellij-haskell/Lobby?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge&utm_content=badge)
 
