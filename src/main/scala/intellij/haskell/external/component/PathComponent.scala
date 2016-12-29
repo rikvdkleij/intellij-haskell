@@ -1,11 +1,13 @@
 package intellij.haskell.external.component
 
 import java.io.File
+import java.net.URL
 
-import com.intellij.execution.process.ProcessNotCreatedException
 import com.intellij.openapi.project.Project
+import com.intellij.util.io.URLUtil
 import intellij.haskell.HaskellNotificationGroup
-import intellij.haskell.external.commandLine.{CommandLine, StackCommandLine}
+import intellij.haskell.external.commandLine.StackCommandLine
+import org.apache.commons.io.FileUtils
 
 import scala.io.Source
 
@@ -68,22 +70,19 @@ object PathComponent {
 
   def downloadCabalConfig(project: Project): Option[Boolean] = {
     getResolverFromLocalPkgdb(project).map(resolver => {
-      val url = s"https://www.stackage.org/$resolver/cabal.config"
-      try {
-        val processOutput = CommandLine.runProgram(Some(project), getIdeaPath(project), "wget", Seq("--no-check-certificate", url), 10000, captureOutputToLog = true, logErrorAsInfo = true)
+      val url = new URL(s"https://www.stackage.org/$resolver/cabal.config")
+      val configFilePath = getConfigFilePath(project)
+      val targetFile = new File(configFilePath)
 
-        if (processOutput.exists(_.getExitCode != 0)) {
-          HaskellNotificationGroup.logErrorBalloonEvent(project, s"Can not download cabal config file for stack resolver $resolver, please check your network environment")
-          false
-        } else {
-          true
-        }
+      try {
+        val in = URLUtil.openStream(url)
+        FileUtils.copyInputStreamToFile(in, targetFile)
+        true
       } catch {
-        case e: ProcessNotCreatedException =>
-          HaskellNotificationGroup.logErrorBalloonEvent(project, e.getMessage)
+        case _: Exception =>
+          HaskellNotificationGroup.logErrorBalloonEvent(project, s"Can not download cabal config file for stack resolver <b>$resolver</b>, please check your network environment.")
           false
       }
-
     })
   }
 

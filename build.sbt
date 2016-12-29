@@ -6,6 +6,7 @@ lazy val commonSettings = Seq(
 val guava = "com.google.guava" % "guava" % "20.0"
 val scalaTest = "org.scalatest" % "scalatest_2.12" % "3.0.1" % "test"
 val sprayJson = "io.spray" %% "spray-json" % "1.3.2"
+val commonsIO = "commons-io" % "commons-io" % "2.5"
 
 lazy val intellijHaskell = (project in file(".")).
   enablePlugins(SbtIdeaPlugin).
@@ -17,6 +18,7 @@ lazy val intellijHaskell = (project in file(".")).
     libraryDependencies += guava,
     libraryDependencies += scalaTest,
     libraryDependencies += sprayJson,
+    libraryDependencies += commonsIO,
     unmanagedSourceDirectories in Compile += baseDirectory.value / "gen",
     unmanagedJars in Compile += baseDirectory.value / "idea"
   )
