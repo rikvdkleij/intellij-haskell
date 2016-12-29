@@ -43,13 +43,8 @@ object CabalConfigComponent {
   }
 
   private def downloadAndParseCabalConfigFile(project: Project): Option[Iterable[String]] = {
-    downloadCabalConfig(project).flatMap(b => {
-      if (b) {
-        parseCabalConfigFile(project)
-      } else {
-        None
-      }
-    })
+    downloadCabalConfig(project)
+    parseCabalConfigFile(project)
   }
 
   private def parseCabalConfigFile(project: Project): Option[Iterable[String]] = {
@@ -60,14 +55,14 @@ object CabalConfigComponent {
         case _ => ""
       }.filter(!_.isEmpty).toList)
     } catch {
-      case _: Exception =>
+      case _: FileNotFoundException =>
         HaskellNotificationGroup.logErrorEvent(project, s"Can not parse `cabal.config` file.")
         None
     }
   }
 
-  def downloadCabalConfig(project: Project): Option[Boolean] = {
-    getResolverFromLocalPkgdb(project).map(resolver => {
+  def downloadCabalConfig(project: Project): Unit = {
+    getResolverFromLocalPkgdb(project).foreach(resolver => {
       val url = new URL(s"https://www.stackage.org/$resolver/cabal.config")
       val configFilePath = getConfigFilePath(project)
       val targetFile = new File(configFilePath)
@@ -75,12 +70,10 @@ object CabalConfigComponent {
       try {
         val in = URLUtil.openStream(url)
         FileUtils.copyInputStreamToFile(in, targetFile)
-        true
       } catch {
         case _: Exception =>
           HaskellNotificationGroup.logErrorEvent(project, s"Can not download cabal config file for stack resolver `$resolver`.")
           HaskellNotificationGroup.logErrorBalloonEvent(project, s"Can not download cabal config file for stack resolver <b>$resolver</b>, please check your network environment.")
-          false
       }
     })
   }
