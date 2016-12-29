@@ -32,7 +32,7 @@ object HLintComponent {
     StackCommandLine.runCommand(Seq("exec", "--", HlintName, "--json", psiFile.getOriginalFile.getVirtualFile.getPath), project).map(output => {
       if (output.getStderr.nonEmpty) {
         if (output.getStderr.toLowerCase.contains("couldn't find file: hlint")) {
-          HaskellNotificationGroup.logWarningBalloonEvent(project, s"No Hlint suggestions because <b>$HlintName</b> build still has to be started or build is not finished yet")
+          HaskellNotificationGroup.logWarningBalloonEvent(project, s"No Hlint suggestions because <b>$HlintName</b> build still has to be started or build is not finished yet.")
         }
       }
       deserializeHLintInfo(project, output.getStdout)

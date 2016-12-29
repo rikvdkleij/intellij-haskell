@@ -80,7 +80,7 @@ object HaskellEditorUtil {
       HintManager.HIDE_BY_ANY_KEY | HintManager.HIDE_BY_TEXT_CHANGE | HintManager.HIDE_BY_SCROLLING, 0, false)
   }
 
-  def showInfoMessageBallon(message: String, editor: Editor, inCenterOfEditor: Boolean): Unit = {
+  def showInfoMessageBalloon(message: String, editor: Editor, inCenterOfEditor: Boolean): Unit = {
     UIUtil.invokeLaterIfNeeded(() => {
       val balloon = JBPopupFactory.getInstance().createHtmlTextBalloonBuilder(message, MessageType.INFO, null).setCloseButtonEnabled(true).setHideOnAction(true).createBalloon()
       if (inCenterOfEditor) {
