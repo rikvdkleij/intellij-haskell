@@ -80,7 +80,7 @@ object HindentFormatAction {
         formattedSourceCode.foreach {
           case Left(e) =>
             HaskellNotificationGroup.logErrorEvent(project, e)
-            HaskellNotificationGroup.logErrorBalloonEvent(project, s"Error while formatting by <b>$HindentName</b>. See Event Log for errors")
+            HaskellNotificationGroup.logErrorBalloonEvent(project, s"Error while formatting by <b>$HindentName</b>. See Event Log for errors.")
           case Right(sourceCode) =>
             selectionModel match {
               case Some(sm) => HaskellFileUtil.saveFileWithPartlyNewContent(psiFile.getProject, virtualFile, sourceCode, sm)
