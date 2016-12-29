@@ -24,6 +24,7 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.projectRoots._
 import com.intellij.openapi.projectRoots.impl.SdkConfigurationUtil
 import com.intellij.openapi.roots.{OrderRootType, ProjectRootManager}
+import com.intellij.openapi.util.SystemInfo
 import com.intellij.openapi.vfs.VirtualFile
 import intellij.haskell.external.commandLine.CommandLine
 import intellij.haskell.{HaskellIcons, HaskellNotificationGroup}
@@ -31,7 +32,13 @@ import org.jdom.Element
 
 class HaskellSdkType extends SdkType("Haskell Tool Stack SDK") {
 
-  override def suggestHomePath(): String = "/usr/bin"
+  override def suggestHomePath(): String = {
+    if (SystemInfo.isLinux)
+      "/usr/bin/stack"
+    else if (SystemInfo.isMac)
+      "/usr/local/bin/stack"
+    else null
+  }
 
   override def suggestSdkName(currentSdkName: String, sdkHome: String): String = "Haskell Tool Stack"
 
