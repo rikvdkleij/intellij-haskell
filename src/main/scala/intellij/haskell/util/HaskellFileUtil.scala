@@ -16,7 +16,7 @@
 
 package intellij.haskell.util
 
-import java.io.File
+import java.io.{File, FileOutputStream, InputStream}
 
 import com.intellij.openapi.application.{ApplicationManager, ModalityState}
 import com.intellij.openapi.command.CommandProcessor
@@ -24,6 +24,7 @@ import com.intellij.openapi.editor.{Document, SelectionModel}
 import com.intellij.openapi.fileEditor.FileDocumentManager
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.roots.ProjectRootManager
+import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.psi.{PsiFile, PsiManager}
 import intellij.haskell.HaskellFile
@@ -130,5 +131,19 @@ object HaskellFileUtil {
       } yield loop(Some(file), rootPath)
     }.headOption
     result.flatten
+  }
+
+  def copyStreamToFile(stream: InputStream, file: File): File = {
+    try {
+      val outputStream = new FileOutputStream(file)
+      try {
+        FileUtil.copy(stream, outputStream)
+      } finally {
+        outputStream.close()
+      }
+    } finally {
+      stream.close()
+    }
+    file
   }
 }

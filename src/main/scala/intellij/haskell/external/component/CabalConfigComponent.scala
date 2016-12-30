@@ -7,7 +7,7 @@ import com.intellij.openapi.project.Project
 import com.intellij.util.io.URLUtil
 import intellij.haskell.HaskellNotificationGroup
 import intellij.haskell.external.commandLine.StackCommandLine
-import org.apache.commons.io.FileUtils
+import intellij.haskell.util.HaskellFileUtil
 
 import scala.io.Source
 
@@ -69,7 +69,7 @@ object CabalConfigComponent {
 
       try {
         val in = URLUtil.openStream(url)
-        FileUtils.copyInputStreamToFile(in, targetFile)
+        HaskellFileUtil.copyStreamToFile(in, targetFile)
       } catch {
         case _: Exception =>
           HaskellNotificationGroup.logErrorEvent(project, s"Can not download cabal config file for stack resolver `$resolver`.")
