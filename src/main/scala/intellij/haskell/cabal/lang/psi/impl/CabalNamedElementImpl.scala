@@ -9,7 +9,7 @@ trait CabalNamedElementImpl extends PsiNameIdentifierOwner with NavigationItem {
 
   def getVariants: Array[AnyRef]
 
-  def resolve(): PsiElement
+  def resolve(): Option[PsiElement]
 
   override def getReference: PsiReference = {
     new CabalReference(this, getTextRange)

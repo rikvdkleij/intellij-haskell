@@ -10,5 +10,5 @@ final class CabalReference(el: CabalNamedElementImpl, textRange: TextRange)
 
   override def getVariants: Array[AnyRef] = el.getVariants
 
-  override def resolve(): PsiElement = el.resolve()
+  override def resolve(): PsiElement = el.resolve().orNull
 }
