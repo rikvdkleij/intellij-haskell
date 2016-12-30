@@ -43,34 +43,36 @@ trait ModulePartImpl extends CabalNamedElementImpl {
       HaskellPsiUtil.findModuleDeclaration(file).flatMap(decl => Option(decl.getModid)).map(_.getText) match {
         case None => None
         case Some(name) if name.startsWith(text) =>
-          DOT_REGEX.split(name).take(numParts + 1).lastOption
+          DotRegex.split(name).take(numParts + 1).lastOption
         case _ => None
       }
     }.toArray[AnyRef]
   }
 
-  override def resolve(): PsiElement = {
+  override def resolve(): Option[PsiElement] = {
     val lastPart = getContext.getLastPart
     if (this != lastPart) resolveToModuleDir(lastPart) else resolveToModuleDecl()
   }
 
-  private val DOT_REGEX = Pattern.compile("\\.")
+  private val DotRegex = Pattern.compile("\\.")
 
-  private def resolveToModuleDir(lastPart: ModulePart): PsiDirectory = {
-    // Find the part's position from the end so we can walk up the directory tree.
-    val revPos = getParent.getChildren.reverse.indexOf(this)
-    if (revPos == -1) throw new AssertionError(s"$getText not in parent (${getParent.getText})")
-    // Iterate up the directory tree 'revPos' times.
+  private def resolveToModuleDir(lastPart: ModulePart): Option[PsiDirectory] = {
+    lastPart.resolve().flatMap(lp => {
+      // Find the part's position from the end so we can walk up the directory tree.
+      val revPos = getParent.getChildren.reverse.indexOf(this)
+      if (revPos == -1) throw new AssertionError(s"$getText not in parent (${getParent.getText})")
+      // Iterate up the directory tree 'revPos' times.
 
-    Stream.iterate(
-      lastPart.resolve().getContainingFile.getContainingDirectory, revPos
-    )(_.getParent).lastOption.filter(
-      // Ensure that the found directory name matches our element.
-      dir => dir.getName == getText
-    ).orNull
+      Stream.iterate(
+        lp.getContainingFile.getContainingDirectory, revPos
+      )(_.getParent).lastOption.filter(
+        // Ensure that the found directory name matches our element.
+        dir => dir.getName == getText
+      )
+    })
   }
 
-  private def resolveToModuleDecl(): PsiElement = {
+  private def resolveToModuleDecl(): Option[PsiElement] = {
     // If the module part IS the last part, resolve to its file's module decl.
     val qualifiedName = getParent.getText
     val scope = Option(ModuleUtilCore.findModuleForPsiElement(this)) match {
@@ -90,6 +92,6 @@ trait ModulePartImpl extends CabalNamedElementImpl {
     }.orElse {
       // If there are no matches, just guess at the first file found, if exists.
       files.headOption
-    }.orNull
+    }
   }
 }
