@@ -7,8 +7,8 @@ import com.intellij.psi.PsiElement
 import com.intellij.util.ProcessingContext
 import intellij.haskell.HaskellIcons
 import intellij.haskell.cabal.CabalLanguage
-import intellij.haskell.cabal.lang.psi
-import intellij.haskell.cabal.lang.psi.CabalPsiUtil
+import intellij.haskell.cabal.lang.psi.impl.ExtensionsImpl
+import intellij.haskell.cabal.lang.psi.{BuildDepends, CabalPsiUtil}
 import intellij.haskell.external.component.HaskellComponentsManager.findGlobalProjectInfo
 
 final class CabalCompletionContributor extends CompletionContributor {
@@ -31,27 +31,40 @@ final class CabalCompletionContributor extends CompletionContributor {
                                   context: ProcessingContext,
                                   result: CompletionResultSet) {
     def run(): Unit = {
-      if (completeExtensions()) return
+      completeExtensions()
     }
 
     lazy val position: PsiElement = parameters.getPosition
 
-    def completeExtensions(): Boolean = {
-      CabalPsiUtil.getFieldContext(position).collect {
-        case el: psi.impl.ExtensionsImpl => filterExtensions(el).foreach {
+    def completeExtensions(): Unit = {
+      CabalPsiUtil.getFieldContext(position).foreach {
+        case el: ExtensionsImpl => filterExtensions(el).foreach {
           result.addElement
         }
-      }.isDefined
+        case el: BuildDepends => filterPackageNames(el).foreach {
+          result.addElement
+        }
+        case _ => ()
+      }
     }
 
-    /** Skip already provided extensions or their negation. */
-    private def filterExtensions(el: psi.impl.ExtensionsImpl): Iterable[LookupElement] = {
+    private def filterExtensions(el: ExtensionsImpl): Iterable[LookupElement] = {
       val currentExts = el.getValue.toSet
       val negExts = currentExts.map(v => if (v.startsWith("No")) v.substring(2) else "No" + v)
+      // Skip already provided extensions or their negation.
       val skipExts = currentExts ++ negExts
       findGlobalProjectInfo(position.getProject)
         .map(_.languageExtensions
           .filter(!skipExts.contains(_))
+          .map(n => LookupElementBuilder.create(n).withIcon(HaskellIcons.HaskellSmallLogo)))
+        .getOrElse(Iterable())
+    }
+
+    private def filterPackageNames(el: BuildDepends): Iterable[LookupElement] = {
+      val skipPackageNames = el.getPackageNames.toSet
+      findGlobalProjectInfo(position.getProject)
+        .map(_.allAvailablePackageNames
+          .filter(!skipPackageNames.contains(_))
           .map(n => LookupElementBuilder.create(n).withIcon(HaskellIcons.HaskellSmallLogo)))
         .getOrElse(Iterable())
     }

@@ -53,7 +53,10 @@ private[component] object GlobalProjectInfoComponent {
           val project = key.project
           StackReplsManager.getProjectRepl(project).findAllAvailableLibraryModules.flatMap { allModuleNames =>
             val prodModuleNames = allModuleNames.filterNot(_.startsWith("Test."))
-            isNoImplicitPreludeGlobalActive(project).map(active => GlobalProjectInfo(prodModuleNames, allModuleNames, active, getLanguageExtensions(project)))
+            for {
+              active <- isNoImplicitPreludeGlobalActive(project)
+              packageNames <- CabalConfigComponent.getAllAvailablePackageNames(project)
+            } yield GlobalProjectInfo(prodModuleNames, allModuleNames, active, getLanguageExtensions(project), packageNames)
           }
         }
 
@@ -103,4 +106,5 @@ private[component] object GlobalProjectInfoComponent {
 case class GlobalProjectInfo(availableProductionLibraryModuleNames: Iterable[String] = Iterable(),
                              allAvailableLibraryModuleNames: Iterable[String] = Iterable(),
                              noImplicitPreludeActive: Boolean = false,
-                             languageExtensions: Iterable[String] = Iterable())
+                             languageExtensions: Iterable[String] = Iterable(),
+                             allAvailablePackageNames: Iterable[String] = Iterable())
