@@ -178,8 +178,9 @@
 
         <!-- Navigation -->
         <gotoClassContributor implementation="intellij.haskell.navigation.GotoByDeclarationContributor"/>
-        <gotoSymbolContributor
-                implementation="intellij.haskell.navigation.GotoByNameContributor"/>
+        <gotoSymbolContributor implementation="intellij.haskell.navigation.GotoByNameContributor"/>
+        <definitionsSearch implementation="intellij.haskell.navigation.InstanceDeclarationsSearch" />
+        <gotoTargetRendererProvider implementation="intellij.haskell.navigation.HaskellGotoTargetRendererProvider"/>
 
         <!-- Annotator -->
         <externalAnnotator language="Haskell"

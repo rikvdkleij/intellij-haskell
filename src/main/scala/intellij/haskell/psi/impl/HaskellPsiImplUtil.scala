@@ -222,8 +222,8 @@ object HaskellPsiImplUtil {
   private abstract class HaskellItemPresentation(haskellElement: PsiElement) extends ItemPresentation {
 
     def getLocationString: String = {
-      val file = haskellElement.getContainingFile
-      HaskellPsiUtil.findModuleDeclaration(file).flatMap(_.getModuleName).getOrElse("Unknown module")
+      val file = Option(haskellElement.getContainingFile)
+      file.flatMap(f => HaskellPsiUtil.findModuleDeclaration(f).flatMap(_.getModuleName)).getOrElse("Unknown module")
     }
 
     def getIcon(unused: Boolean): Icon = {
@@ -254,12 +254,7 @@ object HaskellPsiImplUtil {
     new HaskellItemPresentation(namedElement) {
 
       def getPresentableText: String = {
-        HaskellPsiUtil.findHighestDeclarationElementParent(namedElement) match {
-          case Some(de) if de.getIdentifierElements.exists(_ == namedElement) => HaskellPsiUtil.findDeclarationElementParent(namedElement).map(de => getDeclarationInfo(de)).
-            orElse(HaskellPsiUtil.findExpressionParent(namedElement).map(e => StringUtil.removeCommentsAndWhiteSpaces(e.getText))).
-            getOrElse(s"${namedElement.getName} `in` ${getDeclarationInfo(de)}")
-          case _ => getContainingLineText(namedElement).getOrElse(namedElement.getName).trim
-        }
+        getItemPresentableText(namedElement)
       }
 
       override def getIcon(unused: Boolean): Icon = {
@@ -277,13 +272,28 @@ object HaskellPsiImplUtil {
     }
   }
 
+  def getItemPresentableText(element: PsiElement): String = {
+    HaskellPsiUtil.findNamedElement(element) match {
+      case Some(namedElement) =>
+        HaskellPsiUtil.findHighestDeclarationElementParent(element) match {
+          case Some(de) if de.getIdentifierElements.exists(_ == namedElement) => HaskellPsiUtil.findDeclarationElementParent(namedElement).map(de => getDeclarationInfo(de)).
+            orElse(HaskellPsiUtil.findExpressionParent(namedElement).map(e => StringUtil.removeCommentsAndWhiteSpaces(e.getText))).
+            getOrElse(s"${namedElement.getName} `in` ${getDeclarationInfo(de)}")
+          case Some(de) if HaskellPsiUtil.findExpressionParent(namedElement).isDefined => getContainingLineText(namedElement).getOrElse(namedElement.getName).trim
+          case Some(de) => s"${namedElement.getName} `in` ${getDeclarationInfo(de)}"
+          case _ => namedElement.getName
+        }
+      case _ => element.getText
+    }
+  }
+
   private def getDeclarationInfo(declarationElement: HaskellDeclarationElement): String = {
     val info = declarationElement match {
       case md: HaskellModuleDeclaration => s"module  ${md.getModid.getName}"
       case de => StringUtil.shortenHaskellDeclaration(de.getText)
     }
     if (info.length > 50) {
-      getFirstLineDeclarationText(declarationElement) + " ..."
+      getFirstLineDeclarationText(declarationElement) + "..."
     } else {
       info
     }

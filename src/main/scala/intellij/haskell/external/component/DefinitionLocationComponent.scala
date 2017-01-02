@@ -33,10 +33,11 @@ private[component] object DefinitionLocationComponent {
   private final val Executor = Executors.newCachedThreadPool()
 
   private final val LocAtPattern = """(.+)\:\(([\d]+),([\d]+)\)-\(([\d]+),([\d]+)\)""".r
+  private final val PackageModulePattern = """.+\:([\w\.\-]+)""".r
 
   private case class Key(startLineNr: Int, startColumnNr: Int, endLineNr: Int, endColumnNr: Int, expression: String, psiFile: PsiFile)
 
-  private case class Result(location: Either[String, Option[DefinitionLocation]])
+  private case class Result(location: Either[String, Option[LocationInfo]])
 
   private final val Cache = CacheBuilder.newBuilder()
     .build(
@@ -84,16 +85,17 @@ private[component] object DefinitionLocationComponent {
           StackReplsManager.getProjectRepl(project).findLocationInfoFor(psiFile, key.startLineNr, key.startColumnNr, key.endLineNr, endColumnNr, key.expression)
         }
 
-        private def createDefinitionLocationInfo(output: String): Option[DefinitionLocation] = {
+        private def createDefinitionLocationInfo(output: String): Option[LocationInfo] = {
           output match {
-            case LocAtPattern(filePath, startLineNr, startColumnNr, endLineNr, endColumnNr) => Some(DefinitionLocation(filePath.trim, startLineNr.toInt, startColumnNr.toInt, endLineNr.toInt, endColumnNr.toInt))
+            case LocAtPattern(filePath, startLineNr, startColumnNr, endLineNr, endColumnNr) => Some(DefinitionLocationInfo(filePath.trim, startLineNr.toInt, startColumnNr.toInt, endLineNr.toInt, endColumnNr.toInt))
+            case PackageModulePattern(moduleName) => Some(ModuleLocationInfo(moduleName))
             case _ => None
           }
         }
       }
     )
 
-  def findDefinitionLocation(psiElement: PsiElement): Option[DefinitionLocation] = {
+  def findDefinitionLocation(psiElement: PsiElement): Option[LocationInfo] = {
     val qualifiedNameElement = HaskellPsiUtil.findQualifiedNameElement(psiElement)
     for {
       qne <- qualifiedNameElement
@@ -109,7 +111,7 @@ private[component] object DefinitionLocationComponent {
     Cache.asMap().asScala.filter(_._1.psiFile == psiFile).keys.foreach(Cache.invalidate)
   }
 
-  private def find(psiFile: PsiFile, startPosition: LineColumnPosition, endPosition: LineColumnPosition, expression: String): Option[DefinitionLocation] = {
+  private def find(psiFile: PsiFile, startPosition: LineColumnPosition, endPosition: LineColumnPosition, expression: String): Option[LocationInfo] = {
     val key = Key(startPosition.lineNr, startPosition.columnNr, endPosition.lineNr, endPosition.columnNr, expression, psiFile)
     try {
       Cache.get(key).location match {
@@ -126,4 +128,8 @@ private[component] object DefinitionLocationComponent {
   }
 }
 
-case class DefinitionLocation(filePath: String, startLineNr: Int, startColumnNr: Int, endLineNr: Int, endColumnNr: Int)
+sealed trait LocationInfo
+
+case class DefinitionLocationInfo(filePath: String, startLineNr: Int, startColumnNr: Int, endLineNr: Int, endColumnNr: Int) extends LocationInfo
+
+case class ModuleLocationInfo(moduleName: String) extends LocationInfo

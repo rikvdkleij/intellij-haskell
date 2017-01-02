@@ -91,6 +91,13 @@ object HaskellPsiUtil {
     }
   }
 
+  def findImportHidingDeclarationParent(psiElement: PsiElement): Option[HaskellImportHidingSpec] = {
+    psiElement match {
+      case e: HaskellImportHidingSpec => Some(e)
+      case e => Option(PsiTreeUtil.findFirstParent(e, ImportHidingSpecCondition)).map(_.asInstanceOf[HaskellImportHidingSpec])
+    }
+  }
+
   def findTopDeclarationParent(psiElement: PsiElement): Option[HaskellTopDeclaration] = {
     psiElement match {
       case e: HaskellTopDeclaration => Some(e)

@@ -44,7 +44,7 @@ object HaskellComponentsManager {
     BrowseModuleComponent.findAllTopLevelModuleIdentifiers(project, moduleName, psiFile)
   }
 
-  def findDefinitionLocation(psiElement: PsiElement): Option[DefinitionLocation] = {
+  def findDefinitionLocation(psiElement: PsiElement): Option[LocationInfo] = {
     // As a side effect we preload in background some extra info
     ApplicationManager.getApplication.invokeLater(() => {
       if (HaskellPsiUtil.findExpressionParent(psiElement).isDefined) {

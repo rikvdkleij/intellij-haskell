@@ -19,12 +19,11 @@ package intellij.haskell.navigation
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.TextRange
 import com.intellij.psi._
+import intellij.haskell.HaskellFile
 import intellij.haskell.external.component._
 import intellij.haskell.psi.HaskellPsiUtil._
 import intellij.haskell.psi._
 import intellij.haskell.util.{HaskellProjectUtil, LineColumnPosition}
-
-import scala.Option.option2Iterable
 
 class HaskellReference(element: HaskellNamedElement, textRange: TextRange) extends PsiPolyVariantReferenceBase[HaskellNamedElement](element, textRange) {
 
@@ -44,20 +43,16 @@ class HaskellReference(element: HaskellNamedElement, textRange: TextRange) exten
         } yield new HaskellFileResolveResult(haskellFile)).toArray
       case qe: HaskellQualifierElement =>
         val importDeclarations = findImportDeclarations(psiFile)
-        val resolveResults = findQualifier(importDeclarations, qe).map(q => Iterable(new HaskellQualifierResolveResult(q))).getOrElse(
-          findModuleFiles(importDeclarations, qe, project).map(f => new HaskellFileResolveResult(f.getOriginalElement)))
+        val resolveResults = findQualifier(importDeclarations, qe).map(q => Array(new HaskellQualifierResolveResult(q))).getOrElse(
+          findModuleFiles(importDeclarations, qe, project).map(f => new HaskellFileResolveResult(f.getOriginalElement)).toArray)
         if (resolveResults.isEmpty) {
           // return itself
-          findNamedElement(myElement).map(new HaskellProjectResolveResult(_)).toArray
+          findNamedElement(myElement).map(new HaskellNamedElementResolveResult(_)).toArray
         } else {
           resolveResults.toArray
         }
-      case ne: HaskellNamedElement if findImportDeclarationParent(ne).isDefined =>
-        val importModuleName = findImportDeclarationParent(ne).map(_.getModuleName)
-        importModuleName.map(mn => createResolveResultsByNameInfos(ne, project).
-          find(rr => findModuleName(rr.getElement.getContainingFile.getOriginalFile).contains(mn))).map(_.toArray).getOrElse(Array[ResolveResult]())
-      case ne: HaskellNamedElement if findTopDeclarationParent(ne).isDefined | findModuleDeclarationParent(ne).isDefined =>
-        findResolveResults(ne, psiFile, project).toArray.distinct
+      case ne: HaskellNamedElement if findImportHidingDeclarationParent(ne).isDefined => Array[ResolveResult]()
+      case ne: HaskellNamedElement => HaskellReference.resolveResults(ne, psiFile, project).distinct.toArray
       case _ => Array[ResolveResult]()
     }
     result.asInstanceOf[Array[ResolveResult]]
@@ -74,35 +69,39 @@ class HaskellReference(element: HaskellNamedElement, textRange: TextRange) exten
     Array()
   }
 
-  private def findQualifier(importDeclarations: Iterable[HaskellImportDeclaration], qualifierElement: HaskellQualifierElement) = {
+  private def findQualifier(importDeclarations: Iterable[HaskellImportDeclaration], qualifierElement: HaskellQualifierElement): Option[HaskellQualifier] = {
     importDeclarations.flatMap(id => Option(id.getImportQualifiedAs)).flatMap(iqa => Option(iqa.getQualifier)).find(_.getName == qualifierElement.getName)
   }
 
-  private def findModuleFiles(importDeclarations: Iterable[HaskellImportDeclaration], qualifierElement: HaskellQualifierElement, project: Project) = {
+  private def findModuleFiles(importDeclarations: Iterable[HaskellImportDeclaration], qualifierElement: HaskellQualifierElement, project: Project): Iterable[HaskellFile] = {
     importDeclarations.flatMap(id => Option(id.getModid)).find(mi => mi.getName == qualifierElement.getName).map(mi => HaskellComponentsManager.findHaskellFiles(project, mi.getName)).getOrElse(Iterable())
   }
 
-  private def findResolveResults(namedElement: HaskellNamedElement, psiFile: PsiFile, project: Project) = {
+}
+
+object HaskellReference {
+
+  def resolveResults(namedElement: HaskellNamedElement, psiFile: PsiFile, project: Project): Seq[ResolveResult] = {
     if (HaskellProjectUtil.isLibraryFile(psiFile)) {
       createResolveResultsByNameInfos(namedElement, project)
     } else {
-      val definitionLocationResolveResult = findReferenceByDefinitionLocation(namedElement, project).map(prr => Iterable(new HaskellProjectResolveResult(prr)))
-      definitionLocationResolveResult.getOrElse(createResolveResultsByNameInfos(namedElement, project))
+      findReferenceByDefinitionLocation(namedElement, project).map(prr => new HaskellNamedElementResolveResult(prr)) ++ createResolveResultsByNameInfos(namedElement, project)
     }
   }
 
-  private def createResolveResultsByNameInfos(namedElement: HaskellNamedElement, project: Project): Iterable[ResolveResult] = {
-    HaskellComponentsManager.findNameInfo(namedElement).flatMap {
-      case pni: ProjectNameInfo => findReferenceByProjectNameInfo(pni, namedElement, project).map(new HaskellProjectResolveResult(_)).toIterable
-      case lni: LibraryNameInfo => HaskellReference.findNamedElementsByLibraryNameInfo(lni, namedElement.getName, project).map(ne => new HaskellLibraryResolveResult(ne))
+  private def createResolveResultsByNameInfos(namedElement: HaskellNamedElement, project: Project): Seq[ResolveResult] = {
+    HaskellComponentsManager.findNameInfo(namedElement).toSeq.flatMap {
+      case pni: ProjectNameInfo => findReferenceByProjectNameInfo(pni, namedElement, project).map(new HaskellNamedElementResolveResult(_)).toSeq
+      case lni: LibraryNameInfo => HaskellReference.findNamedElementsByLibraryNameInfo(lni, namedElement.getName, project).map(ne => new HaskellNamedElementResolveResult(ne))
       case bini: BuiltInNameInfo => Some(new BuiltInResolveResult(bini.declaration, bini.libraryName, bini.moduleName))
     }
   }
 
-  private def findReferenceByDefinitionLocation(namedElement: HaskellNamedElement, project: Project): Option[HaskellNamedElement] = {
-    HaskellComponentsManager.findDefinitionLocation(namedElement).flatMap(location => {
-      findReferenceByLocation(location.filePath, location.startLineNr, location.startColumnNr, namedElement, project)
-    })
+  private def findReferenceByDefinitionLocation(namedElement: HaskellNamedElement, project: Project): Seq[HaskellNamedElement] = {
+    HaskellComponentsManager.findDefinitionLocation(namedElement).map {
+      case DefinitionLocationInfo(filePath, startLineNr, startColumnNr, _, _) => findReferenceByLocation(filePath, startLineNr, startColumnNr, namedElement, project).toSeq
+      case ModuleLocationInfo(moduleName) => HaskellReference.findNamedElementsInModule(moduleName, namedElement.getName, project)
+    }.getOrElse(Seq())
   }
 
   private def findReferenceByProjectNameInfo(projectNameInfo: ProjectNameInfo, namedElement: HaskellNamedElement, project: Project): Option[HaskellNamedElement] = {
@@ -113,12 +112,8 @@ class HaskellReference(element: HaskellNamedElement, textRange: TextRange) exten
     HaskellReference.findReferenceByLocation(filePath, lineNr, columnNr, namedElement.getName, project)
   }
 
-}
-
-object HaskellReference {
-
-  def findNamedElementsByLibraryNameInfo(libraryNameInfo: LibraryNameInfo, name: String, project: Project): Iterable[HaskellNamedElement] = {
-    HaskellComponentsManager.findHaskellFiles(project, libraryNameInfo.moduleName).flatMap { f =>
+  def findNamedElementsByLibraryNameInfo(libraryNameInfo: LibraryNameInfo, name: String, project: Project): Seq[HaskellNamedElement] = {
+    HaskellComponentsManager.findHaskellFiles(project, libraryNameInfo.moduleName).toSeq.flatMap { f =>
       val declarationElements = findDeclarationElements(f)
       val namedElementsByNameInfo = declarationElements.flatMap(_.getIdentifierElements).
         filter(_.getName == name).
@@ -137,8 +132,8 @@ object HaskellReference {
     }
   }
 
-  def findNamedElementsInModule(moduleName: String, name: String, project: Project): Iterable[HaskellNamedElement] = {
-    HaskellComponentsManager.findHaskellFiles(project, moduleName).flatMap { f =>
+  def findNamedElementsInModule(moduleName: String, name: String, project: Project): Seq[HaskellNamedElement] = {
+    HaskellComponentsManager.findHaskellFiles(project, moduleName).toSeq.flatMap { f =>
       HaskellPsiUtil.findDeclarationElements(f).flatMap(_.getIdentifierElements).filter(_.getName == name)
     }
   }
@@ -154,9 +149,7 @@ object HaskellReference {
   }
 }
 
-class HaskellProjectResolveResult(val element: HaskellNamedElement) extends PsiElementResolveResult(element)
-
-class HaskellLibraryResolveResult(val element: HaskellNamedElement) extends PsiElementResolveResult(element)
+class HaskellNamedElementResolveResult(val element: HaskellNamedElement) extends PsiElementResolveResult(element)
 
 class HaskellFileResolveResult(val element: PsiElement) extends PsiElementResolveResult(element)
 

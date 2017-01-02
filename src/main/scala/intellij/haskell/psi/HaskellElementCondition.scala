@@ -39,6 +39,15 @@ object HaskellElementCondition {
     }
   }
 
+  final val ImportHidingSpecCondition = new Condition[PsiElement]() {
+    override def value(psiElement: PsiElement): Boolean = {
+      psiElement match {
+        case _: HaskellImportHidingSpec => true
+        case _ => false
+      }
+    }
+  }
+
   final val ImportSpecCondition = new Condition[PsiElement]() {
     override def value(psiElement: PsiElement): Boolean = {
       psiElement match {

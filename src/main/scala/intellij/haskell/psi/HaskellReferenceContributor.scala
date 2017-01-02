@@ -21,18 +21,13 @@ import com.intellij.patterns.PlatformPatterns
 import com.intellij.psi._
 import com.intellij.util.ProcessingContext
 import intellij.haskell.navigation.HaskellReference
-import org.jetbrains.annotations.NotNull
 
 class HaskellReferenceContributor extends PsiReferenceContributor {
   def registerReferenceProviders(registrar: PsiReferenceRegistrar) {
-    registrar.registerReferenceProvider(PlatformPatterns.psiElement(classOf[HaskellNamedElement]), new PsiReferenceProvider {
-
-      @NotNull
-      def getReferencesByElement(@NotNull element: PsiElement, @NotNull context: ProcessingContext): Array[PsiReference] = {
-        element match {
-          case ne: HaskellNamedElement => Array(new HaskellReference(ne, TextRange.from(0, element.getTextLength)))
-          case _ => PsiReference.EMPTY_ARRAY
-        }
+    registrar.registerReferenceProvider(PlatformPatterns.psiElement(classOf[HaskellNamedElement]), (element: PsiElement, context: ProcessingContext) => {
+      element match {
+        case ne: HaskellNamedElement => Array(new HaskellReference(ne, TextRange.from(0, element.getTextLength)))
+        case _ => PsiReference.EMPTY_ARRAY
       }
     })
   }
