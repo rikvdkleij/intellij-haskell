@@ -36,4 +36,6 @@ object HaskellIcons {
   final val Foreign = IconLoader.getIcon("/icons/foreign.png")
 
   final val CabalLogo = IconLoader.getIcon("/icons/cabal.png")
+
+  final val REPL = IconLoader.getIcon("/icons/repl.png")
 }
