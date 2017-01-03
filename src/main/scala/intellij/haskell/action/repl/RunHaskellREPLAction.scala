@@ -6,7 +6,7 @@ import com.intellij.openapi.project.{DumbAware, Project}
 import intellij.haskell.HaskellIcons
 import intellij.haskell.repl.HaskellConsoleRunner
 
-object RunHaskellConsoleAction {
+object RunHaskellREPLAction {
   private[repl] def getModule(project: Project): Option[Module] = {
     Option(project).flatMap(project => {
       ModuleManager.getInstance(project).getModules.headOption
@@ -22,13 +22,13 @@ object RunHaskellConsoleAction {
   }
 }
 
-final class RunHaskellConsoleAction() extends AnAction with DumbAware {
+final class RunHaskellREPLAction() extends AnAction with DumbAware {
   getTemplatePresentation.setIcon(HaskellIcons.REPL)
 
   override def update(e: AnActionEvent) {
     val presentation = e.getPresentation
 
-    RunHaskellConsoleAction.getModule(e) match {
+    RunHaskellREPLAction.getModule(e) match {
       case Some(_) =>
         presentation.setEnabled(true)
         super.update(e)
@@ -37,7 +37,7 @@ final class RunHaskellConsoleAction() extends AnAction with DumbAware {
   }
 
   def actionPerformed(event: AnActionEvent) {
-    RunHaskellConsoleAction.getModule(event).foreach(module => {
+    RunHaskellREPLAction.getModule(event).foreach(module => {
       HaskellConsoleRunner.run(module)
     })
   }

@@ -8,10 +8,10 @@ import com.intellij.psi.PsiDocumentManager
 import com.intellij.testFramework.LightVirtualFile
 import intellij.haskell.{HaskellFile, HaskellIcons}
 
-object LoadHaskellFileInConsoleAction {
+object LoadHaskellFileAction {
   private def getActionFile(e: AnActionEvent): Option[String] = {
     for {
-      _ <- RunHaskellConsoleAction.getModule(e)
+      _ <- RunHaskellREPLAction.getModule(e)
       editor <- Option(e.getData(CommonDataKeys.EDITOR))
       project <- Option(editor.getProject)
       psiFile <- Option(PsiDocumentManager.getInstance(project).getPsiFile(editor.getDocument))
@@ -22,7 +22,7 @@ object LoadHaskellFileInConsoleAction {
   }
 }
 
-final class LoadHaskellFileInConsoleAction() extends HaskellConsoleActionBase {
+final class LoadHaskellFileAction() extends HaskellREPLActionBase {
   getTemplatePresentation.setIcon(HaskellIcons.REPL)
 
   def actionPerformed(e: AnActionEvent) {
@@ -44,7 +44,7 @@ final class LoadHaskellFileInConsoleAction() extends HaskellConsoleActionBase {
 
   override def update(e: AnActionEvent) {
     val presentation = e.getPresentation
-    LoadHaskellFileInConsoleAction.getActionFile(e) match {
+    LoadHaskellFileAction.getActionFile(e) match {
       case Some(filePath) =>
         val f = new File(filePath)
         presentation.setVisible(true)

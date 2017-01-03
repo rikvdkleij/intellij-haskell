@@ -397,17 +397,18 @@
         </action>
 
         <action id="Haskell.REPL.RunHaskellConsoleAction"
-                class="intellij.haskell.action.repl.RunHaskellConsoleAction"
+                class="intellij.haskell.action.repl.RunHaskellREPLAction"
                 text="Start Haskell REPL" description="Runs Haskell REPL">
-            <keyboard-shortcut keymap="$default" first-keystroke="ctrl shift F10"/>
             <add-to-group group-id="ToolsMenu" anchor="last"/>
+            <keyboard-shortcut first-keystroke="ctrl shift t" keymap="$default"/>
         </action>
 
         <action id="Haskell.REPL.LoadHaskellFileInConsoleAction"
-                class="intellij.haskell.action.repl.LoadHaskellFileInConsoleAction"
+                class="intellij.haskell.action.repl.LoadHaskellFileAction"
                 text="Load/Reload Current File in REPL...">
-            <keyboard-shortcut keymap="$default" first-keystroke="ctrl shift L"/>
+            <add-to-group group-id="ToolsMenu" anchor="last"/>
             <add-to-group group-id="EditorPopupMenu" anchor="last"/>
+            <keyboard-shortcut first-keystroke="ctrl shift l" keymap="$default"/>
         </action>
     </actions>
 

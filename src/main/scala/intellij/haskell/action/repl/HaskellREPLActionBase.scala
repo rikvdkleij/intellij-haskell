@@ -9,7 +9,7 @@ import com.intellij.openapi.project.Project
 import com.intellij.util.NotNullFunction
 import intellij.haskell.repl.{HaskellConsole, HaskellConsoleExecuteActionHandler, HaskellConsoleProcessHandler, HaskellConsoleRunner}
 
-object HaskellConsoleActionBase {
+object HaskellREPLActionBase {
 
   final private class HaskellConsoleMatcher extends NotNullFunction[RunContentDescriptor, Boolean] {
     def fun(descriptor: RunContentDescriptor): Boolean = descriptor != null && descriptor.getExecutionConsole.isInstanceOf[HaskellConsole]
@@ -20,11 +20,11 @@ object HaskellConsoleActionBase {
     descriptors.find(descriptor => {
       val handler = descriptor.asInstanceOf[RunContentDescriptor].getProcessHandler
       handler.isInstanceOf[HaskellConsoleProcessHandler]
-    }).map(_.asInstanceOf[HaskellConsoleProcessHandler])
+    }).map(_.asInstanceOf[RunContentDescriptor].getProcessHandler.asInstanceOf[HaskellConsoleProcessHandler])
   }
 }
 
-abstract class HaskellConsoleActionBase extends AnAction {
+abstract class HaskellREPLActionBase extends AnAction {
   private def doExecuteCommand(project: Project, processHandler: HaskellConsoleProcessHandler, command: String): Unit = {
     val console = processHandler.getLanguageConsole
     console.setInputText(command)
@@ -39,7 +39,7 @@ abstract class HaskellConsoleActionBase extends AnAction {
       case Some(processHandler) if !processHandler.isProcessTerminated => doExecuteCommand(project, processHandler, command)
       case _ =>
         for {
-          module <- RunHaskellConsoleAction.getModule(project)
+          module <- RunHaskellREPLAction.getModule(project)
           processHandler <- HaskellConsoleRunner.run(module)
         } yield doExecuteCommand(project, processHandler, command)
     }
