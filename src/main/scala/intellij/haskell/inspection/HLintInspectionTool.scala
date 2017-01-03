@@ -18,6 +18,7 @@ package intellij.haskell.inspection
 
 import com.intellij.codeInspection._
 import com.intellij.psi.{PsiElement, PsiFile, TokenType}
+import com.intellij.testFramework.LightVirtualFile
 import intellij.haskell.external.component.{HLintComponent, HLintInfo}
 import intellij.haskell.psi.HaskellTypes.{HS_COMMENT, HS_NCOMMENT, HS_NEWLINE}
 import intellij.haskell.util.{HaskellProjectUtil, LineColumnPosition}
@@ -28,6 +29,10 @@ class HLintInspectionTool extends LocalInspectionTool {
 
   override def checkFile(psiFile: PsiFile, manager: InspectionManager, isOnTheFly: Boolean): Array[ProblemDescriptor] = {
     if (HaskellProjectUtil.isLibraryFile(psiFile)) {
+      return Array()
+    }
+
+    if (psiFile.getVirtualFile != null && psiFile.getVirtualFile.isInstanceOf[LightVirtualFile]) {
       return Array()
     }
 
