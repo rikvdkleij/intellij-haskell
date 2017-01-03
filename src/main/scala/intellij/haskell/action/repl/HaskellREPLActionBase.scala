@@ -35,7 +35,7 @@ abstract class HaskellREPLActionBase extends AnAction {
   }
 
   protected def executeCommand(project: Project, command: String) {
-    HaskellConsoleActionBase.findRunningHaskellConsole(project) match {
+    HaskellREPLActionBase.findRunningHaskellConsole(project) match {
       case Some(processHandler) if !processHandler.isProcessTerminated => doExecuteCommand(project, processHandler, command)
       case _ =>
         for {

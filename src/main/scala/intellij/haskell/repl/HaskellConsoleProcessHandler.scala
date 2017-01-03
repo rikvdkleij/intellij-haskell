@@ -15,7 +15,7 @@ object HaskellConsoleProcessHandler {
         matcher.find
         val prefix = matcher.group
         val trimmed = StringUtil.trimStart(text, prefix).trim
-        console.setPrompt(prefix + " ")
+        console.setPrompt(prefix.replace(HaskellConsoleHighlightingUtil.PromptArrow, HaskellConsoleHighlightingUtil.LambdaArrow))
         trimmed
       } else {
         text
