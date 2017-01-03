@@ -396,14 +396,14 @@
             <add-to-group group-id="HelpMenu" anchor="last"/>
         </action>
 
-        <action id="ideah.repl.actions.RunHaskellConsoleAction"
+        <action id="Haskell.REPL.RunHaskellConsoleAction"
                 class="intellij.haskell.action.repl.RunHaskellConsoleAction"
                 text="Start Haskell REPL" description="Runs Haskell REPL">
             <keyboard-shortcut keymap="$default" first-keystroke="ctrl shift F10"/>
             <add-to-group group-id="ToolsMenu" anchor="last"/>
         </action>
 
-        <action id="ideah.repl.actions.LoadHaskellFileInConsoleAction"
+        <action id="Haskell.REPL.LoadHaskellFileInConsoleAction"
                 class="intellij.haskell.action.repl.LoadHaskellFileInConsoleAction"
                 text="Load/Reload Current File in REPL...">
             <keyboard-shortcut keymap="$default" first-keystroke="ctrl shift L"/>
