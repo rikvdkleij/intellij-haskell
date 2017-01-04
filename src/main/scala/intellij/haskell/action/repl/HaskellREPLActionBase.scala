@@ -34,13 +34,13 @@ abstract class HaskellREPLActionBase extends AnAction {
     new HaskellConsoleExecuteActionHandler(project, processHandler).runExecuteAction(console, executeImmediately = true)
   }
 
-  protected def executeCommand(project: Project, command: String) {
+  protected def executeCommand(project: Project, command: String, fileName: String) {
     HaskellREPLActionBase.findRunningHaskellConsole(project) match {
       case Some(processHandler) if !processHandler.isProcessTerminated => doExecuteCommand(project, processHandler, command)
       case _ =>
         for {
           module <- RunHaskellREPLAction.getModule(project)
-          processHandler <- HaskellConsoleRunner.run(module)
+          processHandler <- HaskellConsoleRunner.run(module, fileName)
         } yield doExecuteCommand(project, processHandler, command)
     }
   }

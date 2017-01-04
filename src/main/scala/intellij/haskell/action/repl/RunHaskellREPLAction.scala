@@ -38,7 +38,7 @@ final class RunHaskellREPLAction() extends AnAction with DumbAware {
 
   def actionPerformed(event: AnActionEvent) {
     RunHaskellREPLAction.getModule(event).foreach(module => {
-      HaskellConsoleRunner.run(module)
+      HaskellConsoleRunner.run(module, "Haskell REPL")
     })
   }
 }

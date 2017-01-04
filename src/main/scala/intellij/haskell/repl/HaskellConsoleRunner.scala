@@ -13,13 +13,13 @@ import intellij.haskell.HaskellNotificationGroup
 import intellij.haskell.sdk.HaskellSdkType
 
 object HaskellConsoleRunner {
-  private val REPLTitle = "GHCi"
+  val REPLTitle = "λ "
 
-  def run(module: Module): Option[HaskellConsoleProcessHandler] = {
+  def run(module: Module, fileName: String): Option[HaskellConsoleProcessHandler] = {
     ModuleRootManager.getInstance(module).getContentRoots.headOption.flatMap(root => {
       val srcRoot = root.getPath
       val path = srcRoot + File.separator + "src"
-      val runner = new HaskellConsoleRunner(module, REPLTitle, path)
+      val runner = new HaskellConsoleRunner(module, REPLTitle + fileName, path)
       try {
         runner.initAndRun()
         Some(runner.getProcessHandler.asInstanceOf[HaskellConsoleProcessHandler])

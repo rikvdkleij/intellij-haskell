@@ -6,6 +6,7 @@ import com.intellij.openapi.actionSystem.{AnActionEvent, CommonDataKeys}
 import com.intellij.openapi.fileEditor.FileDocumentManager
 import com.intellij.psi.PsiDocumentManager
 import com.intellij.testFramework.LightVirtualFile
+import intellij.haskell.psi.HaskellPsiUtil
 import intellij.haskell.{HaskellFile, HaskellIcons}
 
 object LoadHaskellFileAction {
@@ -33,12 +34,13 @@ final class LoadHaskellFileAction() extends HaskellREPLActionBase {
       psiFile <- Option(PsiDocumentManager.getInstance(project).getPsiFile(document))
       if psiFile.isInstanceOf[HaskellFile]
       virtualFile <- Option(psiFile.getVirtualFile)
+      moduleName <- HaskellPsiUtil.findModuleName(psiFile)
     } yield {
       val filePath = virtualFile.getPath
       PsiDocumentManager.getInstance(project).commitAllDocuments()
       FileDocumentManager.getInstance.saveAllDocuments()
       val command = ":load \"" + filePath + "\""
-      executeCommand(project, command)
+      executeCommand(project, command, moduleName)
     }
   }
 
