@@ -18,7 +18,7 @@ You can install this plugin using the [Jetbrains plugin repository](https://plug
   `Settings`/`Plugins`/`Browse repositories`/`Intellij-Haskell`
 
 
-# Features (1.0.0-beta4)
+# Features
 - Syntax highlighting;
 - Error/warning highlighting;
 - Find usages of identifiers;
@@ -30,16 +30,20 @@ You can install this plugin using the [Jetbrains plugin repository](https://plug
 - View quick documentation;
 - View quick definition;
 - Structure view;
+- Goto to declaration (called `Navigate`/`Declaration` in IntelliJ menu);
 - Navigate to declaration (called `Navigate`/`Class` in IntelliJ menu);
 - Navigate to identifier (called `Navigate`/`Symbol` in IntelliJ menu);
+- Goto instance declaration (called `Navigate`/`Instance declaration` in IntelliJ menu);
 - Navigate to declaration or identifier powered by Hoogle (called `Navigate`/`Navigation by Hoogle` in IntelliJ menu);
 - Inspection by HLint;
 - Quick fixes for HLint suggestions;
 - Show error action to view formatted message. Useful in case message consists of multiple lines (Ctrl-F10, Meta-F10 on Mac OSX);
-- Intention actions to add language extension (depends on compiler error), add top-level type signature (depends on compiler warning) or to add import of identifier;
+- Intention actions to add language extension (depends on compiler error), add top-level type signature (depends on compiler warning);
+- Intention action to select which module to import if identifier is not in scope;
 - Code formatting with Hindent and/or Stylish-haskell. Formatting of selected code by Hindent;
+- Code completion for project module names, language extensions and package names in Cabal file;
 
-# Getting started (1.0.0-beta4)
+# Getting started 
 - Install this plugin. Make sure no other Haskell plugin is installed in IntelliJ;
 - Install latest version of [Stack](https://github.com/commercialhaskell/stack)
 - Install latest versions of [Hindent](https://github.com/chrisdone/hindent) and [Stylish-Haskell](https://github.com/jaspervdj/stylish-haskell). 

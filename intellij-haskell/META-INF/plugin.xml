@@ -1,7 +1,7 @@
 <idea-plugin version="2">
     <id>intellij.haskell</id>
     <name>IntelliJ-Haskell</name>
-    <version>1.0.0-beta4</version>
+    <version>1.0.0-beta5</version>
     <vendor email="rikvdkleij@gmail.com">Rik van der Kleij</vendor>
 
     <description><![CDATA[
@@ -11,6 +11,13 @@
     ]]></description>
 
     <change-notes><![CDATA[
+        <p>1.0.0-beta5</p>
+        <ul>
+            <li>Various improvements and fixes</li>
+            <li>Fixed issue with looping file index process</li>
+            <li>Support for navigation to instance declaration (called `Navigate`/`Instance declaration` in IntelliJ menu)</li>
+            <li>Added completion for package names in Cabal file (@zjhmale)</li>
+        </ul>
         <p>1.0.0-beta4</p>
         <ul>
             <li>Various improvements and fixes</li>
@@ -179,8 +186,6 @@
         <!-- Navigation -->
         <gotoClassContributor implementation="intellij.haskell.navigation.GotoByDeclarationContributor"/>
         <gotoSymbolContributor implementation="intellij.haskell.navigation.GotoByNameContributor"/>
-        <definitionsSearch implementation="intellij.haskell.navigation.InstanceDeclarationsSearch" />
-        <gotoTargetRendererProvider implementation="intellij.haskell.navigation.HaskellGotoTargetRendererProvider"/>
 
         <!-- Annotator -->
         <externalAnnotator language="Haskell"
@@ -374,6 +379,14 @@
                 description="Navigation powered by Hoogle">
             <add-to-group group-id="GoToMenu" anchor="last"/>
             <keyboard-shortcut first-keystroke="ctrl alt h" keymap="$default"/>
+        </action>
+
+        <action id="Haskell.GotoInstanceDeclaration"
+                class="intellij.haskell.action.GotoInstanceDeclarationAction"
+                text="Instance declaration"
+                description="Goto instance declaration">
+            <add-to-group group-id="GoToMenu" anchor="last"/>
+            <keyboard-shortcut first-keystroke="ctrl alt i"  keymap="$default"/>
         </action>
 
         <action id="Haskell.Project.About"
