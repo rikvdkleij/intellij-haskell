@@ -207,7 +207,7 @@ fielddecl                   ::= q_names (COLON_COLON unpack_nounpack_pragma? (tt
 private atype               ::= "forall" (q_name | ttype | LEFT_PAREN type_signature RIGHT_PAREN)+ DOT |
                                   onls LEFT_PAREN onls ttype+ onls RIGHT_PAREN |
                                   onls LEFT_PAREN onls ttype+ DOUBLE_RIGHT_ARROW onls ttype+ onls RIGHT_PAREN |
-                                  onls LEFT_PAREN onls ttype (onls COMMA onls ttype)+ onls (q_name onls)? RIGHT_PAREN |  // q_name? is optional #
+                                  onls LEFT_PAREN (onls VARSYM_ID)? onls ttype (onls COMMA onls ttype)* onls (VARSYM_ID onls)? RIGHT_PAREN |  // VARSYM_ID? is optional #
                                   QUOTE? LEFT_BRACKET onls ttype onls RIGHT_BRACKET |
                                   QUOTE? q_name+ | type_signature | QUOTE? LEFT_PAREN RIGHT_PAREN | QUOTE? LEFT_BRACKET RIGHT_BRACKET | LEFT_PAREN COMMA+ RIGHT_PAREN | DIRECTIVE
 
