@@ -99,50 +99,11 @@ class HaskellCompletionContributor extends CompletionContributor {
   }
 
   val provider = new CompletionProvider[CompletionParameters] {
-    def addCompletions(parameters: CompletionParameters, context: ProcessingContext, originalResultSet: CompletionResultSet) {
-
-      val project = parameters.getPosition.getProject
-      var psiFile = parameters.getOriginalFile
-
-      if (HaskellProjectUtil.isLibraryFile(psiFile)) {
-        return
-      }
-
-      // In case element before caret is a qualifier, module name or a dot we have to "help" IntelliJ to get the right preselected elements behavior
-      // For example, asking for completion in case typing `Data.List.` will give without this help no prefix.
-      val positionElement = Option(parameters.getOriginalPosition).orElse(Option(parameters.getPosition))
-      var prefixText = (
-        for {
-          e <- positionElement
-          p <- HaskellPsiUtil.findModIdElement(e)
-          start = p.getTextRange.getStartOffset
-          end = parameters.getOffset
-        } yield psiFile.getText.substring(start, end)
-        ).orElse({
-        for {
-          e <- positionElement
-          p <- findQualifiedNamedElementToComplete(e)
-          start = if (p.getText.startsWith("(")) p.getTextRange.getStartOffset + 1 else p.getTextRange.getStartOffset
-          end = parameters.getOffset
-        } yield psiFile.getText.substring(start, end)
-      }).orElse(
-        for {
-          e <- positionElement
-          if e.getNode.getElementType != HS_RIGHT_PAREN
-          t <- Option(e.getText).filter(_.trim.nonEmpty)
-        } yield t
-      ).flatMap(pt => if (pt.trim.isEmpty) None else Some(pt))
-
-      if (psiFile.getVirtualFile != null && psiFile.getVirtualFile.isInstanceOf[LightVirtualFile] && psiFile.getName.startsWith(HaskellConsoleRunner.REPLTitle)) {
-        val name = psiFile.getName.replace(HaskellConsoleRunner.REPLTitle, "")
-        val files = HaskellFileIndex.findProjectFiles(project)
-        psiFile = files
-          .find(f => HaskellPsiUtil.findModuleName(PsiManager.getInstance(project).findFile(f)).contains(name))
-          .map(PsiManager.getInstance(project).findFile(_)).orNull
-        if (psiFile == null) return
-        prefixText = positionElement.map(_.getText)
-      }
-
+    private def generateResultSet(project: Project,
+                                  psiFile: PsiFile,
+                                  positionElement: Option[PsiElement],
+                                  prefixText: Option[String],
+                                  originalResultSet: CompletionResultSet): Unit = {
       val resultSet = prefixText match {
         case Some(t) if !t.startsWith("`") => originalResultSet.withPrefixMatcher(originalResultSet.getPrefixMatcher.cloneWithPrefix(t))
         case _ => originalResultSet
@@ -201,6 +162,57 @@ class HaskellCompletionContributor extends CompletionContributor {
                 case _ => ()
               }
           }
+      }
+    }
+
+    def addCompletions(parameters: CompletionParameters, context: ProcessingContext, originalResultSet: CompletionResultSet) {
+
+      val project = parameters.getPosition.getProject
+      val psiFile = parameters.getOriginalFile
+
+      if (HaskellProjectUtil.isLibraryFile(psiFile)) {
+        return
+      }
+
+      // In case element before caret is a qualifier, module name or a dot we have to "help" IntelliJ to get the right preselected elements behavior
+      // For example, asking for completion in case typing `Data.List.` will give without this help no prefix.
+      val positionElement = Option(parameters.getOriginalPosition).orElse(Option(parameters.getPosition))
+
+      if (psiFile.getVirtualFile != null && psiFile.getVirtualFile.isInstanceOf[LightVirtualFile] && psiFile.getName.startsWith(HaskellConsoleRunner.REPLTitle)) {
+        val name = psiFile.getName.replace(HaskellConsoleRunner.REPLTitle, "")
+        val files = HaskellFileIndex.findProjectFiles(project)
+        val prefixText = positionElement.map(_.getText)
+
+        files
+          .find(f => HaskellPsiUtil.findModuleName(PsiManager.getInstance(project).findFile(f)).contains(name))
+          .map(PsiManager.getInstance(project).findFile(_)) match {
+          case Some(f) => generateResultSet(project, f, positionElement, prefixText, originalResultSet)
+          case None => generateResultSet(project, psiFile, positionElement, prefixText, originalResultSet)
+        }
+      } else {
+        val prefixText = (
+          for {
+            e <- positionElement
+            p <- HaskellPsiUtil.findModIdElement(e)
+            start = p.getTextRange.getStartOffset
+            end = parameters.getOffset
+          } yield psiFile.getText.substring(start, end)
+          ).orElse({
+          for {
+            e <- positionElement
+            p <- findQualifiedNamedElementToComplete(e)
+            start = if (p.getText.startsWith("(")) p.getTextRange.getStartOffset + 1 else p.getTextRange.getStartOffset
+            end = parameters.getOffset
+          } yield psiFile.getText.substring(start, end)
+        }).orElse(
+          for {
+            e <- positionElement
+            if e.getNode.getElementType != HS_RIGHT_PAREN
+            t <- Option(e.getText).filter(_.trim.nonEmpty)
+          } yield t
+        ).flatMap(pt => if (pt.trim.isEmpty) None else Some(pt))
+
+        generateResultSet(project, psiFile, positionElement, prefixText, originalResultSet)
       }
     }
   }
