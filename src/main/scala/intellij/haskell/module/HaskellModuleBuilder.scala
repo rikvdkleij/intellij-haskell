@@ -174,7 +174,7 @@ class HaskellModuleWizardStep(wizardContext: WizardContext, haskellModuleBuilder
 
 object HaskellModuleBuilder {
 
-  private final val LibName = "ideaHaskellLib"
+  private final val LibName = ".ideaHaskellLib"
   private final val DependencyPattern = """([\w\-]+)\s([\d\.]+)""".r
   private final val InitialProgressStep = 0.1
   private final val GhcPrimVersion = "0.5.0.0"
