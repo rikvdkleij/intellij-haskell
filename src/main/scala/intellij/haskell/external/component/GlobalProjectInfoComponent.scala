@@ -51,7 +51,7 @@ private[component] object GlobalProjectInfoComponent {
 
         private def createGlobalProjectInfo(key: Key): Option[GlobalProjectInfo] = {
           val project = key.project
-          StackReplsManager.getProjectRepl(project).findAllAvailableLibraryModules.flatMap { allModuleNames =>
+          StackReplsManager.getProjectRepl(project).flatMap(_.findAllAvailableLibraryModules).flatMap { allModuleNames =>
             val prodModuleNames = allModuleNames.filterNot(_.startsWith("Test."))
             for {
               active <- isNoImplicitPreludeGlobalActive(project)
@@ -61,7 +61,7 @@ private[component] object GlobalProjectInfoComponent {
         }
 
         private def isNoImplicitPreludeGlobalActive(project: Project): Option[Boolean] = {
-          val languageFlags = StackReplsManager.getGlobalRepl(project).showActiveLanguageFlags().map(_.stdOutLines)
+          val languageFlags = StackReplsManager.getGlobalRepl(project).flatMap(_.showActiveLanguageFlags()).map(_.stdOutLines)
           languageFlags.map(_.exists(_.contains("-XNoImplicitPrelude")))
         }
 

@@ -82,7 +82,7 @@ private[component] object DefinitionLocationComponent {
 
         private def findLocationInfoFor(key: Key, psiFile: PsiFile, project: Project, endColumnExcluded: Boolean): Option[StackReplOutput] = {
           val endColumnNr = if (endColumnExcluded) key.endColumnNr else key.endColumnNr - 1
-          StackReplsManager.getProjectRepl(project).findLocationInfoFor(psiFile, key.startLineNr, key.startColumnNr, key.endLineNr, endColumnNr, key.expression)
+          StackReplsManager.getProjectRepl(project).flatMap(_.findLocationInfoFor(psiFile, key.startLineNr, key.startColumnNr, key.endLineNr, endColumnNr, key.expression))
         }
 
         private def createDefinitionLocationInfo(output: String): Option[LocationInfo] = {

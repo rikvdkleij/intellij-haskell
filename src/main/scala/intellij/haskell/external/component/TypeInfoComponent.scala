@@ -59,7 +59,7 @@ private[component] object TypeInfoComponent {
 
         private def createTypeInfo(key: Key): Result = {
           val project = key.psiFile.getProject
-          val typeInfo = StackReplsManager.getProjectRepl(project).findTypeInfoFor(key.psiFile, key.startLineNr, key.startColumnNr, key.endLineNr, key.endColumnNr, key.expression) match {
+          val typeInfo = StackReplsManager.getProjectRepl(project).flatMap(_.findTypeInfoFor(key.psiFile, key.startLineNr, key.startColumnNr, key.endLineNr, key.endColumnNr, key.expression)) match {
             case Some(output) => Right(output.stdOutLines.headOption.filterNot(_.trim.isEmpty).map(ti => TypeInfo(ti)))
             case _ => Left("No type info available")
           }

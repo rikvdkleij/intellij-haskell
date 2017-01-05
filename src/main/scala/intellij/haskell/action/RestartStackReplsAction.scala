@@ -46,28 +46,29 @@ class RestartStackReplsAction extends AnAction {
       ProgressManager.getInstance().run(new Backgroundable(project, "Busy with restarting Stack repls", false) {
         def run(progressIndicator: ProgressIndicator) {
           try {
-            val projectRepl = StackReplsManager.getProjectRepl(project)
-            val globalRepl = StackReplsManager.getGlobalRepl(project)
+            (StackReplsManager.getProjectRepl(project), StackReplsManager.getGlobalRepl(project)) match {
+              case (Some(projectRepl), Some(globalRepl)) =>
+                progressIndicator.setText("Busy with stopping Stack repls")
+                globalRepl.exit()
+                projectRepl.exit()
 
-            progressIndicator.setText("Busy with stopping Stack repls")
-            globalRepl.exit()
-            projectRepl.exit()
+                progressIndicator.setText("Busy with cleaning up")
+                cleanLocalPackages(project)
+                HaskellComponentsManager.invalidateGlobalCaches(project)
 
-            progressIndicator.setText("Busy with cleaning up")
-            cleanLocalPackages(project)
-            HaskellComponentsManager.invalidateGlobalCaches(project)
+                Thread.sleep(1000)
 
-            Thread.sleep(1000)
+                progressIndicator.setText("Busy with building project and starting Stack repls")
+                projectRepl.start()
+                globalRepl.start()
 
-            progressIndicator.setText("Busy with building project and starting Stack repls")
-            projectRepl.start()
-            globalRepl.start()
+                progressIndicator.setText("Busy with preloading cache")
+                HaskellComponentsManager.preloadModuleIdentifiersCaches(project)
 
-            progressIndicator.setText("Busy with preloading cache")
-            HaskellComponentsManager.preloadModuleIdentifiersCaches(project)
-
-            progressIndicator.setText("Restarting global repl to release memory")
-            globalRepl.restart()
+                progressIndicator.setText("Restarting global repl to release memory")
+                globalRepl.restart()
+              case _ => ()
+            }
           } finally {
             restarting = false
           }

@@ -74,7 +74,7 @@ private[component] object NameInfoComponent {
         private def findNameInfos(key: Key, project: Project): Option[Iterable[NameInfo]] = {
           val output = if (HaskellProjectUtil.isLibraryFile(key.psiFile)) {
             val moduleName = findModuleName(key.psiFile)
-            moduleName.flatMap(mn => StackReplsManager.getGlobalRepl(project).findInfo(mn, key.name))
+            moduleName.flatMap(mn => StackReplsManager.getGlobalRepl(project).flatMap(_.findInfo(mn, key.name)))
           } else {
             findProjectInfo(key, project)
           }
@@ -82,7 +82,7 @@ private[component] object NameInfoComponent {
         }
 
         private def findProjectInfo(key: Key, project: Project): Option[StackReplOutput] = {
-          StackReplsManager.getProjectRepl(project).findInfo(key.psiFile, key.name)
+          StackReplsManager.getProjectRepl(project).flatMap(_.findInfo(key.psiFile, key.name))
         }
 
         private def findModuleName(psiFile: PsiFile) = {
@@ -117,7 +117,7 @@ private[component] object NameInfoComponent {
         }
 
         private def findNameInfos(key: ModuleAndNameKey): Option[Iterable[NameInfo]] = {
-          val output = StackReplsManager.getGlobalRepl(key.project).findInfo(key.moduleName, key.name)
+          val output = StackReplsManager.getGlobalRepl(key.project).flatMap(_.findInfo(key.moduleName, key.name))
           createNameInfos(key.project, output)
         }
       })

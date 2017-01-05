@@ -55,15 +55,15 @@ private[component] object BrowseModuleComponent {
           val moduleName = key.moduleName
           GlobalProjectInfoComponent.findGlobalProjectInfo(project).flatMap(gpi => {
             if (gpi.allAvailableLibraryModuleNames.exists(_ == moduleName)) {
-              StackReplsManager.getGlobalRepl(project).getModuleIdentifiers(moduleName).filter(_.stdOutLines.nonEmpty) map (_.stdOutLines.flatMap(findModuleIdentifier(_, moduleName)))
+              StackReplsManager.getGlobalRepl(project).flatMap(_.getModuleIdentifiers(moduleName)).filter(_.stdOutLines.nonEmpty) map (_.stdOutLines.flatMap(findModuleIdentifier(_, moduleName)))
             } else {
               key.psiFile match {
                 case Some(f) =>
-                  StackReplsManager.getProjectRepl(project).getAllTopLevelModuleIdentifiers(moduleName, f) map { output =>
+                  StackReplsManager.getProjectRepl(project).flatMap(_.getAllTopLevelModuleIdentifiers(moduleName, f)) map { output =>
                     val definedLocallyLines = output.stdOutLines.takeWhile(l => !l.startsWith("-- imported via"))
                     definedLocallyLines.flatMap(findModuleIdentifier(_, moduleName))
                   }
-                case _ => StackReplsManager.getProjectRepl(project).getModuleIdentifiers(moduleName).map(_.stdOutLines.flatMap(findModuleIdentifier(_, moduleName)))
+                case _ => StackReplsManager.getProjectRepl(project).flatMap(_.getModuleIdentifiers(moduleName)).map(_.stdOutLines.flatMap(findModuleIdentifier(_, moduleName)))
               }
             }
           })

@@ -38,7 +38,7 @@ private[component] object LoadComponent {
       }
     })
 
-    StackReplsManager.getProjectRepl(project).load(psiFile) match {
+    StackReplsManager.getProjectRepl(project).flatMap(_.load(psiFile)) match {
       case Some((loadOutput, loadFailed)) =>
         if (!loadFailed) {
           ApplicationManager.getApplication.executeOnPooledThread(new Runnable {
