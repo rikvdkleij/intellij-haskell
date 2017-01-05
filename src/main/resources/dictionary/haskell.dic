@@ -5,6 +5,7 @@ compat
 datatype
 decl
 decls
+deepseq
 deserialize
 deserializer
 deserializing
@@ -43,6 +44,7 @@ peano
 pprint
 prog
 safecopy
+seq
 sqlite
 stderr
 stdin
