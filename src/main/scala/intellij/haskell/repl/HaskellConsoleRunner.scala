@@ -31,7 +31,6 @@ object HaskellConsoleRunner {
     })
   }
 
-  @throws[CantRunException]
   private def createCommandLine(module: Module, workingDir: String) = {
     val sdk = ProjectRootManager.getInstance(module.getProject).getProjectSdk
     if (sdk == null || !sdk.getSdkType.isInstanceOf[HaskellSdkType] || sdk.getHomePath == null) {
@@ -58,7 +57,6 @@ final class HaskellConsoleRunner private(val module: Module, val consoleTitle: S
 
   protected def createConsoleView = new HaskellConsole(project, consoleTitle)
 
-  @throws[ExecutionException]
   protected def createProcess: Process = {
     cmdline = HaskellConsoleRunner.createCommandLine(module, workingDir)
     cmdline.createProcess

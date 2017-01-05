@@ -28,7 +28,6 @@ class HaskellConsoleExecuteActionHandler(val project: Project, var processHandle
         val spaces = StringUtil.repeatSymbol(' ', indent)
         val newText = before + "\n" + spaces + after
         new WriteCommandAction[Nothing](project) {
-          @throws[Throwable]
           protected def run(result: Result[Nothing]) {
             console.setInputText(newText)
             caretModel.moveToOffset(offset + indent + 1)
