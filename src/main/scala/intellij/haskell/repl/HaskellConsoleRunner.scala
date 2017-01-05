@@ -8,8 +8,7 @@ import com.intellij.execution.console.{ConsoleHistoryController, ConsoleRootType
 import com.intellij.execution.runners.AbstractConsoleRunnerWithHistory
 import com.intellij.execution.{CantRunException, ExecutionException, ExecutionHelper}
 import com.intellij.openapi.module.Module
-import com.intellij.openapi.roots.{ModuleRootManager, ProjectRootManager}
-import intellij.haskell.HaskellNotificationGroup
+import com.intellij.openapi.roots.ModuleRootManager
 import intellij.haskell.sdk.HaskellSdkType
 
 object HaskellConsoleRunner {
@@ -32,14 +31,12 @@ object HaskellConsoleRunner {
   }
 
   private def createCommandLine(module: Module, workingDir: String) = {
-    val sdk = ProjectRootManager.getInstance(module.getProject).getProjectSdk
-    if (sdk == null || !sdk.getSdkType.isInstanceOf[HaskellSdkType] || sdk.getHomePath == null) {
-      HaskellNotificationGroup.logErrorBalloonEvent(module.getProject, "Please make sure your <b>Stack SDK</b> is configured correctly.")
-      throw new CantRunException("Invalid Stack SDK.")
-    } else {
-      new GeneralCommandLine(sdk.getHomePath)
-        .withParameters("ghci")
-        .withWorkDirectory(workingDir)
+    HaskellSdkType.getStackPath(module.getProject) match {
+      case Some(stackPath) =>
+        new GeneralCommandLine(stackPath)
+          .withParameters("ghci")
+          .withWorkDirectory(workingDir)
+      case None => throw new CantRunException("Invalid Stack SDK.")
     }
   }
 }

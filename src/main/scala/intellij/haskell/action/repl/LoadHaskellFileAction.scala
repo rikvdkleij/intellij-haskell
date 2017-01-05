@@ -2,7 +2,7 @@ package intellij.haskell.action.repl
 
 import java.io.File
 
-import com.intellij.openapi.actionSystem.{AnActionEvent, CommonDataKeys}
+import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.fileEditor.FileDocumentManager
 import com.intellij.psi.PsiDocumentManager
 import com.intellij.testFramework.LightVirtualFile
