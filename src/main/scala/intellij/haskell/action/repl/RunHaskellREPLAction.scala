@@ -8,9 +8,7 @@ import intellij.haskell.repl.HaskellConsoleRunner
 
 object RunHaskellREPLAction {
   private[repl] def getModule(project: Project): Option[Module] = {
-    Option(project).flatMap(project => {
-      ModuleManager.getInstance(project).getModules.headOption
-    })
+    ModuleManager.getInstance(project).getModules.headOption
   }
 
   private[repl] def getModule(e: AnActionEvent): Option[Module] = {
