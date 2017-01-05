@@ -60,7 +60,7 @@ You can install this plugin using the [Jetbrains plugin repository](https://plug
   If you want to use later version of tool, you will have to build tool manually in project's folder by using `stack build`;
  - Check `Project structure`/`Project settings`/`Modules` which folders to exclude (like `.stack-work` and `dist`) and which folders are `Source` and `Test` (normally `src` and `test`);
  - Plugin will automatically download library sources (since Stack version 1.2.1 also for test dependencies). They will be added as source libraries to module.
-    This option gives you nice navigation features through libraries. Sources are downloaded to folder `ideaHaskellLib` inside root of project 
+    This option gives you nice navigation features through libraries. Sources are downloaded to folder `.ideaHaskellLib` inside root of project
  - After changes to dependencies you can download them again by using `Tools`/`Download Haskell library sources`. 
  - The `Event Log` will display what's going on in the background. Useful when something fails;    
  - In the background for each Haskell project two Stack repls are running. You can restart them by `Tools`/`Restart Haskell Stack repls`. 
