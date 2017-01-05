@@ -53,8 +53,8 @@ class HaskellDocumentationProvider extends AbstractDocumentationProvider {
 
   private def runHaskellDocs(namedElement: HaskellQualifiedNameElement, args: Seq[String]): Option[String] = {
     StackCommandLine.runCommand(Seq("exec", "--", HaskellDocsName) ++ args, namedElement.getContainingFile.getProject).map(output => {
-      if (output.getExitCode == 1) {
-        HaskellNotificationGroup.logWarningBalloonEvent(namedElement.getProject, s"No documentation because <b>$HaskellDocsName</b> build still has to be started or build is not finished yet.")
+      if (output.getExitCode != 0) {
+        HaskellNotificationGroup.logWarningBalloonEvent(namedElement.getProject, s"Something went wrong while calling <b>$HaskellDocsName</b>. ${output.getStderr}. See event log for more info.")
       }
       output.getStdout
     })
