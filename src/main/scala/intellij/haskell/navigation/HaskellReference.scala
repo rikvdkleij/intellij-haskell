@@ -94,6 +94,7 @@ object HaskellReference {
       case pni: ProjectNameInfo => findReferenceByProjectNameInfo(pni, namedElement, project).map(new HaskellNamedElementResolveResult(_)).toSeq
       case lni: LibraryNameInfo => HaskellReference.findNamedElementsByLibraryNameInfo(lni, namedElement.getName, project).map(ne => new HaskellNamedElementResolveResult(ne))
       case bini: BuiltInNameInfo => Some(new BuiltInResolveResult(bini.declaration, bini.libraryName, bini.moduleName))
+      case _ => None
     }
   }
 

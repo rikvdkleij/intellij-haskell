@@ -48,6 +48,7 @@ class ShowNameInfoAction extends AnAction {
       case pi: ProjectNameInfo => s"${pi.declaration}   -- ${pi.filePath}"
       case li: LibraryNameInfo => s"${li.shortenedDeclaration}   -- ${li.moduleName}"
       case bi: BuiltInNameInfo => s"${bi.shortenedDeclaration}   -- ${bi.moduleName}  BUILT-IN"
+      case ii: InfixInfo => ii.declaration
     }
   }
 }

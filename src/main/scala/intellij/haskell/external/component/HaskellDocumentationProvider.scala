@@ -38,17 +38,21 @@ class HaskellDocumentationProvider extends AbstractDocumentationProvider {
   private def findDocumentation(project: Project, namedElement: HaskellQualifiedNameElement): Option[String] = {
     val name = namedElement.getIdentifierElement.getName
     val nameInfo = HaskellComponentsManager.findNameInfo(namedElement).headOption
-    if (nameInfo.isEmpty) {
-      HaskellNotificationGroup.logWarningEvent(project, s"No documentation because no info could be found for identifier: $name")
-    }
-    val arguments = nameInfo.flatMap {
-      case (lei: LibraryNameInfo) => Some(Seq(lei.moduleName, name))
-      case (pei: ProjectNameInfo) => HaskellPsiUtil.findModuleName(namedElement.getContainingFile).map(mn => Seq(mn, name))
-      case (bei: BuiltInNameInfo) => Some(Seq("Prelude", name))
-    }
+    nameInfo match {
+      case None =>
+        HaskellNotificationGroup.logWarningEvent(project, s"No documentation because no info could be found for identifier: $name")
+        None
+      case Some(ni) =>
+        val arguments = ni match {
+          case (lei: LibraryNameInfo) => Some(Seq(lei.moduleName, name))
+          case (_: ProjectNameInfo) => HaskellPsiUtil.findModuleName(namedElement.getContainingFile).map(mn => Seq(mn, name))
+          case (_: BuiltInNameInfo) => Some(Seq("Prelude", name))
+          case _ => None
+        }
 
-    arguments.flatMap(args => runHaskellDocs(namedElement, args)).
-      map(output => s"${Pattern.compile("$", Pattern.MULTILINE).matcher(output).replaceAll("<br>").replace(" ", "&nbsp;")}")
+        arguments.flatMap(args => runHaskellDocs(namedElement, args)).
+          map(output => s"${Pattern.compile("$", Pattern.MULTILINE).matcher(output).replaceAll("<br>").replace(" ", "&nbsp;")}")
+    }
   }
 
   private def runHaskellDocs(namedElement: HaskellQualifiedNameElement, args: Seq[String]): Option[String] = {

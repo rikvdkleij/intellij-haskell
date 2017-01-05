@@ -37,6 +37,7 @@ private[component] object NameInfoComponent {
   private final val ProjectInfoPattern = """(.+)-- Defined at (.+):([\d]+):([\d]+)""".r
   private final val LibraryModuleInfoPattern = """(.+)-- Defined in [`‘]([\w\.\-]+):([\w\.\-]+)['’]""".r
   private final val ModuleInfoPattern = """(.+)-- Defined in [`‘]([\w\.\-]+)['’]""".r
+  private final val InfixInfoPattern = """(infix.+)""".r
 
   private final val Executor = Executors.newCachedThreadPool()
 
@@ -178,6 +179,7 @@ private[component] object NameInfoComponent {
           Some(LibraryNameInfo(declaration, moduleName))
         }
       case ModuleInfoPattern(declaration, moduleName) => Some(LibraryNameInfo(declaration, moduleName))
+      case InfixInfoPattern(declaration) => Some(InfixInfo(declaration))
       case _ => None
     }
     result
@@ -202,3 +204,5 @@ case class ProjectNameInfo(declaration: String, filePath: String, lineNr: Int, c
 case class LibraryNameInfo(declaration: String, moduleName: String) extends NameInfo
 
 case class BuiltInNameInfo(declaration: String, libraryName: String, moduleName: String) extends NameInfo
+
+case class InfixInfo(declaration: String) extends NameInfo
