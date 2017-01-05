@@ -83,7 +83,12 @@ object HaskellReference {
 
   def resolveResults(namedElement: HaskellNamedElement, psiFile: PsiFile, project: Project): Seq[ResolveResult] = {
     if (HaskellProjectUtil.isLibraryFile(psiFile)) {
-      createResolveResultsByNameInfos(namedElement, project)
+      val resolvedResultsByNameInfo = createResolveResultsByNameInfos(namedElement, project)
+      if (resolvedResultsByNameInfo.isEmpty) {
+        findDeclarationElements(psiFile).flatMap(_.getIdentifierElements).find(_.getName == namedElement.getName).map(e => new HaskellNamedElementResolveResult(e)).toSeq
+      } else {
+        resolvedResultsByNameInfo
+      }
     } else {
       findReferenceByDefinitionLocation(namedElement, project).map(prr => new HaskellNamedElementResolveResult(prr)) ++ createResolveResultsByNameInfos(namedElement, project)
     }
