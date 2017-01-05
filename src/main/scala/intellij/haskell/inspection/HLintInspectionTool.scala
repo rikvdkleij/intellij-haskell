@@ -21,6 +21,7 @@ import com.intellij.psi.{PsiElement, PsiFile, TokenType}
 import com.intellij.testFramework.LightVirtualFile
 import intellij.haskell.external.component.{HLintComponent, HLintInfo}
 import intellij.haskell.psi.HaskellTypes.{HS_COMMENT, HS_NCOMMENT, HS_NEWLINE}
+import intellij.haskell.repl.HaskellConsole
 import intellij.haskell.util.{HaskellProjectUtil, LineColumnPosition}
 
 import scala.annotation.tailrec
@@ -32,7 +33,7 @@ class HLintInspectionTool extends LocalInspectionTool {
       return Array()
     }
 
-    if (psiFile.getVirtualFile != null && psiFile.getVirtualFile.isInstanceOf[LightVirtualFile]) {
+    if (HaskellConsole.isHaskellConsoleFile(psiFile)) {
       return Array()
     }
 

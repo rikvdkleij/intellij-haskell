@@ -36,7 +36,7 @@ import intellij.haskell.psi.HaskellElementCondition._
 import intellij.haskell.psi.HaskellPsiUtil._
 import intellij.haskell.psi.HaskellTypes._
 import intellij.haskell.psi._
-import intellij.haskell.repl.HaskellConsoleRunner
+import intellij.haskell.repl.{HaskellConsole, HaskellConsoleRunner}
 import intellij.haskell.util.HaskellProjectUtil
 import intellij.haskell.util.index.HaskellFileIndex
 
@@ -178,7 +178,7 @@ class HaskellCompletionContributor extends CompletionContributor {
       // For example, asking for completion in case typing `Data.List.` will give without this help no prefix.
       val positionElement = Option(parameters.getOriginalPosition).orElse(Option(parameters.getPosition))
 
-      if (psiFile.getVirtualFile != null && psiFile.getVirtualFile.isInstanceOf[LightVirtualFile] && psiFile.getName.startsWith(HaskellConsoleRunner.REPLTitle)) {
+      if (HaskellConsole.isHaskellConsoleFile(psiFile)) {
         val name = psiFile.getName.replace(HaskellConsoleRunner.REPLTitle, "")
         val files = HaskellFileIndex.findProjectFiles(project)
         val prefixText = positionElement.map(_.getText)
