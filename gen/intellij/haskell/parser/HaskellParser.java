@@ -365,7 +365,7 @@ public class HaskellParser implements PsiParser, LightPsiParser {
   // "forall" (q_name | ttype | LEFT_PAREN type_signature RIGHT_PAREN)+ DOT |
   //                                   onls LEFT_PAREN onls ttype+ onls RIGHT_PAREN |
   //                                   onls LEFT_PAREN onls ttype+ DOUBLE_RIGHT_ARROW onls ttype+ onls RIGHT_PAREN |
-  //                                   onls LEFT_PAREN (onls VARSYM_ID)? onls ttype (onls COMMA onls ttype)* onls (VARSYM_ID onls)? RIGHT_PAREN |  // q_name? is optional #
+  //                                   onls LEFT_PAREN (onls VARSYM_ID)? onls ttype (onls COMMA onls ttype)* onls (VARSYM_ID onls)? RIGHT_PAREN |  // VARSYM_ID? is optional #
   //                                   QUOTE? LEFT_BRACKET onls ttype onls RIGHT_BRACKET |
   //                                   QUOTE? q_name+ | type_signature | QUOTE? LEFT_PAREN RIGHT_PAREN | QUOTE? LEFT_BRACKET RIGHT_BRACKET | LEFT_PAREN COMMA+ RIGHT_PAREN | DIRECTIVE
   static boolean atype(PsiBuilder b, int l) {
@@ -842,17 +842,15 @@ public class HaskellParser implements PsiParser, LightPsiParser {
   }
 
   /* ********************************************************** */
-  // type_signature | inline_pragma | noinline_pragma | specialize_pragma | type_declaration | instance_declaration | default_declaration |
+  // inline_pragma | noinline_pragma | specialize_pragma | instance_declaration | default_declaration |
   //                                   newtype_declaration | data_declaration | minimal_pragma | expression
   static boolean cidecl(PsiBuilder b, int l) {
     if (!recursion_guard_(b, l, "cidecl")) return false;
     boolean r;
     Marker m = enter_section_(b);
-    r = type_signature(b, l + 1);
-    if (!r) r = inline_pragma(b, l + 1);
+    r = inline_pragma(b, l + 1);
     if (!r) r = noinline_pragma(b, l + 1);
     if (!r) r = specialize_pragma(b, l + 1);
-    if (!r) r = type_declaration(b, l + 1);
     if (!r) r = instance_declaration(b, l + 1);
     if (!r) r = default_declaration(b, l + 1);
     if (!r) r = newtype_declaration(b, l + 1);
@@ -2817,7 +2815,7 @@ public class HaskellParser implements PsiParser, LightPsiParser {
 
   /* ********************************************************** */
   // q_name | LEFT_PAREN | RIGHT_PAREN | FLOAT |
-  //                                   COLON_COLON | DOUBLE_RIGHT_ARROW | RIGHT_ARROW |
+  //                                    DOUBLE_RIGHT_ARROW | RIGHT_ARROW |
   //                                   SEMICOLON | LEFT_ARROW | LEFT_BRACKET | RIGHT_BRACKET | literal | LEFT_BRACE | RIGHT_BRACE |
   //                                   COMMA | symbol_reserved_op | QUOTE | BACKQUOTE | fixity | DOT_DOT | scc_pragma | reserved_id | DIRECTIVE
   static boolean general_id(PsiBuilder b, int l) {
@@ -2828,7 +2826,6 @@ public class HaskellParser implements PsiParser, LightPsiParser {
     if (!r) r = consumeToken(b, HS_LEFT_PAREN);
     if (!r) r = consumeToken(b, HS_RIGHT_PAREN);
     if (!r) r = consumeToken(b, HS_FLOAT);
-    if (!r) r = consumeToken(b, HS_COLON_COLON);
     if (!r) r = consumeToken(b, HS_DOUBLE_RIGHT_ARROW);
     if (!r) r = consumeToken(b, HS_RIGHT_ARROW);
     if (!r) r = consumeToken(b, HS_SEMICOLON);
@@ -4331,7 +4328,7 @@ public class HaskellParser implements PsiParser, LightPsiParser {
   }
 
   /* ********************************************************** */
-  // general_id+ nls
+  // (type_signature | type_declaration | general_id+) nls
   static boolean line_expression(PsiBuilder b, int l) {
     if (!recursion_guard_(b, l, "line_expression")) return false;
     boolean r;
@@ -4342,16 +4339,28 @@ public class HaskellParser implements PsiParser, LightPsiParser {
     return r;
   }
 
-  // general_id+
+  // type_signature | type_declaration | general_id+
   private static boolean line_expression_0(PsiBuilder b, int l) {
     if (!recursion_guard_(b, l, "line_expression_0")) return false;
+    boolean r;
+    Marker m = enter_section_(b);
+    r = type_signature(b, l + 1);
+    if (!r) r = type_declaration(b, l + 1);
+    if (!r) r = line_expression_0_2(b, l + 1);
+    exit_section_(b, m, null, r);
+    return r;
+  }
+
+  // general_id+
+  private static boolean line_expression_0_2(PsiBuilder b, int l) {
+    if (!recursion_guard_(b, l, "line_expression_0_2")) return false;
     boolean r;
     Marker m = enter_section_(b);
     r = general_id(b, l + 1);
     int c = current_position_(b);
     while (r) {
       if (!general_id(b, l + 1)) break;
-      if (!empty_element_parsed_guard_(b, "line_expression_0", c)) break;
+      if (!empty_element_parsed_guard_(b, "line_expression_0_2", c)) break;
       c = current_position_(b);
     }
     exit_section_(b, m, null, r);

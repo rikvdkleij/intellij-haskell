@@ -1,14 +1,13 @@
 // This is a generated file. Not intended for manual editing.
 package intellij.haskell.psi.impl;
 
-import java.util.List;
-import org.jetbrains.annotations.*;
 import com.intellij.lang.ASTNode;
-import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiElementVisitor;
 import com.intellij.psi.util.PsiTreeUtil;
-import static intellij.haskell.psi.HaskellTypes.*;
 import intellij.haskell.psi.*;
+import org.jetbrains.annotations.NotNull;
+
+import java.util.List;
 
 public class HaskellExpressionImpl extends HaskellCompositeElementImpl implements HaskellExpression {
 
@@ -41,6 +40,18 @@ public class HaskellExpressionImpl extends HaskellCompositeElementImpl implement
   @NotNull
   public List<HaskellSccPragma> getSccPragmaList() {
     return PsiTreeUtil.getChildrenOfTypeAsList(this, HaskellSccPragma.class);
+  }
+
+  @Override
+  @NotNull
+  public List<HaskellTypeDeclaration> getTypeDeclarationList() {
+    return PsiTreeUtil.getChildrenOfTypeAsList(this, HaskellTypeDeclaration.class);
+  }
+
+  @Override
+  @NotNull
+  public List<HaskellTypeSignature> getTypeSignatureList() {
+    return PsiTreeUtil.getChildrenOfTypeAsList(this, HaskellTypeSignature.class);
   }
 
 }

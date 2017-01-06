@@ -259,15 +259,15 @@ newconstr_fielddecl         ::= q_name onls LEFT_BRACE? onls q_name onls COLON_C
 
 cidecls                     ::= cidecl (onls cidecl)*
 
-private cidecl              ::= type_signature | inline_pragma | noinline_pragma | specialize_pragma | type_declaration | instance_declaration | default_declaration |
+private cidecl              ::= inline_pragma | noinline_pragma | specialize_pragma | instance_declaration | default_declaration |
                                   newtype_declaration | data_declaration | minimal_pragma | expression
 
 expression                  ::= line_expression+ last_line_expression | last_line_expression
-private line_expression     ::= general_id+ nls
+private line_expression     ::= (type_signature | type_declaration | general_id+) nls
 private last_line_expression::= general_id+
 
 private general_id          ::= q_name | LEFT_PAREN | RIGHT_PAREN | FLOAT |
-                                  COLON_COLON | DOUBLE_RIGHT_ARROW | RIGHT_ARROW |
+                                   DOUBLE_RIGHT_ARROW | RIGHT_ARROW |
                                   SEMICOLON | LEFT_ARROW | LEFT_BRACKET | RIGHT_BRACKET | literal | LEFT_BRACE | RIGHT_BRACE |
                                   COMMA | symbol_reserved_op | QUOTE | BACKQUOTE | fixity | DOT_DOT | scc_pragma | reserved_id | DIRECTIVE
 
