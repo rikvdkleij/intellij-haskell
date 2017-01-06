@@ -26,7 +26,8 @@ import com.intellij.openapi.util.text.StringUtil
 import com.intellij.patterns.PlatformPatterns
 import com.intellij.psi.impl.source.tree.TreeUtil
 import com.intellij.psi.util.PsiTreeUtil
-import com.intellij.psi.{PsiElement, PsiFile, TokenType}
+import com.intellij.psi.{PsiElement, PsiFile, PsiManager, TokenType}
+import com.intellij.testFramework.LightVirtualFile
 import com.intellij.util.ProcessingContext
 import intellij.haskell.HaskellIcons
 import intellij.haskell.external.component.HaskellComponentsManager._
@@ -35,7 +36,9 @@ import intellij.haskell.psi.HaskellElementCondition._
 import intellij.haskell.psi.HaskellPsiUtil._
 import intellij.haskell.psi.HaskellTypes._
 import intellij.haskell.psi._
+import intellij.haskell.repl.{HaskellConsole, HaskellConsoleRunner}
 import intellij.haskell.util.HaskellProjectUtil
+import intellij.haskell.util.index.HaskellFileIndex
 
 import scala.collection.JavaConverters._
 import scala.concurrent.duration.Duration
@@ -96,40 +99,11 @@ class HaskellCompletionContributor extends CompletionContributor {
   }
 
   val provider = new CompletionProvider[CompletionParameters] {
-    def addCompletions(parameters: CompletionParameters, context: ProcessingContext, originalResultSet: CompletionResultSet) {
-
-      val project = parameters.getPosition.getProject
-      val psiFile = parameters.getOriginalFile
-
-      if (HaskellProjectUtil.isLibraryFile(psiFile)) {
-        return
-      }
-
-      // In case element before caret is a qualifier, module name or a dot we have to "help" IntelliJ to get the right preselected elements behavior
-      // For example, asking for completion in case typing `Data.List.` will give without this help no prefix.
-      val positionElement = Option(parameters.getOriginalPosition).orElse(Option(parameters.getPosition))
-      val prefixText = (
-        for {
-          e <- positionElement
-          p <- HaskellPsiUtil.findModIdElement(e)
-          start = p.getTextRange.getStartOffset
-          end = parameters.getOffset
-        } yield psiFile.getText.substring(start, end)
-        ).orElse({
-        for {
-          e <- positionElement
-          p <- findQualifiedNamedElementToComplete(e)
-          start = if (p.getText.startsWith("(")) p.getTextRange.getStartOffset + 1 else p.getTextRange.getStartOffset
-          end = parameters.getOffset
-        } yield psiFile.getText.substring(start, end)
-      }).orElse(
-        for {
-          e <- positionElement
-          if e.getNode.getElementType != HS_RIGHT_PAREN
-          t <- Option(e.getText).filter(_.trim.nonEmpty)
-        } yield t
-      ).flatMap(pt => if (pt.trim.isEmpty) None else Some(pt))
-
+    private def generateResultSet(project: Project,
+                                  psiFile: PsiFile,
+                                  positionElement: Option[PsiElement],
+                                  prefixText: Option[String],
+                                  originalResultSet: CompletionResultSet): Unit = {
       val resultSet = prefixText match {
         case Some(t) if !t.startsWith("`") => originalResultSet.withPrefixMatcher(originalResultSet.getPrefixMatcher.cloneWithPrefix(t))
         case _ => originalResultSet
@@ -190,12 +164,66 @@ class HaskellCompletionContributor extends CompletionContributor {
           }
       }
     }
+
+    def addCompletions(parameters: CompletionParameters, context: ProcessingContext, originalResultSet: CompletionResultSet) {
+
+      val project = parameters.getPosition.getProject
+      val psiFile = parameters.getOriginalFile
+
+      if (HaskellProjectUtil.isLibraryFile(psiFile)) {
+        return
+      }
+
+      // In case element before caret is a qualifier, module name or a dot we have to "help" IntelliJ to get the right preselected elements behavior
+      // For example, asking for completion in case typing `Data.List.` will give without this help no prefix.
+      val positionElement = Option(parameters.getOriginalPosition).orElse(Option(parameters.getPosition))
+
+      if (HaskellConsole.isHaskellConsoleFile(psiFile)) {
+        val name = psiFile.getName.replace(HaskellConsoleRunner.REPLTitle, "")
+        val files = HaskellFileIndex.findProjectFiles(project)
+        val prefixText = positionElement.map(_.getText)
+
+        files
+          .find(f => HaskellPsiUtil.findModuleName(PsiManager.getInstance(project).findFile(f)).contains(name))
+          .map(PsiManager.getInstance(project).findFile(_)) match {
+          case Some(f) => generateResultSet(project, f, positionElement, prefixText, originalResultSet)
+          case None => generateResultSet(project, psiFile, positionElement, prefixText, originalResultSet)
+        }
+      } else {
+        val prefixText = (
+          for {
+            e <- positionElement
+            p <- HaskellPsiUtil.findModIdElement(e)
+            start = p.getTextRange.getStartOffset
+            end = parameters.getOffset
+          } yield psiFile.getText.substring(start, end)
+          ).orElse({
+          for {
+            e <- positionElement
+            p <- findQualifiedNamedElementToComplete(e)
+            start = if (p.getText.startsWith("(")) p.getTextRange.getStartOffset + 1 else p.getTextRange.getStartOffset
+            end = parameters.getOffset
+          } yield psiFile.getText.substring(start, end)
+        }).orElse(
+          for {
+            e <- positionElement
+            if e.getNode.getElementType != HS_RIGHT_PAREN
+            t <- Option(e.getText).filter(_.trim.nonEmpty)
+          } yield t
+        ).flatMap(pt => if (pt.trim.isEmpty) None else Some(pt))
+
+        generateResultSet(project, psiFile, positionElement, prefixText, originalResultSet)
+      }
+    }
   }
 
   extend(CompletionType.BASIC, PlatformPatterns.psiElement(), provider)
 
   override def beforeCompletion(context: CompletionInitializationContext): Unit = {
     val psiFile = context.getFile
+
+    if (HaskellConsole.isHaskellConsoleFile(psiFile)) return
+
     val contextElement = Option(psiFile.findElementAt(context.getStartOffset - 1))
     contextElement match {
       case None => context.setDummyIdentifier("a")

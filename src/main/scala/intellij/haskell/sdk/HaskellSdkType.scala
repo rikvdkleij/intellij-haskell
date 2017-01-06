@@ -71,7 +71,6 @@ class HaskellSdkType extends SdkType("Haskell Tool Stack SDK") {
 
   override def getHomeChooserDescriptor: FileChooserDescriptor = {
     val descriptor: FileChooserDescriptor = new FileChooserDescriptor(true, false, false, false, false, false) {
-      @throws[Exception]
       override def validateSelectedFiles(files: Array[VirtualFile]) {
         if (files.length != 0) {
           val selectedPath: String = files(0).getPath
