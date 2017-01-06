@@ -222,7 +222,7 @@ class HaskellCompletionContributor extends CompletionContributor {
   override def beforeCompletion(context: CompletionInitializationContext): Unit = {
     val psiFile = context.getFile
 
-    if (psiFile.getVirtualFile != null && psiFile.getVirtualFile.isInstanceOf[LightVirtualFile]) return
+    if (HaskellConsole.isHaskellConsoleFile(psiFile)) return
 
     val contextElement = Option(psiFile.findElementAt(context.getStartOffset - 1))
     contextElement match {
