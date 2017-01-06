@@ -27,7 +27,7 @@ import scala.annotation.tailrec
 class HLintInspectionTool extends LocalInspectionTool {
 
   override def checkFile(psiFile: PsiFile, manager: InspectionManager, isOnTheFly: Boolean): Array[ProblemDescriptor] = {
-    if (HaskellProjectUtil.isLibraryFile(psiFile)) {
+    if (HaskellProjectUtil.isLibraryFile(psiFile).getOrElse(true)) {
       return Array()
     }
 

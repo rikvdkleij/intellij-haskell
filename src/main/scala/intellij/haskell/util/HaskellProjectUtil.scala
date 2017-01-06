@@ -18,7 +18,7 @@ package intellij.haskell.util
 
 import java.io.File
 
-import com.intellij.openapi.module.ModuleManager
+import com.intellij.openapi.module.{Module, ModuleManager}
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.roots.ProjectRootManager
 import com.intellij.openapi.vfs.{LocalFileSystem, VirtualFile}
@@ -48,20 +48,20 @@ object HaskellProjectUtil {
     })
   }
 
-  def isLibraryFile(psiFile: PsiFile): Boolean = {
+  def isLibraryFile(psiFile: PsiFile): Option[Boolean] = {
     isLibraryFile(psiFile.getContainingFile.getVirtualFile, psiFile.getProject)
   }
 
-  def isLibraryFile(virtualFile: VirtualFile, project: Project): Boolean = {
-    ProjectRootManager.getInstance(project).getFileIndex.isInLibrarySource(virtualFile)
+  def isLibraryFile(virtualFile: VirtualFile, project: Project): Option[Boolean] = {
+    getProjectRootManager(project).map(_.getFileIndex.isInLibrarySource(virtualFile))
   }
 
-  def isProjectTestFile(psiFile: PsiFile): Boolean = {
+  def isProjectTestFile(psiFile: PsiFile): Option[Boolean] = {
     isProjectTestFile(psiFile.getOriginalFile.getVirtualFile, psiFile.getProject)
   }
 
-  def isProjectTestFile(virtualFile: VirtualFile, project: Project): Boolean = {
-    ProjectRootManager.getInstance(project).getFileIndex.isInTestSourceContent(virtualFile)
+  def isProjectTestFile(virtualFile: VirtualFile, project: Project): Option[Boolean] = {
+    getProjectRootManager(project).map(_.getFileIndex.isInTestSourceContent(virtualFile))
   }
 
   def findHaskellFiles(project: Project, includeNonProjectItems: Boolean): Iterable[VirtualFile] = {
@@ -78,10 +78,24 @@ object HaskellProjectUtil {
   }
 
   def getProjectModulesSearchScope(project: Project): GlobalSearchScope = {
-    ModuleManager.getInstance(project).getModules.map(GlobalSearchScope.moduleScope).reduce(_.uniteWith(_))
+    getProjectModules(project).map(GlobalSearchScope.moduleScope).reduce(_.uniteWith(_))
   }
 
   def getSearchScope(project: Project, includeNonProjectItems: Boolean): GlobalSearchScope = {
     if (includeNonProjectItems) GlobalSearchScope.allScope(project) else HaskellProjectUtil.getProjectModulesSearchScope(project)
+  }
+
+  import ScalaUtil._
+
+  def getProjectRootManager(project: Project): Option[ProjectRootManager] = {
+    project.isDisposed.optionNot(ProjectRootManager.getInstance(project))
+  }
+
+  def getModuleManager(project: Project): Option[ModuleManager] = {
+    project.isDisposed.optionNot(ModuleManager.getInstance(project))
+  }
+
+  def getProjectModules(project: Project): Array[Module] = {
+    getModuleManager(project).map(_.getModules).getOrElse(Array())
   }
 }

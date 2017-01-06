@@ -29,28 +29,30 @@ private[component] object AvailableModuleNamesComponent {
   def findAvailableModuleNames(psiFile: PsiFile): Iterable[String] = {
     val globalProjectInfo = GlobalProjectInfoComponent.findGlobalProjectInfo(psiFile.getProject)
 
-    if (HaskellProjectUtil.isProjectTestFile(psiFile)) {
-      val libraryTestModuleNames = globalProjectInfo.map(_.allAvailableLibraryModuleNames).getOrElse(Stream())
-      val testModuleNames = ApplicationManager.getApplication.runReadAction {
-        new Computable[Iterable[String]] {
-          override def compute(): Iterable[String] = {
-            HaskellFileIndex.findProjectTestPsiFiles(psiFile.getProject).flatMap(HaskellPsiUtil.findModuleName) ++
+    HaskellProjectUtil.isProjectTestFile(psiFile).map(isTestFile => {
+      if (isTestFile) {
+        val libraryTestModuleNames = globalProjectInfo.map(_.allAvailableLibraryModuleNames).getOrElse(Stream())
+        val testModuleNames = ApplicationManager.getApplication.runReadAction {
+          new Computable[Iterable[String]] {
+            override def compute(): Iterable[String] = {
+              HaskellFileIndex.findProjectTestPsiFiles(psiFile.getProject).flatMap(HaskellPsiUtil.findModuleName) ++
+                findProjectProductionModuleNames(psiFile.getProject)
+            }
+          }
+        }
+        testModuleNames ++ libraryTestModuleNames
+      } else {
+        val libraryModuleNames = globalProjectInfo.map(_.availableProductionLibraryModuleNames).getOrElse(Stream())
+        val prodModuleNames = ApplicationManager.getApplication.runReadAction {
+          new Computable[Iterable[String]] {
+            override def compute(): Iterable[String] = {
               findProjectProductionModuleNames(psiFile.getProject)
+            }
           }
         }
+        prodModuleNames ++ libraryModuleNames
       }
-      testModuleNames ++ libraryTestModuleNames
-    } else {
-      val libraryModuleNames = globalProjectInfo.map(_.availableProductionLibraryModuleNames).getOrElse(Stream())
-      val prodModuleNames = ApplicationManager.getApplication.runReadAction {
-        new Computable[Iterable[String]] {
-          override def compute(): Iterable[String] = {
-            findProjectProductionModuleNames(psiFile.getProject)
-          }
-        }
-      }
-      prodModuleNames ++ libraryModuleNames
-    }
+    }).getOrElse(Iterable())
   }
 
   def findProjectProductionModuleNames(project: Project): Iterable[String] = {

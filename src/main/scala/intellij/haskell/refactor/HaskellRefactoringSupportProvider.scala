@@ -28,7 +28,7 @@ class HaskellRefactoringSupportProvider extends RefactoringSupportProvider {
 
   private def definedInProjectFile(element: PsiElement) = {
     Option(element.getReference).flatMap(_.asInstanceOf[PsiPolyVariantReference].multiResolve(false).headOption) match {
-      case Some(rr: ResolveResult) => !HaskellProjectUtil.isLibraryFile(rr.getElement.getContainingFile)
+      case Some(rr: ResolveResult) => !HaskellProjectUtil.isLibraryFile(rr.getElement.getContainingFile).getOrElse(true)
       case _ => false
     }
   }

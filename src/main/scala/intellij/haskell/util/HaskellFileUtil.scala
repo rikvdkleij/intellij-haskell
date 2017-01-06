@@ -23,7 +23,6 @@ import com.intellij.openapi.command.CommandProcessor
 import com.intellij.openapi.editor.{Document, SelectionModel}
 import com.intellij.openapi.fileEditor.FileDocumentManager
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.roots.ProjectRootManager
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.psi.{PsiFile, PsiManager}
@@ -125,11 +124,11 @@ object HaskellFileUtil {
       }
     }
 
-    val result = ProjectRootManager.getInstance(project).getContentSourceRoots.view.flatMap { root =>
+    val result = HaskellProjectUtil.getProjectRootManager(project).flatMap(_.getContentSourceRoots.view.flatMap(root =>
       for {
         rootPath <- Option(root.getCanonicalPath)
       } yield loop(Some(file), rootPath)
-    }.headOption
+    ).headOption)
     result.flatten
   }
 

@@ -82,16 +82,18 @@ class HaskellReference(element: HaskellNamedElement, textRange: TextRange) exten
 object HaskellReference {
 
   def resolveResults(namedElement: HaskellNamedElement, psiFile: PsiFile, project: Project): Seq[ResolveResult] = {
-    if (HaskellProjectUtil.isLibraryFile(psiFile)) {
-      val resolvedResultsByNameInfo = createResolveResultsByNameInfos(namedElement, project)
-      if (resolvedResultsByNameInfo.isEmpty) {
-        findDeclarationElements(psiFile).flatMap(_.getIdentifierElements).find(_.getName == namedElement.getName).map(e => new HaskellNamedElementResolveResult(e)).toSeq
+    HaskellProjectUtil.isLibraryFile(psiFile).map(isLibraryFile => {
+      if (isLibraryFile) {
+        val resolvedResultsByNameInfo = createResolveResultsByNameInfos(namedElement, project)
+        if (resolvedResultsByNameInfo.isEmpty) {
+          findDeclarationElements(psiFile).flatMap(_.getIdentifierElements).find(_.getName == namedElement.getName).map(e => new HaskellNamedElementResolveResult(e)).toSeq
+        } else {
+          resolvedResultsByNameInfo
+        }
       } else {
-        resolvedResultsByNameInfo
+        findReferenceByDefinitionLocation(namedElement, project).map(prr => new HaskellNamedElementResolveResult(prr)) ++ createResolveResultsByNameInfos(namedElement, project)
       }
-    } else {
-      findReferenceByDefinitionLocation(namedElement, project).map(prr => new HaskellNamedElementResolveResult(prr)) ++ createResolveResultsByNameInfos(namedElement, project)
-    }
+    }).getOrElse(Seq())
   }
 
   private def createResolveResultsByNameInfos(namedElement: HaskellNamedElement, project: Project): Seq[ResolveResult] = {

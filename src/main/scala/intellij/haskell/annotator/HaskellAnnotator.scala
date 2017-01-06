@@ -67,7 +67,7 @@ class HaskellAnnotator extends ExternalAnnotator[PsiFile, LoadResult] {
     (psiFile, Option(psiFile.getOriginalFile.getVirtualFile)) match {
       case (_, None) => null // can be in case if file is in memory only (just created file)
       case (_, Some(f)) if f.getFileType != HaskellFileType.INSTANCE => null
-      case (_, Some(_)) if HaskellProjectUtil.isLibraryFile(psiFile) => null
+      case (_, Some(_)) if HaskellProjectUtil.isLibraryFile(psiFile).getOrElse(true) => null
       case (_, Some(_)) => psiFile
     }
   }
@@ -224,7 +224,7 @@ object HaskellAnnotator {
       () => {
         if (!project.isDisposed) {
           val openFiles = FileEditorManager.getInstance(project).getOpenFiles
-          val openProjectFiles = openFiles.filterNot(vf => HaskellProjectUtil.isLibraryFile(vf, project))
+          val openProjectFiles = openFiles.filterNot(vf => HaskellProjectUtil.isLibraryFile(vf, project).getOrElse(true))
           val openProjectPsiFiles = HaskellFileUtil.convertToHaskellFiles(openProjectFiles.toStream, project)
           openProjectPsiFiles.foreach(pf =>
             getDaemonCodeAnalyzer(project).restart(pf)

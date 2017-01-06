@@ -14,18 +14,13 @@
  * limitations under the License.
  */
 
-package intellij.haskell.action
+package intellij.haskell.util
 
-import com.intellij.openapi.actionSystem.{AnAction, AnActionEvent}
-import intellij.haskell.module.HaskellModuleBuilder
-import intellij.haskell.util.HaskellProjectUtil
+object ScalaUtil {
 
-class DownloadLibrarySources extends AnAction {
-
-  override def update(e: AnActionEvent): Unit = e.getPresentation.setEnabledAndVisible(HaskellProjectUtil.isHaskellStackProject(e.getProject))
-
-  override def actionPerformed(e: AnActionEvent): Unit = {
-    HaskellProjectUtil.getProjectModules(e.getProject).foreach(m =>
-      HaskellModuleBuilder.addLibrarySources(m))
+  implicit class RichBoolean(val b: Boolean) extends AnyVal {
+    final def option[A](a: => A): Option[A] = if (b) Option(a) else None
+    final def optionNot[A](a: => A): Option[A] = if (b) None else Option(a)
   }
+
 }

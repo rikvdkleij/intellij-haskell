@@ -20,14 +20,14 @@ import java.io.{DataInput, DataOutput}
 import java.util
 
 import com.intellij.openapi.fileTypes.FileType
-import com.intellij.openapi.project.{Project, ProjectManager}
+import com.intellij.openapi.project.Project
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.psi.search.{FileTypeIndex, GlobalSearchScope, GlobalSearchScopesCore}
 import com.intellij.util.indexing.FileBasedIndex.InputFilter
 import com.intellij.util.indexing._
 import com.intellij.util.io.{DataExternalizer, EnumeratorStringDescriptor, KeyDescriptor}
 import intellij.haskell.util.{HaskellFileUtil, HaskellProjectUtil}
-import intellij.haskell.{HaskellFile, HaskellFileType, HaskellNotificationGroup}
+import intellij.haskell.{HaskellFile, HaskellFileType}
 
 import scala.collection.JavaConverters._
 

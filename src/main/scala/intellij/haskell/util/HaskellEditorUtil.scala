@@ -38,20 +38,23 @@ object HaskellEditorUtil {
 
   def enableAction(onlyForProjectFile: Boolean, actionEvent: AnActionEvent): Unit = {
     val presentation = actionEvent.getPresentation
+
     def enable() {
       presentation.setEnabled(true)
       presentation.setVisible(true)
     }
+
     def disable() {
       presentation.setEnabled(false)
       presentation.setVisible(false)
     }
+
     try {
       val dataContext = actionEvent.getDataContext
       val psiFile = CommonDataKeys.PSI_FILE.getData(dataContext)
       psiFile match {
         case _: HaskellFile if !onlyForProjectFile => enable()
-        case _: HaskellFile if onlyForProjectFile && !HaskellProjectUtil.isLibraryFile(psiFile) => enable()
+        case _: HaskellFile if onlyForProjectFile && !HaskellProjectUtil.isLibraryFile(psiFile).getOrElse(true) => enable()
         case _ => disable()
       }
     }

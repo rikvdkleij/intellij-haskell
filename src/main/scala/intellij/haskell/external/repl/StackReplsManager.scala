@@ -17,23 +17,19 @@
 package intellij.haskell.external.repl
 
 import com.intellij.openapi.project.Project
+import intellij.haskell.util.ScalaUtil
 
 object StackReplsManager {
 
+  import ScalaUtil._
+
   def getProjectRepl(project: Project): Option[ProjectStackReplProcess] = {
-    if (project.isDisposed) {
-      None
-    } else {
-      Option(project.getComponent(classOf[ProjectStackReplProcess]))
-    }
+    project.isDisposed.optionNot(project.getComponent(classOf[ProjectStackReplProcess]))
+
   }
 
   def getGlobalRepl(project: Project): Option[GlobalStackReplProcess] = {
-    if (project.isDisposed) {
-      None
-    } else {
-      Option(project.getComponent(classOf[GlobalStackReplProcess]))
-    }
+    project.isDisposed.optionNot(project.getComponent(classOf[GlobalStackReplProcess]))
   }
 }
 

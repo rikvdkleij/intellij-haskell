@@ -23,10 +23,11 @@ import com.intellij.openapi.fileChooser.FileChooserDescriptor
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.projectRoots._
 import com.intellij.openapi.projectRoots.impl.SdkConfigurationUtil
-import com.intellij.openapi.roots.{OrderRootType, ProjectRootManager}
+import com.intellij.openapi.roots.OrderRootType
 import com.intellij.openapi.util.SystemInfo
 import com.intellij.openapi.vfs.VirtualFile
 import intellij.haskell.external.commandLine.CommandLine
+import intellij.haskell.util.HaskellProjectUtil
 import intellij.haskell.{HaskellIcons, HaskellNotificationGroup}
 import org.jdom.Element
 
@@ -109,12 +110,14 @@ object HaskellSdkType {
   }
 
   def getStackPath(project: Project): Option[String] = {
-    val stackPath = Option(ProjectRootManager.getInstance(project).getProjectSdk).map(_.getHomePath)
-    stackPath match {
-      case Some(_) => stackPath
-      case None =>
-        HaskellNotificationGroup.logErrorBalloonEvent(project, "Path to Haskell Stack binary is not configured in Project SDK setting. Please do and restart Project.")
-        None
-    }
+    HaskellProjectUtil.getProjectRootManager(project).flatMap(projectRootManager => {
+      val stackPath = Option(projectRootManager.getProjectSdk).map(_.getHomePath)
+      stackPath match {
+        case Some(_) => stackPath
+        case None =>
+          HaskellNotificationGroup.logErrorBalloonEvent(project, "Path to Haskell Stack binary is not configured in Project SDK setting. Please do and restart Project.")
+          None
+      }
+    })
   }
 }

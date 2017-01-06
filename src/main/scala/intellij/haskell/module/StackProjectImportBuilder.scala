@@ -21,13 +21,14 @@ import java.util
 import javax.swing.Icon
 
 import com.intellij.openapi.application.ApplicationManager
-import com.intellij.openapi.module.{ModifiableModuleModel, Module, ModuleManager}
+import com.intellij.openapi.module.{ModifiableModuleModel, Module}
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.roots.ModifiableRootModel
 import com.intellij.openapi.roots.ui.configuration.ModulesProvider
 import com.intellij.packaging.artifacts.ModifiableArtifactModel
 import com.intellij.projectImport.ProjectImportBuilder
 import intellij.haskell.HaskellIcons
+import intellij.haskell.util.HaskellProjectUtil
 
 import scala.collection.JavaConverters._
 
@@ -46,23 +47,24 @@ class StackProjectImportBuilder extends ProjectImportBuilder[Unit] {
 
   override def commit(project: Project, model: ModifiableModuleModel, modulesProvider: ModulesProvider, artifactModel: ModifiableArtifactModel): java.util.List[Module] = {
     val haskellModuleBuilder = HaskellModuleType.getInstance.createModuleBuilder()
-    val moduleModel = ModuleManager.getInstance(project).getModifiableModel
+    HaskellProjectUtil.getModuleManager(project).map(_.getModifiableModel).map { moduleModel =>
 
-    ApplicationManager.getApplication.runWriteAction(new Runnable {
-      override def run(): Unit = {
-        haskellModuleBuilder.setName(getModuleName)
-        haskellModuleBuilder.setModuleFilePath(getModuleFilePath)
+      ApplicationManager.getApplication.runWriteAction(new Runnable {
+        override def run(): Unit = {
+          haskellModuleBuilder.setName(getModuleName)
+          haskellModuleBuilder.setModuleFilePath(getModuleFilePath)
 
-        haskellModuleBuilder.createModule(moduleModel)
-        haskellModuleBuilder.commit(project)
-        haskellModuleBuilder.addModuleConfigurationUpdater((module: Module, rootModel: ModifiableRootModel) => {
-          haskellModuleBuilder.setupRootModel(rootModel)
-        })
-      }
-    })
+          haskellModuleBuilder.createModule(moduleModel)
+          haskellModuleBuilder.commit(project)
+          haskellModuleBuilder.addModuleConfigurationUpdater((module: Module, rootModel: ModifiableRootModel) => {
+            haskellModuleBuilder.setupRootModel(rootModel)
+          })
+        }
+      })
 
-    haskellModuleBuilder.moduleCreated(moduleModel.getModules.head)
-    moduleModel.getModules.toList.asJava
+      haskellModuleBuilder.moduleCreated(moduleModel.getModules.head)
+      moduleModel.getModules.toList.asJava
+    }.getOrElse(new util.ArrayList[Module]())
   }
 
   private def getModuleName: String = {
