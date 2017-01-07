@@ -22,3 +22,5 @@ lazy val intellijHaskell = (project in file(".")).
   )
 
 ideaBuild in ThisBuild := "163.7743.44"
+
+javacOptions ++= Seq("-encoding", "UTF-8")
