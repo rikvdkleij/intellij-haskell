@@ -48,7 +48,7 @@ COMMENT="--" [^\r\n]*
 // are when we lex a COMMENT or CRLF.
 <YYINITIAL> {
   {WHITE_SPACE}* {COMMENT} { return CabalTypes.COMMENT; }
-  {CRLF}*  { return CabalTypes.WHITE_SPACE; }
+  {CRLF}+  { return CabalTypes.WHITE_SPACE; }
   [^]     { yypushback(yylength()); yybegin(MAIN); return CabalTypes.WHITE_SPACE; }
 }
 
