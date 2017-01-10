@@ -30,7 +30,7 @@ import org.jetbrains.annotations.NotNull
 //noinspection TypeAnnotation
 object HaskellParserDefinition {
   final val WhiteSpaces = TokenSet.create(TokenType.WHITE_SPACE)
-  final val Comments = TokenSet.create(HS_COMMENT, HS_NCOMMENT)
+  final val Comments = TokenSet.create(HS_COMMENT, HS_NCOMMENT, HS_HADDOCK, HS_NHADDOCK)
   final val PragmaStartEndIds = TokenSet.create(HS_PRAGMA_START, HS_PRAGMA_END)
   final val ReservedIdS = TokenSet.create(HS_CASE, HS_CLASS, HS_DATA, HS_DEFAULT, HS_DERIVING, HS_DO, HS_ELSE, HS_IF, HS_IMPORT,
     HS_IN, HS_INFIX, HS_INFIXL, HS_INFIXR, HS_INSTANCE, HS_LET, HS_MODULE, HS_NEWTYPE, HS_OF, HS_THEN, HS_TYPE, HS_WHERE, HS_UNDERSCORE)

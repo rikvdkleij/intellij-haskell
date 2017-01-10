@@ -138,6 +138,7 @@ public interface HaskellTypes {
   IElementType HS_FLOAT = new HaskellTokenType("FLOAT");
   IElementType HS_FOREIGN_EXPORT = new HaskellTokenType("FOREIGN_EXPORT");
   IElementType HS_FOREIGN_IMPORT = new HaskellTokenType("FOREIGN_IMPORT");
+  IElementType HS_HADDOCK = new HaskellTokenType("HADDOCK");
   IElementType HS_HEXADECIMAL = new HaskellTokenType("HEXADECIMAL");
   IElementType HS_IF = new HaskellTokenType("IF");
   IElementType HS_IMPORT = new HaskellTokenType("IMPORT");
@@ -157,6 +158,7 @@ public interface HaskellTypes {
   IElementType HS_NCOMMENT_START = new HaskellTokenType("NCOMMENT_START");
   IElementType HS_NEWLINE = new HaskellTokenType("NEWLINE");
   IElementType HS_NEWTYPE = new HaskellTokenType("NEWTYPE");
+  IElementType HS_NHADDOCK = new HaskellTokenType("NHADDOCK");
   IElementType HS_OCTAL = new HaskellTokenType("OCTAL");
   IElementType HS_OF = new HaskellTokenType("OF");
   IElementType HS_PRAGMA_END = new HaskellTokenType("PRAGMA_END");

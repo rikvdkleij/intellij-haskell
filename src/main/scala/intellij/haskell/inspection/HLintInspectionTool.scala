@@ -19,7 +19,7 @@ package intellij.haskell.inspection
 import com.intellij.codeInspection._
 import com.intellij.psi.{PsiElement, PsiFile, TokenType}
 import intellij.haskell.external.component.{HLintComponent, HLintInfo}
-import intellij.haskell.psi.HaskellTypes.{HS_COMMENT, HS_NCOMMENT, HS_NEWLINE}
+import intellij.haskell.psi.HaskellTypes._
 import intellij.haskell.util.{HaskellProjectUtil, LineColumnPosition}
 
 import scala.annotation.tailrec
@@ -82,5 +82,5 @@ class HLintInspectionTool extends LocalInspectionTool {
 }
 
 object HLintInspectionTool {
-  val NotHaskellIdentifiers = Seq(HS_NEWLINE, HS_COMMENT, HS_NCOMMENT, TokenType.WHITE_SPACE)
+  val NotHaskellIdentifiers = Seq(HS_NEWLINE, HS_COMMENT, HS_NCOMMENT, TokenType.WHITE_SPACE, HS_HADDOCK, HS_NHADDOCK)
 }

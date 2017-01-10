@@ -1294,7 +1294,7 @@ public class HaskellParser implements PsiParser, LightPsiParser {
   }
 
   /* ********************************************************** */
-  // COMMENT | NCOMMENT | NCOMMENT_START | NCOMMENT_END
+  // COMMENT | NCOMMENT | NCOMMENT_START | NCOMMENT_END | HADDOCK | NHADDOCK
   public static boolean comments(PsiBuilder b, int l) {
     if (!recursion_guard_(b, l, "comments")) return false;
     boolean r;
@@ -1303,6 +1303,8 @@ public class HaskellParser implements PsiParser, LightPsiParser {
     if (!r) r = consumeToken(b, HS_NCOMMENT);
     if (!r) r = consumeToken(b, HS_NCOMMENT_START);
     if (!r) r = consumeToken(b, HS_NCOMMENT_END);
+    if (!r) r = consumeToken(b, HS_HADDOCK);
+    if (!r) r = consumeToken(b, HS_NHADDOCK);
     exit_section_(b, l, m, r, false, null);
     return r;
   }
@@ -2815,7 +2817,7 @@ public class HaskellParser implements PsiParser, LightPsiParser {
 
   /* ********************************************************** */
   // q_name | LEFT_PAREN | RIGHT_PAREN | FLOAT |
-  //                                    DOUBLE_RIGHT_ARROW | RIGHT_ARROW |
+  //                                   DOUBLE_RIGHT_ARROW | RIGHT_ARROW |
   //                                   SEMICOLON | LEFT_ARROW | LEFT_BRACKET | RIGHT_BRACKET | literal | LEFT_BRACE | RIGHT_BRACE |
   //                                   COMMA | symbol_reserved_op | QUOTE | BACKQUOTE | fixity | DOT_DOT | scc_pragma | reserved_id | DIRECTIVE | COLON_COLON
   static boolean general_id(PsiBuilder b, int l) {

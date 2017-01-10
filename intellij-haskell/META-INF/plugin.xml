@@ -205,6 +205,7 @@
         <!-- Handler -->
         <typedHandler implementation="intellij.haskell.editor.HaskellTypedHandler" id="HaskellFile"/>
         <extendWordSelectionHandler implementation="intellij.haskell.editor.HaskellExtendWordSelectioner"/>
+        <enterHandlerDelegate implementation="intellij.haskell.editor.EnterInHaddockHandler" id="EnterInHaddockHandler"/>
 
         <!-- Code Style -->
         <codeStyleSettingsProvider

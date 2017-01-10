@@ -21,9 +21,12 @@ import static intellij.haskell.psi.HaskellTypes.*;
 %{
     private int commentStart;
     private int commentDepth;
+
+    private int haddockStart;
+    private int haddockDepth;
 %}
 
-%xstate NCOMMENT
+%xstate NCOMMENT, NHADDOCK
 
 control_character   = [\000 - \037]
 newline             = \r|\n|\r\n
@@ -117,8 +120,44 @@ pragma_end          = "#-}"
 comment             = {dash}{dash}[^\r\n]* | "\\begin{code}"
 ncomment_start      = "{-"
 ncomment_end        = "-}"
+haddock             = {dash}{dash}\ [\^\|][^\r\n]* ({newline} {comment})*
+nhaddock_start      = "{-|"
 
 %%
+
+<NHADDOCK> {
+    {nhaddock_start} {
+        haddockDepth++;
+    }
+
+    <<EOF>> {
+        int state = yystate();
+        yybegin(YYINITIAL);
+        zzStartRead = haddockStart;
+        return HS_NHADDOCK;
+    }
+
+    {ncomment_end} {
+        if (haddockDepth > 0) {
+            haddockDepth--;
+        }
+        else {
+             int state = yystate();
+             yybegin(YYINITIAL);
+             zzStartRead = haddockStart;
+             return HS_NHADDOCK;
+        }
+    }
+
+    .|{white_char}|{newline} {}
+}
+
+{nhaddock_start}({white_char} | {newline} | "-" | [^#\-\}]) {
+    yybegin(NHADDOCK);
+    haddockDepth = 0;
+    haddockStart = getTokenStart();
+}
+
 
 <NCOMMENT> {
     {ncomment_start} {
@@ -132,7 +171,7 @@ ncomment_end        = "-}"
         return HS_NCOMMENT;
     }
 
-    {ncomment_end} {newline}? {
+    {ncomment_end} {
         if (commentDepth > 0) {
             commentDepth--;
         }
@@ -154,6 +193,8 @@ ncomment_end        = "-}"
 }
 
     {newline}             { return HS_NEWLINE; }
+
+    {haddock}             { return HS_HADDOCK; }
     {comment}             { return HS_COMMENT; }
     {white_space}         { return com.intellij.psi.TokenType.WHITE_SPACE; }
 

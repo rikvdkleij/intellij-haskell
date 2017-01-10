@@ -46,27 +46,27 @@ class HaskellCompletionContributor extends CompletionContributor {
   private final val ExecutorService = Executors.newCachedThreadPool()
   implicit private final val ExecContext = ExecutionContext.fromExecutorService(ExecutorService)
 
-  private final val haskellWhere = Stream("where")
-  private final val haskellLet = Stream("let")
+  private final val HaskellWhere = Stream("where")
+  private final val HaskellLet = Stream("let")
   private final val haskellDeclKeywords = Stream("family", "data", "type", "module", "class", "instance", "newtype", "deriving", "in")
-  private final val haskellDefault = Stream("default")
-  private final val haskellImportKeywords = Stream("import", "qualified", "as", "hiding")
-  private final val haskellForeignKeywords = Stream("foreign", "export", "ccall", "safe", "unsafe", "interruptible", "capi", "prim")
-  private final val haskellKeyword = Stream("do", "case", "of")
-  private final val haskellStatic = Stream("static")
-  private final val haskellConditional = Stream("if", "then", "else")
-  private final val haskellInfix = Stream("infix", "infixl", "infixr")
-  private final val haskellBottom = Stream("undefined", "error")
-  private final val haskellTodo = Stream("TODO", "FIXME")
-  private final val haskellTypeRoles = Stream("phantom", "representational", "nominal")
-  private final val haskellForall = Stream("forall")
-  private final val haskellRecursiveDo = Stream("mdo", "rec")
-  private final val haskellArrowSyntax = Stream("proc")
-  private final val haskellPatternKeyword = Stream("pattern")
+  private final val HaskellDefault = Stream("default")
+  private final val HaskellImportKeywords = Stream("import", "qualified", "as", "hiding")
+  private final val HaskellForeignKeywords = Stream("foreign", "export", "ccall", "safe", "unsafe", "interruptible", "capi", "prim")
+  private final val HaskellKeyword = Stream("do", "case", "of")
+  private final val HaskellStatic = Stream("static")
+  private final val HaskellConditional = Stream("if", "then", "else")
+  private final val HaskellInfix = Stream("infix", "infixl", "infixr")
+  private final val HaskellBottom = Stream("undefined", "error")
+  private final val HaskellTodo = Stream("TODO", "FIXME")
+  private final val HaskellTypeRoles = Stream("phantom", "representational", "nominal")
+  private final val HaskellForall = Stream("forall")
+  private final val HaskellRecursiveDo = Stream("mdo", "rec")
+  private final val HaskellArrowSyntax = Stream("proc")
+  private final val HaskellPatternKeyword = Stream("pattern")
 
-  private final val Keywords = haskellWhere ++ haskellLet ++ haskellDeclKeywords ++ haskellDefault ++ haskellImportKeywords ++
-    haskellForeignKeywords ++ haskellKeyword ++ haskellStatic ++ haskellConditional ++ haskellInfix ++ haskellBottom ++
-    haskellTodo ++ haskellTypeRoles ++ haskellForall ++ haskellRecursiveDo ++ haskellArrowSyntax ++ haskellPatternKeyword
+  private final val Keywords = HaskellWhere ++ HaskellLet ++ haskellDeclKeywords ++ HaskellDefault ++ HaskellImportKeywords ++
+    HaskellForeignKeywords ++ HaskellKeyword ++ HaskellStatic ++ HaskellConditional ++ HaskellInfix ++ HaskellBottom ++
+    HaskellTodo ++ HaskellTypeRoles ++ HaskellForall ++ HaskellRecursiveDo ++ HaskellArrowSyntax ++ HaskellPatternKeyword
 
   private final val SpecialReservedIds = Stream("safe", "unsafe")
   private final val PragmaIds = Stream("{-#", "#-}")
@@ -75,6 +75,7 @@ class HaskellCompletionContributor extends CompletionContributor {
     "SPECIALIZE", "SPECIALISE", "MINIMAL", "SOURCE", "UNPACK", "NOUNPACK")
   private final val InsideImportKeywords = Stream("as", "hiding", "qualified")
   private final val CommentIds = Stream("{-", "-}", "--")
+  private final val HaddockIds = Stream("{-|", "-- |", "-- ^")
 
   def findQualifiedNamedElementToComplete(element: PsiElement): Option[HaskellQualifiedNameElement] = {
     val elementType = Option(element.getNode.getElementType)
@@ -167,6 +168,7 @@ class HaskellCompletionContributor extends CompletionContributor {
               resultSet.addAllElements(getSpecialReservedIds.asJavaCollection)
               resultSet.addAllElements(getPragmaStartEndIds.asJavaCollection)
               resultSet.addAllElements(getCommentIds.asJavaCollection)
+              resultSet.addAllElements(getHaddockIds.asJavaCollection)
               resultSet.addAllElements(getIdsFromFullImportedModules(project, psiFile, importDeclarations).asJavaCollection)
               resultSet.addAllElements(getIdsFromHidingIdsImportedModules(project, psiFile, importDeclarations).asJavaCollection)
               resultSet.addAllElements(getIdsFromSpecIdsImportedModules(project, psiFile, importDeclarations).asJavaCollection)
@@ -296,6 +298,10 @@ class HaskellCompletionContributor extends CompletionContributor {
 
   private def getCommentIds = {
     CommentIds.map(p => LookupElementBuilder.create(p).withIcon(HaskellIcons.HaskellSmallBlueLogo).withTailText(" comment", true))
+  }
+
+  private def getHaddockIds = {
+    HaddockIds.map(p => LookupElementBuilder.create(p).withIcon(HaskellIcons.HaskellSmallBlueLogo).withTailText(" haddock", true))
   }
 
   private def getFullImportedModules(psiFile: PsiFile, importDeclarations: Iterable[HaskellImportDeclaration]): Iterable[ImportFull] = {

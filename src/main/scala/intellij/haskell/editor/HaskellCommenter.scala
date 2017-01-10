@@ -23,7 +23,7 @@ import intellij.haskell.psi.HaskellTypes
 
 class HaskellCommenter extends CodeDocumentationAwareCommenter {
   def getLineCommentPrefix: String = {
-    "-- "
+    "--"
   }
 
   def getBlockCommentPrefix: String = {
@@ -50,16 +50,17 @@ class HaskellCommenter extends CodeDocumentationAwareCommenter {
     HaskellTypes.HS_NCOMMENT
   }
 
+  // Haskell documentation does not have similar syntax/structure as Javadoc so makes no sense to put some values here.
   def getDocumentationCommentTokenType: IElementType = {
-    HaskellTypes.HS_COMMENT
+    null
   }
 
   def getDocumentationCommentPrefix: String = {
-    "-- | "
+    null
   }
 
   def getDocumentationCommentLinePrefix: String = {
-    "-- | "
+    null
   }
 
   def getDocumentationCommentSuffix: String = {
@@ -67,6 +68,6 @@ class HaskellCommenter extends CodeDocumentationAwareCommenter {
   }
 
   def isDocumentationComment(element: PsiComment): Boolean = {
-    element.getText.startsWith(getDocumentationCommentLinePrefix)
+    element.getText.startsWith("-- |") || element.getText.startsWith("{-|")
   }
 }
