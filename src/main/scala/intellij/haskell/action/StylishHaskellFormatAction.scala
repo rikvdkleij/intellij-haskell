@@ -45,7 +45,7 @@ object StylishHaskellFormatAction {
     HaskellFileUtil.saveFile(virtualFile)
 
     val project = psiFile.getProject
-    HaskellSettingsState.getStylishHaskellPath match {
+    HaskellSettingsState.getStylishHaskellPath(project) match {
       case Some(stylishHaskellPath) =>
         val processOutput = CommandLine.runProgram(Option(project), project.getBasePath, stylishHaskellPath, Seq(HaskellFileUtil.getFilePath(psiFile)))
 

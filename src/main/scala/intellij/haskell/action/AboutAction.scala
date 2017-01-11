@@ -34,16 +34,17 @@ class AboutAction extends AnAction {
   def actionPerformed(actionEvent: AnActionEvent) {
     ActionUtil.findActionContext(actionEvent).foreach(actionContext => {
       val messages = new ArrayBuffer[String]
-      messages.+=("Stack version: " + StackCommandLine.runCommand(Seq("--version"), actionContext.project).map(_.getStdout).getOrElse("-"))
-      messages.+=("GHC version: " + StackCommandLine.runCommand(Seq("exec", "--", "ghc", "--version"), actionContext.project).map(_.getStdout).getOrElse("-"))
-      messages.+=("Intero version: " + StackCommandLine.runCommand(Seq("exec", "--", "intero", "--version"), actionContext.project).map(_.getStdout).getOrElse("-"))
-      messages.+=("HLint version: " + StackCommandLine.runCommand(Seq("exec", "--", HLintComponent.HlintName, "--version"), actionContext.project).map(_.getStdout).getOrElse("-"))
-      messages.+=("Haskell-docs version can not be retrieved from command line\n")
-      messages.+=("Hindent: " + HaskellSettingsState.getHindentPath.flatMap(hp =>
-        CommandLine.runProgram(None, actionContext.project.getBasePath, hp, Seq("--version")).map(_.getStdout)).getOrElse("-"))
-      messages.+=("Stylish-haskell: " + HaskellSettingsState.getStylishHaskellPath.flatMap(sh =>
-        CommandLine.runProgram(None, actionContext.project.getBasePath, sh, Seq("--version")).map(_.getStdout)).getOrElse("-"))
-      Messages.showInfoMessage(actionContext.project, messages.mkString("\n"), "About Haskell project")
+      val project = actionContext.project
+      messages.+=("<b>Stack version</b>: " + StackCommandLine.runCommand(Seq("--version"), project).map(_.getStdout).getOrElse("-"))
+      messages.+=("<b>GHC version</b>: " + StackCommandLine.runCommand(Seq("exec", "--", "ghc", "--version"), project).map(_.getStdout).getOrElse("-"))
+      messages.+=("<b>Intero version</b>: " + StackCommandLine.runCommand(Seq("exec", "--", "intero", "--version"), project).map(_.getStdout).getOrElse("-"))
+      messages.+=("<b>HLint version</b>: " + StackCommandLine.runCommand(Seq("exec", "--", HLintComponent.HlintName, "--version"), project).map(_.getStdout).getOrElse("-"))
+      messages.+=("<b>Haskell-docs</b> version can not be retrieved from command line\n")
+      messages.+=("<b>Hindent</b>: " + HaskellSettingsState.getHindentPath(project).flatMap(hp =>
+        CommandLine.runProgram(None, project.getBasePath, hp, Seq("--version")).map(_.getStdout)).getOrElse("-"))
+      messages.+=("<b>Stylish-haskell</b>: " + HaskellSettingsState.getStylishHaskellPath(project).flatMap(sh =>
+        CommandLine.runProgram(None, project.getBasePath, sh, Seq("--version")).map(_.getStdout)).getOrElse("-"))
+      Messages.showInfoMessage(project, messages.mkString("\n"), "About Haskell Project")
     })
   }
 }

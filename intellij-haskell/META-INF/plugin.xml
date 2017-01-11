@@ -393,7 +393,8 @@
 
         <action id="Haskell.Project.About"
                 class="intellij.haskell.action.AboutAction"
-                text="About Haskell project"
+                text="About Haskell Project"
+                icon="/icons/haskell@16.png"
                 description="About Haskell GHC/tools used in project">
             <add-to-group group-id="HelpMenu" anchor="last"/>
         </action>
