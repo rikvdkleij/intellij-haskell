@@ -299,7 +299,7 @@
             <add-to-group group-id="NewGroup" anchor="before" relative-to-action="NewFile"/>
         </action>
 
-        <group id="HaskellCodeEditor" text="Haskell" description="Haskell View Tools" icon="/icons/haskell-small-logo.png" popup="true">
+        <group id="HaskellCodeEditor" text="Haskell" description="Haskell View Tools" icon="/icons/haskell@16.png" popup="true">
             <action id="Haskell.ShowType" class="intellij.haskell.action.ShowTypeAction"
                     text="Show Type" description="Show type of (selected) expression">
 
@@ -337,7 +337,7 @@
             <add-to-group group-id="CodeEditorViewGroup" anchor="last"/>
         </group>
 
-        <group id="HaskellToolsMenu" text="Haskell" description="Haskell General Tools" icon="/icons/haskell-small-logo.png" popup="true">
+        <group id="HaskellToolsMenu" text="Haskell" description="Haskell General Tools" icon="/icons/haskell@16.png" popup="true">
             <action id="Haskell.DownloadLibSources" class="intellij.haskell.action.DownloadLibrarySources"
                     text="Download Haskell library sources"
                     description="Download Haskell library sources and add them as source libraries to project">
@@ -350,7 +350,7 @@
             <add-to-group group-id="ToolsMenu" anchor="last"/>
         </group>
 
-        <group id="HaskellCodeMenu" text="Haskell" description="Haskell Code Tools" icon="/icons/haskell-small-logo.png" popup="true">
+        <group id="HaskellCodeMenu" text="Haskell" description="Haskell Code Tools" icon="/icons/haskell@16.png" popup="true">
             <action id="Haskell.HindentFormat"
                     class="intellij.haskell.action.HindentFormatAction"
                     text="Reformat code with hindent"
@@ -374,7 +374,7 @@
             <add-to-group group-id="CodeMenu" anchor="last"/>
         </group>
 
-        <group id="HaskellGoToMenu" text="Haskell" description="Haskell Goto Tools" icon="/icons/haskell-small-logo.png" popup="true">
+        <group id="HaskellGoToMenu" text="Haskell" description="Haskell Goto Tools" icon="/icons/haskell@16.png" popup="true">
             <action id="Haskell.Hoogle.Navigation"
                     class="intellij.haskell.action.HoogleNavigationAction"
                     text="Navigation by Hoogle"
