@@ -101,7 +101,7 @@ object HaskellNotificationGroup {
   private def log(project: Option[Project], message: String, messageType: MessageType, notification: (String, MessageType) => Notification) = {
     project match {
       case Some(p) if !p.isDisposed && p.isInitialized => notification(message, messageType).notify(p)
-      case None => notification(message, messageType).notify()
+      case None => notification(message, messageType).notify(null)
       case _ => ()
     }
   }
