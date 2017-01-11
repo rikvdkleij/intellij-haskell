@@ -16,26 +16,27 @@
 
 package intellij.haskell.settings
 
+import com.intellij.openapi.project.Project
 import intellij.haskell.HaskellNotificationGroup
 
 object HaskellSettingsState {
   private def state = HaskellSettingsPersistentStateComponent.getInstance().getState
 
-  def getHindentPath: Option[String] = {
+  def getHindentPath(project: Project): Option[String] = {
     val path = findPath(state.hindentPath)
-    notifyIfPathIsNotSet(path, HaskellConfigurable.Hindent)
+    notifyIfPathIsNotSet(project, path, HaskellConfigurable.Hindent)
     path
   }
 
-  def getStylishHaskellPath: Option[String] = {
+  def getStylishHaskellPath(project: Project): Option[String] = {
     val path = findPath(state.stylishHaskellPath)
-    notifyIfPathIsNotSet(path, HaskellConfigurable.StylishHaskell)
+    notifyIfPathIsNotSet(project, path, HaskellConfigurable.StylishHaskell)
     path
   }
 
-  private def notifyIfPathIsNotSet(path: Option[String], name: String) {
+  private def notifyIfPathIsNotSet(project: Project, path: Option[String], name: String) {
     if (path.isEmpty) {
-      HaskellNotificationGroup.logErrorBalloonEvent(s"Path to <b>$name</b> is not set. Please do in <b>Settings</b>/<b>Other Settings</b>/<b>Haskell</b>.")
+      HaskellNotificationGroup.logErrorBalloonEvent(project, s"Path to <b>$name</b> is not set. Please do in <b>Settings</b>/<b>Other Settings</b>/<b>Haskell</b>.")
     }
   }
 

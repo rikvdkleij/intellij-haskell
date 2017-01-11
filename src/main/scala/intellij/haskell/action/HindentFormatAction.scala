@@ -57,7 +57,7 @@ object HindentFormatAction {
     val project = psiFile.getProject
     HaskellFileUtil.saveFile(virtualFile)
 
-    HaskellSettingsState.getHindentPath match {
+    HaskellSettingsState.getHindentPath(project) match {
       case Some(hindentPath) =>
         val command = Seq(hindentPath, "--line-length", lineLength.toString, "--indent-size", indentOptions.INDENT_SIZE.toString)
 
