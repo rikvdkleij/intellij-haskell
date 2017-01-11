@@ -13,8 +13,10 @@ import scala.io.Source
 
 object CabalConfigComponent {
   private final val PackageNamePattern = """.* (.*) [==|installed].*""".r
-  private final val LocalPkgdbResolverPattern = """.*/(lts-\d+\.\d+)/.*\n""".r
-  private final val CabalConfigFileResolverPattern = """.*/(lts-\d+\.\d+)""".r
+  private final val LocalLtsPkgdbResolverPattern = """.*/(lts-\d+\.\d+)/.*\n""".r
+  private final val LocalNightlyPkgdbResolverPattern = """.*/(nightly-\d{4}-\d{2}-\d{2})/.*\n""".r
+  private final val CabalConfigFileLtsResolverPattern = """.*/(lts-\d+\.\d+)""".r
+  private final val CabalConfigFileNightlyResolverPattern = """.*/(nightly-\d{4}-\d{2}-\d{2})""".r
 
   def getConfigFilePath(project: Project): String = {
     project.getBasePath + File.separator + "cabal.config"
@@ -89,7 +91,8 @@ object CabalConfigComponent {
   private def getResolverFromLocalPkgdb(project: Project): Option[String] = {
     StackCommandLine.runCommand(Seq("path", "--local-pkg-db"), project).flatMap(output => {
       output.getStdout match {
-        case LocalPkgdbResolverPattern(resolver) => Some(resolver)
+        case LocalLtsPkgdbResolverPattern(resolver) => Some(resolver)
+        case LocalNightlyPkgdbResolverPattern(resolver) => Some(resolver)
         case _ => None
       }
     })
@@ -99,7 +102,8 @@ object CabalConfigComponent {
     try {
       Source.fromFile(getConfigFilePath(project)).getLines().toList.headOption.flatMap(l => {
         l match {
-          case CabalConfigFileResolverPattern(resolver) => Some(resolver)
+          case CabalConfigFileLtsResolverPattern(resolver) => Some(resolver)
+          case CabalConfigFileNightlyResolverPattern(resolver) => Some(resolver)
           case _ => None
         }
       })
