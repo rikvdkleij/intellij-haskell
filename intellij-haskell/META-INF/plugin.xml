@@ -322,7 +322,7 @@
 
             <action id="Haskell.ShowErrorDescription"
                     class="intellij.haskell.action.ShowProblemMessageAction"
-                    text="Show error" description="Show error/warning description">
+                    text="Show Error" description="Show error/warning description">
                 <keyboard-shortcut first-keystroke="ctrl F10" keymap="$default"/>
                 <keyboard-shortcut first-keystroke="meta F10" keymap="Mac OS X"/>
                 <keyboard-shortcut first-keystroke="meta F10" keymap="Mac OS X 10.5+"/>
@@ -330,7 +330,7 @@
 
             <action id="Haskell.Hoogle.It"
                     class="intellij.haskell.action.HoogleAction"
-                    text="Hoogle for it"
+                    text="Hoogle For It"
                     description="Hoogle for (selected) words">
                 <keyboard-shortcut first-keystroke="shift ctrl h" keymap="$default"/>
             </action>
@@ -339,12 +339,12 @@
 
         <group id="HaskellToolsMenu" text="Haskell" description="Haskell General Tools" icon="/icons/haskell@16.png" popup="true">
             <action id="Haskell.DownloadLibSources" class="intellij.haskell.action.DownloadLibrarySources"
-                    text="Download Haskell library sources"
+                    text="Download Haskell Library Sources"
                     description="Download Haskell library sources and add them as source libraries to project">
             </action>
 
             <action id="Haskell.RestartStackRepl" class="intellij.haskell.action.RestartStackReplsAction"
-                    text="Restart Haskell Stack repls"
+                    text="Restart Haskell Stack REPLs"
                     description="Restart Haskell Stack repls and refresh cache">
             </action>
             <add-to-group group-id="ToolsMenu" anchor="last"/>
@@ -353,21 +353,21 @@
         <group id="HaskellCodeMenu" text="Haskell" description="Haskell Code Tools" icon="/icons/haskell@16.png" popup="true">
             <action id="Haskell.HindentFormat"
                     class="intellij.haskell.action.HindentFormatAction"
-                    text="Reformat code with hindent"
+                    text="Reformat Code with Hindent"
                     description="Format current file with hindent">
                 <keyboard-shortcut first-keystroke="ctrl alt k" keymap="$default"/>
             </action>
 
             <action id="Haskell.StylishHaskellFormat"
                     class="intellij.haskell.action.HaskellFormatAction"
-                    text="Reformat code with stylish-haskell"
+                    text="Reformat Code with Stylish-haskell"
                     description="Format current file with stylish-haskell">
                 <keyboard-shortcut first-keystroke="ctrl alt u" keymap="$default"/>
             </action>
 
             <action id="Haskell.HaskellFormat"
                     class="intellij.haskell.action.HaskellFormatAction"
-                    text="Reformat code with hindent and then stylish-haskell"
+                    text="Reformat Code with Hindent and then Stylish-haskell"
                     description="Format current file with hindent and then stylish-haskell">
                 <keyboard-shortcut first-keystroke="ctrl alt SEMICOLON" keymap="$default"/>
             </action>
@@ -384,7 +384,7 @@
 
             <action id="Haskell.GotoInstanceDeclaration"
                     class="intellij.haskell.action.GotoInstanceDeclarationAction"
-                    text="Instance declaration"
+                    text="Instance Declaration"
                     description="Goto instance declaration">
                 <keyboard-shortcut first-keystroke="ctrl alt i"  keymap="$default"/>
             </action>
