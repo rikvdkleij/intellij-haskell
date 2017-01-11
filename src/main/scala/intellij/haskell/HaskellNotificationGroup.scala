@@ -16,15 +16,15 @@
 
 package intellij.haskell
 
-import com.intellij.notification.{Notification, NotificationGroup}
+import com.intellij.notification.{Notification, NotificationDisplayType, NotificationGroup}
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.MessageType
 import com.intellij.openapi.ui.MessageType._
 
 object HaskellNotificationGroup {
 
-  private val LogOnlyGroup = NotificationGroup.logOnlyGroup("Log only Haskell")
-  private val BalloonGroup = NotificationGroup.balloonGroup("Balloon Haskell")
+  private val LogOnlyGroup = new NotificationGroup("Log only Haskell", NotificationDisplayType.NONE, false)
+  private val BalloonGroup = new NotificationGroup("Balloon Haskell", NotificationDisplayType.BALLOON, false)
 
   def logErrorEvent(project: Option[Project], message: String) {
     logEvent(project, message, ERROR, LogOnlyGroup.createNotification)
