@@ -52,7 +52,7 @@ object StylishHaskellFormatAction {
         processOutput.foreach(output => if (output.getStderrLines.isEmpty) {
           HaskellFileUtil.saveFileWithNewContent(psiFile.getProject, virtualFile, output.getStdout)
         } else {
-          HaskellNotificationGroup.logErrorBalloonEvent(project, s"Error while formatting by <b>$StylishHaskellName</b>. See Event Log for errors.")
+          HaskellNotificationGroup.logErrorBalloonEvent(project, s"Error while formatting by <b>$StylishHaskellName</b>. Error: ${output.getStderr}")
         })
 
       case _ => HaskellNotificationGroup.logWarningEvent(project, s"Can not format code because path to `$StylishHaskellName` is not configured in IntelliJ")

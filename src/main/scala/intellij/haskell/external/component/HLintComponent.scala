@@ -31,7 +31,7 @@ object HLintComponent {
     val project = psiFile.getProject
     StackCommandLine.runCommand(Seq("exec", "--", HlintName, "--json", psiFile.getOriginalFile.getVirtualFile.getPath), project).map(output => {
       if (output.getStderr.nonEmpty) {
-        HaskellNotificationGroup.logErrorBalloonEvent(project, s"Something went wrong while calling <b>$HlintName</b>. See event log for more info.")
+        HaskellNotificationGroup.logErrorBalloonEvent(project, s"Something went wrong while calling <b>$HlintName</b>. Error: ${output.getStderr}")
         Seq()
       } else {
         deserializeHLintInfo(project, output.getStdout)

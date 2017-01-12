@@ -58,7 +58,7 @@ class HaskellDocumentationProvider extends AbstractDocumentationProvider {
   private def runHaskellDocs(namedElement: HaskellQualifiedNameElement, args: Seq[String]): Option[String] = {
     StackCommandLine.runCommand(Seq("exec", "--", HaskellDocsName) ++ args, namedElement.getContainingFile.getProject).flatMap(output => {
       if (output.getStderr.nonEmpty) {
-        HaskellNotificationGroup.logErrorBalloonEvent(namedElement.getProject, s"Something went wrong while calling <b>$HaskellDocsName</b>. See event log for more info.")
+        HaskellNotificationGroup.logErrorBalloonEvent(namedElement.getProject, s"Something went wrong while calling <b>$HaskellDocsName</b>. Error: ${output.getStderr}")
         None
       } else {
         Option(output.getStdout)
