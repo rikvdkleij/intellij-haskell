@@ -1405,7 +1405,7 @@ public class HaskellParser implements PsiParser, LightPsiParser {
   }
 
   /* ********************************************************** */
-  // unpack_nounpack_pragma? q_name onls unpack_nounpack_pragma? onls LEFT_BRACE onls (fielddecl ((onls COMMA)? onls fielddecl)*)? onls RIGHT_BRACE
+  // unpack_nounpack_pragma? q_name onls unpack_nounpack_pragma? onls LEFT_BRACE onl (fielddecl ((onl COMMA)? onl fielddecl)*)? onl RIGHT_BRACE
   public static boolean constr1(PsiBuilder b, int l) {
     if (!recursion_guard_(b, l, "constr1")) return false;
     boolean r;
@@ -1416,9 +1416,9 @@ public class HaskellParser implements PsiParser, LightPsiParser {
     r = r && constr1_3(b, l + 1);
     r = r && onls(b, l + 1);
     r = r && consumeToken(b, HS_LEFT_BRACE);
-    r = r && onls(b, l + 1);
+    r = r && onl(b, l + 1);
     r = r && constr1_7(b, l + 1);
-    r = r && onls(b, l + 1);
+    r = r && onl(b, l + 1);
     r = r && consumeToken(b, HS_RIGHT_BRACE);
     exit_section_(b, l, m, r, false, null);
     return r;
@@ -1438,14 +1438,14 @@ public class HaskellParser implements PsiParser, LightPsiParser {
     return true;
   }
 
-  // (fielddecl ((onls COMMA)? onls fielddecl)*)?
+  // (fielddecl ((onl COMMA)? onl fielddecl)*)?
   private static boolean constr1_7(PsiBuilder b, int l) {
     if (!recursion_guard_(b, l, "constr1_7")) return false;
     constr1_7_0(b, l + 1);
     return true;
   }
 
-  // fielddecl ((onls COMMA)? onls fielddecl)*
+  // fielddecl ((onl COMMA)? onl fielddecl)*
   private static boolean constr1_7_0(PsiBuilder b, int l) {
     if (!recursion_guard_(b, l, "constr1_7_0")) return false;
     boolean r;
@@ -1456,7 +1456,7 @@ public class HaskellParser implements PsiParser, LightPsiParser {
     return r;
   }
 
-  // ((onls COMMA)? onls fielddecl)*
+  // ((onl COMMA)? onl fielddecl)*
   private static boolean constr1_7_0_1(PsiBuilder b, int l) {
     if (!recursion_guard_(b, l, "constr1_7_0_1")) return false;
     int c = current_position_(b);
@@ -1468,31 +1468,31 @@ public class HaskellParser implements PsiParser, LightPsiParser {
     return true;
   }
 
-  // (onls COMMA)? onls fielddecl
+  // (onl COMMA)? onl fielddecl
   private static boolean constr1_7_0_1_0(PsiBuilder b, int l) {
     if (!recursion_guard_(b, l, "constr1_7_0_1_0")) return false;
     boolean r;
     Marker m = enter_section_(b);
     r = constr1_7_0_1_0_0(b, l + 1);
-    r = r && onls(b, l + 1);
+    r = r && onl(b, l + 1);
     r = r && fielddecl(b, l + 1);
     exit_section_(b, m, null, r);
     return r;
   }
 
-  // (onls COMMA)?
+  // (onl COMMA)?
   private static boolean constr1_7_0_1_0_0(PsiBuilder b, int l) {
     if (!recursion_guard_(b, l, "constr1_7_0_1_0_0")) return false;
     constr1_7_0_1_0_0_0(b, l + 1);
     return true;
   }
 
-  // onls COMMA
+  // onl COMMA
   private static boolean constr1_7_0_1_0_0_0(PsiBuilder b, int l) {
     if (!recursion_guard_(b, l, "constr1_7_0_1_0_0_0")) return false;
     boolean r;
     Marker m = enter_section_(b);
-    r = onls(b, l + 1);
+    r = onl(b, l + 1);
     r = r && consumeToken(b, HS_COMMA);
     exit_section_(b, m, null, r);
     return r;
