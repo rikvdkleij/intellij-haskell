@@ -197,7 +197,7 @@ gtycon                      ::= QUOTE? q_name | LEFT_PAREN RIGHT_ARROW RIGHT_PAR
 
 private constrs             ::= (("forall" | "∀") q_name DOT)? constr (onls VERTICAL_BAR onls constr)*
 private constr              ::= (type_signature | constr1 | constr2 | constr3 | constr4)
-constr1                     ::= unpack_nounpack_pragma? q_name onls unpack_nounpack_pragma? onls LEFT_BRACE onls (fielddecl ((onls COMMA)? onls fielddecl)*)? onls RIGHT_BRACE
+constr1                     ::= unpack_nounpack_pragma? q_name onls unpack_nounpack_pragma? onls LEFT_BRACE onl (fielddecl ((onl COMMA)? onl fielddecl)*)? onl RIGHT_BRACE
 constr2                     ::= unpack_nounpack_pragma? (q_name | LEFT_PAREN q_name* RIGHT_PAREN | LEFT_BRACKET q_name* RIGHT_BRACKET) onls (onls unpack_nounpack_pragma? onls ttype)*  // Base.hs: data () = () and GHC.Types.hs: data [] a = [] | a : [a]
 constr3                     ::= unpack_nounpack_pragma? sub_constr2 onls unpack_nounpack_pragma? q_name onls unpack_nounpack_pragma? onls sub_constr2
 constr4                     ::= unpack_nounpack_pragma? q_name+ unpack_nounpack_pragma? q_name
