@@ -33,7 +33,7 @@ import intellij.haskell.util.HaskellProjectUtil
 import scala.collection.JavaConverters._
 
 class StackProjectImportBuilder extends ProjectImportBuilder[Unit] {
-  override def getName: String = "Haskell Stack importer"
+  override def getName: String = "Haskell Stack"
 
   override def getList: util.List[Unit] = new util.ArrayList[Unit]()
 
