@@ -33,7 +33,7 @@ You can install this plugin using the [Jetbrains plugin repository](https://plug
 - Goto to declaration (called `Navigate`/`Declaration` in IntelliJ menu);
 - Navigate to declaration (called `Navigate`/`Class` in IntelliJ menu);
 - Navigate to identifier (called `Navigate`/`Symbol` in IntelliJ menu);
-- Goto instance declaration (called `Navigate`/`Instance declaration` in IntelliJ menu);
+- Goto instance declaration (called `Navigate`/`Instance Declaration` in IntelliJ menu);
 - Navigate to declaration or identifier powered by Hoogle (called `Navigate`/`Navigation by Hoogle` in IntelliJ menu);
 - Inspection by HLint;
 - Quick fixes for HLint suggestions;
@@ -45,14 +45,14 @@ You can install this plugin using the [Jetbrains plugin repository](https://plug
 
 # Getting started 
 - Install this plugin. Make sure no other Haskell plugin is installed in IntelliJ;
-- Install latest version of [Stack](https://github.com/commercialhaskell/stack)
+- Install latest version of [Stack](https://github.com/commercialhaskell/stack);
 - Install latest versions of [Hindent](https://github.com/chrisdone/hindent) and [Stylish-Haskell](https://github.com/jaspervdj/stylish-haskell). 
     Note that currently the latest version of Hindent is not on Stackage LTS. You have to install version of Hindent > 5.0, for example by: `stack install --resolver nightly-2016-11-06 hindent`
-    Set file paths to `hindent` and `stylish-haskell` in the `Settings`/`Other Settings`/`Haskell`.
+    Set file paths to `hindent` and `stylish-haskell` in the `Settings`/`Other Settings`/`Haskell`;
 - Setup the project:
  - Make sure your Stack project builds without errors. Preferably by using: `stack build --test --haddock --fast`;
- - After your project is built successfully, import project in IntelliJ by using `File`/`New`/`Project from Existing Sources..` from the IntelliJ menu;
- - In the `New Project` wizard select `Import project from external module` and check `Haskell Stack importer`;
+ - After your project is built successfully, import project in IntelliJ by using `File`/`New`/`Project from Existing Sources...` from the IntelliJ menu;
+ - In the `New Project` wizard select `Import project from external module` and check `Haskell Stack`;
  - In next page of wizard configure `Project SDK` by configuring `Haskell Tool Stack` with selecting path to `stack` binary, e.g. `/usr/local/bin/stack`;
  - Finish wizard and project will be opened;
  - Wizard will try to automatically configure which folders are sources, test and which to exclude;
@@ -60,10 +60,10 @@ You can install this plugin using the [Jetbrains plugin repository](https://plug
   If you want to use later version of tool, you will have to build tool manually in project's folder by using `stack build`;
  - Check `Project structure`/`Project settings`/`Modules` which folders to exclude (like `.stack-work` and `dist`) and which folders are `Source` and `Test` (normally `src` and `test`);
  - Plugin will automatically download library sources (since Stack version 1.2.1 also for test dependencies). They will be added as source libraries to module.
-    This option gives you nice navigation features through libraries. Sources are downloaded to folder `.ideaHaskellLib` inside root of project
- - After changes to dependencies you can download them again by using `Tools`/`Download Haskell library sources`. 
+    This option gives you nice navigation features through libraries. Sources are downloaded to folder `.ideaHaskellLib` inside root of project;
+ - After changes to dependencies you can download them again by using `Tools`/`Download Haskell Library Sources`;
  - The `Event Log` will display what's going on in the background. Useful when something fails;    
- - In the background for each Haskell project two Stack repls are running. You can restart them by `Tools`/`Restart Haskell Stack repls`. 
+ - In the background for each Haskell project two Stack repls are running. You can restart them by `Tools`/`Restart Haskell Stack REPLs`.
     When you make large changes to `stack.yaml` or Cabal file, you have to restart IntelliJ project;
 
 
@@ -72,7 +72,7 @@ You can install this plugin using the [Jetbrains plugin repository](https://plug
 2. IntelliJ has a nice terminal plugin;
 3. Developed plugin on Linux. Also tested on OSX;
 4. Windows is not supported;
-5. `About Haskell project` in `Help` menu shows which Haskell GHC/tools are used by plugin for project;
+5. `About Haskell Project` in `Help` menu shows which Haskell GHC/tools are used by plugin for project;
 
 # How to build project
 1. Clone this project;
