@@ -9,6 +9,7 @@ import intellij.haskell.HaskellNotificationGroup
 import intellij.haskell.util.HaskellFileUtil
 import org.yaml.snakeyaml.Yaml
 
+import scala.collection.Iterator
 import scala.io.Source
 
 object CabalConfigComponent {
@@ -27,23 +28,31 @@ object CabalConfigComponent {
   def getAllAvailablePackageNames(project: Project): Option[Iterable[String]] = {
     val configFilePath = getConfigFilePath(project)
     val configFile = new File(configFilePath)
-    if (!configFile.exists()) {
-      downloadAndParseCabalConfigFile(project)
-    } else {
-      val needUpdate = for {
-        oldResolver <- getResolverFromCabalConfigFile(project)
-        newResolver <- getResolverFromStackYamlFile(project)
-      } yield oldResolver != newResolver
 
-      needUpdate.flatMap(b => {
-        if (b) {
-          removeCabalConfig(project)
+    getResolverFromStackYamlFile(project).flatMap(resolver => {
+      if (resolver.startsWith("lts") || resolver.startsWith("nightly")) {
+        if (!configFile.exists()) {
           downloadAndParseCabalConfigFile(project)
         } else {
-          parseCabalConfigFile(project)
+          val needUpdate = for {
+            oldResolver <- getResolverFromCabalConfigFile(project)
+            newResolver <- getResolverFromStackYamlFile(project)
+          } yield oldResolver != newResolver
+
+          needUpdate.flatMap(b => {
+            if (b) {
+              removeCabalConfig(project)
+              downloadAndParseCabalConfigFile(project)
+            } else {
+              parseCabalConfigFile(project)
+            }
+          })
         }
-      })
-    }
+      } else {
+        val a = parseDefaultCabalConfigFile(project)
+        a
+      }
+    })
   }
 
   private def downloadAndParseCabalConfigFile(project: Project): Option[Iterable[String]] = {
@@ -51,9 +60,9 @@ object CabalConfigComponent {
     parseCabalConfigFile(project)
   }
 
-  private def parseCabalConfigFile(project: Project): Option[Iterable[String]] = {
+  private def parseCabalConfigFileBase(project: Project, lines: Iterator[String]): Option[Iterable[String]] = {
     try {
-      Some(Source.fromFile(getConfigFilePath(project)).getLines().filter(!_.startsWith("--")).map {
+      Some(lines.filter(!_.startsWith("--")).map {
         case PackageNamePattern(packageName) => packageName
         case _ => ""
       }.filter(!_.isEmpty).toList)
@@ -62,6 +71,14 @@ object CabalConfigComponent {
         HaskellNotificationGroup.logErrorEvent(project, s"Can not find `cabal.config` file.")
         None
     }
+  }
+
+  private def parseDefaultCabalConfigFile(project: Project): Option[Iterable[String]] = {
+    parseCabalConfigFileBase(project, Source.fromURL(getClass.getResource("/cabal/cabal.config")).getLines())
+  }
+
+  private def parseCabalConfigFile(project: Project): Option[Iterable[String]] = {
+    parseCabalConfigFileBase(project, Source.fromFile(getConfigFilePath(project)).getLines())
   }
 
   def downloadCabalConfig(project: Project): Unit = {
