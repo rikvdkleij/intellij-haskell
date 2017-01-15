@@ -26,28 +26,16 @@ import intellij.haskell.external.component.HaskellComponentsManager
 import intellij.haskell.external.repl.StackReplsManager
 import intellij.haskell.util.HaskellProjectUtil
 
-class RestartStackReplsAction extends AnAction {
-
+object RestartStackReplsAction {
   private var restarting = false
 
-  override def update(e: AnActionEvent): Unit = {
-    Option(e.getProject) match {
-      case Some(p) =>
-        val isHaskellProject = HaskellProjectUtil.isHaskellStackProject(p)
-        e.getPresentation.setVisible(isHaskellProject)
-        e.getPresentation.setEnabled(isHaskellProject && !restarting)
-      case None =>
-        e.getPresentation.setEnabledAndVisible(false)
-    }
-  }
-
-  override def actionPerformed(e: AnActionEvent): Unit = {
+  def restart(project: Project): Unit = {
     if (restarting) {
-      HaskellNotificationGroup.logWarningBalloonEvent(e.getProject, "Stack repls are already restarting")
+      HaskellNotificationGroup.logWarningBalloonEvent(project, "Stack repls are already restarting")
       return
     }
 
-    Option(e.getProject) foreach { project =>
+    Option(project) foreach { project =>
       restarting = true
       ProgressManager.getInstance().run(new Backgroundable(project, "Busy with restarting Stack repls", false) {
         def run(progressIndicator: ProgressIndicator) {
@@ -85,5 +73,23 @@ class RestartStackReplsAction extends AnAction {
 
   private def cleanLocalPackages(project: Project): Unit = {
     StackCommandLine.runCommand(Seq("clean"), project)
+  }
+}
+
+class RestartStackReplsAction extends AnAction {
+
+  override def update(e: AnActionEvent): Unit = {
+    Option(e.getProject) match {
+      case Some(p) =>
+        val isHaskellProject = HaskellProjectUtil.isHaskellStackProject(p)
+        e.getPresentation.setVisible(isHaskellProject)
+        e.getPresentation.setEnabled(isHaskellProject && !RestartStackReplsAction.restarting)
+      case None =>
+        e.getPresentation.setEnabledAndVisible(false)
+    }
+  }
+
+  override def actionPerformed(e: AnActionEvent): Unit = {
+    RestartStackReplsAction.restart(e.getProject)
   }
 }
