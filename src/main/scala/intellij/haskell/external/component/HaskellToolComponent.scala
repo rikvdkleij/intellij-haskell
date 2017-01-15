@@ -5,6 +5,7 @@ import intellij.haskell.HaskellNotificationGroup
 import intellij.haskell.external.commandLine.StackCommandLine
 
 object HaskellToolComponent {
+  final val HaskellToolsCLIName = "haskell-tools-cli"
   private final val HaskellToolName = "ht-refact"
 
   private def getCommandOptions(project: Project, moduleName:String, mode: String): Seq[String] = {
@@ -14,11 +15,7 @@ object HaskellToolComponent {
   def generateExports(project: Project, moduleName: String): Unit = {
     StackCommandLine.runCommand(getCommandOptions(project, moduleName, "GenerateExports"), project).foreach(output => {
       if (output.getStderr.nonEmpty) {
-        if (output.getStderr.toLowerCase.contains("executable named ht-refact not found on path")) {
-          HaskellNotificationGroup.logWarningBalloonEvent(project, "Please use <b>cabal install haskell-tools-cli</b> to install haskell-tools command line interface first")
-        } else {
-          HaskellNotificationGroup.logErrorBalloonEvent(project, output.getStderr)
-        }
+        HaskellNotificationGroup.logErrorBalloonEvent(project, s"Something went wrong while calling <b>$HaskellToolName</b>. Error: ${output.getStderr}")
       }
     })
   }

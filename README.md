@@ -49,6 +49,8 @@ You can install this plugin using the [Jetbrains plugin repository](https://plug
 - Install latest versions of [Hindent](https://github.com/chrisdone/hindent) and [Stylish-Haskell](https://github.com/jaspervdj/stylish-haskell). 
     Note that currently the latest version of Hindent is not on Stackage LTS. You have to install version of Hindent > 5.0, for example by: `stack install --resolver nightly-2016-11-06 hindent`
     Set file paths to `hindent` and `stylish-haskell` in the `Settings`/`Other Settings`/`Haskell`;
+- Install latest version of [haskell-tools](https://github.com/haskell-tools/haskell-tools) from stackage, e.g. `stack install --resolver nightly-2017-01-14 haskell-tools-cli`.
+    Plugin will automatically build it if you use release resolvers later than `nightly-2017-01-14`;
 - Setup the project:
  - Make sure your Stack project builds without errors. Preferably by using: `stack build --test --haddock --fast`;
  - After your project is built successfully, import project in IntelliJ by using `File`/`New`/`Project from Existing Sources...` from the IntelliJ menu;
