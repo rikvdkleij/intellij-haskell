@@ -15,6 +15,7 @@ import intellij.haskell.{HaskellFileType, HaskellLanguage}
 
 class HaskellSDKNotificationProvider(val myProject: Project, val notifications: EditorNotifications) extends EditorNotifications.Provider[EditorNotificationPanel] {
   private val KEY: Key[EditorNotificationPanel] = Key.create("Setup Erlang SDK")
+  private var currentHaskellSDKName = HaskellSdkType.getCurrentHaskellSDKName(myProject)
 
   myProject.getMessageBus.connect(myProject).subscribe(ProjectTopics.PROJECT_ROOTS, new ModuleRootAdapter() {
     override def rootsChanged(event: ModuleRootEvent) {
@@ -28,18 +29,40 @@ class HaskellSDKNotificationProvider(val myProject: Project, val notifications: 
     if (!file.getFileType.isInstanceOf[HaskellFileType]) return null
     val psiFile: PsiFile = PsiManager.getInstance(myProject).findFile(file)
     if (psiFile == null || (psiFile.getLanguage != HaskellLanguage.Instance)) return null
-    if (HaskellSdkType.isHaskellSDK(myProject)) return null
-    createPanel(myProject, psiFile)
+    if (HaskellSdkType.isHaskellSDK(myProject)) {
+      val sdkName = HaskellSdkType.getCurrentHaskellSDKName(myProject)
+      if (sdkName != currentHaskellSDKName) {
+        currentHaskellSDKName = sdkName
+        createPanel(
+          myProject,
+          "Haskell Project SDK is changed",
+          "Restart Haskell Stack REPLs",
+          (project: Project) => () => {
+            RestartStackReplsAction.restart(project)
+            notifications.updateAllNotifications()
+          }
+        )
+      } else {
+        null
+      }
+    } else {
+      createPanel(
+        myProject,
+        ProjectBundle.message("project.sdk.not.defined"),
+        ProjectBundle.message("project.sdk.setup"),
+        (project: Project) => () => {
+          Option(ProjectSettingsService.getInstance(project).chooseAndSetSdk()).foreach(_ => {
+            RestartStackReplsAction.restart(project)
+          })
+        }
+      )
+    }
   }
 
-  private def createPanel(project: Project, file: PsiFile): EditorNotificationPanel = {
+  private def createPanel(project: Project, panelText: String, panelActionLabel: String, action: Project => Runnable): EditorNotificationPanel = {
     val panel: EditorNotificationPanel = new EditorNotificationPanel
-    panel.setText(ProjectBundle.message("project.sdk.not.defined"))
-    panel.createActionLabel(ProjectBundle.message("project.sdk.setup"), () => {
-      Option(ProjectSettingsService.getInstance(project).chooseAndSetSdk()).foreach(_ => {
-        RestartStackReplsAction.restart(myProject)
-      })
-    })
+    panel.setText(panelText)
+    panel.createActionLabel(panelActionLabel, action(project))
     panel
   }
 }
