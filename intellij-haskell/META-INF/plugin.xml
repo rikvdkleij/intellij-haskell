@@ -279,6 +279,9 @@
                              implementationClass="intellij.haskell.refactor.HaskellNamesValidator"/>
         <renamePsiElementProcessor implementation="intellij.haskell.refactor.HaskellRenameVariableProcessor"/>
         <vetoRenameCondition implementation="intellij.haskell.refactor.HaskellVetoRenameCondition"/>
+
+        <!-- Notification -->
+        <editorNotificationProvider implementation="intellij.haskell.notification.HaskellSDKNotificationProvider"/>
     </extensions>
 
     <application-components>
