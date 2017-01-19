@@ -23,7 +23,7 @@ import javax.swing.Icon
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.module.{ModifiableModuleModel, Module}
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.roots.{ModifiableRootModel, ModuleRootManager}
+import com.intellij.openapi.roots.ModifiableRootModel
 import com.intellij.openapi.roots.ui.configuration.ModulesProvider
 import com.intellij.packaging.artifacts.ModifiableArtifactModel
 import com.intellij.projectImport.ProjectImportBuilder
@@ -48,19 +48,11 @@ class StackProjectImportBuilder extends ProjectImportBuilder[Unit] {
   override def commit(project: Project, model: ModifiableModuleModel, modulesProvider: ModulesProvider, artifactModel: ModifiableArtifactModel): java.util.List[Module] = {
     val haskellModuleBuilder = HaskellModuleType.getInstance.createModuleBuilder()
     HaskellProjectUtil.getModuleManager(project).map(_.getModifiableModel).map { moduleModel =>
-      val module = moduleModel.newModule(getModuleFilePath, HaskellModuleType.getInstance.getId)
-      val rootModel = ModuleRootManager.getInstance(module).getModifiableModel
-      rootModel.inheritSdk()
 
       ApplicationManager.getApplication.runWriteAction(new Runnable {
         override def run(): Unit = {
           haskellModuleBuilder.setName(getModuleName)
           haskellModuleBuilder.setModuleFilePath(getModuleFilePath)
-
-          //haskellModuleBuilder.createModule(moduleModel)
-
-          rootModel.commit()
-          moduleModel.commit()
 
           haskellModuleBuilder.commit(project)
           haskellModuleBuilder.addModuleConfigurationUpdater((module: Module, rootModel: ModifiableRootModel) => {
