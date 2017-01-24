@@ -15,7 +15,7 @@ import intellij.haskell.{HaskellFileType, HaskellLanguage}
 
 class HaskellSDKNotificationProvider(val myProject: Project, val notifications: EditorNotifications) extends EditorNotifications.Provider[EditorNotificationPanel] {
   private val KEY: Key[EditorNotificationPanel] = Key.create("Setup Erlang SDK")
-  private var currentHaskellSDKName = HaskellSdkType.getCurrentHaskellSDKName(myProject)
+  private var fileCache: Map[String, String] = Map()
 
   myProject.getMessageBus.connect(myProject).subscribe(ProjectTopics.PROJECT_ROOTS, new ModuleRootAdapter() {
     override def rootsChanged(event: ModuleRootEvent) {
@@ -31,8 +31,9 @@ class HaskellSDKNotificationProvider(val myProject: Project, val notifications: 
     if (psiFile == null || (psiFile.getLanguage != HaskellLanguage.Instance)) return null
     if (HaskellSdkType.isHaskellSDK(myProject)) {
       val sdkName = HaskellSdkType.getCurrentHaskellSDKName(myProject)
-      if (sdkName != currentHaskellSDKName) {
-        currentHaskellSDKName = sdkName
+
+      val showPanel = () => {
+        fileCache += (psiFile.getName -> sdkName)
         createPanel(
           myProject,
           "Haskell Project SDK is changed",
@@ -42,8 +43,16 @@ class HaskellSDKNotificationProvider(val myProject: Project, val notifications: 
             notifications.updateAllNotifications()
           }
         )
-      } else {
-        null
+      }
+
+      fileCache.get(psiFile.getName) match {
+        case Some(currentHaskellSDKName) =>
+          if (sdkName != currentHaskellSDKName) {
+            showPanel()
+          } else {
+            null
+          }
+        case None => showPanel()
       }
     } else {
       createPanel(
