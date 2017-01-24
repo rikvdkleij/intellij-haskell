@@ -127,9 +127,9 @@ object HaskellSdkType {
     }).contains(HaskellSdkType.getInstance)
   }
 
-  def getCurrentHaskellSDKName(project: Project): String = {
+  def getCurrentHaskellSDKName(project: Project): Option[String] = {
     HaskellProjectUtil.getProjectRootManager(project).flatMap(projectRootManager => {
       Option(projectRootManager.getProjectSdk).map(_.getName)
-    }).orNull
+    })
   }
 }

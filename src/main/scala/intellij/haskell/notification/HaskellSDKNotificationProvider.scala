@@ -30,30 +30,30 @@ class HaskellSDKNotificationProvider(val myProject: Project, val notifications: 
     val psiFile: PsiFile = PsiManager.getInstance(myProject).findFile(file)
     if (psiFile == null || (psiFile.getLanguage != HaskellLanguage.Instance)) return null
     if (HaskellSdkType.isHaskellSDK(myProject)) {
-      val sdkName = HaskellSdkType.getCurrentHaskellSDKName(myProject)
+      HaskellSdkType.getCurrentHaskellSDKName(myProject).map(sdkName => {
+        val showPanel = () => {
+          fileCache += (psiFile.getName -> sdkName)
+          createPanel(
+            myProject,
+            "Haskell Project SDK is changed",
+            "Restart Haskell Stack REPLs",
+            (project: Project) => () => {
+              RestartStackReplsAction.restart(project)
+              notifications.updateAllNotifications()
+            }
+          )
+        }
 
-      val showPanel = () => {
-        fileCache += (psiFile.getName -> sdkName)
-        createPanel(
-          myProject,
-          "Haskell Project SDK is changed",
-          "Restart Haskell Stack REPLs",
-          (project: Project) => () => {
-            RestartStackReplsAction.restart(project)
-            notifications.updateAllNotifications()
-          }
-        )
-      }
-
-      fileCache.get(psiFile.getName) match {
-        case Some(currentHaskellSDKName) =>
-          if (sdkName != currentHaskellSDKName) {
-            showPanel()
-          } else {
-            null
-          }
-        case None => showPanel()
-      }
+        fileCache.get(psiFile.getName) match {
+          case Some(currentHaskellSDKName) =>
+            if (sdkName != currentHaskellSDKName) {
+              showPanel()
+            } else {
+              null
+            }
+          case None => showPanel()
+        }
+      }).orNull
     } else {
       createPanel(
         myProject,
