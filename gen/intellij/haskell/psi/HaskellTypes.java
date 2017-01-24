@@ -163,6 +163,7 @@ public interface HaskellTypes {
   IElementType HS_OF = new HaskellTokenType("OF");
   IElementType HS_PRAGMA_END = new HaskellTokenType("PRAGMA_END");
   IElementType HS_PRAGMA_START = new HaskellTokenType("PRAGMA_START");
+  IElementType HS_QUASIQUOTE = new HaskellTokenType("QUASIQUOTE");
   IElementType HS_QUOTE = new HaskellTokenType("QUOTE");
   IElementType HS_RIGHT_ARROW = new HaskellTokenType("RIGHT_ARROW");
   IElementType HS_RIGHT_BRACE = new HaskellTokenType("RIGHT_BRACE");

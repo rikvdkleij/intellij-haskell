@@ -267,7 +267,7 @@ expression                  ::= line_expression+ last_line_expression | last_lin
 private line_expression     ::= (type_signature | type_declaration | general_id+ nls)
 private last_line_expression::= (type_signature | type_declaration | general_id+)
 
-private general_id          ::= q_name | LEFT_PAREN | RIGHT_PAREN | FLOAT |
+private general_id          ::= QUASIQUOTE | q_name | LEFT_PAREN | RIGHT_PAREN | FLOAT |
                                   DOUBLE_RIGHT_ARROW | RIGHT_ARROW |
                                   SEMICOLON | LEFT_ARROW | LEFT_BRACKET | RIGHT_BRACKET | literal | LEFT_BRACE | RIGHT_BRACE |
                                   COMMA | symbol_reserved_op | QUOTE | BACKQUOTE | fixity | DOT_DOT | scc_pragma | reserved_id | DIRECTIVE | COLON_COLON

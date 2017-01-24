@@ -2816,7 +2816,7 @@ public class HaskellParser implements PsiParser, LightPsiParser {
   }
 
   /* ********************************************************** */
-  // q_name | LEFT_PAREN | RIGHT_PAREN | FLOAT |
+  // QUASIQUOTE | q_name | LEFT_PAREN | RIGHT_PAREN | FLOAT |
   //                                   DOUBLE_RIGHT_ARROW | RIGHT_ARROW |
   //                                   SEMICOLON | LEFT_ARROW | LEFT_BRACKET | RIGHT_BRACKET | literal | LEFT_BRACE | RIGHT_BRACE |
   //                                   COMMA | symbol_reserved_op | QUOTE | BACKQUOTE | fixity | DOT_DOT | scc_pragma | reserved_id | DIRECTIVE | COLON_COLON
@@ -2824,7 +2824,8 @@ public class HaskellParser implements PsiParser, LightPsiParser {
     if (!recursion_guard_(b, l, "general_id")) return false;
     boolean r;
     Marker m = enter_section_(b);
-    r = q_name(b, l + 1);
+    r = consumeToken(b, HS_QUASIQUOTE);
+    if (!r) r = q_name(b, l + 1);
     if (!r) r = consumeToken(b, HS_LEFT_PAREN);
     if (!r) r = consumeToken(b, HS_RIGHT_PAREN);
     if (!r) r = consumeToken(b, HS_FLOAT);

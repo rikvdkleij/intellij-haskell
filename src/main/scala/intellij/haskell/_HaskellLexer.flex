@@ -24,9 +24,12 @@ import static intellij.haskell.psi.HaskellTypes.*;
 
     private int haddockStart;
     private int haddockDepth;
+
+    private int qqStart;
+    private int qqDepth;
 %}
 
-%xstate NCOMMENT, NHADDOCK
+%xstate NCOMMENT, NHADDOCK, QQ
 
 control_character   = [\000 - \037]
 newline             = \r|\n|\r\n
@@ -190,6 +193,39 @@ nhaddock_start      = "{-|"
     yybegin(NCOMMENT);
     commentDepth = 0;
     commentStart = getTokenStart();
+}
+
+<QQ> {
+    {left_bracket} {var_id}* {vertical_bar} {
+        qqDepth++;
+    }
+
+    <<EOF>> {
+        int state = yystate();
+        yybegin(YYINITIAL);
+        zzStartRead = qqStart;
+        return HS_QUASIQUOTE;
+    }
+
+    {vertical_bar} {right_bracket} {
+        if (qqDepth > 0) {
+            qqDepth--;
+        }
+        else {
+             int state = yystate();
+             yybegin(YYINITIAL);
+             zzStartRead = qqStart;
+             return HS_QUASIQUOTE;
+        }
+    }
+
+    .|{white_char}|{newline} {}
+}
+
+{left_bracket} {var_id}* {vertical_bar} {
+    yybegin(QQ);
+    qqDepth = 0;
+    qqStart = getTokenStart();
 }
 
     {newline}             { return HS_NEWLINE; }

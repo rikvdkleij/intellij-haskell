@@ -44,6 +44,7 @@ object HaskellSyntaxHighlighter {
   final val Operator = createTextAttributesKey("HS_OPERATOR", DefaultLanguageHighlighterColors.OPERATION_SIGN)
   final val ReservedSymbol = createTextAttributesKey("HS_SYMBOL", DefaultLanguageHighlighterColors.PREDEFINED_SYMBOL)
   final val Pragma = createTextAttributesKey("HS_PRAGMA", DefaultLanguageHighlighterColors.METADATA)
+  final val Quasiquote = createTextAttributesKey("HS_QUASI_QUOTES", DefaultLanguageHighlighterColors.METADATA)
   final val Default = createTextAttributesKey("HS_DEFAULT", DefaultLanguageHighlighterColors.LOCAL_VARIABLE)
 }
 
@@ -78,6 +79,7 @@ class HaskellSyntaxHighlighter extends SyntaxHighlighterBase {
       case et if et == HS_VAR_ID => pack(Variable)
       case et if et == HS_CON_ID => pack(Constructor)
       case et if et == HS_MODID => pack(Constructor)
+      case et if et == HS_QUASIQUOTE => pack(Quasiquote)
       case et if WhiteSpaces.contains(et) | et == HS_NEWLINE => pack(null)
       case _ => pack(Default)
     }

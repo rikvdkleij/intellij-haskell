@@ -43,6 +43,7 @@ object HaskellColorSettingsPage {
     new AttributesDescriptor("Operator", Operator),
     new AttributesDescriptor("Reserved symbol", ReservedSymbol),
     new AttributesDescriptor("Pragma", Pragma),
+    new AttributesDescriptor("Quasiquote", Quasiquote),
     new AttributesDescriptor("Default", Default))
   private final val AttributesKeyMap = Map[String, TextAttributesKey]()
 }
@@ -88,7 +89,8 @@ class HaskellColorSettingsPage extends ColorSettingsPage {
       "let l1 = [1, 2] \n" +
       "let l2 = 1 : [] \n" +
       "let two = 1 + 1 \n" +
-      """let f = \_ + 1"""
+      "let f = \\_ + 1 \n" +
+      "[t|select * from foo|]"
   }
 
   @NotNull
