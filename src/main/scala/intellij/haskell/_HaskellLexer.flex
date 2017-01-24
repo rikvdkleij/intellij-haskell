@@ -123,7 +123,7 @@ pragma_end          = "#-}"
 comment             = {dash}{dash}[^\r\n]* | "\\begin{code}"
 ncomment_start      = "{-"
 ncomment_end        = "-}"
-haddock             = {dash}{dash}\ [\^\|][^\r\n]* ({newline} {comment})*
+haddock             = {dash}{dash}\ [\^\|][^\r\n]* ({newline} {white_char}* {comment})*
 nhaddock_start      = "{-|"
 
 %%
