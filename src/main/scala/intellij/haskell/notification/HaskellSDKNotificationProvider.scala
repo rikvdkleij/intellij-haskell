@@ -60,8 +60,9 @@ class HaskellSDKNotificationProvider(val myProject: Project, val notifications: 
         ProjectBundle.message("project.sdk.not.defined"),
         ProjectBundle.message("project.sdk.setup"),
         (project: Project) => () => {
-          Option(ProjectSettingsService.getInstance(project).chooseAndSetSdk()).foreach(_ => {
-            RestartStackReplsAction.restart(project)
+          Option(ProjectSettingsService.getInstance(project).chooseAndSetSdk()).foreach(sdk => {
+            if (sdk.getSdkType == HaskellSdkType.getInstance)
+              RestartStackReplsAction.restart(project)
           })
         }
       )
