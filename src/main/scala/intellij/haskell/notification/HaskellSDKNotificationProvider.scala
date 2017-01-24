@@ -14,7 +14,7 @@ import intellij.haskell.sdk.HaskellSdkType
 import intellij.haskell.{HaskellFileType, HaskellLanguage}
 
 class HaskellSDKNotificationProvider(val myProject: Project, val notifications: EditorNotifications) extends EditorNotifications.Provider[EditorNotificationPanel] {
-  private val KEY: Key[EditorNotificationPanel] = Key.create("Setup Erlang SDK")
+  private val KEY: Key[EditorNotificationPanel] = Key.create("Setup Haskell Stack SDK")
   private var fileCache: Map[String, String] = Map()
 
   myProject.getMessageBus.connect(myProject).subscribe(ProjectTopics.PROJECT_ROOTS, new ModuleRootAdapter() {
