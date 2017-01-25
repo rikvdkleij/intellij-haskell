@@ -6,17 +6,15 @@ import com.intellij.openapi.project.{Project, ProjectBundle}
 import com.intellij.openapi.roots.ui.configuration.ProjectSettingsService
 import com.intellij.openapi.roots.{ModuleRootAdapter, ModuleRootEvent}
 import com.intellij.openapi.util.Key
-import com.intellij.openapi.vfs.{VfsUtil, VirtualFile}
-import com.intellij.psi.{PsiFile, PsiManager}
+import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.ui.{EditorNotificationPanel, EditorNotifications}
-import intellij.haskell.action.RestartStackReplsAction
 import intellij.haskell.external.component.StackProjectStartupManager
 import intellij.haskell.sdk.HaskellSdkType
-import intellij.haskell.{HaskellFileType, HaskellLanguage}
+import intellij.haskell.util.HaskellFileUtil
 
 class HaskellSDKNotificationProvider(val myProject: Project, val notifications: EditorNotifications) extends EditorNotifications.Provider[EditorNotificationPanel] {
   private val KEY: Key[EditorNotificationPanel] = Key.create("Setup Haskell Stack SDK")
-  private var fileCache: Map[String, String] = Map()
+  private var currentHaskellSDKNameOption = HaskellSdkType.getCurrentHaskellSDKName(myProject)
 
   myProject.getMessageBus.connect(myProject).subscribe(ProjectTopics.PROJECT_ROOTS, new ModuleRootAdapter() {
     override def rootsChanged(event: ModuleRootEvent) {
@@ -27,46 +25,42 @@ class HaskellSDKNotificationProvider(val myProject: Project, val notifications: 
   override def getKey: Key[EditorNotificationPanel] = KEY
 
   override def createNotificationPanel(file: VirtualFile, fileEditor: FileEditor): EditorNotificationPanel = {
-    if (!file.getFileType.isInstanceOf[HaskellFileType]) return null
-    val psiFile: PsiFile = PsiManager.getInstance(myProject).findFile(file)
-    if (psiFile == null || (psiFile.getLanguage != HaskellLanguage.Instance)) return null
-    if (HaskellSdkType.isHaskellSDK(myProject)) {
-      HaskellSdkType.getCurrentHaskellSDKName(myProject).map(sdkName => {
-        val showPanel = () => {
-          fileCache += (psiFile.getName -> sdkName)
-          createPanel(
-            myProject,
-            "Haskell Project SDK is changed",
-            "Restart Haskell Stack REPLs",
-            (project: Project) => () => {
-              StackProjectStartupManager.openProject(project, needCleanup = true)
-              notifications.updateAllNotifications()
-            }
-          )
-        }
-
-        fileCache.get(psiFile.getName) match {
-          case Some(currentHaskellSDKName) =>
-            if (sdkName != currentHaskellSDKName) {
-              showPanel()
-            } else {
-              null
-            }
-          case None => showPanel()
-        }
-      }).orNull
+    if (HaskellFileUtil.isFileInProject(myProject, file)) {
+      if (HaskellSdkType.isHaskellSDK(myProject)) {
+        (for {
+          sdkName <- HaskellSdkType.getCurrentHaskellSDKName(myProject)
+          currentHaskellSDKName <- currentHaskellSDKNameOption
+        } yield {
+          if (sdkName != currentHaskellSDKName) {
+            createPanel(
+              myProject,
+              "Haskell Project SDK is changed",
+              "Restart Haskell Stack REPLs",
+              (project: Project) => () => {
+                StackProjectStartupManager.openProject(project, needCleanup = true)
+                currentHaskellSDKNameOption = Some(sdkName)
+                notifications.updateAllNotifications()
+              }
+            )
+          } else {
+            null
+          }
+        }).orNull
+      } else {
+        createPanel(
+          myProject,
+          ProjectBundle.message("project.sdk.not.defined"),
+          ProjectBundle.message("project.sdk.setup"),
+          (project: Project) => () => {
+            Option(ProjectSettingsService.getInstance(project).chooseAndSetSdk()).foreach(sdk => {
+              if (sdk.getSdkType == HaskellSdkType.getInstance)
+                StackProjectStartupManager.openProject(project, needCleanup = true)
+            })
+          }
+        )
+      }
     } else {
-      createPanel(
-        myProject,
-        ProjectBundle.message("project.sdk.not.defined"),
-        ProjectBundle.message("project.sdk.setup"),
-        (project: Project) => () => {
-          Option(ProjectSettingsService.getInstance(project).chooseAndSetSdk()).foreach(sdk => {
-            if (sdk.getSdkType == HaskellSdkType.getInstance)
-              StackProjectStartupManager.openProject(project, needCleanup = true)
-          })
-        }
-      )
+      null
     }
   }
 
