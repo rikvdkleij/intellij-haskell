@@ -3,6 +3,7 @@ package intellij.haskell.notification
 import java.util
 
 import com.intellij.openapi.fileEditor.FileEditor
+import com.intellij.openapi.module.ModuleUtilCore
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Key
 import com.intellij.openapi.vfs.newvfs.BulkFileListener
@@ -10,6 +11,7 @@ import com.intellij.openapi.vfs.newvfs.events.VFileEvent
 import com.intellij.openapi.vfs.{VirtualFile, VirtualFileManager}
 import com.intellij.ui.{EditorNotificationPanel, EditorNotifications}
 import intellij.haskell.external.component.StackProjectStartupManager
+import intellij.haskell.module.HaskellModuleBuilder
 import intellij.haskell.sdk.HaskellSdkType
 
 private class ConfigFileWatcher(val notifications: EditorNotifications) extends BulkFileListener.Adapter {
@@ -17,7 +19,7 @@ private class ConfigFileWatcher(val notifications: EditorNotifications) extends 
 
   override def after(events: util.List[_ <: VFileEvent]): Unit = {
     import scala.collection.JavaConverters._
-    if (events.asScala.exists(e => watchFiles.exists(e.getPath.endsWith(_)))) {
+    if (events.asScala.exists(e => watchFiles.exists(e.getPath.endsWith(_) && !e.getPath.contains(HaskellModuleBuilder.LibName)))) {
       ConfigFileWatcherNotificationProvider.needShowPanel = true
       notifications.updateAllNotifications()
     }
@@ -35,17 +37,17 @@ class ConfigFileWatcherNotificationProvider(val myProject: Project, val notifica
   override def getKey: Key[EditorNotificationPanel] = ConfigFileWatcherNotificationProvider.KEY
 
   override def createNotificationPanel(file: VirtualFile, fileEditor: FileEditor): EditorNotificationPanel = {
-    if (HaskellSdkType.getStackPath(myProject).isEmpty || !ConfigFileWatcherNotificationProvider.needShowPanel) return null
-    createPanel(myProject)
+    if (!HaskellSdkType.isHaskellSDK(myProject) || !ConfigFileWatcherNotificationProvider.needShowPanel) return null
+    createPanel(myProject, file)
   }
 
-  private def createPanel(project: Project): EditorNotificationPanel = {
+  private def createPanel(project: Project, file: VirtualFile): EditorNotificationPanel = {
     val panel: EditorNotificationPanel = new EditorNotificationPanel
     panel.setText("Config file is updated")
     panel.createActionLabel("Restart Haskell Stack REPLs", () => {
       ConfigFileWatcherNotificationProvider.needShowPanel = false
-      StackProjectStartupManager.openProject(project, needCleanup = true)
       notifications.updateAllNotifications()
+      StackProjectStartupManager.openProject(project, Option(ModuleUtilCore.findModuleForFile(file, project)), needCleanup = true)
     })
     panel
   }

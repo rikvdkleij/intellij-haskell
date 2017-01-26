@@ -120,4 +120,10 @@ object HaskellSdkType {
       }
     })
   }
+
+  def isHaskellSDK(project: Project): Boolean = {
+    HaskellProjectUtil.getProjectRootManager(project).flatMap(projectRootManager => {
+      Option(projectRootManager.getProjectSdk).map(_.getSdkType)
+    }).contains(HaskellSdkType.getInstance)
+  }
 }

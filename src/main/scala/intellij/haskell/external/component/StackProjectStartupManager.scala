@@ -18,11 +18,13 @@ package intellij.haskell.external.component
 
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.components.ProjectComponent
+import com.intellij.openapi.module.Module
 import com.intellij.openapi.progress.{ProgressIndicator, ProgressManager, Task}
 import com.intellij.openapi.project.Project
 import intellij.haskell.HaskellNotificationGroup
 import intellij.haskell.external.commandLine.StackCommandLine
 import intellij.haskell.external.repl.StackReplsManager
+import intellij.haskell.module.HaskellModuleBuilder
 import intellij.haskell.util.HaskellProjectUtil
 
 object StackProjectStartupManager {
@@ -32,7 +34,7 @@ object StackProjectStartupManager {
     StackCommandLine.runCommand(Seq("clean"), project)
   }
 
-  def openProject(project: Project, needCleanup: Boolean = false): Unit = {
+  def openProject(project: Project, module: Option[Module] = None, needCleanup: Boolean = false): Unit = {
     if (HaskellProjectUtil.isHaskellStackProject(project)) {
       ProgressManager.getInstance().run(new Task.Backgroundable(project, s"[$componentName] Starting Stack repls, building project, building tools and preloading cache", false) {
 
@@ -48,6 +50,10 @@ object StackProjectStartupManager {
                 cleanLocalPackages(project)
                 HaskellComponentsManager.invalidateGlobalCaches(project)
               }
+
+              module.foreach(m => {
+                HaskellModuleBuilder.addLibrarySources(m)
+              })
 
               projectRepl.start()
               globalRepl.start()
