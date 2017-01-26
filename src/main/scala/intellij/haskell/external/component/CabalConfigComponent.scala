@@ -1,20 +1,19 @@
 package intellij.haskell.external.component
 
-import java.io.{File, FileNotFoundException}
+import java.io.{File, FileInputStream, FileNotFoundException}
 import java.net.URL
 
 import com.intellij.openapi.project.Project
 import com.intellij.util.io.URLUtil
 import intellij.haskell.HaskellNotificationGroup
-import intellij.haskell.external.commandLine.StackCommandLine
 import intellij.haskell.util.HaskellFileUtil
+import org.yaml.snakeyaml.Yaml
 
+import scala.collection.Iterator
 import scala.io.Source
 
 object CabalConfigComponent {
   private final val PackageNamePattern = """.* (.*) [==|installed].*""".r
-  private final val LocalLtsPkgdbResolverPattern = """.*/(lts-\d+\.\d+)/.*\n""".r
-  private final val LocalNightlyPkgdbResolverPattern = """.*/(nightly-\d{4}-\d{2}-\d{2})/.*\n""".r
   private final val CabalConfigFileLtsResolverPattern = """.*/(lts-\d+\.\d+)""".r
   private final val CabalConfigFileNightlyResolverPattern = """.*/(nightly-\d{4}-\d{2}-\d{2})""".r
 
@@ -22,49 +21,63 @@ object CabalConfigComponent {
     project.getBasePath + File.separator + "cabal.config"
   }
 
+  def getYamlFilePath(project: Project): String = {
+    project.getBasePath + File.separator + "stack.yaml"
+  }
+
   def getAllAvailablePackageNames(project: Project): Option[Iterable[String]] = {
     val configFilePath = getConfigFilePath(project)
     val configFile = new File(configFilePath)
-    if (!configFile.exists()) {
-      downloadAndParseCabalConfigFile(project)
-    } else {
-      val needUpdate = for {
-        oldResolver <- getResolverFromCabalConfigFile(project)
-        newResolver <- getResolverFromLocalPkgdb(project)
-      } yield oldResolver != newResolver
 
-      needUpdate.flatMap(b => {
-        if (b) {
-          removeCabalConfig(project)
+    getResolverFromStackYamlFile(project).map(resolver => {
+      if (resolver.startsWith("lts") || resolver.startsWith("nightly")) {
+        if (!configFile.exists()) {
           downloadAndParseCabalConfigFile(project)
         } else {
-          parseCabalConfigFile(project)
+          val needUpdate = for {
+            oldResolver <- getResolverFromCabalConfigFile(project)
+            newResolver <- getResolverFromStackYamlFile(project)
+          } yield oldResolver != newResolver
+
+          needUpdate match {
+            case Some(b) =>
+              if (b) {
+                removeCabalConfig(project)
+                downloadAndParseCabalConfigFile(project)
+              } else {
+                parseCabalConfigFile(project)
+              }
+            case None => parseDefaultCabalConfigFile(project)
+          }
         }
-      })
-    }
+      } else {
+        parseDefaultCabalConfigFile(project)
+      }
+    }).orElse(Some(parseDefaultCabalConfigFile(project)))
   }
 
-  private def downloadAndParseCabalConfigFile(project: Project): Option[Iterable[String]] = {
+  private def downloadAndParseCabalConfigFile(project: Project): Iterable[String] = {
     downloadCabalConfig(project)
     parseCabalConfigFile(project)
   }
 
-  private def parseCabalConfigFile(project: Project): Option[Iterable[String]] = {
-    val configFilePath = getConfigFilePath(project)
-    try {
-      Some(Source.fromFile(configFilePath).getLines().filter(!_.startsWith("--")).map {
-        case PackageNamePattern(packageName) => packageName
-        case _ => ""
-      }.filter(!_.isEmpty).toList)
-    } catch {
-      case _: FileNotFoundException =>
-        HaskellNotificationGroup.logErrorEvent(project, s"Can not parse `cabal.config` file.")
-        None
-    }
+  private def parseCabalConfigFileBase(project: Project, lines: Iterator[String]): Iterable[String] = {
+    lines.filter(!_.startsWith("--")).map {
+      case PackageNamePattern(packageName) => packageName
+      case _ => ""
+    }.filterNot(_.isEmpty).toList
+  }
+
+  private def parseDefaultCabalConfigFile(project: Project): Iterable[String] = {
+    parseCabalConfigFileBase(project, Source.fromURL(getClass.getResource("/cabal/cabal.config")).getLines())
+  }
+
+  private def parseCabalConfigFile(project: Project): Iterable[String] = {
+    parseCabalConfigFileBase(project, Source.fromFile(getConfigFilePath(project)).getLines())
   }
 
   def downloadCabalConfig(project: Project): Unit = {
-    getResolverFromLocalPkgdb(project).foreach(resolver => {
+    getResolverFromStackYamlFile(project).foreach(resolver => {
       val url = new URL(s"https://www.stackage.org/$resolver/cabal.config")
       val configFilePath = getConfigFilePath(project)
       val targetFile = new File(configFilePath)
@@ -74,7 +87,6 @@ object CabalConfigComponent {
         HaskellFileUtil.copyStreamToFile(in, targetFile)
       } catch {
         case _: Exception =>
-          HaskellNotificationGroup.logErrorEvent(project, s"Can not download cabal config file for stack resolver `$resolver`.")
           HaskellNotificationGroup.logErrorBalloonEvent(project, s"Can not download cabal config file for stack resolver <b>$resolver</b>, please check your network environment.")
       }
     })
@@ -88,14 +100,18 @@ object CabalConfigComponent {
     }
   }
 
-  private def getResolverFromLocalPkgdb(project: Project): Option[String] = {
-    StackCommandLine.runCommand(Seq("path", "--local-pkg-db"), project).flatMap(output => {
-      output.getStdout match {
-        case LocalLtsPkgdbResolverPattern(resolver) => Some(resolver)
-        case LocalNightlyPkgdbResolverPattern(resolver) => Some(resolver)
-        case _ => None
-      }
-    })
+  private def getResolverFromStackYamlFile(project: Project): Option[String] = {
+    try {
+      Option(new Yaml()
+        .load(new FileInputStream(new File(getYamlFilePath(project))))
+        .asInstanceOf[java.util.Map[String, Any]]
+        .get("resolver"))
+        .map(_.asInstanceOf[String])
+    } catch {
+      case _: FileNotFoundException =>
+        HaskellNotificationGroup.logErrorEvent(project, s"Can not find `stack.yaml` file.")
+        None
+    }
   }
 
   private def getResolverFromCabalConfigFile(project: Project): Option[String] = {
@@ -108,7 +124,9 @@ object CabalConfigComponent {
         }
       })
     } catch {
-      case _: Exception => None
+      case _: FileNotFoundException =>
+        HaskellNotificationGroup.logErrorEvent(project, s"Can not find `cabal.config` file.")
+        None
     }
   }
 
