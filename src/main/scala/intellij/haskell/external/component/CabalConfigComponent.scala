@@ -49,8 +49,7 @@ object CabalConfigComponent {
           })
         }
       } else {
-        val a = parseDefaultCabalConfigFile(project)
-        a
+        parseDefaultCabalConfigFile(project)
       }
     })
   }
