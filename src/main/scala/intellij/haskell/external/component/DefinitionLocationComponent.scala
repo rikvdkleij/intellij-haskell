@@ -59,18 +59,30 @@ private[component] object DefinitionLocationComponent {
           task
         }
 
+        // See https://github.com/commercialhaskell/intero/issues/260
+        // and https://github.com/commercialhaskell/intero/issues/182
         private def createDefinitionLocation(key: Key): Result = {
           val psiFile = key.psiFile
           val project = psiFile.getProject
-          val location = (findLocationInfoFor(key, psiFile, project) match {
-            case Some(output) => Right(output)
+          val location = (findLocationInfoFor(key, psiFile, project, endColumnExcluded = false) match {
+            case Some(output1) =>
+              val headOption = output1.stdOutLines.headOption
+              if (headOption.isEmpty || headOption.contains("Couldn't resolve to any modules.") || headOption.contains("No matching export in any local modules.")) {
+                findLocationInfoFor(key, psiFile, project, endColumnExcluded = true) match {
+                  case Some(output2) => Right(output2)
+                  case _ => Left("No info available")
+                }
+              } else {
+                Right(output1)
+              }
             case _ => Left("No info available")
-          }).right.map(_.stdOutLines.headOption.flatMap(createDefinitionLocationInfo))
+          }).right.map(_.stdOutLines.headOption.flatMap(l => createDefinitionLocationInfo(l)))
           Result(location)
         }
 
-        private def findLocationInfoFor(key: Key, psiFile: PsiFile, project: Project): Option[StackReplOutput] = {
-          StackReplsManager.getProjectRepl(project).flatMap(_.findLocationInfoFor(psiFile, key.startLineNr, key.startColumnNr, key.endLineNr, key.endColumnNr, key.expression))
+        private def findLocationInfoFor(key: Key, psiFile: PsiFile, project: Project, endColumnExcluded: Boolean): Option[StackReplOutput] = {
+          val endColumnNr = if (endColumnExcluded) key.endColumnNr else key.endColumnNr - 1
+          StackReplsManager.getProjectRepl(project).flatMap(_.findLocationInfoFor(psiFile, key.startLineNr, key.startColumnNr, key.endLineNr, endColumnNr, key.expression))
         }
 
         private def createDefinitionLocationInfo(output: String): Option[LocationInfo] = {
@@ -90,7 +102,7 @@ private[component] object DefinitionLocationComponent {
       textOffset = qne.getTextOffset
       psiFile <- Option(psiElement.getContainingFile)
       sp <- LineColumnPosition.fromOffset(psiFile, textOffset)
-      ep <- LineColumnPosition.fromOffset(psiFile, textOffset + qne.getText.length - 1)
+      ep <- LineColumnPosition.fromOffset(psiFile, textOffset + qne.getText.length)
       location <- find(psiFile, sp, ep, qne.getName)
     } yield location
   }
