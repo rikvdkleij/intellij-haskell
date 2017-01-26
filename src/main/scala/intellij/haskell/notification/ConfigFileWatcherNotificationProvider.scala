@@ -9,7 +9,7 @@ import com.intellij.openapi.vfs.newvfs.BulkFileListener
 import com.intellij.openapi.vfs.newvfs.events.VFileEvent
 import com.intellij.openapi.vfs.{VirtualFile, VirtualFileManager}
 import com.intellij.ui.{EditorNotificationPanel, EditorNotifications}
-import intellij.haskell.action.RestartStackReplsAction
+import intellij.haskell.external.component.StackProjectStartupManager
 import intellij.haskell.sdk.HaskellSdkType
 
 private class ConfigFileWatcher(val notifications: EditorNotifications) extends BulkFileListener.Adapter {
@@ -44,7 +44,7 @@ class ConfigFileWatcherNotificationProvider(val myProject: Project, val notifica
     panel.setText("Config file is updated")
     panel.createActionLabel("Restart Haskell Stack REPLs", () => {
       ConfigFileWatcherNotificationProvider.needShowPanel = false
-      RestartStackReplsAction.restart(project)
+      StackProjectStartupManager.openProject(project, needCleanup = true)
       notifications.updateAllNotifications()
     })
     panel
