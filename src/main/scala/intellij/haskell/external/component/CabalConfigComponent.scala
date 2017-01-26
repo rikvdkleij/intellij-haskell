@@ -46,7 +46,7 @@ object CabalConfigComponent {
             } else {
               parseCabalConfigFile(project)
             }
-          })
+          }).orElse(parseDefaultCabalConfigFile(project))
         }
       } else {
         parseDefaultCabalConfigFile(project)
