@@ -296,7 +296,7 @@
             <implementation-class>intellij.haskell.external.repl.ProjectStackReplProcess</implementation-class>
         </component>
         <component>
-            <implementation-class>intellij.haskell.external.component.StackProjectStartupManager</implementation-class>
+            <implementation-class>intellij.haskell.external.component.StackProjectManager</implementation-class>
         </component>
 
         <component>

@@ -10,7 +10,7 @@ import com.intellij.openapi.vfs.newvfs.BulkFileListener
 import com.intellij.openapi.vfs.newvfs.events.VFileEvent
 import com.intellij.openapi.vfs.{VirtualFile, VirtualFileManager}
 import com.intellij.ui.{EditorNotificationPanel, EditorNotifications}
-import intellij.haskell.external.component.StackProjectStartupManager
+import intellij.haskell.external.component.StackProjectManager
 import intellij.haskell.module.HaskellModuleBuilder
 import intellij.haskell.sdk.HaskellSdkType
 
@@ -47,7 +47,7 @@ class ConfigFileWatcherNotificationProvider(val myProject: Project, val notifica
     panel.createActionLabel("Restart Haskell Stack REPLs", () => {
       ConfigFileWatcherNotificationProvider.needShowPanel = false
       notifications.updateAllNotifications()
-      StackProjectStartupManager.openProject(project, Option(ModuleUtilCore.findModuleForFile(file, project)), needCleanup = true)
+      StackProjectManager.restart(project, Option(ModuleUtilCore.findModuleForFile(file, project)))
     })
     panel
   }
