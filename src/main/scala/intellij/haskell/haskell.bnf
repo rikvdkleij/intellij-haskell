@@ -19,7 +19,7 @@
 
   elementTypePrefix="HS_"
 
-  methods("varid|varsym|conid|consym|modid")=[getName setName getNameIdentifier getReference getPresentation]
+  methods("varid|varsym|conid|consym|modid")=[getName setName getNameIdentifier getReference getPresentation getUseScope]
   extends("varid|varsym|conid|consym|modid")="intellij.haskell.psi.impl.HaskellNamedStubBasedPsiElementBase<?>"
   implements("varid|varsym|conid|consym|modid")="intellij.haskell.psi.HaskellNamedElement"
   elementTypeFactory("varid|varsym|conid|consym|modid")="intellij.haskell.psi.impl.HaskellElementTypeFactory.factory"

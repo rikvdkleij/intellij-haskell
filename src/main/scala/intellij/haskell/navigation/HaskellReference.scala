@@ -163,9 +163,9 @@ class HaskellFileResolveResult(val element: PsiElement) extends PsiElementResolv
 
 class HaskellQualifierResolveResult(val element: HaskellNamedElement) extends PsiElementResolveResult(element)
 
-private class BuiltInResolveResult(declaration: String, val libraryName: String, val moduleName: String) extends NoElementToReferResolveResult(declaration)
+class BuiltInResolveResult(declaration: String, val libraryName: String, val moduleName: String) extends NoElementToReferResolveResult(declaration)
 
-private sealed abstract class NoElementToReferResolveResult(val declaration: String) extends ResolveResult {
+sealed abstract class NoElementToReferResolveResult(val declaration: String) extends ResolveResult {
   override def getElement: PsiElement = null
 
   override def isValidResult: Boolean = false

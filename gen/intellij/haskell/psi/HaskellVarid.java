@@ -5,6 +5,7 @@ import com.intellij.navigation.ItemPresentation;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiReference;
 import com.intellij.psi.StubBasedPsiElement;
+import com.intellij.psi.search.SearchScope;
 import intellij.haskell.psi.stubs.HaskellVaridStub;
 
 public interface HaskellVarid extends HaskellNamedElement, StubBasedPsiElement<HaskellVaridStub> {
@@ -18,5 +19,7 @@ public interface HaskellVarid extends HaskellNamedElement, StubBasedPsiElement<H
   PsiReference getReference();
 
   ItemPresentation getPresentation();
+
+  SearchScope getUseScope();
 
 }

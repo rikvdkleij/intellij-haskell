@@ -19,13 +19,16 @@ package intellij.haskell.psi.impl
 import javax.swing._
 
 import com.intellij.navigation.ItemPresentation
+import com.intellij.psi.impl.ResolveScopeManager
 import com.intellij.psi.impl.source.resolve.reference.ReferenceProvidersRegistry
+import com.intellij.psi.search.{LocalSearchScope, SearchScope}
 import com.intellij.psi.util.PsiTreeUtil
 import com.intellij.psi.{PsiElement, PsiReference}
 import com.intellij.util.ArrayUtil
+import intellij.haskell.navigation.{BuiltInResolveResult, HaskellFileResolveResult, HaskellReference}
 import intellij.haskell.psi.HaskellTypes._
 import intellij.haskell.psi._
-import intellij.haskell.util.{HaskellFileUtil, StringUtil}
+import intellij.haskell.util.{HaskellFileUtil, HaskellProjectUtil, StringUtil}
 import intellij.haskell.{HaskellFileType, HaskellIcons}
 
 import scala.annotation.tailrec
@@ -418,6 +421,20 @@ object HaskellPsiImplUtil {
       case e: HaskellTtype => e.getQNameList.asScala.map(_.getIdentifierElement)
       case e: HaskellNamedElement => Seq(e)
       case _ => Seq()
+    }
+  }
+
+  def getUseScope(namedElement: HaskellNamedElement): SearchScope = {
+    val resolvedResult = Option(namedElement.getReference.asInstanceOf[HaskellReference]).map(_.multiResolve(false)).getOrElse(Array())
+    resolvedResult.headOption match {
+      case Some(_: HaskellFileResolveResult) | Some(_: BuiltInResolveResult) => ResolveScopeManager.getElementUseScope(namedElement)
+      case Some(rr) =>
+        if (HaskellProjectUtil.isLibraryFile(rr.getElement.getContainingFile).getOrElse(true)) {
+          ResolveScopeManager.getElementUseScope(namedElement)
+        } else {
+          new LocalSearchScope(resolvedResult.map(_.getElement))
+        }
+      case _ => ResolveScopeManager.getElementUseScope(namedElement)
     }
   }
 }

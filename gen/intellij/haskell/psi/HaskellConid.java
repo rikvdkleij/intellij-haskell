@@ -5,6 +5,7 @@ import com.intellij.navigation.ItemPresentation;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiReference;
 import com.intellij.psi.StubBasedPsiElement;
+import com.intellij.psi.search.SearchScope;
 import intellij.haskell.psi.stubs.HaskellConidStub;
 
 public interface HaskellConid extends HaskellNamedElement, StubBasedPsiElement<HaskellConidStub> {
@@ -18,5 +19,7 @@ public interface HaskellConid extends HaskellNamedElement, StubBasedPsiElement<H
   PsiReference getReference();
 
   ItemPresentation getPresentation();
+
+  SearchScope getUseScope();
 
 }

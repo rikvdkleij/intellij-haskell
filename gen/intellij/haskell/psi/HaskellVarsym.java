@@ -5,6 +5,7 @@ import com.intellij.navigation.ItemPresentation;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiReference;
 import com.intellij.psi.StubBasedPsiElement;
+import com.intellij.psi.search.SearchScope;
 import intellij.haskell.psi.stubs.HaskellVarsymStub;
 
 public interface HaskellVarsym extends HaskellNamedElement, StubBasedPsiElement<HaskellVarsymStub> {
@@ -18,5 +19,7 @@ public interface HaskellVarsym extends HaskellNamedElement, StubBasedPsiElement<
   PsiReference getReference();
 
   ItemPresentation getPresentation();
+
+  SearchScope getUseScope();
 
 }

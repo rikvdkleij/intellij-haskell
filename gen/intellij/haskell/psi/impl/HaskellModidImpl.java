@@ -6,6 +6,7 @@ import com.intellij.navigation.ItemPresentation;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiElementVisitor;
 import com.intellij.psi.PsiReference;
+import com.intellij.psi.search.SearchScope;
 import com.intellij.psi.stubs.IStubElementType;
 import intellij.haskell.psi.HaskellModid;
 import intellij.haskell.psi.HaskellNamedElement;
@@ -50,6 +51,10 @@ public class HaskellModidImpl extends HaskellNamedStubBasedPsiElementBase<Haskel
 
   public ItemPresentation getPresentation() {
     return HaskellPsiImplUtil.getPresentation(this);
+  }
+
+  public SearchScope getUseScope() {
+    return HaskellPsiImplUtil.getUseScope(this);
   }
 
 }
