@@ -53,7 +53,7 @@ object CabalConfigComponent {
       } else {
         parseDefaultCabalConfigFile(project)
       }
-    })
+    }).orElse(Some(parseDefaultCabalConfigFile(project)))
   }
 
   private def downloadAndParseCabalConfigFile(project: Project): Iterable[String] = {
