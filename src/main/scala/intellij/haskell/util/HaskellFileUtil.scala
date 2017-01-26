@@ -30,20 +30,6 @@ import intellij.haskell.HaskellFile
 
 object HaskellFileUtil {
 
-  def isFileInProject(project: Project, file: VirtualFile): Boolean = {
-    val root = project.getBaseDir
-
-    def containsFile(root: VirtualFile, file: VirtualFile): Boolean = {
-      if (root.isDirectory) {
-        root.getChildren.contains(file) || root.getChildren.foldLeft(false)((b, c) => b || containsFile(c, file))
-      } else {
-        root == file
-      }
-    }
-
-    containsFile(root, file)
-  }
-
   def saveAllFiles(): Unit = {
     ApplicationManager.getApplication.invokeAndWait(() => {
       FileDocumentManager.getInstance.saveAllDocuments()
