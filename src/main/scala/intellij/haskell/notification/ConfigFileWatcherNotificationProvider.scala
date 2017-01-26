@@ -13,6 +13,7 @@ import com.intellij.ui.{EditorNotificationPanel, EditorNotifications}
 import intellij.haskell.external.component.StackProjectManager
 import intellij.haskell.module.HaskellModuleBuilder
 import intellij.haskell.sdk.HaskellSdkType
+import intellij.haskell.util.HaskellProjectUtil
 
 private class ConfigFileWatcher(val notifications: EditorNotifications) extends BulkFileListener.Adapter {
   private val watchFiles = Seq("stack.yaml", "cabal.config", ".cabal")
@@ -37,8 +38,11 @@ class ConfigFileWatcherNotificationProvider(val myProject: Project, val notifica
   override def getKey: Key[EditorNotificationPanel] = ConfigFileWatcherNotificationProvider.KEY
 
   override def createNotificationPanel(file: VirtualFile, fileEditor: FileEditor): EditorNotificationPanel = {
-    if (!HaskellSdkType.isHaskellSDK(myProject) || !ConfigFileWatcherNotificationProvider.needShowPanel) return null
-    createPanel(myProject, file)
+    if (HaskellProjectUtil.isHaskellStackProject(myProject) && ConfigFileWatcherNotificationProvider.needShowPanel) {
+      createPanel(myProject, file)
+    } else {
+      null
+    }
   }
 
   private def createPanel(project: Project, file: VirtualFile): EditorNotificationPanel = {
