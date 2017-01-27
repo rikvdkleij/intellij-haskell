@@ -21,11 +21,12 @@ import javax.swing.Icon
 
 import com.intellij.ide.util.projectWizard._
 import com.intellij.openapi.Disposable
+import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.module.{Module, ModuleType}
 import com.intellij.openapi.progress.{ProgressIndicator, ProgressManager, Task}
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.projectRoots.SdkTypeId
-import com.intellij.openapi.roots.{ModifiableRootModel, ModuleRootManager, ModuleRootModificationUtil, OrderRootType}
+import com.intellij.openapi.roots._
 import com.intellij.openapi.ui.Messages
 import com.intellij.openapi.util.Pair
 import com.intellij.openapi.util.io.FileUtil
@@ -174,7 +175,7 @@ class HaskellModuleWizardStep(wizardContext: WizardContext, haskellModuleBuilder
 
 object HaskellModuleBuilder {
 
-  private final val LibName = ".ideaHaskellLib"
+  private final val LibName = s".intellij-haskell${File.separator}lib"
   private final val DependencyPattern = """([\w\-]+)\s([\d\.]+)""".r
   private final val InitialProgressStep = 0.1
   private final val GhcPrimVersion = "0.5.0.0"
@@ -195,6 +196,7 @@ object HaskellModuleBuilder {
             val downloadedPackages = downloadHaskellPackageSources(project, stackPath, packages, progressIndicator)
             progressIndicator.setFraction(0.9)
             addPackagesAsLibrariesToModule(module, downloadedPackages, libDirectory.getAbsolutePath)
+            addPackagesAsLibrariesToSDK(module)
           })
         }
       })
@@ -221,9 +223,12 @@ object HaskellModuleBuilder {
   private def downloadHaskellPackageSources(project: Project, stackPath: String, haskellPackages: Seq[HaskellPackageInfo], progressIndicator: ProgressIndicator) = {
     val step = 0.8 / haskellPackages.size
     var progressFraction = InitialProgressStep
-    haskellPackages.flatMap { packageInfo =>
-      val fullName = packageInfo.name + "-" + packageInfo.version
-      val stdErr = CommandLine.runProgram(Some(project), project.getBasePath + File.separator + LibName, stackPath, Seq("unpack", fullName), 10000, captureOutputToLog = true, logErrorAsInfo = true).map(_.getStderr)
+    haskellPackages.filter(packageInfo => {
+      new File(project.getBasePath + File.separator + LibName + File.separator + packageInfo.dirName).exists()
+    }) ++ haskellPackages.filter(packageInfo => {
+      !new File(project.getBasePath + File.separator + LibName + File.separator + packageInfo.dirName).exists()
+    }).flatMap { packageInfo =>
+      val stdErr = CommandLine.runProgram(Some(project), project.getBasePath + File.separator + LibName, stackPath, Seq("unpack", packageInfo.dirName), 10000, captureOutputToLog = true, logErrorAsInfo = true).map(_.getStderr)
       progressFraction = progressFraction + step
       progressIndicator.setFraction(progressFraction)
 
@@ -250,6 +255,34 @@ object HaskellModuleBuilder {
         model.commit()
       }
     })
+  }
+
+  private def addPackagesAsLibrariesToSDK(module: Module): Unit = {
+    val project = module.getProject
+    val sdk = ProjectRootManager.getInstance(project).getProjectSdk
+    val modificator = sdk.getSdkModificator
+    if (modificator.isWritable) {
+      ApplicationManager.getApplication.invokeLater(() => {
+          Option(sdk.getHomePath).foreach(path => {
+            modificator.setHomePath(path)
+
+            modificator.getRoots(OrderRootType.CLASSES).headOption.foreach(vFile => {
+              modificator.removeRoot(vFile, OrderRootType.CLASSES)
+            })
+            modificator.getRoots(OrderRootType.SOURCES).headOption.foreach(vFile => {
+              modificator.removeRoot(vFile, OrderRootType.SOURCES)
+            })
+
+            val file = new File(getIdeaHaskellLibDirectory(project).getAbsolutePath)
+            Option(LocalFileSystem.getInstance.findFileByIoFile(file)).foreach(virtualFile => {
+              modificator.addRoot(virtualFile, OrderRootType.CLASSES)
+              modificator.addRoot(virtualFile, OrderRootType.SOURCES)
+              modificator.commitChanges()
+            })
+          })
+        }
+      )
+    }
   }
 
   private case class HaskellPackageInfo(name: String, version: String, dirName: String)
