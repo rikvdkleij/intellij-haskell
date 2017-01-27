@@ -186,8 +186,9 @@ object HaskellModuleBuilder {
       ProgressManager.getInstance().run(new Task.Backgroundable(project, "Downloading Haskell library sources and adding them as source libraries to module") {
         def run(progressIndicator: ProgressIndicator) {
           val libDirectory = getIdeaHaskellLibDirectory(project)
-          FileUtil.delete(libDirectory)
-          FileUtil.createDirectory(libDirectory)
+          if (!FileUtil.exists(getIdeaHaskellLibDirectoryStr(project))) {
+            FileUtil.createDirectory(libDirectory)
+          }
           StackCommandLine.runCommand(Seq("list-dependencies", "--test"), project, timeoutInMillis = 60.seconds.toMillis).map(_.getStdoutLines).foreach(dependencyLines => {
             val packageName = HaskellProjectUtil.findCabalPackageName(project)
             val packages = getPackages(project, dependencyLines.asScala).filterNot(p => packageName.contains(p.name))
@@ -203,6 +204,10 @@ object HaskellModuleBuilder {
 
   private def getIdeaHaskellLibDirectory(project: Project): File = {
     new File(project.getBasePath, LibName)
+  }
+
+  private def getIdeaHaskellLibDirectoryStr(project: Project): String = {
+    project.getBasePath + File.separator + LibName
   }
 
   private def getPackages(project: Project, dependencyLines: Seq[String]): Seq[HaskellPackageInfo] = {
