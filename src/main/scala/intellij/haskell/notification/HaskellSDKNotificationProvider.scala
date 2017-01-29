@@ -37,9 +37,9 @@ class HaskellSDKNotificationProvider(val myProject: Project, val notifications: 
             "Haskell Project SDK is changed",
             "Restart Haskell Stack REPLs",
             (project: Project) => () => {
-              StackProjectManager.restart(project, Option(ModuleUtilCore.findModuleForFile(file, project)))
               currentHaskellSDKNameOption = Some(sdkName)
               notifications.updateAllNotifications()
+              StackProjectManager.restart(project, Option(ModuleUtilCore.findModuleForFile(file, project)))
             }
           )
         } else {
