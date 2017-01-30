@@ -21,7 +21,7 @@ import javax.swing._
 import com.intellij.navigation.ItemPresentation
 import com.intellij.psi.impl.ResolveScopeManager
 import com.intellij.psi.impl.source.resolve.reference.ReferenceProvidersRegistry
-import com.intellij.psi.search.{LocalSearchScope, SearchScope}
+import com.intellij.psi.search.{ProjectScope, SearchScope}
 import com.intellij.psi.util.PsiTreeUtil
 import com.intellij.psi.{PsiElement, PsiReference}
 import com.intellij.util.ArrayUtil
@@ -432,7 +432,7 @@ object HaskellPsiImplUtil {
         if (HaskellProjectUtil.isLibraryFile(rr.getElement.getContainingFile).getOrElse(true)) {
           ResolveScopeManager.getElementUseScope(namedElement)
         } else {
-          new LocalSearchScope(resolvedResult.map(_.getElement))
+          ProjectScope.getContentScope(namedElement.getProject)
         }
       case _ => ResolveScopeManager.getElementUseScope(namedElement)
     }

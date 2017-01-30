@@ -78,12 +78,17 @@ class HaskellModuleBuilder extends ModuleBuilder with SourcePathsBuilder with Mo
         }
       }
 
-      val excludeFolderPath = getStackWorkFolderPath
-      excludeFolderPath.mkdir()
-      val excludeFolderFile = Option(LocalFileSystem.getInstance.refreshAndFindFileByPath(FileUtil.toSystemIndependentName(excludeFolderPath.getAbsolutePath)))
-      excludeFolderFile.foreach { f =>
+      val stackWorkDirectory = getStackWorkDirectory
+      stackWorkDirectory.mkdir()
+      Option(LocalFileSystem.getInstance.refreshAndFindFileByIoFile(stackWorkDirectory)).foreach { f =>
         contentEntry.addExcludeFolder(f)
       }
+
+      val libraryDirectory = HaskellModuleBuilder.getIdeaHaskellLibDirectory(rootModel.getProject)
+      libraryDirectory.mkdir()
+      Option(LocalFileSystem.getInstance.refreshAndFindFileByIoFile(libraryDirectory)).foreach(f => {
+        contentEntry.addExcludeFolder(f)
+      })
     }
   }
 
@@ -137,7 +142,7 @@ class HaskellModuleBuilder extends ModuleBuilder with SourcePathsBuilder with Mo
     new HaskellModuleWizardStep(context, this)
   }
 
-  private def getStackWorkFolderPath = {
+  private def getStackWorkDirectory = {
     new File(getContentEntryPath, ".stack-work")
   }
 
@@ -201,7 +206,7 @@ object HaskellModuleBuilder {
     })
   }
 
-  private def getIdeaHaskellLibDirectory(project: Project): File = {
+  def getIdeaHaskellLibDirectory(project: Project): File = {
     new File(project.getBasePath, LibName)
   }
 
