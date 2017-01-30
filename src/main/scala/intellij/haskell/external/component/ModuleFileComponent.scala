@@ -73,7 +73,12 @@ private[component] object ModuleFileComponent {
     } else {
       val key = Key(project, moduleName)
       try {
-        Cache.get(key).files
+        val files = Cache.get(key).files
+        if (files.isEmpty) {
+          // We have to give key a next chance in case not all library sources are downloaded yet
+          Cache.invalidate(key)
+        }
+        files
       }
       catch {
         case _: UncheckedExecutionException => None
