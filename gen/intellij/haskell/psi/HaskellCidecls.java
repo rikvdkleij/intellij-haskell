@@ -17,7 +17,7 @@ public interface HaskellCidecls extends HaskellCompositeElement {
   List<HaskellExpression> getExpressionList();
 
   @NotNull
-  List<HaskellInlinePragma> getInlinePragmaList();
+  List<HaskellInlinePragmas> getInlinePragmasList();
 
   @NotNull
   List<HaskellInstanceDeclaration> getInstanceDeclarationList();
@@ -27,9 +27,6 @@ public interface HaskellCidecls extends HaskellCompositeElement {
 
   @NotNull
   List<HaskellNewtypeDeclaration> getNewtypeDeclarationList();
-
-  @NotNull
-  List<HaskellNoinlinePragma> getNoinlinePragmaList();
 
   @NotNull
   List<HaskellSpecializePragma> getSpecializePragmaList();

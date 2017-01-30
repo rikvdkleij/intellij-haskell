@@ -61,9 +61,11 @@ haddock_pragma              ::= PRAGMA_START onl "OPTIONS_HADDOCK" onl (VARSYM_I
 dummy_pragma                ::= PRAGMA_START q_name? PRAGMA_END? NEWLINE?
 
 other_pragma                ::= ann_pragma | deprecated_warn_pragma | noinline_pragma | inlinable_pragma | line_pragma | rules_pragma |
-                                  specialize_pragma | inline_pragma | minimal_pragma | overlap_pragma | constant_folded_pragma | dummy_pragma
+                                  specialize_pragma | inline_pragma | inline_fused_pragma | inline_inner_pragma | minimal_pragma | overlap_pragma | constant_folded_pragma | dummy_pragma
 deprecated_warn_pragma      ::= PRAGMA_START onl ("DEPRECATED" | "WARNING") general_pragma_content PRAGMA_END
 inline_pragma               ::= PRAGMA_START onl "INLINE" general_pragma_content PRAGMA_END
+inline_fused_pragma         ::= PRAGMA_START onl "INLINE_FUSED" general_pragma_content PRAGMA_END
+inline_inner_pragma         ::= PRAGMA_START onl "INLINE_INNER" general_pragma_content PRAGMA_END
 noinline_pragma             ::= PRAGMA_START onl ("NOINLINE" | "NOTINLINE") general_id+ PRAGMA_END
 specialize_pragma           ::= PRAGMA_START onl ("SPECIALIZE" | "SPECIALISE") general_pragma_content PRAGMA_END
 
@@ -260,7 +262,9 @@ newconstr_fielddecl         ::= q_name onls LEFT_BRACE? onls q_name onls COLON_C
 
 cidecls                     ::= cidecl (onls cidecl)*
 
-private cidecl              ::= inline_pragma | noinline_pragma | specialize_pragma | instance_declaration | default_declaration |
+inline_pragmas              ::= inline_pragma | noinline_pragma | inline_inner_pragma | inline_fused_pragma
+
+private cidecl              ::= inline_pragmas | specialize_pragma | instance_declaration | default_declaration |
                                   newtype_declaration | data_declaration | minimal_pragma | expression
 
 expression                  ::= line_expression+ last_line_expression | last_line_expression
@@ -270,7 +274,8 @@ private last_line_expression::= (type_signature | type_declaration | general_id+
 private general_id          ::= QUASIQUOTE | q_name | LEFT_PAREN | RIGHT_PAREN | FLOAT |
                                   DOUBLE_RIGHT_ARROW | RIGHT_ARROW |
                                   SEMICOLON | LEFT_ARROW | LEFT_BRACKET | RIGHT_BRACKET | literal | LEFT_BRACE | RIGHT_BRACE |
-                                  COMMA | symbol_reserved_op | QUOTE | BACKQUOTE | fixity | DOT_DOT | scc_pragma | reserved_id | DIRECTIVE | COLON_COLON
+                                  COMMA | symbol_reserved_op | QUOTE | BACKQUOTE | fixity | DOT_DOT | scc_pragma | reserved_id | DIRECTIVE | COLON_COLON |
+                                  inline_pragmas
 
 private symbol_reserved_op  ::= AT | BACKSLASH | VERTICAL_BAR | TILDE | EQUAL
 

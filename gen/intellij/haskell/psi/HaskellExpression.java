@@ -8,6 +8,9 @@ import java.util.List;
 public interface HaskellExpression extends HaskellCompositeElement {
 
   @NotNull
+  List<HaskellInlinePragmas> getInlinePragmasList();
+
+  @NotNull
   List<HaskellQName> getQNameList();
 
   @NotNull

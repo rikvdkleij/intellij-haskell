@@ -55,6 +55,18 @@ public class HaskellOtherPragmaImpl extends HaskellCompositeElementImpl implemen
 
   @Override
   @Nullable
+  public HaskellInlineFusedPragma getInlineFusedPragma() {
+    return PsiTreeUtil.getChildOfType(this, HaskellInlineFusedPragma.class);
+  }
+
+  @Override
+  @Nullable
+  public HaskellInlineInnerPragma getInlineInnerPragma() {
+    return PsiTreeUtil.getChildOfType(this, HaskellInlineInnerPragma.class);
+  }
+
+  @Override
+  @Nullable
   public HaskellInlinePragma getInlinePragma() {
     return PsiTreeUtil.getChildOfType(this, HaskellInlinePragma.class);
   }

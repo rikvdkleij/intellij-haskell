@@ -206,7 +206,19 @@ public class HaskellVisitor extends PsiElementVisitor {
     visitCompositeElement(o);
   }
 
+  public void visitInlineFusedPragma(@NotNull HaskellInlineFusedPragma o) {
+    visitCompositeElement(o);
+  }
+
+  public void visitInlineInnerPragma(@NotNull HaskellInlineInnerPragma o) {
+    visitCompositeElement(o);
+  }
+
   public void visitInlinePragma(@NotNull HaskellInlinePragma o) {
+    visitCompositeElement(o);
+  }
+
+  public void visitInlinePragmas(@NotNull HaskellInlinePragmas o) {
     visitCompositeElement(o);
   }
 

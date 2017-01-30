@@ -44,8 +44,8 @@ public class HaskellCideclsImpl extends HaskellCompositeElementImpl implements H
 
   @Override
   @NotNull
-  public List<HaskellInlinePragma> getInlinePragmaList() {
-    return PsiTreeUtil.getChildrenOfTypeAsList(this, HaskellInlinePragma.class);
+  public List<HaskellInlinePragmas> getInlinePragmasList() {
+    return PsiTreeUtil.getChildrenOfTypeAsList(this, HaskellInlinePragmas.class);
   }
 
   @Override
@@ -64,12 +64,6 @@ public class HaskellCideclsImpl extends HaskellCompositeElementImpl implements H
   @NotNull
   public List<HaskellNewtypeDeclaration> getNewtypeDeclarationList() {
     return PsiTreeUtil.getChildrenOfTypeAsList(this, HaskellNewtypeDeclaration.class);
-  }
-
-  @Override
-  @NotNull
-  public List<HaskellNoinlinePragma> getNoinlinePragmaList() {
-    return PsiTreeUtil.getChildrenOfTypeAsList(this, HaskellNoinlinePragma.class);
   }
 
   @Override

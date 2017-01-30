@@ -58,7 +58,10 @@ public interface HaskellTypes {
   IElementType HS_INCLUDE_PRAGMA = new HaskellCompositeElementType("HS_INCLUDE_PRAGMA");
   IElementType HS_INCOHERENT_PRAGMA = new HaskellCompositeElementType("HS_INCOHERENT_PRAGMA");
   IElementType HS_INLINABLE_PRAGMA = new HaskellCompositeElementType("HS_INLINABLE_PRAGMA");
+  IElementType HS_INLINE_FUSED_PRAGMA = new HaskellCompositeElementType("HS_INLINE_FUSED_PRAGMA");
+  IElementType HS_INLINE_INNER_PRAGMA = new HaskellCompositeElementType("HS_INLINE_INNER_PRAGMA");
   IElementType HS_INLINE_PRAGMA = new HaskellCompositeElementType("HS_INLINE_PRAGMA");
+  IElementType HS_INLINE_PRAGMAS = new HaskellCompositeElementType("HS_INLINE_PRAGMAS");
   IElementType HS_INST = new HaskellCompositeElementType("HS_INST");
   IElementType HS_INSTANCE_DECLARATION = new HaskellCompositeElementType("HS_INSTANCE_DECLARATION");
   IElementType HS_INSTVAR = new HaskellCompositeElementType("HS_INSTVAR");
@@ -336,8 +339,17 @@ public interface HaskellTypes {
       else if (type == HS_INLINABLE_PRAGMA) {
         return new HaskellInlinablePragmaImpl(node);
       }
+      else if (type == HS_INLINE_FUSED_PRAGMA) {
+        return new HaskellInlineFusedPragmaImpl(node);
+      }
+      else if (type == HS_INLINE_INNER_PRAGMA) {
+        return new HaskellInlineInnerPragmaImpl(node);
+      }
       else if (type == HS_INLINE_PRAGMA) {
         return new HaskellInlinePragmaImpl(node);
+      }
+      else if (type == HS_INLINE_PRAGMAS) {
+        return new HaskellInlinePragmasImpl(node);
       }
       else if (type == HS_INST) {
         return new HaskellInstImpl(node);

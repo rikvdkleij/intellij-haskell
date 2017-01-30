@@ -26,6 +26,12 @@ public class HaskellExpressionImpl extends HaskellCompositeElementImpl implement
 
   @Override
   @NotNull
+  public List<HaskellInlinePragmas> getInlinePragmasList() {
+    return PsiTreeUtil.getChildrenOfTypeAsList(this, HaskellInlinePragmas.class);
+  }
+
+  @Override
+  @NotNull
   public List<HaskellQName> getQNameList() {
     return PsiTreeUtil.getChildrenOfTypeAsList(this, HaskellQName.class);
   }

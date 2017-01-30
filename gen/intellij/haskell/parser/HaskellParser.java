@@ -173,8 +173,17 @@ public class HaskellParser implements PsiParser, LightPsiParser {
     else if (t == HS_INLINABLE_PRAGMA) {
       r = inlinable_pragma(b, 0);
     }
+    else if (t == HS_INLINE_FUSED_PRAGMA) {
+      r = inline_fused_pragma(b, 0);
+    }
+    else if (t == HS_INLINE_INNER_PRAGMA) {
+      r = inline_inner_pragma(b, 0);
+    }
     else if (t == HS_INLINE_PRAGMA) {
       r = inline_pragma(b, 0);
+    }
+    else if (t == HS_INLINE_PRAGMAS) {
+      r = inline_pragmas(b, 0);
     }
     else if (t == HS_INST) {
       r = inst(b, 0);
@@ -842,14 +851,13 @@ public class HaskellParser implements PsiParser, LightPsiParser {
   }
 
   /* ********************************************************** */
-  // inline_pragma | noinline_pragma | specialize_pragma | instance_declaration | default_declaration |
+  // inline_pragmas | specialize_pragma | instance_declaration | default_declaration |
   //                                   newtype_declaration | data_declaration | minimal_pragma | expression
   static boolean cidecl(PsiBuilder b, int l) {
     if (!recursion_guard_(b, l, "cidecl")) return false;
     boolean r;
     Marker m = enter_section_(b);
-    r = inline_pragma(b, l + 1);
-    if (!r) r = noinline_pragma(b, l + 1);
+    r = inline_pragmas(b, l + 1);
     if (!r) r = specialize_pragma(b, l + 1);
     if (!r) r = instance_declaration(b, l + 1);
     if (!r) r = default_declaration(b, l + 1);
@@ -2819,7 +2827,8 @@ public class HaskellParser implements PsiParser, LightPsiParser {
   // QUASIQUOTE | q_name | LEFT_PAREN | RIGHT_PAREN | FLOAT |
   //                                   DOUBLE_RIGHT_ARROW | RIGHT_ARROW |
   //                                   SEMICOLON | LEFT_ARROW | LEFT_BRACKET | RIGHT_BRACKET | literal | LEFT_BRACE | RIGHT_BRACE |
-  //                                   COMMA | symbol_reserved_op | QUOTE | BACKQUOTE | fixity | DOT_DOT | scc_pragma | reserved_id | DIRECTIVE | COLON_COLON
+  //                                   COMMA | symbol_reserved_op | QUOTE | BACKQUOTE | fixity | DOT_DOT | scc_pragma | reserved_id | DIRECTIVE | COLON_COLON |
+  //                                   inline_pragmas
   static boolean general_id(PsiBuilder b, int l) {
     if (!recursion_guard_(b, l, "general_id")) return false;
     boolean r;
@@ -2848,6 +2857,7 @@ public class HaskellParser implements PsiParser, LightPsiParser {
     if (!r) r = reserved_id(b, l + 1);
     if (!r) r = consumeToken(b, HS_DIRECTIVE);
     if (!r) r = consumeToken(b, HS_COLON_COLON);
+    if (!r) r = inline_pragmas(b, l + 1);
     exit_section_(b, m, null, r);
     return r;
   }
@@ -3594,6 +3604,38 @@ public class HaskellParser implements PsiParser, LightPsiParser {
   }
 
   /* ********************************************************** */
+  // PRAGMA_START onl "INLINE_FUSED" general_pragma_content PRAGMA_END
+  public static boolean inline_fused_pragma(PsiBuilder b, int l) {
+    if (!recursion_guard_(b, l, "inline_fused_pragma")) return false;
+    if (!nextTokenIs(b, HS_PRAGMA_START)) return false;
+    boolean r;
+    Marker m = enter_section_(b);
+    r = consumeToken(b, HS_PRAGMA_START);
+    r = r && onl(b, l + 1);
+    r = r && consumeToken(b, "INLINE_FUSED");
+    r = r && general_pragma_content(b, l + 1);
+    r = r && consumeToken(b, HS_PRAGMA_END);
+    exit_section_(b, m, HS_INLINE_FUSED_PRAGMA, r);
+    return r;
+  }
+
+  /* ********************************************************** */
+  // PRAGMA_START onl "INLINE_INNER" general_pragma_content PRAGMA_END
+  public static boolean inline_inner_pragma(PsiBuilder b, int l) {
+    if (!recursion_guard_(b, l, "inline_inner_pragma")) return false;
+    if (!nextTokenIs(b, HS_PRAGMA_START)) return false;
+    boolean r;
+    Marker m = enter_section_(b);
+    r = consumeToken(b, HS_PRAGMA_START);
+    r = r && onl(b, l + 1);
+    r = r && consumeToken(b, "INLINE_INNER");
+    r = r && general_pragma_content(b, l + 1);
+    r = r && consumeToken(b, HS_PRAGMA_END);
+    exit_section_(b, m, HS_INLINE_INNER_PRAGMA, r);
+    return r;
+  }
+
+  /* ********************************************************** */
   // PRAGMA_START onl "INLINE" general_pragma_content PRAGMA_END
   public static boolean inline_pragma(PsiBuilder b, int l) {
     if (!recursion_guard_(b, l, "inline_pragma")) return false;
@@ -3606,6 +3648,21 @@ public class HaskellParser implements PsiParser, LightPsiParser {
     r = r && general_pragma_content(b, l + 1);
     r = r && consumeToken(b, HS_PRAGMA_END);
     exit_section_(b, m, HS_INLINE_PRAGMA, r);
+    return r;
+  }
+
+  /* ********************************************************** */
+  // inline_pragma | noinline_pragma | inline_inner_pragma | inline_fused_pragma
+  public static boolean inline_pragmas(PsiBuilder b, int l) {
+    if (!recursion_guard_(b, l, "inline_pragmas")) return false;
+    if (!nextTokenIs(b, HS_PRAGMA_START)) return false;
+    boolean r;
+    Marker m = enter_section_(b);
+    r = inline_pragma(b, l + 1);
+    if (!r) r = noinline_pragma(b, l + 1);
+    if (!r) r = inline_inner_pragma(b, l + 1);
+    if (!r) r = inline_fused_pragma(b, l + 1);
+    exit_section_(b, m, HS_INLINE_PRAGMAS, r);
     return r;
   }
 
@@ -5107,7 +5164,7 @@ public class HaskellParser implements PsiParser, LightPsiParser {
 
   /* ********************************************************** */
   // ann_pragma | deprecated_warn_pragma | noinline_pragma | inlinable_pragma | line_pragma | rules_pragma |
-  //                                   specialize_pragma | inline_pragma | minimal_pragma | overlap_pragma | constant_folded_pragma | dummy_pragma
+  //                                   specialize_pragma | inline_pragma | inline_fused_pragma | inline_inner_pragma | minimal_pragma | overlap_pragma | constant_folded_pragma | dummy_pragma
   public static boolean other_pragma(PsiBuilder b, int l) {
     if (!recursion_guard_(b, l, "other_pragma")) return false;
     if (!nextTokenIs(b, HS_PRAGMA_START)) return false;
@@ -5121,6 +5178,8 @@ public class HaskellParser implements PsiParser, LightPsiParser {
     if (!r) r = rules_pragma(b, l + 1);
     if (!r) r = specialize_pragma(b, l + 1);
     if (!r) r = inline_pragma(b, l + 1);
+    if (!r) r = inline_fused_pragma(b, l + 1);
+    if (!r) r = inline_inner_pragma(b, l + 1);
     if (!r) r = minimal_pragma(b, l + 1);
     if (!r) r = overlap_pragma(b, l + 1);
     if (!r) r = constant_folded_pragma(b, l + 1);
