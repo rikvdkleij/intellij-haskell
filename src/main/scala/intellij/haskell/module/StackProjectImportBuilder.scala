@@ -54,7 +54,6 @@ class StackProjectImportBuilder extends ProjectImportBuilder[Unit] {
           haskellModuleBuilder.setName(getModuleName)
           haskellModuleBuilder.setModuleFilePath(getModuleFilePath)
 
-          haskellModuleBuilder.createModule(moduleModel)
           haskellModuleBuilder.commit(project)
           haskellModuleBuilder.addModuleConfigurationUpdater((module: Module, rootModel: ModifiableRootModel) => {
             haskellModuleBuilder.setupRootModel(rootModel)
@@ -62,7 +61,6 @@ class StackProjectImportBuilder extends ProjectImportBuilder[Unit] {
         }
       })
 
-      haskellModuleBuilder.moduleCreated(moduleModel.getModules.head)
       moduleModel.getModules.toList.asJava
     }.getOrElse(new util.ArrayList[Module]())
   }
