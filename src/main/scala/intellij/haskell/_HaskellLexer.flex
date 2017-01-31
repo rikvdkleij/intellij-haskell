@@ -196,7 +196,7 @@ nhaddock_start      = "{-|"
 }
 
 <QQ> {
-    {left_bracket} {var_id}* {vertical_bar} {
+    {left_bracket} ({var_id}|{con_id}|{dot})* {vertical_bar} {
         qqDepth++;
     }
 
@@ -222,7 +222,7 @@ nhaddock_start      = "{-|"
     .|{white_char}|{newline} {}
 }
 
-{left_bracket} {var_id}* {vertical_bar} {
+{left_bracket} ({var_id}|{con_id}|{dot})* {vertical_bar} {
     yybegin(QQ);
     qqDepth = 0;
     qqStart = getTokenStart();
