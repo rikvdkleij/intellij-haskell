@@ -33,7 +33,6 @@ class HaskellRenameVariableProcessor extends RenamePsiElementProcessor {
 
   override def renameElement(element: PsiElement, newName: String, usages: Array[UsageInfo], listener: RefactoringElementListener): Unit = {
     super.renameElement(element, newName, usages, listener)
-    HaskellFileUtil.saveAllFiles()
   }
 
   override def findReferences(element: PsiElement): java.util.Collection[PsiReference] = {
