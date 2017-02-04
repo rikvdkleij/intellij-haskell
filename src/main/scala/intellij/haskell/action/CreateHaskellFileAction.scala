@@ -16,12 +16,19 @@
 
 package intellij.haskell.action
 
-import com.intellij.ide.actions.CreateFileFromTemplateAction
+import java.io.File
+import java.text.ParseException
+
 import com.intellij.ide.actions.CreateFileFromTemplateDialog.Builder
+import com.intellij.ide.actions.{CreateFileAction, CreateFileFromTemplateAction}
+import com.intellij.ide.fileTemplates.{FileTemplate, FileTemplateManager, FileTemplateUtil}
+import com.intellij.ide.util.PropertiesComponent
+import com.intellij.openapi.fileEditor.FileEditorManager
 import com.intellij.openapi.project.{DumbAware, Project}
-import com.intellij.openapi.ui.InputValidatorEx
+import com.intellij.openapi.roots.ProjectRootManager
+import com.intellij.openapi.ui.{InputValidatorEx, Messages}
 import com.intellij.openapi.util.text.StringUtil
-import com.intellij.psi.PsiDirectory
+import com.intellij.psi.{PsiDirectory, PsiFile}
 import intellij.haskell.HaskellIcons
 
 object CreateHaskellFileAction {
@@ -49,6 +56,60 @@ class CreateHaskellFileAction extends CreateFileFromTemplateAction(CreateHaskell
         }
       }
     })
+  }
+
+  override def createFileFromTemplate(fileName: String, template: FileTemplate, fileDir: PsiDirectory): PsiFile = {
+    val path = fileDir.getVirtualFile.getPath
+    val pathItems = ProjectRootManager.getInstance(fileDir.getProject)
+      .getContentSourceRoots
+      .map(_.getPath)
+      .find(path.startsWith)
+      .map(s => path.replace(s + File.separator, "").split(File.separator).toList)
+
+    pathItems match {
+      case None => null
+      case Some(items) =>
+        // Adapted from super definition.
+        val mkdirs = new CreateFileAction.MkDirs(fileName, fileDir)
+        val name = mkdirs.newName
+        val dir = mkdirs.directory
+        val project = dir.getProject
+
+        val nameWithmodulePrefix = if (invalidPathItems(items) || items.isEmpty) {
+          name
+        } else {
+          items.mkString(".") + "." + name
+        }
+
+        // Patch props with custom property.
+        val props = FileTemplateManager.getInstance(project).getDefaultProperties()
+        props.setProperty("NAME", nameWithmodulePrefix)
+
+        val element = FileTemplateUtil.createFromTemplate(template, name, props, dir)
+        val psiFile = element.getContainingFile
+
+        try {
+          val virtualFile = Option(psiFile.getVirtualFile)
+
+          virtualFile.foreach(vFile => {
+            FileEditorManager.getInstance(project).openFile(vFile, true)
+            Option(getDefaultTemplateProperty).foreach(defaultTemplateProperty => {
+              PropertiesComponent.getInstance(project).setValue(defaultTemplateProperty, template.getName)
+            })
+          })
+        } catch {
+          case e: ParseException => Messages.showErrorDialog(project, "Error parsing Haskell Module template: " + e.getMessage, "Create File from Template");
+        }
+
+        psiFile
+    }
+  }
+
+  /**
+    * Returns true if any directory name starts with a lower case letter.
+    */
+  private def invalidPathItems(pathItems: List[String]): Boolean = {
+    pathItems.exists(s => s.isEmpty || !StringUtil.isCapitalized(s.substring(0, 1)))
   }
 
   protected def getActionName(directory: PsiDirectory, newName: String, templateName: String): String = {
