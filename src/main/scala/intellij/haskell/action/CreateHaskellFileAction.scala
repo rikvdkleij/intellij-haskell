@@ -49,7 +49,13 @@ class CreateHaskellFileAction extends CreateFileFromTemplateAction(CreateHaskell
       }
 
       def getErrorText(inputString: String): String = {
-        if (!StringUtil.isCapitalized(inputString)) {
+        val checkString = if (inputString.contains(".")) {
+          inputString.trim.split("\\.").last
+        } else {
+          inputString
+        }
+
+        if (!StringUtil.isCapitalized(checkString)) {
           s"'$inputString' is not a valid Haskell module name"
         } else {
           null
@@ -58,14 +64,7 @@ class CreateHaskellFileAction extends CreateFileFromTemplateAction(CreateHaskell
     })
   }
 
-  override def createFileFromTemplate(fileName: String, template: FileTemplate, fileDir: PsiDirectory): PsiFile = {
-    val path = fileDir.getVirtualFile.getPath
-    val pathItems = ProjectRootManager.getInstance(fileDir.getProject)
-      .getContentSourceRoots
-      .map(_.getPath)
-      .find(path.startsWith)
-      .map(s => path.replace(s + File.separator, "").split(File.separator).toList)
-
+  private def createFileFromTemplate(pathItems: Option[List[String]], fileName: String, template: FileTemplate, fileDir: PsiDirectory): PsiFile = {
     pathItems match {
       case None => null
       case Some(items) =>
@@ -102,6 +101,30 @@ class CreateHaskellFileAction extends CreateFileFromTemplateAction(CreateHaskell
         }
 
         psiFile
+    }
+  }
+
+  override def createFileFromTemplate(fileName: String, template: FileTemplate, fileDir: PsiDirectory): PsiFile = {
+    val path = fileDir.getVirtualFile.getPath
+    val pathItems = ProjectRootManager.getInstance(fileDir.getProject)
+      .getContentSourceRoots
+      .map(_.getPath)
+      .find(path.startsWith)
+      .map(s => path.replace(s + File.separator, "").split(File.separator).toList)
+
+    if (fileName.contains(".")) {
+      var targetDir = fileDir
+      val names = fileName.trim().split("\\.").toList
+      val moduleName = names.last
+      val prefixes = names.dropRight(1)
+
+      prefixes.foreach(dirName => {
+        targetDir = Option(targetDir.findSubdirectory(dirName)).getOrElse(targetDir.createSubdirectory(dirName))
+      })
+
+      createFileFromTemplate(pathItems.map(_ ++ prefixes), moduleName, template, targetDir)
+    } else {
+      createFileFromTemplate(pathItems, fileName, template, fileDir)
     }
   }
 
