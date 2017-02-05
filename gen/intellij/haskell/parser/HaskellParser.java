@@ -1,15 +1,15 @@
 // This is a generated file. Not intended for manual editing.
 package intellij.haskell.parser;
 
-import com.intellij.lang.ASTNode;
-import com.intellij.lang.LightPsiParser;
 import com.intellij.lang.PsiBuilder;
 import com.intellij.lang.PsiBuilder.Marker;
-import com.intellij.lang.PsiParser;
-import com.intellij.psi.tree.IElementType;
-
-import static intellij.haskell.psi.HaskellParserUtil.*;
 import static intellij.haskell.psi.HaskellTypes.*;
+import static intellij.haskell.psi.HaskellParserUtil.*;
+import com.intellij.psi.tree.IElementType;
+import com.intellij.lang.ASTNode;
+import com.intellij.psi.tree.TokenSet;
+import com.intellij.lang.PsiParser;
+import com.intellij.lang.LightPsiParser;
 
 @SuppressWarnings({"SimplifiableIfStatement", "UnusedAssignment"})
 public class HaskellParser implements PsiParser, LightPsiParser {
@@ -374,7 +374,7 @@ public class HaskellParser implements PsiParser, LightPsiParser {
   // "forall" (q_name | ttype | LEFT_PAREN type_signature RIGHT_PAREN)+ DOT |
   //                                   oonls LEFT_PAREN oonls ttype+ oonls RIGHT_PAREN |
   //                                   oonls LEFT_PAREN oonls ttype+ DOUBLE_RIGHT_ARROW oonls ttype+ onls RIGHT_PAREN |
-  //                                   oonls LEFT_PAREN (oonls VARSYM_ID)? oonls ttype (oonls COMMA oonls ttype)* oonls (VARSYM_ID oonls)? RIGHT_PAREN |  // VARSYM_ID? is optional #
+  //                                   oonls LEFT_PAREN (oonls "#")? oonls ttype (oonls COMMA oonls ttype)* oonls ("#" oonls)? RIGHT_PAREN |  
   //                                   QUOTE? LEFT_BRACKET oonls ttype oonls RIGHT_BRACKET |
   //                                   QUOTE? q_name+ | type_signature | QUOTE? LEFT_PAREN RIGHT_PAREN | QUOTE? LEFT_BRACKET RIGHT_BRACKET | LEFT_PAREN COMMA+ RIGHT_PAREN | DIRECTIVE
   static boolean atype(PsiBuilder b, int l) {
@@ -529,7 +529,7 @@ public class HaskellParser implements PsiParser, LightPsiParser {
     return r;
   }
 
-  // oonls LEFT_PAREN (oonls VARSYM_ID)? oonls ttype (oonls COMMA oonls ttype)* oonls (VARSYM_ID oonls)? RIGHT_PAREN
+  // oonls LEFT_PAREN (oonls "#")? oonls ttype (oonls COMMA oonls ttype)* oonls ("#" oonls)? RIGHT_PAREN
   private static boolean atype_3(PsiBuilder b, int l) {
     if (!recursion_guard_(b, l, "atype_3")) return false;
     boolean r;
@@ -547,20 +547,20 @@ public class HaskellParser implements PsiParser, LightPsiParser {
     return r;
   }
 
-  // (oonls VARSYM_ID)?
+  // (oonls "#")?
   private static boolean atype_3_2(PsiBuilder b, int l) {
     if (!recursion_guard_(b, l, "atype_3_2")) return false;
     atype_3_2_0(b, l + 1);
     return true;
   }
 
-  // oonls VARSYM_ID
+  // oonls "#"
   private static boolean atype_3_2_0(PsiBuilder b, int l) {
     if (!recursion_guard_(b, l, "atype_3_2_0")) return false;
     boolean r;
     Marker m = enter_section_(b);
     r = oonls(b, l + 1);
-    r = r && consumeToken(b, HS_VARSYM_ID);
+    r = r && consumeToken(b, "#");
     exit_section_(b, m, null, r);
     return r;
   }
@@ -590,19 +590,19 @@ public class HaskellParser implements PsiParser, LightPsiParser {
     return r;
   }
 
-  // (VARSYM_ID oonls)?
+  // ("#" oonls)?
   private static boolean atype_3_7(PsiBuilder b, int l) {
     if (!recursion_guard_(b, l, "atype_3_7")) return false;
     atype_3_7_0(b, l + 1);
     return true;
   }
 
-  // VARSYM_ID oonls
+  // "#" oonls
   private static boolean atype_3_7_0(PsiBuilder b, int l) {
     if (!recursion_guard_(b, l, "atype_3_7_0")) return false;
     boolean r;
     Marker m = enter_section_(b);
-    r = consumeToken(b, HS_VARSYM_ID);
+    r = consumeToken(b, "#");
     r = r && oonls(b, l + 1);
     exit_section_(b, m, null, r);
     return r;
@@ -6125,53 +6125,71 @@ public class HaskellParser implements PsiParser, LightPsiParser {
   }
 
   /* ********************************************************** */
-  // varsym | varsym? btype (oonls RIGHT_ARROW oonls ttype)* | list_type q_name* | LEFT_PAREN RIGHT_ARROW RIGHT_PAREN
+  // "!"? (varsym | varsym? btype (oonls RIGHT_ARROW oonls ttype)* | list_type q_name* | LEFT_PAREN RIGHT_ARROW RIGHT_PAREN)
   public static boolean ttype(PsiBuilder b, int l) {
     if (!recursion_guard_(b, l, "ttype")) return false;
     boolean r;
     Marker m = enter_section_(b, l, _COLLAPSE_, HS_TTYPE, "<ttype>");
-    r = varsym(b, l + 1);
-    if (!r) r = ttype_1(b, l + 1);
-    if (!r) r = ttype_2(b, l + 1);
-    if (!r) r = parseTokens(b, 0, HS_LEFT_PAREN, HS_RIGHT_ARROW, HS_RIGHT_PAREN);
+    r = ttype_0(b, l + 1);
+    r = r && ttype_1(b, l + 1);
     exit_section_(b, l, m, r, false, null);
     return r;
   }
 
-  // varsym? btype (oonls RIGHT_ARROW oonls ttype)*
+  // "!"?
+  private static boolean ttype_0(PsiBuilder b, int l) {
+    if (!recursion_guard_(b, l, "ttype_0")) return false;
+    consumeToken(b, "!");
+    return true;
+  }
+
+  // varsym | varsym? btype (oonls RIGHT_ARROW oonls ttype)* | list_type q_name* | LEFT_PAREN RIGHT_ARROW RIGHT_PAREN
   private static boolean ttype_1(PsiBuilder b, int l) {
     if (!recursion_guard_(b, l, "ttype_1")) return false;
     boolean r;
     Marker m = enter_section_(b);
-    r = ttype_1_0(b, l + 1);
+    r = varsym(b, l + 1);
+    if (!r) r = ttype_1_1(b, l + 1);
+    if (!r) r = ttype_1_2(b, l + 1);
+    if (!r) r = parseTokens(b, 0, HS_LEFT_PAREN, HS_RIGHT_ARROW, HS_RIGHT_PAREN);
+    exit_section_(b, m, null, r);
+    return r;
+  }
+
+  // varsym? btype (oonls RIGHT_ARROW oonls ttype)*
+  private static boolean ttype_1_1(PsiBuilder b, int l) {
+    if (!recursion_guard_(b, l, "ttype_1_1")) return false;
+    boolean r;
+    Marker m = enter_section_(b);
+    r = ttype_1_1_0(b, l + 1);
     r = r && btype(b, l + 1);
-    r = r && ttype_1_2(b, l + 1);
+    r = r && ttype_1_1_2(b, l + 1);
     exit_section_(b, m, null, r);
     return r;
   }
 
   // varsym?
-  private static boolean ttype_1_0(PsiBuilder b, int l) {
-    if (!recursion_guard_(b, l, "ttype_1_0")) return false;
+  private static boolean ttype_1_1_0(PsiBuilder b, int l) {
+    if (!recursion_guard_(b, l, "ttype_1_1_0")) return false;
     varsym(b, l + 1);
     return true;
   }
 
   // (oonls RIGHT_ARROW oonls ttype)*
-  private static boolean ttype_1_2(PsiBuilder b, int l) {
-    if (!recursion_guard_(b, l, "ttype_1_2")) return false;
+  private static boolean ttype_1_1_2(PsiBuilder b, int l) {
+    if (!recursion_guard_(b, l, "ttype_1_1_2")) return false;
     int c = current_position_(b);
     while (true) {
-      if (!ttype_1_2_0(b, l + 1)) break;
-      if (!empty_element_parsed_guard_(b, "ttype_1_2", c)) break;
+      if (!ttype_1_1_2_0(b, l + 1)) break;
+      if (!empty_element_parsed_guard_(b, "ttype_1_1_2", c)) break;
       c = current_position_(b);
     }
     return true;
   }
 
   // oonls RIGHT_ARROW oonls ttype
-  private static boolean ttype_1_2_0(PsiBuilder b, int l) {
-    if (!recursion_guard_(b, l, "ttype_1_2_0")) return false;
+  private static boolean ttype_1_1_2_0(PsiBuilder b, int l) {
+    if (!recursion_guard_(b, l, "ttype_1_1_2_0")) return false;
     boolean r;
     Marker m = enter_section_(b);
     r = oonls(b, l + 1);
@@ -6183,23 +6201,23 @@ public class HaskellParser implements PsiParser, LightPsiParser {
   }
 
   // list_type q_name*
-  private static boolean ttype_2(PsiBuilder b, int l) {
-    if (!recursion_guard_(b, l, "ttype_2")) return false;
+  private static boolean ttype_1_2(PsiBuilder b, int l) {
+    if (!recursion_guard_(b, l, "ttype_1_2")) return false;
     boolean r;
     Marker m = enter_section_(b);
     r = list_type(b, l + 1);
-    r = r && ttype_2_1(b, l + 1);
+    r = r && ttype_1_2_1(b, l + 1);
     exit_section_(b, m, null, r);
     return r;
   }
 
   // q_name*
-  private static boolean ttype_2_1(PsiBuilder b, int l) {
-    if (!recursion_guard_(b, l, "ttype_2_1")) return false;
+  private static boolean ttype_1_2_1(PsiBuilder b, int l) {
+    if (!recursion_guard_(b, l, "ttype_1_2_1")) return false;
     int c = current_position_(b);
     while (true) {
       if (!q_name(b, l + 1)) break;
-      if (!empty_element_parsed_guard_(b, "ttype_2_1", c)) break;
+      if (!empty_element_parsed_guard_(b, "ttype_1_2_1", c)) break;
       c = current_position_(b);
     }
     return true;

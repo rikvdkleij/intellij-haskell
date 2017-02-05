@@ -210,11 +210,11 @@ fielddecl                   ::= q_names (COLON_COLON unpack_nounpack_pragma? (tt
 private atype               ::= "forall" (q_name | ttype | LEFT_PAREN type_signature RIGHT_PAREN)+ DOT |
                                   oonls LEFT_PAREN oonls ttype+ oonls RIGHT_PAREN |
                                   oonls LEFT_PAREN oonls ttype+ DOUBLE_RIGHT_ARROW oonls ttype+ onls RIGHT_PAREN |
-                                  oonls LEFT_PAREN (oonls VARSYM_ID)? oonls ttype (oonls COMMA oonls ttype)* oonls (VARSYM_ID oonls)? RIGHT_PAREN |  // VARSYM_ID? is optional #
+                                  oonls LEFT_PAREN (oonls "#")? oonls ttype (oonls COMMA oonls ttype)* oonls ("#" oonls)? RIGHT_PAREN |
                                   QUOTE? LEFT_BRACKET oonls ttype oonls RIGHT_BRACKET |
                                   QUOTE? q_name+ | type_signature | QUOTE? LEFT_PAREN RIGHT_PAREN | QUOTE? LEFT_BRACKET RIGHT_BRACKET | LEFT_PAREN COMMA+ RIGHT_PAREN | DIRECTIVE
 
-ttype                       ::= varsym | varsym? btype (oonls RIGHT_ARROW oonls ttype)* | list_type q_name* | LEFT_PAREN RIGHT_ARROW RIGHT_PAREN
+ttype                       ::= "!"? (varsym | varsym? btype (oonls RIGHT_ARROW oonls ttype)* | list_type q_name* | LEFT_PAREN RIGHT_ARROW RIGHT_PAREN)
 
 private btype               ::= atype+     // generalization because left recursive is not supported
 

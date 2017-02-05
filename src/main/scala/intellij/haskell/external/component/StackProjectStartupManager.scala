@@ -16,8 +16,6 @@
 
 package intellij.haskell.external.component
 
-import java.util.concurrent.TimeUnit
-
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.components.ProjectComponent
 import com.intellij.openapi.progress.{ProgressIndicator, ProgressManager, Task}
@@ -62,7 +60,7 @@ class StackProjectStartupManager(project: Project) extends ProjectComponent {
                   if (v.getStdout.trim > "5") {
                     HaskellNotificationGroup.logInfoEvent(project, "Hoogle version > 5 is already installed")
                   } else {
-                    StackCommandLine.executeBuild(project, Seq("build", "hoogle-5.0.4", "haskell-src-exts-1.18.2"), "Build of `hoogle`")
+                    StackCommandLine.executeBuild(project, Seq("build", "hoogle-5.0.9", "haskell-src-exts-1.18.2"), "Build of `hoogle`")
                   }
                 case _ => HaskellNotificationGroup.logWarningBalloonEvent(project, "Could not determine version of (maybe already installed) Hoogle. Version 5 of Hoogle will not be automatically build")
               }
@@ -76,9 +74,9 @@ class StackProjectStartupManager(project: Project) extends ProjectComponent {
               val rebuildHoogleFuture = HoogleComponent.rebuildHoogle(project)
 
               if (!buildToolsFuture.isDone || !rebuildHoogleFuture.isDone || !preloadCacheFuture.isDone) {
-                buildToolsFuture.get(15, TimeUnit.MINUTES)
-                rebuildHoogleFuture.get(15, TimeUnit.MINUTES)
-                preloadCacheFuture.get(15, TimeUnit.MINUTES)
+                buildToolsFuture.get
+                rebuildHoogleFuture.get
+                preloadCacheFuture.get
               }
             case _ => ()
           }

@@ -1,9 +1,10 @@
 // This is a generated file. Not intended for manual editing.
 package intellij.haskell.psi;
 
-import com.intellij.lang.ASTNode;
-import com.intellij.psi.PsiElement;
 import com.intellij.psi.tree.IElementType;
+import com.intellij.psi.PsiElement;
+import com.intellij.lang.ASTNode;
+import intellij.haskell.psi.impl.HaskellElementTypeFactory;
 import intellij.haskell.psi.impl.*;
 
 public interface HaskellTypes {

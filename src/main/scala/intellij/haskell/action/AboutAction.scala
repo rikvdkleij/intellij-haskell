@@ -22,14 +22,16 @@ import com.intellij.openapi.util.SystemInfo
 import intellij.haskell.external.commandLine.{CommandLine, StackCommandLine}
 import intellij.haskell.external.component.HLintComponent
 import intellij.haskell.settings.HaskellSettingsState
-import intellij.haskell.util.HaskellEditorUtil
+import intellij.haskell.util.HaskellProjectUtil
 
 import scala.collection.mutable.ArrayBuffer
 
 class AboutAction extends AnAction {
 
   override def update(actionEvent: AnActionEvent) {
-    HaskellEditorUtil.enableAction(onlyForProjectFile = false, actionEvent)
+    val isHaskellProject = HaskellProjectUtil.isHaskellStackProject(actionEvent.getProject)
+    actionEvent.getPresentation.setEnabled(isHaskellProject)
+    actionEvent.getPresentation.setVisible(isHaskellProject)
   }
 
   private def boldToolName(name: String): String = {
@@ -41,19 +43,17 @@ class AboutAction extends AnAction {
   }
 
   def actionPerformed(actionEvent: AnActionEvent) {
-    ActionUtil.findActionContext(actionEvent).foreach(actionContext => {
-      val messages = new ArrayBuffer[String]
-      val project = actionContext.project
-      messages.+=(s"${boldToolName("Stack")} version: " + StackCommandLine.runCommand(Seq("--version"), project).map(_.getStdout).getOrElse("-"))
-      messages.+=(s"${boldToolName("GHC")} version: " + StackCommandLine.runCommand(Seq("exec", "--", "ghc", "--version"), project).map(_.getStdout).getOrElse("-"))
-      messages.+=(s"${boldToolName("Intero")} version: " + StackCommandLine.runCommand(Seq("exec", "--", "intero", "--version"), project).map(_.getStdout).getOrElse("-"))
-      messages.+=(s"${boldToolName("HLint")} version: " + StackCommandLine.runCommand(Seq("exec", "--", HLintComponent.HlintName, "--version"), project).map(_.getStdout).getOrElse("-"))
-      messages.+=(s"${boldToolName("Haskell-docs")} version can not be retrieved from command line\n")
-      messages.+=(s"${boldToolName("Hindent")} version: " + HaskellSettingsState.getHindentPath(project).flatMap(hp =>
-        CommandLine.runProgram(None, project.getBasePath, hp, Seq("--version")).map(_.getStdout)).getOrElse("-"))
-      messages.+=(s"${boldToolName("Stylish-haskell")} version: " + HaskellSettingsState.getStylishHaskellPath(project).flatMap(sh =>
-        CommandLine.runProgram(None, project.getBasePath, sh, Seq("--version")).map(_.getStdout)).getOrElse("-"))
-      Messages.showInfoMessage(project, messages.mkString("\n"), "About Haskell Project")
-    })
+    val messages = new ArrayBuffer[String]
+    val project = actionEvent.getProject
+    messages.+=(s"${boldToolName("Stack")} version: " + StackCommandLine.runCommand(Seq("--version"), project).map(_.getStdout).getOrElse("-"))
+    messages.+=(s"${boldToolName("GHC")} version: " + StackCommandLine.runCommand(Seq("exec", "--", "ghc", "--version"), project).map(_.getStdout).getOrElse("-"))
+    messages.+=(s"${boldToolName("Intero")} version: " + StackCommandLine.runCommand(Seq("exec", "--", "intero", "--version"), project).map(_.getStdout).getOrElse("-"))
+    messages.+=(s"${boldToolName("HLint")} version: " + StackCommandLine.runCommand(Seq("exec", "--", HLintComponent.HlintName, "--version"), project).map(_.getStdout).getOrElse("-"))
+    messages.+=(s"${boldToolName("Haskell-docs")} version can not be retrieved from command line\n")
+    messages.+=(s"${boldToolName("Hindent")} version: " + HaskellSettingsState.getHindentPath(project).flatMap(hp =>
+      CommandLine.runProgram(None, project.getBasePath, hp, Seq("--version")).map(_.getStdout)).getOrElse("-"))
+    messages.+=(s"${boldToolName("Stylish-haskell")} version: " + HaskellSettingsState.getStylishHaskellPath(project).flatMap(sh =>
+      CommandLine.runProgram(None, project.getBasePath, sh, Seq("--version")).map(_.getStdout)).getOrElse("-"))
+    Messages.showInfoMessage(project, messages.mkString("\n"), "About Haskell Project")
   }
 }
