@@ -46,7 +46,6 @@ object HaskellComponentsManager {
       if (HaskellPsiUtil.findExpressionParent(psiElement).isDefined) {
         TypeInfoComponent.findTypeInfoForElement(psiElement)
       }
-      NameInfoComponent.findNameInfo(psiElement)
     })
 
     DefinitionLocationComponent.findDefinitionLocation(psiElement)
