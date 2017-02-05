@@ -110,7 +110,11 @@ class CreateHaskellFileAction extends CreateFileFromTemplateAction(CreateHaskell
       .getContentSourceRoots
       .map(_.getPath)
       .find(path.startsWith)
-      .map(s => path.replace(s + File.separator, "").split(File.separator).toList)
+      .map(s => if (s != path) {
+        path.replace(s + File.separator, "").split(File.separator).toList
+      } else {
+        List()
+      })
 
     if (fileName.contains(".")) {
       var targetDir = fileDir
