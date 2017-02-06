@@ -3,7 +3,7 @@ package intellij.haskell.intention
 import com.intellij.codeInsight.intention.PsiElementBaseIntentionAction
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.project.Project
-import com.intellij.psi.PsiElement
+import com.intellij.psi.{PsiElement, PsiWhiteSpace}
 import intellij.haskell.psi.HaskellTypes._
 import intellij.haskell.psi.{HaskellElementFactory, HaskellPsiUtil}
 
@@ -14,8 +14,18 @@ class AddParensIntention extends PsiElementBaseIntentionAction {
       right <- HaskellElementFactory.getRightParenElement(project)
       (start, end) <- HaskellPsiUtil.getSelectionStartEnd(psiElement, editor)
     } yield {
-      start.getParent.addBefore(left, start)
-      end.getParent.addAfter(right, end)
+      val addParens = (start: PsiElement, end: PsiElement) => {
+        start.getParent.addBefore(left, start)
+        end.getParent.addAfter(right, end)
+      }
+
+      if (psiElement.getText.length == 1 && start.isInstanceOf[PsiWhiteSpace]) {
+        addParens(end, end)
+      } else if (psiElement.getText.length == 1 && end.isInstanceOf[PsiWhiteSpace]) {
+        addParens(start, start)
+      } else {
+        addParens(start, end)
+      }
     }
   }
 
