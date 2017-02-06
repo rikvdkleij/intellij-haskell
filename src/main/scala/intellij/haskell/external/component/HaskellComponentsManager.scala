@@ -101,9 +101,11 @@ object HaskellComponentsManager {
     GlobalProjectInfoComponent.findGlobalProjectInfo(project) match {
       case Some(info) =>
         ApplicationManager.getApplication.invokeLater(() => {
-          val files = HaskellFileIndex.findProjectProductionPsiFiles(project)
-          val libraryModuleNames = files.flatMap(pf => HaskellPsiUtil.findImportDeclarations(pf).flatMap(_.getModuleName))
-          libraryModuleNames.foreach(mn => BrowseModuleComponent.findImportedModuleIdentifiers(project, mn))
+          if (!project.isDisposed) {
+            val files = HaskellFileIndex.findProjectProductionPsiFiles(project)
+            val libraryModuleNames = files.flatMap(pf => HaskellPsiUtil.findImportDeclarations(pf).flatMap(_.getModuleName))
+            libraryModuleNames.foreach(mn => BrowseModuleComponent.findImportedModuleIdentifiers(project, mn))
+          }
         })
 
         info.allAvailableLibraryModuleNames.foreach { mn =>
