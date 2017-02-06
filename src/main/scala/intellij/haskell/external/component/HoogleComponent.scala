@@ -68,6 +68,7 @@ object HoogleComponent {
   }
 
   def rebuildHoogle(project: Project): Future[_] = {
+    hoogleAvailable = false
     ApplicationManager.getApplication.executeOnPooledThread(new Runnable {
       override def run(): Unit = {
         try {

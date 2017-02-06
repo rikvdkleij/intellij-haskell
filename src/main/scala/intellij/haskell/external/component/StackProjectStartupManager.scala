@@ -65,16 +65,12 @@ class StackProjectStartupManager(project: Project) extends ProjectComponent {
                 case _ => HaskellNotificationGroup.logWarningBalloonEvent(project, "Could not determine version of (maybe already installed) Hoogle. Version 5 of Hoogle will not be automatically build")
               }
 
-              val buildToolsFuture = ApplicationManager.getApplication.executeOnPooledThread(new Runnable {
-                override def run(): Unit = {
-                  StackCommandLine.executeBuild(project, Seq("build", HLintComponent.HlintName), "Build of `hlint`")
-                }
-              })
+              val buildHlintFuture = HLintComponent.buildHlint(project)
 
               val rebuildHoogleFuture = HoogleComponent.rebuildHoogle(project)
 
-              if (!buildToolsFuture.isDone || !rebuildHoogleFuture.isDone || !preloadCacheFuture.isDone) {
-                buildToolsFuture.get
+              if (!buildHlintFuture.isDone || !rebuildHoogleFuture.isDone || !preloadCacheFuture.isDone) {
+                buildHlintFuture.get
                 rebuildHoogleFuture.get
                 preloadCacheFuture.get
               }

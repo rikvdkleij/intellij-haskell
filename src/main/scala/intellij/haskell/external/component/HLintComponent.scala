@@ -16,6 +16,9 @@
 
 package intellij.haskell.external.component
 
+import java.util.concurrent.Future
+
+import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.project.Project
 import com.intellij.psi.PsiFile
 import intellij.haskell.HaskellNotificationGroup
@@ -26,17 +29,39 @@ import spray.json.{DefaultJsonProtocol, _}
 object HLintComponent {
 
   final val HlintName = "hlint"
+  var hlintAvailable = false
+
+  def buildHlint(project: Project): Future[_] = {
+    hlintAvailable = false
+    ApplicationManager.getApplication.executeOnPooledThread(new Runnable {
+      override def run(): Unit = {
+        try {
+          StackCommandLine.executeBuild(project, Seq("build", HLintComponent.HlintName), "Build of `hlint`")
+        } finally {
+          hlintAvailable = true
+        }
+      }
+    })
+  }
 
   def check(psiFile: PsiFile): Seq[HLintInfo] = {
-    val project = psiFile.getProject
-    StackCommandLine.runCommand(Seq("exec", "--", HlintName, "--json", psiFile.getOriginalFile.getVirtualFile.getPath), project).map(output => {
-      if (output.getStderr.nonEmpty) {
-        HaskellNotificationGroup.logErrorBalloonEvent(project, s"Something went wrong while calling <b>$HlintName</b>. Error: ${output.getStderr}")
-        Seq()
-      } else {
-        deserializeHLintInfo(project, output.getStdout)
-      }
-    }).getOrElse(Seq())
+    if (hlintAvailable) {
+      val project = psiFile.getProject
+      StackCommandLine.runCommand(Seq("exec", "--", HlintName, "--json", psiFile.getOriginalFile.getVirtualFile.getPath), project).map(output => {
+        if (output.getStderr.contains("Executable named hlint not found on path")) {
+          HaskellNotificationGroup.logWarningEvent(project, s"$HlintName is not available yet")
+          Seq()
+        }
+        else if (output.getStderr.nonEmpty) {
+          HaskellNotificationGroup.logErrorBalloonEvent(project, s"Something went wrong while calling <b>$HlintName</b>. Error: ${output.getStderr}")
+          Seq()
+        } else {
+          deserializeHLintInfo(project, output.getStdout)
+        }
+      }).getOrElse(Seq())
+    } else {
+      Seq()
+    }
   }
 
   private object HlintJsonProtocol extends DefaultJsonProtocol {
