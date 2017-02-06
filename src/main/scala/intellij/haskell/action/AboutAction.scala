@@ -29,7 +29,8 @@ import scala.collection.mutable.ArrayBuffer
 class AboutAction extends AnAction {
 
   override def update(actionEvent: AnActionEvent) {
-    val isHaskellProject = HaskellProjectUtil.isHaskellStackProject(actionEvent.getProject)
+    val project = Option(actionEvent.getProject)
+    val isHaskellProject = project.exists(HaskellProjectUtil.isHaskellStackProject)
     actionEvent.getPresentation.setEnabled(isHaskellProject)
     actionEvent.getPresentation.setVisible(isHaskellProject)
   }
