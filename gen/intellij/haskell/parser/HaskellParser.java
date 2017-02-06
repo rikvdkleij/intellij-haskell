@@ -374,7 +374,7 @@ public class HaskellParser implements PsiParser, LightPsiParser {
   // "forall" (q_name | ttype | LEFT_PAREN type_signature RIGHT_PAREN)+ DOT |
   //                                   oonls LEFT_PAREN oonls ttype+ oonls RIGHT_PAREN |
   //                                   oonls LEFT_PAREN oonls ttype+ DOUBLE_RIGHT_ARROW oonls ttype+ onls RIGHT_PAREN |
-  //                                   oonls LEFT_PAREN (oonls "#")? oonls ttype (oonls COMMA oonls ttype)* oonls ("#" oonls)? RIGHT_PAREN |  
+  //                                   oonls LEFT_PAREN (oonls "#")? oonls ttype (oonls COMMA oonls ttype)* oonls ("#" oonls)? RIGHT_PAREN |
   //                                   QUOTE? LEFT_BRACKET oonls ttype oonls RIGHT_BRACKET |
   //                                   QUOTE? q_name+ | type_signature | QUOTE? LEFT_PAREN RIGHT_PAREN | QUOTE? LEFT_BRACKET RIGHT_BRACKET | LEFT_PAREN COMMA+ RIGHT_PAREN | DIRECTIVE
   static boolean atype(PsiBuilder b, int l) {
@@ -6556,7 +6556,7 @@ public class HaskellParser implements PsiParser, LightPsiParser {
   }
 
   /* ********************************************************** */
-  // q_names onls COLON_COLON onls (ccontext DOUBLE_RIGHT_ARROW)* onls ttype |
+  // q_names onls COLON_COLON onls (ccontext DOUBLE_RIGHT_ARROW)* onls ttype !EQUAL |
   //                                   q_names onls LEFT_PAREN onls q_names onls COMMA onls ccontext onls DOUBLE_RIGHT_ARROW onls ttype onls RIGHT_PAREN
   public static boolean type_signature(PsiBuilder b, int l) {
     if (!recursion_guard_(b, l, "type_signature")) return false;
@@ -6568,7 +6568,7 @@ public class HaskellParser implements PsiParser, LightPsiParser {
     return r;
   }
 
-  // q_names onls COLON_COLON onls (ccontext DOUBLE_RIGHT_ARROW)* onls ttype
+  // q_names onls COLON_COLON onls (ccontext DOUBLE_RIGHT_ARROW)* onls ttype !EQUAL
   private static boolean type_signature_0(PsiBuilder b, int l) {
     if (!recursion_guard_(b, l, "type_signature_0")) return false;
     boolean r;
@@ -6580,6 +6580,7 @@ public class HaskellParser implements PsiParser, LightPsiParser {
     r = r && type_signature_0_4(b, l + 1);
     r = r && onls(b, l + 1);
     r = r && ttype(b, l + 1);
+    r = r && type_signature_0_7(b, l + 1);
     exit_section_(b, m, null, r);
     return r;
   }
@@ -6604,6 +6605,16 @@ public class HaskellParser implements PsiParser, LightPsiParser {
     r = ccontext(b, l + 1);
     r = r && consumeToken(b, HS_DOUBLE_RIGHT_ARROW);
     exit_section_(b, m, null, r);
+    return r;
+  }
+
+  // !EQUAL
+  private static boolean type_signature_0_7(PsiBuilder b, int l) {
+    if (!recursion_guard_(b, l, "type_signature_0_7")) return false;
+    boolean r;
+    Marker m = enter_section_(b, l, _NOT_);
+    r = !consumeToken(b, HS_EQUAL);
+    exit_section_(b, l, m, r, false, null);
     return r;
   }
 
