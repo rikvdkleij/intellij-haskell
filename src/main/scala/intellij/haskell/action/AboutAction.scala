@@ -49,7 +49,6 @@ class AboutAction extends AnAction {
     messages.+=(s"${boldToolName("GHC")} version: " + StackCommandLine.runCommand(Seq("exec", "--", "ghc", "--version"), project).map(_.getStdout).getOrElse("-"))
     messages.+=(s"${boldToolName("Intero")} version: " + StackCommandLine.runCommand(Seq("exec", "--", "intero", "--version"), project).map(_.getStdout).getOrElse("-"))
     messages.+=(s"${boldToolName("HLint")} version: " + StackCommandLine.runCommand(Seq("exec", "--", HLintComponent.HlintName, "--version"), project).map(_.getStdout).getOrElse("-"))
-    messages.+=(s"${boldToolName("Haskell-docs")} version can not be retrieved from command line\n")
     messages.+=(s"${boldToolName("Hindent")} version: " + HaskellSettingsState.getHindentPath(project).flatMap(hp =>
       CommandLine.runProgram(None, project.getBasePath, hp, Seq("--version")).map(_.getStdout)).getOrElse("-"))
     messages.+=(s"${boldToolName("Stylish-haskell")} version: " + HaskellSettingsState.getStylishHaskellPath(project).flatMap(sh =>
