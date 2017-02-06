@@ -17,6 +17,7 @@
 package intellij.haskell.external.component
 
 import java.util.concurrent.Future
+import java.util.regex.Pattern
 
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.project.Project
@@ -42,6 +43,22 @@ object HoogleComponent {
             o.getStdoutLines.asScala.init
           } else {
             o.getStdoutLines.asScala
+          }
+        )
+    } else {
+      HaskellNotificationGroup.logWarningBalloonEvent(project, "Stack Hoogle is not yet available")
+      None
+    }
+  }
+
+  def findDocumentation(project: Project, name: String, moduleName: Option[String]): Option[String] = {
+    if (hoogleAvailable) {
+      StackCommandLine.runCommand(Seq("hoogle", "--", name) ++ moduleName.map(mn => Seq(s"+$mn", "-i")).getOrElse(Seq()), project, timeoutInMillis = Timout).
+        flatMap(processOutput =>
+          if (processOutput.getStdoutLines.isEmpty || processOutput.getStdout.contains("No results found")) {
+            None
+          } else {
+            Option(processOutput.getStdout).map(o => s"${Pattern.compile("$", Pattern.MULTILINE).matcher(o).replaceAll("<br>").replace(" ", "&nbsp;")}")
           }
         )
     } else {

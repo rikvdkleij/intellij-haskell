@@ -16,14 +16,10 @@
 
 package intellij.haskell.external.component
 
-import java.util.regex.Pattern
-
 import com.intellij.lang.documentation.AbstractDocumentationProvider
 import com.intellij.openapi.project.Project
 import com.intellij.psi.PsiElement
 import intellij.haskell.HaskellNotificationGroup
-import intellij.haskell.external.commandLine.StackCommandLine
-import intellij.haskell.external.component.HaskellDocumentationProvider.HaskellDocsName
 import intellij.haskell.psi.{HaskellPsiUtil, HaskellQualifiedNameElement}
 
 class HaskellDocumentationProvider extends AbstractDocumentationProvider {
@@ -43,30 +39,13 @@ class HaskellDocumentationProvider extends AbstractDocumentationProvider {
         HaskellNotificationGroup.logWarningEvent(project, s"No documentation because no info could be found for identifier: $name")
         None
       case Some(ni) =>
-        val arguments = ni match {
-          case (lei: LibraryNameInfo) => Some(Seq(lei.moduleName, name))
-          case (_: ProjectNameInfo) => HaskellPsiUtil.findModuleName(namedElement.getContainingFile).map(mn => Seq(mn, name))
-          case (_: BuiltInNameInfo) => Some(Seq("Prelude", name))
+        val moduleName = ni match {
+          case (lei: LibraryNameInfo) => Option(lei.moduleName)
+          case (_: ProjectNameInfo) => HaskellPsiUtil.findModuleName(namedElement.getContainingFile)
+          case (_: BuiltInNameInfo) => Some("Prelude")
           case _ => None
         }
-
-        arguments.flatMap(args => runHaskellDocs(namedElement, args)).
-          map(output => s"${Pattern.compile("$", Pattern.MULTILINE).matcher(output).replaceAll("<br>").replace(" ", "&nbsp;")}")
+        HoogleComponent.findDocumentation(project, name, moduleName)
     }
   }
-
-  private def runHaskellDocs(namedElement: HaskellQualifiedNameElement, args: Seq[String]): Option[String] = {
-    StackCommandLine.runCommand(Seq("exec", "--", HaskellDocsName) ++ args, namedElement.getContainingFile.getProject).flatMap(output => {
-      if (output.getStderr.nonEmpty) {
-        HaskellNotificationGroup.logErrorBalloonEvent(namedElement.getProject, s"Something went wrong while calling <b>$HaskellDocsName</b>. Error: ${output.getStderr}")
-        None
-      } else {
-        Option(output.getStdout)
-      }
-    })
-  }
-}
-
-object HaskellDocumentationProvider {
-  final val HaskellDocsName = "haskell-docs"
 }

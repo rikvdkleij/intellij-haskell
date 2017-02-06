@@ -67,7 +67,7 @@ class StackProjectStartupManager(project: Project) extends ProjectComponent {
 
               val buildToolsFuture = ApplicationManager.getApplication.executeOnPooledThread(new Runnable {
                 override def run(): Unit = {
-                  StackCommandLine.executeBuild(project, Seq("build", HaskellDocumentationProvider.HaskellDocsName, HLintComponent.HlintName), "Build of `haskell-docs` and `hlint`")
+                  StackCommandLine.executeBuild(project, Seq("build", HLintComponent.HlintName), "Build of `hlint`")
                 }
               })
 
