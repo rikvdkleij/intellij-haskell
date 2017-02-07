@@ -98,23 +98,13 @@ object HaskellComponentsManager {
   }
 
   private def preloadAllLibraryModuleIdentifiers(project: Project): Unit = {
-    GlobalProjectInfoComponent.findGlobalProjectInfo(project) match {
-      case Some(info) =>
-        ApplicationManager.getApplication.invokeLater(() => {
-          if (!project.isDisposed) {
-            val files = HaskellFileIndex.findProjectProductionPsiFiles(project)
-            val libraryModuleNames = files.flatMap(pf => HaskellPsiUtil.findImportDeclarations(pf).flatMap(_.getModuleName))
-            libraryModuleNames.foreach(mn => BrowseModuleComponent.findImportedModuleIdentifiers(project, mn))
-          }
-        })
-
-        info.allAvailableLibraryModuleNames.foreach { mn =>
-          if (!project.isDisposed) {
-            Thread.sleep(200) // Otherwise it will make IDE unresponsive
-            BrowseModuleComponent.findImportedModuleIdentifiers(project, mn)
-          }
+    ApplicationManager.getApplication.runReadAction(new Runnable {
+      override def run() =
+        if (!project.isDisposed) {
+          val files = HaskellFileIndex.findProjectProductionPsiFiles(project)
+          val importedLibraryModuleNames = files.flatMap(pf => HaskellPsiUtil.findImportDeclarations(pf).flatMap(_.getModuleName))
+          importedLibraryModuleNames.foreach(mn => BrowseModuleComponent.findImportedModuleIdentifiers(project, mn))
         }
-      case _ => HaskellNotificationGroup.logWarningBalloonEvent(project, "Could not preload library identifiers cache because could not obtain global project info")
-    }
+    })
   }
 }
