@@ -56,7 +56,7 @@ You can install this plugin using the [Jetbrains plugin repository](https://plug
  - In next page of wizard configure `Project SDK` by configuring `Haskell Tool Stack` with selecting path to `stack` binary, e.g. `/usr/local/bin/stack`;
  - Finish wizard and project will be opened;
  - Wizard will try to automatically configure which folders are sources, test and which to exclude;
- - Plugin will automatically build Intero, Haskell-docs and HLint to prevent incompatibility issues
+ - Plugin will automatically build Intero and HLint to prevent incompatibility issues
     (If you use non LTS or Nightly resolver e.g. `ghc-7.10.2`, you may have to build them manually since there are some extra-deps should be added to `stack.yaml`).
     Those tools are built against Stackage release defined in project's `stack.yaml`.
     If you want to use later version of tool, you will have to build tool manually in project's folder by using `stack build`;
