@@ -116,7 +116,7 @@ private[component] object BrowseModuleComponent {
   }
 
   def refreshForModule(project: Project, moduleName: String, psiFile: PsiFile): Unit = {
-    val keys = Cache.asMap().keySet().asScala.filter(k => k.project == project && k.moduleName == moduleName && k.psiFile.contains(psiFile))
+    val keys = Cache.asMap().keySet().asScala.filter(k => k.project == project && k.moduleName == moduleName && (k.psiFile.isEmpty || k.psiFile.contains(psiFile)))
     keys.foreach(k => Cache.refresh(k))
   }
 
