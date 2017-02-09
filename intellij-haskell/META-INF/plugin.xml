@@ -279,6 +279,10 @@
                              implementationClass="intellij.haskell.refactor.HaskellNamesValidator"/>
         <renamePsiElementProcessor implementation="intellij.haskell.refactor.HaskellRenameVariableProcessor"/>
         <vetoRenameCondition implementation="intellij.haskell.refactor.HaskellVetoRenameCondition"/>
+
+        <!-- Runner -->
+        <actionPromoter implementation="intellij.haskell.runconfig.HaskellConsoleActionPromoter"/>
+        <configurationType implementation="intellij.haskell.runconfig.HaskellConsoleConfigurationType"/>
     </extensions>
 
     <application-components>
@@ -406,6 +410,10 @@
                 icon="/icons/haskell@16.png"
                 description="About Haskell GHC/tools used in project">
             <add-to-group group-id="HelpMenu" anchor="last"/>
+        </action>
+
+        <action id="HaskellStackConsole.Execute" class="intellij.haskell.runconfig.HaskellConsoleExecuteAction">
+            <keyboard-shortcut first-keystroke="ENTER" keymap="$default"/>
         </action>
     </actions>
 
