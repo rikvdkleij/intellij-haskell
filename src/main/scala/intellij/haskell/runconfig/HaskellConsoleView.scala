@@ -21,9 +21,15 @@ import com.intellij.execution.console.{ConsoleHistoryController, ConsoleRootType
 import com.intellij.execution.process.ProcessHandler
 import com.intellij.openapi.command.WriteCommandAction
 import com.intellij.openapi.project.{Project, ProjectManager}
-import com.intellij.openapi.util.TextRange
+import com.intellij.openapi.util.{Key, TextRange}
+import com.intellij.psi.PsiFile
 import intellij.haskell.{HaskellFileType, HaskellNotificationGroup}
 
+object HaskellConsoleView {
+  val HaskellConsoleKey: Key[LanguageConsoleImpl] = Key.create("ERLANG CONSOLE KEY")
+
+  def isConsole(file: PsiFile): Boolean = file.getOriginalFile.getUserData(HaskellConsoleKey) != null
+}
 
 final class HaskellConsoleView(val project: Project)
   extends LanguageConsoleImpl(project, "Haskell Stack REPL", HaskellFileType.INSTANCE.getLanguage) {
@@ -33,6 +39,9 @@ final class HaskellConsoleView(val project: Project)
   private var myProcessInputWriter: OutputStreamWriter = _
 
   setPrompt("λ")
+
+  val originalFile: PsiFile = getFile.getOriginalFile
+  originalFile.putUserData(HaskellConsoleView.HaskellConsoleKey, this)
 
   override def attachToProcess(processHandler: ProcessHandler): Unit = {
     super.attachToProcess(processHandler)
