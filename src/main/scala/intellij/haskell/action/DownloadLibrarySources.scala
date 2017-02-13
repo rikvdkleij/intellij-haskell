@@ -22,7 +22,12 @@ import intellij.haskell.util.HaskellProjectUtil
 
 class DownloadLibrarySources extends AnAction {
 
-  override def update(e: AnActionEvent): Unit = e.getPresentation.setEnabledAndVisible(HaskellProjectUtil.isHaskellStackProject(e.getProject))
+  override def update(e: AnActionEvent): Unit = {
+    Option(e.getProject) match {
+      case Some(p) => e.getPresentation.setEnabledAndVisible(HaskellProjectUtil.isHaskellStackProject(p))
+      case None => e.getPresentation.setEnabledAndVisible(false)
+    }
+  }
 
   override def actionPerformed(e: AnActionEvent): Unit = {
     HaskellProjectUtil.getProjectModules(e.getProject).foreach(m =>

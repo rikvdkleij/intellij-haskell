@@ -31,8 +31,14 @@ class RestartStackReplsAction extends AnAction {
   private var restarting = false
 
   override def update(e: AnActionEvent): Unit = {
-    e.getPresentation.setVisible(HaskellProjectUtil.isHaskellStackProject(e.getProject))
-    e.getPresentation.setEnabled(!restarting)
+    Option(e.getProject) match {
+      case Some(p) =>
+        val isHaskellProject = HaskellProjectUtil.isHaskellStackProject(p)
+        e.getPresentation.setVisible(isHaskellProject)
+        e.getPresentation.setEnabled(isHaskellProject && !restarting)
+      case None =>
+        e.getPresentation.setEnabledAndVisible(false)
+    }
   }
 
   override def actionPerformed(e: AnActionEvent): Unit = {
