@@ -19,7 +19,7 @@ final class HaskellConsoleConfiguration(val name: String, val project: Project, 
 
   def getConfigurationEditor = new HaskellConsoleConfigurationForm(getProject, getConfigurationModule.getModule)
 
-  def getState(executor: Executor, environment: ExecutionEnvironment) = new HaskellConsoleCommandLineState(this, environment)
+  override def getState(executor: Executor, environment: ExecutionEnvironment) = new HaskellConsoleCommandLineState(this, environment)
 
   override def getValidModules: java.util.Collection[Module] = ModuleManager.getInstance(getProject).getModules.toList.asJava
 
