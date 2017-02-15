@@ -38,7 +38,7 @@ final class HaskellConsoleView(val project: Project)
   private var myHistoryController: ConsoleHistoryController = _
   private var myProcessInputWriter: OutputStreamWriter = _
 
-  setPrompt("λ")
+  setPrompt(HaskellConsoleHighlightingUtil.LambdaArrow)
 
   val originalFile: PsiFile = getFile.getOriginalFile
   originalFile.putUserData(HaskellConsoleView.HaskellConsoleKey, this)

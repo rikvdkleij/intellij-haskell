@@ -2,8 +2,9 @@ package intellij.haskell.runconfig
 
 import com.intellij.execution.CantRunException
 import com.intellij.execution.configurations.{CommandLineState, GeneralCommandLine}
+import com.intellij.execution.console.LanguageConsoleImpl
 import com.intellij.execution.filters.TextConsoleBuilderImpl
-import com.intellij.execution.process.{OSProcessHandler, ProcessHandler, ProcessTerminatedListener}
+import com.intellij.execution.process.{ProcessHandler, ProcessTerminatedListener}
 import com.intellij.execution.runners.ExecutionEnvironment
 import com.intellij.execution.ui.ConsoleView
 import intellij.haskell.sdk.HaskellSdkType
@@ -24,7 +25,7 @@ class HaskellConsoleCommandLineState(val myConfig: HaskellConsoleConfiguration, 
         val commandLine = new GeneralCommandLine(stackPath)
           .withParameters("ghci")
           .withWorkDirectory(myConfig.getWorkingDirPath)
-        val handler = new OSProcessHandler(commandLine.createProcess, commandLine.getCommandLineString)
+        val handler = new HaskellConsoleProcessHandler(commandLine.createProcess(), commandLine.getCommandLineString(), consoleBuilder.getConsole.asInstanceOf[LanguageConsoleImpl])
         ProcessTerminatedListener.attach(handler)
         handler
       case None => throw new CantRunException("Invalid Haskell Stack SDK")
