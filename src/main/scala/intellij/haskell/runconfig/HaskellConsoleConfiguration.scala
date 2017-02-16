@@ -16,8 +16,9 @@ final class HaskellConsoleConfiguration(val name: String, val project: Project, 
   extends ModuleBasedConfiguration[RunConfigurationModule](name, new RunConfigurationModule(project), configurationFactory) {
   private var myWorkingDirPath: String = _
   private var myConsoleArgs: String = _
+  ModuleManager.getInstance(getProject).getModules.toList.headOption.foreach(m => setModule(m))
 
-  def getConfigurationEditor = new HaskellConsoleConfigurationForm(getProject, getConfigurationModule.getModule)
+  def getConfigurationEditor = new HaskellConsoleConfigurationForm(getProject)
 
   override def getState(executor: Executor, environment: ExecutionEnvironment) = new HaskellConsoleCommandLineState(this, environment)
 
@@ -49,7 +50,9 @@ final class HaskellConsoleConfiguration(val name: String, val project: Project, 
     myWorkingDirPath = workingDirPath
   }
 
-  def getWorkingDirPath: String = myWorkingDirPath
+  def getWorkingDirPath: String = {
+    Option(myWorkingDirPath).getOrElse(project.getBasePath)
+  }
 
   def setConsoleArgs(consoleArgs: String) {
     myConsoleArgs = consoleArgs

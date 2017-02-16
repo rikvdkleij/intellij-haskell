@@ -21,14 +21,9 @@ public class HaskellConsoleConfigurationForm extends SettingsEditor<HaskellConso
     private JComboBox myModuleComboBox;
     private RawCommandLineEditor myConsoleArgsEditor;
 
-    @Nullable
-    private final Module myInitialModule;
-
-    public HaskellConsoleConfigurationForm(@NotNull Project project, @Nullable Module module) {
-        myInitialModule = module;
+    public HaskellConsoleConfigurationForm(@NotNull Project project) {
         myModuleComboBox.setEnabled(true);
         HaskellUIUtil.installWorkingDirectoryChooser(myWorkingDirPathField, project);
-        myWorkingDirPathField.setText(project.getBasePath());
     }
 
     @Override
@@ -40,7 +35,6 @@ public class HaskellConsoleConfigurationForm extends SettingsEditor<HaskellConso
                 myModuleComboBox.addItem(module);
             }
         }
-        myModuleComboBox.setSelectedItem(myInitialModule);
         //noinspection unchecked
         myModuleComboBox.setRenderer(getListCellRendererWrapper());
 
