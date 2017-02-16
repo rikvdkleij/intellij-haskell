@@ -5,7 +5,7 @@ import com.intellij.execution.configurations._
 import com.intellij.execution.runners.ExecutionEnvironment
 import com.intellij.openapi.module.{Module, ModuleManager}
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.roots.{ModuleRootManager, ProjectRootManager}
+import com.intellij.openapi.roots.ProjectRootManager
 import com.intellij.util.xmlb.XmlSerializer
 import intellij.haskell.sdk.HaskellSdkType
 import org.jdom.Element
@@ -36,14 +36,12 @@ final class HaskellConsoleConfiguration(val name: String, val project: Project, 
 
   override def checkConfiguration() {
     val selectedModule = getConfigurationModule.getModule
-    if (selectedModule == null) {
-      val projectSdk = ProjectRootManager.getInstance(getProject).getProjectSdk
-      if (projectSdk == null || (projectSdk.getSdkType ne HaskellSdkType.getInstance)) throw new RuntimeConfigurationException("Neither Haskell module selected nor Haskell Stack SDK is configured for the project")
-    }
-    else {
-      val moduleSdk = ModuleRootManager.getInstance(selectedModule).getSdk
-      if (moduleSdk == null || (moduleSdk.getSdkType ne HaskellSdkType.getInstance)) throw new RuntimeConfigurationException("Haskell Stack SDK is not configured for the selected module")
-    }
+    if (selectedModule == null)
+      throw new RuntimeConfigurationException("Haskell module is not selected")
+
+    val projectSdk = ProjectRootManager.getInstance(getProject).getProjectSdk
+    if (projectSdk == null || (projectSdk.getSdkType ne HaskellSdkType.getInstance))
+      throw new RuntimeConfigurationException("Haskell Stack SDK is configured for the project")
   }
 
   def setWorkingDirPath(workingDirPath: String) {

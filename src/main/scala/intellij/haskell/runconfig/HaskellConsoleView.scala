@@ -26,7 +26,7 @@ import com.intellij.psi.PsiFile
 import intellij.haskell.{HaskellFileType, HaskellNotificationGroup}
 
 object HaskellConsoleView {
-  val HaskellConsoleKey: Key[LanguageConsoleImpl] = Key.create("ERLANG CONSOLE KEY")
+  val HaskellConsoleKey: Key[LanguageConsoleImpl] = Key.create("HASKELL CONSOLE KEY")
 
   def isConsole(file: PsiFile): Boolean = file.getOriginalFile.getUserData(HaskellConsoleKey) != null
 }
