@@ -10,14 +10,9 @@ import com.intellij.openapi.util.text.StringUtil
 object HaskellConsoleProcessHandler {
   private def processPrompts(console: LanguageConsoleImpl, text: Option[String]): Option[String] = {
     text.map(text => {
-      if (text.matches(HaskellConsoleHighlightingUtil.LineWithPrompt)) {
-        val matcher = HaskellConsoleHighlightingUtil.GHCIPattern.matcher(text)
-        matcher.find
-        val prefix = matcher.group
-        val trimmed = StringUtil.trimStart(text, prefix).trim
-        trimmed
-      } else {
-        text
+      HaskellConsoleHighlightingUtil.LineWithPrompt.findFirstIn(text) match {
+        case Some(prefix) => StringUtil.trimStart(text, prefix)
+        case None => text
       }
     })
   }

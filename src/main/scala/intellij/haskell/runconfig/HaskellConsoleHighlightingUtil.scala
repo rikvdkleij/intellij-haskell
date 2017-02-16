@@ -1,13 +1,12 @@
 package intellij.haskell.runconfig
 
-import java.util.regex.Pattern
+import scala.util.matching.Regex
 
 object HaskellConsoleHighlightingUtil {
-  private val ID = "\\p{Lu}[\\p{Ll}\\p{Digit}]*"
+  private val ID = "[A-Z]\\w*"
   private val Module = s"\\*?$ID(\\.$ID)*"
   private val Modules = s"($Module\\s*)*"
   val PromptArrow = ">"
   val LambdaArrow = "λ> "
-  val LineWithPrompt: String = s"$Modules$PromptArrow.*"
-  val GHCIPattern: Pattern = Pattern.compile(Modules + PromptArrow)
+  val LineWithPrompt = new Regex(s"($Modules$PromptArrow)")
 }
