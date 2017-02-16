@@ -7,6 +7,7 @@ import com.intellij.openapi.options.SettingsEditor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.TextFieldWithBrowseButton;
 import com.intellij.ui.ListCellRendererWrapper;
+import com.intellij.ui.RawCommandLineEditor;
 import intellij.haskell.module.HaskellModuleType;
 import intellij.haskell.util.HaskellUIUtil;
 import org.jetbrains.annotations.NotNull;
@@ -18,6 +19,7 @@ public class HaskellConsoleConfigurationForm extends SettingsEditor<HaskellConso
     private JPanel myPanel;
     private TextFieldWithBrowseButton myWorkingDirPathField;
     private JComboBox myModuleComboBox;
+    private RawCommandLineEditor myConsoleArgsEditor;
 
     @Nullable
     private final Module myInitialModule;
@@ -44,12 +46,14 @@ public class HaskellConsoleConfigurationForm extends SettingsEditor<HaskellConso
 
         myWorkingDirPathField.setText(config.getWorkingDirPath());
         myModuleComboBox.setSelectedItem(config.getConfigurationModule().getModule());
+        myConsoleArgsEditor.setText(config.getConsoleArgs());
     }
 
     @Override
     protected void applyEditorTo(@NotNull HaskellConsoleConfiguration config) throws ConfigurationException {
         config.setModule((Module) myModuleComboBox.getSelectedItem());
         config.setWorkingDirPath(myWorkingDirPathField.getText());
+        config.setConsoleArgs(myConsoleArgsEditor.getText());
     }
 
     @NotNull

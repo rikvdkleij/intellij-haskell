@@ -8,6 +8,7 @@ import com.intellij.execution.process.{ProcessHandler, ProcessTerminatedListener
 import com.intellij.execution.runners.ExecutionEnvironment
 import com.intellij.execution.ui.ConsoleView
 import intellij.haskell.sdk.HaskellSdkType
+import scala.collection.JavaConverters._
 
 class HaskellConsoleCommandLineState(val myConfig: HaskellConsoleConfiguration, val env: ExecutionEnvironment) extends CommandLineState(env) {
   val consoleBuilder = new TextConsoleBuilderImpl(myConfig.getProject) {
@@ -22,8 +23,10 @@ class HaskellConsoleCommandLineState(val myConfig: HaskellConsoleConfiguration, 
 
     HaskellSdkType.getStackPath(project) match {
       case Some(stackPath) =>
+        val consoleArgs = myConfig.getConsoleArgs
         val commandLine = new GeneralCommandLine(stackPath)
           .withParameters("ghci")
+          .withParameters(consoleArgs.split(" ").toList.asJava)
           .withWorkDirectory(myConfig.getWorkingDirPath)
         val handler = new HaskellConsoleProcessHandler(commandLine.createProcess(), commandLine.getCommandLineString(), consoleBuilder.getConsole.asInstanceOf[LanguageConsoleImpl])
         ProcessTerminatedListener.attach(handler)
