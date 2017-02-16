@@ -4,13 +4,13 @@ import com.intellij.execution.configurations.{ConfigurationFactory, Configuratio
 import intellij.haskell.HaskellIcons
 
 final class HaskellConsoleConfigurationType extends ConfigurationType {
-  def getDisplayName = "Haskell Stack Command"
+  def getDisplayName = "Haskell Stack Shell"
 
-  def getConfigurationTypeDescription = "Haskell Stack command run configuration"
+  def getConfigurationTypeDescription = "Haskell Stack Shell configuration"
 
   def getIcon = HaskellIcons.HaskellSmallLogo
 
-  def getId = "HaskellStackRunConfigurationType"
+  def getId = "HaskellConsoleConfigurationType"
 
   def getConfigurationFactories: Array[ConfigurationFactory] = Array[ConfigurationFactory](new HaskellConsoleConfigurationFactory(this))
 }
