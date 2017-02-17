@@ -1,4 +1,4 @@
-package intellij.haskell.runconfig
+package intellij.haskell.runconfig.console
 
 import com.intellij.openapi.actionSystem.{AnAction, AnActionEvent, CommonDataKeys}
 import com.intellij.openapi.editor.Editor

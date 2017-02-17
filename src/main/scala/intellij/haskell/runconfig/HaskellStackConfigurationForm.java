@@ -9,6 +9,7 @@ import com.intellij.openapi.ui.TextFieldWithBrowseButton;
 import com.intellij.ui.ListCellRendererWrapper;
 import com.intellij.ui.RawCommandLineEditor;
 import intellij.haskell.module.HaskellModuleType;
+import intellij.haskell.runconfig.console.HaskellConsoleConfiguration;
 import intellij.haskell.util.HaskellUIUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;

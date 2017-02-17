@@ -1,4 +1,4 @@
-package intellij.haskell.runconfig
+package intellij.haskell.runconfig.console
 
 import java.util
 import java.util.Comparator

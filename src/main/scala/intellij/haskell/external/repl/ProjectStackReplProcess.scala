@@ -21,7 +21,7 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Computable
 import com.intellij.psi.PsiFile
 import intellij.haskell.psi.HaskellPsiUtil
-import intellij.haskell.runconfig.HaskellConsoleView
+import intellij.haskell.runconfig.console.HaskellConsoleView
 
 private[repl] class ProjectStackReplProcess(project: Project) extends StackReplProcess(project, Seq("--test"), true) {
 

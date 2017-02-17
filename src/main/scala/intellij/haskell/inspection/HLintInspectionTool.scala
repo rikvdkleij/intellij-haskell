@@ -20,7 +20,7 @@ import com.intellij.codeInspection._
 import com.intellij.psi.{PsiElement, PsiFile, TokenType}
 import intellij.haskell.external.component.{HLintComponent, HLintInfo}
 import intellij.haskell.psi.HaskellTypes._
-import intellij.haskell.runconfig.HaskellConsoleView
+import intellij.haskell.runconfig.console.HaskellConsoleView
 import intellij.haskell.util.{HaskellProjectUtil, LineColumnPosition}
 
 import scala.annotation.tailrec

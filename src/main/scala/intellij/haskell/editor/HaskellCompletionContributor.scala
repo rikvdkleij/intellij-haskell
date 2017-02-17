@@ -35,7 +35,7 @@ import intellij.haskell.psi.HaskellElementCondition._
 import intellij.haskell.psi.HaskellPsiUtil._
 import intellij.haskell.psi.HaskellTypes._
 import intellij.haskell.psi._
-import intellij.haskell.runconfig.HaskellConsoleView
+import intellij.haskell.runconfig.console.HaskellConsoleView
 import intellij.haskell.util.HaskellProjectUtil
 import intellij.haskell.util.index.HaskellFileIndex
 

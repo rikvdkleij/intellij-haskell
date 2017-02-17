@@ -1,4 +1,4 @@
-package intellij.haskell.runconfig
+package intellij.haskell.runconfig.console
 
 import com.intellij.execution.CantRunException
 import com.intellij.execution.configurations.{CommandLineState, GeneralCommandLine}
@@ -8,7 +8,6 @@ import com.intellij.execution.process.{ProcessHandler, ProcessTerminatedListener
 import com.intellij.execution.runners.ExecutionEnvironment
 import com.intellij.execution.ui.ConsoleView
 import intellij.haskell.sdk.HaskellSdkType
-import scala.collection.JavaConverters._
 
 class HaskellConsoleCommandLineState(val myConfig: HaskellConsoleConfiguration, val env: ExecutionEnvironment) extends CommandLineState(env) {
   val consoleBuilder = new TextConsoleBuilderImpl(myConfig.getProject) {

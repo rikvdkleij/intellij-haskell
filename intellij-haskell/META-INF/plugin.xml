@@ -281,8 +281,8 @@
         <vetoRenameCondition implementation="intellij.haskell.refactor.HaskellVetoRenameCondition"/>
 
         <!-- Runner -->
-        <actionPromoter implementation="intellij.haskell.runconfig.HaskellConsoleActionPromoter"/>
-        <configurationType implementation="intellij.haskell.runconfig.HaskellStackConfigurationType"/>
+        <actionPromoter implementation="intellij.haskell.runconfig.console.HaskellConsoleActionPromoter"/>
+        <configurationType implementation="intellij.haskell.runconfig.console.HaskellStackConfigurationType"/>
     </extensions>
 
     <application-components>
@@ -412,7 +412,7 @@
             <add-to-group group-id="HelpMenu" anchor="last"/>
         </action>
 
-        <action id="HaskellStackConsole.Execute" class="intellij.haskell.runconfig.HaskellConsoleExecuteAction">
+        <action id="HaskellStackConsole.Execute" class="intellij.haskell.runconfig.console.HaskellConsoleExecuteAction">
             <keyboard-shortcut first-keystroke="ENTER" keymap="$default"/>
         </action>
     </actions>

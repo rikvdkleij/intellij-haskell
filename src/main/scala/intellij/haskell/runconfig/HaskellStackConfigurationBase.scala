@@ -1,8 +1,6 @@
 package intellij.haskell.runconfig
 
-import com.intellij.execution.Executor
 import com.intellij.execution.configurations.{ConfigurationFactory, ModuleBasedConfiguration, RunConfigurationModule, RuntimeConfigurationException}
-import com.intellij.execution.runners.ExecutionEnvironment
 import com.intellij.openapi.module.{Module, ModuleManager}
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.roots.ProjectRootManager

@@ -1,4 +1,4 @@
-package intellij.haskell.runconfig
+package intellij.haskell.runconfig.console
 
 import java.nio.charset.Charset
 

@@ -1,4 +1,4 @@
-package intellij.haskell.runconfig
+package intellij.haskell.runconfig.console
 
 import com.intellij.execution.configurations.{ConfigurationFactory, ConfigurationType}
 import intellij.haskell.HaskellIcons
