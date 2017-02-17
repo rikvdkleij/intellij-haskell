@@ -282,7 +282,7 @@
 
         <!-- Runner -->
         <actionPromoter implementation="intellij.haskell.runconfig.console.HaskellConsoleActionPromoter"/>
-        <configurationType implementation="intellij.haskell.runconfig.console.HaskellStackConfigurationType"/>
+        <configurationType implementation="intellij.haskell.runconfig.HaskellStackConfigurationType"/>
     </extensions>
 
     <application-components>

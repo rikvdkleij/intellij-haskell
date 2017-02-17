@@ -31,7 +31,7 @@ object HaskellConsoleView {
   def isConsole(file: PsiFile): Boolean = file.getOriginalFile.getUserData(HaskellConsoleKey) != null
 }
 
-final class HaskellConsoleView(val project: Project)
+class HaskellConsoleView(val project: Project)
   extends LanguageConsoleImpl(project, "Haskell Stack REPL", HaskellFileType.INSTANCE.getLanguage) {
 
   private val myType = new ConsoleRootType("haskell", "Haskell") {}

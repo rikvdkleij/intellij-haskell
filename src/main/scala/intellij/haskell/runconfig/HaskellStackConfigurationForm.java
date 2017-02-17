@@ -9,14 +9,13 @@ import com.intellij.openapi.ui.TextFieldWithBrowseButton;
 import com.intellij.ui.ListCellRendererWrapper;
 import com.intellij.ui.RawCommandLineEditor;
 import intellij.haskell.module.HaskellModuleType;
-import intellij.haskell.runconfig.console.HaskellConsoleConfiguration;
 import intellij.haskell.util.HaskellUIUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 
-public class HaskellStackConfigurationForm extends SettingsEditor<HaskellConsoleConfiguration> {
+public class HaskellStackConfigurationForm extends SettingsEditor<HaskellStackConfigurationBase> {
     private JPanel myPanel;
     private TextFieldWithBrowseButton myWorkingDirPathField;
     private JComboBox myModuleComboBox;
@@ -28,7 +27,7 @@ public class HaskellStackConfigurationForm extends SettingsEditor<HaskellConsole
     }
 
     @Override
-    protected void resetEditorFrom(@NotNull HaskellConsoleConfiguration config) {
+    protected void resetEditorFrom(@NotNull HaskellStackConfigurationBase config) {
         myModuleComboBox.removeAllItems();
         for (Module module : config.getValidModules()) {
             if (ModuleType.get(module) == HaskellModuleType.getInstance()) {
@@ -45,7 +44,7 @@ public class HaskellStackConfigurationForm extends SettingsEditor<HaskellConsole
     }
 
     @Override
-    protected void applyEditorTo(@NotNull HaskellConsoleConfiguration config) throws ConfigurationException {
+    protected void applyEditorTo(@NotNull HaskellStackConfigurationBase config) throws ConfigurationException {
         config.setModule((Module) myModuleComboBox.getSelectedItem());
         config.setWorkingDirPath(myWorkingDirPathField.getText());
         config.setConsoleArgs(myConsoleArgsEditor.getText());

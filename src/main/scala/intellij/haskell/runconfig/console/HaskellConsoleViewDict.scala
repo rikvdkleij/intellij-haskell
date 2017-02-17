@@ -26,7 +26,7 @@ object HaskellConsoleViewDict {
   def getInstance: HaskellConsoleViewDict = outInstance
 }
 
-final class HaskellConsoleViewDict private() {
+class HaskellConsoleViewDict private() {
   private val consoleViews = new mutable.HashSet[HaskellConsoleView]
 
   def addConsole(console: HaskellConsoleView) {

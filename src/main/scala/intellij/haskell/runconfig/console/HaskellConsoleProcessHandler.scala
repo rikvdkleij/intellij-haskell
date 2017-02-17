@@ -18,7 +18,7 @@ object HaskellConsoleProcessHandler {
   }
 }
 
-final class HaskellConsoleProcessHandler private[runconfig](val process: Process, val commandLine: String, val console: LanguageConsoleImpl)
+class HaskellConsoleProcessHandler private[runconfig](val process: Process, val commandLine: String, val console: LanguageConsoleImpl)
   extends ColoredProcessHandler(process, commandLine, Charset.forName("UTF-8")) {
   override def coloredTextAvailable(text: String, attributes: Key[_]) {
     HaskellConsoleProcessHandler.processPrompts(console, Option(StringUtil.convertLineSeparators(text))).foreach(string => {

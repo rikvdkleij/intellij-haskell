@@ -9,7 +9,9 @@ import com.intellij.execution.runners.ExecutionEnvironment
 import com.intellij.execution.ui.ConsoleView
 import intellij.haskell.sdk.HaskellSdkType
 
-class HaskellConsoleCommandLineState(val myConfig: HaskellConsoleConfiguration, val env: ExecutionEnvironment) extends CommandLineState(env) {
+import scala.collection.JavaConverters._
+
+class HaskellConsoleState(val myConfig: HaskellConsoleConfiguration, val env: ExecutionEnvironment) extends CommandLineState(env) {
   val consoleBuilder = new TextConsoleBuilderImpl(myConfig.getProject) {
     override def getConsole: ConsoleView = {
       new HaskellConsoleView(myConfig.getProject)
@@ -24,7 +26,7 @@ class HaskellConsoleCommandLineState(val myConfig: HaskellConsoleConfiguration, 
       case Some(stackPath) =>
         val consoleArgs = myConfig.getConsoleArgs
         val commandLine = new GeneralCommandLine(stackPath)
-          .withParameters(myConfig.getCommand)
+          .withParameters(myConfig.myCommand)
           .withParameters(consoleArgs.split(" ").toList.asJava)
           .withWorkDirectory(myConfig.getWorkingDirPath)
         val handler = new HaskellConsoleProcessHandler(commandLine.createProcess(), commandLine.getCommandLineString(), consoleBuilder.getConsole.asInstanceOf[LanguageConsoleImpl])
