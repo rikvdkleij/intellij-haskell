@@ -4,6 +4,7 @@ import com.intellij.execution.configurations.{ConfigurationFactory, Configuratio
 import intellij.haskell.HaskellIcons
 import intellij.haskell.runconfig.console.HaskellConsoleConfigurationFactory
 import intellij.haskell.runconfig.run.HaskellRunConfigurationFactory
+import intellij.haskell.runconfig.test.HaskellTestConfigurationFactory
 
 class HaskellStackConfigurationType extends ConfigurationType {
   def getDisplayName = "Haskell Stack"
@@ -16,6 +17,7 @@ class HaskellStackConfigurationType extends ConfigurationType {
 
   def getConfigurationFactories: Array[ConfigurationFactory] = Array[ConfigurationFactory](
     new HaskellConsoleConfigurationFactory(this),
-    new HaskellRunConfigurationFactory(this)
+    new HaskellRunConfigurationFactory(this),
+    new HaskellTestConfigurationFactory(this)
   )
 }

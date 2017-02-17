@@ -12,8 +12,8 @@ import scala.collection.JavaConverters._
 
 abstract class HaskellStackConfigurationBase(val name: String, val project: Project, val configurationFactory: ConfigurationFactory)
   extends ModuleBasedConfiguration[RunConfigurationModule](name, new RunConfigurationModule(project), configurationFactory) {
-  private var myWorkingDirPath: String = ""
-  private var myConsoleArgs: String = ""
+  private var myWorkingDirPath: String = _
+  private var myConsoleArgs: String = _
 
   ModuleManager.getInstance(getProject).getModules.toList.headOption.foreach(m => setModule(m))
 
@@ -46,7 +46,11 @@ abstract class HaskellStackConfigurationBase(val name: String, val project: Proj
   }
 
   def getWorkingDirPath: String = {
-    Option(myWorkingDirPath).getOrElse(project.getBasePath)
+    if (myWorkingDirPath.isEmpty) {
+      project.getBasePath
+    } else {
+      myWorkingDirPath
+    }
   }
 
   def setConsoleArgs(consoleArgs: String) {

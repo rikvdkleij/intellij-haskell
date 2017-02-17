@@ -1,4 +1,4 @@
-package intellij.haskell.runconfig.run
+package intellij.haskell.runconfig
 
 import com.intellij.execution.CantRunException
 import com.intellij.execution.configurations.{CommandLineState, GeneralCommandLine}
@@ -8,7 +8,7 @@ import intellij.haskell.sdk.HaskellSdkType
 
 import scala.collection.JavaConverters._
 
-class HaskellRunningState(val myConfig: HaskellRunConfiguration, val env: ExecutionEnvironment) extends CommandLineState(env) {
+class HaskellStackStateBase(val myConfig: HaskellStackConfigurationBase, val env: ExecutionEnvironment, val command: String) extends CommandLineState(env) {
 
   protected def startProcess: ProcessHandler = {
     val project = myConfig.getProject
@@ -17,7 +17,7 @@ class HaskellRunningState(val myConfig: HaskellRunConfiguration, val env: Execut
       case Some(stackPath) =>
         val consoleArgs = myConfig.getConsoleArgs
         val commandLine = new GeneralCommandLine(stackPath)
-          .withParameters(myConfig.myCommand.split(" ").toList.asJava)
+          .withParameters(command.split(" ").toList.asJava)
           .withParameters(consoleArgs.split(" ").toList.asJava)
           .withWorkDirectory(myConfig.getWorkingDirPath)
         val handler = new KillableColoredProcessHandler(commandLine)
