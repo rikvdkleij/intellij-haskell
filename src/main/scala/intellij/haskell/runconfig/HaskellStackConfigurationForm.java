@@ -15,13 +15,13 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 
-public class HaskellConsoleConfigurationForm extends SettingsEditor<HaskellConsoleConfiguration> {
+public class HaskellStackConfigurationForm extends SettingsEditor<HaskellConsoleConfiguration> {
     private JPanel myPanel;
     private TextFieldWithBrowseButton myWorkingDirPathField;
     private JComboBox myModuleComboBox;
     private RawCommandLineEditor myConsoleArgsEditor;
 
-    public HaskellConsoleConfigurationForm(@NotNull Project project) {
+    public HaskellStackConfigurationForm(@NotNull Project project) {
         myModuleComboBox.setEnabled(true);
         HaskellUIUtil.installWorkingDirectoryChooser(myWorkingDirPathField, project);
     }

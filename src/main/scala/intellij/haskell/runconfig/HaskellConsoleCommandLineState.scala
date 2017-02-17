@@ -25,7 +25,7 @@ class HaskellConsoleCommandLineState(val myConfig: HaskellConsoleConfiguration, 
       case Some(stackPath) =>
         val consoleArgs = myConfig.getConsoleArgs
         val commandLine = new GeneralCommandLine(stackPath)
-          .withParameters("ghci")
+          .withParameters(myConfig.getCommand)
           .withParameters(consoleArgs.split(" ").toList.asJava)
           .withWorkDirectory(myConfig.getWorkingDirPath)
         val handler = new HaskellConsoleProcessHandler(commandLine.createProcess(), commandLine.getCommandLineString(), consoleBuilder.getConsole.asInstanceOf[LanguageConsoleImpl])
