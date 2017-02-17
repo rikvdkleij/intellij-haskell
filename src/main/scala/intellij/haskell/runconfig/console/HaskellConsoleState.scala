@@ -27,8 +27,11 @@ class HaskellConsoleState(val myConfig: HaskellConsoleConfiguration, val env: Ex
         val consoleArgs = myConfig.getConsoleArgs
         val commandLine = new GeneralCommandLine(stackPath)
           .withParameters(myConfig.myCommand)
-          .withParameters(consoleArgs.split(" ").toList.asJava)
           .withWorkDirectory(myConfig.getWorkingDirPath)
+
+        if (!consoleArgs.isEmpty)
+          commandLine.addParameters(consoleArgs.split(" ").toList.asJava)
+
         val handler = new HaskellConsoleProcessHandler(commandLine.createProcess(), commandLine.getCommandLineString(), consoleBuilder.getConsole.asInstanceOf[LanguageConsoleImpl])
         ProcessTerminatedListener.attach(handler)
         handler

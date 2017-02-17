@@ -18,8 +18,11 @@ class HaskellStackStateBase(val myConfig: HaskellStackConfigurationBase, val env
         val consoleArgs = myConfig.getConsoleArgs
         val commandLine = new GeneralCommandLine(stackPath)
           .withParameters(command.split(" ").toList.asJava)
-          .withParameters(consoleArgs.split(" ").toList.asJava)
           .withWorkDirectory(myConfig.getWorkingDirPath)
+
+        if (!consoleArgs.isEmpty)
+          commandLine.addParameters(consoleArgs.split(" ").toList.asJava)
+
         val handler = new KillableColoredProcessHandler(commandLine)
         ProcessTerminatedListener.attach(handler)
         handler
