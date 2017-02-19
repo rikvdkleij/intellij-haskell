@@ -12,12 +12,10 @@ import scala.collection.JavaConverters._
 
 abstract class HaskellStackConfigurationBase(val name: String, val project: Project, val configurationFactory: ConfigurationFactory)
   extends ModuleBasedConfiguration[RunConfigurationModule](name, new RunConfigurationModule(project), configurationFactory) {
-  private var myWorkingDirPath: String = _
-  private var myConsoleArgs: String = _
+  private var myWorkingDirPath: String = ""
+  private var myConsoleArgs: String = ""
 
   ModuleManager.getInstance(getProject).getModules.toList.headOption.foreach(m => setModule(m))
-
-  def getConfigurationEditor = new HaskellStackConfigurationForm(getProject)
 
   override def getValidModules: java.util.Collection[Module] = ModuleManager.getInstance(getProject).getModules.toList.asJava
 

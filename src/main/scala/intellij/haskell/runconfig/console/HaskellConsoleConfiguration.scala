@@ -11,5 +11,7 @@ class HaskellConsoleConfiguration(override val name: String, override val projec
 
   val myCommand = "ghci"
 
+  override def getConfigurationEditor = new HaskellConsoleConfigurationForm(getProject)
+
   override def getState(executor: Executor, environment: ExecutionEnvironment) = new HaskellConsoleState(this, environment)
 }

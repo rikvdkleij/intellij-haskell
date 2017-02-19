@@ -8,11 +8,11 @@ import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.project.{Project, ProjectManager}
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.vfs.VirtualFile
-import com.intellij.psi.{PsiElement, PsiFile, PsiFileFactory}
 import com.intellij.psi.tree.IElementType
-import intellij.haskell.cabal.{CabalFile, CabalLanguage}
+import com.intellij.psi.{PsiElement, PsiFile, PsiFileFactory}
 import intellij.haskell.cabal.lang.psi
 import intellij.haskell.cabal.lang.psi.CabalTypes
+import intellij.haskell.cabal.{CabalFile, CabalLanguage}
 import intellij.haskell.psi.HaskellPsiUtil
 import intellij.haskell.util.NonEmptySet
 
@@ -121,6 +121,13 @@ object CabalQuery {
         LOG.warn(new AssertionError(s"Expected CabalFile, got: ${other.getClass}"))
         None
     }
+  }
+
+  def getPackageName(project: Project): Option[String] = {
+    (for {
+      cabalFile <- findCabalFile(project.getBasePath)
+      cabalQuery <- CabalQuery.fromJavaFile(None, cabalFile)
+    } yield cabalQuery).flatMap(_.getPackageName)
   }
 
   def getExecutableNames(project: Project): Option[List[String]] = {

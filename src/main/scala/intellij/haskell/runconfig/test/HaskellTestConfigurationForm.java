@@ -1,4 +1,4 @@
-package intellij.haskell.runconfig;
+package intellij.haskell.runconfig.test;
 
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleType;
@@ -15,19 +15,20 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 
-public class HaskellStackConfigurationForm extends SettingsEditor<HaskellStackConfigurationBase> {
+public class HaskellTestConfigurationForm extends SettingsEditor<HaskellTestConfiguration> {
     private JPanel myPanel;
     private TextFieldWithBrowseButton myWorkingDirPathField;
     private JComboBox myModuleComboBox;
     private RawCommandLineEditor myConsoleArgsEditor;
+    private JComboBox myTestsuiteComboBox;
 
-    public HaskellStackConfigurationForm(@NotNull Project project) {
+    public HaskellTestConfigurationForm(@NotNull Project project) {
         myModuleComboBox.setEnabled(true);
         HaskellUIUtil.installWorkingDirectoryChooser(myWorkingDirPathField, project);
     }
 
     @Override
-    protected void resetEditorFrom(@NotNull HaskellStackConfigurationBase config) {
+    protected void resetEditorFrom(@NotNull HaskellTestConfiguration config) {
         myModuleComboBox.removeAllItems();
         for (Module module : config.getValidModules()) {
             if (ModuleType.get(module) == HaskellModuleType.getInstance()) {
@@ -37,17 +38,25 @@ public class HaskellStackConfigurationForm extends SettingsEditor<HaskellStackCo
         }
         //noinspection unchecked
         myModuleComboBox.setRenderer(getListCellRendererWrapper());
+        myModuleComboBox.setSelectedItem(config.getConfigurationModule().getModule());
+
+        myTestsuiteComboBox.removeAllItems();
+        for (String executable : config.getTestsuites()) {
+            //noinspection unchecked
+            myTestsuiteComboBox.addItem(executable);
+        }
+        myTestsuiteComboBox.setSelectedItem(config.getTestsuite());
 
         myWorkingDirPathField.setText(config.getWorkingDirPath());
-        myModuleComboBox.setSelectedItem(config.getConfigurationModule().getModule());
         myConsoleArgsEditor.setText(config.getConsoleArgs());
     }
 
     @Override
-    protected void applyEditorTo(@NotNull HaskellStackConfigurationBase config) throws ConfigurationException {
+    protected void applyEditorTo(@NotNull HaskellTestConfiguration config) throws ConfigurationException {
         config.setModule((Module) myModuleComboBox.getSelectedItem());
         config.setWorkingDirPath(myWorkingDirPathField.getText());
         config.setConsoleArgs(myConsoleArgsEditor.getText());
+        config.setTestsuite((String) myTestsuiteComboBox.getSelectedItem());
     }
 
     @NotNull
