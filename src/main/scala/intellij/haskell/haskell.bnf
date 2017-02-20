@@ -19,7 +19,7 @@
 
   elementTypePrefix="HS_"
 
-  methods("varid|varsym|conid|consym|modid")=[getName setName getNameIdentifier getReference getPresentation getUseScope]
+  methods("varid|varsym|conid|consym|modid")=[getName setName getNameIdentifier getReference getPresentation]
   extends("varid|varsym|conid|consym|modid")="intellij.haskell.psi.impl.HaskellNamedStubBasedPsiElementBase<?>"
   implements("varid|varsym|conid|consym|modid")="intellij.haskell.psi.HaskellNamedElement"
   elementTypeFactory("varid|varsym|conid|consym|modid")="intellij.haskell.psi.impl.HaskellElementTypeFactory.factory"
@@ -44,7 +44,7 @@
   implements("var|con|varop|conop")="intellij.haskell.psi.HaskellCNameElement"
   mixin("var|con|varop|conop")="intellij.haskell.psi.impl.HaskellCNameElementImpl"
 
-  methods("q_con_qualifier1|q_con_qualifier2|q_con_qualifier3|q_con_qualifier4|qualifier")=[getName setName getNameIdentifier getReference getPresentation getUseScope]
+  methods("q_con_qualifier1|q_con_qualifier2|q_con_qualifier3|q_con_qualifier4|qualifier")=[getName setName getNameIdentifier getReference getPresentation]
   implements("q_con_qualifier1|q_con_qualifier2|q_con_qualifier3|q_con_qualifier4|qualifier")="intellij.haskell.psi.HaskellQualifierElement"
   mixin("q_con_qualifier1|q_con_qualifier2|q_con_qualifier3|q_con_qualifier4|qualifier")="intellij.haskell.psi.impl.HaskellQualifierElementImpl"
 }
@@ -139,7 +139,7 @@ class_declaration           ::= CLASS onls (scontext onls DOUBLE_RIGHT_ARROW)? o
                                     (onls VERTICAL_BAR onls ttype (onls COMMA onls ttype)*)? onls WHERE? onls cidecls? |
                                   CLASS onls scontext onls DOUBLE_RIGHT_ARROW onls (q_name+ | ttype) onls WHERE? onls cidecls?  // seen in Control.Lens.Internal.Indexed
 
-instance_declaration        ::= INSTANCE onls (overlap_pragma | "OVERLAPPABLE_" | "OVERLAPPING_" | incoherent_pragma)? onls (var_con+ DOT)? onls (scontext onls DOUBLE_RIGHT_ARROW)? onls q_name onls inst onls (WHERE onls cidecls)?
+instance_declaration        ::= INSTANCE onls (overlap_pragma | "OVERLAPPABLE_" | "OVERLAPPING_" | incoherent_pragma)? onls (var_con+ DOT)? onls (scontext onls DOUBLE_RIGHT_ARROW)? onls q_name onls inst (onls WHERE (onls cidecls)?)?
 
 default_declaration         ::= DEFAULT onls (LEFT_PAREN (ttype (COMMA ttype)*)? RIGHT_PAREN | type_signature)
 

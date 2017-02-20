@@ -1,15 +1,15 @@
 // This is a generated file. Not intended for manual editing.
 package intellij.haskell.parser;
 
+import com.intellij.lang.ASTNode;
+import com.intellij.lang.LightPsiParser;
 import com.intellij.lang.PsiBuilder;
 import com.intellij.lang.PsiBuilder.Marker;
-import static intellij.haskell.psi.HaskellTypes.*;
-import static intellij.haskell.psi.HaskellParserUtil.*;
-import com.intellij.psi.tree.IElementType;
-import com.intellij.lang.ASTNode;
-import com.intellij.psi.tree.TokenSet;
 import com.intellij.lang.PsiParser;
-import com.intellij.lang.LightPsiParser;
+import com.intellij.psi.tree.IElementType;
+
+import static intellij.haskell.psi.HaskellParserUtil.*;
+import static intellij.haskell.psi.HaskellTypes.*;
 
 @SuppressWarnings({"SimplifiableIfStatement", "UnusedAssignment"})
 public class HaskellParser implements PsiParser, LightPsiParser {
@@ -4114,7 +4114,7 @@ public class HaskellParser implements PsiParser, LightPsiParser {
   }
 
   /* ********************************************************** */
-  // INSTANCE onls (overlap_pragma | "OVERLAPPABLE_" | "OVERLAPPING_" | incoherent_pragma)? onls (var_con+ DOT)? onls (scontext onls DOUBLE_RIGHT_ARROW)? onls q_name onls inst onls (WHERE onls cidecls)?
+  // INSTANCE onls (overlap_pragma | "OVERLAPPABLE_" | "OVERLAPPING_" | incoherent_pragma)? onls (var_con+ DOT)? onls (scontext onls DOUBLE_RIGHT_ARROW)? onls q_name onls inst (onls WHERE (onls cidecls)?)?
   public static boolean instance_declaration(PsiBuilder b, int l) {
     if (!recursion_guard_(b, l, "instance_declaration")) return false;
     if (!nextTokenIs(b, HS_INSTANCE)) return false;
@@ -4131,8 +4131,7 @@ public class HaskellParser implements PsiParser, LightPsiParser {
     r = r && q_name(b, l + 1);
     r = r && onls(b, l + 1);
     r = r && inst(b, l + 1);
-    r = r && onls(b, l + 1);
-    r = r && instance_declaration_12(b, l + 1);
+    r = r && instance_declaration_11(b, l + 1);
     exit_section_(b, m, HS_INSTANCE_DECLARATION, r);
     return r;
   }
@@ -4210,20 +4209,38 @@ public class HaskellParser implements PsiParser, LightPsiParser {
     return r;
   }
 
-  // (WHERE onls cidecls)?
-  private static boolean instance_declaration_12(PsiBuilder b, int l) {
-    if (!recursion_guard_(b, l, "instance_declaration_12")) return false;
-    instance_declaration_12_0(b, l + 1);
+  // (onls WHERE (onls cidecls)?)?
+  private static boolean instance_declaration_11(PsiBuilder b, int l) {
+    if (!recursion_guard_(b, l, "instance_declaration_11")) return false;
+    instance_declaration_11_0(b, l + 1);
     return true;
   }
 
-  // WHERE onls cidecls
-  private static boolean instance_declaration_12_0(PsiBuilder b, int l) {
-    if (!recursion_guard_(b, l, "instance_declaration_12_0")) return false;
+  // onls WHERE (onls cidecls)?
+  private static boolean instance_declaration_11_0(PsiBuilder b, int l) {
+    if (!recursion_guard_(b, l, "instance_declaration_11_0")) return false;
     boolean r;
     Marker m = enter_section_(b);
-    r = consumeToken(b, HS_WHERE);
-    r = r && onls(b, l + 1);
+    r = onls(b, l + 1);
+    r = r && consumeToken(b, HS_WHERE);
+    r = r && instance_declaration_11_0_2(b, l + 1);
+    exit_section_(b, m, null, r);
+    return r;
+  }
+
+  // (onls cidecls)?
+  private static boolean instance_declaration_11_0_2(PsiBuilder b, int l) {
+    if (!recursion_guard_(b, l, "instance_declaration_11_0_2")) return false;
+    instance_declaration_11_0_2_0(b, l + 1);
+    return true;
+  }
+
+  // onls cidecls
+  private static boolean instance_declaration_11_0_2_0(PsiBuilder b, int l) {
+    if (!recursion_guard_(b, l, "instance_declaration_11_0_2_0")) return false;
+    boolean r;
+    Marker m = enter_section_(b);
+    r = onls(b, l + 1);
     r = r && cidecls(b, l + 1);
     exit_section_(b, m, null, r);
     return r;
