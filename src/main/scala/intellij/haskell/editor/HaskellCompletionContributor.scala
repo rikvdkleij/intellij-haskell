@@ -173,12 +173,14 @@ class HaskellCompletionContributor extends CompletionContributor {
               resultSet.addAllElements(getIdsFromHidingIdsImportedModules(project, psiFile, importDeclarations).asJavaCollection)
               resultSet.addAllElements(getIdsFromSpecIdsImportedModules(project, psiFile, importDeclarations).asJavaCollection)
 
-              val moduleName = HaskellPsiUtil.findModuleName(psiFile)
-              val topLevelLookupElements = moduleName.map(mn => findAllTopLevelModuleIdentifiers(project, mn, psiFile).
-                map(mi => createTopLevelLookupElement(mi)).toStream).getOrElse(Stream())
-              resultSet.addAllElements(topLevelLookupElements.asJavaCollection)
-
-              resultSet.addAllElements(findTopLevelTypeSignatureLookupElements(psiFile).asJavaCollection)
+              val moduleName = findModuleName(psiFile)
+              val topLevelLookupElements = moduleName.map(mn => findAllTopLevelModuleIdentifiers(project, psiFile, mn).map(mi => createTopLevelLookupElement(mi))).getOrElse(Iterable())
+              if (topLevelLookupElements.isEmpty) {
+                resultSet.addAllElements(findTopLevelLookupElements(psiFile).asJavaCollection)
+              } else {
+                resultSet.addAllElements(topLevelLookupElements.asJavaCollection)
+                resultSet.addAllElements(findTopLevelTypeSignatureLookupElements(psiFile).asJavaCollection)
+              }
 
               op match {
                 case Some(e) =>
@@ -219,7 +221,12 @@ class HaskellCompletionContributor extends CompletionContributor {
   // Type signatures in case they exist without accompanying implementation
   private def findTopLevelTypeSignatureLookupElements(psiFile: PsiFile): Iterable[LookupElementBuilder] = {
     val typeSignatures = HaskellPsiUtil.findTopLevelTypeSignatures(psiFile)
-    typeSignatures.flatMap(ts => ts.getIdentifierElements.map(e => createTopLevelTypeSignatureLookupElement(e.getName, ts.getText)))
+    typeSignatures.flatMap(ts => ts.getIdentifierElements.map(e => createTopDeclarationLookupElement(e.getName, ts.getText)))
+  }
+
+  private def findTopLevelLookupElements(psiFile: PsiFile): Iterable[LookupElementBuilder] = {
+    val topLevelDeclarations = HaskellPsiUtil.findTopLevelDeclarations(psiFile)
+    topLevelDeclarations.flatMap(ts => ts.getIdentifierElements.map(e => createTopDeclarationLookupElement(e.getName, ts.getText)))
   }
 
   private def createLocalLookupElement(namedElement: HaskellNamedElement): LookupElementBuilder = {
@@ -230,7 +237,7 @@ class HaskellCompletionContributor extends CompletionContributor {
     LookupElementBuilder.create(moduleIdentifier.name).withTypeText(moduleIdentifier.declaration).withIcon(findIcon(moduleIdentifier))
   }
 
-  private def createTopLevelTypeSignatureLookupElement(name: String, declaration: String): LookupElementBuilder = {
+  private def createTopDeclarationLookupElement(name: String, declaration: String): LookupElementBuilder = {
     LookupElementBuilder.create(name).withTypeText(declaration).withIcon(HaskellIcons.HaskellSmallBlueLogo)
   }
 

@@ -16,9 +16,7 @@
 
 package intellij.haskell.external.component
 
-import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.util.Computable
 import com.intellij.psi.PsiFile
 import intellij.haskell.psi.HaskellPsiUtil
 import intellij.haskell.util.HaskellProjectUtil
@@ -32,30 +30,18 @@ private[component] object AvailableModuleNamesComponent {
     HaskellProjectUtil.isProjectTestFile(psiFile).map(isTestFile => {
       if (isTestFile) {
         val libraryTestModuleNames = globalProjectInfo.map(_.allAvailableLibraryModuleNames).getOrElse(Stream())
-        val testModuleNames = ApplicationManager.getApplication.runReadAction {
-          new Computable[Iterable[String]] {
-            override def compute(): Iterable[String] = {
-              HaskellFileIndex.findProjectTestPsiFiles(psiFile.getProject).flatMap(HaskellPsiUtil.findModuleName) ++
-                findProjectProductionModuleNames(psiFile.getProject)
-            }
-          }
-        }
+        val testModuleNames = HaskellFileIndex.findProjectTestPsiFiles(psiFile.getProject).flatMap(f => HaskellPsiUtil.findModuleName(f)) ++
+          findProjectProductionModuleNames(psiFile.getProject)
         testModuleNames ++ libraryTestModuleNames
       } else {
         val libraryModuleNames = globalProjectInfo.map(_.availableProductionLibraryModuleNames).getOrElse(Stream())
-        val prodModuleNames = ApplicationManager.getApplication.runReadAction {
-          new Computable[Iterable[String]] {
-            override def compute(): Iterable[String] = {
-              findProjectProductionModuleNames(psiFile.getProject)
-            }
-          }
-        }
+        val prodModuleNames = findProjectProductionModuleNames(psiFile.getProject)
         prodModuleNames ++ libraryModuleNames
       }
     }).getOrElse(Iterable())
   }
 
   def findProjectProductionModuleNames(project: Project): Iterable[String] = {
-    HaskellFileIndex.findProjectProductionPsiFiles(project).flatMap(HaskellPsiUtil.findModuleName)
+    HaskellFileIndex.findProjectProductionPsiFiles(project).flatMap(f => HaskellPsiUtil.findModuleName(f))
   }
 }

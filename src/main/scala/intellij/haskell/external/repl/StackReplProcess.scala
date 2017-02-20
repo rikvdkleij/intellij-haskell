@@ -46,8 +46,8 @@ private[repl] abstract class StackReplProcess(val project: Project, val extraSta
 
   private[this] val stdErr = new LinkedBlockingDeque[String]
 
-  private final val LoadTimeout = 5.seconds
-  private final val DefaultTimeout = 2.seconds
+  private final val LoadTimeout = 60.seconds
+  private final val DefaultTimeout = 5.seconds
 
   private final val EndOfOutputIndicator = "^IntellijHaskell^"
 

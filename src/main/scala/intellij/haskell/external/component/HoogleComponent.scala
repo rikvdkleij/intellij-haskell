@@ -72,7 +72,7 @@ object HoogleComponent {
     ApplicationManager.getApplication.executeOnPooledThread(new Runnable {
       override def run(): Unit = {
         try {
-          StackCommandLine.runCommand(Seq("hoogle", "--rebuild"), project, timeoutInMillis = 10.minutes.toMillis)
+          StackCommandLine.runCommand(Seq("hoogle", "--rebuild"), project, timeoutInMillis = 10.minutes.toMillis, logErrorAsInfo = true)
         } finally {
           hoogleAvailable = true
         }

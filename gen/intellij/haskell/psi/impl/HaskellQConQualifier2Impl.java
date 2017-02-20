@@ -1,17 +1,15 @@
 // This is a generated file. Not intended for manual editing.
 package intellij.haskell.psi.impl;
 
-import java.util.List;
-import org.jetbrains.annotations.*;
 import com.intellij.lang.ASTNode;
+import com.intellij.navigation.ItemPresentation;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiElementVisitor;
-import com.intellij.psi.util.PsiTreeUtil;
-import static intellij.haskell.psi.HaskellTypes.*;
-import intellij.haskell.psi.*;
-import com.intellij.navigation.ItemPresentation;
 import com.intellij.psi.PsiReference;
-import com.intellij.psi.search.SearchScope;
+import intellij.haskell.psi.HaskellNamedElement;
+import intellij.haskell.psi.HaskellQConQualifier2;
+import intellij.haskell.psi.HaskellVisitor;
+import org.jetbrains.annotations.NotNull;
 
 public class HaskellQConQualifier2Impl extends HaskellQualifierElementImpl implements HaskellQConQualifier2 {
 
@@ -46,10 +44,6 @@ public class HaskellQConQualifier2Impl extends HaskellQualifierElementImpl imple
 
   public ItemPresentation getPresentation() {
     return HaskellPsiImplUtil.getPresentation(this);
-  }
-
-  public SearchScope getUseScope() {
-    return HaskellPsiImplUtil.getUseScope(this);
   }
 
 }

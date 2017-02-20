@@ -19,6 +19,7 @@ package intellij.haskell.external.component
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.editor.SelectionModel
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.util.Computable
 import com.intellij.psi.{PsiElement, PsiFile}
 import intellij.haskell.annotator.HaskellAnnotator
 import intellij.haskell.psi.HaskellPsiUtil
@@ -36,18 +37,11 @@ object HaskellComponentsManager {
     BrowseModuleComponent.findImportedModuleIdentifiers(project, moduleName)
   }
 
-  def findAllTopLevelModuleIdentifiers(project: Project, moduleName: String, psiFile: PsiFile): Iterable[ModuleIdentifier] = {
+  def findAllTopLevelModuleIdentifiers(project: Project, psiFile: PsiFile, moduleName: String): Iterable[ModuleIdentifier] = {
     BrowseModuleComponent.findAllTopLevelModuleIdentifiers(project, moduleName, psiFile)
   }
 
   def findDefinitionLocation(psiElement: PsiElement): Option[LocationInfo] = {
-    // As a side effect we preload in background some extra info
-    ApplicationManager.getApplication.invokeLater(() => {
-      if (HaskellPsiUtil.findExpressionParent(psiElement).isDefined) {
-        TypeInfoComponent.findTypeInfoForElement(psiElement)
-      }
-    })
-
     DefinitionLocationComponent.findDefinitionLocation(psiElement)
   }
 
@@ -69,6 +63,10 @@ object HaskellComponentsManager {
 
   def loadHaskellFile(psiFile: PsiFile): LoadResult = {
     LoadComponent.load(psiFile)
+  }
+
+  def invalidateModuleFileCache(project: Project): Unit = {
+    ModuleFileComponent.invalidate(project)
   }
 
   def invalidateGlobalCaches(project: Project): Unit = {
@@ -98,13 +96,23 @@ object HaskellComponentsManager {
   }
 
   private def preloadAllLibraryModuleIdentifiers(project: Project): Unit = {
-    ApplicationManager.getApplication.runReadAction(new Runnable {
-      override def run() =
-        if (!project.isDisposed) {
-          val files = HaskellFileIndex.findProjectProductionPsiFiles(project)
-          val importedLibraryModuleNames = files.flatMap(pf => HaskellPsiUtil.findImportDeclarations(pf).flatMap(_.getModuleName))
-          importedLibraryModuleNames.foreach(mn => BrowseModuleComponent.findImportedModuleIdentifiers(project, mn))
-        }
+    val importedLibraryModuleNames =
+      ApplicationManager.getApplication.runReadAction(new Computable[Iterable[String]] {
+        override def compute(): Iterable[String] =
+          if (!project.isDisposed) {
+            HaskellFileIndex.findProjectProductionPsiFiles(project).flatMap(pf => HaskellPsiUtil.findImportDeclarations(pf).flatMap(_.getModuleName))
+          } else {
+            Iterable()
+          }
+      })
+
+    importedLibraryModuleNames.toSeq.distinct.foreach(mn => {
+      ApplicationManager.getApplication.runReadAction(new Runnable {
+        override def run(): Unit =
+          if (!project.isDisposed) {
+            BrowseModuleComponent.findImportedModuleIdentifiers(project, mn)
+          }
+      })
     })
   }
 }

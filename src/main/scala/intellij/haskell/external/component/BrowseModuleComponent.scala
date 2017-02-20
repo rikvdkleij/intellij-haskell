@@ -116,13 +116,22 @@ private[component] object BrowseModuleComponent {
   }
 
   def refreshForModule(project: Project, moduleName: String, psiFile: PsiFile): Unit = {
-    val keys = Cache.asMap().keySet().asScala.filter(k => k.project == project && k.moduleName == moduleName && (k.psiFile.isEmpty || k.psiFile.contains(psiFile)))
+    val keys = getKeys(project, moduleName)
     keys.foreach(k => Cache.refresh(k))
+  }
+
+  def invalidateForModule(project: Project, moduleName: String, psiFile: PsiFile): Unit = {
+    val keys = getKeys(project, moduleName)
+    keys.foreach(k => Cache.invalidate(k))
   }
 
   def invalidate(project: Project): Unit = {
     val keys = Cache.asMap().asScala.keys.filter(k => k.project == project)
     keys.foreach(k => Cache.invalidate(k))
+  }
+
+  private def getKeys(project: Project, moduleName: String) = {
+    Cache.asMap().keySet().asScala.filter(k => k.project == project && k.moduleName == moduleName)
   }
 }
 

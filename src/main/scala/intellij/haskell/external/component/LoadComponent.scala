@@ -17,7 +17,6 @@
 package intellij.haskell.external.component
 
 import com.intellij.openapi.application.ApplicationManager
-import com.intellij.openapi.util.Computable
 import com.intellij.psi.PsiFile
 import intellij.haskell.external.repl.StackReplsManager
 import intellij.haskell.psi.HaskellPsiUtil
@@ -40,13 +39,16 @@ private[component] object LoadComponent {
 
     StackReplsManager.getProjectRepl(project).flatMap(_.load(psiFile)) match {
       case Some((loadOutput, loadFailed)) =>
-        if (!loadFailed) {
-          ApplicationManager.getApplication.executeOnPooledThread(new Runnable {
-            override def run(): Unit = {
-              findModuleName(psiFile).foreach(BrowseModuleComponent.refreshForModule(project, _, psiFile))
+        ApplicationManager.getApplication.runReadAction(new Runnable {
+          override def run(): Unit = {
+            val moduleName = HaskellPsiUtil.findModuleName(psiFile)
+            if (loadFailed) {
+              moduleName.foreach(BrowseModuleComponent.invalidateForModule(project, _, psiFile))
+            } else {
+              moduleName.foreach(BrowseModuleComponent.refreshForModule(project, _, psiFile))
             }
-          })
-        }
+          }
+        })
 
         val filePath = HaskellFileUtil.makeFilePathAbsolute(HaskellFileUtil.getFilePath(psiFile), project)
 
@@ -57,16 +59,6 @@ private[component] object LoadComponent {
         val otherFileProblems = loadProblems.diff(currentFileProblems)
         LoadResult(currentFileProblems, otherFileProblems, loadFailed)
       case _ => LoadResult()
-    }
-  }
-
-  private def findModuleName(psiFile: PsiFile) = {
-    ApplicationManager.getApplication.runReadAction {
-      new Computable[Option[String]] {
-        override def compute(): Option[String] = {
-          HaskellPsiUtil.findModuleName(psiFile)
-        }
-      }
     }
   }
 
@@ -103,7 +95,7 @@ sealed abstract class LoadProblem(private val message: String) {
   }
 
   def isWarning: Boolean = {
-    message.trim.startsWith("warning:") || message.trim.startsWith("Warning:")
+    message.startsWith("warning:") || message.startsWith("Warning:")
   }
 }
 

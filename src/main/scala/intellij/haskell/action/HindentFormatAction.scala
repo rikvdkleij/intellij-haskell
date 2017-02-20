@@ -17,7 +17,7 @@
 package intellij.haskell.action
 
 import java.io.{BufferedReader, BufferedWriter, InputStreamReader, OutputStreamWriter}
-import java.util.concurrent.{Callable, TimeUnit, TimeoutException}
+import java.util.concurrent.Callable
 
 import com.intellij.openapi.actionSystem.{AnAction, AnActionEvent}
 import com.intellij.openapi.application.ApplicationManager
@@ -26,7 +26,7 @@ import com.intellij.openapi.util.Computable
 import com.intellij.psi.PsiFile
 import com.intellij.psi.codeStyle._
 import intellij.haskell.settings.HaskellSettingsState
-import intellij.haskell.util.{HaskellEditorUtil, HaskellFileUtil}
+import intellij.haskell.util.{FutureUtil, HaskellEditorUtil, HaskellFileUtil}
 import intellij.haskell.{HaskellLanguage, HaskellNotificationGroup}
 
 import scala.annotation.tailrec
@@ -61,7 +61,7 @@ object HindentFormatAction {
       case Some(hindentPath) =>
         val command = Seq(hindentPath, "--line-length", lineLength.toString, "--indent-size", indentOptions.INDENT_SIZE.toString)
 
-        val formatFuture = ApplicationManager.getApplication.executeOnPooledThread(new Callable[Either[String, String]] {
+        val formatAction = ApplicationManager.getApplication.executeOnPooledThread(new Callable[Either[String, String]] {
           override def call(): Either[String, String] = {
             selectionModel match {
               case Some(sm) => writeToHindent(command, getSelectedText(sm))
@@ -70,13 +70,7 @@ object HindentFormatAction {
           }
         })
 
-        val formattedSourceCode = try {
-          Option(formatFuture.get(500, TimeUnit.MILLISECONDS))
-        } catch {
-          case e: TimeoutException =>
-            HaskellNotificationGroup.logErrorEvent(project, s"Timeout while formatting by `$HindentName`.")
-            None
-        }
+        val formattedSourceCode = FutureUtil.getValue(formatAction, project, s"formatting by `$HindentName`")
         formattedSourceCode.foreach {
           case Left(e) =>
             HaskellNotificationGroup.logErrorEvent(project, e)

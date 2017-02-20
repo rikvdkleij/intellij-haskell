@@ -1,19 +1,17 @@
 // This is a generated file. Not intended for manual editing.
 package intellij.haskell.psi.impl;
 
-import java.util.List;
-import org.jetbrains.annotations.*;
 import com.intellij.lang.ASTNode;
+import com.intellij.navigation.ItemPresentation;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiElementVisitor;
-import com.intellij.psi.util.PsiTreeUtil;
-import static intellij.haskell.psi.HaskellTypes.*;
-import intellij.haskell.psi.stubs.HaskellConidStub;
-import intellij.haskell.psi.*;
-import com.intellij.navigation.ItemPresentation;
 import com.intellij.psi.PsiReference;
-import com.intellij.psi.search.SearchScope;
 import com.intellij.psi.stubs.IStubElementType;
+import intellij.haskell.psi.HaskellConid;
+import intellij.haskell.psi.HaskellNamedElement;
+import intellij.haskell.psi.HaskellVisitor;
+import intellij.haskell.psi.stubs.HaskellConidStub;
+import org.jetbrains.annotations.NotNull;
 
 public class HaskellConidImpl extends HaskellNamedStubBasedPsiElementBase<HaskellConidStub> implements HaskellConid {
 
@@ -52,10 +50,6 @@ public class HaskellConidImpl extends HaskellNamedStubBasedPsiElementBase<Haskel
 
   public ItemPresentation getPresentation() {
     return HaskellPsiImplUtil.getPresentation(this);
-  }
-
-  public SearchScope getUseScope() {
-    return HaskellPsiImplUtil.getUseScope(this);
   }
 
 }

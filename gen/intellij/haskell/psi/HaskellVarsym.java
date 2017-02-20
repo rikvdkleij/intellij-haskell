@@ -1,14 +1,11 @@
 // This is a generated file. Not intended for manual editing.
 package intellij.haskell.psi;
 
-import java.util.List;
-import org.jetbrains.annotations.*;
+import com.intellij.navigation.ItemPresentation;
 import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiReference;
 import com.intellij.psi.StubBasedPsiElement;
 import intellij.haskell.psi.stubs.HaskellVarsymStub;
-import com.intellij.navigation.ItemPresentation;
-import com.intellij.psi.PsiReference;
-import com.intellij.psi.search.SearchScope;
 
 public interface HaskellVarsym extends HaskellNamedElement, StubBasedPsiElement<HaskellVarsymStub> {
 
@@ -21,7 +18,5 @@ public interface HaskellVarsym extends HaskellNamedElement, StubBasedPsiElement<
   PsiReference getReference();
 
   ItemPresentation getPresentation();
-
-  SearchScope getUseScope();
 
 }

@@ -20,10 +20,8 @@ import java.util.concurrent.Executors
 
 import com.google.common.cache.{CacheBuilder, CacheLoader}
 import com.google.common.util.concurrent.{ListenableFuture, ListenableFutureTask, UncheckedExecutionException}
-import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.progress.ProcessCanceledException
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.util.Computable
 import com.intellij.psi.{PsiElement, PsiFile}
 import intellij.haskell.external.repl.{StackReplOutput, StackReplsManager}
 import intellij.haskell.psi._
@@ -74,7 +72,7 @@ private[component] object NameInfoComponent {
         private def findNameInfos(key: Key, project: Project): Option[Iterable[NameInfo]] = {
           HaskellProjectUtil.isLibraryFile(key.psiFile).flatMap(isLibraryFile => {
             val output = if (isLibraryFile) {
-              val moduleName = findModuleName(key.psiFile)
+              val moduleName = HaskellPsiUtil.findModuleName(key.psiFile, runInRead = true)
               moduleName.flatMap(mn => StackReplsManager.getGlobalRepl(project).flatMap(_.findInfo(mn, key.name)))
             } else {
               findProjectInfo(key, project)
@@ -85,16 +83,6 @@ private[component] object NameInfoComponent {
 
         private def findProjectInfo(key: Key, project: Project): Option[StackReplOutput] = {
           StackReplsManager.getProjectRepl(project).flatMap(_.findInfo(key.psiFile, key.name))
-        }
-
-        private def findModuleName(psiFile: PsiFile) = {
-          ApplicationManager.getApplication.runReadAction {
-            new Computable[Option[String]] {
-              override def compute(): Option[String] = {
-                HaskellPsiUtil.findModuleName(psiFile)
-              }
-            }
-          }
         }
       }
     )

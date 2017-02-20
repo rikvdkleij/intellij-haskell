@@ -26,7 +26,7 @@ import com.intellij.psi.search.{FileTypeIndex, GlobalSearchScope, GlobalSearchSc
 import com.intellij.util.indexing.FileBasedIndex.InputFilter
 import com.intellij.util.indexing._
 import com.intellij.util.io.{DataExternalizer, EnumeratorStringDescriptor, KeyDescriptor}
-import intellij.haskell.util.{HaskellFileUtil, HaskellProjectUtil}
+import intellij.haskell.util.HaskellFileUtil
 import intellij.haskell.{HaskellFile, HaskellFileType}
 
 import scala.collection.JavaConverters._
@@ -80,16 +80,20 @@ object HaskellFileIndex {
     getFilesForType(HaskellFileType.INSTANCE, project, searchScope)
   }
 
-  def findProjectFiles(project: Project): Iterable[VirtualFile] = {
-    findFiles(project, HaskellProjectUtil.getProjectModulesSearchScope(project))
+  def findProjectPsiFiles(project: Project): Iterable[HaskellFile] = {
+    HaskellFileUtil.convertToHaskellFiles(findProjectFiles(project), project)
+  }
+
+  def findProjectProductionPsiFiles(project: Project): Iterable[HaskellFile] = {
+    HaskellFileUtil.convertToHaskellFiles(findProjectProductionFiles(project), project)
   }
 
   def findProjectTestPsiFiles(project: Project): Iterable[HaskellFile] = {
     HaskellFileUtil.convertToHaskellFiles(findProjectTestFiles(project), project)
   }
 
-  def findProjectProductionPsiFiles(project: Project): Iterable[HaskellFile] = {
-    HaskellFileUtil.convertToHaskellFiles(findProjectProductionFiles(project), project)
+  private def findProjectFiles(project: Project): Iterable[VirtualFile] = {
+    findFiles(project, GlobalSearchScope.projectScope(project))
   }
 
   private def findProjectProductionFiles(project: Project): Iterable[VirtualFile] = {

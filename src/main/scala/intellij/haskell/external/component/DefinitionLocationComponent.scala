@@ -64,19 +64,27 @@ private[component] object DefinitionLocationComponent {
         private def createDefinitionLocation(key: Key): Result = {
           val psiFile = key.psiFile
           val project = psiFile.getProject
-          val location = (findLocationInfoFor(key, psiFile, project, endColumnExcluded = false) match {
-            case Some(output1) =>
-              val headOption = output1.stdOutLines.headOption
-              if (headOption.isEmpty || headOption.contains("Couldn't resolve to any modules.") || headOption.contains("No matching export in any local modules.")) {
-                findLocationInfoFor(key, psiFile, project, endColumnExcluded = true) match {
-                  case Some(output2) => Right(output2)
-                  case _ => Left("No info available")
+          val locationInfoOutput = if (key.expression.trim.length == 1) {
+            findLocationInfoFor(key, psiFile, project, endColumnExcluded = true) match {
+              case Some(output) => Right(output)
+              case _ => Left("No info available")
+            }
+          } else {
+            findLocationInfoFor(key, psiFile, project, endColumnExcluded = false) match {
+              case Some(output1) =>
+                val headOption = output1.stdOutLines.headOption
+                if (headOption.isEmpty || headOption.contains("Couldn't resolve to any modules.") || headOption.contains("No matching export in any local modules.")) {
+                  findLocationInfoFor(key, psiFile, project, endColumnExcluded = true) match {
+                    case Some(output2) => Right(output2)
+                    case _ => Left("No info available")
+                  }
+                } else {
+                  Right(output1)
                 }
-              } else {
-                Right(output1)
-              }
-            case _ => Left("No info available")
-          }).right.map(_.stdOutLines.headOption.flatMap(l => createDefinitionLocationInfo(l)))
+              case _ => Left("No info available")
+            }
+          }
+          val location = locationInfoOutput.right.map(_.stdOutLines.headOption.flatMap(l => createDefinitionLocationInfo(l)))
           Result(location)
         }
 

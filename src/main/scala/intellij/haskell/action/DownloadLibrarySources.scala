@@ -17,6 +17,7 @@
 package intellij.haskell.action
 
 import com.intellij.openapi.actionSystem.{AnAction, AnActionEvent}
+import intellij.haskell.external.component.HaskellComponentsManager
 import intellij.haskell.module.HaskellModuleBuilder
 import intellij.haskell.util.HaskellProjectUtil
 
@@ -30,7 +31,11 @@ class DownloadLibrarySources extends AnAction {
   }
 
   override def actionPerformed(e: AnActionEvent): Unit = {
-    HaskellProjectUtil.getProjectModules(e.getProject).foreach(m =>
-      HaskellModuleBuilder.addLibrarySources(m))
+    Option(e.getProject).foreach { project =>
+      HaskellProjectUtil.getProjectModules(project).foreach(m =>
+        HaskellModuleBuilder.addLibrarySources(m)
+      )
+      HaskellComponentsManager.invalidateModuleFileCache(project)
+    }
   }
 }

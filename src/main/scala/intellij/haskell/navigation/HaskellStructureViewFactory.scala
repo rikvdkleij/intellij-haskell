@@ -74,7 +74,7 @@ private class HaskellStructureViewTreeElement(val element: PsiElement, val typeS
 
   def getChildren: Array[TreeElement] = {
     (element match {
-      case hf: HaskellFile => HaskellPsiUtil.findDeclarationElements(hf)
+      case hf: HaskellFile => HaskellPsiUtil.findHaskellDeclarationElements(hf)
       case _ => Seq()
     }).map(declarationElement => new HaskellStructureViewTreeElement(declarationElement, declarationElement.getText)).toArray
   }

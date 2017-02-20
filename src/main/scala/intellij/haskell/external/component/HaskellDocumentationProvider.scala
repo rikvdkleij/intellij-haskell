@@ -41,7 +41,7 @@ class HaskellDocumentationProvider extends AbstractDocumentationProvider {
       case Some(ni) =>
         val moduleName = ni match {
           case (lei: LibraryNameInfo) => Option(lei.moduleName)
-          case (_: ProjectNameInfo) => HaskellPsiUtil.findModuleName(namedElement.getContainingFile)
+          case (_: ProjectNameInfo) => HaskellPsiUtil.findModuleName(namedElement.getContainingFile, runInRead = true)
           case (_: BuiltInNameInfo) => Some("Prelude")
           case _ => None
         }

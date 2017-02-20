@@ -86,7 +86,7 @@ object HaskellReference {
       if (isLibraryFile) {
         val resolvedResultsByNameInfo = createResolveResultsByNameInfos(namedElement, project)
         if (resolvedResultsByNameInfo.isEmpty) {
-          findDeclarationElements(psiFile).flatMap(_.getIdentifierElements).find(_.getName == namedElement.getName).map(e => new HaskellNamedElementResolveResult(e)).toSeq
+          findHaskellDeclarationElements(psiFile).flatMap(_.getIdentifierElements).find(_.getName == namedElement.getName).map(e => new HaskellNamedElementResolveResult(e)).toSeq
         } else {
           resolvedResultsByNameInfo
         }
@@ -122,7 +122,7 @@ object HaskellReference {
 
   def findNamedElementsByLibraryNameInfo(libraryNameInfo: LibraryNameInfo, name: String, project: Project): Seq[HaskellNamedElement] = {
     HaskellComponentsManager.findHaskellFiles(project, libraryNameInfo.moduleName).toSeq.flatMap { f =>
-      val declarationElements = findDeclarationElements(f)
+      val declarationElements = findHaskellDeclarationElements(f)
       val namedElementsByNameInfo = declarationElements.flatMap(_.getIdentifierElements).
         filter(_.getName == name).
         filter(ne => HaskellComponentsManager.findNameInfo(ne).exists(ni => ni.shortenedDeclaration == libraryNameInfo.shortenedDeclaration))
@@ -142,7 +142,7 @@ object HaskellReference {
 
   def findNamedElementsInModule(moduleName: String, name: String, project: Project): Seq[HaskellNamedElement] = {
     HaskellComponentsManager.findHaskellFiles(project, moduleName).toSeq.flatMap { f =>
-      HaskellPsiUtil.findDeclarationElements(f).flatMap(_.getIdentifierElements).filter(_.getName == name)
+      HaskellPsiUtil.findHaskellDeclarationElements(f).flatMap(_.getIdentifierElements).filter(_.getName == name)
     }
   }
 

@@ -16,16 +16,11 @@
 
 package intellij.haskell.refactor
 
-import com.intellij.psi.search.GlobalSearchScope
-import com.intellij.psi.search.searches.ReferencesSearch
-import com.intellij.psi.{PsiElement, PsiReference}
+import com.intellij.psi.PsiElement
 import com.intellij.refactoring.listeners.RefactoringElementListener
 import com.intellij.refactoring.rename.RenamePsiElementProcessor
 import com.intellij.usageView.UsageInfo
-import intellij.haskell.util.index.HaskellFileIndex
-import intellij.haskell.util.{HaskellFileUtil, HaskellProjectUtil}
-
-import scala.collection.JavaConverters._
+import intellij.haskell.util.HaskellProjectUtil
 
 class HaskellRenameVariableProcessor extends RenamePsiElementProcessor {
 
@@ -33,10 +28,5 @@ class HaskellRenameVariableProcessor extends RenamePsiElementProcessor {
 
   override def renameElement(element: PsiElement, newName: String, usages: Array[UsageInfo], listener: RefactoringElementListener): Unit = {
     super.renameElement(element, newName, usages, listener)
-  }
-
-  override def findReferences(element: PsiElement): java.util.Collection[PsiReference] = {
-    val project = element.getProject
-    ReferencesSearch.search(element, GlobalSearchScope.filesScope(project, HaskellFileIndex.findProjectFiles(project).asJavaCollection)).findAll
   }
 }
