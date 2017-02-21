@@ -7,6 +7,7 @@ import com.intellij.openapi.module.{Module, ModuleManager}
 import com.intellij.openapi.roots.ModuleRootManager
 import intellij.haskell.HaskellIcons
 import intellij.haskell.runconfig.HaskellStackConfigurationType
+import intellij.haskell.runconfig.console.HaskellConsoleConfiguration
 
 class RunStackCommandAction extends AnAction(HaskellIcons.HaskellSmallLogo) {
 
@@ -53,14 +54,24 @@ class RunStackCommandAction extends AnAction(HaskellIcons.HaskellSmallLogo) {
     val runManager = RunManagerEx.getInstanceEx(module.getProject)
 
     val factories = new HaskellStackConfigurationType().getConfigurationFactories
-    val newConfigurationSettings = runManager.createRunConfiguration(command, factories(3))
 
-    val configuration = newConfigurationSettings.getConfiguration.asInstanceOf[HaskellStackCommandConfiguration]
-    configuration.setCommand(command)
-    configuration.setConsoleArgs(consoleArgs)
+    if (!List("ghci", "repl").contains(command)) {
+      val newConfigurationSettings = runManager.createRunConfiguration(command, factories(3))
 
-    runManager.setTemporaryConfiguration(newConfigurationSettings)
-    newConfigurationSettings
+      val configuration = newConfigurationSettings.getConfiguration.asInstanceOf[HaskellStackCommandConfiguration]
+      configuration.setCommand(command)
+      configuration.setConsoleArgs(consoleArgs)
+
+      runManager.setTemporaryConfiguration(newConfigurationSettings)
+      newConfigurationSettings
+    } else {
+      val newConfigurationSettings = runManager.createRunConfiguration(command, factories(0))
+
+      val configuration = newConfigurationSettings.getConfiguration.asInstanceOf[HaskellConsoleConfiguration]
+      configuration.setConsoleArgs(consoleArgs)
+
+      runManager.setTemporaryConfiguration(newConfigurationSettings)
+      newConfigurationSettings
+    }
   }
-
 }
