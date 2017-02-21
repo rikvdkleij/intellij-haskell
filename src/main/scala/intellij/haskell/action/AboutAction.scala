@@ -30,7 +30,7 @@ class AboutAction extends AnAction {
 
   override def update(actionEvent: AnActionEvent) {
     val project = Option(actionEvent.getProject)
-    val isHaskellProject = project.exists(HaskellProjectUtil.isHaskellStackProject)
+    val isHaskellProject = project.exists(HaskellProjectUtil.isHaskellStackProject(_))
     actionEvent.getPresentation.setEnabled(isHaskellProject)
     actionEvent.getPresentation.setVisible(isHaskellProject)
   }
