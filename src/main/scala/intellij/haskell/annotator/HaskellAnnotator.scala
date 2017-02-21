@@ -48,6 +48,7 @@ class HaskellAnnotator extends ExternalAnnotator[PsiFile, LoadResult] {
   private final val UseLanguageExtensionPattern3 = """.* You need (\w+) to.*""".r
   private final val UseLanguageExtensionPattern4 = """.* Try enabling (\w+).*""".r
   private final val UseLanguageExtensionPattern5 = """.* Did you mean to enable (\w+)\?""".r
+  private final val UseLanguageExtensionPattern6 = """.*Use (\w+) to permit this.*""".r
   private final val DefinedButNotUsedPattern = """.* Defined but not used: [‘`](.+)[’']""".r
   private final val NotInScopePattern = """.*Not in scope:[^‘`]+[‘`](.+)[’']""".r
   private final val NotInScopePattern2 = """.* not in scope: (.+)""".r
@@ -144,6 +145,7 @@ class HaskellAnnotator extends ExternalAnnotator[PsiFile, LoadResult] {
           case UseLanguageExtensionPattern3(languageExtension) => createLanguageExtensionIntentionAction(problem, tr, languageExtension)
           case UseLanguageExtensionPattern4(languageExtension) => createLanguageExtensionIntentionAction(problem, tr, languageExtension)
           case UseLanguageExtensionPattern5(languageExtension) => createLanguageExtensionIntentionAction(problem, tr, languageExtension)
+          case UseLanguageExtensionPattern6(languageExtension) => createLanguageExtensionIntentionAction(problem, tr, languageExtension)
           case _ => if (problem.isWarning)
             WarningAnnotation(tr, problem.plainMessage, problem.htmlMessage)
           else
