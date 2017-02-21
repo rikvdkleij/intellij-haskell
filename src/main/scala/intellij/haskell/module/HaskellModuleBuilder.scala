@@ -47,13 +47,6 @@ class HaskellModuleBuilder extends ModuleBuilder with SourcePathsBuilder with Mo
 
   override def moduleCreated(module: Module): Unit = {
     HaskellModuleBuilder.addLibrarySources(module)
-    val rootModel = ModuleRootManager.getInstance(module).getModifiableModel
-    rootModel.inheritSdk()
-    ApplicationManager.getApplication.runWriteAction(new Runnable {
-      override def run(): Unit = {
-        rootModel.commit()
-      }
-    })
   }
 
   override def getModuleType: ModuleType[_ <: ModuleBuilder] = HaskellModuleType.getInstance
@@ -67,7 +60,10 @@ class HaskellModuleBuilder extends ModuleBuilder with SourcePathsBuilder with Mo
   override def setupRootModel(rootModel: ModifiableRootModel): Unit = {
     addListener(this)
 
-    if (rootModel.getSdk == null) rootModel.setSdk(HaskellSdkType.findOrCreateSdk())
+    if (rootModel.getSdk == null) {
+      rootModel.setSdk(HaskellSdkType.findOrCreateSdk())
+      rootModel.inheritSdk()
+    }
 
     val contentEntry = doAddContentEntry(rootModel)
 
