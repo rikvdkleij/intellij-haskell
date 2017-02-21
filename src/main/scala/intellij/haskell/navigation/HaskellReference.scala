@@ -25,14 +25,14 @@ import intellij.haskell.psi.HaskellPsiUtil._
 import intellij.haskell.psi._
 import intellij.haskell.util.{HaskellProjectUtil, LineColumnPosition}
 
-class HaskellReference(element: HaskellNamedElement, textRange: TextRange) extends PsiPolyVariantReferenceBase[HaskellNamedElement](element, textRange) {
+class HaskellReference(element: HaskellNamedElement, textRange: TextRange) extends PsiReferenceBase[HaskellNamedElement](element, textRange) {
 
   override def resolve: PsiElement = {
     val resolveResults: Array[ResolveResult] = multiResolve(false)
     resolveResults.headOption.map(_.getElement).orNull
   }
 
-  override def multiResolve(incompleteCode: Boolean): Array[ResolveResult] = {
+  def multiResolve(incompleteCode: Boolean): Array[ResolveResult] = {
     val project = myElement.getProject
     val psiFile = myElement.getContainingFile
 
@@ -52,7 +52,7 @@ class HaskellReference(element: HaskellNamedElement, textRange: TextRange) exten
           resolveResults.toArray
         }
       case ne: HaskellNamedElement if findImportHidingDeclarationParent(ne).isDefined => Array[ResolveResult]()
-      case ne: HaskellNamedElement => HaskellReference.resolveResults(ne, psiFile, project).distinct.toArray
+      case ne: HaskellNamedElement => HaskellReference.resolveResults(ne, psiFile, project, projectWithInstances = false).distinct.toArray
       case _ => Array[ResolveResult]()
     }
     result.asInstanceOf[Array[ResolveResult]]
@@ -81,7 +81,7 @@ class HaskellReference(element: HaskellNamedElement, textRange: TextRange) exten
 
 object HaskellReference {
 
-  def resolveResults(namedElement: HaskellNamedElement, psiFile: PsiFile, project: Project): Seq[ResolveResult] = {
+  def resolveResults(namedElement: HaskellNamedElement, psiFile: PsiFile, project: Project, projectWithInstances: Boolean): Seq[ResolveResult] = {
     HaskellProjectUtil.isLibraryFile(psiFile).map(isLibraryFile => {
       if (isLibraryFile) {
         val resolvedResultsByNameInfo = createResolveResultsByNameInfos(namedElement, project)
@@ -91,7 +91,12 @@ object HaskellReference {
           resolvedResultsByNameInfo
         }
       } else {
-        findReferenceByDefinitionLocation(namedElement, project).map(prr => new HaskellNamedElementResolveResult(prr)) ++ createResolveResultsByNameInfos(namedElement, project)
+        val references = findReferenceByDefinitionLocation(namedElement, project).map(prr => new HaskellNamedElementResolveResult(prr))
+        if (projectWithInstances || references.isEmpty) {
+          references ++ createResolveResultsByNameInfos(namedElement, project)
+        } else {
+          references
+        }
       }
     }).getOrElse(Seq())
   }

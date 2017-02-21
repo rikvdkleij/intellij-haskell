@@ -6573,7 +6573,7 @@ public class HaskellParser implements PsiParser, LightPsiParser {
   }
 
   /* ********************************************************** */
-  // q_names onls COLON_COLON onls (ccontext DOUBLE_RIGHT_ARROW)* onls ttype !EQUAL |
+  // q_names onls COLON_COLON (onls ccontext onls DOUBLE_RIGHT_ARROW)* onls ttype !EQUAL |
   //                                   q_names onls LEFT_PAREN onls q_names onls COMMA onls ccontext onls DOUBLE_RIGHT_ARROW onls ttype onls RIGHT_PAREN
   public static boolean type_signature(PsiBuilder b, int l) {
     if (!recursion_guard_(b, l, "type_signature")) return false;
@@ -6585,7 +6585,7 @@ public class HaskellParser implements PsiParser, LightPsiParser {
     return r;
   }
 
-  // q_names onls COLON_COLON onls (ccontext DOUBLE_RIGHT_ARROW)* onls ttype !EQUAL
+  // q_names onls COLON_COLON (onls ccontext onls DOUBLE_RIGHT_ARROW)* onls ttype !EQUAL
   private static boolean type_signature_0(PsiBuilder b, int l) {
     if (!recursion_guard_(b, l, "type_signature_0")) return false;
     boolean r;
@@ -6593,41 +6593,42 @@ public class HaskellParser implements PsiParser, LightPsiParser {
     r = q_names(b, l + 1);
     r = r && onls(b, l + 1);
     r = r && consumeToken(b, HS_COLON_COLON);
-    r = r && onls(b, l + 1);
-    r = r && type_signature_0_4(b, l + 1);
+    r = r && type_signature_0_3(b, l + 1);
     r = r && onls(b, l + 1);
     r = r && ttype(b, l + 1);
-    r = r && type_signature_0_7(b, l + 1);
+    r = r && type_signature_0_6(b, l + 1);
     exit_section_(b, m, null, r);
     return r;
   }
 
-  // (ccontext DOUBLE_RIGHT_ARROW)*
-  private static boolean type_signature_0_4(PsiBuilder b, int l) {
-    if (!recursion_guard_(b, l, "type_signature_0_4")) return false;
+  // (onls ccontext onls DOUBLE_RIGHT_ARROW)*
+  private static boolean type_signature_0_3(PsiBuilder b, int l) {
+    if (!recursion_guard_(b, l, "type_signature_0_3")) return false;
     int c = current_position_(b);
     while (true) {
-      if (!type_signature_0_4_0(b, l + 1)) break;
-      if (!empty_element_parsed_guard_(b, "type_signature_0_4", c)) break;
+      if (!type_signature_0_3_0(b, l + 1)) break;
+      if (!empty_element_parsed_guard_(b, "type_signature_0_3", c)) break;
       c = current_position_(b);
     }
     return true;
   }
 
-  // ccontext DOUBLE_RIGHT_ARROW
-  private static boolean type_signature_0_4_0(PsiBuilder b, int l) {
-    if (!recursion_guard_(b, l, "type_signature_0_4_0")) return false;
+  // onls ccontext onls DOUBLE_RIGHT_ARROW
+  private static boolean type_signature_0_3_0(PsiBuilder b, int l) {
+    if (!recursion_guard_(b, l, "type_signature_0_3_0")) return false;
     boolean r;
     Marker m = enter_section_(b);
-    r = ccontext(b, l + 1);
+    r = onls(b, l + 1);
+    r = r && ccontext(b, l + 1);
+    r = r && onls(b, l + 1);
     r = r && consumeToken(b, HS_DOUBLE_RIGHT_ARROW);
     exit_section_(b, m, null, r);
     return r;
   }
 
   // !EQUAL
-  private static boolean type_signature_0_7(PsiBuilder b, int l) {
-    if (!recursion_guard_(b, l, "type_signature_0_7")) return false;
+  private static boolean type_signature_0_6(PsiBuilder b, int l) {
+    if (!recursion_guard_(b, l, "type_signature_0_6")) return false;
     boolean r;
     Marker m = enter_section_(b, l, _NOT_);
     r = !consumeToken(b, HS_EQUAL);

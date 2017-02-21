@@ -145,7 +145,7 @@ default_declaration         ::= DEFAULT onls (LEFT_PAREN (ttype (COMMA ttype)*)?
 
 type_instance_declaration   ::= TYPE_INSTANCE onls expression
 
-type_signature              ::= q_names onls COLON_COLON onls (ccontext DOUBLE_RIGHT_ARROW)* onls ttype !EQUAL |
+type_signature              ::= q_names onls COLON_COLON (onls ccontext onls DOUBLE_RIGHT_ARROW)* onls ttype !EQUAL |
                                   q_names onls LEFT_PAREN onls q_names onls COMMA onls ccontext onls DOUBLE_RIGHT_ARROW onls ttype onls RIGHT_PAREN   // seen in  Test.Hspec.Expectations: with_loc(shouldBe, (Show a, Eq a) => a -> a -> Expectation)
 
 fixity_declaration          ::= fixity (DECIMAL)? q_names
