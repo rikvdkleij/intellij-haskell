@@ -50,7 +50,7 @@ class HoogleByNameContributor extends ChooseByNameContributor {
         DeclarationLineUtil.findName(declaration).map(nd => {
           val namedElementsByNameInfo = HaskellComponentsManager.findNameInfoByModuleAndName(project, moduleName, nd.name).flatMap {
             case lni: LibraryNameInfo => HaskellReference.findNamedElementsByLibraryNameInfo(lni, nd.name, project)
-            case pni: ProjectNameInfo => HaskellReference.findReferenceByLocation(pni.filePath, pni.lineNr, pni.columnNr, nd.name, project).toIterable
+            case pni: ProjectNameInfo => HaskellReference.findNamedElementByLocation(pni.filePath, pni.lineNr, pni.columnNr, nd.name, project).toIterable
             case _ => Iterable()
           }
           if (namedElementsByNameInfo.isEmpty) {

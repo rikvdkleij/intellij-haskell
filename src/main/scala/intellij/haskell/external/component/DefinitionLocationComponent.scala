@@ -62,27 +62,41 @@ private[component] object DefinitionLocationComponent {
         // See https://github.com/commercialhaskell/intero/issues/260
         // and https://github.com/commercialhaskell/intero/issues/182
         private def findDefinitionLocation(key: Key): Result = {
+
           val psiFile = key.psiFile
           val project = psiFile.getProject
-          val location = findLocationInfoFor(key, psiFile, project, endColumnExcluded = true) match {
-            case Some(output) =>
-              output.stdOutLines.headOption match {
-                case Some(infoLine) =>
-                  createLocationInfo(infoLine) match {
-                    case someInfo@Some(info: DefinitionLocationInfo) =>
-                      if ((key.startColumnNr == info.startColumnNr && key.startLineNr == info.startLineNr && key.endColumnNr == info.endColumnNr && key.endLineNr == info.endLineNr) || (info.startColumnNr == info.endColumnNr && info.startLineNr == info.endLineNr)) {
-                        findLocationInfoFor(key, psiFile, project, endColumnExcluded = false) match {
-                          case Some(o) => Right(o.stdOutLines.headOption.flatMap(createLocationInfo))
-                          case None => Left("No info available")
+
+          def createLocationInfoWithEndColumnExcluded = {
+            findLocationInfoFor(key, psiFile, project, endColumnExcluded = true) match {
+              case Some(o) => Right(o.stdOutLines.headOption.flatMap(createLocationInfo))
+              case None => Left("No info available")
+            }
+          }
+
+          val location = if (key.expression.trim.length == 1) {
+            createLocationInfoWithEndColumnExcluded
+          } else {
+            findLocationInfoFor(key, psiFile, project, endColumnExcluded = false) match {
+              case Some(output) =>
+                output.stdOutLines.headOption match {
+                  case Some(infoLine) =>
+                    createLocationInfo(infoLine) match {
+                      case info@Some(locationInfo: DefinitionLocationInfo) =>
+                        val locatedNamedElement = LineColumnPosition.getOffset(psiFile, LineColumnPosition(locationInfo.startLineNr, locationInfo.startColumnNr)).flatMap(offset => Option(psiFile.findElementAt(offset)).flatMap(HaskellPsiUtil.findNamedElement))
+                        if (locatedNamedElement.exists(ne => ne.getName != key.expression)) {
+                          createLocationInfoWithEndColumnExcluded
+                        } else {
+                          Right(info)
                         }
-                      } else {
-                        Right(someInfo)
+                      case info => info match {
+                        case None => createLocationInfoWithEndColumnExcluded
+                        case Some(_) => Right(info)
                       }
-                    case info => Right(info)
-                  }
-                case None => Right(None)
-              }
-            case None => Left("No info available")
+                    }
+                  case None => createLocationInfoWithEndColumnExcluded
+                }
+              case None => Left("No info available")
+            }
           }
           Result(location)
         }

@@ -17,18 +17,18 @@
 package intellij.haskell.refactor
 
 import com.intellij.lang.refactoring.RefactoringSupportProvider
-import com.intellij.psi.{PsiElement, PsiFile, PsiPolyVariantReference, ResolveResult}
+import com.intellij.psi._
 import intellij.haskell.util.HaskellProjectUtil
 
 class HaskellRefactoringSupportProvider extends RefactoringSupportProvider {
 
   override def isMemberInplaceRenameAvailable(psiElement: PsiElement, context: PsiElement): Boolean = {
-    !psiElement.isInstanceOf[PsiFile] && definedInProjectFile(psiElement)
+    !psiElement.isInstanceOf[PsiFile] && isDefinedInProject(psiElement)
   }
 
-  private def definedInProjectFile(element: PsiElement) = {
-    Option(element.getReference).flatMap(_.asInstanceOf[PsiPolyVariantReference].multiResolve(false).headOption) match {
-      case Some(rr: ResolveResult) => !HaskellProjectUtil.isLibraryFile(rr.getElement.getContainingFile).getOrElse(true)
+  private def isDefinedInProject(psiElement: PsiElement) = {
+    Option(psiElement.getReference).flatMap(r => Option(r.resolve)) match {
+      case Some(e) => !HaskellProjectUtil.isLibraryFile(e.getContainingFile).getOrElse(false)
       case _ => false
     }
   }

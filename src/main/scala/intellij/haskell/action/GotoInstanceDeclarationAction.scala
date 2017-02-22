@@ -39,10 +39,7 @@ class GotoInstanceDeclarationAction extends AnAction {
       val project = actionContext.project
       val offset = editor.getCaretModel.getOffset
       Option(psiFile.findElementAt(offset)).flatMap(HaskellPsiUtil.findNamedElement).foreach(namedElement => {
-        val resolvedElements = HaskellReference.resolveResults(namedElement, psiFile, project, projectWithInstances = true).distinct.map(_.getElement)
-        val identifierElements = Option(namedElement.getReference).flatMap(r => Option(r.resolve)).flatMap(HaskellPsiUtil.findHighestDeclarationElementParent).map(_.getIdentifierElements.toSeq).getOrElse(Seq())
-        val instanceElements = resolvedElements.diff(identifierElements)
-
+        val instanceElements = HaskellReference.resolveInstanceReferences(namedElement, psiFile, project)
         if (instanceElements.nonEmpty) {
           val popup = NavigationUtil.getPsiElementPopup(instanceElements.toArray, new DefaultPsiElementCellRenderer() {
             override def getElementText(element: PsiElement): String = HaskellPsiImplUtil.getItemPresentableText(element)
