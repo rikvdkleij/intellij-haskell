@@ -106,8 +106,8 @@ class HaskellAnnotator extends ExternalAnnotator[PsiFile, LoadResult] {
     val project = psiFile.getProject
     if (loadResult.loadFailed && loadResult.currentFileProblems.isEmpty) {
       loadResult.otherFileProblems.foreach {
-        case cpf: LoadProblemInOtherFile if !cpf.isWarning => HaskellNotificationGroup.logInfoBalloonEvent(project, s"Error in file <b>${cpf.filePath}</b>: ${cpf.htmlMessage}.")
-        case cpf: LoadProblemWithoutLocation if !cpf.isWarning => HaskellNotificationGroup.logInfoBalloonEvent(project, s"Error ${cpf.htmlMessage}")
+        case cpf: LoadProblemInOtherFile if !cpf.isWarning => HaskellNotificationGroup.logErrorBalloonEvent(project, s"Error in file <b>${cpf.filePath}</b>: ${cpf.htmlMessage}.")
+        case cpf: LoadProblemWithoutLocation if !cpf.isWarning => HaskellNotificationGroup.logErrorBalloonEvent(project, s"Error ${cpf.htmlMessage}")
         case _ => ()
       }
     }
