@@ -407,12 +407,30 @@ class HaskellCompletionContributor extends CompletionContributor {
       vFile <- HaskellFileIndex.findProjectFiles(project)
       pFile = PsiManager.getInstance(project).findFile(vFile)
       mn <- findModuleName(pFile)
-    } yield ImportWithIds(
-      mn,
-      findExportIds(findExportDeclarations(pFile).toList.asJava),
-      qualified = false,
-      None
-    )
+    } yield {
+      val exportIds = findExportDeclarations(pFile).toList
+      if (exportIds.isEmpty) {
+        val tops = findTopDeclarations(pFile)
+          .toList
+          .map(d => Option(d.getExpression).map(_.getQNameList.asScala.head.getName))
+          .filter(_.isDefined)
+          .map(_.get).distinct
+
+        ImportWithIds(
+          mn,
+          tops,
+          qualified = false,
+          None
+        )
+      } else {
+        ImportWithIds(
+          mn,
+          findExportIds(exportIds.asJava),
+          qualified = false,
+          None
+        )
+      }
+    }
 
     val lookupElements = exportInfos.map(importInfo => Future {
       val moduleIdentifiers = findImportedModuleIdentifiers(project, importInfo.moduleName)

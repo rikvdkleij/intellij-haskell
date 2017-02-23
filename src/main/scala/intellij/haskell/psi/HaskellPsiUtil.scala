@@ -40,6 +40,10 @@ object HaskellPsiUtil {
     PsiTreeUtil.findChildrenOfType(psiFile.getOriginalFile, classOf[HaskellExport]).asScala
   }
 
+  def findTopDeclarations(psiFile: PsiFile): Iterable[HaskellTopDeclaration] = {
+    PsiTreeUtil.findChildrenOfType(psiFile.getOriginalFile, classOf[HaskellTopDeclaration]).asScala
+  }
+
   def findLanguageExtensions(psiFile: PsiFile): Iterable[HaskellLanguagePragma] = {
     runReadAction { psiFile: PsiFile =>
       PsiTreeUtil.findChildrenOfType(psiFile.getOriginalFile, classOf[HaskellLanguagePragma]).asScala
