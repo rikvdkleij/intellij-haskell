@@ -231,8 +231,8 @@ object HaskellModuleBuilder {
 
     haskellPackages.filter(packageInfo => {
       new File(project.getBasePath + File.separator + LibName + File.separator + packageInfo.dirName).exists()
-    }) ++ haskellPackages.filter(packageInfo => {
-      !new File(project.getBasePath + File.separator + LibName + File.separator + packageInfo.dirName).exists()
+    }) ++ haskellPackages.filterNot(packageInfo => {
+      new File(project.getBasePath + File.separator + LibName + File.separator + packageInfo.dirName).exists()
     }).flatMap { packageInfo =>
       val stdErr = CommandLine.runProgram(Some(project), project.getBasePath + File.separator + LibName, stackPath, Seq("unpack", packageInfo.dirName), 10000, captureOutputToLog = true, logErrorAsInfo = true).map(_.getStderr)
       progressFraction = progressFraction + step
