@@ -117,12 +117,13 @@ private[component] object DefinitionLocationComponent {
     )
 
   def findDefinitionLocation(namedElement: HaskellNamedElement): Option[LocationInfo] = {
-    val textOffset = namedElement.getTextOffset
     for {
+      qne <- HaskellPsiUtil.findQualifiedNameElement(namedElement)
+      textOffset = qne.getTextOffset
       psiFile <- Option(namedElement.getContainingFile)
       sp <- LineColumnPosition.fromOffset(psiFile, textOffset)
-      ep <- LineColumnPosition.fromOffset(psiFile, textOffset + namedElement.getText.length)
-      location <- find(psiFile, sp, ep, namedElement.getName)
+      ep <- LineColumnPosition.fromOffset(psiFile, textOffset + qne.getText.length)
+      location <- find(psiFile, sp, ep, qne.getName)
     } yield location
   }
 
