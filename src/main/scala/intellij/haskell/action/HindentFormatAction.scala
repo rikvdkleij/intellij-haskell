@@ -50,7 +50,7 @@ class HindentFormatAction extends AnAction {
 object HindentFormatAction {
   final val HindentName = "hindent"
 
-  private[action] def format(psiFile: PsiFile, selectionModel: Option[SelectionModel] = None): Unit = {
+  def format(psiFile: PsiFile, selectionModel: Option[SelectionModel] = None): Unit = {
     val lineLength = CodeStyleSettingsManager.getInstance(psiFile.getProject).getCurrentSettings.getRightMargin(HaskellLanguage.Instance)
     val indentOptions = CodeStyleSettingsManager.getInstance(psiFile.getProject).getCurrentSettings.getCommonSettings(HaskellLanguage.Instance).getIndentOptions
     val virtualFile = HaskellFileUtil.findVirtualFile(psiFile)

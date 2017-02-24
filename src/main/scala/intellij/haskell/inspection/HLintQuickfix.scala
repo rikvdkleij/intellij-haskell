@@ -20,7 +20,8 @@ import com.intellij.codeInspection.LocalQuickFixOnPsiElement
 import com.intellij.openapi.command.CommandProcessor
 import com.intellij.openapi.project.Project
 import com.intellij.psi.util.PsiTreeUtil
-import com.intellij.psi.{PsiElement, PsiFile}
+import com.intellij.psi.{PsiDocumentManager, PsiElement, PsiFile}
+import intellij.haskell.action.HindentFormatAction
 import intellij.haskell.psi.{HaskellElementFactory, HaskellTypes}
 
 import scala.annotation.tailrec
@@ -57,8 +58,10 @@ class HLintQuickfix(startElement: PsiElement, endElement: PsiElement, startLineN
           }
         }
       }
-
     }, null, null)
+    val manager = PsiDocumentManager.getInstance(project)
+    manager.doPostponedOperationsAndUnblockDocument(manager.getDocument(file))
+    HindentFormatAction.format(file, None)
   }
 
   @tailrec
