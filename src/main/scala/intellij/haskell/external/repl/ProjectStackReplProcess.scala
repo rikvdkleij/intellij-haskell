@@ -99,7 +99,7 @@ private[repl] class ProjectStackReplProcess(project: Project) extends StackReplP
     loadedPsiFileInfo match {
       case Some(info) if info.psiFile.contains(psiFile) && !info.loadFailed => executeAction(getFilePath(psiFile))
       case Some(info) if info.psiFile.contains(psiFile) && info.loadFailed => Some(StackReplOutput())
-      case Some(info) => HaskellPsiUtil.findModuleName(psiFile) match {
+      case Some(info) => HaskellPsiUtil.findModuleName(psiFile, runInRead = true) match {
         case Some(mn) if info.moduleName.contains(mn) && !info.loadFailed => executeAction(mn)
         case Some(mn) if info.moduleName.contains(mn) && info.loadFailed => Some(StackReplOutput())
         case omn =>
