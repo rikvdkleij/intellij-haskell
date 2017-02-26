@@ -229,9 +229,10 @@ object HaskellModuleBuilder {
 
     libRoot.listFiles().filterNot(subDir => haskellPackages.map(_.dirName).contains(subDir.getName)).foreach(FileUtil.delete)
 
-    haskellPackages.filter(packageInfo => {
+    val alreadyDownloadedPackages = haskellPackages.filter(packageInfo => {
       new File(project.getBasePath + File.separator + LibName + File.separator + packageInfo.dirName).exists()
-    }) ++ haskellPackages.filterNot(packageInfo => {
+    })
+    val newDownloadedPackages = haskellPackages.filterNot(packageInfo => {
       new File(project.getBasePath + File.separator + LibName + File.separator + packageInfo.dirName).exists()
     }).flatMap { packageInfo =>
       val stdErr = CommandLine.runProgram(Some(project), project.getBasePath + File.separator + LibName, stackPath, Seq("unpack", packageInfo.dirName), 10000, captureOutputToLog = true, logErrorAsInfo = true).map(_.getStderr)
@@ -244,6 +245,7 @@ object HaskellModuleBuilder {
         Seq(packageInfo)
       }
     }
+    alreadyDownloadedPackages ++ newDownloadedPackages
   }
 
   private def getUrlByPath(path: String): String = {
