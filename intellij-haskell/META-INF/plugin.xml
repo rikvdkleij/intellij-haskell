@@ -343,13 +343,6 @@
                     description="Hoogle for (selected) words">
                 <keyboard-shortcut first-keystroke="shift ctrl h" keymap="$default"/>
             </action>
-
-            <action id="Haskell.GenerateExports"
-                    class="intellij.haskell.action.GenerateExportsAction"
-                    text="Generate Exports"
-                    description="Generate exports with haskell-tools for currently opened file">
-                <keyboard-shortcut first-keystroke="ctrl alt g" keymap="$default"/>
-            </action>
             <add-to-group group-id="CodeEditorViewGroup" anchor="last"/>
         </group>
 
@@ -362,6 +355,12 @@
             <action id="Haskell.RestartStackRepl" class="intellij.haskell.action.RestartStackReplsAction"
                     text="Restart Haskell Stack REPLs"
                     description="Restart Haskell Stack repls and refresh cache">
+            </action>
+            <action id="Haskell.GenerateExports"
+                    class="intellij.haskell.action.GenerateExportsAction"
+                    text="Generate Exports"
+                    description="Generate exports with haskell-tools for currently opened file">
+                <keyboard-shortcut first-keystroke="ctrl alt g" keymap="$default"/>
             </action>
             <add-to-group group-id="ToolsMenu" anchor="last"/>
         </group>
