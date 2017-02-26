@@ -191,13 +191,14 @@ object HaskellModuleBuilder {
       ProgressManager.getInstance().run(new Task.Backgroundable(project, "Downloading Haskell library sources and adding them as source libraries to module") {
         def run(progressIndicator: ProgressIndicator) {
           val libDirectory = getIdeaHaskellLibDirectory(project)
-          FileUtil.delete(libDirectory)
-          FileUtil.createDirectory(libDirectory)
+          if (!FileUtil.exists(getIdeaHaskellLibDirectoryStr(project))) {
+            FileUtil.createDirectory(libDirectory)
+          }
           StackCommandLine.runCommand(Seq("list-dependencies", "--test"), project, timeoutInMillis = 60.seconds.toMillis).map(_.getStdoutLines).foreach(dependencyLines => {
             val packageName = HaskellProjectUtil.findCabalPackageName(project)
             val packages = getPackages(project, dependencyLines.asScala).filterNot(p => packageName.contains(p.name))
             progressIndicator.setFraction(InitialProgressStep)
-            val downloadedPackages = downloadHaskellPackageSources(project, stackPath, packages, progressIndicator)
+            val downloadedPackages = downloadHaskellPackageSources(project, libDirectory, stackPath, packages, progressIndicator)
             progressIndicator.setFraction(0.9)
             addPackagesAsLibrariesToModule(module, downloadedPackages, libDirectory.getAbsolutePath)
           })
@@ -208,6 +209,10 @@ object HaskellModuleBuilder {
 
   def getIdeaHaskellLibDirectory(project: Project): File = {
     new File(project.getBasePath, LibName)
+  }
+
+  private def getIdeaHaskellLibDirectoryStr(project: Project): String = {
+    project.getBasePath + File.separator + LibName
   }
 
   private def getPackages(project: Project, dependencyLines: Seq[String]): Seq[HaskellPackageInfo] = {
@@ -223,12 +228,19 @@ object HaskellModuleBuilder {
     }
   }
 
-  private def downloadHaskellPackageSources(project: Project, stackPath: String, haskellPackages: Seq[HaskellPackageInfo], progressIndicator: ProgressIndicator) = {
+  private def downloadHaskellPackageSources(project: Project, libRoot: File, stackPath: String, haskellPackages: Seq[HaskellPackageInfo], progressIndicator: ProgressIndicator) = {
     val step = 0.8 / haskellPackages.size
     var progressFraction = InitialProgressStep
-    haskellPackages.flatMap { packageInfo =>
-      val fullName = packageInfo.name + "-" + packageInfo.version
-      val stdErr = CommandLine.runProgram(Some(project), project.getBasePath + File.separator + LibName, stackPath, Seq("unpack", fullName), 10000, captureOutputToLog = true, logErrorAsInfo = true).map(_.getStderr)
+
+    libRoot.listFiles().filterNot(subDir => haskellPackages.map(_.dirName).contains(subDir.getName)).foreach(FileUtil.delete)
+
+    val alreadyDownloadedPackages = haskellPackages.filter(packageInfo => {
+      new File(project.getBasePath + File.separator + LibName + File.separator + packageInfo.dirName).exists()
+    })
+    val newDownloadedPackages = haskellPackages.filterNot(packageInfo => {
+      new File(project.getBasePath + File.separator + LibName + File.separator + packageInfo.dirName).exists()
+    }).flatMap { packageInfo =>
+      val stdErr = CommandLine.runProgram(Some(project), project.getBasePath + File.separator + LibName, stackPath, Seq("unpack", packageInfo.dirName), 10000, captureOutputToLog = true, logErrorAsInfo = true).map(_.getStderr)
       progressFraction = progressFraction + step
       progressIndicator.setFraction(progressFraction)
 
@@ -238,6 +250,7 @@ object HaskellModuleBuilder {
         Seq(packageInfo)
       }
     }
+    alreadyDownloadedPackages ++ newDownloadedPackages
   }
 
   private def getUrlByPath(path: String): String = {
