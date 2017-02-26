@@ -27,6 +27,7 @@ import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.psi.{PsiFile, PsiManager}
 import intellij.haskell.HaskellFile
+import intellij.haskell.action.SelectionContext
 
 object HaskellFileUtil {
 
@@ -85,12 +86,12 @@ object HaskellFileUtil {
     }, null, null)
   }
 
-  def saveFileWithPartlyNewContent(project: Project, virtualFile: VirtualFile, sourceCode: String, selectionModel: SelectionModel): Unit = {
+  def saveFileWithPartlyNewContent(project: Project, virtualFile: VirtualFile, sourceCode: String, selectionContext: SelectionContext): Unit = {
     CommandProcessor.getInstance().executeCommand(project, () => {
       ApplicationManager.getApplication.runWriteAction(new Runnable {
         override def run(): Unit = {
           val document = findDocument(virtualFile)
-          document.foreach(_.replaceString(selectionModel.getSelectionStart, selectionModel.getSelectionEnd, sourceCode))
+          document.foreach(_.replaceString(selectionContext.start, selectionContext.end, sourceCode))
         }
       })
     }, null, null)
