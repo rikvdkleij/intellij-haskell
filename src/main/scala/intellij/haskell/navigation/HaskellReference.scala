@@ -70,18 +70,17 @@ object HaskellReference {
   def resolveReference(namedElement: HaskellNamedElement, psiFile: PsiFile, project: Project): Option[HaskellNamedElement] = {
     HaskellProjectUtil.isLibraryFile(psiFile).flatMap(isLibraryFile => {
       if (isLibraryFile) {
-        HaskellComponentsManager.findNameInfo(namedElement).headOption.flatMap(ni => resolveReferenceByNameInfo(ni, namedElement, project)).
-          orElse(findHaskellDeclarationElements(psiFile).flatMap(_.getIdentifierElements).find(_.getName == namedElement.getName))
+        resolveReferenceByNameInfo(namedElement, psiFile, project)
       }
       else {
-        resolveReferenceByDefinitionLocation(namedElement, project)
+        resolveReferenceByDefinitionLocation(namedElement, project).orElse(resolveReferenceByNameInfo(namedElement, psiFile, project))
       }
     })
   }
 
   def resolveInstanceReferences(namedElement: HaskellNamedElement, psiFile: PsiFile, project: Project): Iterable[HaskellNamedElement] = {
     HaskellComponentsManager.findNameInfo(namedElement).flatMap { ni =>
-      resolveReferenceByNameInfo(ni, namedElement, project)
+      findReferenceByNameInfo(ni, namedElement, project)
     }
   }
 
@@ -111,6 +110,11 @@ object HaskellReference {
     }
   }
 
+  private def resolveReferenceByNameInfo(namedElement: HaskellNamedElement, psiFile: PsiFile, project: Project) = {
+    HaskellComponentsManager.findNameInfo(namedElement).headOption.flatMap(ni => findReferenceByNameInfo(ni, namedElement, project)).
+      orElse(findHaskellDeclarationElements(psiFile).flatMap(_.getIdentifierElements).find(_.getName == namedElement.getName))
+  }
+
   private def resolveReferenceByDefinitionLocation(namedElement: HaskellNamedElement, project: Project): Option[HaskellNamedElement] = {
     HaskellComponentsManager.findDefinitionLocation(namedElement).flatMap {
       case DefinitionLocationInfo(filePath, startLineNr, startColumnNr, _, _) => findNamedElementByLocation(filePath, startLineNr, startColumnNr, namedElement.getName, project)
@@ -128,7 +132,7 @@ object HaskellReference {
     } yield namedElement
   }
 
-  private def resolveReferenceByNameInfo(nameInfo: NameInfo, namedElement: HaskellNamedElement, project: Project): Option[HaskellNamedElement] = {
+  private def findReferenceByNameInfo(nameInfo: NameInfo, namedElement: HaskellNamedElement, project: Project): Option[HaskellNamedElement] = {
     nameInfo match {
       case pni: ProjectNameInfo => findNamedElementByLocation(pni.filePath, pni.lineNr, pni.columnNr, namedElement.getName, project)
       case lni: LibraryNameInfo => findNamedElementsByLibraryNameInfo(lni, namedElement.getName, project).headOption
