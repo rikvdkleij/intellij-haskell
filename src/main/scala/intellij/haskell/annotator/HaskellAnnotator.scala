@@ -22,7 +22,7 @@ import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer
 import com.intellij.codeInsight.daemon.impl.DaemonCodeAnalyzerImpl
 import com.intellij.codeInsight.intention.impl.BaseIntentionAction
 import com.intellij.lang.annotation.{AnnotationHolder, ExternalAnnotator, HighlightSeverity}
-import com.intellij.notification.{Notification, NotificationListener}
+import com.intellij.notification.Notification
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.fileEditor.{FileEditorManager, OpenFileDescriptor}
@@ -32,7 +32,6 @@ import com.intellij.openapi.vfs.LocalFileSystem
 import com.intellij.psi.PsiFile
 import com.intellij.psi.impl.source.tree.TreeUtil
 import com.intellij.psi.util.PsiTreeUtil
-import com.intellij.ui.EditorNotificationPanel
 import com.intellij.util.SystemProperties
 import intellij.haskell.editor.HaskellImportOptimizer
 import intellij.haskell.external.component.HaskellComponentsManager._
@@ -112,8 +111,8 @@ class HaskellAnnotator extends ExternalAnnotator[PsiFile, LoadResult] {
     if (loadResult.loadFailed && loadResult.currentFileProblems.isEmpty) {
       loadResult.otherFileProblems.foreach {
         case cpf: LoadProblemInOtherFile if !cpf.isWarning =>
-          HaskellNotificationGroup.logErrorBalloonEvent(project, s"Error in file <a href='#'>${cpf.filePath}:${cpf.lineNr}:${cpf.columnNr}</a>: ${cpf.htmlMessage}.",
-            (notification: Notification, hyperlinkEvent: HyperlinkEvent) => {
+          HaskellNotificationGroup.logErrorBalloonEvent(project, s"${cpf.htmlMessage} at <a href='#'>${cpf.filePath}:${cpf.lineNr}:${cpf.columnNr}</a>.",
+            (_: Notification, _: HyperlinkEvent) => {
             val file = LocalFileSystem.getInstance().findFileByPath(cpf.filePath)
             new OpenFileDescriptor(project, file, cpf.lineNr - 1, cpf.columnNr - 1).navigate(true)
           })
