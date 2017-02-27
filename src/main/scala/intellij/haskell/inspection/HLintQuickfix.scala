@@ -25,7 +25,7 @@ import com.intellij.psi.util.PsiTreeUtil
 import com.intellij.psi.{PsiDocumentManager, PsiElement, PsiFile}
 import intellij.haskell.HaskellNotificationGroup
 import intellij.haskell.action.{HindentFormatAction, SelectionContext}
-import intellij.haskell.psi.{HaskellElementFactory, HaskellTypes}
+import intellij.haskell.psi.{HaskellElementFactory, HaskellPsiUtil, HaskellTypes}
 
 import scala.annotation.tailrec
 
@@ -62,16 +62,18 @@ class HLintQuickfix(startElement: PsiElement, endElement: PsiElement, startLineN
         }
       }
 
-      val manager = PsiDocumentManager.getInstance(project)
-      val document = manager.getDocument(file)
-      manager.doPostponedOperationsAndUnblockDocument(document)
+      HaskellPsiUtil.findExpressionParent(commonParent).foreach(e => {
+        val manager = PsiDocumentManager.getInstance(project)
+        val document = manager.getDocument(file)
+        manager.doPostponedOperationsAndUnblockDocument(document)
 
-      val context = SelectionContext(
-        commonParent.getTextRange.getStartOffset,
-        commonParent.getTextRange.getEndOffset,
-        commonParent.getText
-      )
-      HindentFormatAction.format(file, Some(context))
+        val context = SelectionContext(
+          e.getTextRange.getStartOffset,
+          e.getTextRange.getEndOffset,
+          e.getText
+        )
+        HindentFormatAction.format(file, Some(context))
+      })
     }, null, null)
   }
 
