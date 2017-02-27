@@ -16,7 +16,7 @@
 
 package intellij.haskell
 
-import com.intellij.notification.{Notification, NotificationDisplayType, NotificationGroup}
+import com.intellij.notification.{Notification, NotificationDisplayType, NotificationGroup, NotificationListener}
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.MessageType
 import com.intellij.openapi.ui.MessageType._
@@ -64,6 +64,10 @@ object HaskellNotificationGroup {
 
   def logErrorBalloonEvent(project: Project, message: String) {
     balloonEvent(Option(project), message, ERROR)
+  }
+
+  def logErrorBalloonEvent(project: Project, message: String, listener: NotificationListener) {
+    BalloonGroup.createNotification("", message, ERROR.toNotificationType, listener).notify(project)
   }
 
   def logErrorBalloonEvent(message: String) {
