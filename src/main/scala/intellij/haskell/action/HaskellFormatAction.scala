@@ -31,7 +31,8 @@ class HaskellFormatAction extends AnAction {
       val selectionModel = actionContext.selectionModel
       selectionModel match {
         case Some(_) =>
-          HindentFormatAction.format(psiFile, selectionModel)
+          HindentFormatAction.format(psiFile, selectionModel.map(m =>
+            HindentFormatAction.translateSelectionModelToSelectionContext(m)))
         case None =>
           HindentFormatAction.format(psiFile)
           StylishHaskellFormatAction.format(psiFile)

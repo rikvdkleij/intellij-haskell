@@ -19,9 +19,13 @@ package intellij.haskell.inspection
 import com.intellij.codeInspection.LocalQuickFixOnPsiElement
 import com.intellij.openapi.command.CommandProcessor
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.util.TextRange
+import com.intellij.openapi.util.text.StringUtil
 import com.intellij.psi.util.PsiTreeUtil
-import com.intellij.psi.{PsiElement, PsiFile}
-import intellij.haskell.psi.{HaskellElementFactory, HaskellTypes}
+import com.intellij.psi.{PsiDocumentManager, PsiElement, PsiFile}
+import intellij.haskell.HaskellNotificationGroup
+import intellij.haskell.action.{HindentFormatAction, SelectionContext}
+import intellij.haskell.psi.{HaskellElementFactory, HaskellPsiUtil, HaskellTypes}
 
 import scala.annotation.tailrec
 
@@ -58,6 +62,18 @@ class HLintQuickfix(startElement: PsiElement, endElement: PsiElement, startLineN
         }
       }
 
+      HaskellPsiUtil.findExpressionParent(commonParent).foreach(e => {
+        val manager = PsiDocumentManager.getInstance(project)
+        val document = manager.getDocument(file)
+        manager.doPostponedOperationsAndUnblockDocument(document)
+
+        val context = SelectionContext(
+          e.getTextRange.getStartOffset,
+          e.getTextRange.getEndOffset,
+          e.getText
+        )
+        HindentFormatAction.format(file, Some(context))
+      })
     }, null, null)
   }
 

@@ -33,6 +33,8 @@ import scala.annotation.tailrec
 import scala.collection.JavaConverters._
 import scala.collection.mutable.ListBuffer
 
+sealed case class SelectionContext(start: Int, end: Int, text: String)
+
 class HindentFormatAction extends AnAction {
 
   override def update(actionEvent: AnActionEvent) {
@@ -42,7 +44,9 @@ class HindentFormatAction extends AnAction {
   override def actionPerformed(actionEvent: AnActionEvent): Unit = {
     ActionUtil.findActionContext(actionEvent).foreach(actionContext => {
       val psiFile = actionContext.psiFile
-      HindentFormatAction.format(psiFile, actionContext.selectionModel)
+      val selectionContext = actionContext.selectionModel.map(m =>
+        HindentFormatAction.translateSelectionModelToSelectionContext(m))
+      HindentFormatAction.format(psiFile, selectionContext)
     })
   }
 }
@@ -50,7 +54,7 @@ class HindentFormatAction extends AnAction {
 object HindentFormatAction {
   final val HindentName = "hindent"
 
-  private[action] def format(psiFile: PsiFile, selectionModel: Option[SelectionModel] = None): Unit = {
+  def format(psiFile: PsiFile, selectionContext: Option[SelectionContext] = None): Unit = {
     val lineLength = CodeStyleSettingsManager.getInstance(psiFile.getProject).getCurrentSettings.getRightMargin(HaskellLanguage.Instance)
     val indentOptions = CodeStyleSettingsManager.getInstance(psiFile.getProject).getCurrentSettings.getCommonSettings(HaskellLanguage.Instance).getIndentOptions
     val virtualFile = HaskellFileUtil.findVirtualFile(psiFile)
@@ -63,8 +67,8 @@ object HindentFormatAction {
 
         val formatAction = ApplicationManager.getApplication.executeOnPooledThread(new Callable[Either[String, String]] {
           override def call(): Either[String, String] = {
-            selectionModel match {
-              case Some(sm) => writeToHindent(command, getSelectedText(sm))
+            selectionContext match {
+              case Some(sc) => writeToHindent(command, sc.text)
               case None => writeToHindent(command, psiFile.getText)
             }
           }
@@ -76,14 +80,18 @@ object HindentFormatAction {
             HaskellNotificationGroup.logErrorEvent(project, e)
             HaskellNotificationGroup.logErrorBalloonEvent(project, s"Error while formatting by <b>$HindentName</b>. Error: $e")
           case Right(sourceCode) =>
-            selectionModel match {
-              case Some(sm) => HaskellFileUtil.saveFileWithPartlyNewContent(psiFile.getProject, virtualFile, sourceCode, sm)
+            selectionContext match {
+              case Some(sc) => HaskellFileUtil.saveFileWithPartlyNewContent(psiFile.getProject, virtualFile, sourceCode, sc)
               case None => HaskellFileUtil.saveFileWithNewContent(psiFile.getProject, virtualFile, sourceCode)
             }
         }
 
       case _ => HaskellNotificationGroup.logWarningEvent(project, s"Can not format code because path to `$HindentName` is not configured in IntelliJ")
     }
+  }
+
+  def translateSelectionModelToSelectionContext(selectionModel: SelectionModel): SelectionContext = {
+    SelectionContext(selectionModel.getSelectionStart, selectionModel.getSelectionEnd, getSelectedText(selectionModel))
   }
 
   private def getSelectedText(selectionModel: SelectionModel) = {
