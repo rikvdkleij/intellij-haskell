@@ -5489,7 +5489,7 @@ public class HaskellParser implements PsiParser, LightPsiParser {
   }
 
   /* ********************************************************** */
-  // qualifier DOT (varid | consym | DOT? varsym) | q_con
+  // qualifier &<<noSpaceAfterQualifier>>  DOT (varid | consym | DOT? varsym) | q_con
   public static boolean q_var_con(PsiBuilder b, int l) {
     if (!recursion_guard_(b, l, "q_var_con")) return false;
     if (!nextTokenIs(b, HS_CON_ID)) return false;
@@ -5501,44 +5501,55 @@ public class HaskellParser implements PsiParser, LightPsiParser {
     return r;
   }
 
-  // qualifier DOT (varid | consym | DOT? varsym)
+  // qualifier &<<noSpaceAfterQualifier>>  DOT (varid | consym | DOT? varsym)
   private static boolean q_var_con_0(PsiBuilder b, int l) {
     if (!recursion_guard_(b, l, "q_var_con_0")) return false;
     boolean r;
     Marker m = enter_section_(b);
     r = qualifier(b, l + 1);
+    r = r && q_var_con_0_1(b, l + 1);
     r = r && consumeToken(b, HS_DOT);
-    r = r && q_var_con_0_2(b, l + 1);
+    r = r && q_var_con_0_3(b, l + 1);
     exit_section_(b, m, null, r);
     return r;
   }
 
+  // &<<noSpaceAfterQualifier>>
+  private static boolean q_var_con_0_1(PsiBuilder b, int l) {
+    if (!recursion_guard_(b, l, "q_var_con_0_1")) return false;
+    boolean r;
+    Marker m = enter_section_(b, l, _AND_);
+    r = noSpaceAfterQualifier(b, l + 1);
+    exit_section_(b, l, m, r, false, null);
+    return r;
+  }
+
   // varid | consym | DOT? varsym
-  private static boolean q_var_con_0_2(PsiBuilder b, int l) {
-    if (!recursion_guard_(b, l, "q_var_con_0_2")) return false;
+  private static boolean q_var_con_0_3(PsiBuilder b, int l) {
+    if (!recursion_guard_(b, l, "q_var_con_0_3")) return false;
     boolean r;
     Marker m = enter_section_(b);
     r = varid(b, l + 1);
     if (!r) r = consym(b, l + 1);
-    if (!r) r = q_var_con_0_2_2(b, l + 1);
+    if (!r) r = q_var_con_0_3_2(b, l + 1);
     exit_section_(b, m, null, r);
     return r;
   }
 
   // DOT? varsym
-  private static boolean q_var_con_0_2_2(PsiBuilder b, int l) {
-    if (!recursion_guard_(b, l, "q_var_con_0_2_2")) return false;
+  private static boolean q_var_con_0_3_2(PsiBuilder b, int l) {
+    if (!recursion_guard_(b, l, "q_var_con_0_3_2")) return false;
     boolean r;
     Marker m = enter_section_(b);
-    r = q_var_con_0_2_2_0(b, l + 1);
+    r = q_var_con_0_3_2_0(b, l + 1);
     r = r && varsym(b, l + 1);
     exit_section_(b, m, null, r);
     return r;
   }
 
   // DOT?
-  private static boolean q_var_con_0_2_2_0(PsiBuilder b, int l) {
-    if (!recursion_guard_(b, l, "q_var_con_0_2_2_0")) return false;
+  private static boolean q_var_con_0_3_2_0(PsiBuilder b, int l) {
+    if (!recursion_guard_(b, l, "q_var_con_0_3_2_0")) return false;
     consumeToken(b, HS_DOT);
     return true;
   }

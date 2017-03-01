@@ -33,4 +33,8 @@ public class HaskellParserUtil extends GeneratedParserUtilBase {
                 (builder.rawLookup(0) == HS_NEWLINE && builder.rawLookup(1) == HS_NEWLINE && builder.rawLookup(2) == HS_NEWLINE && builder.rawLookup(3) == HS_NEWLINE && builder.rawLookup(4) == HS_NEWLINE && builder.rawLookup(5) == HS_NEWLINE && builder.rawLookup(6) == TokenType.WHITE_SPACE) ||
                 (builder.rawLookup(0) == HS_NEWLINE && builder.rawLookup(1) == HS_NEWLINE && builder.rawLookup(2) == HS_NEWLINE && builder.rawLookup(3) == HS_NEWLINE && builder.rawLookup(4) == HS_NEWLINE && builder.rawLookup(5) == HS_NEWLINE && builder.rawLookup(6) == HS_NEWLINE && builder.rawLookup(7) == TokenType.WHITE_SPACE);
     }
+
+    public static boolean noSpaceAfterQualifier(PsiBuilder builder, int level) {
+        return (builder.rawLookup(0) == HS_QUALIFIER && builder.rawLookup(1) == HS_DOT);
+    }
 }
