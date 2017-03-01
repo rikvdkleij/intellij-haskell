@@ -393,7 +393,7 @@ class ImportAloneInstancesAction(importDecl: String) extends HaskellBaseIntentio
 }
 
 class RedundantImportAction(moduleName: String, redundants: String) extends HaskellBaseIntentionAction {
-  setText(s"Redundant import `$moduleName` ($redundants)")
+  setText(s"Remove redundant import `$moduleName` ($redundants)")
 
   override def getFamilyName: String = "Redundant import"
 
