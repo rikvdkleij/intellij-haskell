@@ -5489,7 +5489,7 @@ public class HaskellParser implements PsiParser, LightPsiParser {
   }
 
   /* ********************************************************** */
-  // qualifier &<<noSpaceAfterQualifier>>  DOT (varid | consym | DOT? varsym) | q_con
+  // &<<noSpaceAfterQualifier>> qualifier DOT (varid | consym | DOT? varsym) | q_con
   public static boolean q_var_con(PsiBuilder b, int l) {
     if (!recursion_guard_(b, l, "q_var_con")) return false;
     if (!nextTokenIs(b, HS_CON_ID)) return false;
@@ -5501,13 +5501,13 @@ public class HaskellParser implements PsiParser, LightPsiParser {
     return r;
   }
 
-  // qualifier &<<noSpaceAfterQualifier>>  DOT (varid | consym | DOT? varsym)
+  // &<<noSpaceAfterQualifier>> qualifier DOT (varid | consym | DOT? varsym)
   private static boolean q_var_con_0(PsiBuilder b, int l) {
     if (!recursion_guard_(b, l, "q_var_con_0")) return false;
     boolean r;
     Marker m = enter_section_(b);
-    r = qualifier(b, l + 1);
-    r = r && q_var_con_0_1(b, l + 1);
+    r = q_var_con_0_0(b, l + 1);
+    r = r && qualifier(b, l + 1);
     r = r && consumeToken(b, HS_DOT);
     r = r && q_var_con_0_3(b, l + 1);
     exit_section_(b, m, null, r);
@@ -5515,8 +5515,8 @@ public class HaskellParser implements PsiParser, LightPsiParser {
   }
 
   // &<<noSpaceAfterQualifier>>
-  private static boolean q_var_con_0_1(PsiBuilder b, int l) {
-    if (!recursion_guard_(b, l, "q_var_con_0_1")) return false;
+  private static boolean q_var_con_0_0(PsiBuilder b, int l) {
+    if (!recursion_guard_(b, l, "q_var_con_0_0")) return false;
     boolean r;
     Marker m = enter_section_(b, l, _AND_);
     r = noSpaceAfterQualifier(b, l + 1);

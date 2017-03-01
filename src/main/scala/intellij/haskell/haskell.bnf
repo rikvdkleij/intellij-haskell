@@ -181,7 +181,7 @@ varop                       ::= varsym | BACKQUOTE varid BACKQUOTE
 conop                       ::= consym | BACKQUOTE conid BACKQUOTE
 
 var_con                     ::= varid | consym | varsym | conid
-q_var_con                   ::= qualifier &<<noSpaceAfterQualifier>> DOT (varid | consym | DOT? varsym) | q_con
+q_var_con                   ::= &<<noSpaceAfterQualifier>> qualifier DOT (varid | consym | DOT? varsym) | q_con
 
 qualifier                   ::= CON_ID (DOT CON_ID)*
 
