@@ -3,7 +3,7 @@ package intellij.haskell.runconfig.test
 import java.util
 
 import com.intellij.execution.Executor
-import com.intellij.execution.configurations.ConfigurationFactory
+import com.intellij.execution.configurations.{ConfigurationFactory, GeneralCommandLine}
 import com.intellij.execution.runners.ExecutionEnvironment
 import com.intellij.openapi.project.Project
 import intellij.haskell.cabal.query.CabalQuery
@@ -15,6 +15,7 @@ class HaskellTestConfiguration(override val name: String, override val project: 
   extends HaskellStackConfigurationBase(name, project, configurationFactory) {
 
   private var myTestsuite: String = ""
+  private var myTestFilter: String = ""
 
   def getTestsuites: util.List[String] = CabalQuery.getTestsuiteNames(project).getOrElse(List()).asJava
 
@@ -30,11 +31,22 @@ class HaskellTestConfiguration(override val name: String, override val project: 
     }
   }
 
+  def setTestFilter(testFilter: String) {
+    myTestFilter = testFilter
+  }
+
+  def getTestFilter: String = {
+    myTestFilter
+  }
+
   override def getConfigurationEditor = new HaskellTestConfigurationForm(getProject)
 
   //https://github.com/commercialhaskell/stack/issues/731
+  //https://github.com/commercialhaskell/stack/issues/2210
   override def getState(executor: Executor, environment: ExecutionEnvironment): HaskellStackStateBase = {
     val packageName: String = CabalQuery.getPackageName(project).getOrElse(project.getName)
-    new HaskellStackStateBase(this, environment, s"test $packageName:$myTestsuite")
+    val command = s"test $packageName:$myTestsuite" ++
+      (if (getTestFilter.isEmpty) "" else s" --test-arguments '-m${'"'}$getTestFilter${'"'}'")
+    new HaskellStackStateBase(this, environment, command)
   }
 }

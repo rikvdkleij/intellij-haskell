@@ -21,6 +21,7 @@ public class HaskellTestConfigurationForm extends SettingsEditor<HaskellTestConf
     private JComboBox myModuleComboBox;
     private RawCommandLineEditor myConsoleArgsEditor;
     private JComboBox myTestsuiteComboBox;
+    private JTextField myTestFilterTextField;
 
     public HaskellTestConfigurationForm(@NotNull Project project) {
         myModuleComboBox.setEnabled(true);
@@ -49,6 +50,7 @@ public class HaskellTestConfigurationForm extends SettingsEditor<HaskellTestConf
 
         myWorkingDirPathField.setText(config.getWorkingDirPath());
         myConsoleArgsEditor.setText(config.getConsoleArgs());
+        myTestFilterTextField.setText(config.getTestFilter());
     }
 
     @Override
@@ -57,6 +59,7 @@ public class HaskellTestConfigurationForm extends SettingsEditor<HaskellTestConf
         config.setWorkingDirPath(myWorkingDirPathField.getText());
         config.setConsoleArgs(myConsoleArgsEditor.getText());
         config.setTestsuite((String) myTestsuiteComboBox.getSelectedItem());
+        config.setTestFilter(myTestFilterTextField.getText());
     }
 
     @NotNull
