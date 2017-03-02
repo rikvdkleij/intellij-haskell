@@ -1,7 +1,8 @@
-package intellij.haskell.action
+package intellij.haskell.action.HaskellTools
 
 import com.intellij.openapi.actionSystem.{AnAction, AnActionEvent}
 import com.intellij.openapi.vfs.VfsUtil
+import intellij.haskell.action.ActionUtil
 import intellij.haskell.external.component.HaskellToolComponent
 import intellij.haskell.psi.HaskellPsiUtil
 import intellij.haskell.util.HaskellFileUtil
