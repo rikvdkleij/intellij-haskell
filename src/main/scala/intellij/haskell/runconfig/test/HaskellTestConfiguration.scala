@@ -45,8 +45,8 @@ class HaskellTestConfiguration(override val name: String, override val project: 
   //https://github.com/commercialhaskell/stack/issues/2210
   override def getState(executor: Executor, environment: ExecutionEnvironment): HaskellStackStateBase = {
     val packageName: String = CabalQuery.getPackageName(project).getOrElse(project.getName)
-    val command = s"test $packageName:$myTestsuite" ++
-      (if (getTestFilter.isEmpty) "" else s" --test-arguments '-m${'"'}$getTestFilter${'"'}'")
-    new HaskellStackStateBase(this, environment, command)
+    val parameters = List("test", s"$packageName:$myTestsuite") ++
+      (if (getTestFilter.isEmpty) List() else List("--test-arguments", "-m \"" + getTestFilter + "\""))
+    new HaskellStackStateBase(this, environment, parameters)
   }
 }

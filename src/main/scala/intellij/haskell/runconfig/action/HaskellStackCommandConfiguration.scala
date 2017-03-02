@@ -21,5 +21,6 @@ class HaskellStackCommandConfiguration(override val name: String, override val p
 
   override def getConfigurationEditor = new HaskellStackCommandConfigurationForm(getProject)
 
-  override def getState(executor: Executor, environment: ExecutionEnvironment) = new HaskellStackStateBase(this, environment, getCommand)
+  override def getState(executor: Executor, environment: ExecutionEnvironment) =
+    new HaskellStackStateBase(this, environment, getCommand.split(" ").toList)
 }

@@ -8,7 +8,7 @@ import intellij.haskell.sdk.HaskellSdkType
 
 import scala.collection.JavaConverters._
 
-class HaskellStackStateBase(val myConfig: HaskellStackConfigurationBase, val env: ExecutionEnvironment, val command: String) extends CommandLineState(env) {
+class HaskellStackStateBase(val myConfig: HaskellStackConfigurationBase, val env: ExecutionEnvironment, val parameters: List[String]) extends CommandLineState(env) {
 
   protected def startProcess: ProcessHandler = {
     val project = myConfig.getProject
@@ -17,7 +17,7 @@ class HaskellStackStateBase(val myConfig: HaskellStackConfigurationBase, val env
       case Some(stackPath) =>
         val consoleArgs = myConfig.getConsoleArgs
         val commandLine = new GeneralCommandLine(stackPath)
-          .withParameters(command.split(" ").toList.asJava)
+          .withParameters(parameters.asJava)
           .withWorkDirectory(myConfig.getWorkingDirPath)
 
         if (!consoleArgs.isEmpty)

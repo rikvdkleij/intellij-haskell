@@ -34,5 +34,6 @@ class HaskellRunConfiguration(override val name: String, override val project: P
 
   override def getConfigurationEditor = new HaskellRunConfigurationForm(getProject)
 
-  override def getState(executor: Executor, environment: ExecutionEnvironment) = new HaskellStackStateBase(this, environment, s"build --exec $myExecutable")
+  override def getState(executor: Executor, environment: ExecutionEnvironment) =
+    new HaskellStackStateBase(this, environment, List("build", "--exec", myExecutable))
 }
