@@ -21,11 +21,24 @@ object HaskellToolComponent {
     })
   }
 
-  def extractBinding(project: Project, moduleName: String, selectionModel: SelectionModel, newName: String): Unit = {
+  private def getSrcRange(selectionModel: SelectionModel): String = {
     val startPoint = selectionModel.getSelectionStartPosition
     val endPoint = selectionModel.getSelectionEndPosition
-    //val mode = "\"ExtractBinding 68:16-68:77 calc\""
-    val mode = "\"ExtractBinding" + s" ${startPoint.line + 1}:${startPoint.column + 1}-${endPoint.line + 1}:${endPoint.column + 1} $newName" + "\""
+
+    s"${startPoint.line + 1}:${startPoint.column + 1}-${endPoint.line + 1}:${endPoint.column + 1}"
+  }
+
+  def extractBinding(project: Project, moduleName: String, selectionModel: SelectionModel, newName: String): Unit = {
+    val mode = "\"ExtractBinding" + s" ${getSrcRange(selectionModel)} $newName" + "\""
+    StackCommandLine.runCommand(getCommandOptions(project, moduleName, mode), project).foreach(output => {
+      if (output.getStderr.nonEmpty) {
+        HaskellNotificationGroup.logErrorBalloonEvent(project, s"Something went wrong while calling <b>$HaskellToolName</b>. Error: ${output.getStderr}")
+      }
+    })
+  }
+
+  def inlineBinding(project: Project, moduleName: String, selectionModel: SelectionModel): Unit = {
+    val mode = "\"InlineBinding" + s" ${getSrcRange(selectionModel)}" + "\""
     StackCommandLine.runCommand(getCommandOptions(project, moduleName, mode), project).foreach(output => {
       if (output.getStderr.nonEmpty) {
         HaskellNotificationGroup.logErrorBalloonEvent(project, s"Something went wrong while calling <b>$HaskellToolName</b>. Error: ${output.getStderr}")

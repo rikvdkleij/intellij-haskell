@@ -368,6 +368,12 @@
                     description="Extract binding with haskell-tools for currently selected code block">
                 <keyboard-shortcut first-keystroke="ctrl alt e" keymap="$default"/>
             </action>
+            <action id="Haskell.InlineBinding"
+                    class="intellij.haskell.action.HaskellTools.InlineBindingAction"
+                    text="Inline Binding"
+                    description="Inline binding with haskell-tools for currently selected code block">
+                <keyboard-shortcut first-keystroke="ctrl alt shift i" keymap="$default"/>
+            </action>
             <add-to-group group-id="ToolsMenu" anchor="last"/>
         </group>
 
