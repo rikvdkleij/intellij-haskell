@@ -30,7 +30,7 @@ object HaskellToolComponent {
       if (resolver.startsWith("lts-")) {
         resolver.replace("lts-", "").toDouble >= 8.0
       } else if (resolver.startsWith("nightly-")) {
-        getMillisOfDate(resolver.replace("nightly-", "")) > getMillisOfDate("2017-01-14")
+        getMillisOfDate(resolver.replace("nightly-", "")) >= getMillisOfDate("2017-02-13")
       } else {
         false
       }
@@ -42,11 +42,11 @@ object HaskellToolComponent {
       act(actionEvent)
     } else {
       val lts80Link = "\"https://www.stackage.org/lts-8.0\""
-      val nightly20170114Link = "\"https://www.stackage.org/nightly-2017-01-14\""
+      val nightly20170114Link = "\"https://www.stackage.org/nightly-2017-02-13\""
       val haskelltoolsLink = "\"http://haskelltools.org/\""
       HaskellNotificationGroup.logErrorBalloonEvent(
         project,
-        s"You need a Stack resolver greater than <a href=$lts80Link>lts-8.0</a> or <a href=$nightly20170114Link>nightly-2017-01-14</a> in order to work with <a href=$haskelltoolsLink>$HaskellToolName</a>.",
+        s"You need a Stack resolver greater than <a href=$lts80Link>lts-8.0</a> or <a href=$nightly20170114Link>nightly-2017-02-13</a> in order to work with <a href=$haskelltoolsLink>$HaskellToolName</a>.",
         (notification: Notification, hyperlinkEvent: HyperlinkEvent) => {
           if (hyperlinkEvent.getEventType == HyperlinkEvent.EventType.ACTIVATED) {
             BrowserUtil.browse(hyperlinkEvent.getURL)
