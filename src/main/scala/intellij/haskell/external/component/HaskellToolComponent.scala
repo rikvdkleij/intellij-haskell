@@ -1,11 +1,15 @@
 package intellij.haskell.external.component
 
+import javax.swing.event.HyperlinkEvent
+
 import com.intellij.openapi.editor.SelectionModel
 import com.intellij.openapi.project.Project
 import intellij.haskell.HaskellNotificationGroup
 import intellij.haskell.external.commandLine.StackCommandLine
 import intellij.haskell.util.StackYamlUtil
 import com.github.nscala_time.time.Imports._
+import com.intellij.ide.BrowserUtil
+import com.intellij.notification.Notification
 import com.intellij.openapi.actionSystem.AnActionEvent
 import intellij.haskell.action.ActionContext
 
@@ -37,7 +41,17 @@ object HaskellToolComponent {
     if (checkResolverForHaskellTools(project)) {
       act(actionEvent)
     } else {
-      HaskellNotificationGroup.logWarningBalloonEvent(project, s"You need a Stack resolver greater than <b>lts-8.0</b> or <b>nightly-2017-01-14</b> in order to work with <b>$HaskellToolName</b>.")
+      val lts80Link = "\"https://www.stackage.org/lts-8.0\""
+      val nightly20170114Link = "\"https://www.stackage.org/nightly-2017-01-14\""
+      val haskelltoolsLink = "\"http://haskelltools.org/\""
+      HaskellNotificationGroup.logErrorBalloonEvent(
+        project,
+        s"You need a Stack resolver greater than <a href=$lts80Link>lts-8.0</a> or <a href=$nightly20170114Link>nightly-2017-01-14</a> in order to work with <a href=$haskelltoolsLink>$HaskellToolName</a>.",
+        (notification: Notification, hyperlinkEvent: HyperlinkEvent) => {
+          if (hyperlinkEvent.getEventType == HyperlinkEvent.EventType.ACTIVATED) {
+            BrowserUtil.browse(hyperlinkEvent.getURL)
+          }
+        })
     }
   }
 
