@@ -1,13 +1,12 @@
 package intellij.haskell.external.component
 
-import java.io.{File, FileInputStream, FileNotFoundException}
+import java.io.{File, FileNotFoundException}
 import java.net.URL
 
 import com.intellij.openapi.project.Project
 import com.intellij.util.io.URLUtil
 import intellij.haskell.HaskellNotificationGroup
-import intellij.haskell.util.HaskellFileUtil
-import org.yaml.snakeyaml.Yaml
+import intellij.haskell.util.{HaskellFileUtil, StackYamlUtil}
 
 import scala.collection.Iterator
 import scala.io.Source
@@ -21,22 +20,18 @@ object CabalConfigComponent {
     project.getBasePath + File.separator + "cabal.config"
   }
 
-  def getYamlFilePath(project: Project): String = {
-    project.getBasePath + File.separator + "stack.yaml"
-  }
-
   def getAllAvailablePackageNames(project: Project): Option[Iterable[String]] = {
     val configFilePath = getConfigFilePath(project)
     val configFile = new File(configFilePath)
 
-    getResolverFromStackYamlFile(project).map(resolver => {
+    StackYamlUtil.getResolverFromStackYamlFile(project).map(resolver => {
       if (resolver.startsWith("lts") || resolver.startsWith("nightly")) {
         if (!configFile.exists()) {
           downloadAndParseCabalConfigFile(project)
         } else {
           val needUpdate = for {
             oldResolver <- getResolverFromCabalConfigFile(project)
-            newResolver <- getResolverFromStackYamlFile(project)
+            newResolver <- StackYamlUtil.getResolverFromStackYamlFile(project)
           } yield oldResolver != newResolver
 
           needUpdate match {
@@ -77,7 +72,7 @@ object CabalConfigComponent {
   }
 
   def downloadCabalConfig(project: Project): Unit = {
-    getResolverFromStackYamlFile(project).foreach(resolver => {
+    StackYamlUtil.getResolverFromStackYamlFile(project).foreach(resolver => {
       val url = new URL(s"https://www.stackage.org/$resolver/cabal.config")
       val configFilePath = getConfigFilePath(project)
       val targetFile = new File(configFilePath)
@@ -97,20 +92,6 @@ object CabalConfigComponent {
     val configFile = new File(configFilePath)
     if (configFile.exists()) {
       configFile.delete()
-    }
-  }
-
-  private def getResolverFromStackYamlFile(project: Project): Option[String] = {
-    try {
-      Option(new Yaml()
-        .load(new FileInputStream(new File(getYamlFilePath(project))))
-        .asInstanceOf[java.util.Map[String, Any]]
-        .get("resolver"))
-        .map(_.asInstanceOf[String])
-    } catch {
-      case _: FileNotFoundException =>
-        HaskellNotificationGroup.logErrorEvent(project, s"Can not find `stack.yaml` file.")
-        None
     }
   }
 

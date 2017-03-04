@@ -9,15 +9,19 @@ import intellij.haskell.util.HaskellFileUtil
 
 class GenerateExportsAction extends AnAction {
   override def actionPerformed(e: AnActionEvent): Unit = {
-    ActionUtil.findActionContext(e).foreach(actionContext => {
-      val file = actionContext.psiFile
-      val vFile = HaskellFileUtil.findVirtualFile(file)
+    val project = e.getProject
 
-      HaskellFileUtil.saveFile(vFile)
+    HaskellToolComponent.checkResolverForHaskellToolsAction(project, e, (actionEvent) => {
+      ActionUtil.findActionContext(actionEvent).foreach(actionContext => {
+        val file = actionContext.psiFile
+        val vFile = HaskellFileUtil.findVirtualFile(file)
 
-      HaskellPsiUtil.findModuleName(file).foreach(moduleName => {
-        HaskellToolComponent.generateExports(e.getProject, moduleName)
-        VfsUtil.markDirtyAndRefresh(true, true, true, vFile)
+        HaskellFileUtil.saveFile(vFile)
+
+        HaskellPsiUtil.findModuleName(file).foreach(moduleName => {
+          HaskellToolComponent.generateExports(actionContext.project, moduleName)
+          VfsUtil.markDirtyAndRefresh(true, true, true, vFile)
+        })
       })
     })
   }

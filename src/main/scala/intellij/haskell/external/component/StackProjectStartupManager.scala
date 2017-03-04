@@ -69,7 +69,9 @@ class StackProjectStartupManager(project: Project) extends ProjectComponent {
 
               val buildToolsFuture = ApplicationManager.getApplication.executeOnPooledThread(new Runnable {
                 override def run(): Unit = {
-                  StackCommandLine.executeBuild(project, Seq("build", HaskellToolComponent.HaskellToolsCLIName), "Build of `haskell-tools`")
+                  if (HaskellToolComponent.checkResolverForHaskellTools(project)) {
+                    StackCommandLine.executeBuild(project, Seq("build", HaskellToolComponent.HaskellToolsCLIName), "Build of `haskell-tools`")
+                  }
                 }
               })
 

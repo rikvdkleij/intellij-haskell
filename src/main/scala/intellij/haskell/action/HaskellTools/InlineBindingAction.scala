@@ -9,20 +9,25 @@ import intellij.haskell.util.HaskellFileUtil
 
 class InlineBindingAction extends AnAction {
   override def actionPerformed(actionEvent: AnActionEvent): Unit = {
-    ActionUtil.findActionContext(actionEvent).foreach(actionContext => {
-      val file = actionContext.psiFile
-      val vFile = HaskellFileUtil.findVirtualFile(file)
-      val project = actionEvent.getProject
+    val project = actionEvent.getProject
 
-      HaskellFileUtil.saveFile(vFile)
+    HaskellToolComponent.checkResolverForHaskellToolsAction(project, actionEvent, (actionEvent) => {
+      ActionUtil.findActionContext(actionEvent).foreach(actionContext => {
 
-      for {
-        moduleName <- HaskellPsiUtil.findModuleName(file)
-        selectionModel <- actionContext.selectionModel
-      } yield {
-        HaskellToolComponent.inlineBinding(project, moduleName, selectionModel)
-        VfsUtil.markDirtyAndRefresh(true, true, true, vFile)
-      }
+        val file = actionContext.psiFile
+        val vFile = HaskellFileUtil.findVirtualFile(file)
+        val project = actionContext.project
+
+        HaskellFileUtil.saveFile(vFile)
+
+        for {
+          moduleName <- HaskellPsiUtil.findModuleName(file)
+          selectionModel <- actionContext.selectionModel
+        } yield {
+          HaskellToolComponent.inlineBinding(project, moduleName, selectionModel)
+          VfsUtil.markDirtyAndRefresh(true, true, true, vFile)
+        }
+      })
     })
   }
 }

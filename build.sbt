@@ -7,6 +7,7 @@ val guava = "com.google.guava" % "guava" % "20.0"
 val scalaTest = "org.scalatest" % "scalatest_2.12" % "3.0.1" % "test"
 val sprayJson = "io.spray" %% "spray-json" % "1.3.2"
 val snakeYaml = "org.yaml" % "snakeyaml" % "1.17"
+val nscalaTime = "com.github.nscala-time" %% "nscala-time" % "2.16.0"
 
 lazy val intellijHaskell = (project in file(".")).
   enablePlugins(SbtIdeaPlugin).
@@ -19,6 +20,7 @@ lazy val intellijHaskell = (project in file(".")).
     libraryDependencies += scalaTest,
     libraryDependencies += sprayJson,
     libraryDependencies += snakeYaml,
+    libraryDependencies += nscalaTime,
     unmanagedSourceDirectories in Compile += baseDirectory.value / "gen",
     unmanagedJars in Compile += baseDirectory.value / "idea"
   )

@@ -9,24 +9,28 @@ import intellij.haskell.util.HaskellFileUtil
 
 class ExtractBindingAction extends AnAction {
   override def actionPerformed(actionEvent: AnActionEvent): Unit = {
-    ActionUtil.findActionContext(actionEvent).foreach(actionContext => {
-      val file = actionContext.psiFile
-      val vFile = HaskellFileUtil.findVirtualFile(file)
-      val project = actionEvent.getProject
+    val project = actionEvent.getProject
 
-      HaskellFileUtil.saveFile(vFile)
+    HaskellToolComponent.checkResolverForHaskellToolsAction(project, actionEvent, (actionEvent) => {
+      ActionUtil.findActionContext(actionEvent).foreach(actionContext => {
+        val file = actionContext.psiFile
+        val vFile = HaskellFileUtil.findVirtualFile(file)
+        val project = actionContext.project
 
-      for {
-        moduleName <- HaskellPsiUtil.findModuleName(file)
-        selectionModel <- actionContext.selectionModel
-      } yield {
-        val dialog = new RefactDialog(project)
+        HaskellFileUtil.saveFile(vFile)
 
-        if (!dialog.showAndGet()) return
+        for {
+          moduleName <- HaskellPsiUtil.findModuleName(file)
+          selectionModel <- actionContext.selectionModel
+        } yield {
+          val dialog = new RefactDialog(project)
 
-        HaskellToolComponent.extractBinding(project, moduleName, selectionModel, dialog.getNewName)
-        VfsUtil.markDirtyAndRefresh(true, true, true, vFile)
-      }
+          if (!dialog.showAndGet()) return
+
+          HaskellToolComponent.extractBinding(project, moduleName, selectionModel, dialog.getNewName)
+          VfsUtil.markDirtyAndRefresh(true, true, true, vFile)
+        }
+      })
     })
   }
 }
