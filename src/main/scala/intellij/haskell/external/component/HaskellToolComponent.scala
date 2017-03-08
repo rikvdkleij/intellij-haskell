@@ -2,16 +2,14 @@ package intellij.haskell.external.component
 
 import javax.swing.event.HyperlinkEvent
 
+import com.intellij.ide.BrowserUtil
+import com.intellij.notification.Notification
+import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.editor.SelectionModel
 import com.intellij.openapi.project.Project
 import intellij.haskell.HaskellNotificationGroup
 import intellij.haskell.external.commandLine.StackCommandLine
 import intellij.haskell.util.StackYamlUtil
-import com.github.nscala_time.time.Imports._
-import com.intellij.ide.BrowserUtil
-import com.intellij.notification.Notification
-import com.intellij.openapi.actionSystem.AnActionEvent
-import intellij.haskell.action.ActionContext
 
 object HaskellToolComponent {
   final val HaskellToolsCLIName = "haskell-tools-cli"
@@ -21,16 +19,12 @@ object HaskellToolComponent {
     Seq("exec", "--", HaskellToolName, "-one-shot", s"-module-name=$moduleName", s"-refactoring=$mode", project.getBasePath)
   }
 
-  private def getMillisOfDate(date: String): Long = {
-    DateTime.parse(date).getMillis
-  }
-
   def checkResolverForHaskellTools(project: Project): Boolean = {
     StackYamlUtil.getResolverFromStackYamlFile(project).exists(resolver => {
       if (resolver.startsWith("lts-")) {
-        resolver.replace("lts-", "").toDouble >= 8.0
+        resolver.replace("lts-", "") >= "8.0"
       } else if (resolver.startsWith("nightly-")) {
-        getMillisOfDate(resolver.replace("nightly-", "")) >= getMillisOfDate("2017-02-13")
+        resolver.replace("nightly-", "") >= "2017-02-13"
       } else {
         false
       }
