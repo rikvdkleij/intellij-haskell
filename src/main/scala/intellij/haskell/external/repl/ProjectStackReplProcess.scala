@@ -16,9 +16,7 @@
 
 package intellij.haskell.external.repl
 
-import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.util.Computable
 import com.intellij.psi.PsiFile
 import intellij.haskell.psi.HaskellPsiUtil
 
@@ -42,21 +40,12 @@ private[repl] class ProjectStackReplProcess(project: Project) extends StackReplP
     execute(psiFile, _ => execute(s":info $name"))
   }
 
-  def load(psiFile: PsiFile): Option[(StackReplOutput, Boolean)] = synchronized {
-    load(psiFile, None)
-  }
-
-  private def load(psiFile: PsiFile, moduleName: Option[String]): Option[(StackReplOutput, Boolean)] = {
+  def load(psiFile: PsiFile, moduleName: Option[String]): Option[(StackReplOutput, Boolean)] = synchronized {
     val filePath = getFilePath(psiFile)
-    val moduleNameAction = ApplicationManager.getApplication.runReadAction(new Computable[Option[String]] {
-      override def compute(): Option[String] = {
-        moduleName.orElse(HaskellPsiUtil.findModuleName(psiFile))
-      }
-    })
     execute(s":load $filePath") match {
       case Some(output) =>
         val loadFailed = isLoadFailed(output)
-        loadedPsiFileInfo = Some(LoadedPsiFileInfo(Some(psiFile), moduleNameAction, loadFailed))
+        loadedPsiFileInfo = Some(LoadedPsiFileInfo(Some(psiFile), moduleName.orElse(HaskellPsiUtil.findModuleName(psiFile, runInRead = true)), loadFailed))
         Some(output, loadFailed)
       case _ =>
         loadedPsiFileInfo = None
@@ -65,11 +54,11 @@ private[repl] class ProjectStackReplProcess(project: Project) extends StackReplP
   }
 
   def getModuleIdentifiers(moduleName: String): Option[StackReplOutput] = synchronized {
-    execute(None, moduleName, mn => execute(s":browse! $mn"))
+    execute(None, moduleName, _ => execute(s":browse! $moduleName"))
   }
 
   def getAllTopLevelModuleIdentifiers(moduleName: String, psiFile: PsiFile): Option[StackReplOutput] = synchronized {
-    execute(Some(psiFile), moduleName, mn => execute(s":browse! *$mn"))
+    execute(psiFile, _ => execute(s":browse! *$moduleName"), Some(moduleName))
   }
 
   def findAllAvailableLibraryModules: Option[Iterable[String]] = synchronized {
@@ -87,7 +76,7 @@ private[repl] class ProjectStackReplProcess(project: Project) extends StackReplP
     }
   }
 
-  private def execute(psiFile: PsiFile, executeAction: String => Option[StackReplOutput]): Option[StackReplOutput] = {
+  private def execute(psiFile: PsiFile, executeAction: String => Option[StackReplOutput], moduleName: Option[String] = None): Option[StackReplOutput] = {
     def execute: Option[StackReplOutput] = {
       loadedPsiFileInfo match {
         case None => None
@@ -99,7 +88,7 @@ private[repl] class ProjectStackReplProcess(project: Project) extends StackReplP
     loadedPsiFileInfo match {
       case Some(info) if info.psiFile.contains(psiFile) && !info.loadFailed => executeAction(getFilePath(psiFile))
       case Some(info) if info.psiFile.contains(psiFile) && info.loadFailed => Some(StackReplOutput())
-      case Some(info) => HaskellPsiUtil.findModuleName(psiFile, runInRead = true) match {
+      case Some(info) => moduleName.orElse(HaskellPsiUtil.findModuleName(psiFile, runInRead = true)) match {
         case Some(mn) if info.moduleName.contains(mn) && !info.loadFailed => executeAction(mn)
         case Some(mn) if info.moduleName.contains(mn) && info.loadFailed => Some(StackReplOutput())
         case omn =>
@@ -107,21 +96,20 @@ private[repl] class ProjectStackReplProcess(project: Project) extends StackReplP
           execute
       }
       case _ =>
-        load(psiFile)
+        load(psiFile, moduleName)
         execute
     }
   }
 
   private def execute(psiFile: Option[PsiFile], moduleName: String, executeAction: String => Option[StackReplOutput]): Option[StackReplOutput] = {
     psiFile match {
-      case Some(pf) => execute(pf, executeAction)
+      case Some(pf) => execute(pf, executeAction, Some(moduleName))
       case None =>
         loadedPsiFileInfo match {
           case Some(info) if !info.loadFailed && info.moduleName.contains(moduleName) => executeAction(moduleName)
           case Some(info) if info.loadFailed && info.moduleName.contains(moduleName) => Some(StackReplOutput())
           case _ =>
-            val output = execute(s":load $moduleName")
-            output match {
+            execute(s":load $moduleName") match {
               case Some(o) =>
                 if (isLoadFailed(o)) {
                   loadedPsiFileInfo = Some(LoadedPsiFileInfo(None, Some(moduleName), loadFailed = true))

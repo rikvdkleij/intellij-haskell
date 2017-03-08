@@ -29,19 +29,20 @@ private[component] object LoadComponent {
   def load(psiFile: PsiFile): LoadResult = {
     val project = psiFile.getProject
 
-    ApplicationManager.getApplication.executeOnPooledThread(new Runnable {
-      override def run(): Unit = {
-        NameInfoComponent.invalidate(psiFile)
-        TypeInfoComponent.invalidate(psiFile)
-        DefinitionLocationComponent.invalidate(psiFile)
-      }
-    })
-
-    StackReplsManager.getProjectRepl(project).flatMap(_.load(psiFile)) match {
+    val moduleName = HaskellPsiUtil.findModuleName(psiFile, runInRead = true)
+    StackReplsManager.getProjectRepl(project).flatMap(_.load(psiFile, moduleName)) match {
       case Some((loadOutput, loadFailed)) =>
+
+        ApplicationManager.getApplication.executeOnPooledThread(new Runnable {
+          override def run(): Unit = {
+            NameInfoComponent.invalidate(psiFile)
+            TypeInfoComponent.invalidate(psiFile)
+            DefinitionLocationComponent.invalidate(psiFile)
+          }
+        })
+
         ApplicationManager.getApplication.runReadAction(new Runnable {
           override def run(): Unit = {
-            val moduleName = HaskellPsiUtil.findModuleName(psiFile)
             if (loadFailed) {
               moduleName.foreach(BrowseModuleComponent.invalidateForModule(project, _, psiFile))
             } else {
