@@ -6,20 +6,18 @@ import com.intellij.psi.PsiElementVisitor;
 import com.intellij.psi.util.PsiTreeUtil;
 import intellij.haskell.psi.HaskellCname;
 import intellij.haskell.psi.HaskellCnameDotDot;
-import intellij.haskell.psi.HaskellImportId;
 import intellij.haskell.psi.HaskellVisitor;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
-import java.util.List;
+public class HaskellCnameDotDotImpl extends HaskellCompositeElementImpl implements HaskellCnameDotDot {
 
-public class HaskellImportIdImpl extends HaskellCompositeElementImpl implements HaskellImportId {
-
-  public HaskellImportIdImpl(ASTNode node) {
+  public HaskellCnameDotDotImpl(ASTNode node) {
     super(node);
   }
 
   public void accept(@NotNull HaskellVisitor visitor) {
-    visitor.visitImportId(this);
+    visitor.visitCnameDotDot(this);
   }
 
   public void accept(@NotNull PsiElementVisitor visitor) {
@@ -28,15 +26,9 @@ public class HaskellImportIdImpl extends HaskellCompositeElementImpl implements 
   }
 
   @Override
-  @NotNull
+  @Nullable
   public HaskellCname getCname() {
-    return notNullChild(PsiTreeUtil.getChildOfType(this, HaskellCname.class));
-  }
-
-  @Override
-  @NotNull
-  public List<HaskellCnameDotDot> getCnameDotDotList() {
-    return PsiTreeUtil.getChildrenOfTypeAsList(this, HaskellCnameDotDot.class);
+    return PsiTreeUtil.getChildOfType(this, HaskellCname.class);
   }
 
 }

@@ -1,10 +1,9 @@
 // This is a generated file. Not intended for manual editing.
 package intellij.haskell.psi;
 
-import com.intellij.psi.tree.IElementType;
-import com.intellij.psi.PsiElement;
 import com.intellij.lang.ASTNode;
-import intellij.haskell.psi.impl.HaskellElementTypeFactory;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.tree.IElementType;
 import intellij.haskell.psi.impl.*;
 
 public interface HaskellTypes {
@@ -16,6 +15,7 @@ public interface HaskellTypes {
   IElementType HS_CLASS_DECLARATION = new HaskellCompositeElementType("HS_CLASS_DECLARATION");
   IElementType HS_CLAZZ = new HaskellCompositeElementType("HS_CLAZZ");
   IElementType HS_CNAME = new HaskellCompositeElementType("HS_CNAME");
+  IElementType HS_CNAME_DOT_DOT = new HaskellCompositeElementType("HS_CNAME_DOT_DOT");
   IElementType HS_COMMENTS = new HaskellCompositeElementType("HS_COMMENTS");
   IElementType HS_CON = new HaskellCompositeElementType("HS_CON");
   IElementType HS_CONID = HaskellElementTypeFactory.factory("HS_CONID");
@@ -32,7 +32,6 @@ public interface HaskellTypes {
   IElementType HS_DEFAULT_DECLARATION = new HaskellCompositeElementType("HS_DEFAULT_DECLARATION");
   IElementType HS_DEPRECATED_WARN_PRAGMA = new HaskellCompositeElementType("HS_DEPRECATED_WARN_PRAGMA");
   IElementType HS_DERIVING_DECLARATION = new HaskellCompositeElementType("HS_DERIVING_DECLARATION");
-  IElementType HS_DOT_DOT_PARENS = new HaskellCompositeElementType("HS_DOT_DOT_PARENS");
   IElementType HS_DUMMY_PRAGMA = new HaskellCompositeElementType("HS_DUMMY_PRAGMA");
   IElementType HS_EXPORT = new HaskellCompositeElementType("HS_EXPORT");
   IElementType HS_EXPORTS = new HaskellCompositeElementType("HS_EXPORTS");
@@ -211,6 +210,9 @@ public interface HaskellTypes {
       else if (type == HS_CNAME) {
         return new HaskellCnameImpl(node);
       }
+      else if (type == HS_CNAME_DOT_DOT) {
+        return new HaskellCnameDotDotImpl(node);
+      }
       else if (type == HS_COMMENTS) {
         return new HaskellCommentsImpl(node);
       }
@@ -258,9 +260,6 @@ public interface HaskellTypes {
       }
       else if (type == HS_DERIVING_DECLARATION) {
         return new HaskellDerivingDeclarationImpl(node);
-      }
-      else if (type == HS_DOT_DOT_PARENS) {
-        return new HaskellDotDotParensImpl(node);
       }
       else if (type == HS_DUMMY_PRAGMA) {
         return new HaskellDummyPragmaImpl(node);

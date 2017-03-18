@@ -99,7 +99,7 @@ private body                ::= import_declarations top_declarations (NEWLINE | 
 import_declarations         ::= ((import_declaration | cfiles_pragma | DIRECTIVE) onl)*
 private top_declarations    ::= (top_declaration (NEWLINE | DIRECTIVE)+)* top_declaration?
 
-import_declaration          ::= IMPORT onls source_pragma? import_package_name? onls import_qualified? onls modid onls import_qualified_as? onls import_spec? NEWLINE?   {methods=[getModuleName] pin=1}
+import_declaration          ::= IMPORT (onls source_pragma)? (onls import_package_name?) onls import_qualified? onls modid onls import_qualified_as? onls import_spec? NEWLINE?   {methods=[getModuleName] pin=1}
 import_qualified            ::= VAR_ID      // "qualified"
 import_qualified_as         ::= VAR_ID qualifier    // "as" qualifier
 import_spec                 ::= import_ids_spec |
@@ -109,9 +109,8 @@ import_spec                 ::= import_ids_spec |
 import_ids_spec             ::= LEFT_PAREN onls import_id (onls COMMA? onls import_id)* onls (COMMA)? onls RIGHT_PAREN
 import_hiding_spec          ::= import_hiding onls LEFT_PAREN onls (import_id onls (onls COMMA onls import_id)* onls (COMMA)?)? onls RIGHT_PAREN
 import_empty_spec           ::= LEFT_PAREN RIGHT_PAREN
-import_hiding               ::= VAR_ID  //  "hiding"
-import_id                   ::= TYPE? (cname onls dot_dot_parens | cname (LEFT_PAREN onls (cname onls (COMMA onls cname onls)* onls)? RIGHT_PAREN) | cname)
-dot_dot_parens              ::= LEFT_PAREN DOT_DOT RIGHT_PAREN
+import_hiding               ::= "hiding"
+import_id                   ::= TYPE? (cname LEFT_PAREN onls (cname_dot_dot onls (COMMA onls cname_dot_dot onls)* onls)? RIGHT_PAREN | cname)
 import_package_name         ::= STRING_LITERAL
 
 top_declaration             ::= type_declaration | data_declaration | newtype_declaration | class_declaration | instance_declaration | default_declaration |
@@ -212,7 +211,7 @@ private atype               ::= "forall" (q_name | ttype | LEFT_PAREN type_signa
                                   oonls LEFT_PAREN oonls ttype+ DOUBLE_RIGHT_ARROW oonls ttype+ onls RIGHT_PAREN |
                                   oonls LEFT_PAREN (oonls "#")? oonls ttype (oonls COMMA oonls ttype)* oonls ("#" oonls)? RIGHT_PAREN |
                                   QUOTE? LEFT_BRACKET oonls ttype oonls RIGHT_BRACKET |
-                                  QUOTE? q_name+ | type_signature | QUOTE? LEFT_PAREN RIGHT_PAREN | QUOTE? LEFT_BRACKET RIGHT_BRACKET | LEFT_PAREN COMMA+ RIGHT_PAREN | DIRECTIVE
+                                  QUOTE? q_name+ | type_signature | QUOTE? LEFT_PAREN RIGHT_PAREN | QUOTE? LEFT_BRACKET RIGHT_BRACKET | LEFT_PAREN COMMA+ RIGHT_PAREN | DIRECTIVE | literal
 
 ttype                       ::= "!"? (varsym | varsym? btype (oonls RIGHT_ARROW oonls ttype)* | list_type q_name* | LEFT_PAREN RIGHT_ARROW RIGHT_PAREN)
 
@@ -250,12 +249,12 @@ instvar                     ::= q_name | LEFT_BRACKET q_name+ RIGHT_BRACKET | LE
 
 private fixity              ::= INFIXL | INFIXR | INFIX
 
-exports                     ::= LEFT_PAREN onl export (onl COMMA? onl export onl)* onl COMMA? onl RIGHT_PAREN | LEFT_PAREN RIGHT_PAREN
-export                      ::= export3 | export1 | export2 | export4
-private export3             ::= (q_con | cname) onl LEFT_PAREN onl (cname onl (onl COMMA onl cname)*)? onl RIGHT_PAREN
-private export1             ::= (q_con | cname) dot_dot_parens
+exports                     ::= LEFT_PAREN onl export ((onl COMMA)? onl export)* (onl COMMA)? onl RIGHT_PAREN | LEFT_PAREN RIGHT_PAREN
+export                      ::= export3 | export2 | export4
+private export3             ::= (q_con | cname) onl LEFT_PAREN (onl cname_dot_dot (onl COMMA onl cname_dot_dot)*)? onl RIGHT_PAREN
 private export2             ::= TYPE? onl cname+
 private export4             ::= MODULE modid
+cname_dot_dot               ::= cname | DOT_DOT
 
 newconstr                   ::= q_name atype | newconstr_fielddecl
 newconstr_fielddecl         ::= q_name onls LEFT_BRACE? onls q_name onls COLON_COLON onls ttype onls RIGHT_BRACE?

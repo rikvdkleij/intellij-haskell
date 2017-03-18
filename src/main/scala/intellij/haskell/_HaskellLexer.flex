@@ -38,10 +38,10 @@ white_char          = [\ \t\f\x0B\ \x0D] | {control_character} | {unispace}   /
 directive           = "#"{white_char}*("if"|"ifdef"|"ifndef"|"define"|"elif"|"else"|"error"|"endif"|"include"|"undef")  ("\\" (\r|\n|\r\n) | [^\r\n])*
 white_space         = {white_char}+
 
-small               = [a-z_] | "α" | "β"          // ignoring any more unicode lowercase letter for now
+small               = [a-z_] | "α" | "β" | "μ"         // ignoring any more unicode lowercase letter for now
 large               = [A-Z]           // ignoring any unicode uppercase letter for now
 
-digit               = [0-9]           // ignoring any unicode decimal digit for now
+digit               = [0-9] | \u2080 | \u2081 | \u2082 | \u2083 | \u2084 | \u2085 | \u2086 | \u2087 | \u2088 | \u2089    // ignoring any more unicode lowercase letter for now
 decimal             = [-+]?{digit}+
 
 hexit               = [0-9A-Fa-f]
