@@ -37,10 +37,12 @@ class HLintInspectionTool extends LocalInspectionTool {
       hi <- hlintInfos
       se <- findStartHaskellElement(psiFile, hi)
       ee <- findEndHaskellElement(psiFile, hi)
+      sl <- LineColumnPosition.fromOffset(psiFile, se.getTextOffset).map(_.lineNr)
+      el <- LineColumnPosition.fromOffset(psiFile, ee.getTextOffset).map(_.lineNr)
     } yield
       hi.to match {
         case Some(to) => problemsHolder.registerProblem(
-          new ProblemDescriptorBase(se, ee, hi.hint, Array(new HLintQuickfix(se, ee, hi.startLine, hi.startColumn, removeLineBreaksAndExtraSpaces(to), hi.hint, hi.note)), findProblemHighlightType(hi), false, null, true, isOnTheFly)
+          new ProblemDescriptorBase(se, ee, hi.hint, Array(new HLintQuickfix(se, ee, hi.startLine, hi.startColumn, removeLineBreaksAndExtraSpaces(sl, el, to), hi.hint, hi.note)), findProblemHighlightType(hi), false, null, true, isOnTheFly)
         )
         case None => problemsHolder.registerProblem(
           new ProblemDescriptorBase(se, ee, hi.hint, Array(), findProblemHighlightType(hi), false, null, true, isOnTheFly))
@@ -48,8 +50,12 @@ class HLintInspectionTool extends LocalInspectionTool {
     problemsHolder.getResultsArray
   }
 
-  private def removeLineBreaksAndExtraSpaces(s: String) = {
-    s.replaceAll("""\n""", " ").replaceAll("""\s+""", " ")
+  private def removeLineBreaksAndExtraSpaces(sl: Int, el: Int, s: String) = {
+    if (sl == el) {
+      s.replaceAll("""\n""", " ").replaceAll("""\s+""", " ")
+    } else {
+      s
+    }
   }
 
   private def findStartHaskellElement(psiFile: PsiFile, hlintInfo: HLintInfo): Option[PsiElement] = {
