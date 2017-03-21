@@ -100,8 +100,8 @@ import_declarations         ::= ((import_declaration | cfiles_pragma | DIRECTIVE
 private top_declarations    ::= (top_declaration (NEWLINE | DIRECTIVE)+)* top_declaration?
 
 import_declaration          ::= IMPORT (onls source_pragma)? (onls import_package_name?) onls import_qualified? onls modid onls import_qualified_as? onls import_spec? NEWLINE?   {methods=[getModuleName] pin=1}
-import_qualified            ::= VAR_ID      // "qualified"
-import_qualified_as         ::= VAR_ID qualifier    // "as" qualifier
+import_qualified            ::= "qualified"
+import_qualified_as         ::= "as" qualifier
 import_spec                 ::= import_ids_spec |
                                   import_hiding_spec |
                                   import_empty_spec

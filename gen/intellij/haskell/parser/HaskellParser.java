@@ -3487,27 +3487,25 @@ public class HaskellParser implements PsiParser, LightPsiParser {
   }
 
   /* ********************************************************** */
-  // VAR_ID
+  // "qualified"
   public static boolean import_qualified(PsiBuilder b, int l) {
     if (!recursion_guard_(b, l, "import_qualified")) return false;
-    if (!nextTokenIs(b, HS_VAR_ID)) return false;
     boolean r;
-    Marker m = enter_section_(b);
-    r = consumeToken(b, HS_VAR_ID);
-    exit_section_(b, m, HS_IMPORT_QUALIFIED, r);
+    Marker m = enter_section_(b, l, _NONE_, HS_IMPORT_QUALIFIED, "<import qualified>");
+    r = consumeToken(b, "qualified");
+    exit_section_(b, l, m, r, false, null);
     return r;
   }
 
   /* ********************************************************** */
-  // VAR_ID qualifier
+  // "as" qualifier
   public static boolean import_qualified_as(PsiBuilder b, int l) {
     if (!recursion_guard_(b, l, "import_qualified_as")) return false;
-    if (!nextTokenIs(b, HS_VAR_ID)) return false;
     boolean r;
-    Marker m = enter_section_(b);
-    r = consumeToken(b, HS_VAR_ID);
+    Marker m = enter_section_(b, l, _NONE_, HS_IMPORT_QUALIFIED_AS, "<import qualified as>");
+    r = consumeToken(b, "as");
     r = r && qualifier(b, l + 1);
-    exit_section_(b, m, HS_IMPORT_QUALIFIED_AS, r);
+    exit_section_(b, l, m, r, false, null);
     return r;
   }
 
