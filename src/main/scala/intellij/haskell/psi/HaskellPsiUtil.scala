@@ -164,7 +164,7 @@ object HaskellPsiUtil {
       val psiFile = psiElement.getContainingFile
       for {
         start <- Option(psiFile.findElementAt(editor.getSelectionModel.getSelectionStart))
-        end <- Option(psiFile.findElementAt(editor.getSelectionModel.getSelectionEnd - 1))
+        end <- Option(psiFile.findElementAt(editor.getSelectionModel.getSelectionEnd))
       } yield (start, end)
     }(psiElement)
   }
