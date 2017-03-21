@@ -75,7 +75,7 @@ private[component] object TypeInfoComponent {
       f <- Option(psiElement.getContainingFile)
       sp <- LineColumnPosition.fromOffset(f, to)
       ep <- LineColumnPosition.fromOffset(f, to + qne.getText.length)
-      ti <- findTypeInfo(f, sp, ep, qne.getText)
+      ti <- findTypeInfo(f, sp, ep, qne.getNameWithoutParens)
     } yield ti
   }
 

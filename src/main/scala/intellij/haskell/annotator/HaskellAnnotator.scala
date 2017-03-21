@@ -47,12 +47,6 @@ import scala.collection.JavaConverters._
 class HaskellAnnotator extends ExternalAnnotator[PsiFile, LoadResult] {
 
   private final val NoTypeSignaturePattern = """.* Top-level binding with no type signature: (.+)""".r
-  private final val UseLanguageExtensionPattern = """.* Perhaps you intended to use (\w+).*""".r
-  private final val UseLanguageExtensionPattern2 = """.* Use (\w+) to allow.*""".r
-  private final val UseLanguageExtensionPattern3 = """.* You need (\w+) to.*""".r
-  private final val UseLanguageExtensionPattern4 = """.* Try enabling (\w+).*""".r
-  private final val UseLanguageExtensionPattern5 = """.* Did you mean to enable (\w+)\?""".r
-  private final val UseLanguageExtensionPattern6 = """.*Use (\w+) to permit this.*""".r
   private final val DefinedButNotUsedPattern = """.* Defined but not used: [‘`](.+)[’']""".r
   private final val NotInScopePattern = """.*Not in scope:[^‘`]+[‘`](.+)[’']""".r
   private final val NotInScopePattern2 = """.* not in scope: (.+)""".r
@@ -113,9 +107,9 @@ class HaskellAnnotator extends ExternalAnnotator[PsiFile, LoadResult] {
         case cpf: LoadProblemInOtherFile if !cpf.isWarning =>
           HaskellNotificationGroup.logErrorBalloonEvent(project, s"${cpf.htmlMessage} at <a href='#'>${cpf.filePath}:${cpf.lineNr}:${cpf.columnNr}</a>.",
             (_: Notification, _: HyperlinkEvent) => {
-            val file = LocalFileSystem.getInstance().findFileByPath(cpf.filePath)
-            new OpenFileDescriptor(project, file, cpf.lineNr - 1, cpf.columnNr - 1).navigate(true)
-          })
+              val file = LocalFileSystem.getInstance().findFileByPath(cpf.filePath)
+              new OpenFileDescriptor(project, file, cpf.lineNr - 1, cpf.columnNr - 1).navigate(true)
+            })
         case cpf: LoadProblemWithoutLocation if !cpf.isWarning => HaskellNotificationGroup.logErrorBalloonEvent(project, s"Error ${cpf.htmlMessage}")
         case _ => ()
       }
@@ -149,19 +143,23 @@ class HaskellAnnotator extends ExternalAnnotator[PsiFile, LoadResult] {
           case NoTypeSignaturePattern(typeSignature) => WarningAnnotationWithIntentionActions(tr, problem.plainMessage, problem.htmlMessage, Iterable(new TypeSignatureIntentionAction(typeSignature)))
           case HaskellImportOptimizer.WarningRedundantImport(moduleName) => WarningAnnotationWithIntentionActions(tr, problem.plainMessage, problem.htmlMessage, Iterable(new OptimizeImportIntentionAction(moduleName, tr.getStartOffset)))
           case DefinedButNotUsedPattern(n) => WarningAnnotationWithIntentionActions(tr, problem.plainMessage, problem.htmlMessage, Iterable(new DefinedButNotUsedIntentionAction(n)))
-          case UseLanguageExtensionPattern(languageExtension) => createLanguageExtensionIntentionAction(problem, tr, languageExtension)
-          case UseLanguageExtensionPattern2(languageExtension) => createLanguageExtensionIntentionAction(problem, tr, languageExtension)
-          case UseLanguageExtensionPattern3(languageExtension) => createLanguageExtensionIntentionAction(problem, tr, languageExtension)
-          case UseLanguageExtensionPattern4(languageExtension) => createLanguageExtensionIntentionAction(problem, tr, languageExtension)
-          case UseLanguageExtensionPattern5(languageExtension) => createLanguageExtensionIntentionAction(problem, tr, languageExtension)
-          case UseLanguageExtensionPattern6(languageExtension) => createLanguageExtensionIntentionAction(problem, tr, languageExtension)
-          case _ => if (problem.isWarning)
-            WarningAnnotation(tr, problem.plainMessage, problem.htmlMessage)
-          else
-            ErrorAnnotation(tr, problem.plainMessage, problem.htmlMessage)
+          case _ =>
+            findSuggestedLanguageExtension(project, plainMessage) match {
+              case Some(le) => createLanguageExtensionIntentionAction(problem, tr, le)
+              case _ =>
+                if (problem.isWarning)
+                  WarningAnnotation(tr, problem.plainMessage, problem.htmlMessage)
+                else
+                  ErrorAnnotation(tr, problem.plainMessage, problem.htmlMessage)
+            }
         }
       }
     }
+  }
+
+  private def findSuggestedLanguageExtension(project: Project, message: String) = {
+    val lanuageExtensions = HaskellComponentsManager.findGlobalProjectInfo(project).map(_.languageExtensions)
+    lanuageExtensions.flatMap(_.find(message.contains))
   }
 
   private def extractPerhapsYouMeantAction(suggestion: String): Option[PerhapsYouMeantIntentionAction] = {

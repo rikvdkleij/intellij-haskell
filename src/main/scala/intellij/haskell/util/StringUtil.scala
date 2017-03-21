@@ -31,8 +31,11 @@ object StringUtil {
     XmlStringUtil.escapeString(s, false, false)
   }
 
+  /**
+    * Because of enabling DuplicateRecordFields accessor functions contain `$sel:`.
+    */
   def shortenHaskellDeclaration(declaration: String): String = {
-    removeCommentsAndWhiteSpaces(declaration.replaceAll(PackageQualifierPattern, ""))
+    removeCommentsAndWhiteSpaces(declaration.replace(".$sel:", ".").replaceAll(PackageQualifierPattern, ""))
   }
 
   def removeCommentsAndWhiteSpaces(code: String): String = {

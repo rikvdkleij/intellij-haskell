@@ -21,6 +21,7 @@ import java.util.concurrent.{Executors, TimeUnit}
 
 import com.intellij.codeInsight.completion._
 import com.intellij.codeInsight.lookup.LookupElementBuilder
+import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.patterns.PlatformPatterns
@@ -29,7 +30,6 @@ import com.intellij.psi.util.PsiTreeUtil
 import com.intellij.psi.{PsiElement, PsiFile, TokenType}
 import com.intellij.util.ProcessingContext
 import intellij.haskell.HaskellIcons
-import intellij.haskell.external.component.HaskellComponentsManager._
 import intellij.haskell.external.component.{HaskellComponentsManager, ModuleIdentifier}
 import intellij.haskell.psi.HaskellElementCondition._
 import intellij.haskell.psi.HaskellPsiUtil._
@@ -137,13 +137,13 @@ class HaskellCompletionContributor extends CompletionContributor {
       }
 
       positionElement match {
+        case Some(e) if isPragmaInProgress(e) =>
+          resultSet.addAllElements(getModulePragmaIds.asJavaCollection)
+          resultSet.addAllElements(getPragmaStartEndIds.asJavaCollection)
         case Some(e) if isFileHeaderPragmaInProgress(e) =>
           resultSet.addAllElements(getLanguageExtensions(project).asJavaCollection)
           resultSet.addAllElements(getPragmaStartEndIds.asJavaCollection)
           resultSet.addAllElements(getFileHeaderPragmaIds.asJavaCollection)
-        case Some(e) if isPragmaInProgress(e) =>
-          resultSet.addAllElements(getModulePragmaIds.asJavaCollection)
-          resultSet.addAllElements(getPragmaStartEndIds.asJavaCollection)
         case Some(e) if isImportSpecInProgress(e) =>
           resultSet.addAllElements(findAvailableIdsForImportModuleSpec(project, e, psiFile).asJavaCollection)
         case Some(e) if isImportModuleDeclarationInProgress(e) =>
@@ -159,38 +159,33 @@ class HaskellCompletionContributor extends CompletionContributor {
         case op =>
           val importDeclarations = findImportDeclarations(psiFile)
 
-          prefixText.map(_.init).flatMap(pt =>
-            importDeclarations.find(id => Option(id.getImportQualifiedAs).exists(_.getQualifier.getName == pt) ||
-              (id.getModuleName.contains(pt) && Option(id.getImportQualifiedAs).isEmpty))) match {
-            case Some(id) => resultSet.addAllElements(createLookupElementsForQualifier(project, psiFile, id).asJavaCollection)
-            case _ =>
-              resultSet.addAllElements(getReservedNames.asJavaCollection)
-              resultSet.addAllElements(getSpecialReservedIds.asJavaCollection)
-              resultSet.addAllElements(getPragmaStartEndIds.asJavaCollection)
-              resultSet.addAllElements(getCommentIds.asJavaCollection)
-              resultSet.addAllElements(getHaddockIds.asJavaCollection)
-              resultSet.addAllElements(getIdsFromFullImportedModules(project, psiFile, importDeclarations).asJavaCollection)
-              resultSet.addAllElements(getIdsFromHidingIdsImportedModules(project, psiFile, importDeclarations).asJavaCollection)
-              resultSet.addAllElements(getIdsFromSpecIdsImportedModules(project, psiFile, importDeclarations).asJavaCollection)
+          resultSet.addAllElements(getReservedNames.asJavaCollection)
+          resultSet.addAllElements(getSpecialReservedIds.asJavaCollection)
+          resultSet.addAllElements(getPragmaStartEndIds.asJavaCollection)
+          resultSet.addAllElements(getCommentIds.asJavaCollection)
+          resultSet.addAllElements(getHaddockIds.asJavaCollection)
+          resultSet.addAllElements(getIdsFromFullImportedModules(project, psiFile, importDeclarations).asJavaCollection)
+          resultSet.addAllElements(getIdsFromHidingIdsImportedModules(project, psiFile, importDeclarations).asJavaCollection)
+          resultSet.addAllElements(getIdsFromSpecIdsImportedModules(project, psiFile, importDeclarations).asJavaCollection)
 
-              val moduleName = findModuleName(psiFile)
-              val topLevelLookupElements = moduleName.map(mn => findAllTopLevelModuleIdentifiers(project, psiFile, mn).map(mi => createTopLevelLookupElement(mi))).getOrElse(Iterable())
-              if (topLevelLookupElements.isEmpty) {
-                resultSet.addAllElements(findTopLevelLookupElements(psiFile).asJavaCollection)
-              } else {
-                resultSet.addAllElements(topLevelLookupElements.asJavaCollection)
-                resultSet.addAllElements(findTopLevelTypeSignatureLookupElements(psiFile).asJavaCollection)
-              }
+          val moduleName = findModuleName(psiFile)
+          val topLevelLookupElements = moduleName.map(mn => HaskellComponentsManager.findAllTopLevelModuleIdentifiers(project, psiFile, mn).map(mi => createTopLevelLookupElement(mi))).getOrElse(Iterable())
+          if (topLevelLookupElements.isEmpty) {
+            resultSet.addAllElements(findTopLevelLookupElements(psiFile).asJavaCollection)
+          } else {
+            resultSet.addAllElements(topLevelLookupElements.asJavaCollection)
+            resultSet.addAllElements(findTopLevelTypeSignatureLookupElements(psiFile).asJavaCollection)
+          }
 
-              op match {
-                case Some(e) =>
-                  val localElements = if (e.getText.trim.isEmpty)
-                    findLocalElements(e)
-                  else
-                    findLocalElements(e).filterNot(_.getText == e.getText)
-                  resultSet.addAllElements(localElements.map(createLocalLookupElement).asJavaCollection)
-                case _ => ()
-              }
+          op match {
+            case Some(e) =>
+              val localElements = if (e.getText.trim.isEmpty)
+                findLocalElements(e)
+              else
+                findLocalElements(e).filterNot(_.getText == e.getText)
+              ApplicationManager.getApplication.invokeLater(() => localElements.foreach(HaskellComponentsManager.findTypeInfoForElement))
+              resultSet.addAllElements(localElements.map(createLocalLookupElement).asJavaCollection)
+            case _ => ()
           }
       }
     }
@@ -208,7 +203,9 @@ class HaskellCompletionContributor extends CompletionContributor {
         HaskellPsiUtil.findModIdElement(ce) match {
           case Some(modid) => context.setDummyIdentifier(modid.getName)
           case _ => findQualifiedNamedElementToComplete(ce) match {
-            case Some(qualifiedNameElement) => context.setDummyIdentifier(qualifiedNameElement.getNameWithoutParens)
+            case Some(qualifiedNameElement) =>
+              context.setDummyIdentifier(qualifiedNameElement.getNameWithoutParens)
+              context.setReplacementOffset(qualifiedNameElement.getTextRange.getEndOffset)
             case _ => ce.getText.trim match {
               case t if t.nonEmpty => context.setDummyIdentifier(t)
               case _ => context.setDummyIdentifier("a")
@@ -242,7 +239,7 @@ class HaskellCompletionContributor extends CompletionContributor {
   }
 
   private def findLocalElements(element: PsiElement) = {
-    Option(PsiTreeUtil.getParentOfType(element, classOf[HaskellExpression])).toStream.flatMap(e => HaskellPsiUtil.findNamedElements(e))
+    HaskellPsiUtil.findExpressionParent(element).toStream.flatMap(e => HaskellPsiUtil.findNamedElements(e))
   }
 
   private def isImportSpecInProgress(element: PsiElement): Boolean = {
@@ -275,7 +272,7 @@ class HaskellCompletionContributor extends CompletionContributor {
   private def findAvailableIdsForImportModuleSpec(project: Project, element: PsiElement, psiFile: PsiFile) = {
     (for {
       moduleName <- HaskellPsiUtil.findImportDeclarationParent(element).flatMap(_.getModuleName)
-    } yield findImportedModuleIdentifiers(project, moduleName).map(m => createLookupElement(m, addParens = true))).getOrElse(Stream())
+    } yield HaskellComponentsManager.findImportedModuleIdentifiers(project, moduleName).map(m => createLookupElement(m, addParens = true))).getOrElse(Stream())
   }
 
   private def findAvailableModuleNames(project: Project, psiFile: PsiFile) = {
@@ -288,7 +285,7 @@ class HaskellCompletionContributor extends CompletionContributor {
   }
 
   private def getLanguageExtensions(project: Project) = {
-    findGlobalProjectInfo(project).map(_.languageExtensions.map(n => LookupElementBuilder.create(n).withIcon(HaskellIcons.HaskellSmallBlueLogo).withTailText(" language extension", true))).getOrElse(Iterable())
+    HaskellComponentsManager.findGlobalProjectInfo(project).map(_.languageExtensions.map(n => LookupElementBuilder.create(n).withIcon(HaskellIcons.HaskellSmallBlueLogo).withTailText(" language extension", true))).getOrElse(Iterable())
   }
 
   private def getPragmaStartEndIds = {
@@ -326,12 +323,12 @@ class HaskellCompletionContributor extends CompletionContributor {
   }
 
   private def isNoImplicitPreludeActive(psiFile: PsiFile): Boolean = {
-    findGlobalProjectInfo(psiFile.getProject).exists(_.noImplicitPreludeActive) ||
+    HaskellComponentsManager.findGlobalProjectInfo(psiFile.getProject).exists(_.noImplicitPreludeActive) ||
       HaskellPsiUtil.findLanguageExtensions(psiFile).exists(_.getQNameList.asScala.exists(_.getName == "NoImplicitPrelude"))
   }
 
   private def findImportIds(importIdList: util.List[HaskellImportId]): Iterable[String] = {
-    importIdList.asScala.flatMap(ii => ii.getCnameList.asScala.map(_.getName))
+    importIdList.asScala.flatMap(ii => Iterable(ii.getCname.getName) ++ ii.getCnameDotDotList.asScala.flatMap(cndd => Option(cndd.getCname).map(_.getName)))
   }
 
   private def getImportedModulesWithHidingIdsSpec(psiFile: PsiFile, importDeclarations: Iterable[HaskellImportDeclaration]): Iterable[ImportWithHiding] = {
@@ -366,7 +363,7 @@ class HaskellCompletionContributor extends CompletionContributor {
     val importInfos = getFullImportedModules(psiFile, importDeclarations)
 
     val lookupElements = importInfos.map(importInfo => Future {
-      val moduleIdentifiers = findImportedModuleIdentifiers(project, importInfo.moduleName)
+      val moduleIdentifiers = HaskellComponentsManager.findImportedModuleIdentifiers(project, importInfo.moduleName)
       createLookupElements(importInfo, moduleIdentifiers)
     })
     waitForResult(lookupElements)
@@ -376,7 +373,7 @@ class HaskellCompletionContributor extends CompletionContributor {
     val importInfos = getImportedModulesWithHidingIdsSpec(psiFile, importDeclarations)
 
     val lookupElements = importInfos.map(importInfo => Future {
-      val moduleIdentifiers = findImportedModuleIdentifiers(project, importInfo.moduleName)
+      val moduleIdentifiers = HaskellComponentsManager.findImportedModuleIdentifiers(project, importInfo.moduleName)
       createLookupElements(importInfo, moduleIdentifiers.filterNot(mi => importInfo.ids.exists(_ == mi.name)))
     })
     waitForResult(lookupElements)
@@ -386,7 +383,7 @@ class HaskellCompletionContributor extends CompletionContributor {
     val importInfos = getImportedModulesWithSpecIds(psiFile, importDeclarations)
 
     val lookupElements = importInfos.map(importInfo => Future {
-      val moduleIdentifiers = findImportedModuleIdentifiers(project, importInfo.moduleName)
+      val moduleIdentifiers = HaskellComponentsManager.findImportedModuleIdentifiers(project, importInfo.moduleName)
       createLookupElements(importInfo, moduleIdentifiers.filter(mi => importInfo.ids.exists(id => if (mi.isOperator) s"(${mi.name})" == id else id == mi.name)))
     })
     waitForResult(lookupElements)
@@ -406,18 +403,6 @@ class HaskellCompletionContributor extends CompletionContributor {
     } catch {
       case _: TimeoutException => None
     }
-  }
-
-  private def createLookupElementsForQualifier(project: Project, psiFile: PsiFile, importDeclaration: HaskellImportDeclaration) = {
-    val importInfo = getFullImportedModules(psiFile, Iterable(importDeclaration)).headOption.
-      orElse(getImportedModulesWithSpecIds(psiFile, Iterable(importDeclaration)).headOption).
-      orElse(getImportedModulesWithHidingIdsSpec(psiFile, Iterable(importDeclaration)).headOption)
-
-    val lookupElements = importInfo.map(ii => Future {
-      val moduleIdentifiers = findImportedModuleIdentifiers(project, ii.moduleName)
-      moduleIdentifiers.map(mi => createQualifiedLookUpElement(mi, ii.as.getOrElse(ii.moduleName)))
-    })
-    lookupElements.map(le => waitForResult(le)).getOrElse(Stream())
   }
 
   private def createLookupElements(importInfo: ImportInfo, moduleIdentifiers: Iterable[ModuleIdentifier]): Iterable[LookupElementBuilder] = {

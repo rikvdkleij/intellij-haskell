@@ -51,7 +51,7 @@ private[repl] abstract class StackReplProcess(val project: Project, val extraSta
 
   private final val EndOfOutputIndicator = "^IntellijHaskell^"
 
-  private final val DelayBetweenReads = 10.millis
+  private final val DelayBetweenReads = 5.millis
 
   protected def execute(command: String): Option[StackReplOutput] = {
 
@@ -72,7 +72,7 @@ private[repl] abstract class StackReplProcess(val project: Project, val extraSta
       val stdOutResult = new ArrayBuffer[String]
       val stdErrResult = new ArrayBuffer[String]
 
-      def reachedEndOfOutput: Boolean = stdOutResult.lastOption.exists(_.startsWith(EndOfOutputIndicator))
+      def reachedEndOfOutput: Boolean = stdOutResult.lastOption.exists(_.startsWith(EndOfOutputIndicator)) && (command.startsWith(":module") || stdOutResult.length > 1 || stdErrResult.length > 1)
 
       writeToOutputStream(command)
 

@@ -22,9 +22,13 @@ import intellij.haskell.external.repl.StackReplsManager
 import intellij.haskell.psi.HaskellPsiUtil
 import intellij.haskell.util.{HaskellFileUtil, StringUtil}
 
+import scala.collection.mutable
+
 private[component] object LoadComponent {
 
   private final val ProblemPattern = """(.+):([\d]+):([\d]+):(.+)""".r
+
+  private final val previousLoadStatus = mutable.Map[PsiFile, Boolean]()
 
   def load(psiFile: PsiFile): LoadResult = {
     val project = psiFile.getProject
@@ -33,23 +37,17 @@ private[component] object LoadComponent {
     StackReplsManager.getProjectRepl(project).flatMap(_.load(psiFile, moduleName)) match {
       case Some((loadOutput, loadFailed)) =>
 
-        ApplicationManager.getApplication.executeOnPooledThread(new Runnable {
-          override def run(): Unit = {
-            NameInfoComponent.invalidate(psiFile)
-            TypeInfoComponent.invalidate(psiFile)
-            DefinitionLocationComponent.invalidate(psiFile)
-          }
-        })
-
-        ApplicationManager.getApplication.runReadAction(new Runnable {
-          override def run(): Unit = {
-            if (loadFailed) {
+        if (previousLoadStatus.getOrElse(psiFile, true) && !loadFailed) {
+          ApplicationManager.getApplication.executeOnPooledThread(new Runnable {
+            override def run(): Unit = {
               moduleName.foreach(BrowseModuleComponent.invalidateForModule(project, _, psiFile))
-            } else {
-              moduleName.foreach(BrowseModuleComponent.refreshForModule(project, _, psiFile))
+              moduleName.foreach(mn => BrowseModuleComponent.findAllTopLevelModuleIdentifiers(project, mn, psiFile))
+              TypeInfoComponent.invalidate(psiFile)
+              NameInfoComponent.invalidate(psiFile)
+              DefinitionLocationComponent.invalidate(psiFile)
             }
-          }
-        })
+          })
+        }
 
         val filePath = HaskellFileUtil.makeFilePathAbsolute(HaskellFileUtil.getFilePath(psiFile), project)
 
@@ -58,6 +56,8 @@ private[component] object LoadComponent {
 
         val currentFileProblems = loadProblems.flatMap(convertToLoadProblemInCurrentFile)
         val otherFileProblems = loadProblems.diff(currentFileProblems)
+
+        previousLoadStatus.put(psiFile, loadFailed)
         LoadResult(currentFileProblems, otherFileProblems, loadFailed)
       case _ => LoadResult()
     }

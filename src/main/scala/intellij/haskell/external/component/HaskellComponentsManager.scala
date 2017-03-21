@@ -16,14 +16,11 @@
 
 package intellij.haskell.external.component
 
-import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.editor.SelectionModel
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.util.Computable
 import com.intellij.psi.{PsiElement, PsiFile}
 import intellij.haskell.annotator.HaskellAnnotator
-import intellij.haskell.psi.{HaskellNamedElement, HaskellPsiUtil}
-import intellij.haskell.util.index.HaskellFileIndex
+import intellij.haskell.psi.HaskellNamedElement
 import intellij.haskell.{HaskellFile, HaskellNotificationGroup}
 
 object HaskellComponentsManager {
@@ -78,7 +75,7 @@ object HaskellComponentsManager {
 
   def preloadModuleIdentifiersCaches(project: Project): Unit = {
     HaskellNotificationGroup.logInfoEvent(project, "Start to preload cache")
-    preloadAllLibraryModuleIdentifiers(project)
+    preloadLibraryIdentifiers(project)
     HaskellAnnotator.restartDaemonCodeAnalyzerForOpenFiles(project)
     HaskellNotificationGroup.logInfoEvent(project, "Finished with preloading cache")
   }
@@ -95,24 +92,25 @@ object HaskellComponentsManager {
     ModuleFileComponent.findHaskellFiles(project, moduleName)
   }
 
-  private def preloadAllLibraryModuleIdentifiers(project: Project): Unit = {
-    val importedLibraryModuleNames =
-      ApplicationManager.getApplication.runReadAction(new Computable[Iterable[String]] {
-        override def compute(): Iterable[String] =
-          if (!project.isDisposed) {
-            HaskellFileIndex.findProjectProductionPsiFiles(project).flatMap(pf => HaskellPsiUtil.findImportDeclarations(pf).flatMap(_.getModuleName))
-          } else {
-            Iterable()
-          }
-      })
-
-    importedLibraryModuleNames.toSeq.distinct.foreach(mn => {
-      ApplicationManager.getApplication.runReadAction(new Runnable {
-        override def run(): Unit =
+  private def preloadLibraryIdentifiers(project: Project): Unit = {
+    if (!project.isDisposed) {
+      val projectInfo = findGlobalProjectInfo(project)
+      if (!project.isDisposed) {
+        BrowseModuleComponent.findImportedModuleIdentifiers(project, "Prelude")
+        Thread.sleep(1000)
+      }
+      if (!project.isDisposed) {
+        projectInfo.foreach(_.allAvailableLibraryModuleNames.find(_ == "Protolude").foreach(mn => BrowseModuleComponent.findImportedModuleIdentifiers(project, mn)))
+        Thread.sleep(1000)
+      }
+      if (!project.isDisposed) {
+        projectInfo.foreach(_.allAvailableLibraryModuleNames.foreach(mn => {
           if (!project.isDisposed) {
             BrowseModuleComponent.findImportedModuleIdentifiers(project, mn)
+            Thread.sleep(1000)
           }
-      })
-    })
+        }))
+      }
+    }
   }
 }

@@ -24,7 +24,7 @@ import com.intellij.openapi.progress.ProcessCanceledException
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.psi.search.GlobalSearchScope
-import intellij.haskell.util.index.HaskellFileIndex
+import intellij.haskell.util.index.{HaskellFileIndex, HaskellModuleIndex}
 import intellij.haskell.util.{HaskellEditorUtil, HaskellProjectUtil}
 import intellij.haskell.{HaskellFile, HaskellNotificationGroup}
 
@@ -69,7 +69,7 @@ private[component] object ModuleFileComponent {
 
   def findHaskellFiles(project: Project, moduleName: String): Iterable[HaskellFile] = {
     if (AvailableModuleNamesComponent.findProjectProductionModuleNames(project).exists(_ == moduleName)) {
-      findFilesForModule(project, moduleName)
+      HaskellModuleIndex.getFilesByModuleName(project, moduleName, GlobalSearchScope.projectScope(project))
     } else {
       val key = Key(project, moduleName)
       try {
