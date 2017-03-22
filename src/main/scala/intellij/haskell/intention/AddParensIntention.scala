@@ -26,8 +26,7 @@ class AddParensIntention extends PsiElementBaseIntentionAction {
   override def isAvailable(project: Project, editor: Editor, psiElement: PsiElement): Boolean = {
     HaskellPsiUtil.getSelectionStartEnd(psiElement, editor) match {
       case None => false
-      case Some((start, end)) =>
-        psiElement.isWritable && (start.getNode.getElementType != HS_LEFT_PAREN || end.getNode.getElementType != HS_RIGHT_PAREN)
+      case Some(_) => psiElement.isWritable
     }
   }
 
