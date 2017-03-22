@@ -20,6 +20,7 @@ import com.intellij.codeInspection._
 import com.intellij.psi.{PsiElement, PsiFile, TokenType}
 import intellij.haskell.external.component.{HLintComponent, HLintInfo}
 import intellij.haskell.psi.HaskellTypes._
+import intellij.haskell.runconfig.console.HaskellConsoleView
 import intellij.haskell.util.{HaskellProjectUtil, LineColumnPosition}
 
 import scala.annotation.tailrec
@@ -28,6 +29,10 @@ class HLintInspectionTool extends LocalInspectionTool {
 
   override def checkFile(psiFile: PsiFile, manager: InspectionManager, isOnTheFly: Boolean): Array[ProblemDescriptor] = {
     if (HaskellProjectUtil.isLibraryFile(psiFile).getOrElse(true)) {
+      return Array()
+    }
+
+    if (HaskellConsoleView.isConsole(psiFile)) {
       return Array()
     }
 

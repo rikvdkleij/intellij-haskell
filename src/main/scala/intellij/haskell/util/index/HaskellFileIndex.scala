@@ -92,7 +92,7 @@ object HaskellFileIndex {
     HaskellFileUtil.convertToHaskellFiles(findProjectTestFiles(project), project)
   }
 
-  private def findProjectFiles(project: Project): Iterable[VirtualFile] = {
+  def findProjectFiles(project: Project): Iterable[VirtualFile] = {
     findFiles(project, GlobalSearchScope.projectScope(project))
   }
 

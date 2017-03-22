@@ -21,6 +21,7 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Computable
 import com.intellij.psi.PsiFile
 import intellij.haskell.psi.HaskellPsiUtil
+import intellij.haskell.runconfig.console.HaskellConsoleView
 
 private[repl] class ProjectStackReplProcess(project: Project) extends StackReplProcess(project, Seq("--test"), true) {
 
@@ -47,20 +48,24 @@ private[repl] class ProjectStackReplProcess(project: Project) extends StackReplP
   }
 
   private def load(psiFile: PsiFile, moduleName: Option[String]): Option[(StackReplOutput, Boolean)] = {
-    val filePath = getFilePath(psiFile)
-    val moduleNameAction = ApplicationManager.getApplication.runReadAction(new Computable[Option[String]] {
-      override def compute(): Option[String] = {
-        moduleName.orElse(HaskellPsiUtil.findModuleName(psiFile))
+    if (!HaskellConsoleView.isConsole(psiFile)) {
+      val filePath = getFilePath(psiFile)
+      val moduleNameAction = ApplicationManager.getApplication.runReadAction(new Computable[Option[String]] {
+        override def compute(): Option[String] = {
+          moduleName.orElse(HaskellPsiUtil.findModuleName(psiFile))
+        }
+      })
+      execute(s":load $filePath") match {
+        case Some(output) =>
+          val loadFailed = isLoadFailed(output)
+          loadedPsiFileInfo = Some(LoadedPsiFileInfo(Some(psiFile), moduleNameAction, loadFailed))
+          Some(output, loadFailed)
+        case _ =>
+          loadedPsiFileInfo = None
+          None
       }
-    })
-    execute(s":load $filePath") match {
-      case Some(output) =>
-        val loadFailed = isLoadFailed(output)
-        loadedPsiFileInfo = Some(LoadedPsiFileInfo(Some(psiFile), moduleNameAction, loadFailed))
-        Some(output, loadFailed)
-      case _ =>
-        loadedPsiFileInfo = None
-        None
+    } else {
+      None
     }
   }
 

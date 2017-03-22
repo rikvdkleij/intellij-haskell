@@ -26,7 +26,7 @@ import com.intellij.openapi.util.text.StringUtil
 import com.intellij.patterns.PlatformPatterns
 import com.intellij.psi.impl.source.tree.TreeUtil
 import com.intellij.psi.util.PsiTreeUtil
-import com.intellij.psi.{PsiElement, PsiFile, TokenType}
+import com.intellij.psi.{PsiElement, PsiFile, PsiManager, TokenType}
 import com.intellij.util.ProcessingContext
 import intellij.haskell.HaskellIcons
 import intellij.haskell.external.component.HaskellComponentsManager._
@@ -35,7 +35,9 @@ import intellij.haskell.psi.HaskellElementCondition._
 import intellij.haskell.psi.HaskellPsiUtil._
 import intellij.haskell.psi.HaskellTypes._
 import intellij.haskell.psi._
+import intellij.haskell.runconfig.console.HaskellConsoleView
 import intellij.haskell.util.HaskellProjectUtil
+import intellij.haskell.util.index.HaskellFileIndex
 
 import scala.collection.JavaConverters._
 import scala.concurrent.duration.Duration
@@ -180,6 +182,10 @@ class HaskellCompletionContributor extends CompletionContributor {
               } else {
                 resultSet.addAllElements(topLevelLookupElements.asJavaCollection)
                 resultSet.addAllElements(findTopLevelTypeSignatureLookupElements(psiFile).asJavaCollection)
+              }
+
+              if (HaskellConsoleView.isConsole(psiFile)) {
+                resultSet.addAllElements(getIdsFromAllExportedModules(project).asJavaCollection)
               }
 
               op match {
@@ -330,6 +336,10 @@ class HaskellCompletionContributor extends CompletionContributor {
       HaskellPsiUtil.findLanguageExtensions(psiFile).exists(_.getQNameList.asScala.exists(_.getName == "NoImplicitPrelude"))
   }
 
+  private def findExportIds(exportIdList: util.List[HaskellExport]): Iterable[String] = {
+    exportIdList.asScala.flatMap(ii => ii.getCnameList.asScala.map(_.getName))
+  }
+
   private def findImportIds(importIdList: util.List[HaskellImportId]): Iterable[String] = {
     importIdList.asScala.flatMap(ii => ii.getCnameList.asScala.map(_.getName))
   }
@@ -386,6 +396,43 @@ class HaskellCompletionContributor extends CompletionContributor {
     val importInfos = getImportedModulesWithSpecIds(psiFile, importDeclarations)
 
     val lookupElements = importInfos.map(importInfo => Future {
+      val moduleIdentifiers = findImportedModuleIdentifiers(project, importInfo.moduleName)
+      createLookupElements(importInfo, moduleIdentifiers.filter(mi => importInfo.ids.exists(id => if (mi.isOperator) s"(${mi.name})" == id else id == mi.name)))
+    })
+    waitForResult(lookupElements)
+  }
+
+  private def getIdsFromAllExportedModules(project: Project) = {
+    val exportInfos = for {
+      vFile <- HaskellFileIndex.findProjectFiles(project)
+      pFile = PsiManager.getInstance(project).findFile(vFile)
+      mn <- findModuleName(pFile)
+    } yield {
+      val exportIds = findExportDeclarations(pFile).toList
+      if (exportIds.isEmpty) {
+        val tops = findTopDeclarations(pFile)
+          .toList
+          .map(d => Option(d.getExpression).map(_.getQNameList.asScala.head.getName))
+          .filter(_.isDefined)
+          .map(_.get).distinct
+
+        ImportWithIds(
+          mn,
+          tops,
+          qualified = false,
+          None
+        )
+      } else {
+        ImportWithIds(
+          mn,
+          findExportIds(exportIds.asJava),
+          qualified = false,
+          None
+        )
+      }
+    }
+
+    val lookupElements = exportInfos.map(importInfo => Future {
       val moduleIdentifiers = findImportedModuleIdentifiers(project, importInfo.moduleName)
       createLookupElements(importInfo, moduleIdentifiers.filter(mi => importInfo.ids.exists(id => if (mi.isOperator) s"(${mi.name})" == id else id == mi.name)))
     })
