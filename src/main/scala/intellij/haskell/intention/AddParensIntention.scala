@@ -19,21 +19,14 @@ class AddParensIntention extends PsiElementBaseIntentionAction {
         end.getParent.addAfter(right, end)
       }
 
-      if (psiElement.getText.length == 1 && start.isInstanceOf[PsiWhiteSpace]) {
-        addParens(end, end)
-      } else if (psiElement.getText.length == 1 && end.isInstanceOf[PsiWhiteSpace]) {
-        addParens(start, start)
-      } else {
-        addParens(start, end)
-      }
+      addParens(start, end)
     }
   }
 
   override def isAvailable(project: Project, editor: Editor, psiElement: PsiElement): Boolean = {
     HaskellPsiUtil.getSelectionStartEnd(psiElement, editor) match {
       case None => false
-      case Some((start, end)) =>
-        psiElement.isWritable && start.getNode.getElementType != HS_LEFT_PAREN && end.getNode.getElementType != HS_RIGHT_PAREN
+      case Some(_) => psiElement.isWritable
     }
   }
 
