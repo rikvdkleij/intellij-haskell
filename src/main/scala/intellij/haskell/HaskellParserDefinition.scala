@@ -39,9 +39,10 @@ object HaskellParserDefinition {
   final val ReservedOperators = TokenSet.create(HS_COLON_COLON, HS_EQUAL, HS_BACKSLASH, HS_VERTICAL_BAR, HS_LEFT_ARROW,
     HS_RIGHT_ARROW, HS_AT, HS_TILDE, HS_DOUBLE_RIGHT_ARROW, HS_DOT_DOT)
   final val Operators = TokenSet.orSet(ReservedOperators, TokenSet.create(HS_VARSYM_ID, HS_CONSYM_ID), TokenSet.create(HS_DOT))
-  final val Numbers = TokenSet.create(HS_DECIMAL, HS_FLOAT, HS_HEXADECIMAL, HS_OCTAL)
+  final val NumberLiterals = TokenSet.create(HS_DECIMAL, HS_FLOAT, HS_HEXADECIMAL, HS_OCTAL)
   final val SymbolsResOp = TokenSet.create(HS_EQUAL, HS_AT, HS_BACKSLASH, HS_VERTICAL_BAR, HS_TILDE)
-
+  final val StringLiterals =     TokenSet.create(HS_CHARACTER_LITERAL, HS_STRING_LITERAL)
+  final val Literals = TokenSet.orSet(StringLiterals, NumberLiterals, TokenSet.create(HS_QUASIQUOTE))
   final val HaskellParser = new HaskellParser
 }
 
@@ -72,7 +73,7 @@ class HaskellParserDefinition extends ParserDefinition {
 
   @NotNull
   def getStringLiteralElements: TokenSet = {
-    TokenSet.create(HS_CHARACTER_LITERAL, HS_STRING_LITERAL)
+    HaskellParserDefinition.StringLiterals
   }
 
   @NotNull

@@ -31,6 +31,9 @@ import intellij.haskell.{HaskellFile, HaskellNotificationGroup}
 
 object HaskellProjectUtil {
 
+  final val Prelude = "Prelude"
+  final val Protolude = "Protolude"
+
   def isHaskellStackProject(project: Project): Boolean = {
     val haskellModuleExists = HaskellModuleType.findHaskellProjectModules(project).nonEmpty
     val stackPath = HaskellSdkType.getStackPath(project)

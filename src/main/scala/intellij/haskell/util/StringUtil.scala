@@ -35,7 +35,12 @@ object StringUtil {
     * Because of enabling DuplicateRecordFields accessor functions contain `$sel:`.
     */
   def shortenHaskellDeclaration(declaration: String): String = {
-    removeCommentsAndWhiteSpaces(declaration.replace(".$sel:", ".").replaceAll(PackageQualifierPattern, ""))
+    if (declaration.contains("$sel:")) {
+      val name = declaration.split("::")
+      name(0).split(":")(1) ++ " :: " + name(1)
+    } else {
+      removeCommentsAndWhiteSpaces(declaration.replaceAll(PackageQualifierPattern, ""))
+    }
   }
 
   def removeCommentsAndWhiteSpaces(code: String): String = {

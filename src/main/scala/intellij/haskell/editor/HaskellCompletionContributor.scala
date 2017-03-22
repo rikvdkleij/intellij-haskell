@@ -29,13 +29,13 @@ import com.intellij.psi.impl.source.tree.TreeUtil
 import com.intellij.psi.util.PsiTreeUtil
 import com.intellij.psi.{PsiElement, PsiFile, TokenType}
 import com.intellij.util.ProcessingContext
-import intellij.haskell.HaskellIcons
 import intellij.haskell.external.component.{HaskellComponentsManager, ModuleIdentifier}
 import intellij.haskell.psi.HaskellElementCondition._
 import intellij.haskell.psi.HaskellPsiUtil._
 import intellij.haskell.psi.HaskellTypes._
 import intellij.haskell.psi._
 import intellij.haskell.util.HaskellProjectUtil
+import intellij.haskell.{HaskellIcons, HaskellParserDefinition}
 
 import scala.collection.JavaConverters._
 import scala.concurrent.duration.Duration
@@ -102,7 +102,7 @@ class HaskellCompletionContributor extends CompletionContributor {
       val project = parameters.getPosition.getProject
       val psiFile = parameters.getOriginalFile
 
-      if (HaskellProjectUtil.isLibraryFile(psiFile).getOrElse(true)) {
+      if (HaskellProjectUtil.isLibraryFile(psiFile).getOrElse(true) || Option(parameters.getOriginalPosition).map(_.getNode.getElementType).exists(t => HaskellParserDefinition.Literals.contains(t) || HaskellParserDefinition.Comments.contains(t))) {
         return
       }
 
@@ -184,7 +184,12 @@ class HaskellCompletionContributor extends CompletionContributor {
               else
                 findLocalElements(e).filterNot(_.getText == e.getText)
               ApplicationManager.getApplication.invokeLater(() => localElements.foreach(HaskellComponentsManager.findTypeInfoForElement))
-              resultSet.addAllElements(localElements.map(createLocalLookupElement).asJavaCollection)
+              val filteredLocalElements = prefixText match {
+                case Some(pt) => localElements.filter(ne => ne.getName.startsWith(pt))
+                case None if !parameters.isAutoPopup => localElements
+                case _ => Stream()
+              }
+              resultSet.addAllElements(filteredLocalElements.map(createLocalLookupElement).asJavaCollection)
             case _ => ()
           }
       }
@@ -315,10 +320,10 @@ class HaskellCompletionContributor extends CompletionContributor {
       mn <- id.getModuleName
     } yield ImportFull(mn, Option(id.getImportQualified).isDefined, Option(id.getImportQualifiedAs).map(_.getQualifier.getName))
 
-    if (importDeclarations.exists(_.getModuleName == "Prelude") || isNoImplicitPreludeActive(psiFile)) {
+    if (importDeclarations.exists(_.getModuleName == HaskellProjectUtil.Prelude) || isNoImplicitPreludeActive(psiFile)) {
       moduleNames
     } else {
-      Iterable(ImportFull("Prelude", qualified = false, None)) ++ moduleNames
+      Iterable(ImportFull(HaskellProjectUtil.Prelude, qualified = false, None)) ++ moduleNames
     }
   }
 
@@ -394,14 +399,6 @@ class HaskellCompletionContributor extends CompletionContributor {
       Await.result(Future.sequence(lookupElements), Timeout).flatten
     } catch {
       case _: TimeoutException => Iterable()
-    }
-  }
-
-  private def waitForResult(lookupElements: Future[Iterable[LookupElementBuilder]]): Iterable[LookupElementBuilder] = {
-    try {
-      Await.result(lookupElements, Timeout)
-    } catch {
-      case _: TimeoutException => None
     }
   }
 

@@ -69,7 +69,7 @@ class HaskellSyntaxHighlighter extends SyntaxHighlighterBase {
       case et if et == HS_HADDOCK | et == HS_NHADDOCK => pack(DocComment)
       case et if et == HS_NCOMMENT => pack(BlockComment)
       case et if et == HS_STRING_LITERAL | et == HS_CHARACTER_LITERAL => pack(String)
-      case et if Numbers.contains(et) => pack(Number)
+      case et if NumberLiterals.contains(et) => pack(Number)
       case et if et == HS_LEFT_PAREN | et == HS_RIGHT_PAREN => pack(Parentheses)
       case et if et == HS_LEFT_BRACE | et == HS_RIGHT_BRACE => pack(Brace)
       case et if et == HS_LEFT_BRACKET | et == HS_RIGHT_BRACKET => pack(Bracket)

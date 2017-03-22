@@ -21,6 +21,7 @@ import com.intellij.openapi.project.Project
 import com.intellij.psi.PsiElement
 import intellij.haskell.HaskellNotificationGroup
 import intellij.haskell.psi.{HaskellPsiUtil, HaskellQualifiedNameElement}
+import intellij.haskell.util.HaskellProjectUtil
 
 class HaskellDocumentationProvider extends AbstractDocumentationProvider {
 
@@ -42,7 +43,7 @@ class HaskellDocumentationProvider extends AbstractDocumentationProvider {
         val moduleName = ni match {
           case (lei: LibraryNameInfo) => Option(lei.moduleName)
           case (_: ProjectNameInfo) => HaskellPsiUtil.findModuleName(namedElement.getContainingFile, runInRead = true)
-          case (_: BuiltInNameInfo) => Some("Prelude")
+          case (_: BuiltInNameInfo) => Some(HaskellProjectUtil.Prelude)
           case _ => None
         }
         HoogleComponent.findDocumentation(project, name, moduleName)

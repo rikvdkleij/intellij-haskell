@@ -16,11 +16,15 @@
 
 package intellij.haskell.external.component
 
+import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.editor.SelectionModel
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.util.Computable
 import com.intellij.psi.{PsiElement, PsiFile}
 import intellij.haskell.annotator.HaskellAnnotator
-import intellij.haskell.psi.HaskellNamedElement
+import intellij.haskell.psi.{HaskellNamedElement, HaskellPsiUtil}
+import intellij.haskell.util.HaskellProjectUtil
+import intellij.haskell.util.index.HaskellFileIndex
 import intellij.haskell.{HaskellFile, HaskellNotificationGroup}
 
 object HaskellComponentsManager {
@@ -96,20 +100,40 @@ object HaskellComponentsManager {
     if (!project.isDisposed) {
       val projectInfo = findGlobalProjectInfo(project)
       if (!project.isDisposed) {
-        BrowseModuleComponent.findImportedModuleIdentifiers(project, "Prelude")
-        Thread.sleep(1000)
+        BrowseModuleComponent.findImportedModuleIdentifiers(project, HaskellProjectUtil.Prelude)
       }
       if (!project.isDisposed) {
-        projectInfo.foreach(_.allAvailableLibraryModuleNames.find(_ == "Protolude").foreach(mn => BrowseModuleComponent.findImportedModuleIdentifiers(project, mn)))
-        Thread.sleep(1000)
+        projectInfo.foreach(_.allAvailableLibraryModuleNames.find(_ == HaskellProjectUtil.Protolude).foreach(mn => BrowseModuleComponent.findImportedModuleIdentifiers(project, mn)))
       }
+
+      val files =
+        ApplicationManager.getApplication.runReadAction(new Computable[Iterable[HaskellFile]] {
+          override def compute(): Iterable[HaskellFile] =
+            if (!project.isDisposed) {
+              HaskellFileIndex.findProjectProductionPsiFiles(project)
+            } else {
+              Iterable()
+            }
+        })
+
+      val moduleNames = files.flatMap(f => {
+        ApplicationManager.getApplication.runReadAction(new Computable[Iterable[String]] {
+          override def compute(): Iterable[String] =
+            if (!project.isDisposed) {
+              HaskellPsiUtil.findImportDeclarations(f).flatMap(_.getModuleName)
+            } else {
+              Iterable()
+            }
+        })
+      }).filterNot(mn => mn == HaskellProjectUtil.Prelude || mn == HaskellProjectUtil.Protolude)
+
       if (!project.isDisposed) {
-        projectInfo.foreach(_.allAvailableLibraryModuleNames.foreach(mn => {
+        moduleNames.foreach(mn => {
           if (!project.isDisposed) {
             BrowseModuleComponent.findImportedModuleIdentifiers(project, mn)
             Thread.sleep(1000)
           }
-        }))
+        })
       }
     }
   }
