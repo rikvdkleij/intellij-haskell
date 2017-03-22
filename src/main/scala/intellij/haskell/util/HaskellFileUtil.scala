@@ -37,6 +37,11 @@ object HaskellFileUtil {
     }, ModalityState.NON_MODAL)
   }
 
+  def saveFile(psiFile: PsiFile): Unit = {
+    val vFile = HaskellFileUtil.findVirtualFile(psiFile)
+    HaskellFileUtil.saveFile(vFile)
+  }
+
   def saveFile(virtualFile: VirtualFile): Unit = {
     ApplicationManager.getApplication.invokeAndWait(() => {
       findDocument(virtualFile).foreach(FileDocumentManager.getInstance.saveDocument)

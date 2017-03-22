@@ -67,9 +67,21 @@ class StackProjectStartupManager(project: Project) extends ProjectComponent {
 
               val buildHlintFuture = HLintComponent.buildHlint(project)
 
+              val buildToolsFuture = ApplicationManager.getApplication.executeOnPooledThread(new Runnable {
+                override def run(): Unit = {
+                  if (HaskellToolComponent.checkResolverForHaskellTools(project)) {
+                    StackCommandLine.executeBuild(project, Seq("build", HaskellToolComponent.HaskellToolsCLIName), "Build of `haskell-tools`")
+                  }
+                }
+              })
+
               val rebuildHoogleFuture = HoogleComponent.rebuildHoogle(project)
 
-              if (!buildHlintFuture.isDone || !rebuildHoogleFuture.isDone || !preloadCacheFuture.isDone) {
+              if (!buildToolsFuture.isDone
+                || !buildHlintFuture.isDone
+                || !rebuildHoogleFuture.isDone
+                || !preloadCacheFuture.isDone) {
+                buildToolsFuture.get
                 buildHlintFuture.get
                 rebuildHoogleFuture.get
                 preloadCacheFuture.get
