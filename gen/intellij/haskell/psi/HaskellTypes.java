@@ -32,6 +32,7 @@ public interface HaskellTypes {
   IElementType HS_DEFAULT_DECLARATION = new HaskellCompositeElementType("HS_DEFAULT_DECLARATION");
   IElementType HS_DEPRECATED_WARN_PRAGMA = new HaskellCompositeElementType("HS_DEPRECATED_WARN_PRAGMA");
   IElementType HS_DERIVING_DECLARATION = new HaskellCompositeElementType("HS_DERIVING_DECLARATION");
+  IElementType HS_DIRECTIVE_DUMMY = new HaskellCompositeElementType("HS_DIRECTIVE_DUMMY");
   IElementType HS_DUMMY_PRAGMA = new HaskellCompositeElementType("HS_DUMMY_PRAGMA");
   IElementType HS_EXPORT = new HaskellCompositeElementType("HS_EXPORT");
   IElementType HS_EXPORTS = new HaskellCompositeElementType("HS_EXPORTS");
@@ -58,10 +59,10 @@ public interface HaskellTypes {
   IElementType HS_INCLUDE_PRAGMA = new HaskellCompositeElementType("HS_INCLUDE_PRAGMA");
   IElementType HS_INCOHERENT_PRAGMA = new HaskellCompositeElementType("HS_INCOHERENT_PRAGMA");
   IElementType HS_INLINABLE_PRAGMA = new HaskellCompositeElementType("HS_INLINABLE_PRAGMA");
+  IElementType HS_INLINELIKE_PRAGMA = new HaskellCompositeElementType("HS_INLINELIKE_PRAGMA");
   IElementType HS_INLINE_FUSED_PRAGMA = new HaskellCompositeElementType("HS_INLINE_FUSED_PRAGMA");
   IElementType HS_INLINE_INNER_PRAGMA = new HaskellCompositeElementType("HS_INLINE_INNER_PRAGMA");
   IElementType HS_INLINE_PRAGMA = new HaskellCompositeElementType("HS_INLINE_PRAGMA");
-  IElementType HS_INLINE_PRAGMAS = new HaskellCompositeElementType("HS_INLINE_PRAGMAS");
   IElementType HS_INST = new HaskellCompositeElementType("HS_INST");
   IElementType HS_INSTANCE_DECLARATION = new HaskellCompositeElementType("HS_INSTANCE_DECLARATION");
   IElementType HS_INSTVAR = new HaskellCompositeElementType("HS_INSTVAR");
@@ -103,6 +104,8 @@ public interface HaskellTypes {
   IElementType HS_SUB_CONSTR_2 = new HaskellCompositeElementType("HS_SUB_CONSTR_2");
   IElementType HS_TOP_DECLARATION = new HaskellCompositeElementType("HS_TOP_DECLARATION");
   IElementType HS_TTYPE = new HaskellCompositeElementType("HS_TTYPE");
+  IElementType HS_TTYPE_1 = new HaskellCompositeElementType("HS_TTYPE_1");
+  IElementType HS_TTYPE_2 = new HaskellCompositeElementType("HS_TTYPE_2");
   IElementType HS_TYPE_DECLARATION = new HaskellCompositeElementType("HS_TYPE_DECLARATION");
   IElementType HS_TYPE_FAMILY_DECLARATION = new HaskellCompositeElementType("HS_TYPE_FAMILY_DECLARATION");
   IElementType HS_TYPE_FAMILY_TYPE = new HaskellCompositeElementType("HS_TYPE_FAMILY_TYPE");
@@ -135,6 +138,7 @@ public interface HaskellTypes {
   IElementType HS_DO = new HaskellTokenType("DO");
   IElementType HS_DOT = new HaskellTokenType("DOT");
   IElementType HS_DOT_DOT = new HaskellTokenType("DOT_DOT");
+  IElementType HS_DOUBLE_QUOTE = new HaskellTokenType("DOUBLE_QUOTE");
   IElementType HS_DOUBLE_RIGHT_ARROW = new HaskellTokenType("DOUBLE_RIGHT_ARROW");
   IElementType HS_ELSE = new HaskellTokenType("ELSE");
   IElementType HS_EQUAL = new HaskellTokenType("EQUAL");
@@ -261,6 +265,9 @@ public interface HaskellTypes {
       else if (type == HS_DERIVING_DECLARATION) {
         return new HaskellDerivingDeclarationImpl(node);
       }
+      else if (type == HS_DIRECTIVE_DUMMY) {
+        return new HaskellDirectiveDummyImpl(node);
+      }
       else if (type == HS_DUMMY_PRAGMA) {
         return new HaskellDummyPragmaImpl(node);
       }
@@ -339,6 +346,9 @@ public interface HaskellTypes {
       else if (type == HS_INLINABLE_PRAGMA) {
         return new HaskellInlinablePragmaImpl(node);
       }
+      else if (type == HS_INLINELIKE_PRAGMA) {
+        return new HaskellInlinelikePragmaImpl(node);
+      }
       else if (type == HS_INLINE_FUSED_PRAGMA) {
         return new HaskellInlineFusedPragmaImpl(node);
       }
@@ -347,9 +357,6 @@ public interface HaskellTypes {
       }
       else if (type == HS_INLINE_PRAGMA) {
         return new HaskellInlinePragmaImpl(node);
-      }
-      else if (type == HS_INLINE_PRAGMAS) {
-        return new HaskellInlinePragmasImpl(node);
       }
       else if (type == HS_INST) {
         return new HaskellInstImpl(node);
@@ -473,6 +480,12 @@ public interface HaskellTypes {
       }
       else if (type == HS_TTYPE) {
         return new HaskellTtypeImpl(node);
+      }
+      else if (type == HS_TTYPE_1) {
+        return new HaskellTtype1Impl(node);
+      }
+      else if (type == HS_TTYPE_2) {
+        return new HaskellTtype2Impl(node);
       }
       else if (type == HS_TYPE_DECLARATION) {
         return new HaskellTypeDeclarationImpl(node);

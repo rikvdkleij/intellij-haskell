@@ -31,17 +31,16 @@ import static intellij.haskell.psi.HaskellTypes.*;
 
 %xstate NCOMMENT, NHADDOCK, QQ
 
-control_character   = [\000 - \037]
 newline             = \r|\n|\r\n
 unispace            = \x05
-white_char          = [\ \t\f\x0B\ \x0D] | {control_character} | {unispace}   // second "space" is probably ^M, I could not find other solution then justing pasting it in to prevent bad character.
+white_char          = [\ \t\f\x0B\ \x0D ] | {unispace}    // second "space" is probably ^M, I could not find other solution then justing pasting it in to prevent bad character.
 directive           = "#"{white_char}*("if"|"ifdef"|"ifndef"|"define"|"elif"|"else"|"error"|"endif"|"include"|"undef")  ("\\" (\r|\n|\r\n) | [^\r\n])*
 white_space         = {white_char}+
 
-small               = [a-z_] | "α" | "β" | "μ"         // ignoring any more unicode lowercase letter for now
-large               = [A-Z]           // ignoring any unicode uppercase letter for now
+small               = [a-z_] | [\u03B1-\u03C9]
+large               = [A-Z] | [\u0391-\u03A9]
 
-digit               = [0-9] | \u2080 | \u2081 | \u2082 | \u2083 | \u2084 | \u2085 | \u2086 | \u2087 | \u2088 | \u2089    // ignoring any more unicode lowercase letter for now
+digit               = [0-9] | [\u2070-\u2079] | [\u2080-\u2089]
 decimal             = [-+]?{digit}+
 
 hexit               = [0-9A-Fa-f]
@@ -60,7 +59,7 @@ escape              = \\({charesc}|{ascii}|({digit}+)|(o({octit}+))|(x({hexit}+)
 
 character_literal   = (\'([^\'\\\n]|{escape})\')
 string_literal      = \"([^\"\\\n]|{escape}|{gap})*(\"|\n)
-
+double_quote        = "\""
 
 // ascSymbol except reservedop
 exclamation_mark    = "!"
@@ -322,4 +321,5 @@ nhaddock_start      = "{-|"
 
     {directive}           { return HS_DIRECTIVE; }
 
+    {double_quote}        { return HS_DOUBLE_QUOTE; }
     [^]                   { return com.intellij.psi.TokenType.BAD_CHARACTER; }

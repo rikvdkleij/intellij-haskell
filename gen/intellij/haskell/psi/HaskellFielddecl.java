@@ -1,25 +1,23 @@
 // This is a generated file. Not intended for manual editing.
 package intellij.haskell.psi;
 
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
+
 import java.util.List;
-import org.jetbrains.annotations.*;
-import com.intellij.psi.PsiElement;
 
 public interface HaskellFielddecl extends HaskellCompositeElement {
 
   @NotNull
-  List<HaskellQName> getQNameList();
-
-  @NotNull
   HaskellQNames getQNames();
 
-  @NotNull
-  List<HaskellTtype> getTtypeList();
-
-  @NotNull
-  List<HaskellTypeSignature> getTypeSignatureList();
+  @Nullable
+  HaskellScontext getScontext();
 
   @Nullable
-  HaskellUnpackNounpackPragma getUnpackNounpackPragma();
+  HaskellTtype getTtype();
+
+  @NotNull
+  List<HaskellUnpackNounpackPragma> getUnpackNounpackPragmaList();
 
 }

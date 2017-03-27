@@ -102,6 +102,10 @@ public class HaskellVisitor extends PsiElementVisitor {
     visitDeclarationElement(o);
   }
 
+  public void visitDirectiveDummy(@NotNull HaskellDirectiveDummy o) {
+    visitCompositeElement(o);
+  }
+
   public void visitDummyPragma(@NotNull HaskellDummyPragma o) {
     visitCompositeElement(o);
   }
@@ -218,7 +222,7 @@ public class HaskellVisitor extends PsiElementVisitor {
     visitCompositeElement(o);
   }
 
-  public void visitInlinePragmas(@NotNull HaskellInlinePragmas o) {
+  public void visitInlinelikePragma(@NotNull HaskellInlinelikePragma o) {
     visitCompositeElement(o);
   }
 
@@ -383,6 +387,14 @@ public class HaskellVisitor extends PsiElementVisitor {
   }
 
   public void visitTtype(@NotNull HaskellTtype o) {
+    visitCompositeElement(o);
+  }
+
+  public void visitTtype1(@NotNull HaskellTtype1 o) {
+    visitCompositeElement(o);
+  }
+
+  public void visitTtype2(@NotNull HaskellTtype2 o) {
     visitCompositeElement(o);
   }
 
