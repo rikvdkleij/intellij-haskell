@@ -159,7 +159,7 @@ deriving_declaration        ::= DERIVING INSTANCE (scontext onls DOUBLE_RIGHT_AR
 private literal             ::= DECIMAL | HEXADECIMAL | OCTAL | FLOAT | CHARACTER_LITERAL | STRING_LITERAL
 
 private onl                 ::= NEWLINE*
-private onls                ::= (&<<containsSpaces>> NEWLINE | NEWLINE)*      // optional multiple (new line and spaces)
+private onls                ::= (&<<containsSpaces>> NEWLINE)*      // optional multiple (new line and spaces)
 private nls                 ::= (&<<containsSpaces>> NEWLINE)+                          // multiple new lines and spaces
 private oonls               ::= (&<<containsSpaces>> NEWLINE)?                         // optional one (new line and spaces)
 
@@ -264,7 +264,7 @@ cname_dot_dot               ::= cname | DOT_DOT
 newconstr                   ::= q_name atype | newconstr_fielddecl
 newconstr_fielddecl         ::= q_name onls LEFT_BRACE? onls q_name onls COLON_COLON onls ttype onls RIGHT_BRACE?
 
-cidecls                     ::= cidecl (onls cidecl)*
+cidecls                     ::= cidecl (nls cidecl)*
 
 inlinelike_pragma           ::= inline_pragma | noinline_pragma | inline_inner_pragma | inline_fused_pragma
 

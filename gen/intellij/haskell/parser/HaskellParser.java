@@ -856,7 +856,7 @@ public class HaskellParser implements PsiParser, LightPsiParser {
   }
 
   /* ********************************************************** */
-  // cidecl (onls cidecl)*
+  // cidecl (nls cidecl)*
   public static boolean cidecls(PsiBuilder b, int l) {
     if (!recursion_guard_(b, l, "cidecls")) return false;
     boolean r;
@@ -867,7 +867,7 @@ public class HaskellParser implements PsiParser, LightPsiParser {
     return r;
   }
 
-  // (onls cidecl)*
+  // (nls cidecl)*
   private static boolean cidecls_1(PsiBuilder b, int l) {
     if (!recursion_guard_(b, l, "cidecls_1")) return false;
     int c = current_position_(b);
@@ -879,12 +879,12 @@ public class HaskellParser implements PsiParser, LightPsiParser {
     return true;
   }
 
-  // onls cidecl
+  // nls cidecl
   private static boolean cidecls_1_0(PsiBuilder b, int l) {
     if (!recursion_guard_(b, l, "cidecls_1_0")) return false;
     boolean r;
     Marker m = enter_section_(b);
-    r = onls(b, l + 1);
+    r = nls(b, l + 1);
     r = r && cidecl(b, l + 1);
     exit_section_(b, m, null, r);
     return r;
@@ -4967,7 +4967,7 @@ public class HaskellParser implements PsiParser, LightPsiParser {
   }
 
   /* ********************************************************** */
-  // (&<<containsSpaces>> NEWLINE | NEWLINE)*
+  // (&<<containsSpaces>> NEWLINE)*
   static boolean onls(PsiBuilder b, int l) {
     if (!recursion_guard_(b, l, "onls")) return false;
     int c = current_position_(b);
@@ -4979,31 +4979,20 @@ public class HaskellParser implements PsiParser, LightPsiParser {
     return true;
   }
 
-  // &<<containsSpaces>> NEWLINE | NEWLINE
+  // &<<containsSpaces>> NEWLINE
   private static boolean onls_0(PsiBuilder b, int l) {
     if (!recursion_guard_(b, l, "onls_0")) return false;
     boolean r;
     Marker m = enter_section_(b);
     r = onls_0_0(b, l + 1);
-    if (!r) r = consumeToken(b, HS_NEWLINE);
-    exit_section_(b, m, null, r);
-    return r;
-  }
-
-  // &<<containsSpaces>> NEWLINE
-  private static boolean onls_0_0(PsiBuilder b, int l) {
-    if (!recursion_guard_(b, l, "onls_0_0")) return false;
-    boolean r;
-    Marker m = enter_section_(b);
-    r = onls_0_0_0(b, l + 1);
     r = r && consumeToken(b, HS_NEWLINE);
     exit_section_(b, m, null, r);
     return r;
   }
 
   // &<<containsSpaces>>
-  private static boolean onls_0_0_0(PsiBuilder b, int l) {
-    if (!recursion_guard_(b, l, "onls_0_0_0")) return false;
+  private static boolean onls_0_0(PsiBuilder b, int l) {
+    if (!recursion_guard_(b, l, "onls_0_0")) return false;
     boolean r;
     Marker m = enter_section_(b, l, _AND_);
     r = containsSpaces(b, l + 1);
