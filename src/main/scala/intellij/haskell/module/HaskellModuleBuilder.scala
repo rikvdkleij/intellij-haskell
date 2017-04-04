@@ -196,7 +196,7 @@ object HaskellModuleBuilder {
           }
           StackCommandLine.runCommand(Seq("list-dependencies", "--test"), project, timeoutInMillis = 60.seconds.toMillis).map(_.getStdoutLines).foreach(dependencyLines => {
             val packageName = HaskellProjectUtil.findCabalPackageName(project)
-            val packages = getPackages(project, dependencyLines.asScala).filterNot(p => packageName.contains(p.name))
+            val packages = getPackages(project, dependencyLines.asScala).filterNot(p => packageName.contains(p.name) || p.name == "rts")
             progressIndicator.setFraction(InitialProgressStep)
             val downloadedPackages = downloadHaskellPackageSources(project, libDirectory, stackPath, packages, progressIndicator)
             progressIndicator.setFraction(0.9)
