@@ -21,7 +21,6 @@ import java.util
 import com.intellij.codeInsight.editorActions.ExtendWordSelectionHandler
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.util.TextRange
-import com.intellij.psi.tree.IElementType
 import com.intellij.psi.{PsiComment, PsiElement, PsiWhiteSpace}
 import intellij.haskell.psi.HaskellPsiUtil
 import intellij.haskell.psi.HaskellTypes._
@@ -31,24 +30,22 @@ import scala.collection.mutable.ListBuffer
 
 class HaskellExtendWordSelectioner extends ExtendWordSelectionHandler {
   override def canSelect(e: PsiElement): Boolean = {
-      !(e.isInstanceOf[PsiComment] || e.isInstanceOf[PsiWhiteSpace])
+    !(e.isInstanceOf[PsiComment] || e.isInstanceOf[PsiWhiteSpace])
   }
 
   override def select(e: PsiElement, editorText: CharSequence, cursorOffset: Int, editor: Editor): util.List[TextRange] = {
     val startOffset = e.getTextRange.getStartOffset
-    val nextEndOffsets = getOffsets(Some(e), ListBuffer.empty[Int], (e: PsiElement) => e.getNextSibling, (e: PsiElement) => e.getTextRange.getEndOffset,
-      Iterable(HS_RIGHT_PAREN))
+    val nextEndOffsets = getOffsets(Some(e), ListBuffer.empty[Int], (e: PsiElement) => e.getNextSibling, (e: PsiElement) => e.getTextRange.getEndOffset)
 
-    val prevStartOffsets = getOffsets(HaskellPsiUtil.findQualifiedNameElement(e).flatMap(qe => Option(qe.getPrevSibling)), ListBuffer.empty[Int], (e: PsiElement) => e.getPrevSibling, (e: PsiElement) => e.getTextRange.getStartOffset,
-      Iterable(HS_LEFT_PAREN))
+    val prevStartOffsets = getOffsets(HaskellPsiUtil.findQualifiedNameElement(e).flatMap(qe => Option(qe.getPrevSibling)), ListBuffer.empty[Int], (e: PsiElement) => e.getPrevSibling, (e: PsiElement) => e.getTextRange.getStartOffset)
     val lastEndOffset = nextEndOffsets.lastOption.getOrElse(e.getTextRange.getEndOffset)
 
     (nextEndOffsets.map(eo => new TextRange(startOffset, eo)) ++ prevStartOffsets.map(so => new TextRange(so, lastEndOffset))).asJava
   }
 
-  private def getOffsets(element: Option[PsiElement], offsets: ListBuffer[Int], getSibling: PsiElement => PsiElement, getOffset: PsiElement => Int, toStop: Iterable[IElementType]): ListBuffer[Int] = {
+  private def getOffsets(element: Option[PsiElement], offsets: ListBuffer[Int], getSibling: PsiElement => PsiElement, getOffset: PsiElement => Int): ListBuffer[Int] = {
     def recur(e: PsiElement): ListBuffer[Int] = {
-      getOffsets(Option(getSibling(e)), offsets, getSibling, getOffset, toStop)
+      getOffsets(Option(getSibling(e)), offsets, getSibling, getOffset)
     }
 
     element match {
@@ -58,9 +55,6 @@ class HaskellExtendWordSelectioner extends ExtendWordSelectionHandler {
             case e: PsiWhiteSpace => recur(e)
             case e: PsiElement if e.getNode.getElementType == HS_COMMA => recur(e)
             case e: PsiElement if e.getNode.getElementType == HS_NEWLINE | e.getNode.getElementType == HS_EQUAL | e.getNode.getElementType == HS_LEFT_ARROW => offsets
-            case e: PsiElement if toStop.exists(_ == e.getNode.getElementType) =>
-              offsets += getOffset(e)
-              offsets
             case _ =>
               offsets += getOffset(e)
               recur(e)
