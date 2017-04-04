@@ -20,12 +20,12 @@ import java.io.{File, FileOutputStream, InputStream}
 
 import com.intellij.openapi.application.{ApplicationManager, ModalityState}
 import com.intellij.openapi.command.CommandProcessor
-import com.intellij.openapi.editor.{Document, SelectionModel}
+import com.intellij.openapi.editor.Document
 import com.intellij.openapi.fileEditor.FileDocumentManager
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.vfs.VirtualFile
-import com.intellij.psi.{PsiFile, PsiManager}
+import com.intellij.psi.{PsiDocumentManager, PsiFile, PsiManager}
 import intellij.haskell.HaskellFile
 import intellij.haskell.action.SelectionContext
 
@@ -37,10 +37,17 @@ object HaskellFileUtil {
     }, ModalityState.NON_MODAL)
   }
 
-  def saveFile(virtualFile: VirtualFile): Unit = {
-    ApplicationManager.getApplication.invokeAndWait(() => {
-      findDocument(virtualFile).foreach(FileDocumentManager.getInstance.saveDocument)
+  def saveAllFilesLater(): Unit = {
+    ApplicationManager.getApplication.invokeLater(() => {
+      FileDocumentManager.getInstance.saveAllDocuments()
     }, ModalityState.NON_MODAL)
+  }
+
+  def saveFile(project: Project, virtualFile: VirtualFile): Unit = {
+    findDocument(virtualFile).foreach { d =>
+      PsiDocumentManager.getInstance(project).doPostponedOperationsAndUnblockDocument(d)
+      FileDocumentManager.getInstance.saveDocument(d)
+    }
   }
 
   def findVirtualFile(psiFile: PsiFile): VirtualFile = {
