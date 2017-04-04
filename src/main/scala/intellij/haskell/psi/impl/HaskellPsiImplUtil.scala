@@ -86,14 +86,14 @@ object HaskellPsiImplUtil {
   }
 
   def getIdentifierElement(cname: HaskellCname): HaskellNamedElement = {
-    Option(cname.getVar).map(_.getVarsym).
-      orElse(Option(cname.getVar).map(_.getVarid)).
-      orElse(Option(cname.getVarop).map(_.getVarid)).
-      orElse(Option(cname.getVarop).map(_.getVarsym)).
-      orElse(Option(cname.getCon).map(_.getConid)).
-      orElse(Option(cname.getCon).map(_.getConsym)).
-      orElse(Option(cname.getConop).map(_.getConid)).
-      orElse(Option(cname.getConop).map(_.getConsym)).
+    Option(cname.getVar).flatMap(v => Option(v.getVarsym)).
+      orElse(Option(cname.getVar).flatMap(v => Option(v.getVarid))).
+      orElse(Option(cname.getVarop).flatMap(v => Option(v.getVarid))).
+      orElse(Option(cname.getVarop).flatMap(v => Option(v.getVarsym))).
+      orElse(Option(cname.getCon).flatMap(v => Option(v.getConid))).
+      orElse(Option(cname.getCon).flatMap(v => Option(v.getConsym))).
+      orElse(Option(cname.getConop).flatMap(v => Option(v.getConid))).
+      orElse(Option(cname.getConop).flatMap(v => Option(v.getConsym))).
       getOrElse(throw new IllegalStateException(s"Identifier for $cname should exist"))
   }
 
@@ -331,7 +331,8 @@ object HaskellPsiImplUtil {
 
   def getIdentifierElements(dataDeclaration: HaskellDataDeclaration): Seq[HaskellNamedElement] = {
     dataDeclaration.getSimpletypeList.asScala.headOption.map(_.getIdentifierElements).getOrElse(Seq()) ++
-      Option(dataDeclaration.getConstr1List.asScala).map(_.flatMap(c => Seq(c.getQName.getIdentifierElement) ++ c.getFielddeclList.asScala.flatMap(_.getQNames.getQNameList.asScala.headOption.map(_.getIdentifierElement)))).getOrElse(Seq()) ++
+      dataDeclaration.getConstr1List.asScala.flatMap(c => Option(c.getQName).map(_.getIdentifierElement).toSeq ++
+        c.getFielddeclList.asScala.flatMap(_.getQNames.getQNameList.asScala.headOption.map(_.getIdentifierElement))) ++
       Option(dataDeclaration.getConstr3List.asScala).map(_.map(c => c.getQName.getIdentifierElement)).getOrElse(Seq()) ++
       Option(dataDeclaration.getConstr2List.asScala).map(_.flatMap(c => c.getQNameList.asScala.map(_.getIdentifierElement))).getOrElse(Seq()) ++
       Option(dataDeclaration.getConstr4List.asScala).map(_.flatMap(c => c.getQNameList.asScala.map(_.getIdentifierElement))).getOrElse(Seq())
