@@ -1,4 +1,4 @@
-<idea-plugin version="2">
+<idea-plugin>
     <id>intellij.haskell</id>
     <name>IntelliJ-Haskell</name>
     <version>1.0.0-beta7</version>
