@@ -21,7 +21,6 @@ import java.util.concurrent.{Executors, TimeUnit}
 
 import com.intellij.codeInsight.completion._
 import com.intellij.codeInsight.lookup.LookupElementBuilder
-import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.patterns.PlatformPatterns
@@ -182,12 +181,12 @@ class HaskellCompletionContributor extends CompletionContributor {
               val localElements = if (e.getText.trim.isEmpty)
                 findLocalElements(e)
               else
-                findLocalElements(e).filterNot(_.getText == e.getText)
-              ApplicationManager.getApplication.invokeLater(() => localElements.foreach(HaskellComponentsManager.findTypeInfoForElement))
+                findLocalElements(e).filterNot(_ == e)
               val filteredLocalElements = prefixText match {
-                case Some(pt) => localElements.filter(ne => ne.getName.startsWith(pt))
-                case None if !parameters.isAutoPopup => localElements
-                case _ => Stream()
+                case Some(pt) =>
+                  val lpt = pt.toLowerCase()
+                  localElements.filter(ne => ne.getName.toLowerCase.startsWith(lpt))
+                case _ => localElements
               }
               resultSet.addAllElements(filteredLocalElements.map(createLocalLookupElement).asJavaCollection)
             case _ => ()
@@ -244,7 +243,12 @@ class HaskellCompletionContributor extends CompletionContributor {
   }
 
   private def findLocalElements(element: PsiElement) = {
-    HaskellPsiUtil.findExpressionParent(element).toStream.flatMap(e => HaskellPsiUtil.findNamedElements(e))
+    HaskellPsiUtil.findExpressionParent(element).toStream.flatMap(e => HaskellPsiUtil.findNamedElements(e)).filter(ne => ne match {
+      case _: HaskellVarid => true
+      case _: HaskellVarsym => true
+      case _: HaskellConsym => true
+      case _ => false
+    })
   }
 
   private def isImportSpecInProgress(element: PsiElement): Boolean = {
