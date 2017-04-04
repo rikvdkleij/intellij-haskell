@@ -42,9 +42,9 @@ object StylishHaskellFormatAction {
   private[action] def format(psiFile: PsiFile): Unit = {
     val virtualFile = HaskellFileUtil.findVirtualFile(psiFile)
 
-    HaskellFileUtil.saveFile(virtualFile)
-
     val project = psiFile.getProject
+    HaskellFileUtil.saveFile(project, virtualFile)
+
     HaskellSettingsState.getStylishHaskellPath(project) match {
       case Some(stylishHaskellPath) =>
         val processOutput = CommandLine.runProgram(Option(project), project.getBasePath, stylishHaskellPath, Seq(HaskellFileUtil.getFilePath(psiFile)))
