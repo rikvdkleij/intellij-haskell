@@ -19,7 +19,7 @@ package intellij.haskell.navigation
 import com.intellij.navigation.{ChooseByNameContributor, ItemPresentation, NavigationItem}
 import com.intellij.openapi.project.Project
 import intellij.haskell.external.component._
-import intellij.haskell.util.HaskellProjectUtil
+import intellij.haskell.util.{HaskellProjectUtil, StringUtil}
 
 class HoogleByNameContributor extends ChooseByNameContributor {
 
@@ -48,13 +48,14 @@ class HoogleByNameContributor extends ChooseByNameContributor {
       case PackagePattern(packageName) => Iterable(NotFoundNavigationItem(packageName))
       case DeclarationPattern(moduleName, declaration) =>
         DeclarationLineUtil.findName(declaration).map(nd => {
-          val namedElementsByNameInfo = HaskellComponentsManager.findNameInfoByModuleAndName(project, moduleName, nd.name).flatMap {
-            case lni: LibraryNameInfo => HaskellReference.findNamedElementsByLibraryNameInfo(lni, nd.name, project)
-            case pni: ProjectNameInfo => HaskellReference.findNamedElementByLocation(pni.filePath, pni.lineNr, pni.columnNr, nd.name, project).toIterable
+          val name = StringUtil.removeOuterParens(nd.name)
+          val namedElementsByNameInfo = HaskellComponentsManager.findNameInfoByModuleAndName(project, moduleName, name).flatMap {
+            case lni: LibraryNameInfo => HaskellReference.findNamedElementsByLibraryNameInfo(lni, name, project)
+            case pni: ProjectNameInfo => HaskellReference.findNamedElementByLocation(pni.filePath, pni.lineNr, pni.columnNr, name, project).toIterable
             case _ => Iterable()
           }
           if (namedElementsByNameInfo.isEmpty) {
-            val namedElements = HaskellReference.findNamedElementsInModule(moduleName, nd.name, project)
+            val namedElements = HaskellReference.findNamedElementsInModule(moduleName, name, project)
             if (namedElements.isEmpty) {
               NotFoundResult(moduleName, declaration)
             } else {
