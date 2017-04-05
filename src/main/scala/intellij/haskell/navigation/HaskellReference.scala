@@ -73,7 +73,7 @@ object HaskellReference {
         resolveReferenceByNameInfo(namedElement, psiFile, project)
       }
       else {
-        resolveReferenceByDefinitionLocation(namedElement, project).orElse(resolveReferenceByNameInfo(namedElement, psiFile, project))
+        resolveReferenceByDefinitionLocation(namedElement, project).orElse(if (HaskellPsiUtil.findExpressionParent(namedElement).isDefined) None else resolveReferenceByNameInfo(namedElement, psiFile, project))
       }
     })
   }
