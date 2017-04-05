@@ -178,17 +178,11 @@ class HaskellCompletionContributor extends CompletionContributor {
 
           op match {
             case Some(e) =>
-              val localElements = if (e.getText.trim.isEmpty)
-                findLocalElements(e)
-              else
-                findLocalElements(e).filterNot(_ == e)
-              val filteredLocalElements = prefixText match {
-                case Some(pt) =>
-                  val lpt = pt.toLowerCase()
-                  localElements.filter(ne => ne.getName.toLowerCase.startsWith(lpt))
-                case _ => localElements
+              val localElements = HaskellPsiUtil.findNamedElement(e) match {
+                case Some(ne) => findLocalElements(e).filterNot(_ == ne)
+                case None => findLocalElements(e)
               }
-              resultSet.addAllElements(filteredLocalElements.map(createLocalLookupElement).asJavaCollection)
+              resultSet.addAllElements(localElements.map(createLocalLookupElement).asJavaCollection)
             case _ => ()
           }
       }
@@ -243,12 +237,12 @@ class HaskellCompletionContributor extends CompletionContributor {
   }
 
   private def findLocalElements(element: PsiElement) = {
-    HaskellPsiUtil.findExpressionParent(element).toStream.flatMap(e => HaskellPsiUtil.findNamedElements(e)).filter(ne => ne match {
+    HaskellPsiUtil.findExpressionParent(element).toStream.flatMap(e => HaskellPsiUtil.findNamedElements(e)).filter {
       case _: HaskellVarid => true
       case _: HaskellVarsym => true
       case _: HaskellConsym => true
       case _ => false
-    })
+    }
   }
 
   private def isImportSpecInProgress(element: PsiElement): Boolean = {
