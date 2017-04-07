@@ -19,7 +19,7 @@ package intellij.haskell.annotator
 import javax.swing.event.HyperlinkEvent
 
 import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer
-import com.intellij.codeInsight.daemon.impl.DaemonCodeAnalyzerImpl
+import com.intellij.codeInsight.daemon.impl._
 import com.intellij.codeInsight.intention.impl.BaseIntentionAction
 import com.intellij.lang.annotation.{AnnotationHolder, ExternalAnnotator, HighlightSeverity}
 import com.intellij.notification.Notification
@@ -66,41 +66,36 @@ class HaskellAnnotator extends ExternalAnnotator[PsiFile, LoadResult] {
     (psiFile, Option(psiFile.getOriginalFile.getVirtualFile)) match {
       case (_, None) => null // can be in case if file is in memory only (just created file)
       case (_, Some(f)) if f.getFileType != HaskellFileType.INSTANCE => null
-      case (_, Some(_)) if HaskellProjectUtil.isLibraryFile(psiFile).getOrElse(true) => null
+      case (_, Some(_)) if !psiFile.isValid | HaskellProjectUtil.isLibraryFile(psiFile).getOrElse(true) => null
       case (_, Some(_)) => psiFile
     }
   }
 
   override def doAnnotate(psiFile: PsiFile): LoadResult = {
-    HaskellFileUtil.saveAllFiles()
+    ApplicationManager.getApplication.invokeAndWait(() => {
+      HaskellFileUtil.saveFile(psiFile)
+    })
     HaskellComponentsManager.loadHaskellFile(psiFile)
   }
 
-  override def apply(psiFile: PsiFile, loadResult: LoadResult, holder: AnnotationHolder) {
-    if (psiFile.isValid) {
-      for (annotation <- createAnnotations(loadResult, psiFile)) {
-        annotation match {
-          case ErrorAnnotation(textRange, message, htmlMessage) => holder.createAnnotation(HighlightSeverity.ERROR, textRange, message, htmlMessage)
-          case ErrorAnnotationWithIntentionActions(textRange, message, htmlMessage, intentionActions) =>
-            val annotation = holder.createAnnotation(HighlightSeverity.ERROR, textRange, message, htmlMessage)
-            intentionActions.foreach(annotation.registerFix)
-          case WarningAnnotation(textRange, message, htmlMessage) => holder.createAnnotation(HighlightSeverity.WARNING, textRange, message, htmlMessage)
-          case WarningAnnotationWithIntentionActions(textRange, message, htmlMessage, intentionActions) =>
-            val annotation = holder.createAnnotation(HighlightSeverity.WARNING, textRange, message, htmlMessage)
-            intentionActions.foreach(annotation.registerFix)
-        }
+  override def apply(psiFile: PsiFile, loadResult: LoadResult, holder: AnnotationHolder): Unit = {
+    for (annotation <- createAnnotations(loadResult, psiFile)) {
+      annotation match {
+        case ErrorAnnotation(textRange, message, htmlMessage) => holder.createAnnotation(HighlightSeverity.ERROR, textRange, message, htmlMessage)
+        case ErrorAnnotationWithIntentionActions(textRange, message, htmlMessage, intentionActions) =>
+          val annotation = holder.createAnnotation(HighlightSeverity.ERROR, textRange, message, htmlMessage)
+          intentionActions.foreach(annotation.registerFix)
+        case WarningAnnotation(textRange, message, htmlMessage) => holder.createAnnotation(HighlightSeverity.WARNING, textRange, message, htmlMessage)
+        case WarningAnnotationWithIntentionActions(textRange, message, htmlMessage, intentionActions) =>
+          val annotation = holder.createAnnotation(HighlightSeverity.WARNING, textRange, message, htmlMessage)
+          intentionActions.foreach(annotation.registerFix)
       }
     }
-    restartCodeAnalyser(psiFile)
-  }
-
-  private def restartCodeAnalyser(psiFile: PsiFile) {
     HaskellAnnotator.getDaemonCodeAnalyzer(psiFile.getProject).restart(psiFile)
   }
 
   private[annotator] def createAnnotations(loadResult: LoadResult, psiFile: PsiFile): Iterable[Annotation] = {
     val problems = loadResult.currentFileProblems.filter(_.filePath == psiFile.getOriginalFile.getVirtualFile.getPath)
-
     val project = psiFile.getProject
     if (loadResult.loadFailed && loadResult.currentFileProblems.isEmpty) {
       loadResult.otherFileProblems.foreach {

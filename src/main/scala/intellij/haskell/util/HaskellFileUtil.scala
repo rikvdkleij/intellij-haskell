@@ -31,22 +31,16 @@ import intellij.haskell.action.SelectionContext
 
 object HaskellFileUtil {
 
-  def saveAllFiles(): Unit = {
-    ApplicationManager.getApplication.invokeAndWait(() => {
-      FileDocumentManager.getInstance.saveAllDocuments()
-    }, ModalityState.NON_MODAL)
-  }
-
   def saveAllFilesLater(): Unit = {
     ApplicationManager.getApplication.invokeLater(() => {
       FileDocumentManager.getInstance.saveAllDocuments()
     }, ModalityState.NON_MODAL)
   }
 
-  def saveFile(project: Project, virtualFile: VirtualFile): Unit = {
-    findDocument(virtualFile).foreach { d =>
-      PsiDocumentManager.getInstance(project).doPostponedOperationsAndUnblockDocument(d)
-      FileDocumentManager.getInstance.saveDocument(d)
+  def saveFile(psiFile: PsiFile): Unit = {
+    findDocument(findVirtualFile(psiFile)).foreach { d =>
+      PsiDocumentManager.getInstance(psiFile.getProject).doPostponedOperationsAndUnblockDocument(d)
+      FileDocumentManager.getInstance.saveDocumentAsIs(d)
     }
   }
 

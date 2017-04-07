@@ -59,7 +59,7 @@ object HindentFormatAction {
     val indentOptions = CodeStyleSettingsManager.getInstance(psiFile.getProject).getCurrentSettings.getCommonSettings(HaskellLanguage.Instance).getIndentOptions
     val virtualFile = HaskellFileUtil.findVirtualFile(psiFile)
     val project = psiFile.getProject
-    HaskellFileUtil.saveFile(project, virtualFile)
+    HaskellFileUtil.saveFile(psiFile)
 
     HaskellSettingsState.getHindentPath(project) match {
       case Some(hindentPath) =>

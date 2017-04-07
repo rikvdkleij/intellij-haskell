@@ -43,7 +43,7 @@ object StylishHaskellFormatAction {
     val virtualFile = HaskellFileUtil.findVirtualFile(psiFile)
 
     val project = psiFile.getProject
-    HaskellFileUtil.saveFile(project, virtualFile)
+    HaskellFileUtil.saveFile(psiFile)
 
     HaskellSettingsState.getStylishHaskellPath(project) match {
       case Some(stylishHaskellPath) =>
