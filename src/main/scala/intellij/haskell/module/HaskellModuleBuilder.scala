@@ -21,6 +21,7 @@ import javax.swing.Icon
 
 import com.intellij.ide.util.projectWizard._
 import com.intellij.openapi.Disposable
+import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.module.{Module, ModuleType}
 import com.intellij.openapi.progress.{ProgressIndicator, ProgressManager, Task}
 import com.intellij.openapi.project.Project
@@ -59,7 +60,10 @@ class HaskellModuleBuilder extends ModuleBuilder with SourcePathsBuilder with Mo
   override def setupRootModel(rootModel: ModifiableRootModel): Unit = {
     addListener(this)
 
-    if (rootModel.getSdk == null) rootModel.setSdk(HaskellSdkType.findOrCreateSdk())
+    if (rootModel.getSdk == null) {
+      rootModel.setSdk(HaskellSdkType.findOrCreateSdk())
+      rootModel.inheritSdk()
+    }
 
     val contentEntry = doAddContentEntry(rootModel)
 

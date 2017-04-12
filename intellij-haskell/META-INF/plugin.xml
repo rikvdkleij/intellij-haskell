@@ -282,6 +282,7 @@
 
         <!-- Notification -->
         <editorNotificationProvider implementation="intellij.haskell.notification.ConfigFileWatcherNotificationProvider"/>
+        <editorNotificationProvider implementation="intellij.haskell.notification.HaskellSDKNotificationProvider"/>
     </extensions>
 
     <application-components>
