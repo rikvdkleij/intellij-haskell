@@ -19,10 +19,4 @@ public interface HaskellExpression extends HaskellCompositeElement {
   @NotNull
   List<HaskellSccPragma> getSccPragmaList();
 
-  @NotNull
-  List<HaskellTypeDeclaration> getTypeDeclarationList();
-
-  @NotNull
-  List<HaskellTypeSignature> getTypeSignatureList();
-
 }

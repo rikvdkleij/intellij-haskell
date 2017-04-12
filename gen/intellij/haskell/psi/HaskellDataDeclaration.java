@@ -38,11 +38,11 @@ public interface HaskellDataDeclaration extends HaskellDataConstructorDeclaratio
   @NotNull
   List<HaskellQName> getQNameList();
 
-  @Nullable
-  HaskellScontext getScontext();
-
   @NotNull
   List<HaskellSimpletype> getSimpletypeList();
+
+  @Nullable
+  HaskellTtype getTtype();
 
   @NotNull
   List<HaskellTypeSignature> getTypeSignatureList();

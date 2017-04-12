@@ -102,10 +102,6 @@ public class HaskellVisitor extends PsiElementVisitor {
     visitDeclarationElement(o);
   }
 
-  public void visitDirectiveDummy(@NotNull HaskellDirectiveDummy o) {
-    visitCompositeElement(o);
-  }
-
   public void visitDummyPragma(@NotNull HaskellDummyPragma o) {
     visitCompositeElement(o);
   }

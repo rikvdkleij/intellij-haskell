@@ -83,15 +83,15 @@ public class HaskellDataDeclarationImpl extends HaskellCompositeElementImpl impl
   }
 
   @Override
-  @Nullable
-  public HaskellScontext getScontext() {
-    return PsiTreeUtil.getChildOfType(this, HaskellScontext.class);
-  }
-
-  @Override
   @NotNull
   public List<HaskellSimpletype> getSimpletypeList() {
     return PsiTreeUtil.getChildrenOfTypeAsList(this, HaskellSimpletype.class);
+  }
+
+  @Override
+  @Nullable
+  public HaskellTtype getTtype() {
+    return PsiTreeUtil.getChildOfType(this, HaskellTtype.class);
   }
 
   @Override

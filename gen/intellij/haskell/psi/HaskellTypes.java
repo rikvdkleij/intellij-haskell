@@ -32,7 +32,6 @@ public interface HaskellTypes {
   IElementType HS_DEFAULT_DECLARATION = new HaskellCompositeElementType("HS_DEFAULT_DECLARATION");
   IElementType HS_DEPRECATED_WARN_PRAGMA = new HaskellCompositeElementType("HS_DEPRECATED_WARN_PRAGMA");
   IElementType HS_DERIVING_DECLARATION = new HaskellCompositeElementType("HS_DERIVING_DECLARATION");
-  IElementType HS_DIRECTIVE_DUMMY = new HaskellCompositeElementType("HS_DIRECTIVE_DUMMY");
   IElementType HS_DUMMY_PRAGMA = new HaskellCompositeElementType("HS_DUMMY_PRAGMA");
   IElementType HS_EXPORT = new HaskellCompositeElementType("HS_EXPORT");
   IElementType HS_EXPORTS = new HaskellCompositeElementType("HS_EXPORTS");
@@ -264,9 +263,6 @@ public interface HaskellTypes {
       }
       else if (type == HS_DERIVING_DECLARATION) {
         return new HaskellDerivingDeclarationImpl(node);
-      }
-      else if (type == HS_DIRECTIVE_DUMMY) {
-        return new HaskellDirectiveDummyImpl(node);
       }
       else if (type == HS_DUMMY_PRAGMA) {
         return new HaskellDummyPragmaImpl(node);

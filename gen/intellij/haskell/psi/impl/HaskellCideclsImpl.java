@@ -72,4 +72,16 @@ public class HaskellCideclsImpl extends HaskellCompositeElementImpl implements H
     return PsiTreeUtil.getChildrenOfTypeAsList(this, HaskellSpecializePragma.class);
   }
 
+  @Override
+  @NotNull
+  public List<HaskellTypeDeclaration> getTypeDeclarationList() {
+    return PsiTreeUtil.getChildrenOfTypeAsList(this, HaskellTypeDeclaration.class);
+  }
+
+  @Override
+  @NotNull
+  public List<HaskellTypeFamilyDeclaration> getTypeFamilyDeclarationList() {
+    return PsiTreeUtil.getChildrenOfTypeAsList(this, HaskellTypeFamilyDeclaration.class);
+  }
+
 }

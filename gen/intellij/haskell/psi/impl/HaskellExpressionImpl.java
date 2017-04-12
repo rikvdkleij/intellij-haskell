@@ -48,16 +48,4 @@ public class HaskellExpressionImpl extends HaskellCompositeElementImpl implement
     return PsiTreeUtil.getChildrenOfTypeAsList(this, HaskellSccPragma.class);
   }
 
-  @Override
-  @NotNull
-  public List<HaskellTypeDeclaration> getTypeDeclarationList() {
-    return PsiTreeUtil.getChildrenOfTypeAsList(this, HaskellTypeDeclaration.class);
-  }
-
-  @Override
-  @NotNull
-  public List<HaskellTypeSignature> getTypeSignatureList() {
-    return PsiTreeUtil.getChildrenOfTypeAsList(this, HaskellTypeSignature.class);
-  }
-
 }

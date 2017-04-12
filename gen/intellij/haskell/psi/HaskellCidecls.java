@@ -31,4 +31,10 @@ public interface HaskellCidecls extends HaskellCompositeElement {
   @NotNull
   List<HaskellSpecializePragma> getSpecializePragmaList();
 
+  @NotNull
+  List<HaskellTypeDeclaration> getTypeDeclarationList();
+
+  @NotNull
+  List<HaskellTypeFamilyDeclaration> getTypeFamilyDeclarationList();
+
 }
