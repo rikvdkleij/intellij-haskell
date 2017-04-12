@@ -279,6 +279,9 @@
                              implementationClass="intellij.haskell.refactor.HaskellNamesValidator"/>
         <renamePsiElementProcessor implementation="intellij.haskell.refactor.HaskellRenameVariableProcessor"/>
         <vetoRenameCondition implementation="intellij.haskell.refactor.HaskellVetoRenameCondition"/>
+
+        <!-- Notification -->
+        <editorNotificationProvider implementation="intellij.haskell.notification.ConfigFileWatcherNotificationProvider"/>
     </extensions>
 
     <application-components>
@@ -293,7 +296,7 @@
             <implementation-class>intellij.haskell.external.repl.ProjectStackReplProcess</implementation-class>
         </component>
         <component>
-            <implementation-class>intellij.haskell.external.component.StackProjectStartupManager</implementation-class>
+            <implementation-class>intellij.haskell.external.component.StackProjectManager</implementation-class>
         </component>
 
         <component>
@@ -426,5 +429,4 @@
             <add-to-group group-id="HelpMenu" anchor="last"/>
         </action>
     </actions>
-
 </idea-plugin>

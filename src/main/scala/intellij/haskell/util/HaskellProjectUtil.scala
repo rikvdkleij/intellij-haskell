@@ -33,10 +33,10 @@ object HaskellProjectUtil {
   final val Prelude = "Prelude"
   final val Protolude = "Protolude"
 
-  def isHaskellStackProject(project: Project): Boolean = {
+  def isHaskellStackProject(project: Project, needShowBalloon: Boolean = true): Boolean = {
     val haskellModuleExists = HaskellModuleType.findHaskellProjectModules(project).nonEmpty
-    val stackPath = HaskellSdkType.getStackPath(project)
-    if (haskellModuleExists && stackPath.isEmpty) {
+    val stackPath = HaskellSdkType.getStackPath(project, needShowBalloon)
+    if (haskellModuleExists && stackPath.isEmpty && needShowBalloon) {
       HaskellNotificationGroup.logErrorBalloonEvent(project, "Path to Haskell Stack binary is not configured in this Haskell Stack project. Please do in Project SDK Setting and restart project.")
     }
     haskellModuleExists && stackPath.isDefined
