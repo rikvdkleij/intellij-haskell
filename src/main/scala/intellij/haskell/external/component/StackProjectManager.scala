@@ -18,28 +18,53 @@ package intellij.haskell.external.component
 
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.components.ProjectComponent
+import com.intellij.openapi.module.Module
 import com.intellij.openapi.progress.{ProgressIndicator, ProgressManager, Task}
 import com.intellij.openapi.project.Project
 import intellij.haskell.HaskellNotificationGroup
 import intellij.haskell.external.commandLine.StackCommandLine
 import intellij.haskell.external.repl.StackReplsManager
+import intellij.haskell.module.HaskellModuleBuilder
 import intellij.haskell.util.HaskellProjectUtil
 
-class StackProjectStartupManager(project: Project) extends ProjectComponent {
+object StackProjectManager {
+  val componentName = "stack-repls-manager"
 
-  override def getComponentName: String = "stack-repls-manager"
+  def cleanLocalPackages(project: Project): Unit = {
+    StackCommandLine.runCommand(Seq("clean"), project)
+  }
 
-  override def projectClosed(): Unit = {}
+  def start(project: Project, module: Option[Module] = None): Unit = {
+    initialize(project, module)
+  }
 
-  override def initComponent(): Unit = {}
+  def restart(project: Project, module: Option[Module] = None): Unit = {
+    initialize(project, module, restart = true)
+  }
 
-  override def projectOpened(): Unit = {
+  def initialize(project: Project, module: Option[Module] = None, restart: Boolean = false): Unit = {
     if (HaskellProjectUtil.isHaskellStackProject(project)) {
-      ProgressManager.getInstance().run(new Task.Backgroundable(project, s"[$getComponentName] Starting Stack repls, building project, building tools and preloading cache", false) {
+      ProgressManager.getInstance().run(new Task.Backgroundable(project, s"[$componentName] Starting Stack repls, building project, building tools and preloading cache", false) {
 
         def run(progressIndicator: ProgressIndicator) {
           (StackReplsManager.getProjectRepl(project), StackReplsManager.getGlobalRepl(project)) match {
             case (Some(projectRepl), Some(globalRepl)) =>
+              if (restart) {
+                progressIndicator.setText("Busy with stopping Stack repls")
+                globalRepl.exit()
+                projectRepl.exit()
+
+                progressIndicator.setText("Busy with cleaning up")
+                cleanLocalPackages(project)
+                HaskellComponentsManager.invalidateGlobalCaches(project)
+
+                Thread.sleep(1000)
+              }
+
+              module.foreach(m => {
+                HaskellModuleBuilder.addLibrarySources(m)
+              })
+
               projectRepl.start()
               globalRepl.start()
 
@@ -92,6 +117,17 @@ class StackProjectStartupManager(project: Project) extends ProjectComponent {
       })
     }
   }
+}
+
+class StackProjectManager(project: Project) extends ProjectComponent {
+
+  override def getComponentName: String = StackProjectManager.componentName
+
+  override def projectClosed(): Unit = {}
+
+  override def initComponent(): Unit = {}
+
+  override def projectOpened(): Unit = StackProjectManager.start(project)
 
   override def disposeComponent(): Unit = {}
 }
