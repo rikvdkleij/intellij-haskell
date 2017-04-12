@@ -27,7 +27,7 @@ class HaskellCodeStyleConfigurable(@NotNull settings: CodeStyleSettings, cloneSe
     new HaskellCodeStyleMainPanel(getCurrentSettings, settings)
   }
 
-  def getHelpTopic: String = {
+  override def getHelpTopic: String = {
     null
   }
 
