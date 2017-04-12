@@ -51,7 +51,7 @@ private[repl] abstract class StackReplProcess(val project: Project, val extraSta
 
   private final val EndOfOutputIndicator = "^IntellijHaskell^"
 
-  private final val DelayBetweenReads = 5.millis
+  private final val DelayBetweenReads = 1.millis
 
   protected def execute(command: String): Option[StackReplOutput] = {
 

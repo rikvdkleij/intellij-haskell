@@ -105,7 +105,7 @@ object HaskellFileIndex {
   }
 
   private def getFilesForType(fileType: FileType, project: Project, searchScope: GlobalSearchScope): Iterable[VirtualFile] = {
-    FileBasedIndex.getInstance.getContainingFiles(FileTypeIndex.NAME, fileType, searchScope).asScala
+    FileTypeIndex.getFiles(fileType, searchScope).asScala
   }
 
   private def getFilesByName(project: Project, name: String, searchScope: GlobalSearchScope): Iterable[VirtualFile] = {

@@ -16,8 +16,13 @@
 
 package intellij.haskell.inspection
 
+import java.util.concurrent.Callable
+
 import com.intellij.codeInspection._
+import com.intellij.openapi.application.ApplicationManager
+import com.intellij.openapi.progress.ProgressManager
 import com.intellij.psi.{PsiElement, PsiFile, TokenType}
+import com.intellij.util.WaitFor
 import intellij.haskell.external.component.{HLintComponent, HLintInfo}
 import intellij.haskell.psi.HaskellTypes._
 import intellij.haskell.util.{HaskellProjectUtil, LineColumnPosition}
@@ -27,25 +32,45 @@ import scala.annotation.tailrec
 class HLintInspectionTool extends LocalInspectionTool {
 
   override def checkFile(psiFile: PsiFile, manager: InspectionManager, isOnTheFly: Boolean): Array[ProblemDescriptor] = {
+    ProgressManager.checkCanceled()
+
     if (HaskellProjectUtil.isLibraryFile(psiFile).getOrElse(true)) {
       return Array()
     }
 
     val problemsHolder = new ProblemsHolder(manager, psiFile, isOnTheFly)
-    val hlintInfos = HLintComponent.check(psiFile)
+    ProgressManager.checkCanceled()
+
+    val hlintInfosFuture = ApplicationManager.getApplication.executeOnPooledThread(new Callable[Seq[HLintInfo]] {
+      override def call(): Seq[HLintInfo] = {
+        HLintComponent.check(psiFile)
+      }
+    })
+
+    new WaitFor() {
+      override def condition(): Boolean = {
+        ProgressManager.checkCanceled()
+        hlintInfosFuture.isDone
+      }
+    }
+
     for {
-      hi <- hlintInfos
+      hi <- hlintInfosFuture.get()
       se <- findStartHaskellElement(psiFile, hi)
       ee <- findEndHaskellElement(psiFile, hi)
       sl <- LineColumnPosition.fromOffset(psiFile, se.getTextOffset).map(_.lineNr)
       el <- LineColumnPosition.fromOffset(psiFile, ee.getTextOffset).map(_.lineNr)
     } yield
       hi.to match {
-        case Some(to) => problemsHolder.registerProblem(
-          new ProblemDescriptorBase(se, ee, hi.hint, Array(new HLintQuickfix(se, ee, hi.startLine, hi.startColumn, removeLineBreaksAndExtraSpaces(sl, el, to), hi.hint, hi.note)), findProblemHighlightType(hi), false, null, true, isOnTheFly)
-        )
-        case None => problemsHolder.registerProblem(
-          new ProblemDescriptorBase(se, ee, hi.hint, Array(), findProblemHighlightType(hi), false, null, true, isOnTheFly))
+        case Some(to) =>
+          ProgressManager.checkCanceled()
+          problemsHolder.registerProblem(
+            new ProblemDescriptorBase(se, ee, hi.hint, Array(new HLintQuickfix(se, ee, hi.startLine, hi.startColumn, removeLineBreaksAndExtraSpaces(sl, el, to), hi.hint, hi.note)), findProblemHighlightType(hi), false, null, true, isOnTheFly)
+          )
+        case None =>
+          ProgressManager.checkCanceled()
+          problemsHolder.registerProblem(
+            new ProblemDescriptorBase(se, ee, hi.hint, Array(), findProblemHighlightType(hi), false, null, true, isOnTheFly))
       }
     problemsHolder.getResultsArray
   }

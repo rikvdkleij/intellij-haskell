@@ -26,7 +26,6 @@ import com.intellij.psi.search.GlobalSearchScope
 import com.intellij.psi.{PsiFile, PsiManager}
 import intellij.haskell.module.HaskellModuleType
 import intellij.haskell.sdk.HaskellSdkType
-import intellij.haskell.util.index.HaskellFileIndex.findFiles
 import intellij.haskell.{HaskellFile, HaskellNotificationGroup}
 
 object HaskellProjectUtil {
@@ -65,15 +64,6 @@ object HaskellProjectUtil {
 
   def isProjectTestFile(virtualFile: VirtualFile, project: Project): Option[Boolean] = {
     getProjectRootManager(project).map(_.getFileIndex.isInTestSourceContent(virtualFile))
-  }
-
-  def findHaskellFiles(project: Project, includeNonProjectItems: Boolean): Iterable[VirtualFile] = {
-    val searchScope = if (includeNonProjectItems) {
-      GlobalSearchScope.allScope(project)
-    } else {
-      getProjectModulesSearchScope(project)
-    }
-    findFiles(project, searchScope)
   }
 
   def findCabalPackageName(project: Project): Option[String] = {

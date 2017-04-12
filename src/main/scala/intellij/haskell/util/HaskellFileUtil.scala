@@ -18,7 +18,7 @@ package intellij.haskell.util
 
 import java.io.{File, FileOutputStream, InputStream}
 
-import com.intellij.openapi.application.{ApplicationManager, ModalityState}
+import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.command.CommandProcessor
 import com.intellij.openapi.editor.Document
 import com.intellij.openapi.fileEditor.FileDocumentManager
@@ -34,7 +34,7 @@ object HaskellFileUtil {
   def saveAllFilesLater(): Unit = {
     ApplicationManager.getApplication.invokeLater(() => {
       FileDocumentManager.getInstance.saveAllDocuments()
-    }, ModalityState.NON_MODAL)
+    })
   }
 
   def saveFile(psiFile: PsiFile): Unit = {

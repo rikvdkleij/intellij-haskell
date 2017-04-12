@@ -34,7 +34,6 @@ import com.intellij.psi.impl.source.tree.TreeUtil
 import com.intellij.psi.util.PsiTreeUtil
 import com.intellij.util.SystemProperties
 import intellij.haskell.editor.HaskellImportOptimizer
-import intellij.haskell.external.component.HaskellComponentsManager._
 import intellij.haskell.external.component._
 import intellij.haskell.psi._
 import intellij.haskell.util._
@@ -100,55 +99,67 @@ class HaskellAnnotator extends ExternalAnnotator[PsiFile, LoadResult] {
     if (loadResult.loadFailed && loadResult.currentFileProblems.isEmpty) {
       loadResult.otherFileProblems.foreach {
         case cpf: LoadProblemInOtherFile if !cpf.isWarning =>
-          HaskellNotificationGroup.logErrorBalloonEvent(project, s"${cpf.htmlMessage} at <a href='#'>${cpf.filePath}:${cpf.lineNr}:${cpf.columnNr}</a>.",
+          HaskellNotificationGroup.logErrorBalloonEvent(project, s"${
+            cpf.htmlMessage
+          } at <a href='#'>${
+            cpf.filePath
+          }:${
+            cpf.lineNr
+          }:${
+            cpf.columnNr
+          }</a>.",
             (_: Notification, _: HyperlinkEvent) => {
               val file = LocalFileSystem.getInstance().findFileByPath(cpf.filePath)
               new OpenFileDescriptor(project, file, cpf.lineNr - 1, cpf.columnNr - 1).navigate(true)
             })
-        case cpf: LoadProblemWithoutLocation if !cpf.isWarning => HaskellNotificationGroup.logErrorBalloonEvent(project, s"Error ${cpf.htmlMessage}")
+        case cpf: LoadProblemWithoutLocation if !cpf.isWarning => HaskellNotificationGroup.logErrorBalloonEvent(project, s"Error ${
+          cpf.htmlMessage
+        }")
         case _ => ()
       }
     }
 
-    problems.flatMap { problem =>
-      val textRange = getProblemTextRange(psiFile, problem)
-      textRange.map { tr =>
-        val plainMessage = problem.plainMessage
-        plainMessage match {
-          // Because of setting `-fdefer-typed-holes` the following problems are displayed as error
-          case PerhapsYouMeantMultiplePattern(notInScopeMessage, suggestionsList) =>
-            val notInScopeName = extractName(notInScopeMessage)
-            val annotations = suggestionsList.split(",").flatMap(s => extractPerhapsYouMeantAction(s))
-            ErrorAnnotationWithIntentionActions(tr, problem.plainMessage, problem.htmlMessage, annotations.toStream ++ createNotInScopeIntentionActions(psiFile, notInScopeName))
-          case PerhapsYouMeantSinglePattern(notInScopeMessage, suggestion) =>
-            val notInScopeName = extractName(notInScopeMessage)
-            val annotation = extractPerhapsYouMeantAction(suggestion)
-            ErrorAnnotationWithIntentionActions(tr, problem.plainMessage, problem.htmlMessage, annotation.toStream ++ createNotInScopeIntentionActions(psiFile, notInScopeName))
-          case NotInScopePattern(name) =>
-            ErrorAnnotationWithIntentionActions(tr, problem.plainMessage, problem.htmlMessage, createNotInScopeIntentionActions(psiFile, name))
-          case NotInScopePattern2(name) =>
-            ErrorAnnotationWithIntentionActions(tr, problem.plainMessage, problem.htmlMessage, createNotInScopeIntentionActions(psiFile, name.split("::").headOption.getOrElse(name).trim))
-          case UseAloneInstancesImportPattern(importDecl) => importAloneInstancesAction(problem, tr, importDecl)
-          case RedundantImportPattern(redundants, moduleName) => redundantImportAction(problem, tr, moduleName, redundants)
-          case HolePattern(_typeSignature) =>
-            ErrorAnnotation(tr, problem.plainMessage, problem.htmlMessage)
-          case HolePattern2(_name, _typeOfName) =>
-            ErrorAnnotation(tr, problem.plainMessage, problem.htmlMessage)
-          //
-          case NoTypeSignaturePattern(typeSignature) => WarningAnnotationWithIntentionActions(tr, problem.plainMessage, problem.htmlMessage, Iterable(new TypeSignatureIntentionAction(typeSignature)))
-          case HaskellImportOptimizer.WarningRedundantImport(moduleName) => WarningAnnotationWithIntentionActions(tr, problem.plainMessage, problem.htmlMessage, Iterable(new OptimizeImportIntentionAction(moduleName, tr.getStartOffset)))
-          case DefinedButNotUsedPattern(n) => WarningAnnotationWithIntentionActions(tr, problem.plainMessage, problem.htmlMessage, Iterable(new DefinedButNotUsedIntentionAction(n)))
-          case _ =>
-            findSuggestedLanguageExtension(project, plainMessage) match {
-              case Some(le) => createLanguageExtensionIntentionAction(problem, tr, le)
+    problems.flatMap {
+      problem =>
+        val textRange = getProblemTextRange(psiFile, problem)
+        textRange.map {
+          tr =>
+            val plainMessage = problem.plainMessage
+            plainMessage match {
+              // Because of setting `-fdefer-typed-holes` the following problems are displayed as error
+              case PerhapsYouMeantMultiplePattern(notInScopeMessage, suggestionsList) =>
+                val notInScopeName = extractName(notInScopeMessage)
+                val annotations = suggestionsList.split(",").flatMap(s => extractPerhapsYouMeantAction(s))
+                ErrorAnnotationWithIntentionActions(tr, problem.plainMessage, problem.htmlMessage, annotations.toStream ++ createNotInScopeIntentionActions(psiFile, notInScopeName))
+              case PerhapsYouMeantSinglePattern(notInScopeMessage, suggestion) =>
+                val notInScopeName = extractName(notInScopeMessage)
+                val annotation = extractPerhapsYouMeantAction(suggestion)
+                ErrorAnnotationWithIntentionActions(tr, problem.plainMessage, problem.htmlMessage, annotation.toStream ++ createNotInScopeIntentionActions(psiFile, notInScopeName))
+              case NotInScopePattern(name) =>
+                ErrorAnnotationWithIntentionActions(tr, problem.plainMessage, problem.htmlMessage, createNotInScopeIntentionActions(psiFile, name))
+              case NotInScopePattern2(name) =>
+                ErrorAnnotationWithIntentionActions(tr, problem.plainMessage, problem.htmlMessage, createNotInScopeIntentionActions(psiFile, name.split("::").headOption.getOrElse(name).trim))
+              case UseAloneInstancesImportPattern(importDecl) => importAloneInstancesAction(problem, tr, importDecl)
+              case RedundantImportPattern(redundants, moduleName) => redundantImportAction(problem, tr, moduleName, redundants)
+              case HolePattern(_) =>
+                ErrorAnnotation(tr, problem.plainMessage, problem.htmlMessage)
+              case HolePattern2(_, _) =>
+                ErrorAnnotation(tr, problem.plainMessage, problem.htmlMessage)
+              //
+              case NoTypeSignaturePattern(typeSignature) => WarningAnnotationWithIntentionActions(tr, problem.plainMessage, problem.htmlMessage, Iterable(new TypeSignatureIntentionAction(typeSignature)))
+              case HaskellImportOptimizer.WarningRedundantImport(moduleName) => WarningAnnotationWithIntentionActions(tr, problem.plainMessage, problem.htmlMessage, Iterable(new OptimizeImportIntentionAction(moduleName, tr.getStartOffset)))
+              case DefinedButNotUsedPattern(n) => WarningAnnotationWithIntentionActions(tr, problem.plainMessage, problem.htmlMessage, Iterable(new DefinedButNotUsedIntentionAction(n)))
               case _ =>
-                if (problem.isWarning)
-                  WarningAnnotation(tr, problem.plainMessage, problem.htmlMessage)
-                else
-                  ErrorAnnotation(tr, problem.plainMessage, problem.htmlMessage)
+                findSuggestedLanguageExtension(project, plainMessage) match {
+                  case Some(le) => createLanguageExtensionIntentionAction(problem, tr, le)
+                  case _ =>
+                    if (problem.isWarning)
+                      WarningAnnotation(tr, problem.plainMessage, problem.htmlMessage)
+                    else
+                      ErrorAnnotation(tr, problem.plainMessage, problem.htmlMessage)
+                }
             }
         }
-      }
     }
   }
 
@@ -159,7 +170,7 @@ class HaskellAnnotator extends ExternalAnnotator[PsiFile, LoadResult] {
 
   private def extractPerhapsYouMeantAction(suggestion: String): Option[PerhapsYouMeantIntentionAction] = {
     suggestion match {
-      case message@PerhapsYouMeantImportedFromPattern(name, _module) => Some(new PerhapsYouMeantIntentionAction(name, message))
+      case message@PerhapsYouMeantImportedFromPattern(name, _) => Some(new PerhapsYouMeantIntentionAction(name, message))
       case message@PerhapsYouMeantLocalPattern(name) => Some(new PerhapsYouMeantIntentionAction(name, message))
       case _ => None
     }
@@ -173,7 +184,7 @@ class HaskellAnnotator extends ExternalAnnotator[PsiFile, LoadResult] {
   }
 
   private def createNotInScopeIntentionActions(psiFile: PsiFile, name: String): Iterable[NotInScopeIntentionAction] = {
-    val moduleIdentifiers = findPreloadedModuleIdentifiers(psiFile.getProject).filter(_.name == name)
+    val moduleIdentifiers = HaskellComponentsManager.findPreloadedModuleIdentifiers(psiFile.getProject).filter(_.name == name)
     moduleIdentifiers.map(mi => new NotInScopeIntentionAction(mi.name, mi.moduleName, psiFile))
   }
 

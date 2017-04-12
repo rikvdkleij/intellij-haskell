@@ -16,7 +16,11 @@
 
 package intellij.haskell.action
 
+import java.util.concurrent.Callable
+
+import com.intellij.execution.process.ProcessOutput
 import com.intellij.openapi.actionSystem.{AnAction, AnActionEvent}
+import com.intellij.openapi.application.ApplicationManager
 import com.intellij.psi.PsiFile
 import intellij.haskell.HaskellNotificationGroup
 import intellij.haskell.external.commandLine.CommandLine
@@ -47,9 +51,13 @@ object StylishHaskellFormatAction {
 
     HaskellSettingsState.getStylishHaskellPath(project) match {
       case Some(stylishHaskellPath) =>
-        val processOutput = CommandLine.runProgram(Option(project), project.getBasePath, stylishHaskellPath, Seq(HaskellFileUtil.getFilePath(psiFile)))
+        val processOutput = ApplicationManager.getApplication.executeOnPooledThread(new Callable[Option[ProcessOutput]] {
+          override def call(): Option[ProcessOutput] = {
+            CommandLine.runProgram(Option(project), project.getBasePath, stylishHaskellPath, Seq(HaskellFileUtil.getFilePath(psiFile)))
+          }
+        })
 
-        processOutput.foreach(output => if (output.getStderrLines.isEmpty) {
+        processOutput.get.foreach(output => if (output.getStderrLines.isEmpty) {
           HaskellFileUtil.saveFileWithNewContent(psiFile.getProject, virtualFile, output.getStdout)
         } else {
           HaskellNotificationGroup.logErrorBalloonEvent(project, s"Error while formatting by <b>$StylishHaskellName</b>. Error: ${output.getStderr}")
