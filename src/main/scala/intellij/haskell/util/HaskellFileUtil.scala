@@ -32,7 +32,7 @@ import intellij.haskell.action.SelectionContext
 object HaskellFileUtil {
 
   def saveAllFilesLater(): Unit = {
-    ApplicationManager.getApplication.invokeLater(() => {
+    ApplicationManager.getApplication.invokeAndWait(() => {
       FileDocumentManager.getInstance.saveAllDocuments()
     })
   }
