@@ -3,7 +3,7 @@ lazy val commonSettings = Seq(
   scalaVersion := "2.12.1"
 )
 
-val guava = "com.google.guava" % "guava" % "20.0"
+val guava = "com.google.guava" % "guava" % "21.0"
 val scalaTest = "org.scalatest" % "scalatest_2.12" % "3.0.1" % "test"
 val sprayJson = "io.spray" %% "spray-json" % "1.3.2"
 val snakeYaml = "org.yaml" % "snakeyaml" % "1.17"
@@ -23,4 +23,4 @@ lazy val intellijHaskell = (project in file(".")).
     unmanagedJars in Compile += baseDirectory.value / "idea"
   )
 
-ideaBuild in ThisBuild := "171.3780.107"
+ideaBuild in ThisBuild := "171.4073.35"
