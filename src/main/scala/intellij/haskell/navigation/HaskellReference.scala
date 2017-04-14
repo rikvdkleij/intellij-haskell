@@ -56,7 +56,9 @@ class HaskellReference(element: HaskellNamedElement, textRange: TextRange) exten
             }
         }
       case ne: HaskellNamedElement if findImportHidingDeclarationParent(ne).isDefined => Iterable()
-      case ne: HaskellNamedElement => HaskellReference.resolveReference(ne, psiFile, project).map(HaskellNamedElementResolveResult)
+      case ne: HaskellNamedElement =>
+        ProgressManager.checkCanceled()
+        HaskellReference.resolveReference(ne, psiFile, project).map(HaskellNamedElementResolveResult)
       case _ => Iterable()
     }
     result.toArray[ResolveResult]

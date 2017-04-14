@@ -21,6 +21,7 @@ import java.util.concurrent.{Executors, TimeUnit}
 
 import com.intellij.codeInsight.completion._
 import com.intellij.codeInsight.lookup.LookupElementBuilder
+import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.patterns.PlatformPatterns
@@ -95,15 +96,20 @@ class HaskellCompletionContributor extends CompletionContributor {
       orElse(HaskellPsiUtil.findQualifiedNameElement(element))
   }
 
+
   val provider = new CompletionProvider[CompletionParameters] {
     def addCompletions(parameters: CompletionParameters, context: ProcessingContext, originalResultSet: CompletionResultSet) {
 
-      val project = parameters.getPosition.getProject
+      ProgressManager.checkCanceled()
+
       val psiFile = parameters.getOriginalFile
+      val project = parameters.getPosition.getProject
 
       if (HaskellProjectUtil.isLibraryFile(psiFile).getOrElse(true) || Option(parameters.getOriginalPosition).map(_.getNode.getElementType).exists(t => HaskellParserDefinition.Literals.contains(t) || HaskellParserDefinition.Comments.contains(t))) {
         return
       }
+
+      ProgressManager.checkCanceled()
 
       // In case element before caret is a qualifier, module name or a dot we have to "help" IntelliJ to get the right preselected elements behavior
       // For example, asking for completion in case typing `Data.List.` will give without this help no prefix.
@@ -135,6 +141,8 @@ class HaskellCompletionContributor extends CompletionContributor {
         case _ => originalResultSet
       }
 
+      ProgressManager.checkCanceled()
+
       positionElement match {
         case Some(e) if isPragmaInProgress(e) =>
           resultSet.addAllElements(getModulePragmaIds.asJavaCollection)
@@ -158,6 +166,8 @@ class HaskellCompletionContributor extends CompletionContributor {
         case op =>
           val importDeclarations = findImportDeclarations(psiFile)
 
+          ProgressManager.checkCanceled()
+
           resultSet.addAllElements(getReservedNames.asJavaCollection)
           resultSet.addAllElements(getSpecialReservedIds.asJavaCollection)
           resultSet.addAllElements(getPragmaStartEndIds.asJavaCollection)
@@ -167,14 +177,23 @@ class HaskellCompletionContributor extends CompletionContributor {
           resultSet.addAllElements(getIdsFromHidingIdsImportedModules(project, psiFile, importDeclarations).asJavaCollection)
           resultSet.addAllElements(getIdsFromSpecIdsImportedModules(project, psiFile, importDeclarations).asJavaCollection)
 
+          ProgressManager.checkCanceled()
+
           val moduleName = findModuleName(psiFile)
-          val topLevelLookupElements = moduleName.map(mn => HaskellComponentsManager.findAllTopLevelModuleIdentifiers(project, psiFile, mn).map(mi => createTopLevelLookupElement(mi))).getOrElse(Iterable())
-          if (topLevelLookupElements.isEmpty) {
-            resultSet.addAllElements(findTopLevelLookupElements(psiFile).asJavaCollection)
-          } else {
-            resultSet.addAllElements(topLevelLookupElements.asJavaCollection)
-            resultSet.addAllElements(findTopLevelTypeSignatureLookupElements(psiFile).asJavaCollection)
+
+          ProgressManager.checkCanceled()
+
+          moduleName match {
+            case Some(mn) =>
+              val topLevelLookupModuleIdentifiers = HaskellComponentsManager.findAllTopLevelModuleIdentifiers(project, psiFile, mn)
+              ProgressManager.checkCanceled()
+              val topLevelLookupElements = topLevelLookupModuleIdentifiers.map(mi => createTopLevelLookupElement(mi))
+              resultSet.addAllElements(topLevelLookupElements.asJavaCollection)
+              resultSet.addAllElements(findTopLevelTypeSignatureLookupElements(psiFile).asJavaCollection)
+            case None => resultSet.addAllElements(findTopLevelLookupElements(psiFile).asJavaCollection)
           }
+
+          ProgressManager.checkCanceled()
 
           op match {
             case Some(e) =>
