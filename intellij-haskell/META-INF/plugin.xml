@@ -281,8 +281,11 @@
         <vetoRenameCondition implementation="intellij.haskell.refactor.HaskellVetoRenameCondition"/>
 
         <!-- Notification -->
-        <editorNotificationProvider implementation="intellij.haskell.notification.ConfigFileWatcherNotificationProvider"/>
-        <editorNotificationProvider implementation="intellij.haskell.notification.HaskellSDKNotificationProvider"/>
+        <!--<editorNotificationProvider implementation="intellij.haskell.notification.ConfigFileWatcherNotificationProvider"/>-->
+        <!--<editorNotificationProvider implementation="intellij.haskell.notification.HaskellSDKNotificationProvider"/>-->
+
+        <!-- Mover -->
+        <!--<statementUpDownMover implementation="intellij.haskell.editor.HaskellStatementUpDownMover"/>-->
     </extensions>
 
     <application-components>
@@ -360,24 +363,24 @@
                     text="Restart Haskell Stack REPLs"
                     description="Restart Haskell Stack repls and refresh cache">
             </action>
-            <action id="Haskell.GenerateExports"
-                    class="intellij.haskell.action.HaskellTools.GenerateExportsAction"
-                    text="Generate Exports"
-                    description="Generate exports with haskell-tools for currently opened file">
-                <keyboard-shortcut first-keystroke="ctrl alt g" keymap="$default"/>
-            </action>
-            <action id="Haskell.ExtractBinding"
-                    class="intellij.haskell.action.HaskellTools.ExtractBindingAction"
-                    text="Extract Binding"
-                    description="Extract binding with haskell-tools for currently selected code block">
-                <keyboard-shortcut first-keystroke="ctrl alt e" keymap="$default"/>
-            </action>
-            <action id="Haskell.InlineBinding"
-                    class="intellij.haskell.action.HaskellTools.InlineBindingAction"
-                    text="Inline Binding"
-                    description="Inline binding with haskell-tools for currently selected code block">
-                <keyboard-shortcut first-keystroke="ctrl alt shift i" keymap="$default"/>
-            </action>
+            <!--<action id="Haskell.GenerateExports"-->
+                    <!--class="intellij.haskell.action.HaskellTools.GenerateExportsAction"-->
+                    <!--text="Generate Exports"-->
+                    <!--description="Generate exports with haskell-tools for currently opened file">-->
+                <!--<keyboard-shortcut first-keystroke="ctrl alt g" keymap="$default"/>-->
+            <!--</action>-->
+            <!--<action id="Haskell.ExtractBinding"-->
+                    <!--class="intellij.haskell.action.HaskellTools.ExtractBindingAction"-->
+                    <!--text="Extract Binding"-->
+                    <!--description="Extract binding with haskell-tools for currently selected code block">-->
+                <!--<keyboard-shortcut first-keystroke="ctrl alt e" keymap="$default"/>-->
+            <!--</action>-->
+            <!--<action id="Haskell.InlineBinding"-->
+                    <!--class="intellij.haskell.action.HaskellTools.InlineBindingAction"-->
+                    <!--text="Inline Binding"-->
+                    <!--description="Inline binding with haskell-tools for currently selected code block">-->
+                <!--<keyboard-shortcut first-keystroke="ctrl alt shift i" keymap="$default"/>-->
+            <!--</action>-->
             <add-to-group group-id="ToolsMenu" anchor="last"/>
         </group>
 
