@@ -102,6 +102,9 @@ private[repl] abstract class StackReplProcess(val project: Project, val extraSta
       }
     }
     catch {
+      case _: InterruptedException =>
+        logWarning("Interruped exception while executing command: " + command)
+        None
       case e: Exception =>
         logError(s"Error in communication with Stack repl: ${e.getMessage}. Check if your Haskell/Stack environment is working okay. Command was: $command")
         exit()
@@ -228,7 +231,7 @@ private[repl] abstract class StackReplProcess(val project: Project, val extraSta
       }
       available = false
     }
-    logInfo("Stack repl is stopped.")
+    logInfo("Stack repl is stopped and is not restarted  automatically. Use `Tools`/`Restart Haskell Stack REPLs`")
   }
 
   def restart(): Unit = {
