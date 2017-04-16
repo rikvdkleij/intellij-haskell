@@ -11,6 +11,10 @@
     ]]></description>
 
     <change-notes><![CDATA[
+        <p>1.0.0-beta8</p>
+        <ul>
+            <li>Various (performance) improvements and fixes</li>
+        </ul>
         <p>1.0.0-beta7</p>
         <ul>
             <li>Various improvements and fixes</li>
