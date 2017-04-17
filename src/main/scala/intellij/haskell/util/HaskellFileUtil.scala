@@ -31,8 +31,11 @@ import intellij.haskell.action.SelectionContext
 
 object HaskellFileUtil {
 
-  def saveAllFilesLater(): Unit = {
+  def saveAllFiles(psiFile: PsiFile): Unit = {
     ApplicationManager.getApplication.invokeAndWait(() => {
+      findDocument(findVirtualFile(psiFile)).foreach { d =>
+        PsiDocumentManager.getInstance(psiFile.getProject).doPostponedOperationsAndUnblockDocument(d)
+      }
       FileDocumentManager.getInstance.saveAllDocuments()
     })
   }

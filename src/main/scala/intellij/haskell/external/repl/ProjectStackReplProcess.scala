@@ -40,6 +40,19 @@ private[repl] class ProjectStackReplProcess(project: Project) extends StackReplP
     execute(psiFile, _ => execute(s":info $name"))
   }
 
+  def isLoaded(psiFile: PsiFile, moduleName: Option[String]): Boolean = {
+    loadedPsiFileInfo match {
+      case Some(info) => info.psiFile match {
+        case Some(pf) => psiFile == pf && !info.loadFailed
+        case _ => (info.moduleName, moduleName) match {
+          case (Some(mn1), Some(mn2)) => mn1 == mn2 && !info.loadFailed
+          case _ => false
+        }
+      }
+      case _ => false
+    }
+  }
+
   def load(psiFile: PsiFile, moduleName: Option[String]): Option[(StackReplOutput, Boolean)] = synchronized {
     val filePath = getFilePath(psiFile)
     execute(s":load $filePath") match {

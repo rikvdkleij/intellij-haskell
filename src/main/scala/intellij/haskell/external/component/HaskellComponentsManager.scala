@@ -66,6 +66,10 @@ object HaskellComponentsManager {
     LoadComponent.load(psiFile)
   }
 
+  def isHaskellFileLoaded(psiFile: PsiFile): Boolean = {
+    LoadComponent.isLoaded(psiFile)
+  }
+
   def invalidateModuleFileCache(project: Project): Unit = {
     ModuleFileComponent.invalidate(project)
   }

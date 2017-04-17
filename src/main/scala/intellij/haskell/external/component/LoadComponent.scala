@@ -26,6 +26,11 @@ private[component] object LoadComponent {
 
   private final val ProblemPattern = """(.+):([\d]+):([\d]+):(.+)""".r
 
+  def isLoaded(psiFile: PsiFile): Boolean = {
+    val moduleName = HaskellPsiUtil.findModuleName(psiFile, runInRead = true)
+    StackReplsManager.getProjectRepl(psiFile.getProject).exists(_.isLoaded(psiFile, moduleName))
+  }
+
   def load(psiFile: PsiFile): LoadResult = {
     val project = psiFile.getProject
 

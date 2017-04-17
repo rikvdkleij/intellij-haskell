@@ -34,10 +34,8 @@ class HaskellReference(element: HaskellNamedElement, textRange: TextRange) exten
   }
 
   override def multiResolve(incompleteCode: Boolean): Array[ResolveResult] = {
-    ProgressManager.checkCanceled()
-
-    val project = element.getProject
     val psiFile = element.getContainingFile
+    val project = element.getProject
 
     ProgressManager.checkCanceled()
 
@@ -57,8 +55,12 @@ class HaskellReference(element: HaskellNamedElement, textRange: TextRange) exten
         }
       case ne: HaskellNamedElement if findImportHidingDeclarationParent(ne).isDefined => Iterable()
       case ne: HaskellNamedElement =>
-        ProgressManager.checkCanceled()
-        HaskellReference.resolveReference(ne, psiFile, project).map(HaskellNamedElementResolveResult)
+        if (HaskellComponentsManager.isHaskellFileLoaded(psiFile)) {
+          ProgressManager.checkCanceled()
+          HaskellReference.resolveReference(ne, psiFile, project).map(HaskellNamedElementResolveResult)
+        } else {
+          Iterable()
+        }
       case _ => Iterable()
     }
     result.toArray[ResolveResult]
