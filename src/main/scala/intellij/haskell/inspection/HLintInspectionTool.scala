@@ -84,12 +84,16 @@ class HLintInspectionTool extends LocalInspectionTool {
   }
 
   private def findStartHaskellElement(psiFile: PsiFile, hlintInfo: HLintInfo): Option[PsiElement] = {
+    ProgressManager.checkCanceled()
+
     val offset = LineColumnPosition.getOffset(psiFile, LineColumnPosition(hlintInfo.startLine, hlintInfo.startColumn))
     val element = offset.flatMap(offset => Option(psiFile.findElementAt(offset)))
     element.filterNot(e => HLintInspectionTool.NotHaskellIdentifiers.contains(e.getNode.getElementType))
   }
 
   private def findEndHaskellElement(psiFile: PsiFile, hlintInfo: HLintInfo): Option[PsiElement] = {
+    ProgressManager.checkCanceled()
+
     val endOffset = if (hlintInfo.endLine >= hlintInfo.startLine && hlintInfo.endColumn > hlintInfo.startColumn) {
       LineColumnPosition.getOffset(psiFile, LineColumnPosition(hlintInfo.endLine, hlintInfo.endColumn - 1))
     } else {
@@ -100,6 +104,8 @@ class HLintInspectionTool extends LocalInspectionTool {
 
   @tailrec
   private def findHaskellIdentifier(psiFile: PsiFile, offset: Int): Option[PsiElement] = {
+    ProgressManager.checkCanceled()
+
     Option(psiFile.findElementAt(offset)) match {
       case None => findHaskellIdentifier(psiFile, offset - 1)
       case Some(e) if HLintInspectionTool.NotHaskellIdentifiers.contains(e.getNode.getElementType) => findHaskellIdentifier(psiFile, offset - 1)
