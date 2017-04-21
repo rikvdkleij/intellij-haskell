@@ -21,7 +21,7 @@ import com.intellij.openapi.progress.Task.Backgroundable
 import com.intellij.openapi.progress.{ProgressIndicator, ProgressManager}
 import com.intellij.openapi.project.Project
 import intellij.haskell.HaskellNotificationGroup
-import intellij.haskell.external.component.{HaskellComponentsManager, StackProjectManager}
+import intellij.haskell.external.component.HaskellComponentsManager
 import intellij.haskell.external.repl.StackReplsManager
 import intellij.haskell.util.HaskellProjectUtil
 
@@ -45,8 +45,7 @@ object RestartStackReplsAction {
                 globalRepl.exit()
                 projectRepl.exit()
 
-                progressIndicator.setText("Busy with cleaning up")
-                StackProjectManager.cleanLocalPackages(project)
+                progressIndicator.setText("Busy with cleaning up cache")
                 HaskellComponentsManager.invalidateGlobalCaches(project)
 
                 Thread.sleep(1000)

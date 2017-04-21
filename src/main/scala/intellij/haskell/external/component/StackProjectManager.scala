@@ -30,10 +30,6 @@ import intellij.haskell.util.HaskellProjectUtil
 object StackProjectManager {
   val componentName = "stack-repls-manager"
 
-  def cleanLocalPackages(project: Project): Unit = {
-    StackCommandLine.runCommand(Seq("clean"), project)
-  }
-
   def start(project: Project, module: Option[Module] = None): Unit = {
     initialize(project, module)
   }
@@ -54,8 +50,7 @@ object StackProjectManager {
                 globalRepl.exit()
                 projectRepl.exit()
 
-                progressIndicator.setText("Busy with cleaning up")
-                cleanLocalPackages(project)
+                progressIndicator.setText("Busy with cleaning up cache")
                 HaskellComponentsManager.invalidateGlobalCaches(project)
 
                 Thread.sleep(1000)

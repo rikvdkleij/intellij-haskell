@@ -18,7 +18,7 @@ class GenerateExportsAction extends AnAction {
 
           HaskellPsiUtil.findModuleName(psiFile).foreach(moduleName => {
             HaskellToolComponent.generateExports(project, moduleName)
-            VfsUtil.markDirtyAndRefresh(true, true, true, HaskellFileUtil.findVirtualFile(psiFile))
+            HaskellFileUtil.findVirtualFile(psiFile).foreach(vf => VfsUtil.markDirtyAndRefresh(true, true, true, vf))
           })
       }
     })

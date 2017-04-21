@@ -66,10 +66,6 @@ object HaskellComponentsManager {
     LoadComponent.load(psiFile)
   }
 
-  def isHaskellFileLoaded(psiFile: PsiFile): Boolean = {
-    LoadComponent.isLoaded(psiFile)
-  }
-
   def invalidateModuleFileCache(project: Project): Unit = {
     ModuleFileComponent.invalidate(project)
   }
@@ -129,13 +125,13 @@ object HaskellComponentsManager {
               Iterable()
             }
         })
-      }).filterNot(mn => mn == HaskellProjectUtil.Prelude || mn == HaskellProjectUtil.Protolude)
+      }).toSeq.distinct.filterNot(mn => mn == HaskellProjectUtil.Prelude || mn == HaskellProjectUtil.Protolude)
 
       if (!project.isDisposed) {
         moduleNames.foreach(mn => {
           if (!project.isDisposed) {
             BrowseModuleComponent.findImportedModuleIdentifiers(project, mn)
-            Thread.sleep(1000)
+            Thread.sleep(500)
           }
         })
       }

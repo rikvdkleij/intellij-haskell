@@ -57,7 +57,6 @@ object HindentFormatAction {
   def format(psiFile: PsiFile, selectionContext: Option[SelectionContext] = None): Unit = {
     val lineLength = CodeStyleSettingsManager.getInstance(psiFile.getProject).getCurrentSettings.getRightMargin(HaskellLanguage.Instance)
     val indentOptions = CodeStyleSettingsManager.getInstance(psiFile.getProject).getCurrentSettings.getCommonSettings(HaskellLanguage.Instance).getIndentOptions
-    val virtualFile = HaskellFileUtil.findVirtualFile(psiFile)
     val project = psiFile.getProject
     HaskellFileUtil.saveFile(psiFile)
 
@@ -81,8 +80,8 @@ object HindentFormatAction {
             HaskellNotificationGroup.logErrorBalloonEvent(project, s"Error while formatting by <b>$HindentName</b>. Error: $e")
           case Right(sourceCode) =>
             selectionContext match {
-              case Some(sc) => HaskellFileUtil.saveFileWithPartlyNewContent(psiFile.getProject, virtualFile, sourceCode, sc)
-              case None => HaskellFileUtil.saveFileWithNewContent(psiFile.getProject, virtualFile, sourceCode)
+              case Some(sc) => HaskellFileUtil.saveFileWithPartlyNewContent(psiFile, sourceCode, sc)
+              case None => HaskellFileUtil.saveFileWithNewContent(psiFile, sourceCode)
             }
         }
 

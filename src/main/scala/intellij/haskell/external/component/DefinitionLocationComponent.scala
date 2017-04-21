@@ -59,10 +59,17 @@ private[component] object DefinitionLocationComponent {
           task
         }
 
+        private def findDefinitionLocation(key: Key): Result = {
+          if (LoadComponent.isLoaded(key.psiFile)) {
+            createDefinitionLocation(key)
+          } else {
+            Result(Left("No info available at this moment"))
+          }
+        }
+
         // See https://github.com/commercialhaskell/intero/issues/260
         // and https://github.com/commercialhaskell/intero/issues/182
-        private def findDefinitionLocation(key: Key): Result = {
-
+        private def createDefinitionLocation(key: Key): Result = {
           val psiFile = key.psiFile
           val project = psiFile.getProject
 
@@ -118,7 +125,7 @@ private[component] object DefinitionLocationComponent {
 
   def findDefinitionLocation(namedElement: HaskellNamedElement): Option[LocationInfo] = {
     for {
-      qne <- HaskellPsiUtil.findQualifiedNameElement(namedElement)
+      qne <- HaskellPsiUtil.findQualifiedNameParent(namedElement)
       textOffset = qne.getTextOffset
       psiFile <- Option(namedElement.getContainingFile)
       sp <- LineColumnPosition.fromOffset(psiFile, textOffset)

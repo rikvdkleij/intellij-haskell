@@ -21,7 +21,7 @@ class InlineBindingAction extends AnAction {
             selectionModel <- selectionModel
           } yield {
             HaskellToolComponent.inlineBinding(project, moduleName, selectionModel)
-            VfsUtil.markDirtyAndRefresh(true, true, true, HaskellFileUtil.findVirtualFile(psiFile))
+            HaskellFileUtil.findVirtualFile(psiFile).foreach(vf => VfsUtil.markDirtyAndRefresh(true, true, true, vf))
           }
       }
     })

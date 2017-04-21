@@ -28,7 +28,8 @@ private[component] object LoadComponent {
 
   def isLoaded(psiFile: PsiFile): Boolean = {
     val moduleName = HaskellPsiUtil.findModuleName(psiFile, runInRead = true)
-    StackReplsManager.getProjectRepl(psiFile.getProject).exists(_.isLoaded(psiFile, moduleName))
+    val project = psiFile.getProject
+    StackReplsManager.getProjectRepl(project).exists(_.isLoaded(psiFile, moduleName)) && !StackReplsManager.getProjectRepl(project).exists(_.isBusy)
   }
 
   def load(psiFile: PsiFile): LoadResult = {
@@ -45,7 +46,6 @@ private[component] object LoadComponent {
               DefinitionLocationComponent.invalidate(psiFile)
               NameInfoComponent.invalidate(psiFile)
               moduleName.foreach(BrowseModuleComponent.invalidateForModule(project, _, psiFile))
-              moduleName.foreach(mn => BrowseModuleComponent.findAllTopLevelModuleIdentifiers(project, mn, psiFile))
             }
           })
         }

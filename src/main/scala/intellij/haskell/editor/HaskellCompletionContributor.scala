@@ -84,16 +84,16 @@ class HaskellCompletionContributor extends CompletionContributor {
       et <- elementType
       if et == HS_DOT
       e <- Option(psiFile.findElementAt(element.getTextOffset - 1))
-      p <- HaskellPsiUtil.findQualifiedNameElement(e)
+      p <- HaskellPsiUtil.findQualifiedNameParent(e)
     } yield p).orElse(for {
       et <- elementType
       if et == HS_NEWLINE || et == TokenType.WHITE_SPACE
       d <- Option(psiFile.findElementAt(element.getTextOffset - 1))
       if d.getNode.getElementType == HS_DOT
       e <- Option(psiFile.findElementAt(element.getTextOffset - 2))
-      p <- HaskellPsiUtil.findQualifiedNameElement(e)
+      p <- HaskellPsiUtil.findQualifiedNameParent(e)
     } yield p).
-      orElse(HaskellPsiUtil.findQualifiedNameElement(element))
+      orElse(HaskellPsiUtil.findQualifiedNameParent(element))
   }
 
 

@@ -25,7 +25,7 @@ class ExtractBindingAction extends AnAction {
             if (!dialog.showAndGet()) return
 
             HaskellToolComponent.extractBinding(project, moduleName, selectionModel, dialog.getNewName)
-            VfsUtil.markDirtyAndRefresh(true, true, true, HaskellFileUtil.findVirtualFile(psiFile))
+            HaskellFileUtil.findVirtualFile(psiFile).foreach(vf => VfsUtil.markDirtyAndRefresh(true, true, true, vf))
           }
       }
     })

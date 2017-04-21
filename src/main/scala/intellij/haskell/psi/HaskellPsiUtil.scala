@@ -76,7 +76,7 @@ object HaskellPsiUtil {
     runReadAction(Option(PsiTreeUtil.findChildOfType(psiFile.getOriginalFile, classOf[HaskellModuleDeclaration])).flatMap(_.getModuleName), runInRead)
   }
 
-  def findQualifiedNameElement(psiElement: PsiElement): Option[HaskellQualifiedNameElement] = {
+  def findQualifiedNameParent(psiElement: PsiElement): Option[HaskellQualifiedNameElement] = {
     psiElement match {
       case e: HaskellQualifiedNameElement => Some(e)
       case e => Option(PsiTreeUtil.findFirstParent(e, QualifiedNameElementCondition)).map(_.asInstanceOf[HaskellQualifiedNameElement])

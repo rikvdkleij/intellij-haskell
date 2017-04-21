@@ -42,12 +42,12 @@ private[component] object TypeInfoComponent {
       new CacheLoader[Key, Result]() {
 
         override def load(key: Key): Result = {
-          createTypeInfo(key)
+          findTypeInfo(key)
         }
 
         override def reload(key: Key, oldResult: Result): ListenableFuture[Result] = {
           val task = ListenableFutureTask.create[Result](() => {
-            val newResult = createTypeInfo(key)
+            val newResult = findTypeInfo(key)
             newResult.typeInfo match {
               case Right(ti) if ti.isDefined => newResult
               case _ => oldResult
@@ -55,6 +55,14 @@ private[component] object TypeInfoComponent {
           })
           Executor.execute(task)
           task
+        }
+
+        private def findTypeInfo(key: Key) = {
+          if (LoadComponent.isLoaded(key.psiFile)) {
+            createTypeInfo(key)
+          } else {
+            Result(Left("No info available at this moment"))
+          }
         }
 
         private def createTypeInfo(key: Key): Result = {
@@ -70,7 +78,7 @@ private[component] object TypeInfoComponent {
 
   def findTypeInfoForElement(psiElement: PsiElement): Option[TypeInfo] = {
     for {
-      qne <- HaskellPsiUtil.findQualifiedNameElement(psiElement)
+      qne <- HaskellPsiUtil.findQualifiedNameParent(psiElement)
       to = qne.getTextOffset
       f <- Option(psiElement.getContainingFile)
       sp <- LineColumnPosition.fromOffset(f, to)

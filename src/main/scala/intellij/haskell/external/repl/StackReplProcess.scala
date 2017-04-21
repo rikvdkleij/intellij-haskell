@@ -72,7 +72,7 @@ private[repl] abstract class StackReplProcess(val project: Project, val extraSta
       val stdOutResult = new ArrayBuffer[String]
       val stdErrResult = new ArrayBuffer[String]
 
-      def reachedEndOfOutput: Boolean = stdOutResult.lastOption.exists(_.startsWith(EndOfOutputIndicator)) && (command.startsWith(":module") || stdOutResult.length > 1 || stdErrResult.length > 1)
+      def reachedEndOfOutput: Boolean = stdOutResult.lastOption.exists(_.startsWith(EndOfOutputIndicator)) && (command.startsWith(":module") || command.startsWith(":set") || stdOutResult.length > 1 || stdErrResult.length > 1)
 
       writeToOutputStream(command)
 
@@ -151,38 +151,32 @@ private[repl] abstract class StackReplProcess(val project: Project, val extraSta
             (err: InputStream) => Source.fromInputStream(err).getLines.foreach(stdErr.add)
           ))
 
-        stdOut.clear()
-        stdErr.clear()
-
-        // We have to wait...
+        // We have to wait so repl has started before continue
         Thread.sleep(1000)
 
         writeOutputToLogInfo()
-
-        // `enter` to pass prompt which asks for which module to load
-        // See Stack 1.2 issue https://github.com/commercialhaskell/stack/issues/2603
-        writeToOutputStream("")
-        Thread.sleep(100)
+        stdOut.clear()
+        stdErr.clear()
 
         writeToOutputStream(s""":set prompt "$EndOfOutputIndicator\\n"""")
 
+        available = true
+        logInfo("Stack repl is started.")
+
         if (isProjectRepl) {
-          writeToOutputStream(":set -Wall")
-          writeToOutputStream(":set -fdefer-typed-holes")
+          execute(":set -Wall")
+          execute(":set -fdefer-typed-holes")
 
           HaskellProjectUtil.findCabalPackageName(project) match {
             case Some(name) =>
               val packageModuleName = s"Paths_${name.replaceAll("-", "_")}"
               logInfo(s"Package module `$packageModuleName` will be loaded")
-              writeToOutputStream(s":load $packageModuleName")
+              execute(s":load $packageModuleName")
             case None =>
               logInfo(s"Package module will not be loaded")
           }
         }
 
-        available = true
-
-        logInfo("Stack repl is started.")
       }
       catch {
         case e: Exception =>
@@ -231,7 +225,11 @@ private[repl] abstract class StackReplProcess(val project: Project, val extraSta
       }
       available = false
     }
-    logInfo("Stack repl is stopped and is not restarted  automatically. Use `Tools`/`Restart Haskell Stack REPLs`")
+    if (forceExit) {
+      logError("Stack repl is stopped and is not restarted automatically. Use `Tools`/`Restart Haskell Stack REPLs`")
+    } else {
+      logInfo("Stack repl is stopped")
+    }
   }
 
   def restart(): Unit = {

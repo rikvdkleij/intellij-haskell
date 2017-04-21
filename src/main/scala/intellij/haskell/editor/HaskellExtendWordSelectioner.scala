@@ -37,7 +37,7 @@ class HaskellExtendWordSelectioner extends ExtendWordSelectionHandler {
     val startOffset = e.getTextRange.getStartOffset
     val nextEndOffsets = getOffsets(Some(e), ListBuffer.empty[Int], (e: PsiElement) => e.getNextSibling, (e: PsiElement) => e.getTextRange.getEndOffset)
 
-    val prevStartOffsets = getOffsets(HaskellPsiUtil.findQualifiedNameElement(e).flatMap(qe => Option(qe.getPrevSibling)), ListBuffer.empty[Int], (e: PsiElement) => e.getPrevSibling, (e: PsiElement) => e.getTextRange.getStartOffset)
+    val prevStartOffsets = getOffsets(HaskellPsiUtil.findQualifiedNameParent(e).flatMap(qe => Option(qe.getPrevSibling)), ListBuffer.empty[Int], (e: PsiElement) => e.getPrevSibling, (e: PsiElement) => e.getTextRange.getStartOffset)
     val lastEndOffset = nextEndOffsets.lastOption.getOrElse(e.getTextRange.getEndOffset)
 
     (nextEndOffsets.map(eo => new TextRange(startOffset, eo)) ++ prevStartOffsets.map(so => new TextRange(so, lastEndOffset))).asJava
@@ -50,7 +50,7 @@ class HaskellExtendWordSelectioner extends ExtendWordSelectionHandler {
 
     element match {
       case Some(e) =>
-        HaskellPsiUtil.findQualifiedNameElement(e) match {
+        HaskellPsiUtil.findQualifiedNameParent(e) match {
           case None => e match {
             case e: PsiWhiteSpace => recur(e)
             case e: PsiElement if e.getNode.getElementType == HS_COMMA => recur(e)

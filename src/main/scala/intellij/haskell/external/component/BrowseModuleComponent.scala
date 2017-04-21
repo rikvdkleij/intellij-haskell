@@ -58,10 +58,14 @@ private[component] object BrowseModuleComponent {
               StackReplsManager.getGlobalRepl(project).flatMap(_.getModuleIdentifiers(moduleName)).filter(_.stdOutLines.nonEmpty) map (_.stdOutLines.flatMap(findModuleIdentifier(_, moduleName)))
             } else {
               key.psiFile match {
-                case Some(f) =>
-                  StackReplsManager.getProjectRepl(project).flatMap(_.getAllTopLevelModuleIdentifiers(moduleName, f)) map { output =>
-                    val definedLocallyLines = output.stdOutLines.takeWhile(l => !l.startsWith("-- imported via"))
-                    definedLocallyLines.flatMap(findModuleIdentifier(_, moduleName))
+                case Some(pf) =>
+                  if (LoadComponent.isLoaded(pf)) {
+                    StackReplsManager.getProjectRepl(project).flatMap(_.getAllTopLevelModuleIdentifiers(moduleName, pf)) map { output =>
+                      val definedLocallyLines = output.stdOutLines.takeWhile(l => !l.startsWith("-- imported via"))
+                      definedLocallyLines.flatMap(findModuleIdentifier(_, moduleName))
+                    }
+                  } else {
+                    None
                   }
                 case _ => StackReplsManager.getProjectRepl(project).flatMap(_.getModuleIdentifiers(moduleName)).map(_.stdOutLines.flatMap(findModuleIdentifier(_, moduleName)))
               }

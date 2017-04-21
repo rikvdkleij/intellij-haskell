@@ -31,29 +31,32 @@ import intellij.haskell.action.SelectionContext
 
 object HaskellFileUtil {
 
-  def saveAllFiles(psiFile: PsiFile): Unit = {
-    ApplicationManager.getApplication.invokeAndWait(() => {
-      findDocument(findVirtualFile(psiFile)).foreach { d =>
-        PsiDocumentManager.getInstance(psiFile.getProject).doPostponedOperationsAndUnblockDocument(d)
-      }
-      FileDocumentManager.getInstance.saveAllDocuments()
-    })
+  def saveAllFiles(psiFile: Option[PsiFile]): Unit = {
+    for {
+      pf <- psiFile
+      d <- findDocument(pf)
+    } yield PsiDocumentManager.getInstance(pf.getProject).doPostponedOperationsAndUnblockDocument(d)
+    FileDocumentManager.getInstance.saveAllDocuments()
   }
 
   def saveFile(psiFile: PsiFile): Unit = {
-    findDocument(findVirtualFile(psiFile)).foreach { d =>
+    findDocument(psiFile).foreach(d => {
       PsiDocumentManager.getInstance(psiFile.getProject).doPostponedOperationsAndUnblockDocument(d)
-      FileDocumentManager.getInstance.saveDocumentAsIs(d)
-    }
+      FileDocumentManager.getInstance.saveDocument(d)
+    })
   }
 
-  def findVirtualFile(psiFile: PsiFile): VirtualFile = {
-    psiFile.getOriginalFile.getVirtualFile
+  def findVirtualFile(psiFile: PsiFile): Option[VirtualFile] = {
+    Option(psiFile.getOriginalFile.getVirtualFile)
   }
 
   def findDocument(virtualFile: VirtualFile): Option[Document] = {
     val fileDocumentManager = FileDocumentManager.getInstance()
     Option(fileDocumentManager.getDocument(virtualFile))
+  }
+
+  def findDocument(psiFile: PsiFile): Option[Document] = {
+    findVirtualFile(psiFile).flatMap(findDocument)
   }
 
   def getFilePath(psiFile: PsiFile): String = {
@@ -79,22 +82,22 @@ object HaskellFileUtil {
     }
   }
 
-  def saveFileWithNewContent(project: Project, virtualFile: VirtualFile, sourceCode: String): Unit = {
-    CommandProcessor.getInstance().executeCommand(project, () => {
+  def saveFileWithNewContent(psiFile: PsiFile, sourceCode: String): Unit = {
+    CommandProcessor.getInstance().executeCommand(psiFile.getProject, () => {
       ApplicationManager.getApplication.runWriteAction(new Runnable {
         override def run(): Unit = {
-          val document = findDocument(virtualFile)
+          val document = findDocument(psiFile)
           document.foreach(_.setText(sourceCode))
         }
       })
     }, null, null)
   }
 
-  def saveFileWithPartlyNewContent(project: Project, virtualFile: VirtualFile, sourceCode: String, selectionContext: SelectionContext): Unit = {
-    CommandProcessor.getInstance().executeCommand(project, () => {
+  def saveFileWithPartlyNewContent(psiFile: PsiFile, sourceCode: String, selectionContext: SelectionContext): Unit = {
+    CommandProcessor.getInstance().executeCommand(psiFile.getProject, () => {
       ApplicationManager.getApplication.runWriteAction(new Runnable {
         override def run(): Unit = {
-          val document = findDocument(virtualFile)
+          val document = findDocument(psiFile)
           document.foreach(_.replaceString(selectionContext.start, selectionContext.end, sourceCode))
         }
       })

@@ -50,12 +50,12 @@ private[component] object NameInfoComponent {
       new CacheLoader[Key, Result] {
 
         override def load(key: Key): Result = {
-          Result(findNameInfos(key, key.psiFile.getProject))
+          Result(findNameInfos(key))
         }
 
         override def reload(key: Key, oldResult: Result): ListenableFuture[Result] = {
           val task = ListenableFutureTask.create[Result](() => {
-            findNameInfosInProjectFile(key, key.psiFile.getProject) match {
+            findNameInfos(key) match {
               case newResult@Some(nis) if nis.nonEmpty => Result(newResult)
               case _ => oldResult
             }
@@ -64,25 +64,25 @@ private[component] object NameInfoComponent {
           task
         }
 
-        private def findNameInfosInProjectFile(key: Key, project: Project): Option[Iterable[NameInfo]] = {
-          val output = findProjectInfo(key, project)
-          createNameInfos(project, output)
-        }
-
-        private def findNameInfos(key: Key, project: Project): Option[Iterable[NameInfo]] = {
+        private def findNameInfos(key: Key): Option[Iterable[NameInfo]] = {
+          val project = key.psiFile.getProject
           HaskellProjectUtil.isLibraryFile(key.psiFile).flatMap(isLibraryFile => {
             val output = if (isLibraryFile) {
               val moduleName = HaskellPsiUtil.findModuleName(key.psiFile, runInRead = true)
               moduleName.flatMap(mn => StackReplsManager.getGlobalRepl(project).flatMap(_.findInfo(mn, key.name)))
             } else {
-              findProjectInfo(key, project)
+              findInfoForProjectIdentifier(key, project)
             }
             createNameInfos(project, output)
           })
         }
 
-        private def findProjectInfo(key: Key, project: Project): Option[StackReplOutput] = {
-          StackReplsManager.getProjectRepl(project).flatMap(_.findInfo(key.psiFile, key.name))
+        private def findInfoForProjectIdentifier(key: Key, project: Project): Option[StackReplOutput] = {
+          if (LoadComponent.isLoaded(key.psiFile)) {
+            StackReplsManager.getProjectRepl(project).flatMap(_.findInfo(key.psiFile, key.name))
+          } else {
+            None
+          }
         }
       }
     )
@@ -114,7 +114,7 @@ private[component] object NameInfoComponent {
 
   def findNameInfo(psiElement: PsiElement): Iterable[NameInfo] = {
     val key = for {
-      qne <- HaskellPsiUtil.findQualifiedNameElement(psiElement)
+      qne <- HaskellPsiUtil.findQualifiedNameParent(psiElement)
       pf <- Option(qne.getContainingFile).map(_.getOriginalFile)
     } yield Key(pf, qne.getNameWithoutParens.replaceAll("""\s+""", ""))
 

@@ -306,7 +306,7 @@ object HaskellPsiImplUtil {
   private def getContainingLineText(namedElement: PsiElement) = {
     for {
       doc <- HaskellFileUtil.findDocument(namedElement.getContainingFile.getVirtualFile)
-      element <- HaskellPsiUtil.findQualifiedNameElement(namedElement)
+      element <- HaskellPsiUtil.findQualifiedNameParent(namedElement)
       start = findNewline(element, e => e.getPrevSibling).getTextOffset
       end = findNewline(element, e => e.getNextSibling).getTextOffset
     } yield StringUtil.removeCommentsAndWhiteSpaces(doc.getCharsSequence.subSequence(start, end).toString.trim)

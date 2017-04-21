@@ -44,8 +44,6 @@ object StylishHaskellFormatAction {
   final val StylishHaskellName = "stylish-haskell"
 
   private[action] def format(psiFile: PsiFile): Unit = {
-    val virtualFile = HaskellFileUtil.findVirtualFile(psiFile)
-
     val project = psiFile.getProject
     HaskellFileUtil.saveFile(psiFile)
 
@@ -58,7 +56,7 @@ object StylishHaskellFormatAction {
         })
 
         processOutput.get.foreach(output => if (output.getStderrLines.isEmpty) {
-          HaskellFileUtil.saveFileWithNewContent(psiFile.getProject, virtualFile, output.getStdout)
+          HaskellFileUtil.saveFileWithNewContent(psiFile, output.getStdout)
         } else {
           HaskellNotificationGroup.logErrorBalloonEvent(project, s"Error while formatting by <b>$StylishHaskellName</b>. Error: ${output.getStderr}")
         })

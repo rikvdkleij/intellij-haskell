@@ -17,24 +17,26 @@
 package intellij.haskell.highlighter
 
 import com.intellij.lang.{BracePair, PairedBraceMatcher}
-import com.intellij.psi.PsiFile
 import com.intellij.psi.tree.IElementType
+import com.intellij.psi.{PsiFile, TokenType}
 import intellij.haskell.psi.HaskellTypes
 
 object HaskellBraceMatcher {
   private final val PAIRS = Array(
-    new BracePair(HaskellTypes.HS_LEFT_PAREN, HaskellTypes.HS_RIGHT_PAREN, false),
+    new BracePair(HaskellTypes.HS_LEFT_PAREN, HaskellTypes.HS_RIGHT_PAREN, true),
     new BracePair(HaskellTypes.HS_PRAGMA_START, HaskellTypes.HS_PRAGMA_END, true),
     new BracePair(HaskellTypes.HS_LEFT_BRACE, HaskellTypes.HS_RIGHT_BRACE, true),
     new BracePair(HaskellTypes.HS_BACKQUOTE, HaskellTypes.HS_BACKQUOTE, false),
     new BracePair(HaskellTypes.HS_NCOMMENT_START, HaskellTypes.HS_NCOMMENT_END, true),
-    new BracePair(HaskellTypes.HS_LEFT_BRACKET, HaskellTypes.HS_RIGHT_BRACKET, false))
+    new BracePair(HaskellTypes.HS_LEFT_BRACKET, HaskellTypes.HS_RIGHT_BRACKET, true))
 }
 
 class HaskellBraceMatcher extends PairedBraceMatcher {
   def getPairs: Array[BracePair] = HaskellBraceMatcher.PAIRS
 
-  def isPairedBracesAllowedBeforeType(lbraceType: IElementType, elementType: IElementType): Boolean = true
+  def isPairedBracesAllowedBeforeType(lbraceType: IElementType, elementType: IElementType): Boolean = {
+    elementType == TokenType.WHITE_SPACE
+  }
 
   def getCodeConstructStart(file: PsiFile, openingBraceOffset: Int): Int = {
     openingBraceOffset

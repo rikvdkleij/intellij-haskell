@@ -55,12 +55,8 @@ class HaskellReference(element: HaskellNamedElement, textRange: TextRange) exten
         }
       case ne: HaskellNamedElement if findImportHidingDeclarationParent(ne).isDefined => Iterable()
       case ne: HaskellNamedElement =>
-        if (HaskellComponentsManager.isHaskellFileLoaded(psiFile)) {
-          ProgressManager.checkCanceled()
-          HaskellReference.resolveReference(ne, psiFile, project).map(HaskellNamedElementResolveResult)
-        } else {
-          Iterable()
-        }
+        ProgressManager.checkCanceled()
+        HaskellReference.resolveReference(ne, psiFile, project).map(HaskellNamedElementResolveResult)
       case _ => Iterable()
     }
     result.toArray[ResolveResult]
@@ -78,7 +74,6 @@ class HaskellReference(element: HaskellNamedElement, textRange: TextRange) exten
   private def findModuleFiles(importDeclarations: Iterable[HaskellImportDeclaration], qualifierElement: HaskellQualifierElement, project: Project): Iterable[HaskellFile] = {
     importDeclarations.flatMap(id => Option(id.getModid)).find(mi => mi.getName == qualifierElement.getName).map(mi => HaskellComponentsManager.findHaskellFiles(project, mi.getName)).getOrElse(Iterable())
   }
-
 }
 
 object HaskellReference {
@@ -86,14 +81,20 @@ object HaskellReference {
   def resolveReference(namedElement: HaskellNamedElement, psiFile: PsiFile, project: Project): Iterable[HaskellNamedElement] = {
     HaskellProjectUtil.isLibraryFile(psiFile).map(isLibraryFile => {
       if (isLibraryFile) {
-        resolveReferences(namedElement, psiFile, project)
+        resolveReferencesByNameInfo(namedElement, psiFile, project)
       }
       else {
         ProgressManager.checkCanceled()
 
         resolveReferenceByDefinitionLocation(namedElement, project) match {
           case Some(ne) => Iterable(ne)
-          case None => if (HaskellPsiUtil.findExpressionParent(namedElement).isDefined) Iterable() else resolveReferences(namedElement, psiFile, project)
+          case None =>
+            if (HaskellPsiUtil.findQualifiedNameParent(namedElement).exists(_.getQualifierName.isDefined)) {
+              resolveReferencesByNameInfo(namedElement, psiFile, project)
+            }
+            else {
+              Iterable()
+            }
         }
       }
     }).getOrElse(Iterable())
@@ -136,7 +137,7 @@ object HaskellReference {
     }
   }
 
-  private def resolveReferences(namedElement: HaskellNamedElement, psiFile: PsiFile, project: Project): Iterable[HaskellNamedElement] = {
+  private def resolveReferencesByNameInfo(namedElement: HaskellNamedElement, psiFile: PsiFile, project: Project): Iterable[HaskellNamedElement] = {
     HaskellComponentsManager.findNameInfo(namedElement).headOption.map(ni => findNamedElementsByNameInfo(ni, namedElement, project)) match {
       case Some(nes) =>
         ProgressManager.checkCanceled()
@@ -167,7 +168,7 @@ object HaskellReference {
       }
       element <- Option(haskellFile.findElementAt(offset))
       namedElement <- findHighestDeclarationElementParent(element).flatMap(_.getIdentifierElements.find(_.getName == name)).
-        orElse(findQualifiedNameElement(element).map(_.getIdentifierElement))
+        orElse(findQualifiedNameParent(element).map(_.getIdentifierElement))
     } yield namedElement
   }
 

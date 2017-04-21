@@ -26,7 +26,7 @@ import intellij.haskell.util.HaskellProjectUtil
 class HaskellDocumentationProvider extends AbstractDocumentationProvider {
 
   override def generateDoc(psiElement: PsiElement, originalPsiElement: PsiElement): String = {
-    HaskellPsiUtil.findQualifiedNameElement(originalPsiElement) match {
+    HaskellPsiUtil.findQualifiedNameParent(originalPsiElement) match {
       case Some(ne) => findDocumentation(psiElement.getProject, ne).getOrElse("No documentation found")
       case _ => s"No documentation because this is not Haskell identifier: ${psiElement.getText}"
     }
