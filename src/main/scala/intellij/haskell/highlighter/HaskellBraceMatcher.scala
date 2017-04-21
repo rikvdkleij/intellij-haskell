@@ -35,7 +35,7 @@ class HaskellBraceMatcher extends PairedBraceMatcher {
   def getPairs: Array[BracePair] = HaskellBraceMatcher.PAIRS
 
   def isPairedBracesAllowedBeforeType(lbraceType: IElementType, elementType: IElementType): Boolean = {
-    elementType == TokenType.WHITE_SPACE
+    elementType == TokenType.WHITE_SPACE || elementType == HaskellTypes.HS_NEWLINE
   }
 
   def getCodeConstructStart(file: PsiFile, openingBraceOffset: Int): Int = {
