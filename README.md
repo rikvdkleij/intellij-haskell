@@ -50,22 +50,22 @@ You can install this plugin using the [Jetbrains plugin repository](https://plug
     Note that currently the latest version of Hindent is not on Stackage LTS. You have to install version of Hindent > 5.0, for example by: `stack install --resolver nightly-2016-11-06 hindent`
     Set file paths to `hindent` and `stylish-haskell` in the `Settings`/`Other Settings`/`Haskell`;
 - Setup the project:
- - Make sure your Stack project builds without errors. Preferably by using: `stack build --test --haddock --fast`;
- - After your project is built successfully, import project in IntelliJ by using `File`/`New`/`Project from Existing Sources...` from the IntelliJ menu;
- - In the `New Project` wizard select `Import project from external module` and check `Haskell Stack`;
- - In next page of wizard configure `Project SDK` by configuring `Haskell Tool Stack` with selecting path to `stack` binary, e.g. `/usr/local/bin/stack`;
- - Finish wizard and project will be opened;
- - Wizard will try to automatically configure which folders are sources, test and which to exclude;
- - Plugin will automatically build Intero and HLint to prevent incompatibility issues
+  - Make sure your Stack project builds without errors. Preferably by using: `stack build --test --haddock --fast`;
+  - After your project is built successfully, import project in IntelliJ by using `File`/`New`/`Project from Existing Sources...` from the IntelliJ menu;
+  - In the `New Project` wizard select `Import project from external module` and check `Haskell Stack`;
+  - In next page of wizard configure `Project SDK` by configuring `Haskell Tool Stack` with selecting path to `stack` binary, e.g. `/usr/local/bin/stack`;
+  - Finish wizard and project will be opened;
+  - Wizard will try to automatically configure which folders are sources, test and which to exclude;
+  - Plugin will automatically build Intero and HLint to prevent incompatibility issues
     (If you use non LTS or Nightly resolver e.g. `ghc-7.10.2`, you may have to build them manually since there are some extra-deps should be added to `stack.yaml`).
     Those tools are built against Stackage release defined in project's `stack.yaml`.
     If you want to use later version of tool, you will have to build tool manually in project's folder by using `stack build`;
- - Check `Project structure`/`Project settings`/`Modules` which folders to exclude (like `.stack-work` and `dist`) and which folders are `Source` and `Test` (normally `src` and `test`);
- - Plugin will automatically download library sources (since Stack version 1.2.1 also for test dependencies). They will be added as source libraries to module.
+  - Check `Project structure`/`Project settings`/`Modules` which folders to exclude (like `.stack-work` and `dist`) and which folders are `Source` and `Test` (normally `src` and `test`);
+  - Plugin will automatically download library sources (since Stack version 1.2.1 also for test dependencies). They will be added as source libraries to module.
     This option gives you nice navigation features through libraries. Sources are downloaded to folder `.ideaHaskellLib` inside root of project;
- - After changes to dependencies you can download them again by using `Tools`/`Download Haskell Library Sources`;
- - The `Event Log` will display what's going on in the background. Useful when something fails;    
- - In the background for each Haskell project two Stack repls are running. You can restart them by `Tools`/`Restart Haskell Stack REPLs`.
+  - After changes to dependencies you can download them again by using `Tools`/`Download Haskell Library Sources`;
+  - The `Event Log` will display what's going on in the background. Useful when something fails;    
+  - In the background for each Haskell project two Stack repls are running. You can restart them by `Tools`/`Restart Haskell Stack REPLs`.
     When you make large changes to `stack.yaml` or Cabal file, you have to restart IntelliJ project;
 
 
@@ -75,6 +75,7 @@ You can install this plugin using the [Jetbrains plugin repository](https://plug
 3. Developed plugin on Linux. Also tested on OSX;
 4. Windows is not supported;
 5. `About Haskell Project` in `Help` menu shows which Haskell GHC/tools are used by plugin for project;
+6. Intero depends on `libtinfo-dev`. On Ubuntu you can install it with `sudo apt-get install libtinfo-dev`;
 
 # How to build project
 1. Clone this project;
