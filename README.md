@@ -64,7 +64,7 @@ You can install this plugin using the [Jetbrains plugin repository](https://plug
   - Plugin will automatically download library sources (since Stack version 1.2.1 also for test dependencies). They will be added as source libraries to module.
     This option gives you nice navigation features through libraries. Sources are downloaded to folder `.ideaHaskellLib` inside root of project;
   - After changes to dependencies you can download them again by using `Tools`/`Download Haskell Library Sources`;
-  - The `Event Log` will display what's going on in the background. Useful when something fails;    
+  - The `Event Log` will display what's going on in the background. Useful when something fails. It's disabled by default. It can be enabled by checking "Haskell Log" checkbox in the Event Log Settings;    
   - In the background for each Haskell project two Stack repls are running. You can restart them by `Tools`/`Restart Haskell Stack REPLs`.
     When you make large changes to `stack.yaml` or Cabal file, you have to restart IntelliJ project;
 
