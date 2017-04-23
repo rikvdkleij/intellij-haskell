@@ -135,8 +135,8 @@ data_declaration_deriving   ::= (DERIVING onl ttype | DERIVING onl LEFT_PAREN tt
 newtype_declaration         ::= NEWTYPE onls INSTANCE? onls ctype_pragma? onls (ccontext onls DOUBLE_RIGHT_ARROW)? onls simpletype onls EQUAL onls newconstr (onls DERIVING onls ttype)?
 
 class_declaration           ::= CLASS onls (scontext onls DOUBLE_RIGHT_ARROW)? onls (q_name+ | ttype) onls (q_name | LEFT_PAREN ttype (onls COMMA onls ttype)* RIGHT_PAREN)*
-                                    (onls VERTICAL_BAR onls ttype (onls COMMA onls ttype)*)? onls WHERE? onls cidecls? |
-                                  CLASS onls scontext onls DOUBLE_RIGHT_ARROW onls (q_name+ | ttype) onls WHERE? onls cidecls?  // seen in Control.Lens.Internal.Indexed
+                                    (onls VERTICAL_BAR onls ttype (onls COMMA onls ttype)*)? onls WHERE? onls cdecls? |
+                                  CLASS onls scontext onls DOUBLE_RIGHT_ARROW onls (q_name+ | ttype) onls WHERE? onls cdecls?  // seen in Control.Lens.Internal.Indexed
 
 instance_declaration        ::= INSTANCE onls (overlap_pragma | "OVERLAPPABLE_" | "OVERLAPPING_" | incoherent_pragma)? onls (var_con+ DOT)? onls (scontext onls DOUBLE_RIGHT_ARROW)? onls
                                     q_name onls inst (onls WHERE (onls cidecls)?)?
@@ -263,12 +263,16 @@ cname_dot_dot               ::= cname | DOT_DOT
 newconstr                   ::= q_name atype | newconstr_fielddecl
 newconstr_fielddecl         ::= q_name onls LEFT_BRACE? onls q_name onls COLON_COLON onls ttype onls RIGHT_BRACE?
 
+cdecls                      ::= cdecl (nls cdecl)*
 cidecls                     ::= cidecl (nls cidecl)*
 
 inlinelike_pragma           ::= inline_pragma | noinline_pragma | inline_inner_pragma | inline_fused_pragma
 
+private cdecl               ::= type_signature | cidecl
+
 private cidecl              ::= inlinelike_pragma | specialize_pragma | instance_declaration | default_declaration |
-                                  newtype_declaration | data_declaration | minimal_pragma | type_declaration | type_family_declaration | expression
+                                  newtype_declaration | data_declaration | minimal_pragma | type_declaration | type_family_declaration | cidecl_expression
+cidecl_expression           ::= general_id+
 
 expression                  ::= line_expression+ last_line_expression | last_line_expression
 private line_expression     ::= general_id+ nls

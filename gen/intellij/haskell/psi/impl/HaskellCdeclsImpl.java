@@ -9,14 +9,14 @@ import org.jetbrains.annotations.NotNull;
 
 import java.util.List;
 
-public class HaskellCideclsImpl extends HaskellCompositeElementImpl implements HaskellCidecls {
+public class HaskellCdeclsImpl extends HaskellCompositeElementImpl implements HaskellCdecls {
 
-  public HaskellCideclsImpl(ASTNode node) {
+  public HaskellCdeclsImpl(ASTNode node) {
     super(node);
   }
 
   public void accept(@NotNull HaskellVisitor visitor) {
-    visitor.visitCidecls(this);
+    visitor.visitCdecls(this);
   }
 
   public void accept(@NotNull PsiElementVisitor visitor) {
@@ -82,6 +82,12 @@ public class HaskellCideclsImpl extends HaskellCompositeElementImpl implements H
   @NotNull
   public List<HaskellTypeFamilyDeclaration> getTypeFamilyDeclarationList() {
     return PsiTreeUtil.getChildrenOfTypeAsList(this, HaskellTypeFamilyDeclaration.class);
+  }
+
+  @Override
+  @NotNull
+  public List<HaskellTypeSignature> getTypeSignatureList() {
+    return PsiTreeUtil.getChildrenOfTypeAsList(this, HaskellTypeSignature.class);
   }
 
 }

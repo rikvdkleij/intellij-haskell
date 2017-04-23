@@ -14,7 +14,15 @@ public class HaskellVisitor extends PsiElementVisitor {
     visitCompositeElement(o);
   }
 
+  public void visitCdecls(@NotNull HaskellCdecls o) {
+    visitCompositeElement(o);
+  }
+
   public void visitCfilesPragma(@NotNull HaskellCfilesPragma o) {
+    visitCompositeElement(o);
+  }
+
+  public void visitCideclExpression(@NotNull HaskellCideclExpression o) {
     visitCompositeElement(o);
   }
 

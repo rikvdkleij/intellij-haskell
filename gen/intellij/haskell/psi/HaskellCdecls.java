@@ -5,7 +5,7 @@ import org.jetbrains.annotations.NotNull;
 
 import java.util.List;
 
-public interface HaskellCidecls extends HaskellCompositeElement {
+public interface HaskellCdecls extends HaskellCompositeElement {
 
   @NotNull
   List<HaskellCideclExpression> getCideclExpressionList();
@@ -36,5 +36,8 @@ public interface HaskellCidecls extends HaskellCompositeElement {
 
   @NotNull
   List<HaskellTypeFamilyDeclaration> getTypeFamilyDeclarationList();
+
+  @NotNull
+  List<HaskellTypeSignature> getTypeSignatureList();
 
 }
