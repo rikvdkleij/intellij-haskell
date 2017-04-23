@@ -67,7 +67,12 @@ private[component] object BrowseModuleComponent {
                   } else {
                     None
                   }
-                case _ => StackReplsManager.getProjectRepl(project).flatMap(_.getModuleIdentifiers(moduleName)).map(_.stdOutLines.flatMap(findModuleIdentifier(_, moduleName)))
+                case _ =>
+                  val output = StackReplsManager.getProjectRepl(project).flatMap(_.getModuleIdentifiers(moduleName))
+                  output match {
+                    case Some(o) if o.stdErrLines.isEmpty => output.map(_.stdOutLines.flatMap(findModuleIdentifier(_, moduleName)))
+                    case _ => None
+                  }
               }
             }
           })
