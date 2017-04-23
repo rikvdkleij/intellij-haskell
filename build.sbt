@@ -1,6 +1,6 @@
 lazy val commonSettings = Seq(
   version := "1.0.0-beta8",
-  scalaVersion := "2.12.1"
+  scalaVersion := "2.12.2"
 )
 
 val guava = "com.google.guava" % "guava" % "21.0"
