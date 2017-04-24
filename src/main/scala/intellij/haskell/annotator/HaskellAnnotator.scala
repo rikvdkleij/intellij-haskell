@@ -33,7 +33,6 @@ import com.intellij.openapi.vfs.LocalFileSystem
 import com.intellij.psi.PsiFile
 import com.intellij.psi.impl.source.tree.TreeUtil
 import com.intellij.psi.util.PsiTreeUtil
-import com.intellij.util.SystemProperties
 import intellij.haskell.editor.HaskellImportOptimizer
 import intellij.haskell.external.component._
 import intellij.haskell.psi._
@@ -97,7 +96,7 @@ class HaskellAnnotator extends ExternalAnnotator[PsiFile, LoadResult] {
   }
 
   private[annotator] def createAnnotations(loadResult: LoadResult, psiFile: PsiFile): Iterable[Annotation] = {
-    val problems = loadResult.currentFileProblems.filter(_.filePath == psiFile.getOriginalFile.getVirtualFile.getPath)
+    val problems = loadResult.currentFileProblems.filter(_.filePath == HaskellFileUtil.getFilePath(psiFile))
     val project = psiFile.getProject
     if (loadResult.loadFailed && loadResult.currentFileProblems.isEmpty) {
       loadResult.otherFileProblems.foreach {
@@ -300,7 +299,7 @@ class LanguageExtensionIntentionAction(languageExtension: String) extends Haskel
   override def getFamilyName: String = "Add language extension"
 
   override def invoke(project: Project, editor: Editor, file: PsiFile): Unit = {
-    val languagePragmaElement = HaskellElementFactory.createLanguagePragma(project, s"{-# LANGUAGE $languageExtension #-} ${SystemProperties.getLineSeparator}")
+    val languagePragmaElement = HaskellElementFactory.createLanguagePragma(project, s"{-# LANGUAGE $languageExtension #-} \n")
     Option(PsiTreeUtil.findChildOfType(file, classOf[HaskellFileHeader])) match {
       case Some(fh) =>
         val lastPragmaElement = PsiTreeUtil.findChildrenOfType(fh, classOf[HaskellFileHeaderPragma]).asScala.lastOption.orNull

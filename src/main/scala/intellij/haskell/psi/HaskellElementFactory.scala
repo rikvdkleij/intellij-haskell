@@ -25,7 +25,6 @@ import com.intellij.psi.impl.source.tree.LeafPsiElement
 import com.intellij.psi.tree.IElementType
 import com.intellij.psi.util.PsiTreeUtil
 import com.intellij.psi.{PsiElement, PsiFileFactory, PsiManager, PsiWhiteSpace}
-import com.intellij.util.SystemProperties
 import intellij.haskell.psi.HaskellTypes._
 import intellij.haskell.{HaskellFile, HaskellFileType, HaskellLanguage}
 
@@ -90,7 +89,7 @@ object HaskellElementFactory {
   }
 
   def createNewLine(project: Project): PsiElement = {
-    createFileFromText(project, SystemProperties.getLineSeparator).getFirstChild
+    createFileFromText(project, "\n").getFirstChild
   }
 
   def createQualifier(project: Project, qualifier: String): Option[HaskellQualifier] = {

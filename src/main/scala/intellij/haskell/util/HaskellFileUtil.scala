@@ -60,7 +60,7 @@ object HaskellFileUtil {
   }
 
   def getFilePath(psiFile: PsiFile): String = {
-    psiFile.getOriginalFile.getVirtualFile.getPath
+    new File(psiFile.getOriginalFile.getVirtualFile.getPath).getAbsolutePath
   }
 
   def makeFilePathAbsolute(filePath: String, project: Project): String = {
