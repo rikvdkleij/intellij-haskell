@@ -32,11 +32,14 @@ import intellij.haskell.action.SelectionContext
 object HaskellFileUtil {
 
   def saveAllFiles(psiFile: Option[PsiFile]): Unit = {
-    for {
-      pf <- psiFile
-      d <- findDocument(pf)
-    } yield PsiDocumentManager.getInstance(pf.getProject).doPostponedOperationsAndUnblockDocument(d)
-    FileDocumentManager.getInstance.saveAllDocuments()
+    psiFile.foreach(pf => {
+      val documentManager = PsiDocumentManager.getInstance(pf.getProject)
+      findDocument(pf).foreach(documentManager.doPostponedOperationsAndUnblockDocument)
+      documentManager.performWhenAllCommitted(
+        () => {
+          FileDocumentManager.getInstance.saveAllDocuments()
+        })
+    })
   }
 
   def saveFile(psiFile: PsiFile): Unit = {
