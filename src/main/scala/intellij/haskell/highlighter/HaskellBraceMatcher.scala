@@ -19,6 +19,7 @@ package intellij.haskell.highlighter
 import com.intellij.lang.{BracePair, PairedBraceMatcher}
 import com.intellij.psi.PsiFile
 import com.intellij.psi.tree.IElementType
+import intellij.haskell.HaskellParserDefinition._
 import intellij.haskell.psi.HaskellTypes
 
 object HaskellBraceMatcher {
@@ -35,7 +36,7 @@ class HaskellBraceMatcher extends PairedBraceMatcher {
   def getPairs: Array[BracePair] = HaskellBraceMatcher.PAIRS
 
   def isPairedBracesAllowedBeforeType(lbraceType: IElementType, elementType: IElementType): Boolean = {
-    elementType != HaskellTypes.HS_VAR_ID && elementType != HaskellTypes.HS_CON_ID && elementType != HaskellTypes.HS_VARSYM_ID && elementType != HaskellTypes.HS_CONSYM_ID
+    !Ids.contains(elementType) && !Literals.contains(elementType)
   }
 
   def getCodeConstructStart(file: PsiFile, openingBraceOffset: Int): Int = {
