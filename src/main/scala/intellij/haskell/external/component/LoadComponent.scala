@@ -18,7 +18,7 @@ package intellij.haskell.external.component
 
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.psi.PsiFile
-import intellij.haskell.external.repl.StackReplsManager
+import intellij.haskell.external.repl._
 import intellij.haskell.psi.HaskellPsiUtil
 import intellij.haskell.util.{HaskellFileUtil, StringUtil}
 
@@ -27,16 +27,20 @@ private[component] object LoadComponent {
   private final val ProblemPattern = """(.+):([\d]+):([\d]+):(.+)""".r
 
   def isLoaded(psiFile: PsiFile): Boolean = {
-    val moduleName = HaskellPsiUtil.findModuleName(psiFile, runInRead = true)
     val project = psiFile.getProject
-    StackReplsManager.getProjectRepl(project).exists(_.isLoaded(psiFile, moduleName)) && !StackReplsManager.getProjectRepl(project).exists(_.isBusy)
+    val projectRepl = StackReplsManager.getProjectRepl(project)
+    projectRepl.map(_.isLoaded(psiFile)).exists {
+      case Loaded() => !projectRepl.exists(_.isBusy)
+      case Failed() => false
+      case NoFileIsLoaded() => !load(psiFile).loadFailed
+      case OtherFileIsLoaded() => !load(psiFile).loadFailed
+    }
   }
 
   def load(psiFile: PsiFile): LoadResult = {
     val project = psiFile.getProject
 
-    val moduleName = HaskellPsiUtil.findModuleName(psiFile, runInRead = true)
-    StackReplsManager.getProjectRepl(project).flatMap(_.load(psiFile, moduleName)) match {
+    StackReplsManager.getProjectRepl(project).flatMap(_.load(psiFile)) match {
       case Some((loadOutput, loadFailed)) =>
 
         if (!loadFailed) {
@@ -45,6 +49,7 @@ private[component] object LoadComponent {
               TypeInfoComponent.invalidate(psiFile)
               DefinitionLocationComponent.invalidate(psiFile)
               NameInfoComponent.invalidate(psiFile)
+              val moduleName = HaskellPsiUtil.findModuleName(psiFile, runInRead = true)
               moduleName.foreach(BrowseModuleComponent.invalidateForModule(project, _, psiFile))
             }
           })

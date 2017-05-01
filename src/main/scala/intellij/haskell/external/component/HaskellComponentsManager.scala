@@ -22,6 +22,7 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Computable
 import com.intellij.psi.{PsiElement, PsiFile}
 import intellij.haskell.annotator.HaskellAnnotator
+import intellij.haskell.external.component.DefinitionLocationComponent.DefinitionLocationResult
 import intellij.haskell.psi.{HaskellNamedElement, HaskellPsiUtil}
 import intellij.haskell.util.HaskellProjectUtil
 import intellij.haskell.util.index.HaskellFileIndex
@@ -42,7 +43,7 @@ object HaskellComponentsManager {
     BrowseModuleComponent.findAllTopLevelModuleIdentifiers(project, moduleName, psiFile)
   }
 
-  def findDefinitionLocation(namedElement: HaskellNamedElement): Option[LocationInfo] = {
+  def findDefinitionLocation(namedElement: HaskellNamedElement): DefinitionLocationResult = {
     DefinitionLocationComponent.findDefinitionLocation(namedElement)
   }
 

@@ -18,11 +18,11 @@ package intellij.haskell.external.repl
 
 import com.intellij.openapi.project.Project
 import com.intellij.psi.PsiFile
-import intellij.haskell.psi.HaskellPsiUtil
+import intellij.haskell.util.HaskellFileUtil
 
 private[repl] class ProjectStackReplProcess(project: Project) extends StackReplProcess(project, Seq("--test"), true) {
 
-  private case class LoadedPsiFileInfo(psiFile: Option[PsiFile], moduleName: Option[String], loadFailed: Boolean)
+  private case class LoadedPsiFileInfo(psiFile: PsiFile, loadFailed: Boolean)
 
   @volatile
   private[this] var loadedPsiFileInfo: Option[LoadedPsiFileInfo] = None
@@ -44,16 +44,12 @@ private[repl] class ProjectStackReplProcess(project: Project) extends StackReplP
     executeWithLoad(psiFile, _ => execute(s":info $name"))
   }
 
-  def isLoaded(psiFile: PsiFile, moduleName: Option[String]): Boolean = {
+  def isLoaded(psiFile: PsiFile): IsFileLoaded = {
     loadedPsiFileInfo match {
-      case Some(info) => info.psiFile match {
-        case Some(pf) => psiFile == pf && !info.loadFailed
-        case _ => (info.moduleName, moduleName) match {
-          case (Some(mn1), Some(mn2)) => mn1 == mn2 && !info.loadFailed
-          case _ => false
-        }
-      }
-      case _ => false
+      case Some(info) if psiFile == info.psiFile && !info.loadFailed => Loaded()
+      case Some(info) if psiFile == info.psiFile && info.loadFailed => Failed()
+      case Some(_) => OtherFileIsLoaded()
+      case None => NoFileIsLoaded()
     }
   }
 
@@ -61,14 +57,14 @@ private[repl] class ProjectStackReplProcess(project: Project) extends StackReplP
     busy
   }
 
-  def load(psiFile: PsiFile, moduleName: Option[String]): Option[(StackReplOutput, Boolean)] = synchronized {
+  def load(psiFile: PsiFile): Option[(StackReplOutput, Boolean)] = synchronized {
     busy = true
     try {
       val filePath = getFilePath(psiFile)
       execute(s":load $filePath") match {
         case Some(output) =>
           val loadFailed = isLoadFailed(output)
-          loadedPsiFileInfo = Some(LoadedPsiFileInfo(Some(psiFile), moduleName.orElse(HaskellPsiUtil.findModuleName(psiFile, runInRead = true)), loadFailed))
+          loadedPsiFileInfo = Some(LoadedPsiFileInfo(psiFile, loadFailed))
           Some(output, loadFailed)
         case _ =>
           loadedPsiFileInfo = None
@@ -121,23 +117,16 @@ private[repl] class ProjectStackReplProcess(project: Project) extends StackReplP
     def execute: Option[StackReplOutput] = {
       loadedPsiFileInfo match {
         case None => None
-        case Some(info) if info.psiFile.contains(psiFile) && !info.loadFailed => executeAction(getFilePath(psiFile))
+        case Some(info) if info.psiFile == psiFile && !info.loadFailed => executeAction(getFilePath(psiFile))
         case _ => Some(StackReplOutput())
       }
     }
 
     loadedPsiFileInfo match {
-      case Some(info) if info.psiFile.contains(psiFile) && !info.loadFailed => executeAction(getFilePath(psiFile))
-      case Some(info) if info.psiFile.contains(psiFile) && info.loadFailed => Some(StackReplOutput())
-      case Some(info) => moduleName.orElse(HaskellPsiUtil.findModuleName(psiFile, runInRead = true)) match {
-        case Some(mn) if info.moduleName.contains(mn) && !info.loadFailed => executeAction(mn)
-        case Some(mn) if info.moduleName.contains(mn) && info.loadFailed => Some(StackReplOutput())
-        case omn =>
-          load(psiFile, omn)
-          execute
-      }
+      case Some(info) if info.psiFile == psiFile && !info.loadFailed => executeAction(getFilePath(psiFile))
+      case Some(info) if info.psiFile == psiFile && info.loadFailed => Some(StackReplOutput())
       case _ =>
-        load(psiFile, moduleName)
+        load(psiFile)
         execute
     }
   }
@@ -147,6 +136,17 @@ private[repl] class ProjectStackReplProcess(project: Project) extends StackReplP
   }
 
   private def getFilePath(psiFile: PsiFile): String = {
-    psiFile.getOriginalFile.getVirtualFile.getPath
+    HaskellFileUtil.getFilePath(psiFile)
   }
 }
+
+
+sealed trait IsFileLoaded
+
+case class Loaded() extends IsFileLoaded
+
+case class Failed() extends IsFileLoaded
+
+case class NoFileIsLoaded() extends IsFileLoaded
+
+case class OtherFileIsLoaded() extends IsFileLoaded

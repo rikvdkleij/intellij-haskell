@@ -80,12 +80,12 @@ object HaskellReference {
 
   def resolveReference(namedElement: HaskellNamedElement, psiFile: PsiFile, project: Project): Iterable[HaskellNamedElement] = {
     HaskellProjectUtil.isLibraryFile(psiFile).map(isLibraryFile => {
+      ProgressManager.checkCanceled()
+
       if (isLibraryFile) {
         resolveReferencesByNameInfo(namedElement, psiFile, project)
       }
       else {
-        ProgressManager.checkCanceled()
-
         resolveReferenceByDefinitionLocation(namedElement, project) match {
           case Some(ne) => Iterable(ne)
           case None =>
@@ -102,7 +102,6 @@ object HaskellReference {
 
   def resolveInstanceReferences(namedElement: HaskellNamedElement, psiFile: PsiFile, project: Project): Iterable[HaskellNamedElement] = {
     HaskellComponentsManager.findNameInfo(namedElement).flatMap { ni =>
-      ProgressManager.checkCanceled()
       findNamedElementsByNameInfo(ni, namedElement, project)
     }
   }
@@ -114,8 +113,6 @@ object HaskellReference {
       val namedElementsByNameInfo = declarationElements.flatMap(_.getIdentifierElements).
         filter(_.getName == name).
         filter(ne => HaskellComponentsManager.findNameInfo(ne).exists(ni => ni.shortenedDeclaration == libraryNameInfo.shortenedDeclaration))
-
-      ProgressManager.checkCanceled()
 
       if (namedElementsByNameInfo.isEmpty) {
         val namedElementsByDeclaration = declarationElements.filter(de => de.getIdentifierElements.forall(e => libraryNameInfo.shortenedDeclaration.contains(e.getName))).flatMap(_.getIdentifierElements).filter(_.getName == name)
@@ -132,16 +129,13 @@ object HaskellReference {
 
   def findNamedElementsInModule(moduleName: String, name: String, project: Project): Iterable[HaskellNamedElement] = {
     HaskellComponentsManager.findHaskellFiles(project, moduleName).flatMap { hf =>
-      ProgressManager.checkCanceled()
       HaskellPsiUtil.findHaskellDeclarationElements(hf).flatMap(_.getIdentifierElements).find(_.getName == name)
     }
   }
 
   private def resolveReferencesByNameInfo(namedElement: HaskellNamedElement, psiFile: PsiFile, project: Project): Iterable[HaskellNamedElement] = {
     HaskellComponentsManager.findNameInfo(namedElement).headOption.map(ni => findNamedElementsByNameInfo(ni, namedElement, project)) match {
-      case Some(nes) =>
-        ProgressManager.checkCanceled()
-        nes
+      case Some(nes) => nes
       case None =>
         ProgressManager.checkCanceled()
         findHaskellDeclarationElements(psiFile).flatMap(_.getIdentifierElements).filter(_.getName == namedElement.getName).toSeq.distinct
@@ -149,13 +143,13 @@ object HaskellReference {
   }
 
   private def resolveReferenceByDefinitionLocation(namedElement: HaskellNamedElement, project: Project): Option[HaskellNamedElement] = {
-    HaskellComponentsManager.findDefinitionLocation(namedElement).flatMap {
-      case DefinitionLocationInfo(filePath, startLineNr, startColumnNr, _, _) =>
-        ProgressManager.checkCanceled()
+    HaskellComponentsManager.findDefinitionLocation(namedElement) match {
+      case Right(DefinitionLocationInfo(filePath, startLineNr, startColumnNr, _, _)) =>
         findNamedElementByLocation(filePath, startLineNr, startColumnNr, namedElement.getName, project)
-      case ModuleLocationInfo(moduleName) =>
-        ProgressManager.checkCanceled()
+      case Right(ModuleLocationInfo(moduleName)) =>
         findNamedElementsInModule(moduleName, namedElement.getName, project).headOption
+      case Left(CancelledLocationInfo()) => None
+      case Left(NoAvailableLocationInfo()) => None
     }
   }
 
@@ -163,7 +157,6 @@ object HaskellReference {
     for {
       haskellFile <- HaskellProjectUtil.findFile(filePath, project)
       offset <- {
-        ProgressManager.checkCanceled()
         LineColumnPosition.getOffset(haskellFile, LineColumnPosition(lineNr, columnNr))
       }
       element <- Option(haskellFile.findElementAt(offset))
@@ -173,7 +166,6 @@ object HaskellReference {
   }
 
   private def findNamedElementsByNameInfo(nameInfo: NameInfo, namedElement: HaskellNamedElement, project: Project): Iterable[HaskellNamedElement] = {
-    ProgressManager.checkCanceled()
     nameInfo match {
       case pni: ProjectNameInfo => findNamedElementByLocation(pni.filePath, pni.lineNr, pni.columnNr, namedElement.getName, project).toIterable
       case lni: LibraryNameInfo => findNamedElementsByLibraryNameInfo(lni, namedElement.getName, project)

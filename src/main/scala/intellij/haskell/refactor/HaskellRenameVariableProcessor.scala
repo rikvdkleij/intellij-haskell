@@ -28,6 +28,7 @@ class HaskellRenameVariableProcessor extends RenamePsiElementProcessor {
 
   override def renameElement(psiElement: PsiElement, newName: String, usages: Array[UsageInfo], listener: RefactoringElementListener): Unit = {
     super.renameElement(psiElement, newName, usages, listener)
-    HaskellFileUtil.saveAllFiles(Option(psiElement.getContainingFile))
+    val psiFile = Option(usages(0).getFile).map(_.getOriginalFile)
+    HaskellFileUtil.saveAllFiles(psiFile)
   }
 }
