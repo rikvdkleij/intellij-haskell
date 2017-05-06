@@ -402,7 +402,7 @@
             </action>
 
             <action id="Haskell.StylishHaskellFormat"
-                    class="intellij.haskell.action.HaskellFormatAction"
+                    class="intellij.haskell.action.StylishHaskellFormatAction"
                     text="Reformat Code with Stylish-haskell"
                     description="Format current file with stylish-haskell">
                 <keyboard-shortcut first-keystroke="ctrl alt u" keymap="$default"/>
