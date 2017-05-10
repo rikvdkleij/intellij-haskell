@@ -26,15 +26,15 @@ import scala.collection.JavaConverters._
 
 class HaskellModuleType extends ModuleType[HaskellModuleBuilder](HaskellModuleType.Id) {
 
-  override def createModuleBuilder(): HaskellModuleBuilder = new HaskellModuleBuilder
+  def createModuleBuilder(): HaskellModuleBuilder = new HaskellModuleBuilder
 
-  override def getName: String = "Haskell module"
+  def getName: String = "Haskell module"
 
-  override def getDescription: String = "Haskell module for Haskell project"
+  def getDescription: String = "Haskell module for Haskell project"
 
-  override def getNodeIcon(isOpened: Boolean): Icon = HaskellIcons.HaskellSmallLogo
+  def getNodeIcon(isOpened: Boolean): Icon = HaskellIcons.HaskellSmallLogo
 
-  override def getBigIcon: Icon = HaskellIcons.HaskellLogo
+  def getBigIcon: Icon = HaskellIcons.HaskellLogo
 }
 
 object HaskellModuleType {
