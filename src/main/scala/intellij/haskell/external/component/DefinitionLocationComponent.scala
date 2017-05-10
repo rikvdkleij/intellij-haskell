@@ -20,8 +20,10 @@ import java.util.concurrent.Executors
 
 import com.google.common.cache.{CacheBuilder, CacheLoader}
 import com.google.common.util.concurrent.{ListenableFuture, ListenableFutureTask, UncheckedExecutionException}
+import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.progress.ProcessCanceledException
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.util.Computable
 import com.intellij.psi.PsiFile
 import intellij.haskell.external.repl.{StackReplOutput, StackReplsManager}
 import intellij.haskell.psi._
@@ -60,16 +62,6 @@ private[component] object DefinitionLocationComponent {
         }
 
         private def findDefinitionLocation(key: Key): DefinitionLocationResult = {
-          if (LoadComponent.isLoaded(key.psiFile)) {
-            createDefinitionLocation(key)
-          } else {
-            Left(CancelledLocationInfo())
-          }
-        }
-
-        // See https://github.com/commercialhaskell/intero/issues/260
-        // and https://github.com/commercialhaskell/intero/issues/182
-        private def createDefinitionLocation(key: Key): DefinitionLocationResult = {
           val psiFile = key.psiFile
           val project = psiFile.getProject
 
@@ -79,7 +71,7 @@ private[component] object DefinitionLocationComponent {
                 case Some(r) => r
                 case None => Left(NoAvailableLocationInfo())
               }
-              case None => Left(NoAvailableLocationInfo())
+              case None => Left(ReplNotAvailable())
             }
           }
 
@@ -92,7 +84,7 @@ private[component] object DefinitionLocationComponent {
                   case Some(infoLine) =>
                     createLocationInfo(infoLine) match {
                       case info@Right(locationInfo: DefinitionLocationInfo) =>
-                        val locatedNamedElement = LineColumnPosition.getOffset(psiFile, LineColumnPosition(locationInfo.startLineNr, locationInfo.startColumnNr)).flatMap(offset => Option(psiFile.findElementAt(offset)).flatMap(HaskellPsiUtil.findNamedElement))
+                        val locatedNamedElement = findNamedElement(psiFile, locationInfo)
                         if (locatedNamedElement.exists(ne => ne.getName != key.expression)) {
                           createLocationInfoWithEndColumnExcluded
                         } else {
@@ -100,16 +92,24 @@ private[component] object DefinitionLocationComponent {
                         }
                       case info => info match {
                         case Left(NoAvailableLocationInfo()) => createLocationInfoWithEndColumnExcluded
-                        case Left(CancelledLocationInfo()) => info
+                        case Left(ReplNotAvailable()) => info
                         case Right(_) => info
                       }
                     }
                   case None => createLocationInfoWithEndColumnExcluded
                 }
-              case None => Left(NoAvailableLocationInfo())
+              case None => Left(ReplNotAvailable())
             }
           }
           location
+        }
+
+        private def findNamedElement(psiFile: PsiFile, locationInfo: DefinitionLocationInfo): Option[HaskellNamedElement] = {
+          ApplicationManager.getApplication.runReadAction(new Computable[Option[HaskellNamedElement]] {
+            override def compute(): Option[HaskellNamedElement] = {
+              LineColumnPosition.getOffset(psiFile, LineColumnPosition(locationInfo.startLineNr, locationInfo.startColumnNr)).flatMap(offset => Option(psiFile.findElementAt(offset)).flatMap(HaskellPsiUtil.findNamedElement))
+            }
+          })
         }
 
         private def findLocationInfoFor(key: Key, psiFile: PsiFile, project: Project, endColumnExcluded: Boolean): Option[StackReplOutput] = {
@@ -144,13 +144,15 @@ private[component] object DefinitionLocationComponent {
     Cache.asMap().asScala.filter(_._1.psiFile == psiFile).keys.foreach(Cache.invalidate)
   }
 
+
   private def find(psiFile: PsiFile, startPosition: LineColumnPosition, endPosition: LineColumnPosition, expression: String): DefinitionLocationResult = {
     val key = Key(startPosition.lineNr, startPosition.columnNr, endPosition.lineNr, endPosition.columnNr, expression, psiFile)
     try {
       val result = Cache.get(key)
       result match {
         case Right(_) => result
-        case _ =>
+        case Left(NoAvailableLocationInfo()) => result
+        case Left(ReplNotAvailable()) =>
           Cache.invalidate(key)
           result
       }
@@ -166,7 +168,7 @@ sealed trait NoLocationInfo
 
 case class NoAvailableLocationInfo() extends NoLocationInfo
 
-case class CancelledLocationInfo() extends NoLocationInfo
+case class ReplNotAvailable() extends NoLocationInfo
 
 sealed trait LocationInfo
 

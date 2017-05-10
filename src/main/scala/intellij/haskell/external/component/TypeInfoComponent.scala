@@ -58,14 +58,6 @@ private[component] object TypeInfoComponent {
         }
 
         private def findTypeInfo(key: Key) = {
-          if (LoadComponent.isLoaded(key.psiFile)) {
-            createTypeInfo(key)
-          } else {
-            Result(Left("No info available at this moment"))
-          }
-        }
-
-        private def createTypeInfo(key: Key): Result = {
           val project = key.psiFile.getProject
           val typeInfo = StackReplsManager.getProjectRepl(project).flatMap(_.findTypeInfoFor(key.psiFile, key.startLineNr, key.startColumnNr, key.endLineNr, key.endColumnNr, key.expression)) match {
             case Some(output) => Right(output.stdOutLines.headOption.filterNot(_.trim.isEmpty).map(ti => TypeInfo(ti)))

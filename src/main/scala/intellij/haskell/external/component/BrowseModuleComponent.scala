@@ -59,7 +59,7 @@ private[component] object BrowseModuleComponent {
             } else {
               key.psiFile match {
                 case Some(pf) =>
-                  if (LoadComponent.isLoaded(pf)) {
+                  if (LoadComponent.isLoaded(pf, forceLoad = false)) {
                     StackReplsManager.getProjectRepl(project).flatMap(_.getAllTopLevelModuleIdentifiers(moduleName, pf)) map { output =>
                       val definedLocallyLines = output.stdOutLines.takeWhile(l => !l.startsWith("-- imported via"))
                       definedLocallyLines.flatMap(findModuleIdentifier(_, moduleName))

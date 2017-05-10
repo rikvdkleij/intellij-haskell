@@ -148,7 +148,7 @@ object HaskellReference {
         findNamedElementByLocation(filePath, startLineNr, startColumnNr, namedElement.getName, project)
       case Right(ModuleLocationInfo(moduleName)) =>
         findNamedElementsInModule(moduleName, namedElement.getName, project).headOption
-      case Left(CancelledLocationInfo()) => None
+      case Left(ReplNotAvailable()) => None
       case Left(NoAvailableLocationInfo()) => None
     }
   }
@@ -160,7 +160,7 @@ object HaskellReference {
         LineColumnPosition.getOffset(haskellFile, LineColumnPosition(lineNr, columnNr))
       }
       element <- Option(haskellFile.findElementAt(offset))
-      namedElement <- findHighestDeclarationElementParent(element).flatMap(_.getIdentifierElements.find(_.getName == name)).
+      namedElement <- HaskellPsiUtil.findNamedElement(element).orElse(findHighestDeclarationElementParent(element).flatMap(_.getIdentifierElements.find(_.getName == name))).
         orElse(findQualifiedNameParent(element).map(_.getIdentifierElement))
     } yield namedElement
   }

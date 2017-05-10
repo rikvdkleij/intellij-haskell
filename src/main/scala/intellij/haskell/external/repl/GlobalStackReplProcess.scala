@@ -24,13 +24,7 @@ private[repl] class GlobalStackReplProcess(project: Project) extends StackReplPr
   private[this] var loadedModuleName: Option[String] = None
 
   def getModuleIdentifiers(moduleName: String): Option[StackReplOutput] = synchronized {
-    loadModule(moduleName)
-
-    if (loadedModuleName.contains(moduleName)) {
-      execute(s":browse! $moduleName")
-    } else {
-      None
-    }
+    execute(s":browse! $moduleName")
   }
 
   def findInfo(moduleName: String, name: String): Option[StackReplOutput] = synchronized {

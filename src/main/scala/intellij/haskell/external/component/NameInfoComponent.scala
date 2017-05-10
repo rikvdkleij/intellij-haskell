@@ -78,10 +78,10 @@ private[component] object NameInfoComponent {
         }
 
         private def findInfoForProjectIdentifier(key: Key, project: Project): Option[StackReplOutput] = {
-          if (LoadComponent.isLoaded(key.psiFile)) {
+          if (LoadComponent.isLoaded(key.psiFile, forceLoad = true)) {
             StackReplsManager.getProjectRepl(project).flatMap(_.findInfo(key.psiFile, key.name))
           } else {
-            None
+            Some(StackReplOutput())
           }
         }
       }

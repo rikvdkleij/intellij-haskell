@@ -26,14 +26,13 @@ private[component] object LoadComponent {
 
   private final val ProblemPattern = """(.+):([\d]+):([\d]+):(.+)""".r
 
-  def isLoaded(psiFile: PsiFile): Boolean = {
+  def isLoaded(psiFile: PsiFile, forceLoad: Boolean): Boolean = {
     val project = psiFile.getProject
     val projectRepl = StackReplsManager.getProjectRepl(project)
     projectRepl.map(_.isLoaded(psiFile)).exists {
-      case Loaded() => !projectRepl.exists(_.isBusy)
+      case Loaded() => true
       case Failed() => false
-      case NoFileIsLoaded() => !load(psiFile).loadFailed
-      case OtherFileIsLoaded() => !load(psiFile).loadFailed
+      case _ => if (forceLoad) !load(psiFile).loadFailed else false
     }
   }
 
