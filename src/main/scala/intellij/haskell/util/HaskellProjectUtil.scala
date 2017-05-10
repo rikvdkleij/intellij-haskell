@@ -66,6 +66,14 @@ object HaskellProjectUtil {
     getProjectRootManager(project).map(_.getFileIndex.isInTestSourceContent(virtualFile))
   }
 
+  def isProjectFile(psiFile: PsiFile): Option[Boolean] = {
+    isProjectFile(psiFile.getOriginalFile.getVirtualFile, psiFile.getProject)
+  }
+
+  def isProjectFile(virtualFile: VirtualFile, project: Project): Option[Boolean] = {
+    getProjectRootManager(project).map(_.getFileIndex.isInSource(virtualFile))
+  }
+
   def findCabalPackageName(project: Project): Option[String] = {
     new File(project.getBasePath).listFiles.find(_.getName.endsWith(".cabal")).map(_.getName.replaceFirst(".cabal", ""))
   }

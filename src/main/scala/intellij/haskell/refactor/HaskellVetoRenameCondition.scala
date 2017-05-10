@@ -24,7 +24,7 @@ class HaskellVetoRenameCondition extends Condition[PsiElement] {
   override def value(psiElement: PsiElement): Boolean = {
     psiElement match {
       case pf: PsiFile => HaskellProjectUtil.isLibraryFile(pf).getOrElse(true)
-      case _ => Option(psiElement.getReference).flatMap(r => Option(r.resolve)) match {
+      case _ => Option(psiElement.getReference) match {
         case Some(e: PsiElement) => HaskellProjectUtil.isLibraryFile(e.getContainingFile).getOrElse(true)
         case _ => true
       }

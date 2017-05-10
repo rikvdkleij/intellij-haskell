@@ -16,7 +16,7 @@
 
 package intellij.haskell.refactor
 
-import com.intellij.psi.PsiElement
+import com.intellij.psi.{PsiElement, PsiFile}
 import com.intellij.refactoring.listeners.RefactoringElementListener
 import com.intellij.refactoring.rename.RenamePsiElementProcessor
 import com.intellij.usageView.UsageInfo
@@ -24,11 +24,20 @@ import intellij.haskell.util.{HaskellFileUtil, HaskellProjectUtil}
 
 class HaskellRenameVariableProcessor extends RenamePsiElementProcessor {
 
-  override def canProcessElement(element: PsiElement): Boolean = HaskellProjectUtil.isHaskellStackProject(element.getProject)
+  override def canProcessElement(psiElement: PsiElement): Boolean = {
+    HaskellProjectUtil.isHaskellStackProject(psiElement.getProject) &&
+      (psiElement match {
+        case pf: PsiFile => HaskellProjectUtil.isProjectFile(pf).getOrElse(false)
+        case _ => Option(psiElement.getReference) match {
+          case Some(e: PsiElement) => HaskellProjectUtil.isProjectFile(e.getContainingFile).getOrElse(false)
+          case _ => false
+        }
+      })
+  }
 
   override def renameElement(psiElement: PsiElement, newName: String, usages: Array[UsageInfo], listener: RefactoringElementListener): Unit = {
     super.renameElement(psiElement, newName, usages, listener)
-    val psiFile = Option(usages(0).getFile).map(_.getOriginalFile)
+    val psiFile = usages.headOption.map(_.getFile).map(_.getOriginalFile)
     HaskellFileUtil.saveAllFiles(psiFile)
   }
 }

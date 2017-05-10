@@ -31,6 +31,6 @@ class HaskellNamesValidator extends NamesValidator {
   }
 
   override def isIdentifier(name: String, project: Project): Boolean = {
-    !isKeyword(name, project)
+    !isKeyword(name, project) && !name.contains(' ')
   }
 }
