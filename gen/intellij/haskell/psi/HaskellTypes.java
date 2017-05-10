@@ -144,6 +144,7 @@ public interface HaskellTypes {
   IElementType HS_ELSE = new HaskellTokenType("ELSE");
   IElementType HS_EQUAL = new HaskellTokenType("EQUAL");
   IElementType HS_FLOAT = new HaskellTokenType("FLOAT");
+  IElementType HS_FORALL = new HaskellTokenType("FORALL");
   IElementType HS_FOREIGN_EXPORT = new HaskellTokenType("FOREIGN_EXPORT");
   IElementType HS_FOREIGN_IMPORT = new HaskellTokenType("FOREIGN_IMPORT");
   IElementType HS_HADDOCK = new HaskellTokenType("HADDOCK");

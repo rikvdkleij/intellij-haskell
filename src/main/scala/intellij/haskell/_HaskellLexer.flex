@@ -104,6 +104,8 @@ right_brace         = "}"
 
 quote               = "'"
 
+forall              = "∀"
+
 symbol_no_colon_dot = {equal} | {at} | {backslash} | {vertical_bar} | {tilde} | {exclamation_mark} | {hash} | {dollar} | {percentage} | {ampersand} | {star} |
                         {plus} | {slash} | {lt} | {gt} | {question_mark} | {caret} | {dash} | "⊜" | "≣" | "≤" | "≥"
 
@@ -322,4 +324,7 @@ nhaddock_start      = "{-|"
     {directive}           { return HS_DIRECTIVE; }
 
     {double_quote}        { return HS_DOUBLE_QUOTE; }
+
+    {forall}              { return HS_FORALL; }
+
     [^]                   { return com.intellij.psi.TokenType.BAD_CHARACTER; }
