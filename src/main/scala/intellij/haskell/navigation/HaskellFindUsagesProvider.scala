@@ -65,11 +65,11 @@ class HaskellFindUsagesProvider extends FindUsagesProvider {
     }
   }
 
-  override def getDescriptiveName(element: PsiElement): String = {
-    element match {
+  override def getDescriptiveName(psiElement: PsiElement): String = {
+    psiElement match {
       case ne: HaskellNamedElement => ne.getName
       case f: HaskellFile => f.getName
-      case _ => element.getText
+      case _ => psiElement.getText
     }
   }
 
