@@ -134,7 +134,7 @@ private[component] object DefinitionLocationComponent {
       psiFile <- Option(namedElement.getContainingFile)
       sp <- LineColumnPosition.fromOffset(psiFile, textOffset)
       ep <- LineColumnPosition.fromOffset(psiFile, textOffset + qne.getText.length)
-    } yield find(psiFile, sp, ep, qne.getNameWithoutParens)) match {
+    } yield find(psiFile, sp, ep, qne.getName)) match {
       case Some(r) => r
       case None => Left(NoAvailableLocationInfo())
     }

@@ -116,7 +116,7 @@ private[component] object NameInfoComponent {
     val key = for {
       qne <- HaskellPsiUtil.findQualifiedNameParent(psiElement)
       pf <- Option(qne.getContainingFile).map(_.getOriginalFile)
-    } yield Key(pf, qne.getNameWithoutParens.replaceAll("""\s+""", ""))
+    } yield Key(pf, qne.getName.replaceAll("""\s+""", ""))
 
     (try {
       key.map(k =>

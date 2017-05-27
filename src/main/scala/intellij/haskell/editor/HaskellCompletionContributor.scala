@@ -117,27 +117,28 @@ class HaskellCompletionContributor extends CompletionContributor {
       val prefixText = (
         for {
           e <- positionElement
-          p <- HaskellPsiUtil.findModIdElement(e)
-          start = p.getTextRange.getStartOffset
+          mie <- HaskellPsiUtil.findModIdElement(e)
+          start = mie.getTextRange.getStartOffset
           end = parameters.getOffset
         } yield psiFile.getText.substring(start, end)
         ).orElse({
         for {
           e <- positionElement
-          p <- findQualifiedNamedElementToComplete(e)
-          start = if (p.getText.startsWith("(")) p.getTextRange.getStartOffset + 1 else p.getTextRange.getStartOffset
+          if e.getNode.getElementType != HS_LEFT_PAREN && e.getNode.getElementType != HS_BACKQUOTE
+          qne <- findQualifiedNamedElementToComplete(e)
+          start = if (qne.getText.startsWith("(") || qne.getText.startsWith("`")) qne.getTextRange.getStartOffset + 1 else qne.getTextRange.getStartOffset
           end = parameters.getOffset
         } yield psiFile.getText.substring(start, end)
       }).orElse(
         for {
           e <- positionElement
-          if e.getNode.getElementType != HS_RIGHT_PAREN
+          if e.getNode.getElementType != HS_RIGHT_PAREN && e.getNode.getElementType != HS_BACKQUOTE
           t <- Option(e.getText).filter(_.trim.nonEmpty)
         } yield t
       ).flatMap(pt => if (pt.trim.isEmpty) None else Some(pt))
 
       val resultSet = prefixText match {
-        case Some(t) if !t.startsWith("`") => originalResultSet.withPrefixMatcher(originalResultSet.getPrefixMatcher.cloneWithPrefix(t))
+        case Some(t)  => originalResultSet.withPrefixMatcher(originalResultSet.getPrefixMatcher.cloneWithPrefix(t))
         case _ => originalResultSet
       }
 
@@ -220,9 +221,7 @@ class HaskellCompletionContributor extends CompletionContributor {
         HaskellPsiUtil.findModIdElement(ce) match {
           case Some(modid) => context.setDummyIdentifier(modid.getName)
           case _ => findQualifiedNamedElementToComplete(ce) match {
-            case Some(qualifiedNameElement) =>
-              context.setDummyIdentifier(qualifiedNameElement.getNameWithoutParens)
-              context.setReplacementOffset(qualifiedNameElement.getTextRange.getEndOffset)
+            case Some(qualifiedNameElement) => context.setDummyIdentifier(qualifiedNameElement.getName)
             case _ => ce.getText.trim match {
               case t if t.nonEmpty => context.setDummyIdentifier(t)
               case _ => context.setDummyIdentifier("a")

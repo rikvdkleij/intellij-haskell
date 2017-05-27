@@ -20,8 +20,6 @@ trait HaskellQualifiedNameElement extends HaskellCompositeElement {
 
   def getName: String
 
-  def getNameWithoutParens: String
-
   def getIdentifierElement: HaskellNamedElement
 
   def getQualifierName: Option[String]

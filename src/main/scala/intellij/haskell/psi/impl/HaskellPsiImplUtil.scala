@@ -55,10 +55,6 @@ object HaskellPsiImplUtil {
   }
 
   def getName(qName: HaskellQName): String = {
-    qName.getText
-  }
-
-  def getNameWithoutParens(qName: HaskellQName): String = {
     Option(qName.getVarCon).map(_.getName).getOrElse(qName.getQVarCon.getName)
   }
 

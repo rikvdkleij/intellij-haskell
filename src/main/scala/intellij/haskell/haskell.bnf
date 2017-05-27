@@ -34,7 +34,7 @@
 
   methods("var_con|q_var_con")=[getName getIdentifierElement]
 
-  methods("q_name|cname")=[getName getIdentifierElement getQualifierName getNameWithoutParens]
+  methods("q_name|cname")=[getName getIdentifierElement getQualifierName]
   implements("q_name|cname")="intellij.haskell.psi.HaskellQualifiedNameElement"
 
   implements("line_expression|last_line_expression")="intellij.haskell.psi.HaskellLineExpressionElement"
