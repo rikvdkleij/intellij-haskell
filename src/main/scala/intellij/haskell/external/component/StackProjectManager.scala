@@ -81,15 +81,7 @@ object StackProjectManager {
                     }
                   })
 
-                  StackCommandLine.runCommand(Seq("exec", "--", "hoogle", "--numeric-version"), project) match {
-                    case Some(v) =>
-                      if (v.getStdout.trim > "5") {
-                        HaskellNotificationGroup.logInfoEvent(project, "Hoogle version > 5 is already installed")
-                      } else {
-                        StackCommandLine.executeBuild(project, Seq("build", "hoogle-5.0.9", "haskell-src-exts-1.18.2"), "Build of `hoogle`")
-                      }
-                    case _ => HaskellNotificationGroup.logWarningBalloonEvent(project, "Could not determine version of (maybe already installed) Hoogle. Version 5 of Hoogle will not be automatically build")
-                  }
+                  StackCommandLine.executeBuild(project, Seq("build", "hoogle"), "Build of `hoogle`")
 
                   val buildHlintFuture = HLintComponent.buildHlint(project)
 
@@ -115,14 +107,18 @@ object StackProjectManager {
                   }
                 case _ => ()
               }
-            } finally {
+            }
+
+            finally {
               starting = false
             }
           }
-        })
+        }
+        )
       }
     }
   }
+
 }
 
 class StackProjectManager(project: Project) extends ProjectComponent {
