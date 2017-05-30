@@ -24,22 +24,22 @@ import com.intellij.openapi.roots.ProjectRootManager
 import com.intellij.openapi.vfs.{LocalFileSystem, VirtualFile}
 import com.intellij.psi.search.GlobalSearchScope
 import com.intellij.psi.{PsiFile, PsiManager}
+import intellij.haskell.HaskellFile
 import intellij.haskell.module.HaskellModuleType
 import intellij.haskell.sdk.HaskellSdkType
-import intellij.haskell.{HaskellFile, HaskellNotificationGroup}
 
 object HaskellProjectUtil {
 
   final val Prelude = "Prelude"
   final val Protolude = "Protolude"
 
-  def isHaskellStackProject(project: Project, needShowBalloon: Boolean = true): Boolean = {
-    val haskellModuleExists = HaskellModuleType.findHaskellProjectModules(project).nonEmpty
-    val stackPath = HaskellSdkType.getStackPath(project, needShowBalloon)
-    if (haskellModuleExists && stackPath.isEmpty && needShowBalloon) {
-      HaskellNotificationGroup.logErrorBalloonEvent(project, "Path to Haskell Stack binary is not configured in this Haskell Stack project. Please do in Project SDK Setting and restart project.")
-    }
-    haskellModuleExists && stackPath.isDefined
+  def isValidHaskellProject(project: Project, notifyNoSdk: Boolean): Boolean = {
+    val stackPath = HaskellSdkType.getStackPath(project, notifyNoSdk)
+    isHaskellProject(project) && stackPath.isDefined
+  }
+
+  def isHaskellProject(project: Project): Boolean = {
+    HaskellModuleType.findHaskellProjectModules(project).nonEmpty
   }
 
   def findFile(filePath: String, project: Project): Option[HaskellFile] = {
@@ -75,7 +75,27 @@ object HaskellProjectUtil {
   }
 
   def findCabalPackageName(project: Project): Option[String] = {
-    new File(project.getBasePath).listFiles.find(_.getName.endsWith(".cabal")).map(_.getName.replaceFirst(".cabal", ""))
+    findCabalPackageName(new File(project.getBasePath))
+  }
+
+  def findCabalPackageName(directory: File): Option[String] = {
+    findCabalFile(directory).map(_.getName.replaceFirst(".cabal", ""))
+  }
+
+  def findCabalFile(project: Project): Option[File] = {
+    findCabalFile(new File(project.getBasePath))
+  }
+
+  def findCabalFile(directory: File): Option[File] = {
+    directory.listFiles.find(_.getName.endsWith(".cabal"))
+  }
+
+  def findStackFile(directory: File): Option[File] = {
+    directory.listFiles.find(_.getName == "stack.yaml")
+  }
+
+  def findStackFile(project: Project): Option[File] = {
+    findStackFile(new File(project.getBasePath))
   }
 
   def getProjectModulesSearchScope(project: Project): GlobalSearchScope = {

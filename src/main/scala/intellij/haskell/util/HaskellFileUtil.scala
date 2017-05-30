@@ -62,7 +62,7 @@ object HaskellFileUtil {
     findVirtualFile(psiFile).flatMap(findDocument)
   }
 
-  def getFilePath(psiFile: PsiFile): String = {
+  def getAbsoluteFilePath(psiFile: PsiFile): String = {
     new File(psiFile.getOriginalFile.getVirtualFile.getPath).getAbsolutePath
   }
 

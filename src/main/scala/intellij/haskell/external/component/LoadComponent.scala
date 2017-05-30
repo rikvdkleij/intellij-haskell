@@ -54,7 +54,7 @@ private[component] object LoadComponent {
           })
         }
 
-        val filePath = HaskellFileUtil.makeFilePathAbsolute(HaskellFileUtil.getFilePath(psiFile), project)
+        val filePath = HaskellFileUtil.makeFilePathAbsolute(HaskellFileUtil.getAbsoluteFilePath(psiFile), project)
 
         // `distinct` because of https://github.com/commercialhaskell/intero/issues/258
         val loadProblems = loadOutput.stdErrLines.distinct.map(l => parseErrorOutputLine(filePath, l))

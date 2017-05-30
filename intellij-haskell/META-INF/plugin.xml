@@ -13,8 +13,10 @@
     <change-notes><![CDATA[
         <p>1.0.0-beta9</p>
         <ul>
-            <li>Various improvements and fixes</li>
+            <li>Various (performance) improvements and fixes</li>
             <li>Windows support in alpha</li>
+            <li>Added notification to restart REPLs after changing config file or changing SDK (@zjhmale)</li>
+            <li>Added notification to set SDK in case not set (@zjhmale)</li>
         </ul>
         <p>1.0.0-beta8</p>
         <ul>
@@ -289,8 +291,8 @@
         <renamePsiElementProcessor implementation="intellij.haskell.refactor.HaskellRenameVariableProcessor"/>
 
         <!-- Notification -->
-        <!--<editorNotificationProvider implementation="intellij.haskell.notification.ConfigFileWatcherNotificationProvider"/>-->
-        <!--<editorNotificationProvider implementation="intellij.haskell.notification.HaskellSDKNotificationProvider"/>-->
+        <editorNotificationProvider implementation="intellij.haskell.notification.ConfigFileWatcherNotificationProvider"/>
+        <editorNotificationProvider implementation="intellij.haskell.notification.HaskellSdkNotificationProvider"/>
 
         <!-- Mover -->
         <!--<statementUpDownMover implementation="intellij.haskell.editor.HaskellStatementUpDownMover"/>-->
@@ -369,7 +371,7 @@
 
             <action id="Haskell.RestartStackRepl" class="intellij.haskell.action.RestartStackReplsAction"
                     text="Restart Haskell Stack REPLs"
-                    description="Restart Haskell Stack repls and refresh cache">
+                    description="Restart Haskell Stack REPLs and refresh cache">
             </action>
             <!--<action id="Haskell.GenerateExports"-->
                     <!--class="intellij.haskell.action.HaskellTools.GenerateExportsAction"-->

@@ -18,7 +18,6 @@ package intellij.haskell.external.component
 
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.components.ProjectComponent
-import com.intellij.openapi.module.Module
 import com.intellij.openapi.progress.{ProgressIndicator, ProgressManager, Task}
 import com.intellij.openapi.project.Project
 import intellij.haskell.HaskellNotificationGroup
@@ -30,87 +29,98 @@ import intellij.haskell.util.HaskellProjectUtil
 object StackProjectManager {
   val componentName = "stack-repls-manager"
 
-  def start(project: Project, module: Option[Module] = None): Unit = {
-    initialize(project, module)
+  var starting = false
+
+  def start(project: Project): Unit = {
+    initialize(project)
   }
 
-  def restart(project: Project, module: Option[Module] = None): Unit = {
-    initialize(project, module, restart = true)
+  def restart(project: Project): Unit = {
+    initialize(project, restart = true)
   }
 
-  def initialize(project: Project, module: Option[Module] = None, restart: Boolean = false): Unit = {
-    if (HaskellProjectUtil.isHaskellStackProject(project)) {
-      ProgressManager.getInstance().run(new Task.Backgroundable(project, s"[$componentName] Starting Stack repls, building project, building tools and preloading cache", false) {
+  private def initialize(project: Project, restart: Boolean = false): Unit = {
+    if (HaskellProjectUtil.isValidHaskellProject(project, notifyNoSdk = true)) {
+      if (starting) {
+        HaskellNotificationGroup.logWarningBalloonEvent(project, "Stack REPLs are already (re)starting")
+      } else {
+        ProgressManager.getInstance().run(new Task.Backgroundable(project, s"[$componentName] Starting Stack REPLs, building project, building tools and preloading cache", false) {
 
-        def run(progressIndicator: ProgressIndicator) {
-          (StackReplsManager.getProjectRepl(project), StackReplsManager.getGlobalRepl(project)) match {
-            case (Some(projectRepl), Some(globalRepl)) =>
-              if (restart) {
-                progressIndicator.setText("Busy with stopping Stack repls")
-                globalRepl.exit()
-                projectRepl.exit()
+          def run(progressIndicator: ProgressIndicator) {
+            starting = true
+            try {
+              (StackReplsManager.getProjectRepl(project), StackReplsManager.getGlobalRepl(project)) match {
+                case (Some(projectRepl), Some(globalRepl)) =>
+                  if (restart) {
+                    progressIndicator.setText("Busy with stopping Stack REPLs")
+                    globalRepl.exit()
+                    projectRepl.exit()
 
-                progressIndicator.setText("Busy with cleaning up cache")
-                HaskellComponentsManager.invalidateGlobalCaches(project)
+                    progressIndicator.setText("Busy with cleaning up cache")
+                    HaskellComponentsManager.invalidateGlobalCaches(project)
 
-                Thread.sleep(1000)
-              }
-
-              module.foreach(m => {
-                HaskellModuleBuilder.addLibrarySources(m)
-              })
-
-              projectRepl.start()
-              globalRepl.start()
-
-              progressIndicator.setText("Busy with building project and starting Stack repls")
-
-              progressIndicator.setText("Busy with preloading cache, building tools and/or rebuilding Hoogle database")
-              val preloadCacheFuture = ApplicationManager.getApplication.executeOnPooledThread(new Runnable {
-                override def run(): Unit = {
-                  HaskellComponentsManager.preloadModuleIdentifiersCaches(project)
-
-                  HaskellNotificationGroup.logInfoEvent(project, "Restarting global repl to release memory")
-                  globalRepl.restart()
-                }
-              })
-
-              StackCommandLine.runCommand(Seq("exec", "--", "hoogle", "--numeric-version"), project) match {
-                case Some(v) =>
-                  if (v.getStdout.trim > "5") {
-                    HaskellNotificationGroup.logInfoEvent(project, "Hoogle version > 5 is already installed")
-                  } else {
-                    StackCommandLine.executeBuild(project, Seq("build", "hoogle-5.0.9", "haskell-src-exts-1.18.2"), "Build of `hoogle`")
+                    Thread.sleep(1000)
                   }
-                case _ => HaskellNotificationGroup.logWarningBalloonEvent(project, "Could not determine version of (maybe already installed) Hoogle. Version 5 of Hoogle will not be automatically build")
+
+                  HaskellProjectUtil.getProjectModules(project).foreach(m => {
+                    HaskellModuleBuilder.addLibrarySources(m)
+                  })
+
+                  projectRepl.start()
+                  globalRepl.start()
+
+                  progressIndicator.setText("Busy with building project and starting Stack REPLs")
+
+                  progressIndicator.setText("Busy with preloading cache, building tools and/or rebuilding Hoogle database")
+                  val preloadCacheFuture = ApplicationManager.getApplication.executeOnPooledThread(new Runnable {
+                    override def run(): Unit = {
+                      HaskellComponentsManager.preloadModuleIdentifiersCaches(project)
+
+                      HaskellNotificationGroup.logInfoEvent(project, "Restarting global REPL to release memory")
+                      globalRepl.restart()
+                    }
+                  })
+
+                  StackCommandLine.runCommand(Seq("exec", "--", "hoogle", "--numeric-version"), project) match {
+                    case Some(v) =>
+                      if (v.getStdout.trim > "5") {
+                        HaskellNotificationGroup.logInfoEvent(project, "Hoogle version > 5 is already installed")
+                      } else {
+                        StackCommandLine.executeBuild(project, Seq("build", "hoogle-5.0.9", "haskell-src-exts-1.18.2"), "Build of `hoogle`")
+                      }
+                    case _ => HaskellNotificationGroup.logWarningBalloonEvent(project, "Could not determine version of (maybe already installed) Hoogle. Version 5 of Hoogle will not be automatically build")
+                  }
+
+                  val buildHlintFuture = HLintComponent.buildHlint(project)
+
+                  //              val buildToolsFuture = ApplicationManager.getApplication.executeOnPooledThread(new Runnable {
+                  //                override def run(): Unit = {
+                  //                  if (HaskellToolComponent.checkResolverForHaskellTools(project)) {
+                  //                    StackCommandLine.executeBuild(project, Seq("build", HaskellToolComponent.HaskellToolsCLIName), "Build of `haskell-tools`")
+                  //                  }
+                  //                }
+                  //              })
+
+                  val rebuildHoogleFuture = HoogleComponent.rebuildHoogle(project)
+
+                  if (
+                  //                !buildToolsFuture.isDone ||
+                    !buildHlintFuture.isDone
+                      || !rebuildHoogleFuture.isDone
+                      || !preloadCacheFuture.isDone) {
+                    //                buildToolsFuture.get
+                    buildHlintFuture.get
+                    rebuildHoogleFuture.get
+                    preloadCacheFuture.get
+                  }
+                case _ => ()
               }
-
-              val buildHlintFuture = HLintComponent.buildHlint(project)
-
-//              val buildToolsFuture = ApplicationManager.getApplication.executeOnPooledThread(new Runnable {
-//                override def run(): Unit = {
-//                  if (HaskellToolComponent.checkResolverForHaskellTools(project)) {
-//                    StackCommandLine.executeBuild(project, Seq("build", HaskellToolComponent.HaskellToolsCLIName), "Build of `haskell-tools`")
-//                  }
-//                }
-//              })
-
-              val rebuildHoogleFuture = HoogleComponent.rebuildHoogle(project)
-
-              if (
-//                !buildToolsFuture.isDone ||
-                   !buildHlintFuture.isDone
-                || !rebuildHoogleFuture.isDone
-                || !preloadCacheFuture.isDone) {
-//                buildToolsFuture.get
-                buildHlintFuture.get
-                rebuildHoogleFuture.get
-                preloadCacheFuture.get
-              }
-            case _ => ()
+            } finally {
+              starting = false
+            }
           }
-        }
-      })
+        })
+      }
     }
   }
 }

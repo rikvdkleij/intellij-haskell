@@ -46,17 +46,19 @@ class StackProjectImportBuilder extends ProjectImportBuilder[Unit] {
   override def isMarked(element: Unit): Boolean = true
 
   override def commit(project: Project, model: ModifiableModuleModel, modulesProvider: ModulesProvider, artifactModel: ModifiableArtifactModel): java.util.List[Module] = {
-    val haskellModuleBuilder = HaskellModuleType.getInstance.createModuleBuilder()
+    val moduleBuilder = HaskellModuleType.getInstance.createModuleBuilder()
     HaskellProjectUtil.getModuleManager(project).map(_.getModifiableModel).map { moduleModel =>
 
       ApplicationManager.getApplication.runWriteAction(new Runnable {
         override def run(): Unit = {
-          haskellModuleBuilder.setName(getModuleName)
-          haskellModuleBuilder.setModuleFilePath(getModuleFilePath)
+          val moduleDirectory = getModuleRootDirectory
+          val moduleName = getModuleName(moduleDirectory)
+          moduleBuilder.setName(moduleName)
+          moduleBuilder.setModuleFilePath(getModuleImlFilePath(moduleDirectory, moduleName))
 
-          haskellModuleBuilder.commit(project)
-          haskellModuleBuilder.addModuleConfigurationUpdater((module: Module, rootModel: ModifiableRootModel) => {
-            haskellModuleBuilder.setupRootModel(rootModel)
+          moduleBuilder.commit(project)
+          moduleBuilder.addModuleConfigurationUpdater((module: Module, rootModel: ModifiableRootModel) => {
+            moduleBuilder.setupRootModel(rootModel)
           })
         }
       })
@@ -65,14 +67,23 @@ class StackProjectImportBuilder extends ProjectImportBuilder[Unit] {
     }.getOrElse(new util.ArrayList[Module]())
   }
 
-  private def getModuleName: String = {
-    val moduleDirPath = new File(getFileToImport)
-    if (moduleDirPath.isDirectory) moduleDirPath.getName
+  private def getModuleRootDirectory = {
+    val moduleDirectory = new File(getFileToImport)
+    if (moduleDirectory.isDirectory) {
+      moduleDirectory
+    }
     else
-      throw new IllegalStateException("What to import has to be directory")
+      throw new IllegalStateException("What to import should be directory")
   }
 
-  private def getModuleFilePath = {
-    new File(new File(getFileToImport), getModuleName).getAbsolutePath + ".iml"
+  private def getModuleName(moduleDirectory: File): String = {
+    HaskellProjectUtil.findCabalPackageName(moduleDirectory) match {
+      case Some(n) => n
+      case _ => throw new IllegalStateException("Can not find Cabal file")
+    }
+  }
+
+  private def getModuleImlFilePath(moduleDir: File, moduleName: String): String = {
+    new File(moduleDir, moduleName).getAbsolutePath + ".iml"
   }
 }

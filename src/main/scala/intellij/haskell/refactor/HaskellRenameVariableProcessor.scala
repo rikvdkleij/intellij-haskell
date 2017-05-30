@@ -25,7 +25,7 @@ import intellij.haskell.util.{HaskellFileUtil, HaskellProjectUtil}
 class HaskellRenameVariableProcessor extends RenamePsiElementProcessor {
 
   override def canProcessElement(psiElement: PsiElement): Boolean = {
-    HaskellProjectUtil.isHaskellStackProject(psiElement.getProject) &&
+    HaskellProjectUtil.isHaskellProject(psiElement.getProject) &&
       (psiElement match {
         case pf: PsiFile => HaskellProjectUtil.isProjectFile(pf).getOrElse(false)
         case _ => Option(psiElement.getReference) match {

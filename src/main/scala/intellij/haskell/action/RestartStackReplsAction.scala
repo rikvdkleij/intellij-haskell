@@ -17,73 +17,16 @@
 package intellij.haskell.action
 
 import com.intellij.openapi.actionSystem.{AnAction, AnActionEvent}
-import com.intellij.openapi.progress.Task.Backgroundable
-import com.intellij.openapi.progress.{ProgressIndicator, ProgressManager}
-import com.intellij.openapi.project.Project
-import intellij.haskell.HaskellNotificationGroup
-import intellij.haskell.external.component.HaskellComponentsManager
-import intellij.haskell.external.repl.StackReplsManager
-import intellij.haskell.util.HaskellProjectUtil
-
-object RestartStackReplsAction {
-  private var restarting = false
-
-  def restart(project: Project): Unit = {
-    if (restarting) {
-      HaskellNotificationGroup.logWarningBalloonEvent(project, "Stack repls are already restarting")
-      return
-    }
-
-    Option(project) foreach { project =>
-      restarting = true
-      ProgressManager.getInstance().run(new Backgroundable(project, "Busy with restarting Stack repls", false) {
-        def run(progressIndicator: ProgressIndicator) {
-          try {
-            (StackReplsManager.getProjectRepl(project), StackReplsManager.getGlobalRepl(project)) match {
-              case (Some(projectRepl), Some(globalRepl)) =>
-                progressIndicator.setText("Busy with stopping Stack repls")
-                globalRepl.exit()
-                projectRepl.exit()
-
-                progressIndicator.setText("Busy with cleaning up cache")
-                HaskellComponentsManager.invalidateGlobalCaches(project)
-
-                Thread.sleep(1000)
-
-                progressIndicator.setText("Busy with building project and starting Stack repls")
-                projectRepl.start()
-                globalRepl.start()
-
-                progressIndicator.setText("Busy with preloading cache")
-                HaskellComponentsManager.preloadModuleIdentifiersCaches(project)
-
-                progressIndicator.setText("Restarting global repl to release memory")
-                globalRepl.restart()
-              case _ => ()
-            }
-          } finally {
-            restarting = false
-          }
-        }
-      })
-    }
-  }
-}
+import intellij.haskell.external.component.StackProjectManager
+import intellij.haskell.util.HaskellEditorUtil
 
 class RestartStackReplsAction extends AnAction {
 
-  override def update(e: AnActionEvent): Unit = {
-    Option(e.getProject) match {
-      case Some(p) =>
-        val isHaskellProject = HaskellProjectUtil.isHaskellStackProject(p)
-        e.getPresentation.setVisible(isHaskellProject)
-        e.getPresentation.setEnabled(isHaskellProject && !RestartStackReplsAction.restarting)
-      case None =>
-        e.getPresentation.setEnabledAndVisible(false)
-    }
+  override def update(actionEvent: AnActionEvent): Unit = {
+    HaskellEditorUtil.enableStackAction(actionEvent)
   }
 
   override def actionPerformed(e: AnActionEvent): Unit = {
-    RestartStackReplsAction.restart(e.getProject)
+    StackProjectManager.restart(e.getProject)
   }
 }

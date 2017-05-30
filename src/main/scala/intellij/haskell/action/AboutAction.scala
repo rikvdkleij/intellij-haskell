@@ -22,17 +22,14 @@ import com.intellij.openapi.util.SystemInfo
 import intellij.haskell.external.commandLine.{CommandLine, StackCommandLine}
 import intellij.haskell.external.component.HLintComponent
 import intellij.haskell.settings.HaskellSettingsState
-import intellij.haskell.util.HaskellProjectUtil
+import intellij.haskell.util.HaskellEditorUtil
 
 import scala.collection.mutable.ArrayBuffer
 
 class AboutAction extends AnAction {
 
   override def update(actionEvent: AnActionEvent) {
-    val project = Option(actionEvent.getProject)
-    val isHaskellProject = project.exists(HaskellProjectUtil.isHaskellStackProject(_))
-    actionEvent.getPresentation.setEnabled(isHaskellProject)
-    actionEvent.getPresentation.setVisible(isHaskellProject)
+    HaskellEditorUtil.enableStackAction(actionEvent)
   }
 
   private def boldToolName(name: String): String = {
@@ -46,7 +43,7 @@ class AboutAction extends AnAction {
   def actionPerformed(actionEvent: AnActionEvent) {
     val messages = new ArrayBuffer[String]
     val project = actionEvent.getProject
-    messages.+=(s"${boldToolName("Stack")} version: " + StackCommandLine.runCommand(Seq("--version"), project).map(_.getStdout).getOrElse("-"))
+    messages.+=(s"${boldToolName("Stack")} version: " + StackCommandLine.runCommand(Seq("--numeric-version"), project).map(_.getStdout).getOrElse("-"))
     messages.+=(s"${boldToolName("GHC")} version: " + StackCommandLine.runCommand(Seq("exec", "--", "ghc", "--version"), project).map(_.getStdout).getOrElse("-"))
     messages.+=(s"${boldToolName("Intero")} version: " + StackCommandLine.runCommand(Seq("exec", "--", "intero", "--version"), project).map(_.getStdout).getOrElse("-"))
     messages.+=(s"${boldToolName("HLint")} version: " + StackCommandLine.runCommand(Seq("exec", "--", HLintComponent.HlintName, "--version"), project).map(_.getStdout).getOrElse("-"))

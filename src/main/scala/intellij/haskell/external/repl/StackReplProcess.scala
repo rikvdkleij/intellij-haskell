@@ -103,7 +103,7 @@ private[repl] abstract class StackReplProcess(val project: Project, val extraSta
     }
     catch {
       case _: InterruptedException =>
-        logWarning("Interruped exception while executing command: " + command)
+        logWarning("Interrupted exception while executing command: " + command)
         None
       case e: Exception =>
         logError(s"Error in communication with Stack repl: ${e.getMessage}. Check if your Haskell/Stack environment is working okay. Command was: $command")
@@ -290,7 +290,7 @@ private[repl] abstract class StackReplProcess(val project: Project, val extraSta
 
   override def projectOpened(): Unit = {}
 
-  override def projectClosed(): Unit = if (HaskellProjectUtil.isHaskellStackProject(project)) exit()
+  override def projectClosed(): Unit = if (HaskellProjectUtil.isHaskellProject(project)) exit()
 
   override def initComponent(): Unit = {}
 

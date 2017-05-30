@@ -19,15 +19,12 @@ package intellij.haskell.action
 import com.intellij.openapi.actionSystem.{AnAction, AnActionEvent}
 import intellij.haskell.external.component.HaskellComponentsManager
 import intellij.haskell.module.HaskellModuleBuilder
-import intellij.haskell.util.HaskellProjectUtil
+import intellij.haskell.util.{HaskellEditorUtil, HaskellProjectUtil}
 
 class DownloadLibrarySources extends AnAction {
 
-  override def update(e: AnActionEvent): Unit = {
-    Option(e.getProject) match {
-      case Some(p) => e.getPresentation.setEnabledAndVisible(HaskellProjectUtil.isHaskellStackProject(p))
-      case None => e.getPresentation.setEnabledAndVisible(false)
-    }
+  override def update(actionEvent: AnActionEvent): Unit = {
+    HaskellEditorUtil.enableStackAction(actionEvent)
   }
 
   override def actionPerformed(e: AnActionEvent): Unit = {

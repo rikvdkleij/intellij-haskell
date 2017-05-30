@@ -42,12 +42,12 @@ private[repl] class ProjectStackReplProcess(project: Project) extends StackReplP
   override def getComponentName: String = "project-stack-repl"
 
   def findTypeInfoFor(psiFile: PsiFile, startLineNr: Int, startColumnNr: Int, endLineNr: Int, endColumnNr: Int, expression: String): Option[StackReplOutput] = {
-    val filePath = HaskellFileUtil.getFilePath(psiFile)
+    val filePath = HaskellFileUtil.getAbsoluteFilePath(psiFile)
     findInfoForCommand(psiFile, s":type-at $filePath $startLineNr $startColumnNr $endLineNr $endColumnNr $expression")
   }
 
   def findLocationInfoFor(psiFile: PsiFile, startLineNr: Int, startColumnNr: Int, endLineNr: Int, endColumnNr: Int, expression: String): Option[StackReplOutput] = {
-    val filePath = HaskellFileUtil.getFilePath(psiFile)
+    val filePath = HaskellFileUtil.getAbsoluteFilePath(psiFile)
     findInfoForCommand(psiFile, s":loc-at $filePath $startLineNr $startColumnNr $endLineNr $endColumnNr $expression")
   }
 
@@ -145,7 +145,7 @@ private[repl] class ProjectStackReplProcess(project: Project) extends StackReplP
   }
 
   private def getFilePath(psiFile: PsiFile): String = {
-    HaskellFileUtil.getFilePath(psiFile)
+    HaskellFileUtil.getAbsoluteFilePath(psiFile)
   }
 }
 

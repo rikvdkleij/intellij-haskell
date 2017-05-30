@@ -96,7 +96,7 @@ class HaskellAnnotator extends ExternalAnnotator[PsiFile, LoadResult] {
   }
 
   private[annotator] def createAnnotations(loadResult: LoadResult, psiFile: PsiFile): Iterable[Annotation] = {
-    val problems = loadResult.currentFileProblems.filter(_.filePath == HaskellFileUtil.getFilePath(psiFile))
+    val problems = loadResult.currentFileProblems.filter(_.filePath == HaskellFileUtil.getAbsoluteFilePath(psiFile))
     val project = psiFile.getProject
     if (loadResult.loadFailed && loadResult.currentFileProblems.isEmpty) {
       loadResult.otherFileProblems.foreach {
