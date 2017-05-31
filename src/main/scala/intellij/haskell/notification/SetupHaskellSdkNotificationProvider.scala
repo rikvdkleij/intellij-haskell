@@ -12,33 +12,25 @@ import intellij.haskell.external.component.StackProjectManager
 import intellij.haskell.sdk.HaskellSdkType
 import intellij.haskell.util.HaskellProjectUtil
 
-object HaskellSdkNotificationProvider {
+object SetupHaskellSdkNotificationProvider {
   private val SdkNotificationPanelKey: Key[EditorNotificationPanel] = Key.create("Setup Haskell Stack SDK")
 }
 
-class HaskellSdkNotificationProvider(project: Project, notifications: EditorNotifications) extends EditorNotifications.Provider[EditorNotificationPanel] {
-  private var previousSdkName: Option[String] = None
-
+class SetupHaskellSdkNotificationProvider(project: Project, notifications: EditorNotifications) extends EditorNotifications.Provider[EditorNotificationPanel] {
   project.getMessageBus.connect(project).subscribe(ProjectTopics.PROJECT_ROOTS, new ModuleRootListener() {
-
-    override def beforeRootsChange(event: ModuleRootEvent): Unit = {
-      previousSdkName = HaskellSdkType.getSdkName(project)
-    }
 
     override def rootsChanged(event: ModuleRootEvent) {
       notifications.updateAllNotifications()
     }
   })
 
-  override def getKey: Key[EditorNotificationPanel] = HaskellSdkNotificationProvider.SdkNotificationPanelKey
+  override def getKey: Key[EditorNotificationPanel] = SetupHaskellSdkNotificationProvider.SdkNotificationPanelKey
 
   override def createNotificationPanel(file: VirtualFile, fileEditor: FileEditor): EditorNotificationPanel = {
     if (HaskellProjectUtil.isHaskellProject(project)) {
-      (previousSdkName, HaskellSdkType.getSdkName(project)) match {
-        case (None, Some(_)) => createRestartPanel(project)
-        case (Some(s1), Some(s2)) if s1 != s2 => createRestartPanel(project)
-        case (_, None) => createSdkSetupPanel(project)
-        case (_, _) => null
+      HaskellSdkType.getSdkName(project) match {
+        case None => createSdkSetupPanel(project)
+        case _ => null
       }
     } else {
       null
@@ -57,18 +49,6 @@ class HaskellSdkNotificationProvider(project: Project, notifications: EditorNoti
           }
           notifications.updateAllNotifications()
         })
-      }
-    )
-  }
-
-  private def createRestartPanel(project: Project) = {
-    createPanel(
-      project,
-      "Haskell Project SDK is changed",
-      "Restart Haskell Stack REPLs",
-      (project: Project) => () => {
-        notifications.updateAllNotifications()
-        StackProjectManager.restart(project)
       }
     )
   }

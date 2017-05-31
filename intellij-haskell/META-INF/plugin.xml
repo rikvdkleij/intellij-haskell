@@ -15,8 +15,8 @@
         <ul>
             <li>Various (performance) improvements and fixes</li>
             <li>Windows support in alpha</li>
-            <li>Added notification to restart REPLs after changing config file or changing SDK (@zjhmale)</li>
-            <li>Added notification to set SDK in case not set (@zjhmale)</li>
+            <li>Added notification to restart REPLs after changing Cabal or Stack file (@zjhmale)</li>
+            <li>Added notification to setup SDK in case no Haskell SDK is set for project</li>
         </ul>
         <p>1.0.0-beta8</p>
         <ul>
@@ -292,7 +292,7 @@
 
         <!-- Notification -->
         <editorNotificationProvider implementation="intellij.haskell.notification.ConfigFileWatcherNotificationProvider"/>
-        <editorNotificationProvider implementation="intellij.haskell.notification.HaskellSdkNotificationProvider"/>
+        <editorNotificationProvider implementation="intellij.haskell.notification.SetupHaskellSdkNotificationProvider"/>
 
         <!-- Mover -->
         <!--<statementUpDownMover implementation="intellij.haskell.editor.HaskellStatementUpDownMover"/>-->
