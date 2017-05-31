@@ -39,7 +39,8 @@ private[component] object LoadComponent {
   def load(psiFile: PsiFile): LoadResult = {
     val project = psiFile.getProject
 
-    StackReplsManager.getProjectRepl(project).flatMap(_.load(psiFile)) match {
+    val moduleName = HaskellPsiUtil.findModuleName(psiFile, runInRead = true)
+    StackReplsManager.getProjectRepl(project).flatMap(_.load(psiFile, moduleName)) match {
       case Some((loadOutput, loadFailed)) =>
 
         if (!loadFailed) {
@@ -48,7 +49,6 @@ private[component] object LoadComponent {
               TypeInfoComponent.invalidate(psiFile)
               DefinitionLocationComponent.invalidate(psiFile)
               NameInfoComponent.invalidate(psiFile)
-              val moduleName = HaskellPsiUtil.findModuleName(psiFile, runInRead = true)
               moduleName.foreach(BrowseModuleComponent.invalidateForModule(project, _, psiFile))
             }
           })
