@@ -62,14 +62,14 @@ object StackProjectManager {
                     Thread.sleep(1000)
                   }
 
+                  progressIndicator.setText("Busy with downloading library sources")
                   HaskellProjectUtil.getProjectModules(project).foreach(m => {
                     HaskellModuleBuilder.addLibrarySources(m)
                   })
 
+                  progressIndicator.setText("Busy with building project and starting Stack REPLs")
                   projectRepl.start()
                   globalRepl.start()
-
-                  progressIndicator.setText("Busy with building project and starting Stack REPLs")
 
                   progressIndicator.setText("Busy with preloading cache, building tools and/or rebuilding Hoogle database")
                   val preloadCacheFuture = ApplicationManager.getApplication.executeOnPooledThread(new Runnable {
@@ -81,9 +81,7 @@ object StackProjectManager {
                     }
                   })
 
-                  StackCommandLine.executeBuild(project, Seq("build", "hoogle"), "Build of `hoogle`")
-
-                  val buildHlintFuture = HLintComponent.buildHlint(project)
+                  StackCommandLine.executeBuild(project, Seq("build", HoogleComponent.HoogleName, HLintComponent.HlintName), "Build of `hoogle`, `hlint`")
 
                   //              val buildToolsFuture = ApplicationManager.getApplication.executeOnPooledThread(new Runnable {
                   //                override def run(): Unit = {
@@ -93,16 +91,12 @@ object StackProjectManager {
                   //                }
                   //              })
 
-                  val rebuildHoogleFuture = HoogleComponent.rebuildHoogle(project)
+                  HoogleComponent.rebuildHoogle(project)
 
                   if (
                   //                !buildToolsFuture.isDone ||
-                    !buildHlintFuture.isDone
-                      || !rebuildHoogleFuture.isDone
-                      || !preloadCacheFuture.isDone) {
+                    !preloadCacheFuture.isDone) {
                     //                buildToolsFuture.get
-                    buildHlintFuture.get
-                    rebuildHoogleFuture.get
                     preloadCacheFuture.get
                   }
                 case _ => ()

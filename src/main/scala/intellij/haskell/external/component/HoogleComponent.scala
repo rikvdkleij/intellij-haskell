@@ -16,10 +16,9 @@
 
 package intellij.haskell.external.component
 
-import java.util.concurrent.Future
 import java.util.regex.Pattern
 
-import com.intellij.openapi.application.ApplicationManager
+import com.intellij.execution.process.ProcessOutput
 import com.intellij.openapi.project.Project
 import intellij.haskell.HaskellNotificationGroup
 import intellij.haskell.external.commandLine.StackCommandLine
@@ -29,13 +28,16 @@ import scala.concurrent.duration._
 
 object HoogleComponent {
 
+  final val HoogleName = "hoogle"
+
   private val Timout = 10.seconds.toMillis
 
-  var hoogleAvailable = false
-
   def runHoogle(project: Project, pattern: String, count: Int = 100): Option[Seq[String]] = {
-    if (hoogleAvailable) {
-      StackCommandLine.runCommand(Seq("hoogle", "--", s""""$pattern"""", s"--count=$count"), project, timeoutInMillis = Timout).
+    if (StackProjectManager.starting) {
+      HaskellNotificationGroup.logWarningBalloonEvent(project, s"Stack $HoogleName is not yet available")
+      None
+    } else {
+      StackCommandLine.runCommand(Seq(HoogleName, "--", s""""$pattern"""", s"--count=$count"), project, timeoutInMillis = Timout).
         map(o =>
           if (o.getStdoutLines.isEmpty || o.getStdout.contains("No results found"))
             Seq()
@@ -45,14 +47,14 @@ object HoogleComponent {
             o.getStdoutLines.asScala
           }
         )
-    } else {
-      HaskellNotificationGroup.logWarningBalloonEvent(project, "Stack Hoogle is not yet available")
-      None
     }
   }
 
   def findDocumentation(project: Project, name: String, moduleName: Option[String]): Option[String] = {
-    if (hoogleAvailable) {
+    if (StackProjectManager.starting) {
+      HaskellNotificationGroup.logWarningBalloonEvent(project, s"Stack $HoogleName is not yet available")
+      None
+    } else {
       StackCommandLine.runCommand(Seq("hoogle", "--", name) ++ moduleName.map(mn => Seq(s"+$mn", "-i")).getOrElse(Seq()), project, timeoutInMillis = Timout).
         flatMap(processOutput =>
           if (processOutput.getStdoutLines.isEmpty || processOutput.getStdout.contains("No results found")) {
@@ -61,22 +63,10 @@ object HoogleComponent {
             Option(processOutput.getStdout).map(o => s"${Pattern.compile("$", Pattern.MULTILINE).matcher(o).replaceAll("<br>").replace(" ", "&nbsp;")}")
           }
         )
-    } else {
-      HaskellNotificationGroup.logWarningBalloonEvent(project, "Stack Hoogle is not yet available")
-      None
     }
   }
 
-  def rebuildHoogle(project: Project): Future[_] = {
-    hoogleAvailable = false
-    ApplicationManager.getApplication.executeOnPooledThread(new Runnable {
-      override def run(): Unit = {
-        try {
-          StackCommandLine.runCommand(Seq("hoogle", "--rebuild"), project, timeoutInMillis = 10.minutes.toMillis, logErrorAsInfo = true, captureOutputToLog = true)
-        } finally {
-          hoogleAvailable = true
-        }
-      }
-    })
+  def rebuildHoogle(project: Project): Option[ProcessOutput] = {
+    StackCommandLine.runCommand(Seq(HoogleName, "--rebuild"), project, timeoutInMillis = 10.minutes.toMillis, logErrorAsInfo = true, captureOutputToLog = true)
   }
 }
