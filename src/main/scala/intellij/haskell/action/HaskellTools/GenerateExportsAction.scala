@@ -13,17 +13,13 @@ class GenerateExportsAction extends AnAction {
   }
 
   override def actionPerformed(e: AnActionEvent): Unit = {
-    val project = e.getProject
+    ActionUtil.findActionContext(e).foreach {
+      case ActionContext(psiFile, _, project, _) =>
+        HaskellFileUtil.saveFile(psiFile)
 
-    HaskellToolsComponent.checkResolverForAction(project, e, (actionEvent) => {
-      ActionUtil.findActionContext(actionEvent).foreach {
-        case ActionContext(psiFile, _, _, _) =>
-          HaskellFileUtil.saveFile(psiFile)
-
-          HaskellPsiUtil.findModuleName(psiFile).foreach(moduleName => {
-            HaskellToolsComponent.generateExports(project, psiFile, moduleName)
-          })
-      }
-    })
+        HaskellPsiUtil.findModuleName(psiFile).foreach(moduleName => {
+          HaskellToolsComponent.generateExports(project, psiFile, moduleName)
+        })
+    }
   }
 }

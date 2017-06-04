@@ -1,18 +1,13 @@
 package intellij.haskell.external.component
 
 import java.io.File
-import javax.swing.event.HyperlinkEvent
 
-import com.intellij.ide.BrowserUtil
-import com.intellij.notification.Notification
-import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.command.CommandProcessor
 import com.intellij.openapi.editor.{Editor, SelectionModel}
 import com.intellij.openapi.progress.{ProgressIndicator, ProgressManager, Task}
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.vfs.VfsUtil
 import com.intellij.psi.{PsiElement, PsiFile}
-import intellij.haskell.HaskellNotificationGroup
 import intellij.haskell.external.commandLine.StackCommandLine
 import intellij.haskell.util.{HaskellFileUtil, LineColumnPosition, StackYamlUtil}
 
@@ -34,24 +29,6 @@ object HaskellToolsComponent {
         false
       }
     })
-  }
-
-  def checkResolverForAction(project: Project, actionEvent: AnActionEvent, act: AnActionEvent => Unit): Unit = {
-    if (isRefactoringSupported(project)) {
-      act(actionEvent)
-    } else {
-      val lts80Link = "\"https://www.stackage.org/lts-8.0\""
-      val nightly20170114Link = "\"https://www.stackage.org/nightly-2017-02-13\""
-      val haskelltoolsLink = "\"http://haskelltools.org/\""
-      HaskellNotificationGroup.logErrorBalloonEvent(
-        project,
-        s"You need a Stack resolver greater than <a href=$lts80Link>lts-8.0</a> or <a href=$nightly20170114Link>nightly-2017-02-13</a> in order to work with <a href=$haskelltoolsLink>$HaskellToolName</a>.",
-        (notification: Notification, hyperlinkEvent: HyperlinkEvent) => {
-          if (hyperlinkEvent.getEventType == HyperlinkEvent.EventType.ACTIVATED) {
-            BrowserUtil.browse(hyperlinkEvent.getURL)
-          }
-        })
-    }
   }
 
   def generateExports(project: Project, psiFile: PsiFile, moduleName: String): Unit = {

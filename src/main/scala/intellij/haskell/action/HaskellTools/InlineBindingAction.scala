@@ -13,17 +13,13 @@ class InlineBindingAction extends AnAction {
   }
 
   override def actionPerformed(actionEvent: AnActionEvent): Unit = {
-    val project = actionEvent.getProject
+    ActionUtil.findActionContext(actionEvent).foreach {
+      case ActionContext(psiFile, editor, project, selectionModel) =>
+        HaskellFileUtil.saveFile(psiFile)
 
-    HaskellToolsComponent.checkResolverForAction(project, actionEvent, (actionEvent) => {
-      ActionUtil.findActionContext(actionEvent).foreach {
-        case ActionContext(psiFile, editor, _, selectionModel) =>
-          HaskellFileUtil.saveFile(psiFile)
-
-          HaskellPsiUtil.findModuleName(psiFile).foreach(mn => {
-            HaskellToolsComponent.inlineBinding(project, psiFile, mn, editor, selectionModel)
-          })
-      }
-    })
+        HaskellPsiUtil.findModuleName(psiFile).foreach(moduleName => {
+          HaskellToolsComponent.inlineBinding(project, psiFile, moduleName, editor, selectionModel)
+        })
+    }
   }
 }
