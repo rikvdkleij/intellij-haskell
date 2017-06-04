@@ -1,28 +1,28 @@
 package intellij.haskell.action.HaskellTools
 
 import com.intellij.openapi.actionSystem.{AnAction, AnActionEvent}
-import com.intellij.openapi.vfs.VfsUtil
 import intellij.haskell.action.{ActionContext, ActionUtil}
-import intellij.haskell.external.component.HaskellToolComponent
+import intellij.haskell.external.component.{HaskellToolsComponent, StackProjectManager}
 import intellij.haskell.psi.HaskellPsiUtil
-import intellij.haskell.util.HaskellFileUtil
+import intellij.haskell.util.{HaskellEditorUtil, HaskellFileUtil}
 
 class InlineBindingAction extends AnAction {
+
+  override def update(actionEvent: AnActionEvent): Unit = {
+    HaskellEditorUtil.enableExternalAction(actionEvent, StackProjectManager.isHaskellToolsAvailable)
+  }
+
   override def actionPerformed(actionEvent: AnActionEvent): Unit = {
     val project = actionEvent.getProject
 
-    HaskellToolComponent.checkResolverForHaskellToolsAction(project, actionEvent, (actionEvent) => {
+    HaskellToolsComponent.checkResolverForAction(project, actionEvent, (actionEvent) => {
       ActionUtil.findActionContext(actionEvent).foreach {
-        case ActionContext(psiFile, _, _, selectionModel) =>
+        case ActionContext(psiFile, editor, _, selectionModel) =>
           HaskellFileUtil.saveFile(psiFile)
 
-          for {
-            moduleName <- HaskellPsiUtil.findModuleName(psiFile)
-            selectionModel <- selectionModel
-          } yield {
-            HaskellToolComponent.inlineBinding(project, moduleName, selectionModel)
-            HaskellFileUtil.findVirtualFile(psiFile).foreach(vf => VfsUtil.markDirtyAndRefresh(true, true, true, vf))
-          }
+          HaskellPsiUtil.findModuleName(psiFile).foreach(mn => {
+            HaskellToolsComponent.inlineBinding(project, psiFile, mn, editor, selectionModel)
+          })
       }
     })
   }

@@ -17,14 +17,14 @@
 package intellij.haskell.action
 
 import com.intellij.openapi.actionSystem.{AnAction, AnActionEvent}
-import intellij.haskell.external.component.HaskellComponentsManager
+import intellij.haskell.external.component.{HaskellComponentsManager, StackProjectManager}
 import intellij.haskell.module.HaskellModuleBuilder
 import intellij.haskell.util.{HaskellEditorUtil, HaskellProjectUtil}
 
 class DownloadLibrarySources extends AnAction {
 
   override def update(actionEvent: AnActionEvent): Unit = {
-    HaskellEditorUtil.enableStackAction(actionEvent)
+    HaskellEditorUtil.enableExternalAction(actionEvent, !StackProjectManager.isStarting(_))
   }
 
   override def actionPerformed(e: AnActionEvent): Unit = {

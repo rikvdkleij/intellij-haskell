@@ -20,7 +20,7 @@ import com.intellij.openapi.actionSystem.{AnAction, AnActionEvent}
 import com.intellij.openapi.ui.Messages
 import com.intellij.openapi.util.SystemInfo
 import intellij.haskell.external.commandLine.{CommandLine, StackCommandLine}
-import intellij.haskell.external.component.HLintComponent
+import intellij.haskell.external.component.{HLintComponent, StackProjectManager}
 import intellij.haskell.settings.HaskellSettingsState
 import intellij.haskell.util.HaskellEditorUtil
 
@@ -29,7 +29,7 @@ import scala.collection.mutable.ArrayBuffer
 class AboutAction extends AnAction {
 
   override def update(actionEvent: AnActionEvent) {
-    HaskellEditorUtil.enableStackAction(actionEvent)
+    HaskellEditorUtil.enableExternalAction(actionEvent, !StackProjectManager.isStarting(_))
   }
 
   private def boldToolName(name: String): String = {

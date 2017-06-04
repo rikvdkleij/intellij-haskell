@@ -28,9 +28,7 @@ object HLintComponent {
   final val HlintName = "hlint"
 
   def check(psiFile: PsiFile): Seq[HLintInfo] = {
-    if (StackProjectManager.starting) {
-      Seq()
-    } else {
+    if (StackProjectManager.isHlintAvailable(psiFile.getProject)) {
       val project = psiFile.getProject
       StackCommandLine.runCommand(Seq("exec", "--", HlintName, "--json", psiFile.getOriginalFile.getVirtualFile.getPath), project).map(output => {
         if (output.getStderr.contains("Executable named hlint not found on path")) {
@@ -44,6 +42,9 @@ object HLintComponent {
           deserializeHLintInfo(project, output.getStdout)
         }
       }).getOrElse(Seq())
+    } else {
+      HaskellNotificationGroup.logWarningBalloonEvent(psiFile.getProject, s"$HlintName is not yet available")
+      Seq()
     }
   }
 

@@ -37,6 +37,7 @@ import com.intellij.lang.Language
 import com.intellij.navigation.{ChooseByNameContributor, NavigationItem}
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.psi.PsiDocumentManager
+import intellij.haskell.external.component.StackProjectManager
 import intellij.haskell.navigation.{GotoByHoogleModel, HoogleByNameContributor}
 import intellij.haskell.util.HaskellEditorUtil
 
@@ -45,7 +46,7 @@ class HoogleNavigationAction extends GotoActionBase {
   private val contributors = Array[ChooseByNameContributor](new HoogleByNameContributor)
 
   override def update(actionEvent: AnActionEvent) {
-    HaskellEditorUtil.enableStackAction(actionEvent)
+    HaskellEditorUtil.enableExternalAction(actionEvent, StackProjectManager.isHoogleAvaiable)
   }
 
   def gotoActionPerformed(actionEvent: AnActionEvent) {

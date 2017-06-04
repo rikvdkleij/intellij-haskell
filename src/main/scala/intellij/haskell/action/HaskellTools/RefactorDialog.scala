@@ -6,7 +6,7 @@ import javax.swing.{JComponent, JPanel, JTextField}
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.{DialogWrapper, ValidationInfo}
 
-class HaskellToolsRefactorDialog(project: Project) extends DialogWrapper(project, false) {
+class RefactorDialog(project: Project) extends DialogWrapper(project, false) {
 
   private val newNameField = new JTextField()
 

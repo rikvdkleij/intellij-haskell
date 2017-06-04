@@ -295,7 +295,7 @@
         <editorNotificationProvider implementation="intellij.haskell.notification.SetupHaskellSdkNotificationProvider"/>
 
         <!-- Mover -->
-        <!--<statementUpDownMover implementation="intellij.haskell.editor.HaskellStatementUpDownMover"/>-->
+        <!--<statementUpDownMover implementation="intellij.haskell.editor.HaskellStatementMover"/>-->
     </extensions>
 
     <application-components>
@@ -363,7 +363,7 @@
             <add-to-group group-id="CodeEditorViewGroup" anchor="last"/>
         </group>
 
-        <group id="HaskellToolsMenu" text="Haskell" description="Haskell General Tools" icon="/icons/haskell@16.png" popup="true">
+        <group id="HaskellToolsMenu" text="Haskell" description="Haskell Tools" icon="/icons/haskell@16.png" popup="true">
             <action id="Haskell.DownloadLibSources" class="intellij.haskell.action.DownloadLibrarySources"
                     text="Download Haskell Library Sources"
                     description="Download Haskell library sources and add them as source libraries to project">
@@ -373,25 +373,35 @@
                     text="Restart Haskell Stack REPLs"
                     description="Restart Haskell Stack REPLs and refresh cache">
             </action>
-            <!--<action id="Haskell.GenerateExports"-->
-                    <!--class="intellij.haskell.action.HaskellTools.GenerateExportsAction"-->
-                    <!--text="Generate Exports"-->
-                    <!--description="Generate exports with haskell-tools for currently opened file">-->
-                <!--<keyboard-shortcut first-keystroke="ctrl alt g" keymap="$default"/>-->
-            <!--</action>-->
-            <!--<action id="Haskell.ExtractBinding"-->
-                    <!--class="intellij.haskell.action.HaskellTools.ExtractBindingAction"-->
-                    <!--text="Extract Binding"-->
-                    <!--description="Extract binding with haskell-tools for currently selected code block">-->
-                <!--<keyboard-shortcut first-keystroke="ctrl alt e" keymap="$default"/>-->
-            <!--</action>-->
-            <!--<action id="Haskell.InlineBinding"-->
-                    <!--class="intellij.haskell.action.HaskellTools.InlineBindingAction"-->
-                    <!--text="Inline Binding"-->
-                    <!--description="Inline binding with haskell-tools for currently selected code block">-->
-                <!--<keyboard-shortcut first-keystroke="ctrl alt shift i" keymap="$default"/>-->
-            <!--</action>-->
-            <add-to-group group-id="ToolsMenu" anchor="last"/>
+            <add-to-group group-id="OtherMenu" anchor="first"/>
+        </group>
+
+        <group id="HaskellRefactorMenu" text="Haskell" description="Haskell Refactoring" icon="/icons/haskell@16.png" popup="true">
+            <action id="Haskell.GenerateTypeSignature"
+                    class="intellij.haskell.action.HaskellTools.GenerateTypeSignatureAction"
+                    text="Generate type signature"
+                    description="Generate type signature for current binding with haskell-tools">
+                <keyboard-shortcut first-keystroke="ctrl alt x" keymap="$default"/>
+            </action>
+            <action id="Haskell.GenerateExports"
+                    class="intellij.haskell.action.HaskellTools.GenerateExportsAction"
+                    text="Generate exports"
+                    description="Generate exports for current file with haskell-tools">
+                <keyboard-shortcut first-keystroke="ctrl alt g" keymap="$default"/>
+            </action>
+            <action id="Haskell.ExtractBinding"
+                    class="intellij.haskell.action.HaskellTools.ExtractBindingAction"
+                    text="Extract binding"
+                    description="Extract binding for selected code with haskell-tools">
+                <keyboard-shortcut first-keystroke="ctrl alt shift b" keymap="$default"/>
+            </action>
+            <action id="Haskell.InlineBinding"
+                    class="intellij.haskell.action.HaskellTools.InlineBindingAction"
+                    text="Inline binding"
+                    description="Inline binding for (selected) name with haskell-tools">
+                <keyboard-shortcut first-keystroke="ctrl alt shift k" keymap="$default"/>
+            </action>
+            <add-to-group group-id="RefactoringMenu" anchor="last"/>
         </group>
 
         <group id="HaskellCodeMenu" text="Haskell" description="Haskell Code Tools" icon="/icons/haskell@16.png" popup="true">

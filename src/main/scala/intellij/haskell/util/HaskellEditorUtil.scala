@@ -31,17 +31,16 @@ import com.intellij.ui.LightweightHint
 import com.intellij.ui.awt.RelativePoint
 import com.intellij.util.ui.{PositionTracker, UIUtil}
 import intellij.haskell.HaskellFile
-import intellij.haskell.external.component.StackProjectManager
 
 import scala.collection.JavaConverters._
 
 object HaskellEditorUtil {
 
-  def enableStackAction(actionEvent: AnActionEvent): Unit = {
+  def enableExternalAction(actionEvent: AnActionEvent, enableCondition: Project => Boolean): Unit = {
     Option(actionEvent.getProject) match {
       case Some(project) =>
-//        actionEvent.getPresentation.setVisible(HaskellProjectUtil.isHaskellProject(project))
-        actionEvent.getPresentation.setEnabled(HaskellProjectUtil.isValidHaskellProject(project, notifyNoSdk = false) && !StackProjectManager.starting)
+        actionEvent.getPresentation.setVisible(HaskellProjectUtil.isHaskellProject(project))
+        actionEvent.getPresentation.setEnabled(HaskellProjectUtil.isValidHaskellProject(project, notifyNoSdk = false) && enableCondition(project))
       case None => actionEvent.getPresentation.setEnabledAndVisible(false)
     }
   }

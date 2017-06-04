@@ -16,12 +16,17 @@
 
 package intellij.haskell.external.component
 
+import javax.swing.event.HyperlinkEvent
+
+import com.intellij.ide.BrowserUtil
+import com.intellij.notification.Notification
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.components.ProjectComponent
 import com.intellij.openapi.progress.{ProgressIndicator, ProgressManager, Task}
 import com.intellij.openapi.project.Project
 import intellij.haskell.HaskellNotificationGroup
 import intellij.haskell.external.commandLine.StackCommandLine
+import intellij.haskell.external.component.HaskellToolsComponent.HaskellToolName
 import intellij.haskell.external.repl.StackReplsManager
 import intellij.haskell.module.HaskellModuleBuilder
 import intellij.haskell.util.HaskellProjectUtil
@@ -29,7 +34,27 @@ import intellij.haskell.util.HaskellProjectUtil
 object StackProjectManager {
   val componentName = "stack-repls-manager"
 
-  var starting = false
+  val lts80Link = "\"https://www.stackage.org/lts-8.0\""
+  val nightly20170114Link = "\"https://www.stackage.org/nightly-2017-02-13\""
+  val haskelltoolsLink = "\"http://haskelltools.org/\""
+
+  import intellij.haskell.util.ScalaUtil._
+
+  def isStarting(project: Project): Boolean = {
+    getStackProjectManager(project).exists(_.starting)
+  }
+
+  def isHoogleAvaiable(project: Project): Boolean = {
+    getStackProjectManager(project).exists(_.hoogleAvailable)
+  }
+
+  def isHlintAvailable(project: Project): Boolean = {
+    getStackProjectManager(project).exists(_.hlintAvailable)
+  }
+
+  def isHaskellToolsAvailable(project: Project): Boolean = {
+    getStackProjectManager(project).exists(_.haskellToolsAvailable)
+  }
 
   def start(project: Project): Unit = {
     initialize(project)
@@ -39,15 +64,19 @@ object StackProjectManager {
     initialize(project, restart = true)
   }
 
+  private def getStackProjectManager(project: Project) = {
+    project.isDisposed.optionNot(project.getComponent(classOf[StackProjectManager]))
+  }
+
   private def initialize(project: Project, restart: Boolean = false): Unit = {
     if (HaskellProjectUtil.isValidHaskellProject(project, notifyNoSdk = true)) {
-      if (starting) {
+      if (isStarting(project)) {
         HaskellNotificationGroup.logWarningBalloonEvent(project, "Stack REPLs are already (re)starting")
       } else {
         ProgressManager.getInstance().run(new Task.Backgroundable(project, s"[$componentName] Starting Stack REPLs, building project, building tools and preloading cache", false) {
 
           def run(progressIndicator: ProgressIndicator) {
-            starting = true
+            getStackProjectManager(project).foreach(_.starting = true)
             try {
               (StackReplsManager.getProjectRepl(project), StackReplsManager.getGlobalRepl(project)) match {
                 case (Some(projectRepl), Some(globalRepl)) =>
@@ -71,7 +100,7 @@ object StackProjectManager {
                   projectRepl.start()
                   globalRepl.start()
 
-                  progressIndicator.setText("Busy with preloading cache, building tools and/or rebuilding Hoogle database")
+                  progressIndicator.setText("Busy with preloading cache, building tools and rebuilding Hoogle database")
                   val preloadCacheFuture = ApplicationManager.getApplication.executeOnPooledThread(new Runnable {
                     override def run(): Unit = {
                       HaskellComponentsManager.preloadModuleIdentifiersCaches(project)
@@ -81,41 +110,54 @@ object StackProjectManager {
                     }
                   })
 
-                  StackCommandLine.executeBuild(project, Seq("build", HoogleComponent.HoogleName, HLintComponent.HlintName), "Build of `hoogle`, `hlint`")
+                  StackCommandLine.executeBuild(project, Seq("build", HLintComponent.HlintName), "Build of `hlint`")
+                  getStackProjectManager(project).foreach(_.hlintAvailable = true)
 
-                  //              val buildToolsFuture = ApplicationManager.getApplication.executeOnPooledThread(new Runnable {
-                  //                override def run(): Unit = {
-                  //                  if (HaskellToolComponent.checkResolverForHaskellTools(project)) {
-                  //                    StackCommandLine.executeBuild(project, Seq("build", HaskellToolComponent.HaskellToolsCLIName), "Build of `haskell-tools`")
-                  //                  }
-                  //                }
-                  //              })
+                  StackCommandLine.executeBuild(project, Seq("build", HoogleComponent.HoogleName), "Build of `hoogle`")
+                  getStackProjectManager(project).foreach(_.hoogleAvailable = true)
+
+                  if (HaskellToolsComponent.isRefactoringSupported(project)) {
+                    StackCommandLine.runCommand(Seq("exec", "--", HaskellToolsComponent.HaskellToolName), project) match {
+                      case Some(v) if v.getStdout.nonEmpty => HaskellNotificationGroup.logInfoEvent(project, s"${HaskellToolsComponent.HaskellToolName} is already installed")
+                      case _ => StackCommandLine.executeBuild(project, Seq("build") ++ HaskellToolsComponent.HaskellToolsCLIName, "Build of `haskell-tools`")
+                    }
+                    getStackProjectManager(project).foreach(_.haskellToolsAvailable = true)
+                  } else {
+                    HaskellNotificationGroup.logInfoBalloonEvent(
+                      project,
+                      s"You need a Stack resolver greater than <a href=$lts80Link>lts-8.0</a> or <a href=$nightly20170114Link>nightly-2017-02-13</a> in order to work with <a href=$haskelltoolsLink>$HaskellToolName</a>.",
+                      (notification: Notification, hyperlinkEvent: HyperlinkEvent) => {
+                        if (hyperlinkEvent.getEventType == HyperlinkEvent.EventType.ACTIVATED) {
+                          BrowserUtil.browse(hyperlinkEvent.getURL)
+                        }
+                      })
+                  }
 
                   HoogleComponent.rebuildHoogle(project)
 
-                  if (
-                  //                !buildToolsFuture.isDone ||
-                    !preloadCacheFuture.isDone) {
-                    //                buildToolsFuture.get
+                  if (!preloadCacheFuture.isDone) {
                     preloadCacheFuture.get
                   }
                 case _ => ()
               }
             }
-
             finally {
-              starting = false
+              getStackProjectManager(project).foreach(_.starting = false)
             }
           }
-        }
-        )
+        })
       }
     }
   }
-
 }
 
 class StackProjectManager(project: Project) extends ProjectComponent {
+
+  private var starting = false
+  private var hoogleAvailable = false
+  private var hlintAvailable = false
+  private var haskellToolsAvailable = false
+
 
   override def getComponentName: String = StackProjectManager.componentName
 

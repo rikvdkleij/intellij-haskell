@@ -33,10 +33,7 @@ object HoogleComponent {
   private val Timout = 10.seconds.toMillis
 
   def runHoogle(project: Project, pattern: String, count: Int = 100): Option[Seq[String]] = {
-    if (StackProjectManager.starting) {
-      HaskellNotificationGroup.logWarningBalloonEvent(project, s"Stack $HoogleName is not yet available")
-      None
-    } else {
+    if (StackProjectManager.isHoogleAvaiable(project)) {
       StackCommandLine.runCommand(Seq(HoogleName, "--", s""""$pattern"""", s"--count=$count"), project, timeoutInMillis = Timout).
         map(o =>
           if (o.getStdoutLines.isEmpty || o.getStdout.contains("No results found"))
@@ -47,14 +44,14 @@ object HoogleComponent {
             o.getStdoutLines.asScala
           }
         )
+    } else {
+      HaskellNotificationGroup.logWarningBalloonEvent(project, s"$HoogleName is not yet available")
+      None
     }
   }
 
   def findDocumentation(project: Project, name: String, moduleName: Option[String]): Option[String] = {
-    if (StackProjectManager.starting) {
-      HaskellNotificationGroup.logWarningBalloonEvent(project, s"Stack $HoogleName is not yet available")
-      None
-    } else {
+    if (StackProjectManager.isHoogleAvaiable(project)) {
       StackCommandLine.runCommand(Seq("hoogle", "--", name) ++ moduleName.map(mn => Seq(s"+$mn", "-i")).getOrElse(Seq()), project, timeoutInMillis = Timout).
         flatMap(processOutput =>
           if (processOutput.getStdoutLines.isEmpty || processOutput.getStdout.contains("No results found")) {
@@ -63,6 +60,9 @@ object HoogleComponent {
             Option(processOutput.getStdout).map(o => s"${Pattern.compile("$", Pattern.MULTILINE).matcher(o).replaceAll("<br>").replace(" ", "&nbsp;")}")
           }
         )
+    } else {
+      HaskellNotificationGroup.logWarningBalloonEvent(project, s"$HoogleName is not yet available")
+      None
     }
   }
 

@@ -6,22 +6,22 @@ import intellij.haskell.external.component.{HaskellToolsComponent, StackProjectM
 import intellij.haskell.psi.HaskellPsiUtil
 import intellij.haskell.util.{HaskellEditorUtil, HaskellFileUtil}
 
-class GenerateExportsAction extends AnAction {
+class GenerateTypeSignatureAction extends AnAction {
 
   override def update(actionEvent: AnActionEvent): Unit = {
     HaskellEditorUtil.enableExternalAction(actionEvent, StackProjectManager.isHaskellToolsAvailable)
   }
 
-  override def actionPerformed(e: AnActionEvent): Unit = {
-    val project = e.getProject
+  override def actionPerformed(actionEvent: AnActionEvent): Unit = {
+    val project = actionEvent.getProject
 
-    HaskellToolsComponent.checkResolverForAction(project, e, (actionEvent) => {
+    HaskellToolsComponent.checkResolverForAction(project, actionEvent, (actionEvent) => {
       ActionUtil.findActionContext(actionEvent).foreach {
-        case ActionContext(psiFile, _, _, _) =>
+        case ActionContext(psiFile, editor, _, selectionModel) =>
           HaskellFileUtil.saveFile(psiFile)
 
-          HaskellPsiUtil.findModuleName(psiFile).foreach(moduleName => {
-            HaskellToolsComponent.generateExports(project, psiFile, moduleName)
+          HaskellPsiUtil.findModuleName(psiFile).foreach(mn => {
+            HaskellToolsComponent.generateTypeSignature(project, psiFile, mn, editor, selectionModel)
           })
       }
     })

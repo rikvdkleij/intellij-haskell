@@ -94,6 +94,10 @@ object HaskellNotificationGroup {
     balloonEvent(None, message, INFO)
   }
 
+  def logInfoBalloonEvent(project: Project, message: String, listener: NotificationListener) {
+    BalloonGroup.createNotification("", message, INFO.toNotificationType, listener).notify(project)
+  }
+
   private def logEvent(project: Option[Project], message: String, messageType: MessageType, notification: (String, MessageType) => Notification) = {
     log(project, message, messageType, LogOnlyGroup.createNotification)
   }
