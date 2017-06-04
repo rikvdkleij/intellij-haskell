@@ -42,8 +42,7 @@ public class HaskellTypedHandler extends TypedHandlerDelegate {
     public Result charTyped(char c, Project project, @NotNull Editor editor, @NotNull PsiFile file) {
         if (!(file instanceof HaskellFile)) return super.charTyped(c, project, editor, file);
 
-        if ((c != '{' && c != '-' && c != '#') ||
-                !CodeInsightSettings.getInstance().AUTOINSERT_PAIR_BRACKET) {
+        if ((c != '{' && c != '-' && c != '#') || !CodeInsightSettings.getInstance().AUTOINSERT_PAIR_BRACKET) {
             return Result.CONTINUE;
         }
         TransactionGuard.getInstance().submitTransactionAndWait(() -> insertMatchedEndComment(project, editor, file, c));

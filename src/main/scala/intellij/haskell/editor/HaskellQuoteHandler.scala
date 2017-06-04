@@ -17,6 +17,6 @@
 package intellij.haskell.editor
 
 import com.intellij.codeInsight.editorActions.SimpleTokenSetQuoteHandler
-import intellij.haskell.psi.HaskellTypes
+import intellij.haskell.psi.HaskellTypes._
 
-class HaskellQuoteHandler extends SimpleTokenSetQuoteHandler(HaskellTypes.HS_STRING_LITERAL, HaskellTypes.HS_CHARACTER_LITERAL)
+class HaskellQuoteHandler extends SimpleTokenSetQuoteHandler(HS_STRING_LITERAL, HS_CHARACTER_LITERAL, HS_BACKQUOTE, HS_QUOTE)

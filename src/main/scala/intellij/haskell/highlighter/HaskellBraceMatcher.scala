@@ -20,16 +20,18 @@ import com.intellij.lang.{BracePair, PairedBraceMatcher}
 import com.intellij.psi.PsiFile
 import com.intellij.psi.tree.IElementType
 import intellij.haskell.HaskellParserDefinition._
-import intellij.haskell.psi.HaskellTypes
 
 object HaskellBraceMatcher {
+
+  import intellij.haskell.psi.HaskellTypes._
+
   private final val PAIRS = Array(
-    new BracePair(HaskellTypes.HS_LEFT_PAREN, HaskellTypes.HS_RIGHT_PAREN, true),
-    new BracePair(HaskellTypes.HS_PRAGMA_START, HaskellTypes.HS_PRAGMA_END, true),
-    new BracePair(HaskellTypes.HS_LEFT_BRACE, HaskellTypes.HS_RIGHT_BRACE, true),
-    new BracePair(HaskellTypes.HS_BACKQUOTE, HaskellTypes.HS_BACKQUOTE, false),
-    new BracePair(HaskellTypes.HS_NCOMMENT_START, HaskellTypes.HS_NCOMMENT_END, true),
-    new BracePair(HaskellTypes.HS_LEFT_BRACKET, HaskellTypes.HS_RIGHT_BRACKET, true))
+    new BracePair(HS_LEFT_PAREN, HS_RIGHT_PAREN, false),
+    new BracePair(HS_PRAGMA_START, HS_PRAGMA_END, true),
+    new BracePair(HS_LEFT_BRACE, HS_RIGHT_BRACE, true),
+    new BracePair(HS_NCOMMENT_START, HS_NCOMMENT_END, true),
+    new BracePair(HS_LEFT_BRACKET, HS_RIGHT_BRACKET, true)
+  )
 }
 
 class HaskellBraceMatcher extends PairedBraceMatcher {
