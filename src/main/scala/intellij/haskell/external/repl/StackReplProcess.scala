@@ -25,10 +25,10 @@ import com.intellij.util.EnvironmentUtil
 import intellij.haskell.HaskellNotificationGroup
 import intellij.haskell.external.commandLine.StackCommandLine._
 import intellij.haskell.sdk.HaskellSdkType
-import intellij.haskell.util.HaskellProjectUtil
+import intellij.haskell.util.{HaskellProjectUtil, StringUtil}
 
 import scala.collection.JavaConverters._
-import scala.collection.mutable.{ArrayBuffer, ListBuffer}
+import scala.collection.mutable.ArrayBuffer
 import scala.concurrent.SyncVar
 import scala.concurrent.duration._
 import scala.io._
@@ -264,29 +264,9 @@ private[repl] abstract class StackReplProcess(val project: Project, val extraSta
   }
 
   private def convertOutputToOneMessagePerLine(project: Project, output: Seq[String]) = {
-    joinIndentedLines(project, output.filterNot(_.isEmpty))
+    StringUtil.joinIndentedLines(project, output.filterNot(_.isEmpty))
   }
 
-  private def joinIndentedLines(project: Project, lines: Seq[String]): Seq[String] = {
-    if (lines.size == 1) {
-      lines
-    } else {
-      try {
-        lines.foldLeft(ListBuffer[StringBuilder]())((lb, s) =>
-          if (s.startsWith("  ")) {
-            lb.last.append(s)
-            lb
-          }
-          else {
-            lb += new StringBuilder(2, s)
-          }).map(_.toString)
-      } catch {
-        case _: NoSuchElementException =>
-          HaskellNotificationGroup.logErrorBalloonEvent(project, s"Could not join indented lines. Probably first line started with spaces. Unexpected input was: ${lines.mkString(", ")}")
-          Seq()
-      }
-    }
-  }
 
   override def projectOpened(): Unit = {}
 

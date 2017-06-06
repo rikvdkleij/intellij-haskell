@@ -16,8 +16,12 @@
 
 package intellij.haskell.util
 
+import com.intellij.openapi.project.Project
 import com.intellij.xml.util.XmlStringUtil
+import intellij.haskell.HaskellNotificationGroup
 import intellij.haskell.external.component.DeclarationLineUtil
+
+import scala.collection.mutable.ListBuffer
 
 object StringUtil {
 
@@ -52,6 +56,27 @@ object StringUtil {
       name.substring(1, name.length - 1)
     } else {
       name
+    }
+  }
+
+  def joinIndentedLines(project: Project, lines: Seq[String]): Seq[String] = {
+    if (lines.size == 1) {
+      lines
+    } else {
+      try {
+        lines.foldLeft(ListBuffer[StringBuilder]())((lb, s) =>
+          if (s.startsWith("  ")) {
+            lb.last.append(s)
+            lb
+          }
+          else {
+            lb += new StringBuilder(2, s)
+          }).map(_.toString)
+      } catch {
+        case _: NoSuchElementException =>
+          HaskellNotificationGroup.logErrorBalloonEvent(project, s"Could not join indented lines. Probably first line started with spaces. Unexpected input was: ${lines.mkString(", ")}")
+          Seq()
+      }
     }
   }
 }

@@ -51,7 +51,12 @@ object CommandLine {
       HaskellNotificationGroup.logErrorBalloonEvent(project, s"Timeout while executing <b>${cmd.getCommandLineString}</b>.")
       None
     } else if (!captureOutputToLog && !processOutput.getStderrLines.isEmpty) {
-      HaskellNotificationGroup.logErrorEvent(project, s"Error while executing `${cmd.getCommandLineString}`:  ${processOutput.getStderr}")
+      val message = s"Error while executing `${cmd.getCommandLineString}`:  ${processOutput.getStderr}"
+      if (logErrorAsInfo) {
+        HaskellNotificationGroup.logInfoEvent(project, message)
+      } else {
+        HaskellNotificationGroup.logErrorEvent(project, message)
+      }
       Option(processOutput)
     } else {
       Option(processOutput)

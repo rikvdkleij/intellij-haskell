@@ -42,7 +42,6 @@ private[component] object LoadComponent {
     val moduleName = HaskellPsiUtil.findModuleName(psiFile, runInRead = true)
     StackReplsManager.getProjectRepl(project).flatMap(_.load(psiFile, moduleName)) match {
       case Some((loadOutput, loadFailed)) =>
-
         if (!loadFailed) {
           ApplicationManager.getApplication.executeOnPooledThread(new Runnable {
             override def run(): Unit = {
@@ -53,18 +52,21 @@ private[component] object LoadComponent {
             }
           })
         }
-
-        val filePath = HaskellFileUtil.makeFilePathAbsolute(HaskellFileUtil.getAbsoluteFilePath(psiFile), project)
-
-        // `distinct` because of https://github.com/commercialhaskell/intero/issues/258
-        val loadProblems = loadOutput.stdErrLines.distinct.map(l => parseErrorOutputLine(filePath, l))
-
-        val currentFileProblems = loadProblems.flatMap(convertToLoadProblemInCurrentFile)
-        val otherFileProblems = loadProblems.diff(currentFileProblems)
-
-        LoadResult(currentFileProblems, otherFileProblems, loadFailed)
+        createLoadResult(psiFile, loadOutput.stdErrLines, loadFailed)
       case _ => LoadResult()
     }
+  }
+
+  def createLoadResult(psiFile: PsiFile, errorLines: Seq[String], loadFailed: Boolean): LoadResult = {
+    val filePath = HaskellFileUtil.getAbsoluteFilePath(psiFile)
+
+    // `distinct` because of https://github.com/commercialhaskell/intero/issues/258
+    val loadProblems = errorLines.distinct.map(l => parseErrorOutputLine(filePath, l))
+
+    val currentFileProblems = loadProblems.flatMap(convertToLoadProblemInCurrentFile)
+    val otherFileProblems = loadProblems.diff(currentFileProblems)
+
+    LoadResult(currentFileProblems, otherFileProblems, loadFailed)
   }
 
   private def convertToLoadProblemInCurrentFile(loadProblem: LoadProblem) = {

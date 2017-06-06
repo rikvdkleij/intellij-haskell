@@ -16,20 +16,16 @@
 
 package intellij.haskell.annotator
 
-import javax.swing.event.HyperlinkEvent
-
 import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer
 import com.intellij.codeInsight.daemon.impl._
 import com.intellij.codeInsight.intention.impl.BaseIntentionAction
 import com.intellij.lang.annotation.{AnnotationHolder, ExternalAnnotator, HighlightSeverity}
-import com.intellij.notification.Notification
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.editor.Editor
-import com.intellij.openapi.fileEditor.{FileEditorManager, OpenFileDescriptor}
+import com.intellij.openapi.fileEditor.FileEditorManager
 import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.TextRange
-import com.intellij.openapi.vfs.LocalFileSystem
 import com.intellij.psi.PsiFile
 import com.intellij.psi.impl.source.tree.TreeUtil
 import com.intellij.psi.util.PsiTreeUtil
@@ -44,22 +40,6 @@ import scala.collection.Iterable
 import scala.collection.JavaConverters._
 
 class HaskellAnnotator extends ExternalAnnotator[PsiFile, LoadResult] {
-
-  private final val NoTypeSignaturePattern = """.* Top-level binding with no type signature: (.+)""".r
-  private final val DefinedButNotUsedPattern = """.* Defined but not used: [‘`](.+)[’']""".r
-  private final val NotInScopePattern = """.*Not in scope:[^‘`]+[‘`](.+)[’']""".r
-  private final val NotInScopePattern2 = """.* not in scope: (.+)""".r
-  private final val UseAloneInstancesImportPattern = """.* To import instances alone, use: (.+)""".r
-  private final val RedundantImportPattern = """.* The import of [‘`](.*)[’'] from module [‘`](.*)[’'] is redundant""".r
-
-  private final val PerhapsYouMeantNamePattern = """.*[`‘]([^‘’'`]+)['’]""".r
-  private final val PerhapsYouMeantMultiplePattern = """.*ot in scope: (.+) Perhaps you meant one of these: (.+)""".r
-  private final val PerhapsYouMeantSinglePattern = """.*ot in scope: (.+) Perhaps you meant (.+)""".r
-  private final val PerhapsYouMeantImportedFromPattern = """.*[`‘]([^‘’'`]+)['’] \(imported from (.*)\)""".r
-  private final val PerhapsYouMeantLocalPattern = """.*[`‘]([^‘’'`]+)['’].*""".r
-
-  private final val HolePattern = """.* Found hole: (.+) Where: .*""".r
-  private final val HolePattern2 = """.* Found hole [`‘]([^‘’'`]+)['’] with type: ([^ ]+) .*""".r
 
   override def collectInformation(psiFile: PsiFile, editor: Editor, hasErrors: Boolean): PsiFile = {
     ProgressManager.checkCanceled()
@@ -80,7 +60,7 @@ class HaskellAnnotator extends ExternalAnnotator[PsiFile, LoadResult] {
   }
 
   override def apply(psiFile: PsiFile, loadResult: LoadResult, holder: AnnotationHolder): Unit = {
-    for (annotation <- createAnnotations(loadResult, psiFile)) {
+    for (annotation <- HaskellAnnotator.createAnnotations(psiFile, loadResult)) {
       annotation match {
         case ErrorAnnotation(textRange, message, htmlMessage) => holder.createAnnotation(HighlightSeverity.ERROR, textRange, message, htmlMessage)
         case ErrorAnnotationWithIntentionActions(textRange, message, htmlMessage, intentionActions) =>
@@ -94,32 +74,62 @@ class HaskellAnnotator extends ExternalAnnotator[PsiFile, LoadResult] {
     }
     HaskellAnnotator.getDaemonCodeAnalyzer(psiFile.getProject).restart(psiFile)
   }
+}
 
-  private[annotator] def createAnnotations(loadResult: LoadResult, psiFile: PsiFile): Iterable[Annotation] = {
-    val problems = loadResult.currentFileProblems.filter(_.filePath == HaskellFileUtil.getAbsoluteFilePath(psiFile))
-    val project = psiFile.getProject
+object HaskellAnnotator {
+
+  private final val NoTypeSignaturePattern = """.* Top-level binding with no type signature: (.+)""".r
+  private final val DefinedButNotUsedPattern = """.* Defined but not used: [‘`](.+)[’']""".r
+  private final val NotInScopePattern = """.*Not in scope:[^‘`]+[‘`](.+)[’']""".r
+  private final val NotInScopePattern2 = """.* not in scope: (.+)""".r
+  private final val UseAloneInstancesImportPattern = """.* To import instances alone, use: (.+)""".r
+  private final val RedundantImportPattern = """.* The import of [‘`](.*)[’'] from module [‘`](.*)[’'] is redundant""".r
+
+  private final val PerhapsYouMeantNamePattern = """.*[`‘]([^‘’'`]+)['’]""".r
+  private final val PerhapsYouMeantMultiplePattern = """.*ot in scope: (.+) Perhaps you meant one of these: (.+)""".r
+  private final val PerhapsYouMeantSinglePattern = """.*ot in scope: (.+) Perhaps you meant (.+)""".r
+  private final val PerhapsYouMeantImportedFromPattern = """.*[`‘]([^‘’'`]+)['’] \(imported from (.*)\)""".r
+  private final val PerhapsYouMeantLocalPattern = """.*[`‘]([^‘’'`]+)['’].*""".r
+
+  private final val HolePattern = """.* Found hole: (.+) Where: .*""".r
+  private final val HolePattern2 = """.* Found hole [`‘]([^‘’'`]+)['’] with type: ([^ ]+) .*""".r
+
+  def getDaemonCodeAnalyzer(project: Project): DaemonCodeAnalyzerImpl = {
+    DaemonCodeAnalyzer.getInstance(project).asInstanceOf[DaemonCodeAnalyzerImpl]
+  }
+
+  def restartDaemonCodeAnalyzerForOpenFiles(project: Project): Unit = {
+    ApplicationManager.getApplication.invokeLater {
+      () => {
+        if (!project.isDisposed) {
+          val openFiles = FileEditorManager.getInstance(project).getOpenFiles
+          val openProjectFiles = openFiles.filterNot(vf => HaskellProjectUtil.isLibraryFile(vf, project).getOrElse(true))
+          val openProjectPsiFiles = HaskellFileUtil.convertToHaskellFiles(openProjectFiles.toStream, project)
+          openProjectPsiFiles.foreach(pf =>
+            getDaemonCodeAnalyzer(project).restart(pf)
+          )
+        }
+      }
+    }
+  }
+
+  def createNoficationsForErrorsNotInCurrentFile(project: Project, loadResult: LoadResult): Unit = {
     if (loadResult.loadFailed && loadResult.currentFileProblems.isEmpty) {
       loadResult.otherFileProblems.foreach {
-        case cpf: LoadProblemInOtherFile if !cpf.isWarning =>
-          HaskellNotificationGroup.logErrorBalloonEvent(project, s"${
-            cpf.htmlMessage
-          } at <a href='#'>${
-            cpf.filePath
-          }:${
-            cpf.lineNr
-          }:${
-            cpf.columnNr
-          }</a>.",
-            (_: Notification, _: HyperlinkEvent) => {
-              val file = LocalFileSystem.getInstance().findFileByPath(cpf.filePath)
-              new OpenFileDescriptor(project, file, cpf.lineNr - 1, cpf.columnNr - 1).navigate(true)
-            })
+        case cpf: LoadProblemInOtherFile if !cpf.isWarning => HaskellNotificationGroup.logErrorBalloonEventWithLink(project, cpf.filePath, cpf.htmlMessage, cpf.lineNr, cpf.columnNr)
         case cpf: LoadProblemWithoutLocation if !cpf.isWarning => HaskellNotificationGroup.logErrorBalloonEvent(project, s"Error ${
           cpf.htmlMessage
         }")
         case _ => ()
       }
     }
+  }
+
+  private def createAnnotations(psiFile: PsiFile, loadResult: LoadResult): Iterable[Annotation] = {
+    val problems = loadResult.currentFileProblems.filter(_.filePath == HaskellFileUtil.getAbsoluteFilePath(psiFile))
+    val project = psiFile.getProject
+
+    createNoficationsForErrorsNotInCurrentFile(project, loadResult)
 
     problems.flatMap {
       problem =>
@@ -226,28 +236,6 @@ class HaskellAnnotator extends ExternalAnnotator[PsiFile, LoadResult] {
     }
     else {
       None
-    }
-  }
-}
-
-object HaskellAnnotator {
-
-  def getDaemonCodeAnalyzer(project: Project): DaemonCodeAnalyzerImpl = {
-    DaemonCodeAnalyzer.getInstance(project).asInstanceOf[DaemonCodeAnalyzerImpl]
-  }
-
-  def restartDaemonCodeAnalyzerForOpenFiles(project: Project): Unit = {
-    ApplicationManager.getApplication.invokeLater {
-      () => {
-        if (!project.isDisposed) {
-          val openFiles = FileEditorManager.getInstance(project).getOpenFiles
-          val openProjectFiles = openFiles.filterNot(vf => HaskellProjectUtil.isLibraryFile(vf, project).getOrElse(true))
-          val openProjectPsiFiles = HaskellFileUtil.convertToHaskellFiles(openProjectFiles.toStream, project)
-          openProjectPsiFiles.foreach(pf =>
-            getDaemonCodeAnalyzer(project).restart(pf)
-          )
-        }
-      }
     }
   }
 }

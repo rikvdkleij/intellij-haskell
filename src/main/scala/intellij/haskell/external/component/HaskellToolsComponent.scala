@@ -8,8 +8,10 @@ import com.intellij.openapi.progress.{ProgressIndicator, ProgressManager, Task}
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.vfs.VfsUtil
 import com.intellij.psi.{PsiElement, PsiFile}
+import intellij.haskell.HaskellNotificationGroup
+import intellij.haskell.annotator.HaskellAnnotator
 import intellij.haskell.external.commandLine.StackCommandLine
-import intellij.haskell.util.{HaskellFileUtil, LineColumnPosition, StackYamlUtil}
+import intellij.haskell.util.{HaskellFileUtil, LineColumnPosition, StackYamlUtil, StringUtil}
 
 import scala.collection.JavaConverters._
 
@@ -96,7 +98,16 @@ object HaskellToolsComponent {
 
     ProgressManager.getInstance().run(new Task.Modal(project, "Refactoring...", false) {
       override def run(indicator: ProgressIndicator): Unit = {
-        StackCommandLine.runCommand(getRefactorCommand(project, moduleName, mode), project, 60.seconds.toMillis, captureOutputToLog = true, logErrorAsInfo = true)
+        StackCommandLine.runCommand(getRefactorCommand(project, moduleName, mode), project, 60.seconds.toMillis, logErrorAsInfo = true).foreach(output => {
+          val exitCode = output.getExitCode
+          if (exitCode != 0) {
+            HaskellNotificationGroup.logErrorBalloonEvent(project, "Could not perform refactor because of compile error")
+            val outLines = StringUtil.joinIndentedLines(project, output.getStdoutLines.asScala)
+            val errorLines = outLines.filter(_.contains("error:")).map(_.replaceAll("Source code problem: ", ""))
+            val loadResult = LoadComponent.createLoadResult(psiFile, errorLines, loadFailed = true)
+            HaskellAnnotator.createNoficationsForErrorsNotInCurrentFile(psiFile.getProject, loadResult)
+          }
+        })
       }
     })
 

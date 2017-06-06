@@ -16,10 +16,14 @@
 
 package intellij.haskell
 
+import javax.swing.event.HyperlinkEvent
+
 import com.intellij.notification.{Notification, NotificationDisplayType, NotificationGroup, NotificationListener}
+import com.intellij.openapi.fileEditor.OpenFileDescriptor
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.MessageType
 import com.intellij.openapi.ui.MessageType._
+import com.intellij.openapi.vfs.LocalFileSystem
 
 object HaskellNotificationGroup {
 
@@ -96,6 +100,17 @@ object HaskellNotificationGroup {
 
   def logInfoBalloonEvent(project: Project, message: String, listener: NotificationListener) {
     BalloonGroup.createNotification("", message, INFO.toNotificationType, listener).notify(project)
+  }
+
+  def logErrorBalloonEventWithLink(project: Project, filePath: String, errorMessage: String, lineNr: Int, columnNr: Int): Unit = {
+    Option(LocalFileSystem.getInstance().findFileByPath(filePath)) match {
+      case Some(file) => HaskellNotificationGroup.logErrorBalloonEvent(project, s"$errorMessage at <a href='#'>$filePath:$lineNr:$columnNr</a>",
+        (_: Notification, _: HyperlinkEvent) => {
+          new OpenFileDescriptor(project, file, lineNr - 1, columnNr - 1).navigate(true)
+        }
+      )
+      case _ => HaskellNotificationGroup.logErrorBalloonEvent(project, errorMessage)
+    }
   }
 
   private def logEvent(project: Option[Project], message: String, messageType: MessageType, notification: (String, MessageType) => Notification) = {
