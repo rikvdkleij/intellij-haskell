@@ -130,13 +130,12 @@ private[repl] abstract class StackReplProcess(val project: Project, val extraSta
     }
 
     if (isProjectRepl) {
-      executeBuild(project, Seq("build", "intero"), "build of Intero")
-      executeBuild(project, Seq("build", "--test", "--only-dependencies", "--haddock", "--fast"), "build of dependencies")
+      executeBuild(project, Seq("build", "intero"), "`intero`")
     }
 
     HaskellSdkType.getStackPath(project).foreach(stackPath => {
       try {
-        val command = (Seq(stackPath, "repl", "--with-ghc", "intero", "--verbosity", "warn", "--no-build", "--terminal", "--no-load", "--ghci-options=-ignore-dot-ghci") ++ extraStartOptions).mkString(" ")
+        val command = (Seq(stackPath, "repl", "--with-ghc", "intero", "--no-build", "--no-load", "--ghci-options=-ignore-dot-ghci") ++ extraStartOptions).mkString(" ")
 
         logInfo(s"Stack repl will be started with command: $command")
 
@@ -226,7 +225,7 @@ private[repl] abstract class StackReplProcess(val project: Project, val extraSta
       available = false
     }
     if (forceExit) {
-      logError("Stack repl is stopped and is not restarted automatically. Use `Tools`/`Restart Haskell Stack REPLs`")
+      logError("Stack repl is stopped and is not restarted automatically. To restart use menu option `Other`/`Haskell`/`Restart Haskell Stack REPLs`")
     } else {
       logInfo("Stack repl is stopped")
     }

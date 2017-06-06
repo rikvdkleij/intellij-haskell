@@ -373,30 +373,35 @@
                     text="Restart Haskell Stack REPLs"
                     description="Restart Haskell Stack REPLs and refresh cache">
             </action>
+
+            <action id="Haskell.GenerateHoogleDatabase" class="intellij.haskell.action.GenerateHoogleDbAction"
+                    text="Generate Hoogle database"
+                    description="Generate Haskell documentation and generate local Hoogle database">
+            </action>
             <add-to-group group-id="OtherMenu" anchor="first"/>
         </group>
 
         <group id="HaskellRefactorMenu" text="Haskell" description="Haskell Refactoring" icon="/icons/haskell@16.png" popup="true">
             <action id="Haskell.GenerateTypeSignature"
-                    class="intellij.haskell.action.HaskellTools.GenerateTypeSignatureAction"
+                    class="intellij.haskell.action.haskelltools.GenerateTypeSignatureAction"
                     text="Generate type signature"
                     description="Generate type signature for current binding with haskell-tools">
                 <keyboard-shortcut first-keystroke="ctrl alt x" keymap="$default"/>
             </action>
             <action id="Haskell.GenerateExports"
-                    class="intellij.haskell.action.HaskellTools.GenerateExportsAction"
+                    class="intellij.haskell.action.haskelltools.GenerateExportsAction"
                     text="Generate exports"
                     description="Generate exports for current file with haskell-tools">
                 <keyboard-shortcut first-keystroke="ctrl alt g" keymap="$default"/>
             </action>
             <action id="Haskell.ExtractBinding"
-                    class="intellij.haskell.action.HaskellTools.ExtractBindingAction"
+                    class="intellij.haskell.action.haskelltools.ExtractBindingAction"
                     text="Extract binding"
                     description="Extract binding for selected code with haskell-tools">
                 <keyboard-shortcut first-keystroke="ctrl alt shift b" keymap="$default"/>
             </action>
             <action id="Haskell.InlineBinding"
-                    class="intellij.haskell.action.HaskellTools.InlineBindingAction"
+                    class="intellij.haskell.action.haskelltools.InlineBindingAction"
                     text="Inline binding"
                     description="Inline binding for (selected) name with haskell-tools">
                 <keyboard-shortcut first-keystroke="ctrl alt shift k" keymap="$default"/>

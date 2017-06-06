@@ -45,6 +45,6 @@ object StackCommandLine {
   def executeBuild(project: Project, buildArguments: Seq[String], message: String): Unit = {
     HaskellNotificationGroup.logInfoEvent(project, s"""Build of $message is starting with command `stack ${buildArguments.mkString(" ")}`""")
     StackCommandLine.runCommand(buildArguments, project, BuildTimeout.toMillis, captureOutputToLog = true, logErrorAsInfo = true)
-    HaskellNotificationGroup.logInfoEvent(project, s"$message is finished")
+    HaskellNotificationGroup.logInfoEvent(project, s"Building $message is finished")
   }
 }

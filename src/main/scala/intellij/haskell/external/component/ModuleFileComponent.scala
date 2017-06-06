@@ -104,7 +104,7 @@ private[component] object ModuleFileComponent {
 
       if (filePaths.isEmpty) {
         // Test dependencies are supported since Stack 1.2.1, see https://github.com/commercialhaskell/stack/issues/1919
-        HaskellEditorUtil.showStatusBarInfoMessage(s"Could not find source code for `$moduleName`. Please use `Download Haskell library sources` in `Tools` from menu.", project)
+        HaskellEditorUtil.showStatusBarInfoMessage(s"Could not find source code for `$moduleName`. Please use `Download Haskell library sources` in `Other`/`Haskell` menu.", project)
         filePaths
       } else {
         filePaths

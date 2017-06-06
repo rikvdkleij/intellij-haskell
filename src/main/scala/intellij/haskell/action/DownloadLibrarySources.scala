@@ -27,8 +27,8 @@ class DownloadLibrarySources extends AnAction {
     HaskellEditorUtil.enableExternalAction(actionEvent, !StackProjectManager.isStarting(_))
   }
 
-  override def actionPerformed(e: AnActionEvent): Unit = {
-    Option(e.getProject).foreach { project =>
+  override def actionPerformed(actionEvent: AnActionEvent): Unit = {
+    Option(actionEvent.getProject).foreach { project =>
       HaskellProjectUtil.getProjectModules(project).foreach(m =>
         HaskellModuleBuilder.addLibrarySources(m)
       )

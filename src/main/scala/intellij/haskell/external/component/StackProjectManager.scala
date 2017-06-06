@@ -44,7 +44,7 @@ object StackProjectManager {
     getStackProjectManager(project).exists(_.starting)
   }
 
-  def isHoogleAvaiable(project: Project): Boolean = {
+  def isHoogleAvailable(project: Project): Boolean = {
     getStackProjectManager(project).exists(_.hoogleAvailable)
   }
 
@@ -73,7 +73,7 @@ object StackProjectManager {
       if (isStarting(project)) {
         HaskellNotificationGroup.logWarningBalloonEvent(project, "Stack REPLs are already (re)starting")
       } else {
-        ProgressManager.getInstance().run(new Task.Backgroundable(project, s"[$componentName] Starting Stack REPLs, building project, building tools and preloading cache", false) {
+        ProgressManager.getInstance().run(new Task.Backgroundable(project, s"[$componentName] Starting Stack REPLs, building tools and preloading cache", false) {
 
           def run(progressIndicator: ProgressIndicator) {
             getStackProjectManager(project).foreach(_.starting = true)
@@ -96,11 +96,11 @@ object StackProjectManager {
                     HaskellModuleBuilder.addLibrarySources(m)
                   })
 
-                  progressIndicator.setText("Busy with building project and starting Stack REPLs")
+                  progressIndicator.setText("Busy with starting Stack REPLs")
                   projectRepl.start()
                   globalRepl.start()
 
-                  progressIndicator.setText("Busy with preloading cache, building tools and rebuilding Hoogle database")
+                  progressIndicator.setText("Busy with preloading cache and building tools")
                   val preloadCacheFuture = ApplicationManager.getApplication.executeOnPooledThread(new Runnable {
                     override def run(): Unit = {
                       HaskellComponentsManager.preloadModuleIdentifiersCaches(project)
@@ -110,30 +110,35 @@ object StackProjectManager {
                     }
                   })
 
-                  StackCommandLine.executeBuild(project, Seq("build", HLintComponent.HlintName), "Build of `hlint`")
+                  StackCommandLine.executeBuild(project, Seq("build", HLintComponent.HlintName), "`hlint`")
                   getStackProjectManager(project).foreach(_.hlintAvailable = true)
 
-                  StackCommandLine.executeBuild(project, Seq("build", HoogleComponent.HoogleName), "Build of `hoogle`")
+                  StackCommandLine.executeBuild(project, Seq("build", HoogleComponent.HoogleName), "`hoogle`")
                   getStackProjectManager(project).foreach(_.hoogleAvailable = true)
 
                   if (HaskellToolsComponent.isRefactoringSupported(project)) {
-                    StackCommandLine.runCommand(Seq("exec", "--", HaskellToolsComponent.HaskellToolName), project) match {
-                      case Some(v) if v.getStdout.nonEmpty => HaskellNotificationGroup.logInfoEvent(project, s"${HaskellToolsComponent.HaskellToolName} is already installed")
-                      case _ => StackCommandLine.executeBuild(project, Seq("build") ++ HaskellToolsComponent.HaskellToolsCLIName, "Build of `haskell-tools`")
+                    StackCommandLine.runCommand(Seq("exec", "--", HaskellToolsComponent.HaskellToolName), project, logErrorAsInfo = true) match {
+                      case Some(output) if output.getStderr.isEmpty => HaskellNotificationGroup.logInfoEvent(project, s"${HaskellToolsComponent.HaskellToolName} is already installed")
+                      case _ => StackCommandLine.executeBuild(project, Seq("build") ++ HaskellToolsComponent.HaskellToolsCLIName, "`haskell-tools`")
                     }
                     getStackProjectManager(project).foreach(_.haskellToolsAvailable = true)
                   } else {
                     HaskellNotificationGroup.logInfoBalloonEvent(
                       project,
                       s"You need a Stack resolver greater than <a href=$lts80Link>lts-8.0</a> or <a href=$nightly20170114Link>nightly-2017-02-13</a> in order to work with <a href=$haskelltoolsLink>$HaskellToolName</a>.",
-                      (notification: Notification, hyperlinkEvent: HyperlinkEvent) => {
+                      (_: Notification, hyperlinkEvent: HyperlinkEvent) => {
                         if (hyperlinkEvent.getEventType == HyperlinkEvent.EventType.ACTIVATED) {
                           BrowserUtil.browse(hyperlinkEvent.getURL)
                         }
                       })
                   }
 
-                  HoogleComponent.rebuildHoogle(project)
+                  if (HoogleComponent.doesHoogleDatabaseExist(project)) {
+                    HaskellNotificationGroup.logInfoEvent(project, "Rebuilding Hoogle database")
+                    HoogleComponent.rebuildHoogle(project)
+                  } else {
+                    HoogleComponent.showHoogleDatabaseDoesNotExistNotification(project)
+                  }
 
                   if (!preloadCacheFuture.isDone) {
                     preloadCacheFuture.get

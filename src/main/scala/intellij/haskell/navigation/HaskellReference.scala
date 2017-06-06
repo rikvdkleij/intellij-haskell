@@ -100,10 +100,10 @@ object HaskellReference {
     }).getOrElse(Iterable())
   }
 
-  def resolveInstanceReferences(namedElement: HaskellNamedElement, psiFile: PsiFile, project: Project): Iterable[HaskellNamedElement] = {
+  def resolveInstanceReferences(namedElement: HaskellNamedElement, psiFile: PsiFile, project: Project): Seq[HaskellNamedElement] = {
     HaskellComponentsManager.findNameInfo(namedElement).flatMap { ni =>
       findNamedElementsByNameInfo(ni, namedElement, project)
-    }
+    }.toSeq.distinct
   }
 
   def findNamedElementsByLibraryNameInfo(libraryNameInfo: LibraryNameInfo, name: String, project: Project): Iterable[HaskellNamedElement] = {

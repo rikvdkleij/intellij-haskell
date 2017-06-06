@@ -17,14 +17,15 @@
 package intellij.haskell.action
 
 import com.intellij.openapi.actionSystem.{AnAction, AnActionEvent}
+import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.text.StringUtil
-import intellij.haskell.external.component.HoogleComponent
+import intellij.haskell.external.component.{HoogleComponent, StackProjectManager}
 import intellij.haskell.util.HaskellEditorUtil
 
 class HoogleAction extends AnAction {
 
   override def update(actionEvent: AnActionEvent) {
-    HaskellEditorUtil.enableAction(onlyForProjectFile = false, actionEvent)
+    HaskellEditorUtil.enableExternalAction(actionEvent, (p: Project) => StackProjectManager.isHoogleAvailable(p) && HoogleComponent.doesHoogleDatabaseExist(p))
   }
 
   def actionPerformed(actionEvent: AnActionEvent) {

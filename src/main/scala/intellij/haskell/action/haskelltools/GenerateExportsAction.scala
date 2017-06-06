@@ -1,4 +1,4 @@
-package intellij.haskell.action.HaskellTools
+package intellij.haskell.action.haskelltools
 
 import com.intellij.openapi.actionSystem.{AnAction, AnActionEvent}
 import intellij.haskell.action.{ActionContext, ActionUtil}

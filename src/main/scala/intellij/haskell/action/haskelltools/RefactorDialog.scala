@@ -1,4 +1,4 @@
-package intellij.haskell.action.HaskellTools
+package intellij.haskell.action.haskelltools
 
 import java.awt.BorderLayout
 import javax.swing.{JComponent, JPanel, JTextField}

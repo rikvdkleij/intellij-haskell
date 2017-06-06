@@ -17,6 +17,7 @@
 package intellij.haskell.navigation
 
 import com.intellij.navigation.{ChooseByNameContributor, ItemPresentation, NavigationItem}
+import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.project.Project
 import intellij.haskell.external.component._
 import intellij.haskell.util.{HaskellProjectUtil, StringUtil}
@@ -44,9 +45,14 @@ class HoogleByNameContributor extends ChooseByNameContributor {
       }
 
     val navigationItems = HoogleComponent.runHoogle(project, hooglePattern, count = 100000).getOrElse(Seq()) flatMap {
-      case ModulePattern(moduleName) => HaskellComponentsManager.findHaskellFiles(project, moduleName)
-      case PackagePattern(packageName) => Iterable(NotFoundNavigationItem(packageName))
+      case ModulePattern(moduleName) =>
+        ProgressManager.checkCanceled()
+        HaskellComponentsManager.findHaskellFiles(project, moduleName)
+      case PackagePattern(packageName) =>
+        ProgressManager.checkCanceled()
+        Iterable(NotFoundNavigationItem(packageName))
       case DeclarationPattern(moduleName, declaration) =>
+        ProgressManager.checkCanceled()
         DeclarationLineUtil.findName(declaration).map(nd => {
           val name = StringUtil.removeOuterParens(nd.name)
           val namedElementsByNameInfo = HaskellComponentsManager.findNameInfoByModuleAndName(project, moduleName, name).flatMap {
@@ -65,9 +71,27 @@ class HoogleByNameContributor extends ChooseByNameContributor {
             namedElementsByNameInfo
           }
         }).getOrElse(NotFoundResult(moduleName, declaration))
-      case d => Iterable(NotFoundNavigationItem(d))
+      case d =>
+        ProgressManager.checkCanceled()
+        Iterable(NotFoundNavigationItem(d))
     }
-    navigationItems.toArray
+    var i = 0
+    navigationItems.map(e => new NavigationItem {
+
+      // Hack to display items in same order as given by Hoogle
+      override def getName: String = {
+        i = i + 1
+        f"$i%06d" + " " + e.getName
+      }
+
+      override def getPresentation: ItemPresentation = e.getPresentation
+
+      override def navigate(b: Boolean): Unit = e.navigate(b)
+
+      override def canNavigate: Boolean = canNavigate
+
+      override def canNavigateToSource: Boolean = canNavigateToSource
+    }).toArray
   }
 
   case class NotFoundNavigationItem(declaration: String, moduleName: Option[String] = None) extends NavigationItem {
@@ -87,5 +111,4 @@ class HoogleByNameContributor extends ChooseByNameContributor {
 
     override def navigate(requestFocus: Boolean): Unit = ()
   }
-
 }

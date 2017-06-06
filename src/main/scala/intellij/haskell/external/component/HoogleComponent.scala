@@ -33,7 +33,7 @@ object HoogleComponent {
   private val Timout = 10.seconds.toMillis
 
   def runHoogle(project: Project, pattern: String, count: Int = 100): Option[Seq[String]] = {
-    if (StackProjectManager.isHoogleAvaiable(project)) {
+    if (StackProjectManager.isHoogleAvailable(project)) {
       StackCommandLine.runCommand(Seq(HoogleName, "--", s""""$pattern"""", s"--count=$count"), project, timeoutInMillis = Timout).
         map(o =>
           if (o.getStdoutLines.isEmpty || o.getStdout.contains("No results found"))
@@ -51,7 +51,10 @@ object HoogleComponent {
   }
 
   def findDocumentation(project: Project, name: String, moduleName: Option[String]): Option[String] = {
-    if (StackProjectManager.isHoogleAvaiable(project)) {
+    if (!doesHoogleDatabaseExist(project)) {
+      showHoogleDatabaseDoesNotExistNotification(project)
+      None
+    } else if (StackProjectManager.isHoogleAvailable(project)) {
       StackCommandLine.runCommand(Seq("hoogle", "--", name) ++ moduleName.map(mn => Seq(s"+$mn", "-i")).getOrElse(Seq()), project, timeoutInMillis = Timout).
         flatMap(processOutput =>
           if (processOutput.getStdoutLines.isEmpty || processOutput.getStdout.contains("No results found")) {
@@ -68,5 +71,16 @@ object HoogleComponent {
 
   def rebuildHoogle(project: Project): Option[ProcessOutput] = {
     StackCommandLine.runCommand(Seq(HoogleName, "--rebuild"), project, timeoutInMillis = 10.minutes.toMillis, logErrorAsInfo = true, captureOutputToLog = true)
+  }
+
+  def doesHoogleDatabaseExist(project: Project): Boolean = {
+    StackCommandLine.runCommand(Seq(HoogleComponent.HoogleName, "--no-setup"), project, logErrorAsInfo = true) match {
+      case Some(output) if output.getStderr.isEmpty => true
+      case _ => false
+    }
+  }
+
+  def showHoogleDatabaseDoesNotExistNotification(project: Project): Unit = {
+    HaskellNotificationGroup.logWarningBalloonEvent(project, "Hoogle database does not exist. Hoogle database can be created by menu option `Other`/`Haskell`/`Generate Hoogle database`")
   }
 }
