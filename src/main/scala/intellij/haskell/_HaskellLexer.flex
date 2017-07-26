@@ -49,7 +49,7 @@ hexadecimal         = 0[xX]{hexit}+
 octit               = [0-7]
 octal               = 0[oO]{octit}+
 
-float               = [-+]?([0-9]+(\\.[0-9]*)?|\\.[0-9]+)([eE][-+]?[0-9]+)?
+float               = [-+]?([0-9]+(\.[0-9]*)?|\.[0-9]+)([eE][-+]?[0-9]+)?
 
 gap                 = \\({white_char}|{newline})*\\
 cntrl               = {large} | [@\[\\\]\^_]

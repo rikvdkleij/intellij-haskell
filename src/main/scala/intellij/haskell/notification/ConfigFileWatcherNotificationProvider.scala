@@ -24,6 +24,7 @@ class ConfigFileWatcherNotificationProvider(project: Project, notifications: Edi
 
   override def createNotificationPanel(virtualFile: VirtualFile, fileEditor: FileEditor): EditorNotificationPanel = {
     if (HaskellProjectUtil.isHaskellProject(project) && ConfigFileWatcherNotificationProvider.showNotification) {
+      ConfigFileWatcherNotificationProvider.showNotification = false
       createPanel(project, virtualFile)
     } else {
       null
@@ -34,20 +35,20 @@ class ConfigFileWatcherNotificationProvider(project: Project, notifications: Edi
     val panel = new EditorNotificationPanel
     panel.setText("Haskell project configuration file is updated")
     panel.createActionLabel("Restart Haskell Stack REPLs", () => {
-      ConfigFileWatcherNotificationProvider.showNotification = false
       notifications.updateAllNotifications()
       StackProjectManager.restart(project)
     })
     panel.createActionLabel("Ignore", () => {
-      ConfigFileWatcherNotificationProvider.showNotification = false
       notifications.updateAllNotifications()
     })
     panel
   }
 }
 
-private class ConfigFileWatcher(project: Project, notifications: EditorNotifications) extends BulkFileListener.Adapter {
-  private val watchFiles = HaskellProjectUtil.findStackFile(project).toSeq ++ HaskellProjectUtil.findCabalFile(project).toSeq
+private class ConfigFileWatcher(project: Project, notifications: EditorNotifications) extends BulkFileListener {
+  private val watchFiles = HaskellProjectUtil.findStackFile(project).toIterable ++ HaskellProjectUtil.findCabalFiles(project)
+
+  override def before(events: util.List[_ <: VFileEvent]): Unit = {}
 
   override def after(events: util.List[_ <: VFileEvent]): Unit = {
     import scala.collection.JavaConverters._

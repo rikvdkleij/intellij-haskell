@@ -1,5 +1,5 @@
 /*
- * Copyright 2016 Rik van der Kleij
+ * Copyright 2014-2017 Rik van der Kleij
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -22,8 +22,7 @@ import com.google.common.cache.{CacheBuilder, CacheLoader}
 import com.google.common.util.concurrent.{ListenableFuture, ListenableFutureTask, UncheckedExecutionException}
 import com.intellij.openapi.progress.ProcessCanceledException
 import com.intellij.openapi.project.Project
-import intellij.haskell.external.commandLine.{CommandLine, StackCommandLine}
-import intellij.haskell.external.repl.StackReplsManager
+import intellij.haskell.external.execution.{CommandLine, StackCommandLine}
 
 import scala.collection.JavaConverters._
 
@@ -51,33 +50,29 @@ private[component] object GlobalProjectInfoComponent {
 
         private def createGlobalProjectInfo(key: Key): Option[GlobalProjectInfo] = {
           val project = key.project
-          StackReplsManager.getProjectRepl(project).flatMap(_.findAllAvailableLibraryModules).flatMap { allModuleNames =>
-            val prodModuleNames = allModuleNames.filterNot(_.startsWith("Test."))
-            for {
-              active <- isNoImplicitPreludeGlobalActive(project)
-              packageNames <- CabalConfigComponent.getAllAvailablePackageNames(project)
-            } yield GlobalProjectInfo(prodModuleNames, allModuleNames, active, getLanguageExtensions(project), packageNames)
-          }
+          val extensions = getSupportedLanguageExtensions(project)
+          val packageNames = getAvailablePackages(project)
+          extensions.map(exts => GlobalProjectInfo(exts, packageNames))
         }
 
-        private def isNoImplicitPreludeGlobalActive(project: Project): Option[Boolean] = {
-          val languageFlags = StackReplsManager.getGlobalRepl(project).flatMap(_.showActiveLanguageFlags()).map(_.stdOutLines)
-          languageFlags.map(_.exists(_.contains("-XNoImplicitPrelude")))
-        }
-
-        private def getLanguageExtensions(project: Project): Iterable[String] = {
+        def getSupportedLanguageExtensions(project: Project): Option[Iterable[String]] = {
           findGhcPath(project).flatMap(ghcPath => {
             CommandLine.runProgram(
               Some(project),
               project.getBasePath,
               ghcPath,
-              Seq("--supported-languages")
+              Seq("--supported-languages"),
+              notifyBalloonError = true
             ).map(_.getStdoutLines.asScala)
-          }).getOrElse(Iterable())
+          })
+        }
+
+        def getAvailablePackages(project: Project): Iterable[String] = {
+          CabalConfigComponent.getAvailablePackageNames(project)
         }
 
         private def findGhcPath(project: Project) = {
-          StackCommandLine.runCommand(Seq("path", "--compiler-exe"), project).flatMap(_.getStdoutLines.asScala.headOption)
+          StackCommandLine.runCommand(project, Seq("path", "--compiler-exe")).flatMap(_.getStdoutLines.asScala.headOption)
         }
       }
     )
@@ -99,12 +94,9 @@ private[component] object GlobalProjectInfoComponent {
   }
 
   def invalidate(project: Project): Unit = {
-    Cache.invalidate(Key(project))
+    val keys = Cache.asMap().keySet().asScala.filter(_.project == project)
+    keys.foreach(Cache.invalidate)
   }
 }
 
-case class GlobalProjectInfo(availableProductionLibraryModuleNames: Iterable[String] = Iterable(),
-                             allAvailableLibraryModuleNames: Iterable[String] = Iterable(),
-                             noImplicitPreludeActive: Boolean = false,
-                             languageExtensions: Iterable[String] = Iterable(),
-                             allAvailablePackageNames: Iterable[String] = Iterable())
+case class GlobalProjectInfo(supportedLanguageExtensions: Iterable[String], availablePackageNames: Iterable[String])

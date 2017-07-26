@@ -1,5 +1,5 @@
 /*
- * Copyright 2016 Rik van der Kleij
+ * Copyright 2014-2017 Rik van der Kleij
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,15 +18,20 @@ package intellij.haskell.util
 
 import java.awt.Point
 import java.awt.event.{MouseEvent, MouseMotionAdapter}
+import javax.swing.Icon
+import javax.swing.event.HyperlinkListener
 
 import com.intellij.codeInsight.hint.{HintManager, HintManagerImpl, HintUtil}
 import com.intellij.openapi.actionSystem.{AnActionEvent, CommonDataKeys}
 import com.intellij.openapi.editor.Editor
+import com.intellij.openapi.fileEditor.ex.FileEditorManagerEx
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.MessageType
 import com.intellij.openapi.ui.popup.util.BaseListPopupStep
 import com.intellij.openapi.ui.popup.{Balloon, JBPopupFactory}
 import com.intellij.openapi.wm.WindowManager
+import com.intellij.openapi.wm.ex.StatusBarEx
+import com.intellij.psi.{PsiElement, PsiFile}
 import com.intellij.ui.LightweightHint
 import com.intellij.ui.awt.RelativePoint
 import com.intellij.util.ui.{PositionTracker, UIUtil}
@@ -38,10 +43,10 @@ object HaskellEditorUtil {
 
   def enableExternalAction(actionEvent: AnActionEvent, enableCondition: Project => Boolean): Unit = {
     Option(actionEvent.getProject) match {
-      case Some(project) =>
-        actionEvent.getPresentation.setVisible(HaskellProjectUtil.isHaskellProject(project))
+      case Some(project) if HaskellProjectUtil.isHaskellProject(project) =>
+        actionEvent.getPresentation.setVisible(true)
         actionEvent.getPresentation.setEnabled(HaskellProjectUtil.isValidHaskellProject(project, notifyNoSdk = false) && enableCondition(project))
-      case None => actionEvent.getPresentation.setEnabledAndVisible(false)
+      case _ => actionEvent.getPresentation.setEnabledAndVisible(false)
     }
   }
 
@@ -61,10 +66,14 @@ object HaskellEditorUtil {
     try {
       val dataContext = actionEvent.getDataContext
       val psiFile = CommonDataKeys.PSI_FILE.getData(dataContext)
-      psiFile match {
-        case _: HaskellFile if !onlyForProjectFile => enable()
-        case _: HaskellFile if onlyForProjectFile && !HaskellProjectUtil.isLibraryFile(psiFile).getOrElse(true) => enable()
-        case _ => disable()
+      if (HaskellProjectUtil.isHaskellProject(psiFile.getProject)) {
+        psiFile match {
+          case _: HaskellFile if !onlyForProjectFile => enable()
+          case _: HaskellFile if onlyForProjectFile && !HaskellProjectUtil.isLibraryFile(psiFile).getOrElse(true) => enable()
+          case _ => disable()
+        }
+      } else {
+        disable()
       }
     }
     catch {
@@ -127,5 +136,28 @@ object HaskellEditorUtil {
 
   def showStatusBarInfoMessage(message: String, project: Project): Unit = {
     WindowManager.getInstance().getStatusBar(project).setInfo(message)
+  }
+
+  def showStatusBarNotificationBalloon(project: Project, message: String): Unit = {
+    UIUtil.invokeLaterIfNeeded(() => {
+      def run() = {
+        val ideFrame = WindowManager.getInstance.getIdeFrame(project)
+        if (ideFrame != null) {
+          val statusBar = ideFrame.getStatusBar.asInstanceOf[StatusBarEx]
+          statusBar.notifyProgressByBalloon(MessageType.WARNING, message, null.asInstanceOf[Icon], null.asInstanceOf[HyperlinkListener])
+        }
+      }
+
+      run()
+    })
+  }
+
+  def findCurrentEditorFile(project: Project): Option[HaskellFile] = {
+    Option(FileEditorManagerEx.getInstanceEx(project).getCurrentFile).flatMap(vf => HaskellFileUtil.convertToHaskellFile(project, vf))
+  }
+
+  def findCurrentElement(psiFile: PsiFile): Option[PsiElement] = {
+   val offset =  Option(FileEditorManagerEx.getInstanceEx(psiFile.getProject).getSelectedTextEditor).map(_.getCaretModel.getCurrentCaret.getOffset)
+    offset.map(psiFile.findElementAt)
   }
 }

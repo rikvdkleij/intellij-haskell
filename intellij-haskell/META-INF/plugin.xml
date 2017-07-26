@@ -12,11 +12,16 @@
 
     <change-notes><![CDATA[
         <p>1.0.0-beta9</p>
+        <b>IMPORTANT: After upgrade reimport your Haskell Stack project and delete folder .ideaHaskellLib inside project's folder</b>
         <ul>
             <li>Various (performance) improvements and fixes</li>
-            <li>Windows support in alpha</li>
+            <li>Windows support</li>
             <li>Added notification to restart REPLs after changing Cabal or Stack file (@zjhmale)</li>
             <li>Added notification to setup SDK in case no Haskell SDK is set for project</li>
+            <li>Multi package support</li>
+            <li>Only one Stack target is loaded per REPL to prevent conflicts</li>
+            <li>Library sources are downloaded to folder .intellij-haskell inside user's home directory</li>
+            <li>Hoogle database is not automatically generated anymore while starting project but is become separate action in Tools menu</li>
         </ul>
         <p>1.0.0-beta8</p>
         <ul>
@@ -181,6 +186,7 @@
         <!-- Refactoring support -->
         <lang.refactoringSupport language="Haskell"
                                  implementationClass="intellij.haskell.refactor.HaskellRefactoringSupportProvider"/>
+        <moveFileHandler implementation="intellij.haskell.refactor.HaskellMoveFileHandler"/>
 
         <!-- Commenter -->
         <lang.commenter language="Haskell" implementationClass="intellij.haskell.editor.HaskellCommenter"/>
@@ -203,7 +209,7 @@
                                  implementationClass="intellij.haskell.navigation.HaskellFindUsagesProvider"/>
 
         <!-- Navigation -->
-        <gotoClassContributor implementation="intellij.haskell.navigation.GotoByDeclarationContributor"/>
+        <gotoClassContributor  implementation="intellij.haskell.navigation.GotoByDeclarationContributor"/>
         <gotoSymbolContributor implementation="intellij.haskell.navigation.GotoByNameContributor"/>
 
         <!-- Annotator -->
@@ -217,7 +223,7 @@
                                 implementationClass="intellij.haskell.editor.HaskellCompletionContributor"/>
         <completion.contributor
                 language="Cabal"
-                implementationClass="intellij.haskell.cabal.completion.CabalCompletionContributor" />
+                implementationClass="intellij.haskell.cabal.completion.CabalCompletionContributor"/>
         <lookup.charFilter implementation="intellij.haskell.editor.HaskellCompletionCharFilter"/>
         <psi.referenceContributor language="Haskell" implementation="intellij.haskell.psi.HaskellReferenceContributor"/>
 
@@ -258,8 +264,8 @@
         <projectImportBuilder implementation="intellij.haskell.module.StackProjectImportBuilder"/>
 
         <!-- Index -->
-        <fileBasedIndex implementation="intellij.haskell.util.index.HaskellFileIndex"/>
-        <fileBasedIndex implementation="intellij.haskell.util.index.HaskellModuleIndex"/>
+        <fileBasedIndex implementation="intellij.haskell.util.index.HaskellFileNameIndex"/>
+        <fileBasedIndex implementation="intellij.haskell.util.index.HaskellModuleNameIndex"/>
         <stubIndex implementation="intellij.haskell.psi.stubs.index.HaskellAllNameIndex"/>
         <stubElementTypeHolder class="intellij.haskell.psi.HaskellTypes"/>
 
@@ -304,18 +310,11 @@
 
     <project-components>
         <component>
-            <implementation-class>intellij.haskell.external.repl.GlobalStackReplProcess</implementation-class>
-        </component>
-        <component>
-            <implementation-class>intellij.haskell.external.repl.ProjectStackReplProcess</implementation-class>
-        </component>
-        <component>
             <implementation-class>intellij.haskell.external.component.StackProjectManager</implementation-class>
         </component>
 
         <component>
-            <implementation-class>intellij.haskell.external.component.HaskellDocumentationProvider
-            </implementation-class>
+            <implementation-class>intellij.haskell.external.component.HaskellDocumentationProvider </implementation-class>
         </component>
     </project-components>
 
@@ -325,7 +324,8 @@
             <add-to-group group-id="NewGroup" anchor="before" relative-to-action="NewFile"/>
         </action>
 
-        <group id="HaskellCodeEditor" text="Haskell" description="Haskell View Tools" icon="/icons/haskell@16.png" popup="true">
+        <group id="HaskellCodeEditor" text="Haskell" description="Haskell View Tools" icon="/icons/haskell@16.png"
+               popup="true">
             <action id="Haskell.ShowType" class="intellij.haskell.action.ShowTypeAction"
                     text="Show Type" description="Show type of (selected) expression">
 
@@ -374,39 +374,11 @@
                     description="Restart Haskell Stack REPLs and refresh cache">
             </action>
 
-            <action id="Haskell.GenerateHoogleDatabase" class="intellij.haskell.action.GenerateHoogleDbAction"
-                    text="Generate Hoogle database"
-                    description="Generate Haskell documentation and generate local Hoogle database">
+            <action id="Haskell.BuildHoogleDatabase" class="intellij.haskell.action.BuildHoogleDbAction"
+                    text="(Re)Build Hoogle database"
+                    description="(Re)Generate Haskell documentation and (re)build local Hoogle database">
             </action>
-            <add-to-group group-id="OtherMenu" anchor="first"/>
-        </group>
-
-        <group id="HaskellRefactorMenu" text="Haskell" description="Haskell Refactoring" icon="/icons/haskell@16.png" popup="true">
-            <action id="Haskell.GenerateTypeSignature"
-                    class="intellij.haskell.action.haskelltools.GenerateTypeSignatureAction"
-                    text="Generate type signature"
-                    description="Generate type signature for current binding with haskell-tools">
-                <keyboard-shortcut first-keystroke="ctrl alt x" keymap="$default"/>
-            </action>
-            <action id="Haskell.GenerateExports"
-                    class="intellij.haskell.action.haskelltools.GenerateExportsAction"
-                    text="Generate exports"
-                    description="Generate exports for current file with haskell-tools">
-                <keyboard-shortcut first-keystroke="ctrl alt g" keymap="$default"/>
-            </action>
-            <action id="Haskell.ExtractBinding"
-                    class="intellij.haskell.action.haskelltools.ExtractBindingAction"
-                    text="Extract binding"
-                    description="Extract binding for selected code with haskell-tools">
-                <keyboard-shortcut first-keystroke="ctrl alt shift b" keymap="$default"/>
-            </action>
-            <action id="Haskell.InlineBinding"
-                    class="intellij.haskell.action.haskelltools.InlineBindingAction"
-                    text="Inline binding"
-                    description="Inline binding for (selected) name with haskell-tools">
-                <keyboard-shortcut first-keystroke="ctrl alt shift k" keymap="$default"/>
-            </action>
-            <add-to-group group-id="RefactoringMenu" anchor="last"/>
+            <add-to-group group-id="ToolsMenu" anchor="first"/>
         </group>
 
         <group id="HaskellCodeMenu" text="Haskell" description="Haskell Code Tools" icon="/icons/haskell@16.png" popup="true">
@@ -445,7 +417,7 @@
                     class="intellij.haskell.action.GotoInstanceDeclarationAction"
                     text="Instance Declaration"
                     description="Goto instance declaration">
-                <keyboard-shortcut first-keystroke="ctrl alt i"  keymap="$default"/>
+                <keyboard-shortcut first-keystroke="ctrl alt i" keymap="$default"/>
             </action>
             <add-to-group group-id="GoToMenu" anchor="last"/>
         </group>

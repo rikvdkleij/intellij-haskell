@@ -1,5 +1,5 @@
 /*
- * Copyright 2016 Rik van der Kleij
+ * Copyright 2014-2017 Rik van der Kleij
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -21,34 +21,35 @@ import com.intellij.openapi.editor.SelectionModel
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Computable
 import com.intellij.psi.{PsiElement, PsiFile}
-import intellij.haskell.annotator.HaskellAnnotator
-import intellij.haskell.external.component.DefinitionLocationComponent.DefinitionLocationResult
+import intellij.haskell.external.execution.CompilationResult
+import intellij.haskell.external.repl.StackReplsManager
+import intellij.haskell.external.repl.StackReplsManager.StackComponentInfo
 import intellij.haskell.psi.{HaskellNamedElement, HaskellPsiUtil}
 import intellij.haskell.util.HaskellProjectUtil
-import intellij.haskell.util.index.HaskellFileIndex
+import intellij.haskell.util.index.HaskellFileNameIndex
 import intellij.haskell.{HaskellFile, HaskellNotificationGroup}
 
 object HaskellComponentsManager {
 
   def findPreloadedModuleIdentifiers(project: Project): Iterable[ModuleIdentifier] = {
     val moduleNames = BrowseModuleComponent.findModuleNamesInCache(project)
-    moduleNames.flatMap(mn => findImportedModuleIdentifiers(project, mn))
+    moduleNames.flatMap(mn => findExportedModuleIdentifiers(project, mn))
   }
 
-  def findImportedModuleIdentifiers(project: Project, moduleName: String): Iterable[ModuleIdentifier] = {
-    BrowseModuleComponent.findImportedModuleIdentifiers(project, moduleName)
+  def findExportedModuleIdentifiers(project: Project, moduleName: String): Iterable[ModuleIdentifier] = {
+    BrowseModuleComponent.findExportedModuleIdentifiers(project, moduleName, None)
   }
 
-  def findAllTopLevelModuleIdentifiers(project: Project, psiFile: PsiFile, moduleName: String): Iterable[ModuleIdentifier] = {
-    BrowseModuleComponent.findAllTopLevelModuleIdentifiers(project, moduleName, psiFile)
+  def findExportedModuleIdentifiersOfCurrentFile(psiFile: PsiFile, moduleName: String): Iterable[ModuleIdentifier] = {
+    BrowseModuleComponent.findExportedModuleIdentifiers(psiFile.getProject, moduleName, Some(psiFile))
   }
 
-  def findDefinitionLocation(namedElement: HaskellNamedElement): DefinitionLocationResult = {
+  def findDefinitionLocation(namedElement: HaskellNamedElement): Option[LocationInfo] = {
     DefinitionLocationComponent.findDefinitionLocation(namedElement)
   }
 
-  def findNameInfo(psiElement: PsiElement): Iterable[NameInfo] = {
-    NameInfoComponent.findNameInfo(psiElement)
+  def findNameInfo(psiElement: PsiElement, forceGetInfo: Boolean): Iterable[NameInfo] = {
+    NameInfoComponent.findNameInfo(psiElement, forceGetInfo)
   }
 
   def findNameInfoByModuleAndName(project: Project, moduleName: String, name: String): Iterable[NameInfo] = {
@@ -59,82 +60,95 @@ object HaskellComponentsManager {
     AvailableModuleNamesComponent.findAvailableModuleNames(psiFile)
   }
 
-  def findGlobalProjectInfo(project: Project): Option[GlobalProjectInfo] = {
-    GlobalProjectInfoComponent.findGlobalProjectInfo(project)
+  def findStackComponentGlobalInfo(psiFile: PsiFile): Option[StackComponentGlobalInfo] = {
+    StackComponentGlobalInfoComponent.findStackComponentGlobalInfo(psiFile)
   }
 
-  def loadHaskellFile(psiFile: PsiFile): LoadResult = {
-    LoadComponent.load(psiFile)
+  def findStackComponentInfo(psiFile: PsiFile): Option[StackComponentInfo] = {
+    HaskellProjectFileInfoComponent.findHaskellProjectFileInfo(psiFile).map(_.stackComponentInfo)
   }
 
-  def invalidateModuleFileCache(project: Project): Unit = {
-    ModuleFileComponent.invalidate(project)
+  def getSupportedLanguageExtension(project: Project): Iterable[String] = {
+    GlobalProjectInfoComponent.findGlobalProjectInfo(project).map(_.supportedLanguageExtensions).getOrElse(Iterable())
+  }
+
+  def getAvailablePackages(project: Project): Iterable[String] = {
+    GlobalProjectInfoComponent.findGlobalProjectInfo(project).map(_.availablePackageNames).getOrElse(Iterable())
+  }
+
+  def findProjectPackageNames(project: Project): Option[Iterable[String]] = {
+    StackReplsManager.getReplsManager(project).map(_.cabalInfos.map(_.packageName))
+  }
+
+  def loadHaskellFile(psiFile: PsiFile, psiElement: Option[PsiElement]): Option[CompilationResult] = {
+    LoadComponent.load(psiFile, psiElement)
+  }
+
+  def invalidateHaskellFileInfoCache(psiFile: PsiFile): Unit = {
+    HaskellProjectFileInfoComponent.invalidate(psiFile)
   }
 
   def invalidateGlobalCaches(project: Project): Unit = {
+    HaskellNotificationGroup.logInfoEvent(project, "Start to invalidate cache")
     GlobalProjectInfoComponent.invalidate(project)
+    StackComponentGlobalInfoComponent.invalidate(project)
+    HaskellProjectFileInfoComponent.invalidate(project)
     BrowseModuleComponent.invalidate(project)
     NameInfoComponent.invalidateAll(project)
-    ModuleFileComponent.invalidate(project)
+    DefinitionLocationComponent.invalidateAll(project)
+    HaskellNotificationGroup.logInfoEvent(project, "Finished with invalidating cache")
   }
 
-  def preloadModuleIdentifiersCaches(project: Project): Unit = {
-    HaskellNotificationGroup.logInfoEvent(project, "Start to preload cache")
+  def preloadLibraryIdentifiersCaches(project: Project): Unit = {
+    HaskellNotificationGroup.logInfoEvent(project, "Start to preload library cache")
     preloadLibraryIdentifiers(project)
-    HaskellAnnotator.restartDaemonCodeAnalyzerForOpenFiles(project)
-    HaskellNotificationGroup.logInfoEvent(project, "Finished with preloading cache")
+    HaskellNotificationGroup.logInfoEvent(project, "Finished with preloading library cache")
   }
 
-  def findTypeInfoForElement(psiElement: PsiElement): Option[TypeInfo] = {
-    TypeInfoComponent.findTypeInfoForElement(psiElement)
+  def findTypeInfoForElement(psiElement: PsiElement, forceGetInfo: Boolean): Option[TypeInfo] = {
+    TypeInfoComponent.findTypeInfoForElement(psiElement, forceGetInfo)
   }
 
   def findTypeInfoForSelection(psiFile: PsiFile, selectionModel: SelectionModel): Option[TypeInfo] = {
     TypeInfoComponent.findTypeInfoForSelection(psiFile, selectionModel)
   }
 
-  def findHaskellFiles(project: Project, moduleName: String): Iterable[HaskellFile] = {
-    ModuleFileComponent.findHaskellFiles(project, moduleName)
-  }
-
   private def preloadLibraryIdentifiers(project: Project): Unit = {
     if (!project.isDisposed) {
-      val projectInfo = findGlobalProjectInfo(project)
       if (!project.isDisposed) {
-        BrowseModuleComponent.findImportedModuleIdentifiers(project, HaskellProjectUtil.Prelude)
-      }
-      if (!project.isDisposed) {
-        projectInfo.foreach(_.allAvailableLibraryModuleNames.find(_ == HaskellProjectUtil.Protolude).foreach(mn => BrowseModuleComponent.findImportedModuleIdentifiers(project, mn)))
+        BrowseModuleComponent.findExportedModuleIdentifiers(project, HaskellProjectUtil.Prelude, None)
       }
 
-      val files =
-        ApplicationManager.getApplication.runReadAction(new Computable[Iterable[HaskellFile]] {
-          override def compute(): Iterable[HaskellFile] =
-            if (!project.isDisposed) {
-              HaskellFileIndex.findProjectProductionPsiFiles(project)
-            } else {
-              Iterable()
-            }
-        })
-
-      val moduleNames = files.flatMap(f => {
-        ApplicationManager.getApplication.runReadAction(new Computable[Iterable[String]] {
-          override def compute(): Iterable[String] =
-            if (!project.isDisposed) {
-              HaskellPsiUtil.findImportDeclarations(f).flatMap(_.getModuleName)
-            } else {
-              Iterable()
-            }
-        })
-      }).toSeq.distinct.filterNot(mn => mn == HaskellProjectUtil.Prelude || mn == HaskellProjectUtil.Protolude)
-
       if (!project.isDisposed) {
-        moduleNames.foreach(mn => {
-          if (!project.isDisposed) {
-            BrowseModuleComponent.findImportedModuleIdentifiers(project, mn)
-            Thread.sleep(500)
-          }
-        })
+        val projectHaskellFiles =
+          ApplicationManager.getApplication.runReadAction(new Computable[Iterable[HaskellFile]] {
+            override def compute(): Iterable[HaskellFile] =
+              if (project.isDisposed) {
+                Iterable()
+              } else {
+                HaskellFileNameIndex.findProjectProductionHaskellFiles(project)
+              }
+          })
+
+        val importedModuleNames = projectHaskellFiles.flatMap(f => {
+          ApplicationManager.getApplication.runReadAction(new Computable[Iterable[String]] {
+            override def compute(): Iterable[String] =
+              if (project.isDisposed) {
+                Iterable()
+              } else {
+                HaskellPsiUtil.findImportDeclarations(f).flatMap(_.getModuleName.filter(_.nonEmpty))
+              }
+          })
+        }).toSeq.distinct.filterNot(_ == HaskellProjectUtil.Prelude)
+
+        if (!project.isDisposed) {
+          importedModuleNames.foreach(mn => {
+            if (!project.isDisposed) {
+              BrowseModuleComponent.findExportedModuleIdentifiers(project, mn, None)
+              Thread.sleep(500)
+            }
+          })
+        }
       }
     }
   }

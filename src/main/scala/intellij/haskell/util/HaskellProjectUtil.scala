@@ -1,5 +1,5 @@
 /*
- * Copyright 2016 Rik van der Kleij
+ * Copyright 2014-2017 Rik van der Kleij
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,7 +18,7 @@ package intellij.haskell.util
 
 import java.io.File
 
-import com.intellij.openapi.module.{Module, ModuleManager}
+import com.intellij.openapi.module.{Module, ModuleManager, ModuleUtil, ModuleUtilCore}
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.roots.ProjectRootManager
 import com.intellij.openapi.vfs.{LocalFileSystem, VirtualFile}
@@ -31,7 +31,6 @@ import intellij.haskell.sdk.HaskellSdkType
 object HaskellProjectUtil {
 
   final val Prelude = "Prelude"
-  final val Protolude = "Protolude"
 
   def isValidHaskellProject(project: Project, notifyNoSdk: Boolean): Boolean = {
     val stackPath = HaskellSdkType.getStackPath(project, notifyNoSdk)
@@ -39,7 +38,7 @@ object HaskellProjectUtil {
   }
 
   def isHaskellProject(project: Project): Boolean = {
-    HaskellModuleType.findHaskellProjectModules(project).nonEmpty
+    findProjectModules(project).nonEmpty
   }
 
   def findFile(filePath: String, project: Project): Option[HaskellFile] = {
@@ -71,19 +70,17 @@ object HaskellProjectUtil {
   }
 
   def isProjectFile(virtualFile: VirtualFile, project: Project): Option[Boolean] = {
-    getProjectRootManager(project).map(_.getFileIndex.isInSource(virtualFile))
+    getProjectRootManager(project).map(_.getFileIndex.isContentSourceFile(virtualFile))
   }
 
-  def findCabalPackageName(project: Project): Option[String] = {
-    findCabalPackageName(new File(project.getBasePath))
+  def getModulePath(module: Module): File = {
+    new File(ModuleUtilCore.getModuleDirPath(module))
   }
 
-  def findCabalPackageName(directory: File): Option[String] = {
-    findCabalFile(directory).map(_.getName.replaceFirst(".cabal", ""))
-  }
-
-  def findCabalFile(project: Project): Option[File] = {
-    findCabalFile(new File(project.getBasePath))
+  def findCabalFiles(project: Project): Iterable[File] = {
+    val modules = findProjectModules(project)
+    val dirs = modules.map(getModulePath)
+    dirs.flatMap(findCabalFile)
   }
 
   def findCabalFile(directory: File): Option[File] = {
@@ -99,7 +96,12 @@ object HaskellProjectUtil {
   }
 
   def getProjectModulesSearchScope(project: Project): GlobalSearchScope = {
-    getProjectModules(project).map(GlobalSearchScope.moduleScope).reduce(_.uniteWith(_))
+    val projectModules = findProjectModules(project).map(GlobalSearchScope.moduleScope)
+    if (projectModules.isEmpty) {
+      GlobalSearchScope.EMPTY_SCOPE
+    } else {
+      projectModules.reduce(_.uniteWith(_))
+    }
   }
 
   def getSearchScope(project: Project, includeNonProjectItems: Boolean): GlobalSearchScope = {
@@ -116,7 +118,9 @@ object HaskellProjectUtil {
     project.isDisposed.optionNot(ModuleManager.getInstance(project))
   }
 
-  def getProjectModules(project: Project): Array[Module] = {
-    getModuleManager(project).map(_.getModules).getOrElse(Array())
+  import scala.collection.JavaConverters._
+
+  def findProjectModules(project: Project): Iterable[Module] = {
+    ModuleUtil.getModulesOfType(project, HaskellModuleType.getInstance).asScala
   }
 }

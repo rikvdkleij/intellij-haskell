@@ -1,5 +1,5 @@
 /*
- * Copyright 2016 Rik van der Kleij
+ * Copyright 2014-2017 Rik van der Kleij
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -20,7 +20,9 @@ import com.intellij.navigation.{ChooseByNameContributor, ItemPresentation, Navig
 import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.project.Project
 import intellij.haskell.external.component._
-import intellij.haskell.util.{HaskellProjectUtil, StringUtil}
+import intellij.haskell.psi.HaskellPsiUtil
+import intellij.haskell.util.StringUtil
+import intellij.haskell.util.index.HaskellModuleNameIndex
 
 class HoogleByNameContributor extends ChooseByNameContributor {
 
@@ -33,7 +35,7 @@ class HoogleByNameContributor extends ChooseByNameContributor {
   }
 
   override def getItemsByName(name: String, pattern: String, project: Project, includeNonProjectItems: Boolean): Array[NavigationItem] = {
-    def NotFoundResult(moduleName: String, declaration: String) = {
+    def NotFoundResult(moduleName: String, declaration: String): Iterable[NotFoundNavigationItem] = {
       Iterable(NotFoundNavigationItem(declaration, Some(moduleName)))
     }
 
@@ -41,13 +43,13 @@ class HoogleByNameContributor extends ChooseByNameContributor {
       if (includeNonProjectItems) {
         pattern
       } else {
-        HaskellProjectUtil.findCabalPackageName(project).map(pn => s"+$pn $pattern").getOrElse(pattern)
+        HaskellComponentsManager.findProjectPackageNames(project).map(_.foldLeft("")((s: String, pn: String) => s + s"+$pn")).map(_ + s" $pattern").getOrElse(pattern)
       }
 
     val navigationItems = HoogleComponent.runHoogle(project, hooglePattern, count = 100000).getOrElse(Seq()) flatMap {
       case ModulePattern(moduleName) =>
         ProgressManager.checkCanceled()
-        HaskellComponentsManager.findHaskellFiles(project, moduleName)
+        HaskellModuleNameIndex.findHaskellFilesByModuleNameInAllScope(project, moduleName)
       case PackagePattern(packageName) =>
         ProgressManager.checkCanceled()
         Iterable(NotFoundNavigationItem(packageName))
@@ -56,19 +58,19 @@ class HoogleByNameContributor extends ChooseByNameContributor {
         DeclarationLineUtil.findName(declaration).map(nd => {
           val name = StringUtil.removeOuterParens(nd.name)
           val namedElementsByNameInfo = HaskellComponentsManager.findNameInfoByModuleAndName(project, moduleName, name).flatMap {
-            case lni: LibraryNameInfo => HaskellReference.findNamedElementsByLibraryNameInfo(lni, name, project)
+            case lni: LibraryNameInfo => HaskellReference.findNamedElementsByLibraryNameInfo(lni, name, project, None, preferExpressions = false)
             case pni: ProjectNameInfo => HaskellReference.findNamedElementByLocation(pni.filePath, pni.lineNr, pni.columnNr, name, project).toIterable
             case _ => Iterable()
           }
           if (namedElementsByNameInfo.isEmpty) {
-            val namedElements = HaskellReference.findNamedElementsInModule(moduleName, name, project)
+            val namedElements = HaskellReference.findNamedElementsByModuleNameAndName(moduleName, name, project, None, preferExpressions = false)
             if (namedElements.isEmpty) {
               NotFoundResult(moduleName, declaration)
             } else {
-              namedElements
+              namedElements.flatMap(HaskellPsiUtil.findDeclarationElementParent)
             }
           } else {
-            namedElementsByNameInfo
+            namedElementsByNameInfo.flatMap(HaskellPsiUtil.findDeclarationElementParent)
           }
         }).getOrElse(NotFoundResult(moduleName, declaration))
       case d =>
@@ -111,4 +113,5 @@ class HoogleByNameContributor extends ChooseByNameContributor {
 
     override def navigate(requestFocus: Boolean): Unit = ()
   }
+
 }

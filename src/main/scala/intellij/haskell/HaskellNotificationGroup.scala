@@ -1,5 +1,5 @@
 /*
- * Copyright 2016 Rik van der Kleij
+ * Copyright 2014-2017 Rik van der Kleij
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,7 +18,7 @@ package intellij.haskell
 
 import javax.swing.event.HyperlinkEvent
 
-import com.intellij.notification.{Notification, NotificationDisplayType, NotificationGroup, NotificationListener}
+import com.intellij.notification._
 import com.intellij.openapi.fileEditor.OpenFileDescriptor
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.MessageType
@@ -28,7 +28,7 @@ import com.intellij.openapi.vfs.LocalFileSystem
 object HaskellNotificationGroup {
 
   private val LogOnlyGroup = new NotificationGroup("Haskell Log", NotificationDisplayType.NONE, false)
-  private val BalloonGroup = new NotificationGroup("Haskell Balloon", NotificationDisplayType.BALLOON, false)
+  private val BalloonGroup = new NotificationGroup("Haskell Balloon", NotificationDisplayType.BALLOON, true)
 
   def logErrorEvent(project: Option[Project], message: String) {
     logEvent(project, message, ERROR, LogOnlyGroup.createNotification)

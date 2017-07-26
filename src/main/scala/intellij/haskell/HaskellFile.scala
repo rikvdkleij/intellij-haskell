@@ -1,5 +1,5 @@
 /*
- * Copyright 2016 Rik van der Kleij
+ * Copyright 2014-2017 Rik van der Kleij
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -21,14 +21,13 @@ import javax.swing._
 import com.intellij.extapi.psi.PsiFileBase
 import com.intellij.openapi.fileTypes.{FileType, FileTypeConsumer, FileTypeFactory, LanguageFileType}
 import com.intellij.psi.FileViewProvider
-import intellij.haskell.psi.{HaskellModid, HaskellModuleDeclaration, HaskellPsiUtil}
 import org.jetbrains.annotations.NotNull
 
 class HaskellFile(viewProvider: FileViewProvider) extends PsiFileBase(viewProvider, HaskellLanguage.Instance) {
 
   @NotNull
   def getFileType: FileType = {
-    HaskellFileType.INSTANCE
+    HaskellFileType.Instance
   }
 
   override def toString: String = {
@@ -41,7 +40,7 @@ class HaskellFile(viewProvider: FileViewProvider) extends PsiFileBase(viewProvid
 }
 
 object HaskellFileType {
-  final val INSTANCE: HaskellFileType = new HaskellFileType
+  final val Instance: HaskellFileType = new HaskellFileType
 }
 
 class HaskellFileType extends LanguageFileType(HaskellLanguage.Instance) {
@@ -65,6 +64,6 @@ class HaskellFileType extends LanguageFileType(HaskellLanguage.Instance) {
 
 class HaskellLanguageFileTypeFactory extends FileTypeFactory {
   def createFileTypes(consumer: FileTypeConsumer) {
-    consumer.consume(HaskellFileType.INSTANCE, HaskellFileType.INSTANCE.getDefaultExtension)
+    consumer.consume(HaskellFileType.Instance, HaskellFileType.Instance.getDefaultExtension)
   }
 }

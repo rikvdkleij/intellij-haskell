@@ -1,5 +1,5 @@
 /*
- * Copyright 2016 Rik van der Kleij
+ * Copyright 2014-2017 Rik van der Kleij
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -90,7 +90,7 @@ private class HaskellStructureViewTreeElement(val element: PsiElement, val typeS
   override def getIcon(unused: Boolean): Icon = {
     element match {
       case hde: HaskellDeclarationElement => hde.getPresentation.getIcon(unused)
-      case pf: PsiFile => HaskellIcons.Module
+      case _: PsiFile => HaskellIcons.Module
       case _ => null
     }
   }

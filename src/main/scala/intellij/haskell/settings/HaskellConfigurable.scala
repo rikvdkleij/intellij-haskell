@@ -1,5 +1,5 @@
 /*
- * Copyright 2016 Rik van der Kleij
+ * Copyright 2014-2017 Rik van der Kleij
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -57,10 +57,8 @@ class HaskellConfigurable extends Configurable {
 
     val settingsPanel = new JPanel(new GridBagLayout())
 
-    val listener: DocumentAdapter = new DocumentAdapter() {
-      override def textChanged(e: DocumentEvent) {
-        isModifiedByUser = true
-      }
+    val listener: DocumentAdapter = (_: DocumentEvent) => {
+      isModifiedByUser = true
     }
 
     hindentPathField.getTextField.getDocument.addDocumentListener(listener)
@@ -128,6 +126,7 @@ class HaskellConfigurable extends Configurable {
         throw new ConfigurationException(s"Invalid path to $command")
       }
     }
+
     Seq((Hindent, hindentPathField.getText), (StylishHaskell, stylishHaskellPathField.getText)
     ).foreach({ case (c, p) => validate(c, p) })
   }

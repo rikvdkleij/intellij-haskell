@@ -1,5 +1,5 @@
 /*
- * Copyright 2016 Rik van der Kleij
+ * Copyright 2014-2017 Rik van der Kleij
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,10 +18,10 @@ package intellij.haskell.external.component
 
 import java.util.regex.Pattern
 
-import com.intellij.execution.process.ProcessOutput
+import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.project.Project
 import intellij.haskell.HaskellNotificationGroup
-import intellij.haskell.external.commandLine.StackCommandLine
+import intellij.haskell.external.execution.StackCommandLine
 
 import scala.collection.JavaConverters._
 import scala.concurrent.duration._
@@ -33,8 +33,8 @@ object HoogleComponent {
   private val Timout = 10.seconds.toMillis
 
   def runHoogle(project: Project, pattern: String, count: Int = 100): Option[Seq[String]] = {
-    if (StackProjectManager.isHoogleAvailable(project)) {
-      StackCommandLine.runCommand(Seq(HoogleName, "--", s""""$pattern"""", s"--count=$count"), project, timeoutInMillis = Timout).
+    if (isHoogleFeatureAvailable(project)) {
+      StackCommandLine.runCommand(project, Seq(HoogleName, "--", s""""$pattern"""", s"--count=$count"), timeoutInMillis = Timout).
         map(o =>
           if (o.getStdoutLines.isEmpty || o.getStdout.contains("No results found"))
             Seq()
@@ -45,17 +45,13 @@ object HoogleComponent {
           }
         )
     } else {
-      HaskellNotificationGroup.logWarningBalloonEvent(project, s"$HoogleName is not yet available")
       None
     }
   }
 
   def findDocumentation(project: Project, name: String, moduleName: Option[String]): Option[String] = {
-    if (!doesHoogleDatabaseExist(project)) {
-      showHoogleDatabaseDoesNotExistNotification(project)
-      None
-    } else if (StackProjectManager.isHoogleAvailable(project)) {
-      StackCommandLine.runCommand(Seq("hoogle", "--", name) ++ moduleName.map(mn => Seq(s"+$mn", "-i")).getOrElse(Seq()), project, timeoutInMillis = Timout).
+    if (isHoogleFeatureAvailable(project)) {
+      StackCommandLine.runCommand(project, Seq(HoogleName, "--", name) ++ moduleName.map(mn => Seq(s"+$mn", "-i")).getOrElse(Seq()), timeoutInMillis = Timout).
         flatMap(processOutput =>
           if (processOutput.getStdoutLines.isEmpty || processOutput.getStdout.contains("No results found")) {
             None
@@ -64,23 +60,34 @@ object HoogleComponent {
           }
         )
     } else {
-      HaskellNotificationGroup.logWarningBalloonEvent(project, s"$HoogleName is not yet available")
       None
     }
   }
 
-  def rebuildHoogle(project: Project): Option[ProcessOutput] = {
-    StackCommandLine.runCommand(Seq(HoogleName, "--rebuild"), project, timeoutInMillis = 10.minutes.toMillis, logErrorAsInfo = true, captureOutputToLog = true)
+  private def isHoogleFeatureAvailable(project: Project): Boolean = {
+    if (!StackProjectManager.isHoogleAvailable(project)) {
+      HaskellNotificationGroup.logWarningBalloonEvent(project, s"$HoogleName is not yet available")
+      false
+    } else if (!doesHoogleDatabaseExist(project)) {
+      showHoogleDatabaseDoesNotExistNotification(project)
+      false
+    } else {
+      true
+    }
+  }
+
+  def rebuildHoogle(project: Project, progressIndicator: ProgressIndicator): Option[Boolean] = {
+    StackCommandLine.executeInMessageView(project, Seq(HoogleName, "--rebuild"), progressIndicator)
   }
 
   def doesHoogleDatabaseExist(project: Project): Boolean = {
-    StackCommandLine.runCommand(Seq(HoogleComponent.HoogleName, "--no-setup"), project, logErrorAsInfo = true) match {
+    StackCommandLine.runCommand(project, Seq(HoogleComponent.HoogleName, "--no-setup")) match {
       case Some(output) if output.getStderr.isEmpty => true
       case _ => false
     }
   }
 
   def showHoogleDatabaseDoesNotExistNotification(project: Project): Unit = {
-    HaskellNotificationGroup.logWarningBalloonEvent(project, "Hoogle database does not exist. Hoogle database can be created by menu option `Other`/`Haskell`/`Generate Hoogle database`")
+    HaskellNotificationGroup.logWarningBalloonEvent(project, "Hoogle database does not exist. Hoogle database can be created by menu option `Tools`/`Haskell`/`(Re)Build Hoogle database`")
   }
 }

@@ -1,5 +1,5 @@
 /*
- * Copyright 2016 Rik van der Kleij
+ * Copyright 2014-2017 Rik van der Kleij
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package intellij.haskell.external.component
+package intellij.haskell.external.execution
 
 import org.scalatest.{BeforeAndAfterEach, FunSpec, GivenWhenThen, Matchers}
 
@@ -26,7 +26,7 @@ class LoadSpec extends FunSpec with Matchers with GivenWhenThen with BeforeAndAf
       val output = "/file/path/HaskellFile.hs:1:11:parse error on input     and so on"
 
       When("parsed to problem")
-      val problem = LoadComponent.parseErrorOutputLine("/file/path/HaskellFile.hs", output).asInstanceOf[LoadProblemInCurrentFile]
+      val problem = HaskellCompilationResultHelper.parseErrorLine(Some("/file/path/HaskellFile.hs"), output).asInstanceOf[CompilationProblemInCurrentFile]
 
       Then("it should contain right data")
       problem.lineNr should equal(1)

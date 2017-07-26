@@ -1,5 +1,5 @@
 /*
- * Copyright 2016 Rik van der Kleij
+ * Copyright 2014-2017 Rik van der Kleij
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -26,7 +26,7 @@ import com.intellij.openapi.projectRoots.impl.SdkConfigurationUtil
 import com.intellij.openapi.roots.OrderRootType
 import com.intellij.openapi.util.SystemInfo
 import com.intellij.openapi.vfs.VirtualFile
-import intellij.haskell.external.commandLine.CommandLine
+import intellij.haskell.external.execution.CommandLine
 import intellij.haskell.util.HaskellProjectUtil
 import intellij.haskell.{HaskellIcons, HaskellNotificationGroup}
 import org.jdom.Element
@@ -47,7 +47,7 @@ class HaskellSdkType extends SdkType("Haskell Tool Stack SDK") {
 
   override def isValidSdkHome(path: String): Boolean = {
     val stackPath = new File(path)
-    stackPath.isFile && path.toLowerCase.contains("stack") && HaskellSdkType.getNumericVersion(path).isDefined
+    !stackPath.isDirectory && stackPath.getName.toLowerCase.contains("stack") && HaskellSdkType.getNumericVersion(path).isDefined
   }
 
   override def getPresentableName: String = "Stack binary"
@@ -72,10 +72,10 @@ class HaskellSdkType extends SdkType("Haskell Tool Stack SDK") {
 
   override def getHomeChooserDescriptor: FileChooserDescriptor = {
     val descriptor: FileChooserDescriptor = new FileChooserDescriptor(true, false, false, false, false, false) {
-      @throws[Exception]
+
       override def validateSelectedFiles(files: Array[VirtualFile]) {
         if (files.length != 0) {
-          val selectedPath: String = files(0).getPath
+          val selectedPath = files(0).getPath
           var valid = isValidSdkHome(selectedPath)
           if (!valid) {
             valid = isValidSdkHome(adjustSelectedSdkHome(selectedPath))
@@ -105,7 +105,8 @@ object HaskellSdkType {
       None,
       workDir,
       sdkHome,
-      Seq("--numeric-version")
+      Seq("--numeric-version"),
+      notifyBalloonError = true
     ).map(_.getStdout)
   }
 

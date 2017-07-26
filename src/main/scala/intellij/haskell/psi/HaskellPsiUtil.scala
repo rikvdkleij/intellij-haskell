@@ -1,5 +1,5 @@
 /*
- * Copyright 2016 Rik van der Kleij
+ * Copyright 2014-2017 Rik van der Kleij
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -23,6 +23,7 @@ import com.intellij.openapi.util.Computable
 import com.intellij.psi.tree.{IElementType, TokenSet}
 import com.intellij.psi.util.PsiTreeUtil
 import com.intellij.psi.{PsiElement, PsiFile}
+import intellij.haskell.HaskellFile
 import intellij.haskell.psi.HaskellElementCondition._
 import intellij.haskell.psi.HaskellTypes._
 
@@ -64,8 +65,8 @@ object HaskellPsiUtil {
     PsiTreeUtil.findChildrenOfType(psiElement, classOf[HaskellDeclarationElement]).asScala.filter(e => e.getParent.getNode.getElementType == HS_TOP_DECLARATION || e.getNode.getElementType == HS_MODULE_DECLARATION)
   }
 
-  def findTopLevelDeclarations(psiElement: PsiElement): Iterable[HaskellDeclarationElement] = {
-    findHaskellDeclarationElements(psiElement).filterNot(e => e.getNode.getElementType == HS_IMPORT_DECLARATION)
+  def findTopLevelDeclarations(psiFile: PsiFile): Iterable[HaskellDeclarationElement] = {
+    findHaskellDeclarationElements(psiFile).filterNot(e => e.getNode.getElementType == HS_IMPORT_DECLARATION)
   }
 
   def findModuleDeclaration(psiFile: PsiFile, runInRead: Boolean = false): Option[HaskellModuleDeclaration] = {
@@ -125,8 +126,12 @@ object HaskellPsiUtil {
     }
   }
 
-  def findTopLevelTypeSignatures(psiElement: PsiElement): Iterable[HaskellTypeSignature] = {
-    PsiTreeUtil.findChildrenOfType(psiElement, classOf[HaskellTypeSignature]).asScala.filter(_.getParent.getNode.getElementType == HS_TOP_DECLARATION)
+  def findTopLevelTypeSignatures(psiFile: PsiFile): Iterable[HaskellTypeSignature] = {
+    PsiTreeUtil.findChildrenOfType(psiFile, classOf[HaskellTypeSignature]).asScala.filter(_.getParent.getNode.getElementType == HS_TOP_DECLARATION)
+  }
+
+  def findTopLevelExpressions(haskellFile: HaskellFile): Iterable[HaskellExpression] = {
+    PsiTreeUtil.findChildrenOfType(haskellFile, classOf[HaskellExpression]).asScala
   }
 
   def findModuleDeclarationParent(psiElement: PsiElement): Option[HaskellModuleDeclaration] = {
@@ -155,12 +160,12 @@ object HaskellPsiUtil {
     Option(PsiTreeUtil.getChildOfType(psiElement, cls))
   }
 
-  def getChildNodes(psiElement: PsiElement, typ: IElementType, typs: IElementType*): Array[ASTNode] = {
-    psiElement.getNode.getChildren(TokenSet.create(typ +: typs: _*))
+  def getChildNodes(psiElement: PsiElement, elementTypes: IElementType*): Array[ASTNode] = {
+    psiElement.getNode.getChildren(TokenSet.create(elementTypes: _*))
   }
 
-  def streamChildren[T <: PsiElement](psiElement: PsiElement, cls: Class[T]): Stream[T] = {
-    PsiTreeUtil.childIterator(psiElement, cls).asScala.toStream
+  def streamChildren[T <: PsiElement](psiElement: PsiElement, cls: Class[T]): Iterator[T] = {
+    PsiTreeUtil.childIterator(psiElement, cls).asScala
   }
 
   /** Analogous to PsiTreeUtil.findFirstParent */

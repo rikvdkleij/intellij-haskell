@@ -1,5 +1,5 @@
 /*
- * Copyright 2016 Rik van der Kleij
+ * Copyright 2014-2017 Rik van der Kleij
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,7 +19,8 @@ package intellij.haskell.external.component
 import com.intellij.openapi.project.Project
 import com.intellij.psi.PsiFile
 import intellij.haskell.HaskellNotificationGroup
-import intellij.haskell.external.commandLine.StackCommandLine
+import intellij.haskell.external.execution.StackCommandLine
+import intellij.haskell.util.HaskellFileUtil
 import spray.json.JsonParser.ParsingException
 import spray.json.{DefaultJsonProtocol, _}
 
@@ -30,20 +31,20 @@ object HLintComponent {
   def check(psiFile: PsiFile): Seq[HLintInfo] = {
     if (StackProjectManager.isHlintAvailable(psiFile.getProject)) {
       val project = psiFile.getProject
-      StackCommandLine.runCommand(Seq("exec", "--", HlintName, "--json", psiFile.getOriginalFile.getVirtualFile.getPath), project).map(output => {
+      StackCommandLine.runCommand(project, Seq("exec", "--", HlintName, "--json", HaskellFileUtil.getAbsoluteFilePath(psiFile))).map(output => {
         if (output.getStderr.contains("Executable named hlint not found on path")) {
-          HaskellNotificationGroup.logWarningEvent(project, s"$HlintName is not available yet")
+          HaskellNotificationGroup.logErrorBalloonEvent(project, s"$HlintName can not be found on path")
           Seq()
         }
-        else if (output.getStderr.nonEmpty) {
-          HaskellNotificationGroup.logErrorBalloonEvent(project, s"Something went wrong while calling <b>$HlintName</b>. Error: ${output.getStderr}")
+        else if (output.getExitCode > 0 && output.getStderr.nonEmpty) {
+          HaskellNotificationGroup.logErrorBalloonEvent(project, s"Error while calling $HlintName: ${output.getStderr}")
           Seq()
         } else {
           deserializeHLintInfo(project, output.getStdout)
         }
       }).getOrElse(Seq())
     } else {
-      HaskellNotificationGroup.logWarningBalloonEvent(psiFile.getProject, s"$HlintName is not yet available")
+      HaskellNotificationGroup.logInfoEvent(psiFile.getProject, s"$HlintName is not yet available")
       Seq()
     }
   }

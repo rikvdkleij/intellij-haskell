@@ -100,6 +100,7 @@ public class HaskellVisitor extends PsiElementVisitor {
 
   public void visitDefaultDeclaration(@NotNull HaskellDefaultDeclaration o) {
     visitDeclarationElement(o);
+    // visitDeclarationElement(o);
   }
 
   public void visitDeprecatedWarnPragma(@NotNull HaskellDeprecatedWarnPragma o) {

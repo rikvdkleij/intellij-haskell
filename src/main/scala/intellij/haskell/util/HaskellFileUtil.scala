@@ -1,5 +1,5 @@
 /*
- * Copyright 2016 Rik van der Kleij
+ * Copyright 2014-2017 Rik van der Kleij
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -24,23 +24,33 @@ import com.intellij.openapi.editor.Document
 import com.intellij.openapi.fileEditor.FileDocumentManager
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.io.FileUtil
-import com.intellij.openapi.vfs.VirtualFile
+import com.intellij.openapi.vfs.{LocalFileSystem, VirtualFile}
 import com.intellij.psi.{PsiDocumentManager, PsiFile, PsiManager}
 import intellij.haskell.HaskellFile
 import intellij.haskell.action.SelectionContext
 
 object HaskellFileUtil {
 
-  def saveAllFiles(psiFile: Option[PsiFile]): Unit = {
-    psiFile.foreach(pf => {
-      val documentManager = PsiDocumentManager.getInstance(pf.getProject)
-      findDocument(pf).foreach(documentManager.doPostponedOperationsAndUnblockDocument)
-      documentManager.performWhenAllCommitted(
-        () => {
-          FileDocumentManager.getInstance.saveAllDocuments()
-        })
-    })
+  def saveAllFiles(project: Project, psiFile: Option[PsiFile]): Unit = {
+    psiFile match {
+      case Some(pf) =>
+        val documentManager = PsiDocumentManager.getInstance(pf.getProject)
+        findDocument(pf).foreach(documentManager.doPostponedOperationsAndUnblockDocument)
+        documentManager.performWhenAllCommitted(
+          () => {
+            FileDocumentManager.getInstance.saveAllDocuments()
+          }
+        )
+      case None =>
+        val documentManager = PsiDocumentManager.getInstance(project)
+        documentManager.performWhenAllCommitted(
+          () => {
+            FileDocumentManager.getInstance.saveAllDocuments()
+          }
+        )
+    }
   }
+
 
   def saveFile(psiFile: PsiFile): Unit = {
     findDocument(psiFile).foreach(d => {
@@ -73,12 +83,24 @@ object HaskellFileUtil {
       new File(project.getBasePath, filePath).getAbsolutePath
   }
 
-  def convertToHaskellFiles(virtualFiles: Iterable[VirtualFile], project: Project): Iterable[HaskellFile] = {
-    val psiManager = PsiManager.getInstance(project)
-    virtualFiles.flatMap(vf => convertToHaskellFile(vf, psiManager))
+  def convertToHaskellFiles(project: Project, virtualFiles: Iterable[VirtualFile]): Iterable[HaskellFile] = {
+    if (project.isDisposed) {
+      Iterable()
+    } else {
+      val psiManager = PsiManager.getInstance(project)
+      virtualFiles.flatMap(vf => convertToHaskellFile(vf, psiManager))
+    }
   }
 
   def convertToHaskellFile(virtualFile: VirtualFile, psiManager: PsiManager): Option[HaskellFile] = {
+    Option(psiManager.findFile(virtualFile)) match {
+      case Some(pf: HaskellFile) => Some(pf)
+      case _ => None
+    }
+  }
+
+  def convertToHaskellFile(project: Project, virtualFile: VirtualFile): Option[HaskellFile] = {
+    val psiManager = PsiManager.getInstance(project)
     Option(psiManager.findFile(virtualFile)) match {
       case Some(pf: HaskellFile) => Some(pf)
       case _ => None
@@ -119,5 +141,16 @@ object HaskellFileUtil {
       stream.close()
     }
     file
+  }
+
+  def getFileNameWithoutExtension(psiFile: PsiFile): String = {
+    val name = psiFile.getName
+    val index = name.lastIndexOf('.')
+    if (index < 0) name else name.substring(0, index)
+  }
+
+
+  def findDirectory(dirPath: String, project: Project): Option[VirtualFile] = {
+    Option(LocalFileSystem.getInstance().findFileByPath(HaskellFileUtil.makeFilePathAbsolute(dirPath, project)))
   }
 }

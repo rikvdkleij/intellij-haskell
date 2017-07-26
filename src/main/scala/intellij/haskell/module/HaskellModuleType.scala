@@ -1,5 +1,5 @@
 /*
- * Copyright 2016 Rik van der Kleij
+ * Copyright 2014-2017 Rik van der Kleij
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,11 +18,8 @@ package intellij.haskell.module
 
 import javax.swing.Icon
 
-import com.intellij.openapi.module.{Module, ModuleType, ModuleTypeManager, ModuleUtil}
-import com.intellij.openapi.project.Project
+import com.intellij.openapi.module.{ModuleType, ModuleTypeManager}
 import intellij.haskell.HaskellIcons
-
-import scala.collection.JavaConverters._
 
 class HaskellModuleType extends ModuleType[HaskellModuleBuilder](HaskellModuleType.Id) {
 
@@ -44,7 +41,4 @@ object HaskellModuleType {
     ModuleTypeManager.getInstance.findByID(Id).asInstanceOf[HaskellModuleType]
   }
 
-  def findHaskellProjectModules(project: Project): Iterable[Module] = {
-    ModuleUtil.getModulesOfType(project, HaskellModuleType.getInstance).asScala
-  }
 }

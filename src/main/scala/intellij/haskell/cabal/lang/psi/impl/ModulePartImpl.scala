@@ -5,13 +5,11 @@ import java.util.regex.Pattern
 import com.intellij.openapi.module.ModuleUtilCore
 import com.intellij.openapi.util.TextRange
 import com.intellij.psi.impl.source.tree.LeafPsiElement
-import com.intellij.psi.search.GlobalSearchScope
+import com.intellij.psi.search.{GlobalSearchScope, GlobalSearchScopesCore}
 import com.intellij.psi.{PsiDirectory, PsiElement, PsiReference}
 import intellij.haskell.cabal.lang.psi._
 import intellij.haskell.psi.HaskellPsiUtil
-import intellij.haskell.util.index.{HaskellFileIndex, HaskellModuleIndex}
-
-import scala.collection.JavaConverters._
+import intellij.haskell.util.index.{HaskellFileNameIndex, HaskellModuleNameIndex}
 
 trait ModulePartImpl extends CabalNamedElementImpl {
 
@@ -39,7 +37,7 @@ trait ModulePartImpl extends CabalNamedElementImpl {
       case s if s.isEmpty => ""
       case s => s + "."
     }
-    HaskellFileIndex.findProjectProductionPsiFiles(getProject).flatMap { file =>
+    HaskellFileNameIndex.findProjectProductionHaskellFiles(getProject).flatMap { file =>
       HaskellPsiUtil.findModuleDeclaration(file).flatMap(decl => Option(decl.getModid)).map(_.getText) match {
         case None => None
         case Some(name) if name.startsWith(text) =>
@@ -74,24 +72,12 @@ trait ModulePartImpl extends CabalNamedElementImpl {
 
   private def resolveToModuleDecl(): Option[PsiElement] = {
     // If the module part IS the last part, resolve to its file's module decl.
-    val qualifiedName = getParent.getText
+    val moduleName = getParent.getText
     val scope = Option(ModuleUtilCore.findModuleForPsiElement(this)) match {
       case Some(m) => GlobalSearchScope.moduleScope(m)
-      case None => GlobalSearchScope.projectScope(getProject)
+      case None => GlobalSearchScopesCore.projectProductionScope(getProject)
     }
-    val files = HaskellModuleIndex.getFilesByModuleName(getProject, qualifiedName, scope)
-
-    files.map { file =>
-      // Get the last "part" of the module decl if the name matches.
-      HaskellPsiUtil.findModuleDeclaration(file).flatMap(decl => Option(decl.getModid)).filter(_.getText == qualifiedName).flatMap(
-        qconid => Option(qconid.getLastChild)
-      )
-    }.collectFirst {
-      // Stop at the first match.
-      case Some(x) => x
-    }.orElse {
-      // If there are no matches, just guess at the first file found, if exists.
-      files.headOption
-    }
+    val haskellFile = HaskellModuleNameIndex.findHaskellFileByModuleName(getProject, moduleName, scope)
+    haskellFile.flatMap(f => HaskellPsiUtil.findModuleDeclaration(f).find(_.getModuleName.contains(moduleName)).flatMap(_.getIdentifierElements.headOption))
   }
 }

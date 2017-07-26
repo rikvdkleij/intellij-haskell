@@ -1,5 +1,5 @@
 /*
- * Copyright 2016 Rik van der Kleij
+ * Copyright 2014-2017 Rik van der Kleij
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -20,7 +20,6 @@ import javax.swing._
 
 import com.intellij.navigation.ItemPresentation
 import com.intellij.psi.impl.source.resolve.reference.ReferenceProvidersRegistry
-import com.intellij.psi.util.PsiTreeUtil
 import com.intellij.psi.{PsiElement, PsiReference}
 import com.intellij.util.ArrayUtil
 import intellij.haskell.psi.HaskellTypes._
@@ -275,8 +274,8 @@ object HaskellPsiImplUtil {
           case Some(de) if de.getIdentifierElements.exists(_ == namedElement) => HaskellPsiUtil.findDeclarationElementParent(namedElement).map(de => getDeclarationInfo(de)).
             orElse(HaskellPsiUtil.findExpressionParent(namedElement).map(e => StringUtil.removeCommentsAndWhiteSpaces(e.getText))).
             getOrElse(s"${namedElement.getName} `in` ${getDeclarationInfo(de)}")
-          case Some(de) if HaskellPsiUtil.findExpressionParent(namedElement).isDefined => getContainingLineText(namedElement).getOrElse(namedElement.getName).trim
           case Some(de) => s"${namedElement.getName} `in` ${getDeclarationInfo(de)}"
+          case _ if HaskellPsiUtil.findExpressionParent(namedElement).isDefined => getContainingLineText(namedElement).getOrElse(namedElement.getName).trim
           case _ => namedElement.getName
         }
       case _ => element.getText
@@ -339,8 +338,9 @@ object HaskellPsiImplUtil {
   }
 
   def getIdentifierElements(newtypeDeclaration: HaskellNewtypeDeclaration): Seq[HaskellNamedElement] = {
-    newtypeDeclaration.getSimpletype.getIdentifierElements ++ newtypeDeclaration.getNewconstr.getQNameList.asScala.headOption.map(_.getIdentifierElement).toSeq ++
-      Option(newtypeDeclaration.getNewconstr.getNewconstrFielddecl).map(_.getQNameList.asScala.map(_.getIdentifierElement)).getOrElse(Seq())
+    newtypeDeclaration.getSimpletype.getIdentifierElements ++
+      Option(newtypeDeclaration.getNewconstr.getNewconstrFielddecl).map(_.getQNameList.asScala.map(_.getIdentifierElement)).getOrElse(Seq()) ++
+      Option(newtypeDeclaration.getNewconstr.getQNameList.asScala.map(_.getIdentifierElement)).getOrElse(Seq())
   }
 
   def getIdentifierElements(classDeclaration: HaskellClassDeclaration): Seq[HaskellNamedElement] = {
@@ -351,7 +351,9 @@ object HaskellPsiImplUtil {
 
   def getIdentifierElements(instanceDeclaration: HaskellInstanceDeclaration): Seq[HaskellNamedElement] = {
     Seq(instanceDeclaration.getQName.getIdentifierElement) ++
-      Option(instanceDeclaration.getInst).map(inst => findTypes(inst)).getOrElse(Seq())
+      instanceDeclaration.getInst.getInstvarList.asScala.
+        flatMap(v => Option(v.getQName).map(_.getIdentifierElement).orElse(Option(v.getTtype).flatMap(_.getQNameList.asScala.headOption.map(_.getIdentifierElement)))) ++
+      instanceDeclaration.getInst.getGtyconList.asScala.flatMap(c => Option(c.getQName).map(_.getIdentifierElement))
   }
 
   def getIdentifierElements(typeFamilyDeclaration: HaskellTypeFamilyDeclaration): Seq[HaskellNamedElement] = {
@@ -360,15 +362,18 @@ object HaskellPsiImplUtil {
   }
 
   def getIdentifierElements(derivingDeclaration: HaskellDerivingDeclaration): Seq[HaskellNamedElement] = {
-    Seq(derivingDeclaration.getQName.getIdentifierElement) ++ findTypes(derivingDeclaration.getInst)
+    Seq(derivingDeclaration.getQName.getIdentifierElement)
   }
 
   def getIdentifierElements(typeInstanceDeclaration: HaskellTypeInstanceDeclaration): Seq[HaskellNamedElement] = {
-    findTypes(typeInstanceDeclaration.getExpression)
+    Seq()
   }
 
   def getIdentifierElements(simpleType: HaskellSimpletype): Seq[HaskellNamedElement] = {
-    findTypes(simpleType)
+    Option(simpleType.getTtype) match {
+      case Some(t) => t.getQNameList.asScala.headOption.map(_.getIdentifierElement).toSeq
+      case None => simpleType.getQNameList.asScala.headOption.map(_.getIdentifierElement).toSeq
+    }
   }
 
   def getIdentifierElements(defaultDeclaration: HaskellDefaultDeclaration): Seq[HaskellNamedElement] = {
@@ -400,21 +405,11 @@ object HaskellPsiImplUtil {
   }
 
   private def removeFileExtension(name: String) = {
-    val fileExtension = "." + HaskellFileType.INSTANCE.getDefaultExtension
+    val fileExtension = "." + HaskellFileType.Instance.getDefaultExtension
     if (name.endsWith(fileExtension)) {
       name.replaceFirst(fileExtension, "")
     } else {
       name
-    }
-  }
-
-  private def findTypes(element: PsiElement) = {
-    val elements = PsiTreeUtil.findChildrenOfAnyType(element, Seq(classOf[HaskellConid], classOf[HaskellConsym], classOf[HaskellTtype]): _*).asScala.toSeq.distinct
-
-    elements.flatMap {
-      case e: HaskellTtype => e.getQNameList.asScala.map(_.getIdentifierElement)
-      case e: HaskellNamedElement => Seq(e)
-      case _ => Seq()
     }
   }
 }

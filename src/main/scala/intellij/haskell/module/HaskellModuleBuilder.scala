@@ -1,5 +1,5 @@
 /*
- * Copyright 2016 Rik van der Kleij
+ * Copyright 2014-2017 Rik van der Kleij
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -21,32 +21,36 @@ import javax.swing.Icon
 
 import com.intellij.ide.util.projectWizard._
 import com.intellij.openapi.Disposable
+import com.intellij.openapi.application.{Result, WriteAction}
 import com.intellij.openapi.module.{Module, ModuleType}
 import com.intellij.openapi.progress.{ProgressIndicator, ProgressManager, Task}
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.projectRoots.SdkTypeId
-import com.intellij.openapi.roots.{ModifiableRootModel, ModuleRootManager, ModuleRootModificationUtil, OrderRootType}
+import com.intellij.openapi.roots._
+import com.intellij.openapi.roots.impl.libraries.ProjectLibraryTable
+import com.intellij.openapi.roots.libraries.{Library, LibraryTable}
 import com.intellij.openapi.ui.Messages
-import com.intellij.openapi.util.Pair
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.vfs.{LocalFileSystem, VfsUtil}
-import intellij.haskell.external.commandLine.{CommandLine, StackCommandLine}
+import intellij.haskell.cabal.CabalInfo
+import intellij.haskell.external.execution.{CaptureOutputToLog, CommandLine, StackCommandLine}
 import intellij.haskell.sdk.HaskellSdkType
+import intellij.haskell.stackyaml.StackYamlComponent
 import intellij.haskell.util.HaskellProjectUtil
 import intellij.haskell.{HaskellIcons, HaskellNotificationGroup}
 
 import scala.collection.JavaConverters._
 import scala.concurrent.duration._
 
-class HaskellModuleBuilder extends ModuleBuilder with SourcePathsBuilder with ModuleBuilderListener {
+class HaskellModuleBuilder extends ModuleBuilder {
 
-  private[this] val sourcePaths = new java.util.ArrayList[Pair[String, String]]()
+  private var cabalInfo: CabalInfo = _
 
-  private[this] var isNewProject = false
-
-  override def moduleCreated(module: Module): Unit = {
-    HaskellModuleBuilder.addLibrarySources(module)
+  def setCabalInfo(cabalInfo: CabalInfo): Unit = {
+    this.cabalInfo = cabalInfo
   }
+
+  private[this] var isNewProjectWithoutExistingSources = false
 
   override def getModuleType: ModuleType[_ <: ModuleBuilder] = HaskellModuleType.getInstance
 
@@ -57,55 +61,51 @@ class HaskellModuleBuilder extends ModuleBuilder with SourcePathsBuilder with Mo
   override def getNodeIcon: Icon = HaskellIcons.HaskellSmallLogo
 
   override def setupRootModel(rootModel: ModifiableRootModel): Unit = {
-    addListener(this)
-
     if (rootModel.getSdk == null) {
       rootModel.setSdk(HaskellSdkType.findOrCreateSdk())
       rootModel.inheritSdk()
     }
 
     val contentEntry = doAddContentEntry(rootModel)
+    val project = rootModel.getProject
+
+    if (isNewProjectWithoutExistingSources) {
+      val packagePath = StackYamlComponent.getPackagePaths(project).flatMap(_.headOption)
+      packagePath.flatMap(pp => HaskellModuleBuilder.createCabalInfo(rootModel.getProject, project.getBaseDir.getPath, pp)) match {
+        case Some(ci) => cabalInfo = ci
+        case None =>
+          Messages.showErrorDialog(s"Could not create Haskell project because can not retrieve info from Cabal file for package path $packagePath", "No Cabal file info")
+      }
+    }
 
     if (contentEntry != null) {
-      getSourcePaths.asScala.foreach { path =>
-        val folder = Option(LocalFileSystem.getInstance.refreshAndFindFileByPath(FileUtil.toSystemIndependentName(path.first)))
-        folder.foreach { f =>
-          contentEntry.addSourceFolder(f, false, path.second)
-        }
-      }
+      cabalInfo.getSourceRoots.foreach(path => {
+        Option(LocalFileSystem.getInstance.refreshAndFindFileByPath(FileUtil.toSystemIndependentName(path))).foreach(f =>
+          contentEntry.addSourceFolder(f, false)
+        )
+      })
 
-      getTestSourcePath.foreach { path =>
-        val folder = Option(LocalFileSystem.getInstance.refreshAndFindFileByPath(FileUtil.toSystemIndependentName(path)))
-        folder.foreach { f =>
-          contentEntry.addSourceFolder(f, true, path)
-        }
-      }
+      cabalInfo.getTestSourceRoots.foreach(path => {
+        Option(LocalFileSystem.getInstance.refreshAndFindFileByPath(FileUtil.toSystemIndependentName(path))).foreach(f =>
+          contentEntry.addSourceFolder(f, true)
+        )
+      })
 
       val stackWorkDirectory = getStackWorkDirectory
       stackWorkDirectory.mkdir()
-      Option(LocalFileSystem.getInstance.refreshAndFindFileByIoFile(stackWorkDirectory)).foreach { f =>
+      Option(LocalFileSystem.getInstance.refreshAndFindFileByIoFile(stackWorkDirectory)).foreach(f =>
         contentEntry.addExcludeFolder(f)
-      }
-
-      val libraryDirectory = HaskellModuleBuilder.getIdeaHaskellLibDirectory(rootModel.getProject)
-      libraryDirectory.mkdir()
-      Option(LocalFileSystem.getInstance.refreshAndFindFileByIoFile(libraryDirectory)).foreach(f => {
-        contentEntry.addExcludeFolder(f)
-      })
+      )
     }
   }
 
   override def setupModule(module: Module): Unit = {
-    if (isNewProject) {
+    if (isNewProjectWithoutExistingSources) {
       val configurationUpdater = new ModuleBuilder.ModuleConfigurationUpdater {
 
         override def update(module: Module, rootModel: ModifiableRootModel): Unit = {
           val project = rootModel.getProject
-          StackCommandLine.runCommand(
-            Seq("new", project.getName, "--bare", "hspec"),
-            project,
-            timeoutInMillis = 20.seconds.toMillis
-          )
+          StackCommandLine.runCommand(project, Seq("new", project.getName, "--bare", "hspec"), timeoutInMillis = 20.seconds.toMillis)
         }
       }
       val modifiableModel: ModifiableRootModel = ModuleRootManager.getInstance(module).getModifiableModel
@@ -114,52 +114,14 @@ class HaskellModuleBuilder extends ModuleBuilder with SourcePathsBuilder with Mo
     super.setupModule(module)
   }
 
-  override def setSourcePaths(sourcePaths: java.util.List[Pair[String, String]]): Unit = {
-    sourcePaths.clear()
-    sourcePaths.addAll(sourcePaths)
-  }
-
-  override def addSourcePath(sourcePathInfo: Pair[String, String]): Unit = {
-    sourcePaths.add(sourcePathInfo)
-  }
-
-  override def getSourcePaths: java.util.List[Pair[String, String]] = {
-    if (sourcePaths.isEmpty) {
-      val paths = new java.util.ArrayList[Pair[String, String]]
-      Seq("src", "lib", "app", "library", "main").foreach { dirName =>
-        val path = getContentEntryPath + File.separator + dirName
-        val srcDir = new File(path)
-        if (srcDir.isDirectory) {
-          paths.add(Pair.create(path, ""))
-        }
-      }
-      paths
-    } else {
-      sourcePaths
-    }
-  }
-
-  // Only called in case new project
+  // Only called in case new project without existing Stack project
   override def getCustomOptionsStep(context: WizardContext, parentDisposable: Disposable): ModuleWizardStep = {
-    isNewProject = true
+    isNewProjectWithoutExistingSources = true
     new HaskellModuleWizardStep(context, this)
   }
 
   private def getStackWorkDirectory = {
     new File(getContentEntryPath, ".stack-work")
-  }
-
-  private def getTestSourcePath = {
-    getExistingPath("test")
-  }
-
-  private def getExistingPath(dirName: String) = {
-    val path = new File(getContentEntryPath, dirName)
-    if (path.isDirectory) {
-      Some(path.getAbsolutePath)
-    } else {
-      None
-    }
   }
 }
 
@@ -182,40 +144,73 @@ class HaskellModuleWizardStep(wizardContext: WizardContext, haskellModuleBuilder
 
 object HaskellModuleBuilder {
 
-  final val LibName = ".ideaHaskellLib"
+  private final val IdeaHaskellLibName = ".intellij-haskell" + File.separator + "lib"
   private final val DependencyPattern = """([\w\-]+)\s([\d\.]+)""".r
   private final val InitialProgressStep = 0.1
   private final val GhcPrimVersion = "0.5.0.0"
   private final val GhcPrim = "ghc-prim"
 
+  def createCabalInfo(project: Project, modulePath: String, packagePath: String): Option[CabalInfo] = {
+    val moduleDirectory = getModuleRootDirectory(packagePath, modulePath)
+    for {
+      cabalFile <- getCabalFile(moduleDirectory)
+      cabalInfo <- getCabalInfo(project, cabalFile)
+    } yield cabalInfo
+  }
+
+  private def getModuleRootDirectory(packagePath: String, modulePath: String): File = {
+    if (packagePath == ".") {
+      new File(modulePath)
+    } else {
+      new File(modulePath, packagePath)
+    }
+  }
+
+  private def getCabalFile(moduleDirectory: File): Option[File] = {
+    HaskellProjectUtil.findCabalFile(moduleDirectory) match {
+      case Some(f) => Option(f)
+      case None =>
+        Messages.showErrorDialog(s"Can not create Haskell module because Cabal file can not be found in $moduleDirectory", "Can not create Haskell module")
+        None
+    }
+  }
+
+  private def getCabalInfo(project: Project, cabalFile: File): Option[CabalInfo] = {
+    CabalInfo.create(project, cabalFile) match {
+      case Some(f) => Option(f)
+      case None =>
+        Messages.showErrorDialog(project, s"Can not create Haskell module because Cabal file $cabalFile can not be read", "Can not create Haskell module")
+        None
+    }
+  }
+
   def addLibrarySources(module: Module): Unit = {
     val project = module.getProject
     HaskellSdkType.getStackPath(project).foreach(stackPath => {
+      val packageName = module.getName
+      val ideaHaskellLibDirectory = getIdeaHaskellLibDirectory
+      if (!ideaHaskellLibDirectory.exists()) {
+        FileUtil.createDirectory(ideaHaskellLibDirectory)
+      }
+
       ProgressManager.getInstance().run(new Task.Backgroundable(project, "Downloading Haskell library sources and adding them as source libraries to module") {
+
         def run(progressIndicator: ProgressIndicator) {
-          val libDirectory = getIdeaHaskellLibDirectory(project)
-          if (!FileUtil.exists(getIdeaHaskellLibDirectoryStr(project))) {
-            FileUtil.createDirectory(libDirectory)
-          }
-          StackCommandLine.runCommand(Seq("list-dependencies", "--test"), project, timeoutInMillis = 60.seconds.toMillis).map(_.getStdoutLines).foreach(dependencyLines => {
-            val packageName = HaskellProjectUtil.findCabalPackageName(project)
+          StackCommandLine.runCommand(project, Seq("list-dependencies", packageName, "--test", "--bench"), timeoutInMillis = 60.seconds.toMillis).map(_.getStdoutLines).foreach(dependencyLines => {
             val packages = getPackages(project, dependencyLines.asScala).filterNot(p => packageName.contains(p.name) || p.name == "rts")
             progressIndicator.setFraction(InitialProgressStep)
-            val downloadedPackages = downloadHaskellPackageSources(project, libDirectory, stackPath, packages, progressIndicator)
+            val downloadedPackages = downloadHaskellPackageSources(project, ideaHaskellLibDirectory, stackPath, packages, progressIndicator)
             progressIndicator.setFraction(0.9)
-            addPackagesAsLibrariesToModule(module, downloadedPackages, libDirectory.getAbsolutePath)
+            addPackagesAsLibrariesToModule(module, downloadedPackages, ideaHaskellLibDirectory.getAbsolutePath)
           })
         }
       })
     })
   }
 
-  def getIdeaHaskellLibDirectory(project: Project): File = {
-    new File(project.getBasePath, LibName)
-  }
-
-  private def getIdeaHaskellLibDirectoryStr(project: Project): String = {
-    project.getBasePath + File.separator + LibName
+  def getIdeaHaskellLibDirectory: File = {
+    val homeDirectory = VfsUtil.getUserHomeDir.getPath
+    new File(homeDirectory, IdeaHaskellLibName)
   }
 
   private def getPackages(project: Project, dependencyLines: Seq[String]): Seq[HaskellPackageInfo] = {
@@ -231,29 +226,31 @@ object HaskellModuleBuilder {
     }
   }
 
-  private def downloadHaskellPackageSources(project: Project, libRoot: File, stackPath: String, haskellPackages: Seq[HaskellPackageInfo], progressIndicator: ProgressIndicator) = {
+  private def downloadHaskellPackageSources(project: Project, ideaHaskellLibDirectory: File, stackPath: String, haskellPackages: Seq[HaskellPackageInfo], progressIndicator: ProgressIndicator) = {
     val step = 0.8 / haskellPackages.size
     var progressFraction = InitialProgressStep
 
-    libRoot.listFiles().filterNot(subDir => haskellPackages.map(_.dirName).contains(subDir.getName)).foreach(FileUtil.delete)
+    def getPackageDirectory(packageInfo: HaskellPackageInfo) = {
+      new File(ideaHaskellLibDirectory.getAbsolutePath + File.separator + packageInfo.directoryName)
+    }
 
     val alreadyDownloadedPackages = haskellPackages.filter(packageInfo => {
-      new File(project.getBasePath + File.separator + LibName + File.separator + packageInfo.dirName).exists()
+      getPackageDirectory(packageInfo).exists()
     })
-    val newDownloadedPackages = haskellPackages.filterNot(packageInfo => {
-      new File(project.getBasePath + File.separator + LibName + File.separator + packageInfo.dirName).exists()
+    val downloadedPackages = haskellPackages.filterNot(packageInfo => {
+      getPackageDirectory(packageInfo).exists()
     }).flatMap { packageInfo =>
-      val stdErr = CommandLine.runProgram(Some(project), project.getBasePath + File.separator + LibName, stackPath, Seq("unpack", packageInfo.dirName), 10000, captureOutputToLog = true, logErrorAsInfo = true).map(_.getStderr)
+      val stderr = CommandLine.runProgram(Some(project), ideaHaskellLibDirectory.getAbsolutePath, stackPath, Seq("unpack", packageInfo.directoryName), 10000, Some(CaptureOutputToLog)).map(_.getStderr)
       progressFraction = progressFraction + step
       progressIndicator.setFraction(progressFraction)
 
-      if (stdErr.exists(_.contains("not found"))) {
+      if (stderr.exists(_.contains("not found"))) {
         Seq()
       } else {
         Seq(packageInfo)
       }
     }
-    alreadyDownloadedPackages ++ newDownloadedPackages
+    alreadyDownloadedPackages ++ downloadedPackages
   }
 
   private def getUrlByPath(path: String): String = {
@@ -264,15 +261,33 @@ object HaskellModuleBuilder {
     ModuleRootModificationUtil.updateModel(module, (t: ModifiableRootModel) => {
       val libraryTable = t.getModuleLibraryTable
       libraryTable.getLibraries.foreach(l => libraryTable.removeLibrary(l))
-      haskellPackages.foreach { hp =>
+      haskellPackages.foreach(hp => {
         val library = libraryTable.createLibrary(hp.name)
         val model = library.getModifiableModel
-        model.addRoot(getUrlByPath(libPath + File.separator + hp.dirName), OrderRootType.SOURCES)
+        val sourceRootUrl = getUrlByPath(libPath + File.separator + hp.directoryName)
+        model.addRoot(sourceRootUrl, OrderRootType.SOURCES)
+        model.addRoot(sourceRootUrl, OrderRootType.CLASSES)
+        addProjectLibrary(module, t, hp.name, sourceRootUrl)
         model.commit()
-      }
+      })
     })
   }
 
-  private case class HaskellPackageInfo(name: String, version: String, dirName: String)
+  private def addProjectLibrary(module: Module, model: ModifiableRootModel, libName: String, sourceRootUrl: String): Unit = {
+    val libraryTable: LibraryTable = ProjectLibraryTable.getInstance(module.getProject)
+    new WriteAction[Library]() {
+
+      override protected def run(result: Result[Library]): Unit = {
+        val library: Library = libraryTable.createLibrary(libName)
+        val libraryModel: Library.ModifiableModel = library.getModifiableModel
+        libraryModel.addRoot(sourceRootUrl, OrderRootType.CLASSES)
+        libraryModel.addRoot(sourceRootUrl, OrderRootType.SOURCES)
+        libraryModel.commit()
+        model.addLibraryEntry(library)
+      }
+    }.execute
+  }
+
+  private case class HaskellPackageInfo(name: String, version: String, directoryName: String)
 
 }

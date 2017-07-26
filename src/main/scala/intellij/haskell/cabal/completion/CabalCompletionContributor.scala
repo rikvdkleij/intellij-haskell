@@ -9,7 +9,7 @@ import intellij.haskell.HaskellIcons
 import intellij.haskell.cabal.CabalLanguage
 import intellij.haskell.cabal.lang.psi.impl.ExtensionsImpl
 import intellij.haskell.cabal.lang.psi.{BuildDepends, CabalPsiUtil}
-import intellij.haskell.external.component.HaskellComponentsManager.findGlobalProjectInfo
+import intellij.haskell.external.component.HaskellComponentsManager.{getAvailablePackages, getSupportedLanguageExtension}
 
 final class CabalCompletionContributor extends CompletionContributor {
 
@@ -53,21 +53,16 @@ final class CabalCompletionContributor extends CompletionContributor {
       val negExts = currentExts.map(v => if (v.startsWith("No")) v.substring(2) else "No" + v)
       // Skip already provided extensions or their negation.
       val skipExts = currentExts ++ negExts
-      findGlobalProjectInfo(position.getProject)
-        .map(_.languageExtensions
-          .filter(!skipExts.contains(_))
-          .map(n => LookupElementBuilder.create(n).withIcon(HaskellIcons.HaskellSmallLogo)))
-        .getOrElse(Iterable())
+      getSupportedLanguageExtension(position.getProject)
+        .filter(!skipExts.contains(_))
+        .map(n => LookupElementBuilder.create(n).withIcon(HaskellIcons.HaskellSmallLogo))
     }
 
     private def filterPackageNames(el: BuildDepends): Iterable[LookupElement] = {
       val skipPackageNames = el.getPackageNames.toSet
-      findGlobalProjectInfo(position.getProject)
-        .map(_.allAvailablePackageNames
-          .filter(!skipPackageNames.contains(_))
-          .map(n => LookupElementBuilder.create(n).withIcon(HaskellIcons.HaskellSmallLogo)))
-        .getOrElse(Iterable())
+      getAvailablePackages(position.getProject)
+        .filter(!skipPackageNames.contains(_))
+        .map(n => LookupElementBuilder.create(n).withIcon(HaskellIcons.HaskellSmallLogo))
     }
   }
-
 }

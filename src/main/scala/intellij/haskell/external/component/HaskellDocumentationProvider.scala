@@ -1,5 +1,5 @@
 /*
- * Copyright 2016 Rik van der Kleij
+ * Copyright 2014-2017 Rik van der Kleij
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -34,7 +34,7 @@ class HaskellDocumentationProvider extends AbstractDocumentationProvider {
 
   private def findDocumentation(project: Project, namedElement: HaskellQualifiedNameElement): Option[String] = {
     val name = namedElement.getIdentifierElement.getName
-    val nameInfo = HaskellComponentsManager.findNameInfo(namedElement).headOption
+    val nameInfo = HaskellComponentsManager.findNameInfo(namedElement, forceGetInfo = true).headOption
     nameInfo match {
       case None =>
         HaskellNotificationGroup.logWarningEvent(project, s"No documentation because no info could be found for identifier: $name")

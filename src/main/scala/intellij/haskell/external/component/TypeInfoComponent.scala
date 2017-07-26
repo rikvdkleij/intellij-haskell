@@ -1,5 +1,5 @@
 /*
- * Copyright 2016 Rik van der Kleij
+ * Copyright 2014-2017 Rik van der Kleij
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -20,8 +20,10 @@ import java.util.concurrent.Executors
 
 import com.google.common.cache.{CacheBuilder, CacheLoader}
 import com.google.common.util.concurrent.{ListenableFuture, ListenableFutureTask, UncheckedExecutionException}
+import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.editor.SelectionModel
 import com.intellij.openapi.progress.ProcessCanceledException
+import com.intellij.openapi.util.Computable
 import com.intellij.psi.{PsiElement, PsiFile}
 import intellij.haskell.external.repl.StackReplsManager
 import intellij.haskell.psi._
@@ -33,57 +35,60 @@ private[component] object TypeInfoComponent {
 
   private final val Executor = Executors.newCachedThreadPool()
 
-  private case class Key(psiFile: PsiFile, startLineNr: Int, startColumnNr: Int, endLineNr: Int, endColumnNr: Int, expression: String)
+  private case class Key(psiFile: PsiFile, startLineNr: Int, startColumnNr: Int, endLineNr: Int, endColumnNr: Int, expression: String, forceGetInfo: Boolean)
 
-  private case class Result(typeInfo: Either[String, Option[TypeInfo]])
+  private case class Result(typeInfo: Either[NoTypeInfo, Option[TypeInfo]])
 
   private final val Cache = CacheBuilder.newBuilder()
     .build(
       new CacheLoader[Key, Result]() {
 
         override def load(key: Key): Result = {
-          findTypeInfo(key)
+          if (!key.forceGetInfo && LoadComponent.isLoading(key.psiFile)) {
+            Result(Left(ReplIsLoading))
+          } else {
+            findTypeInfo(key)
+          }
         }
 
         override def reload(key: Key, oldResult: Result): ListenableFuture[Result] = {
           val task = ListenableFutureTask.create[Result](() => {
-            val newResult = findTypeInfo(key)
-            newResult.typeInfo match {
-              case Right(ti) if ti.isDefined => newResult
-              case _ => oldResult
-            }
+            findTypeInfo(key)
           })
           Executor.execute(task)
           task
         }
 
         private def findTypeInfo(key: Key) = {
-          val project = key.psiFile.getProject
-          val typeInfo = StackReplsManager.getProjectRepl(project).flatMap(_.findTypeInfoFor(key.psiFile, key.startLineNr, key.startColumnNr, key.endLineNr, key.endColumnNr, key.expression)) match {
+          val typeInfo = StackReplsManager.getProjectRepl(key.psiFile).flatMap(_.findTypeInfoFor(key.psiFile, key.startLineNr, key.startColumnNr, key.endLineNr, key.endColumnNr, key.expression)) match {
             case Some(output) => Right(output.stdOutLines.headOption.filterNot(_.trim.isEmpty).map(ti => TypeInfo(ti)))
-            case _ => Left("No type info available")
+            case _ => Left(ReplNotAvailable)
           }
           Result(typeInfo)
         }
       }
     )
 
-  def findTypeInfoForElement(psiElement: PsiElement): Option[TypeInfo] = {
-    for {
-      qne <- HaskellPsiUtil.findQualifiedNameParent(psiElement)
-      to = qne.getTextOffset
-      f <- Option(psiElement.getContainingFile)
-      sp <- LineColumnPosition.fromOffset(f, to)
-      ep <- LineColumnPosition.fromOffset(f, to + qne.getText.length)
-      ti <- findTypeInfo(f, sp, ep, qne.getName)
-    } yield ti
+  def findTypeInfoForElement(psiElement: PsiElement, forceGetInfo: Boolean): Option[TypeInfo] = {
+    val key = ApplicationManager.getApplication.runReadAction(new Computable[Option[Key]] {
+      override def compute(): Option[Key] = {
+        for {
+          qne <- HaskellPsiUtil.findQualifiedNameParent(psiElement)
+          to = qne.getTextOffset
+          pf <- Option(psiElement.getContainingFile)
+          sp <- LineColumnPosition.fromOffset(pf, to)
+          ep <- LineColumnPosition.fromOffset(pf, to + qne.getText.length)
+        } yield Key(pf, sp.lineNr, sp.columnNr, ep.lineNr, ep.columnNr, qne.getName, forceGetInfo)
+      }
+    })
+    key.flatMap(findTypeInfo)
   }
 
   def findTypeInfoForSelection(psiFile: PsiFile, selectionModel: SelectionModel): Option[TypeInfo] = {
     for {
       sp <- LineColumnPosition.fromOffset(psiFile, selectionModel.getSelectionStart)
       ep <- LineColumnPosition.fromOffset(psiFile, selectionModel.getSelectionEnd)
-      typeInfo <- findTypeInfo(psiFile, sp, ep, selectionModel.getSelectedText)
+      typeInfo <- findTypeInfo(Key(psiFile, sp.lineNr, sp.columnNr, ep.lineNr, ep.columnNr, selectionModel.getSelectedText, forceGetInfo = true))
     } yield typeInfo
   }
 
@@ -91,21 +96,40 @@ private[component] object TypeInfoComponent {
     Cache.asMap().asScala.filter(_._1.psiFile == psiFile).keys.foreach(Cache.invalidate)
   }
 
-  private def findTypeInfo(psiFile: PsiFile, startPosition: LineColumnPosition, endPosition: LineColumnPosition, expression: String): Option[TypeInfo] = {
-    val key = Key(psiFile, startPosition.lineNr, startPosition.columnNr, endPosition.lineNr, endPosition.columnNr, expression)
-    try {
-      Cache.get(key).typeInfo match {
-        case Right(result) => result
-        case _ =>
-          Cache.invalidate(key)
-          None
+  private def findTypeInfo(key: Key): Option[TypeInfo] = {
+    val otherKey = key.copy(forceGetInfo = !key.forceGetInfo)
+
+    Option(Cache.getIfPresent(otherKey)) match {
+      case Some(r) => r.typeInfo match {
+        case Right(ti) => ti
+        case _ => None
       }
-    }
-    catch {
-      case _: UncheckedExecutionException => None
-      case _: ProcessCanceledException => None
+      case None =>
+        try {
+          Cache.get(key).typeInfo match {
+            case Right(result) => result
+            case Left(ReplNotAvailable) =>
+              Cache.invalidate(key)
+              None
+            case Left(ReplIsLoading) =>
+              Cache.refresh(key)
+              None
+          }
+        }
+        catch {
+          case _: UncheckedExecutionException => None
+          case _: ProcessCanceledException => None
+        }
     }
   }
+
+
+  private sealed trait NoTypeInfo
+
+  private case object ReplNotAvailable extends NoTypeInfo
+
+  private case object ReplIsLoading extends NoTypeInfo
+
 }
 
 case class TypeInfo(typeSignature: String)

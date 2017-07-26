@@ -1,5 +1,5 @@
 /*
- * Copyright 2016 Rik van der Kleij
+ * Copyright 2014-2017 Rik van der Kleij
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -33,7 +33,7 @@ class ShowNameInfoAction extends AnAction {
       val psiFile = actionContext.psiFile
       val offset = editor.getCaretModel.getOffset
       Option(psiFile.findElementAt(offset)).foreach(psiElement => {
-        val nameInfos = HaskellComponentsManager.findNameInfo(psiElement)
+        val nameInfos = HaskellComponentsManager.findNameInfo(psiElement, forceGetInfo = true)
         if (nameInfos.nonEmpty) {
           HaskellEditorUtil.showList(nameInfos.toSeq.map(createInfoText), editor)
         } else {

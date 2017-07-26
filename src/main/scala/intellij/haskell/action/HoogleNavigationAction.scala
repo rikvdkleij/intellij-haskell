@@ -1,5 +1,5 @@
 /*
- * Copyright 2016 Rik van der Kleij
+ * Copyright 2014-2017 Rik van der Kleij
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  *//*
- * Copyright 2016 Rik van der Kleij
+ * Copyright 2014-2017 Rik van der Kleij
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -47,7 +47,7 @@ class HoogleNavigationAction extends GotoActionBase {
   private val contributors = Array[ChooseByNameContributor](new HoogleByNameContributor)
 
   override def update(actionEvent: AnActionEvent) {
-    HaskellEditorUtil.enableExternalAction(actionEvent, (p: Project) => StackProjectManager.isHoogleAvailable(p) && HoogleComponent.doesHoogleDatabaseExist(p))
+    HaskellEditorUtil.enableExternalAction(actionEvent, (project: Project) => !StackProjectManager.isStarting(project) && StackProjectManager.isHoogleAvailable(project) && HoogleComponent.doesHoogleDatabaseExist(project))
   }
 
   def gotoActionPerformed(actionEvent: AnActionEvent) {

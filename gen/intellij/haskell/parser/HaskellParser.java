@@ -4870,20 +4870,20 @@ public class HaskellParser implements PsiParser, LightPsiParser {
   }
 
   /* ********************************************************** */
-  // q_name atype | newconstr_fielddecl
+  // newconstr_fielddecl | q_name atype
   public static boolean newconstr(PsiBuilder b, int l) {
     if (!recursion_guard_(b, l, "newconstr")) return false;
     boolean r;
     Marker m = enter_section_(b, l, _NONE_, HS_NEWCONSTR, "<newconstr>");
-    r = newconstr_0(b, l + 1);
-    if (!r) r = newconstr_fielddecl(b, l + 1);
+    r = newconstr_fielddecl(b, l + 1);
+    if (!r) r = newconstr_1(b, l + 1);
     exit_section_(b, l, m, r, false, null);
     return r;
   }
 
   // q_name atype
-  private static boolean newconstr_0(PsiBuilder b, int l) {
-    if (!recursion_guard_(b, l, "newconstr_0")) return false;
+  private static boolean newconstr_1(PsiBuilder b, int l) {
+    if (!recursion_guard_(b, l, "newconstr_1")) return false;
     boolean r;
     Marker m = enter_section_(b);
     r = q_name(b, l + 1);
@@ -5009,7 +5009,6 @@ public class HaskellParser implements PsiParser, LightPsiParser {
   // (&<<containsSpaces>> NEWLINE)+
   static boolean nls(PsiBuilder b, int l) {
     if (!recursion_guard_(b, l, "nls")) return false;
-    if (!nextTokenIs(b, HS_NEWLINE)) return false;
     boolean r;
     Marker m = enter_section_(b);
     r = nls_0(b, l + 1);
@@ -5732,12 +5731,11 @@ public class HaskellParser implements PsiParser, LightPsiParser {
   // &<<noSpaceAfterQualifier>> qualifier DOT (varid | consym | DOT? varsym) | q_con
   public static boolean q_var_con(PsiBuilder b, int l) {
     if (!recursion_guard_(b, l, "q_var_con")) return false;
-    if (!nextTokenIs(b, HS_CON_ID)) return false;
     boolean r;
-    Marker m = enter_section_(b);
+    Marker m = enter_section_(b, l, _NONE_, HS_Q_VAR_CON, "<q var con>");
     r = q_var_con_0(b, l + 1);
     if (!r) r = q_con(b, l + 1);
-    exit_section_(b, m, HS_Q_VAR_CON, r);
+    exit_section_(b, l, m, r, false, null);
     return r;
   }
 

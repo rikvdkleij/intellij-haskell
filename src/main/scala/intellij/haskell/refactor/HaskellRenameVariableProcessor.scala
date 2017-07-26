@@ -1,5 +1,5 @@
 /*
- * Copyright 2016 Rik van der Kleij
+ * Copyright 2014-2017 Rik van der Kleij
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -27,8 +27,8 @@ class HaskellRenameVariableProcessor extends RenamePsiElementProcessor {
   override def canProcessElement(psiElement: PsiElement): Boolean = {
     HaskellProjectUtil.isHaskellProject(psiElement.getProject) &&
       (psiElement match {
-        case pf: PsiFile => HaskellProjectUtil.isProjectFile(pf).getOrElse(false)
-        case _ => Option(psiElement.getReference) match {
+        case psiFile: PsiFile => HaskellProjectUtil.isProjectFile(psiFile).getOrElse(false)
+        case _ => Option(psiElement.getReference).map(_.getElement) match {
           case Some(e: PsiElement) => HaskellProjectUtil.isProjectFile(e.getContainingFile).getOrElse(false)
           case _ => false
         }
@@ -37,7 +37,8 @@ class HaskellRenameVariableProcessor extends RenamePsiElementProcessor {
 
   override def renameElement(psiElement: PsiElement, newName: String, usages: Array[UsageInfo], listener: RefactoringElementListener): Unit = {
     super.renameElement(psiElement, newName, usages, listener)
-    val psiFile = usages.headOption.map(_.getFile).map(_.getOriginalFile)
-    HaskellFileUtil.saveAllFiles(psiFile)
+    val project = psiElement.getProject
+
+    HaskellFileUtil.saveAllFiles(project, Option(psiElement.getContainingFile))
   }
 }

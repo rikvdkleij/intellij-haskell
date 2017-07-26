@@ -1,5 +1,5 @@
 /*
- * Copyright 2016 Rik van der Kleij
+ * Copyright 2014-2017 Rik van der Kleij
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,11 +19,8 @@ package intellij.haskell.inspection
 import com.intellij.codeInspection.LocalQuickFixOnPsiElement
 import com.intellij.openapi.command.CommandProcessor
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.util.TextRange
-import com.intellij.openapi.util.text.StringUtil
 import com.intellij.psi.util.PsiTreeUtil
 import com.intellij.psi.{PsiDocumentManager, PsiElement, PsiFile}
-import intellij.haskell.HaskellNotificationGroup
 import intellij.haskell.action.{HindentFormatAction, SelectionContext}
 import intellij.haskell.psi.{HaskellElementFactory, HaskellPsiUtil, HaskellTypes}
 
@@ -54,11 +51,10 @@ class HLintQuickfix(startElement: PsiElement, endElement: PsiElement, startLineN
             commonParent.deleteChildRange(se, ee)
           }
         } else {
-          Option(se.getNextSibling).foreach {
-            ns =>
-              commonParent.deleteChildRange(ns, ee)
-              HaskellElementFactory.createBody(project, toSuggestion).foreach(se.replace)
-          }
+          Option(se.getNextSibling).foreach(ns => {
+            commonParent.deleteChildRange(ns, ee)
+            HaskellElementFactory.createBody(project, toSuggestion).foreach(se.replace)
+          })
         }
       }
 

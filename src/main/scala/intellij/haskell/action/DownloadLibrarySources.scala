@@ -1,5 +1,5 @@
 /*
- * Copyright 2016 Rik van der Kleij
+ * Copyright 2014-2017 Rik van der Kleij
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,7 +17,7 @@
 package intellij.haskell.action
 
 import com.intellij.openapi.actionSystem.{AnAction, AnActionEvent}
-import intellij.haskell.external.component.{HaskellComponentsManager, StackProjectManager}
+import intellij.haskell.external.component.StackProjectManager
 import intellij.haskell.module.HaskellModuleBuilder
 import intellij.haskell.util.{HaskellEditorUtil, HaskellProjectUtil}
 
@@ -29,10 +29,9 @@ class DownloadLibrarySources extends AnAction {
 
   override def actionPerformed(actionEvent: AnActionEvent): Unit = {
     Option(actionEvent.getProject).foreach { project =>
-      HaskellProjectUtil.getProjectModules(project).foreach(m =>
+      HaskellProjectUtil.findProjectModules(project).foreach(m =>
         HaskellModuleBuilder.addLibrarySources(m)
       )
-      HaskellComponentsManager.invalidateModuleFileCache(project)
     }
   }
 }

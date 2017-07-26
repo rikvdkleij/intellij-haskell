@@ -1,5 +1,5 @@
 /*
- * Copyright 2016 Rik van der Kleij
+ * Copyright 2014-2017 Rik van der Kleij
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -25,26 +25,14 @@ import scala.collection.mutable.ListBuffer
 
 object StringUtil {
 
-  private final val PackageQualifierPattern = """([a-z\-]+\-[\.0-9]+\:)?([A-Z][A-Za-z\-\']+\.)+"""
-
-  def toLowerCase(s: String): String = {
-    s.trim.toLowerCase
-  }
+  private final val PackageQualifierPattern = """([a-z\-]+\-[\.0-9]+\:)?([A-Z][A-Za-z\-\']*\.)+"""
 
   def escapeString(s: String): String = {
     XmlStringUtil.escapeString(s, false, false)
   }
 
-  /**
-    * Because of enabling DuplicateRecordFields accessor functions contain `$sel:`.
-    */
   def shortenHaskellDeclaration(declaration: String): String = {
-    if (declaration.contains("$sel:")) {
-      val name = declaration.split("::")
-      name(0).split(":")(1) ++ " :: " + name(1)
-    } else {
-      removeCommentsAndWhiteSpaces(declaration.replaceAll(PackageQualifierPattern, ""))
-    }
+    removeCommentsAndWhiteSpaces(declaration.replaceAll(PackageQualifierPattern, ""))
   }
 
   def removeCommentsAndWhiteSpaces(code: String): String = {

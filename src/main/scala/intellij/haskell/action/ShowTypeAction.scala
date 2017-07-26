@@ -1,5 +1,5 @@
 /*
- * Copyright 2016 Rik van der Kleij
+ * Copyright 2014-2017 Rik van der Kleij
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,8 +17,13 @@
 package intellij.haskell.action
 
 import com.intellij.openapi.actionSystem.{AnAction, AnActionEvent}
+import com.intellij.openapi.application.ApplicationManager
+import com.intellij.openapi.editor.Editor
+import com.intellij.psi.{PsiElement, PsiFile}
+import intellij.haskell.editor.HaskellCompletionContributor
 import intellij.haskell.external.component.HaskellComponentsManager
-import intellij.haskell.util.{HaskellEditorUtil, StringUtil}
+import intellij.haskell.psi.HaskellPsiUtil
+import intellij.haskell.util.{HaskellEditorUtil, StringUtil, TypeInfoUtil}
 
 class ShowTypeAction extends AnAction {
 
@@ -37,12 +42,40 @@ class ShowTypeAction extends AnAction {
           case None => HaskellEditorUtil.showHint(editor, "Could not determine type for selection")
         }
         case _ => Option(psiFile.findElementAt(editor.getCaretModel.getOffset)).foreach { psiElement =>
-          HaskellComponentsManager.findTypeInfoForElement(psiElement) match {
+
+          ApplicationManager.getApplication.executeOnPooledThread(new Runnable {
+            override def run(): Unit = {
+              TypeInfoUtil.preloadTypesAround(psiElement)
+            }
+          })
+
+          HaskellComponentsManager.findTypeInfoForElement(psiElement, forceGetInfo = true) match {
             case Some(ti) => HaskellEditorUtil.showHint(editor, StringUtil.escapeString(ti.typeSignature))
-            case None => HaskellEditorUtil.showHint(editor, s"Could not determine type for ${StringUtil.escapeString(psiElement.getText)}")
+            case None if HaskellPsiUtil.findExpressionParent(psiElement).isDefined =>
+              val moduleNames = HaskellPsiUtil.findImportDeclarations(psiFile).flatMap(_.getModuleName)
+              val declaration = HaskellPsiUtil.findQualifiedNameParent(psiElement).flatMap(qualifiedNameElement => {
+                val name = qualifiedNameElement.getName
+                HaskellCompletionContributor.getAvailableImportedModuleIdentifiers(psiFile).find(mi => moduleNames.exists(_ == mi.moduleName) && mi.name == name).map(_.declaration).
+                  orElse(findModuleName(psiFile).flatMap(mn => HaskellComponentsManager.findExportedModuleIdentifiersOfCurrentFile(psiFile, mn).find(_.name == name).map(_.declaration))).
+                  orElse(HaskellPsiUtil.findHaskellDeclarationElements(psiFile).find(_.getIdentifierElements.exists(_.getName == name)).map(_.getText.replaceAll("""\s+""", " ")))
+              })
+
+              declaration match {
+                case Some(d) => HaskellEditorUtil.showHint(editor, d)
+                case None => showNoTypeInfoHint(editor, psiElement)
+              }
+            case None => showNoTypeInfoHint(editor, psiElement)
           }
         }
       }
     })
+  }
+
+  private def findModuleName(psiFile: PsiFile) = {
+    HaskellPsiUtil.findModuleName(psiFile, runInRead = true)
+  }
+
+  private def showNoTypeInfoHint(editor: Editor, psiElement: PsiElement) = {
+    HaskellEditorUtil.showHint(editor, s"Could not determine type for ${StringUtil.escapeString(psiElement.getText)}")
   }
 }

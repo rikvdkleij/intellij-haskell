@@ -1,5 +1,5 @@
 /*
- * Copyright 2016 Rik van der Kleij
+ * Copyright 2014-2017 Rik van der Kleij
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,31 +17,37 @@
 package intellij.haskell.external.component
 
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.psi.PsiFile
+import com.intellij.psi.search.{FileTypeIndex, GlobalSearchScopesCore}
+import intellij.haskell.HaskellFileType
 import intellij.haskell.psi.HaskellPsiUtil
-import intellij.haskell.util.HaskellProjectUtil
-import intellij.haskell.util.index.HaskellFileIndex
+import intellij.haskell.util.HaskellFileUtil
+
+import scala.collection.JavaConverters._
 
 private[component] object AvailableModuleNamesComponent {
 
   def findAvailableModuleNames(psiFile: PsiFile): Iterable[String] = {
-    val globalProjectInfo = GlobalProjectInfoComponent.findGlobalProjectInfo(psiFile.getProject)
+    val stackComponentInfo = HaskellComponentsManager.findStackComponentInfo(psiFile)
+    val project = psiFile.getProject
+    val stackComponentModuleNames = stackComponentInfo.map(info => findModuleNamesInDirectories(project, info.sourceDirs.flatMap(d => HaskellFileUtil.findDirectory(d, project)))).getOrElse(Stream())
+    val libraryModuleNames = findAvailableLibraryModuleNames(psiFile)
 
-    HaskellProjectUtil.isProjectTestFile(psiFile).map(isTestFile => {
-      if (isTestFile) {
-        val libraryTestModuleNames = globalProjectInfo.map(_.allAvailableLibraryModuleNames).getOrElse(Stream())
-        val testModuleNames = HaskellFileIndex.findProjectTestPsiFiles(psiFile.getProject).flatMap(f => HaskellPsiUtil.findModuleName(f)) ++
-          findProjectProductionModuleNames(psiFile.getProject)
-        testModuleNames ++ libraryTestModuleNames
-      } else {
-        val libraryModuleNames = globalProjectInfo.map(_.availableProductionLibraryModuleNames).getOrElse(Stream())
-        val prodModuleNames = findProjectProductionModuleNames(psiFile.getProject)
-        prodModuleNames ++ libraryModuleNames
-      }
-    }).getOrElse(Iterable())
+    stackComponentModuleNames ++ libraryModuleNames
   }
 
-  def findProjectProductionModuleNames(project: Project): Iterable[String] = {
-    HaskellFileIndex.findProjectProductionPsiFiles(project).flatMap(f => HaskellPsiUtil.findModuleName(f))
+  private def findAvailableLibraryModuleNames(psiFile: PsiFile): Iterable[String] = {
+    HaskellComponentsManager.findStackComponentGlobalInfo(psiFile).map(_.availableLibraryModuleNames).getOrElse(Iterable())
+  }
+
+  private def findModuleNamesInDirectories(project: Project, directories: Seq[VirtualFile]): Iterable[String] = {
+    val files = FileTypeIndex.getFiles(HaskellFileType.Instance, GlobalSearchScopesCore.directoriesScope(project, true, directories: _*)).asScala
+    files.flatMap(f => {
+      for {
+        hf <- HaskellFileUtil.convertToHaskellFile(project, f)
+        m <- HaskellPsiUtil.findModuleName(hf, runInRead = true)
+      } yield m
+    })
   }
 }

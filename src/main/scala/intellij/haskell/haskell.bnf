@@ -262,7 +262,7 @@ private export2             ::= TYPE? onl cname+
 private export4             ::= MODULE modid
 cname_dot_dot               ::= cname | DOT_DOT
 
-newconstr                   ::= q_name atype | newconstr_fielddecl
+newconstr                   ::= newconstr_fielddecl | q_name atype
 newconstr_fielddecl         ::= q_name onls LEFT_BRACE? onls q_name onls COLON_COLON onls ttype onls RIGHT_BRACE?
 
 cdecls                      ::= cdecl (nls cdecl)*

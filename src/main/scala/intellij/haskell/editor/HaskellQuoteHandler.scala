@@ -1,5 +1,5 @@
 /*
- * Copyright 2016 Rik van der Kleij
+ * Copyright 2014-2017 Rik van der Kleij
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,4 +19,4 @@ package intellij.haskell.editor
 import com.intellij.codeInsight.editorActions.SimpleTokenSetQuoteHandler
 import intellij.haskell.psi.HaskellTypes._
 
-class HaskellQuoteHandler extends SimpleTokenSetQuoteHandler(HS_STRING_LITERAL, HS_CHARACTER_LITERAL, HS_BACKQUOTE, HS_QUOTE)
+class HaskellQuoteHandler extends SimpleTokenSetQuoteHandler(HS_STRING_LITERAL, HS_BACKQUOTE, HS_QUOTE, HS_DOUBLE_QUOTE)

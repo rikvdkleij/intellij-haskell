@@ -1,5 +1,5 @@
 /*
- * Copyright 2016 Rik van der Kleij
+ * Copyright 2014-2017 Rik van der Kleij
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,97 +17,75 @@
 package intellij.haskell.external.component
 
 import com.intellij.openapi.application.ApplicationManager
-import com.intellij.psi.PsiFile
+import com.intellij.openapi.progress.{PerformInBackgroundOption, ProgressIndicator, ProgressManager, Task}
+import com.intellij.openapi.project.Project
+import com.intellij.psi.{PsiElement, PsiFile}
+import intellij.haskell.annotator.HaskellAnnotator
+import intellij.haskell.external.execution.{CompilationResult, HaskellCompilationResultHelper, StackCommandLine}
 import intellij.haskell.external.repl._
 import intellij.haskell.psi.HaskellPsiUtil
-import intellij.haskell.util.{HaskellFileUtil, StringUtil}
+import intellij.haskell.util.TypeInfoUtil
 
 private[component] object LoadComponent {
 
-  private final val ProblemPattern = """(.+):([\d]+):([\d]+):(.+)""".r
-
-  def isLoaded(psiFile: PsiFile, forceLoad: Boolean): Boolean = {
-    val project = psiFile.getProject
-    val projectRepl = StackReplsManager.getProjectRepl(project)
-    projectRepl.map(_.isLoaded(psiFile)).exists {
-      case Loaded() => true
-      case Failed() => false
-      case _ => if (forceLoad) !load(psiFile).loadFailed else false
-    }
+  def isLoaded(psiFile: PsiFile): Option[IsFileLoaded] = {
+    val projectRepl = StackReplsManager.getProjectRepl(psiFile)
+    projectRepl.map(_.isLoaded(psiFile))
   }
 
-  def load(psiFile: PsiFile): LoadResult = {
+  def isLoading(psiFile: PsiFile): Boolean = {
+    val projectRepl = StackReplsManager.getProjectRepl(psiFile)
+    projectRepl.exists(_.isLoading.exists(_ == psiFile))
+  }
+
+  def isLoading(project: Project): Boolean = {
+    val projectRepl = StackReplsManager.getProjectRepl(project)
+    projectRepl.exists(_.isLoading.isDefined)
+  }
+
+  def load(psiFile: PsiFile, currentElement: Option[PsiElement]): Option[CompilationResult] = {
     val project = psiFile.getProject
 
-    val moduleName = HaskellPsiUtil.findModuleName(psiFile, runInRead = true)
-    StackReplsManager.getProjectRepl(project).flatMap(_.load(psiFile, moduleName)) match {
+    val stackComponentInfo = HaskellComponentsManager.findStackComponentInfo(psiFile)
+    stackComponentInfo.foreach(info => {
+      if (info.stanzaType != LibType) {
+        val stackComponentInfo = ProjectLibraryFileWatcher.changedLibrariesByPackageName.remove(info.packageName)
+        stackComponentInfo match {
+          case Some(libraryInfo) =>
+            val progressManager = ProgressManager.getInstance()
+            progressManager.run(new Task.Backgroundable(project, s"Busy building library ${libraryInfo.packageName}", false, PerformInBackgroundOption.DEAF) {
+
+              override def run(indicator: ProgressIndicator): Unit = {
+                StackCommandLine.executeInMessageView(project, Seq("build", libraryInfo.target, "--fast"), progressManager.getProgressIndicator)
+                StackReplsManager.getReplsManager(project).foreach(_.restartProjectTestRepl())
+                HaskellAnnotator.restartDaemonCodeAnalyzerForFile(psiFile)
+              }
+            })
+          case None => ()
+        }
+      }
+    })
+
+    StackReplsManager.getProjectRepl(psiFile).flatMap(_.load(psiFile)) match {
       case Some((loadOutput, loadFailed)) =>
         if (!loadFailed) {
+          val moduleName = HaskellPsiUtil.findModuleName(psiFile, runInRead = true)
           ApplicationManager.getApplication.executeOnPooledThread(new Runnable {
+
             override def run(): Unit = {
               TypeInfoComponent.invalidate(psiFile)
+              currentElement.foreach(TypeInfoUtil.preloadTypesAround)
+
               DefinitionLocationComponent.invalidate(psiFile)
               NameInfoComponent.invalidate(psiFile)
-              moduleName.foreach(BrowseModuleComponent.invalidateForModule(project, _, psiFile))
+              BrowseModuleComponent.refreshTopLevel(project, psiFile)
+              moduleName.foreach(mn => BrowseModuleComponent.invalidateForModuleName(project, mn))
             }
           })
         }
-        createLoadResult(psiFile, loadOutput.stdErrLines, loadFailed)
-      case _ => LoadResult()
-    }
-  }
 
-  def createLoadResult(psiFile: PsiFile, errorLines: Seq[String], loadFailed: Boolean): LoadResult = {
-    val filePath = HaskellFileUtil.getAbsoluteFilePath(psiFile)
-
-    // `distinct` because of https://github.com/commercialhaskell/intero/issues/258
-    val loadProblems = errorLines.distinct.map(l => parseErrorOutputLine(filePath, l))
-
-    val currentFileProblems = loadProblems.flatMap(convertToLoadProblemInCurrentFile)
-    val otherFileProblems = loadProblems.diff(currentFileProblems)
-
-    LoadResult(currentFileProblems, otherFileProblems, loadFailed)
-  }
-
-  private def convertToLoadProblemInCurrentFile(loadProblem: LoadProblem) = {
-    loadProblem match {
-      case lp: LoadProblemInCurrentFile => Some(lp)
+        Some(HaskellCompilationResultHelper.createCompilationResult(Some(psiFile), loadOutput.stdErrLines, loadFailed))
       case _ => None
     }
   }
-
-  private[component] def parseErrorOutputLine(filePath: String, outputLine: String): LoadProblem = {
-    outputLine match {
-      case ProblemPattern(problemFilePath, lineNr, columnNr, message) =>
-        val displayMessage = message.trim.replaceAll("""(\s\s\s\s+)""", "\n" + "$1")
-        if (filePath == problemFilePath) {
-          LoadProblemInCurrentFile(problemFilePath, lineNr.toInt, columnNr.toInt, displayMessage)
-        } else {
-          LoadProblemInOtherFile(problemFilePath, lineNr.toInt, columnNr.toInt, displayMessage)
-        }
-      case m => LoadProblemWithoutLocation(m)
-    }
-  }
 }
-
-case class LoadResult(currentFileProblems: Iterable[LoadProblemInCurrentFile] = Iterable(), otherFileProblems: Iterable[LoadProblem] = Iterable(), loadFailed: Boolean = false)
-
-sealed abstract class LoadProblem(private val message: String) {
-  def plainMessage: String = {
-    message.split("\n").mkString.replaceAll("\\s+", " ")
-  }
-
-  def htmlMessage: String = {
-    StringUtil.escapeString(message.replace(' ', '\u00A0'))
-  }
-
-  def isWarning: Boolean = {
-    message.startsWith("warning:") || message.startsWith("Warning:")
-  }
-}
-
-case class LoadProblemInCurrentFile private(filePath: String, lineNr: Int, columnNr: Int, private val message: String) extends LoadProblem(message)
-
-case class LoadProblemInOtherFile private(filePath: String, lineNr: Int, columnNr: Int, private val message: String) extends LoadProblem(message)
-
-case class LoadProblemWithoutLocation private(private val message: String) extends LoadProblem(message)

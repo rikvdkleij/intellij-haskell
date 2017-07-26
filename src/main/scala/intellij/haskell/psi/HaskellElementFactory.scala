@@ -1,5 +1,5 @@
 /*
- * Copyright 2016 Rik van der Kleij
+ * Copyright 2014-2017 Rik van der Kleij
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -31,6 +31,11 @@ import intellij.haskell.{HaskellFile, HaskellFileType, HaskellLanguage}
 import scala.collection.JavaConverters._
 
 object HaskellElementFactory {
+
+  def createUnderscore(project: Project): Option[PsiElement] = {
+    createElementFromText(project, "_", HS_RESERVED_ID)
+  }
+
   def createVarid(project: Project, name: String): Option[HaskellVarid] = {
     createElementFromText(project, name, HS_VARID).map(_.asInstanceOf[HaskellVarid])
   }
@@ -84,7 +89,7 @@ object HaskellElementFactory {
   }
 
   def createTab(project: Project): PsiWhiteSpace = {
-    val tabSize = CodeStyleSettingsManager.getInstance().getCurrentSettings.getTabSize(HaskellFileType.INSTANCE)
+    val tabSize = CodeStyleSettingsManager.getInstance().getCurrentSettings.getTabSize(HaskellFileType.Instance)
     createWhiteSpace(project, " " * tabSize)
   }
 
@@ -119,7 +124,7 @@ object HaskellElementFactory {
     PsiFileFactory.getInstance(project).createFileFromText("a.hs", HaskellLanguage.Instance, text).asInstanceOf[HaskellFile]
   }
 
-  private def createElementFromText(project: Project, text: String, elementType: IElementType) = {
-    Option(new PsiFileFactoryImpl(PsiManager.getInstance(project)).createElementFromText(text, HaskellLanguage.Instance, elementType, null))
+  def createElementFromText(project: Project, text: String, elementType: IElementType): Option[PsiElement] = {
+    Option(new PsiFileFactoryImpl(PsiManager.getInstance(project)).createElementFromText(text, HaskellLanguage.Instance, elementType, null)).filter(_.isValid)
   }
 }
