@@ -47,7 +47,6 @@ abstract class StackRepl(val project: Project, var stanzaType: Option[StanzaType
 
   private final val LoadTimeout = 60.seconds
   private final val DefaultTimeout = 5.seconds
-  private final val SetTimeout = 2.seconds
 
   private final val EndOfOutputIndicator = "^IntellijHaskell^"
 
@@ -89,7 +88,6 @@ abstract class StackRepl(val project: Project, var stanzaType: Option[StanzaType
         writeToOutputStream(command)
 
         val timeout = if (command.startsWith(":load")) LoadTimeout
-        else if (command.startsWith(":set")) SetTimeout
         else DefaultTimeout
 
         val deadline = timeout.fromNow
