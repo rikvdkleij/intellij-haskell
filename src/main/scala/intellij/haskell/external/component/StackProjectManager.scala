@@ -66,7 +66,7 @@ object StackProjectManager {
       if (isStarting(project)) {
         HaskellNotificationGroup.logWarningBalloonEvent(project, "Stack REPLs are already (re)starting")
       } else {
-        ProgressManager.getInstance().run(new Task.Backgroundable(project, "Starting Global Stack REPL, building tools and preloading cache", false, PerformInBackgroundOption.DEAF) {
+        ProgressManager.getInstance().run(new Task.Backgroundable(project, "Building project, starting global Stack REPL, building tools and preloading cache", false, PerformInBackgroundOption.DEAF) {
 
           def run(progressIndicator: ProgressIndicator) {
             getStackProjectManager(project).foreach(_.starting = true)
