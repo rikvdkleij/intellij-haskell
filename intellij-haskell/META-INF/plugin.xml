@@ -20,8 +20,9 @@
             <li>Added notification to setup SDK in case no Haskell SDK is set for project</li>
             <li>Multi package support</li>
             <li>Only one Stack target is loaded per REPL to prevent conflicts</li>
-            <li>Library sources are downloaded to folder .intellij-haskell inside user's home directory</li>
-            <li>Hoogle database is not automatically generated anymore while starting project but is become separate action in Tools menu</li>
+            <li>Library sources are downloaded to folder `.intellij-haskell` inside user's home directory</li>
+            <li>Hoogle database is not automatically generated anymore while starting project but has become separate action in Tools menu</li>
+            <li>Simple support for type info even when compile errors</li>
         </ul>
         <p>1.0.0-beta8</p>
         <ul>
