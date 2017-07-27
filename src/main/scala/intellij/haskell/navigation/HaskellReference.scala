@@ -109,7 +109,7 @@ object HaskellReference {
   }
 
   def findNamedElementsByLibraryNameInfo(libraryNameInfo: LibraryNameInfo, name: String, project: Project, module: Option[Module], preferExpressions: Boolean): Iterable[HaskellNamedElement] = {
-    val namedElements = findNamedElementsByModuleNameAndName(libraryNameInfo.moduleName, name, project, module, preferExpressions)
+    val namedElements = findNamedElementByModuleNameAndName(libraryNameInfo.moduleName, name, project, module, preferExpressions)
     if (namedElements.nonEmpty) {
       namedElements
     } else {
@@ -134,7 +134,7 @@ object HaskellReference {
     }
   }
 
-  def findNamedElementsByModuleNameAndName(moduleName: String, name: String, project: Project, module: Option[Module], preferExpressions: Boolean): Iterable[HaskellNamedElement] = {
+  def findNamedElementByModuleNameAndName(moduleName: String, name: String, project: Project, module: Option[Module], preferExpressions: Boolean): Option[HaskellNamedElement] = {
     val haskellFile = module match {
       case None => HaskellModuleNameIndex.findHaskellFileByModuleName(project, moduleName, GlobalSearchScope.allScope(project))
       case Some(m) => HaskellModuleNameIndex.findHaskellFileByModuleName(project, moduleName, m.getModuleWithDependenciesAndLibrariesScope(true))
@@ -146,9 +146,9 @@ object HaskellReference {
 
     if (preferExpressions) {
       haskellFile.flatMap(hf => HaskellPsiUtil.findTopLevelExpressions(hf).map(e => getChildOfType(e, classOf[HaskellQName])).find(ne => ne.exists(_.getName == name))).flatten.map(_.getIdentifierElement).
-        orElse(findDeclarationIdentifiers).toIterable
+        orElse(findDeclarationIdentifiers)
     } else {
-      findDeclarationIdentifiers.toIterable
+      findDeclarationIdentifiers
     }
   }
 
@@ -167,7 +167,7 @@ object HaskellReference {
         findNamedElementByLocation(filePath, startLineNr, startColumnNr, namedElement.getName, project)
       case Some(ModuleLocationInfo(moduleName)) =>
         val module = ModuleUtilCore.findModuleForPsiElement(namedElement)
-        findNamedElementsByModuleNameAndName(moduleName, namedElement.getName, project, Some(module), preferExpressions = true).headOption
+        findNamedElementByModuleNameAndName(moduleName, namedElement.getName, project, Some(module), preferExpressions = true)
       case None => None
     }
   }
