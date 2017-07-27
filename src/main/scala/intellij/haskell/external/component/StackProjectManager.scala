@@ -105,7 +105,7 @@ object StackProjectManager {
 
                 executeBuild(project, Seq("intero"), "intero", notifyBalloonError = true)
 
-                progressIndicator.setText("Busy with starting Global Stack REPL")
+                progressIndicator.setText("Busy with starting global Stack REPL")
                 StackReplsManager.getGlobalRepl(project).foreach(_.start())
               } finally {
                 getStackProjectManager(project).foreach(_.building = false)
