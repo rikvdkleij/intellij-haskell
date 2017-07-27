@@ -244,15 +244,9 @@ abstract class StackRepl(val project: Project, var stanzaType: Option[StanzaType
 
   private def closeResources() = {
     try {
-      if (stdin != null) {
-        stdin.close()
-      }
-      if (stdout != null) {
-        stdout.close()
-      }
-      if (stderr != null) {
-        stderr.close()
-      }
+      closeResource(stdin)
+      closeResource(stdout)
+      closeResource(stderr)
     } finally {
       if (outputStream.isSet) {
         try {
@@ -261,6 +255,16 @@ abstract class StackRepl(val project: Project, var stanzaType: Option[StanzaType
           case _: Exception => ()
         }
       }
+    }
+  }
+
+  private def closeResource(closeable: Closeable) = {
+    try {
+      if (closeable != null) {
+        closeable.close()
+      }
+    } catch {
+      case _: IOException => ()
     }
   }
 
