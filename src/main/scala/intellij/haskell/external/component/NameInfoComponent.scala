@@ -155,7 +155,7 @@ private[component] object NameInfoComponent {
     }).getOrElse(Iterable())
   }
 
-  def findNameInfoByModuleAndName(project: Project, moduleName: String, name: String): Iterable[NameInfo] = {
+  def findNameInfoByModuleName(project: Project, moduleName: String, name: String): Iterable[NameInfo] = {
     try {
       val key = ModuleAndNameKey(project, moduleName, name)
       ModuleAndNameCache.get(key).nameInfos match {

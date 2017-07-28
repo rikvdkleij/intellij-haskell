@@ -59,18 +59,18 @@ class HoogleByNameContributor extends ChooseByNameContributor {
         ProgressManager.checkCanceled()
         DeclarationLineUtil.findName(declaration).map(nd => {
           val name = StringUtil.removeOuterParens(nd.name)
-          val navigationItemsFromNameInfo = HaskellComponentsManager.findNameInfoByModuleAndName(project, moduleName, name).headOption.flatMap {
-            case lni: LibraryNameInfo => HaskellReference.findNamedElementsByLibraryNameInfo(lni, name, project, None, preferExpressions = false).
+          val navigationItemByNameInfo = HaskellComponentsManager.findNameInfoByModuleName(project, moduleName, name).headOption.flatMap {
+            case lni: LibraryNameInfo => HaskellReference.findIdentifiersByLibraryNameInfo(lni, name, project, None, preferExpressions = false).
               headOption.flatMap(HaskellPsiUtil.findDeclarationElementParent).map(d => createLibraryNavigationItem(d, moduleName))
-            case pni: ProjectNameInfo => HaskellReference.findNamedElementByLocation(pni.filePath, pni.lineNr, pni.columnNr, name, project).flatMap(HaskellPsiUtil.findDeclarationElementParent)
+            case pni: ProjectNameInfo => HaskellReference.findIdentifierByLocation(pni.filePath, pni.lineNr, pni.columnNr, name, project).flatMap(HaskellPsiUtil.findDeclarationElementParent)
             case _ => None
           }
-          navigationItemsFromNameInfo.orElse {
-            val namedElement = HaskellReference.findNamedElementByModuleNameAndName(moduleName, name, project, None, preferExpressions = false)
-            if (namedElement.isEmpty) {
+          navigationItemByNameInfo.orElse {
+            val identifier = HaskellReference.findIdentifiersByModuleName(moduleName, name, project, None, preferExpressions = false).headOption
+            if (identifier.isEmpty) {
               NotFoundResult(moduleName, declaration)
             } else {
-              namedElement.flatMap(HaskellPsiUtil.findDeclarationElementParent)
+              identifier.flatMap(HaskellPsiUtil.findDeclarationElementParent)
             }
           }
         }).getOrElse(NotFoundResult(moduleName, declaration))
@@ -78,6 +78,7 @@ class HoogleByNameContributor extends ChooseByNameContributor {
         ProgressManager.checkCanceled()
         Iterable(NotFoundNavigationItem(d))
     }
+
     var i = 0
     navigationItems.map(item => new NavigationItem {
 

@@ -52,8 +52,8 @@ object HaskellComponentsManager {
     NameInfoComponent.findNameInfo(psiElement, forceGetInfo)
   }
 
-  def findNameInfoByModuleAndName(project: Project, moduleName: String, name: String): Iterable[NameInfo] = {
-    NameInfoComponent.findNameInfoByModuleAndName(project, moduleName, name)
+  def findNameInfoByModuleName(project: Project, moduleName: String, name: String): Iterable[NameInfo] = {
+    NameInfoComponent.findNameInfoByModuleName(project, moduleName, name)
   }
 
   def findAvailableModuleNames(psiFile: PsiFile): Iterable[String] = {
