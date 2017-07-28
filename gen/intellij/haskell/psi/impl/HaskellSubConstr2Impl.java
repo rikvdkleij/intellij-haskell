@@ -44,8 +44,8 @@ public class HaskellSubConstr2Impl extends HaskellCompositeElementImpl implement
 
   @Override
   @NotNull
-  public List<HaskellTtype2> getTtype2List() {
-    return PsiTreeUtil.getChildrenOfTypeAsList(this, HaskellTtype2.class);
+  public List<HaskellTtype2Onls> getTtype2OnlsList() {
+    return PsiTreeUtil.getChildrenOfTypeAsList(this, HaskellTtype2Onls.class);
   }
 
   @Override

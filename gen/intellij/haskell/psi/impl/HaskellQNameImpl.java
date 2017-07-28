@@ -32,6 +32,12 @@ public class HaskellQNameImpl extends HaskellCompositeElementImpl implements Has
 
   @Override
   @Nullable
+  public HaskellUnpackNounpackPragma getUnpackNounpackPragma() {
+    return PsiTreeUtil.getChildOfType(this, HaskellUnpackNounpackPragma.class);
+  }
+
+  @Override
+  @Nullable
   public HaskellVarCon getVarCon() {
     return PsiTreeUtil.getChildOfType(this, HaskellVarCon.class);
   }

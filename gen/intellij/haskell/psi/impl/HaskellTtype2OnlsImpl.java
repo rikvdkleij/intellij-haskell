@@ -4,21 +4,19 @@ package intellij.haskell.psi.impl;
 import com.intellij.lang.ASTNode;
 import com.intellij.psi.PsiElementVisitor;
 import com.intellij.psi.util.PsiTreeUtil;
-import intellij.haskell.psi.HaskellConstr4;
-import intellij.haskell.psi.HaskellQName;
+import intellij.haskell.psi.HaskellTtype2;
+import intellij.haskell.psi.HaskellTtype2Onls;
 import intellij.haskell.psi.HaskellVisitor;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.List;
+public class HaskellTtype2OnlsImpl extends HaskellCompositeElementImpl implements HaskellTtype2Onls {
 
-public class HaskellConstr4Impl extends HaskellCompositeElementImpl implements HaskellConstr4 {
-
-  public HaskellConstr4Impl(ASTNode node) {
+  public HaskellTtype2OnlsImpl(ASTNode node) {
     super(node);
   }
 
   public void accept(@NotNull HaskellVisitor visitor) {
-    visitor.visitConstr4(this);
+    visitor.visitTtype2Onls(this);
   }
 
   public void accept(@NotNull PsiElementVisitor visitor) {
@@ -28,8 +26,8 @@ public class HaskellConstr4Impl extends HaskellCompositeElementImpl implements H
 
   @Override
   @NotNull
-  public List<HaskellQName> getQNameList() {
-    return PsiTreeUtil.getChildrenOfTypeAsList(this, HaskellQName.class);
+  public HaskellTtype2 getTtype2() {
+    return notNullChild(PsiTreeUtil.getChildOfType(this, HaskellTtype2.class));
   }
 
 }

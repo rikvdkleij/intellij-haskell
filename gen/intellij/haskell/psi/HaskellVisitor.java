@@ -403,6 +403,10 @@ public class HaskellVisitor extends PsiElementVisitor {
     visitCompositeElement(o);
   }
 
+  public void visitTtype2Onls(@NotNull HaskellTtype2Onls o) {
+    visitCompositeElement(o);
+  }
+
   public void visitTypeDeclaration(@NotNull HaskellTypeDeclaration o) {
     visitDeclarationElement(o);
   }

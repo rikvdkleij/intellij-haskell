@@ -38,9 +38,9 @@ public class HaskellConstr1Impl extends HaskellCompositeElementImpl implements H
   }
 
   @Override
-  @NotNull
-  public List<HaskellUnpackNounpackPragma> getUnpackNounpackPragmaList() {
-    return PsiTreeUtil.getChildrenOfTypeAsList(this, HaskellUnpackNounpackPragma.class);
+  @Nullable
+  public HaskellUnpackNounpackPragma getUnpackNounpackPragma() {
+    return PsiTreeUtil.getChildOfType(this, HaskellUnpackNounpackPragma.class);
   }
 
 }

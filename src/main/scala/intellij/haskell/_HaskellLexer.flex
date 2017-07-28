@@ -121,11 +121,11 @@ shebang_line        = {hash} {exclamation_mark} [^\r\n]*
 pragma_start        = "{-#"
 pragma_end          = "#-}"
 
-comment             = {dash}{dash}[^\r\n]* | "\\begin{code}"
+comment             = {dash}{dash}{dash}*[^\r\n\!\#\$\%\&\⋆\+\.\/\<\=\>\?\@][^\r\n]* | {dash}{dash}{white_char}* | "\\begin{code}"
 ncomment_start      = "{-"
 ncomment_end        = "-}"
-haddock             = {dash}{dash}\ [\^\|][^\r\n]* ({newline} {white_char}* {comment})*
-nhaddock_start      = "{-|"
+haddock             = {dash}{dash}{white_char}[\^\|][^\r\n]*
+nhaddock_start      = "{-|" | "{- |"
 
 %%
 

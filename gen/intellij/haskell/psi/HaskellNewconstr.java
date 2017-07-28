@@ -21,7 +21,7 @@ public interface HaskellNewconstr extends HaskellCompositeElement {
   HaskellTtype1 getTtype1();
 
   @Nullable
-  HaskellTtype2 getTtype2();
+  HaskellTtype2Onls getTtype2Onls();
 
   @NotNull
   List<HaskellTypeSignature> getTypeSignatureList();

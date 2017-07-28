@@ -17,7 +17,7 @@ public interface HaskellSubConstr2 extends HaskellCompositeElement {
   List<HaskellTtype1> getTtype1List();
 
   @NotNull
-  List<HaskellTtype2> getTtype2List();
+  List<HaskellTtype2Onls> getTtype2OnlsList();
 
   @NotNull
   List<HaskellTypeSignature> getTypeSignatureList();

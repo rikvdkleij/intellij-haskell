@@ -3,11 +3,9 @@ package intellij.haskell.psi;
 
 import org.jetbrains.annotations.NotNull;
 
-import java.util.List;
-
-public interface HaskellConstr4 extends HaskellCompositeElement {
+public interface HaskellTtype2Onls extends HaskellCompositeElement {
 
   @NotNull
-  List<HaskellQName> getQNameList();
+  HaskellTtype2 getTtype2();
 
 }
