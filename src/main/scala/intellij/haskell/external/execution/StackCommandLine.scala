@@ -126,6 +126,8 @@ object StackCommandLine {
             addMessage()
           }
           previousMessageLines.append(text)
+        } else if (text.startsWith("Warning:")) {
+          compileContext.addMessage(CompilerMessageCategory.WARNING, text, null, -1, -1)
         } else {
           compileContext.addMessage(CompilerMessageCategory.INFORMATION, text, null, -1, -1)
         }
@@ -144,6 +146,8 @@ object StackCommandLine {
           val compilerMessageCategory =
             if (errorMessageLine.contains("ExitFailure")) {
               CompilerMessageCategory.ERROR
+            } else if (errorMessageLine.startsWith("Warning:")) {
+              CompilerMessageCategory.WARNING
             } else {
               CompilerMessageCategory.INFORMATION
             }
