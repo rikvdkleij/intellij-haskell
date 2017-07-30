@@ -197,6 +197,9 @@ object HaskellModuleBuilder {
 
     HaskellSdkType.getStackPath(project).foreach(stackPath => {
       val packageName = module.getName
+
+      removeOldIdeaHaskellLibDirectory(project)
+
       val projectLibDirectory = getProjectLibDirectory(project)
       if (!projectLibDirectory.exists()) {
         FileUtil.createDirectory(projectLibDirectory)
@@ -215,6 +218,13 @@ object HaskellModuleBuilder {
         }
       })
     })
+  }
+
+  private def removeOldIdeaHaskellLibDirectory(project: Project): Unit = {
+    val oldLibDir = new File(project.getBasePath, ".ideaHaskellLib")
+    if (oldLibDir.exists()) {
+      FileUtil.delete(oldLibDir)
+    }
   }
 
   private def getProjectLibDirectory(project: Project): File = {

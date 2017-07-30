@@ -12,7 +12,7 @@
 
     <change-notes><![CDATA[
         <p>1.0.0-beta9</p>
-        <b>IMPORTANT: After upgrade reimport your Haskell Stack project and delete folder .ideaHaskellLib inside project's folder</b>
+        <b>IMPORTANT: After upgrade reimport your Haskell Stack project. The folder `.ideaHaskellLib` inside project's folder will be deleted. See changes.</b>
         <ul>
             <li>Various (performance) improvements and fixes</li>
             <li>Windows support</li>
