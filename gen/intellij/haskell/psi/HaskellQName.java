@@ -10,9 +10,6 @@ public interface HaskellQName extends HaskellQualifiedNameElement {
   HaskellQVarCon getQVarCon();
 
   @Nullable
-  HaskellUnpackNounpackPragma getUnpackNounpackPragma();
-
-  @Nullable
   HaskellVarCon getVarCon();
 
   String getName();

@@ -14,7 +14,7 @@ public interface HaskellConstr1 extends HaskellCompositeElement {
   @Nullable
   HaskellQName getQName();
 
-  @Nullable
-  HaskellUnpackNounpackPragma getUnpackNounpackPragma();
+  @NotNull
+  List<HaskellUnpackNounpackPragma> getUnpackNounpackPragmaList();
 
 }

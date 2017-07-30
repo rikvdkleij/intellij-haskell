@@ -1,14 +1,14 @@
 // This is a generated file. Not intended for manual editing.
 package intellij.haskell.psi.impl;
 
-import java.util.List;
-import org.jetbrains.annotations.*;
 import com.intellij.lang.ASTNode;
-import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiElementVisitor;
 import com.intellij.psi.util.PsiTreeUtil;
-import static intellij.haskell.psi.HaskellTypes.*;
-import intellij.haskell.psi.*;
+import intellij.haskell.psi.HaskellNewconstrFielddecl;
+import intellij.haskell.psi.HaskellQName;
+import intellij.haskell.psi.HaskellTypeSignature;
+import intellij.haskell.psi.HaskellVisitor;
+import org.jetbrains.annotations.NotNull;
 
 public class HaskellNewconstrFielddeclImpl extends HaskellCompositeElementImpl implements HaskellNewconstrFielddecl {
 
@@ -27,14 +27,14 @@ public class HaskellNewconstrFielddeclImpl extends HaskellCompositeElementImpl i
 
   @Override
   @NotNull
-  public List<HaskellQName> getQNameList() {
-    return PsiTreeUtil.getChildrenOfTypeAsList(this, HaskellQName.class);
+  public HaskellQName getQName() {
+    return notNullChild(PsiTreeUtil.getChildOfType(this, HaskellQName.class));
   }
 
   @Override
   @NotNull
-  public HaskellTtype getTtype() {
-    return notNullChild(PsiTreeUtil.getChildOfType(this, HaskellTtype.class));
+  public HaskellTypeSignature getTypeSignature() {
+    return notNullChild(PsiTreeUtil.getChildOfType(this, HaskellTypeSignature.class));
   }
 
 }

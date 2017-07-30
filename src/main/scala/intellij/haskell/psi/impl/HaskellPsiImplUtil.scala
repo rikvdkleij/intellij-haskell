@@ -325,12 +325,11 @@ object HaskellPsiImplUtil {
   }
 
   def getIdentifierElements(dataDeclaration: HaskellDataDeclaration): Seq[HaskellNamedElement] = {
-    dataDeclaration.getSimpletypeList.asScala.headOption.map(_.getIdentifierElements).getOrElse(Seq()) ++
+    dataDeclaration.getSimpletype.getIdentifierElements ++
       dataDeclaration.getConstr1List.asScala.flatMap(c => Option(c.getQName).map(_.getIdentifierElement).toSeq ++
         c.getFielddeclList.asScala.flatMap(_.getQNames.getQNameList.asScala.headOption.map(_.getIdentifierElement))) ++
-      Option(dataDeclaration.getConstr3List.asScala).map(_.map(c => c.getQName.getIdentifierElement)).getOrElse(Seq()) ++
-      Option(dataDeclaration.getConstr2List.asScala).map(_.flatMap(c => c.getQNameList.asScala.map(_.getIdentifierElement))).getOrElse(Seq()) ++
-      Option(dataDeclaration.getConstr4List.asScala).map(_.flatMap(c => c.getQNameList.asScala.map(_.getIdentifierElement))).getOrElse(Seq())
+      dataDeclaration.getConstr3List.asScala.flatMap(_.getTtypeList.asScala.headOption.flatMap(_.getQNameList.asScala.headOption.map(_.getIdentifierElement))) ++
+      dataDeclaration.getConstr2List.asScala.flatMap(c => Option(c.getQName).map(_.getIdentifierElement).orElse(c.getTtypeList.asScala.headOption.flatMap(_.getQNameList.asScala.headOption.map(_.getIdentifierElement))))
   }
 
   def getIdentifierElements(typeDeclaration: HaskellTypeDeclaration): Seq[HaskellNamedElement] = {
@@ -339,8 +338,8 @@ object HaskellPsiImplUtil {
 
   def getIdentifierElements(newtypeDeclaration: HaskellNewtypeDeclaration): Seq[HaskellNamedElement] = {
     newtypeDeclaration.getSimpletype.getIdentifierElements ++
-      Option(newtypeDeclaration.getNewconstr.getNewconstrFielddecl).map(_.getQNameList.asScala.map(_.getIdentifierElement)).getOrElse(Seq()) ++
-      Option(newtypeDeclaration.getNewconstr.getQNameList.asScala.map(_.getIdentifierElement)).getOrElse(Seq())
+      Option(newtypeDeclaration.getNewconstr.getNewconstrFielddecl).map(_.getQName.getIdentifierElement).toSeq ++
+      newtypeDeclaration.getNewconstr.getQNameList.asScala.headOption.map(_.getIdentifierElement).toSeq
   }
 
   def getIdentifierElements(classDeclaration: HaskellClassDeclaration): Seq[HaskellNamedElement] = {

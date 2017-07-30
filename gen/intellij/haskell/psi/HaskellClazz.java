@@ -18,7 +18,7 @@ public interface HaskellClazz extends HaskellCompositeElement {
   List<HaskellTtype1> getTtype1List();
 
   @NotNull
-  List<HaskellTtype2Onls> getTtype2OnlsList();
+  List<HaskellTtype2> getTtype2List();
 
   @NotNull
   List<HaskellTypeSignature> getTypeSignatureList();

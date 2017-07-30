@@ -8,10 +8,10 @@ import java.util.List;
 
 public interface HaskellTtype2 extends HaskellCompositeElement {
 
-  @Nullable
-  HaskellQName getQName();
-
   @NotNull
-  List<HaskellTtype> getTtypeList();
+  List<HaskellQName> getQNameList();
+
+  @Nullable
+  HaskellTtype getTtype();
 
 }

@@ -53,12 +53,6 @@ public class HaskellDataDeclarationImpl extends HaskellCompositeElementImpl impl
   }
 
   @Override
-  @NotNull
-  public List<HaskellConstr4> getConstr4List() {
-    return PsiTreeUtil.getChildrenOfTypeAsList(this, HaskellConstr4.class);
-  }
-
-  @Override
   @Nullable
   public HaskellCtypePragma getCtypePragma() {
     return PsiTreeUtil.getChildOfType(this, HaskellCtypePragma.class);
@@ -84,8 +78,8 @@ public class HaskellDataDeclarationImpl extends HaskellCompositeElementImpl impl
 
   @Override
   @NotNull
-  public List<HaskellSimpletype> getSimpletypeList() {
-    return PsiTreeUtil.getChildrenOfTypeAsList(this, HaskellSimpletype.class);
+  public HaskellSimpletype getSimpletype() {
+    return notNullChild(PsiTreeUtil.getChildOfType(this, HaskellSimpletype.class));
   }
 
   @Override

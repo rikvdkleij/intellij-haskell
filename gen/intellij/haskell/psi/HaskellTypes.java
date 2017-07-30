@@ -26,7 +26,6 @@ public interface HaskellTypes {
   IElementType HS_CONSTR_1 = new HaskellCompositeElementType("HS_CONSTR_1");
   IElementType HS_CONSTR_2 = new HaskellCompositeElementType("HS_CONSTR_2");
   IElementType HS_CONSTR_3 = new HaskellCompositeElementType("HS_CONSTR_3");
-  IElementType HS_CONSTR_4 = new HaskellCompositeElementType("HS_CONSTR_4");
   IElementType HS_CONSYM = HaskellElementTypeFactory.factory("HS_CONSYM");
   IElementType HS_CTYPE_PRAGMA = new HaskellCompositeElementType("HS_CTYPE_PRAGMA");
   IElementType HS_DATA_DECLARATION = new HaskellCompositeElementType("HS_DATA_DECLARATION");
@@ -102,12 +101,10 @@ public interface HaskellTypes {
   IElementType HS_SIMPLETYPE = new HaskellCompositeElementType("HS_SIMPLETYPE");
   IElementType HS_SOURCE_PRAGMA = new HaskellCompositeElementType("HS_SOURCE_PRAGMA");
   IElementType HS_SPECIALIZE_PRAGMA = new HaskellCompositeElementType("HS_SPECIALIZE_PRAGMA");
-  IElementType HS_SUB_CONSTR_2 = new HaskellCompositeElementType("HS_SUB_CONSTR_2");
   IElementType HS_TOP_DECLARATION = new HaskellCompositeElementType("HS_TOP_DECLARATION");
   IElementType HS_TTYPE = new HaskellCompositeElementType("HS_TTYPE");
   IElementType HS_TTYPE_1 = new HaskellCompositeElementType("HS_TTYPE_1");
   IElementType HS_TTYPE_2 = new HaskellCompositeElementType("HS_TTYPE_2");
-  IElementType HS_TTYPE_2_ONLS = new HaskellCompositeElementType("HS_TTYPE_2_ONLS");
   IElementType HS_TYPE_DECLARATION = new HaskellCompositeElementType("HS_TYPE_DECLARATION");
   IElementType HS_TYPE_FAMILY_DECLARATION = new HaskellCompositeElementType("HS_TYPE_FAMILY_DECLARATION");
   IElementType HS_TYPE_FAMILY_TYPE = new HaskellCompositeElementType("HS_TYPE_FAMILY_TYPE");
@@ -249,9 +246,6 @@ public interface HaskellTypes {
       }
       else if (type == HS_CONSTR_3) {
         return new HaskellConstr3Impl(node);
-      }
-      else if (type == HS_CONSTR_4) {
-        return new HaskellConstr4Impl(node);
       }
       else if (type == HS_CONSYM) {
         return new HaskellConsymImpl(node);
@@ -478,9 +472,6 @@ public interface HaskellTypes {
       else if (type == HS_SPECIALIZE_PRAGMA) {
         return new HaskellSpecializePragmaImpl(node);
       }
-      else if (type == HS_SUB_CONSTR_2) {
-        return new HaskellSubConstr2Impl(node);
-      }
       else if (type == HS_TOP_DECLARATION) {
         return new HaskellTopDeclarationImpl(node);
       }
@@ -492,9 +483,6 @@ public interface HaskellTypes {
       }
       else if (type == HS_TTYPE_2) {
         return new HaskellTtype2Impl(node);
-      }
-      else if (type == HS_TTYPE_2_ONLS) {
-        return new HaskellTtype2OnlsImpl(node);
       }
       else if (type == HS_TYPE_DECLARATION) {
         return new HaskellTypeDeclarationImpl(node);

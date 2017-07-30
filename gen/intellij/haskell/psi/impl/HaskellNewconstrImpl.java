@@ -51,8 +51,8 @@ public class HaskellNewconstrImpl extends HaskellCompositeElementImpl implements
 
   @Override
   @Nullable
-  public HaskellTtype2Onls getTtype2Onls() {
-    return PsiTreeUtil.getChildOfType(this, HaskellTtype2Onls.class);
+  public HaskellTtype2 getTtype2() {
+    return PsiTreeUtil.getChildOfType(this, HaskellTtype2.class);
   }
 
   @Override

@@ -39,12 +39,6 @@ public class HaskellSimpletypeImpl extends HaskellCompositeElementImpl implement
   }
 
   @Override
-  @Nullable
-  public HaskellTtype2 getTtype2() {
-    return PsiTreeUtil.getChildOfType(this, HaskellTtype2.class);
-  }
-
-  @Override
   @NotNull
   public List<HaskellTypeSignature> getTypeSignatureList() {
     return PsiTreeUtil.getChildrenOfTypeAsList(this, HaskellTypeSignature.class);

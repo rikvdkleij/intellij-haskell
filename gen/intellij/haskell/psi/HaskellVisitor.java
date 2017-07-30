@@ -78,10 +78,6 @@ public class HaskellVisitor extends PsiElementVisitor {
     visitCompositeElement(o);
   }
 
-  public void visitConstr4(@NotNull HaskellConstr4 o) {
-    visitCompositeElement(o);
-  }
-
   public void visitConsym(@NotNull HaskellConsym o) {
     visitNamedElement(o);
   }
@@ -383,10 +379,6 @@ public class HaskellVisitor extends PsiElementVisitor {
     visitCompositeElement(o);
   }
 
-  public void visitSubConstr2(@NotNull HaskellSubConstr2 o) {
-    visitCompositeElement(o);
-  }
-
   public void visitTopDeclaration(@NotNull HaskellTopDeclaration o) {
     visitCompositeElement(o);
   }
@@ -400,10 +392,6 @@ public class HaskellVisitor extends PsiElementVisitor {
   }
 
   public void visitTtype2(@NotNull HaskellTtype2 o) {
-    visitCompositeElement(o);
-  }
-
-  public void visitTtype2Onls(@NotNull HaskellTtype2Onls o) {
     visitCompositeElement(o);
   }
 

@@ -29,15 +29,15 @@ public class HaskellTtype2Impl extends HaskellCompositeElementImpl implements Ha
   }
 
   @Override
-  @Nullable
-  public HaskellQName getQName() {
-    return PsiTreeUtil.getChildOfType(this, HaskellQName.class);
+  @NotNull
+  public List<HaskellQName> getQNameList() {
+    return PsiTreeUtil.getChildrenOfTypeAsList(this, HaskellQName.class);
   }
 
   @Override
-  @NotNull
-  public List<HaskellTtype> getTtypeList() {
-    return PsiTreeUtil.getChildrenOfTypeAsList(this, HaskellTtype.class);
+  @Nullable
+  public HaskellTtype getTtype() {
+    return PsiTreeUtil.getChildOfType(this, HaskellTtype.class);
   }
 
 }

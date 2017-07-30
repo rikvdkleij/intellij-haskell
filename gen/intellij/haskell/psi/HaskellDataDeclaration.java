@@ -23,9 +23,6 @@ public interface HaskellDataDeclaration extends HaskellDataConstructorDeclaratio
   @NotNull
   List<HaskellConstr3> getConstr3List();
 
-  @NotNull
-  List<HaskellConstr4> getConstr4List();
-
   @Nullable
   HaskellCtypePragma getCtypePragma();
 
@@ -39,7 +36,7 @@ public interface HaskellDataDeclaration extends HaskellDataConstructorDeclaratio
   List<HaskellQName> getQNameList();
 
   @NotNull
-  List<HaskellSimpletype> getSimpletypeList();
+  HaskellSimpletype getSimpletype();
 
   @Nullable
   HaskellTtype getTtype();

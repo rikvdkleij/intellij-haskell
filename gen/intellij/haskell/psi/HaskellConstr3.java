@@ -8,9 +8,9 @@ import java.util.List;
 public interface HaskellConstr3 extends HaskellCompositeElement {
 
   @NotNull
-  HaskellQName getQName();
+  List<HaskellTtype> getTtypeList();
 
   @NotNull
-  List<HaskellSubConstr2> getSubConstr2List();
+  List<HaskellUnpackNounpackPragma> getUnpackNounpackPragmaList();
 
 }

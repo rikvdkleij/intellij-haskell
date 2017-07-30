@@ -15,9 +15,6 @@ public interface HaskellSimpletype extends HaskellCompositeElement {
   @Nullable
   HaskellTtype getTtype();
 
-  @Nullable
-  HaskellTtype2 getTtype2();
-
   @NotNull
   List<HaskellTypeSignature> getTypeSignatureList();
 

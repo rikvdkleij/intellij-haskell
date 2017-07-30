@@ -10,4 +10,7 @@ public interface HaskellConstr4 extends HaskellCompositeElement {
   @NotNull
   List<HaskellQName> getQNameList();
 
+  @NotNull
+  List<HaskellUnpackNounpackPragma> getUnpackNounpackPragmaList();
+
 }

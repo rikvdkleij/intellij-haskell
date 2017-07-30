@@ -26,9 +26,9 @@ public class HaskellFielddeclImpl extends HaskellCompositeElementImpl implements
   }
 
   @Override
-  @Nullable
-  public HaskellQName getQName() {
-    return PsiTreeUtil.getChildOfType(this, HaskellQName.class);
+  @NotNull
+  public List<HaskellQName> getQNameList() {
+    return PsiTreeUtil.getChildrenOfTypeAsList(this, HaskellQName.class);
   }
 
   @Override
