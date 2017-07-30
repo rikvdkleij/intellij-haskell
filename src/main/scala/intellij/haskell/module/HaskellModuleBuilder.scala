@@ -28,7 +28,7 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.projectRoots.SdkTypeId
 import com.intellij.openapi.roots._
 import com.intellij.openapi.roots.impl.libraries.ProjectLibraryTable
-import com.intellij.openapi.roots.libraries.{Library, LibraryTable}
+import com.intellij.openapi.roots.libraries.Library
 import com.intellij.openapi.ui.Messages
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.vfs.{LocalFileSystem, VfsUtil}
@@ -186,11 +186,20 @@ object HaskellModuleBuilder {
 
   def addLibrarySources(module: Module): Unit = {
     val project = module.getProject
+
+    new WriteAction[Unit]() {
+
+      override protected def run(result: Result[Unit]): Unit = {
+        val projectLibraryTable = ProjectLibraryTable.getInstance(module.getProject)
+        projectLibraryTable.getModifiableModel.getLibraries.foreach(projectLibraryTable.removeLibrary)
+      }
+    }
+
     HaskellSdkType.getStackPath(project).foreach(stackPath => {
       val packageName = module.getName
-      val ideaHaskellLibDirectory = getIdeaHaskellLibDirectory
-      if (!ideaHaskellLibDirectory.exists()) {
-        FileUtil.createDirectory(ideaHaskellLibDirectory)
+      val projectLibDirectory = getProjectLibDirectory(project)
+      if (!projectLibDirectory.exists()) {
+        FileUtil.createDirectory(projectLibDirectory)
       }
 
       ProgressManager.getInstance().run(new Task.Backgroundable(project, "Downloading Haskell library sources and adding them as source libraries to module") {
@@ -199,18 +208,18 @@ object HaskellModuleBuilder {
           StackCommandLine.runCommand(project, Seq("list-dependencies", packageName, "--test", "--bench"), timeoutInMillis = 60.seconds.toMillis).map(_.getStdoutLines).foreach(dependencyLines => {
             val packages = getPackages(project, dependencyLines.asScala).filterNot(p => packageName.contains(p.name) || p.name == "rts")
             progressIndicator.setFraction(InitialProgressStep)
-            val downloadedPackages = downloadHaskellPackageSources(project, ideaHaskellLibDirectory, stackPath, packages, progressIndicator)
+            val downloadedPackages = downloadHaskellPackageSources(project, projectLibDirectory, stackPath, packages, progressIndicator)
             progressIndicator.setFraction(0.9)
-            addPackagesAsLibrariesToModule(module, downloadedPackages, ideaHaskellLibDirectory.getAbsolutePath)
+            addPackagesAsLibrariesToModule(module, downloadedPackages, projectLibDirectory)
           })
         }
       })
     })
   }
 
-  def getIdeaHaskellLibDirectory: File = {
+  private def getProjectLibDirectory(project: Project): File = {
     val homeDirectory = VfsUtil.getUserHomeDir.getPath
-    new File(homeDirectory, IdeaHaskellLibName)
+    new File(new File(homeDirectory, IdeaHaskellLibName), project.getName)
   }
 
   private def getPackages(project: Project, dependencyLines: Seq[String]): Seq[HaskellPackageInfo] = {
@@ -226,21 +235,17 @@ object HaskellModuleBuilder {
     }
   }
 
-  private def downloadHaskellPackageSources(project: Project, ideaHaskellLibDirectory: File, stackPath: String, haskellPackages: Seq[HaskellPackageInfo], progressIndicator: ProgressIndicator) = {
+  private def downloadHaskellPackageSources(project: Project, projectLibDirectory: File, stackPath: String, haskellPackages: Seq[HaskellPackageInfo], progressIndicator: ProgressIndicator) = {
     val step = 0.8 / haskellPackages.size
     var progressFraction = InitialProgressStep
 
-    def getPackageDirectory(packageInfo: HaskellPackageInfo) = {
-      new File(ideaHaskellLibDirectory.getAbsolutePath + File.separator + packageInfo.directoryName)
-    }
-
     val alreadyDownloadedPackages = haskellPackages.filter(packageInfo => {
-      getPackageDirectory(packageInfo).exists()
+      getPackageDirectory(projectLibDirectory, packageInfo).exists()
     })
     val downloadedPackages = haskellPackages.filterNot(packageInfo => {
-      getPackageDirectory(packageInfo).exists()
+      getPackageDirectory(projectLibDirectory, packageInfo).exists()
     }).flatMap { packageInfo =>
-      val stderr = CommandLine.runProgram(Some(project), ideaHaskellLibDirectory.getAbsolutePath, stackPath, Seq("unpack", packageInfo.directoryName), 10000, Some(CaptureOutputToLog)).map(_.getStderr)
+      val stderr = CommandLine.runProgram(Some(project), projectLibDirectory.getAbsolutePath, stackPath, Seq("unpack", packageInfo.directoryName), 10000, Some(CaptureOutputToLog)).map(_.getStderr)
       progressFraction = progressFraction + step
       progressIndicator.setFraction(progressFraction)
 
@@ -253,37 +258,37 @@ object HaskellModuleBuilder {
     alreadyDownloadedPackages ++ downloadedPackages
   }
 
+  private def getPackageDirectory(projectLibDirectory: File, packageInfo: HaskellPackageInfo) = {
+    new File(projectLibDirectory, packageInfo.directoryName)
+  }
+
   private def getUrlByPath(path: String): String = {
     VfsUtil.getUrlForLibraryRoot(new File(path))
   }
 
-  private def addPackagesAsLibrariesToModule(module: Module, haskellPackages: Seq[HaskellPackageInfo], libPath: String) {
-    ModuleRootModificationUtil.updateModel(module, (t: ModifiableRootModel) => {
-      val libraryTable = t.getModuleLibraryTable
+  private def addPackagesAsLibrariesToModule(module: Module, haskellPackages: Seq[HaskellPackageInfo], projectLibDirectory: File) {
+    ModuleRootModificationUtil.updateModel(module, (modifiableRootModel: ModifiableRootModel) => {
+      val libraryTable = modifiableRootModel.getModuleLibraryTable
       libraryTable.getLibraries.foreach(l => libraryTable.removeLibrary(l))
-      haskellPackages.foreach(hp => {
-        val library = libraryTable.createLibrary(hp.name)
-        val model = library.getModifiableModel
-        val sourceRootUrl = getUrlByPath(libPath + File.separator + hp.directoryName)
-        model.addRoot(sourceRootUrl, OrderRootType.SOURCES)
-        model.addRoot(sourceRootUrl, OrderRootType.CLASSES)
-        addProjectLibrary(module, t, hp.name, sourceRootUrl)
-        model.commit()
+
+      haskellPackages.foreach(packageInfo => {
+        val sourceRootUrl = getUrlByPath(getPackageDirectory(projectLibDirectory, packageInfo).getAbsolutePath)
+        addProjectLibrary(module, modifiableRootModel, packageInfo.name, sourceRootUrl)
       })
     })
   }
 
-  private def addProjectLibrary(module: Module, model: ModifiableRootModel, libName: String, sourceRootUrl: String): Unit = {
-    val libraryTable: LibraryTable = ProjectLibraryTable.getInstance(module.getProject)
+  private def addProjectLibrary(module: Module, modifiableRootModel: ModifiableRootModel, ideaHaskellLibPath: String, sourceRootUrl: String): Unit = {
+    val projectLibraryTable = ProjectLibraryTable.getInstance(module.getProject)
     new WriteAction[Library]() {
 
       override protected def run(result: Result[Library]): Unit = {
-        val library: Library = libraryTable.createLibrary(libName)
-        val libraryModel: Library.ModifiableModel = library.getModifiableModel
+        val library = projectLibraryTable.createLibrary(ideaHaskellLibPath)
+        val libraryModel = library.getModifiableModel
         libraryModel.addRoot(sourceRootUrl, OrderRootType.CLASSES)
         libraryModel.addRoot(sourceRootUrl, OrderRootType.SOURCES)
         libraryModel.commit()
-        model.addLibraryEntry(library)
+        modifiableRootModel.addLibraryEntry(library)
       }
     }.execute
   }
