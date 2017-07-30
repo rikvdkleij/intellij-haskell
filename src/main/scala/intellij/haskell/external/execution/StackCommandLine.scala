@@ -21,7 +21,7 @@ import java.io.File
 import com.intellij.compiler.impl.{CompileDriver, ProjectCompileScope}
 import com.intellij.execution.ExecutionException
 import com.intellij.execution.process._
-import com.intellij.openapi.application.ApplicationManager
+import com.intellij.openapi.application.{Result, WriteAction}
 import com.intellij.openapi.compiler.{CompileContext, CompileTask, CompilerMessageCategory}
 import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.project.Project
@@ -86,13 +86,12 @@ object StackCommandLine {
 
       val compileDriver = new CompileDriver(project)
 
-      ApplicationManager.getApplication.invokeAndWait(() => {
-        val modalityState = ApplicationManager.getApplication.getCurrentModalityState
+      new WriteAction[Unit]() {
 
-        ApplicationManager.getApplication.invokeAndWait(() => {
+        override def run(result: Result[Unit]): Unit = {
           compileDriver.executeCompileTask(task, new ProjectCompileScope(project), s"executing ${cmd.getCommandLineString}", null)
-        }, modalityState)
-      })
+        }
+      }.execute()
 
       handler.waitFor()
       handler.getExitCode == 0
