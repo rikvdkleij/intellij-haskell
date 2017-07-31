@@ -12,7 +12,7 @@
 
     <change-notes><![CDATA[
         <p>1.0.0-beta9</p>
-        <b>IMPORTANT: After upgrade reimport your Haskell Stack project. The folder `.ideaHaskellLib` inside project's folder will be deleted. See changes.</b>
+        <b>IMPORTANT: After updating plugin reimport your Haskell Stack project. The folder `.ideaHaskellLib` inside project's folder will be deleted because library sources are downloaded to other location. See changes.</b>
         <ul>
             <li>Various (performance) improvements and fixes</li>
             <li>Windows support</li>
