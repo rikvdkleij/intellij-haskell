@@ -66,7 +66,7 @@ object StackProjectManager {
       if (isStarting(project)) {
         HaskellNotificationGroup.logWarningBalloonEvent(project, "Stack REPLs are already (re)starting")
       } else {
-        HaskellNotificationGroup.logInfoEvent(project, "Starting Haskell project")
+        HaskellNotificationGroup.logInfoEvent(project, "Initializing Haskell project")
 
         ProgressManager.getInstance().run(new Task.Backgroundable(project, "Building project, starting REPL(s), building tools and preloading cache", false, PerformInBackgroundOption.DEAF) {
 
