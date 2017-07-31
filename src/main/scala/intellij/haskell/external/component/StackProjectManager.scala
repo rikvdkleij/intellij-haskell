@@ -66,6 +66,8 @@ object StackProjectManager {
       if (isStarting(project)) {
         HaskellNotificationGroup.logWarningBalloonEvent(project, "Stack REPLs are already (re)starting")
       } else {
+        HaskellNotificationGroup.logInfoEvent(project, "Starting Haskell project")
+
         ProgressManager.getInstance().run(new Task.Backgroundable(project, "Building project, starting REPL(s), building tools and preloading cache", false, PerformInBackgroundOption.DEAF) {
 
           def run(progressIndicator: ProgressIndicator) {
@@ -75,12 +77,7 @@ object StackProjectManager {
               try {
                 progressIndicator.setText("Busy with building project")
 
-                val dependenciesBuildSuccessfull = StackCommandLine.executeInMessageView(project, Seq("build", "--only-dependencies", "--fast", "--test", "--bench", "--no-run-tests", "--no-run-benchmarks"), progressIndicator)
-                if (dependenciesBuildSuccessfull.contains(true)) {
-                  StackCommandLine.executeInMessageView(project, Seq("build", "--fast"), progressIndicator)
-                } else {
-                  HaskellNotificationGroup.logErrorBalloonEvent(project, "Did not build project because building dependencies failed. See Messages Tool Window")
-                }
+                StackCommandLine.executeInMessageView(project, Seq("build", "--fast", "--test", "--bench", "--no-run-tests", "--no-run-benchmarks"), progressIndicator)
 
                 if (restart) {
                   val projectRepl = StackReplsManager.getProjectRepl(project)
