@@ -1,12 +1,12 @@
 lazy val commonSettings = Seq(
   version := "1.0.0-beta9",
-  scalaVersion := "2.12.2"
+  scalaVersion := "2.12.3"
 )
 
 val guava = "com.google.guava" % "guava" % "21.0"
 val scalaTest = "org.scalatest" % "scalatest_2.12" % "3.0.1" % "test"
 val sprayJson = "io.spray" %% "spray-json" % "1.3.2"
-val snakeYaml = "org.yaml" % "snakeyaml" % "1.17"
+val snakeYaml = "org.yaml" % "snakeyaml" % "1.18"
 
 lazy val intellijHaskell = (project in file(".")).
   enablePlugins(SbtIdeaPlugin).
@@ -23,4 +23,4 @@ lazy val intellijHaskell = (project in file(".")).
     unmanagedJars in Compile += baseDirectory.value / "idea"
   )
 
-ideaBuild in ThisBuild := "172.3317.76"
+ideaBuild in ThisBuild := "172.3544.18"
