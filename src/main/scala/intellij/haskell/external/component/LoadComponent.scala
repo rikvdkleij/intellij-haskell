@@ -66,7 +66,29 @@ private[component] object LoadComponent {
       }
     })
 
-    StackReplsManager.getProjectRepl(psiFile).flatMap(_.load(psiFile)) match {
+    val projectRepl = StackReplsManager.getProjectRepl(psiFile)
+
+    // The REPL is not started if target has compile errors at the moment of start.
+    projectRepl.foreach(repl => {
+      if (!repl.available) {
+        if (stackComponentInfo.exists(_.stanzaType != LibType)) {
+          val task = new Task.WithResult[Option[Boolean], Exception](project, "Building project", false) {
+
+            def compute(progressIndicator: ProgressIndicator): Option[Boolean] = {
+              StackCommandLine.buildProjectInMessageView(project, progressIndicator)
+            }
+          }
+          ProgressManager.getInstance().run(task)
+          if (task.getResult.contains(true)) {
+            repl.start()
+          }
+        } else {
+          repl.start()
+        }
+      }
+    })
+
+    projectRepl.flatMap(_.load(psiFile)) match {
       case Some((loadOutput, loadFailed)) =>
         if (!loadFailed) {
           val moduleName = HaskellPsiUtil.findModuleName(psiFile, runInRead = true)

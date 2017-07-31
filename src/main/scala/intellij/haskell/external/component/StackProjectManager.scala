@@ -77,7 +77,7 @@ object StackProjectManager {
               try {
                 progressIndicator.setText("Busy with building project")
 
-                StackCommandLine.executeInMessageView(project, Seq("build", "--fast", "--test", "--bench", "--no-run-tests", "--no-run-benchmarks"), progressIndicator)
+                StackCommandLine.buildProjectInMessageView(project, progressIndicator)
 
                 if (restart) {
                   val projectRepl = StackReplsManager.getProjectRepl(project)

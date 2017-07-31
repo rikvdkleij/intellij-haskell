@@ -58,6 +58,9 @@ object StackCommandLine {
     processOutput
   }
 
+  def buildProjectInMessageView(project: Project, progressIndicator: ProgressIndicator): Option[Boolean] = {
+    StackCommandLine.executeInMessageView(project, Seq("build", "--fast", "--test", "--bench", "--no-run-tests", "--no-run-benchmarks"), progressIndicator)
+  }
 
   def executeInMessageView(project: Project, arguments: Seq[String], progressIndicator: ProgressIndicator): Option[Boolean] = HaskellSdkType.getStackPath(project).flatMap(stackPath => {
     logStart(project, arguments)
