@@ -16,8 +16,6 @@
 
 package intellij.haskell.external.execution
 
-import java.io.File
-
 import com.intellij.compiler.impl.{CompileDriver, ProjectCompileScope}
 import com.intellij.execution.ExecutionException
 import com.intellij.execution.process._
@@ -26,9 +24,10 @@ import com.intellij.openapi.compiler.{CompileContext, CompileTask, CompilerMessa
 import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Key
-import com.intellij.openapi.vfs.{CharsetToolkit, VfsUtil}
+import com.intellij.openapi.vfs.CharsetToolkit
 import intellij.haskell.HaskellNotificationGroup
 import intellij.haskell.sdk.HaskellSdkType
+import intellij.haskell.util.HaskellFileUtil
 
 import scala.collection.mutable.ListBuffer
 
@@ -141,9 +140,9 @@ object StackCommandLine {
       val compilationProblem = HaskellCompilationResultHelper.parseErrorLine(None, errorMessageLine.replaceAll("\n", " "))
       compilationProblem match {
         case Some(p@CompilationProblemInOtherFile(filePath, lineNr, columnNr, message)) if p.isWarning =>
-          compileContext.addMessage(CompilerMessageCategory.WARNING, message, getFileUrl(filePath), lineNr, columnNr)
+          compileContext.addMessage(CompilerMessageCategory.WARNING, message, HaskellFileUtil.getUrlByPath(filePath), lineNr, columnNr)
         case Some(CompilationProblemInOtherFile(filePath, lineNr, columnNr, message)) =>
-          compileContext.addMessage(CompilerMessageCategory.ERROR, message, getFileUrl(filePath), lineNr, columnNr)
+          compileContext.addMessage(CompilerMessageCategory.ERROR, message, HaskellFileUtil.getUrlByPath(filePath), lineNr, columnNr)
         case _ =>
           val compilerMessageCategory =
             if (errorMessageLine.contains("ExitFailure")) {
@@ -156,10 +155,6 @@ object StackCommandLine {
           compileContext.addMessage(compilerMessageCategory, errorMessageLine, null, -1, -1)
       }
       previousMessageLines.clear()
-    }
-
-    private def getFileUrl(filePath: String) = {
-      VfsUtil.getUrlForLibraryRoot(new File(filePath))
     }
   }
 

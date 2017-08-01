@@ -24,7 +24,7 @@ import com.intellij.openapi.editor.Document
 import com.intellij.openapi.fileEditor.FileDocumentManager
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.io.FileUtil
-import com.intellij.openapi.vfs.{LocalFileSystem, VirtualFile}
+import com.intellij.openapi.vfs.{LocalFileSystem, VirtualFile, VirtualFileManager}
 import com.intellij.psi.{PsiDocumentManager, PsiFile, PsiManager}
 import intellij.haskell.HaskellFile
 import intellij.haskell.action.SelectionContext
@@ -152,5 +152,9 @@ object HaskellFileUtil {
 
   def findDirectory(dirPath: String, project: Project): Option[VirtualFile] = {
     Option(LocalFileSystem.getInstance().findFileByPath(HaskellFileUtil.makeFilePathAbsolute(dirPath, project)))
+  }
+
+  def getUrlByPath(absolutePath: String): String = {
+    VirtualFileManager.constructUrl(LocalFileSystem.getInstance.getProtocol, absolutePath)
   }
 }

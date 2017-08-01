@@ -21,22 +21,22 @@ import javax.swing.Icon
 
 import com.intellij.ide.util.projectWizard._
 import com.intellij.openapi.Disposable
-import com.intellij.openapi.application.{Result, WriteAction}
+import com.intellij.openapi.application.{ApplicationManager, Result, WriteAction}
 import com.intellij.openapi.module.{Module, ModuleType}
 import com.intellij.openapi.progress.{ProgressIndicator, ProgressManager, Task}
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.projectRoots.SdkTypeId
 import com.intellij.openapi.roots._
 import com.intellij.openapi.roots.impl.libraries.ProjectLibraryTable
-import com.intellij.openapi.roots.libraries.{Library, LibraryTable}
+import com.intellij.openapi.roots.libraries.{Library, LibraryTable, LibraryUtil}
 import com.intellij.openapi.ui.Messages
 import com.intellij.openapi.util.io.FileUtil
-import com.intellij.openapi.vfs.{LocalFileSystem, VfsUtil}
+import com.intellij.openapi.vfs.{LocalFileSystem, VfsUtil, VirtualFileManager}
 import intellij.haskell.cabal.CabalInfo
 import intellij.haskell.external.execution.{CaptureOutputToLog, CommandLine, StackCommandLine}
 import intellij.haskell.sdk.HaskellSdkType
 import intellij.haskell.stackyaml.StackYamlComponent
-import intellij.haskell.util.HaskellProjectUtil
+import intellij.haskell.util.{HaskellFileUtil, HaskellProjectUtil}
 import intellij.haskell.{HaskellIcons, HaskellNotificationGroup}
 
 import scala.collection.JavaConverters._
@@ -253,6 +253,9 @@ object HaskellModuleBuilder {
         Seq(packageInfo)
       }
     }
+    ApplicationManager.getApplication.invokeAndWait(() => {
+      VirtualFileManager.getInstance().syncRefresh()
+    })
     alreadyDownloadedPackages ++ downloadedPackages
   }
 
@@ -260,68 +263,66 @@ object HaskellModuleBuilder {
     new File(projectLibDirectory, packageInfo.nameVersion)
   }
 
-  private def getUrlByPath(path: String): String = {
-    VfsUtil.getUrlForLibraryRoot(new File(path))
-  }
 
   private def addPackagesAsLibrariesToModule(module: Module, packageInfos: Seq[HaskellPackageInfo], projectLibDirectory: File) {
-    ModuleRootModificationUtil.updateModel(module, (modifiableRootModel: ModifiableRootModel) => {
+    val projectLibraryTable = ProjectLibraryTable.getInstance(module.getProject)
 
-      val projectLibraryTable = ProjectLibraryTable.getInstance(module.getProject)
-      val moduleLibraryTable = modifiableRootModel.getModuleLibraryTable
-
-      projectLibraryTable.getLibraries.foreach(library => {
-        val packageInfo = packageInfos.find(_.nameVersion == library.getName)
-        packageInfo match {
-          case Some(_) =>
-            if (moduleLibraryTable.getLibraryByName(library.getName) == null) {
-              addModuleLibrary(module, modifiableRootModel, library)
-            }
-          case None =>
-            removeProjectLibrary(projectLibraryTable, library)
-            removeModuleLibrary(moduleLibraryTable, library)
-            FileUtil.delete(new File(projectLibDirectory, library.getName))
-        }
-      })
-
-      packageInfos.foreach(packageInfo => {
-        val projectLibrary = projectLibraryTable.getLibraryByName(packageInfo.nameVersion)
-        if (projectLibrary == null) {
-          val projectLibrary = createProjectLibrary(module.getProject, packageInfo, projectLibDirectory)
-          addModuleLibrary(module, modifiableRootModel, projectLibrary)
-        } else {
-          if (moduleLibraryTable.getLibraryByName(projectLibrary.getName) == null) {
-            addModuleLibrary(module, modifiableRootModel, projectLibrary)
+    projectLibraryTable.getLibraries.foreach(library => {
+      val packageInfo = packageInfos.find(_.nameVersion == library.getName)
+      packageInfo match {
+        case Some(_) =>
+          if (LibraryUtil.findLibrary(module, library.getName) == null) {
+            addModuleLibrary(module, library)
           }
+        case None =>
+          removeModuleLibrary(module, library)
+          removeProjectLibrary(projectLibraryTable, library)
+          FileUtil.delete(new File(projectLibDirectory, library.getName))
+      }
+    })
+
+    packageInfos.foreach(packageInfo => {
+      val projectLibrary = projectLibraryTable.getLibraryByName(packageInfo.nameVersion)
+      if (projectLibrary == null) {
+        val projectLibrary = createProjectLibrary(module.getProject, packageInfo, projectLibDirectory)
+        addModuleLibrary(module, projectLibrary)
+      } else {
+        if (LibraryUtil.findLibrary(module, projectLibrary.getName) == null) {
+          addModuleLibrary(module, projectLibrary)
         }
-      })
+      }
+    })
+  }
+
+  private def removeModuleLibrary(module: Module, library: Library) = {
+    ModuleRootModificationUtil.updateModel(module, (modifiableRootModel: ModifiableRootModel) => {
+      val moduleLibrary = LibraryUtil.findLibrary(module, library.getName)
+      if (moduleLibrary != null) {
+        val libraryOrderEntry = modifiableRootModel.findLibraryOrderEntry(moduleLibrary)
+        modifiableRootModel.removeOrderEntry(libraryOrderEntry)
+      }
     })
   }
 
   private def removeProjectLibrary(libraryTable: LibraryTable, library: Library) = {
     new WriteAction[Unit]() {
 
-      override protected def run(result: Result[Unit]): Unit = {
-        libraryTable.getModifiableModel.getLibraries.find(_ == library).foreach(libraryTable.removeLibrary)
+      def run(result: Result[Unit]): Unit = {
+        libraryTable.getLibraries.find(_.getName == library.getName).foreach(library => {
+          val model = libraryTable.getModifiableModel
+          model.removeLibrary(library)
+          model.commit()
+        })
       }
-    }
-  }
-
-  private def removeModuleLibrary(libraryTable: LibraryTable, library: Library) = {
-    new WriteAction[Unit]() {
-
-      override protected def run(result: Result[Unit]): Unit = {
-        libraryTable.getModifiableModel.getLibraries.find(_ == library).foreach(libraryTable.removeLibrary)
-      }
-    }
+    }.execute()
   }
 
   private def createProjectLibrary(project: Project, packageInfo: HaskellPackageInfo, projectLibDirectory: File): Library = {
-    val sourceRootUrl = getUrlByPath(getPackageDirectory(projectLibDirectory, packageInfo).getAbsolutePath)
+    val sourceRootUrl = HaskellFileUtil.getUrlByPath(getPackageDirectory(projectLibDirectory, packageInfo).getAbsolutePath)
     val projectLibraryTable = ProjectLibraryTable.getInstance(project)
     val library = new WriteAction[Library]() {
 
-      override protected def run(result: Result[Library]): Unit = {
+      def run(result: Result[Library]): Unit = {
         val library = projectLibraryTable.createLibrary(packageInfo.nameVersion)
         val libraryModel = library.getModifiableModel
         libraryModel.addRoot(sourceRootUrl, OrderRootType.CLASSES)
@@ -333,13 +334,10 @@ object HaskellModuleBuilder {
     library.getResultObject
   }
 
-  private def addModuleLibrary(module: Module, modifiableRootModel: ModifiableRootModel, library: Library): Unit = {
-    new WriteAction[Library]() {
-
-      override protected def run(result: Result[Library]): Unit = {
-        modifiableRootModel.addLibraryEntry(library)
-      }
-    }.execute
+  private def addModuleLibrary(module: Module, library: Library): Unit = {
+    ModuleRootModificationUtil.updateModel(module, (modifiableRootModel: ModifiableRootModel) => {
+      modifiableRootModel.addLibraryEntry(library)
+    })
   }
 
   private case class HaskellPackageInfo(name: String, version: String, nameVersion: String)
