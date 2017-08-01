@@ -1,9 +1,13 @@
 package intellij.haskell.notification
 
 import java.util
+import java.util.concurrent.ConcurrentHashMap
 
 import com.intellij.openapi.fileEditor.FileEditor
-import com.intellij.openapi.project.Project
+import com.intellij.openapi.progress.ProgressIndicator
+import com.intellij.openapi.progress.util.ReadTask.Continuation
+import com.intellij.openapi.progress.util.{ProgressIndicatorUtils, ReadTask}
+import com.intellij.openapi.project.{DumbService, Project}
 import com.intellij.openapi.util.Key
 import com.intellij.openapi.vfs.newvfs.BulkFileListener
 import com.intellij.openapi.vfs.newvfs.events.VFileEvent
@@ -12,9 +16,12 @@ import com.intellij.ui.{EditorNotificationPanel, EditorNotifications}
 import intellij.haskell.external.component.StackProjectManager
 import intellij.haskell.util.HaskellProjectUtil
 
+import scala.collection.JavaConverters._
+import scala.collection.concurrent
+
 object ConfigFileWatcherNotificationProvider {
   private val ConfigFileWatcherKey: Key[EditorNotificationPanel] = Key.create("Haskell config file watcher")
-  var showNotification = false
+  val showNotificationsByProject: concurrent.Map[Project, Boolean] = new ConcurrentHashMap[Project, Boolean]().asScala
 }
 
 class ConfigFileWatcherNotificationProvider(project: Project, notifications: EditorNotifications) extends EditorNotifications.Provider[EditorNotificationPanel] {
@@ -23,8 +30,7 @@ class ConfigFileWatcherNotificationProvider(project: Project, notifications: Edi
   override def getKey: Key[EditorNotificationPanel] = ConfigFileWatcherNotificationProvider.ConfigFileWatcherKey
 
   override def createNotificationPanel(virtualFile: VirtualFile, fileEditor: FileEditor): EditorNotificationPanel = {
-    if (HaskellProjectUtil.isHaskellProject(project) && ConfigFileWatcherNotificationProvider.showNotification) {
-      ConfigFileWatcherNotificationProvider.showNotification = false
+    if (HaskellProjectUtil.isHaskellProject(project) && ConfigFileWatcherNotificationProvider.showNotificationsByProject.get(project).exists(_ == true)) {
       createPanel(project, virtualFile)
     } else {
       null
@@ -35,10 +41,12 @@ class ConfigFileWatcherNotificationProvider(project: Project, notifications: Edi
     val panel = new EditorNotificationPanel
     panel.setText("Haskell project configuration file is updated")
     panel.createActionLabel("Restart Haskell Stack REPLs", () => {
+      ConfigFileWatcherNotificationProvider.showNotificationsByProject.put(project, false)
       notifications.updateAllNotifications()
       StackProjectManager.restart(project)
     })
     panel.createActionLabel("Ignore", () => {
+      ConfigFileWatcherNotificationProvider.showNotificationsByProject.put(project, false)
       notifications.updateAllNotifications()
     })
     panel
@@ -46,15 +54,37 @@ class ConfigFileWatcherNotificationProvider(project: Project, notifications: Edi
 }
 
 private class ConfigFileWatcher(project: Project, notifications: EditorNotifications) extends BulkFileListener {
+
+  import scala.collection.JavaConverters._
+
   private val watchFiles = HaskellProjectUtil.findStackFile(project).toIterable ++ HaskellProjectUtil.findCabalFiles(project)
 
   override def before(events: util.List[_ <: VFileEvent]): Unit = {}
 
   override def after(events: util.List[_ <: VFileEvent]): Unit = {
-    import scala.collection.JavaConverters._
-    if (events.asScala.exists(e => watchFiles.exists(_.getAbsolutePath == e.getPath))) {
-      ConfigFileWatcherNotificationProvider.showNotification = true
-      notifications.updateAllNotifications()
+    if (!StackProjectManager.isBuilding(project)) {
+      val readTask = new ReadTask {
+
+        override def computeInReadAction(indicator: ProgressIndicator): Unit = {
+          indicator.checkCanceled()
+          if (events.asScala.exists(e => !e.isFromRefresh && watchFiles.exists(_.getAbsolutePath == e.getPath))) {
+            ConfigFileWatcherNotificationProvider.showNotificationsByProject.put(project, true)
+            notifications.updateAllNotifications()
+          }
+        }
+
+        override def runBackgroundProcess(indicator: ProgressIndicator): Continuation = {
+          DumbService.getInstance(project).runReadActionInSmartMode(() => {
+            performInReadAction(indicator)
+          })
+        }
+
+        override def onCanceled(indicator: ProgressIndicator): Unit = {
+          ProgressIndicatorUtils.scheduleWithWriteActionPriority(this)
+        }
+      }
+
+      ProgressIndicatorUtils.scheduleWithWriteActionPriority(readTask)
     }
   }
 }

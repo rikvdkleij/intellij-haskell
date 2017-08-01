@@ -19,7 +19,10 @@ package intellij.haskell.external.component
 import java.util
 import java.util.concurrent.ConcurrentHashMap
 
-import com.intellij.openapi.project.Project
+import com.intellij.openapi.progress.ProgressIndicator
+import com.intellij.openapi.progress.util.ReadTask.Continuation
+import com.intellij.openapi.progress.util.{ProgressIndicatorUtils, ReadTask}
+import com.intellij.openapi.project.{DumbService, Project}
 import com.intellij.openapi.vfs.newvfs.BulkFileListener
 import com.intellij.openapi.vfs.newvfs.events.VFileEvent
 import intellij.haskell.external.repl.StackReplsManager.StackComponentInfo
@@ -38,10 +41,31 @@ class ProjectLibraryFileWatcher(project: Project) extends BulkFileListener {
   override def before(events: util.List[_ <: VFileEvent]): Unit = {}
 
   override def after(events: util.List[_ <: VFileEvent]): Unit = {
-    val watchFiles = HaskellFileNameIndex.findProjectProductionFiles(project)
-    for {
-      haskellFile <- watchFiles.find(vf => events.asScala.exists(_.getPath == vf.getPath)).flatMap(vf => HaskellFileUtil.convertToHaskellFile(project, vf))
-      info <- HaskellComponentsManager.findStackComponentInfo(haskellFile)
-    } yield ProjectLibraryFileWatcher.changedLibrariesByPackageName.put(info.packageName, info)
+    val readTask = new ReadTask {
+
+      override def runBackgroundProcess(indicator: ProgressIndicator): Continuation = {
+        DumbService.getInstance(project).runReadActionInSmartMode(() => {
+          performInReadAction(indicator)
+        })
+      }
+
+      override def computeInReadAction(indicator: ProgressIndicator): Unit = {
+        indicator.checkCanceled()
+        val watchFiles = HaskellFileNameIndex.findProjectProductionFiles(project)
+        indicator.checkCanceled()
+        for {
+          virtualFile <- watchFiles.find(vf => events.asScala.exists(_.getPath == vf.getPath))
+          haskellFile <- HaskellFileUtil.convertToHaskellFile(project, virtualFile)
+          info <- HaskellComponentsManager.findStackComponentInfo(haskellFile)
+        } yield ProjectLibraryFileWatcher.changedLibrariesByPackageName.put(info.packageName, info)
+
+      }
+
+      override def onCanceled(indicator: ProgressIndicator): Unit = {
+        ProgressIndicatorUtils.scheduleWithWriteActionPriority(this)
+      }
+    }
+    ProgressIndicatorUtils.scheduleWithWriteActionPriority(readTask)
   }
+
 }
