@@ -65,18 +65,20 @@ private class ConfigFileWatcher(project: Project, notifications: EditorNotificat
     if (!StackProjectManager.isBuilding(project)) {
       val readTask = new ReadTask {
 
-        override def computeInReadAction(indicator: ProgressIndicator): Unit = {
-          indicator.checkCanceled()
-          if (events.asScala.exists(e => !e.isFromRefresh && watchFiles.exists(_.getAbsolutePath == e.getPath))) {
-            ConfigFileWatcherNotificationProvider.showNotificationsByProject.put(project, true)
-            notifications.updateAllNotifications()
-          }
-        }
-
         override def runBackgroundProcess(indicator: ProgressIndicator): Continuation = {
           DumbService.getInstance(project).runReadActionInSmartMode(() => {
             performInReadAction(indicator)
           })
+        }
+
+        override def computeInReadAction(indicator: ProgressIndicator): Unit = {
+          if (!project.isDisposed) {
+            indicator.checkCanceled()
+            if (events.asScala.exists(e => !e.isFromRefresh && watchFiles.exists(_.getAbsolutePath == e.getPath))) {
+              ConfigFileWatcherNotificationProvider.showNotificationsByProject.put(project, true)
+              notifications.updateAllNotifications()
+            }
+          }
         }
 
         override def onCanceled(indicator: ProgressIndicator): Unit = {

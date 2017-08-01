@@ -16,7 +16,7 @@
         <ul>
             <li>Various (performance) improvements and fixes</li>
             <li>Windows support</li>
-            <li>Added notification to restart REPLs after changing Cabal or Stack file (@zjhmale)</li>
+            <li>Added notification to restart REPLs after changing Cabal or Stack file (initial version by @zjhmale)</li>
             <li>Added notification to setup SDK in case no Haskell SDK is set for project</li>
             <li>Multi package support</li>
             <li>Only one Stack target is loaded per REPL to prevent conflicts</li>

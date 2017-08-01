@@ -50,15 +50,16 @@ class ProjectLibraryFileWatcher(project: Project) extends BulkFileListener {
       }
 
       override def computeInReadAction(indicator: ProgressIndicator): Unit = {
-        indicator.checkCanceled()
-        val watchFiles = HaskellFileNameIndex.findProjectProductionFiles(project)
-        indicator.checkCanceled()
-        for {
-          virtualFile <- watchFiles.find(vf => events.asScala.exists(_.getPath == vf.getPath))
-          haskellFile <- HaskellFileUtil.convertToHaskellFile(project, virtualFile)
-          info <- HaskellComponentsManager.findStackComponentInfo(haskellFile)
-        } yield ProjectLibraryFileWatcher.changedLibrariesByPackageName.put(info.packageName, info)
-
+        if (!project.isDisposed) {
+          indicator.checkCanceled()
+          val watchFiles = HaskellFileNameIndex.findProjectProductionFiles(project)
+          indicator.checkCanceled()
+          for {
+            virtualFile <- watchFiles.find(vf => events.asScala.exists(_.getPath == vf.getPath))
+            haskellFile <- HaskellFileUtil.convertToHaskellFile(project, virtualFile)
+            info <- HaskellComponentsManager.findStackComponentInfo(haskellFile)
+          } yield ProjectLibraryFileWatcher.changedLibrariesByPackageName.put(info.packageName, info)
+        }
       }
 
       override def onCanceled(indicator: ProgressIndicator): Unit = {
