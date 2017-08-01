@@ -130,22 +130,22 @@ object HaskellComponentsManager {
               }
           })
 
-        val importedModuleNames = projectHaskellFiles.flatMap(f => {
+        val importedLibraryModuleNames = projectHaskellFiles.flatMap(f => {
           ApplicationManager.getApplication.runReadAction(new Computable[Iterable[String]] {
             override def compute(): Iterable[String] =
               if (project.isDisposed) {
                 Iterable()
               } else {
-                HaskellPsiUtil.findImportDeclarations(f).flatMap(_.getModuleName.filter(_.nonEmpty))
+                val libraryModuleNames = findStackComponentGlobalInfo(f).map(_.availableLibraryModuleNames).getOrElse(Iterable())
+                HaskellPsiUtil.findImportDeclarations(f).flatMap(_.getModuleName.filter(_.nonEmpty)).filter(mn => libraryModuleNames.exists(_ == mn))
               }
           })
         }).toSeq.distinct.filterNot(_ == HaskellProjectUtil.Prelude)
 
         if (!project.isDisposed) {
-          importedModuleNames.foreach(mn => {
+          importedLibraryModuleNames.foreach(mn => {
             if (!project.isDisposed) {
               BrowseModuleComponent.findExportedModuleIdentifiers(project, mn, None)
-              Thread.sleep(500)
             }
           })
         }
