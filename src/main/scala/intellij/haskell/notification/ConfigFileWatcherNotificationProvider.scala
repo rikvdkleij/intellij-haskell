@@ -10,7 +10,7 @@ import com.intellij.openapi.progress.util.{ProgressIndicatorUtils, ReadTask}
 import com.intellij.openapi.project.{DumbService, Project}
 import com.intellij.openapi.util.Key
 import com.intellij.openapi.vfs.newvfs.BulkFileListener
-import com.intellij.openapi.vfs.newvfs.events.VFileEvent
+import com.intellij.openapi.vfs.newvfs.events.{VFileContentChangeEvent, VFileEvent}
 import com.intellij.openapi.vfs.{VirtualFile, VirtualFileManager}
 import com.intellij.ui.{EditorNotificationPanel, EditorNotifications}
 import intellij.haskell.external.component.StackProjectManager
@@ -74,7 +74,7 @@ private class ConfigFileWatcher(project: Project, notifications: EditorNotificat
         override def computeInReadAction(indicator: ProgressIndicator): Unit = {
           if (!project.isDisposed) {
             indicator.checkCanceled()
-            if (events.asScala.exists(e => !e.isFromRefresh && watchFiles.exists(_.getAbsolutePath == e.getPath))) {
+            if (events.asScala.exists(e => e.isInstanceOf[VFileContentChangeEvent] && !e.isFromRefresh && watchFiles.exists(_.getAbsolutePath == e.getPath))) {
               ConfigFileWatcherNotificationProvider.showNotificationsByProject.put(project, true)
               notifications.updateAllNotifications()
             }

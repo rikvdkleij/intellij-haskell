@@ -24,7 +24,7 @@ import com.intellij.openapi.progress.util.ReadTask.Continuation
 import com.intellij.openapi.progress.util.{ProgressIndicatorUtils, ReadTask}
 import com.intellij.openapi.project.{DumbService, Project}
 import com.intellij.openapi.vfs.newvfs.BulkFileListener
-import com.intellij.openapi.vfs.newvfs.events.VFileEvent
+import com.intellij.openapi.vfs.newvfs.events.{VFileContentChangeEvent, VFileEvent}
 import intellij.haskell.external.repl.StackReplsManager.StackComponentInfo
 import intellij.haskell.util.HaskellFileUtil
 import intellij.haskell.util.index.HaskellFileNameIndex
@@ -55,7 +55,7 @@ class ProjectLibraryFileWatcher(project: Project) extends BulkFileListener {
           val watchFiles = HaskellFileNameIndex.findProjectProductionFiles(project)
           indicator.checkCanceled()
           for {
-            virtualFile <- watchFiles.find(vf => events.asScala.exists(_.getPath == vf.getPath))
+            virtualFile <- watchFiles.find(vf => events.asScala.exists(e => e.isInstanceOf[VFileContentChangeEvent] && e.getPath == vf.getPath))
             haskellFile <- HaskellFileUtil.convertToHaskellFile(project, virtualFile)
             info <- HaskellComponentsManager.findStackComponentInfo(haskellFile)
           } yield ProjectLibraryFileWatcher.changedLibrariesByPackageName.put(info.packageName, info)
