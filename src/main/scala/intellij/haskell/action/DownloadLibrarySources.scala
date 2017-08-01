@@ -19,7 +19,7 @@ package intellij.haskell.action
 import com.intellij.openapi.actionSystem.{AnAction, AnActionEvent}
 import intellij.haskell.external.component.StackProjectManager
 import intellij.haskell.module.HaskellModuleBuilder
-import intellij.haskell.util.{HaskellEditorUtil, HaskellProjectUtil}
+import intellij.haskell.util.HaskellEditorUtil
 
 class DownloadLibrarySources extends AnAction {
 
@@ -28,10 +28,6 @@ class DownloadLibrarySources extends AnAction {
   }
 
   override def actionPerformed(actionEvent: AnActionEvent): Unit = {
-    Option(actionEvent.getProject).foreach { project =>
-      HaskellProjectUtil.findProjectModules(project).foreach(m =>
-        HaskellModuleBuilder.addLibrarySources(m)
-      )
-    }
+    Option(actionEvent.getProject).foreach(HaskellModuleBuilder.addLibrarySources)
   }
 }

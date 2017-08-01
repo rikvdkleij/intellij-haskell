@@ -110,9 +110,7 @@ object StackProjectManager {
               }
 
               progressIndicator.setText("Busy with downloading library sources")
-              HaskellProjectUtil.findProjectModules(project).foreach(m => {
-                HaskellModuleBuilder.addLibrarySources(m)
-              })
+              HaskellModuleBuilder.addLibrarySources(project)
 
               progressIndicator.setText("Busy with preloading libraries")
               val preloadCacheFuture = ApplicationManager.getApplication.executeOnPooledThread(new Runnable {
