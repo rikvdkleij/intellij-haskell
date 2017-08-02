@@ -64,7 +64,7 @@ object StackProjectManager {
   private def init(project: Project, restart: Boolean = false): Unit = {
     if (HaskellProjectUtil.isValidHaskellProject(project, notifyNoSdk = true)) {
       if (isInitialzing(project)) {
-        HaskellNotificationGroup.logWarningBalloonEvent(project, "Stack REPLs are already (re)starting")
+        HaskellNotificationGroup.logWarningBalloonEvent(project, "Action is not possible because project is initializing")
       } else {
         HaskellNotificationGroup.logInfoEvent(project, "Initializing Haskell project")
 
