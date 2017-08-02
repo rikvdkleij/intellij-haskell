@@ -33,8 +33,8 @@ object StackProjectManager {
 
   import intellij.haskell.util.ScalaUtil._
 
-  def isStarting(project: Project): Boolean = {
-    getStackProjectManager(project).exists(_.starting)
+  def isInitialzing(project: Project): Boolean = {
+    getStackProjectManager(project).exists(_.initializing)
   }
 
   def isBuilding(project: Project): Boolean = {
@@ -63,7 +63,7 @@ object StackProjectManager {
 
   private def init(project: Project, restart: Boolean = false): Unit = {
     if (HaskellProjectUtil.isValidHaskellProject(project, notifyNoSdk = true)) {
-      if (isStarting(project)) {
+      if (isInitialzing(project)) {
         HaskellNotificationGroup.logWarningBalloonEvent(project, "Stack REPLs are already (re)starting")
       } else {
         HaskellNotificationGroup.logInfoEvent(project, "Initializing Haskell project")
@@ -71,7 +71,7 @@ object StackProjectManager {
         ProgressManager.getInstance().run(new Task.Backgroundable(project, "Building project, starting REPL(s), building tools and preloading cache", false, PerformInBackgroundOption.DEAF) {
 
           def run(progressIndicator: ProgressIndicator) {
-            getStackProjectManager(project).foreach(_.starting = true)
+            getStackProjectManager(project).foreach(_.initializing = true)
             getStackProjectManager(project).foreach(_.building = true)
             try {
               try {
@@ -142,7 +142,7 @@ object StackProjectManager {
               }
             }
             finally {
-              getStackProjectManager(project).foreach(_.starting = false)
+              getStackProjectManager(project).foreach(_.initializing = false)
             }
           }
         })
@@ -156,7 +156,7 @@ class StackProjectManager(project: Project) extends ProjectComponent {
   override def getComponentName: String = "stack-project-manager"
 
   @volatile
-  private var starting = false
+  private var initializing = false
 
   @volatile
   private var building = false

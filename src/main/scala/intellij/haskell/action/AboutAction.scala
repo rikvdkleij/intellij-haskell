@@ -29,7 +29,7 @@ import scala.collection.mutable.ArrayBuffer
 class AboutAction extends AnAction {
 
   override def update(actionEvent: AnActionEvent) {
-    HaskellEditorUtil.enableExternalAction(actionEvent, !StackProjectManager.isStarting(_))
+    HaskellEditorUtil.enableExternalAction(actionEvent, !StackProjectManager.isInitialzing(_))
   }
 
   private def boldToolName(name: String): String = {

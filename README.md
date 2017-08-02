@@ -30,11 +30,11 @@ You can install this plugin using the [Jetbrains plugin repository](https://plug
 - View quick documentation;
 - View quick definition;
 - Structure view;
-- Goto to declaration (called `Navigate`/`Declaration` in IntelliJ menu);
-- Navigate to declaration (called `Navigate`/`Class` in IntelliJ menu);
-- Navigate to identifier (called `Navigate`/`Symbol` in IntelliJ menu);
-- Goto instance declaration (called `Navigate`/`Instance Declaration` in IntelliJ menu);
-- Navigate to declaration or identifier powered by Hoogle (called `Navigate`/`Navigation by Hoogle` in IntelliJ menu);
+- Goto to declaration (called `Navigate`>`Declaration` in IntelliJ menu);
+- Navigate to declaration (called `Navigate`>`Class` in IntelliJ menu);
+- Navigate to identifier (called `Navigate`>`Symbol` in IntelliJ menu);
+- Goto instance declaration (called `Navigate`>`Instance Declaration` in IntelliJ menu);
+- Navigate to declaration or identifier powered by Hoogle (called `Navigate`>`Navigation by Hoogle` in IntelliJ menu);
 - Inspection by HLint;
 - Quick fixes for HLint suggestions;
 - Show error action to view formatted message. Useful in case message consists of multiple lines (Ctrl-F10, Meta-F10 on Mac OSX);
@@ -47,11 +47,11 @@ You can install this plugin using the [Jetbrains plugin repository](https://plug
 - Install this plugin. Make sure no other Haskell plugin is installed in IntelliJ;
 - Install latest version of [Stack](https://github.com/commercialhaskell/stack);
 - Install latest versions of [Hindent](https://github.com/chrisdone/hindent) and [Stylish-Haskell](https://github.com/jaspervdj/stylish-haskell). 
-    Note that currently the latest version of Hindent is not on Stackage LTS. You have to install version of Hindent > 5.0, for example by: `stack install --resolver nightly-2016-11-06 hindent`
-    Set file paths to `hindent` and `stylish-haskell` in the `Settings`/`Other Settings`/`Haskell`;
+    You have to install version of Hindent > 5.0, for example by: `stack install --resolver nightly-2016-11-06 hindent`
+    Set file paths to `hindent` and `stylish-haskell` in the `Settings`>`Other Settings`>`Haskell`;
 - Setup the project:
   - Make sure your Stack project builds without errors. Preferably by using: `stack build --test --haddock --fast`;
-  - After your project is built successfully, import project in IntelliJ by using `File`/`New`/`Project from Existing Sources...` from the IntelliJ menu;
+  - After your project is built successfully, import project in IntelliJ by using `File`>`New`>`Project from Existing Sources...` from the IntelliJ menu;
   - In the `New Project` wizard select `Import project from external module` and check `Haskell Stack`;
   - In next page of wizard configure `Project SDK` by configuring `Haskell Tool Stack` with selecting path to `stack` binary, e.g. `/usr/local/bin/stack`;
   - Finish wizard and project will be opened;
@@ -60,22 +60,19 @@ You can install this plugin using the [Jetbrains plugin repository](https://plug
     (If you use non LTS or Nightly resolver e.g. `ghc-7.10.2`, you may have to build them manually since there are some extra-deps should be added to `stack.yaml`).
     Those tools are built against Stackage release defined in project's `stack.yaml`.
     If you want to use later version of tool, you will have to build tool manually in project's folder by using `stack build`;
-  - Check `Project structure`/`Project settings`/`Modules` which folders to exclude (like `.stack-work` and `dist`) and which folders are `Source` and `Test` (normally `src` and `test`);
-  - Plugin will automatically download library sources (since Stack version 1.2.1 also for test dependencies). They will be added as source libraries to module.
-    This option gives you nice navigation features through libraries. Sources are downloaded to folder `.ideaHaskellLib` inside root of project;
-  - After changes to dependencies you can download them again by using `Tools`/`Download Haskell Library Sources`;
-  - The `Event Log` will display what's going on in the background. Useful when something fails. It's disabled by default. It can be enabled by checking `Haskell Log` checkbox in the `Event Log` `Settings`;    
-  - In the background for each Haskell project two Stack repls are running. You can restart them by `Tools`/`Restart Haskell Stack REPLs`.
-    When you make large changes to `stack.yaml` or Cabal file, you have to restart IntelliJ project;
+  - Check `Project structure`>`Project settings`>`Modules` which folders to exclude (like `.stack-work` and `dist`) and which folders are `Source` and `Test` (normally `src` and `test`);
+  - Plugin will automatically download library sources. They will be added as source libraries to module(s).
+    This option gives you nice navigation features through libraries. Sources are downloaded to folder `.intellij-haskell` inside your home folder;
+  - After changes to dependencies you can download them again by using `Tools`>`Download Haskell Library Sources`;
+  - The `Event Log` will display what's going on in the background. Useful when something fails. It's disabled by default. It can be enabled by checking `Haskell Log` checkbox in the `Event Log`>`Settings`;    
+  - In the background for each Haskell project three Stack REPLs are running. You can restart them by `Tools`>`Restart Haskell Stack REPLs`.
+  - When you make changes to `stack.yaml` or Cabal file, IntelliJ will give you notification with the option to restart REPLs;
 
 
 # Remarks
-1. Plugin does not support multi package projects;
-2. IntelliJ has a nice terminal plugin;
-3. Developed plugin on Linux. Also tested on OSX;
-4. Windows is not supported;
-5. `About Haskell Project` in `Help` menu shows which Haskell GHC/tools are used by plugin for project;
-6. Intero depends on `libtinfo-dev`. On Ubuntu you can install it with `sudo apt-get install libtinfo-dev`;
+1. `About Haskell Project` in `Help` menu shows which Haskell GHC/tools are used by plugin for project;
+2. Intero depends on `libtinfo-dev`. On Ubuntu you can install it with `sudo apt-get install libtinfo-dev`;
+
 
 # How to build project
 1. Clone this project;
@@ -84,24 +81,24 @@ You can install this plugin using the [Jetbrains plugin repository](https://plug
 1. Run task `compile` from the sbt console;
 1. Install/enable the following plugins in IntelliJ: Plugin Devkit, Grammar-Kit and PsiViewer;
 1. Import this project as an sbt project in IntelliJ;
-1. Be sure `JVM SDK` inside `Languages & Frameworks`/`Scala Compiler Server` is set to `1.8`, since the Scala compiler version (2.12.1) which this plugin is currently using is not compatible with Java 7 or lower, Java 9 is not yet supported;
-1. Select `Build`/`Build Project`;
+1. Be sure `JVM SDK` inside `Languages & Frameworks`>`Scala Compiler Server` is set to `1.8`, since the Scala compiler version (2.12.3) which this plugin is currently using is not compatible with Java 7 or lower, Java 9 is not yet supported;
+1. Select `Build`>`Build Project`;
 
 
 # How to prepare plugin for deployment
 1. Right click on top of `intellij-haskell.iml` inside `intellij-haskell` folder;
 1. Select `Import module`;
-1. Be sure `unmanaged-jars` dependency is set to `provided` inside `Project structure`/`Project settings`/`Modules`/`Dependencies` (btw, setting `provided` inside sbt file gives error); 
+1. Be sure `unmanaged-jars` dependency is set to `provided` inside `Project structure`>`Project settings`>`Modules`>`Dependencies` (btw, setting `provided` inside sbt file gives error); 
 1. Right click on top of `intellij-haskell` plugin module and select `Prepare Plugin Module 'intellij-haskell' for deployment`; 
 
 
 # How to run/debug plugin inside IntelliJ
-1. Set Plugin SDK settings right inside `Project structure`/`Platform settings`/`SDKs`. For example to, set  SDK home path to `idea/142.5239.7` inside project root folder;
-1. Set `Module-SDK` right for `intellij-haskell` plugin module inside `Project structure`/`Project structure`/`Project settings`/`Modules`; 
-1. To run plugin inside IntelliJ, first run configuration has to be created. Navigate to `Run`/`Edit configurations` and create `plugin` configuration for `intellij-haskell`;
+1. Set Plugin SDK settings right inside `Project structure`>`Platform settings`>`SDKs`. For example to, set  SDK home path to `idea/142.5239.7` inside project root folder;
+1. Set `Module-SDK` right for `intellij-haskell` plugin module inside `Project structure`>`Project structure`>`Project settings`>`Modules`; 
+1. To run plugin inside IntelliJ, first run configuration has to be created. Navigate to `Run`>`Edit configurations` and create `plugin` configuration for `intellij-haskell`;
 
 
 # Development remarks
 1. After making changes to `_HaskellLexer.flex`, run `Run Flex Generator`. This will generate `_HaskellLexer.java`;
 1. After making changes to `haskell.bnf`, run `Generate Parser Code`. This will generate parser Java files in `gen` directory;
-1. Add `sources.zip` inside `idea`/[`idea build #`] to `Project structure`/`Project settings`/`Modules`/`Dependencies`/`unmanaged-jars` to see IntelliJ sources;
+1. Add `sources.zip` inside `idea`>[`idea build #`] to `Project structure`>`Project settings`>`Modules`>`Dependencies`>`unmanaged-jars` to see IntelliJ sources;

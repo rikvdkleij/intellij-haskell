@@ -24,7 +24,7 @@ import intellij.haskell.util.HaskellEditorUtil
 class DownloadLibrarySources extends AnAction {
 
   override def update(actionEvent: AnActionEvent): Unit = {
-    HaskellEditorUtil.enableExternalAction(actionEvent, !StackProjectManager.isStarting(_))
+    HaskellEditorUtil.enableExternalAction(actionEvent, !StackProjectManager.isInitialzing(_))
   }
 
   override def actionPerformed(actionEvent: AnActionEvent): Unit = {
