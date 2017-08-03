@@ -67,7 +67,7 @@ private[component] object NameInfoComponent {
           val name = key.name
           HaskellProjectUtil.isProjectFile(psiFile).map(isProjectFile => {
             if (isProjectFile) {
-              if (!reload && !key.forceGetInfo && LoadComponent.isLoading(psiFile)) {
+              if (!reload && !key.forceGetInfo && LoadComponent.isBusy(psiFile)) {
                 Left(ReplIsLoading)
               } else {
                 findInfoForProjectIdentifier(project, psiFile, name).map(output => createNameInfos(project, output)) match {

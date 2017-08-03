@@ -61,7 +61,7 @@ private[component] object BrowseModuleComponent {
 
           key.psiFile match {
             case Some(psiFile) =>
-              if (!reload && LoadComponent.isLoading(psiFile)) {
+              if (!reload && LoadComponent.isBusy(psiFile)) {
                 Left(ReplIsLoading)
               } else if (LoadComponent.isLoaded(psiFile).exists(_ != Failed)) {
                 StackReplsManager.getProjectRepl(psiFile).flatMap(_.getModuleIdentifiersWithLoad(moduleName, psiFile)).map { output =>

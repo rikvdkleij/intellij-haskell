@@ -31,6 +31,10 @@ object TypeInfoUtil {
         HaskellPsiUtil.findExpressionParent(currentElement).map(HaskellPsiUtil.findNamedElements).getOrElse(Iterable())
       }
     })
-    namedElements.foreach(e => HaskellComponentsManager.findTypeInfoForElement(e, forceGetInfo = false))
+    namedElements.foreach(e => {
+      HaskellComponentsManager.findTypeInfoForElement(e, forceGetInfo = false)
+      // We have to wait for other requests which have more prio because those are on dispatch thread
+      Thread.sleep(50)
+    })
   }
 }

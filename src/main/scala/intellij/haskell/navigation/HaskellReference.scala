@@ -159,6 +159,7 @@ object HaskellReference {
   }
 
   def findIdentifierByLocation(filePath: String, lineNr: Integer, columnNr: Integer, name: String, project: Project): Option[HaskellNamedElement] = {
+    ProgressManager.checkCanceled()
     for {
       haskellFile <- HaskellProjectUtil.findFile(filePath, project)
       offset <- LineColumnPosition.getOffset(haskellFile, LineColumnPosition(lineNr, columnNr))
@@ -191,6 +192,8 @@ object HaskellReference {
   }
 
   private def resolveReferencesByNameInfo(namedElement: HaskellNamedElement, psiFile: PsiFile, project: Project): Iterable[HaskellNamedElement] = {
+    ProgressManager.checkCanceled()
+
     HaskellComponentsManager.findNameInfo(namedElement, forceGetInfo = false).headOption.map(ni => findIdentifiersByNameInfo(ni, namedElement, project, preferExpressions = false)) match {
       case Some(nes) => nes
       case None =>
@@ -200,10 +203,14 @@ object HaskellReference {
   }
 
   private def resolveReferenceByDefinitionLocation(namedElement: HaskellNamedElement, project: Project): Option[HaskellNamedElement] = {
+    ProgressManager.checkCanceled()
+
     HaskellComponentsManager.findDefinitionLocation(namedElement) match {
       case Some(DefinitionLocationInfo(filePath, startLineNr, startColumnNr, _, _)) =>
+        ProgressManager.checkCanceled()
         findIdentifierByLocation(filePath, startLineNr, startColumnNr, namedElement.getName, project)
       case Some(ModuleLocationInfo(moduleName)) =>
+        ProgressManager.checkCanceled()
         val module = ModuleUtilCore.findModuleForPsiElement(namedElement)
         findIdentifiersByModuleName(moduleName, namedElement.getName, project, Some(module), preferExpressions = true).headOption
       case None => None

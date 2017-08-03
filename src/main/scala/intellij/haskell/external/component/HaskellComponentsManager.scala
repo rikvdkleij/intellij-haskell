@@ -146,6 +146,8 @@ object HaskellComponentsManager {
           importedLibraryModuleNames.foreach(mn => {
             if (!project.isDisposed) {
               BrowseModuleComponent.findExportedModuleIdentifiers(project, mn, None)
+              // We have to wait for other requests which have more prio because those are on dispatch thread
+              Thread.sleep(50)
             }
           })
         }

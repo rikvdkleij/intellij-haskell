@@ -41,7 +41,7 @@ private[component] object StackComponentGlobalInfoComponent {
       new CacheLoader[Key, Result]() {
 
         override def load(key: Key): Result = {
-          if (LoadComponent.isLoading(key.project)) {
+          if (LoadComponent.isBusy(key.project)) {
             Left(ReplNotAvailable)
           } else {
             createStackInfo(key)
@@ -66,7 +66,7 @@ private[component] object StackComponentGlobalInfoComponent {
         }
 
         private def findAvailableModuleNames(project: Project, componentInfo: StackComponentInfo): Option[Iterable[String]] = {
-          StackReplsManager.getProjectRepl(project, componentInfo).flatMap(_.findAvailableLibraryModuleNames).map(findModuleNames)
+          StackReplsManager.getProjectRepl(project, componentInfo).flatMap(_.findAvailableLibraryModuleNames(project)).map(findModuleNames)
         }
 
         private def isNoImplicitPreludeActive(project: Project, stackTargetBuildInfo: StackComponentInfo): Option[Boolean] = {

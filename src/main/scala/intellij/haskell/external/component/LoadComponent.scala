@@ -33,18 +33,20 @@ private[component] object LoadComponent {
     projectRepl.map(_.isLoaded(psiFile))
   }
 
-  def isLoading(psiFile: PsiFile): Boolean = {
-    val projectRepl = StackReplsManager.getProjectRepl(psiFile)
-    projectRepl.exists(_.isLoading.exists(_ == psiFile))
+  def isBusy(project: Project): Boolean = {
+    val projectRepl = StackReplsManager.getProjectRepl(project)
+    projectRepl.exists(_.isBusy)
   }
 
-  def isLoading(project: Project): Boolean = {
-    val projectRepl = StackReplsManager.getProjectRepl(project)
-    projectRepl.exists(_.isLoading.isDefined)
+  def isBusy(psiFile: PsiFile): Boolean = {
+    val projectRepl = StackReplsManager.getProjectRepl(psiFile)
+    projectRepl.exists(_.isBusy)
   }
 
   def load(psiFile: PsiFile, currentElement: Option[PsiElement]): Option[CompilationResult] = {
     val project = psiFile.getProject
+
+    ProgressManager.checkCanceled()
 
     val stackComponentInfo = HaskellComponentsManager.findStackComponentInfo(psiFile)
     stackComponentInfo.foreach(info => {
@@ -65,6 +67,8 @@ private[component] object LoadComponent {
         }
       }
     })
+
+    ProgressManager.checkCanceled()
 
     val projectRepl = StackReplsManager.getProjectRepl(psiFile)
 
@@ -88,6 +92,8 @@ private[component] object LoadComponent {
       }
     })
 
+    ProgressManager.checkCanceled()
+
     projectRepl.flatMap(_.load(psiFile)) match {
       case Some((loadOutput, loadFailed)) =>
         if (!loadFailed) {
@@ -95,13 +101,14 @@ private[component] object LoadComponent {
           ApplicationManager.getApplication.executeOnPooledThread(new Runnable {
 
             override def run(): Unit = {
-              TypeInfoComponent.invalidate(psiFile)
-              currentElement.foreach(TypeInfoUtil.preloadTypesAround)
-
               DefinitionLocationComponent.invalidate(psiFile)
               NameInfoComponent.invalidate(psiFile)
+
               BrowseModuleComponent.refreshTopLevel(project, psiFile)
               moduleName.foreach(mn => BrowseModuleComponent.invalidateForModuleName(project, mn))
+
+              TypeInfoComponent.invalidate(psiFile)
+              currentElement.foreach(TypeInfoUtil.preloadTypesAround)
             }
           })
         }

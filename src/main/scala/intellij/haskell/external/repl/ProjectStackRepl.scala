@@ -41,7 +41,17 @@ class ProjectStackRepl(project: Project, replType: StanzaType, target: String, v
   private[this] val allLoadedPsiFileInfos = new ConcurrentHashMap[PsiFile, FileInfo]().asScala
 
   @volatile
-  var isLoading: Option[PsiFile] = None
+  private var isLoading = false
+
+  @volatile
+  private var isFindingAvailableLibraryModuleNames = false
+
+  @volatile
+  private var isExecutingWithLoad = false
+
+  @volatile
+  var isBusy: Boolean = isLoading || isFindingAvailableLibraryModuleNames || isExecutingWithLoad
+
 
   def findTypeInfoFor(psiFile: PsiFile, startLineNr: Int, startColumnNr: Int, endLineNr: Int, endColumnNr: Int, expression: String): Option[StackReplOutput] = {
     val filePath = HaskellFileUtil.getAbsoluteFilePath(psiFile)
@@ -71,10 +81,10 @@ class ProjectStackRepl(project: Project, replType: StanzaType, target: String, v
     this.synchronized {
       val output =
         try {
-          isLoading = Some(psiFile)
+          isLoading = true
           execute(s":load $filePath")
         } finally {
-          isLoading = None
+          isLoading = false
         }
       output match {
         case Some(o) =>
@@ -98,10 +108,15 @@ class ProjectStackRepl(project: Project, replType: StanzaType, target: String, v
     executeWithLoad(psiFile, s":browse! $moduleName", Some(moduleName))
   }
 
-  def findAvailableLibraryModuleNames: Option[StackReplOutput] = synchronized {
-    execute(":load")
-    loadedPsiFileInfo = None
-    execute(""":complete repl "import " """)
+  def findAvailableLibraryModuleNames(project: Project): Option[StackReplOutput] = synchronized {
+    try {
+      isFindingAvailableLibraryModuleNames = true
+      execute(":load")
+      loadedPsiFileInfo = None
+      execute(""":complete repl "import " """)
+    } finally {
+      isFindingAvailableLibraryModuleNames = false
+    }
   }
 
   def showActiveLanguageFlags: Option[StackReplOutput] = synchronized {
@@ -121,16 +136,21 @@ class ProjectStackRepl(project: Project, replType: StanzaType, target: String, v
   }
 
   private def executeWithLoad(psiFile: PsiFile, command: String, moduleName: Option[String] = None): Option[StackReplOutput] = synchronized {
-    loadedPsiFileInfo match {
-      case Some(info) if info.psiFile == psiFile && !info.loadFailed => execute(command)
-      case Some(info) if info.psiFile == psiFile && info.loadFailed => Some(StackReplOutput())
-      case _ =>
-        load(psiFile)
-        loadedPsiFileInfo match {
-          case None => None
-          case Some(info) if info.psiFile == psiFile && !info.loadFailed => execute(command)
-          case _ => Some(StackReplOutput())
-        }
+    try {
+      isExecutingWithLoad = true
+      loadedPsiFileInfo match {
+        case Some(info) if info.psiFile == psiFile && !info.loadFailed => execute(command)
+        case Some(info) if info.psiFile == psiFile && info.loadFailed => Some(StackReplOutput())
+        case _ =>
+          load(psiFile)
+          loadedPsiFileInfo match {
+            case None => None
+            case Some(info) if info.psiFile == psiFile && !info.loadFailed => execute(command)
+            case _ => Some(StackReplOutput())
+          }
+      }
+    } finally {
+      isExecutingWithLoad = false
     }
   }
 

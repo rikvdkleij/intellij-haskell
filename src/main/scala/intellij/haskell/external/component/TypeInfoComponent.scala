@@ -44,7 +44,7 @@ private[component] object TypeInfoComponent {
       new CacheLoader[Key, Result]() {
 
         override def load(key: Key): Result = {
-          if (!key.forceGetInfo && LoadComponent.isLoading(key.psiFile)) {
+          if (!key.forceGetInfo && LoadComponent.isBusy(key.psiFile)) {
             Result(Left(ReplIsLoading))
           } else {
             findTypeInfo(key)

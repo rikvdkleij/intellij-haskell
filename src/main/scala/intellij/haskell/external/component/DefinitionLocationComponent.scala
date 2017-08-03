@@ -44,7 +44,7 @@ object DefinitionLocationComponent {
       new CacheLoader[Key, DefinitionLocationResult]() {
 
         override def load(key: Key): DefinitionLocationResult = {
-          if (LoadComponent.isLoading(key.psiFile)) {
+          if (LoadComponent.isBusy(key.psiFile)) {
             Left(ReplIsLoading)
           } else {
             findDefinitionLocation(key)
