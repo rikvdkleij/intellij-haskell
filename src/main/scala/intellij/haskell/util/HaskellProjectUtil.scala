@@ -49,12 +49,14 @@ object HaskellProjectUtil {
     })
   }
 
+  // File can both project and library file in multi package projects
+  // Being project file is leading
   def isLibraryFile(psiFile: PsiFile): Option[Boolean] = {
-    isLibraryFile(psiFile.getContainingFile.getVirtualFile, psiFile.getProject)
+    isProjectFile(psiFile).map(!_)
   }
 
   def isLibraryFile(virtualFile: VirtualFile, project: Project): Option[Boolean] = {
-    getProjectRootManager(project).map(_.getFileIndex.isInLibrarySource(virtualFile))
+    isProjectFile(virtualFile, project).map(!_)
   }
 
   def isProjectTestFile(psiFile: PsiFile): Option[Boolean] = {
