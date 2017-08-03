@@ -16,13 +16,20 @@
 
 package intellij.haskell.util
 
+import java.util.concurrent.ConcurrentHashMap
+
 import com.intellij.openapi.application.ApplicationManager
+import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Computable
 import com.intellij.psi.PsiElement
 import intellij.haskell.external.component.HaskellComponentsManager
 import intellij.haskell.psi.{HaskellNamedElement, HaskellPsiUtil}
 
+import scala.collection.JavaConverters._
+
 object TypeInfoUtil {
+
+  private val activeTaskByProject = new ConcurrentHashMap[Project, Boolean]().asScala
 
   def preloadTypesAround(currentElement: PsiElement) {
     val namedElements = ApplicationManager.getApplication.runReadAction(new Computable[Iterable[HaskellNamedElement]] {
@@ -31,10 +38,31 @@ object TypeInfoUtil {
         HaskellPsiUtil.findExpressionParent(currentElement).map(HaskellPsiUtil.findNamedElements).getOrElse(Iterable())
       }
     })
-    namedElements.foreach(e => {
-      HaskellComponentsManager.findTypeInfoForElement(e, forceGetInfo = false)
-      // We have to wait for other requests which have more prio because those are on dispatch thread
-      Thread.sleep(50)
+
+    val project = currentElement.getProject
+    if (activeTaskByProject.get(project).contains(true)) {
+      // To prevent growing queue of requests for getting type info
+      activeTaskByProject.remove(project)
+    }
+
+    ApplicationManager.getApplication.executeOnPooledThread(new Runnable {
+
+      override def run(): Unit = {
+        activeTaskByProject.put(project, true)
+
+        namedElements.foreach(e => {
+          if (activeTaskByProject.get(project).contains(true)) {
+            HaskellComponentsManager.findTypeInfoForElement(e, forceGetInfo = false)
+            // We have to wait for other requests which have more prio because those are on dispatch thread
+            Thread.sleep(100)
+          } else {
+            return
+          }
+        })
+
+        activeTaskByProject.remove(project)
+      }
     })
+
   }
 }

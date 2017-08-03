@@ -21,7 +21,7 @@ import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.editor.Editor
 import com.intellij.psi.{PsiElement, PsiFile}
 import intellij.haskell.editor.HaskellCompletionContributor
-import intellij.haskell.external.component.HaskellComponentsManager
+import intellij.haskell.external.component.{HaskellComponentsManager, StackProjectManager}
 import intellij.haskell.psi.HaskellPsiUtil
 import intellij.haskell.util.{HaskellEditorUtil, StringUtil, TypeInfoUtil}
 
@@ -43,11 +43,13 @@ class ShowTypeAction extends AnAction {
         }
         case _ => Option(psiFile.findElementAt(editor.getCaretModel.getOffset)).foreach { psiElement =>
 
-          ApplicationManager.getApplication.executeOnPooledThread(new Runnable {
-            override def run(): Unit = {
-              TypeInfoUtil.preloadTypesAround(psiElement)
-            }
-          })
+          if (!StackProjectManager.isBuilding(actionContext.project)) {
+            ApplicationManager.getApplication.executeOnPooledThread(new Runnable {
+              override def run(): Unit = {
+                TypeInfoUtil.preloadTypesAround(psiElement)
+              }
+            })
+          }
 
           HaskellComponentsManager.findTypeInfoForElement(psiElement, forceGetInfo = true) match {
             case Some(ti) => HaskellEditorUtil.showHint(editor, StringUtil.escapeString(ti.typeSignature))

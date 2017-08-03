@@ -48,7 +48,7 @@ class HaskellAnnotator extends ExternalAnnotator[(PsiFile, Option[PsiElement]), 
     (psiFile, Option(psiFile.getOriginalFile.getVirtualFile)) match {
       case (_, None) => null // can be in case if file is in memory only (just created file)
       case (_, Some(f)) if f.getFileType != HaskellFileType.Instance => null
-      case (_, Some(_)) if !psiFile.isValid | HaskellProjectUtil.isLibraryFile(psiFile).getOrElse(true) => null
+      case (_, Some(_)) if !psiFile.isValid | HaskellProjectUtil.isLibraryFile(psiFile).getOrElse(true) | StackProjectManager.isBuilding(psiFile.getProject) => null
       case (_, Some(_)) =>
         val currentElement = Option(psiFile.findElementAt(editor.getCaretModel.getOffset)).map(PsiTreeUtil.prevVisibleLeaf)
         (psiFile, currentElement)
