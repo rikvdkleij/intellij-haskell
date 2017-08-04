@@ -136,21 +136,27 @@ class ProjectStackRepl(project: Project, replType: StanzaType, target: String, v
   }
 
   private def executeWithLoad(psiFile: PsiFile, command: String, moduleName: Option[String] = None): Option[StackReplOutput] = synchronized {
-    try {
-      isExecutingWithLoad = true
-      loadedPsiFileInfo match {
-        case Some(info) if info.psiFile == psiFile && !info.loadFailed => execute(command)
-        case Some(info) if info.psiFile == psiFile && info.loadFailed => Some(StackReplOutput())
-        case _ =>
-          load(psiFile)
-          loadedPsiFileInfo match {
-            case None => None
-            case Some(info) if info.psiFile == psiFile && !info.loadFailed => execute(command)
-            case _ => Some(StackReplOutput())
-          }
+    def exec(command: String) = {
+      try {
+        isExecutingWithLoad = true
+        execute(command)
+      } finally {
+        isExecutingWithLoad = false
       }
-    } finally {
-      isExecutingWithLoad = false
+    }
+
+    loadedPsiFileInfo match {
+      case Some(info) if info.psiFile == psiFile && !info.loadFailed =>
+        exec(command)
+      case Some(info) if info.psiFile == psiFile && info.loadFailed => Some(StackReplOutput())
+      case _ =>
+        load(psiFile)
+        loadedPsiFileInfo match {
+          case None => None
+          case Some(info) if info.psiFile == psiFile && !info.loadFailed =>
+            exec(command)
+          case _ => Some(StackReplOutput())
+        }
     }
   }
 

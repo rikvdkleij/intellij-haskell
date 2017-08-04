@@ -84,6 +84,7 @@ class HaskellReference(element: HaskellNamedElement, textRange: TextRange) exten
 object HaskellReference {
 
   private def resolveReferences(namedElement: HaskellNamedElement, psiFile: PsiFile, project: Project): Iterable[HaskellNamedElement] = {
+    ProgressManager.checkCanceled()
     HaskellProjectUtil.isLibraryFile(psiFile).map(isLibraryFile => {
       ProgressManager.checkCanceled()
 

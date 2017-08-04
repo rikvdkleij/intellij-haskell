@@ -21,6 +21,7 @@ import java.util.concurrent.Callable
 import com.intellij.codeInspection._
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.progress.ProgressManager
+import com.intellij.openapi.util.Computable
 import com.intellij.psi.{PsiElement, PsiFile, TokenType}
 import com.intellij.util.WaitFor
 import intellij.haskell.external.component.{HLintComponent, HLintInfo, StackProjectManager}
@@ -38,41 +39,66 @@ class HLintInspectionTool extends LocalInspectionTool {
       return Array()
     }
 
-    val problemsHolder = new ProblemsHolder(manager, psiFile, isOnTheFly)
     ProgressManager.checkCanceled()
 
-    val hlintInfosFuture = ApplicationManager.getApplication.executeOnPooledThread(new Callable[Seq[HLintInfo]] {
-      override def call(): Seq[HLintInfo] = {
-        HLintComponent.check(psiFile)
+    val problemsHolder = new ProblemsHolder(manager, psiFile, isOnTheFly)
+
+    ProgressManager.checkCanceled()
+
+    val hlintInfosFuture = ApplicationManager.getApplication.executeOnPooledThread(new Callable[Array[ProblemDescriptor]] {
+      override def call(): Array[ProblemDescriptor] = {
+        ProgressManager.checkCanceled()
+        val result = HLintComponent.check(psiFile)
+        ProgressManager.checkCanceled()
+        for {
+          hi <- result
+          se <- findStartHaskellElement(psiFile, hi)
+          ee <- findEndHaskellElement(psiFile, hi)
+          sl <- fromOffset(psiFile, se)
+          el <- fromOffset(psiFile, ee)
+        } yield {
+          ProgressManager.checkCanceled()
+          ApplicationManager.getApplication.runReadAction(new Runnable() {
+            override def run(): Unit = {
+              hi.to match {
+                case Some(to) =>
+                  problemsHolder.registerProblem(new ProblemDescriptorBase(se, ee, hi.hint, Array(createQuickfix(hi, se, ee, sl, el, to)), findProblemHighlightType(hi), false, null, true, isOnTheFly))
+                case None =>
+                  ProgressManager.checkCanceled()
+                  problemsHolder.registerProblem(new ProblemDescriptorBase(se, ee, hi.hint, Array(), findProblemHighlightType(hi), false, null, true, isOnTheFly))
+              }
+            }
+          })
+        }
+        problemsHolder.getResultsArray
       }
     })
 
+    ProgressManager.checkCanceled()
+
     new WaitFor() {
       override def condition(): Boolean = {
+        Thread.sleep(10)
         ProgressManager.checkCanceled()
         hlintInfosFuture.isDone
       }
     }
 
-    for {
-      hi <- hlintInfosFuture.get()
-      se <- findStartHaskellElement(psiFile, hi)
-      ee <- findEndHaskellElement(psiFile, hi)
-      sl <- LineColumnPosition.fromOffset(psiFile, se.getTextOffset).map(_.lineNr)
-      el <- LineColumnPosition.fromOffset(psiFile, ee.getTextOffset).map(_.lineNr)
-    } yield
-      hi.to match {
-        case Some(to) =>
-          ProgressManager.checkCanceled()
-          problemsHolder.registerProblem(
-            new ProblemDescriptorBase(se, ee, hi.hint, Array(new HLintQuickfix(se, ee, hi.startLine, hi.startColumn, removeLineBreaksAndExtraSpaces(sl, el, to), hi.hint, hi.note)), findProblemHighlightType(hi), false, null, true, isOnTheFly)
-          )
-        case None =>
-          ProgressManager.checkCanceled()
-          problemsHolder.registerProblem(
-            new ProblemDescriptorBase(se, ee, hi.hint, Array(), findProblemHighlightType(hi), false, null, true, isOnTheFly))
+    hlintInfosFuture.get()
+  }
+
+  private def createQuickfix(hLintInfo: HLintInfo, startElement: PsiElement, endElement: PsiElement, startLineNumber: Int, endLineNumber: Int, to: String) = {
+    new HLintQuickfix(startElement, endElement, hLintInfo.startLine, hLintInfo.startColumn, removeLineBreaksAndExtraSpaces(startLineNumber, endLineNumber, to), hLintInfo.hint, hLintInfo.note)
+  }
+
+  private def fromOffset(psiFile: PsiFile, psiElement: PsiElement): Option[Int] = {
+    ProgressManager.checkCanceled()
+
+    ApplicationManager.getApplication.runReadAction(new Computable[Option[Int]] {
+      override def compute(): Option[Int] = {
+        LineColumnPosition.fromOffset(psiFile, psiElement.getTextOffset).map(_.lineNr)
       }
-    problemsHolder.getResultsArray
+    })
   }
 
   private def removeLineBreaksAndExtraSpaces(sl: Int, el: Int, s: String) = {
@@ -86,20 +112,29 @@ class HLintInspectionTool extends LocalInspectionTool {
   private def findStartHaskellElement(psiFile: PsiFile, hlintInfo: HLintInfo): Option[PsiElement] = {
     ProgressManager.checkCanceled()
 
-    val offset = LineColumnPosition.getOffset(psiFile, LineColumnPosition(hlintInfo.startLine, hlintInfo.startColumn))
-    val element = offset.flatMap(offset => Option(psiFile.findElementAt(offset)))
+    val element = ApplicationManager.getApplication.runReadAction(new Computable[Option[PsiElement]] {
+      override def compute(): Option[PsiElement] = {
+        val offset = LineColumnPosition.getOffset(psiFile, LineColumnPosition(hlintInfo.startLine, hlintInfo.startColumn))
+        offset.flatMap(offset => Option(psiFile.findElementAt(offset)))
+      }
+    })
+
     element.filterNot(e => HLintInspectionTool.NotHaskellIdentifiers.contains(e.getNode.getElementType))
   }
 
   private def findEndHaskellElement(psiFile: PsiFile, hlintInfo: HLintInfo): Option[PsiElement] = {
     ProgressManager.checkCanceled()
 
-    val endOffset = if (hlintInfo.endLine >= hlintInfo.startLine && hlintInfo.endColumn > hlintInfo.startColumn) {
-      LineColumnPosition.getOffset(psiFile, LineColumnPosition(hlintInfo.endLine, hlintInfo.endColumn - 1))
-    } else {
-      LineColumnPosition.getOffset(psiFile, LineColumnPosition(hlintInfo.endLine, hlintInfo.endColumn))
-    }
-    endOffset.flatMap(offset => findHaskellIdentifier(psiFile, offset))
+    ApplicationManager.getApplication.runReadAction(new Computable[Option[PsiElement]] {
+      override def compute(): Option[PsiElement] = {
+        val endOffset = if (hlintInfo.endLine >= hlintInfo.startLine && hlintInfo.endColumn > hlintInfo.startColumn) {
+          LineColumnPosition.getOffset(psiFile, LineColumnPosition(hlintInfo.endLine, hlintInfo.endColumn - 1))
+        } else {
+          LineColumnPosition.getOffset(psiFile, LineColumnPosition(hlintInfo.endLine, hlintInfo.endColumn))
+        }
+        endOffset.flatMap(offset => findHaskellIdentifier(psiFile, offset))
+      }
+    })
   }
 
   @tailrec

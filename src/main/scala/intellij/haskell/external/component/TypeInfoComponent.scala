@@ -70,7 +70,7 @@ private[component] object TypeInfoComponent {
     )
 
   def findTypeInfoForElement(psiElement: PsiElement, forceGetInfo: Boolean): Option[TypeInfo] = {
-    val key = ApplicationManager.getApplication.runReadAction(new Computable[Option[Key]] {
+    ApplicationManager.getApplication.runReadAction(new Computable[Option[Key]] {
       override def compute(): Option[Key] = {
         for {
           qne <- HaskellPsiUtil.findQualifiedNameParent(psiElement)
@@ -80,8 +80,16 @@ private[component] object TypeInfoComponent {
           ep <- LineColumnPosition.fromOffset(pf, to + qne.getText.length)
         } yield Key(pf, sp.lineNr, sp.columnNr, ep.lineNr, ep.columnNr, qne.getName, forceGetInfo)
       }
+    }).flatMap(key => {
+      val otherKey = key.copy(forceGetInfo = !forceGetInfo)
+      Option(Cache.getIfPresent(otherKey)) match {
+        case Some(r) => r.typeInfo match {
+          case Right(nis) => nis
+          case Left(_) => None
+        }
+        case None => findTypeInfo(key)
+      }
     })
-    key.flatMap(findTypeInfo)
   }
 
   def findTypeInfoForSelection(psiFile: PsiFile, selectionModel: SelectionModel): Option[TypeInfo] = {

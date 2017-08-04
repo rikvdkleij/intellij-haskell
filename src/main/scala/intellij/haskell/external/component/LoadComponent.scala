@@ -49,6 +49,9 @@ private[component] object LoadComponent {
     ProgressManager.checkCanceled()
 
     val stackComponentInfo = HaskellComponentsManager.findStackComponentInfo(psiFile)
+
+    ProgressManager.checkCanceled()
+
     stackComponentInfo.foreach(info => {
       if (info.stanzaType != LibType) {
         val stackComponentInfo = ProjectLibraryFileWatcher.changedLibrariesByPackageName.remove(info.packageName)

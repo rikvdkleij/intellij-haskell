@@ -56,12 +56,15 @@ class HaskellAnnotator extends ExternalAnnotator[(PsiFile, Option[PsiElement]), 
   }
 
   override def doAnnotate(psiFileElement: (PsiFile, Option[PsiElement])): CompilationResult = {
+    ProgressManager.checkCanceled()
+
     val psiFile = psiFileElement._1
     ApplicationManager.getApplication.invokeAndWait(() => {
       if (!psiFile.getProject.isDisposed) {
         HaskellFileUtil.saveFile(psiFile)
       }
     })
+    ProgressManager.checkCanceled()
     HaskellComponentsManager.loadHaskellFile(psiFile, psiFileElement._2).orNull
   }
 
