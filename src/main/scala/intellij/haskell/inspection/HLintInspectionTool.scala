@@ -60,6 +60,7 @@ class HLintInspectionTool extends LocalInspectionTool {
           ProgressManager.checkCanceled()
           ApplicationManager.getApplication.runReadAction(new Runnable() {
             override def run(): Unit = {
+              ProgressManager.checkCanceled()
               hi.to match {
                 case Some(to) =>
                   problemsHolder.registerProblem(new ProblemDescriptorBase(se, ee, hi.hint, Array(createQuickfix(hi, se, ee, sl, el, to)), findProblemHighlightType(hi), false, null, true, isOnTheFly))
@@ -78,7 +79,7 @@ class HLintInspectionTool extends LocalInspectionTool {
 
     new WaitFor() {
       override def condition(): Boolean = {
-        Thread.sleep(10)
+        Thread.sleep(5)
         ProgressManager.checkCanceled()
         hlintInfosFuture.isDone
       }

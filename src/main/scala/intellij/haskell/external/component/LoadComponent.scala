@@ -107,7 +107,7 @@ private[component] object LoadComponent {
               DefinitionLocationComponent.invalidate(psiFile)
               NameInfoComponent.invalidate(psiFile)
 
-              BrowseModuleComponent.refreshTopLevel(project, psiFile)
+              BrowseModuleComponent.invalidateTopLevel(project, psiFile)
               moduleName.foreach(mn => BrowseModuleComponent.invalidateForModuleName(project, mn))
 
               TypeInfoComponent.invalidate(psiFile)
