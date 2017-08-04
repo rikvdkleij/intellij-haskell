@@ -111,7 +111,9 @@ abstract class StackRepl(val project: Project, var stanzaType: Option[StanzaType
           drain()
           stdErrResult.find(_.contains(CanNotSatisfyErrorMessage)) match {
             case Some(error) =>
-              logError(s"Could not start Stack repl for target `${target.getOrElse("-")}` because dependency has build errors ${error.replaceAll(CanNotSatisfyErrorMessage, "")}")
+              val message = s"Could not start Stack repl for target `${target.getOrElse("-")}` because dependency has build errors ${error.replaceAll(CanNotSatisfyErrorMessage, "")}"
+              logInfo(message)
+              HaskellEditorUtil.showStatusBarNotificationBalloon(project, message)
             case None =>
               logError(s"No result from Stack repl within $timeout. Command was: $command")
               logOutput(stdOutResult, stdErrResult)
