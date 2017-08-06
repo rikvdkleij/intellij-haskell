@@ -21,7 +21,7 @@ import javax.swing.Icon
 
 import com.intellij.ide.util.projectWizard._
 import com.intellij.openapi.Disposable
-import com.intellij.openapi.application.{ApplicationManager, Result, WriteAction}
+import com.intellij.openapi.application.{ApplicationManager, Result, RunResult, WriteAction}
 import com.intellij.openapi.module.{Module, ModuleType}
 import com.intellij.openapi.progress.{ProgressIndicator, ProgressManager, Task}
 import com.intellij.openapi.project.Project
@@ -200,7 +200,7 @@ object HaskellModuleBuilder {
             module <- projectModules
             packageName = module.getName
             lines <- StackCommandLine.runCommand(project, Seq("list-dependencies", packageName, "--test", "--bench"), timeoutInMillis = 60.seconds.toMillis).map(_.getStdoutLines)
-            packageInfos = createPackageInfos(project, lines.asScala).filterNot(p => packageName.contains(p.name) || p.name == "rts" || p.name == "ghc")
+            packageInfos = createPackageInfos(project, lines.asScala).filterNot(p => packageName == p.name || p.name == "rts" || p.name == "ghc")
           } yield (module, packageInfos)
 
           val projectPackageNames = projectModules.map(_.getName)
@@ -293,7 +293,7 @@ object HaskellModuleBuilder {
     })
   }
 
-  private def removeModuleLibrary(module: Module, library: Library) = {
+  private def removeModuleLibrary(module: Module, library: Library): Unit = {
     ModuleRootModificationUtil.updateModel(module, (modifiableRootModel: ModifiableRootModel) => {
       val moduleLibrary = LibraryUtil.findLibrary(module, library.getName)
       if (moduleLibrary != null) {
@@ -303,7 +303,7 @@ object HaskellModuleBuilder {
     })
   }
 
-  private def removeProjectLibrary(project: Project, library: Library) = {
+  private def removeProjectLibrary(project: Project, library: Library): RunResult[Unit] = {
     new WriteAction[Unit]() {
 
       def run(result: Result[Unit]): Unit = {
@@ -321,13 +321,13 @@ object HaskellModuleBuilder {
     val library = new WriteAction[Library]() {
 
       def run(result: Result[Library]): Unit = {
-        val library = projectLibraryTable.createLibrary(packageInfo.nameVersion)
-        val libraryModel = library.getModifiableModel
         val projectModule = projectModules.find(_.getName == packageInfo.name)
-        val sourceRootPath = projectModule match {
-          case Some(m) => HaskellProjectUtil.getModulePath(m).getAbsolutePath
-          case None => getPackageDirectory(projectLibDirectory, packageInfo).getAbsolutePath
+        val (libraryName, sourceRootPath) = projectModule match {
+          case Some(m) => (packageInfo.name, HaskellProjectUtil.getModulePath(m).getAbsolutePath)
+          case None => (packageInfo.nameVersion, getPackageDirectory(projectLibDirectory, packageInfo).getAbsolutePath)
         }
+        val library = projectLibraryTable.createLibrary(libraryName)
+        val libraryModel = library.getModifiableModel
         val sourceRootUrl = HaskellFileUtil.getUrlByPath(sourceRootPath)
         libraryModel.addRoot(sourceRootUrl, OrderRootType.CLASSES)
         libraryModel.addRoot(sourceRootUrl, OrderRootType.SOURCES)

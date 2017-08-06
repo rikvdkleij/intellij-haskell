@@ -17,8 +17,10 @@
 package intellij.haskell.external.component
 
 import com.intellij.openapi.application.ApplicationManager
-import com.intellij.openapi.progress.{PerformInBackgroundOption, ProgressIndicator, ProgressManager, Task}
+import com.intellij.openapi.module.ModuleUtilCore
+import com.intellij.openapi.progress.{ProgressIndicator, ProgressManager, Task}
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.roots.libraries.LibraryUtil
 import com.intellij.psi.{PsiElement, PsiFile}
 import intellij.haskell.annotator.HaskellAnnotator
 import intellij.haskell.external.execution.{CompilationResult, HaskellCompilationResultHelper, StackCommandLine}
@@ -54,20 +56,24 @@ private[component] object LoadComponent {
 
     stackComponentInfo.foreach(info => {
       if (info.stanzaType != LibType) {
-        val stackComponentInfo = ProjectLibraryFileWatcher.changedLibrariesByPackageName.remove(info.packageName)
-        stackComponentInfo match {
-          case Some(libraryInfo) =>
-            val progressManager = ProgressManager.getInstance()
-            progressManager.run(new Task.Backgroundable(project, s"Busy building library ${libraryInfo.packageName}", false, PerformInBackgroundOption.DEAF) {
+        val module = ModuleUtilCore.findModuleForPsiElement(psiFile)
+        val namesOfPackagesToRebuild = ProjectLibraryFileWatcher.changedLibrariesByPackageName.filter(pn => pn._1 == info.packageName || LibraryUtil.findLibrary(module, pn._1) != null).keys
+        namesOfPackagesToRebuild.foreach(nameOfPackageToRebuild => {
+          val stackComponentInfo = ProjectLibraryFileWatcher.changedLibrariesByPackageName.remove(nameOfPackageToRebuild)
+          stackComponentInfo match {
+            case Some(libraryInfo) =>
+              val progressManager = ProgressManager.getInstance()
+              progressManager.run(new Task.Backgroundable(project, s"Busy building library ${libraryInfo.packageName}", false) {
 
-              override def run(indicator: ProgressIndicator): Unit = {
-                StackCommandLine.executeInMessageView(project, Seq("build", libraryInfo.target, "--fast"), progressManager.getProgressIndicator)
-                StackReplsManager.getReplsManager(project).foreach(_.restartProjectTestRepl())
-                HaskellAnnotator.restartDaemonCodeAnalyzerForFile(psiFile)
-              }
-            })
-          case None => ()
-        }
+                override def run(indicator: ProgressIndicator): Unit = {
+                  StackCommandLine.executeInMessageView(project, Seq("build", libraryInfo.target, "--fast"), progressManager.getProgressIndicator)
+                  StackReplsManager.getReplsManager(project).foreach(_.restartProjectTestRepl())
+                  HaskellAnnotator.restartDaemonCodeAnalyzerForFile(psiFile)
+                }
+              })
+            case None => ()
+          }
+        })
       }
     })
 
