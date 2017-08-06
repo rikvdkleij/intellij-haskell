@@ -79,6 +79,7 @@ class HLintInspectionTool extends LocalInspectionTool {
 
     new WaitFor() {
       override def condition(): Boolean = {
+        ProgressManager.checkCanceled()
         Thread.sleep(5)
         ProgressManager.checkCanceled()
         hlintInfosFuture.isDone
