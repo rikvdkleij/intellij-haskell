@@ -85,18 +85,16 @@ private[component] object LoadComponent {
     projectRepl.foreach(repl => {
       if (!repl.available) {
         if (stackComponentInfo.exists(_.stanzaType != LibType)) {
-          val task = new Task.WithResult[Option[Boolean], Exception](project, "Building project", false) {
+          ProgressManager.getInstance().run(new Task.Backgroundable(project, "Building project", false) {
 
-            def compute(progressIndicator: ProgressIndicator): Option[Boolean] = {
-              StackCommandLine.buildProjectInMessageView(project, progressIndicator)
+            def run(progressIndicator: ProgressIndicator): Unit = {
+              val result = StackCommandLine.buildProjectInMessageView(project, progressIndicator)
+              if (result.contains(true)) {
+                repl.start()
+                HaskellAnnotator.restartDaemonCodeAnalyzerForFile(psiFile)
+              }
             }
-          }
-          ProgressManager.getInstance().run(task)
-          if (task.getResult.contains(true)) {
-            repl.start()
-          }
-        } else {
-          repl.start()
+          })
         }
       }
     })
