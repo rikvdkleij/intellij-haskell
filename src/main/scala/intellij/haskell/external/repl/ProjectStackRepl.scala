@@ -49,9 +49,9 @@ class ProjectStackRepl(project: Project, replType: StanzaType, target: String, v
   @volatile
   private var isExecutingWithLoad = false
 
-  @volatile
-  var isBusy: Boolean = isLoading || isFindingAvailableLibraryModuleNames || isExecutingWithLoad
-
+  def isBusy: Boolean = {
+    isLoading || isFindingAvailableLibraryModuleNames || isExecutingWithLoad
+  }
 
   def findTypeInfoFor(psiFile: PsiFile, startLineNr: Int, startColumnNr: Int, endLineNr: Int, endColumnNr: Int, expression: String): Option[StackReplOutput] = {
     val filePath = HaskellFileUtil.getAbsoluteFilePath(psiFile)

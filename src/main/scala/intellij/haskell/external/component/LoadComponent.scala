@@ -48,11 +48,7 @@ private[component] object LoadComponent {
   def load(psiFile: PsiFile, currentElement: Option[PsiElement]): Option[CompilationResult] = {
     val project = psiFile.getProject
 
-    ProgressManager.checkCanceled()
-
     val stackComponentInfo = HaskellComponentsManager.findStackComponentInfo(psiFile)
-
-    ProgressManager.checkCanceled()
 
     stackComponentInfo.foreach(info => {
       if (info.stanzaType != LibType) {
@@ -77,8 +73,6 @@ private[component] object LoadComponent {
       }
     })
 
-    ProgressManager.checkCanceled()
-
     val projectRepl = StackReplsManager.getProjectRepl(psiFile)
 
     // The REPL is not started if target has compile errors at the moment of start.
@@ -99,8 +93,6 @@ private[component] object LoadComponent {
       }
     })
 
-    ProgressManager.checkCanceled()
-
     projectRepl.flatMap(_.load(psiFile)) match {
       case Some((loadOutput, loadFailed)) =>
         if (!loadFailed) {
@@ -111,7 +103,7 @@ private[component] object LoadComponent {
               DefinitionLocationComponent.invalidate(psiFile)
               NameInfoComponent.invalidate(psiFile)
 
-              BrowseModuleComponent.invalidateTopLevel(project, psiFile)
+              BrowseModuleComponent.refreshTopLevel(project, psiFile)
               moduleName.foreach(mn => BrowseModuleComponent.invalidateForModuleName(project, mn))
 
               TypeInfoComponent.invalidate(psiFile)

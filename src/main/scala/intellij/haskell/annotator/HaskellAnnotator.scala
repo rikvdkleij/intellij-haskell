@@ -23,7 +23,6 @@ import com.intellij.lang.annotation.{AnnotationHolder, ExternalAnnotator, Highli
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.fileEditor.FileEditorManager
-import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.TextRange
 import com.intellij.psi.impl.source.tree.TreeUtil
@@ -43,8 +42,6 @@ import scala.collection.JavaConverters._
 class HaskellAnnotator extends ExternalAnnotator[(PsiFile, Option[PsiElement]), CompilationResult] {
 
   override def collectInformation(psiFile: PsiFile, editor: Editor, hasErrors: Boolean): (PsiFile, Option[PsiElement]) = {
-    ProgressManager.checkCanceled()
-
     (psiFile, Option(psiFile.getOriginalFile.getVirtualFile)) match {
       case (_, None) => null // can be in case if file is in memory only (just created file)
       case (_, Some(f)) if f.getFileType != HaskellFileType.Instance => null
@@ -56,15 +53,12 @@ class HaskellAnnotator extends ExternalAnnotator[(PsiFile, Option[PsiElement]), 
   }
 
   override def doAnnotate(psiFileElement: (PsiFile, Option[PsiElement])): CompilationResult = {
-    ProgressManager.checkCanceled()
-
     val psiFile = psiFileElement._1
     ApplicationManager.getApplication.invokeAndWait(() => {
       if (!psiFile.getProject.isDisposed) {
         HaskellFileUtil.saveFile(psiFile)
       }
     })
-    ProgressManager.checkCanceled()
     HaskellComponentsManager.loadHaskellFile(psiFile, psiFileElement._2).orNull
   }
 
