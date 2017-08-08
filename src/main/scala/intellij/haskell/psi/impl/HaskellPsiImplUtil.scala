@@ -24,6 +24,7 @@ import com.intellij.psi.{PsiElement, PsiReference}
 import com.intellij.util.ArrayUtil
 import intellij.haskell.psi.HaskellTypes._
 import intellij.haskell.psi._
+import intellij.haskell.refactor.HaskellRenameFileProcessor
 import intellij.haskell.util.{HaskellFileUtil, StringUtil}
 import intellij.haskell.{HaskellFileType, HaskellIcons}
 
@@ -105,9 +106,13 @@ object HaskellPsiImplUtil {
   }
 
   def setName(modid: HaskellModid, newName: String): PsiElement = {
-    val newModid = HaskellElementFactory.createModid(modid.getProject, removeFileExtension(newName))
-    newModid.foreach(mi => modid.getNode.getTreeParent.replaceChild(modid.getNode, mi.getNode))
-    modid
+    if (newName.endsWith("." + HaskellFileType.Instance.getDefaultExtension)) {
+      val newModid = HaskellElementFactory.createModid(modid.getProject, HaskellRenameFileProcessor.createNewModuleName(modid.getName, newName))
+      newModid.foreach(mi => modid.getNode.getTreeParent.replaceChild(modid.getNode, mi.getNode))
+      modid
+    } else {
+      modid
+    }
   }
 
   def getName(varid: HaskellVarid): String = {
@@ -403,7 +408,7 @@ object HaskellPsiImplUtil {
     dataConstructorDeclaration.getIdentifierElements.head
   }
 
-  private def removeFileExtension(name: String) = {
+  def removeFileExtension(name: String): String = {
     val fileExtension = "." + HaskellFileType.Instance.getDefaultExtension
     if (name.endsWith(fileExtension)) {
       name.replaceFirst(fileExtension, "")

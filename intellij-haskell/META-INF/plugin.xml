@@ -194,6 +194,7 @@
         <lang.refactoringSupport language="Haskell"
                                  implementationClass="intellij.haskell.refactor.HaskellRefactoringSupportProvider"/>
         <moveFileHandler implementation="intellij.haskell.refactor.HaskellMoveFileHandler"/>
+        <renamePsiElementProcessor implementation="intellij.haskell.refactor.HaskellRenameFileProcessor"/>
 
         <!-- Commenter -->
         <lang.commenter language="Haskell" implementationClass="intellij.haskell.editor.HaskellCommenter"/>

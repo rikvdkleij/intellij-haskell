@@ -18,6 +18,7 @@ package intellij.haskell.psi
 
 import com.intellij.openapi.util.TextRange
 import com.intellij.psi.AbstractElementManipulator
+import com.intellij.util.IncorrectOperationException
 
 object HaskellNamedElementManipulator {
   def getStringTokenRange(element: HaskellNamedElement): TextRange = {
@@ -27,6 +28,9 @@ object HaskellNamedElementManipulator {
 
 class HaskellNamedElementManipulator extends AbstractElementManipulator[HaskellNamedElement] {
   def handleContentChange(psi: HaskellNamedElement, range: TextRange, newContent: String): HaskellNamedElement = {
+    if (newContent.contains(' ') || newContent.contains(".")) {
+      throw new IncorrectOperationException(s"$newContent is not a valid name")
+    }
     val oldName = psi.getName
     val newName = oldName.substring(0, range.getStartOffset) + newContent + oldName.substring(range.getEndOffset)
     psi.setName(newName).asInstanceOf[HaskellNamedElement]
