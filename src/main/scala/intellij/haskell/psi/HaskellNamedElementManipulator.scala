@@ -28,7 +28,7 @@ object HaskellNamedElementManipulator {
 
 class HaskellNamedElementManipulator extends AbstractElementManipulator[HaskellNamedElement] {
   def handleContentChange(psi: HaskellNamedElement, range: TextRange, newContent: String): HaskellNamedElement = {
-    if (newContent.contains(' ') || newContent.contains(".")) {
+    if (newContent.contains(' ') || newContent.endsWith(".")) {
       throw new IncorrectOperationException(s"$newContent is not a valid name")
     }
     val oldName = psi.getName
