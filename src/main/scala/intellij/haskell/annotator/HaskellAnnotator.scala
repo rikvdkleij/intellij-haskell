@@ -22,7 +22,6 @@ import com.intellij.codeInsight.intention.impl.BaseIntentionAction
 import com.intellij.lang.annotation.{AnnotationHolder, ExternalAnnotator, HighlightSeverity}
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.editor.Editor
-import com.intellij.openapi.fileEditor.FileEditorManager
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.TextRange
 import com.intellij.psi.impl.source.tree.TreeUtil
@@ -101,36 +100,6 @@ object HaskellAnnotator {
     DaemonCodeAnalyzer.getInstance(project).asInstanceOf[DaemonCodeAnalyzerImpl]
   }
 
-  def restartDaemonCodeAnalyzerForOpenFiles(project: Project): Unit = {
-    ApplicationManager.getApplication.invokeLater {
-      () => {
-        if (!project.isDisposed) {
-          val openFiles = FileEditorManager.getInstance(project).getOpenFiles
-          val openProjectFiles = openFiles.filterNot(vf => HaskellProjectUtil.isLibraryFile(vf, project).getOrElse(true))
-          val openProjectPsiFiles = HaskellFileUtil.convertToHaskellFiles(project, openProjectFiles.toStream)
-          openProjectPsiFiles.foreach(pf =>
-            getDaemonCodeAnalyzer(project).restart(pf)
-          )
-        }
-      }
-    }
-  }
-
-  def restartDaemonCodeAnalyzerForTestFiles(project: Project): Unit = {
-    ApplicationManager.getApplication.invokeLater {
-      () => {
-        if (!project.isDisposed) {
-          val openFiles = FileEditorManager.getInstance(project).getOpenFiles
-          val openNonProjectProductionFiles = openFiles.filter(vf => HaskellProjectUtil.isProjectTestFile(vf, project).getOrElse(false))
-          val openNonProjectProductionPsiFiles = HaskellFileUtil.convertToHaskellFiles(project, openNonProjectProductionFiles.toStream)
-          openNonProjectProductionPsiFiles.foreach(pf =>
-            getDaemonCodeAnalyzer(project).restart(pf)
-          )
-        }
-      }
-    }
-  }
-
   def restartDaemonCodeAnalyzerForFile(psiFile: PsiFile): Unit = {
     ApplicationManager.getApplication.invokeLater {
       () => {
@@ -141,7 +110,6 @@ object HaskellAnnotator {
       }
     }
   }
-
 
   private def createAnnotations(psiFile: PsiFile, loadResult: CompilationResult): Iterable[Annotation] = {
     val problems = loadResult.currentFileProblems.filter(_.filePath == HaskellFileUtil.getAbsoluteFilePath(psiFile))
