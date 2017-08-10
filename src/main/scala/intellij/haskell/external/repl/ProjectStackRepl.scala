@@ -41,16 +41,10 @@ class ProjectStackRepl(project: Project, replType: StanzaType, target: String, v
   private[this] val allLoadedPsiFileInfos = new ConcurrentHashMap[PsiFile, FileInfo]().asScala
 
   @volatile
-  private var isLoading = false
-
-  @volatile
-  private var isFindingAvailableLibraryModuleNames = false
-
-  @volatile
-  private var isExecutingWithLoad = false
+  private var busy = false
 
   def isBusy: Boolean = {
-    isLoading || isFindingAvailableLibraryModuleNames || isExecutingWithLoad
+    busy
   }
 
   def findTypeInfoFor(psiFile: PsiFile, startLineNr: Int, startColumnNr: Int, endLineNr: Int, endColumnNr: Int, expression: String): Option[StackReplOutput] = {
@@ -79,13 +73,7 @@ class ProjectStackRepl(project: Project, replType: StanzaType, target: String, v
   def load(psiFile: PsiFile): Option[(StackReplOutput, Boolean)] = {
     val filePath = getFilePath(psiFile)
     this.synchronized {
-      val output =
-        try {
-          isLoading = true
-          execute(s":load $filePath")
-        } finally {
-          isLoading = false
-        }
+      val output = executeWithSettingBusy(s":load $filePath")
       output match {
         case Some(o) =>
           val loadFailed = isLoadFailed(o)
@@ -109,18 +97,11 @@ class ProjectStackRepl(project: Project, replType: StanzaType, target: String, v
   }
 
   def findAvailableLibraryModuleNames(project: Project): Option[StackReplOutput] = synchronized {
-    try {
-      isFindingAvailableLibraryModuleNames = true
-      execute(":load")
-      loadedPsiFileInfo = None
-      execute(""":complete repl "import " """)
-    } finally {
-      isFindingAvailableLibraryModuleNames = false
-    }
+    executeWithSettingBusy(":load", """:complete repl "import " """)
   }
 
   def showActiveLanguageFlags: Option[StackReplOutput] = synchronized {
-    execute(":show language")
+    executeWithSettingBusy(":show language")
   }
 
   private def findInfoForCommand(psiFile: PsiFile, command: String) = {
@@ -128,7 +109,7 @@ class ProjectStackRepl(project: Project, replType: StanzaType, target: String, v
       case Some(lf) if lf.loadFailed => Some(StackReplOutput())
       case Some(_) =>
         this.synchronized {
-          execute(command)
+          executeWithSettingBusy(command)
         }
       case None =>
         executeWithLoad(psiFile, command)
@@ -136,27 +117,27 @@ class ProjectStackRepl(project: Project, replType: StanzaType, target: String, v
   }
 
   private def executeWithLoad(psiFile: PsiFile, command: String, moduleName: Option[String] = None): Option[StackReplOutput] = synchronized {
-    def exec(command: String) = {
-      try {
-        isExecutingWithLoad = true
-        execute(command)
-      } finally {
-        isExecutingWithLoad = false
-      }
-    }
-
     loadedPsiFileInfo match {
       case Some(info) if info.psiFile == psiFile && !info.loadFailed =>
-        exec(command)
+        executeWithSettingBusy(command)
       case Some(info) if info.psiFile == psiFile && info.loadFailed => Some(StackReplOutput())
       case _ =>
         load(psiFile)
         loadedPsiFileInfo match {
           case None => None
           case Some(info) if info.psiFile == psiFile && !info.loadFailed =>
-            exec(command)
+            executeWithSettingBusy(command)
           case _ => Some(StackReplOutput())
         }
+    }
+  }
+
+  private def executeWithSettingBusy(commands: String*) = {
+    try {
+      busy = true
+      commands.map(c => execute(c)).lastOption.flatten
+    } finally {
+      busy = false
     }
   }
 
