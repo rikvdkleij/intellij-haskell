@@ -52,6 +52,8 @@ class HLintInspectionTool extends LocalInspectionTool {
         ProgressManager.checkCanceled()
         for {
           hi <- result
+          problemType = findProblemHighlightType(hi)
+          if problemType != ProblemHighlightType.GENERIC_ERROR
           se <- findStartHaskellElement(psiFile, hi)
           ee <- findEndHaskellElement(psiFile, hi)
           sl <- fromOffset(psiFile, se)
@@ -63,10 +65,10 @@ class HLintInspectionTool extends LocalInspectionTool {
               ProgressManager.checkCanceled()
               hi.to match {
                 case Some(to) =>
-                  problemsHolder.registerProblem(new ProblemDescriptorBase(se, ee, hi.hint, Array(createQuickfix(hi, se, ee, sl, el, to)), findProblemHighlightType(hi), false, null, true, isOnTheFly))
+                  problemsHolder.registerProblem(new ProblemDescriptorBase(se, ee, hi.hint, Array(createQuickfix(hi, se, ee, sl, el, to)), problemType, false, null, true, isOnTheFly))
                 case None =>
                   ProgressManager.checkCanceled()
-                  problemsHolder.registerProblem(new ProblemDescriptorBase(se, ee, hi.hint, Array(), findProblemHighlightType(hi), false, null, true, isOnTheFly))
+                  problemsHolder.registerProblem(new ProblemDescriptorBase(se, ee, hi.hint, Array(), problemType, false, null, true, isOnTheFly))
               }
             }
           })
