@@ -37,19 +37,19 @@ object HaskellElementFactory {
   }
 
   def createVarid(project: Project, name: String): Option[HaskellVarid] = {
-    createElementFromText(project, name, HS_VARID).map(_.asInstanceOf[HaskellVarid])
+    createElementFromText(project, name, HS_VARID).map(_.asInstanceOf[HaskellVarid]).filter(_.getChildren.length == 0)
   }
 
   def createConid(project: Project, name: String): Option[HaskellConid] = {
-    createElementFromText(project, name, HS_CONID).map(_.asInstanceOf[HaskellConid])
+    createElementFromText(project, name, HS_CONID).map(_.asInstanceOf[HaskellConid]).filter(_.getChildren.length == 0)
   }
 
   def createVarsym(project: Project, name: String): Option[HaskellVarsym] = {
-    createElementFromText(project, name, HS_VARSYM).map(_.asInstanceOf[HaskellVarsym])
+    createElementFromText(project, name, HS_VARSYM).map(_.asInstanceOf[HaskellVarsym]).filter(_.getChildren.length == 0)
   }
 
   def createConsym(project: Project, name: String): Option[HaskellConsym] = {
-    createElementFromText(project, name, HS_CONSYM).map(_.asInstanceOf[HaskellConsym])
+    createElementFromText(project, name, HS_CONSYM).map(_.asInstanceOf[HaskellConsym]).filter(_.getChildren.length == 0)
   }
 
   def createQualifiedNameElement(project: Project, name: String): HaskellQualifiedNameElement = {
