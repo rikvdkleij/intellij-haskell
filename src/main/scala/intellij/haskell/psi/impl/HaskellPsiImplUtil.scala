@@ -74,13 +74,6 @@ object HaskellPsiImplUtil {
     cname.getText
   }
 
-  def getNameWithoutParens(cname: HaskellCname): String = {
-    Option(cname.getVar).map(_.getName).
-      orElse(Option(cname.getCon).map(_.getName)).
-      orElse(Option(cname.getVarop).map(_.getName)).
-      getOrElse(cname.getConop.getName)
-  }
-
   def getIdentifierElement(cname: HaskellCname): HaskellNamedElement = {
     Option(cname.getVar).flatMap(v => Option(v.getVarsym)).
       orElse(Option(cname.getVar).flatMap(v => Option(v.getVarid))).
