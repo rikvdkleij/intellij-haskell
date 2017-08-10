@@ -145,10 +145,13 @@ object HaskellFileUtil {
 
   def getFileNameWithoutExtension(psiFile: PsiFile): String = {
     val name = psiFile.getName
-    val index = name.lastIndexOf('.')
-    if (index < 0) name else name.substring(0, index)
+    removeFileExtension(name)
   }
 
+  def removeFileExtension(fileName: String): String = {
+    val index = fileName.lastIndexOf('.')
+    if (index < 0) fileName else fileName.substring(0, index)
+  }
 
   def findDirectory(dirPath: String, project: Project): Option[VirtualFile] = {
     Option(LocalFileSystem.getInstance().findFileByPath(HaskellFileUtil.makeFilePathAbsolute(dirPath, project)))

@@ -165,8 +165,8 @@ object HaskellReference {
       haskellFile <- HaskellProjectUtil.findFile(filePath, project)
       offset <- LineColumnPosition.getOffset(haskellFile, LineColumnPosition(lineNr, columnNr))
       element <- Option(haskellFile.findElementAt(offset))
-      namedElement <- HaskellPsiUtil.findNamedElement(element).orElse(findHighestDeclarationElementParent(element).flatMap(_.getIdentifierElements.find(_.getName == name))).
-        orElse(findQualifiedNameParent(element).map(_.getIdentifierElement))
+      namedElement <- HaskellPsiUtil.findNamedElement(element).find(_.getName == name).orElse(findHighestDeclarationElementParent(element).flatMap(_.getIdentifierElements.find(_.getName == name))).
+        orElse(findQualifiedNameParent(element).map(_.getIdentifierElement).find(_.getName == name))
     } yield namedElement
   }
 

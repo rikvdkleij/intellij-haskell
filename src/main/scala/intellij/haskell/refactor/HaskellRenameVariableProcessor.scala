@@ -39,6 +39,6 @@ class HaskellRenameVariableProcessor extends RenamePsiElementProcessor {
     super.renameElement(psiElement, newName, usages, listener)
     val project = psiElement.getProject
 
-    HaskellFileUtil.saveAllFiles(project, Option(psiElement.getContainingFile))
+    HaskellFileUtil.saveAllFiles(project, Option(psiElement.getContainingFile).map(_.getOriginalFile))
   }
 }

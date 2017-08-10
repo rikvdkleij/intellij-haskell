@@ -195,6 +195,10 @@
                                  implementationClass="intellij.haskell.refactor.HaskellRefactoringSupportProvider"/>
         <moveFileHandler implementation="intellij.haskell.refactor.HaskellMoveFileHandler"/>
         <renamePsiElementProcessor implementation="intellij.haskell.refactor.HaskellRenameFileProcessor"/>
+        <renamePsiElementProcessor implementation="intellij.haskell.refactor.HaskellRenameVariableProcessor"/>
+        <renameInputValidator implementation="intellij.haskell.refactor.HaskellRenameInputValidator"/>
+        <lang.elementManipulator forClass="intellij.haskell.psi.HaskellNamedElement" implementationClass="intellij.haskell.psi.HaskellNamedElementManipulator"/>
+        <lang.namesValidator language="Haskell" implementationClass="intellij.haskell.refactor.HaskellNamesValidator"/>
 
         <!-- Commenter -->
         <lang.commenter language="Haskell" implementationClass="intellij.haskell.editor.HaskellCommenter"/>
@@ -296,13 +300,6 @@
         <moduleType id="HASKELL_MODULE" implementationClass="intellij.haskell.module.HaskellModuleType"/>
         <moduleConfigurationEditorProvider implementation="intellij.haskell.settings.HaskellModuleEditorsProvider"
                                            order="first"/>
-
-        <!-- Name -->
-        <lang.elementManipulator forClass="intellij.haskell.psi.HaskellNamedElement"
-                                 implementationClass="intellij.haskell.psi.HaskellNamedElementManipulator"/>
-        <lang.namesValidator language="Haskell"
-                             implementationClass="intellij.haskell.refactor.HaskellNamesValidator"/>
-        <renamePsiElementProcessor implementation="intellij.haskell.refactor.HaskellRenameVariableProcessor"/>
 
         <!-- Notification -->
         <editorNotificationProvider implementation="intellij.haskell.notification.ConfigFileWatcherNotificationProvider"/>
