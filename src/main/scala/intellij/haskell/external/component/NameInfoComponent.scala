@@ -130,11 +130,8 @@ private[component] object NameInfoComponent {
     } yield Key(pf, qne.getName.replaceAll("""\s+""", ""), forceGetInfo)).map(key => {
 
       val otherKey = key.copy(forceGetInfo = !forceGetInfo)
-      Option(Cache.getIfPresent(otherKey)) match {
-        case Some(r) => r.nameInfos match {
-          case Right(nis) => nis
-          case Left(_) => Iterable()
-        }
+      Option(Cache.getIfPresent(otherKey)).flatMap(_.nameInfos.toOption) match {
+        case Some(nis) => nis
         case None =>
           try {
             Cache.get(key).nameInfos match {

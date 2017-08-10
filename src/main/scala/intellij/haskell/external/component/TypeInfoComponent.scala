@@ -82,11 +82,8 @@ private[component] object TypeInfoComponent {
       }
     }).flatMap(key => {
       val otherKey = key.copy(forceGetInfo = !forceGetInfo)
-      Option(Cache.getIfPresent(otherKey)) match {
-        case Some(r) => r.typeInfo match {
-          case Right(nis) => nis
-          case Left(_) => None
-        }
+      Option(Cache.getIfPresent(otherKey)).flatMap(_.typeInfo.toOption) match {
+        case Some(r) => r
         case None => findTypeInfo(key)
       }
     })
