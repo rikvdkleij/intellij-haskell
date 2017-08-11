@@ -102,29 +102,20 @@ private[component] object TypeInfoComponent {
   }
 
   private def findTypeInfo(key: Key): Option[TypeInfo] = {
-    val otherKey = key.copy(forceGetInfo = !key.forceGetInfo)
-
-    Option(Cache.getIfPresent(otherKey)) match {
-      case Some(r) => r.typeInfo match {
-        case Right(ti) => ti
-        case _ => None
+    try {
+      Cache.get(key).typeInfo match {
+        case Right(result) => result
+        case Left(ReplNotAvailable) =>
+          Cache.invalidate(key)
+          None
+        case Left(ReplIsLoading) =>
+          Cache.refresh(key)
+          None
       }
-      case None =>
-        try {
-          Cache.get(key).typeInfo match {
-            case Right(result) => result
-            case Left(ReplNotAvailable) =>
-              Cache.invalidate(key)
-              None
-            case Left(ReplIsLoading) =>
-              Cache.refresh(key)
-              None
-          }
-        }
-        catch {
-          case _: UncheckedExecutionException => None
-          case _: ProcessCanceledException => None
-        }
+    }
+    catch {
+      case _: UncheckedExecutionException => None
+      case _: ProcessCanceledException => None
     }
   }
 
