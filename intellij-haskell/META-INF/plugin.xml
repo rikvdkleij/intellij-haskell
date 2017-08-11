@@ -342,8 +342,9 @@
             </action>
 
             <action id="Haskell.ShowTypeSticky" class="intellij.haskell.action.ShowTypeStickyAction"
-                    text="Show Type (Sticky)" description="Show type of (selected) expression">
+                    text="Show Type (Sticky)" description="Show type of (selected) expression (Sticky)">
 
+                <keyboard-shortcut first-keystroke="ctrl alt i" keymap="$default"/>
                 <keyboard-shortcut first-keystroke="ctrl alt i" keymap="Mac OS X"/>
                 <keyboard-shortcut first-keystroke="ctrl alt i" keymap="Mac OS X 10.5+"/>
             </action>
