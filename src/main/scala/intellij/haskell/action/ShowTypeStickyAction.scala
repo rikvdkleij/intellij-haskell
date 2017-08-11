@@ -1,8 +1,8 @@
 package intellij.haskell.action
 
 import com.intellij.openapi.actionSystem.{AnAction, AnActionEvent}
-import com.intellij.psi.{PsiElement, TokenType}
 import com.intellij.psi.util.PsiTreeUtil
+import com.intellij.psi.{PsiElement, TokenType}
 import intellij.haskell.external.component.HaskellComponentsManager
 import intellij.haskell.psi.{HaskellPsiUtil, HaskellQualifiedNameElement, HaskellTypes}
 import intellij.haskell.util.{HaskellEditorUtil, StringUtil}
@@ -51,7 +51,7 @@ class ShowTypeStickyAction extends AnAction {
   private def untilNameElementBackwards(element: Option[PsiElement]): Option[HaskellQualifiedNameElement] = {
     element match {
       case Some(e) =>
-        HaskellPsiUtil.findQualifiedNameElement(e) match {
+        HaskellPsiUtil.findQualifiedNameParent(e) match {
           case None => untilNameElementBackwards(Option(e.getPrevSibling))
           case qualifiedName => qualifiedName
         }
