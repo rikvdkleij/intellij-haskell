@@ -33,7 +33,7 @@ class HaskellReference(element: HaskellNamedElement, textRange: TextRange) exten
 
   override def resolve: PsiElement = {
     val resolveResults = multiResolve(false)
-    if (resolveResults.length == 1) resolveResults(0).getElement else null
+    if (resolveResults.length > 0) resolveResults(0).getElement else null
   }
 
   override def multiResolve(incompleteCode: Boolean): Array[ResolveResult] = {
@@ -89,15 +89,12 @@ object HaskellReference {
       ProgressManager.checkCanceled()
 
       if (isLibraryFile) {
-        resolveReferencesByNameInfo(namedElement, psiFile, project)
+        resolveReferencesByNameInfo(namedElement, psiFile, project, preferExpression = false)
       } else {
         if (HaskellPsiUtil.findQualifiedNameParent(namedElement).exists(_.getQualifierName.isDefined)) {
-          resolveReferencesByNameInfo(namedElement, psiFile, project)
+          resolveReferencesByNameInfo(namedElement, psiFile, project, preferExpression = true)
         } else {
-          resolveReferenceByDefinitionLocation(namedElement, project) match {
-            case Some(ne) => Iterable(ne)
-            case None => Iterable()
-          }
+          resolveReferenceByDefinitionLocation(namedElement, psiFile)
         }
       }
     }).getOrElse(Iterable())
@@ -192,10 +189,10 @@ object HaskellReference {
     }
   }
 
-  private def resolveReferencesByNameInfo(namedElement: HaskellNamedElement, psiFile: PsiFile, project: Project): Iterable[HaskellNamedElement] = {
+  private def resolveReferencesByNameInfo(namedElement: HaskellNamedElement, psiFile: PsiFile, project: Project, preferExpression: Boolean): Iterable[HaskellNamedElement] = {
     ProgressManager.checkCanceled()
 
-    HaskellComponentsManager.findNameInfo(namedElement, forceGetInfo = false).headOption.map(ni => findIdentifiersByNameInfo(ni, namedElement, project, preferExpressions = false)) match {
+    HaskellComponentsManager.findNameInfo(namedElement, forceGetInfo = false).headOption.map(ni => findIdentifiersByNameInfo(ni, namedElement, project, preferExpression)) match {
       case Some(nes) => nes
       case None =>
         ProgressManager.checkCanceled()
@@ -203,8 +200,10 @@ object HaskellReference {
     }
   }
 
-  private def resolveReferenceByDefinitionLocation(namedElement: HaskellNamedElement, project: Project): Option[HaskellNamedElement] = {
+  private def resolveReferenceByDefinitionLocation(namedElement: HaskellNamedElement, psiFile: PsiFile): Iterable[HaskellNamedElement] = {
     ProgressManager.checkCanceled()
+
+    val project = psiFile.getProject
 
     HaskellComponentsManager.findDefinitionLocation(namedElement) match {
       case Some(DefinitionLocationInfo(filePath, startLineNr, startColumnNr, _, _)) =>
@@ -212,9 +211,9 @@ object HaskellReference {
         findIdentifierByLocation(filePath, startLineNr, startColumnNr, namedElement.getName, project)
       case Some(ModuleLocationInfo(moduleName)) =>
         ProgressManager.checkCanceled()
-        val module = ModuleUtilCore.findModuleForPsiElement(namedElement)
-        findIdentifiersByModuleName(moduleName, namedElement.getName, project, Some(module), preferExpressions = true).headOption
-      case None => None
+        val module = Option(ModuleUtilCore.findModuleForPsiElement(namedElement))
+        findIdentifiersByModuleName(moduleName, namedElement.getName, project, module, preferExpressions = true)
+      case None => resolveReferencesByNameInfo(namedElement, psiFile, project, preferExpression = true)
     }
   }
 
