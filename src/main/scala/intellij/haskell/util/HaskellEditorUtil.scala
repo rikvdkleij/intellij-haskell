@@ -81,7 +81,7 @@ object HaskellEditorUtil {
     }
   }
 
-  def showHint(editor: Editor, text: String): Unit = {
+  def showHint(editor: Editor, text: String, sticky: Boolean = false): Unit = {
     val label = HintUtil.createInformationLabel(text)
     label.setFont(UIUtil.getLabelFont)
 
@@ -96,9 +96,15 @@ object HaskellEditorUtil {
 
     val position = editor.getCaretModel.getLogicalPosition
     val point = HintManagerImpl.getHintPosition(hint, editor, position, HintManager.ABOVE)
+    val hintHint = HintManagerImpl.createHintHint(editor, point, hint, HintManager.ABOVE).setExplicitClose(sticky)
 
-    hintManager.showEditorHint(hint, editor, point,
-      HintManager.HIDE_BY_ANY_KEY | HintManager.HIDE_BY_TEXT_CHANGE | HintManager.HIDE_BY_SCROLLING, 0, false)
+    val hideFlags = if (sticky) {
+      HintManager.HIDE_BY_ESCAPE
+    } else {
+      HintManager.HIDE_BY_ANY_KEY | HintManager.HIDE_BY_TEXT_CHANGE | HintManager.HIDE_BY_SCROLLING
+    }
+
+    hintManager.showEditorHint(hint, editor, point, hideFlags, 0, false, hintHint)
   }
 
   def showInfoMessageBalloon(message: String, editor: Editor, inCenterOfEditor: Boolean): Unit = {

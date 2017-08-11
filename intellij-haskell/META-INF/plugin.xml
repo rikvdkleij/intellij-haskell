@@ -341,6 +341,13 @@
                 <keyboard-shortcut first-keystroke="ctrl alt p" keymap="Mac OS X 10.5+"/>
             </action>
 
+            <action id="Haskell.ShowTypeSticky" class="intellij.haskell.action.ShowTypeStickyAction"
+                    text="Show Type (Sticky)" description="Show type of (selected) expression">
+
+                <keyboard-shortcut first-keystroke="ctrl alt i" keymap="Mac OS X"/>
+                <keyboard-shortcut first-keystroke="ctrl alt i" keymap="Mac OS X 10.5+"/>
+            </action>
+
             <action id="Haskell.ShowInfo" class="intellij.haskell.action.ShowNameInfoAction"
                     text="Show Info" description="Show info about identifier in context of file">
 
