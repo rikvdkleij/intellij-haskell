@@ -74,11 +74,15 @@ private[component] object BrowseModuleComponent {
               val projectHaskellFiles =
                 ApplicationManager.getApplication.runReadAction(new Computable[Iterable[HaskellFile]] {
                   override def compute(): Iterable[HaskellFile] = {
-                    val productionFile = HaskellModuleNameIndex.findHaskellFileByModuleName(project, moduleName, GlobalSearchScopesCore.projectProductionScope(project))
-                    if (productionFile.isEmpty) {
-                      HaskellModuleNameIndex.findHaskellFileByModuleName(project, moduleName, GlobalSearchScopesCore.projectTestScope(project))
+                    if (!project.isDisposed) {
+                      val productionFile = HaskellModuleNameIndex.findHaskellFileByModuleName(project, moduleName, GlobalSearchScopesCore.projectProductionScope(project))
+                      if (productionFile.isEmpty) {
+                        HaskellModuleNameIndex.findHaskellFileByModuleName(project, moduleName, GlobalSearchScopesCore.projectTestScope(project))
+                      } else {
+                        productionFile
+                      }
                     } else {
-                      productionFile
+                      Iterable()
                     }
                   }
                 })
