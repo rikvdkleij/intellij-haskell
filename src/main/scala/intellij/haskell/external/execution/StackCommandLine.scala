@@ -57,14 +57,12 @@ object StackCommandLine {
     processOutput
   }
 
+  def buildProjectDependenciesInMessageView(project: Project, progressIndicator: ProgressIndicator): Option[Boolean] = {
+    StackCommandLine.executeInMessageView(project, Seq("build", "--fast", "--test", "--bench", "--no-run-tests", "--no-run-benchmarks", "--only-dependencies"), progressIndicator)
+  }
+
   def buildProjectInMessageView(project: Project, progressIndicator: ProgressIndicator): Option[Boolean] = {
-    val dependenciesBuildResult = StackCommandLine.executeInMessageView(project, Seq("build", "--fast", "--test", "--bench", "--no-run-tests", "--no-run-benchmarks", "--only-dependencies"), progressIndicator)
-    if (dependenciesBuildResult.contains(true)) {
-      StackCommandLine.executeInMessageView(project, Seq("build", "--fast"), progressIndicator)
-    } else {
-      HaskellNotificationGroup.logInfoEvent(project, "Did not build project because building with only dependencies failed")
-      None
-    }
+    StackCommandLine.executeInMessageView(project, Seq("build", "--fast"), progressIndicator)
   }
 
   def executeInMessageView(project: Project, arguments: Seq[String], progressIndicator: ProgressIndicator): Option[Boolean] = HaskellSdkType.getStackPath(project).flatMap(stackPath => {

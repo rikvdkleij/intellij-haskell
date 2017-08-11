@@ -77,11 +77,16 @@ object StackProjectManager {
               try {
                 progressIndicator.setText("Busy with building project")
 
-                StackCommandLine.buildProjectInMessageView(project, progressIndicator)
+                val result = StackCommandLine.buildProjectDependenciesInMessageView(project, progressIndicator)
+                if (result.contains(true)) {
+                  StackCommandLine.buildProjectInMessageView(project, progressIndicator)
+                } else {
+                  HaskellNotificationGroup.logInfoEvent(project, "Did not build project because building project it's dependencies failed")
+                }
 
                 if (restart) {
-                  val projectRepl = StackReplsManager.getProjectRepl(project)
-                  val projectTestRepl = StackReplsManager.getProjectTestRepl(project)
+                  val projectRepl = StackReplsManager.getProjectLibraryRepl(project)
+                  val projectTestRepl = StackReplsManager.getProjectNonLibraryRepl(project)
                   progressIndicator.setText("Busy with stopping Stack REPLs")
                   StackReplsManager.getGlobalRepl(project).foreach(_.exit())
                   projectRepl.foreach(_.exit())
@@ -181,8 +186,8 @@ class StackProjectManager(project: Project) extends ProjectComponent {
   override def projectClosed(): Unit = {
     if (HaskellProjectUtil.isHaskellProject(project)) {
       replsManager.getGlobalRepl.exit()
-      replsManager.getProjectRepl.foreach(_.exit())
-      replsManager.getProjectTestRepl.foreach(_.exit())
+      replsManager.getProjectLibraryRepl.foreach(_.exit())
+      replsManager.getProjectNonLibraryRepl.foreach(_.exit())
     }
   }
 

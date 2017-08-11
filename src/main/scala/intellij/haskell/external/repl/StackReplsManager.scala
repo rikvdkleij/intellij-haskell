@@ -20,6 +20,8 @@ import com.intellij.openapi.module.ModuleUtilCore
 import com.intellij.openapi.project.Project
 import com.intellij.psi.PsiFile
 import intellij.haskell.HaskellNotificationGroup
+import intellij.haskell.annotator.HaskellAnnotator
+import intellij.haskell.annotator.HaskellAnnotator.getDaemonCodeAnalyzer
 import intellij.haskell.cabal._
 import intellij.haskell.external.component.{HaskellComponentsManager, StackProjectManager}
 import intellij.haskell.external.repl.StackReplsManager.StackComponentInfo
@@ -31,12 +33,12 @@ private[external] object StackReplsManager {
     StackProjectManager.getStackProjectManager(project).map(_.getStackReplsManager)
   }
 
-  def getProjectRepl(project: Project): Option[ProjectStackRepl] = {
-    getReplsManager(project).flatMap(_.getProjectRepl)
+  def getProjectLibraryRepl(project: Project): Option[ProjectStackRepl] = {
+    getReplsManager(project).flatMap(_.getProjectLibraryRepl)
   }
 
-  def getProjectTestRepl(project: Project): Option[ProjectStackRepl] = {
-    getReplsManager(project).flatMap(_.getProjectTestRepl)
+  def getProjectNonLibraryRepl(project: Project): Option[ProjectStackRepl] = {
+    getReplsManager(project).flatMap(_.getProjectNonLibraryRepl)
   }
 
   def getProjectRepl(psiFile: PsiFile): Option[ProjectStackRepl] = {
@@ -44,7 +46,7 @@ private[external] object StackReplsManager {
   }
 
   def getProjectRepl(project: Project, stackComponentInfo: StackComponentInfo): Option[ProjectStackRepl] = {
-    getReplsManager(project).flatMap(_.getProjectRepl(stackComponentInfo))
+    getReplsManager(project).flatMap(_.getProjectRepl(stackComponentInfo, None))
   }
 
   def getGlobalRepl(project: Project): Option[GlobalStackRepl] = {
@@ -72,14 +74,14 @@ private[external] object StackReplsManager {
 
 private[external] class StackReplsManager(val project: Project,
                                           private[this] val globalRepl: GlobalStackRepl,
-                                          private[this] var projectRepl: Option[ProjectStackRepl],
-                                          private[this] var projectTestRepl: Option[ProjectStackRepl]) {
+                                          private[this] var projectLibraryRepl: Option[ProjectStackRepl],
+                                          private[this] var projectNonLibraryRepl: Option[ProjectStackRepl]) {
 
   val cabalInfos: Iterable[CabalInfo] = StackReplsManager.createCabalInfos(project)
   val stackComponentInfos: Iterable[StackComponentInfo] = StackReplsManager.createStackComponentInfo(project, cabalInfos)
 
-  def restartProjectTestRepl(): Unit = synchronized {
-    projectTestRepl match {
+  def restartProjectNonLibraryRepl(): Unit = synchronized {
+    projectNonLibraryRepl match {
       case Some(repl) =>
         repl.exit()
         repl.clearLoadedInfo()
@@ -88,16 +90,16 @@ private[external] class StackReplsManager(val project: Project,
     }
   }
 
-  def getProjectRepl: Option[ProjectStackRepl] = projectRepl
+  def getProjectLibraryRepl: Option[ProjectStackRepl] = projectLibraryRepl
 
-  def getProjectTestRepl: Option[ProjectStackRepl] = projectTestRepl
+  def getProjectNonLibraryRepl: Option[ProjectStackRepl] = projectNonLibraryRepl
 
   def getGlobalRepl: GlobalStackRepl = globalRepl
 
   private val ignoredHaskellFiles = Seq("setup.hs", "hlint.hs")
 
   def getProjectRepl(psiFile: PsiFile): Option[ProjectStackRepl] = {
-    if (ignoredHaskellFiles.contains(psiFile.getName.toLowerCase) && psiFile.getVirtualFile.getParent.getPath == HaskellProjectUtil.getModulePath(ModuleUtilCore.findModuleForPsiElement(psiFile)).getAbsolutePath) {
+    if (ignoredHaskellFiles.contains(psiFile.getName.toLowerCase) && Option(ModuleUtilCore.findModuleForPsiElement(psiFile)).exists(m => psiFile.getVirtualFile.getParent.getPath == HaskellProjectUtil.getModulePath(m).getAbsolutePath)) {
       HaskellNotificationGroup.logInfoEvent(psiFile.getProject, s"${psiFile.getName} can not be loaded in REPL")
       None
     } else {
@@ -107,7 +109,7 @@ private[external] class StackReplsManager(val project: Project,
       } else {
         val componentInfo = HaskellComponentsManager.findStackComponentInfo(psiFile)
         componentInfo match {
-          case Some(ci) => getProjectRepl(ci)
+          case Some(ci) => getProjectRepl(ci, Some(psiFile))
           case None =>
             HaskellNotificationGroup.logErrorBalloonEvent(project, s"Could not switch to project Stack repl for file ${psiFile.getName} because no Stack target build info")
             None
@@ -116,23 +118,25 @@ private[external] class StackReplsManager(val project: Project,
     }
   }
 
-  def getProjectRepl(componentInfo: StackComponentInfo): Option[ProjectStackRepl] = {
-    if (componentInfo.stanzaType == LibType || componentInfo.stanzaType == ExeType) {
-      getProjectProductionRepl(componentInfo)
+  def getProjectRepl(componentInfo: StackComponentInfo, psiFile: Option[PsiFile]): Option[ProjectStackRepl] = {
+    if (componentInfo.stanzaType == LibType) {
+      getProjectLibraryRepl(componentInfo, psiFile)
     } else {
-      getProjectTestRepl(componentInfo)
+      getProjectNonLibraryRepl(componentInfo, psiFile)
     }
   }
 
-  private def getProjectProductionRepl(componentInfo: StackComponentInfo): Option[ProjectStackRepl] = synchronized {
-    projectRepl match {
+  private def getProjectLibraryRepl(componentInfo: StackComponentInfo, psiFile: Option[PsiFile]): Option[ProjectStackRepl] = synchronized {
+    projectLibraryRepl match {
       case None =>
-        projectRepl = Some(new ProjectStackRepl(project, componentInfo.stanzaType, componentInfo.target, componentInfo.sourceDirs))
-        projectRepl.foreach(_.start())
-        projectRepl
+        projectLibraryRepl = Some(new ProjectStackRepl(project, componentInfo.stanzaType, componentInfo.target, componentInfo.sourceDirs))
+        projectLibraryRepl.foreach(_.start())
+        psiFile.foreach(pf => getDaemonCodeAnalyzer(pf.getProject).getFileStatusMap.dispose())
+        psiFile.foreach(HaskellAnnotator.restartDaemonCodeAnalyzerForFile)
+        projectLibraryRepl
       case Some(repl) =>
         if (repl.target.contains(componentInfo.target)) {
-          projectRepl
+          projectLibraryRepl
         } else {
           repl.exit()
           repl.clearLoadedInfo()
@@ -145,15 +149,17 @@ private[external] class StackReplsManager(val project: Project,
     }
   }
 
-  private def getProjectTestRepl(componentInfo: StackComponentInfo): Option[ProjectStackRepl] = synchronized {
-    projectTestRepl match {
+  private def getProjectNonLibraryRepl(componentInfo: StackComponentInfo, psiFile: Option[PsiFile]): Option[ProjectStackRepl] = synchronized {
+    projectNonLibraryRepl match {
       case None =>
-        projectTestRepl = Some(new ProjectStackRepl(project, componentInfo.stanzaType, componentInfo.target, componentInfo.sourceDirs))
-        projectTestRepl.foreach(_.start())
-        projectTestRepl
+        projectNonLibraryRepl = Some(new ProjectStackRepl(project, componentInfo.stanzaType, componentInfo.target, componentInfo.sourceDirs))
+        projectNonLibraryRepl.foreach(_.start())
+        psiFile.foreach(pf => getDaemonCodeAnalyzer(pf.getProject).getFileStatusMap.dispose())
+        psiFile.foreach(HaskellAnnotator.restartDaemonCodeAnalyzerForFile)
+        projectNonLibraryRepl
       case Some(repl) =>
         if (repl.target.contains(componentInfo.target)) {
-          projectTestRepl
+          projectNonLibraryRepl
         } else {
           repl.exit()
           repl.clearLoadedInfo()

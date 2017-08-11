@@ -36,7 +36,7 @@ private[component] object LoadComponent {
   }
 
   def isBusy(project: Project): Boolean = {
-    val projectRepl = StackReplsManager.getProjectRepl(project)
+    val projectRepl = StackReplsManager.getProjectLibraryRepl(project)
     projectRepl.exists(_.isBusy)
   }
 
@@ -52,8 +52,8 @@ private[component] object LoadComponent {
 
     stackComponentInfo.foreach(info => {
       if (info.stanzaType != LibType) {
-        val module = ModuleUtilCore.findModuleForPsiElement(psiFile)
-        val namesOfPackagesToRebuild = ProjectLibraryFileWatcher.changedLibrariesByPackageName.filter(pn => pn._1 == info.packageName || LibraryUtil.findLibrary(module, pn._1) != null).keys
+        val module = Option(ModuleUtilCore.findModuleForPsiElement(psiFile))
+        val namesOfPackagesToRebuild = ProjectLibraryFileWatcher.changedLibrariesByPackageName.filter(pn => pn._1 == info.packageName || module.exists(mn => LibraryUtil.findLibrary(mn, pn._1) != null)).keys
         namesOfPackagesToRebuild.foreach(nameOfPackageToRebuild => {
           val stackComponentInfo = ProjectLibraryFileWatcher.changedLibrariesByPackageName.remove(nameOfPackageToRebuild)
           stackComponentInfo match {
@@ -63,7 +63,7 @@ private[component] object LoadComponent {
 
                 override def run(indicator: ProgressIndicator): Unit = {
                   StackCommandLine.executeInMessageView(project, Seq("build", libraryInfo.target, "--fast"), progressManager.getProgressIndicator)
-                  StackReplsManager.getReplsManager(project).foreach(_.restartProjectTestRepl())
+                  StackReplsManager.getReplsManager(project).foreach(_.restartProjectNonLibraryRepl())
                   HaskellAnnotator.restartDaemonCodeAnalyzerForFile(psiFile)
                 }
               })
