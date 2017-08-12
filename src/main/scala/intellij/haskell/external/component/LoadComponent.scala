@@ -17,7 +17,6 @@
 package intellij.haskell.external.component
 
 import com.intellij.openapi.application.ApplicationManager
-import com.intellij.openapi.module.ModuleUtilCore
 import com.intellij.openapi.progress.{ProgressIndicator, ProgressManager, Task}
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.roots.libraries.LibraryUtil
@@ -26,7 +25,7 @@ import intellij.haskell.annotator.HaskellAnnotator
 import intellij.haskell.external.execution.{CompilationResult, HaskellCompilationResultHelper, StackCommandLine}
 import intellij.haskell.external.repl._
 import intellij.haskell.psi.HaskellPsiUtil
-import intellij.haskell.util.TypeInfoUtil
+import intellij.haskell.util.{HaskellProjectUtil, TypeInfoUtil}
 
 private[component] object LoadComponent {
 
@@ -52,7 +51,7 @@ private[component] object LoadComponent {
 
     stackComponentInfo.foreach(info => {
       if (info.stanzaType != LibType) {
-        val module = Option(ModuleUtilCore.findModuleForPsiElement(psiFile))
+        val module = HaskellProjectUtil.getModule(psiFile)
         val namesOfPackagesToRebuild = ProjectLibraryFileWatcher.changedLibrariesByPackageName.filter(pn => pn._1 == info.packageName || module.exists(mn => LibraryUtil.findLibrary(mn, pn._1) != null)).keys
         namesOfPackagesToRebuild.foreach(nameOfPackageToRebuild => {
           val stackComponentInfo = ProjectLibraryFileWatcher.changedLibrariesByPackageName.remove(nameOfPackageToRebuild)

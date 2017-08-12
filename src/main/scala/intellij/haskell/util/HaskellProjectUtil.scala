@@ -23,7 +23,7 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.roots.ProjectRootManager
 import com.intellij.openapi.vfs.{LocalFileSystem, VirtualFile}
 import com.intellij.psi.search.GlobalSearchScope
-import com.intellij.psi.{PsiFile, PsiManager}
+import com.intellij.psi.{PsiElement, PsiFile, PsiManager}
 import intellij.haskell.HaskellFile
 import intellij.haskell.module.HaskellModuleType
 import intellij.haskell.sdk.HaskellSdkType
@@ -118,6 +118,10 @@ object HaskellProjectUtil {
 
   def getModuleManager(project: Project): Option[ModuleManager] = {
     project.isDisposed.optionNot(ModuleManager.getInstance(project))
+  }
+
+  def getModule(psiElement: PsiElement): Option[Module] = {
+    Option(ModuleUtilCore.findModuleForPsiElement(psiElement))
   }
 
   import scala.collection.JavaConverters._

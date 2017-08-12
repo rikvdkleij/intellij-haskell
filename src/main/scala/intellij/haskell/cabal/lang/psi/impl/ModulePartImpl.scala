@@ -2,13 +2,13 @@ package intellij.haskell.cabal.lang.psi.impl
 
 import java.util.regex.Pattern
 
-import com.intellij.openapi.module.ModuleUtilCore
 import com.intellij.openapi.util.TextRange
 import com.intellij.psi.impl.source.tree.LeafPsiElement
 import com.intellij.psi.search.{GlobalSearchScope, GlobalSearchScopesCore}
 import com.intellij.psi.{PsiDirectory, PsiElement, PsiReference}
 import intellij.haskell.cabal.lang.psi._
 import intellij.haskell.psi.HaskellPsiUtil
+import intellij.haskell.util.HaskellProjectUtil
 import intellij.haskell.util.index.{HaskellFileNameIndex, HaskellModuleNameIndex}
 
 trait ModulePartImpl extends CabalNamedElementImpl {
@@ -73,7 +73,7 @@ trait ModulePartImpl extends CabalNamedElementImpl {
   private def resolveToModuleDecl(): Option[PsiElement] = {
     // If the module part IS the last part, resolve to its file's module decl.
     val moduleName = getParent.getText
-    val scope = Option(ModuleUtilCore.findModuleForPsiElement(this)) match {
+    val scope = HaskellProjectUtil.getModule(this) match {
       case Some(m) => GlobalSearchScope.moduleScope(m)
       case None => GlobalSearchScopesCore.projectProductionScope(getProject)
     }
