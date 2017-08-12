@@ -4,9 +4,9 @@ import com.intellij.patterns.{ElementPattern, ElementPatternCondition}
 import com.intellij.psi.PsiElement
 import com.intellij.refactoring.rename.RenameInputValidator
 import com.intellij.util.ProcessingContext
-import intellij.haskell.HaskellFile
 import intellij.haskell.psi._
 import intellij.haskell.util.HaskellFileUtil
+import intellij.haskell.{HaskellFile, HaskellFileType}
 
 class HaskellRenameInputValidator extends RenameInputValidator {
 
@@ -30,7 +30,7 @@ class HaskellRenameInputValidator extends RenameInputValidator {
         case _: HaskellVarsym => HaskellElementFactory.createVarsym(project, newName).isDefined
         case _: HaskellConid => HaskellElementFactory.createConid(project, newName).isDefined
         case _: HaskellConsym => HaskellElementFactory.createConsym(project, newName).isDefined
-        case _: HaskellFile => HaskellElementFactory.createConid(project, HaskellFileUtil.removeFileExtension(newName)).isDefined
+        case _: HaskellFile => HaskellElementFactory.createConid(project, HaskellFileUtil.removeFileExtension(newName)).isDefined && newName.endsWith("." + HaskellFileType.Instance.getDefaultExtension)
         case _ => false
       }
     }
