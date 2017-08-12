@@ -22,6 +22,7 @@ import com.intellij.ide.util.projectWizard.{ModuleWizardStep, WizardContext}
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.projectImport.ProjectImportProvider
+import intellij.haskell.util.HaskellFileUtil
 
 class StackProjectImportProvider(builder: StackProjectImportBuilder) extends ProjectImportProvider(builder) {
 
@@ -29,7 +30,7 @@ class StackProjectImportProvider(builder: StackProjectImportBuilder) extends Pro
     Array(new HaskellModuleWizardStep(context, HaskellModuleType.getInstance.createModuleBuilder()))
 
   override def canImport(fileOrDirectory: VirtualFile, project: Project): Boolean = {
-    val file = new File(fileOrDirectory.getPath)
+    val file = new File(HaskellFileUtil.getAbsoluteFilePath(fileOrDirectory))
     if (file.isDirectory) {
       file.listFiles().map(_.getName).contains("stack.yaml")
     } else {

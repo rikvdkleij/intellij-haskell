@@ -50,10 +50,10 @@ class StackProjectImportBuilder extends ProjectImportBuilder[Unit] {
     val moduleBuilder = HaskellModuleType.getInstance.createModuleBuilder()
 
     HaskellProjectUtil.getModuleManager(project).map(_.getModifiableModel).map { moduleModel =>
-      StackYamlComponent.getPackagePaths(project).foreach(packagePaths => {
-        packagePaths.foreach(packagePath => {
-          val moduleDirectory = getModuleRootDirectory(packagePath)
-          HaskellModuleBuilder.createCabalInfo(project, getFileToImport, packagePath) match {
+      StackYamlComponent.getPackagePaths(project).foreach(packageRelativePaths => {
+        packageRelativePaths.foreach(packageRelativePath => {
+          val moduleDirectory = getModuleRootDirectory(packageRelativePath)
+          HaskellModuleBuilder.createCabalInfo(project, getFileToImport, packageRelativePath) match {
             case Some(cabalInfo) =>
               val moduleName = cabalInfo.packageName
               moduleBuilder.setCabalInfo(cabalInfo)
@@ -64,7 +64,7 @@ class StackProjectImportBuilder extends ProjectImportBuilder[Unit] {
                 moduleBuilder.setupRootModel(rootModel)
               })
             case None =>
-              Messages.showErrorDialog(s"Could not create Haskell module because can not retrieve info from Cabal file for package path $packagePath", "No Cabal file info")
+              Messages.showErrorDialog(s"Could not create Haskell module because can not retrieve info from Cabal file for package path $packageRelativePath", "No Cabal file info")
           }
         })
       })

@@ -30,6 +30,7 @@ import com.intellij.openapi.ui.{InputValidatorEx, Messages}
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.psi.{PsiDirectory, PsiFile}
 import intellij.haskell.HaskellIcons
+import intellij.haskell.util.HaskellFileUtil
 
 object CreateHaskellFileAction {
   private final val NEW_HASKELL_FILE = "New Haskell File"
@@ -105,10 +106,10 @@ class CreateHaskellFileAction extends CreateFileFromTemplateAction(CreateHaskell
   }
 
   override def createFileFromTemplate(fileName: String, template: FileTemplate, fileDir: PsiDirectory): PsiFile = {
-    val path = fileDir.getVirtualFile.getPath
+    val path = HaskellFileUtil.getAbsoluteFilePath(fileDir.getVirtualFile)
     val pathItems = ProjectRootManager.getInstance(fileDir.getProject)
       .getContentSourceRoots
-      .map(_.getPath)
+      .map(HaskellFileUtil.getAbsoluteFilePath)
       .find(path.startsWith)
       .map(s => if (s != path) {
         path.replace(s + File.separator, "").split(File.separator).toList

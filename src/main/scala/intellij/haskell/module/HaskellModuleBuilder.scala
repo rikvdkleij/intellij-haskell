@@ -71,11 +71,11 @@ class HaskellModuleBuilder extends ModuleBuilder {
     val project = rootModel.getProject
 
     if (isNewProjectWithoutExistingSources) {
-      val packagePath = StackYamlComponent.getPackagePaths(project).flatMap(_.headOption)
-      packagePath.flatMap(pp => HaskellModuleBuilder.createCabalInfo(rootModel.getProject, project.getBaseDir.getPath, pp)) match {
+      val packageRelativePath = StackYamlComponent.getPackagePaths(project).flatMap(_.headOption)
+      packageRelativePath.flatMap(pp => HaskellModuleBuilder.createCabalInfo(rootModel.getProject, HaskellFileUtil.getAbsoluteFilePath(project.getBaseDir), pp)) match {
         case Some(ci) => cabalInfo = ci
         case None =>
-          Messages.showErrorDialog(s"Could not create Haskell project because can not retrieve info from Cabal file for package path $packagePath", "No Cabal file info")
+          Messages.showErrorDialog(s"Could not create Haskell project because can not retrieve info from Cabal file for package path $packageRelativePath", "No Cabal file info")
       }
     }
 
@@ -148,8 +148,8 @@ object HaskellModuleBuilder {
   private final val IdeaHaskellLibName = ".intellij-haskell" + File.separator + "lib"
   private final val PackagePattern = """([\w\-]+)\s([\d\.]+)""".r
 
-  def createCabalInfo(project: Project, modulePath: String, packagePath: String): Option[CabalInfo] = {
-    val moduleDirectory = getModuleRootDirectory(packagePath, modulePath)
+  def createCabalInfo(project: Project, modulePath: String, packageRelativePath: String): Option[CabalInfo] = {
+    val moduleDirectory = getModuleRootDirectory(packageRelativePath, modulePath)
     for {
       cabalFile <- getCabalFile(moduleDirectory)
       cabalInfo <- getCabalInfo(project, cabalFile)
@@ -224,7 +224,7 @@ object HaskellModuleBuilder {
   }
 
   private def getProjectLibDirectory(project: Project): File = {
-    val homeDirectory = VfsUtil.getUserHomeDir.getPath
+    val homeDirectory = HaskellFileUtil.getAbsoluteFilePath(VfsUtil.getUserHomeDir)
     new File(new File(homeDirectory, IdeaHaskellLibName), project.getName)
   }
 

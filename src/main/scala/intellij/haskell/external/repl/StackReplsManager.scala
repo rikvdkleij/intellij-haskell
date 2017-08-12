@@ -25,7 +25,7 @@ import intellij.haskell.annotator.HaskellAnnotator.getDaemonCodeAnalyzer
 import intellij.haskell.cabal._
 import intellij.haskell.external.component.{HaskellComponentsManager, StackProjectManager}
 import intellij.haskell.external.repl.StackReplsManager.StackComponentInfo
-import intellij.haskell.util.{HaskellEditorUtil, HaskellProjectUtil}
+import intellij.haskell.util.{HaskellEditorUtil, HaskellFileUtil, HaskellProjectUtil}
 
 private[external] object StackReplsManager {
 
@@ -99,7 +99,7 @@ private[external] class StackReplsManager(val project: Project,
   private val ignoredHaskellFiles = Seq("setup.hs", "hlint.hs")
 
   def getProjectRepl(psiFile: PsiFile): Option[ProjectStackRepl] = {
-    if (ignoredHaskellFiles.contains(psiFile.getName.toLowerCase) && Option(ModuleUtilCore.findModuleForPsiElement(psiFile)).exists(m => psiFile.getVirtualFile.getParent.getPath == HaskellProjectUtil.getModulePath(m).getAbsolutePath)) {
+    if (ignoredHaskellFiles.contains(psiFile.getName.toLowerCase) && Option(ModuleUtilCore.findModuleForPsiElement(psiFile)).exists(m => HaskellFileUtil.getAbsoluteFilePath(psiFile) == HaskellProjectUtil.getModulePath(m).getAbsolutePath)) {
       HaskellNotificationGroup.logInfoEvent(psiFile.getProject, s"${psiFile.getName} can not be loaded in REPL")
       None
     } else {

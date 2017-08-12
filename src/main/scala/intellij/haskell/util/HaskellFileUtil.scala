@@ -76,6 +76,10 @@ object HaskellFileUtil {
     new File(psiFile.getOriginalFile.getVirtualFile.getPath).getAbsolutePath
   }
 
+  def getAbsoluteFilePath(virtualFile: VirtualFile): String = {
+    new File(virtualFile.getPath).getAbsolutePath
+  }
+
   def makeFilePathAbsolute(filePath: String, project: Project): String = {
     if (new File(filePath).isAbsolute)
       filePath

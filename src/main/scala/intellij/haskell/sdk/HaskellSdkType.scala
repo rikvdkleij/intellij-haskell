@@ -27,7 +27,7 @@ import com.intellij.openapi.roots.OrderRootType
 import com.intellij.openapi.util.SystemInfo
 import com.intellij.openapi.vfs.VirtualFile
 import intellij.haskell.external.execution.CommandLine
-import intellij.haskell.util.HaskellProjectUtil
+import intellij.haskell.util.{HaskellFileUtil, HaskellProjectUtil}
 import intellij.haskell.{HaskellIcons, HaskellNotificationGroup}
 import org.jdom.Element
 
@@ -75,7 +75,7 @@ class HaskellSdkType extends SdkType("Haskell Tool Stack SDK") {
 
       override def validateSelectedFiles(files: Array[VirtualFile]) {
         if (files.length != 0) {
-          val selectedPath = files(0).getPath
+          val selectedPath = HaskellFileUtil.getAbsoluteFilePath(files(0))
           var valid = isValidSdkHome(selectedPath)
           if (!valid) {
             valid = isValidSdkHome(adjustSelectedSdkHome(selectedPath))
