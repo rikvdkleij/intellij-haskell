@@ -64,7 +64,7 @@ class StackProjectImportBuilder extends ProjectImportBuilder[Unit] {
                 moduleBuilder.setupRootModel(rootModel)
               })
             case None =>
-              Messages.showErrorDialog(s"Could not create Haskell module because can not retrieve info from Cabal file for package path $packageRelativePath", "No Cabal file info")
+              Messages.showErrorDialog(s"Could not create Haskell module because could not retrieve or parse Cabal file for package path `$packageRelativePath`", "No Cabal file info")
           }
         })
       })

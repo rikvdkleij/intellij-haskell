@@ -75,7 +75,7 @@ class HaskellModuleBuilder extends ModuleBuilder {
       packageRelativePath.flatMap(pp => HaskellModuleBuilder.createCabalInfo(rootModel.getProject, HaskellFileUtil.getAbsoluteFilePath(project.getBaseDir), pp)) match {
         case Some(ci) => cabalInfo = ci
         case None =>
-          Messages.showErrorDialog(s"Could not create Haskell project because can not retrieve info from Cabal file for package path $packageRelativePath", "No Cabal file info")
+          Messages.showErrorDialog(s"Could not create Haskell module because could not retrieve or parse Cabal file for package path $packageRelativePath", "No Cabal file info")
       }
     }
 
@@ -149,26 +149,27 @@ object HaskellModuleBuilder {
   private final val PackagePattern = """([\w\-]+)\s([\d\.]+)""".r
 
   def createCabalInfo(project: Project, modulePath: String, packageRelativePath: String): Option[CabalInfo] = {
-    val moduleDirectory = getModuleRootDirectory(packageRelativePath, modulePath)
     for {
+      moduleDirectory <- getModuleRootDirectory(packageRelativePath, modulePath)
       cabalFile <- getCabalFile(moduleDirectory)
       cabalInfo <- getCabalInfo(project, cabalFile)
     } yield cabalInfo
   }
 
-  private def getModuleRootDirectory(packagePath: String, modulePath: String): File = {
-    if (packagePath == ".") {
+  private def getModuleRootDirectory(packagePath: String, modulePath: String): Option[File] = {
+    val file = if (packagePath == ".") {
       new File(modulePath)
     } else {
       new File(modulePath, packagePath)
     }
+    Option(file).filter(_.exists())
   }
 
   private def getCabalFile(moduleDirectory: File): Option[File] = {
     HaskellProjectUtil.findCabalFile(moduleDirectory) match {
       case Some(f) => Option(f)
       case None =>
-        Messages.showErrorDialog(s"Can not create Haskell module because Cabal file can not be found in $moduleDirectory", "Can not create Haskell module")
+        Messages.showErrorDialog(s"Could not create Haskell module because Cabal file can not be found in $moduleDirectory", "Haskell module can not be created")
         None
     }
   }
@@ -177,7 +178,7 @@ object HaskellModuleBuilder {
     CabalInfo.create(project, cabalFile) match {
       case Some(f) => Option(f)
       case None =>
-        Messages.showErrorDialog(project, s"Can not create Haskell module because Cabal file $cabalFile can not be read", "Can not create Haskell module")
+        Messages.showErrorDialog(project, s"Could not create Haskell module because Cabal file $cabalFile can not be parsed", "Haskell module can not be created")
         None
     }
   }
