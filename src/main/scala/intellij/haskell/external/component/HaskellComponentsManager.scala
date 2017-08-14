@@ -21,6 +21,7 @@ import com.intellij.openapi.editor.SelectionModel
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Computable
 import com.intellij.psi.{PsiElement, PsiFile}
+import intellij.haskell.cabal.CabalInfo
 import intellij.haskell.external.execution.CompilationResult
 import intellij.haskell.external.repl.StackReplsManager
 import intellij.haskell.external.repl.StackReplsManager.StackComponentInfo
@@ -78,6 +79,10 @@ object HaskellComponentsManager {
 
   def findProjectPackageNames(project: Project): Option[Iterable[String]] = {
     StackReplsManager.getReplsManager(project).map(_.cabalInfos.map(_.packageName))
+  }
+
+  def findCabalInfos(project: Project): Iterable[CabalInfo] = {
+    StackReplsManager.getReplsManager(project).map(_.cabalInfos).getOrElse(Iterable())
   }
 
   def loadHaskellFile(psiFile: PsiFile, psiElement: Option[PsiElement]): Option[CompilationResult] = {

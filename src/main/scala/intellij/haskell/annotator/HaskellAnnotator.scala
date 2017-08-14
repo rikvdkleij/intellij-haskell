@@ -31,6 +31,7 @@ import intellij.haskell.editor.HaskellImportOptimizer
 import intellij.haskell.external.component._
 import intellij.haskell.external.execution._
 import intellij.haskell.psi._
+import intellij.haskell.runconfig.console.HaskellConsoleView
 import intellij.haskell.util._
 import intellij.haskell.{HaskellFile, HaskellFileType, HaskellNotificationGroup}
 
@@ -41,13 +42,17 @@ import scala.collection.JavaConverters._
 class HaskellAnnotator extends ExternalAnnotator[(PsiFile, Option[PsiElement]), CompilationResult] {
 
   override def collectInformation(psiFile: PsiFile, editor: Editor, hasErrors: Boolean): (PsiFile, Option[PsiElement]) = {
-    (psiFile, Option(psiFile.getOriginalFile.getVirtualFile)) match {
-      case (_, None) => null // can be in case if file is in memory only (just created file)
-      case (_, Some(f)) if f.getFileType != HaskellFileType.Instance => null
-      case (_, Some(_)) if !psiFile.isValid | HaskellProjectUtil.isLibraryFile(psiFile).getOrElse(true) | StackProjectManager.isBuilding(psiFile.getProject) => null
-      case (_, Some(_)) =>
-        val currentElement = Option(psiFile.findElementAt(editor.getCaretModel.getOffset)).flatMap(e => Option(PsiTreeUtil.prevVisibleLeaf(e))).filter(_.isValid)
-        (psiFile, currentElement)
+    if (HaskellConsoleView.isConsoleFile(psiFile)) {
+      null
+    } else {
+      (psiFile, Option(psiFile.getOriginalFile.getVirtualFile)) match {
+        case (_, None) => null // can be in case if file is in memory only (just created file)
+        case (_, Some(f)) if f.getFileType != HaskellFileType.Instance => null
+        case (_, Some(_)) if !psiFile.isValid | HaskellProjectUtil.isLibraryFile(psiFile).getOrElse(true) | StackProjectManager.isBuilding(psiFile.getProject) => null
+        case (_, Some(_)) =>
+          val currentElement = Option(psiFile.findElementAt(editor.getCaretModel.getOffset)).flatMap(e => Option(PsiTreeUtil.prevVisibleLeaf(e))).filter(_.isValid)
+          (psiFile, currentElement)
+      }
     }
   }
 

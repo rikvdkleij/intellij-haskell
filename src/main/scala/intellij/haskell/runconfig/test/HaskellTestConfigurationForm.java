@@ -21,7 +21,7 @@ public class HaskellTestConfigurationForm extends SettingsEditor<HaskellTestConf
     private JComboBox myModuleComboBox;
     private RawCommandLineEditor myConsoleArgsEditor;
     private JComboBox myTestsuiteComboBox;
-    private JTextField myTestFilterTextField;
+    private RawCommandLineEditor myTestFilterTextField;
 
     public HaskellTestConfigurationForm(@NotNull Project project) {
         myModuleComboBox.setEnabled(true);
@@ -42,24 +42,24 @@ public class HaskellTestConfigurationForm extends SettingsEditor<HaskellTestConf
         myModuleComboBox.setSelectedItem(config.getConfigurationModule().getModule());
 
         myTestsuiteComboBox.removeAllItems();
-        for (String executable : config.getTestsuites()) {
+        for (String executable : config.getTestSuiteTargetNames()) {
             //noinspection unchecked
             myTestsuiteComboBox.addItem(executable);
         }
-        myTestsuiteComboBox.setSelectedItem(config.getTestsuite());
+        myTestsuiteComboBox.setSelectedItem(config.getTestSuiteTargetName());
 
         myWorkingDirPathField.setText(config.getWorkingDirPath());
-        myConsoleArgsEditor.setText(config.getConsoleArgs());
-        myTestFilterTextField.setText(config.getTestFilter());
+        myConsoleArgsEditor.setText(config.getStackArgs());
+        myTestFilterTextField.setText(config.getTestArguments());
     }
 
     @Override
     protected void applyEditorTo(@NotNull HaskellTestConfiguration config) throws ConfigurationException {
         config.setModule((Module) myModuleComboBox.getSelectedItem());
         config.setWorkingDirPath(myWorkingDirPathField.getText());
-        config.setConsoleArgs(myConsoleArgsEditor.getText());
-        config.setTestsuite((String) myTestsuiteComboBox.getSelectedItem());
-        config.setTestFilter(myTestFilterTextField.getText());
+        config.setStackArgs(myConsoleArgsEditor.getText());
+        config.setTestSuiteTargetName((String) myTestsuiteComboBox.getSelectedItem());
+        config.setTestArguments(myTestFilterTextField.getText());
     }
 
     @NotNull

@@ -27,6 +27,7 @@ import com.intellij.psi.PsiFile
 import intellij.haskell.HaskellNotificationGroup
 import intellij.haskell.external.repl.StackReplsManager
 import intellij.haskell.external.repl.StackReplsManager.StackComponentInfo
+import intellij.haskell.runconfig.console.HaskellConsoleView.HaskellConsoleKey
 import intellij.haskell.util.HaskellFileUtil
 
 import scala.collection.JavaConverters._
@@ -56,11 +57,17 @@ private[component] object HaskellProjectFileInfoComponent {
         private def createHaskellFileInfo(key: Key): Option[HaskellProjectFileInfo] = {
           val psiFile = key.psiFile
           val project = psiFile.getProject
-          val stackTargetBuildInfo = StackReplsManager.getReplsManager(project).map(_.stackComponentInfos).flatMap(info => getStackComponentInfo(psiFile, info))
 
-          for {
-            buildInfo <- stackTargetBuildInfo
-          } yield HaskellProjectFileInfo(buildInfo)
+          val stackComponentInfos = StackReplsManager.getReplsManager(project).map(_.stackComponentInfos).getOrElse(Iterable())
+          val consoleStackTarget = Option(psiFile.getOriginalFile.getUserData(HaskellConsoleKey))
+          consoleStackTarget.flatMap(target => stackComponentInfos.find(_.target == target)) match {
+            case Some(info) => Some(HaskellProjectFileInfo(info))
+            case None =>
+              val stackTargetBuildInfo = StackReplsManager.getReplsManager(project).map(_.stackComponentInfos).flatMap(info => getStackComponentInfo(psiFile, info))
+              for {
+                buildInfo <- stackTargetBuildInfo
+              } yield HaskellProjectFileInfo(buildInfo)
+          }
         }
 
         private def getStackComponentInfo(psiFile: PsiFile, stackTargetBuildInfos: Iterable[StackComponentInfo]): Option[StackComponentInfo] = {

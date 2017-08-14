@@ -8,7 +8,7 @@ import com.intellij.openapi.editor.actions.EnterAction
 import com.intellij.util.containers.ContainerUtil
 
 class HaskellConsoleActionPromoter extends ActionPromoter {
-  private val COMPARATOR = new Comparator[AnAction]() {
+  private val Comparator = new Comparator[AnAction]() {
     def compare(o1: AnAction, o2: AnAction): Int = {
       (notEnter(o1), notEnter(o2)) match {
         case (false, true) => 1
@@ -22,7 +22,7 @@ class HaskellConsoleActionPromoter extends ActionPromoter {
 
   def promote(actions: util.List[AnAction], context: DataContext): util.List[AnAction] = {
     val result = ContainerUtil.newArrayList(actions)
-    ContainerUtil.sort(result, COMPARATOR)
+    ContainerUtil.sort(result, Comparator)
     result
   }
 }

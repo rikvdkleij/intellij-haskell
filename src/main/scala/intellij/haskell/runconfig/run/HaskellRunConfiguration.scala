@@ -1,12 +1,12 @@
 package intellij.haskell.runconfig.run
 
-import java.util
+import java.lang
 
 import com.intellij.execution.Executor
 import com.intellij.execution.configurations.ConfigurationFactory
 import com.intellij.execution.runners.ExecutionEnvironment
 import com.intellij.openapi.project.Project
-import intellij.haskell.cabal.query.CabalQuery
+import intellij.haskell.external.component.HaskellComponentsManager
 import intellij.haskell.runconfig.{HaskellStackConfigurationBase, HaskellStackStateBase}
 
 import scala.collection.JavaConverters._
@@ -14,26 +14,26 @@ import scala.collection.JavaConverters._
 class HaskellRunConfiguration(override val name: String, override val project: Project, override val configurationFactory: ConfigurationFactory)
   extends HaskellStackConfigurationBase(name, project, configurationFactory) {
 
-  private var myExecutable: String = ""
+  private var executableName: String = ""
 
-  def getExecutables: util.List[String] = {
-    CabalQuery.getExecutableNames(project).getOrElse(List()).asJava
+  def getExecutableNames: lang.Iterable[String] = {
+    HaskellComponentsManager.findCabalInfos(project).flatMap(_.getExecutables.flatMap(_.getName)).asJava
   }
 
-  def setExecutable(consoleArgs: String) {
-    myExecutable = consoleArgs
+  def setExecutable(executableName: String) {
+    this.executableName = executableName
   }
 
   def getExecutable: String = {
-    if (myExecutable.isEmpty) {
-      CabalQuery.getExecutableNames(project).map(_.head).getOrElse(project.getName)
+    if (executableName.isEmpty) {
+      getExecutableNames.asScala.headOption.getOrElse("")
     } else {
-      myExecutable
+      executableName
     }
   }
 
-  override def getConfigurationEditor = new HaskellRunConfigurationForm(getProject)
+  override def getConfigurationEditor = new HaskellRunConfigurationForm(project)
 
   override def getState(executor: Executor, environment: ExecutionEnvironment) =
-    new HaskellStackStateBase(this, environment, List("build", "--exec", myExecutable))
+    new HaskellStackStateBase(this, environment, List("build", "--exec", executableName))
 }

@@ -26,13 +26,12 @@ import com.intellij.psi.PsiFile
 import intellij.haskell.{HaskellFileType, HaskellNotificationGroup}
 
 object HaskellConsoleView {
-  val HaskellConsoleKey: Key[LanguageConsoleImpl] = Key.create("HASKELL CONSOLE KEY")
+  val HaskellConsoleKey: Key[String] = Key.create("HASKELL CONSOLE KEY")
 
-  def isConsole(file: PsiFile): Boolean = file.getOriginalFile.getUserData(HaskellConsoleKey) != null
+  def isConsoleFile(file: PsiFile): Boolean = file.getOriginalFile.getUserData(HaskellConsoleKey) != null
 }
 
-class HaskellConsoleView(val project: Project)
-  extends LanguageConsoleImpl(project, "Haskell Stack REPL", HaskellFileType.INSTANCE.getLanguage) {
+class HaskellConsoleView(val project: Project, val stackTarget: String) extends LanguageConsoleImpl(project, "Haskell Stack REPL", HaskellFileType.Instance.getLanguage) {
 
   private val myType = new ConsoleRootType("haskell", "Haskell") {}
   private var myHistoryController: ConsoleHistoryController = _
@@ -41,7 +40,7 @@ class HaskellConsoleView(val project: Project)
   setPrompt(HaskellConsoleHighlightingUtil.LambdaArrow)
 
   val originalFile: PsiFile = getFile.getOriginalFile
-  originalFile.putUserData(HaskellConsoleView.HaskellConsoleKey, this)
+  originalFile.putUserData(HaskellConsoleView.HaskellConsoleKey, stackTarget)
 
   override def attachToProcess(processHandler: ProcessHandler): Unit = {
     super.attachToProcess(processHandler)
@@ -49,13 +48,13 @@ class HaskellConsoleView(val project: Project)
       myProcessInputWriter = new OutputStreamWriter(processInput)
       myHistoryController = new ConsoleHistoryController(myType, "haskell", this)
       myHistoryController.install()
-      HaskellConsoleViewDict.getInstance.addConsole(this)
+      HaskellConsoleViewMap.getInstance.addConsole(this)
     })
   }
 
   override def dispose() {
     super.dispose()
-    HaskellConsoleViewDict.getInstance.delConsole(this)
+    HaskellConsoleViewMap.getInstance.delConsole(this)
   }
 
   def append(text: String) {

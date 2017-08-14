@@ -146,7 +146,12 @@ class ProjectStackRepl(project: Project, replType: StanzaType, target: String, v
   }
 
   private def getFilePath(psiFile: PsiFile): String = {
-    HaskellFileUtil.getAbsoluteFilePath(psiFile)
+   val filePath =  HaskellFileUtil.getAbsoluteFilePath(psiFile)
+    if (filePath.contains(" ")) {
+      s""""$filePath""""
+    } else {
+      filePath
+    }
   }
 }
 
