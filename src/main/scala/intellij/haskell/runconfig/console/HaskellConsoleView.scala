@@ -32,7 +32,7 @@ object HaskellConsoleView {
 }
 
 class HaskellConsoleView(val project: Project)
-  extends LanguageConsoleImpl(project, "Haskell Stack REPL", HaskellFileType.INSTANCE.getLanguage) {
+  extends LanguageConsoleImpl(project, "Haskell Stack REPL", HaskellFileType.Instance.getLanguage) {
 
   private val myType = new ConsoleRootType("haskell", "Haskell") {}
   private var myHistoryController: ConsoleHistoryController = _

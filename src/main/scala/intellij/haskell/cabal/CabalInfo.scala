@@ -23,6 +23,7 @@ import com.intellij.openapi.project.Project
 import com.intellij.psi.tree.IElementType
 import com.intellij.psi.{PsiElement, PsiFileFactory}
 import intellij.haskell.HaskellNotificationGroup
+import intellij.haskell.cabal.lang.psi
 import intellij.haskell.cabal.lang.psi._
 import intellij.haskell.cabal.lang.psi.impl.SourceDirsImpl
 import intellij.haskell.psi.HaskellPsiUtil
@@ -89,6 +90,10 @@ class CabalInfo(cabalFile: CabalFile, val modulePath: String) {
 
   def getTestSourceRoots: Iterable[String] = {
     (getTestSuites ++ getBenchmarks).flatMap(_.getSourceDirs)
+  }
+
+  def getGhcOptions: Set[String] = {
+    HaskellPsiUtil.streamChildren(cabalFile, classOf[psi.impl.GhcOptionsImpl]).flatMap(_.getValue).toSet
   }
 }
 

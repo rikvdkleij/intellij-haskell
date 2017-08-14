@@ -42,11 +42,11 @@ public class HaskellTestConfigurationForm extends SettingsEditor<HaskellTestConf
         myModuleComboBox.setSelectedItem(config.getConfigurationModule().getModule());
 
         myTestsuiteComboBox.removeAllItems();
-        for (String executable : config.getTestsuites()) {
+        for (String executable : config.getTestsuiteTargetNames()) {
             //noinspection unchecked
             myTestsuiteComboBox.addItem(executable);
         }
-        myTestsuiteComboBox.setSelectedItem(config.getTestsuite());
+        myTestsuiteComboBox.setSelectedItem(config.getTestsuiteName());
 
         myWorkingDirPathField.setText(config.getWorkingDirPath());
         myConsoleArgsEditor.setText(config.getConsoleArgs());
@@ -58,7 +58,7 @@ public class HaskellTestConfigurationForm extends SettingsEditor<HaskellTestConf
         config.setModule((Module) myModuleComboBox.getSelectedItem());
         config.setWorkingDirPath(myWorkingDirPathField.getText());
         config.setConsoleArgs(myConsoleArgsEditor.getText());
-        config.setTestsuite((String) myTestsuiteComboBox.getSelectedItem());
+        config.setTestsuiteTargetName((String) myTestsuiteComboBox.getSelectedItem());
         config.setTestFilter(myTestFilterTextField.getText());
     }
 

@@ -41,7 +41,7 @@ public class HaskellRunConfigurationForm extends SettingsEditor<HaskellRunConfig
         myModuleComboBox.setSelectedItem(config.getConfigurationModule().getModule());
 
         myExecutableComboBox.removeAllItems();
-        for (String executable : config.getExecutables()) {
+        for (String executable : config.getExecutableNames()) {
             //noinspection unchecked
             myExecutableComboBox.addItem(executable);
         }
