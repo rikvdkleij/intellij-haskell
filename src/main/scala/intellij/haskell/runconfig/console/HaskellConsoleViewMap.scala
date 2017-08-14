@@ -20,13 +20,13 @@ import com.intellij.openapi.project.Project
 
 import scala.collection.mutable
 
-object HaskellConsoleViewDict {
-  private val outInstance = new HaskellConsoleViewDict
+object HaskellConsoleViewMap {
+  private val consoleInstance = new HaskellConsoleViewMap
 
-  def getInstance: HaskellConsoleViewDict = outInstance
+  def getInstance: HaskellConsoleViewMap = consoleInstance
 }
 
-class HaskellConsoleViewDict private() {
+class HaskellConsoleViewMap private() {
   private val consoleViews = new mutable.HashSet[HaskellConsoleView]
 
   def addConsole(console: HaskellConsoleView) {

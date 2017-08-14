@@ -14,31 +14,31 @@ import scala.collection.JavaConverters._
 class HaskellTestConfiguration(override val name: String, override val project: Project, override val configurationFactory: ConfigurationFactory)
   extends HaskellStackConfigurationBase(name, project, configurationFactory) {
 
-  private var testsuiteTargetName: String = ""
-  private var testFilter: String = ""
+  private var testSuiteTargetName: String = ""
+  private var testArguments: String = "--color"
 
-  def getTestsuiteTargetNames: lang.Iterable[String] = {
+  def getTestSuiteTargetNames: lang.Iterable[String] = {
     HaskellComponentsManager.findCabalInfos(project).flatMap(_.getTestSuites.map(_.getTargetName)).asJava
   }
 
-  def setTestsuiteTargetName(targetName: String) {
-    testsuiteTargetName = targetName
+  def setTestSuiteTargetName(targetName: String) {
+    testSuiteTargetName = targetName
   }
 
-  def getTestsuiteName: String = {
-    if (testsuiteTargetName.isEmpty) {
-      getTestsuiteTargetNames.asScala.headOption.getOrElse("")
+  def getTestSuiteTargetName: String = {
+    if (testSuiteTargetName.isEmpty) {
+      getTestSuiteTargetNames.asScala.headOption.getOrElse("")
     } else {
-      testsuiteTargetName
+      testSuiteTargetName
     }
   }
 
-  def setTestFilter(testFilter: String) {
-    this.testFilter = testFilter
+  def setTestArguments(testPattern: String) {
+    this.testArguments = testPattern
   }
 
-  def getTestFilter: String = {
-    testFilter
+  def getTestArguments: String = {
+    testArguments
   }
 
   override def getConfigurationEditor = new HaskellTestConfigurationForm(getProject)
@@ -46,8 +46,7 @@ class HaskellTestConfiguration(override val name: String, override val project: 
   //https://github.com/commercialhaskell/stack/issues/731
   //https://github.com/commercialhaskell/stack/issues/2210
   override def getState(executor: Executor, environment: ExecutionEnvironment): HaskellStackStateBase = {
-    val parameters = List("test", s"$testsuiteTargetName") ++
-      (if (getTestFilter.isEmpty) List() else List("--test-arguments", "-m \"" + getTestFilter + "\""))
+    val parameters = List("test", s"$testSuiteTargetName") ++ List("--test-arguments", getTestArguments)
     new HaskellStackStateBase(this, environment, parameters)
   }
 }

@@ -9,26 +9,27 @@ import com.intellij.openapi.ui.TextFieldWithBrowseButton;
 import com.intellij.ui.ListCellRendererWrapper;
 import com.intellij.ui.RawCommandLineEditor;
 import intellij.haskell.module.HaskellModuleType;
-import intellij.haskell.runconfig.HaskellStackConfigurationBase;
 import intellij.haskell.util.HaskellUIUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 
-public class HaskellConsoleConfigurationForm extends SettingsEditor<HaskellStackConfigurationBase> {
+public class HaskellConsoleConfigurationForm extends SettingsEditor<HaskellConsoleConfiguration> {
     private JPanel myPanel;
     private TextFieldWithBrowseButton myWorkingDirPathField;
     private JComboBox myModuleComboBox;
     private RawCommandLineEditor myConsoleArgsEditor;
+    private JComboBox targetcomboBox;
 
     public HaskellConsoleConfigurationForm(@NotNull Project project) {
         myModuleComboBox.setEnabled(true);
+        targetcomboBox.setEnabled(true);
         HaskellUIUtil.installWorkingDirectoryChooser(myWorkingDirPathField, project);
     }
 
     @Override
-    protected void resetEditorFrom(@NotNull HaskellStackConfigurationBase config) {
+    protected void resetEditorFrom(@NotNull HaskellConsoleConfiguration config) {
         myModuleComboBox.removeAllItems();
         for (Module module : config.getValidModules()) {
             if (ModuleType.get(module) == HaskellModuleType.getInstance()) {
@@ -40,15 +41,24 @@ public class HaskellConsoleConfigurationForm extends SettingsEditor<HaskellStack
         myModuleComboBox.setRenderer(getListCellRendererWrapper());
         myModuleComboBox.setSelectedItem(config.getConfigurationModule().getModule());
 
+        targetcomboBox.removeAllItems();
+        for (String name : config.getStackTargetNames()) {
+            //noinspection unchecked
+            targetcomboBox.addItem(name);
+        }
+        //noinspection unchecked
+        targetcomboBox.setSelectedItem(config.getStackTarget());
+
         myWorkingDirPathField.setText(config.getWorkingDirPath());
-        myConsoleArgsEditor.setText(config.getConsoleArgs());
+        myConsoleArgsEditor.setText(config.getStackArgs());
     }
 
     @Override
-    protected void applyEditorTo(@NotNull HaskellStackConfigurationBase config) throws ConfigurationException {
+    protected void applyEditorTo(@NotNull HaskellConsoleConfiguration config) throws ConfigurationException {
         config.setModule((Module) myModuleComboBox.getSelectedItem());
         config.setWorkingDirPath(myWorkingDirPathField.getText());
-        config.setConsoleArgs(myConsoleArgsEditor.getText());
+        config.setStackArgs(myConsoleArgsEditor.getText());
+        config.setStackTarget((String) targetcomboBox.getSelectedItem());
     }
 
     @NotNull

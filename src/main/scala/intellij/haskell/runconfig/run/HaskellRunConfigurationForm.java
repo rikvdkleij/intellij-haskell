@@ -48,14 +48,14 @@ public class HaskellRunConfigurationForm extends SettingsEditor<HaskellRunConfig
         myExecutableComboBox.setSelectedItem(config.getExecutable());
 
         myWorkingDirPathField.setText(config.getWorkingDirPath());
-        myConsoleArgsEditor.setText(config.getConsoleArgs());
+        myConsoleArgsEditor.setText(config.getStackArgs());
     }
 
     @Override
     protected void applyEditorTo(@NotNull HaskellRunConfiguration config) throws ConfigurationException {
         config.setModule((Module) myModuleComboBox.getSelectedItem());
         config.setWorkingDirPath(myWorkingDirPathField.getText());
-        config.setConsoleArgs(myConsoleArgsEditor.getText());
+        config.setStackArgs(myConsoleArgsEditor.getText());
         config.setExecutable((String) myExecutableComboBox.getSelectedItem());
     }
 

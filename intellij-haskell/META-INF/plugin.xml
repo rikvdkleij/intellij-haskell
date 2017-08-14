@@ -445,16 +445,5 @@
                 description="About Haskell GHC/tools used in project">
             <add-to-group group-id="HelpMenu" anchor="last"/>
         </action>
-
-        <group id="Haskell.Runconfig">
-            <action id="Haskell.ConsoleExecute"
-                    class="intellij.haskell.runconfig.console.HaskellConsoleExecuteAction">
-                <keyboard-shortcut first-keystroke="ENTER" keymap="$default"/>
-            </action>
-            <action id="Haskell.StackCommand"
-                    class="intellij.haskell.runconfig.action.RunStackCommandAction"
-                    text="Run Haskell Stack command">
-            </action>
-        </group>
     </actions>
 </idea-plugin>
