@@ -16,6 +16,8 @@
 
 package intellij.haskell.util
 
+import com.intellij.openapi.util.{Computable, Condition}
+
 object ScalaUtil {
 
   implicit class RichBoolean(val b: Boolean) extends AnyVal {
@@ -23,4 +25,15 @@ object ScalaUtil {
     final def optionNot[A](a: => A): Option[A] = if (b) None else Option(a)
   }
 
+  def runnable(f: => Unit) = new Runnable {
+    override def run(): Unit = f
+  }
+
+  def computable[A](f: => A) = new Computable[A] {
+    override def compute(): A = f
+  }
+
+  def condition[A](f: A => Boolean) = new Condition[A] {
+    override def value(t: A): Boolean = f(t)
+  }
 }
