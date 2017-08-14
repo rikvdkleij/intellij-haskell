@@ -34,7 +34,7 @@ import intellij.haskell.cabal.lang.psi.CabalTypes;
 CRLF=\n|\r|\r\n
 WHITE_SPACE=[\ \t\f]
 NOT_WHITE_SPACE=[^\ ]
-KEY=[A-Za-z_][A-Za-z_0-9\-]*
+KEY=[A-Za-z_][A-Za-z_0-9\-\.]*
 DIGIT=[0-9]
 COMMENT="--" [^\r\n]*
 
