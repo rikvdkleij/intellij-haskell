@@ -34,13 +34,13 @@ import intellij.haskell.psi.HaskellElementCondition._
 import intellij.haskell.psi.HaskellPsiUtil._
 import intellij.haskell.psi.HaskellTypes._
 import intellij.haskell.psi._
-import intellij.haskell.runconfig.console.HaskellConsoleView
+import intellij.haskell.runconfig.console.{HaskellConsoleView, HaskellConsoleViewMap}
 import intellij.haskell.util.HaskellProjectUtil
 import intellij.haskell.{HaskellFile, HaskellIcons, HaskellParserDefinition}
 
 import scala.collection.JavaConverters._
+import scala.concurrent._
 import scala.concurrent.duration.Duration
-import scala.concurrent.{Await, ExecutionContext, Future, TimeoutException}
 
 class HaskellCompletionContributor extends CompletionContributor {
 
@@ -171,28 +171,33 @@ class HaskellCompletionContributor extends CompletionContributor {
           resultSet.addAllElements(getCommentIds.asJavaCollection)
           resultSet.addAllElements(getHaddockIds.asJavaCollection)
           ProgressManager.checkCanceled()
-          resultSet.addAllElements(getAvailableImportedLookupElements(psiFile).asJavaCollection)
+
+          ProgressManager.checkCanceled()
+
+          val file = HaskellConsoleViewMap.consoleFileViews.get(psiFile.getName)
+
+          val bla = file.getOrElse(psiFile)
+
+
+          resultSet.addAllElements(getAvailableImportedLookupElements(bla).asJavaCollection)
+          val moduleName = findModuleName(bla)
+
+          ProgressManager.checkCanceled()
+
+          val currentFileModuleIdentifiers = moduleName.map(mn => HaskellComponentsManager.findExportedModuleIdentifiersOfCurrentFile(bla, mn))
+          ProgressManager.checkCanceled()
+          currentFileModuleIdentifiers.foreach(moduleIdentifiers => {
+            val lookupElements = moduleIdentifiers.map(createTopLevelLookupElement)
+            ProgressManager.checkCanceled()
+            resultSet.addAllElements(lookupElements.asJavaCollection)
+            ProgressManager.checkCanceled()
+          })
+
 
           ProgressManager.checkCanceled()
 
           if (!HaskellConsoleView.isConsoleFile(psiFile)) {
-            val moduleName = findModuleName(psiFile)
-
-            ProgressManager.checkCanceled()
-
-            val currentFileModuleIdentifiers = moduleName.map(mn => HaskellComponentsManager.findExportedModuleIdentifiersOfCurrentFile(psiFile, mn))
-            ProgressManager.checkCanceled()
-            currentFileModuleIdentifiers.foreach(moduleIdentifiers => {
-              val lookupElements = moduleIdentifiers.map(createTopLevelLookupElement)
-              ProgressManager.checkCanceled()
-              resultSet.addAllElements(lookupElements.asJavaCollection)
-              ProgressManager.checkCanceled()
-            })
-
             resultSet.addAllElements(findOtherLookupElements(psiFile, currentFileModuleIdentifiers.getOrElse(Iterable())).asJavaCollection)
-
-            ProgressManager.checkCanceled()
-
             op.foreach(element => {
               val localElements = HaskellPsiUtil.findNamedElement(element) match {
                 case Some(ne) => findLocalElements(element).filterNot(_ == ne)

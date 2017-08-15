@@ -48,13 +48,13 @@ class HaskellConsoleView(val project: Project, val stackTarget: String) extends 
       myProcessInputWriter = new OutputStreamWriter(processInput)
       myHistoryController = new ConsoleHistoryController(myType, "haskell", this)
       myHistoryController.install()
-      HaskellConsoleViewMap.getInstance.addConsole(this)
+      HaskellConsoleViewMap.addConsole(this)
     })
   }
 
   override def dispose() {
     super.dispose()
-    HaskellConsoleViewMap.getInstance.delConsole(this)
+    HaskellConsoleViewMap.delConsole(this)
   }
 
   def append(text: String) {
