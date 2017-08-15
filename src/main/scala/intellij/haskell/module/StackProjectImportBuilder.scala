@@ -20,7 +20,8 @@ import java.io.File
 import java.util
 import javax.swing.Icon
 
-import com.intellij.openapi.module.{ModifiableModuleModel, Module}
+import com.intellij.ide.util.projectWizard.ModuleBuilder
+import com.intellij.openapi.module.{ModifiableModuleModel, Module, ModuleType}
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.roots.ModifiableRootModel
 import com.intellij.openapi.roots.ui.configuration.ModulesProvider
@@ -49,28 +50,35 @@ class StackProjectImportBuilder extends ProjectImportBuilder[Unit] {
   override def commit(project: Project, model: ModifiableModuleModel, modulesProvider: ModulesProvider, artifactModel: ModifiableArtifactModel): java.util.List[Module] = {
     val moduleBuilder = HaskellModuleType.getInstance.createModuleBuilder()
 
-    HaskellProjectUtil.getModuleManager(project).map(_.getModifiableModel).map { moduleModel =>
-      StackYamlComponent.getPackagePaths(project).foreach(packageRelativePaths => {
-        packageRelativePaths.foreach(packageRelativePath => {
-          val moduleDirectory = getModuleRootDirectory(packageRelativePath)
-          HaskellModuleBuilder.createCabalInfo(project, getFileToImport, packageRelativePath) match {
-            case Some(cabalInfo) =>
-              val moduleName = cabalInfo.packageName
-              moduleBuilder.setCabalInfo(cabalInfo)
-              moduleBuilder.setName(moduleName)
-              moduleBuilder.setModuleFilePath(getModuleImlFilePath(moduleDirectory, moduleName))
-              moduleBuilder.commit(project)
-              moduleBuilder.addModuleConfigurationUpdater((_: Module, rootModel: ModifiableRootModel) => {
-                moduleBuilder.setupRootModel(rootModel)
-              })
-            case None =>
-              Messages.showErrorDialog(s"Could not create Haskell module because could not retrieve or parse Cabal file for package path `$packageRelativePath`", "No Cabal file info")
-          }
-        })
+    StackYamlComponent.getPackagePaths(project).foreach(packageRelativePaths => {
+      packageRelativePaths.foreach(packageRelativePath => {
+        val moduleDirectory = getModuleRootDirectory(packageRelativePath)
+        HaskellModuleBuilder.createCabalInfo(project, getFileToImport, packageRelativePath) match {
+          case Some(cabalInfo) =>
+            val moduleName = cabalInfo.packageName
+            moduleBuilder.setCabalInfo(cabalInfo)
+            moduleBuilder.setName(moduleName)
+            moduleBuilder.setModuleFilePath(getModuleImlFilePath(moduleDirectory, moduleName))
+            moduleBuilder.commit(project)
+            moduleBuilder.addModuleConfigurationUpdater((_: Module, rootModel: ModifiableRootModel) => {
+              moduleBuilder.setupRootModel(rootModel)
+            })
+          case None =>
+            Messages.showErrorDialog(s"Could not create Haskell module because could not retrieve or parse Cabal file for package path `$packageRelativePath`", "No Cabal file info")
+        }
       })
 
-      moduleModel.getModules.toList.asJava
-    }.getOrElse(new util.ArrayList[Module]())
+      if (!packageRelativePaths.contains(".")) {
+        val emptyModuleBuilder = new EmptyParentModuleBuilder(project)
+        emptyModuleBuilder.setModuleFilePath(new File(project.getBasePath, project.getName + " parent").getAbsolutePath + ".iml")
+        emptyModuleBuilder.setName("Empty parent module")
+        emptyModuleBuilder.commit(project)
+        emptyModuleBuilder.addModuleConfigurationUpdater((_: Module, rootModel: ModifiableRootModel) => {
+          emptyModuleBuilder.setupRootModel(rootModel)
+        })
+      }
+    })
+    HaskellProjectUtil.getModuleManager(project).map(_.getModules).getOrElse(Array()).toList.asJava
   }
 
   private def getModuleRootDirectory(packagePath: String): File = {
@@ -85,4 +93,25 @@ class StackProjectImportBuilder extends ProjectImportBuilder[Unit] {
   private def getModuleImlFilePath(moduleDirectory: File, moduleName: String): String = {
     new File(moduleDirectory, moduleName).getAbsolutePath + ".iml"
   }
+}
+
+class EmptyParentModuleBuilder(val project: Project) extends ModuleBuilder {
+  override def isOpenProjectSettingsAfter = true
+
+  override def canCreateModule = true
+
+  override def setupRootModel(modifiableRootModel: ModifiableRootModel): Unit = {
+    val contentEntry = doAddContentEntry(modifiableRootModel)
+    modifiableRootModel.addContentEntry(project.getBasePath)
+  }
+
+  override def getModuleType: ModuleType[_ <: ModuleBuilder] = ModuleType.EMPTY
+
+  override def getPresentableName = "Empty Parent Module"
+
+  override def getGroupName: String = getPresentableName
+
+  override def isTemplateBased = true
+
+  override def getDescription = "Empty parent module."
 }
