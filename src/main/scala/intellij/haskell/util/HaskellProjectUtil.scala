@@ -120,7 +120,7 @@ object HaskellProjectUtil {
     project.isDisposed.optionNot(ModuleManager.getInstance(project))
   }
 
-  def getModule(psiElement: PsiElement): Option[Module] = {
+  def findModule(psiElement: PsiElement): Option[Module] = {
     Option(ModuleUtilCore.findModuleForPsiElement(psiElement))
   }
 

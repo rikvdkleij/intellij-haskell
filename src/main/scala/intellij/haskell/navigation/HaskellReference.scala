@@ -211,7 +211,7 @@ object HaskellReference {
         findIdentifierByLocation(filePath, startLineNr, startColumnNr, namedElement.getName, project)
       case Some(ModuleLocationInfo(moduleName)) =>
         ProgressManager.checkCanceled()
-        val module = HaskellProjectUtil.getModule(namedElement)
+        val module = HaskellProjectUtil.findModule(namedElement)
         findIdentifiersByModuleName(moduleName, namedElement.getName, project, module, preferExpressions = true)
       case None => resolveReferencesByNameInfo(namedElement, psiFile, project, preferExpression = true)
     }
@@ -220,7 +220,7 @@ object HaskellReference {
   private def findIdentifiersByNameInfo(nameInfo: NameInfo, namedElement: HaskellNamedElement, project: Project, preferExpressions: Boolean): Iterable[HaskellNamedElement] = {
     nameInfo match {
       case pni: ProjectNameInfo => findIdentifierByLocation(pni.filePath, pni.lineNr, pni.columnNr, namedElement.getName, project).toIterable
-      case lni: LibraryNameInfo => findIdentifiersByLibraryNameInfo(lni, namedElement.getName, project, HaskellProjectUtil.getModule(namedElement), preferExpressions)
+      case lni: LibraryNameInfo => findIdentifiersByLibraryNameInfo(lni, namedElement.getName, project, HaskellProjectUtil.findModule(namedElement), preferExpressions)
       case _ => Iterable()
     }
   }

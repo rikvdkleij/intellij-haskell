@@ -73,7 +73,7 @@ trait ModulePartImpl extends CabalNamedElementImpl {
   private def resolveToModuleDecl(): Option[PsiElement] = {
     // If the module part IS the last part, resolve to its file's module decl.
     val moduleName = getParent.getText
-    val scope = HaskellProjectUtil.getModule(this) match {
+    val scope = HaskellProjectUtil.findModule(this) match {
       case Some(m) => GlobalSearchScope.moduleScope(m)
       case None => GlobalSearchScopesCore.projectProductionScope(getProject)
     }

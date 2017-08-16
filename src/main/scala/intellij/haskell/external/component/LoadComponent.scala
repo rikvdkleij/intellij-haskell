@@ -51,7 +51,7 @@ private[component] object LoadComponent {
 
     stackComponentInfo.foreach(info => {
       if (info.stanzaType != LibType) {
-        val module = HaskellProjectUtil.getModule(psiFile)
+        val module = HaskellProjectUtil.findModule(psiFile)
         val namesOfPackagesToRebuild = ProjectLibraryFileWatcher.changedLibrariesByPackageName.filter(pn => pn._1 == info.packageName || module.exists(mn => LibraryUtil.findLibrary(mn, pn._1) != null)).keys
         namesOfPackagesToRebuild.foreach(nameOfPackageToRebuild => {
           val stackComponentInfo = ProjectLibraryFileWatcher.changedLibrariesByPackageName.remove(nameOfPackageToRebuild)

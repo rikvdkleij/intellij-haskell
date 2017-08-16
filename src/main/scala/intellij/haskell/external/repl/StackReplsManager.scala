@@ -98,7 +98,7 @@ private[external] class StackReplsManager(val project: Project,
   private val ignoredHaskellFiles = Seq("setup.hs", "hlint.hs")
 
   def getProjectRepl(psiFile: PsiFile): Option[ProjectStackRepl] = {
-    if (ignoredHaskellFiles.contains(psiFile.getName.toLowerCase) && HaskellProjectUtil.getModule(psiFile).exists(m => HaskellFileUtil.getAbsoluteFilePath(psiFile) == HaskellProjectUtil.getModulePath(m).getAbsolutePath)) {
+    if (ignoredHaskellFiles.contains(psiFile.getName.toLowerCase) && HaskellProjectUtil.findModule(psiFile).exists(m => HaskellFileUtil.getAbsoluteFilePath(psiFile) == HaskellProjectUtil.getModulePath(m).getAbsolutePath)) {
       HaskellNotificationGroup.logInfoEvent(psiFile.getProject, s"${psiFile.getName} can not be loaded in REPL")
       None
     } else {
