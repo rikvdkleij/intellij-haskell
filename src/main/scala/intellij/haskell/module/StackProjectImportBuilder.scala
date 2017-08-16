@@ -69,12 +69,12 @@ class StackProjectImportBuilder extends ProjectImportBuilder[Unit] {
       })
 
       if (!packageRelativePaths.contains(".")) {
-        val emptyModuleBuilder = new ParentModuleBuilder(project)
-        emptyModuleBuilder.setModuleFilePath(new File(project.getBasePath, project.getName + " parent").getAbsolutePath + ".iml")
-        emptyModuleBuilder.setName("Parent module")
-        emptyModuleBuilder.commit(project)
-        emptyModuleBuilder.addModuleConfigurationUpdater((_: Module, rootModel: ModifiableRootModel) => {
-          emptyModuleBuilder.setupRootModel(rootModel)
+        val parentModuleBuilder = new ParentModuleBuilder(project)
+        parentModuleBuilder.setModuleFilePath(new File(project.getBasePath, project.getName + " parent").getAbsolutePath + ".iml")
+        parentModuleBuilder.setName("Parent module")
+        parentModuleBuilder.commit(project)
+        parentModuleBuilder.addModuleConfigurationUpdater((_: Module, rootModel: ModifiableRootModel) => {
+          parentModuleBuilder.setupRootModel(rootModel)
         })
       }
     })
