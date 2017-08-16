@@ -101,6 +101,7 @@ class HaskellCompletionContributor extends CompletionContributor {
       ProgressManager.checkCanceled()
 
       val psiFile: HaskellFile = parameters.getOriginalFile.asInstanceOf[HaskellFile]
+
       val project = parameters.getPosition.getProject
 
       if (!HaskellConsoleView.isConsoleFile(psiFile) && (HaskellProjectUtil.isLibraryFile(psiFile).getOrElse(true) || Option(parameters.getOriginalPosition).map(_.getNode.getElementType).exists(t => HaskellParserDefinition.Literals.contains(t) || HaskellParserDefinition.Comments.contains(t)))) {
@@ -174,17 +175,21 @@ class HaskellCompletionContributor extends CompletionContributor {
 
           ProgressManager.checkCanceled()
 
-          val file = HaskellConsoleViewMap.consoleFileViews.get(psiFile.getName)
+          // If file is console file, find the project file which corresponds to loaded file in console
+          val loadedFile = for {
+            consoleInfo <- HaskellConsoleView.findConsoleInfo(psiFile)
+            configName = consoleInfo.configurationName
+            haskellFile <- HaskellConsoleViewMap.projectFileByConfigName.get(configName)
+          } yield haskellFile
 
-          val bla = file.getOrElse(psiFile)
+
+          // Retrieve identifiers in scope by always using the project file
+          val file = loadedFile.getOrElse(psiFile)
+          resultSet.addAllElements(getAvailableImportedLookupElements(file).asJavaCollection)
+          val moduleName = findModuleName(file)
+          val currentFileModuleIdentifiers = moduleName.map(mn => HaskellComponentsManager.findExportedModuleIdentifiersOfCurrentFile(file, mn))
 
 
-          resultSet.addAllElements(getAvailableImportedLookupElements(bla).asJavaCollection)
-          val moduleName = findModuleName(bla)
-
-          ProgressManager.checkCanceled()
-
-          val currentFileModuleIdentifiers = moduleName.map(mn => HaskellComponentsManager.findExportedModuleIdentifiersOfCurrentFile(bla, mn))
           ProgressManager.checkCanceled()
           currentFileModuleIdentifiers.foreach(moduleIdentifiers => {
             val lookupElements = moduleIdentifiers.map(createTopLevelLookupElement)

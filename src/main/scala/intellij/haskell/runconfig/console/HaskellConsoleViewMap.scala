@@ -3,30 +3,25 @@ package intellij.haskell.runconfig.console
 import java.util.concurrent.ConcurrentHashMap
 
 import com.intellij.openapi.editor.Editor
-import com.intellij.openapi.project.Project
-import com.intellij.psi.PsiFile
+import intellij.haskell.HaskellFile
 
 import scala.collection.JavaConverters._
 
 object HaskellConsoleViewMap {
-  val consoleViews = new ConcurrentHashMap[HaskellConsoleView, Option[PsiFile]]().asScala
+  private val consoleViews = new ConcurrentHashMap[Editor, HaskellConsoleView]().asScala
 
   def addConsole(console: HaskellConsoleView) {
-    consoleViews.put(console, None)
+    consoleViews.put(console.getConsoleEditor, console)
   }
 
   def delConsole(console: HaskellConsoleView) {
-    consoleViews.remove(console)
+    consoleViews.remove(console.getConsoleEditor)
   }
 
-  def getConsole(editor: Editor): Option[(HaskellConsoleView, Option[PsiFile])] = {
-    consoleViews.find(_._1.getConsoleEditor == editor)
+  def getConsole(editor: Editor): Option[HaskellConsoleView] = {
+    consoleViews.get(editor)
   }
 
-  def getConsole(project: Project): Option[(HaskellConsoleView, Option[PsiFile])] = {
-    consoleViews.find(_._1.getProject == project)
-  }
-
-
-  val consoleFileViews = new ConcurrentHashMap[String, PsiFile]().asScala
+  // File is project file and not file which represents console
+  val projectFileByConfigName = new ConcurrentHashMap[String, HaskellFile]().asScala
 }

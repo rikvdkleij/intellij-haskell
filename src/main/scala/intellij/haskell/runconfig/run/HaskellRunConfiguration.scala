@@ -11,7 +11,7 @@ import intellij.haskell.runconfig.{HaskellStackConfigurationBase, HaskellStackSt
 
 import scala.collection.JavaConverters._
 
-class HaskellRunConfiguration(override val name: String, override val project: Project, override val configurationFactory: ConfigurationFactory)
+class HaskellRunConfiguration(name: String, project: Project, configurationFactory: ConfigurationFactory)
   extends HaskellStackConfigurationBase(name, project, configurationFactory) {
 
   private var executableName: String = ""
@@ -32,7 +32,7 @@ class HaskellRunConfiguration(override val name: String, override val project: P
     }
   }
 
-  override def getConfigurationEditor = new HaskellRunConfigurationForm(project)
+  override def getConfigurationEditor = new HaskellRunConfigurationForm()
 
   override def getState(executor: Executor, environment: ExecutionEnvironment) =
     new HaskellStackStateBase(this, environment, List("build", "--exec", executableName))

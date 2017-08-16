@@ -13,7 +13,7 @@ class HaskellConsoleExecuteAction extends AnAction {
       presentation.setEnabled(false)
     } else {
       HaskellConsoleViewMap.getConsole(editor) match {
-        case Some(consoleView) => presentation.setEnabledAndVisible(consoleView._1.isRunning)
+        case Some(consoleView) => presentation.setEnabledAndVisible(consoleView.isRunning)
         case None => presentation.setEnabled(false)
       }
     }
@@ -23,6 +23,6 @@ class HaskellConsoleExecuteAction extends AnAction {
     for {
       editor <- Option(actionEvent.getData(CommonDataKeys.EDITOR))
       consoleView <- HaskellConsoleViewMap.getConsole(editor)
-    } yield consoleView._1.execute()
+    } yield consoleView.execute()
   }
 }

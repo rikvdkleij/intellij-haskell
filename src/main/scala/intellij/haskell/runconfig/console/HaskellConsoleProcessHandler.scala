@@ -25,18 +25,18 @@ object HaskellConsoleProcessHandler {
   }
 }
 
-class HaskellConsoleProcessHandler private[runconfig](val process: Process, val commandLine: String, val console: LanguageConsoleImpl) extends ColoredProcessHandler(process, commandLine, Charset.forName("UTF-8")) {
+class HaskellConsoleProcessHandler private[runconfig](val process: Process, val commandLine: String, val console: HaskellConsoleView) extends ColoredProcessHandler(process, commandLine, Charset.forName("UTF-8")) {
 
   override def coloredTextAvailable(text: String, attributes: Key[_]) {
     text match {
       case HaskellConsoleProcessHandler.ModulesLoadedPattern(moduleNamesList) =>
         val moduleNames = moduleNamesList.trim.init.split(",").map(_.trim)
-        val file = ApplicationManager.getApplication.runReadAction(new Computable[Option[HaskellFile]] {
+        val haskellFile = ApplicationManager.getApplication.runReadAction(new Computable[Option[HaskellFile]] {
           override def compute(): Option[HaskellFile] = {
-            moduleNames.headOption.flatMap(mn => HaskellModuleNameIndex.findHaskellFileByModuleName(console.getProject, mn, GlobalSearchScope.projectScope(console.getProject)))
+            moduleNames.lastOption.flatMap(mn => HaskellModuleNameIndex.findHaskellFileByModuleName(console.getProject, mn, GlobalSearchScope.projectScope(console.getProject)))
           }
         })
-        HaskellConsoleViewMap.consoleFileViews.put(console.getFile.getName, file.get)
+        haskellFile.foreach(hf => HaskellConsoleViewMap.projectFileByConfigName.put(console.configuration.getName, hf))
       case _ => ()
     }
 

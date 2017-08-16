@@ -11,7 +11,7 @@ import intellij.haskell.runconfig.HaskellStackConfigurationBase
 
 import scala.collection.JavaConverters._
 
-class HaskellConsoleConfiguration(override val name: String, override val project: Project, override val configurationFactory: ConfigurationFactory)
+class HaskellConsoleConfiguration(name: String, project: Project, configurationFactory: ConfigurationFactory)
   extends HaskellStackConfigurationBase(name, project, configurationFactory) {
 
   private var stackTarget: String = ""

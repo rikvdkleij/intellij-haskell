@@ -26,28 +26,32 @@ import com.intellij.psi.PsiFile
 import intellij.haskell.{HaskellFileType, HaskellNotificationGroup}
 
 object HaskellConsoleView {
-  val HaskellConsoleKey: Key[String] = Key.create("HASKELL CONSOLE KEY")
+  private val HaskellConsoleKey: Key[HaskellConsoleInfo] = Key.create("HASKELL CONSOLE KEY")
 
   def isConsoleFile(file: PsiFile): Boolean = file.getOriginalFile.getUserData(HaskellConsoleKey) != null
+
+  def findConsoleInfo(psiFile: PsiFile): Option[HaskellConsoleInfo] = {
+    Option(psiFile.getOriginalFile.getUserData(HaskellConsoleKey))
+  }
 }
 
-class HaskellConsoleView(val project: Project, val stackTarget: String) extends LanguageConsoleImpl(project, "Haskell Stack REPL", HaskellFileType.Instance.getLanguage) {
+class HaskellConsoleView(val project: Project, val configuration: HaskellConsoleConfiguration) extends LanguageConsoleImpl(project, "Haskell Stack REPL", HaskellFileType.Instance.getLanguage) {
 
-  private val myType = new ConsoleRootType("haskell", "Haskell") {}
-  private var myHistoryController: ConsoleHistoryController = _
-  private var myProcessInputWriter: OutputStreamWriter = _
+  private val consoleRootType = new ConsoleRootType("haskell", "Haskell") {}
+  private var historyController: ConsoleHistoryController = _
+  private var outputStreamWriter: OutputStreamWriter = _
 
   setPrompt(HaskellConsoleHighlightingUtil.LambdaArrow)
 
   val originalFile: PsiFile = getFile.getOriginalFile
-  originalFile.putUserData(HaskellConsoleView.HaskellConsoleKey, stackTarget)
+  originalFile.putUserData(HaskellConsoleView.HaskellConsoleKey, HaskellConsoleInfo(configuration.getStackTarget, configuration.getName))
 
   override def attachToProcess(processHandler: ProcessHandler): Unit = {
     super.attachToProcess(processHandler)
     Option(processHandler.getProcessInput).foreach(processInput => {
-      myProcessInputWriter = new OutputStreamWriter(processInput)
-      myHistoryController = new ConsoleHistoryController(myType, "haskell", this)
-      myHistoryController.install()
+      outputStreamWriter = new OutputStreamWriter(processInput)
+      historyController = new ConsoleHistoryController(consoleRootType, "haskell", this)
+      historyController.install()
       HaskellConsoleViewMap.addConsole(this)
     })
   }
@@ -68,19 +72,19 @@ class HaskellConsoleView(val project: Project, val stackTarget: String) extends 
 
   def execute(): Unit = {
     for {
-      myProcessInputWriter <- Option(myProcessInputWriter)
-      myHistoryController <- Option(myHistoryController)
+      processInputWriter <- Option(outputStreamWriter)
+      historyController <- Option(historyController)
     } yield {
       val consoleEditor = getConsoleEditor
       val editorDocument = consoleEditor.getDocument
       val text = editorDocument.getText
 
       addToHistoryInner(new TextRange(0, text.length), consoleEditor, true, true)
-      myHistoryController.addToHistory(text)
+      historyController.addToHistory(text)
       for (line <- text.split("\n")) {
         try {
-          myProcessInputWriter.write(line + "\n")
-          myProcessInputWriter.flush()
+          processInputWriter.write(line + "\n")
+          processInputWriter.flush()
         } catch {
           case e: IOException => HaskellNotificationGroup.logErrorEvent(ProjectManager.getInstance().getDefaultProject, e.getMessage)
         }
@@ -88,3 +92,5 @@ class HaskellConsoleView(val project: Project, val stackTarget: String) extends 
     }
   }
 }
+
+final case class HaskellConsoleInfo(stackTarget: String, configurationName: String)

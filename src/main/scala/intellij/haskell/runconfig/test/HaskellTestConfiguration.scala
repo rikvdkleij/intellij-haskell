@@ -11,7 +11,7 @@ import intellij.haskell.runconfig.{HaskellStackConfigurationBase, HaskellStackSt
 
 import scala.collection.JavaConverters._
 
-class HaskellTestConfiguration(override val name: String, override val project: Project, override val configurationFactory: ConfigurationFactory)
+class HaskellTestConfiguration(name: String, project: Project, configurationFactory: ConfigurationFactory)
   extends HaskellStackConfigurationBase(name, project, configurationFactory) {
 
   private var testSuiteTargetName: String = ""
