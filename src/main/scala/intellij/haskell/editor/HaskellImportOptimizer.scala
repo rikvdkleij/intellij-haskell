@@ -47,7 +47,7 @@ class HaskellImportOptimizer extends ImportOptimizer {
 }
 
 object HaskellImportOptimizer {
-  final val WarningRedundantImport: Regex = """The (?:qualified )?import of [`|‘]([^'’]+)['|’] is redundant.*""".r
+  final val WarningRedundantImport: Regex = """.*The (?:qualified )?import of [`|‘]([^'’]+)['|’] is redundant.*""".r
 
   def removeRedundantImport(psiFile: PsiFile, offset: Int): Unit = {
     val redundantImportDeclaration = Option(psiFile.findElementAt(offset)).flatMap(HaskellPsiUtil.findImportDeclarationParent)
