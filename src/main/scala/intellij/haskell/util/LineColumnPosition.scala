@@ -37,7 +37,7 @@ object LineColumnPosition {
   def fromOffset(psiFile: PsiFile, offset: Int): Option[LineColumnPosition] = {
     val fdm = FileDocumentManager.getInstance
     for {
-      file <- Option(psiFile.getOriginalFile.getVirtualFile)
+      file <- HaskellFileUtil.findVirtualFile(psiFile)
       doc <- Option(fdm.getDocument(file))
       li <- if (offset <= doc.getTextLength) Some(doc.getLineNumber(offset)) else None
     } yield LineColumnPosition(li + 1, offset - doc.getLineStartOffset(li) + 1)
@@ -46,7 +46,7 @@ object LineColumnPosition {
   def getOffset(psiFile: PsiFile, lineColPos: LineColumnPosition): Option[Int] = {
     val fdm = FileDocumentManager.getInstance
     for {
-      file <- Option(psiFile.getOriginalFile.getVirtualFile)
+      file <- HaskellFileUtil.findVirtualFile(psiFile)
       doc <- Option(fdm.getDocument(file))
       lineIndex <- getLineIndex(lineColPos.lineNr, doc)
       startOffsetLine = doc.getLineStartOffset(lineIndex)

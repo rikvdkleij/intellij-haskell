@@ -33,9 +33,10 @@ class HaskellImportOptimizer extends ImportOptimizer {
 
   override def processFile(psiFile: PsiFile): Runnable = {
     () => {
-      val warnings = DaemonCodeAnalyzerImpl.getHighlights(HaskellFileUtil.findDocument(psiFile.getVirtualFile).get, HighlightSeverity.WARNING, psiFile.getProject)
+      val document = HaskellFileUtil.findDocument(psiFile)
+      val warnings = document.map(d => DaemonCodeAnalyzerImpl.getHighlights(d, HighlightSeverity.WARNING, psiFile.getProject)).map(_.asScala).getOrElse(Seq())
 
-      val redundantImports = warnings.asScala.filter(_.getDescription match {
+      val redundantImports = warnings.filter(_.getDescription match {
         case HaskellImportOptimizer.WarningRedundantImport(_) => true
         case _ => false
       })

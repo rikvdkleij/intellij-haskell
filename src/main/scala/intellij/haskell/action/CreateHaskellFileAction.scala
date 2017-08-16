@@ -89,8 +89,7 @@ class CreateHaskellFileAction extends CreateFileFromTemplateAction(CreateHaskell
         val psiFile = element.getContainingFile
 
         try {
-          val virtualFile = Option(psiFile.getVirtualFile)
-
+          val virtualFile = HaskellFileUtil.findVirtualFile(psiFile)
           virtualFile.foreach(vFile => {
             FileEditorManager.getInstance(project).openFile(vFile, true)
             Option(getDefaultTemplateProperty).foreach(defaultTemplateProperty => {

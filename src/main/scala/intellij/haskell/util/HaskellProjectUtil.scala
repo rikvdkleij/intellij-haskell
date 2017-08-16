@@ -60,7 +60,7 @@ object HaskellProjectUtil {
   }
 
   def isProjectTestFile(psiFile: PsiFile): Option[Boolean] = {
-    isProjectTestFile(psiFile.getOriginalFile.getVirtualFile, psiFile.getProject)
+    HaskellFileUtil.findVirtualFile(psiFile).flatMap(vf => isProjectTestFile(vf, psiFile.getProject))
   }
 
   def isProjectTestFile(virtualFile: VirtualFile, project: Project): Option[Boolean] = {
@@ -68,7 +68,7 @@ object HaskellProjectUtil {
   }
 
   def isProjectFile(psiFile: PsiFile): Option[Boolean] = {
-    isProjectFile(psiFile.getOriginalFile.getVirtualFile, psiFile.getProject)
+    HaskellFileUtil.findVirtualFile(psiFile).flatMap(vf => isProjectFile(vf, psiFile.getProject))
   }
 
   def isProjectFile(virtualFile: VirtualFile, project: Project): Option[Boolean] = {

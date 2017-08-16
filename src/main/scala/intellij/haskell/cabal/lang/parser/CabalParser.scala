@@ -2,13 +2,12 @@ package intellij.haskell.cabal.lang.parser
 
 import com.intellij.lang.impl.PsiBuilderAdapter
 import com.intellij.lang.{ASTNode, PsiBuilder, PsiParser}
-import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.psi.PsiFile
 import com.intellij.psi.impl.source.resolve.FileContextUtil
 import com.intellij.psi.tree.IElementType
-
 import intellij.haskell.cabal.lang.psi.CabalTypes._
 import intellij.haskell.cabal.lang.psi._
+import intellij.haskell.util.HaskellFileUtil
 
 final class CabalParser extends PsiParser {
 
@@ -25,8 +24,6 @@ final class CabalPsiBuilder(builder: PsiBuilder)
   def getPsiFile: Option[PsiFile] = {
     Option(getUserDataUnprotected(FileContextUtil.CONTAINING_FILE_KEY))
   }
-
-  def getVirtualFile: Option[VirtualFile] = getPsiFile.map(_.getVirtualFile)
 
   def doParse(root: IElementType): ASTNode = {
     val marker = mark()
@@ -803,7 +800,7 @@ final class CabalPsiBuilder(builder: PsiBuilder)
         if (trackedCount > PARSE_WHILE_ASSERTION_LIMIT) {
           throw new AssertionError(
             s"parseWhile stuck at offset $getCurrentOffset for $trackedCount iterations in file: "
-              + getVirtualFile.orNull
+              + getPsiFile.flatMap(HaskellFileUtil.findVirtualFile).orNull
           )
         }
       } else {

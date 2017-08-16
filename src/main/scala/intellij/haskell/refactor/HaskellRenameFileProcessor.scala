@@ -17,7 +17,7 @@ class HaskellRenameFileProcessor extends RenamePsiElementProcessor {
 
   override def prepareRenaming(psiElement: PsiElement, fileName: String, allRenames: util.Map[PsiElement, String]): Unit = {
     if (psiElement.isValid) {
-      Option(psiElement.getContainingFile).flatMap(f => HaskellPsiUtil.findModuleDeclaration(f)).foreach(moduleDeclaration => {
+      HaskellPsiUtil.findModuleDeclaration(psiElement.getContainingFile).foreach(moduleDeclaration => {
         moduleDeclaration.getModuleName.foreach(moduleName => {
           val newModuleName = HaskellRenameFileProcessor.createNewModuleName(moduleName, fileName)
           allRenames.put(moduleDeclaration, newModuleName)

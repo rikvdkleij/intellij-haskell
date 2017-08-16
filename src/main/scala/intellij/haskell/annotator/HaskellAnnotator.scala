@@ -45,7 +45,7 @@ class HaskellAnnotator extends ExternalAnnotator[(PsiFile, Option[PsiElement]), 
     if (HaskellConsoleView.isConsoleFile(psiFile)) {
       null
     } else {
-      (psiFile, Option(psiFile.getOriginalFile.getVirtualFile)) match {
+      (psiFile, HaskellFileUtil.findVirtualFile(psiFile)) match {
         case (_, None) => null // can be in case if file is in memory only (just created file)
         case (_, Some(f)) if f.getFileType != HaskellFileType.Instance => null
         case (_, Some(_)) if !psiFile.isValid | HaskellProjectUtil.isLibraryFile(psiFile).getOrElse(true) | StackProjectManager.isBuilding(psiFile.getProject) => null

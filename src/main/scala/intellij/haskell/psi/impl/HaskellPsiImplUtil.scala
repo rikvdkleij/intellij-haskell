@@ -215,8 +215,8 @@ object HaskellPsiImplUtil {
   private abstract class HaskellItemPresentation(haskellElement: PsiElement) extends ItemPresentation {
 
     def getLocationString: String = {
-      val file = Option(haskellElement.getContainingFile)
-      file.flatMap(f => HaskellPsiUtil.findModuleDeclaration(f).flatMap(_.getModuleName)).getOrElse("Unknown module")
+      val psiFile = haskellElement.getContainingFile
+      HaskellPsiUtil.findModuleDeclaration(psiFile).flatMap(_.getModuleName).getOrElse("Unknown module")
     }
 
     def getIcon(unused: Boolean): Icon = {
@@ -298,7 +298,8 @@ object HaskellPsiImplUtil {
 
   private def getContainingLineText(namedElement: PsiElement) = {
     for {
-      doc <- HaskellFileUtil.findDocument(namedElement.getContainingFile.getVirtualFile)
+      virtualFile <- HaskellFileUtil.findVirtualFile(namedElement.getContainingFile)
+      doc <- HaskellFileUtil.findDocument(virtualFile)
       element <- HaskellPsiUtil.findQualifiedNameParent(namedElement)
       start = findNewline(element, e => e.getPrevSibling).getTextOffset
       end = findNewline(element, e => e.getNextSibling).getTextOffset

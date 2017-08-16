@@ -31,26 +31,15 @@ import intellij.haskell.action.SelectionContext
 
 object HaskellFileUtil {
 
-  def saveAllFiles(project: Project, psiFile: Option[PsiFile]): Unit = {
-    psiFile match {
-      case Some(pf) =>
-        val documentManager = PsiDocumentManager.getInstance(pf.getProject)
-        findDocument(pf).foreach(documentManager.doPostponedOperationsAndUnblockDocument)
-        documentManager.performWhenAllCommitted(
-          () => {
-            FileDocumentManager.getInstance.saveAllDocuments()
-          }
-        )
-      case None =>
-        val documentManager = PsiDocumentManager.getInstance(project)
-        documentManager.performWhenAllCommitted(
-          () => {
-            FileDocumentManager.getInstance.saveAllDocuments()
-          }
-        )
-    }
+  def saveAllFiles(project: Project, psiFile: PsiFile): Unit = {
+    val documentManager = PsiDocumentManager.getInstance(psiFile.getProject)
+    findDocument(psiFile).foreach(documentManager.doPostponedOperationsAndUnblockDocument)
+    documentManager.performWhenAllCommitted(
+      () => {
+        FileDocumentManager.getInstance.saveAllDocuments()
+      }
+    )
   }
-
 
   def saveFile(psiFile: PsiFile): Unit = {
     findDocument(psiFile).foreach(d => {
