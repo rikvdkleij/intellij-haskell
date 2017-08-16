@@ -69,9 +69,9 @@ class StackProjectImportBuilder extends ProjectImportBuilder[Unit] {
       })
 
       if (!packageRelativePaths.contains(".")) {
-        val emptyModuleBuilder = new EmptyParentModuleBuilder(project)
+        val emptyModuleBuilder = new ParentModuleBuilder(project)
         emptyModuleBuilder.setModuleFilePath(new File(project.getBasePath, project.getName + " parent").getAbsolutePath + ".iml")
-        emptyModuleBuilder.setName("Empty parent module")
+        emptyModuleBuilder.setName("Parent module")
         emptyModuleBuilder.commit(project)
         emptyModuleBuilder.addModuleConfigurationUpdater((_: Module, rootModel: ModifiableRootModel) => {
           emptyModuleBuilder.setupRootModel(rootModel)
@@ -95,23 +95,22 @@ class StackProjectImportBuilder extends ProjectImportBuilder[Unit] {
   }
 }
 
-class EmptyParentModuleBuilder(val project: Project) extends ModuleBuilder {
+class ParentModuleBuilder(val project: Project) extends ModuleBuilder {
   override def isOpenProjectSettingsAfter = true
 
   override def canCreateModule = true
 
   override def setupRootModel(modifiableRootModel: ModifiableRootModel): Unit = {
-    val contentEntry = doAddContentEntry(modifiableRootModel)
     modifiableRootModel.addContentEntry(project.getBasePath)
   }
 
   override def getModuleType: ModuleType[_ <: ModuleBuilder] = ModuleType.EMPTY
 
-  override def getPresentableName = "Empty Parent Module"
+  override def getPresentableName = "Parent Module"
 
   override def getGroupName: String = getPresentableName
 
   override def isTemplateBased = true
 
-  override def getDescription = "Empty parent module."
+  override def getDescription = "Module at root of project so directories at root level are accessible"
 }
