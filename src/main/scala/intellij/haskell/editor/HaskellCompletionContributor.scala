@@ -104,15 +104,20 @@ class HaskellCompletionContributor extends CompletionContributor {
 
       val project = parameters.getPosition.getProject
 
-      if (!HaskellConsoleView.isConsoleFile(psiFile) && (HaskellProjectUtil.isLibraryFile(psiFile).getOrElse(true) || Option(parameters.getOriginalPosition).map(_.getNode.getElementType).exists(t => HaskellParserDefinition.Literals.contains(t) || HaskellParserDefinition.Comments.contains(t)))) {
+      val isConsoleFile = HaskellConsoleView.isConsoleFile(psiFile)
+      if (!isConsoleFile && (HaskellProjectUtil.isLibraryFile(psiFile).getOrElse(true) || Option(parameters.getOriginalPosition).map(_.getNode.getElementType).exists(t => HaskellParserDefinition.Literals.contains(t) || HaskellParserDefinition.Comments.contains(t)))) {
         return
       }
 
       ProgressManager.checkCanceled()
 
-      // In case element before caret is a qualifier, module name or a dot we have to "help" IntelliJ to get the right preselected elements behavior
-      // For example, asking for completion in case typing `Data.List.` will give without this help no prefix.
-      val positionElement = Option(parameters.getOriginalPosition).orElse(Option(parameters.getPosition))
+      val positionElement = if (isConsoleFile) {
+        None
+      } else {
+        // In case element before caret is a qualifier, module name or a dot we have to "help" IntelliJ to get the right preselected elements behavior
+        // For example, asking for completion in case typing `Data.List.` will give without this help no prefix.
+        Option(parameters.getOriginalPosition).orElse(Option(parameters.getPosition))
+      }
       val prefixText = (
         for {
           e <- positionElement
@@ -145,64 +150,66 @@ class HaskellCompletionContributor extends CompletionContributor {
 
       positionElement match {
         case Some(e) if isPragmaInProgress(e) =>
-          resultSet.addAllElements(getModulePragmaIds.asJavaCollection)
-          resultSet.addAllElements(getPragmaStartEndIds.asJavaCollection)
+          resultSet.addAllElements(getModulePragmaIdsLookupElements.asJavaCollection)
+          resultSet.addAllElements(getPragmaStartEndIdsLookupElements.asJavaCollection)
         case Some(e) if isFileHeaderPragmaInProgress(e) =>
-          resultSet.addAllElements(getLanguageExtensions(project).asJavaCollection)
-          resultSet.addAllElements(getPragmaStartEndIds.asJavaCollection)
-          resultSet.addAllElements(getFileHeaderPragmaIds.asJavaCollection)
+          resultSet.addAllElements(getLanguageExtensionsLookupElements(project).asJavaCollection)
+          resultSet.addAllElements(getPragmaStartEndIdsLookupElements.asJavaCollection)
+          resultSet.addAllElements(getFileHeaderPragmaIdsLookupElements.asJavaCollection)
         case Some(e) if isImportSpecInProgress(e) =>
           resultSet.addAllElements(findAvailableIdsForImportModuleSpec(project, e, psiFile).asJavaCollection)
         case Some(e) if isImportModuleDeclarationInProgress(e) =>
           // Do not give suggestions when defining import qualifier
           if (e.getParent.getNode.getElementType != HS_QUALIFIER) {
-            resultSet.addAllElements(findAvailableModuleNames(project, psiFile).asJavaCollection)
-            resultSet.addAllElements(getInsideImportClauses.asJavaCollection)
+            resultSet.addAllElements(findAvailableModuleNamesLookupElements(project, psiFile).asJavaCollection)
+            resultSet.addAllElements(getInsideImportClausesLookupElements.asJavaCollection)
             resultSet.addElement(createKeywordLookupElement("import"))
           }
         case Some(e) if isNCommentInProgress(e) =>
-          resultSet.addAllElements(getPragmaStartEndIds.asJavaCollection)
-          resultSet.addAllElements(getCommentIds.asJavaCollection)
+          resultSet.addAllElements(getPragmaStartEndIdsLookupElements.asJavaCollection)
+          resultSet.addAllElements(getCommentIdsLookupElements.asJavaCollection)
         case op =>
           ProgressManager.checkCanceled()
 
-          resultSet.addAllElements(getReservedNames.asJavaCollection)
-          resultSet.addAllElements(getSpecialReservedIds.asJavaCollection)
-          resultSet.addAllElements(getPragmaStartEndIds.asJavaCollection)
-          resultSet.addAllElements(getCommentIds.asJavaCollection)
-          resultSet.addAllElements(getHaddockIds.asJavaCollection)
-          ProgressManager.checkCanceled()
-
-          ProgressManager.checkCanceled()
-
           // If file is console file, find the project file which corresponds to loaded file in console
-          val loadedFile = for {
-            consoleInfo <- HaskellConsoleView.findConsoleInfo(psiFile)
-            configName = consoleInfo.configurationName
-            haskellFile <- HaskellConsoleViewMap.projectFileByConfigName.get(configName)
-          } yield haskellFile
+          val projectFile =
+            if (isConsoleFile) {
+              resultSet.addAllElements(HaskellComponentsManager.findAvailableStackTargetProjectModuleNames(psiFile).map(createModuleLookupElement).asJavaCollection)
+              for {
+                consoleInfo <- HaskellConsoleView.findConsoleInfo(psiFile)
+                configName = consoleInfo.configurationName
+                haskellFile <- HaskellConsoleViewMap.projectFileByConfigName.get(configName)
+              } yield haskellFile
+            } else {
+              Some(psiFile)
+            }
 
+          ProgressManager.checkCanceled()
 
           // Retrieve identifiers in scope by always using the project file
-          val file = loadedFile.getOrElse(psiFile)
-          resultSet.addAllElements(getAvailableImportedLookupElements(file).asJavaCollection)
-          val moduleName = findModuleName(file)
-          val currentFileModuleIdentifiers = moduleName.map(mn => HaskellComponentsManager.findExportedModuleIdentifiersOfCurrentFile(file, mn))
+          projectFile.foreach(file => {
+            resultSet.addAllElements(getAvailableImportedLookupElements(file).asJavaCollection)
+            val moduleName = findModuleName(file)
+            val identifiers = moduleName.map(mn => HaskellComponentsManager.findExportedModuleIdentifiersOfCurrentFile(file, mn))
 
-
-          ProgressManager.checkCanceled()
-          currentFileModuleIdentifiers.foreach(moduleIdentifiers => {
-            val lookupElements = moduleIdentifiers.map(createTopLevelLookupElement)
             ProgressManager.checkCanceled()
-            resultSet.addAllElements(lookupElements.asJavaCollection)
+
+            identifiers.foreach(ids => {
+              val lookupElements = ids.map(createTopLevelLookupElement)
+              resultSet.addAllElements(lookupElements.asJavaCollection)
+              resultSet.addAllElements(findOtherLookupElements(file, identifiers.getOrElse(Iterable())).asJavaCollection)
+            })
+
             ProgressManager.checkCanceled()
-          })
 
+            resultSet.addAllElements(getKeywordLookupElements.asJavaCollection)
+            resultSet.addAllElements(getSpecialReservedIdLookupElements.asJavaCollection)
+            resultSet.addAllElements(getPragmaStartEndIdsLookupElements.asJavaCollection)
+            resultSet.addAllElements(getCommentIdsLookupElements.asJavaCollection)
+            resultSet.addAllElements(getHaddockIdsLookupElements.asJavaCollection)
 
-          ProgressManager.checkCanceled()
+            ProgressManager.checkCanceled()
 
-          if (!HaskellConsoleView.isConsoleFile(psiFile)) {
-            resultSet.addAllElements(findOtherLookupElements(psiFile, currentFileModuleIdentifiers.getOrElse(Iterable())).asJavaCollection)
             op.foreach(element => {
               val localElements = HaskellPsiUtil.findNamedElement(element) match {
                 case Some(ne) => findLocalElements(element).filterNot(_ == ne)
@@ -210,7 +217,7 @@ class HaskellCompletionContributor extends CompletionContributor {
               }
               resultSet.addAllElements(localElements.map(createLocalLookupElement).asJavaCollection)
             })
-          }
+          })
       }
     }
   }
@@ -312,36 +319,40 @@ class HaskellCompletionContributor extends CompletionContributor {
     } yield HaskellComponentsManager.findExportedModuleIdentifiers(project, moduleName).map(m => createLookupElement(m, addParens = true))).getOrElse(Stream())
   }
 
-  private def findAvailableModuleNames(project: Project, psiFile: PsiFile) = {
+  private def findAvailableModuleNamesLookupElements(project: Project, psiFile: PsiFile) = {
     val moduleNames = HaskellComponentsManager.findAvailableModuleNames(psiFile)
-    moduleNames.map(m => LookupElementBuilder.create(m).withTailText(" module", true))
+    moduleNames.map(createModuleLookupElement)
   }
 
-  private def getInsideImportClauses = {
+  private def createModuleLookupElement(moduleName: String) = {
+    LookupElementBuilder.create(moduleName).withTailText(" module", true)
+  }
+
+  private def getInsideImportClausesLookupElements = {
     InsideImportKeywords.map(c => LookupElementBuilder.create(c).withTailText(" clause", true))
   }
 
-  private def getLanguageExtensions(project: Project) = {
+  private def getLanguageExtensionsLookupElements(project: Project) = {
     HaskellComponentsManager.getSupportedLanguageExtension(project).map(n => LookupElementBuilder.create(n).withIcon(HaskellIcons.HaskellSmallBlueLogo).withTailText(" language extension", true))
   }
 
-  private def getPragmaStartEndIds = {
+  private def getPragmaStartEndIdsLookupElements = {
     PragmaIds.map(p => LookupElementBuilder.create(p).withIcon(HaskellIcons.HaskellSmallBlueLogo).withTailText(" pragma", true))
   }
 
-  private def getFileHeaderPragmaIds = {
+  private def getFileHeaderPragmaIdsLookupElements = {
     FileHeaderPragmaIds.map(p => LookupElementBuilder.create(p).withIcon(HaskellIcons.HaskellSmallBlueLogo).withTailText(" pragma", true))
   }
 
-  private def getModulePragmaIds = {
+  private def getModulePragmaIdsLookupElements = {
     ModulePragmaIds.map(p => LookupElementBuilder.create(p).withIcon(HaskellIcons.HaskellSmallBlueLogo).withTailText(" pragma", true))
   }
 
-  private def getCommentIds = {
+  private def getCommentIdsLookupElements = {
     CommentIds.map(p => LookupElementBuilder.create(p).withIcon(HaskellIcons.HaskellSmallBlueLogo).withTailText(" comment", true))
   }
 
-  private def getHaddockIds = {
+  private def getHaddockIdsLookupElements = {
     HaddockIds.map(p => LookupElementBuilder.create(p).withIcon(HaskellIcons.HaskellSmallBlueLogo).withTailText(" haddock", true))
   }
 
@@ -349,7 +360,7 @@ class HaskellCompletionContributor extends CompletionContributor {
     getAvailableImportedModuleIdentifiers(psiFile).map(mi => createLookupElement(mi))
   }
 
-  private def getReservedNames = {
+  private def getKeywordLookupElements = {
     Keywords.map(createKeywordLookupElement)
   }
 
@@ -357,7 +368,7 @@ class HaskellCompletionContributor extends CompletionContributor {
     LookupElementBuilder.create(keyword).withIcon(HaskellIcons.HaskellSmallBlueLogo).withTailText(" keyword", true)
   }
 
-  private def getSpecialReservedIds = {
+  private def getSpecialReservedIdLookupElements = {
     SpecialReservedIds.map(sr => LookupElementBuilder.create(sr).withIcon(HaskellIcons.HaskellSmallBlueLogo).withTailText(" special keyword", true))
   }
 
@@ -400,7 +411,7 @@ object HaskellCompletionContributor {
   private final val Timeout = Duration.create(1, TimeUnit.SECONDS)
 
   private final val ExecutorService = Executors.newCachedThreadPool()
-  implicit private final val ExecContext = ExecutionContext.fromExecutorService(ExecutorService)
+  implicit private final val ExecContext: ExecutionContextExecutorService = ExecutionContext.fromExecutorService(ExecutorService)
 
   def getAvailableImportedModuleIdentifiers(psiFile: PsiFile): Iterable[ModuleIdentifier] = {
     val project = psiFile.getProject

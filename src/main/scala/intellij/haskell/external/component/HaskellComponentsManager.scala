@@ -61,6 +61,10 @@ object HaskellComponentsManager {
     AvailableModuleNamesComponent.findAvailableModuleNames(psiFile)
   }
 
+  def findAvailableStackTargetProjectModuleNames(psiFile: PsiFile): Iterable[String] = {
+    AvailableModuleNamesComponent.findAvailableStackTargetProjectModuleNames(psiFile)
+  }
+
   def findStackComponentGlobalInfo(psiFile: PsiFile): Option[StackComponentGlobalInfo] = {
     StackComponentGlobalInfoComponent.findStackComponentGlobalInfo(psiFile)
   }

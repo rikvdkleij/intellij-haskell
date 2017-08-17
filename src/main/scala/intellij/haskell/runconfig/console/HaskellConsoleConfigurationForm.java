@@ -10,6 +10,7 @@ import javax.swing.*;
 public class HaskellConsoleConfigurationForm extends SettingsEditor<HaskellConsoleConfiguration> {
     private JPanel myPanel;
     private JComboBox targetcomboBox;
+    private JLabel Note;
 
     public HaskellConsoleConfigurationForm(@NotNull Project project) {
         targetcomboBox.setEnabled(true);

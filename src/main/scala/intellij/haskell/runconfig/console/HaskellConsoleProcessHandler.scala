@@ -31,12 +31,17 @@ class HaskellConsoleProcessHandler private[runconfig](val process: Process, val 
     text match {
       case HaskellConsoleProcessHandler.ModulesLoadedPattern(moduleNamesList) =>
         val moduleNames = moduleNamesList.trim.init.split(",").map(_.trim)
-        val haskellFile = ApplicationManager.getApplication.runReadAction(new Computable[Option[HaskellFile]] {
-          override def compute(): Option[HaskellFile] = {
-            moduleNames.lastOption.flatMap(mn => HaskellModuleNameIndex.findHaskellFileByModuleName(console.getProject, mn, GlobalSearchScope.projectScope(console.getProject)))
-          }
-        })
-        haskellFile.foreach(hf => HaskellConsoleViewMap.projectFileByConfigName.put(console.configuration.getName, hf))
+        moduleNames match {
+          case Array(mn) =>
+            val haskellFile = ApplicationManager.getApplication.runReadAction(new Computable[Option[HaskellFile]] {
+              override def compute(): Option[HaskellFile] = {
+                HaskellModuleNameIndex.findHaskellFileByModuleName(console.getProject, mn, GlobalSearchScope.projectScope(console.getProject)
+                )
+              }
+            })
+            haskellFile.foreach(hf => HaskellConsoleViewMap.projectFileByConfigName.put(console.configuration.getName, hf))
+          case _ => ()
+        }
       case _ => ()
     }
 

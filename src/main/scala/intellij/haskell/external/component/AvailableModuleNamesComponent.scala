@@ -29,12 +29,14 @@ import scala.collection.JavaConverters._
 private[component] object AvailableModuleNamesComponent {
 
   def findAvailableModuleNames(psiFile: PsiFile): Iterable[String] = {
+    val libraryModuleNames = findAvailableLibraryModuleNames(psiFile)
+    findAvailableStackTargetProjectModuleNames(psiFile) ++ libraryModuleNames
+  }
+
+  def findAvailableStackTargetProjectModuleNames(psiFile: PsiFile): Iterable[String] = {
     val stackComponentInfo = HaskellComponentsManager.findStackComponentInfo(psiFile)
     val project = psiFile.getProject
-    val stackComponentModuleNames = stackComponentInfo.map(info => findModuleNamesInDirectories(project, info.sourceDirs.flatMap(d => HaskellFileUtil.findDirectory(d, project)))).getOrElse(Stream())
-    val libraryModuleNames = findAvailableLibraryModuleNames(psiFile)
-
-    stackComponentModuleNames ++ libraryModuleNames
+    stackComponentInfo.map(info => findModuleNamesInDirectories(project, info.sourceDirs.flatMap(d => HaskellFileUtil.findDirectory(d, project)))).getOrElse(Stream())
   }
 
   private def findAvailableLibraryModuleNames(psiFile: PsiFile): Iterable[String] = {
