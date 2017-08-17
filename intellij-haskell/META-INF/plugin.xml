@@ -1,7 +1,7 @@
 <idea-plugin>
     <id>intellij.haskell</id>
     <name>IntelliJ-Haskell</name>
-    <version>1.0.0-beta10</version>
+    <version>1.0.0-beta11</version>
     <vendor email="rikvdkleij@gmail.com">Rik van der Kleij</vendor>
 
     <description><![CDATA[
@@ -11,6 +11,12 @@
     ]]></description>
 
     <change-notes><![CDATA[
+        <p>1.0.0-beta11</p>
+        <ul>
+            <li>Various (performance) improvements and fixes</li>
+            <li>Added Sticky Type Info action, see issue #199 (@solicode)</li>
+            <li>Support for REPL, Runner and Tester by using IntelliJ Configurations</li>
+        </ul>
         <p>1.0.0-beta10</p>
         <b>IMPORTANT: After updating plugin reimport your Haskell Stack project to get the module dependencies right in case project contains multiple packages which are depending on each other.</b>
         <ul>
