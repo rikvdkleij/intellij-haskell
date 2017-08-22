@@ -26,6 +26,7 @@ You can install this plugin using the [Jetbrains plugin repository](https://plug
 - Code completion;
 - In-place rename identifiers;
 - View type info from (selected) expression;
+- View sticky type info;
 - View expression info;
 - View quick documentation;
 - View quick definition;
@@ -42,6 +43,8 @@ You can install this plugin using the [Jetbrains plugin repository](https://plug
 - Intention action to select which module to import if identifier is not in scope;
 - Code formatting with Hindent and/or Stylish-haskell. Formatting of selected code by Hindent;
 - Code completion for project module names, language extensions and package names in Cabal file;
+- Running REPL, tests and executables via `Run Configurations`;
+
 
 # Getting started 
 - Install this plugin. Make sure no other Haskell plugin is installed in IntelliJ;
@@ -55,7 +58,7 @@ You can install this plugin using the [Jetbrains plugin repository](https://plug
   - In the `New Project` wizard select `Import project from external module` and check `Haskell Stack`;
   - In next page of wizard configure `Project SDK` by configuring `Haskell Tool Stack` with selecting path to `stack` binary, e.g. `/usr/local/bin/stack`;
   - Finish wizard and project will be opened;
-  - Wizard will try to automatically configure which folders are sources, test and which to exclude;
+  - Wizard will automatically configure which folders are sources, test and which to exclude;
   - Plugin will automatically build Intero and HLint to prevent incompatibility issues
     (If you use non LTS or Nightly resolver e.g. `ghc-7.10.2`, you may have to build them manually since there are some extra-deps should be added to `stack.yaml`).
     Those tools are built against Stackage release defined in project's `stack.yaml`.
@@ -63,8 +66,9 @@ You can install this plugin using the [Jetbrains plugin repository](https://plug
   - Check `Project structure`>`Project settings`>`Modules` which folders to exclude (like `.stack-work` and `dist`) and which folders are `Source` and `Test` (normally `src` and `test`);
   - Plugin will automatically download library sources. They will be added as source libraries to module(s).
     This option gives you nice navigation features through libraries. Sources are downloaded to folder `.intellij-haskell` inside your home folder;
-  - After changes to dependencies you can download them again by using `Tools`>`Download Haskell Library Sources`;
-  - The `Event Log` will display what's going on in the background. Useful when something fails. It's disabled by default. It can be enabled by checking `Haskell Log` checkbox in the `Event Log`>`Settings`;    
+  - After changes to dependencies you can download them again by using `Tools`>`Haskell`>`Download Haskell Library Sources`;
+  - The `Event Log` will display what's going on in the background. Useful when something fails. It's disabled by default. 
+    It can be enabled by checking `Haskell Log` checkbox in the `Event Log`>`Settings` or `Settings`>`Appearance & Behavior`>`Notifications`;    
   - In the background for each Haskell project three Stack REPLs are running. You can restart them by `Tools`>`Restart Haskell Stack REPLs`.
   - When you make changes to `stack.yaml` or Cabal file, IntelliJ will give you notification with the option to restart REPLs;
 
