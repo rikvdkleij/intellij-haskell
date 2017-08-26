@@ -35,8 +35,7 @@ class HaskellConsoleProcessHandler private[runconfig](val process: Process, val 
           case Array(mn) =>
             val haskellFile = ApplicationManager.getApplication.runReadAction(new Computable[Option[HaskellFile]] {
               override def compute(): Option[HaskellFile] = {
-                HaskellModuleNameIndex.findHaskellFileByModuleName(console.getProject, mn, GlobalSearchScope.projectScope(console.getProject)
-                )
+                HaskellModuleNameIndex.findHaskellFileByModuleName(console.getProject, mn, GlobalSearchScope.projectScope(console.getProject))
               }
             })
             haskellFile.foreach(hf => HaskellConsoleViewMap.projectFileByConfigName.put(console.configuration.getName, hf))

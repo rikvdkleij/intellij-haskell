@@ -3,6 +3,7 @@ package intellij.haskell.runconfig.console
 import java.util.concurrent.ConcurrentHashMap
 
 import com.intellij.openapi.editor.Editor
+import com.intellij.openapi.project.Project
 import intellij.haskell.HaskellFile
 
 import scala.collection.JavaConverters._
@@ -20,6 +21,10 @@ object HaskellConsoleViewMap {
 
   def getConsole(editor: Editor): Option[HaskellConsoleView] = {
     consoleViews.get(editor)
+  }
+
+  def getConsole(editor: Project): Option[HaskellConsoleView] = {
+    consoleViews.values.find(_.project == editor)
   }
 
   // File is project file and not file which represents console

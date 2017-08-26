@@ -385,6 +385,20 @@
             <add-to-group group-id="CodeEditorViewGroup" anchor="last"/>
         </group>
 
+        <group id="HaskellGhciMenu" text="GHCi" description="GHCi" popup="true">
+            <action id="Haskell.SendToGhci" class="intellij.haskell.action.ghci.SendToConsoleAction"
+                    text="Send to GHCi" description="Execute selected command in GHCi" />
+
+            <action id="Haskell.Ghci.LoadModule" class="intellij.haskell.action.ghci.LoadModuleAction"
+                    text="Load module in GHCi" description="Load currently selected module in GHCi" />
+
+            <action id="Haskell.Ghci.ReloadModules" class="intellij.haskell.action.ghci.ReloadModulesAction"
+                    text="Reload modules in GHCi" description="Reload the current module set in GHCi" />
+
+            <action id="Haskell.Ghci.ReloadWithLastCommand" class="intellij.haskell.action.ghci.ReloadWithLastCommandAction"
+                    text="Reload GHCi with last command" description="Re-execute last command after reloading modules" />
+        </group>
+
         <group id="HaskellToolsMenu" text="Haskell" description="Haskell Tools" icon="/icons/haskell@16.png" popup="true">
             <action id="Haskell.DownloadLibSources" class="intellij.haskell.action.DownloadLibrarySources"
                     text="Download Haskell Library Sources"
@@ -401,6 +415,7 @@
                     description="(Re)Generate Haskell documentation and (re)build local Hoogle database">
             </action>
             <add-to-group group-id="ToolsMenu" anchor="first"/>
+            <reference id="HaskellGhciMenu"/>
         </group>
 
         <group id="HaskellCodeMenu" text="Haskell" description="Haskell Code Tools" icon="/icons/haskell@16.png" popup="true">
