@@ -23,7 +23,7 @@ import com.intellij.execution.process.ProcessHandler
 import com.intellij.execution.ui.ConsoleViewContentType
 import com.intellij.openapi.command.WriteCommandAction
 import com.intellij.openapi.project.{Project, ProjectManager}
-import com.intellij.openapi.util.{Key, TextRange}
+import com.intellij.openapi.util.Key
 import com.intellij.psi.PsiFile
 import com.intellij.util.DocumentUtil
 import intellij.haskell.{HaskellFileType, HaskellNotificationGroup}
@@ -85,14 +85,17 @@ class HaskellConsoleView(val project: Project, val configuration: HaskellConsole
     executeCommand(text)
   }
 
-  def executeCommand(command: String, silent: Boolean = false): Unit = {
+  def executeCommand(command: String, addToHistory: Boolean = true, echo: Boolean = true): Unit = {
     for {
       processInputWriter <- Option(outputStreamWriter)
       historyController <- Option(historyController)
     } yield {
-      if (!silent) {
+      if (addToHistory) {
         lastCommand = Some(command)
         historyController.addToHistory(command)
+      }
+
+      if (echo) {
         print(command + "\n", ConsoleViewContentType.NORMAL_OUTPUT)
       }
 
@@ -109,7 +112,7 @@ class HaskellConsoleView(val project: Project, val configuration: HaskellConsole
 
   def executeLastCommand(): Unit = {
     lastCommand.foreach { command =>
-      executeCommand(command, silent = true)
+      executeCommand(command)
     }
   }
 

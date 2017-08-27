@@ -16,7 +16,7 @@ class LoadModuleAction extends AnAction {
       actionContext <- ActionUtil.findActionContext(actionEvent)
       consoleView <- HaskellConsoleViewMap.getConsole(actionContext.project)
     } yield {
-      consoleView.executeCommand(s":load ${actionContext.psiFile.getVirtualFile.getPath}", silent = true)
+      consoleView.executeCommand(s":load ${actionContext.psiFile.getVirtualFile.getPath}", addToHistory = false)
     }
   }
 

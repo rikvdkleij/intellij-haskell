@@ -16,7 +16,7 @@ class ReloadModulesAction extends AnAction {
       actionContext <- ActionUtil.findActionContext(actionEvent)
       consoleView <- HaskellConsoleViewMap.getConsole(actionContext.project)
     } yield {
-      consoleView.executeCommand(":reload", silent = true)
+      consoleView.executeCommand(":reload", addToHistory = false)
     }
   }
 
