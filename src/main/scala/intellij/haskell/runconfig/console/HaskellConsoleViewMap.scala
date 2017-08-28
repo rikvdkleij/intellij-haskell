@@ -24,7 +24,7 @@ object HaskellConsoleViewMap {
   }
 
   def getConsole(editor: Project): Option[HaskellConsoleView] = {
-    consoleViews.values.find(_.project == editor)
+    consoleViews.values.find(console => console.project == editor && console.isShowing)
   }
 
   // File is project file and not file which represents console
