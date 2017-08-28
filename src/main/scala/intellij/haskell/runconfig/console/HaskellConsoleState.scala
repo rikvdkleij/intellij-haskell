@@ -6,8 +6,8 @@ import com.intellij.execution.filters.TextConsoleBuilderImpl
 import com.intellij.execution.process.{ProcessHandler, ProcessTerminatedListener}
 import com.intellij.execution.runners.ExecutionEnvironment
 import com.intellij.execution.ui.ConsoleView
-import intellij.haskell.external.execution.{GhcVersion, StackCommandLine}
 import intellij.haskell.sdk.HaskellSdkType
+import intellij.haskell.util.{GhcVersion, HaskellProjectUtil}
 
 class HaskellConsoleState(val configuration: HaskellConsoleConfiguration, val environment: ExecutionEnvironment) extends CommandLineState(environment) {
 
@@ -21,9 +21,6 @@ class HaskellConsoleState(val configuration: HaskellConsoleConfiguration, val en
   protected def startProcess: ProcessHandler = {
     val project = configuration.getProject
 
-    val ghcVersion = StackCommandLine.runCommand(project, Seq("exec", "--", "ghc", "--numeric-version"))
-      .map(o => GhcVersion.parse(o.getStdout.trim))
-
     HaskellSdkType.getStackPath(project) match {
       case Some(stackPath) =>
         val stackTarget = configuration.getStackTarget
@@ -36,8 +33,8 @@ class HaskellConsoleState(val configuration: HaskellConsoleConfiguration, val en
         }
 
         // Enable color output for GHC versions that support it.
-        ghcVersion.foreach { version =>
-          if (version >= GhcVersion(8, 2, 1)) {
+        HaskellProjectUtil.getGhcVersion(project).foreach { ghcVersion =>
+          if (ghcVersion >= GhcVersion(8, 2, 1)) {
             commandLine.addParameters("--ghc-options", "-fdiagnostics-color=always")
           }
         }

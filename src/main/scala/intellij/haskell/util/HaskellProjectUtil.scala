@@ -25,6 +25,7 @@ import com.intellij.openapi.vfs.{LocalFileSystem, VirtualFile}
 import com.intellij.psi.search.GlobalSearchScope
 import com.intellij.psi.{PsiElement, PsiFile, PsiManager}
 import intellij.haskell.HaskellFile
+import intellij.haskell.external.execution.StackCommandLine
 import intellij.haskell.module.HaskellModuleType
 import intellij.haskell.sdk.HaskellSdkType
 
@@ -128,5 +129,24 @@ object HaskellProjectUtil {
 
   def findProjectModules(project: Project): Iterable[Module] = {
     ModuleUtil.getModulesOfType(project, HaskellModuleType.getInstance).asScala
+  }
+
+  def getGhcVersion(project: Project): Option[GhcVersion] = {
+    StackCommandLine.runCommand(project, Seq("exec", "--", "ghc", "--numeric-version"))
+      .map(o => GhcVersion.parse(o.getStdout.trim))
+  }
+
+}
+
+case class GhcVersion(major: Int, minor: Int, patch: Int) extends Ordered[GhcVersion] {
+  def compare(that: GhcVersion): Int = GhcVersion.asc.compare(this, that)
+}
+
+object GhcVersion {
+  val asc: Ordering[GhcVersion] = Ordering.by(unapply)
+
+  def parse(version: String): GhcVersion = {
+    val parts = version.split('.')
+    GhcVersion(parts(0).toInt, parts(1).toInt, parts(2).toInt)
   }
 }
