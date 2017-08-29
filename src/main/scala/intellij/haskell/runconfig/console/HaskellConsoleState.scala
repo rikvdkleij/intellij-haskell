@@ -7,6 +7,7 @@ import com.intellij.execution.process.{ProcessHandler, ProcessTerminatedListener
 import com.intellij.execution.runners.ExecutionEnvironment
 import com.intellij.execution.ui.ConsoleView
 import intellij.haskell.sdk.HaskellSdkType
+import intellij.haskell.util.{GhcVersion, HaskellProjectUtil}
 
 class HaskellConsoleState(val configuration: HaskellConsoleConfiguration, val environment: ExecutionEnvironment) extends CommandLineState(environment) {
 
@@ -30,6 +31,15 @@ class HaskellConsoleState(val configuration: HaskellConsoleConfiguration, val en
         if (stackTarget.nonEmpty) {
           commandLine.addParameter(stackTarget)
         }
+
+        // Enable color output for GHC versions that support it.
+        HaskellProjectUtil.getGhcVersion(project).foreach { ghcVersion =>
+          if (ghcVersion >= GhcVersion(8, 2, 1)) {
+            commandLine.addParameters("--ghc-options", "-fdiagnostics-color=always")
+          }
+        }
+
+        commandLine.setRedirectErrorStream(true)
 
         val handler = new HaskellConsoleProcessHandler(commandLine.createProcess(), commandLine.getCommandLineString(), consoleBuilder.getConsole.asInstanceOf[HaskellConsoleView])
         ProcessTerminatedListener.attach(handler)

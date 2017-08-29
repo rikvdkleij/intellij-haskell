@@ -1,10 +1,10 @@
 package intellij.haskell.action
 
 import com.intellij.openapi.actionSystem.{AnAction, AnActionEvent}
+import com.intellij.psi.PsiElement
 import com.intellij.psi.util.PsiTreeUtil
-import com.intellij.psi.{PsiElement, TokenType}
 import intellij.haskell.external.component.HaskellComponentsManager
-import intellij.haskell.psi.{HaskellPsiUtil, HaskellQualifiedNameElement, HaskellTypes}
+import intellij.haskell.psi.{HaskellPsiUtil, HaskellQualifiedNameElement}
 import intellij.haskell.util.{HaskellEditorUtil, StringUtil}
 
 import scala.annotation.tailrec
@@ -27,7 +27,7 @@ class ShowTypeStickyAction extends AnAction {
         }
         case _ =>
           for {
-            psiElement <- untilNonWhitespaceBackwards(Option(psiFile.findElementAt(editor.getCaretModel.getOffset)))
+            psiElement <- HaskellPsiUtil.untilNonWhitespaceBackwards(Option(psiFile.findElementAt(editor.getCaretModel.getOffset)))
             namedElement <- HaskellPsiUtil.findNamedElement(psiElement).orElse {
               untilNameElementBackwards(Some(PsiTreeUtil.getDeepestLast(psiElement)))
             }
@@ -36,15 +36,6 @@ class ShowTypeStickyAction extends AnAction {
           }
       }
     })
-  }
-
-  @tailrec
-  private def untilNonWhitespaceBackwards(element: Option[PsiElement]): Option[PsiElement] = {
-    element match {
-      case Some(e) if e.getNode.getElementType == HaskellTypes.HS_NEWLINE || e.getNode.getElementType == TokenType.WHITE_SPACE =>
-        untilNonWhitespaceBackwards(Option(e.getPrevSibling))
-      case e => e
-    }
   }
 
   @tailrec

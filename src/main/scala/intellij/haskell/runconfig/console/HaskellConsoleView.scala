@@ -18,11 +18,14 @@ package intellij.haskell.runconfig.console
 import java.io.{IOException, OutputStreamWriter}
 
 import com.intellij.execution.console.{ConsoleHistoryController, ConsoleRootType, LanguageConsoleImpl}
+import com.intellij.execution.filters._
 import com.intellij.execution.process.ProcessHandler
+import com.intellij.execution.ui.ConsoleViewContentType
 import com.intellij.openapi.command.WriteCommandAction
 import com.intellij.openapi.project.{Project, ProjectManager}
-import com.intellij.openapi.util.{Key, TextRange}
+import com.intellij.openapi.util.Key
 import com.intellij.psi.PsiFile
+import com.intellij.util.DocumentUtil
 import intellij.haskell.{HaskellFileType, HaskellNotificationGroup}
 
 object HaskellConsoleView {
@@ -40,7 +43,9 @@ class HaskellConsoleView(val project: Project, val configuration: HaskellConsole
   private val consoleRootType = new ConsoleRootType("haskell", "Haskell") {}
   private var historyController: ConsoleHistoryController = _
   private var outputStreamWriter: OutputStreamWriter = _
+  private var lastCommand: Option[String] = None
 
+  addMessageFilter(createFileHyperLinkFilter())
   setPrompt(HaskellConsoleHighlightingUtil.LambdaArrow)
 
   val originalFile: PsiFile = getFile.getOriginalFile
@@ -71,17 +76,30 @@ class HaskellConsoleView(val project: Project, val configuration: HaskellConsole
   }
 
   def execute(): Unit = {
+    val consoleEditor = getConsoleEditor
+    val editorDocument = consoleEditor.getDocument
+    val text = editorDocument.getText
+
+    DocumentUtil.writeInRunUndoTransparentAction(() => consoleEditor.getDocument.deleteString(0, text.length))
+
+    executeCommand(text)
+  }
+
+  def executeCommand(command: String, addToHistory: Boolean = true, echo: Boolean = true): Unit = {
     for {
       processInputWriter <- Option(outputStreamWriter)
       historyController <- Option(historyController)
     } yield {
-      val consoleEditor = getConsoleEditor
-      val editorDocument = consoleEditor.getDocument
-      val text = editorDocument.getText
+      if (addToHistory) {
+        lastCommand = Some(command)
+        historyController.addToHistory(command)
+      }
 
-      addToHistoryInner(new TextRange(0, text.length), consoleEditor, true, true)
-      historyController.addToHistory(text)
-      for (line <- text.split("\n")) {
+      if (echo) {
+        print(command + "\n", ConsoleViewContentType.NORMAL_OUTPUT)
+      }
+
+      for (line <- command.split("\n")) {
         try {
           processInputWriter.write(line + "\n")
           processInputWriter.flush()
@@ -91,6 +109,20 @@ class HaskellConsoleView(val project: Project, val configuration: HaskellConsole
       }
     }
   }
+
+  def executeLastCommand(): Unit = {
+    lastCommand.foreach { command =>
+      executeCommand(command)
+    }
+  }
+
+  private def createFileHyperLinkFilter(): PatternBasedFileHyperlinkFilter = {
+    val pattern = ".*?(?<file>(?:\\p{Alpha}\\:|/)[0-9 a-z_A-Z\\-\\\\./]+):(?<line>[0-9]+):(?<column>[0-9]+).*".r
+    val format = new PatternHyperlinkFormat(pattern.pattern, false, false, PatternHyperlinkPart.PATH, PatternHyperlinkPart.LINE, PatternHyperlinkPart.COLUMN)
+    val dataFinder = new PatternBasedFileHyperlinkRawDataFinder(Array(format))
+    new PatternBasedFileHyperlinkFilter(project, null, dataFinder)
+  }
+
 }
 
 final case class HaskellConsoleInfo(stackTarget: String, configurationName: String)

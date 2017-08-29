@@ -22,11 +22,12 @@ import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.util.Computable
 import com.intellij.psi.tree.{IElementType, TokenSet}
 import com.intellij.psi.util.PsiTreeUtil
-import com.intellij.psi.{PsiElement, PsiFile}
+import com.intellij.psi.{PsiElement, PsiFile, TokenType}
 import intellij.haskell.HaskellFile
 import intellij.haskell.psi.HaskellElementCondition._
 import intellij.haskell.psi.HaskellTypes._
 
+import scala.annotation.tailrec
 import scala.collection.JavaConverters._
 
 object HaskellPsiUtil {
@@ -154,6 +155,15 @@ object HaskellPsiUtil {
       start <- Option(psiFile.findElementAt(editor.getSelectionModel.getSelectionStart))
       end <- Option(psiFile.findElementAt(editor.getSelectionModel.getSelectionEnd - 1))
     } yield (start, end)
+  }
+
+  @tailrec
+  def untilNonWhitespaceBackwards(element: Option[PsiElement]): Option[PsiElement] = {
+    element match {
+      case Some(e) if e.getNode.getElementType == HaskellTypes.HS_NEWLINE || e.getNode.getElementType == TokenType.WHITE_SPACE =>
+        untilNonWhitespaceBackwards(Option(e.getPrevSibling))
+      case e => e
+    }
   }
 
   def getChildOfType[T <: PsiElement](psiElement: PsiElement, cls: Class[T]): Option[T] = {
