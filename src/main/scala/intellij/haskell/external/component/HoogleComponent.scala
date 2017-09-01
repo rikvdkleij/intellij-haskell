@@ -56,7 +56,9 @@ object HoogleComponent {
           if (processOutput.getStdoutLines.isEmpty || processOutput.getStdout.contains("No results found")) {
             None
           } else {
-            Option(processOutput.getStdout).map(o => s"${Pattern.compile("$", Pattern.MULTILINE).matcher(o).replaceAll("<br>").replace(" ", "&nbsp;")}")
+            // Remove excessive newlines that Hoogle outputs
+            val cleanOutput = processOutput.getStdout.trim.replaceAll("\n{3,}", "\n\n")
+            Some(s"${Pattern.compile("$", Pattern.MULTILINE).matcher(cleanOutput).replaceAll("<br>").replace(" ", "&nbsp;")}")
           }
         )
     } else {
