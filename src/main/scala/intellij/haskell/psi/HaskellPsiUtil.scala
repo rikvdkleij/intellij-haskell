@@ -174,8 +174,8 @@ object HaskellPsiUtil {
     psiElement.getNode.getChildren(TokenSet.create(elementTypes: _*))
   }
 
-  def streamChildren[T <: PsiElement](psiElement: PsiElement, cls: Class[T]): Iterator[T] = {
-    PsiTreeUtil.childIterator(psiElement, cls).asScala
+  def streamChildren[T <: PsiElement](psiElement: PsiElement, cls: Class[T]): Iterable[T] = {
+    PsiTreeUtil.collectElementsOfType(psiElement, cls).asScala
   }
 
   /** Analogous to PsiTreeUtil.findFirstParent */
