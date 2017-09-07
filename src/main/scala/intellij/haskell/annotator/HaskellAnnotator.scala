@@ -87,8 +87,8 @@ object HaskellAnnotator {
 
   private final val NoTypeSignaturePattern = """.* Top-level binding with no type signature: (.+)""".r
   private final val DefinedButNotUsedPattern = """.* Defined but not used: [‘`](.+)[’']""".r
-  private final val NotInScopePattern = """.*Not in scope:[^‘`]+[‘`](.+)[’']""".r
-  private final val NotInScopePattern2 = """.* not in scope: (.+)""".r
+  private final val NotInScopePattern = """.*ot in scope:[^‘`']*[‘`']([^’']+)[’'].*""".r
+  private final val NotInScopePattern2 = """.*ot in scope: ([^ ]+).*""".r
   private final val UseAloneInstancesImportPattern = """.* To import instances alone, use: (.+)""".r
   private final val RedundantImportPattern = """.* The import of [‘`](.*)[’'] from module [‘`](.*)[’'] is redundant""".r
 
@@ -348,8 +348,20 @@ class NotInScopeIntentionAction(identifier: String, moduleName: String, psiFile:
     HaskellElementFactory.createImportDeclaration(project, moduleName, identifier).foreach(importDeclarationElement =>
       Option(PsiTreeUtil.findChildOfType(file, classOf[HaskellImportDeclarations])) match {
         case Some(ids) if !ids.getImportDeclarationList.isEmpty =>
-          val lastImportDeclaration = HaskellPsiUtil.findImportDeclarations(psiFile).lastOption.orNull
-          ids.addAfter(importDeclarationElement, lastImportDeclaration)
+          ids.getImportDeclarationList.asScala.find(d => d.getModuleName.contains(moduleName)) match {
+            case Some(id) =>
+              val parent = Option(id.getImportSpec).flatMap(s => Option(s.getImportIdsSpec))
+              parent match {
+                case Some(importIdsSpec) =>
+                  importIdsSpec.getImportIdList.asScala.lastOption.foreach(importId => {
+                    val commaElement = importIdsSpec.addAfter(HaskellElementFactory.createComma(project), importId)
+                    HaskellElementFactory.createImportId(project, identifier).foreach(mi => importIdsSpec.addAfter(mi, commaElement))
+                  })
+                case None => createImportDeclaration(importDeclarationElement, ids)
+              }
+            case None =>
+              createImportDeclaration(importDeclarationElement, ids)
+          }
         case _ =>
           HaskellPsiUtil.findModuleDeclaration(psiFile) match {
             case Some(md) =>
@@ -359,6 +371,11 @@ class NotInScopeIntentionAction(identifier: String, moduleName: String, psiFile:
           }
       }
     )
+  }
+
+  private def createImportDeclaration(importDeclarationElement: HaskellImportDeclaration, ids: HaskellImportDeclarations) = {
+    val lastImportDeclaration = HaskellPsiUtil.findImportDeclarations(psiFile).lastOption.orNull
+    ids.addAfter(importDeclarationElement, lastImportDeclaration)
   }
 }
 

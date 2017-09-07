@@ -52,6 +52,10 @@ object HaskellElementFactory {
     createElementFromText(project, name, HS_CONSYM).map(_.asInstanceOf[HaskellConsym]).filter(_.getChildren.length == 0)
   }
 
+  def createImportId(project: Project, identifier: String): Option[HaskellImportId] = {
+    createElementFromText(project, surroundWithParensIfSymbol(project, identifier), HS_IMPORT_ID).map(_.asInstanceOf[HaskellImportId])
+  }
+
   def createQualifiedNameElement(project: Project, name: String): HaskellQualifiedNameElement = {
     val haskellFile = createFileFromText(project, name)
     PsiTreeUtil.findChildOfType(haskellFile, classOf[HaskellQualifiedNameElement])
@@ -88,6 +92,11 @@ object HaskellElementFactory {
     PsiTreeUtil.findChildOfType(haskellFile, classOf[PsiWhiteSpace])
   }
 
+  def createComma(project: Project): PsiElement = {
+    val haskellFile = createFileFromText(project, ",")
+    PsiTreeUtil.findChildOfType(haskellFile, classOf[PsiElement])
+  }
+
   def createTab(project: Project): PsiWhiteSpace = {
     val tabSize = CodeStyleSettingsManager.getInstance().getCurrentSettings.getTabSize(HaskellFileType.Instance)
     createWhiteSpace(project, " " * tabSize)
@@ -111,8 +120,16 @@ object HaskellElementFactory {
   }
 
   def createImportDeclaration(project: Project, moduleName: String, identifier: String): Option[HaskellImportDeclaration] = {
-    val haskellImportDeclaration = createElementFromText(project, s"import $moduleName ($identifier) \n", HS_IMPORT_DECLARATION)
+    val haskellImportDeclaration = createElementFromText(project, s"import $moduleName (${surroundWithParensIfSymbol(project, identifier)}) \n", HS_IMPORT_DECLARATION)
     haskellImportDeclaration.map(_.asInstanceOf[HaskellImportDeclaration])
+  }
+
+  private def surroundWithParensIfSymbol(project: Project, identifier: String) = {
+    if (createVarsym(project, identifier).isDefined || createConsym(project, identifier).isDefined) {
+      s"($identifier)"
+    } else {
+      identifier
+    }
   }
 
   def createImportDeclaration(project: Project, importDecl: String): Option[HaskellImportDeclaration] = {
