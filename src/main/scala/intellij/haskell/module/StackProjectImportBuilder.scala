@@ -25,7 +25,6 @@ import com.intellij.openapi.module.{ModifiableModuleModel, Module, ModuleType}
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.roots.ModifiableRootModel
 import com.intellij.openapi.roots.ui.configuration.ModulesProvider
-import com.intellij.openapi.ui.Messages
 import com.intellij.packaging.artifacts.ModifiableArtifactModel
 import com.intellij.projectImport.ProjectImportBuilder
 import intellij.haskell.HaskellIcons
@@ -63,8 +62,7 @@ class StackProjectImportBuilder extends ProjectImportBuilder[Unit] {
             moduleBuilder.addModuleConfigurationUpdater((_: Module, rootModel: ModifiableRootModel) => {
               moduleBuilder.setupRootModel(rootModel)
             })
-          case None =>
-            Messages.showErrorDialog(s"Could not create Haskell module because could not retrieve or parse Cabal file for package path `$packageRelativePath`", "No Cabal file info")
+          case None => ()
         }
       })
 
