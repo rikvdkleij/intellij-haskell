@@ -22,6 +22,7 @@ import com.intellij.codeInsight.editorActions.ExtendWordSelectionHandler
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.util.TextRange
 import com.intellij.psi.{PsiComment, PsiElement, PsiWhiteSpace}
+import intellij.haskell.HaskellFile
 import intellij.haskell.psi.HaskellPsiUtil
 import intellij.haskell.psi.HaskellTypes._
 
@@ -29,8 +30,9 @@ import scala.collection.JavaConverters._
 import scala.collection.mutable.ListBuffer
 
 class HaskellExtendWordSelectioner extends ExtendWordSelectionHandler {
+
   override def canSelect(e: PsiElement): Boolean = {
-    !(e.isInstanceOf[PsiComment] || e.isInstanceOf[PsiWhiteSpace])
+    Option(e.getContainingFile).exists(_.isInstanceOf[HaskellFile]) || !(e.isInstanceOf[PsiComment] || e.isInstanceOf[PsiWhiteSpace])
   }
 
   override def select(e: PsiElement, editorText: CharSequence, cursorOffset: Int, editor: Editor): util.List[TextRange] = {
