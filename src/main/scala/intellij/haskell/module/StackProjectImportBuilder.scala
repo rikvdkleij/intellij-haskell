@@ -29,7 +29,7 @@ import com.intellij.packaging.artifacts.ModifiableArtifactModel
 import com.intellij.projectImport.ProjectImportBuilder
 import intellij.haskell.HaskellIcons
 import intellij.haskell.stackyaml.StackYamlComponent
-import intellij.haskell.util.HaskellProjectUtil
+import intellij.haskell.util.{HaskellFileUtil, HaskellProjectUtil}
 
 import scala.collection.JavaConverters._
 
@@ -68,7 +68,7 @@ class StackProjectImportBuilder extends ProjectImportBuilder[Unit] {
 
       if (!packageRelativePaths.contains(".")) {
         val parentModuleBuilder = new ParentModuleBuilder(project)
-        parentModuleBuilder.setModuleFilePath(new File(project.getBasePath, project.getName + " parent").getAbsolutePath + ".iml")
+        parentModuleBuilder.setModuleFilePath(new File(project.getBasePath, project.getName + "-parent").getAbsolutePath + ".iml")
         parentModuleBuilder.setName("Parent module")
         parentModuleBuilder.commit(project)
         parentModuleBuilder.addModuleConfigurationUpdater((_: Module, rootModel: ModifiableRootModel) => {
@@ -99,10 +99,10 @@ class ParentModuleBuilder(val project: Project) extends ModuleBuilder {
   override def canCreateModule = true
 
   override def setupRootModel(modifiableRootModel: ModifiableRootModel): Unit = {
-    modifiableRootModel.addContentEntry(project.getBasePath)
+    modifiableRootModel.addContentEntry(HaskellFileUtil.getUrlByPath(project.getBasePath))
   }
 
-  override def getModuleType: ModuleType[_ <: ModuleBuilder] = ModuleType.EMPTY
+  override def getModuleType: ModuleType[_ <: ModuleBuilder] = HaskellModuleType.getInstance
 
   override def getPresentableName = "Parent Module"
 
