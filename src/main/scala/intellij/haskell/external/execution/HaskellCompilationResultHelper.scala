@@ -79,7 +79,10 @@ object HaskellCompilationResultHelper {
 
 case class CompilationResult(currentFileProblems: Iterable[CompilationProblemInCurrentFile], otherFileProblems: Iterable[CompilationProblem], failed: Boolean)
 
-sealed abstract class CompilationProblem(private val message: String) {
+trait CompilationProblem {
+
+  def message: String
+
   def plainMessage: String = {
     message.split("\n").mkString.replaceAll("\\s+", " ")
   }
@@ -93,7 +96,7 @@ sealed abstract class CompilationProblem(private val message: String) {
   }
 }
 
-case class CompilationProblemInCurrentFile private(filePath: String, lineNr: Int, columnNr: Int, private val message: String) extends CompilationProblem(message)
+case class CompilationProblemInCurrentFile private(filePath: String, lineNr: Int, columnNr: Int, message: String) extends CompilationProblem
 
-case class CompilationProblemInOtherFile private(filePath: String, lineNr: Int, columnNr: Int, private val message: String) extends CompilationProblem(message)
+case class CompilationProblemInOtherFile private(filePath: String, lineNr: Int, columnNr: Int, message: String) extends CompilationProblem
 
