@@ -3,30 +3,39 @@ package intellij.haskell.intention
 import com.intellij.codeInsight.intention.PsiElementBaseIntentionAction
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.project.Project
-import com.intellij.psi.{PsiElement, PsiWhiteSpace}
+import com.intellij.psi.PsiElement
 import intellij.haskell.psi.HaskellTypes._
 import intellij.haskell.psi.{HaskellElementFactory, HaskellPsiUtil}
 
 class AddParensIntention extends PsiElementBaseIntentionAction {
+
   override def invoke(project: Project, editor: Editor, psiElement: PsiElement): Unit = {
+    val selectionStartEnd = HaskellPsiUtil.getSelectionStartEnd(psiElement, editor)
     for {
       left <- HaskellElementFactory.getLeftParenElement(project)
       right <- HaskellElementFactory.getRightParenElement(project)
-      (start, end) <- HaskellPsiUtil.getSelectionStartEnd(psiElement, editor)
     } yield {
-      val addParens = (start: PsiElement, end: PsiElement) => {
-        start.getParent.addBefore(left, start)
-        end.getParent.addAfter(right, end)
+      if (selectionStartEnd.isDefined) {
+        for {
+          (start, end) <- selectionStartEnd
+        } yield {
+          if (start.getNode.getElementType != HS_NEWLINE) {
+            start.getParent.addBefore(left, start)
+            end.getParent.addAfter(right, start)
+          }
+        }
+      } else {
+        psiElement.getParent.addBefore(left, psiElement)
+        psiElement.getParent.addAfter(right, psiElement)
       }
-
-      addParens(start, end)
     }
   }
 
   override def isAvailable(project: Project, editor: Editor, psiElement: PsiElement): Boolean = {
     HaskellPsiUtil.getSelectionStartEnd(psiElement, editor) match {
-      case None => false
-      case Some(_) => psiElement.isWritable
+      case None => psiElement.isWritable
+      case Some((start, _)) if start.getNode.getElementType != HS_NEWLINE => psiElement.isWritable
+      case _ => false
     }
   }
 

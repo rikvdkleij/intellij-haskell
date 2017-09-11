@@ -151,10 +151,14 @@ object HaskellPsiUtil {
 
   def getSelectionStartEnd(psiElement: PsiElement, editor: Editor): Option[(PsiElement, PsiElement)] = {
     val psiFile = psiElement.getContainingFile
-    for {
-      start <- Option(psiFile.findElementAt(editor.getSelectionModel.getSelectionStart))
-      end <- Option(psiFile.findElementAt(editor.getSelectionModel.getSelectionEnd - 1))
-    } yield (start, end)
+    if (Option(editor.getSelectionModel.getSelectedText).isDefined) {
+      for {
+        start <- Option(psiFile.findElementAt(editor.getSelectionModel.getSelectionStart))
+        end <- Option(psiFile.findElementAt(editor.getSelectionModel.getSelectionEnd - (if (editor.getSelectionModel.getSelectedText.length > 1) 1 else 0)))
+      } yield (start, end)
+    } else {
+      None
+    }
   }
 
   @tailrec
