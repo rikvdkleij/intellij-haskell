@@ -3009,9 +3009,8 @@ public class HaskellParser implements PsiParser, LightPsiParser {
 
   /* ********************************************************** */
   // QUASIQUOTE | q_name | LEFT_PAREN | RIGHT_PAREN | FLOAT |
-  //                                   DOUBLE_RIGHT_ARROW | RIGHT_ARROW |
-  //                                   SEMICOLON | LEFT_ARROW | LEFT_BRACKET | RIGHT_BRACKET | literal | LEFT_BRACE | RIGHT_BRACE |
-  //                                   COMMA | symbol_reserved_op | QUOTE | BACKQUOTE | fixity | DOT_DOT | scc_pragma | reserved_id | COLON_COLON |
+  //                                   SEMICOLON | LEFT_BRACKET | RIGHT_BRACKET | literal | LEFT_BRACE | RIGHT_BRACE |
+  //                                   COMMA | symbol_reserved_op | QUOTE | BACKQUOTE | fixity | scc_pragma | reserved_id | 
   //                                   inlinelike_pragma | NEWLINE DIRECTIVE
   static boolean general_id(PsiBuilder b, int l) {
     if (!recursion_guard_(b, l, "general_id")) return false;
@@ -3022,10 +3021,7 @@ public class HaskellParser implements PsiParser, LightPsiParser {
     if (!r) r = consumeToken(b, HS_LEFT_PAREN);
     if (!r) r = consumeToken(b, HS_RIGHT_PAREN);
     if (!r) r = consumeToken(b, HS_FLOAT);
-    if (!r) r = consumeToken(b, HS_DOUBLE_RIGHT_ARROW);
-    if (!r) r = consumeToken(b, HS_RIGHT_ARROW);
     if (!r) r = consumeToken(b, HS_SEMICOLON);
-    if (!r) r = consumeToken(b, HS_LEFT_ARROW);
     if (!r) r = consumeToken(b, HS_LEFT_BRACKET);
     if (!r) r = consumeToken(b, HS_RIGHT_BRACKET);
     if (!r) r = literal(b, l + 1);
@@ -3036,10 +3032,8 @@ public class HaskellParser implements PsiParser, LightPsiParser {
     if (!r) r = consumeToken(b, HS_QUOTE);
     if (!r) r = consumeToken(b, HS_BACKQUOTE);
     if (!r) r = fixity(b, l + 1);
-    if (!r) r = consumeToken(b, HS_DOT_DOT);
     if (!r) r = scc_pragma(b, l + 1);
     if (!r) r = reserved_id(b, l + 1);
-    if (!r) r = consumeToken(b, HS_COLON_COLON);
     if (!r) r = inlinelike_pragma(b, l + 1);
     if (!r) r = parseTokens(b, 0, HS_NEWLINE, HS_DIRECTIVE);
     exit_section_(b, m, null, r);
@@ -3048,10 +3042,9 @@ public class HaskellParser implements PsiParser, LightPsiParser {
 
   /* ********************************************************** */
   // (CON_ID | VAR_ID | CONSYM_ID | VARSYM_ID | DOT |
-  //                                   LEFT_PAREN | RIGHT_PAREN | FLOAT | DO | WHERE | IF | THEN | ELSE |
-  //                                   COLON_COLON | DOUBLE_RIGHT_ARROW | RIGHT_ARROW | IN | CASE | OF | LET |
-  //                                   SEMICOLON | LEFT_ARROW | LEFT_BRACKET | RIGHT_BRACKET | literal | LEFT_BRACE | RIGHT_BRACE |
-  //                                   COMMA | UNDERSCORE | symbol_reserved_op | QUOTE | BACKQUOTE | DOT_DOT | MODULE | INSTANCE | NEWLINE | DOUBLE_QUOTE)+
+  //                                   LEFT_PAREN | RIGHT_PAREN | FLOAT | DO | WHERE | IF | THEN | ELSE | IN | CASE | OF | LET |
+  //                                   SEMICOLON | LEFT_BRACKET | RIGHT_BRACKET | literal | LEFT_BRACE | RIGHT_BRACE |
+  //                                   COMMA | UNDERSCORE | symbol_reserved_op | QUOTE | BACKQUOTE | MODULE | INSTANCE | NEWLINE | DOUBLE_QUOTE)+
   public static boolean general_pragma_content(PsiBuilder b, int l) {
     if (!recursion_guard_(b, l, "general_pragma_content")) return false;
     boolean r;
@@ -3068,10 +3061,9 @@ public class HaskellParser implements PsiParser, LightPsiParser {
   }
 
   // CON_ID | VAR_ID | CONSYM_ID | VARSYM_ID | DOT |
-  //                                   LEFT_PAREN | RIGHT_PAREN | FLOAT | DO | WHERE | IF | THEN | ELSE |
-  //                                   COLON_COLON | DOUBLE_RIGHT_ARROW | RIGHT_ARROW | IN | CASE | OF | LET |
-  //                                   SEMICOLON | LEFT_ARROW | LEFT_BRACKET | RIGHT_BRACKET | literal | LEFT_BRACE | RIGHT_BRACE |
-  //                                   COMMA | UNDERSCORE | symbol_reserved_op | QUOTE | BACKQUOTE | DOT_DOT | MODULE | INSTANCE | NEWLINE | DOUBLE_QUOTE
+  //                                   LEFT_PAREN | RIGHT_PAREN | FLOAT | DO | WHERE | IF | THEN | ELSE | IN | CASE | OF | LET |
+  //                                   SEMICOLON | LEFT_BRACKET | RIGHT_BRACKET | literal | LEFT_BRACE | RIGHT_BRACE |
+  //                                   COMMA | UNDERSCORE | symbol_reserved_op | QUOTE | BACKQUOTE | MODULE | INSTANCE | NEWLINE | DOUBLE_QUOTE
   private static boolean general_pragma_content_0(PsiBuilder b, int l) {
     if (!recursion_guard_(b, l, "general_pragma_content_0")) return false;
     boolean r;
@@ -3089,15 +3081,11 @@ public class HaskellParser implements PsiParser, LightPsiParser {
     if (!r) r = consumeToken(b, HS_IF);
     if (!r) r = consumeToken(b, HS_THEN);
     if (!r) r = consumeToken(b, HS_ELSE);
-    if (!r) r = consumeToken(b, HS_COLON_COLON);
-    if (!r) r = consumeToken(b, HS_DOUBLE_RIGHT_ARROW);
-    if (!r) r = consumeToken(b, HS_RIGHT_ARROW);
     if (!r) r = consumeToken(b, HS_IN);
     if (!r) r = consumeToken(b, HS_CASE);
     if (!r) r = consumeToken(b, HS_OF);
     if (!r) r = consumeToken(b, HS_LET);
     if (!r) r = consumeToken(b, HS_SEMICOLON);
-    if (!r) r = consumeToken(b, HS_LEFT_ARROW);
     if (!r) r = consumeToken(b, HS_LEFT_BRACKET);
     if (!r) r = consumeToken(b, HS_RIGHT_BRACKET);
     if (!r) r = literal(b, l + 1);
@@ -3108,7 +3096,6 @@ public class HaskellParser implements PsiParser, LightPsiParser {
     if (!r) r = symbol_reserved_op(b, l + 1);
     if (!r) r = consumeToken(b, HS_QUOTE);
     if (!r) r = consumeToken(b, HS_BACKQUOTE);
-    if (!r) r = consumeToken(b, HS_DOT_DOT);
     if (!r) r = consumeToken(b, HS_MODULE);
     if (!r) r = consumeToken(b, HS_INSTANCE);
     if (!r) r = consumeToken(b, HS_NEWLINE);
@@ -6239,16 +6226,21 @@ public class HaskellParser implements PsiParser, LightPsiParser {
   }
 
   /* ********************************************************** */
-  // AT | BACKSLASH | VERTICAL_BAR | TILDE | EQUAL
+  // DOT_DOT | COLON_COLON | EQUAL | BACKSLASH | VERTICAL_BAR | LEFT_ARROW | RIGHT_ARROW | AT | TILDE | DOUBLE_RIGHT_ARROW
   static boolean symbol_reserved_op(PsiBuilder b, int l) {
     if (!recursion_guard_(b, l, "symbol_reserved_op")) return false;
     boolean r;
     Marker m = enter_section_(b);
-    r = consumeToken(b, HS_AT);
+    r = consumeToken(b, HS_DOT_DOT);
+    if (!r) r = consumeToken(b, HS_COLON_COLON);
+    if (!r) r = consumeToken(b, HS_EQUAL);
     if (!r) r = consumeToken(b, HS_BACKSLASH);
     if (!r) r = consumeToken(b, HS_VERTICAL_BAR);
+    if (!r) r = consumeToken(b, HS_LEFT_ARROW);
+    if (!r) r = consumeToken(b, HS_RIGHT_ARROW);
+    if (!r) r = consumeToken(b, HS_AT);
     if (!r) r = consumeToken(b, HS_TILDE);
-    if (!r) r = consumeToken(b, HS_EQUAL);
+    if (!r) r = consumeToken(b, HS_DOUBLE_RIGHT_ARROW);
     exit_section_(b, m, null, r);
     return r;
   }

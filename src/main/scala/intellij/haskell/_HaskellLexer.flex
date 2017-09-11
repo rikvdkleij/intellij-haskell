@@ -106,15 +106,16 @@ quote               = "'"
 
 forall              = "∀"
 
-symbol_no_colon_dot = {equal} | {at} | {backslash} | {vertical_bar} | {tilde} | {exclamation_mark} | {hash} | {dollar} | {percentage} | {ampersand} | {star} |
+symbol_no_dot       = {equal} | {at} | {backslash} | {vertical_bar} | {tilde} | {exclamation_mark} | {hash} | {dollar} | {percentage} | {ampersand} | {star} |
                         {plus} | {slash} | {lt} | {gt} | {question_mark} | {caret} | {dash} | "⊜" | "≣" | "≤" | "≥"
-
+symbol              = {symbol_no_dot} | {dot}
 
 var_id              = {question_mark}? {small} ({small} | {large} | {digit} | {quote})* {hash}*
-varsym_id           = {symbol_no_colon_dot} ({symbol_no_colon_dot} | {dot} | {colon})*
+varsym_id           = (({dot_dot} | {colon} | {colon_colon} | {equal} | {backslash} | {vertical_bar} | {left_arrow} | {right_arrow} | {at} | {tilde} | {double_right_arrow} | {dot}) ({symbol} | {colon})+) |
+                        {symbol_no_dot} ({symbol} | {colon})*
 
 con_id              = {large} ({small} | {large} | {digit} | {quote})* {hash}*
-consym_id           = {quote}? {colon} ({symbol_no_colon_dot} | {dot} | {colon})*
+consym_id           = {quote}? {colon} ({symbol} | {colon})*
 
 shebang_line        = {hash} {exclamation_mark} [^\r\n]*
 
