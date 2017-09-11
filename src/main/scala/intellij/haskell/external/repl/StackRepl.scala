@@ -23,7 +23,7 @@ import com.intellij.openapi.project.Project
 import com.intellij.util.EnvironmentUtil
 import intellij.haskell.HaskellNotificationGroup
 import intellij.haskell.sdk.HaskellSdkType
-import intellij.haskell.util.{HaskellEditorUtil, StringUtil}
+import intellij.haskell.util.{GhcVersion, HaskellEditorUtil, HaskellProjectUtil, StringUtil}
 
 import scala.collection.JavaConverters._
 import scala.collection.mutable.ArrayBuffer
@@ -203,6 +203,11 @@ abstract class StackRepl(val project: Project, var stanzaType: Option[StanzaType
             } else {
               if (stanzaType != None) {
                 execute(":set -fdefer-typed-holes", forceExecute = true)
+                HaskellProjectUtil.getGhcVersion(project).foreach { ghcVersion =>
+                  if (ghcVersion >= GhcVersion(8, 2, 1)) {
+                    execute(":set -fno-diagnostics-show-caret", forceExecute = true)
+                  }
+                }
               }
 
               logInfo("Stack repl is started")
