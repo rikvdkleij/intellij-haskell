@@ -37,7 +37,7 @@ abstract class StackRepl(val project: Project, var stanzaType: Option[StanzaType
   private final val LineSeparator = '\n'
 
   @volatile
-  var available = false
+  private[external] var available = false
 
   private[this] val outputStream = new SyncVar[OutputStream]
 
@@ -46,6 +46,7 @@ abstract class StackRepl(val project: Project, var stanzaType: Option[StanzaType
   private[this] val stdErr = new LinkedBlockingDeque[String]
 
   private final val LoadTimeout = 60.seconds
+
   private final val DefaultTimeout = 5.seconds
 
   private final val EndOfOutputIndicator = "^IntellijHaskell^"
