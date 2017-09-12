@@ -94,6 +94,7 @@ object HaskellAnnotator {
 
   private final val PerhapsYouMeantNamePattern = """.*[`‘]([^‘’'`]+)['’]""".r
   private final val PerhapsYouMeantMultiplePattern = """.*ot in scope: (.+) Perhaps you meant one of these: (.+)""".r
+  private final val PerhapsYouMeantSingleMultiplePattern = """.*ot in scope: (.+) Perhaps you meant one of these: (.+) Perhaps you want to add .*""".r
   private final val PerhapsYouMeantSinglePattern = """.*ot in scope: (.+) Perhaps you meant (.+)""".r
   private final val PerhapsYouMeantImportedFromPattern = """.*[`‘]([^‘’'`]+)['’] \(imported from (.*)\)""".r
   private final val PerhapsYouMeantLocalPattern = """.*[`‘]([^‘’'`]+)['’].*""".r
@@ -122,6 +123,12 @@ object HaskellAnnotator {
 
     HaskellCompilationResultHelper.createNotificationsForErrorsNotInCurrentFile(project, loadResult)
 
+    def createErrorAnnotationWithMultiplePerhapsIntentions(problem: CompilationProblemInCurrentFile, tr: TextRange, notInScopeMessage: String, suggestionsList: String) = {
+      val notInScopeName = extractName(notInScopeMessage)
+      val annotations = suggestionsList.split(",").flatMap(s => extractPerhapsYouMeantAction(s))
+      ErrorAnnotationWithIntentionActions(tr, problem.plainMessage, problem.htmlMessage, annotations.toStream ++ createNotInScopeIntentionActions(psiFile, notInScopeName))
+    }
+
     problems.flatMap {
       problem =>
         val textRange = getProblemTextRange(psiFile, problem)
@@ -130,10 +137,10 @@ object HaskellAnnotator {
             val plainMessage = problem.plainMessage
             plainMessage match {
               // Because of setting `-fdefer-typed-holes` the following problems are displayed as error
+              case PerhapsYouMeantSingleMultiplePattern(notInScopeMessage, suggestionsList) =>
+                createErrorAnnotationWithMultiplePerhapsIntentions(problem, tr, notInScopeMessage, suggestionsList)
               case PerhapsYouMeantMultiplePattern(notInScopeMessage, suggestionsList) =>
-                val notInScopeName = extractName(notInScopeMessage)
-                val annotations = suggestionsList.split(",").flatMap(s => extractPerhapsYouMeantAction(s))
-                ErrorAnnotationWithIntentionActions(tr, problem.plainMessage, problem.htmlMessage, annotations.toStream ++ createNotInScopeIntentionActions(psiFile, notInScopeName))
+                createErrorAnnotationWithMultiplePerhapsIntentions(problem, tr, notInScopeMessage, suggestionsList)
               case PerhapsYouMeantSinglePattern(notInScopeMessage, suggestion) =>
                 val notInScopeName = extractName(notInScopeMessage)
                 val annotation = extractPerhapsYouMeantAction(suggestion)
@@ -187,7 +194,8 @@ object HaskellAnnotator {
   }
 
   private def createNotInScopeIntentionActions(psiFile: PsiFile, name: String): Iterable[NotInScopeIntentionAction] = {
-    val moduleIdentifiers = HaskellComponentsManager.findPreloadedModuleIdentifiers(psiFile.getProject).filter(_.name == name)
+    val nameWithoutParens = StringUtil.removeOuterParens(name)
+    val moduleIdentifiers = HaskellComponentsManager.findPreloadedModuleIdentifiers(psiFile.getProject).filter(_.name == nameWithoutParens)
     moduleIdentifiers.map(mi => new NotInScopeIntentionAction(mi.name, mi.moduleName, psiFile))
   }
 
