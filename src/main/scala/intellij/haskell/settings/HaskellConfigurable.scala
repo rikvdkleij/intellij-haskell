@@ -32,6 +32,8 @@ class HaskellConfigurable extends Configurable {
   private var isModifiedByUser = false
   private val hindentPathField = new TextFieldWithBrowseButton
   private val stylishHaskellPathField = new TextFieldWithBrowseButton
+  private val replTimeoutField = new JTextField
+  private val replTimeoutLabel = new JLabel("Changed timeout will take effect after restarting project")
 
   override def getDisplayName: String = {
     "Haskell"
@@ -63,6 +65,7 @@ class HaskellConfigurable extends Configurable {
 
     hindentPathField.getTextField.getDocument.addDocumentListener(listener)
     stylishHaskellPathField.getTextField.getDocument.addDocumentListener(listener)
+    replTimeoutField.getDocument.addDocumentListener(listener)
 
     val base = new GridBagConstraints {
       insets = new Insets(2, 0, 2, 3)
@@ -100,23 +103,21 @@ class HaskellConfigurable extends Configurable {
     }
 
     addLabeledControl(1, Hindent, hindentPathField)
-    addLabeledControl(3, StylishHaskell, stylishHaskellPathField)
-
-    settingsPanel.add(new JPanel(), base.setConstraints(
-      gridx = 0,
-      gridy = 5,
-      weighty = 10.0
-    ))
+    addLabeledControl(2, StylishHaskell, stylishHaskellPathField)
+    addLabeledControl(3, ReplTimout, replTimeoutField)
+    addLabeledControl(4, "", replTimeoutLabel)
 
     settingsPanel
   }
 
   override def apply() {
     validatePaths()
+    val validREPLTimeout = validateREPLTimeout()
 
     val state = HaskellSettingsPersistentStateComponent.getInstance().getState
     state.hindentPath = hindentPathField.getText
     state.stylishHaskellPath = stylishHaskellPathField.getText
+    state.replTimeout = validREPLTimeout
   }
 
   private def validatePaths() {
@@ -131,6 +132,19 @@ class HaskellConfigurable extends Configurable {
     ).foreach({ case (c, p) => validate(c, p) })
   }
 
+  private def validateREPLTimeout(): Integer = {
+    val timeout = try {
+      Integer.valueOf(replTimeoutField.getText)
+    } catch {
+      case _: NumberFormatException => throw new ConfigurationException(s"Invalid REPL timeout")
+    }
+
+    if (timeout <= 0) {
+      throw new ConfigurationException(s"REPL timeout should be larger than 0")
+    }
+    timeout
+  }
+
   override def disposeUIResources() {
   }
 
@@ -140,10 +154,12 @@ class HaskellConfigurable extends Configurable {
     val state = HaskellSettingsPersistentStateComponent.getInstance().getState
     hindentPathField.getTextField.setText(state.hindentPath)
     stylishHaskellPathField.getTextField.setText(state.stylishHaskellPath)
+    replTimeoutField.setText(state.replTimeout.toString)
   }
 }
 
 object HaskellConfigurable {
   final val Hindent = "hindent"
   final val StylishHaskell = "stylish-haskell"
+  final val ReplTimout = "REPL timeout in seconds"
 }

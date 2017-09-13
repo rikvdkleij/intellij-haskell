@@ -32,7 +32,7 @@ import scala.concurrent.duration._
 import scala.io._
 import scala.sys.process._
 
-abstract class StackRepl(val project: Project, var stanzaType: Option[StanzaType], var target: Option[String], extraReplOptions: Seq[String] = Seq()) {
+abstract class StackRepl(val project: Project, var stanzaType: Option[StanzaType], var target: Option[String], extraReplOptions: Seq[String] = Seq(), replTimeout: Int) {
 
   private final val LineSeparator = '\n'
 
@@ -47,7 +47,7 @@ abstract class StackRepl(val project: Project, var stanzaType: Option[StanzaType
 
   private final val LoadTimeout = 60.seconds
 
-  private final val DefaultTimeout = 5.seconds
+  private final val DefaultTimeout = replTimeout.seconds
 
   private final val EndOfOutputIndicator = "^IntellijHaskell^"
 

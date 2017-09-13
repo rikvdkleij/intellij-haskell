@@ -24,6 +24,7 @@ import intellij.haskell.annotator.HaskellAnnotator.getDaemonCodeAnalyzer
 import intellij.haskell.cabal._
 import intellij.haskell.external.component.{HaskellComponentsManager, StackProjectManager}
 import intellij.haskell.external.repl.StackReplsManager.StackComponentInfo
+import intellij.haskell.settings.HaskellSettingsState
 import intellij.haskell.util.{HaskellEditorUtil, HaskellFileUtil, HaskellProjectUtil}
 
 private[external] object StackReplsManager {
@@ -128,7 +129,7 @@ private[external] class StackReplsManager(val project: Project,
   private def getProjectLibraryRepl(componentInfo: StackComponentInfo, psiFile: Option[PsiFile]): Option[ProjectStackRepl] = synchronized {
     projectLibraryRepl match {
       case None =>
-        projectLibraryRepl = Some(new ProjectStackRepl(project, componentInfo.stanzaType, componentInfo.target, componentInfo.sourceDirs))
+        projectLibraryRepl = Some(new ProjectStackRepl(project, componentInfo.stanzaType, componentInfo.target, componentInfo.sourceDirs, HaskellSettingsState.getREPLTimeout))
         projectLibraryRepl.foreach(_.start())
         psiFile.foreach(pf => getDaemonCodeAnalyzer(pf.getProject).getFileStatusMap.dispose())
         psiFile.foreach(HaskellAnnotator.restartDaemonCodeAnalyzerForFile)
@@ -151,7 +152,7 @@ private[external] class StackReplsManager(val project: Project,
   private def getProjectNonLibraryRepl(componentInfo: StackComponentInfo, psiFile: Option[PsiFile]): Option[ProjectStackRepl] = synchronized {
     projectNonLibraryRepl match {
       case None =>
-        projectNonLibraryRepl = Some(new ProjectStackRepl(project, componentInfo.stanzaType, componentInfo.target, componentInfo.sourceDirs))
+        projectNonLibraryRepl = Some(new ProjectStackRepl(project, componentInfo.stanzaType, componentInfo.target, componentInfo.sourceDirs, HaskellSettingsState.getREPLTimeout))
         projectNonLibraryRepl.foreach(_.start())
         psiFile.foreach(pf => getDaemonCodeAnalyzer(pf.getProject).getFileStatusMap.dispose())
         psiFile.foreach(HaskellAnnotator.restartDaemonCodeAnalyzerForFile)

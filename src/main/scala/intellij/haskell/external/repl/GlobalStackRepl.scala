@@ -18,7 +18,7 @@ package intellij.haskell.external.repl
 
 import com.intellij.openapi.project.Project
 
-class GlobalStackRepl(project: Project) extends StackRepl(project, None, None, Seq("--no-package-hiding")) {
+class GlobalStackRepl(project: Project, replTimeout: Int) extends StackRepl(project, None, None, Seq("--no-package-hiding"), replTimeout) {
 
   private[this] var loadedModuleName: Option[String] = None
 

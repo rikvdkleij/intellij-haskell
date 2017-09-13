@@ -24,7 +24,7 @@ import intellij.haskell.util.HaskellFileUtil
 
 import scala.collection.JavaConverters._
 
-class ProjectStackRepl(project: Project, replType: StanzaType, target: String, var sourceDirs: Seq[String]) extends StackRepl(project, Some(replType), Some(target), Seq()) {
+class ProjectStackRepl(project: Project, replType: StanzaType, target: String, var sourceDirs: Seq[String], replTimeout: Int) extends StackRepl(project, Some(replType), Some(target), Seq(), replTimeout: Int) {
 
   def clearLoadedInfo(): Unit = {
     loadedPsiFileInfo = None

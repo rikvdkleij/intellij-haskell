@@ -158,6 +158,8 @@ object StackProjectManager {
 
 class StackProjectManager(project: Project) extends ProjectComponent {
 
+  import intellij.haskell.settings.HaskellSettingsState
+
   override def getComponentName: String = "stack-project-manager"
 
   @volatile
@@ -180,7 +182,7 @@ class StackProjectManager(project: Project) extends ProjectComponent {
   }
 
   def initStackReplsManager(): Unit = {
-    replsManager = new StackReplsManager(project, new GlobalStackRepl(project), None, None)
+    replsManager = new StackReplsManager(project, new GlobalStackRepl(project, HaskellSettingsState.getREPLTimeout), None, None)
   }
 
   override def projectClosed(): Unit = {
