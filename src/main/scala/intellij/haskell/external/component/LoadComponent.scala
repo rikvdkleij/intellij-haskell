@@ -17,15 +17,17 @@
 package intellij.haskell.external.component
 
 import com.intellij.openapi.application.ApplicationManager
+import com.intellij.openapi.fileEditor.FileEditorManager
 import com.intellij.openapi.progress.{ProgressIndicator, ProgressManager, Task}
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.roots.libraries.LibraryUtil
 import com.intellij.psi.{PsiElement, PsiFile}
+import com.intellij.util.WaitFor
 import intellij.haskell.annotator.HaskellAnnotator
 import intellij.haskell.external.execution.{CompilationResult, HaskellCompilationResultHelper, StackCommandLine}
 import intellij.haskell.external.repl._
 import intellij.haskell.psi.HaskellPsiUtil
-import intellij.haskell.util.{HaskellProjectUtil, TypeInfoUtil}
+import intellij.haskell.util.{HaskellFileUtil, HaskellProjectUtil, TypeInfoUtil}
 
 private[component] object LoadComponent {
 
@@ -50,7 +52,7 @@ private[component] object LoadComponent {
     val stackComponentInfo = HaskellComponentsManager.findStackComponentInfo(psiFile)
 
     stackComponentInfo.foreach(info => {
-      if (info.stanzaType != LibType) {
+      if (info.stanzaType != LibType && isFileOfSelectedEditor(psiFile).contains(true)) {
         val module = HaskellProjectUtil.findModule(psiFile)
         val namesOfPackagesToRebuild = ProjectLibraryFileWatcher.changedLibrariesByPackageName.filter(pn => pn._1 == info.packageName || module.exists(mn => LibraryUtil.findLibrary(mn, pn._1) != null)).keys
         namesOfPackagesToRebuild.foreach(nameOfPackageToRebuild => {
@@ -114,5 +116,19 @@ private[component] object LoadComponent {
         Some(HaskellCompilationResultHelper.createCompilationResult(Some(psiFile), loadOutput.stdErrLines, loadFailed))
       case _ => None
     }
+  }
+
+  private def isFileOfSelectedEditor(psiFile: PsiFile): Option[Boolean] = {
+    var fileOfSelectedEditor: Option[Boolean] = None
+    ApplicationManager.getApplication.invokeLater(() => {
+      fileOfSelectedEditor = Option(FileEditorManager.getInstance(psiFile.getProject).getSelectedTextEditor).map(e => HaskellFileUtil.findDocument(psiFile).contains(e.getDocument)).orElse(Some(false))
+    })
+
+    new WaitFor(5000, 1) {
+      override def condition(): Boolean = {
+        fileOfSelectedEditor.isDefined
+      }
+    }
+    fileOfSelectedEditor
   }
 }
