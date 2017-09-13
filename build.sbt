@@ -4,8 +4,8 @@ lazy val commonSettings = Seq(
 )
 
 val guava = "com.google.guava" % "guava" % "21.0"
-val scalaTest = "org.scalatest" % "scalatest_2.12" % "3.0.1" % "test"
-val sprayJson = "io.spray" %% "spray-json" % "1.3.2"
+val scalaTest = "org.scalatest" % "scalatest_2.12" % "3.0.4" % "test"
+val sprayJson = "io.spray" %% "spray-json" % "1.3.3"
 val snakeYaml = "org.yaml" % "snakeyaml" % "1.18"
 
 lazy val intellijHaskell = (project in file(".")).
