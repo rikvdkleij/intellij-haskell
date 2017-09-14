@@ -108,7 +108,10 @@ private[component] object LoadComponent {
               moduleName.foreach(mn => BrowseModuleComponent.invalidateForModuleName(project, mn))
 
               TypeInfoComponent.invalidate(psiFile)
-              currentElement.foreach(TypeInfoUtil.preloadTypesAround)
+              if (stackComponentInfo.exists(_.stanzaType == LibType)) {
+                // Because expressions in hspec files can be large....
+                currentElement.foreach(TypeInfoUtil.preloadTypesAround)
+              }
             }
           })
         }
