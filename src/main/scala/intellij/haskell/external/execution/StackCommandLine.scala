@@ -58,14 +58,14 @@ object StackCommandLine {
   }
 
   def buildProjectDependenciesInMessageView(project: Project, progressIndicator: ProgressIndicator): Option[Boolean] = {
-    StackCommandLine.executeInMessageView(project, Seq("build", "--fast", "--test", "--bench", "--no-run-tests", "--no-run-benchmarks", "--only-dependencies"), progressIndicator)
+    StackCommandLine.executeInMessageView(project, Seq("build", "--fast", "--test", "--bench", "--no-run-tests", "--no-run-benchmarks", "--only-dependencies"), Some(progressIndicator))
   }
 
   def buildProjectInMessageView(project: Project, progressIndicator: ProgressIndicator): Option[Boolean] = {
-    StackCommandLine.executeInMessageView(project, Seq("build", "--fast"), progressIndicator)
+    StackCommandLine.executeInMessageView(project, Seq("build", "--fast"), Some(progressIndicator))
   }
 
-  def executeInMessageView(project: Project, arguments: Seq[String], progressIndicator: ProgressIndicator): Option[Boolean] = HaskellSdkType.getStackPath(project).flatMap(stackPath => {
+  def executeInMessageView(project: Project, arguments: Seq[String], progressIndicator: Option[ProgressIndicator] = None): Option[Boolean] = HaskellSdkType.getStackPath(project).flatMap(stackPath => {
     logStart(project, arguments)
     val cmd = CommandLine.createCommandLine(project.getBasePath, stackPath, arguments)
     (try {
@@ -81,7 +81,7 @@ object StackCommandLine {
       val task = new CompileTask {
 
         def execute(compileContext: CompileContext): Boolean = {
-          val adapter = new MessageViewProcessAdapter(compileContext, progressIndicator)
+          val adapter = new MessageViewProcessAdapter(compileContext, progressIndicator.getOrElse(compileContext.getProgressIndicator))
           handler.addProcessListener(adapter)
           handler.startNotify()
           handler.waitFor()

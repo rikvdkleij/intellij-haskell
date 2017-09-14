@@ -79,7 +79,7 @@ object HoogleComponent {
   }
 
   def rebuildHoogle(project: Project, progressIndicator: ProgressIndicator): Option[Boolean] = {
-    StackCommandLine.executeInMessageView(project, Seq(HoogleName, "--rebuild"), progressIndicator)
+    StackCommandLine.executeInMessageView(project, Seq(HoogleName, "--rebuild"), Some(progressIndicator))
   }
 
   def doesHoogleDatabaseExist(project: Project): Boolean = {

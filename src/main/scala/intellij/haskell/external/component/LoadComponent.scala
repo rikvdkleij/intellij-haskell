@@ -48,55 +48,55 @@ private[component] object LoadComponent {
 
   def load(psiFile: PsiFile, currentElement: Option[PsiElement]): Option[CompilationResult] = {
     val project = psiFile.getProject
-
     val stackComponentInfo = HaskellComponentsManager.findStackComponentInfo(psiFile)
-
-    stackComponentInfo.foreach(info => {
-      if (info.stanzaType != LibType && isFileOfSelectedEditor(psiFile).contains(true)) {
-        val module = HaskellProjectUtil.findModule(psiFile)
-        val namesOfPackagesToRebuild = ProjectLibraryFileWatcher.changedLibrariesByPackageName.filter(pn => pn._1 == info.packageName || module.exists(mn => LibraryUtil.findLibrary(mn, pn._1) != null)).keys
-        namesOfPackagesToRebuild.foreach(nameOfPackageToRebuild => {
-          val stackComponentInfo = ProjectLibraryFileWatcher.changedLibrariesByPackageName.remove(nameOfPackageToRebuild)
-          stackComponentInfo match {
-            case Some(libraryInfo) =>
-              val progressManager = ProgressManager.getInstance()
-              progressManager.run(new Task.Backgroundable(project, s"Busy building library ${libraryInfo.packageName}", false) {
-
-                override def run(indicator: ProgressIndicator): Unit = {
-                  StackCommandLine.executeInMessageView(project, Seq("build", libraryInfo.target, "--fast"), progressManager.getProgressIndicator)
-                  StackReplsManager.getReplsManager(project).foreach(_.restartProjectNonLibraryRepl())
-                  HaskellAnnotator.restartDaemonCodeAnalyzerForFile(psiFile)
-                }
-              })
-            case None => ()
-          }
-        })
-      }
-    })
-
     val projectRepl = StackReplsManager.getProjectRepl(psiFile)
 
-    // The REPL is not started if target has compile errors at the moment of start.
-    projectRepl.foreach(repl => {
-      if (!repl.available) {
-        if (stackComponentInfo.exists(_.stanzaType != LibType)) {
-          ProgressManager.getInstance().run(new Task.Backgroundable(project, "Building project", false) {
+    val fileOfSelectedEditor = isFileOfSelectedEditor(psiFile)
+    if (fileOfSelectedEditor) {
+      stackComponentInfo.foreach(info => {
+        if (info.stanzaType != LibType) {
+          val module = HaskellProjectUtil.findModule(psiFile)
+          val namesOfPackagesToRebuild = ProjectLibraryFileWatcher.changedLibrariesByPackageName.filter(pn => pn._1 == info.packageName || module.exists(mn => LibraryUtil.findLibrary(mn, pn._1) != null)).keys
+          namesOfPackagesToRebuild.foreach(nameOfPackageToRebuild => {
+            val stackComponentInfo = ProjectLibraryFileWatcher.changedLibrariesByPackageName.remove(nameOfPackageToRebuild)
+            stackComponentInfo match {
+              case Some(libraryInfo) =>
+                ApplicationManager.getApplication.executeOnPooledThread(new Runnable() {
 
-            def run(progressIndicator: ProgressIndicator): Unit = {
-              val result = StackCommandLine.buildProjectInMessageView(project, progressIndicator)
-              if (result.contains(true)) {
-                repl.start()
-                HaskellAnnotator.restartDaemonCodeAnalyzerForFile(psiFile)
-              }
+                  override def run(): Unit = {
+                    StackCommandLine.executeInMessageView(project, Seq("build", libraryInfo.target, "--fast"))
+                    StackReplsManager.getReplsManager(project).foreach(_.restartProjectNonLibraryRepl())
+                    HaskellAnnotator.restartDaemonCodeAnalyzerForFile(psiFile)
+                  }
+                })
+              case None => ()
             }
           })
         }
-      }
-    })
+      })
+
+      // The REPL is not started if target has compile errors at the moment of start.
+      projectRepl.foreach(repl => {
+        if (!repl.available) {
+          if (stackComponentInfo.exists(_.stanzaType != LibType)) {
+            ProgressManager.getInstance().run(new Task.Backgroundable(project, "Building project", false) {
+
+              def run(progressIndicator: ProgressIndicator): Unit = {
+                val result = StackCommandLine.buildProjectInMessageView(project, progressIndicator)
+                if (result.contains(true)) {
+                  repl.start()
+                  HaskellAnnotator.restartDaemonCodeAnalyzerForFile(psiFile)
+                }
+              }
+            })
+          }
+        }
+      })
+    }
 
     projectRepl.flatMap(_.load(psiFile)) match {
       case Some((loadOutput, loadFailed)) =>
-        if (!loadFailed) {
+        if (!loadFailed && fileOfSelectedEditor) {
           val moduleName = HaskellPsiUtil.findModuleName(psiFile, runInRead = true)
           ApplicationManager.getApplication.executeOnPooledThread(new Runnable {
 
@@ -118,7 +118,7 @@ private[component] object LoadComponent {
     }
   }
 
-  private def isFileOfSelectedEditor(psiFile: PsiFile): Option[Boolean] = {
+  private def isFileOfSelectedEditor(psiFile: PsiFile): Boolean = {
     var fileOfSelectedEditor: Option[Boolean] = None
     ApplicationManager.getApplication.invokeLater(() => {
       fileOfSelectedEditor = Option(FileEditorManager.getInstance(psiFile.getProject).getSelectedTextEditor).map(e => HaskellFileUtil.findDocument(psiFile).contains(e.getDocument)).orElse(Some(false))
@@ -129,6 +129,6 @@ private[component] object LoadComponent {
         fileOfSelectedEditor.isDefined
       }
     }
-    fileOfSelectedEditor
+    fileOfSelectedEditor.getOrElse(false)
   }
 }
