@@ -61,7 +61,7 @@ abstract class StackRepl(val project: Project, var stanzaType: Option[StanzaType
 
   protected def execute(command: String, forceExecute: Boolean = false): Option[StackReplOutput] = {
     if (!available && !forceExecute) {
-      HaskellEditorUtil.showStatusBarNotificationBalloon(project, s"[$getComponentName] Haskell support is not available when Stack repl is not running. Command was: $command")
+      HaskellEditorUtil.showStatusBarNotificationBalloon(project, s"[$getComponentName] Haskell support is not available when Stack repl is not running.")
       None
     } else if (!outputStream.isSet) {
       logError("Can not write to Stack repl. Check if your Stack project environment is working okay")
