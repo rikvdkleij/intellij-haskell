@@ -51,5 +51,6 @@ public class HaskellSettingsPersistentStateComponent implements PersistentStateC
         public String hindentPath = "";
         public String stylishHaskellPath = "";
         public Integer replTimeout = 5;
+        public String hlintOptions = "";
     }
 }

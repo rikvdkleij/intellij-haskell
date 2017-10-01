@@ -32,6 +32,7 @@ class HaskellConfigurable extends Configurable {
   private var isModifiedByUser = false
   private val hindentPathField = new TextFieldWithBrowseButton
   private val stylishHaskellPathField = new TextFieldWithBrowseButton
+  private val hlintOptionsField = new JTextField
   private val replTimeoutField = new JTextField
   private val replTimeoutLabel = new JLabel("Changed timeout will take effect after restarting project")
 
@@ -65,6 +66,7 @@ class HaskellConfigurable extends Configurable {
 
     hindentPathField.getTextField.getDocument.addDocumentListener(listener)
     stylishHaskellPathField.getTextField.getDocument.addDocumentListener(listener)
+    hlintOptionsField.getDocument.addDocumentListener(listener)
     replTimeoutField.getDocument.addDocumentListener(listener)
 
     val base = new GridBagConstraints {
@@ -104,8 +106,9 @@ class HaskellConfigurable extends Configurable {
 
     addLabeledControl(1, Hindent, hindentPathField)
     addLabeledControl(2, StylishHaskell, stylishHaskellPathField)
-    addLabeledControl(3, ReplTimout, replTimeoutField)
-    addLabeledControl(4, "", replTimeoutLabel)
+    addLabeledControl(3, HlintOptions, hlintOptionsField)
+    addLabeledControl(4, ReplTimout, replTimeoutField)
+    addLabeledControl(5, "", replTimeoutLabel)
 
     settingsPanel
   }
@@ -118,6 +121,7 @@ class HaskellConfigurable extends Configurable {
     state.hindentPath = hindentPathField.getText
     state.stylishHaskellPath = stylishHaskellPathField.getText
     state.replTimeout = validREPLTimeout
+    state.hlintOptions = hlintOptionsField.getText
   }
 
   private def validatePaths() {
@@ -154,6 +158,7 @@ class HaskellConfigurable extends Configurable {
     val state = HaskellSettingsPersistentStateComponent.getInstance().getState
     hindentPathField.getTextField.setText(state.hindentPath)
     stylishHaskellPathField.getTextField.setText(state.stylishHaskellPath)
+    hlintOptionsField.setText(state.hlintOptions)
     replTimeoutField.setText(state.replTimeout.toString)
   }
 }
@@ -161,5 +166,6 @@ class HaskellConfigurable extends Configurable {
 object HaskellConfigurable {
   final val Hindent = "hindent"
   final val StylishHaskell = "stylish-haskell"
-  final val ReplTimout = "REPL timeout in seconds"
+  final val ReplTimout = "Background REPL timeout in seconds"
+  final val HlintOptions = "Hlint options"
 }

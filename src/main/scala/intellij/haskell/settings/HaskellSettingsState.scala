@@ -38,6 +38,10 @@ object HaskellSettingsState {
     state.replTimeout
   }
 
+  def getHlintOptions: String = {
+    state.hlintOptions
+  }
+
   private def notifyIfPathIsNotSet(project: Project, path: Option[String], name: String) {
     if (path.isEmpty) {
       HaskellNotificationGroup.logErrorBalloonEvent(project, s"Path to <b>$name</b> is not set. Please do in <b>Settings</b>/<b>Other Settings</b>/<b>Haskell</b>.")

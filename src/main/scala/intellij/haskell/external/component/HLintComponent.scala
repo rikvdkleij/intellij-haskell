@@ -20,6 +20,7 @@ import com.intellij.openapi.project.Project
 import com.intellij.psi.PsiFile
 import intellij.haskell.HaskellNotificationGroup
 import intellij.haskell.external.execution.StackCommandLine
+import intellij.haskell.settings.HaskellSettingsState
 import intellij.haskell.util.HaskellFileUtil
 import spray.json.JsonParser.ParsingException
 import spray.json.{DefaultJsonProtocol, _}
@@ -31,7 +32,7 @@ object HLintComponent {
   def check(psiFile: PsiFile): Seq[HLintInfo] = {
     if (StackProjectManager.isHlintAvailable(psiFile.getProject)) {
       val project = psiFile.getProject
-      StackCommandLine.runCommand(project, Seq("exec", "--", HlintName, "--json", HaskellFileUtil.getAbsoluteFilePath(psiFile))).map(output => {
+      StackCommandLine.runCommand(project, Seq("exec", "--", HlintName) ++ HaskellSettingsState.getHlintOptions.split("""\s+""") ++ Seq("--json", HaskellFileUtil.getAbsoluteFilePath(psiFile))).map(output => {
         if (output.getStderr.contains("Executable named hlint not found on path")) {
           HaskellNotificationGroup.logErrorBalloonEvent(project, s"$HlintName can not be found on path")
           Seq()
