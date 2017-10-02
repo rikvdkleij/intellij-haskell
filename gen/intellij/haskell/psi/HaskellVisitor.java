@@ -291,10 +291,6 @@ public class HaskellVisitor extends PsiElementVisitor {
     visitCompositeElement(o);
   }
 
-  public void visitOptionsGhcOption(@NotNull HaskellOptionsGhcOption o) {
-    visitCompositeElement(o);
-  }
-
   public void visitOptionsGhcPragma(@NotNull HaskellOptionsGhcPragma o) {
     visitCompositeElement(o);
   }

@@ -236,9 +236,6 @@ public class HaskellParser implements PsiParser, LightPsiParser {
     else if (t == HS_NOUNPACK_PRAGMA) {
       r = nounpack_pragma(b, 0);
     }
-    else if (t == HS_OPTIONS_GHC_OPTION) {
-      r = options_ghc_option(b, 0);
-    }
     else if (t == HS_OPTIONS_GHC_PRAGMA) {
       r = options_ghc_pragma(b, 0);
     }
@@ -3010,7 +3007,7 @@ public class HaskellParser implements PsiParser, LightPsiParser {
   /* ********************************************************** */
   // QUASIQUOTE | q_name | LEFT_PAREN | RIGHT_PAREN | FLOAT |
   //                                   SEMICOLON | LEFT_BRACKET | RIGHT_BRACKET | literal | LEFT_BRACE | RIGHT_BRACE |
-  //                                   COMMA | symbol_reserved_op | QUOTE | BACKQUOTE | fixity | scc_pragma | reserved_id | 
+  //                                   COMMA | symbol_reserved_op | QUOTE | BACKQUOTE | fixity | scc_pragma | reserved_id |
   //                                   inlinelike_pragma | NEWLINE DIRECTIVE
   static boolean general_id(PsiBuilder b, int l) {
     if (!recursion_guard_(b, l, "general_id")) return false;
@@ -5199,143 +5196,7 @@ public class HaskellParser implements PsiParser, LightPsiParser {
   }
 
   /* ********************************************************** */
-  // (VAR_ID ("-" (VAR_ID | TYPE))* | ("-" (VAR_ID | TYPE))+ | "-" CON_ID) (EQUAL literal)?
-  public static boolean options_ghc_option(PsiBuilder b, int l) {
-    if (!recursion_guard_(b, l, "options_ghc_option")) return false;
-    boolean r;
-    Marker m = enter_section_(b, l, _NONE_, HS_OPTIONS_GHC_OPTION, "<options ghc option>");
-    r = options_ghc_option_0(b, l + 1);
-    r = r && options_ghc_option_1(b, l + 1);
-    exit_section_(b, l, m, r, false, null);
-    return r;
-  }
-
-  // VAR_ID ("-" (VAR_ID | TYPE))* | ("-" (VAR_ID | TYPE))+ | "-" CON_ID
-  private static boolean options_ghc_option_0(PsiBuilder b, int l) {
-    if (!recursion_guard_(b, l, "options_ghc_option_0")) return false;
-    boolean r;
-    Marker m = enter_section_(b);
-    r = options_ghc_option_0_0(b, l + 1);
-    if (!r) r = options_ghc_option_0_1(b, l + 1);
-    if (!r) r = options_ghc_option_0_2(b, l + 1);
-    exit_section_(b, m, null, r);
-    return r;
-  }
-
-  // VAR_ID ("-" (VAR_ID | TYPE))*
-  private static boolean options_ghc_option_0_0(PsiBuilder b, int l) {
-    if (!recursion_guard_(b, l, "options_ghc_option_0_0")) return false;
-    boolean r;
-    Marker m = enter_section_(b);
-    r = consumeToken(b, HS_VAR_ID);
-    r = r && options_ghc_option_0_0_1(b, l + 1);
-    exit_section_(b, m, null, r);
-    return r;
-  }
-
-  // ("-" (VAR_ID | TYPE))*
-  private static boolean options_ghc_option_0_0_1(PsiBuilder b, int l) {
-    if (!recursion_guard_(b, l, "options_ghc_option_0_0_1")) return false;
-    int c = current_position_(b);
-    while (true) {
-      if (!options_ghc_option_0_0_1_0(b, l + 1)) break;
-      if (!empty_element_parsed_guard_(b, "options_ghc_option_0_0_1", c)) break;
-      c = current_position_(b);
-    }
-    return true;
-  }
-
-  // "-" (VAR_ID | TYPE)
-  private static boolean options_ghc_option_0_0_1_0(PsiBuilder b, int l) {
-    if (!recursion_guard_(b, l, "options_ghc_option_0_0_1_0")) return false;
-    boolean r;
-    Marker m = enter_section_(b);
-    r = consumeToken(b, "-");
-    r = r && options_ghc_option_0_0_1_0_1(b, l + 1);
-    exit_section_(b, m, null, r);
-    return r;
-  }
-
-  // VAR_ID | TYPE
-  private static boolean options_ghc_option_0_0_1_0_1(PsiBuilder b, int l) {
-    if (!recursion_guard_(b, l, "options_ghc_option_0_0_1_0_1")) return false;
-    boolean r;
-    Marker m = enter_section_(b);
-    r = consumeToken(b, HS_VAR_ID);
-    if (!r) r = consumeToken(b, HS_TYPE);
-    exit_section_(b, m, null, r);
-    return r;
-  }
-
-  // ("-" (VAR_ID | TYPE))+
-  private static boolean options_ghc_option_0_1(PsiBuilder b, int l) {
-    if (!recursion_guard_(b, l, "options_ghc_option_0_1")) return false;
-    boolean r;
-    Marker m = enter_section_(b);
-    r = options_ghc_option_0_1_0(b, l + 1);
-    int c = current_position_(b);
-    while (r) {
-      if (!options_ghc_option_0_1_0(b, l + 1)) break;
-      if (!empty_element_parsed_guard_(b, "options_ghc_option_0_1", c)) break;
-      c = current_position_(b);
-    }
-    exit_section_(b, m, null, r);
-    return r;
-  }
-
-  // "-" (VAR_ID | TYPE)
-  private static boolean options_ghc_option_0_1_0(PsiBuilder b, int l) {
-    if (!recursion_guard_(b, l, "options_ghc_option_0_1_0")) return false;
-    boolean r;
-    Marker m = enter_section_(b);
-    r = consumeToken(b, "-");
-    r = r && options_ghc_option_0_1_0_1(b, l + 1);
-    exit_section_(b, m, null, r);
-    return r;
-  }
-
-  // VAR_ID | TYPE
-  private static boolean options_ghc_option_0_1_0_1(PsiBuilder b, int l) {
-    if (!recursion_guard_(b, l, "options_ghc_option_0_1_0_1")) return false;
-    boolean r;
-    Marker m = enter_section_(b);
-    r = consumeToken(b, HS_VAR_ID);
-    if (!r) r = consumeToken(b, HS_TYPE);
-    exit_section_(b, m, null, r);
-    return r;
-  }
-
-  // "-" CON_ID
-  private static boolean options_ghc_option_0_2(PsiBuilder b, int l) {
-    if (!recursion_guard_(b, l, "options_ghc_option_0_2")) return false;
-    boolean r;
-    Marker m = enter_section_(b);
-    r = consumeToken(b, "-");
-    r = r && consumeToken(b, HS_CON_ID);
-    exit_section_(b, m, null, r);
-    return r;
-  }
-
-  // (EQUAL literal)?
-  private static boolean options_ghc_option_1(PsiBuilder b, int l) {
-    if (!recursion_guard_(b, l, "options_ghc_option_1")) return false;
-    options_ghc_option_1_0(b, l + 1);
-    return true;
-  }
-
-  // EQUAL literal
-  private static boolean options_ghc_option_1_0(PsiBuilder b, int l) {
-    if (!recursion_guard_(b, l, "options_ghc_option_1_0")) return false;
-    boolean r;
-    Marker m = enter_section_(b);
-    r = consumeToken(b, HS_EQUAL);
-    r = r && literal(b, l + 1);
-    exit_section_(b, m, null, r);
-    return r;
-  }
-
-  /* ********************************************************** */
-  // PRAGMA_START onl ("OPTIONS_GHC" | "OPTIONS") onl options_ghc_option+ onl PRAGMA_END NEWLINE?
+  // PRAGMA_START onl ("OPTIONS_GHC" | "OPTIONS") onl expression onl PRAGMA_END NEWLINE?
   public static boolean options_ghc_pragma(PsiBuilder b, int l) {
     if (!recursion_guard_(b, l, "options_ghc_pragma")) return false;
     if (!nextTokenIs(b, HS_PRAGMA_START)) return false;
@@ -5345,7 +5206,7 @@ public class HaskellParser implements PsiParser, LightPsiParser {
     r = r && onl(b, l + 1);
     r = r && options_ghc_pragma_2(b, l + 1);
     r = r && onl(b, l + 1);
-    r = r && options_ghc_pragma_4(b, l + 1);
+    r = r && expression(b, l + 1);
     r = r && onl(b, l + 1);
     r = r && consumeToken(b, HS_PRAGMA_END);
     r = r && options_ghc_pragma_7(b, l + 1);
@@ -5360,22 +5221,6 @@ public class HaskellParser implements PsiParser, LightPsiParser {
     Marker m = enter_section_(b);
     r = consumeToken(b, "OPTIONS_GHC");
     if (!r) r = consumeToken(b, "OPTIONS");
-    exit_section_(b, m, null, r);
-    return r;
-  }
-
-  // options_ghc_option+
-  private static boolean options_ghc_pragma_4(PsiBuilder b, int l) {
-    if (!recursion_guard_(b, l, "options_ghc_pragma_4")) return false;
-    boolean r;
-    Marker m = enter_section_(b);
-    r = options_ghc_option(b, l + 1);
-    int c = current_position_(b);
-    while (r) {
-      if (!options_ghc_option(b, l + 1)) break;
-      if (!empty_element_parsed_guard_(b, "options_ghc_pragma_4", c)) break;
-      c = current_position_(b);
-    }
     exit_section_(b, m, null, r);
     return r;
   }
@@ -7158,84 +7003,16 @@ public class HaskellParser implements PsiParser, LightPsiParser {
   }
 
   /* ********************************************************** */
-  // VARSYM_ID | TILDE | (DOT | DOT_DOT) VARSYM_ID | (DOT | DOT_DOT) CONSYM_ID | (DOT | DOT_DOT) EQUAL | DOT
+  // VARSYM_ID | DOT VARSYM_ID | DOT
   public static boolean varsym(PsiBuilder b, int l) {
     if (!recursion_guard_(b, l, "varsym")) return false;
+    if (!nextTokenIs(b, "<varsym>", HS_DOT, HS_VARSYM_ID)) return false;
     boolean r;
     Marker m = enter_section_(b, l, _NONE_, HS_VARSYM, "<varsym>");
     r = consumeToken(b, HS_VARSYM_ID);
-    if (!r) r = consumeToken(b, HS_TILDE);
-    if (!r) r = varsym_2(b, l + 1);
-    if (!r) r = varsym_3(b, l + 1);
-    if (!r) r = varsym_4(b, l + 1);
+    if (!r) r = parseTokens(b, 0, HS_DOT, HS_VARSYM_ID);
     if (!r) r = consumeToken(b, HS_DOT);
     exit_section_(b, l, m, r, false, null);
-    return r;
-  }
-
-  // (DOT | DOT_DOT) VARSYM_ID
-  private static boolean varsym_2(PsiBuilder b, int l) {
-    if (!recursion_guard_(b, l, "varsym_2")) return false;
-    boolean r;
-    Marker m = enter_section_(b);
-    r = varsym_2_0(b, l + 1);
-    r = r && consumeToken(b, HS_VARSYM_ID);
-    exit_section_(b, m, null, r);
-    return r;
-  }
-
-  // DOT | DOT_DOT
-  private static boolean varsym_2_0(PsiBuilder b, int l) {
-    if (!recursion_guard_(b, l, "varsym_2_0")) return false;
-    boolean r;
-    Marker m = enter_section_(b);
-    r = consumeToken(b, HS_DOT);
-    if (!r) r = consumeToken(b, HS_DOT_DOT);
-    exit_section_(b, m, null, r);
-    return r;
-  }
-
-  // (DOT | DOT_DOT) CONSYM_ID
-  private static boolean varsym_3(PsiBuilder b, int l) {
-    if (!recursion_guard_(b, l, "varsym_3")) return false;
-    boolean r;
-    Marker m = enter_section_(b);
-    r = varsym_3_0(b, l + 1);
-    r = r && consumeToken(b, HS_CONSYM_ID);
-    exit_section_(b, m, null, r);
-    return r;
-  }
-
-  // DOT | DOT_DOT
-  private static boolean varsym_3_0(PsiBuilder b, int l) {
-    if (!recursion_guard_(b, l, "varsym_3_0")) return false;
-    boolean r;
-    Marker m = enter_section_(b);
-    r = consumeToken(b, HS_DOT);
-    if (!r) r = consumeToken(b, HS_DOT_DOT);
-    exit_section_(b, m, null, r);
-    return r;
-  }
-
-  // (DOT | DOT_DOT) EQUAL
-  private static boolean varsym_4(PsiBuilder b, int l) {
-    if (!recursion_guard_(b, l, "varsym_4")) return false;
-    boolean r;
-    Marker m = enter_section_(b);
-    r = varsym_4_0(b, l + 1);
-    r = r && consumeToken(b, HS_EQUAL);
-    exit_section_(b, m, null, r);
-    return r;
-  }
-
-  // DOT | DOT_DOT
-  private static boolean varsym_4_0(PsiBuilder b, int l) {
-    if (!recursion_guard_(b, l, "varsym_4_0")) return false;
-    boolean r;
-    Marker m = enter_section_(b);
-    r = consumeToken(b, HS_DOT);
-    if (!r) r = consumeToken(b, HS_DOT_DOT);
-    exit_section_(b, m, null, r);
     return r;
   }
 

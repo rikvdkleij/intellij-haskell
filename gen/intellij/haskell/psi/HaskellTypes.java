@@ -79,7 +79,6 @@ public interface HaskellTypes {
   IElementType HS_NEWTYPE_DECLARATION = new HaskellCompositeElementType("HS_NEWTYPE_DECLARATION");
   IElementType HS_NOINLINE_PRAGMA = new HaskellCompositeElementType("HS_NOINLINE_PRAGMA");
   IElementType HS_NOUNPACK_PRAGMA = new HaskellCompositeElementType("HS_NOUNPACK_PRAGMA");
-  IElementType HS_OPTIONS_GHC_OPTION = new HaskellCompositeElementType("HS_OPTIONS_GHC_OPTION");
   IElementType HS_OPTIONS_GHC_PRAGMA = new HaskellCompositeElementType("HS_OPTIONS_GHC_PRAGMA");
   IElementType HS_OTHER_PRAGMA = new HaskellCompositeElementType("HS_OTHER_PRAGMA");
   IElementType HS_OVERLAP_PRAGMA = new HaskellCompositeElementType("HS_OVERLAP_PRAGMA");
@@ -405,9 +404,6 @@ public interface HaskellTypes {
       }
       else if (type == HS_NOUNPACK_PRAGMA) {
         return new HaskellNounpackPragmaImpl(node);
-      }
-      else if (type == HS_OPTIONS_GHC_OPTION) {
-        return new HaskellOptionsGhcOptionImpl(node);
       }
       else if (type == HS_OPTIONS_GHC_PRAGMA) {
         return new HaskellOptionsGhcPragmaImpl(node);
