@@ -15,6 +15,7 @@ class HaskellRunConfiguration(name: String, project: Project, configurationFacto
   extends HaskellStackConfigurationBase(name, project, configurationFactory) {
 
   private var executableName: String = ""
+  private var programArgs: String = ""
 
   def getExecutableNames: lang.Iterable[String] = {
     HaskellComponentsManager.findCabalInfos(project).flatMap(_.getExecutables.flatMap(_.getName)).asJava
@@ -32,8 +33,22 @@ class HaskellRunConfiguration(name: String, project: Project, configurationFacto
     }
   }
 
+  def setProgramArgs(programArgs: String) {
+    this.programArgs = programArgs
+  }
+
+  def getProgramArgs: String = {
+    this.programArgs
+  }
+
   override def getConfigurationEditor = new HaskellRunConfigurationForm()
 
-  override def getState(executor: Executor, environment: ExecutionEnvironment) =
-    new HaskellStackStateBase(this, environment, List("build", "--exec", executableName))
+  override def getState(executor: Executor, environment: ExecutionEnvironment): HaskellStackStateBase = {
+    val executableNameWithArgs = if (programArgs.isEmpty) {
+      executableName
+    } else {
+      s"$executableName $programArgs"
+    }
+    new HaskellStackStateBase(this, environment, List("build", "--exec", executableNameWithArgs))
+  }
 }
