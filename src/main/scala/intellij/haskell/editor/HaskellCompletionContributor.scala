@@ -190,14 +190,14 @@ class HaskellCompletionContributor extends CompletionContributor {
           projectFile.foreach(file => {
             resultSet.addAllElements(getAvailableImportedLookupElements(file).asJavaCollection)
             val moduleName = findModuleName(file)
-            val identifiers = moduleName.map(mn => HaskellComponentsManager.findExportedModuleIdentifiersOfCurrentFile(file, mn))
+            val exportedIdentifiers = moduleName.map(mn => HaskellComponentsManager.findExportedModuleIdentifiersOfCurrentFile(file, mn))
 
             ProgressManager.checkCanceled()
 
-            identifiers.foreach(ids => {
+            exportedIdentifiers.foreach(ids => {
               val lookupElements = ids.map(createTopLevelLookupElement)
               resultSet.addAllElements(lookupElements.asJavaCollection)
-              resultSet.addAllElements(findOtherLookupElements(file, identifiers.getOrElse(Iterable())).asJavaCollection)
+              resultSet.addAllElements(findOtherLookupElements(file, exportedIdentifiers.getOrElse(Iterable())).asJavaCollection)
             })
 
             ProgressManager.checkCanceled()
@@ -254,10 +254,10 @@ class HaskellCompletionContributor extends CompletionContributor {
   import HaskellCompletionContributor._
 
 
-  private def findOtherLookupElements(haskellFile: HaskellFile, currentModuleIdentifiers: Iterable[ModuleIdentifier]): Iterable[LookupElementBuilder] = {
-    val currentNames = currentModuleIdentifiers.map(_.name)
+  private def findOtherLookupElements(haskellFile: HaskellFile, exportedModuleIdentifiers: Iterable[ModuleIdentifier]): Iterable[LookupElementBuilder] = {
+    val exportedNames = exportedModuleIdentifiers.map(_.name)
     val topLevelDeclarations = HaskellPsiUtil.findHaskellDeclarationElements(haskellFile)
-    topLevelDeclarations.flatMap(d => d.getIdentifierElements.filterNot(e => currentNames.exists(_ == e.getName)).map(e => createTopDeclarationLookupElement(e, d)))
+    topLevelDeclarations.flatMap(d => d.getIdentifierElements.filterNot(e => exportedNames.exists(_ == e.getName)).map(e => createTopDeclarationLookupElement(e, d)))
   }
 
   private def createTopDeclarationLookupElement(namedElement: HaskellNamedElement, declarationElement: HaskellDeclarationElement): LookupElementBuilder = {
