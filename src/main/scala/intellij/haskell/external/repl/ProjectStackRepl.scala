@@ -91,9 +91,8 @@ class ProjectStackRepl(project: Project, replType: StanzaType, target: String, v
     findInfoForCommand(psiFile, s":browse! $moduleName")
   }
 
-  // Only returns exported identifiers of current file
-  def getModuleIdentifiersWithLoad(moduleName: String, psiFile: PsiFile): Option[StackReplOutput] = {
-    executeWithLoad(psiFile, s":browse! $moduleName", Some(moduleName))
+  def getLocalModuleIdentifiers(moduleName: String, psiFile: PsiFile): Option[StackReplOutput] = {
+    executeWithLoad(psiFile, s":browse! *$moduleName", Some(moduleName))
   }
 
   def findAvailableLibraryModuleNames(project: Project): Option[StackReplOutput] = synchronized {

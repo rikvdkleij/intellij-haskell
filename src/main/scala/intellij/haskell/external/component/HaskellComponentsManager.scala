@@ -38,11 +38,11 @@ object HaskellComponentsManager {
   }
 
   def findExportedModuleIdentifiers(project: Project, moduleName: String): Iterable[ModuleIdentifier] = {
-    BrowseModuleComponent.findExportedModuleIdentifiers(project, moduleName, None)
+    BrowseModuleComponent.findModuleIdentifiers(project, moduleName, None)
   }
 
-  def findExportedModuleIdentifiersOfCurrentFile(psiFile: PsiFile, moduleName: String): Iterable[ModuleIdentifier] = {
-    BrowseModuleComponent.findExportedModuleIdentifiers(psiFile.getProject, moduleName, Some(psiFile))
+  def findLocalModuleIdentifiers(psiFile: PsiFile, moduleName: String): Iterable[ModuleIdentifier] = {
+    BrowseModuleComponent.findModuleIdentifiers(psiFile.getProject, moduleName, Some(psiFile))
   }
 
   def findDefinitionLocation(namedElement: HaskellNamedElement): Option[LocationInfo] = {
@@ -125,7 +125,7 @@ object HaskellComponentsManager {
   private def preloadLibraryIdentifiers(project: Project): Unit = {
     if (!project.isDisposed) {
       if (!project.isDisposed) {
-        BrowseModuleComponent.findExportedModuleIdentifiers(project, HaskellProjectUtil.Prelude, None)
+        BrowseModuleComponent.findModuleIdentifiers(project, HaskellProjectUtil.Prelude, None)
       }
 
       if (!project.isDisposed) {
@@ -154,7 +154,7 @@ object HaskellComponentsManager {
         if (!project.isDisposed) {
           importedLibraryModuleNames.foreach(mn => {
             if (!project.isDisposed) {
-              BrowseModuleComponent.findExportedModuleIdentifiers(project, mn, None)
+              BrowseModuleComponent.findModuleIdentifiers(project, mn, None)
               // We have to wait for other requests which have more prio because those are on dispatch thread
               Thread.sleep(100)
             }

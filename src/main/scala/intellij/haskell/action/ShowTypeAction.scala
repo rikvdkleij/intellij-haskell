@@ -75,7 +75,7 @@ object ShowTypeAction {
         val declaration = HaskellPsiUtil.findQualifiedNameParent(psiElement).flatMap(qualifiedNameElement => {
           val name = qualifiedNameElement.getName
           HaskellCompletionContributor.getAvailableImportedModuleIdentifiers(psiFile).find(mi => moduleNames.exists(_ == mi.moduleName) && mi.name == name).map(_.declaration).
-            orElse(findModuleName(psiFile).flatMap(mn => HaskellComponentsManager.findExportedModuleIdentifiersOfCurrentFile(psiFile, mn).find(_.name == name).map(_.declaration))).
+            orElse(findModuleName(psiFile).flatMap(mn => HaskellComponentsManager.findLocalModuleIdentifiers(psiFile, mn).find(_.name == name).map(_.declaration))).
             orElse(HaskellPsiUtil.findHaskellDeclarationElements(psiFile).find(_.getIdentifierElements.exists(_.getName == name)).map(_.getText.replaceAll("""\s+""", " ")))
         })
 

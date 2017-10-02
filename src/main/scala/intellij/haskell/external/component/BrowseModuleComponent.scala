@@ -64,8 +64,8 @@ private[component] object BrowseModuleComponent {
               if (!reload && LoadComponent.isBusy(psiFile)) {
                 Left(ReplIsLoading)
               } else if (LoadComponent.isLoaded(psiFile).exists(_ != Failed)) {
-                StackReplsManager.getProjectRepl(psiFile).flatMap(_.getModuleIdentifiersWithLoad(moduleName, psiFile)).map { output =>
-                  Right(output.stdOutLines.flatMap(l => findModuleIdentifiers(project, l, moduleName)))
+                StackReplsManager.getProjectRepl(psiFile).flatMap(_.getLocalModuleIdentifiers(moduleName, psiFile)).map { output =>
+                  Right(output.stdOutLines.takeWhile(l => !l.startsWith("-- imported via")).flatMap(l => findModuleIdentifiers(project, l, moduleName)))
                 }.getOrElse(Left(NoBrowseInfoAvailable))
               } else {
                 Left(NoBrowseInfoAvailable)
@@ -107,8 +107,14 @@ private[component] object BrowseModuleComponent {
           }
         }
 
+        // This kind of declarations are returned in case DuplicateRecordFields are enabled
+        private final val Module$SelPattern = """([\w\.\-]+)\.\$sel:(.+)""".r
+
         private def findModuleIdentifiers(project: Project, declarationLine: String, moduleName: String): Option[ModuleIdentifier] = {
-          DeclarationLineUtil.findName(declarationLine).map(nd => createModuleIdentifier(nd.name, moduleName, nd.declaration))
+          declarationLine match {
+            case Module$SelPattern(mn, declaration) => DeclarationLineUtil.findName(declaration).map(nd => createModuleIdentifier(nd.name, mn, nd.declaration))
+            case _ => DeclarationLineUtil.findName(declarationLine) map (nd => createModuleIdentifier(nd.name, moduleName, nd.declaration))
+          }
         }
 
         private def createModuleIdentifier(name: String, moduleName: String, declaration: String) = {
@@ -117,7 +123,7 @@ private[component] object BrowseModuleComponent {
       }
     )
 
-  def findExportedModuleIdentifiers(project: Project, moduleName: String, psiFile: Option[PsiFile]): Iterable[ModuleIdentifier] = {
+  def findModuleIdentifiers(project: Project, moduleName: String, psiFile: Option[PsiFile]): Iterable[ModuleIdentifier] = {
     try {
       val key = Key(project, moduleName, psiFile)
       Cache.get(key) match {

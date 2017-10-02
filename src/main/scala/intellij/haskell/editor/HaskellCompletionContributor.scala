@@ -190,14 +190,22 @@ class HaskellCompletionContributor extends CompletionContributor {
           projectFile.foreach(file => {
             resultSet.addAllElements(getAvailableImportedLookupElements(file).asJavaCollection)
             val moduleName = findModuleName(file)
-            val exportedIdentifiers = moduleName.map(mn => HaskellComponentsManager.findExportedModuleIdentifiersOfCurrentFile(file, mn))
+            val localIdentifiers = moduleName.map(mn => HaskellComponentsManager.findLocalModuleIdentifiers(file, mn))
 
             ProgressManager.checkCanceled()
 
-            exportedIdentifiers.foreach(ids => {
-              val lookupElements = ids.map(createTopLevelLookupElement)
-              resultSet.addAllElements(lookupElements.asJavaCollection)
-              resultSet.addAllElements(findOtherLookupElements(file, exportedIdentifiers.getOrElse(Iterable())).asJavaCollection)
+            localIdentifiers.foreach(ids => {
+              val importDeclarations = HaskellPsiUtil.findImportDeclarations(psiFile)
+              val localLookupElements = ids.map(mi => if (moduleName.contains(mi.moduleName)) {
+                createLocalTopLevelLookupElement(mi)
+              } else {
+                val qualifier = importDeclarations.find(id => id.getModuleName.contains(mi.moduleName)).flatMap(id => Option(id.getImportQualifiedAs).map(_.getQualifier.getName))
+                qualifier match {
+                  case Some(q) => createLookupElement(mi.copy(name = s"$q.${mi.name}"))
+                  case None => createLookupElement(mi)
+                }
+              })
+              resultSet.addAllElements(localLookupElements.asJavaCollection)
             })
 
             ProgressManager.checkCanceled()
@@ -253,27 +261,11 @@ class HaskellCompletionContributor extends CompletionContributor {
 
   import HaskellCompletionContributor._
 
-
-  private def findOtherLookupElements(haskellFile: HaskellFile, exportedModuleIdentifiers: Iterable[ModuleIdentifier]): Iterable[LookupElementBuilder] = {
-    val exportedNames = exportedModuleIdentifiers.map(_.name)
-    val topLevelDeclarations = HaskellPsiUtil.findHaskellDeclarationElements(haskellFile)
-    topLevelDeclarations.flatMap(d => d.getIdentifierElements.filterNot(e => exportedNames.exists(_ == e.getName)).map(e => createTopDeclarationLookupElement(e, d)))
-  }
-
-  private def createTopDeclarationLookupElement(namedElement: HaskellNamedElement, declarationElement: HaskellDeclarationElement): LookupElementBuilder = {
-    val typeDeclaration = (if (namedElement.getText.trim.replace(namedElement.getName, "").isEmpty) {
-      HaskellComponentsManager.findTypeInfoForElement(namedElement, forceGetInfo = false).map(_.typeSignature)
-    } else {
-      None
-    }).getOrElse(declarationElement.getText.replaceAll("""\s+""", " "))
-    LookupElementBuilder.create(namedElement.getName).withTypeText(typeDeclaration).withIcon(HaskellIcons.HaskellSmallBlueLogo)
-  }
-
   private def createLocalLookupElement(namedElement: HaskellNamedElement): LookupElementBuilder = {
     LookupElementBuilder.create(namedElement.getName).withTypeText(HaskellComponentsManager.findTypeInfoForElement(namedElement, forceGetInfo = false).map(ti => StringUtil.unescapeXml(ti.typeSignature)).getOrElse("")).withIcon(HaskellIcons.HaskellSmallBlueLogo)
   }
 
-  private def createTopLevelLookupElement(moduleIdentifier: ModuleIdentifier): LookupElementBuilder = {
+  private def createLocalTopLevelLookupElement(moduleIdentifier: ModuleIdentifier): LookupElementBuilder = {
     LookupElementBuilder.create(moduleIdentifier.name).withTypeText(moduleIdentifier.declaration).withIcon(findIcon(moduleIdentifier))
   }
 

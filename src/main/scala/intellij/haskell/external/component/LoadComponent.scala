@@ -96,21 +96,24 @@ private[component] object LoadComponent {
 
     projectRepl.flatMap(_.load(psiFile)) match {
       case Some((loadOutput, loadFailed)) =>
-        if (!loadFailed && fileOfSelectedEditor) {
-          val moduleName = HaskellPsiUtil.findModuleName(psiFile, runInRead = true)
+        if (fileOfSelectedEditor) {
           ApplicationManager.getApplication.executeOnPooledThread(new Runnable {
 
             override def run(): Unit = {
               DefinitionLocationComponent.invalidate(psiFile)
-              NameInfoComponent.invalidate(psiFile)
-
-              BrowseModuleComponent.refreshTopLevel(project, psiFile)
-              moduleName.foreach(mn => BrowseModuleComponent.invalidateForModuleName(project, mn))
-
               TypeInfoComponent.invalidate(psiFile)
-              if (stackComponentInfo.exists(_.stanzaType == LibType)) {
-                // Because expressions in hspec files can be large....
-                currentElement.foreach(TypeInfoUtil.preloadTypesAround)
+
+              if (!loadFailed) {
+                NameInfoComponent.invalidate(psiFile)
+
+                BrowseModuleComponent.refreshTopLevel(project, psiFile)
+                val moduleName = HaskellPsiUtil.findModuleName(psiFile, runInRead = true)
+                moduleName.foreach(mn => BrowseModuleComponent.invalidateForModuleName(project, mn))
+
+                if (stackComponentInfo.exists(_.stanzaType == LibType)) {
+                  // Because expressions in hspec files can be large....
+                  currentElement.foreach(TypeInfoUtil.preloadTypesAround)
+                }
               }
             }
           })
