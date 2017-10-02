@@ -1,7 +1,7 @@
 <idea-plugin>
     <id>intellij.haskell</id>
     <name>IntelliJ-Haskell</name>
-    <version>1.0.0-beta12-snapshot</version>
+    <version>1.0.0-beta12</version>
     <vendor email="rikvdkleij@gmail.com">Rik van der Kleij</vendor>
 
     <description><![CDATA[
@@ -11,6 +11,16 @@
     ]]></description>
 
     <change-notes><![CDATA[
+        <p>1.0.0-beta12</p>
+        <ul>
+            <li>Various improvements and fixes</li>
+            <li>Improved REPL (@solicode)</li>
+            <li>Improved project structure of multi-package projects</li>
+            <li>Improved parsing of operators and GHC option pragmas (issue #221)</li>
+            <li>Configurable background REPL timeout (issue #218)</li>
+            <li>Configurable Hlint options (issue #196)</li>
+            <li>Support for Runner program arguments (issue #222)</li>
+        </ul>
         <p>1.0.0-beta12-snapshot</p>
         <ul>
             <li>Various improvements and fixes</li>
