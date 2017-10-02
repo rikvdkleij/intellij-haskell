@@ -1,0 +1,6 @@
+:set +m
+:set prompt ""
+:set prompt2 ""
+
+-- GHC 8.2.1+
+:set prompt-cont ""

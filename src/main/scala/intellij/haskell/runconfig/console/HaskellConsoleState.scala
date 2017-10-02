@@ -24,8 +24,9 @@ class HaskellConsoleState(val configuration: HaskellConsoleConfiguration, val en
     HaskellSdkType.getStackPath(project) match {
       case Some(stackPath) =>
         val stackTarget = configuration.getStackTarget
+        val ghciOptionsPath = getClass.getResource("/ghci/default.ghci").getPath
         val commandLine = new GeneralCommandLine(stackPath)
-          .withParameters(configuration.replCommand)
+          .withParameters(configuration.replCommand, "--ghci-options", s"-ignore-dot-ghci -ghci-script $ghciOptionsPath")
           .withWorkDirectory(project.getBasePath)
 
         if (stackTarget.nonEmpty) {

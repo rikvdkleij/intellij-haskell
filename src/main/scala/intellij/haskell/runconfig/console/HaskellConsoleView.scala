@@ -41,8 +41,7 @@ object HaskellConsoleView {
 class HaskellConsoleView(val project: Project, val configuration: HaskellConsoleConfiguration) extends LanguageConsoleImpl(project, "Haskell Stack REPL", HaskellFileType.Instance.getLanguage) {
 
   private val consoleRootType = new ConsoleRootType("haskell", "Haskell") {}
-  private var historyController: ConsoleHistoryController = _
-  private var outputStreamWriter: OutputStreamWriter = _
+  private val historyController: ConsoleHistoryController = new ConsoleHistoryController(consoleRootType, "haskell", this)
   private var lastCommand: Option[String] = None
 
   addMessageFilter(createFileHyperLinkFilter())
@@ -53,12 +52,9 @@ class HaskellConsoleView(val project: Project, val configuration: HaskellConsole
 
   override def attachToProcess(processHandler: ProcessHandler): Unit = {
     super.attachToProcess(processHandler)
-    Option(processHandler.getProcessInput).foreach(processInput => {
-      outputStreamWriter = new OutputStreamWriter(processInput)
-      historyController = new ConsoleHistoryController(consoleRootType, "haskell", this)
-      historyController.install()
-      HaskellConsoleViewMap.addConsole(this)
-    })
+
+    historyController.install()
+    HaskellConsoleViewMap.addConsole(this)
   }
 
   override def dispose() {
@@ -85,9 +81,10 @@ class HaskellConsoleView(val project: Project, val configuration: HaskellConsole
     executeCommand(text)
   }
 
-  def executeCommand(command: String, addToHistory: Boolean = true, echo: Boolean = true): Unit = {
+  def executeCommand(rawCommandText: String, addToHistory: Boolean = true): Unit = {
+    val command = rawCommandText.trim()
+
     for {
-      processInputWriter <- Option(outputStreamWriter)
       historyController <- Option(historyController)
     } yield {
       if (addToHistory) {
@@ -95,18 +92,13 @@ class HaskellConsoleView(val project: Project, val configuration: HaskellConsole
         historyController.addToHistory(command)
       }
 
-      if (echo) {
-        print(command + "\n", ConsoleViewContentType.NORMAL_OUTPUT)
+      val commandInputText = command match {
+        // In order to execute multi-line commands in +m mode, 2 newlines are required.
+        case s if s.contains('\n') => s + "\n\n"
+        case s => s + "\n"
       }
 
-      for (line <- command.split("\n")) {
-        try {
-          processInputWriter.write(line + "\n")
-          processInputWriter.flush()
-        } catch {
-          case e: IOException => HaskellNotificationGroup.logErrorEvent(ProjectManager.getInstance().getDefaultProject, e.getMessage)
-        }
-      }
+      print(commandInputText, ConsoleViewContentType.USER_INPUT)
     }
   }
 
