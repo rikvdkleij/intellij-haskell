@@ -15,18 +15,16 @@
  */
 package intellij.haskell.runconfig.console
 
-import java.io.{IOException, OutputStreamWriter}
-
 import com.intellij.execution.console.{ConsoleHistoryController, ConsoleRootType, LanguageConsoleImpl}
 import com.intellij.execution.filters._
 import com.intellij.execution.process.ProcessHandler
 import com.intellij.execution.ui.ConsoleViewContentType
 import com.intellij.openapi.command.WriteCommandAction
-import com.intellij.openapi.project.{Project, ProjectManager}
+import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Key
 import com.intellij.psi.PsiFile
 import com.intellij.util.DocumentUtil
-import intellij.haskell.{HaskellFileType, HaskellNotificationGroup}
+import intellij.haskell.HaskellFileType
 
 object HaskellConsoleView {
   private val HaskellConsoleKey: Key[HaskellConsoleInfo] = Key.create("HASKELL CONSOLE KEY")

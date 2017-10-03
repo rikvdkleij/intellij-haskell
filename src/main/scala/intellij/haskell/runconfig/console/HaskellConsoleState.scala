@@ -24,9 +24,15 @@ class HaskellConsoleState(val configuration: HaskellConsoleConfiguration, val en
     HaskellSdkType.getStackPath(project) match {
       case Some(stackPath) =>
         val stackTarget = configuration.getStackTarget
-        val ghciOptionsPath = getClass.getResource("/ghci/default.ghci").getPath
+        val ghcVersion = HaskellProjectUtil.getGhcVersion(project)
+        val ghc821Compatible = ghcVersion.exists(_ >= GhcVersion(8, 2, 1))
+        val ghciOptionsPath = if (ghc821Compatible) {
+          getClass.getResource("/ghci/8.2.1.ghci").getPath
+        } else {
+          getClass.getResource("/ghci/default.ghci").getPath
+        }
         val commandLine = new GeneralCommandLine(stackPath)
-          .withParameters(configuration.replCommand, "--ghci-options", s"-ignore-dot-ghci -ghci-script $ghciOptionsPath")
+          .withParameters(configuration.replCommand, "--ghci-options", s"-ghci-script $ghciOptionsPath")
           .withWorkDirectory(project.getBasePath)
 
         if (stackTarget.nonEmpty) {
@@ -34,10 +40,8 @@ class HaskellConsoleState(val configuration: HaskellConsoleConfiguration, val en
         }
 
         // Enable color output for GHC versions that support it.
-        HaskellProjectUtil.getGhcVersion(project).foreach { ghcVersion =>
-          if (ghcVersion >= GhcVersion(8, 2, 1)) {
-            commandLine.addParameters("--ghc-options", "-fdiagnostics-color=always")
-          }
+        if (ghc821Compatible) {
+          commandLine.addParameters("--ghc-options", "-fdiagnostics-color=always")
         }
 
         commandLine.setRedirectErrorStream(true)
