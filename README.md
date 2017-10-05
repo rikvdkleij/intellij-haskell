@@ -41,9 +41,13 @@ You can install this plugin using the [Jetbrains plugin repository](https://plug
 - Show error action to view formatted message. Useful in case message consists of multiple lines (Ctrl-F10, Meta-F10 on Mac OSX);
 - Intention actions to add language extension (depends on compiler error), add top-level type signature (depends on compiler warning);
 - Intention action to select which module to import if identifier is not in scope;
-- Code formatting with Hindent and/or Stylish-haskell. Formatting of selected code by Hindent;
+- Code formatting with `hindent`, `stylish-haskell`, or both together. `hindent` can also be used to format a selected code block.
 - Code completion for project module names, language extensions and package names in Cabal file;
 - Running REPL, tests and executables via `Run Configurations`;
+
+### Usage with `hindent`
+
+When used with `hindent`, `intellij-haskell` automatically sets `--indent-size` as a command-line option in `hindent` from the `Indent` option in your project code style settings. It also automatically sets the `--line-length` command-line option from your `Right margin (columns)` code style setting. This means that any `.hindent.yaml` files used for configuration will have these options overridden and may not fully work.
 
 
 # Getting started 
