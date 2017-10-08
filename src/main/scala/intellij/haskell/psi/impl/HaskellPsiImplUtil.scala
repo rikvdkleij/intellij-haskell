@@ -349,9 +349,9 @@ object HaskellPsiImplUtil {
 
   def getIdentifierElements(instanceDeclaration: HaskellInstanceDeclaration): Seq[HaskellNamedElement] = {
     Option(instanceDeclaration.getQName).map(_.getIdentifierElement).toSeq ++
-      instanceDeclaration.getInst.getInstvarList.asScala.
-        flatMap(v => Option(v.getQName).map(_.getIdentifierElement).orElse(Option(v.getTtype).flatMap(_.getQNameList.asScala.headOption.map(_.getIdentifierElement)))) ++
-      instanceDeclaration.getInst.getGtyconList.asScala.flatMap(c => Option(c.getQName).map(_.getIdentifierElement))
+      Option(instanceDeclaration.getInst).map(_.getInstvarList.asScala.
+        flatMap(v => Option(v.getQName).map(_.getIdentifierElement).orElse(Option(v.getTtype).flatMap(_.getQNameList.asScala.headOption.map(_.getIdentifierElement))))).getOrElse(Seq()) ++
+      Option(instanceDeclaration.getInst).map(_.getGtyconList.asScala.flatMap(c => Option(c.getQName).map(_.getIdentifierElement))).getOrElse(Seq())
   }
 
   def getIdentifierElements(typeFamilyDeclaration: HaskellTypeFamilyDeclaration): Seq[HaskellNamedElement] = {
