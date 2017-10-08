@@ -137,9 +137,11 @@ class_declaration           ::= CLASS onls (scontext onls DOUBLE_RIGHT_ARROW)? o
                                   CLASS onls scontext onls DOUBLE_RIGHT_ARROW onls (q_name+ | ttype) onls WHERE? onls cdecls?  // seen in Control.Lens.Internal.Indexed
 
 instance_declaration        ::= INSTANCE onls (overlap_pragma | "OVERLAPPABLE_" | "OVERLAPPING_" | incoherent_pragma)? onls (var_con+ DOT)? onls (scontext onls DOUBLE_RIGHT_ARROW)? onls
-                                    q_name onls inst (onls WHERE (onls cidecls)?)?
+                                    (type_equality | q_name onls inst (onls WHERE (onls cidecls)?)?)    // this way of using type equality in Data.Type.Equality
 
-default_declaration         ::= DEFAULT onls (LEFT_PAREN (ttype (COMMA ttype)*)? RIGHT_PAREN | type_signature)
+type_equality               ::= q_name+ TILDE q_name+
+
+default_declaration         ::= DEFAULT onls (type_signature | LEFT_PAREN (ttype (COMMA ttype)*)? RIGHT_PAREN)
 
 type_instance_declaration   ::= TYPE_INSTANCE onls expression
 
@@ -150,7 +152,7 @@ fixity_declaration          ::= fixity (DECIMAL)? q_names
 
 foreign_declaration         ::= (FOREIGN_IMPORT | FOREIGN_EXPORT) onls expression
 
-type_family_declaration     ::= TYPE_FAMILY onls type_family_type (onls WHERE onls expression)?
+type_family_declaration     ::= TYPE_FAMILY onls type_family_type (onls (WHERE | EQUAL) (onls expression)?)?
 
 deriving_declaration        ::= DERIVING INSTANCE (scontext onls DOUBLE_RIGHT_ARROW)? onls q_name onls inst
 
@@ -206,20 +208,20 @@ constr3                     ::= (onls unpack_nounpack_pragma? onls ttype)+
 fielddecl                   ::= q_names (onl COLON_COLON unpack_nounpack_pragma? (onls ("forall" | FORALL) (onls q_name)+)? (onls scontext onls DOUBLE_RIGHT_ARROW)? unpack_nounpack_pragma? onls ttype)?
 
 private atype               ::= (("forall" | FORALL) (onl q_name | LEFT_PAREN (type_signature | ttype) RIGHT_PAREN)+ (onl DOUBLE_RIGHT_ARROW onl ttype)? |
-                                  LEFT_PAREN ttype1 RIGHT_PAREN |
-                                  LEFT_BRACE ttype1 RIGHT_BRACE |
-                                  LEFT_PAREN ttype2 RIGHT_PAREN |
-                                  LEFT_BRACE ttype2 RIGHT_BRACE |
+                                  q_name? LEFT_PAREN ttype1 RIGHT_PAREN |
+                                  q_name? LEFT_BRACE ttype1 RIGHT_BRACE |
+                                  q_name? LEFT_PAREN ttype2 RIGHT_PAREN |
+                                  q_name? LEFT_BRACE ttype2 RIGHT_BRACE |
                                   QUOTE? LEFT_BRACKET oonls ttype (oonls COMMA oonls ttype)* oonls RIGHT_BRACKET |
                                   QUOTE? (q_name (oonls COLON_COLON oonls ttype)?)+ | QUOTE? LEFT_PAREN RIGHT_PAREN | QUOTE? LEFT_BRACKET RIGHT_BRACKET | LEFT_PAREN COMMA+ RIGHT_PAREN  | literal | LEFT_PAREN RIGHT_ARROW RIGHT_PAREN | NEWLINE DIRECTIVE) !COLON_COLON
 
 ttype1                      ::= (onl "#")? onl ttype ((onl COMMA)? onl ttype)* onl ("#" onl)?
-ttype2                      ::= ("forall" | FORALL) (onl q_name)+ (onl DOUBLE_RIGHT_ARROW onl ttype)? onl
+ttype2                      ::= ("forall" | FORALL)? onl ttype (onl DOUBLE_RIGHT_ARROW onl ttype)? onl
 
 
 ttype                       ::= "!"? (btype (oonls RIGHT_ARROW oonls ttype)* | list_type q_name* | LEFT_PAREN RIGHT_ARROW RIGHT_PAREN)
 
-private btype               ::= atype+     // generalization because left recursive is not supported
+private btype               ::= (atype | TILDE)+     // generalization because left recursive is not supported
 
 simpletype                  ::= ttype | (q_name | LEFT_PAREN RIGHT_PAREN)+ |
                                   q_name* oonls LEFT_PAREN q_name RIGHT_PAREN oonls q_name* |
@@ -248,7 +250,7 @@ inst                        ::= gtycon+ instvar* (LEFT_PAREN onls gtycon (instva
                                   (LEFT_PAREN onls instvar+ onls RIGHT_PAREN)+ instvar* |
                                   ((LEFT_PAREN onls instvar+ (onls RIGHT_ARROW onls instvar+)+ onls RIGHT_PAREN)+ instvar*)+
 
-instvar                     ::= q_name | ttype | LEFT_BRACKET q_name+ RIGHT_BRACKET | LEFT_PAREN q_name+ RIGHT_PAREN | LEFT_PAREN RIGHT_PAREN
+instvar                     ::= ttype | q_name | LEFT_BRACKET q_name+ RIGHT_BRACKET | LEFT_PAREN q_name+ RIGHT_PAREN | LEFT_PAREN RIGHT_PAREN
 
 private fixity              ::= INFIXL | INFIXR | INFIX
 

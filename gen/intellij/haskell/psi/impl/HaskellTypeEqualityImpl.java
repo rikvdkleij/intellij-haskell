@@ -4,21 +4,21 @@ package intellij.haskell.psi.impl;
 import com.intellij.lang.ASTNode;
 import com.intellij.psi.PsiElementVisitor;
 import com.intellij.psi.util.PsiTreeUtil;
-import intellij.haskell.psi.HaskellTtype;
-import intellij.haskell.psi.HaskellTtype2;
+import intellij.haskell.psi.HaskellQName;
+import intellij.haskell.psi.HaskellTypeEquality;
 import intellij.haskell.psi.HaskellVisitor;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.List;
 
-public class HaskellTtype2Impl extends HaskellCompositeElementImpl implements HaskellTtype2 {
+public class HaskellTypeEqualityImpl extends HaskellCompositeElementImpl implements HaskellTypeEquality {
 
-  public HaskellTtype2Impl(ASTNode node) {
+  public HaskellTypeEqualityImpl(ASTNode node) {
     super(node);
   }
 
   public void accept(@NotNull HaskellVisitor visitor) {
-    visitor.visitTtype2(this);
+    visitor.visitTypeEquality(this);
   }
 
   public void accept(@NotNull PsiElementVisitor visitor) {
@@ -28,8 +28,8 @@ public class HaskellTtype2Impl extends HaskellCompositeElementImpl implements Ha
 
   @Override
   @NotNull
-  public List<HaskellTtype> getTtypeList() {
-    return PsiTreeUtil.getChildrenOfTypeAsList(this, HaskellTtype.class);
+  public List<HaskellQName> getQNameList() {
+    return PsiTreeUtil.getChildrenOfTypeAsList(this, HaskellQName.class);
   }
 
 }

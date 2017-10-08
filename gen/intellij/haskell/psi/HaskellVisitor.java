@@ -395,6 +395,10 @@ public class HaskellVisitor extends PsiElementVisitor {
     visitDeclarationElement(o);
   }
 
+  public void visitTypeEquality(@NotNull HaskellTypeEquality o) {
+    visitCompositeElement(o);
+  }
+
   public void visitTypeFamilyDeclaration(@NotNull HaskellTypeFamilyDeclaration o) {
     visitDeclarationElement(o);
   }

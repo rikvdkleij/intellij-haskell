@@ -1,12 +1,13 @@
 // This is a generated file. Not intended for manual editing.
 package intellij.haskell.psi;
 
-import java.util.List;
-import org.jetbrains.annotations.*;
-import com.intellij.psi.PsiElement;
 import com.intellij.navigation.ItemPresentation;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 import scala.Option;
 import scala.collection.Seq;
+
+import java.util.List;
 
 public interface HaskellInstanceDeclaration extends HaskellDeclarationElement {
 
@@ -16,17 +17,20 @@ public interface HaskellInstanceDeclaration extends HaskellDeclarationElement {
   @Nullable
   HaskellIncoherentPragma getIncoherentPragma();
 
-  @NotNull
+  @Nullable
   HaskellInst getInst();
 
   @Nullable
   HaskellOverlapPragma getOverlapPragma();
 
-  @NotNull
+  @Nullable
   HaskellQName getQName();
 
   @Nullable
   HaskellScontext getScontext();
+
+  @Nullable
+  HaskellTypeEquality getTypeEquality();
 
   @NotNull
   List<HaskellVarCon> getVarConList();

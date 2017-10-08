@@ -105,6 +105,7 @@ public interface HaskellTypes {
   IElementType HS_TTYPE_1 = new HaskellCompositeElementType("HS_TTYPE_1");
   IElementType HS_TTYPE_2 = new HaskellCompositeElementType("HS_TTYPE_2");
   IElementType HS_TYPE_DECLARATION = new HaskellCompositeElementType("HS_TYPE_DECLARATION");
+  IElementType HS_TYPE_EQUALITY = new HaskellCompositeElementType("HS_TYPE_EQUALITY");
   IElementType HS_TYPE_FAMILY_DECLARATION = new HaskellCompositeElementType("HS_TYPE_FAMILY_DECLARATION");
   IElementType HS_TYPE_FAMILY_TYPE = new HaskellCompositeElementType("HS_TYPE_FAMILY_TYPE");
   IElementType HS_TYPE_INSTANCE_DECLARATION = new HaskellCompositeElementType("HS_TYPE_INSTANCE_DECLARATION");
@@ -482,6 +483,9 @@ public interface HaskellTypes {
       }
       else if (type == HS_TYPE_DECLARATION) {
         return new HaskellTypeDeclarationImpl(node);
+      }
+      else if (type == HS_TYPE_EQUALITY) {
+        return new HaskellTypeEqualityImpl(node);
       }
       else if (type == HS_TYPE_FAMILY_DECLARATION) {
         return new HaskellTypeFamilyDeclarationImpl(node);

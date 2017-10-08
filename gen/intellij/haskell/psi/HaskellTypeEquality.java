@@ -5,9 +5,9 @@ import org.jetbrains.annotations.NotNull;
 
 import java.util.List;
 
-public interface HaskellTtype2 extends HaskellCompositeElement {
+public interface HaskellTypeEquality extends HaskellCompositeElement {
 
   @NotNull
-  List<HaskellTtype> getTtypeList();
+  List<HaskellQName> getQNameList();
 
 }
