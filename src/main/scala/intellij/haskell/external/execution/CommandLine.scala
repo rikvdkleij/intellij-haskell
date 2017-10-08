@@ -31,12 +31,13 @@ import scala.concurrent.duration._
 object CommandLine {
   val DefaultTimeout: FiniteDuration = 3.seconds
 
-  def runProgram(project: Option[Project], workDir: String, commandPath: String, arguments: Seq[String], timeoutInMillis: Long = DefaultTimeout.toMillis, captureOutput: Option[CaptureOutput] = None, notifyBalloonError: Boolean = false): Option[ProcessOutput] = {
+  def runProgram(project: Option[Project], workDir: String, commandPath: String, arguments: Seq[String], timeoutInMillis: Long = DefaultTimeout.toMillis, captureOutput: Option[CaptureOutput] = None,
+                 notifyBalloonError: Boolean = false, ignoreExitCode: Boolean = false): Option[ProcessOutput] = {
     val commandLine = createCommandLine(workDir, commandPath, arguments)
-    run(project, commandLine, timeoutInMillis, captureOutput, notifyBalloonError)
+    run(project, commandLine, timeoutInMillis, captureOutput, notifyBalloonError, ignoreExitCode)
   }
 
-  private def run(project: Option[Project], cmd: GeneralCommandLine, timeout: Long, captureOutput: Option[CaptureOutput], notifyBalloonError: Boolean): Option[ProcessOutput] = {
+  private def run(project: Option[Project], cmd: GeneralCommandLine, timeout: Long, captureOutput: Option[CaptureOutput], notifyBalloonError: Boolean, ignoreExitCode: Boolean): Option[ProcessOutput] = {
     val processHandler = createProcessHandler(project, cmd, captureOutput)
 
     val processOutput = processHandler.runProcess(timeout.toInt, true)
@@ -48,7 +49,7 @@ object CommandLine {
         HaskellNotificationGroup.logErrorEvent(project, message)
       }
       None
-    } else if (processOutput.getExitCode != 0) {
+    } else if (!ignoreExitCode && processOutput.getExitCode != 0) {
       val message = s"Executing ${cmd.getCommandLineString} failed, see Haskell Event log for more information"
       if (notifyBalloonError) {
         HaskellNotificationGroup.logErrorBalloonEvent(project, message)

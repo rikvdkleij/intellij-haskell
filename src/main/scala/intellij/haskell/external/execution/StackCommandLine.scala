@@ -33,7 +33,8 @@ import scala.collection.mutable.ListBuffer
 
 object StackCommandLine {
 
-  def runCommand(project: Project, command: Seq[String], timeoutInMillis: Long = CommandLine.DefaultTimeout.toMillis, captureOutput: Option[CaptureOutput] = None, notifyBalloonError: Boolean = false): Option[ProcessOutput] = {
+  def runCommand(project: Project, command: Seq[String], timeoutInMillis: Long = CommandLine.DefaultTimeout.toMillis, captureOutput: Option[CaptureOutput] = None,
+                 notifyBalloonError: Boolean = false, ignoreExitCode: Boolean = false): Option[ProcessOutput] = {
     HaskellSdkType.getStackPath(project).flatMap(stackPath => {
       CommandLine.runProgram(
         Some(project),
@@ -42,7 +43,8 @@ object StackCommandLine {
         command,
         timeoutInMillis.toInt,
         captureOutput,
-        notifyBalloonError)
+        notifyBalloonError,
+        ignoreExitCode)
     })
   }
 

@@ -24,7 +24,7 @@ import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.util.Computable
 import com.intellij.psi.{PsiElement, PsiFile, TokenType}
 import com.intellij.util.WaitFor
-import intellij.haskell.external.component.{HLintComponent, HLintInfo, StackProjectManager}
+import intellij.haskell.external.component.{HLintComponent, HLintInfo}
 import intellij.haskell.psi.HaskellTypes._
 import intellij.haskell.util.{HaskellProjectUtil, LineColumnPosition}
 
@@ -35,7 +35,7 @@ class HLintInspectionTool extends LocalInspectionTool {
   override def checkFile(psiFile: PsiFile, manager: InspectionManager, isOnTheFly: Boolean): Array[ProblemDescriptor] = {
     ProgressManager.checkCanceled()
 
-    if (HaskellProjectUtil.isLibraryFile(psiFile).getOrElse(true) || StackProjectManager.isBuilding(psiFile.getProject)) {
+    if (HaskellProjectUtil.isLibraryFile(psiFile).getOrElse(true)) {
       return Array()
     }
 
