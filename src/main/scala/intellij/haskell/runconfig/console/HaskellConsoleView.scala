@@ -19,12 +19,15 @@ import com.intellij.execution.console.{ConsoleHistoryController, ConsoleRootType
 import com.intellij.execution.filters._
 import com.intellij.execution.process.ProcessHandler
 import com.intellij.execution.ui.ConsoleViewContentType
+import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.command.WriteCommandAction
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.util.Key
+import com.intellij.openapi.util.{Computable, Key}
 import com.intellij.psi.PsiFile
+import com.intellij.psi.search.GlobalSearchScope
 import com.intellij.util.DocumentUtil
-import intellij.haskell.HaskellFileType
+import intellij.haskell.util.index.HaskellModuleNameIndex
+import intellij.haskell.{HaskellFile, HaskellFileType}
 
 object HaskellConsoleView {
   private val HaskellConsoleKey: Key[HaskellConsoleInfo] = Key.create("HASKELL CONSOLE KEY")
@@ -79,18 +82,29 @@ class HaskellConsoleView(val project: Project, val configuration: HaskellConsole
     executeCommand(text)
   }
 
-  def executeCommand(rawCommandText: String, addToHistory: Boolean = true): Unit = {
-    val command = rawCommandText.trim()
+  private final val LoadPattern = """:l(?:oad)?\s+([\w\-\.]+)""".r
+
+  def executeCommand(commandText: String, addToHistory: Boolean = true): Unit = {
+    commandText.trim() match {
+      case LoadPattern(moduleName) =>
+        val haskellFile = ApplicationManager.getApplication.runReadAction(new Computable[Option[HaskellFile]] {
+          override def compute(): Option[HaskellFile] = {
+            HaskellModuleNameIndex.findHaskellFileByModuleName(project, moduleName, GlobalSearchScope.projectScope(project))
+          }
+        })
+        haskellFile.foreach(hf => HaskellConsoleViewMap.projectFileByConfigName.put(configuration.getName, hf))
+      case _ => ()
+    }
 
     for {
       historyController <- Option(historyController)
     } yield {
       if (addToHistory) {
-        lastCommand = Some(command)
-        historyController.addToHistory(command)
+        lastCommand = Some(commandText.trim())
+        historyController.addToHistory(commandText.trim())
       }
 
-      val commandInputText = command match {
+      val commandInputText = commandText.trim() match {
         // In order to execute multi-line commands in +m mode, 2 newlines are required.
         case s if s.contains('\n') => s + "\n\n"
         case s => s + "\n"
