@@ -18,6 +18,7 @@
             <li>Multi-line support in REPL (@solicode)</li>
             <li>Improved project structure of multi-package projects</li>
             <li>Improved parser</li>
+            <li>Also display type info in status bar</li>
             <li>Configurable background REPL timeout (issue #218)</li>
             <li>Configurable Hlint options (issue #196)</li>
             <li>Support for Runner program arguments (issue #222)</li>
