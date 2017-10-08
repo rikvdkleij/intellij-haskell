@@ -15,8 +15,9 @@
         <ul>
             <li>Various improvements and fixes</li>
             <li>Improved REPL (@solicode)</li>
+            <li>Multi-line support in REPL (@solicode)</li>
             <li>Improved project structure of multi-package projects</li>
-            <li>Improved parsing of operators and GHC option pragmas (issue #221)</li>
+            <li>Improved parser</li>
             <li>Configurable background REPL timeout (issue #218)</li>
             <li>Configurable Hlint options (issue #196)</li>
             <li>Support for Runner program arguments (issue #222)</li>
