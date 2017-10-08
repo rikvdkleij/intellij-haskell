@@ -124,10 +124,12 @@ private[component] object NameInfoComponent {
       })
 
   def findNameInfo(psiElement: PsiElement, forceGetInfo: Boolean): Iterable[NameInfo] = {
-    (for {
-      qne <- HaskellPsiUtil.findQualifiedNameParent(psiElement)
-      pf <- Option(qne.getContainingFile).map(_.getOriginalFile)
-    } yield Key(pf, qne.getName.replaceAll("""\s+""", ""), forceGetInfo)).map(key => {
+    HaskellPsiUtil.findQualifiedNameParent(psiElement).map(p => findNameInfo(p, forceGetInfo)).getOrElse(Iterable())
+  }
+
+  def findNameInfo(qualifiedNameElement: HaskellQualifiedNameElement, forceGetInfo: Boolean): Iterable[NameInfo] = {
+    Option(qualifiedNameElement.getContainingFile).map(_.getOriginalFile).map(pf =>
+      Key(pf, qualifiedNameElement.getName.replaceAll("""\s+""", ""), forceGetInfo)).map(key => {
 
       val otherKey = key.copy(forceGetInfo = !forceGetInfo)
       Option(Cache.getIfPresent(otherKey)).flatMap(_.nameInfos.toOption) match {

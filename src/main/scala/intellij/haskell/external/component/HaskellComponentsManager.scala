@@ -25,7 +25,7 @@ import intellij.haskell.cabal.CabalInfo
 import intellij.haskell.external.execution.CompilationResult
 import intellij.haskell.external.repl.StackReplsManager
 import intellij.haskell.external.repl.StackReplsManager.StackComponentInfo
-import intellij.haskell.psi.{HaskellNamedElement, HaskellPsiUtil}
+import intellij.haskell.psi.{HaskellNamedElement, HaskellPsiUtil, HaskellQualifiedNameElement}
 import intellij.haskell.util.HaskellProjectUtil
 import intellij.haskell.util.index.HaskellFileNameIndex
 import intellij.haskell.{HaskellFile, HaskellNotificationGroup}
@@ -49,10 +49,13 @@ object HaskellComponentsManager {
     DefinitionLocationComponent.findDefinitionLocation(namedElement)
   }
 
+  def findNameInfo(qualifiedNameElement: HaskellQualifiedNameElement, forceGetInfo: Boolean): Iterable[NameInfo] = {
+    NameInfoComponent.findNameInfo(qualifiedNameElement, forceGetInfo)
+  }
+
   def findNameInfo(psiElement: PsiElement, forceGetInfo: Boolean): Iterable[NameInfo] = {
     NameInfoComponent.findNameInfo(psiElement, forceGetInfo)
   }
-
   def findNameInfoByModuleName(project: Project, moduleName: String, name: String): Iterable[NameInfo] = {
     NameInfoComponent.findNameInfoByModuleName(project, moduleName, name)
   }
