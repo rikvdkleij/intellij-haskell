@@ -18,9 +18,11 @@ package intellij.haskell.external.component
 
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.fileEditor.FileEditorManager
+import com.intellij.openapi.module.Module
 import com.intellij.openapi.progress.{ProgressIndicator, ProgressManager, Task}
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.roots.libraries.LibraryUtil
+import com.intellij.openapi.util.Computable
 import com.intellij.psi.{PsiElement, PsiFile}
 import com.intellij.util.WaitFor
 import intellij.haskell.annotator.HaskellAnnotator
@@ -55,7 +57,7 @@ private[component] object LoadComponent {
     if (fileOfSelectedEditor) {
       stackComponentInfo.foreach(info => {
         if (info.stanzaType != LibType) {
-          val module = HaskellProjectUtil.findModule(psiFile)
+          val module = findModule(psiFile)
           val namesOfPackagesToRebuild = ProjectLibraryFileWatcher.changedLibrariesByPackageName.filter(pn => pn._1 == info.packageName || module.exists(mn => LibraryUtil.findLibrary(mn, pn._1) != null)).keys
           namesOfPackagesToRebuild.foreach(nameOfPackageToRebuild => {
             val stackComponentInfo = ProjectLibraryFileWatcher.changedLibrariesByPackageName.remove(nameOfPackageToRebuild)
@@ -136,5 +138,13 @@ private[component] object LoadComponent {
       }
     }
     fileOfSelectedEditor.getOrElse(false)
+  }
+
+  private def findModule(psiFile: PsiFile) = {
+    ApplicationManager.getApplication.runReadAction(new Computable[Option[Module]] {
+      override def compute(): Option[Module] = {
+        HaskellProjectUtil.findModule(psiFile)
+      }
+    })
   }
 }
