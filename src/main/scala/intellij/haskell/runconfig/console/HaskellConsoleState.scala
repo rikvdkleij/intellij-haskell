@@ -6,8 +6,9 @@ import com.intellij.execution.filters.TextConsoleBuilderImpl
 import com.intellij.execution.process.{ProcessHandler, ProcessTerminatedListener}
 import com.intellij.execution.runners.ExecutionEnvironment
 import com.intellij.execution.ui.ConsoleView
+import com.intellij.openapi.util.io.FileUtil
 import intellij.haskell.sdk.HaskellSdkType
-import intellij.haskell.util.{GhcVersion, HaskellProjectUtil}
+import intellij.haskell.util.{GhcVersion, HaskellFileUtil, HaskellProjectUtil}
 
 class HaskellConsoleState(val configuration: HaskellConsoleConfiguration, val environment: ExecutionEnvironment) extends CommandLineState(environment) {
 
@@ -26,13 +27,17 @@ class HaskellConsoleState(val configuration: HaskellConsoleConfiguration, val en
         val stackTarget = configuration.getStackTarget
         val ghcVersion = HaskellProjectUtil.getGhcVersion(project)
         val ghc821Compatible = ghcVersion.exists(_ >= GhcVersion(8, 2, 1))
-        val ghciOptionsPath = if (ghc821Compatible) {
-          getClass.getResource("/ghci/8.2.1.ghci").getPath
+        val ghciScript = FileUtil.generateRandomTemporaryPath()
+        val ghciOptionsStream = if (ghc821Compatible) {
+          getClass.getResourceAsStream("/ghci/8.2.1.ghci")
         } else {
-          getClass.getResource("/ghci/default.ghci").getPath
+          getClass.getResourceAsStream("/ghci/default.ghci")
         }
+        
+        HaskellFileUtil.copyStreamToFile(ghciOptionsStream, ghciScript)
+        
         val commandLine = new GeneralCommandLine(stackPath)
-          .withParameters(configuration.replCommand, "--ghci-options", s"-ghci-script $ghciOptionsPath")
+          .withParameters(configuration.replCommand, "--ghci-options", s"-ghci-script ${ghciScript.getAbsolutePath}")
           .withWorkDirectory(project.getBasePath)
 
         if (stackTarget.nonEmpty) {
