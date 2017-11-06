@@ -1,6 +1,6 @@
 lazy val commonSettings = Seq(
   version := "1.0.0-beta12",
-  scalaVersion := "2.12.3"
+  scalaVersion := "2.12.4"
 )
 
 val guava = "com.google.guava" % "guava" % "21.0"
@@ -23,4 +23,4 @@ lazy val intellijHaskell = (project in file(".")).
     unmanagedJars in Compile += baseDirectory.value / "idea"
   )
 
-ideaBuild in ThisBuild := "173.2941.3"
+ideaBuild in ThisBuild := "173.3531.6"

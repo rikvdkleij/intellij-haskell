@@ -29,7 +29,7 @@ class CabalSyntaxHighlighter extends SyntaxHighlighterBase {
       case CabalTypes.CONFIG => pack(CabalSyntaxHighlighter.CONFIG)
       case CabalTypes.CONDITIONAL => pack(CabalSyntaxHighlighter.CONDITIONAL)
       case CabalTypes.LBRACE | CabalTypes.RBRACE => pack(CabalSyntaxHighlighter.BRACES)
-      case _ => EMPTY
+      case _ => new Array[TextAttributesKey](0)
     }
   }
 }

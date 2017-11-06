@@ -63,7 +63,7 @@ class HaskellParserDefinition extends ParserDefinition {
   }
 
   @NotNull
-  def getWhitespaceTokens: TokenSet = {
+  override def getWhitespaceTokens: TokenSet = {
     HaskellParserDefinition.WhiteSpaces
   }
 
