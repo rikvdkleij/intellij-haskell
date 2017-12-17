@@ -23,7 +23,7 @@ import intellij.haskell.util.HaskellEditorUtil
 class RestartStackReplsAction extends AnAction {
 
   override def update(actionEvent: AnActionEvent): Unit = {
-    HaskellEditorUtil.enableExternalAction(actionEvent, !StackProjectManager.isInitialzing(_))
+    HaskellEditorUtil.enableExternalAction(actionEvent, !StackProjectManager.isInitializing(_))
   }
 
   override def actionPerformed(e: AnActionEvent): Unit = {

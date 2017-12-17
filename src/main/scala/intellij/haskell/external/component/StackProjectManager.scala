@@ -33,7 +33,7 @@ object StackProjectManager {
 
   import intellij.haskell.util.ScalaUtil._
 
-  def isInitialzing(project: Project): Boolean = {
+  def isInitializing(project: Project): Boolean = {
     getStackProjectManager(project).exists(_.initializing)
   }
 
@@ -63,7 +63,7 @@ object StackProjectManager {
 
   private def init(project: Project, restart: Boolean = false): Unit = {
     if (HaskellProjectUtil.isValidHaskellProject(project, notifyNoSdk = true)) {
-      if (isInitialzing(project)) {
+      if (isInitializing(project)) {
         HaskellNotificationGroup.logWarningBalloonEvent(project, "Action is not possible because project is initializing")
       } else {
         HaskellNotificationGroup.logInfoEvent(project, "Initializing Haskell project")
@@ -105,6 +105,7 @@ object StackProjectManager {
                   })
                 }
 
+                progressIndicator.setText(s"Busy with building intero ")
                 executeBuild(project, Seq("intero"), "intero", notifyBalloonError = true)
 
                 progressIndicator.setText("Busy with starting global Stack REPL")

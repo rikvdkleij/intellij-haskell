@@ -47,7 +47,7 @@ class HoogleNavigationAction extends GotoActionBase {
   private val contributors = Array[ChooseByNameContributor](new HoogleByNameContributor)
 
   override def update(actionEvent: AnActionEvent) {
-    HaskellEditorUtil.enableExternalAction(actionEvent, (project: Project) => !StackProjectManager.isInitialzing(project) && StackProjectManager.isHoogleAvailable(project) && HoogleComponent.doesHoogleDatabaseExist(project))
+    HaskellEditorUtil.enableExternalAction(actionEvent, (project: Project) => !StackProjectManager.isInitializing(project) && StackProjectManager.isHoogleAvailable(project) && HoogleComponent.doesHoogleDatabaseExist(project))
   }
 
   def gotoActionPerformed(actionEvent: AnActionEvent) {

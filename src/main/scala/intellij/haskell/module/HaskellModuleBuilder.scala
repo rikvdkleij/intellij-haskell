@@ -31,13 +31,13 @@ import com.intellij.openapi.roots.impl.libraries.ProjectLibraryTable
 import com.intellij.openapi.roots.libraries.{Library, LibraryUtil}
 import com.intellij.openapi.ui.Messages
 import com.intellij.openapi.util.io.FileUtil
-import com.intellij.openapi.vfs.{LocalFileSystem, VfsUtil, VirtualFileManager}
+import com.intellij.openapi.vfs.{LocalFileSystem, VirtualFileManager}
 import intellij.haskell.cabal.CabalInfo
 import intellij.haskell.external.execution.{CaptureOutputToLog, CommandLine, StackCommandLine}
 import intellij.haskell.sdk.HaskellSdkType
 import intellij.haskell.stackyaml.StackYamlComponent
 import intellij.haskell.util.{HaskellFileUtil, HaskellProjectUtil}
-import intellij.haskell.{HaskellIcons, HaskellNotificationGroup}
+import intellij.haskell.{GlobalInfo, HaskellIcons, HaskellNotificationGroup}
 
 import scala.collection.JavaConverters._
 import scala.collection.mutable
@@ -145,7 +145,7 @@ class HaskellModuleWizardStep(wizardContext: WizardContext, haskellModuleBuilder
 
 object HaskellModuleBuilder {
 
-  private final val IdeaHaskellLibName = ".intellij-haskell" + File.separator + "lib"
+  private final val IntelliJHaskellLibName = "lib"
   private final val PackagePattern = """([\w\-]+)\s([\d\.]+)""".r
 
   def createCabalInfo(project: Project, modulePath: String, packageRelativePath: String): Option[CabalInfo] = {
@@ -225,8 +225,7 @@ object HaskellModuleBuilder {
   }
 
   private def getProjectLibDirectory(project: Project): File = {
-    val homeDirectory = HaskellFileUtil.getAbsoluteFilePath(VfsUtil.getUserHomeDir)
-    new File(new File(homeDirectory, IdeaHaskellLibName), project.getName)
+    new File(new File(GlobalInfo.getIntelliJHaskellDirectory, IntelliJHaskellLibName), project.getName)
   }
 
   private def createPackageInfos(project: Project, dependencyLines: Seq[String]): Seq[HaskellPackageInfo] = {

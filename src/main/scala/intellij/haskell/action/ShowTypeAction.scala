@@ -70,7 +70,7 @@ object ShowTypeAction {
 
     HaskellComponentsManager.findTypeInfoForElement(psiElement, forceGetInfo = true) match {
       case Some(ti) =>
-        HaskellEditorUtil.showStatusBarInfoMessage(ti.typeSignature, project)
+        HaskellEditorUtil.showStatusBarInfoMessage(project, ti.typeSignature)
         HaskellEditorUtil.showHint(editor, StringUtil.escapeString(ti.typeSignature), sticky)
       case None if HaskellPsiUtil.findExpressionParent(psiElement).isDefined =>
         val moduleNames = HaskellPsiUtil.findImportDeclarations(psiFile).flatMap(_.getModuleName)
@@ -83,7 +83,7 @@ object ShowTypeAction {
 
         declaration match {
           case Some(d) =>
-            HaskellEditorUtil.showStatusBarInfoMessage(d, project)
+            HaskellEditorUtil.showStatusBarInfoMessage(project, d)
             HaskellEditorUtil.showHint(editor, StringUtil.escapeString(d), sticky)
           case None => showNoTypeInfoHint(editor, psiElement)
         }

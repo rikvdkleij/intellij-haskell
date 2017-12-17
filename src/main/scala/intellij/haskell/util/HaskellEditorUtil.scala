@@ -140,7 +140,7 @@ object HaskellEditorUtil {
     })
   }
 
-  def showStatusBarInfoMessage(message: String, project: Project): Unit = {
+  def showStatusBarInfoMessage(project: Project, message: String): Unit = {
     WindowManager.getInstance().getStatusBar(project).setInfo(message)
   }
 

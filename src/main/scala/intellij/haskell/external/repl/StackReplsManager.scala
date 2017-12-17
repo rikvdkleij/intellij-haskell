@@ -104,14 +104,14 @@ private[external] class StackReplsManager(val project: Project,
       None
     } else {
       if (StackProjectManager.isBuilding(project)) {
-        HaskellEditorUtil.showStatusBarNotificationBalloon(project, "Haskell support is not available while (re)building project")
+        HaskellEditorUtil.showStatusBarInfoMessage(project, "Haskell support is not available while (re)building project")
         None
       } else {
         val componentInfo = HaskellComponentsManager.findStackComponentInfo(psiFile)
         componentInfo match {
           case Some(ci) => getProjectRepl(ci, Some(psiFile))
           case None =>
-            HaskellNotificationGroup.logErrorBalloonEvent(project, s"Could not switch to project Stack repl for file ${psiFile.getName} because no Stack target build info")
+            HaskellNotificationGroup.logErrorBalloonEvent(project, s"Could not switch to project Stack REPL for file ${psiFile.getName} because no Stack target build info")
             None
         }
       }

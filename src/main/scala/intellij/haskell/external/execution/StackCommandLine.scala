@@ -49,8 +49,9 @@ object StackCommandLine {
   }
 
   def executeBuild(project: Project, buildArguments: Seq[String], message: String, notifyBalloonError: Boolean = false): Option[ProcessOutput] = {
-    logStart(project, buildArguments)
-    val processOutput = runCommand(project, Seq("build") ++ buildArguments, -1, Some(CaptureOutputToLog))
+    val arguments = Seq("build") ++ buildArguments
+    logStarting(project, arguments)
+    val processOutput = runCommand(project, arguments, -1, Some(CaptureOutputToLog))
     if (processOutput.isEmpty || processOutput.exists(_.getExitCode != 0)) {
       HaskellNotificationGroup.logErrorEvent(project, s"Building `$message` has failed")
     } else {
@@ -68,7 +69,7 @@ object StackCommandLine {
   }
 
   def executeInMessageView(project: Project, arguments: Seq[String], progressIndicator: Option[ProgressIndicator] = None): Option[Boolean] = HaskellSdkType.getStackPath(project).flatMap(stackPath => {
-    logStart(project, arguments)
+    logStarting(project, arguments)
     val cmd = CommandLine.createCommandLine(project.getBasePath, stackPath, arguments)
     (try {
       Option(cmd.createProcess())
@@ -106,8 +107,8 @@ object StackCommandLine {
     })
   })
 
-  private def logStart(project: Project, buildArguments: Seq[String]) = {
-    HaskellNotificationGroup.logInfoEvent(project, s"""Starting to execute `stack ${buildArguments.mkString(" ")}`""")
+  private def logStarting(project: Project, arguments: Seq[String]) = {
+    HaskellNotificationGroup.logInfoEvent(project, s"""Starting to execute `stack ${arguments.mkString(" ")}`""")
   }
 
   private class MessageViewProcessAdapter(val compileContext: CompileContext, val progressIndicator: ProgressIndicator) extends ProcessAdapter() {

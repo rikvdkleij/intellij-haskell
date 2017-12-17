@@ -21,9 +21,9 @@ import java.util.concurrent.LinkedBlockingDeque
 
 import com.intellij.openapi.project.Project
 import com.intellij.util.EnvironmentUtil
-import intellij.haskell.HaskellNotificationGroup
 import intellij.haskell.sdk.HaskellSdkType
 import intellij.haskell.util.{GhcVersion, HaskellEditorUtil, HaskellProjectUtil, StringUtil}
+import intellij.haskell.{GlobalInfo, HaskellNotificationGroup}
 
 import scala.collection.JavaConverters._
 import scala.collection.mutable.ArrayBuffer
@@ -38,6 +38,9 @@ abstract class StackRepl(val project: Project, var stanzaType: Option[StanzaType
 
   @volatile
   private[external] var available = false
+
+  @volatile
+  private[external] var starting = false
 
   private[this] val outputStream = new SyncVar[OutputStream]
 
@@ -57,11 +60,12 @@ abstract class StackRepl(val project: Project, var stanzaType: Option[StanzaType
 
   private final val CanNotSatisfyErrorMessage = "cannot satisfy"
 
+
   def getComponentName: String = target.map(t => "project-stack-repl-" + t).getOrElse("global-stack-repl")
 
   protected def execute(command: String, forceExecute: Boolean = false): Option[StackReplOutput] = {
     if (!available && !forceExecute) {
-      HaskellEditorUtil.showStatusBarNotificationBalloon(project, s"[$getComponentName] Haskell support is not available when Stack repl is not running.")
+      HaskellEditorUtil.showStatusBarInfoMessage(project, s"[$getComponentName] Haskell support is not available when Stack REPL is not running.")
       None
     } else if (!outputStream.isSet) {
       logError("Can not write to Stack repl. Check if your Stack project environment is working okay")
@@ -92,7 +96,7 @@ abstract class StackRepl(val project: Project, var stanzaType: Option[StanzaType
         else DefaultTimeout
 
         val deadline = timeout.fromNow
-        while (deadline.hasTimeLeft && (stdOutResult.isEmpty || !reachedEndOfOutput)) {
+        while (deadline.hasTimeLeft && !reachedEndOfOutput) {
           drain()
 
           // We have to wait...
@@ -110,15 +114,8 @@ abstract class StackRepl(val project: Project, var stanzaType: Option[StanzaType
           Some(StackReplOutput(convertOutputToOneMessagePerLine(project, removePrompt(stdOutResult)), convertOutputToOneMessagePerLine(project, stdErrResult)))
         } else {
           drain()
-          stdErrResult.find(_.contains(CanNotSatisfyErrorMessage)) match {
-            case Some(error) =>
-              val message = s"Could not start Stack repl for target `${target.getOrElse("-")}` because dependency has build errors ${error.replaceAll(CanNotSatisfyErrorMessage, "")}"
-              logInfo(message)
-              HaskellEditorUtil.showStatusBarNotificationBalloon(project, message)
-            case None =>
-              logError(s"No result from Stack repl within $timeout. Command was: $command")
-              logOutput(stdOutResult, stdErrResult)
-          }
+          logError(s"No result from Stack REPL within $timeout. Command was: $command")
+          logOutput(stdOutResult, stdErrResult)
           None
         }
       }
@@ -160,10 +157,11 @@ abstract class StackRepl(val project: Project, var stanzaType: Option[StanzaType
     }
 
     if (available) {
-      logError("Stack repl can not be started because it's already running")
+      logError("Stack REPL can not be started because it's already running")
     } else {
       HaskellSdkType.getStackPath(project).foreach(stackPath => {
         try {
+          starting = true
           val extraOptions = if (stanzaType.isEmpty || stanzaType.contains(TestSuiteType)) {
             extraReplOptions ++ Seq("--test")
           } else if (stanzaType.isEmpty || stanzaType.contains(BenchmarkType)) {
@@ -172,12 +170,18 @@ abstract class StackRepl(val project: Project, var stanzaType: Option[StanzaType
             extraReplOptions
           }
 
-          val command = (Seq(stackPath, "repl") ++ target.toSeq ++ Seq("--with-ghc", "intero", "--no-load", "--no-build", "--ghci-options=-ignore-dot-ghci", "--silent") ++ extraOptions).mkString(" ")
-          logInfo(s"Stack repl will be started with command: $command")
+          val replGhiOptionsFilePath = createGhciOptionsFile.getAbsolutePath
+          val command = (Seq(stackPath, "repl") ++ target.toSeq ++ Seq("--with-ghc", "intero", "--no-load", "--no-build", "--ghci-options", s"-ghci-script=$replGhiOptionsFilePath", "--silent") ++ extraOptions).mkString(" ")
+
+          logInfo(s"Stack REPL will be started with command: $command")
+
           val processBuilder = Option(EnvironmentUtil.getEnvironmentMap) match {
             case None => Process(command, new File(project.getBasePath))
             case Some(envMap) => Process(command, new File(project.getBasePath), envMap.asScala.toArray: _*)
           }
+
+          stdOut.clear()
+          stdErr.clear()
 
           val process = processBuilder.run(
             new ProcessIO(
@@ -186,38 +190,41 @@ abstract class StackRepl(val project: Project, var stanzaType: Option[StanzaType
               (err: InputStream) => Source.fromInputStream(err).getLines.foreach(stdErr.add)
             ))
 
-          def shouldBeStarted: Boolean = {
-            process.isAlive() && stdOut.size() > 2
+          def isStarted: Boolean = {
+            process.isAlive() && stdOut.toArray[String](Array()).lastOption.exists(_.contains(EndOfOutputIndicator))
+          }
+
+          def dependencyError: Boolean = {
+            stdErr.toArray.mkString(" ").contains(CanNotSatisfyErrorMessage)
           }
 
           val deadline = DefaultTimeout.fromNow
-          while (deadline.hasTimeLeft && !shouldBeStarted) {
-            // We have to wait till repl is started
+          while (deadline.hasTimeLeft && !isStarted && !dependencyError) {
+            // We have to wait till REPL is started
             Thread.sleep(DelayBetweenReads.toMillis)
           }
 
-          if (shouldBeStarted) {
-            val output = execute(s""":set prompt "$EndOfOutputIndicator\\n"""", forceExecute = true)
-            if (output.isEmpty) {
-              closeResources()
-              logInfo("Stack repl is not started because of problem")
-            } else {
-              if (stanzaType != None) {
-                execute(":set -fdefer-typed-holes", forceExecute = true)
-                HaskellProjectUtil.getGhcVersion(project).foreach { ghcVersion =>
-                  if (ghcVersion >= GhcVersion(8, 2, 1)) {
-                    execute(":set -fno-diagnostics-show-caret", forceExecute = true)
-                  }
+          if (isStarted) {
+            if (stanzaType != None) {
+              execute(":set -fdefer-typed-holes", forceExecute = true)
+              HaskellProjectUtil.getGhcVersion(project).foreach { ghcVersion =>
+                if (ghcVersion >= GhcVersion(8, 2, 1)) {
+                  execute(":set -fno-diagnostics-show-caret", forceExecute = true)
                 }
               }
-
-              logInfo("Stack repl is started")
-              available = true
             }
+            logInfo("Stack REPL is started")
+            available = true
           } else {
-            logError(s"Stack repl could not be started within $DefaultTimeout")
-            closeResources()
-            writeOutputToLog()
+            if (dependencyError) {
+              val message = s"Stack REPL could not be started for target `${target.getOrElse("-")}` because a dependency has build errors"
+              logInfo(message)
+              HaskellEditorUtil.showStatusBarNotificationBalloon(project, message)
+            } else {
+              logError(s"Stack REPL could not be started within $DefaultTimeout")
+              writeOutputToLog()
+            }
+            exit(forceExit = true)
           }
         }
         catch {
@@ -227,25 +234,43 @@ abstract class StackRepl(val project: Project, var stanzaType: Option[StanzaType
             writeOutputToLog()
             exit(forceExit = true)
         }
+        finally {
+          starting = false
+        }
       })
     }
   }
 
   def exit(forceExit: Boolean = false): Unit = synchronized {
     if (!available && !forceExit) {
-      logInfo("Stack repl can not be stopped because it's already stopped")
+      logInfo("Stack REPL can not be stopped because it's already stopped")
     } else {
       try {
         available = false
-        execute(ExitCommand, forceExecute = true)
+        writeToOutputStream(ExitCommand)
+//        execute(ExitCommand, forceExecute = true)
       }
       catch {
         case e: Exception =>
-          logError(s"Error while shutting down Stack repl for project ${project.getName}. Error message: ${e.getMessage}")
+          logError(s"Error while shutting down Stack REPL for project ${project.getName}. Error message: ${e.getMessage}")
       }
       closeResources()
-      logInfo("Stack repl is stopped")
+      logInfo("Stack REPL is stopped")
     }
+  }
+
+
+  def createGhciOptionsFile: File = {
+    val ghciOptionsFile = new File(GlobalInfo.getIntelliJHaskellDirectory, "repl.ghci")
+    if (!ghciOptionsFile.exists()) {
+      val writer = new BufferedWriter(new FileWriter(ghciOptionsFile))
+      try {
+        writer.write(s""":set prompt "$EndOfOutputIndicator\\n"""")
+      } finally {
+        writer.close()
+      }
+    }
+    ghciOptionsFile
   }
 
   private def closeResources() = {
