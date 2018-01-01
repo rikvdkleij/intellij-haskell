@@ -17,6 +17,7 @@
 package intellij.haskell.external.repl
 
 import com.intellij.openapi.project.Project
+import intellij.haskell.external.repl.StackRepl.StackReplOutput
 
 class GlobalStackRepl(project: Project, replTimeout: Int) extends StackRepl(project, None, None, Seq("--no-package-hiding"), replTimeout) {
 
@@ -40,7 +41,7 @@ class GlobalStackRepl(project: Project, replTimeout: Int) extends StackRepl(proj
   private def loadModule(moduleName: String) = {
     if (!loadedModuleName.contains(moduleName)) {
       val output = execute(s":module $moduleName")
-      if (output.exists(_.stdErrLines.isEmpty)) {
+      if (output.exists(_.stderrLines.isEmpty)) {
         loadedModuleName = Some(moduleName)
       } else {
         loadedModuleName = None

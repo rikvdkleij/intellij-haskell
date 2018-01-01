@@ -20,11 +20,14 @@ import java.util.concurrent.ConcurrentHashMap
 
 import com.intellij.openapi.project.Project
 import com.intellij.psi.PsiFile
+import intellij.haskell.external.repl.StackRepl.{StackReplOutput, StanzaType}
 import intellij.haskell.util.HaskellFileUtil
 
 import scala.collection.JavaConverters._
 
 class ProjectStackRepl(project: Project, replType: StanzaType, target: String, var sourceDirs: Seq[String], replTimeout: Int) extends StackRepl(project, Some(replType), Some(target), Seq(), replTimeout: Int) {
+
+  import intellij.haskell.external.repl.ProjectStackRepl._
 
   def clearLoadedInfo(): Unit = {
     loadedPsiFileInfo = None
@@ -141,11 +144,11 @@ class ProjectStackRepl(project: Project, replType: StanzaType, target: String, v
   }
 
   private def isLoadFailed(output: StackReplOutput): Boolean = {
-    output.stdOutLines.lastOption.exists(_.contains("Failed, "))
+    output.stdoutLines.lastOption.exists(_.contains("Failed, "))
   }
 
   private def getFilePath(psiFile: PsiFile): String = {
-   val filePath =  HaskellFileUtil.getAbsoluteFilePath(psiFile)
+    val filePath = HaskellFileUtil.getAbsoluteFilePath(psiFile)
     if (filePath.contains(" ")) {
       s""""$filePath""""
     } else {
@@ -154,13 +157,16 @@ class ProjectStackRepl(project: Project, replType: StanzaType, target: String, v
   }
 }
 
+object ProjectStackRepl {
 
-sealed trait IsFileLoaded
+  sealed trait IsFileLoaded
 
-case object Loaded extends IsFileLoaded
+  case object Loaded extends IsFileLoaded
 
-case object Failed extends IsFileLoaded
+  case object Failed extends IsFileLoaded
 
-case object NoFileIsLoaded extends IsFileLoaded
+  case object NoFileIsLoaded extends IsFileLoaded
 
-case object OtherFileIsLoaded extends IsFileLoaded
+  case object OtherFileIsLoaded extends IsFileLoaded
+
+}

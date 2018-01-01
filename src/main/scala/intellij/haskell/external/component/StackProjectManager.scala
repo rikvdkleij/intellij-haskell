@@ -183,7 +183,7 @@ class StackProjectManager(project: Project) extends ProjectComponent {
   }
 
   def initStackReplsManager(): Unit = {
-    replsManager = new StackReplsManager(project, new GlobalStackRepl(project, HaskellSettingsState.getREPLTimeout), None, None)
+    replsManager = new StackReplsManager(project, new GlobalStackRepl(project, HaskellSettingsState.getReplTimeout), None, None)
   }
 
   override def projectClosed(): Unit = {

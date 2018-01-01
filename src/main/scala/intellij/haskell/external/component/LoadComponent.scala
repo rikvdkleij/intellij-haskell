@@ -27,6 +27,8 @@ import com.intellij.psi.{PsiElement, PsiFile}
 import com.intellij.util.WaitFor
 import intellij.haskell.annotator.HaskellAnnotator
 import intellij.haskell.external.execution.{CompilationResult, HaskellCompilationResultHelper, StackCommandLine}
+import intellij.haskell.external.repl.ProjectStackRepl.IsFileLoaded
+import intellij.haskell.external.repl.StackRepl.LibType
 import intellij.haskell.external.repl._
 import intellij.haskell.psi.HaskellPsiUtil
 import intellij.haskell.util.{HaskellFileUtil, HaskellProjectUtil, TypeInfoUtil}
@@ -126,7 +128,7 @@ private[component] object LoadComponent {
           })
         }
 
-        Some(HaskellCompilationResultHelper.createCompilationResult(Some(psiFile), loadOutput.stdErrLines, loadFailed))
+        Some(HaskellCompilationResultHelper.createCompilationResult(Some(psiFile), loadOutput.stderrLines, loadFailed))
       case _ => None
     }
   }

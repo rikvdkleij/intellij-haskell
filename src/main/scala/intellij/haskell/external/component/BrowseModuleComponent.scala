@@ -27,6 +27,7 @@ import com.intellij.openapi.util.Computable
 import com.intellij.psi.PsiFile
 import com.intellij.psi.search.GlobalSearchScopesCore
 import intellij.haskell.HaskellFile
+import intellij.haskell.external.repl.ProjectStackRepl.Failed
 import intellij.haskell.external.repl._
 import intellij.haskell.util.StringUtil
 import intellij.haskell.util.index.HaskellModuleNameIndex
@@ -65,7 +66,7 @@ private[component] object BrowseModuleComponent {
                 Left(ReplIsLoading)
               } else if (LoadComponent.isLoaded(psiFile).exists(_ != Failed)) {
                 StackReplsManager.getProjectRepl(psiFile).flatMap(_.getLocalModuleIdentifiers(moduleName, psiFile)).map { output =>
-                  Right(output.stdOutLines.takeWhile(l => !l.startsWith("-- imported via")).flatMap(l => findModuleIdentifiers(project, l, moduleName)))
+                  Right(output.stdoutLines.takeWhile(l => !l.startsWith("-- imported via")).flatMap(l => findModuleIdentifiers(project, l, moduleName)))
                 }.getOrElse(Left(NoBrowseInfoAvailable))
               } else {
                 Left(NoBrowseInfoAvailable)
@@ -90,15 +91,15 @@ private[component] object BrowseModuleComponent {
               if (projectHaskellFiles.nonEmpty) {
                 val output = projectHaskellFiles.headOption.flatMap(f => StackReplsManager.getProjectRepl(f).flatMap(_.getModuleIdentifiers(moduleName, f)))
                 output match {
-                  case Some(o) if o.stdErrLines.isEmpty => output.map(_.stdOutLines.flatMap(l => findModuleIdentifiers(project, l, moduleName))) match {
+                  case Some(o) if o.stderrLines.isEmpty => output.map(_.stdoutLines.flatMap(l => findModuleIdentifiers(project, l, moduleName))) match {
                     case Some(ids) => Right(ids)
                     case None => Left(NoBrowseInfoAvailable)
                   }
                   case _ => Left(NoBrowseInfoAvailable)
                 }
               } else {
-                val moduleIdentifiers = StackReplsManager.getGlobalRepl(project).flatMap(_.getModuleIdentifiers(moduleName).filter(_.stdOutLines.nonEmpty).
-                  map(_.stdOutLines.flatMap(l => findModuleIdentifiers(project, l, moduleName))))
+                val moduleIdentifiers = StackReplsManager.getGlobalRepl(project).flatMap(_.getModuleIdentifiers(moduleName).filter(_.stdoutLines.nonEmpty).
+                  map(_.stdoutLines.flatMap(l => findModuleIdentifiers(project, l, moduleName))))
                 moduleIdentifiers match {
                   case Some(ids) => Right(ids)
                   case None => Left(NoBrowseInfoAvailable)

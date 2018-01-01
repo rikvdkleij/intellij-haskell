@@ -25,7 +25,7 @@ import com.intellij.openapi.progress.util.{ProgressIndicatorUtils, ReadTask}
 import com.intellij.openapi.project.{DumbService, Project}
 import com.intellij.openapi.vfs.newvfs.BulkFileListener
 import com.intellij.openapi.vfs.newvfs.events.{VFileContentChangeEvent, VFileEvent}
-import intellij.haskell.external.repl.LibType
+import intellij.haskell.external.repl.StackRepl.LibType
 import intellij.haskell.external.repl.StackReplsManager.StackComponentInfo
 import intellij.haskell.util.HaskellFileUtil
 import intellij.haskell.util.index.HaskellFileNameIndex

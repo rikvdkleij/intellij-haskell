@@ -23,7 +23,8 @@ import com.google.common.util.concurrent.{ListenableFuture, ListenableFutureTask
 import com.intellij.openapi.progress.ProcessCanceledException
 import com.intellij.openapi.project.Project
 import com.intellij.psi.PsiFile
-import intellij.haskell.external.repl.{StackReplOutput, StackReplsManager}
+import intellij.haskell.external.repl.StackRepl.StackReplOutput
+import intellij.haskell.external.repl.StackReplsManager
 import intellij.haskell.psi._
 import intellij.haskell.util.LineColumnPosition
 
@@ -68,7 +69,7 @@ object DefinitionLocationComponent {
 
         private def createLocationInfoWithEndColumnExcluded(project: Project, psiFile: PsiFile, key: Key): DefinitionLocationResult = {
           findLocationInfoFor(key, psiFile, project, endColumnExcluded = true) match {
-            case Some(o) => o.stdOutLines.headOption.map(createLocationInfo) match {
+            case Some(o) => o.stdoutLines.headOption.map(createLocationInfo) match {
               case Some(r) => r
               case None => Left(NoLocationInfoAvailable)
             }

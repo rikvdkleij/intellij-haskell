@@ -34,7 +34,7 @@ object HaskellSettingsState {
     path
   }
 
-  def getREPLTimeout: Integer = {
+  def getReplTimeout: Integer = {
     state.replTimeout
   }
 

@@ -23,7 +23,9 @@ import com.google.common.util.concurrent.{ListenableFuture, ListenableFutureTask
 import com.intellij.openapi.progress.ProcessCanceledException
 import com.intellij.openapi.project.Project
 import com.intellij.psi.{PsiElement, PsiFile}
-import intellij.haskell.external.repl.{Failed, StackReplOutput, StackReplsManager}
+import intellij.haskell.external.repl.ProjectStackRepl.Failed
+import intellij.haskell.external.repl.StackRepl.StackReplOutput
+import intellij.haskell.external.repl.StackReplsManager
 import intellij.haskell.psi._
 import intellij.haskell.util.StringUtil.escapeString
 import intellij.haskell.util.{HaskellProjectUtil, StringUtil}
@@ -181,7 +183,7 @@ private[component] object NameInfoComponent {
   }
 
   private def createNameInfos(project: Project, output: StackReplOutput): Iterable[NameInfo] = {
-    output.stdOutLines.flatMap(l => createNameInfo(l, project))
+    output.stdoutLines.flatMap(l => createNameInfo(l, project))
   }
 
   private def createNameInfo(outputLine: String, project: Project): Option[NameInfo] = {

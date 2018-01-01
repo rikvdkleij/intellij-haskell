@@ -23,8 +23,9 @@ import com.google.common.util.concurrent.{ListenableFuture, ListenableFutureTask
 import com.intellij.openapi.progress.ProcessCanceledException
 import com.intellij.openapi.project.Project
 import com.intellij.psi.PsiFile
+import intellij.haskell.external.repl.StackRepl.StackReplOutput
+import intellij.haskell.external.repl.StackReplsManager
 import intellij.haskell.external.repl.StackReplsManager.StackComponentInfo
-import intellij.haskell.external.repl.{StackReplOutput, StackReplsManager}
 
 import scala.collection.JavaConverters._
 
@@ -70,11 +71,11 @@ private[component] object StackComponentGlobalInfoComponent {
         }
 
         private def isNoImplicitPreludeActive(project: Project, stackTargetBuildInfo: StackComponentInfo): Option[Boolean] = {
-          StackReplsManager.getProjectRepl(project, stackTargetBuildInfo).flatMap(_.showActiveLanguageFlags).map(_.stdOutLines).map(_.exists(_.contains("-XNoImplicitPrelude")))
+          StackReplsManager.getProjectRepl(project, stackTargetBuildInfo).flatMap(_.showActiveLanguageFlags).map(_.stdoutLines).map(_.exists(_.contains("-XNoImplicitPrelude")))
         }
 
         private def findModuleNames(output: StackReplOutput) = {
-          val lines = output.stdOutLines
+          val lines = output.stdoutLines
           if (lines.isEmpty) {
             Iterable()
           } else {

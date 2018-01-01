@@ -61,7 +61,7 @@ private[component] object TypeInfoComponent {
 
         private def findTypeInfo(key: Key) = {
           val typeInfo = StackReplsManager.getProjectRepl(key.psiFile).flatMap(_.findTypeInfoFor(key.psiFile, key.startLineNr, key.startColumnNr, key.endLineNr, key.endColumnNr, key.expression)) match {
-            case Some(output) => Right(output.stdOutLines.headOption.filterNot(_.trim.isEmpty).map(ti => TypeInfo(ti)))
+            case Some(output) => Right(output.stdoutLines.headOption.filterNot(_.trim.isEmpty).map(ti => TypeInfo(ti)))
             case _ => Left(ReplNotAvailable)
           }
           Result(typeInfo)
