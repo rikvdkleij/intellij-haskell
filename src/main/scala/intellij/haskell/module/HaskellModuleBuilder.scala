@@ -22,16 +22,18 @@ import javax.swing.Icon
 import com.intellij.ide.util.projectWizard._
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.{ApplicationManager, Result, RunResult, WriteAction}
-import com.intellij.openapi.module.{Module, ModuleType}
+import com.intellij.openapi.module.{ModifiableModuleModel, Module, ModuleType}
 import com.intellij.openapi.progress.{ProgressIndicator, ProgressManager, Task}
-import com.intellij.openapi.project.Project
+import com.intellij.openapi.project.{Project, ProjectManager}
 import com.intellij.openapi.projectRoots.SdkTypeId
 import com.intellij.openapi.roots._
 import com.intellij.openapi.roots.impl.libraries.ProjectLibraryTable
 import com.intellij.openapi.roots.libraries.{Library, LibraryUtil}
+import com.intellij.openapi.roots.ui.configuration.ModulesProvider
 import com.intellij.openapi.ui.Messages
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.vfs.{LocalFileSystem, VirtualFileManager}
+import com.intellij.platform.templates.TemplateModuleBuilder
 import intellij.haskell.cabal.CabalInfo
 import intellij.haskell.external.execution.{CaptureOutputToLog, CommandLine, StackCommandLine}
 import intellij.haskell.sdk.HaskellSdkType
@@ -43,7 +45,7 @@ import scala.collection.JavaConverters._
 import scala.collection.mutable
 import scala.concurrent.duration._
 
-class HaskellModuleBuilder extends ModuleBuilder {
+class HaskellModuleBuilder extends TemplateModuleBuilder(null, HaskellModuleType.getInstance, List().asJava) {
 
   private var cabalInfo: CabalInfo = _
 
@@ -120,6 +122,28 @@ class HaskellModuleBuilder extends ModuleBuilder {
     isNewProjectWithoutExistingSources = true
     new HaskellModuleWizardStep(context, this)
   }
+
+  override def createModule(moduleModel: ModifiableModuleModel): Module = {
+    ModuleBuilder.deleteModuleFile(getModuleFilePath)
+    val moduleType = getModuleType
+    val module = moduleModel.newModule(getModuleFilePath, moduleType.getId)
+    setupModule(module)
+    module
+  }
+
+  override def getBuilderId: String = {
+    val moduleType = getModuleType()
+    if (moduleType == null) null else moduleType.getId
+  }
+
+  override def createWizardSteps(wizardContext: WizardContext, modulesProvider: ModulesProvider): Array[ModuleWizardStep] = {
+    Array()
+  }
+
+  override def createProject(name: String, path: String): Project = ProjectManager.getInstance.createProject(name, path)
+
+  // To prevent first page of wizard is empty.
+  override def isTemplateBased: Boolean = false
 
   private def getStackWorkDirectory = {
     new File(getContentEntryPath, ".stack-work")

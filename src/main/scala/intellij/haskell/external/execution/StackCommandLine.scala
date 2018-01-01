@@ -68,44 +68,45 @@ object StackCommandLine {
     StackCommandLine.executeInMessageView(project, Seq("build", "--fast"), Some(progressIndicator))
   }
 
-  def executeInMessageView(project: Project, arguments: Seq[String], progressIndicator: Option[ProgressIndicator] = None): Option[Boolean] = HaskellSdkType.getStackPath(project).flatMap(stackPath => {
-    logStarting(project, arguments)
-    val cmd = CommandLine.createCommandLine(project.getBasePath, stackPath, arguments)
-    (try {
-      Option(cmd.createProcess())
-    } catch {
-      case e: ExecutionException =>
-        HaskellNotificationGroup.logErrorBalloonEvent(project, s"Error while starting `${cmd.getCommandLineString}`: ${e.getMessage}")
-        None
-    }).map(process => {
+  def executeInMessageView(project: Project, arguments: Seq[String], progressIndicator: Option[ProgressIndicator] = None): Option[Boolean] =
+    HaskellSdkType.getStackPath(project).flatMap(stackPath => {
+      logStarting(project, arguments)
+      val cmd = CommandLine.createCommandLine(project.getBasePath, stackPath, arguments)
+      (try {
+        Option(cmd.createProcess())
+      } catch {
+        case e: ExecutionException =>
+          HaskellNotificationGroup.logErrorBalloonEvent(project, s"Error while starting `${cmd.getCommandLineString}`: ${e.getMessage}")
+          None
+      }).map(process => {
 
-      val handler = new BaseOSProcessHandler(process, cmd.getCommandLineString, CharsetToolkit.getDefaultSystemCharset)
+        val handler = new BaseOSProcessHandler(process, cmd.getCommandLineString, CharsetToolkit.getDefaultSystemCharset)
 
-      val task = new CompileTask {
+        val task = new CompileTask {
 
-        def execute(compileContext: CompileContext): Boolean = {
-          val adapter = new MessageViewProcessAdapter(compileContext, progressIndicator.getOrElse(compileContext.getProgressIndicator))
-          handler.addProcessListener(adapter)
-          handler.startNotify()
-          handler.waitFor()
-          adapter.addLastMessage()
-          handler.getExitCode == 0
+          def execute(compileContext: CompileContext): Boolean = {
+            val adapter = new MessageViewProcessAdapter(compileContext, progressIndicator.getOrElse(compileContext.getProgressIndicator))
+            handler.addProcessListener(adapter)
+            handler.startNotify()
+            handler.waitFor()
+            adapter.addLastMessage()
+            handler.getExitCode == 0
+          }
         }
-      }
 
-      val compileDriver = new CompileDriver(project)
+        val compileDriver = new CompileDriver(project)
 
-      new WriteAction[Unit]() {
+        new WriteAction[Unit]() {
 
-        override def run(result: Result[Unit]): Unit = {
-          compileDriver.executeCompileTask(task, new ProjectCompileScope(project), s"executing ${cmd.getCommandLineString}", null)
-        }
-      }.execute()
+          override def run(result: Result[Unit]): Unit = {
+            compileDriver.executeCompileTask(task, new ProjectCompileScope(project), s"executing ${cmd.getCommandLineString}", null)
+          }
+        }.execute()
 
-      handler.waitFor()
-      handler.getExitCode == 0
+        handler.waitFor()
+        handler.getExitCode == 0
+      })
     })
-  })
 
   private def logStarting(project: Project, arguments: Seq[String]) = {
     HaskellNotificationGroup.logInfoEvent(project, s"""Starting to execute `stack ${arguments.mkString(" ")}`""")
