@@ -31,18 +31,15 @@ import scala.concurrent.duration._
 object CommandLine {
   val DefaultTimeout: FiniteDuration = 3.seconds
 
-  def runProgram(project: Option[Project], workDir: String, commandPath: String, arguments: Seq[String], timeoutInMillis: Long = DefaultTimeout.toMillis, captureOutput: Option[CaptureOutput] = None,
-                 notifyBalloonError: Boolean = false, ignoreExitCode: Boolean = false): Option[ProcessOutput] = {
+  def run(project: Option[Project], workDir: String, commandPath: String, arguments: Seq[String], timeoutInMillis: Long = DefaultTimeout.toMillis, captureOutput: Option[CaptureOutput] = None,
+          notifyBalloonError: Boolean = false, ignoreExitCode: Boolean = false): Option[ProcessOutput] = {
+
     val commandLine = createCommandLine(workDir, commandPath, arguments)
-    run(project, commandLine, timeoutInMillis, captureOutput, notifyBalloonError, ignoreExitCode)
-  }
+    val processHandler = createProcessHandler(project, commandLine, captureOutput)
 
-  private def run(project: Option[Project], cmd: GeneralCommandLine, timeout: Long, captureOutput: Option[CaptureOutput], notifyBalloonError: Boolean, ignoreExitCode: Boolean): Option[ProcessOutput] = {
-    val processHandler = createProcessHandler(project, cmd, captureOutput)
-
-    val processOutput = processHandler.runProcess(timeout.toInt, true)
+    val processOutput = processHandler.runProcess(timeoutInMillis.toInt, true)
     if (processOutput.isTimeout) {
-      val message = s"Timeout while executing ${cmd.getCommandLineString}"
+      val message = s"Timeout while executing ${commandLine.getCommandLineString}"
       if (notifyBalloonError) {
         HaskellNotificationGroup.logErrorBalloonEvent(project, message)
       } else {
@@ -50,31 +47,21 @@ object CommandLine {
       }
       None
     } else if (!ignoreExitCode && processOutput.getExitCode != 0) {
-      val message = s"Executing ${cmd.getCommandLineString} failed, see Haskell Event log for more information"
+      val message = s"Executing ${commandLine.getCommandLineString} failed, see Haskell Event log for more information"
       if (notifyBalloonError) {
         HaskellNotificationGroup.logErrorBalloonEvent(project, message)
       } else {
         HaskellNotificationGroup.logErrorEvent(project, message)
       }
-      val errorMessage = createLogMessage(cmd, processOutput)
+      val errorMessage = createLogMessage(commandLine, processOutput)
       HaskellNotificationGroup.logErrorEvent(project, errorMessage)
       Some(processOutput)
     } else if (captureOutput.isEmpty) {
-      val message = createLogMessage(cmd, processOutput)
+      val message = createLogMessage(commandLine, processOutput)
       HaskellNotificationGroup.logInfoEvent(project, message)
       Some(processOutput)
     } else {
       Some(processOutput)
-    }
-  }
-
-  private def createProcessHandler(project: Option[Project], cmd: GeneralCommandLine, captureOutput: Option[CaptureOutput]): CapturingProcessHandler = {
-    captureOutput match {
-      case Some(CaptureOutputToLog) =>
-        new CapturingProcessHandler(cmd) {
-          override protected def createProcessAdapter(processOutput: ProcessOutput): CapturingProcessAdapter = new CapturingProcessToLog(project, cmd, processOutput)
-        }
-      case None => new CapturingProcessHandler(cmd)
     }
   }
 
@@ -85,6 +72,16 @@ object CommandLine {
     commandLine.addParameters(arguments.asJava)
     commandLine.withParentEnvironmentType(ParentEnvironmentType.CONSOLE)
     commandLine
+  }
+
+  private def createProcessHandler(project: Option[Project], cmd: GeneralCommandLine, captureOutput: Option[CaptureOutput]): CapturingProcessHandler = {
+    captureOutput match {
+      case Some(CaptureOutputToLog) =>
+        new CapturingProcessHandler(cmd) {
+          override protected def createProcessAdapter(processOutput: ProcessOutput): CapturingProcessAdapter = new CapturingProcessToLog(project, cmd, processOutput)
+        }
+      case None => new CapturingProcessHandler(cmd)
+    }
   }
 
   private def createLogMessage(cmd: GeneralCommandLine, processOutput: ProcessOutput) = {

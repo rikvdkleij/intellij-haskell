@@ -43,15 +43,15 @@ class AboutAction extends AnAction {
   def actionPerformed(actionEvent: AnActionEvent) {
     val messages = new ArrayBuffer[String]
     val project = actionEvent.getProject
-    messages.+=(s"${boldToolName("Stack")} version: " + StackCommandLine.runCommand(project, Seq("--numeric-version")).map(_.getStdout).getOrElse("-"))
-    messages.+=(s"${boldToolName("GHC")} version: " + StackCommandLine.runCommand(project, Seq("exec", "--", "ghc", "--version")).map(_.getStdout).getOrElse("-"))
-    messages.+=(s"${boldToolName("Intero")} version: " + StackCommandLine.runCommand(project, Seq("exec", "--", "intero", "--version")).map(_.getStdout).getOrElse("-"))
-    messages.+=(s"${boldToolName("HLint")} version: " + StackCommandLine.runCommand(project, Seq("exec", "--", HLintComponent.HlintName, "--version")).map(_.getStdout).getOrElse("-"))
-    messages.+=(s"${boldToolName("Hoogle")} version: " + StackCommandLine.runCommand(project, Seq("exec", "--", "hoogle", "--version")).map(_.getStdout).getOrElse("-"))
+    messages.+=(s"${boldToolName("Stack")} version: " + StackCommandLine.run(project, Seq("--numeric-version")).map(_.getStdout).getOrElse("-"))
+    messages.+=(s"${boldToolName("GHC")} version: " + StackCommandLine.run(project, Seq("exec", "--", "ghc", "--version")).map(_.getStdout).getOrElse("-"))
+    messages.+=(s"${boldToolName("Intero")} version: " + StackCommandLine.run(project, Seq("exec", "--", "intero", "--version")).map(_.getStdout).getOrElse("-"))
+    messages.+=(s"${boldToolName("HLint")} version: " + StackCommandLine.run(project, Seq("exec", "--", HLintComponent.HlintName, "--version")).map(_.getStdout).getOrElse("-"))
+    messages.+=(s"${boldToolName("Hoogle")} version: " + StackCommandLine.run(project, Seq("exec", "--", "hoogle", "--version")).map(_.getStdout).getOrElse("-"))
     messages.+=(s"${boldToolName("Hindent")} version: " + HaskellSettingsState.getHindentPath(project).flatMap(hp =>
-      CommandLine.runProgram(None, project.getBasePath, hp, Seq("--version")).map(_.getStdout)).getOrElse("-"))
+      CommandLine.run(None, project.getBasePath, hp, Seq("--version")).map(_.getStdout)).getOrElse("-"))
     messages.+=(s"${boldToolName("Stylish-haskell")} version: " + HaskellSettingsState.getStylishHaskellPath(project).flatMap(sh =>
-      CommandLine.runProgram(None, project.getBasePath, sh, Seq("--version")).map(_.getStdout)).getOrElse("-"))
+      CommandLine.run(None, project.getBasePath, sh, Seq("--version")).map(_.getStdout)).getOrElse("-"))
     Messages.showInfoMessage(project, messages.mkString("\n"), "About Haskell Project")
   }
 }

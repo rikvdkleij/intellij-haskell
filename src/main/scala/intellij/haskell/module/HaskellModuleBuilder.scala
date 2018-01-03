@@ -108,7 +108,7 @@ class HaskellModuleBuilder extends TemplateModuleBuilder(null, HaskellModuleType
 
         override def update(module: Module, rootModel: ModifiableRootModel): Unit = {
           val project = rootModel.getProject
-          StackCommandLine.runCommand(project, Seq("new", project.getName, "--bare", "hspec"), timeoutInMillis = 20.seconds.toMillis)
+          StackCommandLine.run(project, Seq("new", project.getName, "--bare", "hspec"), timeoutInMillis = 20.seconds.toMillis)
         }
       }
       val modifiableModel: ModifiableRootModel = ModuleRootManager.getInstance(module).getModifiableModel
@@ -224,7 +224,7 @@ object HaskellModuleBuilder {
           val packageInfosByModule = for {
             module <- projectModules
             packageName = module.getName
-            lines <- StackCommandLine.runCommand(project, Seq("list-dependencies", packageName, "--test", "--bench"), timeoutInMillis = 60.seconds.toMillis).map(_.getStdoutLines)
+            lines <- StackCommandLine.run(project, Seq("list-dependencies", packageName, "--test", "--bench"), timeoutInMillis = 60.seconds.toMillis).map(_.getStdoutLines)
             packageInfos = createPackageInfos(project, lines.asScala).filterNot(p => packageName == p.name || p.name == "rts" || p.name == "ghc")
           } yield (module, packageInfos)
 
@@ -264,7 +264,7 @@ object HaskellModuleBuilder {
 
   private def downloadHaskellPackageSources(project: Project, projectLibDirectory: File, stackPath: String, packageInfos: Seq[HaskellPackageInfo]): Unit = {
     packageInfos.filterNot(packageInfo => getPackageDirectory(projectLibDirectory, packageInfo).exists()).flatMap(packageInfo => {
-      val stderr = CommandLine.runProgram(Some(project), projectLibDirectory.getAbsolutePath, stackPath, Seq("unpack", packageInfo.nameVersion), 10000, Some(CaptureOutputToLog)).map(_.getStderr)
+      val stderr = CommandLine.run(Some(project), projectLibDirectory.getAbsolutePath, stackPath, Seq("unpack", packageInfo.nameVersion), 10000, Some(CaptureOutputToLog)).map(_.getStderr)
       if (stderr.exists(_.contains("not found"))) {
         Seq()
       } else {

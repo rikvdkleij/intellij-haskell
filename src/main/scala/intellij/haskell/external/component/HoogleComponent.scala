@@ -34,7 +34,7 @@ object HoogleComponent {
 
   def runHoogle(project: Project, pattern: String, count: Int = 100): Option[Seq[String]] = {
     if (isHoogleFeatureAvailable(project)) {
-      StackCommandLine.runCommand(project, Seq(HoogleName, "--", s""""$pattern"""", s"--count=$count"), timeoutInMillis = Timout).
+      StackCommandLine.run(project, Seq(HoogleName, "--", s""""$pattern"""", s"--count=$count"), timeoutInMillis = Timout).
         map(o =>
           if (o.getStdoutLines.isEmpty || o.getStdout.contains("No results found"))
             Seq()
@@ -51,7 +51,7 @@ object HoogleComponent {
 
   def findDocumentation(project: Project, name: String, moduleName: Option[String]): Option[String] = {
     if (isHoogleFeatureAvailable(project)) {
-      StackCommandLine.runCommand(project, Seq(HoogleName, "--", name) ++ moduleName.map(mn => Seq(s"+$mn", "-i")).getOrElse(Seq()), timeoutInMillis = Timout).
+      StackCommandLine.run(project, Seq(HoogleName, "--", name) ++ moduleName.map(mn => Seq(s"+$mn", "-i")).getOrElse(Seq()), timeoutInMillis = Timout).
         flatMap(processOutput =>
           if (processOutput.getStdoutLines.isEmpty || processOutput.getStdout.contains("No results found")) {
             None
@@ -83,7 +83,7 @@ object HoogleComponent {
   }
 
   def doesHoogleDatabaseExist(project: Project): Boolean = {
-    StackCommandLine.runCommand(project, Seq(HoogleComponent.HoogleName, "--no-setup")) match {
+    StackCommandLine.run(project, Seq(HoogleComponent.HoogleName, "--no-setup")) match {
       case Some(output) if output.getStderr.isEmpty => true
       case _ => false
     }

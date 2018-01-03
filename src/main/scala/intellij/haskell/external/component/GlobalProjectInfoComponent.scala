@@ -57,7 +57,7 @@ private[component] object GlobalProjectInfoComponent {
 
         def getSupportedLanguageExtensions(project: Project): Option[Iterable[String]] = {
           findGhcPath(project).flatMap(ghcPath => {
-            CommandLine.runProgram(
+            CommandLine.run(
               Some(project),
               project.getBasePath,
               ghcPath,
@@ -72,7 +72,7 @@ private[component] object GlobalProjectInfoComponent {
         }
 
         private def findGhcPath(project: Project) = {
-          StackCommandLine.runCommand(project, Seq("path", "--compiler-exe")).flatMap(_.getStdoutLines.asScala.headOption)
+          StackCommandLine.run(project, Seq("path", "--compiler-exe")).flatMap(_.getStdoutLines.asScala.headOption)
         }
       }
     )

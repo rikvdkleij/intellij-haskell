@@ -101,7 +101,7 @@ object HaskellSdkType {
 
   def getNumericVersion(sdkHome: String): Option[String] = {
     val workDir = new File(sdkHome).getParent
-    CommandLine.runProgram(
+    CommandLine.run(
       None,
       workDir,
       sdkHome,

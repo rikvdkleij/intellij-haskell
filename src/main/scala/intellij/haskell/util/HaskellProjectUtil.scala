@@ -132,7 +132,7 @@ object HaskellProjectUtil {
   }
 
   def getGhcVersion(project: Project): Option[GhcVersion] = {
-    StackCommandLine.runCommand(project, Seq("exec", "--", "ghc", "--numeric-version"))
+    StackCommandLine.run(project, Seq("exec", "--", "ghc", "--numeric-version"))
       .map(o => GhcVersion.parse(o.getStdout.trim))
   }
 

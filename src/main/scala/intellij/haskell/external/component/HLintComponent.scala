@@ -33,7 +33,7 @@ object HLintComponent {
     if (StackProjectManager.isHlintAvailable(psiFile.getProject)) {
       val project = psiFile.getProject
       val hlintOptions = if (HaskellSettingsState.getHlintOptions.trim.isEmpty) Array[String]() else HaskellSettingsState.getHlintOptions.split("""\s+""")
-      StackCommandLine.runCommand(project, Seq("exec", "--", HlintName) ++ hlintOptions ++ Seq("--json", HaskellFileUtil.getAbsoluteFilePath(psiFile)), ignoreExitCode = true).map(output => {
+      StackCommandLine.run(project, Seq("exec", "--", HlintName) ++ hlintOptions ++ Seq("--json", HaskellFileUtil.getAbsoluteFilePath(psiFile)), ignoreExitCode = true).map(output => {
         if (output.getStderr.contains("Executable named hlint not found on path")) {
           HaskellNotificationGroup.logErrorBalloonEvent(project, s"$HlintName can not be found on path")
           Seq()

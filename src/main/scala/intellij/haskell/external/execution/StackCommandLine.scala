@@ -33,14 +33,14 @@ import scala.collection.mutable.ListBuffer
 
 object StackCommandLine {
 
-  def runCommand(project: Project, command: Seq[String], timeoutInMillis: Long = CommandLine.DefaultTimeout.toMillis, captureOutput: Option[CaptureOutput] = None,
-                 notifyBalloonError: Boolean = false, ignoreExitCode: Boolean = false): Option[ProcessOutput] = {
+  def run(project: Project, arguements: Seq[String], timeoutInMillis: Long = CommandLine.DefaultTimeout.toMillis, captureOutput: Option[CaptureOutput] = None,
+          notifyBalloonError: Boolean = false, ignoreExitCode: Boolean = false): Option[ProcessOutput] = {
     HaskellSdkType.getStackPath(project).flatMap(stackPath => {
-      CommandLine.runProgram(
+      CommandLine.run(
         Some(project),
         project.getBasePath,
         stackPath,
-        command,
+        arguements,
         timeoutInMillis.toInt,
         captureOutput,
         notifyBalloonError,
@@ -48,10 +48,10 @@ object StackCommandLine {
     })
   }
 
-  def executeBuild(project: Project, buildArguments: Seq[String], message: String, notifyBalloonError: Boolean = false): Option[ProcessOutput] = {
+  def build(project: Project, buildArguments: Seq[String], message: String, notifyBalloonError: Boolean = false): Option[ProcessOutput] = {
     val arguments = Seq("build") ++ buildArguments
     logStarting(project, arguments)
-    val processOutput = runCommand(project, arguments, -1, Some(CaptureOutputToLog))
+    val processOutput = run(project, arguments, -1, Some(CaptureOutputToLog))
     if (processOutput.isEmpty || processOutput.exists(_.getExitCode != 0)) {
       HaskellNotificationGroup.logErrorEvent(project, s"Building `$message` has failed")
     } else {

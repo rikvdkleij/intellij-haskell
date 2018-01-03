@@ -24,7 +24,7 @@ import com.intellij.openapi.ui.Messages
 import com.intellij.openapi.vfs.VirtualFileManager
 import intellij.haskell.HaskellNotificationGroup
 import intellij.haskell.external.execution.StackCommandLine
-import intellij.haskell.external.execution.StackCommandLine.executeBuild
+import intellij.haskell.external.execution.StackCommandLine.build
 import intellij.haskell.external.repl.{GlobalStackRepl, StackReplsManager}
 import intellij.haskell.module.HaskellModuleBuilder
 import intellij.haskell.util.HaskellProjectUtil
@@ -106,7 +106,7 @@ object StackProjectManager {
                 }
 
                 progressIndicator.setText(s"Busy with building intero ")
-                executeBuild(project, Seq("intero"), "intero", notifyBalloonError = true)
+                build(project, Seq("intero"), "intero", notifyBalloonError = true)
 
                 progressIndicator.setText("Busy with starting global Stack REPL")
                 StackReplsManager.getGlobalRepl(project).foreach(_.start())
@@ -130,11 +130,11 @@ object StackProjectManager {
               })
 
               progressIndicator.setText(s"Busy with building ${HLintComponent.HlintName}")
-              StackCommandLine.executeBuild(project, Seq(HLintComponent.HlintName), HLintComponent.HlintName, notifyBalloonError = true)
+              StackCommandLine.build(project, Seq(HLintComponent.HlintName), HLintComponent.HlintName, notifyBalloonError = true)
               getStackProjectManager(project).foreach(_.hlintAvailable = true)
 
               progressIndicator.setText(s"Busy with building ${HoogleComponent.HoogleName}")
-              StackCommandLine.executeBuild(project, Seq(HoogleComponent.HoogleName), HoogleComponent.HoogleName, notifyBalloonError = true)
+              StackCommandLine.build(project, Seq(HoogleComponent.HoogleName), HoogleComponent.HoogleName, notifyBalloonError = true)
               getStackProjectManager(project).foreach(_.hoogleAvailable = true)
 
 
