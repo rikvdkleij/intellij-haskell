@@ -32,7 +32,7 @@ object CommandLine {
   val DefaultTimeout: FiniteDuration = 3.seconds
 
   def run(project: Option[Project], workDir: String, commandPath: String, arguments: Seq[String], timeoutInMillis: Long = DefaultTimeout.toMillis, captureOutput: Option[CaptureOutput] = None,
-          notifyBalloonError: Boolean = false, ignoreExitCode: Boolean = false): Option[ProcessOutput] = {
+          notifyBalloonError: Boolean = false, ignoreExitCode: Boolean = false): ProcessOutput = {
 
     val commandLine = createCommandLine(workDir, commandPath, arguments)
     val processHandler = createProcessHandler(project, commandLine, captureOutput)
@@ -45,7 +45,7 @@ object CommandLine {
       } else {
         HaskellNotificationGroup.logErrorEvent(project, message)
       }
-      None
+      processOutput
     } else if (!ignoreExitCode && processOutput.getExitCode != 0) {
       val message = s"Executing ${commandLine.getCommandLineString} failed, see Haskell Event log for more information"
       if (notifyBalloonError) {
@@ -55,13 +55,13 @@ object CommandLine {
       }
       val errorMessage = createLogMessage(commandLine, processOutput)
       HaskellNotificationGroup.logErrorEvent(project, errorMessage)
-      Some(processOutput)
+      processOutput
     } else if (captureOutput.isEmpty) {
       val message = createLogMessage(commandLine, processOutput)
       HaskellNotificationGroup.logInfoEvent(project, message)
-      Some(processOutput)
+      processOutput
     } else {
-      Some(processOutput)
+      processOutput
     }
   }
 

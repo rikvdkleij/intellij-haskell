@@ -48,10 +48,10 @@ class AboutAction extends AnAction {
     messages.+=(s"${boldToolName("Intero")} version: " + StackCommandLine.run(project, Seq("exec", "--", "intero", "--version")).map(_.getStdout).getOrElse("-"))
     messages.+=(s"${boldToolName("HLint")} version: " + StackCommandLine.run(project, Seq("exec", "--", HLintComponent.HlintName, "--version")).map(_.getStdout).getOrElse("-"))
     messages.+=(s"${boldToolName("Hoogle")} version: " + StackCommandLine.run(project, Seq("exec", "--", "hoogle", "--version")).map(_.getStdout).getOrElse("-"))
-    messages.+=(s"${boldToolName("Hindent")} version: " + HaskellSettingsState.getHindentPath(project).flatMap(hp =>
-      CommandLine.run(None, project.getBasePath, hp, Seq("--version")).map(_.getStdout)).getOrElse("-"))
-    messages.+=(s"${boldToolName("Stylish-haskell")} version: " + HaskellSettingsState.getStylishHaskellPath(project).flatMap(sh =>
-      CommandLine.run(None, project.getBasePath, sh, Seq("--version")).map(_.getStdout)).getOrElse("-"))
+    messages.+=(s"${boldToolName("Hindent")} version: " + HaskellSettingsState.getHindentPath(project).map(hp =>
+      CommandLine.run(None, project.getBasePath, hp, Seq("--version")).getStdout))
+    messages.+=(s"${boldToolName("Stylish-haskell")} version: " + HaskellSettingsState.getStylishHaskellPath(project).map(sh =>
+      CommandLine.run(None, project.getBasePath, sh, Seq("--version")).getStdout))
     Messages.showInfoMessage(project, messages.mkString("\n"), "About Haskell Project")
   }
 }

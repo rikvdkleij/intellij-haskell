@@ -101,13 +101,19 @@ object HaskellSdkType {
 
   def getNumericVersion(sdkHome: String): Option[String] = {
     val workDir = new File(sdkHome).getParent
-    CommandLine.run(
+    val output = CommandLine.run(
       None,
       workDir,
       sdkHome,
       Seq("--numeric-version"),
       notifyBalloonError = true
-    ).map(_.getStdout)
+    )
+
+    if (output.getExitCode == 0) {
+      Some(output.getStdout)
+    } else {
+      None
+    }
   }
 
   def getStackPath(project: Project, notifyNoSdk: Boolean = true): Option[String] = {

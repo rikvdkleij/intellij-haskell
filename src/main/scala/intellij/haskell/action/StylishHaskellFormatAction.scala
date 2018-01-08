@@ -49,17 +49,18 @@ object StylishHaskellFormatAction {
 
     HaskellSettingsState.getStylishHaskellPath(project) match {
       case Some(stylishHaskellPath) =>
-        val processOutput = ApplicationManager.getApplication.executeOnPooledThread(new Callable[Option[ProcessOutput]] {
-          override def call(): Option[ProcessOutput] = {
+        val processOutputFuture = ApplicationManager.getApplication.executeOnPooledThread(new Callable[ProcessOutput] {
+          override def call(): ProcessOutput = {
             CommandLine.run(Option(project), project.getBasePath, stylishHaskellPath, Seq(HaskellFileUtil.getAbsoluteFilePath(psiFile)))
           }
         })
 
-        processOutput.get.foreach(output => if (output.getStderrLines.isEmpty) {
-          HaskellFileUtil.saveFileWithNewContent(psiFile, output.getStdout)
+        val processOutput = processOutputFuture.get
+        if (processOutput.getStderrLines.isEmpty) {
+          HaskellFileUtil.saveFileWithNewContent(psiFile, processOutput.getStdout)
         } else {
-          HaskellNotificationGroup.logErrorBalloonEvent(project, s"Error while formatting by `$StylishHaskellName`. Error: ${output.getStderr}")
-        })
+          HaskellNotificationGroup.logErrorBalloonEvent(project, s"Error while formatting by `$StylishHaskellName`. Error: ${processOutput.getStderr}")
+        }
 
       case _ => HaskellNotificationGroup.logWarningEvent(project, s"Can not format code because path to `$StylishHaskellName` is not configured in IntelliJ")
     }

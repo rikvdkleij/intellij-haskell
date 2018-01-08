@@ -102,21 +102,6 @@ class HaskellModuleBuilder extends TemplateModuleBuilder(null, HaskellModuleType
     }
   }
 
-  override def setupModule(module: Module): Unit = {
-    if (isNewProjectWithoutExistingSources) {
-      val configurationUpdater = new ModuleBuilder.ModuleConfigurationUpdater {
-
-        override def update(module: Module, rootModel: ModifiableRootModel): Unit = {
-          val project = rootModel.getProject
-          StackCommandLine.run(project, Seq("new", project.getName, "--bare", "hspec"), timeoutInMillis = 20.seconds.toMillis)
-        }
-      }
-      val modifiableModel: ModifiableRootModel = ModuleRootManager.getInstance(module).getModifiableModel
-      configurationUpdater.update(module, modifiableModel)
-    }
-    super.setupModule(module)
-  }
-
   // Only called in case new project without existing Stack project
   override def getCustomOptionsStep(context: WizardContext, parentDisposable: Disposable): ModuleWizardStep = {
     isNewProjectWithoutExistingSources = true
@@ -127,6 +112,19 @@ class HaskellModuleBuilder extends TemplateModuleBuilder(null, HaskellModuleType
     ModuleBuilder.deleteModuleFile(getModuleFilePath)
     val moduleType = getModuleType
     val module = moduleModel.newModule(getModuleFilePath, moduleType.getId)
+    val project = module.getProject
+
+    if (isNewProjectWithoutExistingSources) {
+      val processOutput = StackCommandLine.run(project, Seq("new", project.getName, "--bare", "hpec"), timeoutInMillis = 60.seconds.toMillis)
+      processOutput match {
+        case None =>
+          throw new RuntimeException("Can not create new Stack project. Can not execute Stack command to create Stack project on file system")
+        case Some(output) =>
+          if (output.getExitCode != 0) {
+            throw new RuntimeException(s"Can not create new Stack project: ${output.getStdout} ${output.getStderr}")
+          }
+      }
+    }
     setupModule(module)
     module
   }
@@ -264,8 +262,8 @@ object HaskellModuleBuilder {
 
   private def downloadHaskellPackageSources(project: Project, projectLibDirectory: File, stackPath: String, packageInfos: Seq[HaskellPackageInfo]): Unit = {
     packageInfos.filterNot(packageInfo => getPackageDirectory(projectLibDirectory, packageInfo).exists()).flatMap(packageInfo => {
-      val stderr = CommandLine.run(Some(project), projectLibDirectory.getAbsolutePath, stackPath, Seq("unpack", packageInfo.nameVersion), 10000, Some(CaptureOutputToLog)).map(_.getStderr)
-      if (stderr.exists(_.contains("not found"))) {
+      val stderr = CommandLine.run(Some(project), projectLibDirectory.getAbsolutePath, stackPath, Seq("unpack", packageInfo.nameVersion), 10000, Some(CaptureOutputToLog)).getStderr
+      if (stderr.contains("not found")) {
         Seq()
       } else {
         Seq(packageInfo)

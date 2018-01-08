@@ -56,14 +56,14 @@ private[component] object GlobalProjectInfoComponent {
         }
 
         def getSupportedLanguageExtensions(project: Project): Option[Iterable[String]] = {
-          findGhcPath(project).flatMap(ghcPath => {
+          findGhcPath(project).map(ghcPath => {
             CommandLine.run(
               Some(project),
               project.getBasePath,
               ghcPath,
               Seq("--supported-languages"),
               notifyBalloonError = true
-            ).map(_.getStdoutLines.asScala)
+            ).getStdoutLines.asScala
           })
         }
 
