@@ -112,7 +112,9 @@ object StackProjectManager {
                 StackReplsManager.getGlobalRepl(project).foreach(_.start())
               } finally {
                 getStackProjectManager(project).foreach(_.building = false)
-                ApplicationManager.getApplication.getMessageBus.connect(project).subscribe(VirtualFileManager.VFS_CHANGES, new ProjectLibraryFileWatcher(project))
+                if (!project.isDisposed) {
+                  ApplicationManager.getApplication.getMessageBus.connect(project).subscribe(VirtualFileManager.VFS_CHANGES, new ProjectLibraryFileWatcher(project))
+                }
               }
 
               progressIndicator.setText("Busy with downloading library sources")
