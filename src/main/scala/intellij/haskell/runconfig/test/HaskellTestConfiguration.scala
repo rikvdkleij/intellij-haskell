@@ -18,7 +18,7 @@ class HaskellTestConfiguration(name: String, project: Project, configurationFact
   private var testArguments: String = "--color"
 
   def getTestSuiteTargetNames: lang.Iterable[String] = {
-    HaskellComponentsManager.findCabalInfos(project).flatMap(_.getTestSuites.map(_.getTargetName)).asJava
+    HaskellComponentsManager.findCabalInfos(project).flatMap(_.testSuites.map(_.targetName)).asJava
   }
 
   def setTestSuiteTargetName(targetName: String) {

@@ -82,13 +82,13 @@ class HaskellModuleBuilder extends TemplateModuleBuilder(null, HaskellModuleType
     }
 
     if (contentEntry != null) {
-      cabalInfo.getSourceRoots.foreach(path => {
+      cabalInfo.sourceRoots.foreach(path => {
         Option(LocalFileSystem.getInstance.refreshAndFindFileByPath(FileUtil.toSystemIndependentName(path))).foreach(f =>
           contentEntry.addSourceFolder(f, false)
         )
       })
 
-      cabalInfo.getTestSourceRoots.foreach(path => {
+      cabalInfo.testSourceRoots.foreach(path => {
         Option(LocalFileSystem.getInstance.refreshAndFindFileByPath(FileUtil.toSystemIndependentName(path))).foreach(f =>
           contentEntry.addSourceFolder(f, true)
         )

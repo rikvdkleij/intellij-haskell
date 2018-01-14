@@ -54,18 +54,18 @@ private[external] object StackReplsManager {
     getReplsManager(project).map(_.getGlobalRepl)
   }
 
-  def createCabalInfos(project: Project): Iterable[CabalInfo] = {
+  private def createCabalInfos(project: Project): Iterable[CabalInfo] = {
     val modules = HaskellProjectUtil.findProjectModules(project)
     val moduleDirectoryPaths = modules.map(HaskellProjectUtil.getModulePath)
     moduleDirectoryPaths.flatMap(p => HaskellProjectUtil.findCabalFile(p).flatMap(cf => CabalInfo.create(project, cf)))
   }
 
-  def createStackComponentInfo(project: Project, cabalInfos: Iterable[CabalInfo]): Iterable[StackComponentInfo] = {
-    cabalInfos.flatMap(_.getCabalStanzas).map {
-      case cs: LibraryCabalStanza => StackComponentInfo(cs.packageName, cs.getTargetName, LibType, cs.getSourceDirs)
-      case cs: ExecutableCabalStanza => StackComponentInfo(cs.packageName, cs.getTargetName, ExeType, cs.getSourceDirs)
-      case cs: TestSuiteCabalStanza => StackComponentInfo(cs.packageName, cs.getTargetName, TestSuiteType, cs.getSourceDirs)
-      case cs: BenchmarkCabalStanza => StackComponentInfo(cs.packageName, cs.getTargetName, BenchmarkType, cs.getSourceDirs)
+  private def createStackComponentInfo(project: Project, cabalInfos: Iterable[CabalInfo]): Iterable[StackComponentInfo] = {
+    cabalInfos.flatMap(_.cabalStanzas).map {
+      case cs: LibraryCabalStanza => StackComponentInfo(cs.packageName, cs.targetName, LibType, cs.sourceDirs)
+      case cs: ExecutableCabalStanza => StackComponentInfo(cs.packageName, cs.targetName, ExeType, cs.sourceDirs)
+      case cs: TestSuiteCabalStanza => StackComponentInfo(cs.packageName, cs.targetName, TestSuiteType, cs.sourceDirs)
+      case cs: BenchmarkCabalStanza => StackComponentInfo(cs.packageName, cs.targetName, BenchmarkType, cs.sourceDirs)
     }
   }
 

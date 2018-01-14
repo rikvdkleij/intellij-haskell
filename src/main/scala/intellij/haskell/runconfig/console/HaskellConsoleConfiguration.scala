@@ -22,7 +22,7 @@ class HaskellConsoleConfiguration(name: String, project: Project, configurationF
   override def getState(executor: Executor, environment: ExecutionEnvironment) = new HaskellConsoleState(this, environment)
 
   def getStackTargetNames: lang.Iterable[String] = {
-    HaskellComponentsManager.findCabalInfos(project).flatMap(_.getCabalStanzas.map(_.getTargetName)).asJava
+    HaskellComponentsManager.findCabalInfos(project).flatMap(_.cabalStanzas.map(_.targetName)).asJava
   }
 
   def setStackTarget(target: String): Unit = {

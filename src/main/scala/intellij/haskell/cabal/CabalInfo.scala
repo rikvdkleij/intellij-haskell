@@ -57,26 +57,26 @@ class CabalInfo(cabalFile: CabalFile, val modulePath: String) {
     ff <- HaskellPsiUtil.getChildOfType(pkgName, classOf[Freeform])
   } yield ff.getText).getOrElse(throw new IllegalStateException(s"Can not find package name in Cabal file ${cabalFile.getName}"))
 
-  def getLibrary: Option[LibraryCabalStanza] = {
+  lazy val library: Option[LibraryCabalStanza] = {
     cabalFile.getChildren.collectFirst {
       case c: Library => LibraryCabalStanza(c, packageName, modulePath)
     }
   }
 
-  def getExecutables: Iterable[ExecutableCabalStanza] = {
-    HaskellPsiUtil.streamChildren(cabalFile, classOf[Executable]).map(c => ExecutableCabalStanza(c, packageName, modulePath)).toIterable
+  lazy val executables: Iterable[ExecutableCabalStanza] = {
+    HaskellPsiUtil.streamChildren(cabalFile, classOf[Executable]).map(c => ExecutableCabalStanza(c, packageName, modulePath))
   }
 
-  def getTestSuites: Iterable[TestSuiteCabalStanza] = {
-    HaskellPsiUtil.streamChildren(cabalFile, classOf[TestSuite]).map(c => TestSuiteCabalStanza(c, packageName, modulePath)).toIterable
+  lazy val testSuites: Iterable[TestSuiteCabalStanza] = {
+    HaskellPsiUtil.streamChildren(cabalFile, classOf[TestSuite]).map(c => TestSuiteCabalStanza(c, packageName, modulePath))
   }
 
-  def getBenchmarks: Iterable[BenchmarkCabalStanza] = {
-    HaskellPsiUtil.streamChildren(cabalFile, classOf[Benchmark]).map(c => BenchmarkCabalStanza(c, packageName, modulePath)).toIterable
+  lazy val benchmarks: Iterable[BenchmarkCabalStanza] = {
+    HaskellPsiUtil.streamChildren(cabalFile, classOf[Benchmark]).map(c => BenchmarkCabalStanza(c, packageName, modulePath))
   }
 
-  def getCabalStanzas: Iterable[CabalStanza] = {
-    getLibrary.toArray ++
+  lazy val cabalStanzas: Iterable[CabalStanza] = {
+    library.toArray ++
       cabalFile.getChildren.collect {
         case c: Executable => ExecutableCabalStanza(c, packageName, modulePath)
         case c: TestSuite => TestSuiteCabalStanza(c, packageName, modulePath)
@@ -84,15 +84,15 @@ class CabalInfo(cabalFile: CabalFile, val modulePath: String) {
       }
   }
 
-  def getSourceRoots: Iterable[String] = {
-    getLibrary.map(_.getSourceDirs).getOrElse(Array()) ++ getExecutables.flatMap(_.getSourceDirs)
+  lazy val sourceRoots: Iterable[String] = {
+    library.map(_.sourceDirs).getOrElse(Array()) ++ executables.flatMap(_.sourceDirs)
   }
 
-  def getTestSourceRoots: Iterable[String] = {
-    (getTestSuites ++ getBenchmarks).flatMap(_.getSourceDirs)
+  lazy val testSourceRoots: Iterable[String] = {
+    (testSuites ++ benchmarks).flatMap(_.sourceDirs)
   }
 
-  def getGhcOptions: Set[String] = {
+  lazy val ghcOptions: Set[String] = {
     HaskellPsiUtil.streamChildren(cabalFile, classOf[psi.impl.GhcOptionsImpl]).flatMap(_.getValue).toSet
   }
 }
@@ -102,39 +102,39 @@ sealed trait CabalStanza {
   protected val sectionRootElement: PsiElement
   protected val modulePath: String
 
-  def getTargetName: String
+  val targetName: String
 
-  protected def getNameElementType: Option[IElementType]
+  val nameElementType: Option[IElementType]
 
-  lazy val getSourceDirs: Array[String] = {
+  lazy val sourceDirs: Array[String] = {
     HaskellPsiUtil.getChildOfType(sectionRootElement, classOf[SourceDirsImpl]).map(_.getValue).getOrElse(Array()).map(d => modulePath + File.separator + d)
   }
 
-  lazy val getName: Option[String] = {
-    getNameElementType.flatMap(net => HaskellPsiUtil.getChildNodes(sectionRootElement, net).headOption).map(_.getText)
+  lazy val name: Option[String] = {
+    nameElementType.flatMap(net => HaskellPsiUtil.getChildNodes(sectionRootElement, net).headOption).map(_.getText)
   }
 }
 
 case class LibraryCabalStanza(sectionRootElement: PsiElement, packageName: String, modulePath: String) extends CabalStanza {
-  override protected def getNameElementType: Option[IElementType] = None
+  val nameElementType: Option[IElementType] = None
 
-  override def getTargetName: String = s"$packageName:lib"
+  val targetName: String = s"$packageName:lib"
 }
 
 case class ExecutableCabalStanza(sectionRootElement: PsiElement, packageName: String, modulePath: String) extends CabalStanza {
-  override def getNameElementType: Option[IElementType] = Some(CabalTypes.EXECUTABLE_NAME)
+  lazy val nameElementType: Option[IElementType] = Some(CabalTypes.EXECUTABLE_NAME)
 
-  override def getTargetName: String = getName.map(n => s"$packageName:exe:$n").getOrElse(throw new IllegalStateException(s"Executable should have name in package $packageName"))
+  lazy val targetName: String = name.map(n => s"$packageName:exe:$n").getOrElse(throw new IllegalStateException(s"Executable should have name in package $packageName"))
 }
 
 case class TestSuiteCabalStanza(sectionRootElement: PsiElement, packageName: String, modulePath: String) extends CabalStanza {
-  override def getNameElementType: Option[IElementType] = Some(CabalTypes.TEST_SUITE_NAME)
+  lazy val nameElementType: Option[IElementType] = Some(CabalTypes.TEST_SUITE_NAME)
 
-  override def getTargetName: String = getName.map(n => s"$packageName:test:$n").getOrElse(throw new IllegalStateException(s"Test-suite should have name in package $packageName"))
+  lazy val targetName: String = name.map(n => s"$packageName:test:$n").getOrElse(throw new IllegalStateException(s"Test-suite should have name in package $packageName"))
 }
 
 case class BenchmarkCabalStanza(sectionRootElement: PsiElement, packageName: String, modulePath: String) extends CabalStanza {
-  override def getNameElementType: Option[IElementType] = Some(CabalTypes.BENCHMARK_NAME)
+  lazy val nameElementType: Option[IElementType] = Some(CabalTypes.BENCHMARK_NAME)
 
-  override def getTargetName: String = getName.map(n => s"$packageName:bench:$n").getOrElse(throw new IllegalStateException(s"Benchmark should have name in package $packageName"))
+  lazy val targetName: String = name.map(n => s"$packageName:bench:$n").getOrElse(throw new IllegalStateException(s"Benchmark should have name in package $packageName"))
 }

@@ -18,7 +18,7 @@ class HaskellRunConfiguration(name: String, project: Project, configurationFacto
   private var programArgs: String = ""
 
   def getExecutableNames: lang.Iterable[String] = {
-    HaskellComponentsManager.findCabalInfos(project).flatMap(_.getExecutables.flatMap(_.getName)).asJava
+    HaskellComponentsManager.findCabalInfos(project).flatMap(_.executables.flatMap(_.name)).asJava
   }
 
   def setExecutable(executableName: String) {
