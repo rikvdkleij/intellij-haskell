@@ -4,7 +4,7 @@ lazy val commonSettings = Seq(
 )
 
 val guava = "com.google.guava" % "guava" % "23.6-jre"
-val scalaTest = "org.scalatest" % "scalatest_2.12" % "3.0.4" % "test"
+val scalaTest = "org.scalatest" %% "scalatest" % "3.0.4" % Test
 val sprayJson = "io.spray" %% "spray-json" % "1.3.4"
 val snakeYaml = "org.yaml" % "snakeyaml" % "1.19"
 
