@@ -15,19 +15,22 @@
  */
 package intellij.haskell.runconfig.console
 
+import java.io.{IOException, OutputStreamWriter}
+
 import com.intellij.execution.console.{ConsoleHistoryController, ConsoleRootType, LanguageConsoleImpl}
 import com.intellij.execution.filters._
 import com.intellij.execution.process.ProcessHandler
 import com.intellij.execution.ui.ConsoleViewContentType
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.command.WriteCommandAction
-import com.intellij.openapi.project.Project
+import com.intellij.openapi.project.{Project, ProjectManager}
 import com.intellij.openapi.util.{Computable, Key}
 import com.intellij.psi.PsiFile
 import com.intellij.psi.search.GlobalSearchScope
 import com.intellij.util.DocumentUtil
+import intellij.haskell.runconfig.console.HaskellConsoleHighlightingUtil.LambdaArrow
 import intellij.haskell.util.index.HaskellModuleNameIndex
-import intellij.haskell.{HaskellFile, HaskellFileType}
+import intellij.haskell.{HaskellFile, HaskellFileType, HaskellNotificationGroup}
 
 object HaskellConsoleView {
   private val HaskellConsoleKey: Key[HaskellConsoleInfo] = Key.create("HASKELL CONSOLE KEY")
@@ -42,7 +45,8 @@ object HaskellConsoleView {
 class HaskellConsoleView(val project: Project, val configuration: HaskellConsoleConfiguration) extends LanguageConsoleImpl(project, "Haskell Stack REPL", HaskellFileType.Instance.getLanguage) {
 
   private val consoleRootType = new ConsoleRootType("haskell", "Haskell") {}
-  private val historyController: ConsoleHistoryController = new ConsoleHistoryController(consoleRootType, "haskell", this)
+  private var historyController: ConsoleHistoryController = _
+  private var outputStreamWriter: OutputStreamWriter = _
   private var lastCommand: Option[String] = None
 
   addMessageFilter(createFileHyperLinkFilter())
@@ -53,13 +57,17 @@ class HaskellConsoleView(val project: Project, val configuration: HaskellConsole
 
   override def attachToProcess(processHandler: ProcessHandler): Unit = {
     super.attachToProcess(processHandler)
-
-    historyController.install()
-    HaskellConsoleViewMap.addConsole(this)
+    Option(processHandler.getProcessInput).foreach(processInput => {
+      outputStreamWriter = new OutputStreamWriter(processInput)
+      historyController = new ConsoleHistoryController(consoleRootType, "haskell", this)
+      historyController.install()
+      HaskellConsoleViewMap.addConsole(this)
+    })
   }
-
+  
   override def dispose() {
     super.dispose()
+    outputStreamWriter.close()
     HaskellConsoleViewMap.delConsole(this)
   }
 
@@ -97,6 +105,7 @@ class HaskellConsoleView(val project: Project, val configuration: HaskellConsole
     }
 
     for {
+      processInputWriter <- Option(outputStreamWriter)
       historyController <- Option(historyController)
     } yield {
       if (addToHistory) {
@@ -110,7 +119,16 @@ class HaskellConsoleView(val project: Project, val configuration: HaskellConsole
         case s => s + "\n"
       }
 
-      print(commandInputText, ConsoleViewContentType.USER_INPUT)
+      print(s"$LambdaArrow$commandInputText", ConsoleViewContentType.SYSTEM_OUTPUT)
+
+      try {
+        processInputWriter.write(commandInputText)
+        processInputWriter.flush()
+      } catch {
+        case e: IOException => HaskellNotificationGroup.logErrorEvent(ProjectManager.getInstance().getDefaultProject, e.getMessage)
+      }
+
+      scrollToEnd()
     }
   }
 
