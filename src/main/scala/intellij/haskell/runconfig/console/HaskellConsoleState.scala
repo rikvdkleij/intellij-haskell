@@ -1,12 +1,14 @@
 package intellij.haskell.runconfig.console
 
+import java.io.File
+
 import com.intellij.execution.CantRunException
 import com.intellij.execution.configurations.{CommandLineState, GeneralCommandLine}
 import com.intellij.execution.filters.TextConsoleBuilderImpl
 import com.intellij.execution.process.{ProcessHandler, ProcessTerminatedListener}
 import com.intellij.execution.runners.ExecutionEnvironment
 import com.intellij.execution.ui.ConsoleView
-import com.intellij.openapi.util.io.FileUtil
+import intellij.haskell.GlobalInfo
 import intellij.haskell.sdk.HaskellSdkType
 import intellij.haskell.util.{GhcVersion, HaskellFileUtil, HaskellProjectUtil}
 
@@ -27,14 +29,12 @@ class HaskellConsoleState(val configuration: HaskellConsoleConfiguration, val en
         val stackTarget = configuration.getStackTarget
         val ghcVersion = HaskellProjectUtil.getGhcVersion(project)
         val ghc821Compatible = ghcVersion.exists(_ >= GhcVersion(8, 2, 1))
-        val ghciScript = FileUtil.generateRandomTemporaryPath()
-        val ghciOptionsStream = if (ghc821Compatible) {
-          getClass.getResourceAsStream("/ghci/8.2.1.ghci")
-        } else {
-          getClass.getResourceAsStream("/ghci/default.ghci")
-        }
+        val ghciScriptName = if (ghc821Compatible) "8.2.1.ghci" else "default.ghci"
+        val ghciScript = new File(GlobalInfo.getIntelliJHaskellDirectory, ghciScriptName)
         
-        HaskellFileUtil.copyStreamToFile(ghciOptionsStream, ghciScript)
+        if(!ghciScript.exists()) {
+          HaskellFileUtil.copyStreamToFile(getClass.getResourceAsStream(s"/ghci/$ghciScriptName"), ghciScript)
+        }
         
         val commandLine = new GeneralCommandLine(stackPath)
           .withParameters(configuration.replCommand, "--ghci-options", s"-ghci-script ${ghciScript.getAbsolutePath}")
