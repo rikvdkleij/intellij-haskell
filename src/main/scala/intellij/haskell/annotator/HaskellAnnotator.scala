@@ -79,7 +79,6 @@ class HaskellAnnotator extends ExternalAnnotator[(PsiFile, Option[PsiElement]), 
           intentionActions.foreach(annotation.registerFix)
       }
     }
-    HaskellAnnotator.restartDaemonCodeAnalyzerForFile(psiFile)
   }
 }
 
@@ -136,7 +135,7 @@ object HaskellAnnotator {
           tr =>
             val plainMessage = problem.plainMessage
             plainMessage match {
-              // Because of setting `-fdefer-typed-holes` the following problems are displayed as error
+              // Because of setting `-fdefer-type-errors` the following problems are displayed as error
               case PerhapsYouMeantSingleMultiplePattern(notInScopeMessage, suggestionsList) =>
                 createErrorAnnotationWithMultiplePerhapsIntentions(problem, tr, notInScopeMessage, suggestionsList)
               case PerhapsYouMeantMultiplePattern(notInScopeMessage, suggestionsList) =>
@@ -163,7 +162,7 @@ object HaskellAnnotator {
                 findSuggestedLanguageExtension(project, plainMessage) match {
                   case les if les.nonEmpty => createLanguageExtensionIntentionsAction(problem, tr, les)
                   case _ =>
-                    if (problem.isWarning)
+                    if (problem.isWarning && !plainMessage.startsWith("warning: [-Wdeferred-type-errors]") && !plainMessage.startsWith("warning: [-Wdeferred-type-holes]"))
                       WarningAnnotation(tr, problem.plainMessage, problem.htmlMessage)
                     else
                       ErrorAnnotation(tr, problem.plainMessage, problem.htmlMessage)
