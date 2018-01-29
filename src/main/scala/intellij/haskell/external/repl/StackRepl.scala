@@ -55,7 +55,7 @@ abstract class StackRepl(val project: Project, var stanzaType: Option[StanzaType
 
   private final val EndOfOutputIndicator = "^IntellijHaskell^"
 
-  private final val DelayBetweenReads = 1.millis
+  private final val DelayBetweenReadsInMillis = 1
 
   private final val ExitCommand = ":q"
 
@@ -65,8 +65,8 @@ abstract class StackRepl(val project: Project, var stanzaType: Option[StanzaType
 
   protected def execute(command: String, forceExecute: Boolean = false): Option[StackReplOutput] = {
 
-    if (!available && !forceExecute) {
-      HaskellEditorUtil.showStatusBarInfoMessage(project, s"[$getComponentName] Haskell support is not available when Stack REPL is not running.")
+    if ((!available || starting) && !forceExecute) {
+      HaskellEditorUtil.showStatusBarInfoMessage(project, s"[$getComponentName] Haskell support is not available when Stack REPL is not (yet) running.")
       None
     } else if (!outputStreamSyncVar.isSet) {
       logError("Can not write to Stack repl. Check if your Stack project environment is working okay")
@@ -83,7 +83,7 @@ abstract class StackRepl(val project: Project, var stanzaType: Option[StanzaType
         if (stderrResult.nonEmpty) {
           val stderrMessage = "stderr: " + stderrResult.mkString("\n")
           if (errorAsInfo) {
-           logInfo(stderrMessage)
+            logInfo(stderrMessage)
           } else {
             logError(stderrMessage)
           }
@@ -120,19 +120,19 @@ abstract class StackRepl(val project: Project, var stanzaType: Option[StanzaType
           drainQueues()
 
           // We have to wait...
-          Thread.sleep(DelayBetweenReads.toMillis)
+          Thread.sleep(DelayBetweenReadsInMillis)
         }
 
-        drainQueues()
+        logInfo(s"Command $command took + ${(timeout - deadline.timeLeft).toMillis} ms")
 
-        logInfo("command: " + command)
-        logOutput(errorAsInfo = true)
+        drainQueues()
 
         if (hasReachedEndOfOutput) {
           Some(StackReplOutput(convertOutputToOneMessagePerLine(project, removePrompt(stdoutResult)), convertOutputToOneMessagePerLine(project, stderrResult)))
         } else {
           drainQueues()
           logError(s"No result from Stack REPL within $timeout. Command was: $command")
+          exit(forceExit = true)
           None
         }
       }
@@ -166,12 +166,12 @@ abstract class StackRepl(val project: Project, var stanzaType: Option[StanzaType
       }
     }
 
-    if (available) {
-      logError("Stack REPL can not be started because it's already running")
+    if (available || starting) {
+      logError("Stack REPL can not be started because it's already starting or running")
     } else {
+      starting = true
       HaskellSdkType.getStackPath(project).foreach(stackPath => {
         try {
-          starting = true
           val extraOptions = if (stanzaType.isEmpty || stanzaType.contains(TestSuiteType)) {
             extraReplOptions ++ Seq("--test")
           } else if (stanzaType.isEmpty || stanzaType.contains(BenchmarkType)) {
@@ -211,12 +211,13 @@ abstract class StackRepl(val project: Project, var stanzaType: Option[StanzaType
           val deadline = DefaultTimeout.fromNow
           while (deadline.hasTimeLeft && !isStarted && !hasDependencyError) {
             // We have to wait till REPL is started
-            Thread.sleep(DelayBetweenReads.toMillis)
+            Thread.sleep(DelayBetweenReadsInMillis)
           }
 
-          if (isStarted) {
+          if (isStarted && !hasDependencyError) {
             if (stanzaType != None) {
-              execute(":set -fdefer-typed-holes", forceExecute = true)
+              execute(":set -fdefer-type-errors", forceExecute = true)
+              execute(":set -fno-code", forceExecute = true)
               HaskellProjectUtil.getGhcVersion(project).foreach { ghcVersion =>
                 if (ghcVersion >= GhcVersion(8, 2, 1)) {
                   execute(":set -fno-diagnostics-show-caret", forceExecute = true)
@@ -233,7 +234,7 @@ abstract class StackRepl(val project: Project, var stanzaType: Option[StanzaType
               logError(s"Stack REPL could not be started within $DefaultTimeout")
               writeOutputToLog()
             }
-            exit(forceExit = true)
+            closeResources()
           }
         }
         catch {
@@ -307,8 +308,8 @@ abstract class StackRepl(val project: Project, var stanzaType: Option[StanzaType
     }
   }
 
-  def restart(): Unit = {
-    exit()
+  def restart(forceExit: Boolean = false): Unit = synchronized {
+    exit(forceExit)
     start()
   }
 
