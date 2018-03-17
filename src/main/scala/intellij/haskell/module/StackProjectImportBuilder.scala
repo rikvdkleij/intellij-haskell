@@ -18,7 +18,6 @@ package intellij.haskell.module
 
 import java.io.File
 import java.util
-import javax.swing.Icon
 
 import com.intellij.ide.util.projectWizard.ModuleBuilder
 import com.intellij.openapi.module.{ModifiableModuleModel, Module, ModuleType}
@@ -30,6 +29,7 @@ import com.intellij.projectImport.ProjectImportBuilder
 import intellij.haskell.HaskellIcons
 import intellij.haskell.stackyaml.StackYamlComponent
 import intellij.haskell.util.{HaskellFileUtil, HaskellProjectUtil}
+import javax.swing.Icon
 
 import scala.collection.JavaConverters._
 
@@ -46,10 +46,12 @@ class StackProjectImportBuilder extends ProjectImportBuilder[Unit] {
 
   override def isMarked(element: Unit): Boolean = true
 
+  private final val projectRootRelativePath = "."
+
   override def commit(project: Project, model: ModifiableModuleModel, modulesProvider: ModulesProvider, artifactModel: ModifiableArtifactModel): java.util.List[Module] = {
     val moduleBuilder = HaskellModuleType.getInstance.createModuleBuilder()
 
-    val packagePaths = StackYamlComponent.getPackagePaths(project).getOrElse(Seq("."))
+    val packagePaths = StackYamlComponent.getPackagePaths(project).getOrElse(Seq(projectRootRelativePath))
 
     packagePaths.foreach(packageRelativePath => {
       val moduleDirectory = getModuleRootDirectory(packageRelativePath)
@@ -67,7 +69,7 @@ class StackProjectImportBuilder extends ProjectImportBuilder[Unit] {
       }
     })
 
-    if (!packagePaths.contains(".")) {
+    if (!packagePaths.contains(projectRootRelativePath)) {
       val parentModuleBuilder = new ParentModuleBuilder(project)
       parentModuleBuilder.setModuleFilePath(new File(project.getBasePath, project.getName + "-parent").getAbsolutePath + ".iml")
       parentModuleBuilder.setName("Parent module")
@@ -81,13 +83,12 @@ class StackProjectImportBuilder extends ProjectImportBuilder[Unit] {
   }
 
   private def getModuleRootDirectory(packagePath: String): File = {
-    if (packagePath == ".") {
+    if (packagePath == projectRootRelativePath) {
       new File(getFileToImport)
     } else {
       new File(getFileToImport, packagePath)
     }
   }
-
 
   private def getModuleImlFilePath(moduleDirectory: File, moduleName: String): String = {
     new File(moduleDirectory, moduleName).getAbsolutePath + ".iml"
