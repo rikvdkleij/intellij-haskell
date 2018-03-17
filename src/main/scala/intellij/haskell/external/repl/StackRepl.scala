@@ -21,7 +21,8 @@ import java.util.concurrent.LinkedBlockingQueue
 
 import com.intellij.openapi.project.Project
 import com.intellij.util.EnvironmentUtil
-import intellij.haskell.external.repl.StackRepl.{BenchmarkType, StackReplOutput, StanzaType, TestSuiteType}
+import intellij.haskell.external.repl.StackRepl.{BenchmarkType, StackReplOutput, TestSuiteType}
+import intellij.haskell.external.repl.StackReplsManager.StackComponentInfo
 import intellij.haskell.sdk.HaskellSdkType
 import intellij.haskell.util.{GhcVersion, HaskellEditorUtil, HaskellProjectUtil, StringUtil}
 import intellij.haskell.{GlobalInfo, HaskellNotificationGroup}
@@ -33,7 +34,26 @@ import scala.concurrent.duration._
 import scala.io._
 import scala.sys.process._
 
-abstract class StackRepl(val project: Project, var stanzaType: Option[StanzaType], var target: Option[String], extraReplOptions: Seq[String] = Seq(), replTimeout: Int) {
+abstract class StackRepl(project: Project, componentInfo: Option[StackComponentInfo], extraReplOptions: Seq[String] = Seq(), replTimeout: Int) {
+
+  val target: Option[String] = componentInfo.map(_.target)
+  private val stanzaType = componentInfo.map(_.stanzaType)
+
+  private object GhciCommand {
+
+    trait Command
+
+    case object Load extends Command
+
+    case object LocalBrowse extends Command
+
+    case object Set extends Command
+
+    case object Module extends Command
+
+    case object OtherCommand extends Command
+
+  }
 
   private final val LineSeparator = '\n'
 
@@ -61,7 +81,12 @@ abstract class StackRepl(val project: Project, var stanzaType: Option[StanzaType
 
   private final val CanNotSatisfyErrorMessageIndicator = "cannot satisfy"
 
+  private final val LocalBrowseStopReadingIndicator = "-- imported via"
+
   def getComponentName: String = target.map(t => "project-stack-repl-" + t).getOrElse("global-stack-repl")
+
+  private val stdoutResult = new ArrayBuffer[String]
+  private val stderrResult = new ArrayBuffer[String]
 
   protected def execute(command: String, forceExecute: Boolean = false): Option[StackReplOutput] = {
 
@@ -72,11 +97,14 @@ abstract class StackRepl(val project: Project, var stanzaType: Option[StanzaType
       logError("Can not write to Stack repl. Check if your Stack project environment is working okay")
       None
     } else {
-      stdoutQueue.clear()
-      stderrQueue.clear()
 
-      val stdoutResult = new ArrayBuffer[String]
-      val stderrResult = new ArrayBuffer[String]
+      def init() = {
+        stdoutQueue.clear()
+        stderrQueue.clear()
+
+        stdoutResult.clear()
+        stderrResult.clear()
+      }
 
       def logOutput(errorAsInfo: Boolean = false): Unit = {
         if (stdoutResult.nonEmpty) logInfo("stdout: " + stdoutResult.mkString("\n"))
@@ -95,13 +123,44 @@ abstract class StackRepl(val project: Project, var stanzaType: Option[StanzaType
         stderrQueue.drainTo(stderrResult.asJava)
       }
 
+      def cleanupOutputPreviousCommand(): Unit = {
+        drainQueues()
+
+        if (stdoutResult.nonEmpty || stderrResult.nonEmpty) {
+          // Output of previous command is there and could still being written....
+          val deadline = DefaultTimeout.fromNow
+          while (deadline.hasTimeLeft() && !stdoutResult.lastOption.exists(_.contains(EndOfOutputIndicator))) {
+            drainQueues()
+
+            // We have to wait...
+            Thread.sleep(DelayBetweenReadsInMillis)
+          }
+        }
+      }
+
       try {
+        stdoutResult.clear()
+        stderrResult.clear()
+
+        cleanupOutputPreviousCommand()
+
+        init()
+
+        val ghciCommand = command match {
+          case c if c.startsWith(":browse! *") => GhciCommand.LocalBrowse
+          case c if c.startsWith(":load") => GhciCommand.Load
+          case c if c.startsWith(":module") => GhciCommand.Module
+          case c if c.startsWith(":set") => GhciCommand.Set
+          case _ => GhciCommand.OtherCommand
+        }
 
         def hasReachedEndOfOutput =
           if (command == ExitCommand) {
             stdoutResult.lastOption.exists(_.startsWith("Leaving GHCi"))
+          } else if (ghciCommand == GhciCommand.LocalBrowse) {
+            stdoutResult.exists(_.startsWith(LocalBrowseStopReadingIndicator))
           } else {
-            stdoutResult.lastOption.exists(_.contains(EndOfOutputIndicator)) && (command.startsWith(":module") || command.startsWith(":set") || stdoutResult.length > 1 || stderrResult.length > 1)
+            stdoutResult.lastOption.exists(_.contains(EndOfOutputIndicator)) && (ghciCommand == GhciCommand.Module || ghciCommand == GhciCommand.Set || stdoutResult.length > 1 || stderrResult.length > 1)
           }
 
         def writeToOutputStream(command: String) = {
@@ -113,7 +172,7 @@ abstract class StackRepl(val project: Project, var stanzaType: Option[StanzaType
 
         writeToOutputStream(command)
 
-        val timeout = if (command.startsWith(":load")) LoadTimeout else DefaultTimeout
+        val timeout = if (ghciCommand == GhciCommand.Load) LoadTimeout else DefaultTimeout
 
         val deadline = timeout.fromNow
         while (deadline.hasTimeLeft && !hasReachedEndOfOutput) {
@@ -123,13 +182,17 @@ abstract class StackRepl(val project: Project, var stanzaType: Option[StanzaType
           Thread.sleep(DelayBetweenReadsInMillis)
         }
 
-        logInfo(s"Command $command took + ${(timeout - deadline.timeLeft).toMillis} ms")
-
-        drainQueues()
-
-        if (hasReachedEndOfOutput) {
-          Some(StackReplOutput(convertOutputToOneMessagePerLine(project, removePrompt(stdoutResult)), convertOutputToOneMessagePerLine(project, stderrResult)))
-        } else {
+        if (deadline.hasTimeLeft) {
+          logInfo(s"Command $command took + ${(timeout - deadline.timeLeft).toMillis} ms")
+          logOutput(errorAsInfo = true)
+          val result = if (ghciCommand == GhciCommand.LocalBrowse) {
+            stdoutResult.takeWhile(l => !l.startsWith(LocalBrowseStopReadingIndicator))
+          } else {
+            stdoutResult
+          }
+          Some(StackReplOutput(convertOutputToOneMessagePerLine(project, removePrompt(result)), convertOutputToOneMessagePerLine(project, stderrResult)))
+        }
+        else {
           drainQueues()
           logError(s"No result from Stack REPL within $timeout. Command was: $command")
           exit(forceExit = true)
@@ -215,13 +278,13 @@ abstract class StackRepl(val project: Project, var stanzaType: Option[StanzaType
           }
 
           if (isStarted && !hasDependencyError) {
-            if (stanzaType != None) {
+            if (stanzaType.isDefined) {
               execute(":set -fdefer-type-errors", forceExecute = true)
-              execute(":set -fno-code", forceExecute = true)
-              HaskellProjectUtil.getGhcVersion(project).foreach { ghcVersion =>
-                if (ghcVersion >= GhcVersion(8, 2, 1)) {
-                  execute(":set -fno-diagnostics-show-caret", forceExecute = true)
-                }
+              HaskellProjectUtil.getGhcVersion(project).foreach {
+                ghcVersion =>
+                  if (ghcVersion >= GhcVersion(8, 2, 1)) {
+                    execute(":set -fno-diagnostics-show-caret", forceExecute = true)
+                  }
               }
             }
             logInfo("Stack REPL is started")

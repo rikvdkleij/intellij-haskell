@@ -16,13 +16,10 @@
 
 package intellij.haskell.external.execution
 
-import com.intellij.execution.process.ProcessOutput
 import com.intellij.openapi.project.Project
 import com.intellij.psi.PsiFile
 import intellij.haskell.HaskellNotificationGroup
 import intellij.haskell.util.{HaskellFileUtil, StringUtil}
-
-import scala.collection.JavaConverters._
 
 object HaskellCompilationResultHelper {
 
@@ -48,12 +45,6 @@ object HaskellCompilationResultHelper {
         case _ => ()
       }
     }
-  }
-
-  def showBuildErrors(project: Project, currentPsiFile: Option[PsiFile], processOutput: ProcessOutput): Unit = {
-    val stderrLines = StringUtil.joinIndentedLines(project, processOutput.getStderrLines.asScala)
-    val result = createCompilationResult(currentPsiFile, stderrLines, processOutput.getExitCode > 0)
-    createNotificationsForErrorsNotInCurrentFile(project, result)
   }
 
   private def convertToCompilationProblemInCurrentFile(problem: CompilationProblem) = {

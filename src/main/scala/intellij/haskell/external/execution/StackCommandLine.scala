@@ -49,14 +49,16 @@ object StackCommandLine {
     })
   }
 
-  def build(project: Project, buildArguments: Seq[String], message: String, notifyBalloonError: Boolean = false): Option[ProcessOutput] = {
-    val arguments = Seq("build") ++ buildArguments
+  def build(project: Project, buildTarget: String, logBuildResult: Boolean, fast: Boolean = false): Option[ProcessOutput] = {
+    val arguments = Seq("build", buildTarget) ++ (if (fast) Seq("--fast") else Seq())
     logStarting(project, arguments)
-    val processOutput = run(project, arguments, -1, Some(CaptureOutputToLog))
-    if (processOutput.isEmpty || processOutput.exists(_.getExitCode != 0)) {
-      HaskellNotificationGroup.logErrorEvent(project, s"Building `$message` has failed")
-    } else {
-      HaskellNotificationGroup.logInfoEvent(project, s"Building `$message` is finished successfully")
+    val processOutput = run(project, arguments, -1, if (logBuildResult) Some(CaptureOutputToLog) else None, ignoreExitCode = true)
+    if (logBuildResult) {
+      if (processOutput.isEmpty || processOutput.exists(_.getExitCode != 0)) {
+        HaskellNotificationGroup.logErrorEvent(project, s"Building `$buildTarget` has failed, see Haskell Event log for more information")
+      } else {
+        HaskellNotificationGroup.logInfoEvent(project, s"Building `$buildTarget` is finished successfully")
+      }
     }
     processOutput
   }

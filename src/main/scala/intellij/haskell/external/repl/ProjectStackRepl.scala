@@ -20,12 +20,13 @@ import java.util.concurrent.ConcurrentHashMap
 
 import com.intellij.openapi.project.Project
 import com.intellij.psi.PsiFile
-import intellij.haskell.external.repl.StackRepl.{StackReplOutput, StanzaType}
+import intellij.haskell.external.repl.StackRepl.StackReplOutput
+import intellij.haskell.external.repl.StackReplsManager.StackComponentInfo
 import intellij.haskell.util.HaskellFileUtil
 
 import scala.collection.JavaConverters._
 
-class ProjectStackRepl(project: Project, replType: StanzaType, target: String, var sourceDirs: Seq[String], replTimeout: Int) extends StackRepl(project, Some(replType), Some(target), Seq(), replTimeout: Int) {
+class ProjectStackRepl(project: Project, componentInfo: StackComponentInfo, replTimeout: Int) extends StackRepl(project, Some(componentInfo), Seq(), replTimeout: Int) {
 
   import intellij.haskell.external.repl.ProjectStackRepl._
 
@@ -73,10 +74,14 @@ class ProjectStackRepl(project: Project, replType: StanzaType, target: String, v
     }
   }
 
-  def load(psiFile: PsiFile): Option[(StackReplOutput, Boolean)] = {
+  def load(psiFile: PsiFile, reload: Boolean): Option[(StackReplOutput, Boolean)] = {
     val filePath = getFilePath(psiFile)
     this.synchronized {
-      val output = executeWithSettingBusy(s":load $filePath")
+      val output = if (reload) {
+        executeWithSettingBusy(s":reload")
+      } else {
+        executeWithSettingBusy(s":load $filePath")
+      }
       output match {
         case Some(o) =>
           val loadFailed = isLoadFailed(o)
@@ -84,6 +89,7 @@ class ProjectStackRepl(project: Project, replType: StanzaType, target: String, v
           allLoadedPsiFileInfos.put(psiFile, FileInfo(loadFailed))
           Some(o, loadFailed)
         case _ =>
+          allLoadedPsiFileInfos.remove(psiFile)
           loadedPsiFileInfo = None
           None
       }
@@ -98,7 +104,9 @@ class ProjectStackRepl(project: Project, replType: StanzaType, target: String, v
     executeWithLoad(psiFile, s":browse! *$moduleName", Some(moduleName))
   }
 
+  // To retrieve only library module names, it will first execute `load` to remove all modules from scope
   def findAvailableLibraryModuleNames(project: Project): Option[StackReplOutput] = synchronized {
+    loadedPsiFileInfo = None
     executeWithSettingBusy(":load", """:complete repl "import " """)
   }
 
@@ -124,7 +132,7 @@ class ProjectStackRepl(project: Project, replType: StanzaType, target: String, v
         executeWithSettingBusy(command)
       case Some(info) if info.psiFile == psiFile && info.loadFailed => Some(StackReplOutput())
       case _ =>
-        load(psiFile)
+        load(psiFile, reload = false)
         loadedPsiFileInfo match {
           case None => None
           case Some(info) if info.psiFile == psiFile && !info.loadFailed =>
