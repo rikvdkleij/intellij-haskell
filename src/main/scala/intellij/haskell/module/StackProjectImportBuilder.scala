@@ -49,33 +49,34 @@ class StackProjectImportBuilder extends ProjectImportBuilder[Unit] {
   override def commit(project: Project, model: ModifiableModuleModel, modulesProvider: ModulesProvider, artifactModel: ModifiableArtifactModel): java.util.List[Module] = {
     val moduleBuilder = HaskellModuleType.getInstance.createModuleBuilder()
 
-    StackYamlComponent.getPackagePaths(project).foreach(packageRelativePaths => {
-      packageRelativePaths.foreach(packageRelativePath => {
-        val moduleDirectory = getModuleRootDirectory(packageRelativePath)
-        HaskellModuleBuilder.createCabalInfo(project, getFileToImport, packageRelativePath) match {
-          case Some(cabalInfo) =>
-            val moduleName = cabalInfo.packageName
-            moduleBuilder.setCabalInfo(cabalInfo)
-            moduleBuilder.setName(moduleName)
-            moduleBuilder.setModuleFilePath(getModuleImlFilePath(moduleDirectory, moduleName))
-            moduleBuilder.commit(project)
-            moduleBuilder.addModuleConfigurationUpdater((_: Module, rootModel: ModifiableRootModel) => {
-              moduleBuilder.setupRootModel(rootModel)
-            })
-          case None => ()
-        }
-      })
+    val packagePaths = StackYamlComponent.getPackagePaths(project).getOrElse(Seq("."))
 
-      if (!packageRelativePaths.contains(".")) {
-        val parentModuleBuilder = new ParentModuleBuilder(project)
-        parentModuleBuilder.setModuleFilePath(new File(project.getBasePath, project.getName + "-parent").getAbsolutePath + ".iml")
-        parentModuleBuilder.setName("Parent module")
-        parentModuleBuilder.commit(project)
-        parentModuleBuilder.addModuleConfigurationUpdater((_: Module, rootModel: ModifiableRootModel) => {
-          parentModuleBuilder.setupRootModel(rootModel)
-        })
+    packagePaths.foreach(packageRelativePath => {
+      val moduleDirectory = getModuleRootDirectory(packageRelativePath)
+      HaskellModuleBuilder.createCabalInfo(project, getFileToImport, packageRelativePath) match {
+        case Some(cabalInfo) =>
+          val moduleName = cabalInfo.packageName
+          moduleBuilder.setCabalInfo(cabalInfo)
+          moduleBuilder.setName(moduleName)
+          moduleBuilder.setModuleFilePath(getModuleImlFilePath(moduleDirectory, moduleName))
+          moduleBuilder.commit(project)
+          moduleBuilder.addModuleConfigurationUpdater((_: Module, rootModel: ModifiableRootModel) => {
+            moduleBuilder.setupRootModel(rootModel)
+          })
+        case None => ()
       }
     })
+
+    if (!packagePaths.contains(".")) {
+      val parentModuleBuilder = new ParentModuleBuilder(project)
+      parentModuleBuilder.setModuleFilePath(new File(project.getBasePath, project.getName + "-parent").getAbsolutePath + ".iml")
+      parentModuleBuilder.setName("Parent module")
+      parentModuleBuilder.commit(project)
+      parentModuleBuilder.addModuleConfigurationUpdater((_: Module, rootModel: ModifiableRootModel) => {
+        parentModuleBuilder.setupRootModel(rootModel)
+      })
+    }
+
     HaskellProjectUtil.getModuleManager(project).map(_.getModules).getOrElse(Array()).toList.asJava
   }
 
