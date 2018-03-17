@@ -44,14 +44,14 @@ class AboutAction extends AnAction {
     val messages = new ArrayBuffer[String]
     val project = actionEvent.getProject
     messages.+=(s"${boldToolName("Stack")} version: " + StackCommandLine.run(project, Seq("--numeric-version")).map(_.getStdout).getOrElse("-"))
-    messages.+=(s"${boldToolName("GHC")} version: " + StackCommandLine.run(project, Seq("exec", "--", "ghc", "--version")).map(_.getStdout).getOrElse("-"))
-    messages.+=(s"${boldToolName("Intero")} version: " + StackCommandLine.run(project, Seq("exec", "--", "intero", "--version")).map(_.getStdout).getOrElse("-"))
-    messages.+=(s"${boldToolName("HLint")} version: " + StackCommandLine.run(project, Seq("exec", "--", HLintComponent.HlintName, "--version")).map(_.getStdout).getOrElse("-"))
-    messages.+=(s"${boldToolName("Hoogle")} version: " + StackCommandLine.run(project, Seq("exec", "--", "hoogle", "--version")).map(_.getStdout).getOrElse("-"))
-    messages.+=(s"${boldToolName("Hindent")} version: " + HaskellSettingsState.getHindentPath(project).map(hp =>
-      CommandLine.run(None, project.getBasePath, hp, Seq("--version")).getStdout))
-    messages.+=(s"${boldToolName("Stylish-haskell")} version: " + HaskellSettingsState.getStylishHaskellPath(project).map(sh =>
-      CommandLine.run(None, project.getBasePath, sh, Seq("--version")).getStdout))
+    messages.+=(s"${boldToolName("GHC")}: " + StackCommandLine.run(project, Seq("exec", "--", "ghc", "--version")).map(_.getStdout).getOrElse("-"))
+    messages.+=(s"${boldToolName("Intero")}: " + StackCommandLine.run(project, Seq("exec", "--", "intero", "--version")).map(_.getStdout).getOrElse("-"))
+    messages.+=(s"${boldToolName("HLint")}: " + StackCommandLine.run(project, Seq("exec", "--", HLintComponent.HlintName, "--version")).map(_.getStdout).getOrElse("-"))
+    messages.+=(s"${boldToolName("Hoogle")}: " + StackCommandLine.run(project, Seq("exec", "--", "hoogle", "--version")).map(_.getStdout).getOrElse("-"))
+    messages.+=(s"${boldToolName("Hindent")}: " + HaskellSettingsState.getHindentPath(project).map(hp =>
+      CommandLine.run(None, project.getBasePath, hp, Seq("--version")).getStdout).getOrElse("-"))
+    messages.+=(s"${boldToolName("Stylish-haskell")}: " + HaskellSettingsState.getStylishHaskellPath(project).map(sh =>
+      CommandLine.run(None, project.getBasePath, sh, Seq("--version")).getStdout).getOrElse("-"))
     Messages.showInfoMessage(project, messages.mkString("\n"), "About Haskell Project")
   }
 }
