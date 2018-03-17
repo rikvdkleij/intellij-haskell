@@ -31,11 +31,15 @@ import scala.concurrent.duration._
 object CommandLine {
   val DefaultTimeout: FiniteDuration = 3.seconds
 
-  def run(project: Option[Project], workDir: String, commandPath: String, arguments: Seq[String], timeoutInMillis: Long = DefaultTimeout.toMillis, captureOutput: Option[CaptureOutput] = None,
-          notifyBalloonError: Boolean = false, ignoreExitCode: Boolean = false): ProcessOutput = {
+  def run(project: Option[Project], workDir: String, commandPath: String, arguments: Seq[String], timeoutInMillis: Long = DefaultTimeout.toMillis,
+          notifyBalloonError: Boolean = false, ignoreExitCode: Boolean = false, logOutput: Boolean = false): ProcessOutput = {
 
     val commandLine = createCommandLine(workDir, commandPath, arguments)
-    val processHandler = createProcessHandler(project, commandLine, captureOutput)
+    if (!logOutput) {
+      HaskellNotificationGroup.logInfoEvent(s"Executing: ${commandLine.getCommandLineString}")
+    }
+
+    val processHandler = createProcessHandler(project, commandLine, logOutput)
 
     val processOutput = processHandler.runProcess(timeoutInMillis.toInt, true)
     if (processOutput.isTimeout) {
@@ -56,10 +60,6 @@ object CommandLine {
       val errorMessage = createLogMessage(commandLine, processOutput)
       HaskellNotificationGroup.logErrorEvent(project, errorMessage)
       processOutput
-    } else if (captureOutput.isEmpty) {
-      val message = createLogMessage(commandLine, processOutput)
-      HaskellNotificationGroup.logInfoEvent(project, message)
-      processOutput
     } else {
       processOutput
     }
@@ -74,13 +74,13 @@ object CommandLine {
     commandLine
   }
 
-  private def createProcessHandler(project: Option[Project], cmd: GeneralCommandLine, captureOutput: Option[CaptureOutput]): CapturingProcessHandler = {
-    captureOutput match {
-      case Some(CaptureOutputToLog) =>
-        new CapturingProcessHandler(cmd) {
-          override protected def createProcessAdapter(processOutput: ProcessOutput): CapturingProcessAdapter = new CapturingProcessToLog(project, cmd, processOutput)
-        }
-      case None => new CapturingProcessHandler(cmd)
+  private def createProcessHandler(project: Option[Project], cmd: GeneralCommandLine, logOutput: Boolean): CapturingProcessHandler = {
+    if (logOutput) {
+      new CapturingProcessHandler(cmd) {
+        override protected def createProcessAdapter(processOutput: ProcessOutput): CapturingProcessAdapter = new CapturingProcessToLog(project, cmd, processOutput)
+      }
+    } else {
+      new CapturingProcessHandler(cmd)
     }
   }
 
@@ -99,12 +99,9 @@ private class CapturingProcessToLog(val project: Option[Project], val cmd: Gener
   }
 
   private def addToLog(text: String, outputType: Key[_]) {
-    if (text.trim.nonEmpty) {
-      if (outputType == ProcessOutputTypes.STDERR) {
-        HaskellNotificationGroup.logErrorEvent(project, s"${cmd.getCommandLineString}:  $text")
-      } else {
-        HaskellNotificationGroup.logInfoEvent(project, s"${cmd.getCommandLineString}:  $text")
-      }
+    val trimmedText = text.trim
+    if (trimmedText.nonEmpty) {
+      HaskellNotificationGroup.logInfoEvent(project, s"${cmd.getCommandLineString}:  $trimmedText")
     }
   }
 }

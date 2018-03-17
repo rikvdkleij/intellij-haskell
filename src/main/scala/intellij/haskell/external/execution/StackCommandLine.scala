@@ -33,8 +33,8 @@ import scala.collection.mutable.ListBuffer
 
 object StackCommandLine {
 
-  def run(project: Project, arguments: Seq[String], timeoutInMillis: Long = CommandLine.DefaultTimeout.toMillis, captureOutput: Option[CaptureOutput] = None,
-          notifyBalloonError: Boolean = false, ignoreExitCode: Boolean = false): Option[ProcessOutput] = {
+  def run(project: Project, arguments: Seq[String], timeoutInMillis: Long = CommandLine.DefaultTimeout.toMillis,
+          ignoreExitCode: Boolean = false): Option[ProcessOutput] = {
     HaskellSdkType.getStackPath(project).map(stackPath => {
       CommandLine.run(
         Some(project),
@@ -42,17 +42,14 @@ object StackCommandLine {
         stackPath,
         arguments,
         timeoutInMillis.toInt,
-        captureOutput,
-        notifyBalloonError,
-        ignoreExitCode
+        ignoreExitCode = ignoreExitCode
       )
     })
   }
 
   def build(project: Project, buildTarget: String, logBuildResult: Boolean, fast: Boolean = false): Option[ProcessOutput] = {
     val arguments = Seq("build", buildTarget) ++ (if (fast) Seq("--fast") else Seq())
-    logStarting(project, arguments)
-    val processOutput = run(project, arguments, -1, if (logBuildResult) Some(CaptureOutputToLog) else None, ignoreExitCode = true)
+    val processOutput = run(project, arguments, -1, ignoreExitCode = true)
     if (logBuildResult) {
       if (processOutput.isEmpty || processOutput.exists(_.getExitCode != 0)) {
         HaskellNotificationGroup.logErrorEvent(project, s"Building `$buildTarget` has failed, see Haskell Event log for more information")
@@ -73,7 +70,6 @@ object StackCommandLine {
 
   def executeInMessageView(project: Project, arguments: Seq[String], progressIndicator: Option[ProgressIndicator] = None): Option[Boolean] =
     HaskellSdkType.getStackPath(project).flatMap(stackPath => {
-      logStarting(project, arguments)
       val cmd = CommandLine.createCommandLine(project.getBasePath, stackPath, arguments)
       (try {
         Option(cmd.createProcess())
@@ -110,10 +106,6 @@ object StackCommandLine {
         handler.getExitCode == 0
       })
     })
-
-  private def logStarting(project: Project, arguments: Seq[String]) = {
-    HaskellNotificationGroup.logInfoEvent(project, s"""Starting to execute `stack ${arguments.mkString(" ")}`""")
-  }
 
   private class MessageViewProcessAdapter(val compileContext: CompileContext, val progressIndicator: ProgressIndicator) extends ProcessAdapter() {
 

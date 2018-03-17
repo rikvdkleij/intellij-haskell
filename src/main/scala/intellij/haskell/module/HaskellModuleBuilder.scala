@@ -17,7 +17,6 @@
 package intellij.haskell.module
 
 import java.io.File
-import javax.swing.Icon
 
 import com.intellij.ide.util.projectWizard._
 import com.intellij.openapi.Disposable
@@ -35,11 +34,12 @@ import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.vfs.{LocalFileSystem, VirtualFileManager}
 import com.intellij.platform.templates.TemplateModuleBuilder
 import intellij.haskell.cabal.CabalInfo
-import intellij.haskell.external.execution.{CaptureOutputToLog, CommandLine, StackCommandLine}
+import intellij.haskell.external.execution.{CommandLine, StackCommandLine}
 import intellij.haskell.sdk.HaskellSdkType
 import intellij.haskell.stackyaml.StackYamlComponent
 import intellij.haskell.util.{HaskellFileUtil, HaskellProjectUtil}
 import intellij.haskell.{GlobalInfo, HaskellIcons, HaskellNotificationGroup}
+import javax.swing.Icon
 
 import scala.collection.JavaConverters._
 import scala.collection.mutable
@@ -262,7 +262,7 @@ object HaskellModuleBuilder {
 
   private def downloadHaskellPackageSources(project: Project, projectLibDirectory: File, stackPath: String, packageInfos: Seq[HaskellPackageInfo]): Unit = {
     packageInfos.filterNot(packageInfo => getPackageDirectory(projectLibDirectory, packageInfo).exists()).flatMap(packageInfo => {
-      val stderr = CommandLine.run(Some(project), projectLibDirectory.getAbsolutePath, stackPath, Seq("unpack", packageInfo.nameVersion), 10000, Some(CaptureOutputToLog)).getStderr
+      val stderr = CommandLine.run(Some(project), projectLibDirectory.getAbsolutePath, stackPath, Seq("unpack", packageInfo.nameVersion), 10000).getStderr
       if (stderr.contains("not found")) {
         Seq()
       } else {
