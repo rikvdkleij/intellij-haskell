@@ -6,6 +6,7 @@ import com.intellij.openapi.project.Project
 import com.intellij.psi.PsiElement
 import intellij.haskell.psi.HaskellTypes._
 import intellij.haskell.psi.{HaskellElementFactory, HaskellPsiUtil}
+import intellij.haskell.util.HaskellProjectUtil
 
 class AddParensIntention extends PsiElementBaseIntentionAction {
 
@@ -32,11 +33,11 @@ class AddParensIntention extends PsiElementBaseIntentionAction {
   }
 
   override def isAvailable(project: Project, editor: Editor, psiElement: PsiElement): Boolean = {
-    HaskellPsiUtil.getSelectionStartEnd(psiElement, editor) match {
+    HaskellProjectUtil.isHaskellProject(project) && (HaskellPsiUtil.getSelectionStartEnd(psiElement, editor) match {
       case None => psiElement.isWritable
       case Some((start, _)) if start.getNode.getElementType != HS_NEWLINE => psiElement.isWritable
       case _ => false
-    }
+    })
   }
 
   override def getFamilyName: String = getText
