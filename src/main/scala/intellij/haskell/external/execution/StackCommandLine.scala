@@ -16,10 +16,10 @@
 
 package intellij.haskell.external.execution
 
-import com.intellij.compiler.impl.{CompileDriver, ProjectCompileScope}
+import com.intellij.compiler.impl._
+import com.intellij.compiler.progress.CompilerTask
 import com.intellij.execution.ExecutionException
 import com.intellij.execution.process._
-import com.intellij.openapi.application.{Result, WriteAction}
 import com.intellij.openapi.compiler.{CompileContext, CompileTask, CompilerMessageCategory}
 import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.project.Project
@@ -27,9 +27,10 @@ import com.intellij.openapi.util.Key
 import com.intellij.openapi.vfs.CharsetToolkit
 import intellij.haskell.HaskellNotificationGroup
 import intellij.haskell.sdk.HaskellSdkType
-import intellij.haskell.util.HaskellFileUtil
+import intellij.haskell.util.{GhcVersion, HaskellFileUtil, HaskellProjectUtil}
 
 import scala.collection.mutable.ListBuffer
+import scala.concurrent.SyncVar
 
 object StackCommandLine {
 
@@ -60,15 +61,39 @@ object StackCommandLine {
     processOutput
   }
 
-  def buildProjectDependenciesInMessageView(project: Project, progressIndicator: ProgressIndicator): Option[Boolean] = {
-    StackCommandLine.executeInMessageView(project, Seq("build", "--fast", "--test", "--bench", "--no-run-tests", "--no-run-benchmarks", "--only-dependencies"), Some(progressIndicator))
+  def build(project: Project, buildTarget: String, logBuildResult: Boolean, fast: Boolean = false): Option[ProcessOutput] = {
+    val arguments = Seq("build", buildTarget) ++ (if (fast) Seq("--fast") else Seq())
+    val processOutput = run(project, arguments, -1, ignoreExitCode = true)
+    if (logBuildResult) {
+      if (processOutput.isEmpty || processOutput.exists(_.getExitCode != 0)) {
+        HaskellNotificationGroup.logErrorEvent(project, s"Building `$buildTarget` has failed, see Haskell Event log for more information")
+      } else {
+        HaskellNotificationGroup.logInfoEvent(project, s"Building `$buildTarget` is finished successfully")
+      }
+    }
+    processOutput
   }
 
-  def buildProjectInMessageView(project: Project, progressIndicator: ProgressIndicator): Option[Boolean] = {
-    StackCommandLine.executeInMessageView(project, Seq("build", "--fast"), Some(progressIndicator))
+  private def ghcOptions(project: Project) = {
+    HaskellProjectUtil.getGhcVersion(project).map(
+      ghcVersion =>
+        if (ghcVersion >= GhcVersion(8, 2, 1)) {
+          Seq("--ghc-options", NoDiagnosticsShowCaretFlag)
+        } else {
+          Seq()
+        }
+    ).getOrElse(Seq())
   }
 
-  def executeInMessageView(project: Project, arguments: Seq[String], progressIndicator: Option[ProgressIndicator] = None): Option[Boolean] =
+  def buildProjectDependenciesInMessageView(project: Project): Option[Boolean] = {
+    StackCommandLine.executeInMessageView(project, Seq("build", "--fast", "--test", "--bench", "--no-run-tests", "--no-run-benchmarks", "--only-dependencies") ++ ghcOptions(project))
+  }
+
+  def buildProjectInMessageView(project: Project): Option[Boolean] = {
+    StackCommandLine.executeInMessageView(project, Seq("build", "--fast") ++ ghcOptions(project))
+  }
+
+  def executeInMessageView(project: Project, arguments: Seq[String]): Option[Boolean] = {
     HaskellSdkType.getStackPath(project).flatMap(stackPath => {
       val cmd = CommandLine.createCommandLine(project.getBasePath, stackPath, arguments)
       (try {
@@ -81,10 +106,11 @@ object StackCommandLine {
 
         val handler = new BaseOSProcessHandler(process, cmd.getCommandLineString, CharsetToolkit.getDefaultSystemCharset)
 
-        val task = new CompileTask {
+        val compilerTask = new CompilerTask(project, s"executing ${cmd.getCommandLineString}", false, false, true, true)
+        val compileTask = new CompileTask {
 
           def execute(compileContext: CompileContext): Boolean = {
-            val adapter = new MessageViewProcessAdapter(compileContext, progressIndicator.getOrElse(compileContext.getProgressIndicator))
+            val adapter = new MessageViewProcessAdapter(compileContext, compilerTask.getIndicator)
             handler.addProcessListener(adapter)
             handler.startNotify()
             handler.waitFor()
@@ -93,17 +119,15 @@ object StackCommandLine {
           }
         }
 
-        val compileDriver = new CompileDriver(project)
+        val compileContext = new CompileContextImpl(project, compilerTask, new ProjectCompileScope(project), false, false)
 
-        new WriteAction[Unit]() {
+        val compileResult = new SyncVar[Boolean]
 
-          override def run(result: Result[Unit]): Unit = {
-            compileDriver.executeCompileTask(task, new ProjectCompileScope(project), s"executing ${cmd.getCommandLineString}", null)
-          }
-        }.execute()
+        compilerTask.start(() => {
+          compileResult.put(compileTask.execute(compileContext))
+        }, null)
 
-        handler.waitFor()
-        handler.getExitCode == 0
+        compileResult.get
       })
     })
 
@@ -138,7 +162,7 @@ object StackCommandLine {
       }
     }
 
-    private def addMessage(): Unit = {
+    private def addMessage() = {
       val errorMessageLine = previousMessageLines.mkString(" ")
       val compilationProblem = HaskellCompilationResultHelper.parseErrorLine(None, errorMessageLine.replaceAll("\n", " "))
       compilationProblem match {

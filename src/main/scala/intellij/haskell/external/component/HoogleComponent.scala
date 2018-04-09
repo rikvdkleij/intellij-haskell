@@ -18,7 +18,6 @@ package intellij.haskell.external.component
 
 import java.util.regex.Pattern
 
-import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.project.Project
 import intellij.haskell.HaskellNotificationGroup
 import intellij.haskell.external.execution.StackCommandLine
@@ -78,8 +77,8 @@ object HoogleComponent {
     }
   }
 
-  def rebuildHoogle(project: Project, progressIndicator: ProgressIndicator): Option[Boolean] = {
-    StackCommandLine.executeInMessageView(project, Seq(HoogleName, "--rebuild", "--test", "--no-run-tests"), Some(progressIndicator))
+  def rebuildHoogle(project: Project): Option[Boolean] = {
+    StackCommandLine.executeInMessageView(project, Seq(HoogleName, "--rebuild", "--test", "--no-run-tests"))
   }
 
   def doesHoogleDatabaseExist(project: Project): Boolean = {

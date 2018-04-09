@@ -32,11 +32,11 @@ class BuildHoogleDbAction extends AnAction {
   def actionPerformed(actionEvent: AnActionEvent) {
     val message = "Building or rebuilding Hoogle database"
     Option(actionEvent.getProject).foreach(project => {
-      ProgressManager.getInstance().run(new Task.Modal(project, message, false) {
+      ProgressManager.getInstance().run(new Task.Backgroundable(project, message, false) {
 
         def run(progressIndicator: ProgressIndicator) {
           HaskellNotificationGroup.logInfoEvent(project, message)
-          HoogleComponent.rebuildHoogle(project, progressIndicator)
+          HoogleComponent.rebuildHoogle(project)
         }
       })
     })
