@@ -105,10 +105,10 @@ class CreateHaskellFileAction extends CreateFileFromTemplateAction(CreateHaskell
   }
 
   override def createFileFromTemplate(fileName: String, template: FileTemplate, fileDir: PsiDirectory): PsiFile = {
-    val path = HaskellFileUtil.getAbsoluteFilePath(fileDir.getVirtualFile)
+    val path = HaskellFileUtil.getAbsolutePath(fileDir.getVirtualFile)
     val pathItems = ProjectRootManager.getInstance(fileDir.getProject)
       .getContentSourceRoots
-      .map(HaskellFileUtil.getAbsoluteFilePath)
+      .map(HaskellFileUtil.getAbsolutePath)
       .find(path.startsWith)
       .map(s => if (s != path) {
         path.replace(s + File.separator, "").split(File.separator).toList

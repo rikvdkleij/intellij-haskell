@@ -51,10 +51,10 @@ private[component] object LoadComponent {
 
   def load(psiFile: PsiFile, currentElement: Option[PsiElement]): Option[CompilationResult] = {
     val project = psiFile.getProject
-    val stackComponentInfo = HaskellComponentsManager.findStackComponentInfo(psiFile)
 
     StackReplsManager.getProjectRepl(psiFile).flatMap(projectRepl => {
       val fileOfSelectedEditor = isFileOfSelectedEditor(psiFile)
+      lazy val stackComponentInfo = HaskellComponentsManager.findStackComponentInfo(psiFile)
       if (fileOfSelectedEditor) {
         stackComponentInfo.foreach(componentInfo => {
           lazy val moduleName = findModule(psiFile)
@@ -113,7 +113,9 @@ private[component] object LoadComponent {
   private def isFileOfSelectedEditor(psiFile: PsiFile): Boolean = {
     var fileOfSelectedEditor: Option[Boolean] = None
     ApplicationManager.getApplication.invokeLater(() => {
-      fileOfSelectedEditor = Option(FileEditorManager.getInstance(psiFile.getProject).getSelectedTextEditor).map(e => HaskellFileUtil.findDocument(psiFile).contains(e.getDocument)).orElse(Some(false))
+      if (!psiFile.getProject.isDisposed) {
+        fileOfSelectedEditor = Option(FileEditorManager.getInstance(psiFile.getProject).getSelectedTextEditor).map(e => HaskellFileUtil.findDocument(psiFile).contains(e.getDocument)).orElse(Some(false))
+      }
     })
 
     new WaitFor(5000, 1) {

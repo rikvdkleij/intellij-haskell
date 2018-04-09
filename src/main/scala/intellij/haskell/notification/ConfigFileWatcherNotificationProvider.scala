@@ -14,7 +14,7 @@ import com.intellij.openapi.vfs.newvfs.events.{VFileContentChangeEvent, VFileEve
 import com.intellij.openapi.vfs.{VirtualFile, VirtualFileManager}
 import com.intellij.ui.{EditorNotificationPanel, EditorNotifications}
 import intellij.haskell.external.component.StackProjectManager
-import intellij.haskell.util.HaskellProjectUtil
+import intellij.haskell.util.{HaskellFileUtil, HaskellProjectUtil}
 
 import scala.collection.JavaConverters._
 import scala.collection.concurrent
@@ -30,7 +30,7 @@ class ConfigFileWatcherNotificationProvider(project: Project, notifications: Edi
   override def getKey: Key[EditorNotificationPanel] = ConfigFileWatcherNotificationProvider.ConfigFileWatcherKey
 
   override def createNotificationPanel(virtualFile: VirtualFile, fileEditor: FileEditor): EditorNotificationPanel = {
-    if (HaskellProjectUtil.isHaskellProject(project) && ConfigFileWatcherNotificationProvider.showNotificationsByProject.get(project).exists(_ == true)) {
+    if (HaskellProjectUtil.isHaskellProject(project) && ConfigFileWatcherNotificationProvider.showNotificationsByProject.get(project).contains(true)) {
       createPanel(project, virtualFile)
     } else {
       null
@@ -74,7 +74,7 @@ private class ConfigFileWatcher(project: Project, notifications: EditorNotificat
         override def computeInReadAction(indicator: ProgressIndicator): Unit = {
           if (!project.isDisposed) {
             indicator.checkCanceled()
-            if (events.asScala.exists(e => e.isInstanceOf[VFileContentChangeEvent] && !e.isFromRefresh && watchFiles.exists(_.getAbsolutePath == e.getPath))) {
+            if (events.asScala.exists(e => e.isInstanceOf[VFileContentChangeEvent] && !e.isFromRefresh && watchFiles.exists(_.getAbsolutePath == HaskellFileUtil.getAbsolutePath(e.getFile)))) {
               ConfigFileWatcherNotificationProvider.showNotificationsByProject.put(project, true)
               notifications.updateAllNotifications()
             }

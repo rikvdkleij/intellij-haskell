@@ -119,7 +119,7 @@ object HaskellAnnotator {
   }
 
   private def createAnnotations(psiFile: PsiFile, loadResult: CompilationResult): Iterable[Annotation] = {
-    val problems = loadResult.currentFileProblems.filter(_.filePath == HaskellFileUtil.getAbsoluteFilePath(psiFile))
+    val problems = loadResult.currentFileProblems.filter(_.filePath == HaskellFileUtil.getAbsolutePath(psiFile))
     val project = psiFile.getProject
 
     HaskellCompilationResultHelper.createNotificationsForErrorsNotInCurrentFile(project, loadResult)

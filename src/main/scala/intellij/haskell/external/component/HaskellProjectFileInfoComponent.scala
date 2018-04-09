@@ -67,12 +67,21 @@ private[component] object HaskellProjectFileInfoComponent {
         }
 
         private def getStackComponentInfo(psiFile: PsiFile, stackTargetBuildInfos: Iterable[StackComponentInfo]): Option[StackComponentInfo] = {
-          val filePath = HaskellFileUtil.getAbsoluteFilePath(psiFile)
-          stackTargetBuildInfos.find(_.sourceDirs.exists(sd => FileUtil.isAncestor(sd, filePath, false))) match {
+          val filePath = HaskellFileUtil.getAbsolutePath(psiFile)
+          stackTargetBuildInfos.find(_.mainIs.exists(mi => mi == filePath)) match {
             case info@Some(_) => info
             case None =>
-              HaskellNotificationGroup.logErrorBalloonEvent(psiFile.getProject, s"Can not determine Stack target for file $psiFile because no accompanying `hs-source-dirs` can be found in Cabal file(s)")
-              None
+              val infos = stackTargetBuildInfos.filter(_.sourceDirs.exists(sd => FileUtil.isAncestor(sd, filePath, true))).toSeq
+              if (infos.size > 1) {
+                HaskellNotificationGroup.logWarningBalloonEvent(psiFile.getProject, s"Ambiguous Stack target: ${psiFile.getName} belongs to the source dir of more than one Stack target/Cabal stanza. The first one of ${infos.map(_.target)} is chosen.")
+              }
+              infos.headOption
+              match {
+                case info@Some(_) => info
+                case None =>
+                  HaskellNotificationGroup.logErrorBalloonEvent(psiFile.getProject, s"Can not determine Stack target for file ${psiFile.getName} because no accompanying `hs-source-dirs` or `main-is` can be found in Cabal file(s)")
+                  None
+              }
           }
         }
       }

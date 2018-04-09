@@ -10,7 +10,7 @@ object GlobalInfo {
   private final val IntelliJHaskellDirName = ".intellij-haskell"
 
   def getIntelliJHaskellDirectory: File = {
-    val homeDirectory = HaskellFileUtil.getAbsoluteFilePath(VfsUtil.getUserHomeDir)
+    val homeDirectory = HaskellFileUtil.getAbsolutePath(VfsUtil.getUserHomeDir)
     new File(homeDirectory, IntelliJHaskellDirName)
   }
 

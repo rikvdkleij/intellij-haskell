@@ -34,6 +34,8 @@ import scala.concurrent.SyncVar
 
 object StackCommandLine {
 
+  final val NoDiagnosticsShowCaretFlag = "-fno-diagnostics-show-caret"
+
   def run(project: Project, arguments: Seq[String], timeoutInMillis: Long = CommandLine.DefaultTimeout.toMillis,
           ignoreExitCode: Boolean = false): Option[ProcessOutput] = {
     HaskellSdkType.getStackPath(project).map(stackPath => {
@@ -46,19 +48,6 @@ object StackCommandLine {
         ignoreExitCode = ignoreExitCode
       )
     })
-  }
-
-  def build(project: Project, buildTarget: String, logBuildResult: Boolean, fast: Boolean = false): Option[ProcessOutput] = {
-    val arguments = Seq("build", buildTarget) ++ (if (fast) Seq("--fast") else Seq())
-    val processOutput = run(project, arguments, -1, ignoreExitCode = true)
-    if (logBuildResult) {
-      if (processOutput.isEmpty || processOutput.exists(_.getExitCode != 0)) {
-        HaskellNotificationGroup.logErrorEvent(project, s"Building `$buildTarget` has failed, see Haskell Event log for more information")
-      } else {
-        HaskellNotificationGroup.logInfoEvent(project, s"Building `$buildTarget` is finished successfully")
-      }
-    }
-    processOutput
   }
 
   def build(project: Project, buildTarget: String, logBuildResult: Boolean, fast: Boolean = false): Option[ProcessOutput] = {
@@ -130,15 +119,27 @@ object StackCommandLine {
         compileResult.get
       })
     })
+  }
 
   private class MessageViewProcessAdapter(val compileContext: CompileContext, val progressIndicator: ProgressIndicator) extends ProcessAdapter() {
+
+    private final val WhileBuildingText = "--  While building custom"
+    private final var whileBuildingTextIsPassed = false
 
     private val previousMessageLines = ListBuffer[String]()
 
     override def onTextAvailable(event: ProcessEvent, outputType: Key[_]) {
-      val text = event.getText
+      // Workaround to remove the indentation after `-- While building` so the error/warning lines can be properly  parsed.
+      val text = if (whileBuildingTextIsPassed) {
+        event.getText.drop(4)
+      } else {
+        event.getText
+      }
       progressIndicator.setText(text)
       addToMessageView(text, outputType)
+      if (text.startsWith(WhileBuildingText)) {
+        whileBuildingTextIsPassed = true
+      }
     }
 
     def addLastMessage(): Unit = {

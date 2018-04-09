@@ -3,6 +3,7 @@ package intellij.haskell.action.ghci
 import com.intellij.openapi.actionSystem.{AnAction, AnActionEvent}
 import intellij.haskell.action.ActionUtil
 import intellij.haskell.runconfig.console.HaskellConsoleViewMap
+import intellij.haskell.util.HaskellFileUtil
 
 class LoadModuleAction extends AnAction {
 
@@ -15,7 +16,7 @@ class LoadModuleAction extends AnAction {
       actionContext <- ActionUtil.findActionContext(actionEvent)
       consoleView <- HaskellConsoleViewMap.getConsole(actionContext.project)
     } yield {
-      consoleView.executeCommand(s":load ${actionContext.psiFile.getVirtualFile.getPath}", addToHistory = false)
+      consoleView.executeCommand(s":load ${HaskellFileUtil.getAbsolutePath(actionContext.psiFile)}", addToHistory = false)
     }
   }
 

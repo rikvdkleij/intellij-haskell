@@ -52,12 +52,12 @@ class ProjectStackRepl(project: Project, componentInfo: StackComponentInfo, repl
   }
 
   def findTypeInfoFor(psiFile: PsiFile, startLineNr: Int, startColumnNr: Int, endLineNr: Int, endColumnNr: Int, expression: String): Option[StackReplOutput] = {
-    val filePath = HaskellFileUtil.getAbsoluteFilePath(psiFile)
+    val filePath = HaskellFileUtil.getAbsolutePath(psiFile)
     findInfoForCommand(psiFile, s":type-at $filePath $startLineNr $startColumnNr $endLineNr $endColumnNr $expression")
   }
 
   def findLocationInfoFor(psiFile: PsiFile, startLineNr: Int, startColumnNr: Int, endLineNr: Int, endColumnNr: Int, expression: String): Option[StackReplOutput] = {
-    val filePath = HaskellFileUtil.getAbsoluteFilePath(psiFile)
+    val filePath = HaskellFileUtil.getAbsolutePath(psiFile)
     findInfoForCommand(psiFile, s":loc-at $filePath $startLineNr $startColumnNr $endLineNr $endColumnNr $expression")
   }
 
@@ -156,7 +156,7 @@ class ProjectStackRepl(project: Project, componentInfo: StackComponentInfo, repl
   }
 
   private def getFilePath(psiFile: PsiFile): String = {
-    val filePath = HaskellFileUtil.getAbsoluteFilePath(psiFile)
+    val filePath = HaskellFileUtil.getAbsolutePath(psiFile)
     if (filePath.contains(" ")) {
       s""""$filePath""""
     } else {

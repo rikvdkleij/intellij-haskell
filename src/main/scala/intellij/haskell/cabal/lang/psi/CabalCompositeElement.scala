@@ -3,7 +3,6 @@ package intellij.haskell.cabal.lang.psi
 import com.intellij.extapi.psi.ASTWrapperPsiElement
 import com.intellij.lang.ASTNode
 import com.intellij.psi.PsiElement
-
 import intellij.haskell.cabal.lang.psi.impl._
 
 sealed trait CabalCompositeElement extends PsiElement
@@ -62,7 +61,7 @@ final class DataDir(node: ASTNode) extends CabalFieldElement(node)
 final class ExtraSourceFiles(node: ASTNode) extends CabalFieldElement(node)
 final class ExtraDocFiles(node: ASTNode) extends CabalFieldElement(node)
 final class ExtraTmpFiles(node: ASTNode) extends CabalFieldElement(node)
-final class MainIs(node: ASTNode) extends CabalFieldElement(node)
+final class MainIs(node: ASTNode) extends CabalFieldElement(node) with MainIsImpl
 final class BuildDepends(node: ASTNode) extends CabalFieldElement(node) with BuildDependsImpl
 final class Dependencies(node: ASTNode) extends CabalFieldValueElement(node)
 final class Dependency(node: ASTNode) extends CabalCompositeElementImpl(node)

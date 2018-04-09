@@ -76,13 +76,13 @@ object HaskellProjectUtil {
     getProjectRootManager(project).map(_.getFileIndex.isContentSourceFile(virtualFile))
   }
 
-  def getModulePath(module: Module): File = {
+  def getModuleDir(module: Module): File = {
     new File(ModuleUtilCore.getModuleDirPath(module))
   }
 
   def findCabalFiles(project: Project): Iterable[File] = {
     val modules = findProjectModules(project)
-    val dirs = modules.map(getModulePath)
+    val dirs = modules.map(getModuleDir)
     dirs.flatMap(findCabalFile)
   }
 

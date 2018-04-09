@@ -68,7 +68,7 @@ object StackProjectManager {
       } else {
         HaskellNotificationGroup.logInfoEvent(project, "Initializing Haskell project")
 
-        ProgressManager.getInstance().run(new Task.Backgroundable(project, "Building project, starting REPL(s), building tools and preloading cache", false, PerformInBackgroundOption.DEAF) {
+        ProgressManager.getInstance().run(new Task.Backgroundable(project, "Building project, starting REPL(s), building tools and preloading cache", false, PerformInBackgroundOption.ALWAYS_BACKGROUND) {
 
           def run(progressIndicator: ProgressIndicator) {
             getStackProjectManager(project).foreach(_.initializing = true)
@@ -77,9 +77,9 @@ object StackProjectManager {
               try {
                 progressIndicator.setText("Busy with building project")
 
-                val result = StackCommandLine.buildProjectDependenciesInMessageView(project, progressIndicator)
+                val result = StackCommandLine.buildProjectDependenciesInMessageView(project)
                 if (result.contains(true)) {
-                  StackCommandLine.buildProjectInMessageView(project, progressIndicator)
+                  StackCommandLine.buildProjectInMessageView(project)
                 } else {
                   HaskellNotificationGroup.logInfoEvent(project, "Did not build project because building project it's dependencies failed")
                 }
@@ -174,21 +174,21 @@ class StackProjectManager(project: Project) extends ProjectComponent {
   private var hlintAvailable = false
 
   @volatile
-  private var replsManager: StackReplsManager = _
+  private var replsManager: Option[StackReplsManager] = None
 
-  def getStackReplsManager: StackReplsManager = {
+  def getStackReplsManager: Option[StackReplsManager] = {
     replsManager
   }
 
   def initStackReplsManager(): Unit = {
-    replsManager = new StackReplsManager(project)
+    replsManager = Option(new StackReplsManager(project))
   }
 
   override def projectClosed(): Unit = {
     if (HaskellProjectUtil.isHaskellProject(project)) {
-      replsManager.getGlobalRepl.exit()
-      replsManager.getProjectLibraryRepl.foreach(_.exit())
-      replsManager.getProjectNonLibraryRepl.foreach(_.exit())
+      replsManager.foreach(_.getGlobalRepl.exit())
+      replsManager.foreach(_.getProjectLibraryRepl.foreach(_.exit()))
+      replsManager.foreach(_.getProjectNonLibraryRepl.foreach(_.exit()))
     }
   }
 
@@ -197,7 +197,7 @@ class StackProjectManager(project: Project) extends ProjectComponent {
   override def projectOpened(): Unit = {
     if (HaskellProjectUtil.isHaskellProject(project)) {
       initStackReplsManager()
-      if (replsManager.stackComponentInfos.isEmpty) {
+      if (replsManager.exists(_.stackComponentInfos.isEmpty)) {
         Messages.showErrorDialog(project, s"Can not start project because Stack/Cabal info can not be retrieved", "Can not start project")
       } else {
         StackProjectManager.start(project)

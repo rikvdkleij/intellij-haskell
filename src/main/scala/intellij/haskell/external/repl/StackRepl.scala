@@ -21,6 +21,7 @@ import java.util.concurrent.LinkedBlockingQueue
 
 import com.intellij.openapi.project.Project
 import com.intellij.util.EnvironmentUtil
+import intellij.haskell.external.execution.StackCommandLine
 import intellij.haskell.external.repl.StackRepl.{BenchmarkType, StackReplOutput, TestSuiteType}
 import intellij.haskell.external.repl.StackReplsManager.StackComponentInfo
 import intellij.haskell.sdk.HaskellSdkType
@@ -280,12 +281,11 @@ abstract class StackRepl(project: Project, componentInfo: Option[StackComponentI
           if (isStarted && !hasDependencyError) {
             if (stanzaType.isDefined) {
               execute(":set -fdefer-type-errors", forceExecute = true)
-              HaskellProjectUtil.getGhcVersion(project).foreach {
-                ghcVersion =>
-                  if (ghcVersion >= GhcVersion(8, 2, 1)) {
-                    execute(":set -fno-diagnostics-show-caret", forceExecute = true)
-                  }
-              }
+              HaskellProjectUtil.getGhcVersion(project).foreach(ghcVersion =>
+                if (ghcVersion >= GhcVersion(8, 2, 1)) {
+                  execute(s":set ${StackCommandLine.NoDiagnosticsShowCaretFlag}", forceExecute = true)
+                }
+              )
             }
             logInfo("Stack REPL is started")
             available = true

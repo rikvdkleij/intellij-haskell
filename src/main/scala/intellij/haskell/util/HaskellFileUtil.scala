@@ -17,11 +17,13 @@
 package intellij.haskell.util
 
 import java.io.{File, FileOutputStream, InputStream}
+import java.nio.file.Paths
 
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.command.CommandProcessor
 import com.intellij.openapi.editor.Document
 import com.intellij.openapi.fileEditor.FileDocumentManager
+import com.intellij.openapi.module.Module
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.vfs.{LocalFileSystem, VirtualFile, VirtualFileManager}
@@ -61,19 +63,28 @@ object HaskellFileUtil {
     findVirtualFile(psiFile).flatMap(findDocument)
   }
 
-  def getAbsoluteFilePath(psiFile: PsiFile): String = {
-    new File(psiFile.getOriginalFile.getVirtualFile.getPath).getAbsolutePath
+  def getAbsolutePath(psiFile: PsiFile): String = {
+    getAbsolutePath(psiFile.getOriginalFile.getVirtualFile)
   }
 
-  def getAbsoluteFilePath(virtualFile: VirtualFile): String = {
-    new File(virtualFile.getPath).getAbsolutePath
+  def getAbsolutePath(virtualFile: VirtualFile): String = {
+    Paths.get(virtualFile.getPath).toAbsolutePath.normalize().toString
   }
 
   def makeFilePathAbsolute(filePath: String, project: Project): String = {
-    if (new File(filePath).isAbsolute)
-      filePath
+    makeFilePathAbsolute(filePath, project.getBasePath)
+  }
+
+  def makeFilePathAbsolute(filePath: String, module: Module): String = {
+    makeFilePathAbsolute(filePath, HaskellProjectUtil.getModuleDir(module).getAbsolutePath)
+  }
+
+  def makeFilePathAbsolute(filePath: String, parentFilePath: String): String = {
+    val path = Paths.get(filePath)
+    if (path.isAbsolute)
+      path.normalize().toString
     else
-      new File(project.getBasePath, filePath).getAbsolutePath
+      Paths.get(parentFilePath, filePath).normalize().toString
   }
 
   def convertToHaskellFiles(project: Project, virtualFiles: Iterable[VirtualFile]): Iterable[HaskellFile] = {

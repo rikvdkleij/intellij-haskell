@@ -70,23 +70,27 @@ private[component] object TypeInfoComponent {
     )
 
   def findTypeInfoForElement(psiElement: PsiElement, forceGetInfo: Boolean): Option[TypeInfo] = {
-    ApplicationManager.getApplication.runReadAction(new Computable[Option[Key]] {
-      override def compute(): Option[Key] = {
-        for {
-          qne <- HaskellPsiUtil.findQualifiedNameParent(psiElement)
-          to = qne.getTextOffset
-          pf <- Option(psiElement.getContainingFile)
-          sp <- LineColumnPosition.fromOffset(pf, to)
-          ep <- LineColumnPosition.fromOffset(pf, to + qne.getText.length)
-        } yield Key(pf, sp.lineNr, sp.columnNr, ep.lineNr, ep.columnNr, qne.getName, forceGetInfo)
-      }
-    }).flatMap(key => {
-      val otherKey = key.copy(forceGetInfo = !forceGetInfo)
-      Option(Cache.getIfPresent(otherKey)).flatMap(_.typeInfo.toOption) match {
-        case Some(r) => r
-        case None => findTypeInfo(key)
-      }
-    })
+    if (psiElement.isValid) {
+      ApplicationManager.getApplication.runReadAction(new Computable[Option[Key]] {
+        override def compute(): Option[Key] = {
+          for {
+            qne <- HaskellPsiUtil.findQualifiedNameParent(psiElement)
+            to = qne.getTextOffset
+            pf <- Option(psiElement.getContainingFile)
+            sp <- LineColumnPosition.fromOffset(pf, to)
+            ep <- LineColumnPosition.fromOffset(pf, to + qne.getText.length)
+          } yield Key(pf, sp.lineNr, sp.columnNr, ep.lineNr, ep.columnNr, qne.getName, forceGetInfo)
+        }
+      }).flatMap(key => {
+        val otherKey = key.copy(forceGetInfo = !forceGetInfo)
+        Option(Cache.getIfPresent(otherKey)).flatMap(_.typeInfo.toOption) match {
+          case Some(r) => r
+          case None => findTypeInfo(key)
+        }
+      })
+    } else {
+      None
+    }
   }
 
   def findTypeInfoForSelection(psiFile: PsiFile, selectionModel: SelectionModel): Option[TypeInfo] = {

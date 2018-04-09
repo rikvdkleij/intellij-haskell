@@ -18,6 +18,8 @@ package intellij.haskell.external.repl
 
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.util.Computable
+import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.psi.PsiFile
 import intellij.haskell.HaskellNotificationGroup
 import intellij.haskell.cabal._
@@ -30,7 +32,7 @@ import intellij.haskell.util.{HaskellEditorUtil, HaskellFileUtil, HaskellProject
 private[external] object StackReplsManager {
 
   def getReplsManager(project: Project): Option[StackReplsManager] = {
-    StackProjectManager.getStackProjectManager(project).map(_.getStackReplsManager)
+    StackProjectManager.getStackProjectManager(project).flatMap(_.getStackReplsManager)
   }
 
   def getProjectLibraryRepl(project: Project): Option[ProjectStackRepl] = {
@@ -55,20 +57,20 @@ private[external] object StackReplsManager {
 
   private def createCabalInfos(project: Project): Iterable[CabalInfo] = {
     val modules = HaskellProjectUtil.findProjectModules(project)
-    val moduleDirectoryPaths = modules.map(HaskellProjectUtil.getModulePath)
-    moduleDirectoryPaths.flatMap(p => HaskellProjectUtil.findCabalFile(p).flatMap(cf => CabalInfo.create(project, cf)))
+    val moduleDirs = modules.map(HaskellProjectUtil.getModuleDir)
+    moduleDirs.flatMap(p => HaskellProjectUtil.findCabalFile(p).flatMap(cf => CabalInfo.create(project, cf)))
   }
 
   private def createStackComponentInfo(project: Project, cabalInfos: Iterable[CabalInfo]): Iterable[StackComponentInfo] = {
     cabalInfos.flatMap(_.cabalStanzas).map {
-      case cs: LibraryCabalStanza => StackComponentInfo(cs.packageName, cs.targetName, LibType, cs.sourceDirs)
-      case cs: ExecutableCabalStanza => StackComponentInfo(cs.packageName, cs.targetName, ExeType, cs.sourceDirs)
-      case cs: TestSuiteCabalStanza => StackComponentInfo(cs.packageName, cs.targetName, TestSuiteType, cs.sourceDirs)
-      case cs: BenchmarkCabalStanza => StackComponentInfo(cs.packageName, cs.targetName, BenchmarkType, cs.sourceDirs)
+      case cs: LibraryCabalStanza => StackComponentInfo(cs.packageName, cs.targetName, LibType, cs.sourceDirs, None)
+      case cs: ExecutableCabalStanza => StackComponentInfo(cs.packageName, cs.targetName, ExeType, cs.sourceDirs, cs.mainIs)
+      case cs: TestSuiteCabalStanza => StackComponentInfo(cs.packageName, cs.targetName, TestSuiteType, cs.sourceDirs, cs.mainIs)
+      case cs: BenchmarkCabalStanza => StackComponentInfo(cs.packageName, cs.targetName, BenchmarkType, cs.sourceDirs, cs.mainIs)
     }
   }
 
-  case class StackComponentInfo(packageName: String, target: String, stanzaType: StanzaType, sourceDirs: Seq[String])
+  case class StackComponentInfo(packageName: String, target: String, stanzaType: StanzaType, sourceDirs: Seq[String], mainIs: Option[String])
 
 }
 
@@ -102,7 +104,8 @@ private[external] class StackReplsManager(val project: Project) {
   def getGlobalRepl: GlobalStackRepl = globalRepl
 
   private def getProjectRepl(psiFile: PsiFile): Option[ProjectStackRepl] = {
-    if (ignoredHaskellFiles.contains(psiFile.getName.toLowerCase) && HaskellProjectUtil.findModule(psiFile).exists(m => HaskellFileUtil.getAbsoluteFilePath(psiFile) == HaskellProjectUtil.getModulePath(m).getAbsolutePath)) {
+    if (ignoredHaskellFiles.contains(psiFile.getName.toLowerCase) &&
+      HaskellProjectUtil.findModule(psiFile).exists(m => findContainingDirectory(psiFile).exists(vf => HaskellFileUtil.getAbsolutePath(vf) == HaskellProjectUtil.getModuleDir(m).getPath))) {
       HaskellNotificationGroup.logInfoEvent(psiFile.getProject, s"${psiFile.getName} can not be loaded in REPL")
       None
     } else {
@@ -119,6 +122,14 @@ private[external] class StackReplsManager(val project: Project) {
         }
       }
     }
+  }
+
+  private def findContainingDirectory(psiFile: PsiFile): Option[VirtualFile] = {
+    ApplicationManager.getApplication.runReadAction(new Computable[Option[VirtualFile]] {
+      override def compute(): Option[VirtualFile] = {
+        Option(psiFile.getContainingDirectory).map(_.getVirtualFile)
+      }
+    })
   }
 
   private def setAndGetProjectRepl(componentInfo: StackComponentInfo): Option[ProjectStackRepl] = {

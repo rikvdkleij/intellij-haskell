@@ -26,7 +26,7 @@ object HaskellCompilationResultHelper {
   private final val ProblemPattern = """(.+):([\d]+):([\d]+):(.+)""".r
 
   def createCompilationResult(currentPsiFile: Option[PsiFile], errorLines: Seq[String], failed: Boolean): CompilationResult = {
-    val filePath = currentPsiFile.map(HaskellFileUtil.getAbsoluteFilePath)
+    val filePath = currentPsiFile.map(HaskellFileUtil.getAbsolutePath)
 
     // `distinct` because of https://github.com/commercialhaskell/intero/issues/258
     val compilationProblems = errorLines.distinct.flatMap(l => parseErrorLine(filePath, l))

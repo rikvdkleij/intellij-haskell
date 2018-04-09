@@ -17,7 +17,6 @@
 package intellij.haskell.sdk
 
 import java.io.File
-import javax.swing.Icon
 
 import com.intellij.openapi.fileChooser.FileChooserDescriptor
 import com.intellij.openapi.project.Project
@@ -29,6 +28,7 @@ import com.intellij.openapi.vfs.VirtualFile
 import intellij.haskell.external.execution.CommandLine
 import intellij.haskell.util.{HaskellFileUtil, HaskellProjectUtil}
 import intellij.haskell.{HaskellIcons, HaskellNotificationGroup}
+import javax.swing.Icon
 import org.jdom.Element
 
 class HaskellSdkType extends SdkType("Haskell Tool Stack SDK") {
@@ -75,7 +75,7 @@ class HaskellSdkType extends SdkType("Haskell Tool Stack SDK") {
 
       override def validateSelectedFiles(files: Array[VirtualFile]) {
         if (files.length != 0) {
-          val selectedPath = HaskellFileUtil.getAbsoluteFilePath(files(0))
+          val selectedPath = HaskellFileUtil.getAbsolutePath(files(0))
           var valid = isValidSdkHome(selectedPath)
           if (!valid) {
             valid = isValidSdkHome(adjustSelectedSdkHome(selectedPath))

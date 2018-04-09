@@ -51,7 +51,7 @@ object StylishHaskellFormatAction {
       case Some(stylishHaskellPath) =>
         val processOutputFuture = ApplicationManager.getApplication.executeOnPooledThread(new Callable[ProcessOutput] {
           override def call(): ProcessOutput = {
-            CommandLine.run(Option(project), project.getBasePath, stylishHaskellPath, Seq(HaskellFileUtil.getAbsoluteFilePath(psiFile)))
+            CommandLine.run(Option(project), project.getBasePath, stylishHaskellPath, Seq(HaskellFileUtil.getAbsolutePath(psiFile)))
           }
         })
 

@@ -17,6 +17,7 @@
 package intellij.haskell.module
 
 import java.io.File
+import java.nio.file.Paths
 import java.util
 
 import com.intellij.ide.util.projectWizard.ModuleBuilder
@@ -24,6 +25,7 @@ import com.intellij.openapi.module.{ModifiableModuleModel, Module, ModuleType}
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.roots.ModifiableRootModel
 import com.intellij.openapi.roots.ui.configuration.ModulesProvider
+import com.intellij.openapi.vfs.LocalFileSystem
 import com.intellij.packaging.artifacts.ModifiableArtifactModel
 import com.intellij.projectImport.ProjectImportBuilder
 import intellij.haskell.HaskellIcons
@@ -57,10 +59,10 @@ class StackProjectImportBuilder extends ProjectImportBuilder[Unit] {
       val moduleDirectory = getModuleRootDirectory(packageRelativePath)
       HaskellModuleBuilder.createCabalInfo(project, getFileToImport, packageRelativePath) match {
         case Some(cabalInfo) =>
-          val moduleName = cabalInfo.packageName
+          val packageName = cabalInfo.packageName
           moduleBuilder.setCabalInfo(cabalInfo)
-          moduleBuilder.setName(moduleName)
-          moduleBuilder.setModuleFilePath(getModuleImlFilePath(moduleDirectory, moduleName))
+          moduleBuilder.setName(packageName)
+          moduleBuilder.setModuleFilePath(getModuleImlFilePath(moduleDirectory, packageName))
           moduleBuilder.commit(project)
           moduleBuilder.addModuleConfigurationUpdater((_: Module, rootModel: ModifiableRootModel) => {
             moduleBuilder.setupRootModel(rootModel)
@@ -71,7 +73,7 @@ class StackProjectImportBuilder extends ProjectImportBuilder[Unit] {
 
     if (!packagePaths.contains(projectRootRelativePath)) {
       val parentModuleBuilder = new ParentModuleBuilder(project)
-      parentModuleBuilder.setModuleFilePath(new File(project.getBasePath, project.getName + "-parent").getAbsolutePath + ".iml")
+      parentModuleBuilder.setModuleFilePath(Paths.get(project.getBasePath, project.getName + "-parent.iml").toString)
       parentModuleBuilder.setName("Parent module")
       parentModuleBuilder.commit(project)
       parentModuleBuilder.addModuleConfigurationUpdater((_: Module, rootModel: ModifiableRootModel) => {
@@ -90,8 +92,8 @@ class StackProjectImportBuilder extends ProjectImportBuilder[Unit] {
     }
   }
 
-  private def getModuleImlFilePath(moduleDirectory: File, moduleName: String): String = {
-    new File(moduleDirectory, moduleName).getAbsolutePath + ".iml"
+  private def getModuleImlFilePath(moduleDirectory: File, packageName: String): String = {
+    Paths.get(moduleDirectory.getAbsolutePath, packageName + ".iml").toString
   }
 }
 
@@ -102,6 +104,13 @@ class ParentModuleBuilder(val project: Project) extends ModuleBuilder {
 
   override def setupRootModel(modifiableRootModel: ModifiableRootModel): Unit = {
     modifiableRootModel.addContentEntry(HaskellFileUtil.getUrlByPath(project.getBasePath))
+
+    val stackWorkDirectory = HaskellModuleBuilder.getStackWorkDirectory(this)
+    stackWorkDirectory.mkdir()
+    Option(LocalFileSystem.getInstance.refreshAndFindFileByIoFile(stackWorkDirectory)).foreach(f => {
+      val contentEntry = doAddContentEntry(modifiableRootModel)
+      contentEntry.addExcludeFolder(f)
+    })
   }
 
   override def getModuleType: ModuleType[_ <: ModuleBuilder] = HaskellModuleType.getInstance
