@@ -95,8 +95,8 @@ private[component] object LoadComponent {
                   val moduleName = HaskellPsiUtil.findModuleName(psiFile, runInRead = true)
                   moduleName.foreach(mn => BrowseModuleComponent.invalidateForModuleName(project, mn))
 
+                  // Only preload types for Lib targets because expressions in hspec files can be large....
                   if (stackComponentInfo.exists(_.stanzaType == LibType)) {
-                    // Because expressions in hspec files can be large....
                     currentElement.foreach(TypeInfoUtil.preloadTypesAround)
                   }
                 }
