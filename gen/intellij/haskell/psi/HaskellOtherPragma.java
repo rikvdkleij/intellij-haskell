@@ -18,9 +18,6 @@ public interface HaskellOtherPragma extends HaskellCompositeElement {
   HaskellDeprecatedWarnPragma getDeprecatedWarnPragma();
 
   @Nullable
-  HaskellDummyPragma getDummyPragma();
-
-  @Nullable
   HaskellInlinablePragma getInlinablePragma();
 
   @Nullable

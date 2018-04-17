@@ -4,10 +4,11 @@ package intellij.haskell.psi.impl;
 import com.intellij.lang.ASTNode;
 import com.intellij.psi.PsiElementVisitor;
 import com.intellij.psi.util.PsiTreeUtil;
-import intellij.haskell.psi.HaskellExpression;
+import intellij.haskell.psi.HaskellGeneralPragmaContent;
 import intellij.haskell.psi.HaskellOptionsGhcPragma;
 import intellij.haskell.psi.HaskellVisitor;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 public class HaskellOptionsGhcPragmaImpl extends HaskellCompositeElementImpl implements HaskellOptionsGhcPragma {
 
@@ -25,9 +26,9 @@ public class HaskellOptionsGhcPragmaImpl extends HaskellCompositeElementImpl imp
   }
 
   @Override
-  @NotNull
-  public HaskellExpression getExpression() {
-    return notNullChild(PsiTreeUtil.getChildOfType(this, HaskellExpression.class));
+  @Nullable
+  public HaskellGeneralPragmaContent getGeneralPragmaContent() {
+    return PsiTreeUtil.getChildOfType(this, HaskellGeneralPragmaContent.class);
   }
 
 }

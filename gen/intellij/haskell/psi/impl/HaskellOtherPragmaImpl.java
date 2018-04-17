@@ -49,12 +49,6 @@ public class HaskellOtherPragmaImpl extends HaskellCompositeElementImpl implemen
 
   @Override
   @Nullable
-  public HaskellDummyPragma getDummyPragma() {
-    return PsiTreeUtil.getChildOfType(this, HaskellDummyPragma.class);
-  }
-
-  @Override
-  @Nullable
   public HaskellInlinablePragma getInlinablePragma() {
     return PsiTreeUtil.getChildOfType(this, HaskellInlinablePragma.class);
   }

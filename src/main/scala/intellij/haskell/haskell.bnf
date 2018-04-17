@@ -52,43 +52,42 @@
 program                     ::= onl SHEBANG_LINE? onl file_header? onl module_body
 
 file_header                 ::= (file_header_pragma onl)+
-file_header_pragma          ::= language_pragma | options_ghc_pragma | include_pragma | haddock_pragma | ann_pragma | DIRECTIVE | dummy_pragma
-language_pragma             ::= PRAGMA_START onl "LANGUAGE" onl q_name (onl COMMA onl q_name?)* onl PRAGMA_END NEWLINE?
-options_ghc_pragma          ::= PRAGMA_START onl ("OPTIONS_GHC" | "OPTIONS") onl expression onl PRAGMA_END NEWLINE?
-include_pragma              ::= PRAGMA_START onl "INCLUDE" general_pragma_content PRAGMA_END NEWLINE?
-haddock_pragma              ::= PRAGMA_START onl "OPTIONS_HADDOCK" onl (VARSYM_ID | VAR_ID)+ onl (COMMA onl (VARSYM_ID | VAR_ID)+)* onl PRAGMA_END NEWLINE?
-dummy_pragma                ::= PRAGMA_START q_name? PRAGMA_END? NEWLINE?
+file_header_pragma          ::= language_pragma | options_ghc_pragma | include_pragma | haddock_pragma | ann_pragma
+options_ghc_pragma          ::= PRAGMA_START onl ("OPTIONS_GHC" | "OPTIONS") onl general_pragma_content onl PRAGMA_END {pin=3}
+language_pragma             ::= PRAGMA_START onl "LANGUAGE" onl q_name (onl COMMA onl q_name?)* onl PRAGMA_END {pin=3}
+include_pragma              ::= PRAGMA_START onl "INCLUDE" general_pragma_content onl PRAGMA_END {pin=3}
+haddock_pragma              ::= PRAGMA_START onl "OPTIONS_HADDOCK" onl (VARSYM_ID | VAR_ID)+ onl (COMMA onl (VARSYM_ID | VAR_ID)+)* onl PRAGMA_END {pin=3}
 
 other_pragma                ::= cfiles_pragma | ann_pragma | deprecated_warn_pragma | noinline_pragma | inlinable_pragma | line_pragma | rules_pragma |
-                                  specialize_pragma | inline_pragma | inline_fused_pragma | inline_inner_pragma | minimal_pragma | overlap_pragma | constant_folded_pragma | dummy_pragma
-deprecated_warn_pragma      ::= PRAGMA_START onl ("DEPRECATED" | "WARNING") general_pragma_content PRAGMA_END
-inline_pragma               ::= PRAGMA_START onl "INLINE" general_pragma_content PRAGMA_END
-inline_fused_pragma         ::= PRAGMA_START onl "INLINE_FUSED" general_pragma_content PRAGMA_END
-inline_inner_pragma         ::= PRAGMA_START onl "INLINE_INNER" general_pragma_content PRAGMA_END
-noinline_pragma             ::= PRAGMA_START onl ("NOINLINE" | "NOTINLINE") general_id+ PRAGMA_END
-specialize_pragma           ::= PRAGMA_START onl ("SPECIALIZE" | "SPECIALISE") general_pragma_content PRAGMA_END
+                                  specialize_pragma | inline_pragma | inline_fused_pragma | inline_inner_pragma | minimal_pragma | overlap_pragma | constant_folded_pragma
+deprecated_warn_pragma      ::= PRAGMA_START onl ("DEPRECATED" | "WARNING") onl general_pragma_content onl PRAGMA_END  {pin=3}
+inline_pragma               ::= PRAGMA_START onl "INLINE" onl general_pragma_content onl PRAGMA_END  {pin=3}
+inline_fused_pragma         ::= PRAGMA_START onl "INLINE_FUSED" onl general_pragma_content onl PRAGMA_END {pin=3}
+inline_inner_pragma         ::= PRAGMA_START onl "INLINE_INNER" onl general_pragma_content onl PRAGMA_END {pin=3}
+noinline_pragma             ::= PRAGMA_START onl ("NOINLINE" | "NOTINLINE") onl general_id+ onl PRAGMA_END {pin=3}
+specialize_pragma           ::= PRAGMA_START onl ("SPECIALIZE" | "SPECIALISE") onl general_pragma_content onl PRAGMA_END {pin=3}
 
-inlinable_pragma            ::= PRAGMA_START onl ("INLINABLE" | "INLINEABLE") general_pragma_content PRAGMA_END
-ann_pragma                  ::= PRAGMA_START onl "ANN" general_pragma_content PRAGMA_END
-line_pragma                 ::= PRAGMA_START onl "LINE" general_pragma_content PRAGMA_END
-rules_pragma                ::= PRAGMA_START onl "RULES" general_pragma_content PRAGMA_END
+inlinable_pragma            ::= PRAGMA_START onl ("INLINABLE" | "INLINEABLE") onl general_pragma_content onl PRAGMA_END {pin=3}
+ann_pragma                  ::= PRAGMA_START onl "ANN" onl general_pragma_content onl PRAGMA_END {pin=3}
+line_pragma                 ::= PRAGMA_START onl "LINE" onl general_pragma_content onl PRAGMA_END {pin=3}
+rules_pragma                ::= PRAGMA_START onl "RULES" onl general_pragma_content onl PRAGMA_END {pin=3}
 
-source_pragma               ::= PRAGMA_START onl "SOURCE" onl PRAGMA_END
-minimal_pragma              ::= PRAGMA_START onl "MINIMAL" onl general_pragma_content onl PRAGMA_END
-unpack_pragma               ::= PRAGMA_START onl "UNPACK" onl PRAGMA_END
-nounpack_pragma             ::= PRAGMA_START onl "NOUNPACK" onl PRAGMA_END
-ctype_pragma                ::= PRAGMA_START onl "CTYPE" onl general_pragma_content onl PRAGMA_END
-overlap_pragma              ::= PRAGMA_START onl ("OVERLAPPABLE" | "OVERLAPPING" | "OVERLAPS") onl PRAGMA_END
-constant_folded_pragma      ::= PRAGMA_START onl "CONSTANT_FOLDED" onl general_pragma_content onl PRAGMA_END
+source_pragma               ::= PRAGMA_START onl "SOURCE" onl PRAGMA_END {pin=3}
+minimal_pragma              ::= PRAGMA_START onl "MINIMAL" onl general_pragma_content onl PRAGMA_END {pin=3}
+unpack_pragma               ::= PRAGMA_START onl "UNPACK" onl PRAGMA_END {pin=3}
+nounpack_pragma             ::= PRAGMA_START onl "NOUNPACK" onl PRAGMA_END {pin=3}
+ctype_pragma                ::= PRAGMA_START onl "CTYPE" onl general_pragma_content onl PRAGMA_END {pin=3}
+overlap_pragma              ::= PRAGMA_START onl ("OVERLAPPABLE" | "OVERLAPPING" | "OVERLAPS") onl PRAGMA_END {pin=3}
+constant_folded_pragma      ::= PRAGMA_START onl "CONSTANT_FOLDED" onl general_pragma_content onl PRAGMA_END {pin=3}
 unpack_nounpack_pragma      ::= unpack_pragma | nounpack_pragma | ctype_pragma
-scc_pragma                  ::= PRAGMA_START onl "SCC" onl general_pragma_content onl PRAGMA_END
-incoherent_pragma           ::= PRAGMA_START onl "INCOHERENT" onl PRAGMA_END
+scc_pragma                  ::= PRAGMA_START onl "SCC" onl general_pragma_content onl PRAGMA_END {pin=3}
+incoherent_pragma           ::= PRAGMA_START onl "INCOHERENT" onl PRAGMA_END {pin=3}
 general_pragma_content      ::= (CON_ID | VAR_ID | CONSYM_ID | VARSYM_ID | DOT |
                                   LEFT_PAREN | RIGHT_PAREN | FLOAT | DO | WHERE | IF | THEN | ELSE | IN | CASE | OF | LET |
                                   SEMICOLON | LEFT_BRACKET | RIGHT_BRACKET | literal | LEFT_BRACE | RIGHT_BRACE |
                                   COMMA | UNDERSCORE | symbol_reserved_op | QUOTE | BACKQUOTE | MODULE | INSTANCE | NEWLINE | DOUBLE_QUOTE)+
 
-cfiles_pragma               ::= PRAGMA_START onl "CFILES" general_pragma_content PRAGMA_END
+cfiles_pragma               ::= PRAGMA_START onl "CFILES" onl general_pragma_content onl PRAGMA_END {pin=3}
 
 module_body                 ::= module_declaration onl body | onl body
 module_declaration          ::= MODULE modid onl deprecated_warn_pragma? onl (exports onl)? WHERE
