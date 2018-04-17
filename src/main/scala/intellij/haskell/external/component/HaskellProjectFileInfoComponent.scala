@@ -16,6 +16,7 @@
 
 package intellij.haskell.external.component
 
+import java.nio.file.Paths
 import java.util.concurrent.Executors
 
 import com.google.common.cache.{CacheBuilder, CacheLoader}
@@ -28,7 +29,7 @@ import intellij.haskell.HaskellNotificationGroup
 import intellij.haskell.external.repl.StackReplsManager
 import intellij.haskell.external.repl.StackReplsManager.StackComponentInfo
 import intellij.haskell.runconfig.console.HaskellConsoleView
-import intellij.haskell.util.HaskellFileUtil
+import intellij.haskell.util.{HaskellFileUtil, ScalaUtil}
 
 import scala.collection.JavaConverters._
 
@@ -71,11 +72,17 @@ private[component] object HaskellProjectFileInfoComponent {
           stackTargetBuildInfos.find(_.mainIs.exists(mi => mi == filePath)) match {
             case info@Some(_) => info
             case None =>
-              val infos = stackTargetBuildInfos.filter(_.sourceDirs.exists(sd => FileUtil.isAncestor(sd, filePath, true))).toSeq
-              if (infos.size > 1) {
-                HaskellNotificationGroup.logWarningBalloonEvent(psiFile.getProject, s"Ambiguous Stack target: ${psiFile.getName} belongs to the source dir of more than one Stack target/Cabal stanza. The first one of ${infos.map(_.target)} is chosen.")
+              val sourceDirsByInfo = stackTargetBuildInfos.map(info => (info, info.sourceDirs.filter(sd => FileUtil.isAncestor(sd, filePath, true)))).filterNot({ case (_, sd) => sd.isEmpty })
+              if (sourceDirsByInfo.size > 1) {
+                val sourceDirByInfo = sourceDirsByInfo.map({ case (info, sds) => (info, sds.maxBy(sd => Paths.get(sd).getNameCount)) })
+                val mostSpecificSourceDirByInfo = ScalaUtil.maxsBy(sourceDirByInfo)({ case (_, sd) => Paths.get(sd).getNameCount })
+                if (mostSpecificSourceDirByInfo.size > 1) {
+                  HaskellNotificationGroup.logWarningBalloonEvent(psiFile.getProject, s"Ambiguous Stack target: ${psiFile.getName} belongs to the source dir of more than one Stack target/Cabal stanza. The first one of ${mostSpecificSourceDirByInfo.map(_._1.target)} is chosen.")
+                }
+                mostSpecificSourceDirByInfo.headOption.map(_._1)
+              } else {
+                sourceDirsByInfo.headOption.map(_._1)
               }
-              infos.headOption
               match {
                 case info@Some(_) => info
                 case None =>
