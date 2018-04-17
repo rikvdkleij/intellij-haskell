@@ -21,6 +21,7 @@ import java.util.concurrent.LinkedBlockingQueue
 
 import com.intellij.openapi.project.Project
 import com.intellij.util.EnvironmentUtil
+import intellij.haskell.external.component.ProjectLibraryFileWatcher
 import intellij.haskell.external.execution.StackCommandLine
 import intellij.haskell.external.repl.StackRepl.{BenchmarkType, StackReplOutput, TestSuiteType}
 import intellij.haskell.external.repl.StackReplsManager.StackComponentInfo
@@ -291,8 +292,11 @@ abstract class StackRepl(project: Project, componentInfo: Option[StackComponentI
             available = true
           } else {
             if (hasDependencyError) {
-              logInfo(s"Stack REPL could not be started for target `${target.getOrElse("-")}` because a dependency has build errors")
-              HaskellEditorUtil.showStatusBarNotificationBalloon(project, s"Stack REPL could not be started for target `${target.getOrElse("-")}` because a dependency has build errors")
+              if (ProjectLibraryFileWatcher.buildStatus.isEmpty) {
+                val message = s"Stack REPL could not be started for target `${target.getOrElse("-")}` because a dependency has build errors"
+                logInfo(message)
+                HaskellEditorUtil.showStatusBarNotificationBalloon(project, message)
+              }
             } else {
               logError(s"Stack REPL could not be started within $DefaultTimeout")
               writeOutputToLog()

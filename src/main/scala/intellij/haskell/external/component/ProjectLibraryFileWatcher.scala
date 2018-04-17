@@ -20,18 +20,16 @@ import java.util
 import java.util.concurrent.ConcurrentHashMap
 
 import com.intellij.openapi.application.ApplicationManager
-import com.intellij.openapi.progress.ProgressIndicator
-import com.intellij.openapi.progress.util.ReadTask.Continuation
-import com.intellij.openapi.progress.util.{ProgressIndicatorUtils, ReadTask}
-import com.intellij.openapi.project.{DumbService, Project}
+import com.intellij.openapi.progress.{PerformInBackgroundOption, ProgressIndicator, ProgressManager, Task}
+import com.intellij.openapi.project.Project
 import com.intellij.openapi.vfs.newvfs.BulkFileListener
 import com.intellij.openapi.vfs.newvfs.events.{VFileContentChangeEvent, VFileEvent}
 import intellij.haskell.external.component.ProjectLibraryFileWatcher.{Build, Building}
 import intellij.haskell.external.execution.StackCommandLine
 import intellij.haskell.external.repl.StackRepl.LibType
 import intellij.haskell.external.repl.StackReplsManager.StackComponentInfo
-import intellij.haskell.util.HaskellFileUtil
 import intellij.haskell.util.index.HaskellFileNameIndex
+import intellij.haskell.util.{HaskellFileUtil, ScalaUtil}
 
 import scala.collection.JavaConverters._
 import scala.collection.concurrent
@@ -45,7 +43,7 @@ object ProjectLibraryFileWatcher {
 
   case object Build extends BuildStatus
 
-  private val buildStatus = new ConcurrentHashMap[String, BuildStatus]().asScala
+  val buildStatus: concurrent.Map[String, BuildStatus] = new ConcurrentHashMap[String, BuildStatus]().asScala
 }
 
 class ProjectLibraryFileWatcher(project: Project) extends BulkFileListener {
@@ -53,58 +51,41 @@ class ProjectLibraryFileWatcher(project: Project) extends BulkFileListener {
   override def before(events: util.List[_ <: VFileEvent]): Unit = {}
 
   override def after(events: util.List[_ <: VFileEvent]): Unit = {
-    val readTask = new ReadTask {
 
-      override def runBackgroundProcess(indicator: ProgressIndicator): Continuation = {
-        DumbService.getInstance(project).runReadActionInSmartMode(() => {
-          performInReadAction(indicator)
-        })
-      }
+    if (!project.isDisposed) {
+      val watchFiles = ApplicationManager.getApplication.runReadAction(ScalaUtil.computable(HaskellFileNameIndex.findProjectProductionFiles(project)))
+      for {
+        virtualFile <- watchFiles.find(vf => events.asScala.exists(e => e.isInstanceOf[VFileContentChangeEvent] && e.getPath == vf.getPath))
+        haskellFile <- ApplicationManager.getApplication.runReadAction(ScalaUtil.computable(HaskellFileUtil.convertToHaskellFile(project, virtualFile)))
+        componentInfo <- HaskellComponentsManager.findStackComponentInfo(haskellFile)
+      } yield
+        if (componentInfo.stanzaType == LibType) {
+          this.synchronized {
+            if (ProjectLibraryFileWatcher.buildStatus.get(componentInfo.packageName).contains(Building)) {
+              ProjectLibraryFileWatcher.buildStatus.put(componentInfo.packageName, Build)
+            } else if (ProjectLibraryFileWatcher.buildStatus.get(componentInfo.packageName).isEmpty) {
+              ProjectLibraryFileWatcher.buildStatus.put(componentInfo.packageName, Building)
+              ProgressManager.getInstance().run(new Task.Backgroundable(project, "Project watcher", false, PerformInBackgroundOption.ALWAYS_BACKGROUND) {
 
-      override def computeInReadAction(indicator: ProgressIndicator): Unit = {
-        if (!project.isDisposed) {
-          indicator.checkCanceled()
-          val watchFiles = HaskellFileNameIndex.findProjectProductionFiles(project)
-          indicator.checkCanceled()
-          for {
-            virtualFile <- watchFiles.find(vf => events.asScala.exists(e => e.isInstanceOf[VFileContentChangeEvent] && e.getPath == vf.getPath))
-            haskellFile <- HaskellFileUtil.convertToHaskellFile(project, virtualFile)
-            componentInfo <- HaskellComponentsManager.findStackComponentInfo(haskellFile)
-          } yield
-            if (componentInfo.stanzaType == LibType) {
-              this.synchronized {
-                if (ProjectLibraryFileWatcher.buildStatus.get(componentInfo.packageName).contains(Building)) {
-                  ProjectLibraryFileWatcher.buildStatus.put(componentInfo.packageName, Build)
-                } else if (ProjectLibraryFileWatcher.buildStatus.get(componentInfo.packageName).isEmpty) {
-                  ProjectLibraryFileWatcher.buildStatus.put(componentInfo.packageName, Building)
-                  ApplicationManager.getApplication.executeOnPooledThread(new Runnable() {
-
-                    override def run(): Unit = {
-                      val output = StackCommandLine.build(project, componentInfo.target, logBuildResult = false, fast = true)
-                      if (output.exists(_.getExitCode == 0)) {
-                        ProjectLibraryFileWatcher.builtLibraries.put(componentInfo.packageName, componentInfo)
-                      }
-                      val status = ProjectLibraryFileWatcher.buildStatus.get(componentInfo.packageName)
-                      if (status.contains(Build)) {
-                        ProjectLibraryFileWatcher.buildStatus.put(componentInfo.packageName, Building)
-                        run()
-                      } else {
-                        ProjectLibraryFileWatcher.buildStatus.remove(componentInfo.packageName)
-                      }
-                    }
-                  })
+                def run(progressIndicator: ProgressIndicator) {
+                  progressIndicator.setText("Project is being built...")
+                  val output = StackCommandLine.buildProject(project, logBuildResult = false)
+                  if (output.exists(_.getExitCode == 0)) {
+                    ProjectLibraryFileWatcher.builtLibraries.put(componentInfo.packageName, componentInfo)
+                  }
+                  val status = ProjectLibraryFileWatcher.buildStatus.get(componentInfo.packageName)
+                  if (status.contains(Build)) {
+                    ProjectLibraryFileWatcher.buildStatus.put(componentInfo.packageName, Building)
+                    run(progressIndicator)
+                  } else {
+                    ProjectLibraryFileWatcher.buildStatus.remove(componentInfo.packageName)
+                  }
                 }
-              }
+              })
             }
+          }
         }
-      }
-
-      override def onCanceled(indicator: ProgressIndicator): Unit = {
-        ProgressIndicatorUtils.scheduleWithWriteActionPriority(this)
-      }
     }
-
-    ProgressIndicatorUtils.scheduleWithWriteActionPriority(readTask)
   }
 
 }

@@ -50,8 +50,16 @@ object StackCommandLine {
     })
   }
 
-  def build(project: Project, buildTarget: String, logBuildResult: Boolean, fast: Boolean = false): Option[ProcessOutput] = {
-    val arguments = Seq("build", buildTarget) ++ (if (fast) Seq("--fast") else Seq())
+  def build(project: Project, buildTarget: String, logBuildResult: Boolean): Option[ProcessOutput] = {
+    build(project, Some(buildTarget), logBuildResult)
+  }
+
+  def buildProject(project: Project, logBuildResult: Boolean): Option[ProcessOutput] = {
+    build(project, None, logBuildResult)
+  }
+
+  private def build(project: Project, buildTarget: Option[String] = None, logBuildResult: Boolean): Option[ProcessOutput] = {
+    val arguments = Seq("build") ++ buildTarget.toSeq ++ Seq("--fast")
     val processOutput = run(project, arguments, -1, ignoreExitCode = true)
     if (logBuildResult) {
       if (processOutput.isEmpty || processOutput.exists(_.getExitCode != 0)) {
