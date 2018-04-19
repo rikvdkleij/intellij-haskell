@@ -122,7 +122,7 @@ object StackProjectManager {
               val preloadCacheFuture = ApplicationManager.getApplication.executeOnPooledThread(new Runnable {
 
                 override def run(): Unit = {
-//                  HaskellComponentsManager.preloadLibraryIdentifiersCaches(project)
+                  HaskellComponentsManager.preloadLibraryIdentifiersCaches(project)
 
                   HaskellNotificationGroup.logInfoEvent(project, "Restarting global REPL to release memory")
                   StackReplsManager.getGlobalRepl(project).foreach(_.restart())
