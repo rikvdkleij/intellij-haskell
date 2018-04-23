@@ -23,10 +23,7 @@ public class HaskellParser implements PsiParser, LightPsiParser {
     boolean r;
     b = adapt_builder_(t, b, this, null);
     Marker m = enter_section_(b, 0, _COLLAPSE_, null);
-    if (t == HS_ANN_PRAGMA) {
-      r = ann_pragma(b, 0);
-    }
-    else if (t == HS_CCONTEXT) {
+    if (t == HS_CCONTEXT) {
       r = ccontext(b, 0);
     }
     else if (t == HS_CDECLS) {
@@ -65,9 +62,6 @@ public class HaskellParser implements PsiParser, LightPsiParser {
     else if (t == HS_CONOP) {
       r = conop(b, 0);
     }
-    else if (t == HS_CONSTANT_FOLDED_PRAGMA) {
-      r = constant_folded_pragma(b, 0);
-    }
     else if (t == HS_CONSTR_1) {
       r = constr1(b, 0);
     }
@@ -91,9 +85,6 @@ public class HaskellParser implements PsiParser, LightPsiParser {
     }
     else if (t == HS_DEFAULT_DECLARATION) {
       r = default_declaration(b, 0);
-    }
-    else if (t == HS_DEPRECATED_WARN_PRAGMA) {
-      r = deprecated_warn_pragma(b, 0);
     }
     else if (t == HS_DERIVING_DECLARATION) {
       r = deriving_declaration(b, 0);
@@ -128,9 +119,6 @@ public class HaskellParser implements PsiParser, LightPsiParser {
     else if (t == HS_GTYCON) {
       r = gtycon(b, 0);
     }
-    else if (t == HS_HADDOCK_PRAGMA) {
-      r = haddock_pragma(b, 0);
-    }
     else if (t == HS_IMPORT_DECLARATION) {
       r = import_declaration(b, 0);
     }
@@ -164,23 +152,8 @@ public class HaskellParser implements PsiParser, LightPsiParser {
     else if (t == HS_IMPORT_SPEC) {
       r = import_spec(b, 0);
     }
-    else if (t == HS_INCLUDE_PRAGMA) {
-      r = include_pragma(b, 0);
-    }
     else if (t == HS_INCOHERENT_PRAGMA) {
       r = incoherent_pragma(b, 0);
-    }
-    else if (t == HS_INLINABLE_PRAGMA) {
-      r = inlinable_pragma(b, 0);
-    }
-    else if (t == HS_INLINE_FUSED_PRAGMA) {
-      r = inline_fused_pragma(b, 0);
-    }
-    else if (t == HS_INLINE_INNER_PRAGMA) {
-      r = inline_inner_pragma(b, 0);
-    }
-    else if (t == HS_INLINE_PRAGMA) {
-      r = inline_pragma(b, 0);
     }
     else if (t == HS_INLINELIKE_PRAGMA) {
       r = inlinelike_pragma(b, 0);
@@ -196,12 +169,6 @@ public class HaskellParser implements PsiParser, LightPsiParser {
     }
     else if (t == HS_KIND_SIGNATURE) {
       r = kind_signature(b, 0);
-    }
-    else if (t == HS_LANGUAGE_PRAGMA) {
-      r = language_pragma(b, 0);
-    }
-    else if (t == HS_LINE_PRAGMA) {
-      r = line_pragma(b, 0);
     }
     else if (t == HS_LIST_TYPE) {
       r = list_type(b, 0);
@@ -226,15 +193,6 @@ public class HaskellParser implements PsiParser, LightPsiParser {
     }
     else if (t == HS_NEWTYPE_DECLARATION) {
       r = newtype_declaration(b, 0);
-    }
-    else if (t == HS_NOINLINE_PRAGMA) {
-      r = noinline_pragma(b, 0);
-    }
-    else if (t == HS_NOUNPACK_PRAGMA) {
-      r = nounpack_pragma(b, 0);
-    }
-    else if (t == HS_OPTIONS_GHC_PRAGMA) {
-      r = options_ghc_pragma(b, 0);
     }
     else if (t == HS_OTHER_PRAGMA) {
       r = other_pragma(b, 0);
@@ -274,9 +232,6 @@ public class HaskellParser implements PsiParser, LightPsiParser {
     }
     else if (t == HS_RESERVED_ID) {
       r = reserved_id(b, 0);
-    }
-    else if (t == HS_RULES_PRAGMA) {
-      r = rules_pragma(b, 0);
     }
     else if (t == HS_SCC_PRAGMA) {
       r = scc_pragma(b, 0);
@@ -329,9 +284,6 @@ public class HaskellParser implements PsiParser, LightPsiParser {
     else if (t == HS_UNPACK_NOUNPACK_PRAGMA) {
       r = unpack_nounpack_pragma(b, 0);
     }
-    else if (t == HS_UNPACK_PRAGMA) {
-      r = unpack_pragma(b, 0);
-    }
     else if (t == HS_VAR) {
       r = var(b, 0);
     }
@@ -355,25 +307,6 @@ public class HaskellParser implements PsiParser, LightPsiParser {
 
   protected boolean parse_root_(IElementType t, PsiBuilder b, int l) {
     return program(b, l + 1);
-  }
-
-  /* ********************************************************** */
-  // PRAGMA_START onl "ANN" onl general_pragma_content onl PRAGMA_END
-  public static boolean ann_pragma(PsiBuilder b, int l) {
-    if (!recursion_guard_(b, l, "ann_pragma")) return false;
-    if (!nextTokenIs(b, HS_PRAGMA_START)) return false;
-    boolean r, p;
-    Marker m = enter_section_(b, l, _NONE_, HS_ANN_PRAGMA, null);
-    r = consumeToken(b, HS_PRAGMA_START);
-    r = r && onl(b, l + 1);
-    r = r && consumeToken(b, "ANN");
-    p = r; // pin = 3
-    r = r && report_error_(b, onl(b, l + 1));
-    r = p && report_error_(b, general_pragma_content(b, l + 1)) && r;
-    r = p && report_error_(b, onl(b, l + 1)) && r;
-    r = p && consumeToken(b, HS_PRAGMA_END) && r;
-    exit_section_(b, l, m, r, p, null);
-    return r || p;
   }
 
   /* ********************************************************** */
@@ -958,22 +891,15 @@ public class HaskellParser implements PsiParser, LightPsiParser {
   }
 
   /* ********************************************************** */
-  // PRAGMA_START onl "CFILES" onl general_pragma_content onl PRAGMA_END
+  // pragma
   public static boolean cfiles_pragma(PsiBuilder b, int l) {
     if (!recursion_guard_(b, l, "cfiles_pragma")) return false;
     if (!nextTokenIs(b, HS_PRAGMA_START)) return false;
-    boolean r, p;
-    Marker m = enter_section_(b, l, _NONE_, HS_CFILES_PRAGMA, null);
-    r = consumeToken(b, HS_PRAGMA_START);
-    r = r && onl(b, l + 1);
-    r = r && consumeToken(b, "CFILES");
-    p = r; // pin = 3
-    r = r && report_error_(b, onl(b, l + 1));
-    r = p && report_error_(b, general_pragma_content(b, l + 1)) && r;
-    r = p && report_error_(b, onl(b, l + 1)) && r;
-    r = p && consumeToken(b, HS_PRAGMA_END) && r;
-    exit_section_(b, l, m, r, p, null);
-    return r || p;
+    boolean r;
+    Marker m = enter_section_(b);
+    r = pragma(b, l + 1);
+    exit_section_(b, m, HS_CFILES_PRAGMA, r);
+    return r;
   }
 
   /* ********************************************************** */
@@ -1500,15 +1426,23 @@ public class HaskellParser implements PsiParser, LightPsiParser {
   }
 
   /* ********************************************************** */
-  // CON_ID
+  // CON_ID "#"?
   public static boolean conid(PsiBuilder b, int l) {
     if (!recursion_guard_(b, l, "conid")) return false;
     if (!nextTokenIs(b, HS_CON_ID)) return false;
     boolean r;
     Marker m = enter_section_(b);
     r = consumeToken(b, HS_CON_ID);
+    r = r && conid_1(b, l + 1);
     exit_section_(b, m, HS_CONID, r);
     return r;
+  }
+
+  // "#"?
+  private static boolean conid_1(PsiBuilder b, int l) {
+    if (!recursion_guard_(b, l, "conid_1")) return false;
+    consumeToken(b, "#");
+    return true;
   }
 
   /* ********************************************************** */
@@ -1534,25 +1468,6 @@ public class HaskellParser implements PsiParser, LightPsiParser {
     r = r && consumeToken(b, HS_BACKQUOTE);
     exit_section_(b, m, null, r);
     return r;
-  }
-
-  /* ********************************************************** */
-  // PRAGMA_START onl "CONSTANT_FOLDED" onl general_pragma_content onl PRAGMA_END
-  public static boolean constant_folded_pragma(PsiBuilder b, int l) {
-    if (!recursion_guard_(b, l, "constant_folded_pragma")) return false;
-    if (!nextTokenIs(b, HS_PRAGMA_START)) return false;
-    boolean r, p;
-    Marker m = enter_section_(b, l, _NONE_, HS_CONSTANT_FOLDED_PRAGMA, null);
-    r = consumeToken(b, HS_PRAGMA_START);
-    r = r && onl(b, l + 1);
-    r = r && consumeToken(b, "CONSTANT_FOLDED");
-    p = r; // pin = 3
-    r = r && report_error_(b, onl(b, l + 1));
-    r = p && report_error_(b, general_pragma_content(b, l + 1)) && r;
-    r = p && report_error_(b, onl(b, l + 1)) && r;
-    r = p && consumeToken(b, HS_PRAGMA_END) && r;
-    exit_section_(b, l, m, r, p, null);
-    return r || p;
   }
 
   /* ********************************************************** */
@@ -1920,22 +1835,15 @@ public class HaskellParser implements PsiParser, LightPsiParser {
   }
 
   /* ********************************************************** */
-  // PRAGMA_START onl "CTYPE" onl general_pragma_content onl PRAGMA_END
+  // pragma
   public static boolean ctype_pragma(PsiBuilder b, int l) {
     if (!recursion_guard_(b, l, "ctype_pragma")) return false;
     if (!nextTokenIs(b, HS_PRAGMA_START)) return false;
-    boolean r, p;
-    Marker m = enter_section_(b, l, _NONE_, HS_CTYPE_PRAGMA, null);
-    r = consumeToken(b, HS_PRAGMA_START);
-    r = r && onl(b, l + 1);
-    r = r && consumeToken(b, "CTYPE");
-    p = r; // pin = 3
-    r = r && report_error_(b, onl(b, l + 1));
-    r = p && report_error_(b, general_pragma_content(b, l + 1)) && r;
-    r = p && report_error_(b, onl(b, l + 1)) && r;
-    r = p && consumeToken(b, HS_PRAGMA_END) && r;
-    exit_section_(b, l, m, r, p, null);
-    return r || p;
+    boolean r;
+    Marker m = enter_section_(b);
+    r = pragma(b, l + 1);
+    exit_section_(b, m, HS_CTYPE_PRAGMA, r);
+    return r;
   }
 
   /* ********************************************************** */
@@ -2464,36 +2372,6 @@ public class HaskellParser implements PsiParser, LightPsiParser {
   }
 
   /* ********************************************************** */
-  // PRAGMA_START onl ("DEPRECATED" | "WARNING") onl general_pragma_content onl PRAGMA_END
-  public static boolean deprecated_warn_pragma(PsiBuilder b, int l) {
-    if (!recursion_guard_(b, l, "deprecated_warn_pragma")) return false;
-    if (!nextTokenIs(b, HS_PRAGMA_START)) return false;
-    boolean r, p;
-    Marker m = enter_section_(b, l, _NONE_, HS_DEPRECATED_WARN_PRAGMA, null);
-    r = consumeToken(b, HS_PRAGMA_START);
-    r = r && onl(b, l + 1);
-    r = r && deprecated_warn_pragma_2(b, l + 1);
-    p = r; // pin = 3
-    r = r && report_error_(b, onl(b, l + 1));
-    r = p && report_error_(b, general_pragma_content(b, l + 1)) && r;
-    r = p && report_error_(b, onl(b, l + 1)) && r;
-    r = p && consumeToken(b, HS_PRAGMA_END) && r;
-    exit_section_(b, l, m, r, p, null);
-    return r || p;
-  }
-
-  // "DEPRECATED" | "WARNING"
-  private static boolean deprecated_warn_pragma_2(PsiBuilder b, int l) {
-    if (!recursion_guard_(b, l, "deprecated_warn_pragma_2")) return false;
-    boolean r;
-    Marker m = enter_section_(b);
-    r = consumeToken(b, "DEPRECATED");
-    if (!r) r = consumeToken(b, "WARNING");
-    exit_section_(b, m, null, r);
-    return r;
-  }
-
-  /* ********************************************************** */
   // DERIVING INSTANCE (scontext onls DOUBLE_RIGHT_ARROW)? onls q_name onls inst
   public static boolean deriving_declaration(PsiBuilder b, int l) {
     if (!recursion_guard_(b, l, "deriving_declaration")) return false;
@@ -2947,17 +2825,13 @@ public class HaskellParser implements PsiParser, LightPsiParser {
   }
 
   /* ********************************************************** */
-  // language_pragma | options_ghc_pragma | include_pragma | haddock_pragma | ann_pragma
+  // pragma
   public static boolean file_header_pragma(PsiBuilder b, int l) {
     if (!recursion_guard_(b, l, "file_header_pragma")) return false;
     if (!nextTokenIs(b, HS_PRAGMA_START)) return false;
     boolean r;
     Marker m = enter_section_(b);
-    r = language_pragma(b, l + 1);
-    if (!r) r = options_ghc_pragma(b, l + 1);
-    if (!r) r = include_pragma(b, l + 1);
-    if (!r) r = haddock_pragma(b, l + 1);
-    if (!r) r = ann_pragma(b, l + 1);
+    r = pragma(b, l + 1);
     exit_section_(b, m, HS_FILE_HEADER_PRAGMA, r);
     return r;
   }
@@ -3023,8 +2897,8 @@ public class HaskellParser implements PsiParser, LightPsiParser {
   /* ********************************************************** */
   // QUASIQUOTE | q_name | LEFT_PAREN | RIGHT_PAREN | FLOAT |
   //                                   SEMICOLON | LEFT_BRACKET | RIGHT_BRACKET | literal | LEFT_BRACE | RIGHT_BRACE |
-  //                                   COMMA | symbol_reserved_op | QUOTE | BACKQUOTE | fixity | scc_pragma | reserved_id |
-  //                                   inlinelike_pragma | NEWLINE DIRECTIVE
+  //                                   COMMA | symbol_reserved_op | QUOTE | BACKQUOTE | fixity | reserved_id |
+  //                                   inlinelike_pragma | NEWLINE DIRECTIVE | scc_pragma
   static boolean general_id(PsiBuilder b, int l) {
     if (!recursion_guard_(b, l, "general_id")) return false;
     boolean r;
@@ -3045,19 +2919,21 @@ public class HaskellParser implements PsiParser, LightPsiParser {
     if (!r) r = consumeToken(b, HS_QUOTE);
     if (!r) r = consumeToken(b, HS_BACKQUOTE);
     if (!r) r = fixity(b, l + 1);
-    if (!r) r = scc_pragma(b, l + 1);
     if (!r) r = reserved_id(b, l + 1);
     if (!r) r = inlinelike_pragma(b, l + 1);
     if (!r) r = parseTokens(b, 0, HS_NEWLINE, HS_DIRECTIVE);
+    if (!r) r = scc_pragma(b, l + 1);
     exit_section_(b, m, null, r);
     return r;
   }
 
   /* ********************************************************** */
-  // (CON_ID | VAR_ID | CONSYM_ID | VARSYM_ID | DOT |
-  //                                   LEFT_PAREN | RIGHT_PAREN | FLOAT | DO | WHERE | IF | THEN | ELSE | IN | CASE | OF | LET |
+  // (CON_ID | VAR_ID | CONSYM_ID | VARSYM_ID |
+  //                                   LEFT_PAREN | RIGHT_PAREN | FLOAT |
   //                                   SEMICOLON | LEFT_BRACKET | RIGHT_BRACKET | literal | LEFT_BRACE | RIGHT_BRACE |
-  //                                   COMMA | UNDERSCORE | symbol_reserved_op | QUOTE | BACKQUOTE | MODULE | INSTANCE | NEWLINE | DOUBLE_QUOTE)+
+  //                                   COMMA | QUOTE | BACKQUOTE | NEWLINE | DOUBLE_QUOTE | TILDE | DOT | DOT_DOT | VERTICAL_BAR |
+  //                                   EQUAL | DOUBLE_RIGHT_ARROW | COLON_COLON | RIGHT_ARROW | LEFT_ARROW | BACKSLASH | TYPE |
+  //                                   INSTANCE | MODULE | WHERE | DO | LET | IN | CASE | OF | IF | THEN | ELSE | DIRECTIVE)+
   public static boolean general_pragma_content(PsiBuilder b, int l) {
     if (!recursion_guard_(b, l, "general_pragma_content")) return false;
     boolean r;
@@ -3073,10 +2949,12 @@ public class HaskellParser implements PsiParser, LightPsiParser {
     return r;
   }
 
-  // CON_ID | VAR_ID | CONSYM_ID | VARSYM_ID | DOT |
-  //                                   LEFT_PAREN | RIGHT_PAREN | FLOAT | DO | WHERE | IF | THEN | ELSE | IN | CASE | OF | LET |
+  // CON_ID | VAR_ID | CONSYM_ID | VARSYM_ID |
+  //                                   LEFT_PAREN | RIGHT_PAREN | FLOAT |
   //                                   SEMICOLON | LEFT_BRACKET | RIGHT_BRACKET | literal | LEFT_BRACE | RIGHT_BRACE |
-  //                                   COMMA | UNDERSCORE | symbol_reserved_op | QUOTE | BACKQUOTE | MODULE | INSTANCE | NEWLINE | DOUBLE_QUOTE
+  //                                   COMMA | QUOTE | BACKQUOTE | NEWLINE | DOUBLE_QUOTE | TILDE | DOT | DOT_DOT | VERTICAL_BAR |
+  //                                   EQUAL | DOUBLE_RIGHT_ARROW | COLON_COLON | RIGHT_ARROW | LEFT_ARROW | BACKSLASH | TYPE |
+  //                                   INSTANCE | MODULE | WHERE | DO | LET | IN | CASE | OF | IF | THEN | ELSE | DIRECTIVE
   private static boolean general_pragma_content_0(PsiBuilder b, int l) {
     if (!recursion_guard_(b, l, "general_pragma_content_0")) return false;
     boolean r;
@@ -3085,19 +2963,9 @@ public class HaskellParser implements PsiParser, LightPsiParser {
     if (!r) r = consumeToken(b, HS_VAR_ID);
     if (!r) r = consumeToken(b, HS_CONSYM_ID);
     if (!r) r = consumeToken(b, HS_VARSYM_ID);
-    if (!r) r = consumeToken(b, HS_DOT);
     if (!r) r = consumeToken(b, HS_LEFT_PAREN);
     if (!r) r = consumeToken(b, HS_RIGHT_PAREN);
     if (!r) r = consumeToken(b, HS_FLOAT);
-    if (!r) r = consumeToken(b, HS_DO);
-    if (!r) r = consumeToken(b, HS_WHERE);
-    if (!r) r = consumeToken(b, HS_IF);
-    if (!r) r = consumeToken(b, HS_THEN);
-    if (!r) r = consumeToken(b, HS_ELSE);
-    if (!r) r = consumeToken(b, HS_IN);
-    if (!r) r = consumeToken(b, HS_CASE);
-    if (!r) r = consumeToken(b, HS_OF);
-    if (!r) r = consumeToken(b, HS_LET);
     if (!r) r = consumeToken(b, HS_SEMICOLON);
     if (!r) r = consumeToken(b, HS_LEFT_BRACKET);
     if (!r) r = consumeToken(b, HS_RIGHT_BRACKET);
@@ -3105,14 +2973,33 @@ public class HaskellParser implements PsiParser, LightPsiParser {
     if (!r) r = consumeToken(b, HS_LEFT_BRACE);
     if (!r) r = consumeToken(b, HS_RIGHT_BRACE);
     if (!r) r = consumeToken(b, HS_COMMA);
-    if (!r) r = consumeToken(b, HS_UNDERSCORE);
-    if (!r) r = symbol_reserved_op(b, l + 1);
     if (!r) r = consumeToken(b, HS_QUOTE);
     if (!r) r = consumeToken(b, HS_BACKQUOTE);
-    if (!r) r = consumeToken(b, HS_MODULE);
-    if (!r) r = consumeToken(b, HS_INSTANCE);
     if (!r) r = consumeToken(b, HS_NEWLINE);
     if (!r) r = consumeToken(b, HS_DOUBLE_QUOTE);
+    if (!r) r = consumeToken(b, HS_TILDE);
+    if (!r) r = consumeToken(b, HS_DOT);
+    if (!r) r = consumeToken(b, HS_DOT_DOT);
+    if (!r) r = consumeToken(b, HS_VERTICAL_BAR);
+    if (!r) r = consumeToken(b, HS_EQUAL);
+    if (!r) r = consumeToken(b, HS_DOUBLE_RIGHT_ARROW);
+    if (!r) r = consumeToken(b, HS_COLON_COLON);
+    if (!r) r = consumeToken(b, HS_RIGHT_ARROW);
+    if (!r) r = consumeToken(b, HS_LEFT_ARROW);
+    if (!r) r = consumeToken(b, HS_BACKSLASH);
+    if (!r) r = consumeToken(b, HS_TYPE);
+    if (!r) r = consumeToken(b, HS_INSTANCE);
+    if (!r) r = consumeToken(b, HS_MODULE);
+    if (!r) r = consumeToken(b, HS_WHERE);
+    if (!r) r = consumeToken(b, HS_DO);
+    if (!r) r = consumeToken(b, HS_LET);
+    if (!r) r = consumeToken(b, HS_IN);
+    if (!r) r = consumeToken(b, HS_CASE);
+    if (!r) r = consumeToken(b, HS_OF);
+    if (!r) r = consumeToken(b, HS_IF);
+    if (!r) r = consumeToken(b, HS_THEN);
+    if (!r) r = consumeToken(b, HS_ELSE);
+    if (!r) r = consumeToken(b, HS_DIRECTIVE);
     exit_section_(b, m, null, r);
     return r;
   }
@@ -3190,105 +3077,6 @@ public class HaskellParser implements PsiParser, LightPsiParser {
       c = current_position_(b);
     }
     return true;
-  }
-
-  /* ********************************************************** */
-  // PRAGMA_START onl "OPTIONS_HADDOCK" onl (VARSYM_ID | VAR_ID)+ onl (COMMA onl (VARSYM_ID | VAR_ID)+)* onl PRAGMA_END
-  public static boolean haddock_pragma(PsiBuilder b, int l) {
-    if (!recursion_guard_(b, l, "haddock_pragma")) return false;
-    if (!nextTokenIs(b, HS_PRAGMA_START)) return false;
-    boolean r, p;
-    Marker m = enter_section_(b, l, _NONE_, HS_HADDOCK_PRAGMA, null);
-    r = consumeToken(b, HS_PRAGMA_START);
-    r = r && onl(b, l + 1);
-    r = r && consumeToken(b, "OPTIONS_HADDOCK");
-    p = r; // pin = 3
-    r = r && report_error_(b, onl(b, l + 1));
-    r = p && report_error_(b, haddock_pragma_4(b, l + 1)) && r;
-    r = p && report_error_(b, onl(b, l + 1)) && r;
-    r = p && report_error_(b, haddock_pragma_6(b, l + 1)) && r;
-    r = p && report_error_(b, onl(b, l + 1)) && r;
-    r = p && consumeToken(b, HS_PRAGMA_END) && r;
-    exit_section_(b, l, m, r, p, null);
-    return r || p;
-  }
-
-  // (VARSYM_ID | VAR_ID)+
-  private static boolean haddock_pragma_4(PsiBuilder b, int l) {
-    if (!recursion_guard_(b, l, "haddock_pragma_4")) return false;
-    boolean r;
-    Marker m = enter_section_(b);
-    r = haddock_pragma_4_0(b, l + 1);
-    int c = current_position_(b);
-    while (r) {
-      if (!haddock_pragma_4_0(b, l + 1)) break;
-      if (!empty_element_parsed_guard_(b, "haddock_pragma_4", c)) break;
-      c = current_position_(b);
-    }
-    exit_section_(b, m, null, r);
-    return r;
-  }
-
-  // VARSYM_ID | VAR_ID
-  private static boolean haddock_pragma_4_0(PsiBuilder b, int l) {
-    if (!recursion_guard_(b, l, "haddock_pragma_4_0")) return false;
-    boolean r;
-    Marker m = enter_section_(b);
-    r = consumeToken(b, HS_VARSYM_ID);
-    if (!r) r = consumeToken(b, HS_VAR_ID);
-    exit_section_(b, m, null, r);
-    return r;
-  }
-
-  // (COMMA onl (VARSYM_ID | VAR_ID)+)*
-  private static boolean haddock_pragma_6(PsiBuilder b, int l) {
-    if (!recursion_guard_(b, l, "haddock_pragma_6")) return false;
-    int c = current_position_(b);
-    while (true) {
-      if (!haddock_pragma_6_0(b, l + 1)) break;
-      if (!empty_element_parsed_guard_(b, "haddock_pragma_6", c)) break;
-      c = current_position_(b);
-    }
-    return true;
-  }
-
-  // COMMA onl (VARSYM_ID | VAR_ID)+
-  private static boolean haddock_pragma_6_0(PsiBuilder b, int l) {
-    if (!recursion_guard_(b, l, "haddock_pragma_6_0")) return false;
-    boolean r;
-    Marker m = enter_section_(b);
-    r = consumeToken(b, HS_COMMA);
-    r = r && onl(b, l + 1);
-    r = r && haddock_pragma_6_0_2(b, l + 1);
-    exit_section_(b, m, null, r);
-    return r;
-  }
-
-  // (VARSYM_ID | VAR_ID)+
-  private static boolean haddock_pragma_6_0_2(PsiBuilder b, int l) {
-    if (!recursion_guard_(b, l, "haddock_pragma_6_0_2")) return false;
-    boolean r;
-    Marker m = enter_section_(b);
-    r = haddock_pragma_6_0_2_0(b, l + 1);
-    int c = current_position_(b);
-    while (r) {
-      if (!haddock_pragma_6_0_2_0(b, l + 1)) break;
-      if (!empty_element_parsed_guard_(b, "haddock_pragma_6_0_2", c)) break;
-      c = current_position_(b);
-    }
-    exit_section_(b, m, null, r);
-    return r;
-  }
-
-  // VARSYM_ID | VAR_ID
-  private static boolean haddock_pragma_6_0_2_0(PsiBuilder b, int l) {
-    if (!recursion_guard_(b, l, "haddock_pragma_6_0_2_0")) return false;
-    boolean r;
-    Marker m = enter_section_(b);
-    r = consumeToken(b, HS_VARSYM_ID);
-    if (!r) r = consumeToken(b, HS_VAR_ID);
-    exit_section_(b, m, null, r);
-    return r;
   }
 
   /* ********************************************************** */
@@ -3718,138 +3506,25 @@ public class HaskellParser implements PsiParser, LightPsiParser {
   }
 
   /* ********************************************************** */
-  // PRAGMA_START onl "INCLUDE" general_pragma_content onl PRAGMA_END
-  public static boolean include_pragma(PsiBuilder b, int l) {
-    if (!recursion_guard_(b, l, "include_pragma")) return false;
-    if (!nextTokenIs(b, HS_PRAGMA_START)) return false;
-    boolean r, p;
-    Marker m = enter_section_(b, l, _NONE_, HS_INCLUDE_PRAGMA, null);
-    r = consumeToken(b, HS_PRAGMA_START);
-    r = r && onl(b, l + 1);
-    r = r && consumeToken(b, "INCLUDE");
-    p = r; // pin = 3
-    r = r && report_error_(b, general_pragma_content(b, l + 1));
-    r = p && report_error_(b, onl(b, l + 1)) && r;
-    r = p && consumeToken(b, HS_PRAGMA_END) && r;
-    exit_section_(b, l, m, r, p, null);
-    return r || p;
-  }
-
-  /* ********************************************************** */
-  // PRAGMA_START onl "INCOHERENT" onl PRAGMA_END
+  // pragma
   public static boolean incoherent_pragma(PsiBuilder b, int l) {
     if (!recursion_guard_(b, l, "incoherent_pragma")) return false;
     if (!nextTokenIs(b, HS_PRAGMA_START)) return false;
-    boolean r, p;
-    Marker m = enter_section_(b, l, _NONE_, HS_INCOHERENT_PRAGMA, null);
-    r = consumeToken(b, HS_PRAGMA_START);
-    r = r && onl(b, l + 1);
-    r = r && consumeToken(b, "INCOHERENT");
-    p = r; // pin = 3
-    r = r && report_error_(b, onl(b, l + 1));
-    r = p && consumeToken(b, HS_PRAGMA_END) && r;
-    exit_section_(b, l, m, r, p, null);
-    return r || p;
-  }
-
-  /* ********************************************************** */
-  // PRAGMA_START onl ("INLINABLE" | "INLINEABLE") onl general_pragma_content onl PRAGMA_END
-  public static boolean inlinable_pragma(PsiBuilder b, int l) {
-    if (!recursion_guard_(b, l, "inlinable_pragma")) return false;
-    if (!nextTokenIs(b, HS_PRAGMA_START)) return false;
-    boolean r, p;
-    Marker m = enter_section_(b, l, _NONE_, HS_INLINABLE_PRAGMA, null);
-    r = consumeToken(b, HS_PRAGMA_START);
-    r = r && onl(b, l + 1);
-    r = r && inlinable_pragma_2(b, l + 1);
-    p = r; // pin = 3
-    r = r && report_error_(b, onl(b, l + 1));
-    r = p && report_error_(b, general_pragma_content(b, l + 1)) && r;
-    r = p && report_error_(b, onl(b, l + 1)) && r;
-    r = p && consumeToken(b, HS_PRAGMA_END) && r;
-    exit_section_(b, l, m, r, p, null);
-    return r || p;
-  }
-
-  // "INLINABLE" | "INLINEABLE"
-  private static boolean inlinable_pragma_2(PsiBuilder b, int l) {
-    if (!recursion_guard_(b, l, "inlinable_pragma_2")) return false;
     boolean r;
     Marker m = enter_section_(b);
-    r = consumeToken(b, "INLINABLE");
-    if (!r) r = consumeToken(b, "INLINEABLE");
-    exit_section_(b, m, null, r);
+    r = pragma(b, l + 1);
+    exit_section_(b, m, HS_INCOHERENT_PRAGMA, r);
     return r;
   }
 
   /* ********************************************************** */
-  // PRAGMA_START onl "INLINE_FUSED" onl general_pragma_content onl PRAGMA_END
-  public static boolean inline_fused_pragma(PsiBuilder b, int l) {
-    if (!recursion_guard_(b, l, "inline_fused_pragma")) return false;
-    if (!nextTokenIs(b, HS_PRAGMA_START)) return false;
-    boolean r, p;
-    Marker m = enter_section_(b, l, _NONE_, HS_INLINE_FUSED_PRAGMA, null);
-    r = consumeToken(b, HS_PRAGMA_START);
-    r = r && onl(b, l + 1);
-    r = r && consumeToken(b, "INLINE_FUSED");
-    p = r; // pin = 3
-    r = r && report_error_(b, onl(b, l + 1));
-    r = p && report_error_(b, general_pragma_content(b, l + 1)) && r;
-    r = p && report_error_(b, onl(b, l + 1)) && r;
-    r = p && consumeToken(b, HS_PRAGMA_END) && r;
-    exit_section_(b, l, m, r, p, null);
-    return r || p;
-  }
-
-  /* ********************************************************** */
-  // PRAGMA_START onl "INLINE_INNER" onl general_pragma_content onl PRAGMA_END
-  public static boolean inline_inner_pragma(PsiBuilder b, int l) {
-    if (!recursion_guard_(b, l, "inline_inner_pragma")) return false;
-    if (!nextTokenIs(b, HS_PRAGMA_START)) return false;
-    boolean r, p;
-    Marker m = enter_section_(b, l, _NONE_, HS_INLINE_INNER_PRAGMA, null);
-    r = consumeToken(b, HS_PRAGMA_START);
-    r = r && onl(b, l + 1);
-    r = r && consumeToken(b, "INLINE_INNER");
-    p = r; // pin = 3
-    r = r && report_error_(b, onl(b, l + 1));
-    r = p && report_error_(b, general_pragma_content(b, l + 1)) && r;
-    r = p && report_error_(b, onl(b, l + 1)) && r;
-    r = p && consumeToken(b, HS_PRAGMA_END) && r;
-    exit_section_(b, l, m, r, p, null);
-    return r || p;
-  }
-
-  /* ********************************************************** */
-  // PRAGMA_START onl "INLINE" onl general_pragma_content onl PRAGMA_END
-  public static boolean inline_pragma(PsiBuilder b, int l) {
-    if (!recursion_guard_(b, l, "inline_pragma")) return false;
-    if (!nextTokenIs(b, HS_PRAGMA_START)) return false;
-    boolean r, p;
-    Marker m = enter_section_(b, l, _NONE_, HS_INLINE_PRAGMA, null);
-    r = consumeToken(b, HS_PRAGMA_START);
-    r = r && onl(b, l + 1);
-    r = r && consumeToken(b, "INLINE");
-    p = r; // pin = 3
-    r = r && report_error_(b, onl(b, l + 1));
-    r = p && report_error_(b, general_pragma_content(b, l + 1)) && r;
-    r = p && report_error_(b, onl(b, l + 1)) && r;
-    r = p && consumeToken(b, HS_PRAGMA_END) && r;
-    exit_section_(b, l, m, r, p, null);
-    return r || p;
-  }
-
-  /* ********************************************************** */
-  // inline_pragma | noinline_pragma | inline_inner_pragma | inline_fused_pragma
+  // pragma
   public static boolean inlinelike_pragma(PsiBuilder b, int l) {
     if (!recursion_guard_(b, l, "inlinelike_pragma")) return false;
     if (!nextTokenIs(b, HS_PRAGMA_START)) return false;
     boolean r;
     Marker m = enter_section_(b);
-    r = inline_pragma(b, l + 1);
-    if (!r) r = noinline_pragma(b, l + 1);
-    if (!r) r = inline_inner_pragma(b, l + 1);
-    if (!r) r = inline_fused_pragma(b, l + 1);
+    r = pragma(b, l + 1);
     exit_section_(b, m, HS_INLINELIKE_PRAGMA, r);
     return r;
   }
@@ -4580,58 +4255,6 @@ public class HaskellParser implements PsiParser, LightPsiParser {
   }
 
   /* ********************************************************** */
-  // PRAGMA_START onl "LANGUAGE" onl q_name (onl COMMA onl q_name?)* onl PRAGMA_END
-  public static boolean language_pragma(PsiBuilder b, int l) {
-    if (!recursion_guard_(b, l, "language_pragma")) return false;
-    if (!nextTokenIs(b, HS_PRAGMA_START)) return false;
-    boolean r, p;
-    Marker m = enter_section_(b, l, _NONE_, HS_LANGUAGE_PRAGMA, null);
-    r = consumeToken(b, HS_PRAGMA_START);
-    r = r && onl(b, l + 1);
-    r = r && consumeToken(b, "LANGUAGE");
-    p = r; // pin = 3
-    r = r && report_error_(b, onl(b, l + 1));
-    r = p && report_error_(b, q_name(b, l + 1)) && r;
-    r = p && report_error_(b, language_pragma_5(b, l + 1)) && r;
-    r = p && report_error_(b, onl(b, l + 1)) && r;
-    r = p && consumeToken(b, HS_PRAGMA_END) && r;
-    exit_section_(b, l, m, r, p, null);
-    return r || p;
-  }
-
-  // (onl COMMA onl q_name?)*
-  private static boolean language_pragma_5(PsiBuilder b, int l) {
-    if (!recursion_guard_(b, l, "language_pragma_5")) return false;
-    int c = current_position_(b);
-    while (true) {
-      if (!language_pragma_5_0(b, l + 1)) break;
-      if (!empty_element_parsed_guard_(b, "language_pragma_5", c)) break;
-      c = current_position_(b);
-    }
-    return true;
-  }
-
-  // onl COMMA onl q_name?
-  private static boolean language_pragma_5_0(PsiBuilder b, int l) {
-    if (!recursion_guard_(b, l, "language_pragma_5_0")) return false;
-    boolean r;
-    Marker m = enter_section_(b);
-    r = onl(b, l + 1);
-    r = r && consumeToken(b, HS_COMMA);
-    r = r && onl(b, l + 1);
-    r = r && language_pragma_5_0_3(b, l + 1);
-    exit_section_(b, m, null, r);
-    return r;
-  }
-
-  // q_name?
-  private static boolean language_pragma_5_0_3(PsiBuilder b, int l) {
-    if (!recursion_guard_(b, l, "language_pragma_5_0_3")) return false;
-    q_name(b, l + 1);
-    return true;
-  }
-
-  /* ********************************************************** */
   // general_id+
   static boolean last_line_expression(PsiBuilder b, int l) {
     if (!recursion_guard_(b, l, "last_line_expression")) return false;
@@ -4677,25 +4300,6 @@ public class HaskellParser implements PsiParser, LightPsiParser {
   }
 
   /* ********************************************************** */
-  // PRAGMA_START onl "LINE" onl general_pragma_content onl PRAGMA_END
-  public static boolean line_pragma(PsiBuilder b, int l) {
-    if (!recursion_guard_(b, l, "line_pragma")) return false;
-    if (!nextTokenIs(b, HS_PRAGMA_START)) return false;
-    boolean r, p;
-    Marker m = enter_section_(b, l, _NONE_, HS_LINE_PRAGMA, null);
-    r = consumeToken(b, HS_PRAGMA_START);
-    r = r && onl(b, l + 1);
-    r = r && consumeToken(b, "LINE");
-    p = r; // pin = 3
-    r = r && report_error_(b, onl(b, l + 1));
-    r = p && report_error_(b, general_pragma_content(b, l + 1)) && r;
-    r = p && report_error_(b, onl(b, l + 1)) && r;
-    r = p && consumeToken(b, HS_PRAGMA_END) && r;
-    exit_section_(b, l, m, r, p, null);
-    return r || p;
-  }
-
-  /* ********************************************************** */
   // LEFT_BRACKET (COLON_COLON | q_name) RIGHT_BRACKET
   public static boolean list_type(PsiBuilder b, int l) {
     if (!recursion_guard_(b, l, "list_type")) return false;
@@ -4737,38 +4341,31 @@ public class HaskellParser implements PsiParser, LightPsiParser {
   }
 
   /* ********************************************************** */
-  // PRAGMA_START onl "MINIMAL" onl general_pragma_content onl PRAGMA_END
+  // pragma
   public static boolean minimal_pragma(PsiBuilder b, int l) {
     if (!recursion_guard_(b, l, "minimal_pragma")) return false;
     if (!nextTokenIs(b, HS_PRAGMA_START)) return false;
-    boolean r, p;
-    Marker m = enter_section_(b, l, _NONE_, HS_MINIMAL_PRAGMA, null);
-    r = consumeToken(b, HS_PRAGMA_START);
-    r = r && onl(b, l + 1);
-    r = r && consumeToken(b, "MINIMAL");
-    p = r; // pin = 3
-    r = r && report_error_(b, onl(b, l + 1));
-    r = p && report_error_(b, general_pragma_content(b, l + 1)) && r;
-    r = p && report_error_(b, onl(b, l + 1)) && r;
-    r = p && consumeToken(b, HS_PRAGMA_END) && r;
-    exit_section_(b, l, m, r, p, null);
-    return r || p;
+    boolean r;
+    Marker m = enter_section_(b);
+    r = pragma(b, l + 1);
+    exit_section_(b, m, HS_MINIMAL_PRAGMA, r);
+    return r;
   }
 
   /* ********************************************************** */
-  // (CON_ID DOT)* CON_ID
+  // (conid DOT)* conid
   public static boolean modid(PsiBuilder b, int l) {
     if (!recursion_guard_(b, l, "modid")) return false;
     boolean r, p;
     Marker m = enter_section_(b, l, _NONE_, HS_MODID, "<modid>");
     r = modid_0(b, l + 1);
     p = r; // pin = 1
-    r = r && consumeToken(b, HS_CON_ID);
+    r = r && conid(b, l + 1);
     exit_section_(b, l, m, r, p, modid_recover_rule_parser_);
     return r || p;
   }
 
-  // (CON_ID DOT)*
+  // (conid DOT)*
   private static boolean modid_0(PsiBuilder b, int l) {
     if (!recursion_guard_(b, l, "modid_0")) return false;
     int c = current_position_(b);
@@ -4780,12 +4377,13 @@ public class HaskellParser implements PsiParser, LightPsiParser {
     return true;
   }
 
-  // CON_ID DOT
+  // conid DOT
   private static boolean modid_0_0(PsiBuilder b, int l) {
     if (!recursion_guard_(b, l, "modid_0_0")) return false;
     boolean r;
     Marker m = enter_section_(b);
-    r = consumeTokens(b, 0, HS_CON_ID, HS_DOT);
+    r = conid(b, l + 1);
+    r = r && consumeToken(b, HS_DOT);
     exit_section_(b, m, null, r);
     return r;
   }
@@ -4832,7 +4430,7 @@ public class HaskellParser implements PsiParser, LightPsiParser {
   }
 
   /* ********************************************************** */
-  // MODULE modid onl deprecated_warn_pragma? onl (exports onl)? WHERE
+  // MODULE modid onl pragma? onl (exports onl)? WHERE
   public static boolean module_declaration(PsiBuilder b, int l) {
     if (!recursion_guard_(b, l, "module_declaration")) return false;
     if (!nextTokenIs(b, HS_MODULE)) return false;
@@ -4849,10 +4447,10 @@ public class HaskellParser implements PsiParser, LightPsiParser {
     return r;
   }
 
-  // deprecated_warn_pragma?
+  // pragma?
   private static boolean module_declaration_3(PsiBuilder b, int l) {
     if (!recursion_guard_(b, l, "module_declaration_3")) return false;
-    deprecated_warn_pragma(b, l + 1);
+    pragma(b, l + 1);
     return true;
   }
 
@@ -5045,69 +4643,6 @@ public class HaskellParser implements PsiParser, LightPsiParser {
   }
 
   /* ********************************************************** */
-  // PRAGMA_START onl ("NOINLINE" | "NOTINLINE") onl general_id+ onl PRAGMA_END
-  public static boolean noinline_pragma(PsiBuilder b, int l) {
-    if (!recursion_guard_(b, l, "noinline_pragma")) return false;
-    if (!nextTokenIs(b, HS_PRAGMA_START)) return false;
-    boolean r, p;
-    Marker m = enter_section_(b, l, _NONE_, HS_NOINLINE_PRAGMA, null);
-    r = consumeToken(b, HS_PRAGMA_START);
-    r = r && onl(b, l + 1);
-    r = r && noinline_pragma_2(b, l + 1);
-    p = r; // pin = 3
-    r = r && report_error_(b, onl(b, l + 1));
-    r = p && report_error_(b, noinline_pragma_4(b, l + 1)) && r;
-    r = p && report_error_(b, onl(b, l + 1)) && r;
-    r = p && consumeToken(b, HS_PRAGMA_END) && r;
-    exit_section_(b, l, m, r, p, null);
-    return r || p;
-  }
-
-  // "NOINLINE" | "NOTINLINE"
-  private static boolean noinline_pragma_2(PsiBuilder b, int l) {
-    if (!recursion_guard_(b, l, "noinline_pragma_2")) return false;
-    boolean r;
-    Marker m = enter_section_(b);
-    r = consumeToken(b, "NOINLINE");
-    if (!r) r = consumeToken(b, "NOTINLINE");
-    exit_section_(b, m, null, r);
-    return r;
-  }
-
-  // general_id+
-  private static boolean noinline_pragma_4(PsiBuilder b, int l) {
-    if (!recursion_guard_(b, l, "noinline_pragma_4")) return false;
-    boolean r;
-    Marker m = enter_section_(b);
-    r = general_id(b, l + 1);
-    int c = current_position_(b);
-    while (r) {
-      if (!general_id(b, l + 1)) break;
-      if (!empty_element_parsed_guard_(b, "noinline_pragma_4", c)) break;
-      c = current_position_(b);
-    }
-    exit_section_(b, m, null, r);
-    return r;
-  }
-
-  /* ********************************************************** */
-  // PRAGMA_START onl "NOUNPACK" onl PRAGMA_END
-  public static boolean nounpack_pragma(PsiBuilder b, int l) {
-    if (!recursion_guard_(b, l, "nounpack_pragma")) return false;
-    if (!nextTokenIs(b, HS_PRAGMA_START)) return false;
-    boolean r, p;
-    Marker m = enter_section_(b, l, _NONE_, HS_NOUNPACK_PRAGMA, null);
-    r = consumeToken(b, HS_PRAGMA_START);
-    r = r && onl(b, l + 1);
-    r = r && consumeToken(b, "NOUNPACK");
-    p = r; // pin = 3
-    r = r && report_error_(b, onl(b, l + 1));
-    r = p && consumeToken(b, HS_PRAGMA_END) && r;
-    exit_section_(b, l, m, r, p, null);
-    return r || p;
-  }
-
-  /* ********************************************************** */
   // (DIRECTIVE? NEWLINE)*
   static boolean onl(PsiBuilder b, int l) {
     if (!recursion_guard_(b, l, "onl")) return false;
@@ -5234,88 +4769,86 @@ public class HaskellParser implements PsiParser, LightPsiParser {
   }
 
   /* ********************************************************** */
-  // PRAGMA_START onl ("OPTIONS_GHC" | "OPTIONS") onl general_pragma_content onl PRAGMA_END
-  public static boolean options_ghc_pragma(PsiBuilder b, int l) {
-    if (!recursion_guard_(b, l, "options_ghc_pragma")) return false;
-    if (!nextTokenIs(b, HS_PRAGMA_START)) return false;
-    boolean r, p;
-    Marker m = enter_section_(b, l, _NONE_, HS_OPTIONS_GHC_PRAGMA, null);
-    r = consumeToken(b, HS_PRAGMA_START);
-    r = r && onl(b, l + 1);
-    r = r && options_ghc_pragma_2(b, l + 1);
-    p = r; // pin = 3
-    r = r && report_error_(b, onl(b, l + 1));
-    r = p && report_error_(b, general_pragma_content(b, l + 1)) && r;
-    r = p && report_error_(b, onl(b, l + 1)) && r;
-    r = p && consumeToken(b, HS_PRAGMA_END) && r;
-    exit_section_(b, l, m, r, p, null);
-    return r || p;
-  }
-
-  // "OPTIONS_GHC" | "OPTIONS"
-  private static boolean options_ghc_pragma_2(PsiBuilder b, int l) {
-    if (!recursion_guard_(b, l, "options_ghc_pragma_2")) return false;
-    boolean r;
-    Marker m = enter_section_(b);
-    r = consumeToken(b, "OPTIONS_GHC");
-    if (!r) r = consumeToken(b, "OPTIONS");
-    exit_section_(b, m, null, r);
-    return r;
-  }
-
-  /* ********************************************************** */
-  // cfiles_pragma | ann_pragma | deprecated_warn_pragma | noinline_pragma | inlinable_pragma | line_pragma | rules_pragma |
-  //                                   specialize_pragma | inline_pragma | inline_fused_pragma | inline_inner_pragma | minimal_pragma | overlap_pragma | constant_folded_pragma
+  // pragma
   public static boolean other_pragma(PsiBuilder b, int l) {
     if (!recursion_guard_(b, l, "other_pragma")) return false;
     if (!nextTokenIs(b, HS_PRAGMA_START)) return false;
     boolean r;
     Marker m = enter_section_(b);
-    r = cfiles_pragma(b, l + 1);
-    if (!r) r = ann_pragma(b, l + 1);
-    if (!r) r = deprecated_warn_pragma(b, l + 1);
-    if (!r) r = noinline_pragma(b, l + 1);
-    if (!r) r = inlinable_pragma(b, l + 1);
-    if (!r) r = line_pragma(b, l + 1);
-    if (!r) r = rules_pragma(b, l + 1);
-    if (!r) r = specialize_pragma(b, l + 1);
-    if (!r) r = inline_pragma(b, l + 1);
-    if (!r) r = inline_fused_pragma(b, l + 1);
-    if (!r) r = inline_inner_pragma(b, l + 1);
-    if (!r) r = minimal_pragma(b, l + 1);
-    if (!r) r = overlap_pragma(b, l + 1);
-    if (!r) r = constant_folded_pragma(b, l + 1);
+    r = pragma(b, l + 1);
     exit_section_(b, m, HS_OTHER_PRAGMA, r);
     return r;
   }
 
   /* ********************************************************** */
-  // PRAGMA_START onl ("OVERLAPPABLE" | "OVERLAPPING" | "OVERLAPS") onl PRAGMA_END
+  // pragma
   public static boolean overlap_pragma(PsiBuilder b, int l) {
     if (!recursion_guard_(b, l, "overlap_pragma")) return false;
     if (!nextTokenIs(b, HS_PRAGMA_START)) return false;
+    boolean r;
+    Marker m = enter_section_(b);
+    r = pragma(b, l + 1);
+    exit_section_(b, m, HS_OVERLAP_PRAGMA, r);
+    return r;
+  }
+
+  /* ********************************************************** */
+  // PRAGMA_START (onl CON_ID? onl general_pragma_content? onl PRAGMA_END)+
+  static boolean pragma(PsiBuilder b, int l) {
+    if (!recursion_guard_(b, l, "pragma")) return false;
+    if (!nextTokenIs(b, HS_PRAGMA_START)) return false;
     boolean r, p;
-    Marker m = enter_section_(b, l, _NONE_, HS_OVERLAP_PRAGMA, null);
+    Marker m = enter_section_(b, l, _NONE_);
     r = consumeToken(b, HS_PRAGMA_START);
-    r = r && onl(b, l + 1);
-    r = r && overlap_pragma_2(b, l + 1);
-    p = r; // pin = 3
-    r = r && report_error_(b, onl(b, l + 1));
-    r = p && consumeToken(b, HS_PRAGMA_END) && r;
+    p = r; // pin = 1
+    r = r && pragma_1(b, l + 1);
     exit_section_(b, l, m, r, p, null);
     return r || p;
   }
 
-  // "OVERLAPPABLE" | "OVERLAPPING" | "OVERLAPS"
-  private static boolean overlap_pragma_2(PsiBuilder b, int l) {
-    if (!recursion_guard_(b, l, "overlap_pragma_2")) return false;
+  // (onl CON_ID? onl general_pragma_content? onl PRAGMA_END)+
+  private static boolean pragma_1(PsiBuilder b, int l) {
+    if (!recursion_guard_(b, l, "pragma_1")) return false;
     boolean r;
     Marker m = enter_section_(b);
-    r = consumeToken(b, "OVERLAPPABLE");
-    if (!r) r = consumeToken(b, "OVERLAPPING");
-    if (!r) r = consumeToken(b, "OVERLAPS");
+    r = pragma_1_0(b, l + 1);
+    int c = current_position_(b);
+    while (r) {
+      if (!pragma_1_0(b, l + 1)) break;
+      if (!empty_element_parsed_guard_(b, "pragma_1", c)) break;
+      c = current_position_(b);
+    }
     exit_section_(b, m, null, r);
     return r;
+  }
+
+  // onl CON_ID? onl general_pragma_content? onl PRAGMA_END
+  private static boolean pragma_1_0(PsiBuilder b, int l) {
+    if (!recursion_guard_(b, l, "pragma_1_0")) return false;
+    boolean r;
+    Marker m = enter_section_(b);
+    r = onl(b, l + 1);
+    r = r && pragma_1_0_1(b, l + 1);
+    r = r && onl(b, l + 1);
+    r = r && pragma_1_0_3(b, l + 1);
+    r = r && onl(b, l + 1);
+    r = r && consumeToken(b, HS_PRAGMA_END);
+    exit_section_(b, m, null, r);
+    return r;
+  }
+
+  // CON_ID?
+  private static boolean pragma_1_0_1(PsiBuilder b, int l) {
+    if (!recursion_guard_(b, l, "pragma_1_0_1")) return false;
+    consumeToken(b, HS_CON_ID);
+    return true;
+  }
+
+  // general_pragma_content?
+  private static boolean pragma_1_0_3(PsiBuilder b, int l) {
+    if (!recursion_guard_(b, l, "pragma_1_0_3")) return false;
+    general_pragma_content(b, l + 1);
+    return true;
   }
 
   /* ********************************************************** */
@@ -5427,49 +4960,61 @@ public class HaskellParser implements PsiParser, LightPsiParser {
   }
 
   /* ********************************************************** */
-  // CON_ID
+  // conid
   public static boolean q_con_qualifier1(PsiBuilder b, int l) {
     if (!recursion_guard_(b, l, "q_con_qualifier1")) return false;
     if (!nextTokenIs(b, HS_CON_ID)) return false;
     boolean r;
     Marker m = enter_section_(b);
-    r = consumeToken(b, HS_CON_ID);
+    r = conid(b, l + 1);
     exit_section_(b, m, HS_Q_CON_QUALIFIER_1, r);
     return r;
   }
 
   /* ********************************************************** */
-  // CON_ID DOT CON_ID
+  // conid DOT conid
   public static boolean q_con_qualifier2(PsiBuilder b, int l) {
     if (!recursion_guard_(b, l, "q_con_qualifier2")) return false;
     if (!nextTokenIs(b, HS_CON_ID)) return false;
     boolean r;
     Marker m = enter_section_(b);
-    r = consumeTokens(b, 0, HS_CON_ID, HS_DOT, HS_CON_ID);
+    r = conid(b, l + 1);
+    r = r && consumeToken(b, HS_DOT);
+    r = r && conid(b, l + 1);
     exit_section_(b, m, HS_Q_CON_QUALIFIER_2, r);
     return r;
   }
 
   /* ********************************************************** */
-  // CON_ID DOT CON_ID DOT CON_ID
+  // conid DOT conid DOT conid
   public static boolean q_con_qualifier3(PsiBuilder b, int l) {
     if (!recursion_guard_(b, l, "q_con_qualifier3")) return false;
     if (!nextTokenIs(b, HS_CON_ID)) return false;
     boolean r;
     Marker m = enter_section_(b);
-    r = consumeTokens(b, 0, HS_CON_ID, HS_DOT, HS_CON_ID, HS_DOT, HS_CON_ID);
+    r = conid(b, l + 1);
+    r = r && consumeToken(b, HS_DOT);
+    r = r && conid(b, l + 1);
+    r = r && consumeToken(b, HS_DOT);
+    r = r && conid(b, l + 1);
     exit_section_(b, m, HS_Q_CON_QUALIFIER_3, r);
     return r;
   }
 
   /* ********************************************************** */
-  // CON_ID DOT CON_ID DOT CON_ID DOT CON_ID
+  // conid DOT conid DOT conid DOT conid
   public static boolean q_con_qualifier4(PsiBuilder b, int l) {
     if (!recursion_guard_(b, l, "q_con_qualifier4")) return false;
     if (!nextTokenIs(b, HS_CON_ID)) return false;
     boolean r;
     Marker m = enter_section_(b);
-    r = consumeTokens(b, 0, HS_CON_ID, HS_DOT, HS_CON_ID, HS_DOT, HS_CON_ID, HS_DOT, HS_CON_ID);
+    r = conid(b, l + 1);
+    r = r && consumeToken(b, HS_DOT);
+    r = r && conid(b, l + 1);
+    r = r && consumeToken(b, HS_DOT);
+    r = r && conid(b, l + 1);
+    r = r && consumeToken(b, HS_DOT);
+    r = r && conid(b, l + 1);
     exit_section_(b, m, HS_Q_CON_QUALIFIER_4, r);
     return r;
   }
@@ -5639,19 +5184,19 @@ public class HaskellParser implements PsiParser, LightPsiParser {
   }
 
   /* ********************************************************** */
-  // CON_ID (DOT CON_ID)*
+  // conid (DOT conid)*
   public static boolean qualifier(PsiBuilder b, int l) {
     if (!recursion_guard_(b, l, "qualifier")) return false;
     if (!nextTokenIs(b, HS_CON_ID)) return false;
     boolean r;
     Marker m = enter_section_(b);
-    r = consumeToken(b, HS_CON_ID);
+    r = conid(b, l + 1);
     r = r && qualifier_1(b, l + 1);
     exit_section_(b, m, HS_QUALIFIER, r);
     return r;
   }
 
-  // (DOT CON_ID)*
+  // (DOT conid)*
   private static boolean qualifier_1(PsiBuilder b, int l) {
     if (!recursion_guard_(b, l, "qualifier_1")) return false;
     int c = current_position_(b);
@@ -5663,12 +5208,13 @@ public class HaskellParser implements PsiParser, LightPsiParser {
     return true;
   }
 
-  // DOT CON_ID
+  // DOT conid
   private static boolean qualifier_1_0(PsiBuilder b, int l) {
     if (!recursion_guard_(b, l, "qualifier_1_0")) return false;
     boolean r;
     Marker m = enter_section_(b);
-    r = consumeTokens(b, 0, HS_DOT, HS_CON_ID);
+    r = consumeToken(b, HS_DOT);
+    r = r && conid(b, l + 1);
     exit_section_(b, m, null, r);
     return r;
   }
@@ -5706,41 +5252,15 @@ public class HaskellParser implements PsiParser, LightPsiParser {
   }
 
   /* ********************************************************** */
-  // PRAGMA_START onl "RULES" onl general_pragma_content onl PRAGMA_END
-  public static boolean rules_pragma(PsiBuilder b, int l) {
-    if (!recursion_guard_(b, l, "rules_pragma")) return false;
-    if (!nextTokenIs(b, HS_PRAGMA_START)) return false;
-    boolean r, p;
-    Marker m = enter_section_(b, l, _NONE_, HS_RULES_PRAGMA, null);
-    r = consumeToken(b, HS_PRAGMA_START);
-    r = r && onl(b, l + 1);
-    r = r && consumeToken(b, "RULES");
-    p = r; // pin = 3
-    r = r && report_error_(b, onl(b, l + 1));
-    r = p && report_error_(b, general_pragma_content(b, l + 1)) && r;
-    r = p && report_error_(b, onl(b, l + 1)) && r;
-    r = p && consumeToken(b, HS_PRAGMA_END) && r;
-    exit_section_(b, l, m, r, p, null);
-    return r || p;
-  }
-
-  /* ********************************************************** */
-  // PRAGMA_START onl "SCC" onl general_pragma_content onl PRAGMA_END
+  // pragma
   public static boolean scc_pragma(PsiBuilder b, int l) {
     if (!recursion_guard_(b, l, "scc_pragma")) return false;
     if (!nextTokenIs(b, HS_PRAGMA_START)) return false;
-    boolean r, p;
-    Marker m = enter_section_(b, l, _NONE_, HS_SCC_PRAGMA, null);
-    r = consumeToken(b, HS_PRAGMA_START);
-    r = r && onl(b, l + 1);
-    r = r && consumeToken(b, "SCC");
-    p = r; // pin = 3
-    r = r && report_error_(b, onl(b, l + 1));
-    r = p && report_error_(b, general_pragma_content(b, l + 1)) && r;
-    r = p && report_error_(b, onl(b, l + 1)) && r;
-    r = p && consumeToken(b, HS_PRAGMA_END) && r;
-    exit_section_(b, l, m, r, p, null);
-    return r || p;
+    boolean r;
+    Marker m = enter_section_(b);
+    r = pragma(b, l + 1);
+    exit_section_(b, m, HS_SCC_PRAGMA, r);
+    return r;
   }
 
   /* ********************************************************** */
@@ -6063,49 +5583,26 @@ public class HaskellParser implements PsiParser, LightPsiParser {
   }
 
   /* ********************************************************** */
-  // PRAGMA_START onl "SOURCE" onl PRAGMA_END
+  // pragma
   public static boolean source_pragma(PsiBuilder b, int l) {
     if (!recursion_guard_(b, l, "source_pragma")) return false;
     if (!nextTokenIs(b, HS_PRAGMA_START)) return false;
-    boolean r, p;
-    Marker m = enter_section_(b, l, _NONE_, HS_SOURCE_PRAGMA, null);
-    r = consumeToken(b, HS_PRAGMA_START);
-    r = r && onl(b, l + 1);
-    r = r && consumeToken(b, "SOURCE");
-    p = r; // pin = 3
-    r = r && report_error_(b, onl(b, l + 1));
-    r = p && consumeToken(b, HS_PRAGMA_END) && r;
-    exit_section_(b, l, m, r, p, null);
-    return r || p;
+    boolean r;
+    Marker m = enter_section_(b);
+    r = pragma(b, l + 1);
+    exit_section_(b, m, HS_SOURCE_PRAGMA, r);
+    return r;
   }
 
   /* ********************************************************** */
-  // PRAGMA_START onl ("SPECIALIZE" | "SPECIALISE") onl general_pragma_content onl PRAGMA_END
+  // pragma
   public static boolean specialize_pragma(PsiBuilder b, int l) {
     if (!recursion_guard_(b, l, "specialize_pragma")) return false;
     if (!nextTokenIs(b, HS_PRAGMA_START)) return false;
-    boolean r, p;
-    Marker m = enter_section_(b, l, _NONE_, HS_SPECIALIZE_PRAGMA, null);
-    r = consumeToken(b, HS_PRAGMA_START);
-    r = r && onl(b, l + 1);
-    r = r && specialize_pragma_2(b, l + 1);
-    p = r; // pin = 3
-    r = r && report_error_(b, onl(b, l + 1));
-    r = p && report_error_(b, general_pragma_content(b, l + 1)) && r;
-    r = p && report_error_(b, onl(b, l + 1)) && r;
-    r = p && consumeToken(b, HS_PRAGMA_END) && r;
-    exit_section_(b, l, m, r, p, null);
-    return r || p;
-  }
-
-  // "SPECIALIZE" | "SPECIALISE"
-  private static boolean specialize_pragma_2(PsiBuilder b, int l) {
-    if (!recursion_guard_(b, l, "specialize_pragma_2")) return false;
     boolean r;
     Marker m = enter_section_(b);
-    r = consumeToken(b, "SPECIALIZE");
-    if (!r) r = consumeToken(b, "SPECIALISE");
-    exit_section_(b, m, null, r);
+    r = pragma(b, l + 1);
+    exit_section_(b, m, HS_SPECIALIZE_PRAGMA, r);
     return r;
   }
 
@@ -6991,34 +6488,15 @@ public class HaskellParser implements PsiParser, LightPsiParser {
   }
 
   /* ********************************************************** */
-  // unpack_pragma | nounpack_pragma | ctype_pragma
+  // pragma
   public static boolean unpack_nounpack_pragma(PsiBuilder b, int l) {
     if (!recursion_guard_(b, l, "unpack_nounpack_pragma")) return false;
     if (!nextTokenIs(b, HS_PRAGMA_START)) return false;
     boolean r;
     Marker m = enter_section_(b);
-    r = unpack_pragma(b, l + 1);
-    if (!r) r = nounpack_pragma(b, l + 1);
-    if (!r) r = ctype_pragma(b, l + 1);
+    r = pragma(b, l + 1);
     exit_section_(b, m, HS_UNPACK_NOUNPACK_PRAGMA, r);
     return r;
-  }
-
-  /* ********************************************************** */
-  // PRAGMA_START onl "UNPACK" onl PRAGMA_END
-  public static boolean unpack_pragma(PsiBuilder b, int l) {
-    if (!recursion_guard_(b, l, "unpack_pragma")) return false;
-    if (!nextTokenIs(b, HS_PRAGMA_START)) return false;
-    boolean r, p;
-    Marker m = enter_section_(b, l, _NONE_, HS_UNPACK_PRAGMA, null);
-    r = consumeToken(b, HS_PRAGMA_START);
-    r = r && onl(b, l + 1);
-    r = r && consumeToken(b, "UNPACK");
-    p = r; // pin = 3
-    r = r && report_error_(b, onl(b, l + 1));
-    r = p && consumeToken(b, HS_PRAGMA_END) && r;
-    exit_section_(b, l, m, r, p, null);
-    return r || p;
   }
 
   /* ********************************************************** */
@@ -7061,15 +6539,23 @@ public class HaskellParser implements PsiParser, LightPsiParser {
   }
 
   /* ********************************************************** */
-  // VAR_ID
+  // VAR_ID "#"?
   public static boolean varid(PsiBuilder b, int l) {
     if (!recursion_guard_(b, l, "varid")) return false;
     if (!nextTokenIs(b, HS_VAR_ID)) return false;
     boolean r;
     Marker m = enter_section_(b);
     r = consumeToken(b, HS_VAR_ID);
+    r = r && varid_1(b, l + 1);
     exit_section_(b, m, HS_VARID, r);
     return r;
+  }
+
+  // "#"?
+  private static boolean varid_1(PsiBuilder b, int l) {
+    if (!recursion_guard_(b, l, "varid_1")) return false;
+    consumeToken(b, "#");
+    return true;
   }
 
   /* ********************************************************** */

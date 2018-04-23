@@ -4,8 +4,14 @@ package intellij.haskell.psi;
 import com.intellij.navigation.ItemPresentation;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiReference;
+import org.jetbrains.annotations.NotNull;
+
+import java.util.List;
 
 public interface HaskellQualifier extends HaskellQualifierElement {
+
+  @NotNull
+  List<HaskellConid> getConidList();
 
   String getName();
 

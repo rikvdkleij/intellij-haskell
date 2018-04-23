@@ -110,11 +110,11 @@ symbol_no_dot       = {equal} | {at} | {backslash} | {vertical_bar} | {tilde} | 
                         {plus} | {slash} | {lt} | {gt} | {question_mark} | {caret} | {dash} | "⊜" | "≣" | "≤" | "≥"
 symbol              = {symbol_no_dot} | {dot}
 
-var_id              = {question_mark}? {small} ({small} | {large} | {digit} | {quote})* {hash}*
+var_id              = {question_mark}? {small} ({small} | {large} | {digit} | {quote})*
 varsym_id           = (({dot_dot} | {colon} | {colon_colon} | {equal} | {backslash} | {vertical_bar} | {left_arrow} | {right_arrow} | {at} | {tilde} | {double_right_arrow} | {dot}) ({symbol} | {colon})+) |
                         {symbol_no_dot} ({symbol} | {colon})*
 
-con_id              = {large} ({small} | {large} | {digit} | {quote})* {hash}*
+con_id              = {large} ({small} | {large} | {digit} | {quote})*
 consym_id           = {quote}? {colon} ({symbol} | {colon})*
 
 shebang_line        = {hash} {exclamation_mark} [^\r\n]*

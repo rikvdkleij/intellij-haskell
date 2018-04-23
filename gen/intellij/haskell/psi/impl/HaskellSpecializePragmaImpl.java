@@ -8,7 +8,8 @@ import intellij.haskell.psi.HaskellGeneralPragmaContent;
 import intellij.haskell.psi.HaskellSpecializePragma;
 import intellij.haskell.psi.HaskellVisitor;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
+
+import java.util.List;
 
 public class HaskellSpecializePragmaImpl extends HaskellCompositeElementImpl implements HaskellSpecializePragma {
 
@@ -26,9 +27,9 @@ public class HaskellSpecializePragmaImpl extends HaskellCompositeElementImpl imp
   }
 
   @Override
-  @Nullable
-  public HaskellGeneralPragmaContent getGeneralPragmaContent() {
-    return PsiTreeUtil.getChildOfType(this, HaskellGeneralPragmaContent.class);
+  @NotNull
+  public List<HaskellGeneralPragmaContent> getGeneralPragmaContentList() {
+    return PsiTreeUtil.getChildrenOfTypeAsList(this, HaskellGeneralPragmaContent.class);
   }
 
 }

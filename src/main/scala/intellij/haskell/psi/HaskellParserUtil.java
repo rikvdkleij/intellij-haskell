@@ -37,4 +37,5 @@ public class HaskellParserUtil extends GeneratedParserUtilBase {
     public static boolean noSpaceAfterQualifier(PsiBuilder builder, int level) {
         return (builder.rawLookup(0) == HS_CON_ID && builder.rawLookup(1) == HS_DOT);
     }
+
 }

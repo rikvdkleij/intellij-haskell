@@ -1,11 +1,13 @@
 // This is a generated file. Not intended for manual editing.
 package intellij.haskell.psi;
 
-import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.NotNull;
+
+import java.util.List;
 
 public interface HaskellCtypePragma extends HaskellCompositeElement {
 
-  @Nullable
-  HaskellGeneralPragmaContent getGeneralPragmaContent();
+  @NotNull
+  List<HaskellGeneralPragmaContent> getGeneralPragmaContentList();
 
 }

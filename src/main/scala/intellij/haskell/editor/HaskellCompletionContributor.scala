@@ -68,9 +68,10 @@ class HaskellCompletionContributor extends CompletionContributor {
 
   private final val SpecialReservedIds = Stream("safe", "unsafe")
   private final val PragmaIds = Stream("{-#", "#-}")
-  private final val FileHeaderPragmaIds = Stream("LANGUAGE", "OPTIONS_HADDOCK", "INCLUDE", "OPTIONS", "OPTIONS_GHC", "ANN")
-  private final val ModulePragmaIds = Stream("ANN", "DEPRECATED", "WARING", "INLINE", "NOINLINE", "NOTINLINE", "INLINABEL", "LINE", "RULES",
-    "SPECIALIZE", "SPECIALISE", "MINIMAL", "SOURCE", "UNPACK", "NOUNPACK")
+  private final val Ann = "ANN"
+  private final val FileHeaderPragmaIds = Stream("LANGUAGE", "OPTIONS_HADDOCK", "INCLUDE", "OPTIONS", "OPTIONS_GHC", Ann)
+  private final val ModulePragmaIds = Stream(Ann, "DEPRECATED", "WARING", "INLINE", "INLINE_FUSED", "INLINE_INNER", "NOINLINE", "NOTINLINE", "INLINABEL", "LINE", "RULES",
+    "SPECIALIZE", "SPECIALISE", "MINIMAL", "SOURCE", "UNPACK", "NOUNPACK", "OVERLAPPING", "OVERLAPPABLE", "OVERLAPS", "CONSTANT_FOLDED", "SCC", "INCOHERENT", "CFILES")
   private final val InsideImportKeywords = Stream("as", "hiding", "qualified")
   private final val CommentIds = Stream("{-", "-}", "--")
   private final val HaddockIds = Stream("{-|", "-- |", "-- ^")
@@ -95,7 +96,7 @@ class HaskellCompletionContributor extends CompletionContributor {
   }
 
 
-  val provider = new CompletionProvider[CompletionParameters] {
+  val provider: CompletionProvider[CompletionParameters] = new CompletionProvider[CompletionParameters] {
     def addCompletions(parameters: CompletionParameters, context: ProcessingContext, originalResultSet: CompletionResultSet) {
 
       ProgressManager.checkCanceled()
@@ -125,7 +126,14 @@ class HaskellCompletionContributor extends CompletionContributor {
           start = mie.getTextRange.getStartOffset
           end = parameters.getOffset
         } yield psiFile.getText.substring(start, end)
-        ).orElse({
+        ).orElse(
+        for {
+          e <- positionElement
+          if isFileHeaderPragmaInProgress(e) || isPragmaInProgress(e)
+          start = e.getTextRange.getStartOffset
+          end = parameters.getOffset
+        } yield psiFile.getText.substring(start, end)
+      ).orElse({
         for {
           e <- positionElement
           if e.getNode.getElementType != HS_LEFT_PAREN && e.getNode.getElementType != HS_BACKQUOTE
@@ -149,13 +157,13 @@ class HaskellCompletionContributor extends CompletionContributor {
       ProgressManager.checkCanceled()
 
       positionElement match {
-        case Some(e) if isPragmaInProgress(e) =>
-          resultSet.addAllElements(getModulePragmaIdsLookupElements.asJavaCollection)
-          resultSet.addAllElements(getPragmaStartEndIdsLookupElements.asJavaCollection)
         case Some(e) if isFileHeaderPragmaInProgress(e) =>
           resultSet.addAllElements(getLanguageExtensionsLookupElements(project).asJavaCollection)
           resultSet.addAllElements(getPragmaStartEndIdsLookupElements.asJavaCollection)
           resultSet.addAllElements(getFileHeaderPragmaIdsLookupElements.asJavaCollection)
+        case Some(e) if isPragmaInProgress(e) =>
+          resultSet.addAllElements(getModulePragmaIdsLookupElements.asJavaCollection)
+          resultSet.addAllElements(getPragmaStartEndIdsLookupElements.asJavaCollection)
         case Some(e) if isImportSpecInProgress(e) =>
           resultSet.addAllElements(findAvailableIdsForImportModuleSpec(project, e, psiFile).asJavaCollection)
         case Some(e) if isImportModuleDeclarationInProgress(e) =>
