@@ -52,50 +52,28 @@
 program                     ::= onl SHEBANG_LINE? onl file_header? onl module_body
 
 file_header                 ::= (file_header_pragma onl)+
-file_header_pragma          ::= language_pragma | options_ghc_pragma | include_pragma | haddock_pragma | ann_pragma
-options_ghc_pragma          ::= PRAGMA_START onl ("OPTIONS_GHC" | "OPTIONS") onl general_pragma_content onl PRAGMA_END {pin=3}
-language_pragma             ::= PRAGMA_START onl "LANGUAGE" onl q_name (onl COMMA onl q_name?)* onl PRAGMA_END {pin=3}
-include_pragma              ::= PRAGMA_START onl "INCLUDE" general_pragma_content onl PRAGMA_END {pin=3}
-haddock_pragma              ::= PRAGMA_START onl "OPTIONS_HADDOCK" onl (VARSYM_ID | VAR_ID)+ onl (COMMA onl (VARSYM_ID | VAR_ID)+)* onl PRAGMA_END {pin=3}
+private pragma              ::= PRAGMA_START (onl CON_ID? onl general_pragma_content? onl PRAGMA_END)+ {pin=1}
+file_header_pragma          ::= pragma
 
-other_pragma                ::= cfiles_pragma | ann_pragma | deprecated_warn_pragma | noinline_pragma | inlinable_pragma | line_pragma | rules_pragma |
-                                  specialize_pragma | inline_pragma | inline_fused_pragma | inline_inner_pragma | minimal_pragma | overlap_pragma | constant_folded_pragma
-deprecated_warn_pragma      ::= PRAGMA_START onl ("DEPRECATED" | "WARNING") onl general_pragma_content onl PRAGMA_END  {pin=3}
-inline_pragma               ::= PRAGMA_START onl "INLINE" onl general_pragma_content onl PRAGMA_END  {pin=3}
-inline_fused_pragma         ::= PRAGMA_START onl "INLINE_FUSED" onl general_pragma_content onl PRAGMA_END {pin=3}
-inline_inner_pragma         ::= PRAGMA_START onl "INLINE_INNER" onl general_pragma_content onl PRAGMA_END {pin=3}
-noinline_pragma             ::= PRAGMA_START onl ("NOINLINE" | "NOTINLINE") onl general_id+ onl PRAGMA_END {pin=3}
-specialize_pragma           ::= PRAGMA_START onl ("SPECIALIZE" | "SPECIALISE") onl general_pragma_content onl PRAGMA_END {pin=3}
+other_pragma                ::= pragma
 
-inlinable_pragma            ::= PRAGMA_START onl ("INLINABLE" | "INLINEABLE") onl general_pragma_content onl PRAGMA_END {pin=3}
-ann_pragma                  ::= PRAGMA_START onl "ANN" onl general_pragma_content onl PRAGMA_END {pin=3}
-line_pragma                 ::= PRAGMA_START onl "LINE" onl general_pragma_content onl PRAGMA_END {pin=3}
-rules_pragma                ::= PRAGMA_START onl "RULES" onl general_pragma_content onl PRAGMA_END {pin=3}
-
-source_pragma               ::= PRAGMA_START onl "SOURCE" onl PRAGMA_END {pin=3}
-minimal_pragma              ::= PRAGMA_START onl "MINIMAL" onl general_pragma_content onl PRAGMA_END {pin=3}
-unpack_pragma               ::= PRAGMA_START onl "UNPACK" onl PRAGMA_END {pin=3}
-nounpack_pragma             ::= PRAGMA_START onl "NOUNPACK" onl PRAGMA_END {pin=3}
-ctype_pragma                ::= PRAGMA_START onl "CTYPE" onl general_pragma_content onl PRAGMA_END {pin=3}
-overlap_pragma              ::= PRAGMA_START onl ("OVERLAPPABLE" | "OVERLAPPING" | "OVERLAPS") onl PRAGMA_END {pin=3}
-constant_folded_pragma      ::= PRAGMA_START onl "CONSTANT_FOLDED" onl general_pragma_content onl PRAGMA_END {pin=3}
-unpack_nounpack_pragma      ::= unpack_pragma | nounpack_pragma | ctype_pragma
-scc_pragma                  ::= PRAGMA_START onl "SCC" onl general_pragma_content onl PRAGMA_END {pin=3}
-incoherent_pragma           ::= PRAGMA_START onl "INCOHERENT" onl PRAGMA_END {pin=3}
-general_pragma_content      ::= (CON_ID | VAR_ID | CONSYM_ID | VARSYM_ID | DOT |
-                                  LEFT_PAREN | RIGHT_PAREN | FLOAT | DO | WHERE | IF | THEN | ELSE | IN | CASE | OF | LET |
+general_pragma_content      ::= (CON_ID | VAR_ID | CONSYM_ID | VARSYM_ID |
+                                  LEFT_PAREN | RIGHT_PAREN | FLOAT |
                                   SEMICOLON | LEFT_BRACKET | RIGHT_BRACKET | literal | LEFT_BRACE | RIGHT_BRACE |
-                                  COMMA | UNDERSCORE | symbol_reserved_op | QUOTE | BACKQUOTE | MODULE | INSTANCE | NEWLINE | DOUBLE_QUOTE)+
+                                  COMMA | QUOTE | BACKQUOTE | NEWLINE | DOUBLE_QUOTE | TILDE | DOT | DOT_DOT | VERTICAL_BAR |
+                                  EQUAL | DOUBLE_RIGHT_ARROW | COLON_COLON | RIGHT_ARROW | LEFT_ARROW | BACKSLASH | TYPE |
+                                  INSTANCE | MODULE | WHERE | DO | LET | IN | CASE | OF | IF | THEN | ELSE | DIRECTIVE)+
 
-cfiles_pragma               ::= PRAGMA_START onl "CFILES" onl general_pragma_content onl PRAGMA_END {pin=3}
 
 module_body                 ::= module_declaration onl body | onl body
-module_declaration          ::= MODULE modid onl deprecated_warn_pragma? onl (exports onl)? WHERE
+module_declaration          ::= MODULE modid onl pragma? onl (exports onl)? WHERE
 
 private body                ::= import_declarations top_declarations  (NEWLINE | DIRECTIVE)*
+cfiles_pragma               ::= pragma
 import_declarations         ::= ((import_declaration | cfiles_pragma | DIRECTIVE) onl)*
 private top_declarations    ::= (top_declaration (NEWLINE | DIRECTIVE)+)* top_declaration?
 
+source_pragma               ::= pragma
 import_declaration          ::= IMPORT (onls source_pragma)? (onls import_qualified)? (onls import_package_name)? onls modid onls import_qualified_as? onls import_spec? NEWLINE?   {methods=[getModuleName] pin=1}
 import_qualified            ::= "qualified"
 import_qualified_as         ::= "as" qualifier
@@ -121,6 +99,7 @@ type_declaration            ::= TYPE onls simpletype onls COLON_COLON onls ttype
                                   TYPE onls simpletype
 
 
+ctype_pragma                ::= pragma
 data_declaration            ::= DATA (onls ctype_pragma)? onls INSTANCE? onls (ccontext onls DOUBLE_RIGHT_ARROW)? onls simpletype onls (LEFT_PAREN onls kind_signature onls RIGHT_PAREN)* onls (COLON_COLON ttype)? onls q_name* onls (EQUAL | WHERE)?
                                     onls (type_signature (nls type_signature)* | constrs) (onls data_declaration_deriving)? |
                                   DATA (onls ctype_pragma)? onls (LEFT_PAREN onls kind_signature onls RIGHT_PAREN)* onls simpletype onls (LEFT_PAREN onls kind_signature onls RIGHT_PAREN)* onls (COLON_COLON ttype)? onls q_name* (onls data_declaration_deriving)?
@@ -135,6 +114,8 @@ class_declaration           ::= CLASS onls (scontext onls DOUBLE_RIGHT_ARROW)? o
                                     (onls VERTICAL_BAR onls ttype (onls COMMA onls ttype)*)? onls WHERE? onls cdecls? |
                                   CLASS onls scontext onls DOUBLE_RIGHT_ARROW onls (q_name+ | ttype) onls WHERE? onls cdecls?  // seen in Control.Lens.Internal.Indexed
 
+overlap_pragma              ::= pragma
+incoherent_pragma           ::= pragma
 instance_declaration        ::= INSTANCE onls (overlap_pragma | "OVERLAPPABLE_" | "OVERLAPPING_" | incoherent_pragma)? onls (var_con+ DOT)? onls (scontext onls DOUBLE_RIGHT_ARROW)? onls
                                     (type_equality | q_name onls inst (onls WHERE (onls cidecls)?)?)    // this way of using type equality in Data.Type.Equality
 
@@ -167,11 +148,11 @@ private oonls               ::= (&<<containsSpaces>> NEWLINE)?                  
 
 comments                    ::= COMMENT | NCOMMENT | NCOMMENT_START | NCOMMENT_END | HADDOCK | NHADDOCK // rule is necessary to refer to various comment types in code
 
-modid                       ::= (CON_ID DOT)* CON_ID {pin=1 recoverWhile=modid_recover_rule stubClass = "intellij.haskell.psi.stubs.HaskellModidStub"}
+modid                       ::= (conid DOT)* conid {pin=1 recoverWhile=modid_recover_rule stubClass = "intellij.haskell.psi.stubs.HaskellModidStub"}
 private modid_recover_rule  ::= DOT
 
-varid                       ::= VAR_ID {stubClass = "intellij.haskell.psi.stubs.HaskellVaridStub"}
-conid                       ::= CON_ID {stubClass = "intellij.haskell.psi.stubs.HaskellConidStub"}
+varid                       ::= VAR_ID "#"? {stubClass = "intellij.haskell.psi.stubs.HaskellVaridStub"}
+conid                       ::= CON_ID "#"? {stubClass = "intellij.haskell.psi.stubs.HaskellConidStub"}
 varsym                      ::= VARSYM_ID | DOT VARSYM_ID | DOT     {stubClass = "intellij.haskell.psi.stubs.HaskellVarsymStub"}
 consym                      ::= CONSYM_ID   {stubClass = "intellij.haskell.psi.stubs.HaskellConsymStub"}
 
@@ -184,13 +165,13 @@ conop                       ::= consym | BACKQUOTE conid BACKQUOTE
 var_con                     ::= varid | consym | varsym | conid
 q_var_con                   ::= &<<noSpaceAfterQualifier>> qualifier DOT (varid | consym | DOT? varsym) | q_con
 
-qualifier                   ::= CON_ID (DOT CON_ID)*
+qualifier                   ::= conid (DOT conid)*
 
 q_con                       ::= q_con_qualifier4 DOT conid | q_con_qualifier3 DOT conid | q_con_qualifier2 DOT conid | q_con_qualifier1 DOT conid
-q_con_qualifier4            ::= CON_ID DOT CON_ID DOT CON_ID DOT CON_ID
-q_con_qualifier3            ::= CON_ID DOT CON_ID DOT CON_ID
-q_con_qualifier2            ::= CON_ID DOT CON_ID
-q_con_qualifier1            ::= CON_ID
+q_con_qualifier4            ::= conid DOT conid DOT conid DOT conid
+q_con_qualifier3            ::= conid DOT conid DOT conid
+q_con_qualifier2            ::= conid DOT conid
+q_con_qualifier1            ::= conid
 q_con_qualifier             ::= q_con_qualifier4 | q_con_qualifier3 | q_con_qualifier2 | q_con_qualifier1  // used for renaming
 
 q_name                      ::= q_var_con | var_con | LEFT_PAREN q_var_con RIGHT_PAREN | LEFT_PAREN var_con RIGHT_PAREN | BACKQUOTE q_var_con BACKQUOTE | BACKQUOTE var_con BACKQUOTE
@@ -198,6 +179,7 @@ q_names                     ::= q_name (COMMA q_name)*
 
 gtycon                      ::= QUOTE? q_name | LEFT_PAREN RIGHT_ARROW RIGHT_PAREN | LEFT_PAREN RIGHT_PAREN | QUOTE? LEFT_BRACKET RIGHT_BRACKET | LEFT_PAREN COMMA (COMMA)* RIGHT_PAREN
 
+unpack_nounpack_pragma      ::= pragma
 private constrs             ::= constr (onls VERTICAL_BAR onls constr)*
 private constr              ::= (type_signature | constr1 | constr2 | constr3)
 constr1                     ::= unpack_nounpack_pragma? (onls q_name)? (onls unpack_nounpack_pragma)? onls LEFT_BRACE onl fielddecl? ((onl COMMA)? onl fielddecl)* onl RIGHT_BRACE
@@ -266,7 +248,9 @@ newconstr_fielddecl         ::= q_name onls LEFT_BRACE? onls type_signature onls
 cdecls                      ::= cdecl (nls cdecl)*
 cidecls                     ::= cidecl (nls cidecl)*
 
-inlinelike_pragma           ::= inline_pragma | noinline_pragma | inline_inner_pragma | inline_fused_pragma
+inlinelike_pragma           ::= pragma
+specialize_pragma           ::= pragma
+minimal_pragma              ::= pragma
 
 private cdecl               ::= type_signature | cidecl
 
@@ -278,10 +262,11 @@ expression                  ::= line_expression+ last_line_expression | last_lin
 private line_expression     ::= general_id+ nls
 private last_line_expression::= general_id+
 
+scc_pragma                  ::= pragma
 private general_id          ::= QUASIQUOTE | q_name | LEFT_PAREN | RIGHT_PAREN | FLOAT |
                                   SEMICOLON | LEFT_BRACKET | RIGHT_BRACKET | literal | LEFT_BRACE | RIGHT_BRACE |
-                                  COMMA | symbol_reserved_op | QUOTE | BACKQUOTE | fixity | scc_pragma | reserved_id |
-                                  inlinelike_pragma | NEWLINE DIRECTIVE
+                                  COMMA | symbol_reserved_op | QUOTE | BACKQUOTE | fixity | reserved_id |
+                                  inlinelike_pragma | NEWLINE DIRECTIVE | scc_pragma
 
 private symbol_reserved_op  ::= DOT_DOT | COLON_COLON | EQUAL | BACKSLASH | VERTICAL_BAR | LEFT_ARROW | RIGHT_ARROW | AT | TILDE | DOUBLE_RIGHT_ARROW
 

@@ -8,7 +8,8 @@ import intellij.haskell.psi.HaskellCfilesPragma;
 import intellij.haskell.psi.HaskellGeneralPragmaContent;
 import intellij.haskell.psi.HaskellVisitor;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
+
+import java.util.List;
 
 public class HaskellCfilesPragmaImpl extends HaskellCompositeElementImpl implements HaskellCfilesPragma {
 
@@ -26,9 +27,9 @@ public class HaskellCfilesPragmaImpl extends HaskellCompositeElementImpl impleme
   }
 
   @Override
-  @Nullable
-  public HaskellGeneralPragmaContent getGeneralPragmaContent() {
-    return PsiTreeUtil.getChildOfType(this, HaskellGeneralPragmaContent.class);
+  @NotNull
+  public List<HaskellGeneralPragmaContent> getGeneralPragmaContentList() {
+    return PsiTreeUtil.getChildrenOfTypeAsList(this, HaskellGeneralPragmaContent.class);
   }
 
 }

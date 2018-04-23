@@ -4,9 +4,12 @@ package intellij.haskell.psi.impl;
 import com.intellij.lang.ASTNode;
 import com.intellij.psi.PsiElementVisitor;
 import com.intellij.psi.util.PsiTreeUtil;
-import intellij.haskell.psi.*;
+import intellij.haskell.psi.HaskellGeneralPragmaContent;
+import intellij.haskell.psi.HaskellInlinelikePragma;
+import intellij.haskell.psi.HaskellVisitor;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
+
+import java.util.List;
 
 public class HaskellInlinelikePragmaImpl extends HaskellCompositeElementImpl implements HaskellInlinelikePragma {
 
@@ -24,27 +27,9 @@ public class HaskellInlinelikePragmaImpl extends HaskellCompositeElementImpl imp
   }
 
   @Override
-  @Nullable
-  public HaskellInlineFusedPragma getInlineFusedPragma() {
-    return PsiTreeUtil.getChildOfType(this, HaskellInlineFusedPragma.class);
-  }
-
-  @Override
-  @Nullable
-  public HaskellInlineInnerPragma getInlineInnerPragma() {
-    return PsiTreeUtil.getChildOfType(this, HaskellInlineInnerPragma.class);
-  }
-
-  @Override
-  @Nullable
-  public HaskellInlinePragma getInlinePragma() {
-    return PsiTreeUtil.getChildOfType(this, HaskellInlinePragma.class);
-  }
-
-  @Override
-  @Nullable
-  public HaskellNoinlinePragma getNoinlinePragma() {
-    return PsiTreeUtil.getChildOfType(this, HaskellNoinlinePragma.class);
+  @NotNull
+  public List<HaskellGeneralPragmaContent> getGeneralPragmaContentList() {
+    return PsiTreeUtil.getChildrenOfTypeAsList(this, HaskellGeneralPragmaContent.class);
   }
 
 }
