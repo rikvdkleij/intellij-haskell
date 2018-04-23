@@ -136,6 +136,10 @@ class HaskellModuleBuilder extends TemplateModuleBuilder(null, HaskellModuleType
     Array()
   }
 
+  override def createFinishingSteps(wizardContext: WizardContext, modulesProvider: ModulesProvider): Array[ModuleWizardStep] = {
+    Array()
+  }
+
   override def createProject(name: String, path: String): Project = ProjectManager.getInstance.createProject(name, path)
 
   // To prevent first page of wizard is empty.
@@ -162,7 +166,6 @@ class HaskellModuleWizardStep(wizardContext: WizardContext, haskellModuleBuilder
 
 object HaskellModuleBuilder {
 
-  private final val IntelliJHaskellLibName = "lib"
   private final val PackagePattern = """([\w\-]+)\s([\d\.]+)""".r
 
   def createCabalInfo(project: Project, modulePath: String, packageRelativePath: String): Option[CabalInfo] = {
@@ -174,7 +177,7 @@ object HaskellModuleBuilder {
   }
 
   def getStackWorkDirectory(moduleBuilder: ModuleBuilder): File = {
-    new File(moduleBuilder.getContentEntryPath, ".stack-work")
+    new File(moduleBuilder.getContentEntryPath, GlobalInfo.StackWorkDirName)
   }
 
   private def getModuleRootDirectory(packagePath: String, modulePath: String): Option[File] = {
@@ -207,8 +210,6 @@ object HaskellModuleBuilder {
   def addLibrarySources(project: Project): Unit = {
     HaskellSdkType.getStackPath(project).foreach(stackPath => {
 
-      removeOldIdeaHaskellLibDirectory(project)
-
       val projectLibDirectory = getProjectLibDirectory(project)
       if (!projectLibDirectory.exists()) {
         FileUtil.createDirectory(projectLibDirectory)
@@ -233,15 +234,8 @@ object HaskellModuleBuilder {
     })
   }
 
-  private def removeOldIdeaHaskellLibDirectory(project: Project): Unit = {
-    val oldLibDir = new File(project.getBasePath, ".ideaHaskellLib")
-    if (oldLibDir.exists()) {
-      FileUtil.delete(oldLibDir)
-    }
-  }
-
   private def getProjectLibDirectory(project: Project): File = {
-    new File(new File(GlobalInfo.getIntelliJHaskellDirectory, IntelliJHaskellLibName), project.getName)
+    new File(new File(GlobalInfo.getLibrarySourcesPath), project.getName)
   }
 
   private def createPackageInfos(project: Project, dependencyLines: Seq[String], projectModules: Iterable[Module]): Seq[HaskellPackageInfo] = {
