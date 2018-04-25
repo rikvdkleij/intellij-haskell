@@ -139,7 +139,7 @@ nhaddock_start      = {left_brace}{dash}{white_char}?{vertical_bar}
         int state = yystate();
         yybegin(YYINITIAL);
         zzStartRead = haddockStart;
-        return HS_NHADDOCK;
+        return HS_NOT_TERMINATED_COMMENT;
     }
 
     {ncomment_end} {
@@ -157,7 +157,7 @@ nhaddock_start      = {left_brace}{dash}{white_char}?{vertical_bar}
     .|{white_char}|{newline} {}
 }
 
-{nhaddock_start}({white_char} | {newline} | "-" | [^#\-\}]) {
+{nhaddock_start} {
     yybegin(NHADDOCK);
     haddockDepth = 0;
     haddockStart = getTokenStart();
@@ -173,7 +173,7 @@ nhaddock_start      = {left_brace}{dash}{white_char}?{vertical_bar}
         int state = yystate();
         yybegin(YYINITIAL);
         zzStartRead = commentStart;
-        return HS_NCOMMENT;
+        return HS_NOT_TERMINATED_COMMENT;
     }
 
     {ncomment_end} {
@@ -191,11 +191,12 @@ nhaddock_start      = {left_brace}{dash}{white_char}?{vertical_bar}
     .|{white_char}|{newline} {}
 }
 
-{ncomment_start}({white_char} | {newline} | "-" | [^#\-\}]) {
+{ncomment_start}[^\#\-\}] {
     yybegin(NCOMMENT);
     commentDepth = 0;
     commentStart = getTokenStart();
 }
+
 
 <QQ> {
     {left_bracket} ({var_id}|{con_id}|{dot})* {vertical_bar} {
@@ -233,13 +234,14 @@ nhaddock_start      = {left_brace}{dash}{white_char}?{vertical_bar}
     {newline}             { return HS_NEWLINE; }
 
     {haddock}             { return HS_HADDOCK; }
+    {pragma_start}        { return HS_PRAGMA_START; }
+    {pragma_end}          { return HS_PRAGMA_END; }
+
     {comment}             { return HS_COMMENT; }
     {white_space}         { return com.intellij.psi.TokenType.WHITE_SPACE; }
 
     {ncomment_start}      { return HS_NCOMMENT_START; }
     {ncomment_end}        { return HS_NCOMMENT_END; }
-    {pragma_start}        { return HS_PRAGMA_START; }
-    {pragma_end}          { return HS_PRAGMA_END; }
 
     // not listed as reserved identifier but have meaning in certain context,
     // let's say specialreservedid
