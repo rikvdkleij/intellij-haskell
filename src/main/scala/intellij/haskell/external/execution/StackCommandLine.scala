@@ -37,7 +37,7 @@ object StackCommandLine {
   final val NoDiagnosticsShowCaretFlag = "-fno-diagnostics-show-caret"
 
   def run(project: Project, arguments: Seq[String], timeoutInMillis: Long = CommandLine.DefaultTimeout.toMillis,
-          ignoreExitCode: Boolean = false): Option[ProcessOutput] = {
+          ignoreExitCode: Boolean = false, logOutput: Boolean = false): Option[ProcessOutput] = {
     HaskellSdkType.getStackPath(project).map(stackPath => {
       CommandLine.run(
         Some(project),
@@ -45,9 +45,16 @@ object StackCommandLine {
         stackPath,
         arguments,
         timeoutInMillis.toInt,
-        ignoreExitCode = ignoreExitCode
+        ignoreExitCode = ignoreExitCode,
+        logOutput = logOutput
       )
     })
+  }
+
+  def installTool(project: Project, toolName: String): Option[ProcessOutput] = {
+    import intellij.haskell.GlobalInfo._
+    val arguments = Seq("--stack-root", toolsStackRootPath, "--resolver", StackageLtsVersion, "--system-ghc", "--local-bin-path", toolsBinPath, "install", toolName)
+    run(project, arguments, -1, logOutput = true)
   }
 
   def build(project: Project, buildTarget: String, logBuildResult: Boolean): Option[ProcessOutput] = {

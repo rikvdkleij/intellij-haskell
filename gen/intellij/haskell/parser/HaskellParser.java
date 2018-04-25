@@ -1385,7 +1385,7 @@ public class HaskellParser implements PsiParser, LightPsiParser {
   }
 
   /* ********************************************************** */
-  // COMMENT | NCOMMENT | NCOMMENT_START | NCOMMENT_END | HADDOCK | NHADDOCK
+  // COMMENT | NCOMMENT | NCOMMENT_START | NCOMMENT_END | HADDOCK | NHADDOCK | NOT_TERMINATED_COMMENT
   public static boolean comments(PsiBuilder b, int l) {
     if (!recursion_guard_(b, l, "comments")) return false;
     boolean r;
@@ -1396,6 +1396,7 @@ public class HaskellParser implements PsiParser, LightPsiParser {
     if (!r) r = consumeToken(b, HS_NCOMMENT_END);
     if (!r) r = consumeToken(b, HS_HADDOCK);
     if (!r) r = consumeToken(b, HS_NHADDOCK);
+    if (!r) r = consumeToken(b, HS_NOT_TERMINATED_COMMENT);
     exit_section_(b, l, m, r, false, null);
     return r;
   }

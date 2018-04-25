@@ -22,12 +22,12 @@ import com.intellij.openapi.progress.{PerformInBackgroundOption, ProgressIndicat
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.Messages
 import com.intellij.openapi.vfs.VirtualFileManager
-import intellij.haskell.HaskellNotificationGroup
 import intellij.haskell.external.execution.StackCommandLine
 import intellij.haskell.external.execution.StackCommandLine.build
 import intellij.haskell.external.repl.StackReplsManager
 import intellij.haskell.module.HaskellModuleBuilder
 import intellij.haskell.util.HaskellProjectUtil
+import intellij.haskell.{GlobalInfo, HaskellNotificationGroup}
 
 object StackProjectManager {
 
@@ -75,6 +75,8 @@ object StackProjectManager {
             getStackProjectManager(project).foreach(_.building = true)
             try {
               try {
+                // Stack update
+
                 progressIndicator.setText("Busy with building project")
 
                 val result = StackCommandLine.buildProjectDependenciesInMessageView(project)
@@ -129,12 +131,12 @@ object StackProjectManager {
                 }
               })
 
-              progressIndicator.setText(s"Busy with building ${HLintComponent.HlintName}")
-              StackCommandLine.build(project, HLintComponent.HlintName, logBuildResult = true)
+              progressIndicator.setText(s"Busy with installing ${HLintComponent.HLintName} in ${GlobalInfo.toolsBinPath}")
+              StackCommandLine.installTool(project, HLintComponent.HLintName)
               getStackProjectManager(project).foreach(_.hlintAvailable = true)
 
-              progressIndicator.setText(s"Busy with building ${HoogleComponent.HoogleName}")
-              StackCommandLine.build(project, HoogleComponent.HoogleName, logBuildResult = true)
+              progressIndicator.setText(s"Busy with installing ${HoogleComponent.HoogleName} in ${GlobalInfo.toolsBinPath}")
+              StackCommandLine.installTool(project, HoogleComponent.HoogleName)
               getStackProjectManager(project).foreach(_.hoogleAvailable = true)
 
 

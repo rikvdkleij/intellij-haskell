@@ -29,7 +29,7 @@ import scala.collection.JavaConverters._
 import scala.concurrent.duration._
 
 object CommandLine {
-  val DefaultTimeout: FiniteDuration = 3.seconds
+  val DefaultTimeout: FiniteDuration = 30.seconds
 
   def run(project: Option[Project], workDir: String, commandPath: String, arguments: Seq[String], timeoutInMillis: Long = DefaultTimeout.toMillis,
           notifyBalloonError: Boolean = false, ignoreExitCode: Boolean = false, logOutput: Boolean = false): ProcessOutput = {

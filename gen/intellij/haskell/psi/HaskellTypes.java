@@ -149,6 +149,7 @@ public interface HaskellTypes {
   IElementType HS_NEWLINE = new HaskellTokenType("NEWLINE");
   IElementType HS_NEWTYPE = new HaskellTokenType("NEWTYPE");
   IElementType HS_NHADDOCK = new HaskellTokenType("NHADDOCK");
+  IElementType HS_NOT_TERMINATED_COMMENT = new HaskellTokenType("NOT_TERMINATED_COMMENT");
   IElementType HS_OCTAL = new HaskellTokenType("OCTAL");
   IElementType HS_OF = new HaskellTokenType("OF");
   IElementType HS_PRAGMA_END = new HaskellTokenType("PRAGMA_END");

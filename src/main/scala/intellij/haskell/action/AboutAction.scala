@@ -19,7 +19,7 @@ package intellij.haskell.action
 import com.intellij.openapi.actionSystem.{AnAction, AnActionEvent}
 import com.intellij.openapi.ui.Messages
 import com.intellij.openapi.util.SystemInfo
-import intellij.haskell.external.component.{HLintComponent, StackProjectManager}
+import intellij.haskell.external.component.{HLintComponent, HoogleComponent, StackProjectManager}
 import intellij.haskell.external.execution.{CommandLine, StackCommandLine}
 import intellij.haskell.settings.HaskellSettingsState
 import intellij.haskell.util.HaskellEditorUtil
@@ -46,8 +46,8 @@ class AboutAction extends AnAction {
     messages.+=(s"${boldToolName("Stack")} version: " + StackCommandLine.run(project, Seq("--numeric-version")).map(_.getStdout).getOrElse("-"))
     messages.+=(s"${boldToolName("GHC")}: " + StackCommandLine.run(project, Seq("exec", "--", "ghc", "--version")).map(_.getStdout).getOrElse("-"))
     messages.+=(s"${boldToolName("Intero")}: " + StackCommandLine.run(project, Seq("exec", "--", "intero", "--version")).map(_.getStdout).getOrElse("-"))
-    messages.+=(s"${boldToolName("HLint")}: " + StackCommandLine.run(project, Seq("exec", "--", HLintComponent.HlintName, "--version")).map(_.getStdout).getOrElse("-"))
-    messages.+=(s"${boldToolName("Hoogle")}: " + StackCommandLine.run(project, Seq("exec", "--", "hoogle", "--version")).map(_.getStdout).getOrElse("-"))
+    messages.+=(s"${boldToolName("HLint")}: " + HLintComponent.versionInfo(project))
+    messages.+=(s"${boldToolName("Hoogle")}: " + HoogleComponent.versionInfo(project))
     messages.+=(s"${boldToolName("Hindent")}: " + HaskellSettingsState.getHindentPath(project).map(hp =>
       CommandLine.run(None, project.getBasePath, hp, Seq("--version")).getStdout).getOrElse("-"))
     messages.+=(s"${boldToolName("Stylish-haskell")}: " + HaskellSettingsState.getStylishHaskellPath(project).map(sh =>
