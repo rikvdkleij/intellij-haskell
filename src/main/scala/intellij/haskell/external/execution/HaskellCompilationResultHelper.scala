@@ -28,8 +28,7 @@ object HaskellCompilationResultHelper {
   def createCompilationResult(currentPsiFile: Option[PsiFile], errorLines: Seq[String], failed: Boolean): CompilationResult = {
     val filePath = currentPsiFile.map(HaskellFileUtil.getAbsolutePath)
 
-    // `distinct` because of https://github.com/commercialhaskell/intero/issues/258
-    val compilationProblems = errorLines.distinct.flatMap(l => parseErrorLine(filePath, l))
+    val compilationProblems = errorLines.flatMap(l => parseErrorLine(filePath, l))
 
     val currentFileProblems = compilationProblems.flatMap(convertToCompilationProblemInCurrentFile)
     val otherFileProblems = compilationProblems.diff(currentFileProblems)
