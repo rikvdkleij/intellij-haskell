@@ -75,7 +75,8 @@ object StackProjectManager {
             getStackProjectManager(project).foreach(_.building = true)
             try {
               try {
-                // Stack update
+                progressIndicator.setText("Busy with updating the Stack package index")
+                StackCommandLine.executeInMessageView(project, Seq("update"))
 
                 progressIndicator.setText("Busy with building project")
 

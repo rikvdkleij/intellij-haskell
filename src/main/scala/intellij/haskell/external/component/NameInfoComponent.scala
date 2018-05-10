@@ -16,11 +16,7 @@
 
 package intellij.haskell.external.component
 
-import java.util.concurrent.Executors
-
-import com.google.common.cache.{CacheBuilder, CacheLoader}
-import com.google.common.util.concurrent.{ListenableFuture, ListenableFutureTask, UncheckedExecutionException}
-import com.intellij.openapi.progress.ProcessCanceledException
+import com.github.blemale.scaffeine.{LoadingCache, Scaffeine}
 import com.intellij.openapi.project.Project
 import com.intellij.psi.{PsiElement, PsiFile}
 import intellij.haskell.external.repl.ProjectStackRepl.Failed
@@ -30,156 +26,86 @@ import intellij.haskell.psi._
 import intellij.haskell.util.StringUtil.escapeString
 import intellij.haskell.util.{HaskellProjectUtil, StringUtil}
 
-import scala.collection.JavaConverters._
-
 private[component] object NameInfoComponent {
+
+  import intellij.haskell.external.component.NameInfoComponentResult._
 
   private final val ProjectInfoPattern = """(.+)-- Defined at (.+):([\d]+):([\d]+)""".r
   private final val LibraryModuleInfoPattern = """(.+)-- Defined in [`‘]([\w\.\-]+):([\w\.\-]+)['’]""".r
   private final val ModuleInfoPattern = """(.+)-- Defined in [`‘]([\w\.\-]+)['’]""".r
   private final val InfixInfoPattern = """(infix.+)""".r
 
-  private final val Executor = Executors.newCachedThreadPool()
+  private final val Cache: LoadingCache[Key, NameInfoResult] = Scaffeine().build((k: Key) => findNameInfos(k))
 
-  private case class Key(psiFile: PsiFile, name: String, forceGetInfo: Boolean)
+  private case class Key(psiFile: PsiFile, name: String)
 
-  private case class ModuleAndNameKey(project: Project, moduleName: String, name: String)
+  def findNameInfo(psiElement: PsiElement): Option[NameInfoResult] = {
+    HaskellPsiUtil.findQualifiedNameParent(psiElement).flatMap(p => findNameInfo(p))
+  }
 
-  private case class Result(nameInfos: Either[NoNameInfo, Iterable[NameInfo]])
-
-  private final val Cache = CacheBuilder.newBuilder()
-    .build(
-      new CacheLoader[Key, Result] {
-
-        override def load(key: Key): Result = {
-          Result(findNameInfos(key, reload = false))
-        }
-
-        override def reload(key: Key, oldResult: Result): ListenableFuture[Result] = {
-          val task = ListenableFutureTask.create[Result](() => {
-            Result(findNameInfos(key, reload = true))
-          })
-          Executor.execute(task)
-          task
-        }
-
-        private def findNameInfos(key: Key, reload: Boolean): Either[NoNameInfo, Iterable[NameInfo]] = {
-          val psiFile = key.psiFile
-          val project = psiFile.getProject
-          val name = key.name
-          HaskellProjectUtil.isProjectFile(psiFile).map(isProjectFile => {
-            if (isProjectFile) {
-              if (!reload && !key.forceGetInfo && LoadComponent.isBusy(psiFile)) {
-                Left(ReplIsLoading)
-              } else {
-                findInfoForProjectIdentifier(project, psiFile, name).map(output => createNameInfos(project, output)) match {
-                  case Some(nis) => Right(nis)
-                  case None => Left(ReplNotAvailable)
-                }
-              }
-            } else {
-              val moduleName = HaskellPsiUtil.findModuleName(psiFile, runInRead = true)
-              moduleName.flatMap(mn => StackReplsManager.getGlobalRepl(project).flatMap(_.findInfo(mn, name))).map(output => createNameInfos(project, output)) match {
-                case Some(nis) => Right(nis)
-                case None => Left(ReplNotAvailable)
-              }
-            }
-          }).getOrElse(Left(ReplNotAvailable))
-        }
-
-        private def findInfoForProjectIdentifier(project: Project, psiFile: PsiFile, name: String): Option[StackReplOutput] = {
-          if (LoadComponent.isLoaded(psiFile).exists(_ != Failed)) {
-            StackReplsManager.getProjectRepl(psiFile).flatMap(_.findInfo(psiFile, name))
-          } else {
-            None
-          }
-        }
-      }
-    )
-
-  private final val ModuleAndNameCache = CacheBuilder.newBuilder()
-    .build(
-      new CacheLoader[ModuleAndNameKey, Result] {
-
-        override def load(key: ModuleAndNameKey): Result = {
-          Result(findNameInfos(key))
-        }
-
-        override def reload(key: ModuleAndNameKey, oldResult: Result): ListenableFuture[Result] = {
-          val task = ListenableFutureTask.create[Result](() => {
-            findNameInfos(key) match {
-              case newResult@Right(nis) if nis.nonEmpty => Result(newResult)
-              case _ => oldResult
-            }
-          })
-          Executor.execute(task)
-          task
-        }
-
-        private def findNameInfos(key: ModuleAndNameKey): Either[NoNameInfo, Iterable[NameInfo]] = {
-          val output = StackReplsManager.getGlobalRepl(key.project).flatMap(_.findInfo(key.moduleName, key.name))
-          output match {
-            case Some(o) => Right(createNameInfos(key.project, o))
+  private def findNameInfos(key: Key): NameInfoResult = {
+    val psiFile = key.psiFile
+    val project = psiFile.getProject
+    val name = key.name
+    val isProjectFile = HaskellProjectUtil.isProjectFile(psiFile)
+    if (isProjectFile) {
+      if (LoadComponent.isBusy(psiFile)) {
+        Left(ReplIsBusy)
+      } else {
+        if (LoadComponent.isLoaded(psiFile).exists(_ != Failed)) {
+          StackReplsManager.getProjectRepl(psiFile).flatMap(_.findInfo(psiFile, name)) match {
             case None => Left(ReplNotAvailable)
+            case Some(o) => Right(createNameInfos(project, o))
           }
+        } else {
+          Left(NoInfoAvailable)
         }
-      })
-
-  def findNameInfo(psiElement: PsiElement, forceGetInfo: Boolean): Iterable[NameInfo] = {
-    HaskellPsiUtil.findQualifiedNameParent(psiElement).map(p => findNameInfo(p, forceGetInfo)).getOrElse(Iterable())
-  }
-
-  def findNameInfo(qualifiedNameElement: HaskellQualifiedNameElement, forceGetInfo: Boolean): Iterable[NameInfo] = {
-    Option(qualifiedNameElement.getContainingFile).map(_.getOriginalFile).map(pf =>
-      Key(pf, qualifiedNameElement.getName.replaceAll("""\s+""", ""), forceGetInfo)).map(key => {
-
-      val otherKey = key.copy(forceGetInfo = !forceGetInfo)
-      Option(Cache.getIfPresent(otherKey)).flatMap(_.nameInfos.toOption) match {
-        case Some(nis) => nis
-        case None =>
-          try {
-            Cache.get(key).nameInfos match {
-              case Right(nis) => nis
-              case Left(ReplNotAvailable) =>
-                Cache.invalidate(key)
-                Iterable()
-              case Left(ReplIsLoading) =>
-                Cache.refresh(key)
-                Iterable()
+      }
+    } else {
+      val moduleName = HaskellPsiUtil.findModuleName(psiFile, runInRead = true)
+      moduleName match {
+        case None => Left(NoInfoAvailable)
+        case Some(mn) =>
+          StackReplsManager.getGlobalRepl(project).flatMap(_.findInfo(mn, name)) match {
+            case None => Left(ReplNotAvailable)
+            case Some(o) => createNameInfos(project, o) match {
+              case infos if infos.nonEmpty => Right(infos)
+              case _ => Left(NoInfoAvailable)
             }
           }
-          catch {
-            case _: UncheckedExecutionException => Iterable()
-            case _: ProcessCanceledException => Iterable()
-          }
       }
-    }).getOrElse(Iterable())
+    }
   }
 
-  def findNameInfoByModuleName(project: Project, moduleName: String, name: String): Iterable[NameInfo] = {
-    try {
-      val key = ModuleAndNameKey(project, moduleName, name)
-      ModuleAndNameCache.get(key).nameInfos match {
-        case Right(nis) => nis
-        case Left(ReplNotAvailable) =>
-          Cache.invalidate(key)
-          Iterable()
-        case _ => Iterable()
+  def findNameInfo(qualifiedNameElement: HaskellQualifiedNameElement): Option[NameInfoResult] = {
+    Option(qualifiedNameElement.getContainingFile).map(_.getOriginalFile).map(pf =>
+      Key(pf, qualifiedNameElement.getName.replaceAll("""\s+""", ""))).map(key => {
+      Cache.getIfPresent(key) match {
+        case Some(r) => r
+        case None =>
+          val result = Cache.get(key)
+          result match {
+            case Right(_) => result
+            case Left(NoInfoAvailable) =>
+              result
+            case Left(ReplNotAvailable) =>
+              Cache.invalidate(key)
+              result
+            case Left(ReplIsBusy) =>
+              Cache.invalidate(key)
+              result
+          }
       }
-    }
-    catch {
-      case _: UncheckedExecutionException => None
-      case _: ProcessCanceledException => None
-    }
+    })
   }
 
   def invalidate(psiFile: PsiFile): Unit = {
-    Cache.asMap().asScala.filter(_._1.psiFile == psiFile).keys.foreach(Cache.invalidate)
+    Cache.asMap().filter(_._1.psiFile == psiFile).keys.foreach(Cache.invalidate)
   }
 
   def invalidateAll(project: Project): Unit = {
-    Cache.asMap().asScala.map(_._1.psiFile).filter(_.getProject == project).foreach(invalidate)
-    ModuleAndNameCache.asMap().asScala.filter(_._1.project == project).keys.foreach(ModuleAndNameCache.invalidate)
+    Cache.asMap().map(_._1.psiFile).filter(_.getProject == project).foreach(invalidate)
+    NameInfoByModuleComponent.invalidateAll(project)
   }
 
   private def createNameInfos(project: Project, output: StackReplOutput): Iterable[NameInfo] = {
@@ -203,27 +129,60 @@ private[component] object NameInfoComponent {
     result
   }
 
-  private sealed trait NoNameInfo
+  object NameInfoByModuleComponent {
 
-  private case object ReplNotAvailable extends NoNameInfo
+    private case class Key(project: Project, moduleName: String, name: String)
 
-  private case object ReplIsLoading extends NoNameInfo
+    private final val Cache: LoadingCache[Key, NameInfoResult] = Scaffeine().build((k: Key) => loadByModuleAndName(k))
+
+    private def loadByModuleAndName(key: Key): NameInfoResult = {
+      findNameInfos(key)
+    }
+
+    private def findNameInfos(key: Key): Either[NoInfo, Iterable[NameInfo]] = {
+      val output = StackReplsManager.getGlobalRepl(key.project).flatMap(_.findInfo(key.moduleName, key.name))
+      output match {
+        case Some(o) => Right(createNameInfos(key.project, o))
+        case None => Left(ReplNotAvailable)
+      }
+    }
+
+    def findNameInfoByModuleName(project: Project, moduleName: String, name: String): NameInfoResult = {
+      val key = Key(project, moduleName, name)
+      val result = Cache.get(key)
+      result match {
+        case Right(_) => result
+        case Left(_) =>
+          Cache.invalidate(key)
+          result
+      }
+    }
+
+    private[component] def invalidateAll(project: Project): Unit = {
+      Cache.asMap().filter(_._1.project == project).keys.foreach(Cache.invalidate)
+    }
+  }
 
 }
 
-sealed trait NameInfo {
+object NameInfoComponentResult {
+  type NameInfoResult = Either[NoInfo, Iterable[NameInfo]]
 
-  def declaration: String
+  sealed trait NameInfo {
 
-  def shortenedDeclaration: String = StringUtil.shortenHaskellDeclaration(declaration)
+    def declaration: String
 
-  def escapedDeclaration: String = escapeString(declaration).replaceAll("""\s+""", " ")
+    def shortenedDeclaration: String = StringUtil.shortenHaskellDeclaration(declaration)
+
+    def escapedDeclaration: String = escapeString(declaration).replaceAll("""\s+""", " ")
+  }
+
+  case class ProjectNameInfo(declaration: String, filePath: String, lineNr: Int, columnNr: Int) extends NameInfo
+
+  case class LibraryNameInfo(declaration: String, moduleName: String) extends NameInfo
+
+  case class BuiltInNameInfo(declaration: String, libraryName: String, moduleName: String) extends NameInfo
+
+  case class InfixInfo(declaration: String) extends NameInfo
+
 }
-
-case class ProjectNameInfo(declaration: String, filePath: String, lineNr: Int, columnNr: Int) extends NameInfo
-
-case class LibraryNameInfo(declaration: String, moduleName: String) extends NameInfo
-
-case class BuiltInNameInfo(declaration: String, libraryName: String, moduleName: String) extends NameInfo
-
-case class InfixInfo(declaration: String) extends NameInfo

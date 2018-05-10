@@ -17,14 +17,13 @@
 package intellij.haskell.action
 
 import com.intellij.openapi.actionSystem.{AnAction, AnActionEvent}
-import com.intellij.openapi.application.ApplicationManager
-import com.intellij.openapi.editor.{Editor, SelectionModel}
+import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.project.Project
 import com.intellij.psi.{PsiElement, PsiFile}
 import intellij.haskell.editor.HaskellCompletionContributor
 import intellij.haskell.external.component.{HaskellComponentsManager, StackProjectManager}
 import intellij.haskell.psi._
-import intellij.haskell.util.{HaskellEditorUtil, StringUtil, TypeInfoUtil}
+import intellij.haskell.util.{HaskellEditorUtil, StringUtil}
 
 class ShowTypeAction extends AnAction {
 
@@ -33,46 +32,44 @@ class ShowTypeAction extends AnAction {
   }
 
   def actionPerformed(actionEvent: AnActionEvent) {
-    ActionUtil.findActionContext(actionEvent).foreach(actionContext => {
-      val editor = actionContext.editor
-      val psiFile = actionContext.psiFile
+    if (!StackProjectManager.isBuilding(actionEvent.getProject)) {
+      ActionUtil.findActionContext(actionEvent).foreach(actionContext => {
+        val editor = actionContext.editor
+        val psiFile = actionContext.psiFile
 
-      actionContext.selectionModel match {
-        case Some(sm) => HaskellComponentsManager.findTypeInfoForSelection(psiFile, sm) match {
-          case Some(ti) => HaskellEditorUtil.showHint(editor, StringUtil.escapeString(ti.typeSignature))
-          case None => HaskellEditorUtil.showHint(editor, "Could not determine type for selection")
-        }
-        case _ => Option(psiFile.findElementAt(editor.getCaretModel.getOffset)).foreach { psiElement =>
-          ShowTypeAction.showTypeHint(actionContext.project, editor, psiElement, psiFile)
-        }
-      }
-    })
-  }
-
-}
-
-object ShowTypeAction {
-  def showTypeSelectionHint(editor: Editor, psiFile: PsiFile, selectionModel: SelectionModel): Unit = {
-    HaskellComponentsManager.findTypeInfoForSelection(psiFile, selectionModel) match {
-      case Some(ti) => HaskellEditorUtil.showHint(editor, StringUtil.escapeString(ti.typeSignature))
-      case None => HaskellEditorUtil.showHint(editor, "Could not determine type for selection")
-    }
-  }
-
-  def showTypeHint(project: Project, editor: Editor, psiElement: PsiElement, psiFile: PsiFile, sticky: Boolean = false): Unit = {
-    if (!StackProjectManager.isBuilding(project)) {
-      ApplicationManager.getApplication.executeOnPooledThread(new Runnable {
-        override def run(): Unit = {
-          TypeInfoUtil.preloadTypesAround(psiElement)
+        actionContext.selectionModel match {
+          case Some(sm) => HaskellComponentsManager.findTypeInfoForSelection(psiFile, sm) match {
+            case Some(Right(info)) => HaskellEditorUtil.showHint(editor, StringUtil.escapeString(info.typeSignature))
+            case _ => HaskellEditorUtil.showHint(editor, "Could not determine type for selection")
+          }
+          case _ => ()
+            Option(psiFile.findElementAt(editor.getCaretModel.getOffset)).foreach { psiElement =>
+            ShowTypeAction.showTypeHint(actionContext.project, editor, psiElement, psiFile)
+          }
         }
       })
     }
+    else {
+      HaskellEditorUtil.showHaskellSupportIsNotAvailableWhileBuilding(actionEvent.getProject)
+    }
+  }
+}
 
-    HaskellComponentsManager.findTypeInfoForElement(psiElement, forceGetInfo = true) match {
-      case Some(ti) =>
-        HaskellEditorUtil.showStatusBarInfoMessage(project, ti.typeSignature)
-        HaskellEditorUtil.showHint(editor, StringUtil.escapeString(ti.typeSignature), sticky)
-      case None if HaskellPsiUtil.findExpressionParent(psiElement).isDefined =>
+object ShowTypeAction {
+
+  def showTypeHint(project: Project, editor: Editor, psiElement: PsiElement, psiFile: PsiFile, sticky: Boolean = false): Unit = {
+    // FIXME For now disabled to improve to responsiveness
+//    ApplicationManager.getApplication.executeOnPooledThread(new Runnable {
+//      override def run(): Unit = {
+//        TypeInfoUtil.preloadTypesAround(psiElement)
+//      }
+//    })
+
+    HaskellComponentsManager.findTypeInfoForElement(psiElement) match {
+      case Some(Right(info)) =>
+        HaskellEditorUtil.showStatusBarInfoMessage(project, info.typeSignature)
+        HaskellEditorUtil.showHint(editor, StringUtil.escapeString(info.typeSignature), sticky)
+      case _ if HaskellPsiUtil.findExpressionParent(psiElement).isDefined =>
         val moduleNames = HaskellPsiUtil.findImportDeclarations(psiFile).flatMap(_.getModuleName)
         val declaration = HaskellPsiUtil.findQualifiedNameParent(psiElement).flatMap(qualifiedNameElement => {
           val name = qualifiedNameElement.getName

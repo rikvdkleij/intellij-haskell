@@ -18,11 +18,12 @@ package intellij.haskell.external.repl
 
 import java.util.concurrent.ConcurrentHashMap
 
+import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.project.Project
 import com.intellij.psi.PsiFile
 import intellij.haskell.external.repl.StackRepl.StackReplOutput
 import intellij.haskell.external.repl.StackReplsManager.StackComponentInfo
-import intellij.haskell.util.HaskellFileUtil
+import intellij.haskell.util.{HaskellFileUtil, ScalaUtil}
 
 import scala.collection.JavaConverters._
 
@@ -42,7 +43,7 @@ class ProjectStackRepl(project: Project, componentInfo: StackComponentInfo, repl
 
   private case class FileInfo(loadFailed: Boolean)
 
-  private[this] val allLoadedPsiFileInfos = new ConcurrentHashMap[PsiFile, FileInfo]().asScala
+  private[this] val allLoadedPsiFileInfos = new ConcurrentHashMap[String, FileInfo]().asScala
 
   @volatile
   private var busy = false
@@ -53,12 +54,12 @@ class ProjectStackRepl(project: Project, componentInfo: StackComponentInfo, repl
 
   def findTypeInfoFor(psiFile: PsiFile, startLineNr: Int, startColumnNr: Int, endLineNr: Int, endColumnNr: Int, expression: String): Option[StackReplOutput] = {
     val filePath = HaskellFileUtil.getAbsolutePath(psiFile)
-    findInfoForCommand(psiFile, s":type-at $filePath $startLineNr $startColumnNr $endLineNr $endColumnNr $expression")
+    findInfoForCommand(psiFile, s":type-at $filePath $startLineNr $startColumnNr $endLineNr $endColumnNr $expression", setBusy = false)
   }
 
   def findLocationInfoFor(psiFile: PsiFile, startLineNr: Int, startColumnNr: Int, endLineNr: Int, endColumnNr: Int, expression: String): Option[StackReplOutput] = {
     val filePath = HaskellFileUtil.getAbsolutePath(psiFile)
-    findInfoForCommand(psiFile, s":loc-at $filePath $startLineNr $startColumnNr $endLineNr $endColumnNr $expression")
+    findInfoForCommand(psiFile, s":loc-at $filePath $startLineNr $startColumnNr $endLineNr $endColumnNr $expression", setBusy = false)
   }
 
   def findInfo(psiFile: PsiFile, name: String): Option[StackReplOutput] = {
@@ -74,9 +75,13 @@ class ProjectStackRepl(project: Project, componentInfo: StackComponentInfo, repl
     }
   }
 
+  private final val OkModulesLoaded = "Ok, modules loaded: "
+  private final val ModuleListRegEx = """([\w\,\s]+)\."""
+  private final val OkModulesLoadedPattern = (OkModulesLoaded + ModuleListRegEx).r
+
   def load(psiFile: PsiFile, reload: Boolean): Option[(StackReplOutput, Boolean)] = {
     val filePath = getFilePath(psiFile)
-    this.synchronized {
+    synchronized {
       val output = if (reload) {
         executeWithSettingBusy(s":reload")
       } else {
@@ -85,19 +90,32 @@ class ProjectStackRepl(project: Project, componentInfo: StackComponentInfo, repl
       output match {
         case Some(o) =>
           val loadFailed = isLoadFailed(o)
+          o.stdoutLines.find(l => l.startsWith(OkModulesLoaded)).map(findLoadedModuleNames).foreach(_.foreach(mn => allLoadedPsiFileInfos.put(mn, FileInfo(loadFailed))))
+
           loadedPsiFileInfo = Some(PsiFileInfo(psiFile, loadFailed))
-          allLoadedPsiFileInfos.put(psiFile, FileInfo(loadFailed))
           Some(o, loadFailed)
         case _ =>
-          allLoadedPsiFileInfos.remove(psiFile)
+          allLoadedPsiFileInfos.clear()
           loadedPsiFileInfo = None
           None
       }
     }
   }
 
+  private def findLoadedModuleNames(line: String): Array[String] = {
+    def findModuleNames(moduleNameList: String): Array[String] = {
+      if (moduleNameList == "none") Array()
+      else moduleNameList.split(",")
+    }
+
+    line match {
+      case OkModulesLoadedPattern(moduleNameList) => findModuleNames(moduleNameList)
+      case _ => Array()
+    }
+  }
+
   def getModuleIdentifiers(moduleName: String, psiFile: PsiFile): Option[StackReplOutput] = {
-    findInfoForCommand(psiFile, s":browse! $moduleName")
+    findInfoForCommand(psiFile, s":browse! $moduleName", setBusy = true)
   }
 
   def getLocalModuleIdentifiers(moduleName: String, psiFile: PsiFile): Option[StackReplOutput] = {
@@ -106,7 +124,6 @@ class ProjectStackRepl(project: Project, componentInfo: StackComponentInfo, repl
 
   // To retrieve only library module names, it will first execute `load` to remove all modules from scope
   def findAvailableLibraryModuleNames(project: Project): Option[StackReplOutput] = synchronized {
-    loadedPsiFileInfo = None
     executeWithSettingBusy(":load", """:complete repl "import " """)
   }
 
@@ -114,15 +131,20 @@ class ProjectStackRepl(project: Project, componentInfo: StackComponentInfo, repl
     executeWithSettingBusy(":show language")
   }
 
-  private def findInfoForCommand(psiFile: PsiFile, command: String) = {
-    allLoadedPsiFileInfos.get(psiFile) match {
-      case Some(lf) if lf.loadFailed => Some(StackReplOutput())
-      case Some(_) =>
-        this.synchronized {
-          executeWithSettingBusy(command)
-        }
-      case None =>
-        executeWithLoad(psiFile, command)
+  private def findInfoForCommand(psiFile: PsiFile, command: String, setBusy: Boolean): Option[StackReplOutput] = {
+    val moduleName = ApplicationManager.getApplication.runReadAction(ScalaUtil.computable(HaskellFileUtil.getModuleName(psiFile)))
+    synchronized {
+      moduleName.flatMap(allLoadedPsiFileInfos.get) match {
+        case Some(lf) if lf.loadFailed => Some(StackReplOutput())
+        case Some(_) =>
+          if (setBusy) {
+            executeWithSettingBusy(command)
+          } else {
+            executeWithoutSettingBusy(Seq(command))
+          }
+        case None =>
+          executeWithLoad(psiFile, command)
+      }
     }
   }
 
@@ -145,10 +167,14 @@ class ProjectStackRepl(project: Project, componentInfo: StackComponentInfo, repl
   private def executeWithSettingBusy(commands: String*) = {
     try {
       busy = true
-      commands.map(c => execute(c)).lastOption.flatten
+      executeWithoutSettingBusy(commands)
     } finally {
       busy = false
     }
+  }
+
+  private def executeWithoutSettingBusy(commands: Seq[String]) = {
+    commands.map(c => execute(c)).lastOption.flatten
   }
 
   private def isLoadFailed(output: StackReplOutput): Boolean = {

@@ -27,7 +27,7 @@ import com.intellij.openapi.util.Key
 import com.intellij.openapi.vfs.CharsetToolkit
 import intellij.haskell.HaskellNotificationGroup
 import intellij.haskell.sdk.HaskellSdkType
-import intellij.haskell.util.{GhcVersion, HaskellFileUtil, HaskellProjectUtil}
+import intellij.haskell.util.{HaskellFileUtil, HaskellProjectUtil}
 
 import scala.collection.mutable.ListBuffer
 import scala.concurrent.SyncVar
@@ -37,16 +37,17 @@ object StackCommandLine {
   final val NoDiagnosticsShowCaretFlag = "-fno-diagnostics-show-caret"
 
   def run(project: Project, arguments: Seq[String], timeoutInMillis: Long = CommandLine.DefaultTimeout.toMillis,
-          ignoreExitCode: Boolean = false, logOutput: Boolean = false): Option[ProcessOutput] = {
+          ignoreExitCode: Boolean = false, logOutput: Boolean = false, workDir: Option[String] = None, notifyBalloonError: Boolean = false): Option[ProcessOutput] = {
     HaskellSdkType.getStackPath(project).map(stackPath => {
       CommandLine.run(
         Some(project),
-        project.getBasePath,
+        workDir.getOrElse(project.getBasePath),
         stackPath,
         arguments,
         timeoutInMillis.toInt,
         ignoreExitCode = ignoreExitCode,
-        logOutput = logOutput
+        logOutput = logOutput,
+        notifyBalloonError = notifyBalloonError
       )
     })
   }
@@ -54,7 +55,7 @@ object StackCommandLine {
   def installTool(project: Project, toolName: String): Option[ProcessOutput] = {
     import intellij.haskell.GlobalInfo._
     val arguments = Seq("--stack-root", toolsStackRootPath, "--resolver", StackageLtsVersion, "--system-ghc", "--local-bin-path", toolsBinPath, "install", toolName)
-    run(project, arguments, -1, logOutput = true)
+    run(project, arguments, -1, logOutput = true, workDir = Some(toolsStackRootPath), notifyBalloonError = true)
   }
 
   def build(project: Project, buildTarget: String, logBuildResult: Boolean): Option[ProcessOutput] = {
@@ -79,18 +80,15 @@ object StackCommandLine {
   }
 
   private def ghcOptions(project: Project) = {
-    HaskellProjectUtil.getGhcVersion(project).map(
-      ghcVersion =>
-        if (ghcVersion >= GhcVersion(8, 2, 1)) {
-          Seq("--ghc-options", NoDiagnosticsShowCaretFlag)
-        } else {
-          Seq()
-        }
-    ).getOrElse(Seq())
+    if (HaskellProjectUtil.setNoDiagnosticsShowCaretFlag(project)) {
+      Seq("--ghc-options", NoDiagnosticsShowCaretFlag)
+    } else {
+      Seq()
+    }
   }
 
   def buildProjectDependenciesInMessageView(project: Project): Option[Boolean] = {
-    StackCommandLine.executeInMessageView(project, Seq("build", "--fast", "--test", "--bench", "--no-run-tests", "--no-run-benchmarks", "--only-dependencies") ++ ghcOptions(project))
+    StackCommandLine.executeInMessageView(project, Seq("build", "--fast", "--test", "--bench", "--no-run-tests", "--no-run-benchmarks", "--only-dependencies"))
   }
 
   def buildProjectInMessageView(project: Project): Option[Boolean] = {

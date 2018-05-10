@@ -19,13 +19,13 @@ package intellij.haskell.util.index
 import java.util.Collections
 
 import com.intellij.openapi.fileTypes.FileType
-import com.intellij.openapi.project.Project
+import com.intellij.openapi.project.{DumbService, Project}
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.psi.search.{FileTypeIndex, GlobalSearchScope, GlobalSearchScopesCore}
 import com.intellij.util.indexing.FileBasedIndex.InputFilter
 import com.intellij.util.indexing._
 import com.intellij.util.io.{EnumeratorStringDescriptor, KeyDescriptor}
-import intellij.haskell.util.HaskellFileUtil
+import intellij.haskell.util.{HaskellFileUtil, ScalaUtil}
 import intellij.haskell.{HaskellFile, HaskellFileType}
 
 import scala.collection.JavaConverters._
@@ -71,7 +71,7 @@ object HaskellFileNameIndex {
   }
 
   private def getFilesByName(project: Project, name: String, searchScope: GlobalSearchScope): Iterable[VirtualFile] = {
-    FileBasedIndex.getInstance.getContainingFiles(HaskellFileNameIndex, name, searchScope).asScala
+    DumbService.getInstance(project).runReadActionInSmartMode(ScalaUtil.computable(FileBasedIndex.getInstance.getContainingFiles(HaskellFileNameIndex, name, searchScope).asScala))
   }
 }
 

@@ -46,20 +46,20 @@ object HaskellModuleNameIndex {
 
   def findHaskellFileByModuleName(project: Project, moduleName: String, searchScope: GlobalSearchScope): Option[HaskellFile] = {
     val projectFile = if (searchScope.isSearchInLibraries) {
-      findFilesByModuleName(moduleName, GlobalSearchScope.projectScope(project)).headOption
+      findFilesByModuleName(project, moduleName, GlobalSearchScope.projectScope(project)).headOption
     } else {
       None
     }
 
-    val virtualFile = projectFile.orElse(findFilesByModuleName(moduleName, searchScope).headOption)
+    val virtualFile = projectFile.orElse(findFilesByModuleName(project, moduleName, searchScope).headOption)
     virtualFile.flatMap(vf => HaskellFileUtil.convertToHaskellFile(project, vf))
   }
 
   def findHaskellFilesByModuleNameInAllScope(project: Project, moduleName: String): Iterable[HaskellFile] = {
-    HaskellFileUtil.convertToHaskellFiles(project, findFilesByModuleName(moduleName, GlobalSearchScope.allScope(project)))
+    HaskellFileUtil.convertToHaskellFiles(project, findFilesByModuleName(project, moduleName, GlobalSearchScope.allScope(project)))
   }
 
-  private def findFilesByModuleName(moduleName: String, searchScope: GlobalSearchScope): Iterable[VirtualFile] = {
+  private def findFilesByModuleName(project: Project, moduleName: String, searchScope: GlobalSearchScope): Iterable[VirtualFile] = {
     FileBasedIndex.getInstance.getContainingFiles(HaskellModuleNameIndex, moduleName, searchScope).asScala
   }
 }
@@ -74,7 +74,7 @@ class HaskellModuleNameIndex extends ScalaScalarIndexExtension[String] {
 
   override def getKeyDescriptor: KeyDescriptor[String] = HaskellModuleNameIndex.KeyDescriptor
 
-  override def getInputFilter = HaskellModuleNameIndex.HaskellFileFilter
+  override def getInputFilter: FileBasedIndex.InputFilter = HaskellModuleNameIndex.HaskellFileFilter
 
   override def dependsOnFileContent: Boolean = true
 

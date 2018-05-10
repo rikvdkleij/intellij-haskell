@@ -53,8 +53,8 @@ object TypeInfoUtil {
 
           namedElements.foreach(e => {
             if (activeTaskByProject.get(project).contains(true)) {
-              HaskellComponentsManager.findTypeInfoForElement(e, forceGetInfo = false)
-              // We have to wait for other requests which have more prio because those are on dispatch thread
+              HaskellComponentsManager.findTypeInfoForElement(e)
+              // We have to wait for other requests which have more priority because those are on dispatch thread
               Thread.sleep(100)
             } else {
               return

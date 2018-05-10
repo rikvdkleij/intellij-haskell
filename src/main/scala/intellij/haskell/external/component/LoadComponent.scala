@@ -30,7 +30,7 @@ import intellij.haskell.external.repl.ProjectStackRepl.{Failed, IsFileLoaded, Lo
 import intellij.haskell.external.repl.StackRepl.LibType
 import intellij.haskell.external.repl._
 import intellij.haskell.psi.HaskellPsiUtil
-import intellij.haskell.util.{HaskellFileUtil, HaskellProjectUtil, TypeInfoUtil}
+import intellij.haskell.util.{HaskellFileUtil, HaskellProjectUtil}
 
 private[component] object LoadComponent {
 
@@ -95,10 +95,11 @@ private[component] object LoadComponent {
                   val moduleName = HaskellPsiUtil.findModuleName(psiFile, runInRead = true)
                   moduleName.foreach(mn => BrowseModuleComponent.invalidateForModuleName(project, mn))
 
+                  // FIXME For now disabled to improve to responsiveness
                   // Only preload types for Lib targets because expressions in hspec files can be large....
-                  if (stackComponentInfo.exists(_.stanzaType == LibType)) {
-                    currentElement.foreach(TypeInfoUtil.preloadTypesAround)
-                  }
+//                  if (stackComponentInfo.exists(_.stanzaType == LibType)) {
+//                    currentElement.foreach(TypeInfoUtil.preloadTypesAround)
+//                  }
                 }
               }
             })

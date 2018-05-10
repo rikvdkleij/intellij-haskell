@@ -20,30 +20,36 @@ import com.intellij.lang.documentation.AbstractDocumentationProvider
 import com.intellij.openapi.project.Project
 import com.intellij.psi.PsiElement
 import intellij.haskell.HaskellNotificationGroup
+import intellij.haskell.external.component.NameInfoComponentResult.{BuiltInNameInfo, LibraryNameInfo, ProjectNameInfo}
 import intellij.haskell.psi.{HaskellPsiUtil, HaskellQualifiedNameElement}
-import intellij.haskell.util.HaskellProjectUtil
+import intellij.haskell.util.{HaskellEditorUtil, HaskellProjectUtil}
 
 class HaskellDocumentationProvider extends AbstractDocumentationProvider {
 
   override def generateDoc(psiElement: PsiElement, originalPsiElement: PsiElement): String = {
-    HaskellPsiUtil.findQualifiedNameParent(originalPsiElement) match {
-      case Some(ne) => findDocumentation(psiElement.getProject, ne).getOrElse("No documentation found")
-      case _ => s"No documentation because this is not Haskell identifier: ${psiElement.getText}"
+    val project = psiElement.getProject
+    if (!StackProjectManager.isBuilding(project)) {
+      HaskellPsiUtil.findQualifiedNameParent(originalPsiElement) match {
+        case Some(ne) => findDocumentation(project, ne).getOrElse("No documentation found")
+        case _ => s"No documentation because this is not Haskell identifier: ${psiElement.getText}"
+      }
+    } else {
+      HaskellEditorUtil.HaskellSupportIsNotAvailableWhileBuildingText
     }
   }
 
   private def findDocumentation(project: Project, namedElement: HaskellQualifiedNameElement): Option[String] = {
     val name = namedElement.getIdentifierElement.getName
-    val nameInfo = HaskellComponentsManager.findNameInfo(namedElement, forceGetInfo = true).headOption
+    val nameInfo = HaskellComponentsManager.findNameInfo(namedElement).flatMap(_.right.toOption)
     nameInfo match {
       case None =>
         HaskellNotificationGroup.logWarningEvent(project, s"No documentation because no info could be found for identifier: $name")
         None
       case Some(ni) =>
         val moduleName = ni match {
-          case (lei: LibraryNameInfo) => Option(lei.moduleName)
-          case (_: ProjectNameInfo) => HaskellPsiUtil.findModuleName(namedElement.getContainingFile, runInRead = true)
-          case (_: BuiltInNameInfo) => Some(HaskellProjectUtil.Prelude)
+          case lei: LibraryNameInfo => Option(lei.moduleName)
+          case _: ProjectNameInfo => HaskellPsiUtil.findModuleName(namedElement.getContainingFile, runInRead = true)
+          case _: BuiltInNameInfo => Some(HaskellProjectUtil.Prelude)
           case _ => None
         }
         HoogleComponent.findDocumentation(project, name, moduleName)

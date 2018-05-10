@@ -117,22 +117,19 @@ object HaskellSdkType {
   }
 
   def getStackPath(project: Project, notifyNoSdk: Boolean = true): Option[String] = {
-    HaskellProjectUtil.getProjectRootManager(project).flatMap(projectRootManager => {
-      val stackPath = Option(projectRootManager.getProjectSdk).map(_.getHomePath)
-      stackPath match {
-        case Some(_) => stackPath
-        case None =>
-          if (notifyNoSdk) {
-            HaskellNotificationGroup.logErrorBalloonEvent(project, "Path to Haskell Stack binary is not configured in Project SDK setting.")
-          }
-          None
-      }
-    })
+    val projectRootManager = HaskellProjectUtil.getProjectRootManager(project)
+    val stackPath = Option(projectRootManager.getProjectSdk).map(_.getHomePath)
+    stackPath match {
+      case Some(_) => stackPath
+      case None =>
+        if (notifyNoSdk) {
+          HaskellNotificationGroup.logErrorBalloonEvent(project, "Path to Haskell Stack binary is not configured in Project SDK setting.")
+        }
+        None
+    }
   }
 
   def getSdkName(project: Project): Option[String] = {
-    HaskellProjectUtil.getProjectRootManager(project).flatMap(projectRootManager => {
-      Option(projectRootManager.getProjectSdk).map(_.getName)
-    })
+    Option(HaskellProjectUtil.getProjectRootManager(project).getProjectSdk).map(_.getName)
   }
 }

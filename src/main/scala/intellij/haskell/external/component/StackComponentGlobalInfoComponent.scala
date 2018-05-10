@@ -16,107 +16,86 @@
 
 package intellij.haskell.external.component
 
-import java.util.concurrent.Executors
-
-import com.google.common.cache.{CacheBuilder, CacheLoader}
-import com.google.common.util.concurrent.{ListenableFuture, ListenableFutureTask, UncheckedExecutionException}
-import com.intellij.openapi.progress.ProcessCanceledException
+import com.github.blemale.scaffeine.{LoadingCache, Scaffeine}
 import com.intellij.openapi.project.Project
 import com.intellij.psi.PsiFile
 import intellij.haskell.external.repl.StackRepl.StackReplOutput
 import intellij.haskell.external.repl.StackReplsManager
 import intellij.haskell.external.repl.StackReplsManager.StackComponentInfo
 
-import scala.collection.JavaConverters._
-
 private[component] object StackComponentGlobalInfoComponent {
 
   private case class Key(project: Project, stackComponentInfo: StackComponentInfo)
 
-  private val executor = Executors.newCachedThreadPool()
+  private type Result = Either[NoInfo, StackComponentGlobalInfo]
 
-  private type Result = Either[NoStackComponentGlobalInfo, StackComponentGlobalInfo]
+  private final val Cache: LoadingCache[Key, Result] = Scaffeine().build((k: Key) => load(k))
 
-  private final val Cache = CacheBuilder.newBuilder()
-    .build(
-      new CacheLoader[Key, Result]() {
+  def load(key: Key): Result = {
+    if (LoadComponent.isBusy(key.project)) {
+      Left(ReplIsBusy)
+    } else {
+      createStackInfo(key)
+    }
+  }
 
-        override def load(key: Key): Result = {
-          if (LoadComponent.isBusy(key.project)) {
-            Left(ReplNotAvailable)
-          } else {
-            createStackInfo(key)
-          }
-        }
-
-        override def reload(key: Key, oldValue: Result): ListenableFuture[Result] = {
-          val task = ListenableFutureTask.create[Result](() => {
-            createStackInfo(key)
-          })
-          executor.execute(task)
-          task
-        }
-
-        private def createStackInfo(key: Key): Result = {
-          val project = key.project
-          val stackComponentInfo = key.stackComponentInfo
-          (for {
-            moduleNames <- findAvailableModuleNames(project, stackComponentInfo)
-            noImplicitPrelude <- isNoImplicitPreludeActive(project, stackComponentInfo)
-          } yield StackComponentGlobalInfo(stackComponentInfo, moduleNames, noImplicitPrelude)).map(r => Right(r)).getOrElse(Left(NoStackComponentGlobalInfoAvailable))
-        }
-
-        private def findAvailableModuleNames(project: Project, componentInfo: StackComponentInfo): Option[Iterable[String]] = {
-          StackReplsManager.getProjectRepl(project, componentInfo).flatMap(_.findAvailableLibraryModuleNames(project)).map(findModuleNames)
-        }
-
-        private def isNoImplicitPreludeActive(project: Project, stackTargetBuildInfo: StackComponentInfo): Option[Boolean] = {
-          StackReplsManager.getProjectRepl(project, stackTargetBuildInfo).flatMap(_.showActiveLanguageFlags).map(_.stdoutLines).map(_.exists(_.contains("-XNoImplicitPrelude")))
-        }
-
-        private def findModuleNames(output: StackReplOutput) = {
-          val lines = output.stdoutLines
-          if (lines.isEmpty) {
-            Iterable()
-          } else {
-            lines.tail.map(m => m.substring(1, m.length - 1))
-          }
-        }
+  private def createStackInfo(key: Key): Result = {
+    val project = key.project
+    val stackComponentInfo = key.stackComponentInfo
+    findAvailableModuleNames(project, stackComponentInfo) match {
+      case Left(noInfo) => Left(noInfo)
+      case Right(mn) => isNoImplicitPreludeActive(project, stackComponentInfo) match {
+        case Left(noInfo) => Left(noInfo)
+        case Right(noImplicitPrelude) => Right(StackComponentGlobalInfo(stackComponentInfo, mn, noImplicitPrelude))
       }
-    )
+    }
+  }
+
+  private def findAvailableModuleNames(project: Project, componentInfo: StackComponentInfo): Either[NoInfo, Iterable[String]] = {
+    StackReplsManager.getProjectRepl(project, componentInfo).flatMap(_.findAvailableLibraryModuleNames(project)) match {
+      case Some(o) => Right(findModuleNames(o))
+      case None => Left(ReplNotAvailable)
+    }
+  }
+
+  private def isNoImplicitPreludeActive(project: Project, stackTargetBuildInfo: StackComponentInfo): Either[NoInfo, Boolean] = {
+    StackReplsManager.getProjectRepl(project, stackTargetBuildInfo).flatMap(_.showActiveLanguageFlags) match {
+      case Some(o) => Right(o.stdoutLines.contains("-XNoImplicitPrelude"))
+      case None => Left(ReplNotAvailable)
+    }
+  }
+
+  private def findModuleNames(output: StackReplOutput) = {
+    val lines = output.stdoutLines
+    if (lines.isEmpty) {
+      Iterable()
+    } else {
+      lines.tail.map(m => m.substring(1, m.length - 1))
+    }
+  }
 
   def findStackComponentGlobalInfo(psiFile: PsiFile): Option[StackComponentGlobalInfo] = {
     HaskellComponentsManager.findStackComponentInfo(psiFile).flatMap(info => {
-      try {
-        val key = Key(psiFile.getProject, info)
-        Cache.get(key) match {
-          case Right(result) => Some(result)
-          case Left(NoStackComponentGlobalInfoAvailable) =>
-            Cache.invalidate(key)
-            None
-          case Left(ReplNotAvailable) =>
-            Cache.refresh(key)
-            None
-        }
-      }
-      catch {
-        case _: UncheckedExecutionException => None
-        case _: ProcessCanceledException => None
+      val key = Key(psiFile.getProject, info)
+      Cache.get(key) match {
+        case Right(result) => Some(result)
+        case Left(NoInfoAvailable) =>
+          Cache.invalidate(key)
+          None
+        case Left(ReplNotAvailable) =>
+          Cache.invalidate(key)
+          None
+        case Left(ReplIsBusy) =>
+          Cache.invalidate(key)
+          None
       }
     })
   }
 
   def invalidate(project: Project): Unit = {
-    val keys = Cache.asMap().keySet().asScala.filter(_.project == project)
+    val keys = Cache.asMap().keys.filter(_.project == project)
     keys.foreach(Cache.invalidate)
   }
-
-  private sealed trait NoStackComponentGlobalInfo
-
-  private case object NoStackComponentGlobalInfoAvailable extends NoStackComponentGlobalInfo
-
-  private case object ReplNotAvailable extends NoStackComponentGlobalInfo
-
 }
 
 case class StackComponentGlobalInfo(stackComponentInfo: StackComponentInfo, availableLibraryModuleNames: Iterable[String], noImplicitPreludeActive: Boolean)

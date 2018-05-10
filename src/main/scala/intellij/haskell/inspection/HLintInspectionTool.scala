@@ -35,7 +35,7 @@ class HLintInspectionTool extends LocalInspectionTool {
   override def checkFile(psiFile: PsiFile, manager: InspectionManager, isOnTheFly: Boolean): Array[ProblemDescriptor] = {
     ProgressManager.checkCanceled()
 
-    if (HaskellProjectUtil.isLibraryFile(psiFile).getOrElse(true)) {
+    if (HaskellProjectUtil.isLibraryFile(psiFile)) {
       return Array()
     }
 

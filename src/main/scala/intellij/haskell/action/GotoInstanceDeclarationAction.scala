@@ -21,6 +21,7 @@ import com.intellij.ide.util.DefaultPsiElementCellRenderer
 import com.intellij.openapi.actionSystem.{AnAction, AnActionEvent}
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.psi.PsiElement
+import intellij.haskell.external.component.HaskellComponentsManager
 import intellij.haskell.navigation.HaskellReference
 import intellij.haskell.psi.HaskellPsiUtil
 import intellij.haskell.psi.impl.HaskellPsiImplUtil
@@ -39,7 +40,14 @@ class GotoInstanceDeclarationAction extends AnAction {
       val project = actionContext.project
       val offset = editor.getCaretModel.getOffset
       Option(psiFile.findElementAt(offset)).flatMap(HaskellPsiUtil.findNamedElement).foreach(namedElement => {
-        val instanceElements = HaskellReference.resolveInstanceReferences(namedElement, psiFile, project)
+        val instanceElements = HaskellComponentsManager.findNameInfo(namedElement) match {
+          case Some(Right(infos)) => HaskellReference.resolveInstanceReferences(namedElement, infos, project)
+          case Some(Left(info)) =>
+            HaskellEditorUtil.showHint(editor, info.message)
+            Seq()
+          case _ => Seq()
+        }
+
         if (instanceElements.nonEmpty) {
           val popup = NavigationUtil.getPsiElementPopup(instanceElements.toArray, new DefaultPsiElementCellRenderer() {
             override def getElementText(element: PsiElement): String = HaskellPsiImplUtil.getItemPresentableText(element)

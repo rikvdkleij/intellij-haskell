@@ -2,14 +2,15 @@ package intellij.haskell.cabal.lang.psi.impl
 
 import java.util.regex.Pattern
 
+import com.intellij.openapi.project.DumbService
 import com.intellij.openapi.util.TextRange
 import com.intellij.psi.impl.source.tree.LeafPsiElement
 import com.intellij.psi.search.{GlobalSearchScope, GlobalSearchScopesCore}
 import com.intellij.psi.{PsiDirectory, PsiElement, PsiReference}
 import intellij.haskell.cabal.lang.psi._
 import intellij.haskell.psi.HaskellPsiUtil
-import intellij.haskell.util.HaskellProjectUtil
 import intellij.haskell.util.index.{HaskellFileNameIndex, HaskellModuleNameIndex}
+import intellij.haskell.util.{HaskellProjectUtil, ScalaUtil}
 
 trait ModulePartImpl extends CabalNamedElementImpl {
 
@@ -77,7 +78,7 @@ trait ModulePartImpl extends CabalNamedElementImpl {
       case Some(m) => GlobalSearchScope.moduleScope(m)
       case None => GlobalSearchScopesCore.projectProductionScope(getProject)
     }
-    val haskellFile = HaskellModuleNameIndex.findHaskellFileByModuleName(getProject, moduleName, scope)
+    val haskellFile = DumbService.getInstance(getProject).tryRunReadActionInSmartMode(ScalaUtil.computable(HaskellModuleNameIndex.findHaskellFileByModuleName(getProject, moduleName, scope)), null)
     haskellFile.flatMap(f => HaskellPsiUtil.findModuleDeclaration(f).find(_.getModuleName.contains(moduleName)).flatMap(_.getIdentifierElements.headOption))
   }
 }

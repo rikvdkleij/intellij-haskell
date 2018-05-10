@@ -16,11 +16,7 @@
 
 package intellij.haskell.external.component
 
-import java.util.concurrent.Executors
-
-import com.google.common.cache.{CacheBuilder, CacheLoader}
-import com.google.common.util.concurrent.{ListenableFuture, ListenableFutureTask, UncheckedExecutionException}
-import com.intellij.openapi.progress.ProcessCanceledException
+import com.github.blemale.scaffeine.{LoadingCache, Scaffeine}
 import com.intellij.openapi.project.Project
 import intellij.haskell.external.execution.{CommandLine, StackCommandLine}
 
@@ -30,72 +26,48 @@ private[component] object GlobalProjectInfoComponent {
 
   private case class Key(project: Project)
 
-  private val executor = Executors.newCachedThreadPool()
-
-  private final val Cache = CacheBuilder.newBuilder()
-    .build(
-      new CacheLoader[Key, Option[GlobalProjectInfo]]() {
-
-        override def load(key: Key): Option[GlobalProjectInfo] = {
-          createGlobalProjectInfo(key)
-        }
-
-        override def reload(key: Key, oldValue: Option[GlobalProjectInfo]): ListenableFuture[Option[GlobalProjectInfo]] = {
-          val task = ListenableFutureTask.create[Option[GlobalProjectInfo]](() => {
-            createGlobalProjectInfo(key)
-          })
-          executor.execute(task)
-          task
-        }
-
-        private def createGlobalProjectInfo(key: Key): Option[GlobalProjectInfo] = {
-          val project = key.project
-          val extensions = getSupportedLanguageExtensions(project)
-          val packageNames = getAvailablePackages(project)
-          extensions.map(exts => GlobalProjectInfo(exts, packageNames))
-        }
-
-        def getSupportedLanguageExtensions(project: Project): Option[Iterable[String]] = {
-          findGhcPath(project).map(ghcPath => {
-            CommandLine.run(
-              Some(project),
-              project.getBasePath,
-              ghcPath,
-              Seq("--supported-languages"),
-              notifyBalloonError = true
-            ).getStdoutLines.asScala
-          })
-        }
-
-        def getAvailablePackages(project: Project): Iterable[String] = {
-          CabalConfigComponent.getAvailablePackageNames(project)
-        }
-
-        private def findGhcPath(project: Project) = {
-          StackCommandLine.run(project, Seq("path", "--compiler-exe")).flatMap(_.getStdoutLines.asScala.headOption)
-        }
-      }
-    )
+  private final val Cache: LoadingCache[Key, Option[GlobalProjectInfo]] = Scaffeine().build((k: Key) => createGlobalProjectInfo(k))
 
   def findGlobalProjectInfo(project: Project): Option[GlobalProjectInfo] = {
-    try {
-      val key = Key(project)
-      Cache.get(key) match {
-        case result@Some(_) => result
-        case _ =>
-          Cache.invalidate(key)
-          None
-      }
-    }
-    catch {
-      case _: UncheckedExecutionException => None
-      case _: ProcessCanceledException => None
+    val key = Key(project)
+    Cache.get(key) match {
+      case result@Some(_) => result
+      case _ =>
+        Cache.invalidate(key)
+        None
     }
   }
 
+  def getSupportedLanguageExtensions(project: Project): Option[Iterable[String]] = {
+    findGhcPath(project).map(ghcPath => {
+      CommandLine.run(
+        Some(project),
+        project.getBasePath,
+        ghcPath,
+        Seq("--supported-languages"),
+        notifyBalloonError = true
+      ).getStdoutLines.asScala
+    })
+  }
+
+  def getAvailablePackages(project: Project): Iterable[String] = {
+    CabalConfigComponent.getAvailablePackageNames(project)
+  }
+
   def invalidate(project: Project): Unit = {
-    val keys = Cache.asMap().keySet().asScala.filter(_.project == project)
+    val keys = Cache.asMap().keys.filter(_.project == project)
     keys.foreach(Cache.invalidate)
+  }
+
+  private def createGlobalProjectInfo(key: Key): Option[GlobalProjectInfo] = {
+    val project = key.project
+    val extensions = getSupportedLanguageExtensions(project)
+    val packageNames = getAvailablePackages(project)
+    extensions.map(exts => GlobalProjectInfo(exts, packageNames))
+  }
+
+  private def findGhcPath(project: Project) = {
+    StackCommandLine.run(project, Seq("path", "--compiler-exe")).flatMap(_.getStdoutLines.asScala.headOption)
   }
 }
 

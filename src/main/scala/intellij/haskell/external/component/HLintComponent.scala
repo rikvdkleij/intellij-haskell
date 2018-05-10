@@ -52,7 +52,7 @@ object HLintComponent {
   }
 
   private def runHLint(project: Project, arguments: Seq[String], ignoreExitCode: Boolean) = {
-    CommandLine.run(Some(project), project.getBasePath, HLintPath, arguments, logOutput = true, ignoreExitCode = ignoreExitCode)
+    CommandLine.run(Some(project), project.getBasePath, HLintPath, arguments, logOutput = false, ignoreExitCode = ignoreExitCode)
   }
 
   private object HlintJsonProtocol extends DefaultJsonProtocol {

@@ -154,9 +154,7 @@ private[external] class StackReplsManager(val project: Project) {
         if (repl.target.contains(componentInfo.target)) {
           repl
         } else {
-          ApplicationManager.getApplication.executeOnPooledThread(new Runnable {
-            override def run(): Unit = repl.exit()
-          })
+          repl.exit()
           createAndStartProjectRepl(componentInfo)
         }
     }

@@ -33,6 +33,12 @@ object HaskellProjectUtil {
 
   final val Prelude = "Prelude"
 
+  def setNoDiagnosticsShowCaretFlag(project: Project): Boolean = {
+    HaskellProjectUtil.getGhcVersion(project).exists(ghcVersion =>
+      ghcVersion >= GhcVersion(8, 2, 1)
+    )
+  }
+
   def isValidHaskellProject(project: Project, notifyNoSdk: Boolean): Boolean = {
     val stackPath = HaskellSdkType.getStackPath(project, notifyNoSdk)
     isHaskellProject(project) && stackPath.isDefined
@@ -52,28 +58,39 @@ object HaskellProjectUtil {
 
   // File can both project and library file in multi package projects
   // Being project file is leading
-  def isLibraryFile(psiFile: PsiFile): Option[Boolean] = {
-    isProjectFile(psiFile).map(!_)
+  def isLibraryFile(psiFile: PsiFile): Boolean = {
+    !isProjectFile(psiFile)
   }
 
-  def isLibraryFile(virtualFile: VirtualFile, project: Project): Option[Boolean] = {
-    isProjectFile(virtualFile, project).map(!_)
+  def isLibraryFile(virtualFile: VirtualFile, project: Project): Boolean = {
+    !isProjectFile(virtualFile, project)
   }
 
-  def isProjectTestFile(psiFile: PsiFile): Option[Boolean] = {
-    HaskellFileUtil.findVirtualFile(psiFile).flatMap(vf => isProjectTestFile(vf, psiFile.getProject))
+  def isProjectTestFile(psiFile: PsiFile): Boolean = {
+    HaskellFileUtil.findVirtualFile(psiFile).forall(vf => isProjectTestFile(vf, psiFile.getProject))
   }
 
-  def isProjectTestFile(virtualFile: VirtualFile, project: Project): Option[Boolean] = {
-    getProjectRootManager(project).map(_.getFileIndex.isInTestSourceContent(virtualFile))
+  def isProjectTestFile(virtualFile: VirtualFile, project: Project): Boolean = {
+    if (project.isDisposed) {
+      false
+    } else {
+      getProjectRootManager(project).getFileIndex.isInTestSourceContent(virtualFile)
+    }
   }
 
-  def isProjectFile(psiFile: PsiFile): Option[Boolean] = {
-    HaskellFileUtil.findVirtualFile(psiFile).flatMap(vf => isProjectFile(vf, psiFile.getProject))
+  /**
+    * findVirtualFile returns null when file is only in memory so then is must be a project file
+    */
+  def isProjectFile(psiFile: PsiFile): Boolean = {
+    HaskellFileUtil.findVirtualFile(psiFile).forall(vf => isProjectFile(vf, psiFile.getProject))
   }
 
-  def isProjectFile(virtualFile: VirtualFile, project: Project): Option[Boolean] = {
-    getProjectRootManager(project).map(_.getFileIndex.isContentSourceFile(virtualFile))
+  def isProjectFile(virtualFile: VirtualFile, project: Project): Boolean = {
+    if (project.isDisposed) {
+      false
+    } else {
+      getProjectRootManager(project).getFileIndex.isContentSourceFile(virtualFile)
+    }
   }
 
   def getModuleDir(module: Module): File = {
@@ -113,8 +130,8 @@ object HaskellProjectUtil {
 
   import ScalaUtil._
 
-  def getProjectRootManager(project: Project): Option[ProjectRootManager] = {
-    project.isDisposed.optionNot(ProjectRootManager.getInstance(project))
+  def getProjectRootManager(project: Project): ProjectRootManager = {
+    ProjectRootManager.getInstance(project)
   }
 
   def getModuleManager(project: Project): Option[ModuleManager] = {

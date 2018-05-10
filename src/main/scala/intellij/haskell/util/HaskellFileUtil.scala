@@ -30,6 +30,7 @@ import com.intellij.openapi.vfs.{LocalFileSystem, VirtualFile, VirtualFileManage
 import com.intellij.psi.{PsiDocumentManager, PsiFile, PsiManager}
 import intellij.haskell.HaskellFile
 import intellij.haskell.action.SelectionContext
+import intellij.haskell.psi.HaskellPsiUtil
 
 object HaskellFileUtil {
 
@@ -163,5 +164,9 @@ object HaskellFileUtil {
 
   def getUrlByPath(absolutePath: String): String = {
     VirtualFileManager.constructUrl(LocalFileSystem.getInstance.getProtocol, absolutePath)
+  }
+
+  def getModuleName(psiFile: PsiFile): Option[String] = {
+    HaskellPsiUtil.findModuleDeclaration(psiFile).map(_.getModid.getName)
   }
 }

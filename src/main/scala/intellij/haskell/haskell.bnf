@@ -58,7 +58,7 @@ file_header_pragma          ::= pragma
 other_pragma                ::= pragma
 
 general_pragma_content      ::= (CON_ID | VAR_ID | CONSYM_ID | VARSYM_ID |
-                                  LEFT_PAREN | RIGHT_PAREN | FLOAT |
+                                  LEFT_PAREN | RIGHT_PAREN | FLOAT | UNDERSCORE |
                                   SEMICOLON | LEFT_BRACKET | RIGHT_BRACKET | literal | LEFT_BRACE | RIGHT_BRACE |
                                   COMMA | QUOTE | BACKQUOTE | NEWLINE | DOUBLE_QUOTE | TILDE | DOT | DOT_DOT | VERTICAL_BAR |
                                   EQUAL | DOUBLE_RIGHT_ARROW | COLON_COLON | RIGHT_ARROW | LEFT_ARROW | BACKSLASH | TYPE |

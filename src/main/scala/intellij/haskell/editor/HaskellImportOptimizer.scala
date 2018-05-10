@@ -29,7 +29,7 @@ import scala.util.matching.Regex
 
 class HaskellImportOptimizer extends ImportOptimizer {
 
-  override def supports(psiFile: PsiFile): Boolean = psiFile.isInstanceOf[HaskellFile] && !HaskellProjectUtil.isLibraryFile(psiFile).getOrElse(true)
+  override def supports(psiFile: PsiFile): Boolean = psiFile.isInstanceOf[HaskellFile] && !HaskellProjectUtil.isLibraryFile(psiFile)
 
   override def processFile(psiFile: PsiFile): Runnable = {
     () => {

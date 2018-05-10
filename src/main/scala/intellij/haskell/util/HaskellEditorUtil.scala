@@ -18,8 +18,6 @@ package intellij.haskell.util
 
 import java.awt.Point
 import java.awt.event.{MouseEvent, MouseMotionAdapter}
-import javax.swing.Icon
-import javax.swing.event.HyperlinkListener
 
 import com.intellij.codeInsight.hint.{HintManager, HintManagerImpl, HintUtil}
 import com.intellij.openapi.actionSystem.{AnActionEvent, CommonDataKeys}
@@ -36,10 +34,14 @@ import com.intellij.ui.LightweightHint
 import com.intellij.ui.awt.RelativePoint
 import com.intellij.util.ui.{PositionTracker, UIUtil}
 import intellij.haskell.HaskellFile
+import javax.swing.Icon
+import javax.swing.event.HyperlinkListener
 
 import scala.collection.JavaConverters._
 
 object HaskellEditorUtil {
+
+  final val HaskellSupportIsNotAvailableWhileBuildingText = "Haskell support is not available when project is being built."
 
   def enableExternalAction(actionEvent: AnActionEvent, enableCondition: Project => Boolean): Unit = {
     Option(actionEvent.getProject) match {
@@ -69,7 +71,7 @@ object HaskellEditorUtil {
       if (HaskellProjectUtil.isHaskellProject(psiFile.getProject)) {
         psiFile match {
           case _: HaskellFile if !onlyForProjectFile => enable()
-          case _: HaskellFile if onlyForProjectFile && !HaskellProjectUtil.isLibraryFile(psiFile).getOrElse(true) => enable()
+          case _: HaskellFile if onlyForProjectFile && !HaskellProjectUtil.isLibraryFile(psiFile) => enable()
           case _ => disable()
         }
       } else {
@@ -163,7 +165,11 @@ object HaskellEditorUtil {
   }
 
   def findCurrentElement(psiFile: PsiFile): Option[PsiElement] = {
-   val offset =  Option(FileEditorManagerEx.getInstanceEx(psiFile.getProject).getSelectedTextEditor).map(_.getCaretModel.getCurrentCaret.getOffset)
+    val offset = Option(FileEditorManagerEx.getInstanceEx(psiFile.getProject).getSelectedTextEditor).map(_.getCaretModel.getCurrentCaret.getOffset)
     offset.map(psiFile.findElementAt)
+  }
+
+  def showHaskellSupportIsNotAvailableWhileBuilding(project: Project) = {
+    HaskellEditorUtil.showStatusBarInfoMessage(project, HaskellSupportIsNotAvailableWhileBuildingText)
   }
 }

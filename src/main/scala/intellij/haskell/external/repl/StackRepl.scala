@@ -26,7 +26,7 @@ import intellij.haskell.external.execution.StackCommandLine
 import intellij.haskell.external.repl.StackRepl.{BenchmarkType, StackReplOutput, TestSuiteType}
 import intellij.haskell.external.repl.StackReplsManager.StackComponentInfo
 import intellij.haskell.sdk.HaskellSdkType
-import intellij.haskell.util.{GhcVersion, HaskellEditorUtil, HaskellProjectUtil, StringUtil}
+import intellij.haskell.util.{HaskellEditorUtil, HaskellProjectUtil, StringUtil}
 import intellij.haskell.{GlobalInfo, HaskellNotificationGroup}
 
 import scala.collection.JavaConverters._
@@ -128,7 +128,7 @@ abstract class StackRepl(project: Project, componentInfo: Option[StackComponentI
       def cleanupOutputPreviousCommand(): Unit = {
         drainQueues()
 
-        if (stdoutResult.nonEmpty || stderrResult.nonEmpty) {
+        if (stdoutResult.nonEmpty) {
           // Output of previous command is there and could still being written....
           val deadline = DefaultTimeout.fromNow
           while (deadline.hasTimeLeft() && !stdoutResult.lastOption.exists(_.contains(EndOfOutputIndicator))) {
@@ -282,11 +282,9 @@ abstract class StackRepl(project: Project, componentInfo: Option[StackComponentI
           if (isStarted && !hasDependencyError) {
             if (stanzaType.isDefined) {
               execute(":set -fdefer-type-errors", forceExecute = true)
-              HaskellProjectUtil.getGhcVersion(project).foreach(ghcVersion =>
-                if (ghcVersion >= GhcVersion(8, 2, 1)) {
-                  execute(s":set ${StackCommandLine.NoDiagnosticsShowCaretFlag}", forceExecute = true)
-                }
-              )
+              if (HaskellProjectUtil.setNoDiagnosticsShowCaretFlag(project)) {
+                execute(s":set ${StackCommandLine.NoDiagnosticsShowCaretFlag}", forceExecute = true)
+              }
             }
             logInfo("Stack REPL is started")
             available = true
@@ -329,8 +327,9 @@ abstract class StackRepl(project: Project, componentInfo: Option[StackComponentI
       catch {
         case e: Exception =>
           logError(s"Error while shutting down Stack REPL for project ${project.getName}. Error message: ${e.getMessage}")
+      } finally {
+        closeResources()
       }
-      closeResources()
       logInfo("Stack REPL is stopped")
     }
   }

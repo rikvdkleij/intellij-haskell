@@ -22,6 +22,7 @@ import com.intellij.codeInsight.intention.impl.BaseIntentionAction
 import com.intellij.lang.annotation.{AnnotationHolder, ExternalAnnotator, HighlightSeverity}
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.editor.Editor
+import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.TextRange
 import com.intellij.psi.impl.source.tree.TreeUtil
@@ -48,7 +49,7 @@ class HaskellAnnotator extends ExternalAnnotator[(PsiFile, Option[PsiElement]), 
       (psiFile, HaskellFileUtil.findVirtualFile(psiFile)) match {
         case (_, None) => null // can be in case if file is in memory only (just created file)
         case (_, Some(f)) if f.getFileType != HaskellFileType.Instance => null
-        case (_, Some(_)) if !psiFile.isValid | HaskellProjectUtil.isLibraryFile(psiFile).getOrElse(true) | StackProjectManager.isBuilding(psiFile.getProject) => null
+        case (_, Some(_)) if !psiFile.isValid | HaskellProjectUtil.isLibraryFile(psiFile) | StackProjectManager.isBuilding(psiFile.getProject) => null
         case (_, Some(_)) =>
           val currentElement = Option(psiFile.findElementAt(editor.getCaretModel.getOffset)).
             find(e => HaskellPsiUtil.findExpressionParent(e).isDefined).
@@ -59,12 +60,15 @@ class HaskellAnnotator extends ExternalAnnotator[(PsiFile, Option[PsiElement]), 
   }
 
   override def doAnnotate(psiFileElement: (PsiFile, Option[PsiElement])): CompilationResult = {
+    ProgressManager.checkCanceled()
     val psiFile = psiFileElement._1
     ApplicationManager.getApplication.invokeAndWait(() => {
       if (!psiFile.getProject.isDisposed) {
+        ProgressManager.checkCanceled()
         HaskellFileUtil.saveFile(psiFile)
       }
     })
+    ProgressManager.checkCanceled()
     HaskellComponentsManager.loadHaskellFile(psiFile, psiFileElement._2).orNull
   }
 

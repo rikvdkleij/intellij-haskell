@@ -22,8 +22,9 @@ class ShowTypeStickyAction extends AnAction {
 
       actionContext.selectionModel match {
         case Some(sm) => HaskellComponentsManager.findTypeInfoForSelection(psiFile, sm) match {
-          case Some(ti) => HaskellEditorUtil.showHint(editor, StringUtil.escapeString(ti.typeSignature), sticky = true)
-          case None => HaskellEditorUtil.showHint(editor, "Could not determine type for selection")
+          case Some(Right(info)) => HaskellEditorUtil.showHint(editor, StringUtil.escapeString(info.typeSignature), sticky = true)
+          case Some(Left(info)) => HaskellEditorUtil.showHint(editor, info.message)
+          case _ => HaskellEditorUtil.showHint(editor, "Could not determine type for selection")
         }
         case _ =>
           for {

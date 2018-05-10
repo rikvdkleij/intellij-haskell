@@ -2930,7 +2930,7 @@ public class HaskellParser implements PsiParser, LightPsiParser {
 
   /* ********************************************************** */
   // (CON_ID | VAR_ID | CONSYM_ID | VARSYM_ID |
-  //                                   LEFT_PAREN | RIGHT_PAREN | FLOAT |
+  //                                   LEFT_PAREN | RIGHT_PAREN | FLOAT | UNDERSCORE |
   //                                   SEMICOLON | LEFT_BRACKET | RIGHT_BRACKET | literal | LEFT_BRACE | RIGHT_BRACE |
   //                                   COMMA | QUOTE | BACKQUOTE | NEWLINE | DOUBLE_QUOTE | TILDE | DOT | DOT_DOT | VERTICAL_BAR |
   //                                   EQUAL | DOUBLE_RIGHT_ARROW | COLON_COLON | RIGHT_ARROW | LEFT_ARROW | BACKSLASH | TYPE |
@@ -2951,7 +2951,7 @@ public class HaskellParser implements PsiParser, LightPsiParser {
   }
 
   // CON_ID | VAR_ID | CONSYM_ID | VARSYM_ID |
-  //                                   LEFT_PAREN | RIGHT_PAREN | FLOAT |
+  //                                   LEFT_PAREN | RIGHT_PAREN | FLOAT | UNDERSCORE |
   //                                   SEMICOLON | LEFT_BRACKET | RIGHT_BRACKET | literal | LEFT_BRACE | RIGHT_BRACE |
   //                                   COMMA | QUOTE | BACKQUOTE | NEWLINE | DOUBLE_QUOTE | TILDE | DOT | DOT_DOT | VERTICAL_BAR |
   //                                   EQUAL | DOUBLE_RIGHT_ARROW | COLON_COLON | RIGHT_ARROW | LEFT_ARROW | BACKSLASH | TYPE |
@@ -2967,6 +2967,7 @@ public class HaskellParser implements PsiParser, LightPsiParser {
     if (!r) r = consumeToken(b, HS_LEFT_PAREN);
     if (!r) r = consumeToken(b, HS_RIGHT_PAREN);
     if (!r) r = consumeToken(b, HS_FLOAT);
+    if (!r) r = consumeToken(b, HS_UNDERSCORE);
     if (!r) r = consumeToken(b, HS_SEMICOLON);
     if (!r) r = consumeToken(b, HS_LEFT_BRACKET);
     if (!r) r = consumeToken(b, HS_RIGHT_BRACKET);
