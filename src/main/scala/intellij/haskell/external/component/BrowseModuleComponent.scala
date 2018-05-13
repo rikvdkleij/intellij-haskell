@@ -72,6 +72,8 @@ private[component] object BrowseModuleComponent {
     keys.foreach(k => Cache.invalidate(k))
   }
 
+  private final val IndicesNotReadyMessage = "Finding module identifiers is not available until indices are ready"
+
   private def findModuleIdentifiers(key: Key): BrowseModuleResult = {
     val project = key.project
     val moduleName = key.moduleName
@@ -88,16 +90,14 @@ private[component] object BrowseModuleComponent {
           Left(NoInfoAvailable)
         }
       case None =>
-        val projectHaskellFiles =
+        val projectHaskellFile =
           if (!project.isDisposed) {
-            val productionFile = DumbService.getInstance(project).tryRunReadActionInSmartMode(ScalaUtil.computable(
-              HaskellModuleNameIndex.findHaskellFileByModuleName(project, moduleName, GlobalSearchScopesCore.projectProductionScope(project))
-            ), null)
+            val productionFile = Option(DumbService.getInstance(project).tryRunReadActionInSmartMode(ScalaUtil.computable(
+              HaskellModuleNameIndex.findHaskellFileByModuleName(project, moduleName, GlobalSearchScopesCore.projectProductionScope(project))), IndicesNotReadyMessage)).flatten
 
             if (productionFile.isEmpty) {
-              DumbService.getInstance(project).tryRunReadActionInSmartMode(ScalaUtil.computable(
-                HaskellModuleNameIndex.findHaskellFileByModuleName(project, moduleName, GlobalSearchScopesCore.projectTestScope(project))
-              ), null)
+              Option(DumbService.getInstance(project).tryRunReadActionInSmartMode(ScalaUtil.computable(
+                HaskellModuleNameIndex.findHaskellFileByModuleName(project, moduleName, GlobalSearchScopesCore.projectTestScope(project))), IndicesNotReadyMessage)).flatten
             } else {
               productionFile
             }
@@ -105,28 +105,30 @@ private[component] object BrowseModuleComponent {
             None
           }
 
-        if (projectHaskellFiles.nonEmpty) {
-          if (LoadComponent.isBusy(project)) {
-            Left(ReplIsBusy)
-          } else {
-            val output = projectHaskellFiles.flatMap(f => StackReplsManager.getProjectRepl(f).flatMap(_.getModuleIdentifiers(moduleName, f)))
-            output match {
-              case Some(o) if o.stderrLines.isEmpty => output.map(_.stdoutLines.flatMap(l => findModuleIdentifiers(project, l, moduleName))) match {
-                case Some(ids) => Right(ids)
-                case None => Left(NoInfoAvailable)
+        projectHaskellFile match {
+          case Some(f) =>
+            if (LoadComponent.isBusy(f)) {
+              Left(ReplIsBusy)
+            } else {
+              val output = projectHaskellFile.flatMap(f => StackReplsManager.getProjectRepl(f).flatMap(_.getModuleIdentifiers(moduleName, f)))
+              output match {
+                case Some(o) if o.stderrLines.isEmpty => output.map(_.stdoutLines.flatMap(l => findModuleIdentifiers(project, l, moduleName))) match {
+                  case Some(ids) => Right(ids)
+                  case None => Left(NoInfoAvailable)
+                }
+                case _ => Left(ReplNotAvailable)
               }
-              case _ => Left(ReplNotAvailable)
-            }
-          }
-        } else {
-          val moduleIdentifiers =
-            StackReplsManager.getGlobalRepl(project).flatMap(_.getModuleIdentifiers(moduleName)) match {
-              case None => Left(ReplNotAvailable)
-              case Some(o) if o.stdoutLines.nonEmpty => Right(o.stdoutLines.flatMap(l => findModuleIdentifiers(project, l, moduleName).toSeq))
-              case _ => Left(NoInfoAvailable)
             }
 
-          moduleIdentifiers
+          case None =>
+            val moduleIdentifiers =
+              StackReplsManager.getGlobalRepl(project).flatMap(_.getModuleIdentifiers(moduleName)) match {
+                case None => Left(ReplNotAvailable)
+                case Some(o) if o.stdoutLines.nonEmpty => Right(o.stdoutLines.flatMap(l => findModuleIdentifiers(project, l, moduleName).toSeq))
+                case _ => Left(NoInfoAvailable)
+              }
+
+            moduleIdentifiers
         }
     }
   }

@@ -78,7 +78,8 @@ trait ModulePartImpl extends CabalNamedElementImpl {
       case Some(m) => GlobalSearchScope.moduleScope(m)
       case None => GlobalSearchScopesCore.projectProductionScope(getProject)
     }
-    val haskellFile = DumbService.getInstance(getProject).tryRunReadActionInSmartMode(ScalaUtil.computable(HaskellModuleNameIndex.findHaskellFileByModuleName(getProject, moduleName, scope)), null)
+    val haskellFile = Option(DumbService.getInstance(getProject).
+      tryRunReadActionInSmartMode(ScalaUtil.computable(HaskellModuleNameIndex.findHaskellFileByModuleName(getProject, moduleName, scope)), "Resolving module is not available until indices are ready")).flatten
     haskellFile.flatMap(f => HaskellPsiUtil.findModuleDeclaration(f).find(_.getModuleName.contains(moduleName)).flatMap(_.getIdentifierElements.headOption))
   }
 }

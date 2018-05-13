@@ -51,7 +51,7 @@ class HoogleByNameContributor extends ChooseByNameContributor {
     val navigationItems = HoogleComponent.runHoogle(project, hooglePattern, count = 100000).getOrElse(Seq()).flatMap {
       case ModulePattern(moduleName) =>
         ProgressManager.checkCanceled()
-        DumbService.getInstance(project).tryRunReadActionInSmartMode(ScalaUtil.computable(HaskellModuleNameIndex.findHaskellFilesByModuleNameInAllScope(project, moduleName)), null)
+        Option(DumbService.getInstance(project).tryRunReadActionInSmartMode(ScalaUtil.computable(HaskellModuleNameIndex.findHaskellFilesByModuleNameInAllScope(project, moduleName)), "Hoogle not available until indices are ready")).getOrElse(Iterable())
       case PackagePattern(packageName) =>
         ProgressManager.checkCanceled()
         Iterable(NotFoundNavigationItem(packageName))

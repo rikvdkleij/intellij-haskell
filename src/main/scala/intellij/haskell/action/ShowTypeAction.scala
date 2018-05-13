@@ -70,6 +70,8 @@ object ShowTypeAction {
         HaskellEditorUtil.showStatusBarInfoMessage(project, info.typeSignature)
         HaskellEditorUtil.showHint(editor, StringUtil.escapeString(info.typeSignature), sticky)
       case _ if HaskellPsiUtil.findExpressionParent(psiElement).isDefined =>
+          // TODO Looks like redundant code
+          // TODO Also not works
         val moduleNames = HaskellPsiUtil.findImportDeclarations(psiFile).flatMap(_.getModuleName)
         val declaration = HaskellPsiUtil.findQualifiedNameParent(psiElement).flatMap(qualifiedNameElement => {
           val name = qualifiedNameElement.getName

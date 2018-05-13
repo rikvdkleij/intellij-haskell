@@ -31,8 +31,8 @@ private[component] object StackComponentGlobalInfoComponent {
 
   private final val Cache: LoadingCache[Key, Result] = Scaffeine().build((k: Key) => load(k))
 
-  def load(key: Key): Result = {
-    if (LoadComponent.isBusy(key.project)) {
+  private def load(key: Key): Result = {
+    if (LoadComponent.isBusy(key.project, key.stackComponentInfo)) {
       Left(ReplIsBusy)
     } else {
       createStackInfo(key)
