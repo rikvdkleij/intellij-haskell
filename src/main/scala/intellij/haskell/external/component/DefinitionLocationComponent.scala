@@ -17,14 +17,15 @@
 package intellij.haskell.external.component
 
 import com.github.blemale.scaffeine.{LoadingCache, Scaffeine}
+import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.project.Project
 import com.intellij.psi.PsiFile
 import intellij.haskell.external.repl.StackRepl.StackReplOutput
 import intellij.haskell.external.repl.StackReplsManager
 import intellij.haskell.psi._
-import intellij.haskell.util.LineColumnPosition
+import intellij.haskell.util.{LineColumnPosition, ScalaUtil}
 
-object DefinitionLocationComponent {
+private[component] object DefinitionLocationComponent {
   private final val LocAtPattern = """(.+)\:\(([\d]+),([\d]+)\)-\(([\d]+),([\d]+)\)""".r
   private final val PackageModulePattern = """.+\:([\w\.\-]+)""".r
 
@@ -34,14 +35,14 @@ object DefinitionLocationComponent {
 
   private final val Cache: LoadingCache[Key, DefinitionLocationResult] = Scaffeine().build((k: Key) => findDefinitionLocation(k))
 
-  def findDefinitionLocation(namedElement: HaskellNamedElement): Option[DefinitionLocationResult] = {
+  def findDefinitionLocation(namedElement: HaskellNamedElement, waitIfBusy: Boolean): Option[DefinitionLocationResult] = {
     (for {
       qne <- HaskellPsiUtil.findQualifiedNameParent(namedElement).map(_.getIdentifierElement)
       textOffset = qne.getTextOffset
       psiFile <- Option(namedElement.getContainingFile)
       sp <- LineColumnPosition.fromOffset(psiFile, textOffset)
       ep <- LineColumnPosition.fromOffset(psiFile, textOffset + qne.getText.length)
-    } yield find(psiFile, sp, ep, qne.getName)) match {
+    } yield find(psiFile, sp, ep, qne.getName, waitIfBusy)) match {
       case r@Some(_) => r
       case None => None
     }
@@ -82,7 +83,8 @@ object DefinitionLocationComponent {
 
   private def findLocationInfoFor(key: Key, psiFile: PsiFile, project: Project, withoutLastColumn: Boolean): Option[StackReplOutput] = {
     val endColumnNr = if (withoutLastColumn) key.endColumnNr - 1 else key.endColumnNr
-    StackReplsManager.getProjectRepl(psiFile).flatMap(_.findLocationInfoFor(psiFile, key.startLineNr, key.startColumnNr, key.endLineNr, endColumnNr, key.name))
+    val moduleName = ApplicationManager.getApplication.runReadAction(ScalaUtil.computable(HaskellPsiUtil.findModuleName(psiFile, runInRead = true)))
+    StackReplsManager.getProjectRepl(psiFile).flatMap(_.findLocationInfoFor(moduleName, psiFile, key.startLineNr, key.startColumnNr, key.endLineNr, endColumnNr, key.name))
   }
 
   private def createLocationInfo(output: String): DefinitionLocationResult = {
@@ -93,19 +95,32 @@ object DefinitionLocationComponent {
     }
   }
 
-  private def find(psiFile: PsiFile, startPosition: LineColumnPosition, endPosition: LineColumnPosition, expression: String): DefinitionLocationResult = {
+  private def find(psiFile: PsiFile, startPosition: LineColumnPosition, endPosition: LineColumnPosition, expression: String, waitIfBusy: Boolean): DefinitionLocationResult = {
     val key = Key(startPosition.lineNr, startPosition.columnNr, endPosition.lineNr, endPosition.columnNr, expression, psiFile)
-    val result = Cache.get(key)
-    result match {
-      case Right(_) => result
-      case Left(ReplNotAvailable) =>
-        Cache.invalidate(key)
-        result
-      case Left(NoInfoAvailable) =>
-        result
-      case Left(ReplIsBusy) =>
-        Cache.invalidate(key)
-        result
+    Cache.getIfPresent(key) match {
+      case Some(r) => r
+      case None =>
+        if (!LoadComponent.isBusy(key.psiFile) || waitIfBusy) {
+        val result = Cache.get(key)
+        result match {
+          case Right(_) => result
+          case Left(ReplNotAvailable) =>
+            Cache.invalidate(key)
+            result
+          case Left(NoInfoAvailable) =>
+            result
+          case Left(ReplIsBusy) =>
+            if (waitIfBusy && !psiFile.getProject.isDisposed) {
+              Thread.sleep(100)
+              find(psiFile, startPosition, endPosition, expression, waitIfBusy)
+            } else {
+              Cache.invalidate(key)
+              result
+            }
+        }
+        } else {
+          Left(ReplIsBusy)
+        }
     }
   }
 }

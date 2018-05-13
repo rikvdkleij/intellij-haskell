@@ -38,6 +38,13 @@ class GlobalStackRepl(project: Project, replTimeout: Int) extends StackRepl(proj
     }
   }
 
+  override def restart(forceExit: Boolean): Unit = synchronized {
+    if (available && !starting) {
+      exit(forceExit)
+      start()
+    }
+  }
+
   private def loadModule(moduleName: String) = {
     if (!loadedModuleName.contains(moduleName)) {
       val output = execute(s":module $moduleName")

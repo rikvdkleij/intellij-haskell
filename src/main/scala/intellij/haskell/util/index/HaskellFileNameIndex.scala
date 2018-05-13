@@ -70,6 +70,7 @@ object HaskellFileNameIndex {
     FileTypeIndex.getFiles(fileType, searchScope).asScala
   }
 
+  // Waits if index is not ready
   private def getFilesByName(project: Project, name: String, searchScope: GlobalSearchScope): Iterable[VirtualFile] = {
     DumbService.getInstance(project).runReadActionInSmartMode(ScalaUtil.computable(FileBasedIndex.getInstance.getContainingFiles(HaskellFileNameIndex, name, searchScope).asScala))
   }

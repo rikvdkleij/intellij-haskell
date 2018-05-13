@@ -16,6 +16,8 @@
 
 package intellij.haskell.external.repl
 
+import java.util.concurrent.ConcurrentHashMap
+
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Computable
@@ -23,11 +25,11 @@ import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.psi.PsiFile
 import intellij.haskell.HaskellNotificationGroup
 import intellij.haskell.cabal._
-import intellij.haskell.external.component.{HaskellComponentsManager, StackProjectManager}
+import intellij.haskell.external.component._
 import intellij.haskell.external.repl.StackRepl._
 import intellij.haskell.external.repl.StackReplsManager.StackComponentInfo
 import intellij.haskell.settings.HaskellSettingsState
-import intellij.haskell.util.{HaskellEditorUtil, HaskellFileUtil, HaskellProjectUtil}
+import intellij.haskell.util.{HaskellEditorUtil, HaskellFileUtil, HaskellProjectUtil, ScalaUtil}
 
 private[external] object StackReplsManager {
 
@@ -35,20 +37,20 @@ private[external] object StackReplsManager {
     StackProjectManager.getStackProjectManager(project).flatMap(_.getStackReplsManager)
   }
 
-  def getProjectLibraryRepl(project: Project): Option[ProjectStackRepl] = {
-    getReplsManager(project).flatMap(_.getProjectLibraryRepl)
-  }
-
-  def getProjectNonLibraryRepl(project: Project): Option[ProjectStackRepl] = {
-    getReplsManager(project).flatMap(_.getProjectNonLibraryRepl)
+  def getRunningProjectRepls(project: Project): Iterable[ProjectStackRepl] = {
+    getReplsManager(project).map(_.getRunningProjectRepls).getOrElse(Iterable())
   }
 
   def getProjectRepl(psiFile: PsiFile): Option[ProjectStackRepl] = {
-    getReplsManager(psiFile.getProject).flatMap(_.getProjectRepl(psiFile))
+    getReplsManager(psiFile.getProject).flatMap(_.findProjectRepl(psiFile))
   }
 
-  def getProjectRepl(project: Project, stackComponentInfo: StackComponentInfo): Option[ProjectStackRepl] = {
-    getReplsManager(project).flatMap(_.setAndGetProjectRepl(stackComponentInfo))
+  def getRunningProjectRepl(psiFile: PsiFile): Option[ProjectStackRepl] = {
+    HaskellComponentsManager.findStackComponentInfo(psiFile).flatMap(ci => getRunningProjectRepl(psiFile.getProject, ci))
+  }
+
+  def getRunningProjectRepl(project: Project, stackComponentInfo: StackComponentInfo): Option[ProjectStackRepl] = {
+    getReplsManager(project).flatMap(_.getRunningProjectRepl(stackComponentInfo))
   }
 
   def getGlobalRepl(project: Project): Option[GlobalStackRepl] = {
@@ -76,35 +78,30 @@ private[external] object StackReplsManager {
 
 private[external] class StackReplsManager(val project: Project) {
 
+  import scala.collection.JavaConverters._
+
   private val globalRepl: GlobalStackRepl = new GlobalStackRepl(project, HaskellSettingsState.getReplTimeout)
 
-  @volatile
-  private var projectLibraryRepl: Option[ProjectStackRepl] = None
-
-  @volatile
-  private var projectNonLibraryRepl: Option[ProjectStackRepl] = None
+  private val projectRepls = new ConcurrentHashMap[StackComponentInfo, ProjectStackRepl]().asScala
 
   val cabalInfos: Iterable[CabalInfo] = StackReplsManager.createCabalInfos(project)
+
   val stackComponentInfos: Iterable[StackComponentInfo] = StackReplsManager.createStackComponentInfo(project, cabalInfos)
 
-  private val ignoredHaskellFiles = Seq("setup.hs", "hlint.hs")
+  private final val IgnoredHaskellFiles = Seq("setup.hs", "hlint.hs")
 
-  def restartProjectRepl(repl: ProjectStackRepl): Unit = synchronized {
-    if (repl.available && !repl.starting) {
-      repl.exit()
-      repl.clearLoadedInfo()
-      repl.start()
-    }
+  def getRunningProjectRepl(stackComponentInfo: StackComponentInfo): Option[ProjectStackRepl] = {
+    projectRepls.get(stackComponentInfo)
   }
 
-  def getProjectLibraryRepl: Option[ProjectStackRepl] = projectLibraryRepl
-
-  def getProjectNonLibraryRepl: Option[ProjectStackRepl] = projectNonLibraryRepl
+  def getRunningProjectRepls: Iterable[ProjectStackRepl] = {
+    projectRepls.values
+  }
 
   def getGlobalRepl: GlobalStackRepl = globalRepl
 
-  private def getProjectRepl(psiFile: PsiFile): Option[ProjectStackRepl] = {
-    if (ignoredHaskellFiles.contains(psiFile.getName.toLowerCase) &&
+  private def findProjectRepl(psiFile: PsiFile): Option[ProjectStackRepl] = {
+    if (IgnoredHaskellFiles.contains(psiFile.getName.toLowerCase) &&
       HaskellProjectUtil.findModule(psiFile).exists(m => findContainingDirectory(psiFile).exists(vf => HaskellFileUtil.getAbsolutePath(vf) == HaskellProjectUtil.getModuleDir(m).getPath))) {
       HaskellNotificationGroup.logInfoEvent(psiFile.getProject, s"${psiFile.getName} can not be loaded in REPL")
       None
@@ -115,9 +112,9 @@ private[external] class StackReplsManager(val project: Project) {
       } else {
         val componentInfo = HaskellComponentsManager.findStackComponentInfo(psiFile)
         componentInfo match {
-          case Some(ci) => setAndGetProjectRepl(ci)
+          case Some(ci) => Some(getProjectRepl(ci, psiFile))
           case None =>
-            HaskellNotificationGroup.logErrorBalloonEvent(project, s"Could not switch to project Stack REPL for file ${psiFile.getName} because no Stack target build info")
+            HaskellNotificationGroup.logErrorBalloonEvent(project, s"Could not switch to project Stack REPL for file ${psiFile.getName} because no Stack target could be found for this file")
             None
         }
       }
@@ -132,35 +129,23 @@ private[external] class StackReplsManager(val project: Project) {
     })
   }
 
-  private def setAndGetProjectRepl(componentInfo: StackComponentInfo): Option[ProjectStackRepl] = {
-    if (componentInfo.stanzaType == LibType) {
-      synchronized {
-        projectLibraryRepl = Some(getProjectRepl(projectLibraryRepl, componentInfo))
-        projectLibraryRepl
-      }
-    } else {
-      synchronized {
-        projectNonLibraryRepl = Some(getProjectRepl(projectNonLibraryRepl, componentInfo))
-        projectNonLibraryRepl
-      }
-    }
-  }
-
-  private def getProjectRepl(projectStackRepl: Option[ProjectStackRepl], componentInfo: StackComponentInfo): ProjectStackRepl = {
-    projectStackRepl match {
+  private def getProjectRepl(componentInfo: StackComponentInfo, psiFile: PsiFile): ProjectStackRepl = synchronized {
+    projectRepls.get(componentInfo) match {
+      case Some(r) => r
       case None =>
-        createAndStartProjectRepl(componentInfo)
-      case Some(repl) =>
-        if (repl.target.contains(componentInfo.target)) {
-          repl
-        } else {
-          repl.exit()
-          createAndStartProjectRepl(componentInfo)
-        }
+        val repl = createAndStartProjectRepl(componentInfo)
+        projectRepls.put(componentInfo, repl)
+
+        // Already load global info in cache here to prevent a file has to be loaded twice because library modules are obtained in REPL without any module loaded.
+        ApplicationManager.getApplication.executeOnPooledThread(ScalaUtil.runnable {
+          HaskellComponentsManager.findStackComponentGlobalInfo(psiFile)
+        })
+
+        repl
     }
   }
 
-  private def createAndStartProjectRepl(componentInfo: StackComponentInfo) = {
+  private def createAndStartProjectRepl(componentInfo: StackComponentInfo): ProjectStackRepl = {
     val repl = new ProjectStackRepl(project, componentInfo, HaskellSettingsState.getReplTimeout)
     repl.start()
     repl

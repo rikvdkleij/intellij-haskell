@@ -58,22 +58,18 @@ object StackCommandLine {
     run(project, arguments, -1, logOutput = true, workDir = Some(toolsStackRootPath), notifyBalloonError = true)
   }
 
-  def build(project: Project, buildTarget: String, logBuildResult: Boolean): Option[ProcessOutput] = {
-    build(project, Some(buildTarget), logBuildResult)
-  }
-
   def buildProject(project: Project, logBuildResult: Boolean): Option[ProcessOutput] = {
-    build(project, None, logBuildResult)
+    build(project, Seq(), logBuildResult)
   }
 
-  private def build(project: Project, buildTarget: Option[String] = None, logBuildResult: Boolean): Option[ProcessOutput] = {
-    val arguments = Seq("build") ++ buildTarget.toSeq ++ Seq("--fast")
+  def build(project: Project, buildTargets: Seq[String], logBuildResult: Boolean): Option[ProcessOutput] = {
+    val arguments = Seq("build") ++ buildTargets ++ Seq("--fast")
     val processOutput = run(project, arguments, -1, ignoreExitCode = true)
     if (logBuildResult) {
       if (processOutput.isEmpty || processOutput.exists(_.getExitCode != 0)) {
-        HaskellNotificationGroup.logErrorEvent(project, s"Building `$buildTarget` has failed, see Haskell Event log for more information")
+        HaskellNotificationGroup.logErrorEvent(project, s"Building `${buildTargets.mkString(", ")}` has failed, see Haskell Event log for more information")
       } else {
-        HaskellNotificationGroup.logInfoEvent(project, s"Building `$buildTarget` is finished successfully")
+        HaskellNotificationGroup.logInfoEvent(project, s"Building `${buildTargets.mkString(", ")}` is finished successfully")
       }
     }
     processOutput

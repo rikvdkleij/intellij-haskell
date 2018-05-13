@@ -84,16 +84,14 @@ object StackProjectManager {
                 if (result.contains(true)) {
                   StackCommandLine.buildProjectInMessageView(project)
                 } else {
-                  HaskellNotificationGroup.logInfoEvent(project, "Did not build project because building project it's dependencies failed")
+                  HaskellNotificationGroup.logInfoEvent(project, "Project will not be built because building it's dependencies failed")
                 }
 
                 if (restart) {
-                  val projectLibRepl = StackReplsManager.getProjectLibraryRepl(project)
-                  val projectNonLibRepl = StackReplsManager.getProjectNonLibraryRepl(project)
+                  val projectRepsl = StackReplsManager.getRunningProjectRepls(project)
                   progressIndicator.setText("Busy with stopping Stack REPLs")
                   StackReplsManager.getGlobalRepl(project).foreach(_.exit())
-                  projectLibRepl.foreach(_.exit())
-                  projectNonLibRepl.foreach(_.exit())
+                  projectRepsl.foreach(_.exit())
 
                   progressIndicator.setText("Busy with cleaning up cache")
                   HaskellComponentsManager.invalidateGlobalCaches(project)
@@ -106,14 +104,15 @@ object StackProjectManager {
                   })
                 }
 
-                progressIndicator.setText(s"Busy with building intero ")
-                build(project, "intero", logBuildResult = true)
+                progressIndicator.setText(s"Busy with building Intero ")
+                build(project, Seq("intero"), logBuildResult = true)
 
                 progressIndicator.setText("Busy with starting global Stack REPL")
                 StackReplsManager.getGlobalRepl(project).foreach(_.start())
               } finally {
                 getStackProjectManager(project).foreach(_.building = false)
                 if (!project.isDisposed) {
+//                  val stackLibraryComponents = StackReplsManager.getReplsManager(project).map(_.stackComponentInfos.filter(_.stanzaType == LibType)).getOrElse(Iterable())
                   ApplicationManager.getApplication.getMessageBus.connect(project).subscribe(VirtualFileManager.VFS_CHANGES, new ProjectLibraryFileWatcher(project))
                 }
               }
@@ -190,8 +189,7 @@ class StackProjectManager(project: Project) extends ProjectComponent {
   override def projectClosed(): Unit = {
     if (HaskellProjectUtil.isHaskellProject(project)) {
       replsManager.foreach(_.getGlobalRepl.exit())
-      replsManager.foreach(_.getProjectLibraryRepl.foreach(_.exit()))
-      replsManager.foreach(_.getProjectNonLibraryRepl.foreach(_.exit()))
+      replsManager.foreach(_.getRunningProjectRepls.foreach(_.exit()))
     }
   }
 
@@ -201,7 +199,7 @@ class StackProjectManager(project: Project) extends ProjectComponent {
     if (HaskellProjectUtil.isHaskellProject(project)) {
       initStackReplsManager()
       if (replsManager.exists(_.stackComponentInfos.isEmpty)) {
-        Messages.showErrorDialog(project, s"Can not start project because Stack/Cabal info can not be retrieved", "Can not start project")
+        Messages.showErrorDialog(project, s"Can not start project because no Cabal file was found or could not be read", "Can not start project")
       } else {
         StackProjectManager.start(project)
       }

@@ -18,19 +18,15 @@ package intellij.haskell.external.component
 
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.fileEditor.FileEditorManager
-import com.intellij.openapi.module.Module
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.roots.libraries.LibraryUtil
-import com.intellij.openapi.util.Computable
 import com.intellij.psi.{PsiElement, PsiFile}
 import com.intellij.util.WaitFor
-import intellij.haskell.annotator.HaskellAnnotator
 import intellij.haskell.external.execution.{CompilationResult, HaskellCompilationResultHelper}
 import intellij.haskell.external.repl.ProjectStackRepl.{Failed, IsFileLoaded, Loaded}
-import intellij.haskell.external.repl.StackRepl.LibType
+import intellij.haskell.external.repl.StackReplsManager.StackComponentInfo
 import intellij.haskell.external.repl._
 import intellij.haskell.psi.HaskellPsiUtil
-import intellij.haskell.util.{HaskellFileUtil, HaskellProjectUtil}
+import intellij.haskell.util.{HaskellFileUtil, ScalaUtil}
 
 private[component] object LoadComponent {
 
@@ -39,13 +35,13 @@ private[component] object LoadComponent {
     projectRepl.map(_.isLoaded(psiFile))
   }
 
-  def isBusy(project: Project): Boolean = {
-    val projectRepl = StackReplsManager.getProjectLibraryRepl(project)
+  def isBusy(project: Project, stackComponentInfo: StackComponentInfo): Boolean = {
+    val projectRepl = StackReplsManager.getRunningProjectRepl(project, stackComponentInfo)
     projectRepl.exists(_.isBusy)
   }
 
   def isBusy(psiFile: PsiFile): Boolean = {
-    val projectRepl = StackReplsManager.getProjectRepl(psiFile)
+    val projectRepl = StackReplsManager.getRunningProjectRepl(psiFile)
     projectRepl.exists(_.isBusy)
   }
 
@@ -54,20 +50,7 @@ private[component] object LoadComponent {
 
     StackReplsManager.getProjectRepl(psiFile).flatMap(projectRepl => {
       val fileOfSelectedEditor = isFileOfSelectedEditor(psiFile)
-      lazy val stackComponentInfo = HaskellComponentsManager.findStackComponentInfo(psiFile)
       if (fileOfSelectedEditor) {
-        stackComponentInfo.foreach(componentInfo => {
-          lazy val moduleName = findModule(psiFile)
-          val libraryNames = ProjectLibraryFileWatcher.builtLibraries.filter {
-            case (pn, _) => componentInfo.stanzaType != LibType && pn == componentInfo.packageName || moduleName.exists(m => LibraryUtil.findLibrary(m, pn) != null)
-          }.keys
-
-          if (libraryNames.nonEmpty) {
-            libraryNames.foreach(ProjectLibraryFileWatcher.builtLibraries.remove)
-            StackReplsManager.getReplsManager(project).foreach(_.restartProjectRepl(projectRepl))
-            HaskellAnnotator.getDaemonCodeAnalyzer(project).restart(psiFile)
-          }
-        })
 
         // The REPL is not started if target which it's depends on has compile errors at the moment of start.
         synchronized {
@@ -82,25 +65,23 @@ private[component] object LoadComponent {
       projectRepl.load(psiFile, reload) match {
         case Some((loadOutput, loadFailed)) =>
           if (fileOfSelectedEditor) {
-            ApplicationManager.getApplication.executeOnPooledThread(new Runnable {
+            ApplicationManager.getApplication.executeOnPooledThread(ScalaUtil.runnable {
 
-              override def run(): Unit = {
-                DefinitionLocationComponent.invalidate(psiFile)
-                TypeInfoComponent.invalidate(psiFile)
+              DefinitionLocationComponent.invalidate(psiFile)
+              TypeInfoComponent.invalidate(psiFile)
 
-                if (!loadFailed) {
-                  NameInfoComponent.invalidate(psiFile)
+              if (!loadFailed) {
+                NameInfoComponent.invalidate(psiFile)
 
-                  BrowseModuleComponent.refreshTopLevel(project, psiFile)
-                  val moduleName = HaskellPsiUtil.findModuleName(psiFile, runInRead = true)
-                  moduleName.foreach(mn => BrowseModuleComponent.invalidateForModuleName(project, mn))
+                BrowseModuleComponent.refreshTopLevel(project, psiFile)
+                val moduleName = HaskellPsiUtil.findModuleName(psiFile, runInRead = true)
+                moduleName.foreach(mn => BrowseModuleComponent.invalidateForModuleName(project, mn))
 
-                  // FIXME For now disabled to improve to responsiveness
-                  // Only preload types for Lib targets because expressions in hspec files can be large....
-//                  if (stackComponentInfo.exists(_.stanzaType == LibType)) {
-//                    currentElement.foreach(TypeInfoUtil.preloadTypesAround)
-//                  }
-                }
+                // FIXME For now disabled to improve to responsiveness
+                // Only preload types for Lib targets because expressions in hspec files can be large....
+                //                  if (stackComponentInfo.exists(_.stanzaType == LibType)) {
+                //                    currentElement.foreach(TypeInfoUtil.preloadTypesAround)
+                //                  }
               }
             })
           }
@@ -125,13 +106,5 @@ private[component] object LoadComponent {
       }
     }
     fileOfSelectedEditor.getOrElse(false)
-  }
-
-  private def findModule(psiFile: PsiFile) = {
-    ApplicationManager.getApplication.runReadAction(new Computable[Option[Module]] {
-      override def compute(): Option[Module] = {
-        HaskellProjectUtil.findModule(psiFile)
-      }
-    })
   }
 }

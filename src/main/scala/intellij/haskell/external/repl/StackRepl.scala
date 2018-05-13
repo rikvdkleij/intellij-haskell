@@ -38,7 +38,6 @@ import scala.sys.process._
 
 abstract class StackRepl(project: Project, componentInfo: Option[StackComponentInfo], extraReplOptions: Seq[String] = Seq(), replTimeout: Int) {
 
-  val target: Option[String] = componentInfo.map(_.target)
   private val stanzaType = componentInfo.map(_.stanzaType)
 
   private object GhciCommand {
@@ -85,7 +84,7 @@ abstract class StackRepl(project: Project, componentInfo: Option[StackComponentI
 
   private final val LocalBrowseStopReadingIndicator = "-- imported via"
 
-  def getComponentName: String = target.map(t => "project-stack-repl-" + t).getOrElse("global-stack-repl")
+  def getComponentName: String = componentInfo.map(_.target).map(t => "project-stack-repl-" + t).getOrElse("global-stack-repl")
 
   private val stdoutResult = new ArrayBuffer[String]
   private val stderrResult = new ArrayBuffer[String]
@@ -160,9 +159,9 @@ abstract class StackRepl(project: Project, componentInfo: Option[StackComponentI
           if (command == ExitCommand) {
             stdoutResult.lastOption.exists(_.startsWith("Leaving GHCi"))
           } else if (ghciCommand == GhciCommand.LocalBrowse) {
-            stdoutResult.exists(_.startsWith(LocalBrowseStopReadingIndicator))
+            stdoutResult.exists(_.startsWith(LocalBrowseStopReadingIndicator)) || stderrResult.nonEmpty
           } else {
-            stdoutResult.lastOption.exists(_.contains(EndOfOutputIndicator)) && (ghciCommand == GhciCommand.Module || ghciCommand == GhciCommand.Set || stdoutResult.length > 1 || stderrResult.length > 1)
+            stdoutResult.lastOption.exists(_.contains(EndOfOutputIndicator)) && (ghciCommand == GhciCommand.Module || ghciCommand == GhciCommand.Set || stdoutResult.length > 1 || stderrResult.nonEmpty)
           }
 
         def writeToOutputStream(command: String) = {
@@ -246,7 +245,7 @@ abstract class StackRepl(project: Project, componentInfo: Option[StackComponentI
           }
 
           val replGhciOptionsFilePath = createGhciOptionsFile.getAbsolutePath
-          val command = (Seq(stackPath, "repl") ++ target.toSeq ++ Seq("--with-ghc", "intero", "--no-load", "--no-build", "--ghci-options", s"-ghci-script=$replGhciOptionsFilePath", "--silent") ++ extraOptions).mkString(" ")
+          val command = (Seq(stackPath, "repl") ++ componentInfo.map(_.target).toSeq ++ Seq("--with-ghc", "intero", "--no-load", "--no-build", "--ghci-options", s"-ghci-script=$replGhciOptionsFilePath", "--silent") ++ extraOptions).mkString(" ")
 
           logInfo(s"Stack REPL will be started with command: $command")
 
@@ -290,8 +289,8 @@ abstract class StackRepl(project: Project, componentInfo: Option[StackComponentI
             available = true
           } else {
             if (hasDependencyError) {
-              if (ProjectLibraryFileWatcher.buildStatus.isEmpty) {
-                val message = s"Stack REPL could not be started for target `${target.getOrElse("-")}` because a dependency has build errors"
+              if (!ProjectLibraryFileWatcher.isBuilding(project)) {
+                val message = s"Stack REPL could not be started for target `${componentInfo.map(_.target).getOrElse("-")}` because a dependency has build errors"
                 logInfo(message)
                 HaskellEditorUtil.showStatusBarNotificationBalloon(project, message)
               }
@@ -374,10 +373,7 @@ abstract class StackRepl(project: Project, componentInfo: Option[StackComponentI
     }
   }
 
-  def restart(forceExit: Boolean = false): Unit = synchronized {
-    exit(forceExit)
-    start()
-  }
+  def restart(forceExit: Boolean = false): Unit
 
   private def logError(message: String) = {
     HaskellNotificationGroup.logErrorBalloonEvent(project, s"[$getComponentName] $message")

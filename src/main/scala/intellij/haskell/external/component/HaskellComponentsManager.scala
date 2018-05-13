@@ -46,8 +46,8 @@ object HaskellComponentsManager {
     BrowseModuleComponent.findModuleIdentifiers(psiFile.getProject, moduleName, Some(psiFile))
   }
 
-  def findDefinitionLocation(namedElement: HaskellNamedElement): Option[DefinitionLocationResult] = {
-    DefinitionLocationComponent.findDefinitionLocation(namedElement)
+  def findDefinitionLocation(namedElement: HaskellNamedElement, waitIfBusy: Boolean = false): Option[DefinitionLocationResult] = {
+    DefinitionLocationComponent.findDefinitionLocation(namedElement, waitIfBusy)
   }
 
   def findNameInfo(qualifiedNameElement: HaskellQualifiedNameElement): Option[NameInfoResult] = {
@@ -102,6 +102,11 @@ object HaskellComponentsManager {
     HaskellProjectFileInfoComponent.invalidate(psiFile)
   }
 
+  def invalidateLocationAndTypeInfo(psiFile: PsiFile) = {
+    DefinitionLocationComponent.invalidate(psiFile)
+    TypeInfoComponent.invalidate(psiFile)
+  }
+
   def invalidateGlobalCaches(project: Project): Unit = {
     HaskellNotificationGroup.logInfoEvent(project, "Start to invalidate cache")
     GlobalProjectInfoComponent.invalidate(project)
@@ -114,10 +119,9 @@ object HaskellComponentsManager {
   }
 
   def preloadLibraryIdentifiersCaches(project: Project): Unit = {
-    // FIXME For now no preload of libraries
-//    HaskellNotificationGroup.logInfoEvent(project, "Start to preload library cache")
-//    preloadLibraryIdentifiers(project)
-//    HaskellNotificationGroup.logInfoEvent(project, "Finished with preloading library cache")
+    HaskellNotificationGroup.logInfoEvent(project, "Start to preload library cache")
+    preloadLibraryIdentifiers(project)
+    HaskellNotificationGroup.logInfoEvent(project, "Finished with preloading library cache")
   }
 
   def findTypeInfoForElement(psiElement: PsiElement): Option[TypeInfoResult] = {

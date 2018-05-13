@@ -84,7 +84,7 @@ object ShowTypeAction {
             HaskellEditorUtil.showHint(editor, StringUtil.escapeString(d), sticky)
           case None => showNoTypeInfoHint(editor, psiElement)
         }
-      case None => showNoTypeInfoHint(editor, psiElement)
+      case _ => showNoTypeInfoHint(editor, psiElement)
     }
   }
 
