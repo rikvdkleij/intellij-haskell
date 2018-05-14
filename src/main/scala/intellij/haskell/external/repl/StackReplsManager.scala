@@ -60,7 +60,19 @@ private[external] object StackReplsManager {
   private def createCabalInfos(project: Project): Iterable[CabalInfo] = {
     val modules = HaskellProjectUtil.findProjectModules(project)
     val moduleDirs = modules.map(HaskellProjectUtil.getModuleDir)
-    moduleDirs.flatMap(p => HaskellProjectUtil.findCabalFile(p).flatMap(cf => CabalInfo.create(project, cf)))
+    if (moduleDirs.isEmpty) {
+      HaskellNotificationGroup.logWarningBalloonEvent(project, s"No Haskell modules found for project ${project.getName}. Check your project configuration.")
+      Iterable()
+    } else {
+      val cabalFiles = (for {
+        dir <- moduleDirs
+        cf <- HaskellProjectUtil.findCabalFile(dir)
+      } yield CabalInfo.create(project, cf)).flatten
+      if (cabalFiles.isEmpty) {
+        HaskellNotificationGroup.logWarningBalloonEvent(project, s"No Cabal files found for project ${project.getName}. Check your project configuration.")
+      }
+      cabalFiles
+    }
   }
 
   private def createStackComponentInfo(project: Project, cabalInfos: Iterable[CabalInfo]): Iterable[StackComponentInfo] = {

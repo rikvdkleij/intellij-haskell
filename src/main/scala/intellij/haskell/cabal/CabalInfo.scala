@@ -35,15 +35,15 @@ object CabalInfo {
 
   def create(project: Project, cabalFile: File): Option[CabalInfo] = {
     val source = try {
-      Some(Source.fromFile(cabalFile, StandardCharsets.UTF_8.toString).mkString)
+      Option(Source.fromFile(cabalFile, StandardCharsets.UTF_8.toString)).map(_.mkString)
     } catch {
       case e: IOException =>
         HaskellNotificationGroup.logErrorBalloonEvent(project, s"Could not read Cabal file ${cabalFile.getName}, error: ${e.getMessage}")
         None
     }
 
-    source.flatMap(src => PsiFileFactory.getInstance(project).createFileFromText(cabalFile.getName, CabalLanguage.Instance, src) match {
-      case cabalPsiFile: CabalFile => Some(new CabalInfo(cabalPsiFile, cabalFile.getParentFile.getAbsolutePath))
+    source.flatMap(src => Option(PsiFileFactory.getInstance(project).createFileFromText(cabalFile.getName, CabalLanguage.Instance, src)) match {
+      case Some(cabalPsiFile: CabalFile) => Some(new CabalInfo(cabalPsiFile, cabalFile.getParentFile.getAbsolutePath))
       case _ =>
         HaskellNotificationGroup.logErrorBalloonEvent(project, s"Could not parse Cabal file ${cabalFile.getName}")
         None
