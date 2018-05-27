@@ -96,7 +96,7 @@ class HaskellConsoleView(val project: Project, val configuration: HaskellConsole
     commandText.trim() match {
       case LoadPattern(moduleName) =>
         val haskellFile = Option(DumbService.getInstance(project).tryRunReadActionInSmartMode(ScalaUtil.computable(
-          HaskellModuleNameIndex.findHaskellFileByModuleName(project, moduleName, GlobalSearchScope.projectScope(project))), "Haskell console view not available until indices are ready")).flatten
+          HaskellModuleNameIndex.findHaskellFileByModuleName(project, moduleName, GlobalSearchScope.projectScope(project))), "Haskell console features not available until indices are ready")).flatten
         haskellFile.foreach(hf => HaskellConsoleViewMap.projectFileByConfigName.put(configuration.getName, hf))
       case _ => ()
     }

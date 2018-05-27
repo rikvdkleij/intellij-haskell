@@ -16,65 +16,81 @@
 
 package intellij.haskell.external.component
 
-import com.github.blemale.scaffeine.{LoadingCache, Scaffeine}
+import com.github.blemale.scaffeine.{AsyncLoadingCache, Scaffeine}
 import com.intellij.openapi.project.{DumbService, Project}
 import com.intellij.psi.PsiFile
-import com.intellij.psi.search.GlobalSearchScopesCore
+import com.intellij.psi.search.GlobalSearchScope
 import intellij.haskell.external.repl.ProjectStackRepl.Failed
 import intellij.haskell.external.repl._
 import intellij.haskell.util.index.HaskellModuleNameIndex
 import intellij.haskell.util.{ScalaUtil, StringUtil}
 
+import scala.concurrent.{ExecutionContext, Future}
+
 private[component] object BrowseModuleComponent {
 
   private case class Key(project: Project, moduleName: String, psiFile: Option[PsiFile])
 
-  type BrowseModuleResult = Either[NoInfo, Iterable[ModuleIdentifier]]
+  private sealed trait NoBrowseInfo
 
-  private final val Cache: LoadingCache[Key, BrowseModuleResult] = Scaffeine().build((k: Key) => findModuleIdentifiers(k))
+  private case object ReplNotAvailable extends NoBrowseInfo
 
-  def findModuleIdentifiers(project: Project, moduleName: String, psiFile: Option[PsiFile]): Iterable[ModuleIdentifier] = {
+  private case object ReplIsBusy extends NoBrowseInfo
+
+  private case object NoInfoAvailable extends NoBrowseInfo
+
+  private case object IndexNotReady extends NoBrowseInfo
+
+  type BrowseModuleResult = Iterable[ModuleIdentifier]
+  private type BrowseModuleInternalResult = Either[NoBrowseInfo, Iterable[ModuleIdentifier]]
+
+  private final val Cache: AsyncLoadingCache[Key, BrowseModuleInternalResult] = Scaffeine().buildAsync((k: Key) => {
+    if (k.project.isDisposed) {
+      Left(NoInfoAvailable)
+    } else {
+      findModuleIdentifiers(k)
+    }
+  })
+
+  def findModuleIdentifiers(project: Project, moduleName: String, psiFile: Option[PsiFile])(implicit ec: ExecutionContext): Future[Iterable[ModuleIdentifier]] = {
     val key = Key(project, moduleName, psiFile)
-    Cache.get(key) match {
+
+    concurrent.blocking(Cache.get(key).map {
       case Right(ids) => ids
       case Left(NoInfoAvailable) =>
         Iterable()
       case Left(ReplNotAvailable) =>
-        Cache.invalidate(key)
+        Cache.synchronous().invalidate(key)
         Iterable()
       case Left(ReplIsBusy) =>
-        Cache.invalidate(key)
+        Cache.synchronous.invalidate(key)
         Iterable()
-    }
+      case Left(IndexNotReady) =>
+        Cache.synchronous.invalidate(key)
+        Iterable()
+    })
   }
 
   def findModuleNamesInCache(project: Project): Iterable[String] = {
-    Cache.asMap().filter(_._1.project == project).map(_._1.moduleName)
+    Cache.synchronous().asMap().filter(_._1.project == project).map(_._1.moduleName)
   }
 
-  def invalidateTopLevel(project: Project, psiFile: PsiFile): Unit = {
-    val keys = Cache.asMap().keys.filter(k => k.project == project && k.psiFile.contains(psiFile))
-    keys.foreach(k => Cache.invalidate(k))
-  }
-
-  def refreshTopLevel(project: Project, psiFile: PsiFile): Unit = {
-    val keys = Cache.asMap().keys.filter(k => k.project == project && k.psiFile.contains(psiFile))
-    keys.foreach(k => Cache.refresh(k))
+  def refreshTopLevel(project: Project, moduleName: String, psiFile: PsiFile): Unit = {
+    val key = Key(project, moduleName, Some(psiFile))
+    Cache.synchronous().refresh(key)
   }
 
   def invalidateForModuleName(project: Project, moduleName: String): Unit = {
-    val keys = Cache.asMap().keys.filter(k => k.project == project && k.moduleName == moduleName && k.psiFile.isEmpty)
-    keys.foreach(k => Cache.invalidate(k))
+    val key = Key(project, moduleName, None)
+    Cache.synchronous.invalidate(key)
   }
 
   def invalidate(project: Project): Unit = {
-    val keys = Cache.asMap().keys.filter(k => k.project == project)
-    keys.foreach(k => Cache.invalidate(k))
+    val keys = Cache.synchronous().asMap().keys.filter(_.project == project)
+    Cache.synchronous.invalidateAll(keys)
   }
 
-  private final val IndicesNotReadyMessage = "Finding module identifiers is not available until indices are ready"
-
-  private def findModuleIdentifiers(key: Key): BrowseModuleResult = {
+  private def findModuleIdentifiers(key: Key): BrowseModuleInternalResult = {
     val project = key.project
     val moduleName = key.moduleName
 
@@ -90,49 +106,40 @@ private[component] object BrowseModuleComponent {
           Left(NoInfoAvailable)
         }
       case None =>
-        val projectHaskellFile =
-          if (!project.isDisposed) {
-            val productionFile = Option(DumbService.getInstance(project).tryRunReadActionInSmartMode(ScalaUtil.computable(
-              HaskellModuleNameIndex.findHaskellFileByModuleName(project, moduleName, GlobalSearchScopesCore.projectProductionScope(project))), IndicesNotReadyMessage)).flatten
-
-            if (productionFile.isEmpty) {
-              Option(DumbService.getInstance(project).tryRunReadActionInSmartMode(ScalaUtil.computable(
-                HaskellModuleNameIndex.findHaskellFileByModuleName(project, moduleName, GlobalSearchScopesCore.projectTestScope(project))), IndicesNotReadyMessage)).flatten
-            } else {
-              productionFile
-            }
-          } else {
-            None
-          }
-
-        projectHaskellFile match {
-          case Some(f) =>
-            if (LoadComponent.isBusy(f)) {
-              Left(ReplIsBusy)
-            } else {
-              val output = projectHaskellFile.flatMap(f => StackReplsManager.getProjectRepl(f).flatMap(_.getModuleIdentifiers(moduleName, f)))
-              output match {
-                case Some(o) if o.stderrLines.isEmpty => output.map(_.stdoutLines.flatMap(l => findModuleIdentifiers(project, l, moduleName))) match {
-                  case Some(ids) => Right(ids)
-                  case None => Left(NoInfoAvailable)
+        Option(DumbService.getInstance(project).tryRunReadActionInSmartMode(
+          ScalaUtil.computable(HaskellModuleNameIndex.findHaskellFileByModuleName(project, moduleName, GlobalSearchScope.projectScope(project))),
+          "Obtaining module identifiers is not available until indices are ready")
+        ) match {
+          case Some(pf) =>
+            pf match {
+              case Some(f) =>
+                if (LoadComponent.isBusy(f)) {
+                  Left(ReplIsBusy)
+                } else {
+                  val output = StackReplsManager.getProjectRepl(f).flatMap(_.getModuleIdentifiers(moduleName, f))
+                  output match {
+                    case Some(o) if o.stderrLines.isEmpty => output.map(_.stdoutLines.flatMap(l => findModuleIdentifiers(project, l, moduleName))) match {
+                      case Some(ids) => Right(ids)
+                      case None => Left(NoInfoAvailable)
+                    }
+                    case _ => Left(ReplNotAvailable)
+                  }
                 }
-                case _ => Left(ReplNotAvailable)
-              }
+
+              case None => findLibraryModuleIdentifiers(project, moduleName)
             }
-
-          case None =>
-            val moduleIdentifiers =
-              StackReplsManager.getGlobalRepl(project).flatMap(_.getModuleIdentifiers(moduleName)) match {
-                case None => Left(ReplNotAvailable)
-                case Some(o) if o.stdoutLines.nonEmpty => Right(o.stdoutLines.flatMap(l => findModuleIdentifiers(project, l, moduleName).toSeq))
-                case _ => Left(NoInfoAvailable)
-              }
-
-            moduleIdentifiers
+          case None => Left(IndexNotReady)
         }
     }
   }
 
+  private def findLibraryModuleIdentifiers(project: Project, moduleName: String): Either[NoBrowseInfo, Seq[ModuleIdentifier]] = {
+    StackReplsManager.getGlobalRepl(project).flatMap(_.getModuleIdentifiers(moduleName)) match {
+      case None => Left(ReplNotAvailable)
+      case Some(o) if o.stdoutLines.nonEmpty => Right(o.stdoutLines.flatMap(l => findModuleIdentifiers(project, l, moduleName).toSeq))
+      case _ => Left(NoInfoAvailable)
+    }
+  }
 
   // This kind of declarations are returned in case DuplicateRecordFields are enabled
   private final val Module$SelPattern =

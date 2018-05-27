@@ -298,7 +298,7 @@
         <projectImportBuilder implementation="intellij.haskell.module.StackProjectImportBuilder"/>
 
         <!-- Index -->
-        <fileBasedIndex implementation="intellij.haskell.util.index.HaskellFileNameIndex"/>
+        <fileBasedIndex implementation="intellij.haskell.util.index.HaskellFilePathIndex"/>
         <fileBasedIndex implementation="intellij.haskell.util.index.HaskellModuleNameIndex"/>
         <stubIndex implementation="intellij.haskell.psi.stubs.index.HaskellAllNameIndex"/>
         <stubElementTypeHolder class="intellij.haskell.psi.HaskellTypes"/>

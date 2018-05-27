@@ -16,26 +16,32 @@
 
 package intellij.haskell.external.component
 
-import com.github.blemale.scaffeine.{LoadingCache, Scaffeine}
-import com.intellij.openapi.application.ApplicationManager
+import java.util.concurrent.TimeUnit
+
+import com.github.blemale.scaffeine.{AsyncLoadingCache, Scaffeine}
 import com.intellij.openapi.project.Project
 import com.intellij.psi.PsiFile
+import com.intellij.psi.search.GlobalSearchScope
 import intellij.haskell.external.repl.StackRepl.StackReplOutput
 import intellij.haskell.external.repl.StackReplsManager
 import intellij.haskell.psi._
-import intellij.haskell.util.{LineColumnPosition, ScalaUtil}
+import intellij.haskell.util.LineColumnPosition
+import intellij.haskell.util.index.HaskellFilePathIndex
+
+import scala.concurrent.duration.Duration
+import scala.concurrent.{Await, TimeoutException}
 
 private[component] object DefinitionLocationComponent {
   private final val LocAtPattern = """(.+)\:\(([\d]+),([\d]+)\)-\(([\d]+),([\d]+)\)""".r
   private final val PackageModulePattern = """.+\:([\w\.\-]+)""".r
 
-  private case class Key(startLineNr: Int, startColumnNr: Int, endLineNr: Int, endColumnNr: Int, name: String, psiFile: PsiFile)
+  private case class Key(startLineNr: Int, startColumnNr: Int, endLineNr: Int, endColumnNr: Int, name: String, psiFile: PsiFile, moduleName: Option[String])
 
   type DefinitionLocationResult = Either[NoInfo, LocationInfo]
 
-  private final val Cache: LoadingCache[Key, DefinitionLocationResult] = Scaffeine().build((k: Key) => findDefinitionLocation(k))
+  private final val Cache: AsyncLoadingCache[Key, DefinitionLocationResult] = Scaffeine().buildAsync((k: Key) => findDefinitionLocation(k))
 
-  def findDefinitionLocation(namedElement: HaskellNamedElement, waitIfBusy: Boolean): Option[DefinitionLocationResult] = {
+  def findDefinitionLocation(namedElement: HaskellNamedElement, waitIfBusy: Boolean): DefinitionLocationResult = {
     (for {
       qne <- HaskellPsiUtil.findQualifiedNameParent(namedElement).map(_.getIdentifierElement)
       textOffset = qne.getTextOffset
@@ -43,17 +49,19 @@ private[component] object DefinitionLocationComponent {
       sp <- LineColumnPosition.fromOffset(psiFile, textOffset)
       ep <- LineColumnPosition.fromOffset(psiFile, textOffset + qne.getText.length)
     } yield find(psiFile, sp, ep, qne.getName, waitIfBusy)) match {
-      case r@Some(_) => r
-      case None => None
+      case Some(r) => r
+      case None => Left(NoInfoAvailable)
     }
   }
 
   def invalidate(psiFile: PsiFile): Unit = {
-    Cache.asMap().filter(_._1.psiFile == psiFile).keys.foreach(Cache.invalidate)
+    val keys = Cache.synchronous().asMap().filter(_._1.psiFile == psiFile).keys
+    Cache.synchronous().invalidateAll(keys)
   }
 
   def invalidateAll(project: Project): Unit = {
-    Cache.asMap().map(_._1.psiFile).filter(_.getProject == project).foreach(invalidate)
+    val files = Cache.synchronous().asMap().map(_._1.psiFile).filter(_.getProject == project)
+    files.foreach(invalidate)
   }
 
   private def findDefinitionLocation(key: Key): DefinitionLocationResult = {
@@ -64,15 +72,15 @@ private[component] object DefinitionLocationComponent {
       val project = psiFile.getProject
 
       if (key.name.headOption.exists(_.isUpper)) {
-        createLocationInfoWithEndColumnExcluded(project, psiFile, key, withoutLastColumn = true)
+        createLocationInfo(project, psiFile, key, withoutLastColumn = true)
       } else {
-        createLocationInfoWithEndColumnExcluded(project, psiFile, key, withoutLastColumn = false)
+        createLocationInfo(project, psiFile, key, withoutLastColumn = false)
       }
     }
   }
 
-  private def createLocationInfoWithEndColumnExcluded(project: Project, psiFile: PsiFile, key: Key, withoutLastColumn: Boolean): DefinitionLocationResult = {
-    findLocationInfoFor(key, psiFile, project, withoutLastColumn) match {
+  private def createLocationInfo(project: Project, psiFile: PsiFile, key: Key, withoutLastColumn: Boolean): DefinitionLocationResult = {
+    findLocationInfo(key, psiFile, project, withoutLastColumn) match {
       case Some(o) => o.stdoutLines.headOption.map(createLocationInfo) match {
         case Some(r) => r
         case None => Left(NoInfoAvailable)
@@ -81,10 +89,9 @@ private[component] object DefinitionLocationComponent {
     }
   }
 
-  private def findLocationInfoFor(key: Key, psiFile: PsiFile, project: Project, withoutLastColumn: Boolean): Option[StackReplOutput] = {
+  private def findLocationInfo(key: Key, psiFile: PsiFile, project: Project, withoutLastColumn: Boolean): Option[StackReplOutput] = {
     val endColumnNr = if (withoutLastColumn) key.endColumnNr - 1 else key.endColumnNr
-    val moduleName = ApplicationManager.getApplication.runReadAction(ScalaUtil.computable(HaskellPsiUtil.findModuleName(psiFile, runInRead = true)))
-    StackReplsManager.getProjectRepl(psiFile).flatMap(_.findLocationInfoFor(moduleName, psiFile, key.startLineNr, key.startColumnNr, key.endLineNr, endColumnNr, key.name))
+    StackReplsManager.getProjectRepl(psiFile).flatMap(_.findLocationInfo(key.moduleName, psiFile, key.startLineNr, key.startColumnNr, key.endLineNr, endColumnNr, key.name))
   }
 
   private def createLocationInfo(output: String): DefinitionLocationResult = {
@@ -95,31 +102,31 @@ private[component] object DefinitionLocationComponent {
     }
   }
 
+  private final val Timeout = Duration.create(100, TimeUnit.MILLISECONDS)
+
   private def find(psiFile: PsiFile, startPosition: LineColumnPosition, endPosition: LineColumnPosition, expression: String, waitIfBusy: Boolean): DefinitionLocationResult = {
-    val key = Key(startPosition.lineNr, startPosition.columnNr, endPosition.lineNr, endPosition.columnNr, expression, psiFile)
-    Cache.getIfPresent(key) match {
-      case Some(r) => r
-      case None =>
-        if (!LoadComponent.isBusy(key.psiFile) || waitIfBusy) {
-        val result = Cache.get(key)
-        result match {
-          case Right(_) => result
-          case Left(ReplNotAvailable) =>
-            Cache.invalidate(key)
-            result
-          case Left(NoInfoAvailable) =>
-            result
-          case Left(ReplIsBusy) =>
-            if (waitIfBusy && !psiFile.getProject.isDisposed) {
-              Thread.sleep(100)
-              find(psiFile, startPosition, endPosition, expression, waitIfBusy)
-            } else {
-              Cache.invalidate(key)
-              result
-            }
-        }
+    val project = psiFile.getProject
+    val moduleName = HaskellFilePathIndex.findModuleName(psiFile, GlobalSearchScope.projectScope(project))
+    val key = Key(startPosition.lineNr, startPosition.columnNr, endPosition.lineNr, endPosition.columnNr, expression, psiFile, moduleName)
+    val result = try {
+      Await.result(Cache.get(key), Timeout)
+    } catch {
+      case _: TimeoutException => Left(ReplIsBusy)
+    }
+    result match {
+      case Right(_) => result
+      case Left(ReplNotAvailable) =>
+        Cache.synchronous().invalidate(key)
+        result
+      case Left(NoInfoAvailable) =>
+        result
+      case Left(ReplIsBusy) =>
+        if (waitIfBusy && !project.isDisposed) {
+          Thread.sleep(100)
+          find(psiFile, startPosition, endPosition, expression, waitIfBusy)
         } else {
-          Left(ReplIsBusy)
+          Cache.synchronous().invalidate(key)
+          result
         }
     }
   }

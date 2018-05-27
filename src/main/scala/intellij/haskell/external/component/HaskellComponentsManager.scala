@@ -16,6 +16,8 @@
 
 package intellij.haskell.external.component
 
+import java.util.concurrent.{Executors, TimeUnit}
+
 import com.intellij.openapi.editor.SelectionModel
 import com.intellij.openapi.project.{DumbService, Project}
 import com.intellij.psi.{PsiElement, PsiFile}
@@ -28,25 +30,36 @@ import intellij.haskell.external.execution.CompilationResult
 import intellij.haskell.external.repl.StackReplsManager
 import intellij.haskell.external.repl.StackReplsManager.StackComponentInfo
 import intellij.haskell.psi.{HaskellNamedElement, HaskellPsiUtil, HaskellQualifiedNameElement}
-import intellij.haskell.util.index.HaskellFileNameIndex
+import intellij.haskell.util.index.HaskellFileIndex
 import intellij.haskell.util.{HaskellProjectUtil, ScalaUtil}
+
+import scala.concurrent._
+import scala.concurrent.duration.Duration
 
 object HaskellComponentsManager {
 
-  def findPreloadedModuleIdentifiers(project: Project): Iterable[ModuleIdentifier] = {
+  private final val Timeout = Duration.create(100, TimeUnit.MILLISECONDS)
+
+  def findPreloadedModuleIdentifiers(project: Project)(implicit ec: ExecutionContext): Iterable[ModuleIdentifier] = {
     val moduleNames = BrowseModuleComponent.findModuleNamesInCache(project)
-    moduleNames.flatMap(mn => findExportedModuleIdentifiers(project, mn))
+    moduleNames.flatMap(mn => {
+      try {
+        Await.result(findModuleIdentifiers(project, mn), Timeout)
+      } catch {
+        case _: TimeoutException => Iterable()
+      }
+    })
   }
 
-  def findExportedModuleIdentifiers(project: Project, moduleName: String): Iterable[ModuleIdentifier] = {
+  def findModuleIdentifiers(project: Project, moduleName: String)(implicit ec: ExecutionContext): Future[Iterable[ModuleIdentifier]] = {
     BrowseModuleComponent.findModuleIdentifiers(project, moduleName, None)
   }
 
-  def findLocalModuleIdentifiers(psiFile: PsiFile, moduleName: String): Iterable[ModuleIdentifier] = {
-    BrowseModuleComponent.findModuleIdentifiers(psiFile.getProject, moduleName, Some(psiFile))
+  def findLocalModuleIdentifiers(project: Project, psiFile: PsiFile, moduleName: String)(implicit ec: ExecutionContext): Future[Iterable[ModuleIdentifier]] = {
+    BrowseModuleComponent.findModuleIdentifiers(project, moduleName, Some(psiFile))
   }
 
-  def findDefinitionLocation(namedElement: HaskellNamedElement, waitIfBusy: Boolean = false): Option[DefinitionLocationResult] = {
+  def findDefinitionLocation(namedElement: HaskellNamedElement, waitIfBusy: Boolean = false): DefinitionLocationResult = {
     DefinitionLocationComponent.findDefinitionLocation(namedElement, waitIfBusy)
   }
 
@@ -62,12 +75,12 @@ object HaskellComponentsManager {
     NameInfoComponent.NameInfoByModuleComponent.findNameInfoByModuleName(project, moduleName, name)
   }
 
-  def findAvailableModuleNames(psiFile: PsiFile): Iterable[String] = {
-    AvailableModuleNamesComponent.findAvailableModuleNames(psiFile)
+  def findAvailableModuleNamesWithIndex(psiFile: PsiFile): Iterable[String] = {
+    AvailableModuleNamesComponent.findAvailableModuleNamesWithIndex(psiFile)
   }
 
-  def findAvailableStackTargetProjectModuleNames(psiFile: PsiFile): Iterable[String] = {
-    AvailableModuleNamesComponent.findAvailableStackTargetProjectModuleNames(psiFile)
+  def findAvailableProjectModuleNamesWithIndex(psiFile: PsiFile): Iterable[String] = {
+    AvailableModuleNamesComponent.findAvailableProjectModuleNamesWithIndex(psiFile)
   }
 
   def findStackComponentGlobalInfo(psiFile: PsiFile): Option[StackComponentGlobalInfo] = {
@@ -102,7 +115,7 @@ object HaskellComponentsManager {
     HaskellProjectFileInfoComponent.invalidate(psiFile)
   }
 
-  def invalidateLocationAndTypeInfo(psiFile: PsiFile) = {
+  def invalidateLocationAndTypeInfo(psiFile: PsiFile): Unit = {
     DefinitionLocationComponent.invalidate(psiFile)
     TypeInfoComponent.invalidate(psiFile)
   }
@@ -133,46 +146,47 @@ object HaskellComponentsManager {
   }
 
   private def preloadLibraryIdentifiers(project: Project): Unit = {
-    if (!project.isDisposed) {
-      if (!project.isDisposed) {
-        DumbService.getInstance(project).runReadActionInSmartMode(ScalaUtil.computable(BrowseModuleComponent.findModuleIdentifiers(project, HaskellProjectUtil.Prelude, None), null))
-      }
+    val ExecutorService = Executors.newCachedThreadPool()
+    implicit val ExecContext: ExecutionContextExecutorService = ExecutionContext.fromExecutorService(ExecutorService)
 
-      if (!project.isDisposed) {
-        val projectHaskellFiles =
-          DumbService.getInstance(project).runReadActionInSmartMode(ScalaUtil.computable(
+    if (!project.isDisposed) {
+      DumbService.getInstance(project).runReadActionInSmartMode(ScalaUtil.computable(BrowseModuleComponent.findModuleIdentifiers(project, HaskellProjectUtil.Prelude, None)))
+    }
+
+    if (!project.isDisposed) {
+      val projectHaskellFiles =
+        DumbService.getInstance(project).runReadActionInSmartMode(ScalaUtil.computable(
+          if (project.isDisposed) {
+            Iterable()
+          } else {
+            HaskellFileIndex.findProjectProductionHaskellFiles(project)
+          }
+        ))
+
+      val importedLibraryModuleNames =
+        DumbService.getInstance(project).runReadActionInSmartMode(ScalaUtil.computable(
+          projectHaskellFiles.flatMap(f => {
             if (project.isDisposed) {
               Iterable()
             } else {
-              HaskellFileNameIndex.findProjectProductionHaskellFiles(project)
+              val libraryModuleNames = findStackComponentGlobalInfo(f).map(_.availableLibraryModuleNames).getOrElse(Iterable())
+              HaskellPsiUtil.findImportDeclarations(f).flatMap(_.getModuleName.filter(_.nonEmpty)).filter(mn => libraryModuleNames.exists(_ == mn))
+                .toSeq.distinct.filterNot(a => a == HaskellProjectUtil.Prelude)
             }
-          ))
 
-        val importedLibraryModuleNames =
-          DumbService.getInstance(project).runReadActionInSmartMode(ScalaUtil.computable(
-            projectHaskellFiles.flatMap(f => {
-              if (project.isDisposed) {
-                Iterable[String]()
-              } else {
-                val libraryModuleNames = findStackComponentGlobalInfo(f).map(_.availableLibraryModuleNames).getOrElse(Iterable())
-                HaskellPsiUtil.findImportDeclarations(f).flatMap(_.getModuleName.filter(_.nonEmpty)).filter(mn => libraryModuleNames.exists(_ == mn))
-                  .toSeq.distinct.filterNot(a => a == HaskellProjectUtil.Prelude)
-              }
-
-            })
-          ))
-
-        if (!project.isDisposed) {
-          importedLibraryModuleNames.foreach(mn => {
-            if (!project.isDisposed) {
-              if (StackReplsManager.getGlobalRepl(project).exists(_.available)) {
-                DumbService.getInstance(project).runReadActionInSmartMode(ScalaUtil.computable(BrowseModuleComponent.findModuleIdentifiers(project, mn, None)))
-                // We have to wait for other requests which have more priority because those are on dispatch thread
-                Thread.sleep(100)
-              }
-            }
           })
-        }
+        ))
+
+      if (!project.isDisposed) {
+        importedLibraryModuleNames.foreach(mn => {
+          if (!project.isDisposed) {
+            if (StackReplsManager.getGlobalRepl(project).exists(_.available)) {
+              DumbService.getInstance(project).runReadActionInSmartMode(ScalaUtil.computable(BrowseModuleComponent.findModuleIdentifiers(project, mn, None)))
+              // We have to wait for other requests which have more priority because those are on dispatch thread
+              Thread.sleep(100)
+            }
+          }
+        })
       }
     }
   }

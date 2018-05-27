@@ -384,10 +384,10 @@ abstract class StackRepl(project: Project, componentInfo: Option[StackComponentI
   }
 
   private def removePrompt(output: Seq[String]): Seq[String] = {
-    if (output.isEmpty) {
-      output
-    } else {
+    if (output.lastOption.exists(_.trim == EndOfOutputIndicator)) {
       output.init
+    } else {
+      output
     }
   }
 

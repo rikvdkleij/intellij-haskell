@@ -70,13 +70,10 @@ object ShowTypeAction {
         HaskellEditorUtil.showStatusBarInfoMessage(project, info.typeSignature)
         HaskellEditorUtil.showHint(editor, StringUtil.escapeString(info.typeSignature), sticky)
       case _ if HaskellPsiUtil.findExpressionParent(psiElement).isDefined =>
-          // TODO Looks like redundant code
-          // TODO Also not works
-        val moduleNames = HaskellPsiUtil.findImportDeclarations(psiFile).flatMap(_.getModuleName)
         val declaration = HaskellPsiUtil.findQualifiedNameParent(psiElement).flatMap(qualifiedNameElement => {
           val name = qualifiedNameElement.getName
-          HaskellCompletionContributor.getAvailableImportedModuleIdentifiers(psiFile).find(mi => moduleNames.exists(_ == mi.moduleName) && mi.name == name).map(_.declaration).
-            orElse(findModuleName(psiFile).flatMap(mn => HaskellComponentsManager.findLocalModuleIdentifiers(psiFile, mn).find(_.name == name).map(_.declaration))).
+          val moduleName = findModuleName(psiFile)
+          HaskellCompletionContributor.getAvailableModuleIdentifiers(psiFile, moduleName).find(_.name == name).map(_.declaration).
             orElse(HaskellPsiUtil.findHaskellDeclarationElements(psiFile).find(_.getIdentifierElements.exists(_.getName == name)).map(_.getText.replaceAll("""\s+""", " ")))
         })
 

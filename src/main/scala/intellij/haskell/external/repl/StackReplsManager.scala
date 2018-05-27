@@ -45,6 +45,10 @@ private[external] object StackReplsManager {
     getReplsManager(psiFile.getProject).flatMap(_.findProjectRepl(psiFile))
   }
 
+  def getProjectRepl(project: Project, stackComponentInfo: StackComponentInfo): Option[ProjectStackRepl] = {
+    getReplsManager(project).map(_.getProjectRepl(stackComponentInfo, None))
+  }
+
   def getRunningProjectRepl(psiFile: PsiFile): Option[ProjectStackRepl] = {
     HaskellComponentsManager.findStackComponentInfo(psiFile).flatMap(ci => getRunningProjectRepl(psiFile.getProject, ci))
   }
@@ -114,19 +118,19 @@ private[external] class StackReplsManager(val project: Project) {
 
   private def findProjectRepl(psiFile: PsiFile): Option[ProjectStackRepl] = {
     if (IgnoredHaskellFiles.contains(psiFile.getName.toLowerCase) &&
-      HaskellProjectUtil.findModule(psiFile).exists(m => findContainingDirectory(psiFile).exists(vf => HaskellFileUtil.getAbsolutePath(vf) == HaskellProjectUtil.getModuleDir(m).getPath))) {
+      HaskellProjectUtil.findModuleForFile(psiFile).exists(m => findContainingDirectory(psiFile).exists(vf => HaskellFileUtil.getAbsolutePath(vf) == HaskellProjectUtil.getModuleDir(m).getPath))) {
       HaskellNotificationGroup.logInfoEvent(psiFile.getProject, s"${psiFile.getName} can not be loaded in REPL")
       None
     } else {
       if (StackProjectManager.isBuilding(project)) {
-        HaskellEditorUtil.showStatusBarInfoMessage(project, "Haskell support is not available while (re)building project")
+        HaskellEditorUtil.showStatusBarInfoMessage(project, "Haskell support is not available while building project")
         None
       } else {
         val componentInfo = HaskellComponentsManager.findStackComponentInfo(psiFile)
         componentInfo match {
-          case Some(ci) => Some(getProjectRepl(ci, psiFile))
+          case Some(ci) => Some(getProjectRepl(ci, Some(psiFile)))
           case None =>
-            HaskellNotificationGroup.logErrorBalloonEvent(project, s"Could not switch to project Stack REPL for file ${psiFile.getName} because no Stack target could be found for this file")
+            HaskellNotificationGroup.logErrorBalloonEvent(project, s"No Haskell support for file ${psiFile.getName} because no Stack target could be found for this file")
             None
         }
       }
@@ -141,19 +145,27 @@ private[external] class StackReplsManager(val project: Project) {
     })
   }
 
-  private def getProjectRepl(componentInfo: StackComponentInfo, psiFile: PsiFile): ProjectStackRepl = synchronized {
+  private def getProjectRepl(componentInfo: StackComponentInfo, psiFile: Option[PsiFile]): ProjectStackRepl = {
     projectRepls.get(componentInfo) match {
-      case Some(r) => r
+      case Some(repl) => repl
       case None =>
-        val repl = createAndStartProjectRepl(componentInfo)
-        projectRepls.put(componentInfo, repl)
+        synchronized {
+          projectRepls.get(componentInfo) match {
+            case Some(r) => r
+            case None =>
+              val repl = createAndStartProjectRepl(componentInfo)
+              projectRepls.put(componentInfo, repl)
 
-        // Already load global info in cache here to prevent a file has to be loaded twice because library modules are obtained in REPL without any module loaded.
-        ApplicationManager.getApplication.executeOnPooledThread(ScalaUtil.runnable {
-          HaskellComponentsManager.findStackComponentGlobalInfo(psiFile)
-        })
+              psiFile.foreach(pf => {
+                // Already load global info in cache here to prevent a file has to be loaded twice because library modules are obtained in REPL without any module loaded.
+                ApplicationManager.getApplication.executeOnPooledThread(ScalaUtil.runnable {
+                  HaskellComponentsManager.findStackComponentGlobalInfo(pf)
+                })
+              })
 
-        repl
+              repl
+          }
+        }
     }
   }
 

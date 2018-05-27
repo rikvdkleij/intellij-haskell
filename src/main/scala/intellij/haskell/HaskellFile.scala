@@ -16,11 +16,10 @@
 
 package intellij.haskell
 
-import javax.swing._
-
 import com.intellij.extapi.psi.PsiFileBase
 import com.intellij.openapi.fileTypes.{FileType, FileTypeConsumer, FileTypeFactory, LanguageFileType}
 import com.intellij.psi.FileViewProvider
+import javax.swing._
 import org.jetbrains.annotations.NotNull
 
 class HaskellFile(viewProvider: FileViewProvider) extends PsiFileBase(viewProvider, HaskellLanguage.Instance) {

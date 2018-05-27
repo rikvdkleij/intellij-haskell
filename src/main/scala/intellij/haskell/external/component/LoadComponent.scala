@@ -22,7 +22,7 @@ import com.intellij.openapi.project.Project
 import com.intellij.psi.{PsiElement, PsiFile}
 import com.intellij.util.WaitFor
 import intellij.haskell.external.execution.{CompilationResult, HaskellCompilationResultHelper}
-import intellij.haskell.external.repl.ProjectStackRepl.{Failed, IsFileLoaded, Loaded}
+import intellij.haskell.external.repl.ProjectStackRepl.IsFileLoaded
 import intellij.haskell.external.repl.StackReplsManager.StackComponentInfo
 import intellij.haskell.external.repl._
 import intellij.haskell.psi.HaskellPsiUtil
@@ -50,20 +50,17 @@ private[component] object LoadComponent {
 
     StackReplsManager.getProjectRepl(psiFile).flatMap(projectRepl => {
       val fileOfSelectedEditor = isFileOfSelectedEditor(psiFile)
-      if (fileOfSelectedEditor) {
 
-        // The REPL is not started if target which it's depends on has compile errors at the moment of start.
-        synchronized {
-          if (!projectRepl.available && !projectRepl.starting) {
-            projectRepl.start()
-          }
+      // The REPL is not started if target which it's depends on has compile errors at the moment of start.
+      synchronized {
+        if (!projectRepl.available && !projectRepl.starting) {
+          projectRepl.start()
         }
       }
 
-      val loaded = projectRepl.isLoaded(psiFile)
-      val reload = loaded == Loaded || loaded == Failed
-      projectRepl.load(psiFile, reload) match {
+      projectRepl.load(psiFile) match {
         case Some((loadOutput, loadFailed)) =>
+          // TODO Is this still necessary?
           if (fileOfSelectedEditor) {
             ApplicationManager.getApplication.executeOnPooledThread(ScalaUtil.runnable {
 
@@ -73,9 +70,11 @@ private[component] object LoadComponent {
               if (!loadFailed) {
                 NameInfoComponent.invalidate(psiFile)
 
-                BrowseModuleComponent.refreshTopLevel(project, psiFile)
                 val moduleName = HaskellPsiUtil.findModuleName(psiFile, runInRead = true)
-                moduleName.foreach(mn => BrowseModuleComponent.invalidateForModuleName(project, mn))
+                moduleName.foreach(mn => {
+                  BrowseModuleComponent.refreshTopLevel(project, mn, psiFile)
+                  BrowseModuleComponent.invalidateForModuleName(project, mn)
+                })
 
                 // FIXME For now disabled to improve to responsiveness
                 // Only preload types for Lib targets because expressions in hspec files can be large....

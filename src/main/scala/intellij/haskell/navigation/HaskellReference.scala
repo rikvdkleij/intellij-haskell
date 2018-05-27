@@ -23,13 +23,13 @@ import com.intellij.openapi.project.{DumbService, Project}
 import com.intellij.openapi.util.TextRange
 import com.intellij.psi._
 import com.intellij.psi.search.GlobalSearchScope
+import intellij.haskell.HaskellFile
 import intellij.haskell.external.component.NameInfoComponentResult.{LibraryNameInfo, NameInfo, ProjectNameInfo}
 import intellij.haskell.external.component._
 import intellij.haskell.psi.HaskellPsiUtil._
 import intellij.haskell.psi._
 import intellij.haskell.util._
 import intellij.haskell.util.index.HaskellModuleNameIndex
-import intellij.haskell.{HaskellFile, HaskellNotificationGroup}
 
 class HaskellReference(element: HaskellNamedElement, textRange: TextRange) extends PsiPolyVariantReferenceBase[HaskellNamedElement](element, textRange) {
 
@@ -101,16 +101,9 @@ object HaskellReference {
       if (isLibraryFile) {
         resolveReferencesByNameInfo(parent, namedElement, psiFile, project, preferExpression = false)
       } else {
-        if (parent.getQualifierName.isDefined) {
-          parent.getIdentifierElement match {
-            case _: HaskellVarsym | _: HaskellVarid => resolveReferenceByDefinitionLocation(parent, namedElement, psiFile)
-            case _ => resolveReferenceByDefinitionLocation(parent, namedElement, psiFile)
-          }
-        } else {
-          parent.getIdentifierElement match {
-            case _: HaskellVarsym | _: HaskellVarid => resolveReferenceByDefinitionLocation(parent, namedElement, psiFile)
-            case _ => resolveReferenceByDefinitionLocation(parent, namedElement, psiFile)
-          }
+        parent.getIdentifierElement match {
+          case _: HaskellVarsym | _: HaskellVarid => resolveReferenceByDefinitionLocation(parent, namedElement, psiFile)
+          case _ => resolveReferenceByDefinitionLocation(parent, namedElement, psiFile)
         }
       }
     }).getOrElse(Iterable())
@@ -229,35 +222,25 @@ object HaskellReference {
 
     val project = psiFile.getProject
 
-    val isActiveFile = !HaskellFileUtil.findVirtualFile(psiFile).exists(vf => FileEditorManager.getInstance(project).getSelectedFiles.headOption.contains(vf))
+    val isFileEdited = HaskellFileUtil.findVirtualFile(psiFile).exists(vf => FileEditorManager.getInstance(project).getSelectedFiles.headOption.contains(vf))
 
-    HaskellNotificationGroup.logInfoEvent(project, s"${namedElement.getText} of ${psiFile.getName} is  " + isActiveFile)
-    HaskellComponentsManager.findDefinitionLocation(namedElement, isActiveFile) match {
-      case Some(result) => result match {
-        case Right(DefinitionLocationInfo(filePath, startLineNr, startColumnNr, _, _)) =>
-          ProgressManager.checkCanceled()
-          findIdentifierByLocation(filePath, startLineNr, startColumnNr, namedElement.getName, project)
-        case Right(ModuleLocationInfo(moduleName)) =>
-          ProgressManager.checkCanceled()
-          val module = HaskellProjectUtil.findModule(namedElement)
-          findIdentifiersByModuleName(moduleName, namedElement.getName, project, module, preferExpressions = true)
-        case Left(noInfo) => noInfo match {
-          case info@NoInfoAvailable =>
-            ProgressManager.checkCanceled()
-            // FIXME For now no fallback to name info
-            //            resolveReferencesByNameInfo(qualifiedNameElement, namedElement, psiFile, project, preferExpression = true)
-            HaskellEditorUtil.showStatusBarInfoMessage(project, info.message)
-            Iterable()
-          case info@ReplIsBusy =>
-            HaskellEditorUtil.showStatusBarInfoMessage(project, info.message)
-            Iterable()
-          case info@ReplNotAvailable =>
-            HaskellEditorUtil.showStatusBarInfoMessage(project, info.message)
-            Iterable()
-        }
+    HaskellComponentsManager.findDefinitionLocation(namedElement, waitIfBusy = !isFileEdited) match {
+      case Right(DefinitionLocationInfo(filePath, startLineNr, startColumnNr, _, _)) =>
+        findIdentifierByLocation(filePath, startLineNr, startColumnNr, namedElement.getName, project)
+      case Right(ModuleLocationInfo(moduleName)) =>
+        val module = HaskellProjectUtil.findModuleForFile(psiFile)
+        findIdentifiersByModuleName(moduleName, namedElement.getName, project, module, preferExpressions = true)
+      case Left(noInfo) => noInfo match {
+        case info@NoInfoAvailable =>
+          HaskellEditorUtil.showStatusBarInfoMessage(project, info.message)
+          Iterable()
+        case info@ReplIsBusy =>
+          HaskellEditorUtil.showStatusBarInfoMessage(project, info.message)
+          Iterable()
+        case info@ReplNotAvailable =>
+          HaskellEditorUtil.showStatusBarInfoMessage(project, info.message)
+          Iterable()
       }
-      case None =>
-        Iterable()
     }
   }
 

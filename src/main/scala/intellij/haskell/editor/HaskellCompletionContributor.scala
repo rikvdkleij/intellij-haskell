@@ -17,7 +17,7 @@
 package intellij.haskell.editor
 
 import java.util
-import java.util.concurrent.{Executors, TimeUnit}
+import java.util.concurrent.TimeUnit
 
 import com.intellij.codeInsight.completion._
 import com.intellij.codeInsight.lookup.LookupElementBuilder
@@ -165,7 +165,7 @@ class HaskellCompletionContributor extends CompletionContributor {
           resultSet.addAllElements(getModulePragmaIdsLookupElements.asJavaCollection)
           resultSet.addAllElements(getPragmaStartEndIdsLookupElements.asJavaCollection)
         case Some(e) if isImportSpecInProgress(e) =>
-          resultSet.addAllElements(findAvailableIdsForImportModuleSpec(project, e, psiFile).asJavaCollection)
+          resultSet.addAllElements(findAvailableIdsForImportModuleSpec(e, psiFile).asJavaCollection)
         case Some(e) if isImportModuleDeclarationInProgress(e) =>
           // Do not give suggestions when defining import qualifier
           if (e.getParent.getNode.getElementType != HS_QUALIFIER) {
@@ -182,7 +182,7 @@ class HaskellCompletionContributor extends CompletionContributor {
           // If file is console file, find the project file which corresponds to loaded file in console
           val projectFile =
             if (isConsoleFile) {
-              resultSet.addAllElements(HaskellComponentsManager.findAvailableStackTargetProjectModuleNames(psiFile).map(createModuleLookupElement).asJavaCollection)
+              resultSet.addAllElements(HaskellComponentsManager.findAvailableProjectModuleNamesWithIndex(psiFile).map(createModuleLookupElement).asJavaCollection)
               for {
                 consoleInfo <- HaskellConsoleView.findConsoleInfo(psiFile)
                 configName = consoleInfo.configurationName
@@ -196,31 +196,7 @@ class HaskellCompletionContributor extends CompletionContributor {
 
           // Retrieve identifiers in scope by always using the project file
           projectFile.foreach(file => {
-            resultSet.addAllElements(getAvailableImportedLookupElements(file).asJavaCollection)
-            val moduleName = findModuleName(file)
-            moduleName match {
-              case Some(mn) =>
-                val localIdentifiers = HaskellComponentsManager.findLocalModuleIdentifiers(file, mn)
-
-                ProgressManager.checkCanceled()
-
-                val importDeclarations = HaskellPsiUtil.findImportDeclarations(psiFile)
-                val localLookupElements = localIdentifiers.map(mi => if (moduleName.contains(mi.moduleName)) {
-                  createLocalTopLevelLookupElement(mi)
-                } else {
-                  val qualifier = importDeclarations.find(id => id.getModuleName.contains(mi.moduleName)).flatMap(id => Option(id.getImportQualifiedAs).map(_.getQualifier.getName))
-                  qualifier match {
-                    case Some(q) => createLookupElement(mi.copy(name = s"$q.${mi.name}"))
-                    case None => createLookupElement(mi)
-                  }
-                }
-                )
-                resultSet.addAllElements(localLookupElements.asJavaCollection)
-
-              case None =>
-                HaskellNotificationGroup.logWarningEvent(project, s"No code completion available because no module defined in ${psiFile.getName}")
-                Iterable()
-            }
+            resultSet.addAllElements(getAvailableLookupElements(file).asJava)
           })
 
           ProgressManager.checkCanceled()
@@ -285,9 +261,6 @@ class HaskellCompletionContributor extends CompletionContributor {
     LookupElementBuilder.create(namedElement.getName).withTypeText(typeSignature.map(StringUtil.unescapeXml).getOrElse("")).withIcon(HaskellIcons.HaskellSmallBlueLogo)
   }
 
-  private def createLocalTopLevelLookupElement(moduleIdentifier: ModuleIdentifier): LookupElementBuilder = {
-    LookupElementBuilder.create(moduleIdentifier.name).withTypeText(moduleIdentifier.declaration).withIcon(findIcon(moduleIdentifier))
-  }
 
   private def findLocalElements(element: PsiElement) = {
     HaskellPsiUtil.findExpressionParent(element).toStream.flatMap(e => HaskellPsiUtil.findNamedElements(e)).filter {
@@ -325,14 +298,23 @@ class HaskellCompletionContributor extends CompletionContributor {
     element.getNode.getElementType == HS_NCOMMENT
   }
 
-  private def findAvailableIdsForImportModuleSpec(project: Project, element: PsiElement, psiFile: PsiFile) = {
-    (for {
-      moduleName <- HaskellPsiUtil.findImportDeclarationParent(element).flatMap(_.getModuleName)
-    } yield HaskellComponentsManager.findExportedModuleIdentifiers(project, moduleName).map(m => createLookupElement(m, addParens = true))).getOrElse(Stream())
+  private def findAvailableIdsForImportModuleSpec(element: PsiElement, psiFile: PsiFile) = {
+    import scala.concurrent.ExecutionContext.Implicits.global
+
+    HaskellPsiUtil.findImportDeclarationParent(element).flatMap(_.getModuleName) match {
+      case Some(moduleName) =>
+        val ids = HaskellComponentsManager.findModuleIdentifiers(psiFile.getProject, moduleName).map(_.map(i => createLookupElement(i, addParens = true)))
+        try {
+          Await.result(ids, Timeout)
+        } catch {
+          case _: TimeoutException => Iterable()
+        }
+      case None => Iterable()
+    }
   }
 
   private def findAvailableModuleNamesLookupElements(project: Project, psiFile: PsiFile) = {
-    val moduleNames = HaskellComponentsManager.findAvailableModuleNames(psiFile)
+    val moduleNames = HaskellComponentsManager.findAvailableModuleNamesWithIndex(psiFile)
     moduleNames.map(createModuleLookupElement)
   }
 
@@ -368,8 +350,9 @@ class HaskellCompletionContributor extends CompletionContributor {
     HaddockIds.map(p => LookupElementBuilder.create(p).withIcon(HaskellIcons.HaskellSmallBlueLogo).withTailText(" haddock", true))
   }
 
-  private def getAvailableImportedLookupElements(psiFile: PsiFile) = {
-    getAvailableImportedModuleIdentifiers(psiFile).map(mi => createLookupElement(mi))
+  private def getAvailableLookupElements(psiFile: PsiFile): Iterable[LookupElementBuilder] = {
+    val moduleName = findModuleName(psiFile, runInRead = true)
+    useAvailableModuleIdentifiers(psiFile, moduleName, (f1, f2, f3, f4) => (f1 ++ f2 ++ f3).map(mi => createLookupElement(mi)) ++ getLocalTopLevelLookupElments(psiFile, moduleName, f4))
   }
 
   private def getKeywordLookupElements = {
@@ -383,53 +366,40 @@ class HaskellCompletionContributor extends CompletionContributor {
   private def getSpecialReservedIdLookupElements = {
     SpecialReservedIds.map(sr => LookupElementBuilder.create(sr).withIcon(HaskellIcons.HaskellSmallBlueLogo).withTailText(" special keyword", true))
   }
-
-  private def createLookupElement(moduleIdentifier: ModuleIdentifier, addParens: Boolean = false) = {
-    addWiths(LookupElementBuilder.create(
-      if (moduleIdentifier.isOperator && addParens)
-        s"""(${moduleIdentifier.name})"""
-      else
-        moduleIdentifier.name
-    ), moduleIdentifier)
-  }
-
-  private def addWiths(lookupElementBuilder: LookupElementBuilder, moduleIdentifier: ModuleIdentifier) = {
-    lookupElementBuilder.
-      withTailText(" " + moduleIdentifier.moduleName, true).
-      withIcon(findIcon(moduleIdentifier)).
-      withTypeText(moduleIdentifier.declaration)
-  }
-
-  private def findIcon(moduleIdentifier: ModuleIdentifier) = {
-    import intellij.haskell.HaskellIcons._
-    moduleIdentifier.declaration match {
-      case d if d.startsWith("class ") => Class
-      case d if d.startsWith("data ") => Data
-      case d if d.startsWith("default ") => Default
-      case d if d.startsWith("foreign ") => Foreign
-      case d if d.startsWith("instance ") => Instance
-      case d if d.startsWith("newtype ") => NewType
-      case d if d.startsWith("type family ") => TypeFamily
-      case d if d.startsWith("type instance ") => TypeInstance
-      case d if d.startsWith("type ") => Type
-      case d if d.startsWith("module ") => Module
-      case _ => HaskellSmallBlueLogo
-    }
-  }
 }
 
 object HaskellCompletionContributor {
 
   private final val Timeout = Duration.create(1, TimeUnit.SECONDS)
 
-  private final val ExecutorService = Executors.newCachedThreadPool()
-  implicit private final val ExecContext: ExecutionContextExecutorService = ExecutionContext.fromExecutorService(ExecutorService)
+  import scala.concurrent.ExecutionContext.Implicits.global
 
-  def getAvailableImportedModuleIdentifiers(psiFile: PsiFile): Iterable[ModuleIdentifier] = {
-    val project = psiFile.getProject
+  private def useAvailableModuleIdentifiers[A](psiFile: PsiFile, moduleName: Option[String],
+                                               doIt: (Iterable[ModuleIdentifier], Iterable[ModuleIdentifier], Iterable[ModuleIdentifier], Iterable[ModuleIdentifier]) => Iterable[A]): Iterable[A] = {
     val importDeclarations = findImportDeclarations(psiFile)
-    val moduleIdentifiers = getModuleIdentifiersFromFullImportedModules(project, psiFile, importDeclarations) ++ getModuleIdentifiersFromHidingIdsImportedModules(project, psiFile, importDeclarations) ++ getModuleIdentifiersFromSpecIdsImportedModules(project, psiFile, importDeclarations)
-    waitForModuleIdentifiers(moduleIdentifiers)
+
+    val idsF1 = getModuleIdentifiersFromFullImportedModules(psiFile, importDeclarations)
+    val idsF2 = getModuleIdentifiersFromHidingIdsImportedModules(psiFile, importDeclarations)
+    val idsF3 = getModuleIdentifiersFromSpecIdsImportedModules(psiFile, importDeclarations)
+    val idsF4 = moduleName.map(mn => HaskellComponentsManager.findLocalModuleIdentifiers(psiFile.getProject, psiFile, mn)).getOrElse(Future.successful(Iterable()))
+
+    val f = for {
+      f1 <- idsF1
+      f2 <- idsF2
+      f3 <- idsF3
+      f4 <- idsF4
+    } yield doIt(f1, f2, f3, f4)
+    try {
+      Await.result(f, Timeout)
+    } catch {
+      case _: TimeoutException =>
+        HaskellNotificationGroup.logInfoEvent(psiFile.getProject, s"Timout while getting module identifiers for ${psiFile.getName}")
+        Iterable()
+    }
+  }
+
+  def getAvailableModuleIdentifiers(psiFile: PsiFile, moduleName: Option[String]): Iterable[ModuleIdentifier] = {
+    useAvailableModuleIdentifiers(psiFile, moduleName, (f1, f2, f3, f4) => f1 ++ f2 ++ f3 ++ f4)
   }
 
   private sealed trait ImportInfo {
@@ -491,38 +461,93 @@ object HaskellCompletionContributor {
     )
   }
 
-  private def getModuleIdentifiersFromFullImportedModules(project: Project, psiFile: PsiFile, importDeclarations: Iterable[HaskellImportDeclaration]) = {
+  private def getModuleIdentifiersFromFullImportedModules(psiFile: PsiFile, importDeclarations: Iterable[HaskellImportDeclaration]): Future[Iterable[ModuleIdentifier]] = {
     val importInfos = getFullImportedModules(psiFile, importDeclarations)
 
-    importInfos.map(importInfo => Future {
-      val mis = HaskellComponentsManager.findExportedModuleIdentifiers(project, importInfo.moduleName)
-      createQualifiedModuleIdentifiers(importInfo, mis)
-    })
+    Future.sequence(importInfos.map(importInfo => {
+      val allModuleIdentifiers = HaskellComponentsManager.findModuleIdentifiers(psiFile.getProject, importInfo.moduleName)
+      allModuleIdentifiers.map(mi => createQualifiedModuleIdentifiers(importInfo, mi))
+    })).map(_.flatten)
   }
 
-  private def getModuleIdentifiersFromHidingIdsImportedModules(project: Project, psiFile: PsiFile, importDeclarations: Iterable[HaskellImportDeclaration]) = {
+  private def getModuleIdentifiersFromHidingIdsImportedModules(psiFile: PsiFile, importDeclarations: Iterable[HaskellImportDeclaration]): Future[Iterable[ModuleIdentifier]] = {
     val importInfos = getImportedModulesWithHidingIdsSpec(psiFile, importDeclarations)
 
-    importInfos.map(importInfo => Future {
-      val moduleIdentifiers = HaskellComponentsManager.findExportedModuleIdentifiers(project, importInfo.moduleName)
-      createQualifiedModuleIdentifiers(importInfo, moduleIdentifiers.filterNot(mi => importInfo.ids.exists(_ == mi.name)))
-    })
+    Future.sequence(importInfos.map(importInfo => {
+      val allModuleIdentifiers = HaskellComponentsManager.findModuleIdentifiers(psiFile.getProject, importInfo.moduleName)
+      allModuleIdentifiers.map(ids => createQualifiedModuleIdentifiers(importInfo, ids.filterNot(mi => importInfo.ids.exists(_ == mi.name))))
+    })).map(_.flatten)
   }
 
-  private def getModuleIdentifiersFromSpecIdsImportedModules(project: Project, psiFile: PsiFile, importDeclarations: Iterable[HaskellImportDeclaration]) = {
+  private def getModuleIdentifiersFromSpecIdsImportedModules(psiFile: PsiFile, importDeclarations: Iterable[HaskellImportDeclaration]): Future[Iterable[ModuleIdentifier]] = {
     val importInfos = getImportedModulesWithSpecIds(psiFile, importDeclarations)
 
-    importInfos.map(importInfo => Future {
-      val moduleIdentifiers = HaskellComponentsManager.findExportedModuleIdentifiers(project, importInfo.moduleName)
-      createQualifiedModuleIdentifiers(importInfo, moduleIdentifiers.filter(mi => importInfo.ids.exists(id => if (mi.isOperator) s"(${mi.name})" == id else id == mi.name)))
-    })
+    Future.sequence(importInfos.map(importInfo => {
+      val allModuleIdentifiers = HaskellComponentsManager.findModuleIdentifiers(psiFile.getProject, importInfo.moduleName)
+      allModuleIdentifiers.map(ids => createQualifiedModuleIdentifiers(importInfo, ids.filter(mi => importInfo.ids.exists(id => if (mi.isOperator) s"(${mi.name})" == id else id == mi.name))))
+    })).map(_.flatten)
   }
 
-  private def waitForModuleIdentifiers(lookupElements: Iterable[Future[Iterable[ModuleIdentifier]]]): Iterable[ModuleIdentifier] = {
-    try {
-      Await.result(Future.sequence(lookupElements), Timeout).flatten
-    } catch {
-      case _: TimeoutException => Iterable()
+  private def createLocalTopLevelLookupElement(moduleIdentifier: ModuleIdentifier): LookupElementBuilder = {
+    LookupElementBuilder.create(moduleIdentifier.name).withTypeText(moduleIdentifier.declaration).withIcon(findIcon(moduleIdentifier))
+  }
+
+  private def addWiths(lookupElementBuilder: LookupElementBuilder, moduleIdentifier: ModuleIdentifier) = {
+    lookupElementBuilder.
+      withTailText(" " + moduleIdentifier.moduleName, true).
+      withIcon(findIcon(moduleIdentifier)).
+      withTypeText(moduleIdentifier.declaration)
+  }
+
+  private def findIcon(moduleIdentifier: ModuleIdentifier) = {
+    import intellij.haskell.HaskellIcons._
+    moduleIdentifier.declaration match {
+      case d if d.startsWith("class ") => Class
+      case d if d.startsWith("data ") => Data
+      case d if d.startsWith("default ") => Default
+      case d if d.startsWith("foreign ") => Foreign
+      case d if d.startsWith("instance ") => Instance
+      case d if d.startsWith("newtype ") => NewType
+      case d if d.startsWith("type family ") => TypeFamily
+      case d if d.startsWith("type instance ") => TypeInstance
+      case d if d.startsWith("type ") => Type
+      case d if d.startsWith("module ") => HaskellIcons.Module
+      case _ => HaskellSmallBlueLogo
+    }
+  }
+
+
+  private def createLookupElement(moduleIdentifier: ModuleIdentifier, addParens: Boolean = false) = {
+    addWiths(LookupElementBuilder.create(
+      if (moduleIdentifier.isOperator && addParens)
+        s"""(${moduleIdentifier.name})"""
+      else
+        moduleIdentifier.name
+    ), moduleIdentifier)
+  }
+
+  private def getLocalTopLevelLookupElments(psiFile: PsiFile, moduleName: Option[String], localIdentifiers: Iterable[ModuleIdentifier]): Iterable[LookupElementBuilder] = {
+    moduleName match {
+      case Some(_) =>
+
+        ProgressManager.checkCanceled()
+
+        val importDeclarations = HaskellPsiUtil.findImportDeclarations(psiFile)
+        val localLookupElements = localIdentifiers.map(mi =>
+          if (moduleName.contains(mi.moduleName)) {
+            createLocalTopLevelLookupElement(mi)
+          } else {
+            val qualifier = importDeclarations.find(id => id.getModuleName.contains(mi.moduleName)).flatMap(id => Option(id.getImportQualifiedAs).map(_.getQualifier.getName))
+            qualifier match {
+              case Some(q) => createLookupElement(mi.copy(name = s"$q.${mi.name}"))
+              case None => createLookupElement(mi)
+            }
+          }
+        )
+        localLookupElements
+      case None =>
+        HaskellNotificationGroup.logWarningEvent(psiFile.getProject, s"No support for suggesting local toplevel identtifiers because no module defined in ${psiFile.getName}")
+        Iterable()
     }
   }
 

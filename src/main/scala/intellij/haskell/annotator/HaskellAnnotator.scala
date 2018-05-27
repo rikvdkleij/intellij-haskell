@@ -199,6 +199,8 @@ object HaskellAnnotator {
   }
 
   private def createNotInScopeIntentionActions(psiFile: PsiFile, name: String): Iterable[NotInScopeIntentionAction] = {
+    import scala.concurrent.ExecutionContext.Implicits.global
+
     val nameWithoutParens = StringUtil.removeOuterParens(name)
     val moduleIdentifiers = HaskellComponentsManager.findPreloadedModuleIdentifiers(psiFile.getProject).filter(_.name == nameWithoutParens)
     moduleIdentifiers.map(mi => new NotInScopeIntentionAction(mi.name, mi.moduleName, psiFile))

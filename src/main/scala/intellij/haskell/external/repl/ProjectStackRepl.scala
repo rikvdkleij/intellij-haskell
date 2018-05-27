@@ -37,19 +37,20 @@ class ProjectStackRepl(project: Project, stackComponentInfo: StackComponentInfo,
 
   val packageName: String = stackComponentInfo.packageName
 
-  def clearLoadedInfo(): Unit = {
-    loadedPsiFileInfo = None
-    allLoadedPsiFileInfos.clear()
+  def clearLoadedModules(): Unit = {
+    loadedModule = None
+    loadedDependentModules.clear()
   }
 
-  private case class PsiFileInfo(psiFile: PsiFile, loadFailed: Boolean)
+  private case class ModuleInfo(psiFile: PsiFile, loadFailed: Boolean)
 
   @volatile
-  private[this] var loadedPsiFileInfo: Option[PsiFileInfo] = None
+  private[this] var loadedModule: Option[ModuleInfo] = None
 
-  private case class FileInfo(loadFailed: Boolean)
+  private case class DependentModuleInfo(loadFailed: Boolean)
 
-  private[this] val allLoadedPsiFileInfos = new ConcurrentHashMap[String, FileInfo]().asScala
+  private type ModuleName = String
+  private[this] val loadedDependentModules = new ConcurrentHashMap[ModuleName, DependentModuleInfo]().asScala
 
   @volatile
   private var busy = false
@@ -58,12 +59,12 @@ class ProjectStackRepl(project: Project, stackComponentInfo: StackComponentInfo,
     busy
   }
 
-  def findTypeInfoFor(moduleName: Option[String], psiFile: PsiFile, startLineNr: Int, startColumnNr: Int, endLineNr: Int, endColumnNr: Int, expression: String): Option[StackReplOutput] = {
+  def findTypeInfo(moduleName: Option[String], psiFile: PsiFile, startLineNr: Int, startColumnNr: Int, endLineNr: Int, endColumnNr: Int, expression: String): Option[StackReplOutput] = {
     val filePath = HaskellFileUtil.getAbsolutePath(psiFile)
     findInfoForCommand(moduleName, psiFile, s":type-at $filePath $startLineNr $startColumnNr $endLineNr $endColumnNr $expression", setBusy = false)
   }
 
-  def findLocationInfoFor(moduleName: Option[String], psiFile: PsiFile, startLineNr: Int, startColumnNr: Int, endLineNr: Int, endColumnNr: Int, expression: String): Option[StackReplOutput] = {
+  def findLocationInfo(moduleName: Option[String], psiFile: PsiFile, startLineNr: Int, startColumnNr: Int, endLineNr: Int, endColumnNr: Int, expression: String): Option[StackReplOutput] = {
     val filePath = HaskellFileUtil.getAbsolutePath(psiFile)
     findInfoForCommand(moduleName, psiFile, s":loc-at $filePath $startLineNr $startColumnNr $endLineNr $endColumnNr $expression", setBusy = false)
   }
@@ -73,7 +74,7 @@ class ProjectStackRepl(project: Project, stackComponentInfo: StackComponentInfo,
   }
 
   def isLoaded(psiFile: PsiFile): IsFileLoaded = {
-    loadedPsiFileInfo match {
+    loadedModule match {
       case Some(info) if psiFile == info.psiFile && !info.loadFailed => Loaded
       case Some(info) if psiFile == info.psiFile && info.loadFailed => Failed
       case Some(_) => OtherFileIsLoaded
@@ -85,25 +86,29 @@ class ProjectStackRepl(project: Project, stackComponentInfo: StackComponentInfo,
   private final val ModuleListRegEx = """([\w\,\s]+)\."""
   private final val OkModulesLoadedPattern = (OkModulesLoaded + ModuleListRegEx).r
 
-  def load(psiFile: PsiFile, reload: Boolean): Option[(StackReplOutput, Boolean)] = synchronized {
+  def load(psiFile: PsiFile): Option[(StackReplOutput, Boolean)] = {
     val filePath = getFilePath(psiFile)
-    val output = if (reload) {
-      HaskellNotificationGroup.logInfoEvent(project, s"Reload of $filePath")
-      executeWithSettingBusy(s":reload")
-    } else {
-      executeWithSettingBusy(s":load $filePath")
-    }
-    output match {
-      case Some(o) =>
-        val loadFailed = isLoadFailed(o)
-        o.stdoutLines.find(l => l.startsWith(OkModulesLoaded)).map(findLoadedModuleNames).foreach(_.foreach(mn => allLoadedPsiFileInfos.put(mn, FileInfo(loadFailed))))
+    synchronized {
+      val loaded = isLoaded(psiFile)
+      val reload = loaded == Loaded || loaded == Failed
+      val output = if (reload) {
+        HaskellNotificationGroup.logInfoEvent(project, s"Reload of $filePath")
+        executeWithSettingBusy(s":reload")
+      } else {
+        executeWithSettingBusy(s":load $filePath")
+      }
+      output match {
+        case Some(o) =>
+          val loadFailed = isLoadFailed(o)
+          o.stdoutLines.find(l => l.startsWith(OkModulesLoaded)).map(findLoadedModuleNames).foreach(_.foreach(mn => loadedDependentModules.put(mn, DependentModuleInfo(loadFailed))))
 
-        loadedPsiFileInfo = Some(PsiFileInfo(psiFile, loadFailed))
-        Some(o, loadFailed)
-      case _ =>
-        allLoadedPsiFileInfos.clear()
-        loadedPsiFileInfo = None
-        None
+          loadedModule = Some(ModuleInfo(psiFile, loadFailed))
+          Some(o, loadFailed)
+        case _ =>
+          loadedDependentModules.clear()
+          loadedModule = None
+          None
+      }
     }
   }
 
@@ -129,7 +134,7 @@ class ProjectStackRepl(project: Project, stackComponentInfo: StackComponentInfo,
 
   // To retrieve only library module names, it will first execute `load` to remove all modules from scope
   def findAvailableLibraryModuleNames(project: Project): Option[StackReplOutput] = synchronized {
-    loadedPsiFileInfo = None
+    loadedModule = None
     executeWithSettingBusy(":load", """:complete repl "import " """)
   }
 
@@ -140,13 +145,13 @@ class ProjectStackRepl(project: Project, stackComponentInfo: StackComponentInfo,
   override def restart(forceExit: Boolean): Unit = synchronized {
     if (available && !starting) {
       exit(forceExit)
-      clearLoadedInfo()
+      clearLoadedModules()
       start()
     }
   }
 
   private def findInfoForCommand(moduleName: Option[String], psiFile: PsiFile, command: String, setBusy: Boolean): Option[StackReplOutput] = synchronized {
-    moduleName.flatMap(allLoadedPsiFileInfos.get) match {
+    moduleName.flatMap(loadedDependentModules.get) match {
       case Some(lf) if lf.loadFailed => Some(StackReplOutput())
       case Some(_) =>
         if (setBusy) {
@@ -160,12 +165,12 @@ class ProjectStackRepl(project: Project, stackComponentInfo: StackComponentInfo,
   }
 
   private def executeWithLoad(psiFile: PsiFile, command: String, moduleName: Option[String] = None): Option[StackReplOutput] = synchronized {
-    loadedPsiFileInfo match {
+    loadedModule match {
       case Some(info) if info.psiFile == psiFile && !info.loadFailed => executeWithSettingBusy(command)
       case Some(info) if info.psiFile == psiFile && info.loadFailed => Some(StackReplOutput())
       case _ =>
-        load(psiFile, reload = false)
-        loadedPsiFileInfo match {
+        load(psiFile)
+        loadedModule match {
           case None => None
           case Some(info) if info.psiFile == psiFile && !info.loadFailed => executeWithSettingBusy(command)
           case _ => Some(StackReplOutput())

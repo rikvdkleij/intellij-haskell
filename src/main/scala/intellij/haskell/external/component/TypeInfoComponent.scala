@@ -23,7 +23,7 @@ import com.intellij.openapi.util.Computable
 import com.intellij.psi.{PsiElement, PsiFile}
 import intellij.haskell.external.repl.StackReplsManager
 import intellij.haskell.psi._
-import intellij.haskell.util.{LineColumnPosition, ScalaUtil}
+import intellij.haskell.util.LineColumnPosition
 
 private[component] object TypeInfoComponent {
 
@@ -68,8 +68,8 @@ private[component] object TypeInfoComponent {
     if (LoadComponent.isBusy(key.psiFile)) {
       Left(ReplIsBusy)
     } else {
-      val moduleName = ApplicationManager.getApplication.runReadAction(ScalaUtil.computable(HaskellPsiUtil.findModuleName(key.psiFile, runInRead = true)))
-      val typeInfo = StackReplsManager.getProjectRepl(key.psiFile).flatMap(_.findTypeInfoFor(moduleName, key.psiFile, key.startLineNr, key.startColumnNr, key.endLineNr, key.endColumnNr, key.expression)) match {
+      val moduleName = HaskellPsiUtil.findModuleName(key.psiFile, runInRead = true)
+      val typeInfo = StackReplsManager.getProjectRepl(key.psiFile).flatMap(_.findTypeInfo(moduleName, key.psiFile, key.startLineNr, key.startColumnNr, key.endLineNr, key.endColumnNr, key.expression)) match {
         case Some(output) => output.stdoutLines.headOption.filterNot(_.trim.isEmpty).map(ti => Right(TypeInfo(ti))).getOrElse(Left(NoInfoAvailable))
         case _ => Left(ReplNotAvailable)
       }

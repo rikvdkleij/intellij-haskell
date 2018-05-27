@@ -52,20 +52,20 @@ private[component] object StackComponentGlobalInfoComponent {
   }
 
   private def findAvailableModuleNames(project: Project, componentInfo: StackComponentInfo): Either[NoInfo, Iterable[String]] = {
-    StackReplsManager.getRunningProjectRepl(project, componentInfo).flatMap(_.findAvailableLibraryModuleNames(project)) match {
-      case Some(o) => Right(findModuleNames(o))
+    StackReplsManager.getProjectRepl(project, componentInfo).flatMap(_.findAvailableLibraryModuleNames(project)) match {
+      case Some(o) => Right(getModuleNames(o))
       case None => Left(ReplNotAvailable)
     }
   }
 
   private def isNoImplicitPreludeActive(project: Project, stackTargetBuildInfo: StackComponentInfo): Either[NoInfo, Boolean] = {
-    StackReplsManager.getRunningProjectRepl(project, stackTargetBuildInfo).flatMap(_.showActiveLanguageFlags) match {
+    StackReplsManager.getProjectRepl(project, stackTargetBuildInfo).flatMap(_.showActiveLanguageFlags) match {
       case Some(o) => Right(o.stdoutLines.contains("-XNoImplicitPrelude"))
       case None => Left(ReplNotAvailable)
     }
   }
 
-  private def findModuleNames(output: StackReplOutput) = {
+  private def getModuleNames(output: StackReplOutput) = {
     val lines = output.stdoutLines
     if (lines.isEmpty) {
       Iterable()

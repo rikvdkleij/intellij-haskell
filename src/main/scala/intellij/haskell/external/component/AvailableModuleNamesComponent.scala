@@ -21,22 +21,23 @@ import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.psi.PsiFile
 import com.intellij.psi.search.{FileTypeIndex, GlobalSearchScopesCore}
 import intellij.haskell.HaskellFileType
-import intellij.haskell.psi.HaskellPsiUtil
 import intellij.haskell.util.HaskellFileUtil
+import intellij.haskell.util.index.HaskellFilePathIndex
 
 import scala.collection.JavaConverters._
 
+// TODO Consider to use cache with expiring
 private[component] object AvailableModuleNamesComponent {
 
-  def findAvailableModuleNames(psiFile: PsiFile): Iterable[String] = {
+  def findAvailableModuleNamesWithIndex(psiFile: PsiFile): Iterable[String] = {
     val libraryModuleNames = findAvailableLibraryModuleNames(psiFile)
-    findAvailableStackTargetProjectModuleNames(psiFile) ++ libraryModuleNames
+    findAvailableProjectModuleNamesWithIndex(psiFile) ++ libraryModuleNames
   }
 
-  def findAvailableStackTargetProjectModuleNames(psiFile: PsiFile): Iterable[String] = {
+  def findAvailableProjectModuleNamesWithIndex(psiFile: PsiFile): Iterable[String] = {
     val stackComponentInfo = HaskellComponentsManager.findStackComponentInfo(psiFile)
     val project = psiFile.getProject
-    stackComponentInfo.map(info => findModuleNamesInDirectories(project, info.sourceDirs.flatMap(d => HaskellFileUtil.findDirectory(d, project)))).getOrElse(Stream())
+    stackComponentInfo.map(info => findModuleNamesInDirectories(project, info.sourceDirs.flatMap(d => HaskellFileUtil.findDirectory(d, project)))).getOrElse(Iterable())
   }
 
   private def findAvailableLibraryModuleNames(psiFile: PsiFile): Iterable[String] = {
@@ -44,12 +45,10 @@ private[component] object AvailableModuleNamesComponent {
   }
 
   private def findModuleNamesInDirectories(project: Project, directories: Seq[VirtualFile]): Iterable[String] = {
-    val files = FileTypeIndex.getFiles(HaskellFileType.Instance, GlobalSearchScopesCore.directoriesScope(project, true, directories: _*)).asScala
-    files.flatMap(f => {
-      for {
-        hf <- HaskellFileUtil.convertToHaskellFile(project, f)
-        m <- HaskellPsiUtil.findModuleName(hf, runInRead = true)
-      } yield m
-    })
+    for {
+      vf <- FileTypeIndex.getFiles(HaskellFileType.Instance, GlobalSearchScopesCore.directoriesScope(project, true, directories: _*)).asScala
+      hf <- HaskellFileUtil.convertToHaskellFile(project, vf)
+      mn <- HaskellFilePathIndex.findModuleName(hf, GlobalSearchScopesCore.directoriesScope(project, true, directories: _*))
+    } yield mn
   }
 }

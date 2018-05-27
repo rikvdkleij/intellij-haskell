@@ -64,7 +64,15 @@ object HaskellFileUtil {
   }
 
   def getAbsolutePath(psiFile: PsiFile): String = {
-    getAbsolutePath(psiFile.getOriginalFile.getVirtualFile)
+    Option(psiFile.getVirtualFile) match {
+      case Some(vf) => getAbsolutePath(vf)
+      case None =>
+        saveFile(psiFile)
+        Option(psiFile.getVirtualFile) match {
+          case Some(vf) => getAbsolutePath(vf)
+          case None => throw new IllegalStateException(s"Could not determine path for file ${psiFile.getName} because file exists only in memory")
+        }
+    }
   }
 
   def getAbsolutePath(virtualFile: VirtualFile): String = {
