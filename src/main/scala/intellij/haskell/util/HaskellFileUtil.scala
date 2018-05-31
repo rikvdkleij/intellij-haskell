@@ -24,6 +24,7 @@ import com.intellij.openapi.command.CommandProcessor
 import com.intellij.openapi.editor.Document
 import com.intellij.openapi.fileEditor.FileDocumentManager
 import com.intellij.openapi.module.Module
+import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.vfs.{LocalFileSystem, VirtualFile, VirtualFileManager}
@@ -43,9 +44,12 @@ object HaskellFileUtil {
     )
   }
 
-  def saveFile(psiFile: PsiFile): Unit = {
+  def saveFile(psiFile: PsiFile, checkCancelled: Boolean): Unit = {
     findDocument(psiFile).foreach(d => {
       PsiDocumentManager.getInstance(psiFile.getProject).doPostponedOperationsAndUnblockDocument(d)
+      if (checkCancelled) {
+        ProgressManager.checkCanceled()
+      }
       FileDocumentManager.getInstance.saveDocument(d)
     })
   }
@@ -67,7 +71,7 @@ object HaskellFileUtil {
     Option(psiFile.getVirtualFile) match {
       case Some(vf) => getAbsolutePath(vf)
       case None =>
-        saveFile(psiFile)
+        saveFile(psiFile, false)
         Option(psiFile.getVirtualFile) match {
           case Some(vf) => getAbsolutePath(vf)
           case None => throw new IllegalStateException(s"Could not determine path for file ${psiFile.getName} because file exists only in memory")

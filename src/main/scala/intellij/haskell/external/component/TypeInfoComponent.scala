@@ -70,7 +70,7 @@ private[component] object TypeInfoComponent {
     } else {
       val moduleName = HaskellPsiUtil.findModuleName(key.psiFile, runInRead = true)
       val typeInfo = StackReplsManager.getProjectRepl(key.psiFile).flatMap(_.findTypeInfo(moduleName, key.psiFile, key.startLineNr, key.startColumnNr, key.endLineNr, key.endColumnNr, key.expression)) match {
-        case Some(output) => output.stdoutLines.headOption.filterNot(_.trim.isEmpty).map(ti => Right(TypeInfo(ti))).getOrElse(Left(NoInfoAvailable))
+        case Some(output) => output.stdoutLines.headOption.filterNot(_.trim.isEmpty).map(ti => Right(TypeInfo(ti, output.stderrLines.nonEmpty))).getOrElse(Left(NoInfoAvailable))
         case _ => Left(ReplNotAvailable)
       }
       typeInfo
@@ -97,6 +97,6 @@ object TypeInfoComponentResult {
 
   type TypeInfoResult = Either[NoInfo, TypeInfo]
 
-  case class TypeInfo(typeSignature: String)
+  case class TypeInfo(typeSignature: String, withFailure: Boolean)
 
 }

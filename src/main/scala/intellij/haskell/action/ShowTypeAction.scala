@@ -44,8 +44,8 @@ class ShowTypeAction extends AnAction {
           }
           case _ => ()
             Option(psiFile.findElementAt(editor.getCaretModel.getOffset)).foreach { psiElement =>
-            ShowTypeAction.showTypeHint(actionContext.project, editor, psiElement, psiFile)
-          }
+              ShowTypeAction.showTypeHint(actionContext.project, editor, psiElement, psiFile)
+            }
         }
       })
     }
@@ -58,32 +58,38 @@ class ShowTypeAction extends AnAction {
 object ShowTypeAction {
 
   def showTypeHint(project: Project, editor: Editor, psiElement: PsiElement, psiFile: PsiFile, sticky: Boolean = false): Unit = {
-    // FIXME For now disabled to improve to responsiveness
-//    ApplicationManager.getApplication.executeOnPooledThread(new Runnable {
-//      override def run(): Unit = {
-//        TypeInfoUtil.preloadTypesAround(psiElement)
-//      }
-//    })
-
     HaskellComponentsManager.findTypeInfoForElement(psiElement) match {
       case Some(Right(info)) =>
-        HaskellEditorUtil.showStatusBarInfoMessage(project, info.typeSignature)
-        HaskellEditorUtil.showHint(editor, StringUtil.escapeString(info.typeSignature), sticky)
-      case _ if HaskellPsiUtil.findExpressionParent(psiElement).isDefined =>
-        val declaration = HaskellPsiUtil.findQualifiedNameParent(psiElement).flatMap(qualifiedNameElement => {
-          val name = qualifiedNameElement.getName
-          val moduleName = findModuleName(psiFile)
-          HaskellCompletionContributor.getAvailableModuleIdentifiers(psiFile, moduleName).find(_.name == name).map(_.declaration).
-            orElse(HaskellPsiUtil.findHaskellDeclarationElements(psiFile).find(_.getIdentifierElements.exists(_.getName == name)).map(_.getText.replaceAll("""\s+""", " ")))
-        })
+        val typeSignature2 = if (info.withFailure) {
+          getTypeSignatureFromScope(psiFile, psiElement)
+        } else {
+          None
+        }
 
-        declaration match {
-          case Some(d) =>
-            HaskellEditorUtil.showStatusBarInfoMessage(project, d)
-            HaskellEditorUtil.showHint(editor, StringUtil.escapeString(d), sticky)
+        showTypeInfoMessage(project, editor, sticky, typeSignature2.getOrElse(info.typeSignature))
+      case _ =>
+        getTypeSignatureFromScope(psiFile, psiElement) match {
+          case Some(typeSignature) => showTypeInfoMessage(project, editor, sticky, typeSignature)
           case None => showNoTypeInfoHint(editor, psiElement)
         }
-      case _ => showNoTypeInfoHint(editor, psiElement)
+    }
+  }
+
+  private def showTypeInfoMessage(project: Project, editor: Editor, sticky: Boolean, typeSignature: String) = {
+    HaskellEditorUtil.showStatusBarInfoMessage(project, typeSignature)
+    HaskellEditorUtil.showHint(editor, StringUtil.escapeString(typeSignature), sticky)
+  }
+
+  private def getTypeSignatureFromScope(psiFile: PsiFile, psiElement: PsiElement) = {
+    if (HaskellPsiUtil.findExpressionParent(psiElement).isDefined) {
+      HaskellPsiUtil.findQualifiedNameParent(psiElement).flatMap(qualifiedNameElement => {
+        val name = qualifiedNameElement.getName
+        val moduleName = findModuleName(psiFile)
+        HaskellCompletionContributor.getAvailableModuleIdentifiers(psiFile, moduleName).find(_.name == name).map(_.declaration).
+          orElse(HaskellPsiUtil.findHaskellDeclarationElements(psiFile).find(_.getIdentifierElements.exists(_.getName == name)).map(_.getText.replaceAll("""\s+""", " ")))
+      })
+    } else {
+      None
     }
   }
 

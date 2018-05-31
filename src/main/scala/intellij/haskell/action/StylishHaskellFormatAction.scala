@@ -45,7 +45,7 @@ object StylishHaskellFormatAction {
 
   private[action] def format(psiFile: PsiFile): Unit = {
     val project = psiFile.getProject
-    HaskellFileUtil.saveFile(psiFile)
+    HaskellFileUtil.saveFile(psiFile, checkCancelled = false)
 
     HaskellSettingsState.getStylishHaskellPath(project) match {
       case Some(stylishHaskellPath) =>

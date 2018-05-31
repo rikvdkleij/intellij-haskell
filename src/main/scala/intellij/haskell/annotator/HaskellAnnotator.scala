@@ -65,7 +65,7 @@ class HaskellAnnotator extends ExternalAnnotator[(PsiFile, Option[PsiElement]), 
     ApplicationManager.getApplication.invokeAndWait(() => {
       if (!psiFile.getProject.isDisposed) {
         ProgressManager.checkCanceled()
-        HaskellFileUtil.saveFile(psiFile)
+        HaskellFileUtil.saveFile(psiFile, checkCancelled = true)
       }
     })
     ProgressManager.checkCanceled()
