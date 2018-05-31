@@ -236,10 +236,12 @@ abstract class StackRepl(project: Project, componentInfo: Option[StackComponentI
       starting = true
       HaskellSdkType.getStackPath(project).foreach(stackPath => {
         try {
-          val extraOptions = if (stanzaType.isEmpty || stanzaType.contains(TestSuiteType)) {
+          val extraOptions = if (stanzaType.contains(TestSuiteType)) {
             extraReplOptions ++ Seq("--test")
-          } else if (stanzaType.isEmpty || stanzaType.contains(BenchmarkType)) {
+          } else if (stanzaType.contains(BenchmarkType)) {
             extraReplOptions ++ Seq("--bench")
+          } else if (stanzaType.isEmpty) {
+            extraReplOptions ++ Seq("--test") ++ Seq("--bench")
           } else {
             extraReplOptions
           }
