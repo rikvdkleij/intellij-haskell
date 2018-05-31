@@ -70,12 +70,6 @@ private[component] object LoadComponent {
                 BrowseModuleComponent.refreshTopLevel(project, mn, psiFile)
                 BrowseModuleComponent.invalidateForModuleName(project, mn)
               })
-
-              // FIXME For now disabled to improve to responsiveness
-              // Only preload types for Lib targets because expressions in hspec files can be large....
-              //                  if (stackComponentInfo.exists(_.stanzaType == LibType)) {
-              //                    currentElement.foreach(TypeInfoUtil.preloadTypesAround)
-              //                  }
             }
           })
           Some(HaskellCompilationResultHelper.createCompilationResult(Some(psiFile), loadOutput.stderrLines, loadFailed))
