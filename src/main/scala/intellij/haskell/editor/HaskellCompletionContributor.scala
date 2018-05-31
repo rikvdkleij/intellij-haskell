@@ -394,7 +394,15 @@ object HaskellCompletionContributor {
     } catch {
       case _: TimeoutException =>
         HaskellNotificationGroup.logInfoEvent(psiFile.getProject, s"Timout while getting module identifiers for ${psiFile.getName}")
-        Iterable()
+        doIt(getSuccessValue(idsF1), getSuccessValue(idsF2), getSuccessValue(idsF3), getSuccessValue(idsF4))
+    }
+  }
+
+  private def getSuccessValue[A](f: Future[Iterable[ModuleIdentifier]]) = {
+    if (f.isCompleted) {
+      f.value.map(_.getOrElse(Iterable())).getOrElse(Iterable())
+    } else {
+      Iterable()
     }
   }
 
