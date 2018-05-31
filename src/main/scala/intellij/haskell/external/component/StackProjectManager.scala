@@ -75,9 +75,6 @@ object StackProjectManager {
             getStackProjectManager(project).foreach(_.building = true)
             try {
               try {
-//                progressIndicator.setText("Busy with updating the Stack package index")
-//                StackCommandLine.executeInMessageView(project, Seq("update"))
-
                 progressIndicator.setText("Busy with building project")
 
                 val result = StackCommandLine.buildProjectDependenciesInMessageView(project)
@@ -112,7 +109,6 @@ object StackProjectManager {
               } finally {
                 getStackProjectManager(project).foreach(_.building = false)
                 if (!project.isDisposed) {
-//                  val stackLibraryComponents = StackReplsManager.getReplsManager(project).map(_.stackComponentInfos.filter(_.stanzaType == LibType)).getOrElse(Iterable())
                   ApplicationManager.getApplication.getMessageBus.connect(project).subscribe(VirtualFileManager.VFS_CHANGES, new ProjectLibraryFileWatcher(project))
                 }
               }
