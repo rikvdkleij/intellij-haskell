@@ -17,16 +17,14 @@
 package intellij.haskell.external.component
 
 import com.intellij.openapi.application.ApplicationManager
-import com.intellij.openapi.fileEditor.FileEditorManager
 import com.intellij.openapi.project.Project
 import com.intellij.psi.{PsiElement, PsiFile}
-import com.intellij.util.WaitFor
 import intellij.haskell.external.execution.{CompilationResult, HaskellCompilationResultHelper}
 import intellij.haskell.external.repl.ProjectStackRepl.IsFileLoaded
 import intellij.haskell.external.repl.StackReplsManager.StackComponentInfo
 import intellij.haskell.external.repl._
 import intellij.haskell.psi.HaskellPsiUtil
-import intellij.haskell.util.{HaskellFileUtil, ScalaUtil}
+import intellij.haskell.util.ScalaUtil
 
 private[component] object LoadComponent {
 
@@ -49,7 +47,6 @@ private[component] object LoadComponent {
     val project = psiFile.getProject
 
     StackReplsManager.getProjectRepl(psiFile).flatMap(projectRepl => {
-      val fileOfSelectedEditor = isFileOfSelectedEditor(psiFile)
 
       // The REPL is not started if target which it's depends on has compile errors at the moment of start.
       synchronized {
@@ -60,50 +57,30 @@ private[component] object LoadComponent {
 
       projectRepl.load(psiFile) match {
         case Some((loadOutput, loadFailed)) =>
-          // TODO Is this still necessary?
-          if (fileOfSelectedEditor) {
-            ApplicationManager.getApplication.executeOnPooledThread(ScalaUtil.runnable {
+          ApplicationManager.getApplication.executeOnPooledThread(ScalaUtil.runnable {
 
-              DefinitionLocationComponent.invalidate(psiFile)
-              TypeInfoComponent.invalidate(psiFile)
+            DefinitionLocationComponent.invalidate(psiFile)
+            TypeInfoComponent.invalidate(psiFile)
 
-              if (!loadFailed) {
-                NameInfoComponent.invalidate(psiFile)
+            if (!loadFailed) {
+              NameInfoComponent.invalidate(psiFile)
 
-                val moduleName = HaskellPsiUtil.findModuleName(psiFile, runInRead = true)
-                moduleName.foreach(mn => {
-                  BrowseModuleComponent.refreshTopLevel(project, mn, psiFile)
-                  BrowseModuleComponent.invalidateForModuleName(project, mn)
-                })
+              val moduleName = HaskellPsiUtil.findModuleName(psiFile, runInRead = true)
+              moduleName.foreach(mn => {
+                BrowseModuleComponent.refreshTopLevel(project, mn, psiFile)
+                BrowseModuleComponent.invalidateForModuleName(project, mn)
+              })
 
-                // FIXME For now disabled to improve to responsiveness
-                // Only preload types for Lib targets because expressions in hspec files can be large....
-                //                  if (stackComponentInfo.exists(_.stanzaType == LibType)) {
-                //                    currentElement.foreach(TypeInfoUtil.preloadTypesAround)
-                //                  }
-              }
-            })
-          }
+              // FIXME For now disabled to improve to responsiveness
+              // Only preload types for Lib targets because expressions in hspec files can be large....
+              //                  if (stackComponentInfo.exists(_.stanzaType == LibType)) {
+              //                    currentElement.foreach(TypeInfoUtil.preloadTypesAround)
+              //                  }
+            }
+          })
           Some(HaskellCompilationResultHelper.createCompilationResult(Some(psiFile), loadOutput.stderrLines, loadFailed))
         case _ => None
       }
     })
-  }
-
-
-  private def isFileOfSelectedEditor(psiFile: PsiFile): Boolean = {
-    var fileOfSelectedEditor: Option[Boolean] = None
-    ApplicationManager.getApplication.invokeLater(() => {
-      if (!psiFile.getProject.isDisposed) {
-        fileOfSelectedEditor = Option(FileEditorManager.getInstance(psiFile.getProject).getSelectedTextEditor).map(e => HaskellFileUtil.findDocument(psiFile).contains(e.getDocument)).orElse(Some(false))
-      }
-    })
-
-    new WaitFor(5000, 1) {
-      override def condition(): Boolean = {
-        fileOfSelectedEditor.isDefined
-      }
-    }
-    fileOfSelectedEditor.getOrElse(false)
   }
 }
