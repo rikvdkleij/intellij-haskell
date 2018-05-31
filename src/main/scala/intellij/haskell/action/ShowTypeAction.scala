@@ -60,13 +60,14 @@ object ShowTypeAction {
   def showTypeHint(project: Project, editor: Editor, psiElement: PsiElement, psiFile: PsiFile, sticky: Boolean = false): Unit = {
     HaskellComponentsManager.findTypeInfoForElement(psiElement) match {
       case Some(Right(info)) =>
-        val typeSignature2 = if (info.withFailure) {
-          getTypeSignatureFromScope(psiFile, psiElement)
-        } else {
-          None
-        }
+        val typeSignatureFromScope =
+          if (info.withFailure) {
+            getTypeSignatureFromScope(psiFile, psiElement)
+          } else {
+            None
+          }
 
-        showTypeInfoMessage(project, editor, sticky, typeSignature2.getOrElse(info.typeSignature))
+        showTypeInfoMessage(project, editor, sticky, typeSignatureFromScope.getOrElse(info.typeSignature))
       case _ =>
         getTypeSignatureFromScope(psiFile, psiElement) match {
           case Some(typeSignature) => showTypeInfoMessage(project, editor, sticky, typeSignature)
