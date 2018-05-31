@@ -245,7 +245,9 @@ abstract class StackRepl(project: Project, componentInfo: Option[StackComponentI
           }
 
           val replGhciOptionsFilePath = createGhciOptionsFile.getAbsolutePath
-          val command = (Seq(stackPath, "repl") ++ componentInfo.map(_.target).toSeq ++ Seq("--with-ghc", "intero", "--no-load", "--no-build", "--ghci-options", s"-ghci-script=$replGhciOptionsFilePath", "--silent") ++ extraOptions).mkString(" ")
+          val command = (Seq(stackPath, "repl") ++
+            componentInfo.map(_.target).toSeq ++
+            Seq("--with-ghc", "intero", "--no-load", "--no-build", "--ghci-options", s"-ghci-script=$replGhciOptionsFilePath", "--silent", "--ghc-options", "-v1") ++ extraOptions).mkString(" ")
 
           logInfo(s"Stack REPL will be started with command: $command")
 
