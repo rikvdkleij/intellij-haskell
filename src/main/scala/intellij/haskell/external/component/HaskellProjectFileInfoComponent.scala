@@ -67,24 +67,30 @@ private[component] object HaskellProjectFileInfoComponent {
 
   private def getStackComponentInfo(psiFile: PsiFile, stackTargetBuildInfos: Iterable[StackComponentInfo]): Option[StackComponentInfo] = {
     val filePath = HaskellFileUtil.getAbsolutePath(psiFile)
-    stackTargetBuildInfos.find(_.mainIs.exists(mi => mi == filePath)) match {
+    stackTargetBuildInfos.find(_.mainIs.exists(filePath.contains)) match {
       case info@Some(_) => info
       case None =>
-        val sourceDirsByInfo = stackTargetBuildInfos.map(info => (info, info.sourceDirs.filter(sd => FileUtil.isAncestor(sd, filePath, true)))).filterNot({ case (_, sd) => sd.isEmpty })
-        if (sourceDirsByInfo.size > 1) {
-          val sourceDirByInfo = sourceDirsByInfo.map({ case (info, sds) => (info, sds.maxBy(sd => Paths.get(sd).getNameCount)) })
-          val mostSpecificSourceDirByInfo = ScalaUtil.maxsBy(sourceDirByInfo)({ case (_, sd) => Paths.get(sd).getNameCount })
-          if (mostSpecificSourceDirByInfo.size > 1) {
-            HaskellNotificationGroup.logWarningBalloonEvent(psiFile.getProject, s"Ambiguous Stack target: ${psiFile.getName} belongs to the source dir of more than one Stack target/Cabal stanza. The first one of ${mostSpecificSourceDirByInfo.map(_._1.target)} is chosen.")
-          }
-          mostSpecificSourceDirByInfo.headOption.map(_._1)
-        } else {
-          sourceDirsByInfo.headOption.map(_._1)
-        }
-        match {
-          case info@Some(_) => info
+        filePath match {
+          case Some(p) =>
+            val sourceDirsByInfo = stackTargetBuildInfos.map(info => (info, info.sourceDirs.filter(sd => FileUtil.isAncestor(sd, p, true)))).filterNot({ case (_, sd) => sd.isEmpty })
+            val stackComponentInfo = if (sourceDirsByInfo.size > 1) {
+              val sourceDirByInfo = sourceDirsByInfo.map({ case (info, sds) => (info, sds.maxBy(sd => Paths.get(sd).getNameCount)) })
+              val mostSpecificSourceDirByInfo = ScalaUtil.maxsBy(sourceDirByInfo)({ case (_, sd) => Paths.get(sd).getNameCount })
+              if (mostSpecificSourceDirByInfo.size > 1) {
+                HaskellNotificationGroup.logWarningBalloonEvent(psiFile.getProject, s"Ambiguous Stack target: ${psiFile.getName} belongs to the source dir of more than one Stack target/Cabal stanza. The first one of ${mostSpecificSourceDirByInfo.map(_._1.target)} is chosen.")
+              }
+              mostSpecificSourceDirByInfo.headOption.map(_._1)
+            } else {
+              sourceDirsByInfo.headOption.map(_._1)
+            }
+            stackComponentInfo match {
+              case info@Some(_) => info
+              case None =>
+                HaskellNotificationGroup.logErrorBalloonEvent(psiFile.getProject, s"Could not determine Stack target for file ${psiFile.getName} because no accompanying `hs-source-dirs` or `main-is` can be found in Cabal file(s)")
+                None
+            }
           case None =>
-            HaskellNotificationGroup.logErrorBalloonEvent(psiFile.getProject, s"Can not determine Stack target for file ${psiFile.getName} because no accompanying `hs-source-dirs` or `main-is` can be found in Cabal file(s)")
+            HaskellNotificationGroup.logWarningBalloonEvent(psiFile.getProject, s"Could not determine Stack target because could not determine path for file `${psiFile.getName}`. File exists only in memory")
             None
         }
     }

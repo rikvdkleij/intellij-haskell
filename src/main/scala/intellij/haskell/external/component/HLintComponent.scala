@@ -34,12 +34,18 @@ object HLintComponent {
     if (StackProjectManager.isHlintAvailable(psiFile.getProject)) {
       val project = psiFile.getProject
       val hlintOptions = if (HaskellSettingsState.getHlintOptions.trim.isEmpty) Array[String]() else HaskellSettingsState.getHlintOptions.split("""\s+""")
-      val output = runHLint(project, hlintOptions.toSeq ++ Seq("--json", HaskellFileUtil.getAbsolutePath(psiFile)), ignoreExitCode = true)
-      if (output.getExitCode > 0 && output.getStderr.nonEmpty) {
-        HaskellNotificationGroup.logErrorBalloonEvent(project, s"Error while calling $HLintName: ${output.getStderr}")
-        Seq()
-      } else {
-        deserializeHLintInfo(project, output.getStdout)
+      HaskellFileUtil.getAbsolutePath(psiFile) match {
+        case Some(path) =>
+          val output = runHLint(project, hlintOptions.toSeq ++ Seq("--json", path), ignoreExitCode = true)
+          if (output.getExitCode > 0 && output.getStderr.nonEmpty) {
+            HaskellNotificationGroup.logErrorBalloonEvent(project, s"Error while calling $HLintName: ${output.getStderr}")
+            Seq()
+          } else {
+            deserializeHLintInfo(project, output.getStdout)
+          }
+        case None => ()
+          HaskellNotificationGroup.logWarningBalloonEvent(psiFile.getProject, s"Can not display HLint suggestions because can not determine path for file `${psiFile.getName}`. File exists only in memory")
+          Seq()
       }
     } else {
       HaskellNotificationGroup.logInfoEvent(psiFile.getProject, s"$HLintName is not yet available")

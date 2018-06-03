@@ -18,21 +18,20 @@ package intellij.haskell.external.component
 
 import com.github.blemale.scaffeine.{LoadingCache, Scaffeine}
 import com.intellij.openapi.project.Project
-import com.intellij.psi.PsiFile
 import intellij.haskell.external.repl.StackRepl.StackReplOutput
 import intellij.haskell.external.repl.StackReplsManager
 import intellij.haskell.external.repl.StackReplsManager.StackComponentInfo
 
 private[component] object StackComponentGlobalInfoComponent {
 
-  private case class Key(project: Project, stackComponentInfo: StackComponentInfo)
+  private case class Key(stackComponentInfo: StackComponentInfo)
 
   private type Result = Either[NoInfo, StackComponentGlobalInfo]
 
   private final val Cache: LoadingCache[Key, Result] = Scaffeine().build((k: Key) => load(k))
 
   private def load(key: Key): Result = {
-    if (LoadComponent.isBusy(key.project, key.stackComponentInfo)) {
+    if (LoadComponent.isBusy(key.stackComponentInfo.module.getProject, key.stackComponentInfo)) {
       Left(ReplIsBusy)
     } else {
       createStackInfo(key)
@@ -40,7 +39,7 @@ private[component] object StackComponentGlobalInfoComponent {
   }
 
   private def createStackInfo(key: Key): Result = {
-    val project = key.project
+    val project = key.stackComponentInfo.module.getProject
     val stackComponentInfo = key.stackComponentInfo
     findAvailableModuleNames(project, stackComponentInfo) match {
       case Left(noInfo) => Left(noInfo)
@@ -74,9 +73,8 @@ private[component] object StackComponentGlobalInfoComponent {
     }
   }
 
-  def findStackComponentGlobalInfo(psiFile: PsiFile): Option[StackComponentGlobalInfo] = {
-    HaskellComponentsManager.findStackComponentInfo(psiFile).flatMap(info => {
-      val key = Key(psiFile.getProject, info)
+  def findStackComponentGlobalInfo(stackComponentInfo: StackComponentInfo): Option[StackComponentGlobalInfo] = {
+      val key = Key(stackComponentInfo)
       Cache.get(key) match {
         case Right(result) => Some(result)
         case Left(NoInfoAvailable) =>
@@ -89,11 +87,10 @@ private[component] object StackComponentGlobalInfoComponent {
           Cache.invalidate(key)
           None
       }
-    })
   }
 
   def invalidate(project: Project): Unit = {
-    val keys = Cache.asMap().keys.filter(_.project == project)
+    val keys = Cache.asMap().keys.filter(_.stackComponentInfo.module.getProject == project)
     keys.foreach(Cache.invalidate)
   }
 }

@@ -149,19 +149,23 @@ abstract class StackRepl(project: Project, componentInfo: Option[StackComponentI
 
         val ghciCommand = command match {
           case c if c.startsWith(":browse! *") => GhciCommand.LocalBrowse
-          case c if c.startsWith(":load") => GhciCommand.Load
+          case c if c.startsWith(":load") | c.startsWith(":reload") => GhciCommand.Load
           case c if c.startsWith(":module") => GhciCommand.Module
           case c if c.startsWith(":set") => GhciCommand.Set
           case _ => GhciCommand.OtherCommand
+        }
+
+        def outputContainsEndOfOutputIndicator = {
+          stdoutResult.lastOption.exists(_.contains(EndOfOutputIndicator))
         }
 
         def hasReachedEndOfOutput =
           if (command == ExitCommand) {
             stdoutResult.lastOption.exists(_.startsWith("Leaving GHCi"))
           } else if (ghciCommand == GhciCommand.LocalBrowse) {
-            stdoutResult.exists(_.startsWith(LocalBrowseStopReadingIndicator)) || stderrResult.nonEmpty
+            stdoutResult.exists(_.startsWith(LocalBrowseStopReadingIndicator)) || outputContainsEndOfOutputIndicator || stderrResult.nonEmpty
           } else {
-            stdoutResult.lastOption.exists(_.contains(EndOfOutputIndicator)) && (ghciCommand == GhciCommand.Module || ghciCommand == GhciCommand.Set || stdoutResult.length > 1 || stderrResult.nonEmpty)
+            outputContainsEndOfOutputIndicator && (ghciCommand == GhciCommand.Module || ghciCommand == GhciCommand.Set || stdoutResult.length > 1 || stderrResult.nonEmpty)
           }
 
         def writeToOutputStream(command: String) = {

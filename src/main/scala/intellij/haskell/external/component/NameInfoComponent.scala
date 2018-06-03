@@ -18,12 +18,13 @@ package intellij.haskell.external.component
 
 import com.github.blemale.scaffeine.{LoadingCache, Scaffeine}
 import com.intellij.openapi.project.Project
+import com.intellij.psi.search.GlobalSearchScope
 import com.intellij.psi.{PsiElement, PsiFile}
-import intellij.haskell.external.repl.ProjectStackRepl.Failed
 import intellij.haskell.external.repl.StackRepl.StackReplOutput
 import intellij.haskell.external.repl.StackReplsManager
 import intellij.haskell.psi._
 import intellij.haskell.util.StringUtil.escapeString
+import intellij.haskell.util.index.HaskellFilePathIndex
 import intellij.haskell.util.{HaskellProjectUtil, StringUtil}
 
 private[component] object NameInfoComponent {
@@ -52,7 +53,7 @@ private[component] object NameInfoComponent {
       if (LoadComponent.isBusy(psiFile)) {
         Left(ReplIsBusy)
       } else {
-        if (LoadComponent.isLoaded(psiFile).exists(_ != Failed)) {
+        if (LoadComponent.isFileLoaded(psiFile)) {
           StackReplsManager.getProjectRepl(psiFile).flatMap(_.findInfo(psiFile, name)) match {
             case None => Left(ReplNotAvailable)
             case Some(o) => Right(createNameInfos(project, o))
@@ -62,7 +63,7 @@ private[component] object NameInfoComponent {
         }
       }
     } else {
-      val moduleName = HaskellPsiUtil.findModuleName(psiFile, runInRead = true)
+      val moduleName = HaskellFilePathIndex.findModuleName(psiFile, GlobalSearchScope.allScope(project))
       moduleName match {
         case None => Left(NoInfoAvailable)
         case Some(mn) =>

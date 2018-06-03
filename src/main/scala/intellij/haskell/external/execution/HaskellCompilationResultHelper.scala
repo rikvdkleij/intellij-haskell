@@ -25,10 +25,10 @@ object HaskellCompilationResultHelper {
 
   private final val ProblemPattern = """(.+):([\d]+):([\d]+):(.+)""".r
 
-  def createCompilationResult(currentPsiFile: Option[PsiFile], errorLines: Seq[String], failed: Boolean): CompilationResult = {
-    val filePath = currentPsiFile.map(HaskellFileUtil.getAbsolutePath)
+  def createCompilationResult(currentPsiFile: PsiFile, errorLines: Seq[String], failed: Boolean): CompilationResult = {
+    val filePath = HaskellFileUtil.getAbsolutePath(currentPsiFile).getOrElse(throw new IllegalStateException(s"File `${currentPsiFile.getName}` exists only in memory"))
 
-    val compilationProblems = errorLines.flatMap(l => parseErrorLine(filePath, l))
+    val compilationProblems = errorLines.flatMap(l => parseErrorLine(Some(filePath), l))
 
     val currentFileProblems = compilationProblems.flatMap(convertToCompilationProblemInCurrentFile)
     val otherFileProblems = compilationProblems.diff(currentFileProblems)

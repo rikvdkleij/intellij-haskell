@@ -43,13 +43,13 @@ import scala.collection.JavaConverters._
 class HaskellAnnotator extends ExternalAnnotator[(PsiFile, Option[PsiElement]), CompilationResult] {
 
   override def collectInformation(psiFile: PsiFile, editor: Editor, hasErrors: Boolean): (PsiFile, Option[PsiElement]) = {
-    if (HaskellConsoleView.isConsoleFile(psiFile)) {
+    if (HaskellConsoleView.isConsoleFile(psiFile) || StackProjectManager.isBuilding(psiFile.getProject) || HaskellProjectUtil.isLibraryFile(psiFile)) {
       null
     } else {
       (psiFile, HaskellFileUtil.findVirtualFile(psiFile)) match {
         case (_, None) => null // can be in case if file is in memory only (just created file)
         case (_, Some(f)) if f.getFileType != HaskellFileType.Instance => null
-        case (_, Some(_)) if !psiFile.isValid | HaskellProjectUtil.isLibraryFile(psiFile) | StackProjectManager.isBuilding(psiFile.getProject) => null
+        case (_, Some(_)) if !psiFile.isValid => null
         case (_, Some(_)) =>
           val currentElement = Option(psiFile.findElementAt(editor.getCaretModel.getOffset)).
             find(e => HaskellPsiUtil.findExpressionParent(e).isDefined).
@@ -123,7 +123,7 @@ object HaskellAnnotator {
   }
 
   private def createAnnotations(psiFile: PsiFile, loadResult: CompilationResult): Iterable[Annotation] = {
-    val problems = loadResult.currentFileProblems.filter(_.filePath == HaskellFileUtil.getAbsolutePath(psiFile))
+    val problems = loadResult.currentFileProblems.filter(problem => HaskellFileUtil.getAbsolutePath(psiFile).contains(problem.filePath))
     val project = psiFile.getProject
 
     HaskellCompilationResultHelper.createNotificationsForErrorsNotInCurrentFile(project, loadResult)

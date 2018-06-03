@@ -111,7 +111,7 @@ final class FlagDefault(node: ASTNode) extends CabalFieldElement(node)
 final class FlagManual(node: ASTNode) extends CabalFieldElement(node)
 
 final class Library(node: ASTNode) extends CabalStanzaElement(node)
-final class ExposedModules(node: ASTNode) extends CabalFieldElement(node)
+final class ExposedModules(node: ASTNode) extends CabalFieldElement(node) with ExposedModulesImpl
 final class Exposed(node: ASTNode) extends CabalFieldElement(node)
 final class ReexportedModules(node: ASTNode) extends CabalFieldElement(node)
 final class ModuleReexport(node: ASTNode) extends CabalFieldValueElement(node)

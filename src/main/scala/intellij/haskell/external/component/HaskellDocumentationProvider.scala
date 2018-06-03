@@ -19,9 +19,11 @@ package intellij.haskell.external.component
 import com.intellij.lang.documentation.AbstractDocumentationProvider
 import com.intellij.openapi.project.Project
 import com.intellij.psi.PsiElement
+import com.intellij.psi.search.GlobalSearchScope
 import intellij.haskell.HaskellNotificationGroup
 import intellij.haskell.external.component.NameInfoComponentResult.{BuiltInNameInfo, LibraryNameInfo, ProjectNameInfo}
 import intellij.haskell.psi.{HaskellPsiUtil, HaskellQualifiedNameElement}
+import intellij.haskell.util.index.HaskellFilePathIndex
 import intellij.haskell.util.{HaskellEditorUtil, HaskellProjectUtil}
 
 class HaskellDocumentationProvider extends AbstractDocumentationProvider {
@@ -48,7 +50,7 @@ class HaskellDocumentationProvider extends AbstractDocumentationProvider {
       case Some(ni) =>
         val moduleName = ni match {
           case lei: LibraryNameInfo => Option(lei.moduleName)
-          case _: ProjectNameInfo => HaskellPsiUtil.findModuleName(namedElement.getContainingFile, runInRead = true)
+          case _: ProjectNameInfo => HaskellFilePathIndex.findModuleName(namedElement.getContainingFile, GlobalSearchScope.projectScope(project))
           case _: BuiltInNameInfo => Some(HaskellProjectUtil.Prelude)
           case _ => None
         }

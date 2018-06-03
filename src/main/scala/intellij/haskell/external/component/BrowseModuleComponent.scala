@@ -17,10 +17,10 @@
 package intellij.haskell.external.component
 
 import com.github.blemale.scaffeine.{AsyncLoadingCache, Scaffeine}
-import com.intellij.openapi.project.{DumbService, Project}
+import com.intellij.openapi.application.ApplicationManager
+import com.intellij.openapi.project.{IndexNotReadyException, Project}
 import com.intellij.psi.PsiFile
 import com.intellij.psi.search.GlobalSearchScope
-import intellij.haskell.external.repl.ProjectStackRepl.Failed
 import intellij.haskell.external.repl._
 import intellij.haskell.util.index.HaskellModuleNameIndex
 import intellij.haskell.util.{ScalaUtil, StringUtil}
@@ -29,7 +29,7 @@ import scala.concurrent.{ExecutionContext, Future}
 
 private[component] object BrowseModuleComponent {
 
-  private case class Key(project: Project, moduleName: String, psiFile: Option[PsiFile])
+  private case class Key(project: Project, moduleName: String, psiFile: Option[PsiFile], exported: Boolean)
 
   private sealed trait NoBrowseInfo
 
@@ -53,22 +53,58 @@ private[component] object BrowseModuleComponent {
   })
 
   def findModuleIdentifiers(project: Project, moduleName: String, psiFile: Option[PsiFile])(implicit ec: ExecutionContext): Future[Iterable[ModuleIdentifier]] = {
-    val key = Key(project, moduleName, psiFile)
 
-    concurrent.blocking(Cache.get(key).map {
-      case Right(ids) => ids
-      case Left(NoInfoAvailable) =>
-        Iterable()
-      case Left(ReplNotAvailable) =>
-        Cache.synchronous().invalidate(key)
-        Iterable()
-      case Left(ReplIsBusy) =>
-        Cache.synchronous.invalidate(key)
-        Iterable()
-      case Left(IndexNotReady) =>
-        Cache.synchronous.invalidate(key)
-        Iterable()
-    })
+    def findKey = {
+      psiFile match {
+        case None =>
+          val projectPsiFile = try {
+            Right(ApplicationManager.getApplication.runReadAction(ScalaUtil.computable(HaskellModuleNameIndex.findHaskellFileByModuleName(project, moduleName, GlobalSearchScope.projectScope(project)))))
+          } catch {
+            case _: IndexNotReadyException => Left("Indices not ready")
+          }
+          projectPsiFile match {
+            case Right(pf) => Some(Key(project, moduleName, pf, exported = true))
+            case Left(_) => None
+          }
+        case pf@Some(_) => Some(Key(project, moduleName, pf, exported = false))
+      }
+    }
+
+    findKey match {
+      case Some(key) =>
+
+        def matchResult(result: Future[BrowseModuleInternalResult]) = {
+          concurrent.blocking(result.map {
+            case Right(ids) => ids
+            case Left(NoInfoAvailable) =>
+              Iterable()
+            case Left(ReplNotAvailable) =>
+              Cache.synchronous().invalidate(key)
+              Iterable()
+            case Left(ReplIsBusy) =>
+              Cache.synchronous.invalidate(key)
+              Iterable()
+            case Left(IndexNotReady) =>
+              Cache.synchronous.invalidate(key)
+              Iterable()
+          })
+        }
+
+        Cache.getIfPresent(key) match {
+          case Some(r) => matchResult(r)
+          case None => key.psiFile match {
+            case None => matchResult(Cache.get(key))
+            case Some(pf) => if (!key.exported && LoadComponent.isFileLoaded(pf)) {
+              matchResult(Cache.get(key))
+            } else if (key.exported && LoadComponent.isModuleLoaded(Some(moduleName), pf)) {
+              matchResult(Cache.get(key))
+            } else {
+              Future.successful(Iterable())
+            }
+          }
+        }
+      case None => Future.successful(Iterable())
+    }
   }
 
   def findModuleNamesInCache(project: Project): Iterable[String] = {
@@ -76,12 +112,12 @@ private[component] object BrowseModuleComponent {
   }
 
   def refreshTopLevel(project: Project, moduleName: String, psiFile: PsiFile): Unit = {
-    val key = Key(project, moduleName, Some(psiFile))
+    val key = Key(project, moduleName, Some(psiFile), exported = false)
     Cache.synchronous().refresh(key)
   }
 
-  def invalidateForModuleName(project: Project, moduleName: String): Unit = {
-    val key = Key(project, moduleName, None)
+  def invalidateForModuleName(project: Project, moduleName: String, psiFile: PsiFile): Unit = {
+    val key = Key(project, moduleName, Some(psiFile), exported = true)
     Cache.synchronous.invalidate(key)
   }
 
@@ -95,41 +131,26 @@ private[component] object BrowseModuleComponent {
     val moduleName = key.moduleName
 
     key.psiFile match {
-      case Some(psiFile) =>
+      case Some(psiFile) if !key.exported =>
         if (LoadComponent.isBusy(psiFile)) {
           Left(ReplIsBusy)
-        } else if (LoadComponent.isLoaded(psiFile).exists(_ != Failed)) {
+        } else if (LoadComponent.isFileLoaded(psiFile)) {
           StackReplsManager.getProjectRepl(psiFile).flatMap(_.getLocalModuleIdentifiers(moduleName, psiFile)).map { output =>
             Right(output.stdoutLines.takeWhile(l => !l.startsWith("-- imported via")).flatMap(l => findModuleIdentifiers(project, l, moduleName)))
           }.getOrElse(Left(ReplNotAvailable))
         } else {
           Left(NoInfoAvailable)
         }
-      case None =>
-        Option(DumbService.getInstance(project).tryRunReadActionInSmartMode(
-          ScalaUtil.computable(HaskellModuleNameIndex.findHaskellFileByModuleName(project, moduleName, GlobalSearchScope.projectScope(project))),
-          "Obtaining module identifiers is not available until indices are ready")
-        ) match {
-          case Some(pf) =>
-            pf match {
-              case Some(f) =>
-                if (LoadComponent.isBusy(f)) {
-                  Left(ReplIsBusy)
-                } else {
-                  val output = StackReplsManager.getProjectRepl(f).flatMap(_.getModuleIdentifiers(moduleName, f))
-                  output match {
-                    case Some(o) if o.stderrLines.isEmpty => output.map(_.stdoutLines.flatMap(l => findModuleIdentifiers(project, l, moduleName))) match {
-                      case Some(ids) => Right(ids)
-                      case None => Left(NoInfoAvailable)
-                    }
-                    case _ => Left(ReplNotAvailable)
-                  }
-                }
-
-              case None => findLibraryModuleIdentifiers(project, moduleName)
-            }
-          case None => Left(IndexNotReady)
+      case Some(psiFile) if key.exported =>
+        val output = StackReplsManager.getProjectRepl(psiFile).flatMap(_.getModuleIdentifiers(moduleName, psiFile))
+        output match {
+          case Some(o) if o.stderrLines.isEmpty => output.map(_.stdoutLines.flatMap(l => findModuleIdentifiers(project, l, moduleName))) match {
+            case Some(ids) => Right(ids)
+            case None => Left(NoInfoAvailable)
+          }
+          case _ => Left(ReplNotAvailable)
         }
+      case None => findLibraryModuleIdentifiers(project, moduleName)
     }
   }
 

@@ -1,6 +1,7 @@
 package intellij.haskell.action.ghci
 
 import com.intellij.openapi.actionSystem.{AnAction, AnActionEvent}
+import intellij.haskell.HaskellNotificationGroup
 import intellij.haskell.action.ActionUtil
 import intellij.haskell.runconfig.console.HaskellConsoleViewMap
 import intellij.haskell.util.HaskellFileUtil
@@ -16,7 +17,10 @@ class LoadModuleAction extends AnAction {
       actionContext <- ActionUtil.findActionContext(actionEvent)
       consoleView <- HaskellConsoleViewMap.getConsole(actionContext.project)
     } yield {
-      consoleView.executeCommand(s":load ${HaskellFileUtil.getAbsolutePath(actionContext.psiFile)}", addToHistory = false)
+      HaskellFileUtil.getAbsolutePath(actionContext.psiFile) match {
+        case Some(filePath) => consoleView.executeCommand(s":load $filePath", addToHistory = false)
+        case None => HaskellNotificationGroup.logWarningBalloonEvent(actionContext.project, s"Can not load file in REPL because could not determine path for file `${actionContext.psiFile.getName}`. File exists only in memory")
+      }
     }
   }
 

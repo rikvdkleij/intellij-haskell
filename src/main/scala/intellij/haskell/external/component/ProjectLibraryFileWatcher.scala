@@ -95,7 +95,7 @@ class ProjectLibraryFileWatcher(project: Project) extends BulkFileListener {
 
                         val dependentLibRepls = projectRepls.filter(repl => repl.stanzaType == LibType && dependentModules.map(_.getName).contains(repl.packageName))
 
-                        val openFiles = FileEditorManager.getInstance(project).getOpenFiles.filter(f => HaskellProjectUtil.isProjectFile(f, project))
+                        val openFiles = FileEditorManager.getInstance(project).getOpenFiles.filter(f => ApplicationManager.getApplication.runReadAction(ScalaUtil.computable(HaskellProjectUtil.isProjectFile(f, project))))
                         val haskellFiles = ApplicationManager.getApplication.runReadAction(ScalaUtil.computable(HaskellFileUtil.convertToHaskellFiles(project, openFiles)))
                         val dependentFiles = haskellFiles.filter(f => HaskellComponentsManager.findStackComponentInfo(f).exists(ci => ci.stanzaType != LibType && currentlyBuildComponents.map(_.packageName).contains(ci.packageName)))
                         val dependentLibFiles = haskellFiles.toSeq.diff(dependentFiles.toSeq).filter(f => HaskellProjectUtil.findModuleForFile(f).exists(m => dependentModules.contains(m)))

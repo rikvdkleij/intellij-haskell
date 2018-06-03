@@ -17,13 +17,16 @@
 package intellij.haskell.action
 
 import com.intellij.openapi.actionSystem.{AnAction, AnActionEvent}
+import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.project.Project
+import com.intellij.psi.search.GlobalSearchScope
 import com.intellij.psi.{PsiElement, PsiFile}
 import intellij.haskell.editor.HaskellCompletionContributor
 import intellij.haskell.external.component.{HaskellComponentsManager, StackProjectManager}
 import intellij.haskell.psi._
-import intellij.haskell.util.{HaskellEditorUtil, StringUtil}
+import intellij.haskell.util.index.HaskellFilePathIndex
+import intellij.haskell.util.{HaskellEditorUtil, ScalaUtil, StringUtil}
 
 class ShowTypeAction extends AnAction {
 
@@ -57,6 +60,24 @@ class ShowTypeAction extends AnAction {
 
 object ShowTypeAction {
 
+  def showTypeInStatusBar(project: Project, psiElement: PsiElement, psiFile: PsiFile): Unit = {
+    HaskellComponentsManager.findTypeInfoForElement(psiElement) match {
+      case Some(Right(info)) =>
+        val typeSignatureFromScope =
+          if (info.withFailure) {
+            getTypeSignatureFromScopeInReadAction(psiElement, psiFile)
+          } else {
+            None
+          }
+        showTypeSignatureInStatusBar(project, typeSignatureFromScope.getOrElse(info.typeSignature))
+      case _ =>
+        getTypeSignatureFromScopeInReadAction(psiElement, psiFile) match {
+          case Some(typeSignature) => showTypeSignatureInStatusBar(project, typeSignature)
+          case None => ()
+        }
+    }
+  }
+
   def showTypeHint(project: Project, editor: Editor, psiElement: PsiElement, psiFile: PsiFile, sticky: Boolean = false): Unit = {
     HaskellComponentsManager.findTypeInfoForElement(psiElement) match {
       case Some(Right(info)) =>
@@ -67,18 +88,26 @@ object ShowTypeAction {
             None
           }
 
-        showTypeInfoMessage(project, editor, sticky, typeSignatureFromScope.getOrElse(info.typeSignature))
+        showTypeSignatureMessages(project, editor, sticky, typeSignatureFromScope.getOrElse(info.typeSignature))
       case _ =>
         getTypeSignatureFromScope(psiFile, psiElement) match {
-          case Some(typeSignature) => showTypeInfoMessage(project, editor, sticky, typeSignature)
+          case Some(typeSignature) => showTypeSignatureMessages(project, editor, sticky, typeSignature)
           case None => showNoTypeInfoHint(editor, psiElement)
         }
     }
   }
 
-  private def showTypeInfoMessage(project: Project, editor: Editor, sticky: Boolean, typeSignature: String) = {
-    HaskellEditorUtil.showStatusBarInfoMessage(project, typeSignature)
+  private def getTypeSignatureFromScopeInReadAction(psiElement: PsiElement, psiFile: PsiFile) = {
+    ApplicationManager.getApplication.runReadAction(ScalaUtil.computable(getTypeSignatureFromScope(psiFile, psiElement)))
+  }
+
+  private def showTypeSignatureMessages(project: Project, editor: Editor, sticky: Boolean, typeSignature: String) = {
+    showTypeSignatureInStatusBar(project, typeSignature)
     HaskellEditorUtil.showHint(editor, StringUtil.escapeString(typeSignature), sticky)
+  }
+
+  private def showTypeSignatureInStatusBar(project: Project, typeSignature: String) = {
+    HaskellEditorUtil.showStatusBarInfoMessage(project, typeSignature)
   }
 
   private def getTypeSignatureFromScope(psiFile: PsiFile, psiElement: PsiElement) = {
@@ -95,7 +124,7 @@ object ShowTypeAction {
   }
 
   private def findModuleName(psiFile: PsiFile): Option[String] = {
-    HaskellPsiUtil.findModuleName(psiFile, runInRead = true)
+    HaskellFilePathIndex.findModuleName(psiFile, GlobalSearchScope.projectScope(psiFile.getProject))
   }
 
   private def showNoTypeInfoHint(editor: Editor, psiElement: PsiElement): Unit = {

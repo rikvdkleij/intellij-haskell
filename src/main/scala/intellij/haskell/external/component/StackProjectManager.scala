@@ -26,7 +26,7 @@ import intellij.haskell.external.execution.StackCommandLine
 import intellij.haskell.external.execution.StackCommandLine.build
 import intellij.haskell.external.repl.StackReplsManager
 import intellij.haskell.module.HaskellModuleBuilder
-import intellij.haskell.util.HaskellProjectUtil
+import intellij.haskell.util.{HaskellProjectUtil, ScalaUtil}
 import intellij.haskell.{GlobalInfo, HaskellNotificationGroup}
 
 object StackProjectManager {
@@ -117,14 +117,11 @@ object StackProjectManager {
               HaskellModuleBuilder.addLibrarySources(project)
 
               progressIndicator.setText("Busy with preloading libraries")
-              val preloadCacheFuture = ApplicationManager.getApplication.executeOnPooledThread(new Runnable {
+              val preloadCacheFuture = ApplicationManager.getApplication.executeOnPooledThread(ScalaUtil.runnable {
+                HaskellComponentsManager.preloadLibraryIdentifiersCaches(project)
 
-                override def run(): Unit = {
-                  HaskellComponentsManager.preloadLibraryIdentifiersCaches(project)
-
-                  HaskellNotificationGroup.logInfoEvent(project, "Restarting global REPL to release memory")
-                  StackReplsManager.getGlobalRepl(project).foreach(_.restart())
-                }
+                HaskellNotificationGroup.logInfoEvent(project, "Restarting global REPL to release memory")
+                StackReplsManager.getGlobalRepl(project).foreach(_.restart())
               })
 
               progressIndicator.setText(s"Busy with installing ${HLintComponent.HLintName} in ${GlobalInfo.toolsBinPath}")

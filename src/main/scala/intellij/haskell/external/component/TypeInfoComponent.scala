@@ -16,14 +16,20 @@
 
 package intellij.haskell.external.component
 
-import com.github.blemale.scaffeine.{LoadingCache, Scaffeine}
+import java.util.concurrent.TimeUnit
+
+import com.github.blemale.scaffeine.{AsyncLoadingCache, Scaffeine}
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.editor.SelectionModel
-import com.intellij.openapi.util.Computable
+import com.intellij.psi.search.GlobalSearchScope
 import com.intellij.psi.{PsiElement, PsiFile}
 import intellij.haskell.external.repl.StackReplsManager
 import intellij.haskell.psi._
-import intellij.haskell.util.LineColumnPosition
+import intellij.haskell.util.index.HaskellFilePathIndex
+import intellij.haskell.util.{LineColumnPosition, ScalaUtil}
+
+import scala.concurrent.duration.Duration
+import scala.concurrent.{Await, Future, TimeoutException}
 
 private[component] object TypeInfoComponent {
 
@@ -31,20 +37,18 @@ private[component] object TypeInfoComponent {
 
   private case class Key(psiFile: PsiFile, startLineNr: Int, startColumnNr: Int, endLineNr: Int, endColumnNr: Int, expression: String)
 
-  private final val Cache: LoadingCache[Key, TypeInfoResult] = Scaffeine().build((k: Key) => findTypeInfoResult(k))
+  private final val Cache: AsyncLoadingCache[Key, TypeInfoResult] = Scaffeine().buildAsync((k: Key) => findTypeInfoResult(k))
 
   def findTypeInfoForElement(psiElement: PsiElement): Option[TypeInfoResult] = {
     val result = if (psiElement.isValid) {
-      ApplicationManager.getApplication.runReadAction(new Computable[Option[Key]] {
-        override def compute(): Option[Key] = {
-          for {
-            qne <- HaskellPsiUtil.findQualifiedNameParent(psiElement)
-            to = qne.getTextOffset
-            pf <- Option(psiElement.getContainingFile)
-            sp <- LineColumnPosition.fromOffset(pf, to)
-            ep <- LineColumnPosition.fromOffset(pf, to + qne.getText.length)
-          } yield Key(pf, sp.lineNr, sp.columnNr, ep.lineNr, ep.columnNr, qne.getName)
-        }
+      ApplicationManager.getApplication.runReadAction(ScalaUtil.computable {
+        for {
+          qne <- HaskellPsiUtil.findQualifiedNameParent(psiElement)
+          to = qne.getTextOffset
+          pf <- Option(psiElement.getContainingFile)
+          sp <- LineColumnPosition.fromOffset(pf, to)
+          ep <- LineColumnPosition.fromOffset(pf, to + qne.getText.length)
+        } yield Key(pf, sp.lineNr, sp.columnNr, ep.lineNr, ep.columnNr, qne.getName)
       }).map(findTypeInfo)
     } else {
       None
@@ -61,14 +65,15 @@ private[component] object TypeInfoComponent {
   }
 
   def invalidate(psiFile: PsiFile): Unit = {
-    Cache.asMap().filter(_._1.psiFile == psiFile).keys.foreach(Cache.invalidate)
+    Cache.synchronous().asMap().filter(_._1.psiFile == psiFile).keys.foreach(Cache.synchronous().invalidate)
   }
 
   private def findTypeInfoResult(key: Key): TypeInfoResult = {
-    if (LoadComponent.isBusy(key.psiFile)) {
+    val psiFile = key.psiFile
+    if (LoadComponent.isBusy(psiFile)) {
       Left(ReplIsBusy)
     } else {
-      val moduleName = HaskellPsiUtil.findModuleName(key.psiFile, runInRead = true)
+      val moduleName = HaskellFilePathIndex.findModuleName(psiFile, GlobalSearchScope.projectScope(psiFile.getProject))
       val typeInfo = StackReplsManager.getProjectRepl(key.psiFile).flatMap(_.findTypeInfo(moduleName, key.psiFile, key.startLineNr, key.startColumnNr, key.endLineNr, key.endColumnNr, key.expression)) match {
         case Some(output) => output.stdoutLines.headOption.filterNot(_.trim.isEmpty).map(ti => Right(TypeInfo(ti, output.stderrLines.nonEmpty))).getOrElse(Left(NoInfoAvailable))
         case _ => Left(ReplNotAvailable)
@@ -78,17 +83,36 @@ private[component] object TypeInfoComponent {
   }
 
   private def findTypeInfo(key: Key): TypeInfoResult = {
-    val result = Cache.get(key)
-    result match {
-      case Right(_) => result
-      case Left(NoInfoAvailable) =>
-        result
-      case Left(ReplNotAvailable) =>
-        Cache.invalidate(key)
-        result
-      case Left(ReplIsBusy) =>
-        Cache.invalidate(key)
-        result
+    Cache.getIfPresent(key) match {
+      case Some(r) => wait(r)
+      case None =>
+        if (LoadComponent.isModuleLoaded(HaskellFilePathIndex.findModuleName(key.psiFile, GlobalSearchScope.projectScope(key.psiFile.getProject)), key.psiFile)) {
+          val result = wait(Cache.get(key))
+          result match {
+            case Right(_) => result
+            case Left(NoInfoAvailable) =>
+              result
+            case Left(ReplNotAvailable) =>
+              Cache.synchronous().invalidate(key)
+              result
+            case Left(ReplIsBusy) =>
+              Cache.synchronous().invalidate(key)
+              result
+          }
+        }
+        else {
+          Left(NoInfoAvailable)
+        }
+    }
+  }
+
+  private final val Timeout = Duration.create(100, TimeUnit.MILLISECONDS)
+
+  private def wait(f: => Future[TypeInfoResult]) = {
+    try {
+      Await.result(f, Timeout)
+    } catch {
+      case _: TimeoutException => Left(ReplIsBusy)
     }
   }
 }

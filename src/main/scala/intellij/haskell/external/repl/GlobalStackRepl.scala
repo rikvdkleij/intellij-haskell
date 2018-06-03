@@ -41,6 +41,7 @@ class GlobalStackRepl(project: Project, replTimeout: Int) extends StackRepl(proj
   override def restart(forceExit: Boolean): Unit = synchronized {
     if (available && !starting) {
       exit(forceExit)
+      loadedModuleName = None
       start()
     }
   }

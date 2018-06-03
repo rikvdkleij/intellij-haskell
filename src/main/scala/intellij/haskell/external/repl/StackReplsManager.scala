@@ -19,6 +19,7 @@ package intellij.haskell.external.repl
 import java.util.concurrent.ConcurrentHashMap
 
 import com.intellij.openapi.application.ApplicationManager
+import com.intellij.openapi.module.Module
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Computable
 import com.intellij.openapi.vfs.VirtualFile
@@ -61,17 +62,19 @@ private[external] object StackReplsManager {
     getReplsManager(project).map(_.getGlobalRepl)
   }
 
-  private def createCabalInfos(project: Project): Iterable[CabalInfo] = {
+  private def createCabalInfos(project: Project): Iterable[(Module, CabalInfo)] = {
     val modules = HaskellProjectUtil.findProjectModules(project)
     val moduleDirs = modules.map(HaskellProjectUtil.getModuleDir)
     if (moduleDirs.isEmpty) {
       HaskellNotificationGroup.logWarningBalloonEvent(project, s"No Haskell modules found for project ${project.getName}. Check your project configuration.")
       Iterable()
     } else {
-      val cabalFiles = (for {
-        dir <- moduleDirs
+      val cabalFiles = for {
+        m <- modules
+        dir = HaskellProjectUtil.getModuleDir(m)
         cf <- HaskellProjectUtil.findCabalFile(dir)
-      } yield CabalInfo.create(project, cf)).flatten
+        ci <- CabalInfo.create(project, cf)
+      } yield (m, ci)
       if (cabalFiles.isEmpty) {
         HaskellNotificationGroup.logWarningBalloonEvent(project, s"No Cabal files found for project ${project.getName}. Check your project configuration.")
       }
@@ -79,16 +82,16 @@ private[external] object StackReplsManager {
     }
   }
 
-  private def createStackComponentInfo(project: Project, cabalInfos: Iterable[CabalInfo]): Iterable[StackComponentInfo] = {
-    cabalInfos.flatMap(_.cabalStanzas).map {
-      case cs: LibraryCabalStanza => StackComponentInfo(cs.packageName, cs.targetName, LibType, cs.sourceDirs, None)
-      case cs: ExecutableCabalStanza => StackComponentInfo(cs.packageName, cs.targetName, ExeType, cs.sourceDirs, cs.mainIs)
-      case cs: TestSuiteCabalStanza => StackComponentInfo(cs.packageName, cs.targetName, TestSuiteType, cs.sourceDirs, cs.mainIs)
-      case cs: BenchmarkCabalStanza => StackComponentInfo(cs.packageName, cs.targetName, BenchmarkType, cs.sourceDirs, cs.mainIs)
-    }
+  private def createStackComponentInfo(project: Project, moduleCabalInfos: Iterable[(Module, CabalInfo)]): Iterable[StackComponentInfo] = {
+    moduleCabalInfos.flatMap { case (m: Module, cabalInfo: CabalInfo) => cabalInfo.cabalStanzas.map {
+      case cs: LibraryCabalStanza => StackComponentInfo(m, cs.packageName, cs.targetName, LibType, cs.sourceDirs, None)
+      case cs: ExecutableCabalStanza => StackComponentInfo(m, cs.packageName, cs.targetName, ExeType, cs.sourceDirs, cs.mainIs)
+      case cs: TestSuiteCabalStanza => StackComponentInfo(m, cs.packageName, cs.targetName, TestSuiteType, cs.sourceDirs, cs.mainIs)
+      case cs: BenchmarkCabalStanza => StackComponentInfo(m, cs.packageName, cs.targetName, BenchmarkType, cs.sourceDirs, cs.mainIs)
+    }}
   }
 
-  case class StackComponentInfo(packageName: String, target: String, stanzaType: StanzaType, sourceDirs: Seq[String], mainIs: Option[String])
+  case class StackComponentInfo(module: Module, packageName: String, target: String, stanzaType: StanzaType, sourceDirs: Seq[String], mainIs: Option[String])
 
 }
 
@@ -100,9 +103,9 @@ private[external] class StackReplsManager(val project: Project) {
 
   private val projectRepls = new ConcurrentHashMap[StackComponentInfo, ProjectStackRepl]().asScala
 
-  val cabalInfos: Iterable[CabalInfo] = StackReplsManager.createCabalInfos(project)
+  val moduleCabalInfos: Iterable[(Module, CabalInfo)] = StackReplsManager.createCabalInfos(project)
 
-  val stackComponentInfos: Iterable[StackComponentInfo] = StackReplsManager.createStackComponentInfo(project, cabalInfos)
+  val stackComponentInfos: Iterable[StackComponentInfo] = StackReplsManager.createStackComponentInfo(project, moduleCabalInfos)
 
   private final val IgnoredHaskellFiles = Seq("setup.hs", "hlint.hs")
 
@@ -159,7 +162,7 @@ private[external] class StackReplsManager(val project: Project) {
               psiFile.foreach(pf => {
                 // Already load global info in cache here to prevent a file has to be loaded twice because library modules are obtained in REPL without any module loaded.
                 ApplicationManager.getApplication.executeOnPooledThread(ScalaUtil.runnable {
-                  HaskellComponentsManager.findStackComponentGlobalInfo(pf)
+                  HaskellComponentsManager.findStackComponentGlobalInfo(componentInfo)
                 })
               })
 

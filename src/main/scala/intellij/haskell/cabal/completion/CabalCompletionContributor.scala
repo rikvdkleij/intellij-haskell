@@ -8,8 +8,10 @@ import com.intellij.util.ProcessingContext
 import intellij.haskell.HaskellIcons
 import intellij.haskell.cabal.CabalLanguage
 import intellij.haskell.cabal.lang.psi.impl.ExtensionsImpl
-import intellij.haskell.cabal.lang.psi.{BuildDepends, CabalPsiUtil}
+import intellij.haskell.cabal.lang.psi.{BuildDepends, CabalPsiUtil, ExposedModules}
+import intellij.haskell.external.component.HaskellComponentsManager
 import intellij.haskell.external.component.HaskellComponentsManager.{getAvailablePackages, getSupportedLanguageExtension}
+import intellij.haskell.util.HaskellProjectUtil
 
 final class CabalCompletionContributor extends CompletionContributor {
 
@@ -44,6 +46,9 @@ final class CabalCompletionContributor extends CompletionContributor {
         case el: BuildDepends => filterPackageNames(el).foreach {
           result.addElement
         }
+        case em: ExposedModules => filterExposedModuleNames(em).foreach {
+          result.addElement
+        }
         case _ => ()
       }
     }
@@ -62,6 +67,16 @@ final class CabalCompletionContributor extends CompletionContributor {
       val skipPackageNames = el.getPackageNames.toSet
       getAvailablePackages(position.getProject)
         .filter(!skipPackageNames.contains(_))
+        .map(n => LookupElementBuilder.create(n).withIcon(HaskellIcons.HaskellSmallLogo))
+    }
+
+    // TODO Take into account stanza type, currently always project library module names are suggested.
+    private def filterExposedModuleNames(em: ExposedModules): Iterable[LookupElement] = {
+      val skipModuleNames = em.getModuleNames.toSet
+      val module = HaskellProjectUtil.findModule(position)
+      val moduleNames = module.map(HaskellComponentsManager.findAvailableModuleLibraryModuleNamesWithIndex).getOrElse(Iterable())
+      moduleNames
+        .filterNot(skipModuleNames.contains)
         .map(n => LookupElementBuilder.create(n).withIcon(HaskellIcons.HaskellSmallLogo))
     }
   }

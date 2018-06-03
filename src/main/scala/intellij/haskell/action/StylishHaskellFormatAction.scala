@@ -49,19 +49,22 @@ object StylishHaskellFormatAction {
 
     HaskellSettingsState.getStylishHaskellPath(project) match {
       case Some(stylishHaskellPath) =>
-        val processOutputFuture = ApplicationManager.getApplication.executeOnPooledThread(new Callable[ProcessOutput] {
-          override def call(): ProcessOutput = {
-            CommandLine.run(Option(project), project.getBasePath, stylishHaskellPath, Seq(HaskellFileUtil.getAbsolutePath(psiFile)))
-          }
-        })
+        HaskellFileUtil.getAbsolutePath(psiFile) match {
+          case Some(path) =>
+            val processOutputFuture = ApplicationManager.getApplication.executeOnPooledThread(new Callable[ProcessOutput] {
+              override def call(): ProcessOutput = {
+                CommandLine.run(Option(project), project.getBasePath, stylishHaskellPath, Seq(path))
+              }
+            })
 
-        val processOutput = processOutputFuture.get
-        if (processOutput.getStderrLines.isEmpty) {
-          HaskellFileUtil.saveFileWithNewContent(psiFile, processOutput.getStdout)
-        } else {
-          HaskellNotificationGroup.logErrorBalloonEvent(project, s"Error while formatting by `$StylishHaskellName`. Error: ${processOutput.getStderr}")
+            val processOutput = processOutputFuture.get
+            if (processOutput.getStderrLines.isEmpty) {
+              HaskellFileUtil.saveFileWithNewContent(psiFile, processOutput.getStdout)
+            } else {
+              HaskellNotificationGroup.logErrorBalloonEvent(project, s"Error while formatting by `$StylishHaskellName`. Error: ${processOutput.getStderr}")
+            }
+          case None => HaskellNotificationGroup.logWarningBalloonEvent(psiFile.getProject, s"Can not format file because could not determine path for file `${psiFile.getName}`. File exists only in memory")
         }
-
       case _ => HaskellNotificationGroup.logWarningEvent(project, s"Can not format code because path to `$StylishHaskellName` is not configured in IntelliJ")
     }
   }

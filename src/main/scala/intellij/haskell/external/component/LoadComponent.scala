@@ -18,19 +18,29 @@ package intellij.haskell.external.component
 
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.project.Project
+import com.intellij.psi.search.GlobalSearchScope
 import com.intellij.psi.{PsiElement, PsiFile}
 import intellij.haskell.external.execution.{CompilationResult, HaskellCompilationResultHelper}
-import intellij.haskell.external.repl.ProjectStackRepl.IsFileLoaded
+import intellij.haskell.external.repl.ProjectStackRepl.Loaded
 import intellij.haskell.external.repl.StackReplsManager.StackComponentInfo
 import intellij.haskell.external.repl._
-import intellij.haskell.psi.HaskellPsiUtil
 import intellij.haskell.util.ScalaUtil
+import intellij.haskell.util.index.HaskellFilePathIndex
 
 private[component] object LoadComponent {
 
-  def isLoaded(psiFile: PsiFile): Option[IsFileLoaded] = {
+  def isFileLoaded(psiFile: PsiFile): Boolean = {
     val projectRepl = StackReplsManager.getProjectRepl(psiFile)
-    projectRepl.map(_.isLoaded(psiFile))
+    projectRepl.map(_.isFileLoaded(psiFile)).contains(Loaded)
+  }
+
+  def isModuleLoaded(moduleName: Option[String], psiFile: PsiFile): Boolean = {
+    isFileLoaded(psiFile) || {
+      for {
+        mn <- moduleName
+        repl <- StackReplsManager.getProjectRepl(psiFile)
+      } yield repl.isModuleLoaded(mn)
+    }.contains(true)
   }
 
   def isBusy(project: Project, stackComponentInfo: StackComponentInfo): Boolean = {
@@ -51,6 +61,7 @@ private[component] object LoadComponent {
       // The REPL is not started if target which it's depends on has compile errors at the moment of start.
       synchronized {
         if (!projectRepl.available && !projectRepl.starting) {
+          projectRepl.clearLoadedModules()
           projectRepl.start()
         }
       }
@@ -65,14 +76,14 @@ private[component] object LoadComponent {
             if (!loadFailed) {
               NameInfoComponent.invalidate(psiFile)
 
-              val moduleName = HaskellPsiUtil.findModuleName(psiFile, runInRead = true)
+              val moduleName = HaskellFilePathIndex.findModuleName(psiFile, GlobalSearchScope.projectScope(project))
               moduleName.foreach(mn => {
                 BrowseModuleComponent.refreshTopLevel(project, mn, psiFile)
-                BrowseModuleComponent.invalidateForModuleName(project, mn)
+                BrowseModuleComponent.invalidateForModuleName(project, mn, psiFile)
               })
             }
           })
-          Some(HaskellCompilationResultHelper.createCompilationResult(Some(psiFile), loadOutput.stderrLines, loadFailed))
+          Some(HaskellCompilationResultHelper.createCompilationResult(psiFile, loadOutput.stderrLines, loadFailed))
         case _ => None
       }
     })

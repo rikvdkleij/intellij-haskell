@@ -222,9 +222,9 @@ object HaskellReference {
 
     val project = psiFile.getProject
 
-    val isFileEdited = HaskellFileUtil.findVirtualFile(psiFile).exists(vf => FileEditorManager.getInstance(project).getSelectedFiles.headOption.contains(vf))
+    val isCurrentSelectedFile = HaskellFileUtil.findVirtualFile(psiFile).exists(vf => FileEditorManager.getInstance(project).getSelectedFiles.headOption.contains(vf))
 
-    HaskellComponentsManager.findDefinitionLocation(namedElement, waitIfBusy = !isFileEdited) match {
+    HaskellComponentsManager.findDefinitionLocation(namedElement, isCurrentFile = isCurrentSelectedFile) match {
       case Right(DefinitionLocationInfo(filePath, startLineNr, startColumnNr, _, _)) =>
         findIdentifierByLocation(filePath, startLineNr, startColumnNr, namedElement.getName, project)
       case Right(ModuleLocationInfo(moduleName)) =>

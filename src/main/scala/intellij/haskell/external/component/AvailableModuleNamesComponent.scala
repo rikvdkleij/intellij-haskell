@@ -16,11 +16,13 @@
 
 package intellij.haskell.external.component
 
+import com.intellij.openapi.module.Module
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.psi.PsiFile
-import com.intellij.psi.search.{FileTypeIndex, GlobalSearchScopesCore}
+import com.intellij.psi.search.FileTypeIndex
 import intellij.haskell.HaskellFileType
+import intellij.haskell.external.repl.StackRepl.{BenchmarkType, TestSuiteType}
+import intellij.haskell.external.repl.StackReplsManager.StackComponentInfo
 import intellij.haskell.util.HaskellFileUtil
 import intellij.haskell.util.index.HaskellFilePathIndex
 
@@ -30,25 +32,36 @@ import scala.collection.JavaConverters._
 private[component] object AvailableModuleNamesComponent {
 
   def findAvailableModuleNamesWithIndex(psiFile: PsiFile): Iterable[String] = {
-    val libraryModuleNames = findAvailableLibraryModuleNames(psiFile)
-    findAvailableProjectModuleNamesWithIndex(psiFile) ++ libraryModuleNames
-  }
-
-  def findAvailableProjectModuleNamesWithIndex(psiFile: PsiFile): Iterable[String] = {
     val stackComponentInfo = HaskellComponentsManager.findStackComponentInfo(psiFile)
-    val project = psiFile.getProject
-    stackComponentInfo.map(info => findModuleNamesInDirectories(project, info.sourceDirs.flatMap(d => HaskellFileUtil.findDirectory(d, project)))).getOrElse(Iterable())
+    stackComponentInfo match {
+      case Some(info) =>
+        val libraryModuleNames = findAvailableLibraryModuleNames(info)
+        findAvailableProjectModuleNamesWithIndex(info) ++ libraryModuleNames
+      case None => Iterable()
+    }
   }
 
-  private def findAvailableLibraryModuleNames(psiFile: PsiFile): Iterable[String] = {
-    HaskellComponentsManager.findStackComponentGlobalInfo(psiFile).map(_.availableLibraryModuleNames).getOrElse(Iterable())
+  private final val TestStanzaTypes = Seq(TestSuiteType, BenchmarkType)
+
+  def findAvailableProjectModuleNamesWithIndex(stackComponentInfo: StackComponentInfo): Iterable[String] = {
+    val module = stackComponentInfo.module
+    val project = module.getProject
+    findModuleNamesInDirectories(project, module, TestStanzaTypes.contains(stackComponentInfo.stanzaType))
   }
 
-  private def findModuleNamesInDirectories(project: Project, directories: Seq[VirtualFile]): Iterable[String] = {
+  def findAvailableLibraryModuleNamesWithIndex(module: Module): Iterable[String] = {
+    findModuleNamesInDirectories(module.getProject, module, includeTests = false)
+  }
+
+  private def findAvailableLibraryModuleNames(stackComponentInfo: StackComponentInfo): Iterable[String] = {
+    HaskellComponentsManager.findStackComponentGlobalInfo(stackComponentInfo).map(_.availableLibraryModuleNames).getOrElse(Iterable())
+  }
+
+  private def findModuleNamesInDirectories(project: Project, module: Module, includeTests: Boolean): Iterable[String] = {
     for {
-      vf <- FileTypeIndex.getFiles(HaskellFileType.Instance, GlobalSearchScopesCore.directoriesScope(project, true, directories: _*)).asScala
+      vf <- FileTypeIndex.getFiles(HaskellFileType.Instance, module.getModuleScope(includeTests)).asScala
       hf <- HaskellFileUtil.convertToHaskellFile(project, vf)
-      mn <- HaskellFilePathIndex.findModuleName(hf, GlobalSearchScopesCore.directoriesScope(project, true, directories: _*))
+      mn <- HaskellFilePathIndex.findModuleName(hf, module.getModuleScope(includeTests))
     } yield mn
   }
 }

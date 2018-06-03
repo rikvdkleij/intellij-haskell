@@ -45,19 +45,14 @@ object HaskellFilePathIndex {
   }
 
   def findModuleName(psiFile: PsiFile, searchScope: GlobalSearchScope): Option[String] = {
-    val project = psiFile.getProject
-    Option(psiFile.getVirtualFile).map(_.getPath) match {
-      case Some(path) =>
-        Option(DumbService.getInstance(project).tryRunReadActionInSmartMode(ScalaUtil.computable(FileBasedIndex.getInstance.getValues(HaskellFilePathIndex, path, searchScope).asScala), null)) match {
-          case None => HaskellPsiUtil.findModuleName(psiFile, runInRead = true)
-          case Some(v) =>
-            // Should be only one entry max
-            v.headOption.flatten
-        }
+    val path = psiFile.getVirtualFile.getPath
+    Option(DumbService.getInstance(psiFile.getProject).tryRunReadActionInSmartMode(ScalaUtil.computable(FileBasedIndex.getInstance.getValues(HaskellFilePathIndex, path, searchScope).asScala), null)) match {
       case None => HaskellPsiUtil.findModuleName(psiFile, runInRead = true)
+      case Some(v) =>
+        // Should be only one entry max
+        v.headOption.flatten
     }
   }
-
 }
 
 
@@ -81,13 +76,10 @@ class HaskellFilePathIndex extends FileBasedIndexExtension[String, Option[String
 
     def map(fileContent: FileContent): java.util.Map[String, Option[String]] = {
       val psiFile = fileContent.getPsiFile
-      Option(psiFile.getUserData(IndexingDataKeys.VIRTUAL_FILE)).map(_.getPath) match {
-        case Some(path) =>
-          HaskellPsiUtil.findModuleDeclaration(psiFile).flatMap(_.getModuleName) match {
-            case Some(mn) => Collections.singletonMap(path, Some(mn))
-            case _ => Collections.singletonMap(path, None)
-          }
-        case None => Collections.singletonMap("-", None)
+      val path = fileContent.getFile.getPath
+      HaskellPsiUtil.findModuleDeclaration(psiFile).flatMap(_.getModuleName) match {
+        case Some(mn) => Collections.singletonMap(path, Some(mn))
+        case _ => Collections.singletonMap(path, None)
       }
     }
   }

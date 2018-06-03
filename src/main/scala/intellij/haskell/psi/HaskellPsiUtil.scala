@@ -74,6 +74,9 @@ object HaskellPsiUtil {
     runReadAction(Option(PsiTreeUtil.findChildOfType(psiFile.getOriginalFile, classOf[HaskellModuleDeclaration])), runInRead)
   }
 
+  /**
+    * Use [[intellij.haskell.util.index.HaskellFilePathIndex.findModuleName()]]
+    */
   def findModuleName(psiFile: PsiFile, runInRead: Boolean = false): Option[String] = {
     runReadAction(Option(PsiTreeUtil.findChildOfType(psiFile.getOriginalFile, classOf[HaskellModuleDeclaration])).flatMap(_.getModuleName), runInRead)
   }
