@@ -18,8 +18,8 @@ package intellij.haskell.psi
 
 import java.util
 
+import com.intellij.application.options.CodeStyle
 import com.intellij.openapi.project.Project
-import com.intellij.psi.codeStyle.CodeStyleSettingsManager
 import com.intellij.psi.impl.PsiFileFactoryImpl
 import com.intellij.psi.impl.source.tree.LeafPsiElement
 import com.intellij.psi.tree.IElementType
@@ -98,7 +98,7 @@ object HaskellElementFactory {
   }
 
   def createTab(project: Project): PsiWhiteSpace = {
-    val tabSize = CodeStyleSettingsManager.getInstance().getCurrentSettings.getTabSize(HaskellFileType.Instance)
+    val tabSize = CodeStyle.getSettings(project).getTabSize(HaskellFileType.Instance)
     createWhiteSpace(project, " " * tabSize)
   }
 
