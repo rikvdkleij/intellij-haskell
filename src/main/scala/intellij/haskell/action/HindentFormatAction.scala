@@ -19,12 +19,12 @@ package intellij.haskell.action
 import java.io.{BufferedReader, BufferedWriter, InputStreamReader, OutputStreamWriter}
 import java.util.concurrent.Callable
 
+import com.intellij.application.options.CodeStyle
 import com.intellij.openapi.actionSystem.{AnAction, AnActionEvent}
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.editor.SelectionModel
 import com.intellij.openapi.util.Computable
 import com.intellij.psi.PsiFile
-import com.intellij.psi.codeStyle._
 import intellij.haskell.settings.HaskellSettingsState
 import intellij.haskell.util.{FutureUtil, HaskellEditorUtil, HaskellFileUtil}
 import intellij.haskell.{HaskellLanguage, HaskellNotificationGroup}
@@ -55,8 +55,8 @@ object HindentFormatAction {
   final val HindentName = "hindent"
 
   def format(psiFile: PsiFile, selectionContext: Option[SelectionContext] = None): Unit = {
-    val lineLength = CodeStyleSettingsManager.getInstance(psiFile.getProject).getCurrentSettings.getRightMargin(HaskellLanguage.Instance)
-    val indentOptions = CodeStyleSettingsManager.getInstance(psiFile.getProject).getCurrentSettings.getCommonSettings(HaskellLanguage.Instance).getIndentOptions
+    val lineLength = CodeStyle.getSettings(psiFile.getProject).getRightMargin(HaskellLanguage.Instance)
+    val indentOptions = CodeStyle.getSettings(psiFile.getProject).getCommonSettings(HaskellLanguage.Instance).getIndentOptions
     val project = psiFile.getProject
     HaskellFileUtil.saveFile(psiFile, checkCancelled = false)
 
