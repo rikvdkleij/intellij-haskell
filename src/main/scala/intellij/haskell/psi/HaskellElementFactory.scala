@@ -69,9 +69,9 @@ object HaskellElementFactory {
     createElementFromText(project, declaration, HS_TOP_DECLARATION).map(_.asInstanceOf[HaskellTopDeclaration])
   }
 
-  def createLanguagePragma(project: Project, languagePragma: String): HaskellLanguagePragma = {
+  def createLanguagePragma(project: Project, languagePragma: String): HaskellFileHeaderPragma = {
     val haskellFile = createFileFromText(project, languagePragma)
-    PsiTreeUtil.findChildOfType(haskellFile, classOf[HaskellLanguagePragma])
+    PsiTreeUtil.findChildOfType(haskellFile, classOf[HaskellFileHeaderPragma])
   }
 
   def createLeafPsiElements(project: Project, code: String): util.Collection[LeafPsiElement] = {

@@ -8,6 +8,9 @@ import java.util.List;
 public interface HaskellCdecls extends HaskellCompositeElement {
 
   @NotNull
+  List<HaskellCdeclDataDeclaration> getCdeclDataDeclarationList();
+
+  @NotNull
   List<HaskellCideclExpression> getCideclExpressionList();
 
   @NotNull

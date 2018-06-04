@@ -430,7 +430,7 @@ object HaskellCompletionContributor {
   private def isNoImplicitPreludeActive(psiFile: PsiFile): Boolean = {
     val stackComponentInfo = HaskellComponentsManager.findStackComponentInfo(psiFile)
     val globalInfo = stackComponentInfo.flatMap(HaskellComponentsManager.findStackComponentGlobalInfo)
-    globalInfo.exists(_.noImplicitPreludeActive) || HaskellPsiUtil.findLanguageExtensions(psiFile).exists(_.getQNameList.asScala.exists(_.getName == "NoImplicitPrelude"))
+    globalInfo.exists(_.noImplicitPreludeActive) || HaskellPsiUtil.findLanguageExtensions(psiFile).flatMap(_.getGeneralPragmaContentList.asScala).exists(_.getText.contains("NoImplicitPrelude"))
   }
 
   private def getFullImportedModules(psiFile: PsiFile, importDeclarations: Iterable[HaskellImportDeclaration]): Iterable[ImportFull] = {

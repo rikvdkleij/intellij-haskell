@@ -26,6 +26,9 @@ public class HaskellParser implements PsiParser, LightPsiParser {
     if (t == HS_CCONTEXT) {
       r = ccontext(b, 0);
     }
+    else if (t == HS_CDECL_DATA_DECLARATION) {
+      r = cdecl_data_declaration(b, 0);
+    }
     else if (t == HS_CDECLS) {
       r = cdecls(b, 0);
     }
@@ -384,11 +387,10 @@ public class HaskellParser implements PsiParser, LightPsiParser {
     boolean r;
     Marker m = enter_section_(b);
     r = atype_0_0_1_0(b, l + 1);
-    int c = current_position_(b);
     while (r) {
+      int c = current_position_(b);
       if (!atype_0_0_1_0(b, l + 1)) break;
       if (!empty_element_parsed_guard_(b, "atype_0_0_1", c)) break;
-      c = current_position_(b);
     }
     exit_section_(b, m, null, r);
     return r;
@@ -432,10 +434,8 @@ public class HaskellParser implements PsiParser, LightPsiParser {
   private static boolean atype_0_0_1_0_1_1(PsiBuilder b, int l) {
     if (!recursion_guard_(b, l, "atype_0_0_1_0_1_1")) return false;
     boolean r;
-    Marker m = enter_section_(b);
     r = type_signature(b, l + 1);
     if (!r) r = ttype(b, l + 1);
-    exit_section_(b, m, null, r);
     return r;
   }
 
@@ -565,11 +565,10 @@ public class HaskellParser implements PsiParser, LightPsiParser {
   // (oonls COMMA oonls ttype)*
   private static boolean atype_0_5_4(PsiBuilder b, int l) {
     if (!recursion_guard_(b, l, "atype_0_5_4")) return false;
-    int c = current_position_(b);
     while (true) {
+      int c = current_position_(b);
       if (!atype_0_5_4_0(b, l + 1)) break;
       if (!empty_element_parsed_guard_(b, "atype_0_5_4", c)) break;
-      c = current_position_(b);
     }
     return true;
   }
@@ -611,11 +610,10 @@ public class HaskellParser implements PsiParser, LightPsiParser {
     boolean r;
     Marker m = enter_section_(b);
     r = atype_0_6_1_0(b, l + 1);
-    int c = current_position_(b);
     while (r) {
+      int c = current_position_(b);
       if (!atype_0_6_1_0(b, l + 1)) break;
       if (!empty_element_parsed_guard_(b, "atype_0_6_1", c)) break;
-      c = current_position_(b);
     }
     exit_section_(b, m, null, r);
     return r;
@@ -706,11 +704,10 @@ public class HaskellParser implements PsiParser, LightPsiParser {
     boolean r;
     Marker m = enter_section_(b);
     r = consumeToken(b, HS_COMMA);
-    int c = current_position_(b);
     while (r) {
+      int c = current_position_(b);
       if (!consumeToken(b, HS_COMMA)) break;
       if (!empty_element_parsed_guard_(b, "atype_0_9_1", c)) break;
-      c = current_position_(b);
     }
     exit_section_(b, m, null, r);
     return r;
@@ -742,11 +739,10 @@ public class HaskellParser implements PsiParser, LightPsiParser {
   // (NEWLINE | DIRECTIVE)*
   private static boolean body_2(PsiBuilder b, int l) {
     if (!recursion_guard_(b, l, "body_2")) return false;
-    int c = current_position_(b);
     while (true) {
+      int c = current_position_(b);
       if (!body_2_0(b, l + 1)) break;
       if (!empty_element_parsed_guard_(b, "body_2", c)) break;
-      c = current_position_(b);
     }
     return true;
   }
@@ -755,10 +751,8 @@ public class HaskellParser implements PsiParser, LightPsiParser {
   private static boolean body_2_0(PsiBuilder b, int l) {
     if (!recursion_guard_(b, l, "body_2_0")) return false;
     boolean r;
-    Marker m = enter_section_(b);
     r = consumeToken(b, HS_NEWLINE);
     if (!r) r = consumeToken(b, HS_DIRECTIVE);
-    exit_section_(b, m, null, r);
     return r;
   }
 
@@ -769,11 +763,10 @@ public class HaskellParser implements PsiParser, LightPsiParser {
     boolean r;
     Marker m = enter_section_(b);
     r = btype_0(b, l + 1);
-    int c = current_position_(b);
     while (r) {
+      int c = current_position_(b);
       if (!btype_0(b, l + 1)) break;
       if (!empty_element_parsed_guard_(b, "btype", c)) break;
-      c = current_position_(b);
     }
     exit_section_(b, m, null, r);
     return r;
@@ -783,10 +776,8 @@ public class HaskellParser implements PsiParser, LightPsiParser {
   private static boolean btype_0(PsiBuilder b, int l) {
     if (!recursion_guard_(b, l, "btype_0")) return false;
     boolean r;
-    Marker m = enter_section_(b);
     r = atype(b, l + 1);
     if (!r) r = consumeToken(b, HS_TILDE);
-    exit_section_(b, m, null, r);
     return r;
   }
 
@@ -821,11 +812,10 @@ public class HaskellParser implements PsiParser, LightPsiParser {
   // (onls COMMA onls clazz)*
   private static boolean ccontext_0_3(PsiBuilder b, int l) {
     if (!recursion_guard_(b, l, "ccontext_0_3")) return false;
-    int c = current_position_(b);
     while (true) {
+      int c = current_position_(b);
       if (!ccontext_0_3_0(b, l + 1)) break;
       if (!empty_element_parsed_guard_(b, "ccontext_0_3", c)) break;
-      c = current_position_(b);
     }
     return true;
   }
@@ -844,15 +834,133 @@ public class HaskellParser implements PsiParser, LightPsiParser {
   }
 
   /* ********************************************************** */
-  // type_signature | cidecl
+  // type_signature | cdecl_data_declaration | cidecl
   static boolean cdecl(PsiBuilder b, int l) {
     if (!recursion_guard_(b, l, "cdecl")) return false;
     boolean r;
-    Marker m = enter_section_(b);
     r = type_signature(b, l + 1);
+    if (!r) r = cdecl_data_declaration(b, l + 1);
     if (!r) r = cidecl(b, l + 1);
+    return r;
+  }
+
+  /* ********************************************************** */
+  // DATA (onls ctype_pragma)? onls (LEFT_PAREN onls kind_signature onls RIGHT_PAREN)* onls simpletype (onls LEFT_PAREN onls kind_signature onls RIGHT_PAREN)* (onls COLON_COLON ttype)? q_name*
+  public static boolean cdecl_data_declaration(PsiBuilder b, int l) {
+    if (!recursion_guard_(b, l, "cdecl_data_declaration")) return false;
+    if (!nextTokenIs(b, HS_DATA)) return false;
+    boolean r;
+    Marker m = enter_section_(b);
+    r = consumeToken(b, HS_DATA);
+    r = r && cdecl_data_declaration_1(b, l + 1);
+    r = r && onls(b, l + 1);
+    r = r && cdecl_data_declaration_3(b, l + 1);
+    r = r && onls(b, l + 1);
+    r = r && simpletype(b, l + 1);
+    r = r && cdecl_data_declaration_6(b, l + 1);
+    r = r && cdecl_data_declaration_7(b, l + 1);
+    r = r && cdecl_data_declaration_8(b, l + 1);
+    exit_section_(b, m, HS_CDECL_DATA_DECLARATION, r);
+    return r;
+  }
+
+  // (onls ctype_pragma)?
+  private static boolean cdecl_data_declaration_1(PsiBuilder b, int l) {
+    if (!recursion_guard_(b, l, "cdecl_data_declaration_1")) return false;
+    cdecl_data_declaration_1_0(b, l + 1);
+    return true;
+  }
+
+  // onls ctype_pragma
+  private static boolean cdecl_data_declaration_1_0(PsiBuilder b, int l) {
+    if (!recursion_guard_(b, l, "cdecl_data_declaration_1_0")) return false;
+    boolean r;
+    Marker m = enter_section_(b);
+    r = onls(b, l + 1);
+    r = r && ctype_pragma(b, l + 1);
     exit_section_(b, m, null, r);
     return r;
+  }
+
+  // (LEFT_PAREN onls kind_signature onls RIGHT_PAREN)*
+  private static boolean cdecl_data_declaration_3(PsiBuilder b, int l) {
+    if (!recursion_guard_(b, l, "cdecl_data_declaration_3")) return false;
+    while (true) {
+      int c = current_position_(b);
+      if (!cdecl_data_declaration_3_0(b, l + 1)) break;
+      if (!empty_element_parsed_guard_(b, "cdecl_data_declaration_3", c)) break;
+    }
+    return true;
+  }
+
+  // LEFT_PAREN onls kind_signature onls RIGHT_PAREN
+  private static boolean cdecl_data_declaration_3_0(PsiBuilder b, int l) {
+    if (!recursion_guard_(b, l, "cdecl_data_declaration_3_0")) return false;
+    boolean r;
+    Marker m = enter_section_(b);
+    r = consumeToken(b, HS_LEFT_PAREN);
+    r = r && onls(b, l + 1);
+    r = r && kind_signature(b, l + 1);
+    r = r && onls(b, l + 1);
+    r = r && consumeToken(b, HS_RIGHT_PAREN);
+    exit_section_(b, m, null, r);
+    return r;
+  }
+
+  // (onls LEFT_PAREN onls kind_signature onls RIGHT_PAREN)*
+  private static boolean cdecl_data_declaration_6(PsiBuilder b, int l) {
+    if (!recursion_guard_(b, l, "cdecl_data_declaration_6")) return false;
+    while (true) {
+      int c = current_position_(b);
+      if (!cdecl_data_declaration_6_0(b, l + 1)) break;
+      if (!empty_element_parsed_guard_(b, "cdecl_data_declaration_6", c)) break;
+    }
+    return true;
+  }
+
+  // onls LEFT_PAREN onls kind_signature onls RIGHT_PAREN
+  private static boolean cdecl_data_declaration_6_0(PsiBuilder b, int l) {
+    if (!recursion_guard_(b, l, "cdecl_data_declaration_6_0")) return false;
+    boolean r;
+    Marker m = enter_section_(b);
+    r = onls(b, l + 1);
+    r = r && consumeToken(b, HS_LEFT_PAREN);
+    r = r && onls(b, l + 1);
+    r = r && kind_signature(b, l + 1);
+    r = r && onls(b, l + 1);
+    r = r && consumeToken(b, HS_RIGHT_PAREN);
+    exit_section_(b, m, null, r);
+    return r;
+  }
+
+  // (onls COLON_COLON ttype)?
+  private static boolean cdecl_data_declaration_7(PsiBuilder b, int l) {
+    if (!recursion_guard_(b, l, "cdecl_data_declaration_7")) return false;
+    cdecl_data_declaration_7_0(b, l + 1);
+    return true;
+  }
+
+  // onls COLON_COLON ttype
+  private static boolean cdecl_data_declaration_7_0(PsiBuilder b, int l) {
+    if (!recursion_guard_(b, l, "cdecl_data_declaration_7_0")) return false;
+    boolean r;
+    Marker m = enter_section_(b);
+    r = onls(b, l + 1);
+    r = r && consumeToken(b, HS_COLON_COLON);
+    r = r && ttype(b, l + 1);
+    exit_section_(b, m, null, r);
+    return r;
+  }
+
+  // q_name*
+  private static boolean cdecl_data_declaration_8(PsiBuilder b, int l) {
+    if (!recursion_guard_(b, l, "cdecl_data_declaration_8")) return false;
+    while (true) {
+      int c = current_position_(b);
+      if (!q_name(b, l + 1)) break;
+      if (!empty_element_parsed_guard_(b, "cdecl_data_declaration_8", c)) break;
+    }
+    return true;
   }
 
   /* ********************************************************** */
@@ -870,11 +978,10 @@ public class HaskellParser implements PsiParser, LightPsiParser {
   // (nls cdecl)*
   private static boolean cdecls_1(PsiBuilder b, int l) {
     if (!recursion_guard_(b, l, "cdecls_1")) return false;
-    int c = current_position_(b);
     while (true) {
+      int c = current_position_(b);
       if (!cdecls_1_0(b, l + 1)) break;
       if (!empty_element_parsed_guard_(b, "cdecls_1", c)) break;
-      c = current_position_(b);
     }
     return true;
   }
@@ -908,7 +1015,6 @@ public class HaskellParser implements PsiParser, LightPsiParser {
   static boolean cidecl(PsiBuilder b, int l) {
     if (!recursion_guard_(b, l, "cidecl")) return false;
     boolean r;
-    Marker m = enter_section_(b);
     r = inlinelike_pragma(b, l + 1);
     if (!r) r = specialize_pragma(b, l + 1);
     if (!r) r = instance_declaration(b, l + 1);
@@ -919,7 +1025,6 @@ public class HaskellParser implements PsiParser, LightPsiParser {
     if (!r) r = type_declaration(b, l + 1);
     if (!r) r = type_family_declaration(b, l + 1);
     if (!r) r = cidecl_expression(b, l + 1);
-    exit_section_(b, m, null, r);
     return r;
   }
 
@@ -930,11 +1035,10 @@ public class HaskellParser implements PsiParser, LightPsiParser {
     boolean r;
     Marker m = enter_section_(b, l, _NONE_, HS_CIDECL_EXPRESSION, "<cidecl expression>");
     r = general_id(b, l + 1);
-    int c = current_position_(b);
     while (r) {
+      int c = current_position_(b);
       if (!general_id(b, l + 1)) break;
       if (!empty_element_parsed_guard_(b, "cidecl_expression", c)) break;
-      c = current_position_(b);
     }
     exit_section_(b, l, m, r, false, null);
     return r;
@@ -955,11 +1059,10 @@ public class HaskellParser implements PsiParser, LightPsiParser {
   // (nls cidecl)*
   private static boolean cidecls_1(PsiBuilder b, int l) {
     if (!recursion_guard_(b, l, "cidecls_1")) return false;
-    int c = current_position_(b);
     while (true) {
+      int c = current_position_(b);
       if (!cidecls_1_0(b, l + 1)) break;
       if (!empty_element_parsed_guard_(b, "cidecls_1", c)) break;
-      c = current_position_(b);
     }
     return true;
   }
@@ -1048,11 +1151,10 @@ public class HaskellParser implements PsiParser, LightPsiParser {
     boolean r;
     Marker m = enter_section_(b);
     r = q_name(b, l + 1);
-    int c = current_position_(b);
     while (r) {
+      int c = current_position_(b);
       if (!q_name(b, l + 1)) break;
       if (!empty_element_parsed_guard_(b, "class_declaration_0_4_0", c)) break;
-      c = current_position_(b);
     }
     exit_section_(b, m, null, r);
     return r;
@@ -1061,11 +1163,10 @@ public class HaskellParser implements PsiParser, LightPsiParser {
   // (q_name | LEFT_PAREN ttype (onls COMMA onls ttype)* RIGHT_PAREN)*
   private static boolean class_declaration_0_6(PsiBuilder b, int l) {
     if (!recursion_guard_(b, l, "class_declaration_0_6")) return false;
-    int c = current_position_(b);
     while (true) {
+      int c = current_position_(b);
       if (!class_declaration_0_6_0(b, l + 1)) break;
       if (!empty_element_parsed_guard_(b, "class_declaration_0_6", c)) break;
-      c = current_position_(b);
     }
     return true;
   }
@@ -1097,11 +1198,10 @@ public class HaskellParser implements PsiParser, LightPsiParser {
   // (onls COMMA onls ttype)*
   private static boolean class_declaration_0_6_0_1_2(PsiBuilder b, int l) {
     if (!recursion_guard_(b, l, "class_declaration_0_6_0_1_2")) return false;
-    int c = current_position_(b);
     while (true) {
+      int c = current_position_(b);
       if (!class_declaration_0_6_0_1_2_0(b, l + 1)) break;
       if (!empty_element_parsed_guard_(b, "class_declaration_0_6_0_1_2", c)) break;
-      c = current_position_(b);
     }
     return true;
   }
@@ -1143,11 +1243,10 @@ public class HaskellParser implements PsiParser, LightPsiParser {
   // (onls COMMA onls ttype)*
   private static boolean class_declaration_0_7_0_4(PsiBuilder b, int l) {
     if (!recursion_guard_(b, l, "class_declaration_0_7_0_4")) return false;
-    int c = current_position_(b);
     while (true) {
+      int c = current_position_(b);
       if (!class_declaration_0_7_0_4_0(b, l + 1)) break;
       if (!empty_element_parsed_guard_(b, "class_declaration_0_7_0_4", c)) break;
-      c = current_position_(b);
     }
     return true;
   }
@@ -1216,11 +1315,10 @@ public class HaskellParser implements PsiParser, LightPsiParser {
     boolean r;
     Marker m = enter_section_(b);
     r = q_name(b, l + 1);
-    int c = current_position_(b);
     while (r) {
+      int c = current_position_(b);
       if (!q_name(b, l + 1)) break;
       if (!empty_element_parsed_guard_(b, "class_declaration_1_6_0", c)) break;
-      c = current_position_(b);
     }
     exit_section_(b, m, null, r);
     return r;
@@ -1276,11 +1374,10 @@ public class HaskellParser implements PsiParser, LightPsiParser {
     boolean r;
     Marker m = enter_section_(b);
     r = q_name(b, l + 1);
-    int c = current_position_(b);
     while (r) {
+      int c = current_position_(b);
       if (!q_name(b, l + 1)) break;
       if (!empty_element_parsed_guard_(b, "clazz_2", c)) break;
-      c = current_position_(b);
     }
     exit_section_(b, m, null, r);
     return r;
@@ -1306,11 +1403,10 @@ public class HaskellParser implements PsiParser, LightPsiParser {
     boolean r;
     Marker m = enter_section_(b);
     r = atype(b, l + 1);
-    int c = current_position_(b);
     while (r) {
+      int c = current_position_(b);
       if (!atype(b, l + 1)) break;
       if (!empty_element_parsed_guard_(b, "clazz_3_3", c)) break;
-      c = current_position_(b);
     }
     exit_section_(b, m, null, r);
     return r;
@@ -1336,11 +1432,10 @@ public class HaskellParser implements PsiParser, LightPsiParser {
     boolean r;
     Marker m = enter_section_(b);
     r = q_name(b, l + 1);
-    int c = current_position_(b);
     while (r) {
+      int c = current_position_(b);
       if (!q_name(b, l + 1)) break;
       if (!empty_element_parsed_guard_(b, "clazz_4_2", c)) break;
-      c = current_position_(b);
     }
     exit_section_(b, m, null, r);
     return r;
@@ -1349,11 +1444,10 @@ public class HaskellParser implements PsiParser, LightPsiParser {
   // q_name*
   private static boolean clazz_4_4(PsiBuilder b, int l) {
     if (!recursion_guard_(b, l, "clazz_4_4")) return false;
-    int c = current_position_(b);
     while (true) {
+      int c = current_position_(b);
       if (!q_name(b, l + 1)) break;
       if (!empty_element_parsed_guard_(b, "clazz_4_4", c)) break;
-      c = current_position_(b);
     }
     return true;
   }
@@ -1476,12 +1570,10 @@ public class HaskellParser implements PsiParser, LightPsiParser {
   static boolean constr(PsiBuilder b, int l) {
     if (!recursion_guard_(b, l, "constr")) return false;
     boolean r;
-    Marker m = enter_section_(b);
     r = type_signature(b, l + 1);
     if (!r) r = constr1(b, l + 1);
     if (!r) r = constr2(b, l + 1);
     if (!r) r = constr3(b, l + 1);
-    exit_section_(b, m, null, r);
     return r;
   }
 
@@ -1558,11 +1650,10 @@ public class HaskellParser implements PsiParser, LightPsiParser {
   // ((onl COMMA)? onl fielddecl)*
   private static boolean constr1_7(PsiBuilder b, int l) {
     if (!recursion_guard_(b, l, "constr1_7")) return false;
-    int c = current_position_(b);
     while (true) {
+      int c = current_position_(b);
       if (!constr1_7_0(b, l + 1)) break;
       if (!empty_element_parsed_guard_(b, "constr1_7", c)) break;
-      c = current_position_(b);
     }
     return true;
   }
@@ -1648,11 +1739,10 @@ public class HaskellParser implements PsiParser, LightPsiParser {
   // q_name*
   private static boolean constr2_2_2_1(PsiBuilder b, int l) {
     if (!recursion_guard_(b, l, "constr2_2_2_1")) return false;
-    int c = current_position_(b);
     while (true) {
+      int c = current_position_(b);
       if (!q_name(b, l + 1)) break;
       if (!empty_element_parsed_guard_(b, "constr2_2_2_1", c)) break;
-      c = current_position_(b);
     }
     return true;
   }
@@ -1672,11 +1762,10 @@ public class HaskellParser implements PsiParser, LightPsiParser {
   // q_name*
   private static boolean constr2_2_3_1(PsiBuilder b, int l) {
     if (!recursion_guard_(b, l, "constr2_2_3_1")) return false;
-    int c = current_position_(b);
     while (true) {
+      int c = current_position_(b);
       if (!q_name(b, l + 1)) break;
       if (!empty_element_parsed_guard_(b, "constr2_2_3_1", c)) break;
-      c = current_position_(b);
     }
     return true;
   }
@@ -1691,11 +1780,10 @@ public class HaskellParser implements PsiParser, LightPsiParser {
   // ((onls unpack_nounpack_pragma)? onls ttype (onls unpack_nounpack_pragma)?)*
   private static boolean constr2_5(PsiBuilder b, int l) {
     if (!recursion_guard_(b, l, "constr2_5")) return false;
-    int c = current_position_(b);
     while (true) {
+      int c = current_position_(b);
       if (!constr2_5_0(b, l + 1)) break;
       if (!empty_element_parsed_guard_(b, "constr2_5", c)) break;
-      c = current_position_(b);
     }
     return true;
   }
@@ -1756,11 +1844,10 @@ public class HaskellParser implements PsiParser, LightPsiParser {
     boolean r;
     Marker m = enter_section_(b, l, _NONE_, HS_CONSTR_3, "<constr 3>");
     r = constr3_0(b, l + 1);
-    int c = current_position_(b);
     while (r) {
+      int c = current_position_(b);
       if (!constr3_0(b, l + 1)) break;
       if (!empty_element_parsed_guard_(b, "constr3", c)) break;
-      c = current_position_(b);
     }
     exit_section_(b, l, m, r, false, null);
     return r;
@@ -1801,11 +1888,10 @@ public class HaskellParser implements PsiParser, LightPsiParser {
   // (onls VERTICAL_BAR onls constr)*
   private static boolean constrs_1(PsiBuilder b, int l) {
     if (!recursion_guard_(b, l, "constrs_1")) return false;
-    int c = current_position_(b);
     while (true) {
+      int c = current_position_(b);
       if (!constrs_1_0(b, l + 1)) break;
       if (!empty_element_parsed_guard_(b, "constrs_1", c)) break;
-      c = current_position_(b);
     }
     return true;
   }
@@ -1938,11 +2024,10 @@ public class HaskellParser implements PsiParser, LightPsiParser {
   // (LEFT_PAREN onls kind_signature onls RIGHT_PAREN)*
   private static boolean data_declaration_0_9(PsiBuilder b, int l) {
     if (!recursion_guard_(b, l, "data_declaration_0_9")) return false;
-    int c = current_position_(b);
     while (true) {
+      int c = current_position_(b);
       if (!data_declaration_0_9_0(b, l + 1)) break;
       if (!empty_element_parsed_guard_(b, "data_declaration_0_9", c)) break;
-      c = current_position_(b);
     }
     return true;
   }
@@ -1982,11 +2067,10 @@ public class HaskellParser implements PsiParser, LightPsiParser {
   // q_name*
   private static boolean data_declaration_0_13(PsiBuilder b, int l) {
     if (!recursion_guard_(b, l, "data_declaration_0_13")) return false;
-    int c = current_position_(b);
     while (true) {
+      int c = current_position_(b);
       if (!q_name(b, l + 1)) break;
       if (!empty_element_parsed_guard_(b, "data_declaration_0_13", c)) break;
-      c = current_position_(b);
     }
     return true;
   }
@@ -2002,10 +2086,8 @@ public class HaskellParser implements PsiParser, LightPsiParser {
   private static boolean data_declaration_0_15_0(PsiBuilder b, int l) {
     if (!recursion_guard_(b, l, "data_declaration_0_15_0")) return false;
     boolean r;
-    Marker m = enter_section_(b);
     r = consumeToken(b, HS_EQUAL);
     if (!r) r = consumeToken(b, HS_WHERE);
-    exit_section_(b, m, null, r);
     return r;
   }
 
@@ -2034,11 +2116,10 @@ public class HaskellParser implements PsiParser, LightPsiParser {
   // (nls type_signature)*
   private static boolean data_declaration_0_17_0_1(PsiBuilder b, int l) {
     if (!recursion_guard_(b, l, "data_declaration_0_17_0_1")) return false;
-    int c = current_position_(b);
     while (true) {
+      int c = current_position_(b);
       if (!data_declaration_0_17_0_1_0(b, l + 1)) break;
       if (!empty_element_parsed_guard_(b, "data_declaration_0_17_0_1", c)) break;
-      c = current_position_(b);
     }
     return true;
   }
@@ -2115,11 +2196,10 @@ public class HaskellParser implements PsiParser, LightPsiParser {
   // (LEFT_PAREN onls kind_signature onls RIGHT_PAREN)*
   private static boolean data_declaration_1_3(PsiBuilder b, int l) {
     if (!recursion_guard_(b, l, "data_declaration_1_3")) return false;
-    int c = current_position_(b);
     while (true) {
+      int c = current_position_(b);
       if (!data_declaration_1_3_0(b, l + 1)) break;
       if (!empty_element_parsed_guard_(b, "data_declaration_1_3", c)) break;
-      c = current_position_(b);
     }
     return true;
   }
@@ -2141,11 +2221,10 @@ public class HaskellParser implements PsiParser, LightPsiParser {
   // (LEFT_PAREN onls kind_signature onls RIGHT_PAREN)*
   private static boolean data_declaration_1_7(PsiBuilder b, int l) {
     if (!recursion_guard_(b, l, "data_declaration_1_7")) return false;
-    int c = current_position_(b);
     while (true) {
+      int c = current_position_(b);
       if (!data_declaration_1_7_0(b, l + 1)) break;
       if (!empty_element_parsed_guard_(b, "data_declaration_1_7", c)) break;
-      c = current_position_(b);
     }
     return true;
   }
@@ -2185,11 +2264,10 @@ public class HaskellParser implements PsiParser, LightPsiParser {
   // q_name*
   private static boolean data_declaration_1_11(PsiBuilder b, int l) {
     if (!recursion_guard_(b, l, "data_declaration_1_11")) return false;
-    int c = current_position_(b);
     while (true) {
+      int c = current_position_(b);
       if (!q_name(b, l + 1)) break;
       if (!empty_element_parsed_guard_(b, "data_declaration_1_11", c)) break;
-      c = current_position_(b);
     }
     return true;
   }
@@ -2220,11 +2298,10 @@ public class HaskellParser implements PsiParser, LightPsiParser {
     boolean r;
     Marker m = enter_section_(b);
     r = data_declaration_deriving_0(b, l + 1);
-    int c = current_position_(b);
     while (r) {
+      int c = current_position_(b);
       if (!data_declaration_deriving_0(b, l + 1)) break;
       if (!empty_element_parsed_guard_(b, "data_declaration_deriving", c)) break;
-      c = current_position_(b);
     }
     exit_section_(b, m, HS_DATA_DECLARATION_DERIVING, r);
     return r;
@@ -2272,11 +2349,10 @@ public class HaskellParser implements PsiParser, LightPsiParser {
   // (onl COMMA onl ttype)*
   private static boolean data_declaration_deriving_0_1_4(PsiBuilder b, int l) {
     if (!recursion_guard_(b, l, "data_declaration_deriving_0_1_4")) return false;
-    int c = current_position_(b);
     while (true) {
+      int c = current_position_(b);
       if (!data_declaration_deriving_0_1_4_0(b, l + 1)) break;
       if (!empty_element_parsed_guard_(b, "data_declaration_deriving_0_1_4", c)) break;
-      c = current_position_(b);
     }
     return true;
   }
@@ -2352,11 +2428,10 @@ public class HaskellParser implements PsiParser, LightPsiParser {
   // (COMMA ttype)*
   private static boolean default_declaration_2_1_1_0_1(PsiBuilder b, int l) {
     if (!recursion_guard_(b, l, "default_declaration_2_1_1_0_1")) return false;
-    int c = current_position_(b);
     while (true) {
+      int c = current_position_(b);
       if (!default_declaration_2_1_1_0_1_0(b, l + 1)) break;
       if (!empty_element_parsed_guard_(b, "default_declaration_2_1_1_0_1", c)) break;
-      c = current_position_(b);
     }
     return true;
   }
@@ -2447,11 +2522,10 @@ public class HaskellParser implements PsiParser, LightPsiParser {
     boolean r;
     Marker m = enter_section_(b);
     r = cname(b, l + 1);
-    int c = current_position_(b);
     while (r) {
+      int c = current_position_(b);
       if (!cname(b, l + 1)) break;
       if (!empty_element_parsed_guard_(b, "export2_2", c)) break;
-      c = current_position_(b);
     }
     exit_section_(b, m, null, r);
     return r;
@@ -2477,10 +2551,8 @@ public class HaskellParser implements PsiParser, LightPsiParser {
   private static boolean export3_0(PsiBuilder b, int l) {
     if (!recursion_guard_(b, l, "export3_0")) return false;
     boolean r;
-    Marker m = enter_section_(b);
     r = q_con(b, l + 1);
     if (!r) r = cname(b, l + 1);
-    exit_section_(b, m, null, r);
     return r;
   }
 
@@ -2506,11 +2578,10 @@ public class HaskellParser implements PsiParser, LightPsiParser {
   // (onl COMMA onl cname_dot_dot)*
   private static boolean export3_3_0_2(PsiBuilder b, int l) {
     if (!recursion_guard_(b, l, "export3_3_0_2")) return false;
-    int c = current_position_(b);
     while (true) {
+      int c = current_position_(b);
       if (!export3_3_0_2_0(b, l + 1)) break;
       if (!empty_element_parsed_guard_(b, "export3_3_0_2", c)) break;
-      c = current_position_(b);
     }
     return true;
   }
@@ -2573,11 +2644,10 @@ public class HaskellParser implements PsiParser, LightPsiParser {
   // ((onl COMMA)? onl export)*
   private static boolean exports_0_3(PsiBuilder b, int l) {
     if (!recursion_guard_(b, l, "exports_0_3")) return false;
-    int c = current_position_(b);
     while (true) {
+      int c = current_position_(b);
       if (!exports_0_3_0(b, l + 1)) break;
       if (!empty_element_parsed_guard_(b, "exports_0_3", c)) break;
-      c = current_position_(b);
     }
     return true;
   }
@@ -2659,11 +2729,10 @@ public class HaskellParser implements PsiParser, LightPsiParser {
     boolean r;
     Marker m = enter_section_(b);
     r = line_expression(b, l + 1);
-    int c = current_position_(b);
     while (r) {
+      int c = current_position_(b);
       if (!line_expression(b, l + 1)) break;
       if (!empty_element_parsed_guard_(b, "expression_0_0", c)) break;
-      c = current_position_(b);
     }
     exit_section_(b, m, null, r);
     return r;
@@ -2748,11 +2817,10 @@ public class HaskellParser implements PsiParser, LightPsiParser {
     boolean r;
     Marker m = enter_section_(b);
     r = fielddecl_1_0_3_0_2_0(b, l + 1);
-    int c = current_position_(b);
     while (r) {
+      int c = current_position_(b);
       if (!fielddecl_1_0_3_0_2_0(b, l + 1)) break;
       if (!empty_element_parsed_guard_(b, "fielddecl_1_0_3_0_2", c)) break;
-      c = current_position_(b);
     }
     exit_section_(b, m, null, r);
     return r;
@@ -2804,11 +2872,10 @@ public class HaskellParser implements PsiParser, LightPsiParser {
     boolean r;
     Marker m = enter_section_(b);
     r = file_header_0(b, l + 1);
-    int c = current_position_(b);
     while (r) {
+      int c = current_position_(b);
       if (!file_header_0(b, l + 1)) break;
       if (!empty_element_parsed_guard_(b, "file_header", c)) break;
-      c = current_position_(b);
     }
     exit_section_(b, m, HS_FILE_HEADER, r);
     return r;
@@ -2842,11 +2909,9 @@ public class HaskellParser implements PsiParser, LightPsiParser {
   static boolean fixity(PsiBuilder b, int l) {
     if (!recursion_guard_(b, l, "fixity")) return false;
     boolean r;
-    Marker m = enter_section_(b);
     r = consumeToken(b, HS_INFIXL);
     if (!r) r = consumeToken(b, HS_INFIXR);
     if (!r) r = consumeToken(b, HS_INFIX);
-    exit_section_(b, m, null, r);
     return r;
   }
 
@@ -2888,10 +2953,8 @@ public class HaskellParser implements PsiParser, LightPsiParser {
   private static boolean foreign_declaration_0(PsiBuilder b, int l) {
     if (!recursion_guard_(b, l, "foreign_declaration_0")) return false;
     boolean r;
-    Marker m = enter_section_(b);
     r = consumeToken(b, HS_FOREIGN_IMPORT);
     if (!r) r = consumeToken(b, HS_FOREIGN_EXPORT);
-    exit_section_(b, m, null, r);
     return r;
   }
 
@@ -2940,11 +3003,10 @@ public class HaskellParser implements PsiParser, LightPsiParser {
     boolean r;
     Marker m = enter_section_(b, l, _NONE_, HS_GENERAL_PRAGMA_CONTENT, "<general pragma content>");
     r = general_pragma_content_0(b, l + 1);
-    int c = current_position_(b);
     while (r) {
+      int c = current_position_(b);
       if (!general_pragma_content_0(b, l + 1)) break;
       if (!empty_element_parsed_guard_(b, "general_pragma_content", c)) break;
-      c = current_position_(b);
     }
     exit_section_(b, l, m, r, false, null);
     return r;
@@ -2959,7 +3021,6 @@ public class HaskellParser implements PsiParser, LightPsiParser {
   private static boolean general_pragma_content_0(PsiBuilder b, int l) {
     if (!recursion_guard_(b, l, "general_pragma_content_0")) return false;
     boolean r;
-    Marker m = enter_section_(b);
     r = consumeToken(b, HS_CON_ID);
     if (!r) r = consumeToken(b, HS_VAR_ID);
     if (!r) r = consumeToken(b, HS_CONSYM_ID);
@@ -3002,7 +3063,6 @@ public class HaskellParser implements PsiParser, LightPsiParser {
     if (!r) r = consumeToken(b, HS_THEN);
     if (!r) r = consumeToken(b, HS_ELSE);
     if (!r) r = consumeToken(b, HS_DIRECTIVE);
-    exit_section_(b, m, null, r);
     return r;
   }
 
@@ -3072,11 +3132,10 @@ public class HaskellParser implements PsiParser, LightPsiParser {
   // (COMMA)*
   private static boolean gtycon_4_2(PsiBuilder b, int l) {
     if (!recursion_guard_(b, l, "gtycon_4_2")) return false;
-    int c = current_position_(b);
     while (true) {
+      int c = current_position_(b);
       if (!consumeToken(b, HS_COMMA)) break;
       if (!empty_element_parsed_guard_(b, "gtycon_4_2", c)) break;
-      c = current_position_(b);
     }
     return true;
   }
@@ -3184,11 +3243,10 @@ public class HaskellParser implements PsiParser, LightPsiParser {
   public static boolean import_declarations(PsiBuilder b, int l) {
     if (!recursion_guard_(b, l, "import_declarations")) return false;
     Marker m = enter_section_(b, l, _NONE_, HS_IMPORT_DECLARATIONS, "<import declarations>");
-    int c = current_position_(b);
     while (true) {
+      int c = current_position_(b);
       if (!import_declarations_0(b, l + 1)) break;
       if (!empty_element_parsed_guard_(b, "import_declarations", c)) break;
-      c = current_position_(b);
     }
     exit_section_(b, l, m, true, false, null);
     return true;
@@ -3209,11 +3267,9 @@ public class HaskellParser implements PsiParser, LightPsiParser {
   private static boolean import_declarations_0_0(PsiBuilder b, int l) {
     if (!recursion_guard_(b, l, "import_declarations_0_0")) return false;
     boolean r;
-    Marker m = enter_section_(b);
     r = import_declaration(b, l + 1);
     if (!r) r = cfiles_pragma(b, l + 1);
     if (!r) r = consumeToken(b, HS_DIRECTIVE);
-    exit_section_(b, m, null, r);
     return r;
   }
 
@@ -3281,11 +3337,10 @@ public class HaskellParser implements PsiParser, LightPsiParser {
   // (onls COMMA onls import_id)*
   private static boolean import_hiding_spec_4_0_2(PsiBuilder b, int l) {
     if (!recursion_guard_(b, l, "import_hiding_spec_4_0_2")) return false;
-    int c = current_position_(b);
     while (true) {
+      int c = current_position_(b);
       if (!import_hiding_spec_4_0_2_0(b, l + 1)) break;
       if (!empty_element_parsed_guard_(b, "import_hiding_spec_4_0_2", c)) break;
-      c = current_position_(b);
     }
     return true;
   }
@@ -3377,11 +3432,10 @@ public class HaskellParser implements PsiParser, LightPsiParser {
   // (COMMA onls cname_dot_dot onls)*
   private static boolean import_id_1_0_3_0_2(PsiBuilder b, int l) {
     if (!recursion_guard_(b, l, "import_id_1_0_3_0_2")) return false;
-    int c = current_position_(b);
     while (true) {
+      int c = current_position_(b);
       if (!import_id_1_0_3_0_2_0(b, l + 1)) break;
       if (!empty_element_parsed_guard_(b, "import_id_1_0_3_0_2", c)) break;
-      c = current_position_(b);
     }
     return true;
   }
@@ -3421,11 +3475,10 @@ public class HaskellParser implements PsiParser, LightPsiParser {
   // (onls COMMA? onls import_id)*
   private static boolean import_ids_spec_3(PsiBuilder b, int l) {
     if (!recursion_guard_(b, l, "import_ids_spec_3")) return false;
-    int c = current_position_(b);
     while (true) {
+      int c = current_position_(b);
       if (!import_ids_spec_3_0(b, l + 1)) break;
       if (!empty_element_parsed_guard_(b, "import_ids_spec_3", c)) break;
-      c = current_position_(b);
     }
     return true;
   }
@@ -3569,11 +3622,10 @@ public class HaskellParser implements PsiParser, LightPsiParser {
     boolean r;
     Marker m = enter_section_(b);
     r = gtycon(b, l + 1);
-    int c = current_position_(b);
     while (r) {
+      int c = current_position_(b);
       if (!gtycon(b, l + 1)) break;
       if (!empty_element_parsed_guard_(b, "inst_0_0", c)) break;
-      c = current_position_(b);
     }
     exit_section_(b, m, null, r);
     return r;
@@ -3582,11 +3634,10 @@ public class HaskellParser implements PsiParser, LightPsiParser {
   // instvar*
   private static boolean inst_0_1(PsiBuilder b, int l) {
     if (!recursion_guard_(b, l, "inst_0_1")) return false;
-    int c = current_position_(b);
     while (true) {
+      int c = current_position_(b);
       if (!instvar(b, l + 1)) break;
       if (!empty_element_parsed_guard_(b, "inst_0_1", c)) break;
-      c = current_position_(b);
     }
     return true;
   }
@@ -3594,11 +3645,10 @@ public class HaskellParser implements PsiParser, LightPsiParser {
   // (LEFT_PAREN onls gtycon (instvar)* onls RIGHT_PAREN)*
   private static boolean inst_0_2(PsiBuilder b, int l) {
     if (!recursion_guard_(b, l, "inst_0_2")) return false;
-    int c = current_position_(b);
     while (true) {
+      int c = current_position_(b);
       if (!inst_0_2_0(b, l + 1)) break;
       if (!empty_element_parsed_guard_(b, "inst_0_2", c)) break;
-      c = current_position_(b);
     }
     return true;
   }
@@ -3621,11 +3671,10 @@ public class HaskellParser implements PsiParser, LightPsiParser {
   // (instvar)*
   private static boolean inst_0_2_0_3(PsiBuilder b, int l) {
     if (!recursion_guard_(b, l, "inst_0_2_0_3")) return false;
-    int c = current_position_(b);
     while (true) {
+      int c = current_position_(b);
       if (!inst_0_2_0_3_0(b, l + 1)) break;
       if (!empty_element_parsed_guard_(b, "inst_0_2_0_3", c)) break;
-      c = current_position_(b);
     }
     return true;
   }
@@ -3643,11 +3692,10 @@ public class HaskellParser implements PsiParser, LightPsiParser {
   // instvar*
   private static boolean inst_0_3(PsiBuilder b, int l) {
     if (!recursion_guard_(b, l, "inst_0_3")) return false;
-    int c = current_position_(b);
     while (true) {
+      int c = current_position_(b);
       if (!instvar(b, l + 1)) break;
       if (!empty_element_parsed_guard_(b, "inst_0_3", c)) break;
-      c = current_position_(b);
     }
     return true;
   }
@@ -3669,11 +3717,10 @@ public class HaskellParser implements PsiParser, LightPsiParser {
     boolean r;
     Marker m = enter_section_(b);
     r = inst_1_0_0(b, l + 1);
-    int c = current_position_(b);
     while (r) {
+      int c = current_position_(b);
       if (!inst_1_0_0(b, l + 1)) break;
       if (!empty_element_parsed_guard_(b, "inst_1_0", c)) break;
-      c = current_position_(b);
     }
     exit_section_(b, m, null, r);
     return r;
@@ -3700,11 +3747,10 @@ public class HaskellParser implements PsiParser, LightPsiParser {
     boolean r;
     Marker m = enter_section_(b);
     r = inst_1_0_0_3_0(b, l + 1);
-    int c = current_position_(b);
     while (r) {
+      int c = current_position_(b);
       if (!inst_1_0_0_3_0(b, l + 1)) break;
       if (!empty_element_parsed_guard_(b, "inst_1_0_0_3", c)) break;
-      c = current_position_(b);
     }
     exit_section_(b, m, null, r);
     return r;
@@ -3726,11 +3772,10 @@ public class HaskellParser implements PsiParser, LightPsiParser {
   // instvar*
   private static boolean inst_1_1(PsiBuilder b, int l) {
     if (!recursion_guard_(b, l, "inst_1_1")) return false;
-    int c = current_position_(b);
     while (true) {
+      int c = current_position_(b);
       if (!instvar(b, l + 1)) break;
       if (!empty_element_parsed_guard_(b, "inst_1_1", c)) break;
-      c = current_position_(b);
     }
     return true;
   }
@@ -3760,11 +3805,10 @@ public class HaskellParser implements PsiParser, LightPsiParser {
     boolean r;
     Marker m = enter_section_(b);
     r = inst_2_1_0(b, l + 1);
-    int c = current_position_(b);
     while (r) {
+      int c = current_position_(b);
       if (!inst_2_1_0(b, l + 1)) break;
       if (!empty_element_parsed_guard_(b, "inst_2_1", c)) break;
-      c = current_position_(b);
     }
     exit_section_(b, m, null, r);
     return r;
@@ -3787,11 +3831,10 @@ public class HaskellParser implements PsiParser, LightPsiParser {
   // instvar*
   private static boolean inst_2_2(PsiBuilder b, int l) {
     if (!recursion_guard_(b, l, "inst_2_2")) return false;
-    int c = current_position_(b);
     while (true) {
+      int c = current_position_(b);
       if (!instvar(b, l + 1)) break;
       if (!empty_element_parsed_guard_(b, "inst_2_2", c)) break;
-      c = current_position_(b);
     }
     return true;
   }
@@ -3813,11 +3856,10 @@ public class HaskellParser implements PsiParser, LightPsiParser {
     boolean r;
     Marker m = enter_section_(b);
     r = inst_3_0_0(b, l + 1);
-    int c = current_position_(b);
     while (r) {
+      int c = current_position_(b);
       if (!inst_3_0_0(b, l + 1)) break;
       if (!empty_element_parsed_guard_(b, "inst_3_0", c)) break;
-      c = current_position_(b);
     }
     exit_section_(b, m, null, r);
     return r;
@@ -3843,11 +3885,10 @@ public class HaskellParser implements PsiParser, LightPsiParser {
     boolean r;
     Marker m = enter_section_(b);
     r = instvar(b, l + 1);
-    int c = current_position_(b);
     while (r) {
+      int c = current_position_(b);
       if (!instvar(b, l + 1)) break;
       if (!empty_element_parsed_guard_(b, "inst_3_0_0_2", c)) break;
-      c = current_position_(b);
     }
     exit_section_(b, m, null, r);
     return r;
@@ -3856,11 +3897,10 @@ public class HaskellParser implements PsiParser, LightPsiParser {
   // instvar*
   private static boolean inst_3_1(PsiBuilder b, int l) {
     if (!recursion_guard_(b, l, "inst_3_1")) return false;
-    int c = current_position_(b);
     while (true) {
+      int c = current_position_(b);
       if (!instvar(b, l + 1)) break;
       if (!empty_element_parsed_guard_(b, "inst_3_1", c)) break;
-      c = current_position_(b);
     }
     return true;
   }
@@ -3871,11 +3911,10 @@ public class HaskellParser implements PsiParser, LightPsiParser {
     boolean r;
     Marker m = enter_section_(b);
     r = inst_4_0(b, l + 1);
-    int c = current_position_(b);
     while (r) {
+      int c = current_position_(b);
       if (!inst_4_0(b, l + 1)) break;
       if (!empty_element_parsed_guard_(b, "inst_4", c)) break;
-      c = current_position_(b);
     }
     exit_section_(b, m, null, r);
     return r;
@@ -3898,11 +3937,10 @@ public class HaskellParser implements PsiParser, LightPsiParser {
     boolean r;
     Marker m = enter_section_(b);
     r = inst_4_0_0_0(b, l + 1);
-    int c = current_position_(b);
     while (r) {
+      int c = current_position_(b);
       if (!inst_4_0_0_0(b, l + 1)) break;
       if (!empty_element_parsed_guard_(b, "inst_4_0_0", c)) break;
-      c = current_position_(b);
     }
     exit_section_(b, m, null, r);
     return r;
@@ -3929,11 +3967,10 @@ public class HaskellParser implements PsiParser, LightPsiParser {
     boolean r;
     Marker m = enter_section_(b);
     r = instvar(b, l + 1);
-    int c = current_position_(b);
     while (r) {
+      int c = current_position_(b);
       if (!instvar(b, l + 1)) break;
       if (!empty_element_parsed_guard_(b, "inst_4_0_0_0_2", c)) break;
-      c = current_position_(b);
     }
     exit_section_(b, m, null, r);
     return r;
@@ -3945,11 +3982,10 @@ public class HaskellParser implements PsiParser, LightPsiParser {
     boolean r;
     Marker m = enter_section_(b);
     r = inst_4_0_0_0_3_0(b, l + 1);
-    int c = current_position_(b);
     while (r) {
+      int c = current_position_(b);
       if (!inst_4_0_0_0_3_0(b, l + 1)) break;
       if (!empty_element_parsed_guard_(b, "inst_4_0_0_0_3", c)) break;
-      c = current_position_(b);
     }
     exit_section_(b, m, null, r);
     return r;
@@ -3974,11 +4010,10 @@ public class HaskellParser implements PsiParser, LightPsiParser {
     boolean r;
     Marker m = enter_section_(b);
     r = instvar(b, l + 1);
-    int c = current_position_(b);
     while (r) {
+      int c = current_position_(b);
       if (!instvar(b, l + 1)) break;
       if (!empty_element_parsed_guard_(b, "inst_4_0_0_0_3_0_3", c)) break;
-      c = current_position_(b);
     }
     exit_section_(b, m, null, r);
     return r;
@@ -3987,11 +4022,10 @@ public class HaskellParser implements PsiParser, LightPsiParser {
   // instvar*
   private static boolean inst_4_0_1(PsiBuilder b, int l) {
     if (!recursion_guard_(b, l, "inst_4_0_1")) return false;
-    int c = current_position_(b);
     while (true) {
+      int c = current_position_(b);
       if (!instvar(b, l + 1)) break;
       if (!empty_element_parsed_guard_(b, "inst_4_0_1", c)) break;
-      c = current_position_(b);
     }
     return true;
   }
@@ -4061,11 +4095,10 @@ public class HaskellParser implements PsiParser, LightPsiParser {
     boolean r;
     Marker m = enter_section_(b);
     r = var_con(b, l + 1);
-    int c = current_position_(b);
     while (r) {
+      int c = current_position_(b);
       if (!var_con(b, l + 1)) break;
       if (!empty_element_parsed_guard_(b, "instance_declaration_4_0_0", c)) break;
-      c = current_position_(b);
     }
     exit_section_(b, m, null, r);
     return r;
@@ -4184,11 +4217,10 @@ public class HaskellParser implements PsiParser, LightPsiParser {
     boolean r;
     Marker m = enter_section_(b);
     r = q_name(b, l + 1);
-    int c = current_position_(b);
     while (r) {
+      int c = current_position_(b);
       if (!q_name(b, l + 1)) break;
       if (!empty_element_parsed_guard_(b, "instvar_2_1", c)) break;
-      c = current_position_(b);
     }
     exit_section_(b, m, null, r);
     return r;
@@ -4212,11 +4244,10 @@ public class HaskellParser implements PsiParser, LightPsiParser {
     boolean r;
     Marker m = enter_section_(b);
     r = q_name(b, l + 1);
-    int c = current_position_(b);
     while (r) {
+      int c = current_position_(b);
       if (!q_name(b, l + 1)) break;
       if (!empty_element_parsed_guard_(b, "instvar_3_1", c)) break;
-      c = current_position_(b);
     }
     exit_section_(b, m, null, r);
     return r;
@@ -4227,7 +4258,6 @@ public class HaskellParser implements PsiParser, LightPsiParser {
   static boolean keyword(PsiBuilder b, int l) {
     if (!recursion_guard_(b, l, "keyword")) return false;
     boolean r;
-    Marker m = enter_section_(b);
     r = consumeToken(b, HS_DATA);
     if (!r) r = consumeToken(b, HS_CLASS);
     if (!r) r = consumeToken(b, HS_INSTANCE);
@@ -4239,7 +4269,6 @@ public class HaskellParser implements PsiParser, LightPsiParser {
     if (!r) r = consumeToken(b, HS_TYPE_INSTANCE);
     if (!r) r = consumeToken(b, HS_IMPORT);
     if (!r) r = consumeToken(b, HS_MODULE);
-    exit_section_(b, m, null, r);
     return r;
   }
 
@@ -4263,11 +4292,10 @@ public class HaskellParser implements PsiParser, LightPsiParser {
     boolean r;
     Marker m = enter_section_(b);
     r = general_id(b, l + 1);
-    int c = current_position_(b);
     while (r) {
+      int c = current_position_(b);
       if (!general_id(b, l + 1)) break;
       if (!empty_element_parsed_guard_(b, "last_line_expression", c)) break;
-      c = current_position_(b);
     }
     exit_section_(b, m, null, r);
     return r;
@@ -4291,11 +4319,10 @@ public class HaskellParser implements PsiParser, LightPsiParser {
     boolean r;
     Marker m = enter_section_(b);
     r = general_id(b, l + 1);
-    int c = current_position_(b);
     while (r) {
+      int c = current_position_(b);
       if (!general_id(b, l + 1)) break;
       if (!empty_element_parsed_guard_(b, "line_expression_0", c)) break;
-      c = current_position_(b);
     }
     exit_section_(b, m, null, r);
     return r;
@@ -4319,10 +4346,8 @@ public class HaskellParser implements PsiParser, LightPsiParser {
   private static boolean list_type_1(PsiBuilder b, int l) {
     if (!recursion_guard_(b, l, "list_type_1")) return false;
     boolean r;
-    Marker m = enter_section_(b);
     r = consumeToken(b, HS_COLON_COLON);
     if (!r) r = q_name(b, l + 1);
-    exit_section_(b, m, null, r);
     return r;
   }
 
@@ -4331,14 +4356,12 @@ public class HaskellParser implements PsiParser, LightPsiParser {
   static boolean literal(PsiBuilder b, int l) {
     if (!recursion_guard_(b, l, "literal")) return false;
     boolean r;
-    Marker m = enter_section_(b);
     r = consumeToken(b, HS_DECIMAL);
     if (!r) r = consumeToken(b, HS_HEXADECIMAL);
     if (!r) r = consumeToken(b, HS_OCTAL);
     if (!r) r = consumeToken(b, HS_FLOAT);
     if (!r) r = consumeToken(b, HS_CHARACTER_LITERAL);
     if (!r) r = consumeToken(b, HS_STRING_LITERAL);
-    exit_section_(b, m, null, r);
     return r;
   }
 
@@ -4370,11 +4393,10 @@ public class HaskellParser implements PsiParser, LightPsiParser {
   // (conid DOT)*
   private static boolean modid_0(PsiBuilder b, int l) {
     if (!recursion_guard_(b, l, "modid_0")) return false;
-    int c = current_position_(b);
     while (true) {
+      int c = current_position_(b);
       if (!modid_0_0(b, l + 1)) break;
       if (!empty_element_parsed_guard_(b, "modid_0", c)) break;
-      c = current_position_(b);
     }
     return true;
   }
@@ -4613,11 +4635,10 @@ public class HaskellParser implements PsiParser, LightPsiParser {
     boolean r;
     Marker m = enter_section_(b);
     r = nls_0(b, l + 1);
-    int c = current_position_(b);
     while (r) {
+      int c = current_position_(b);
       if (!nls_0(b, l + 1)) break;
       if (!empty_element_parsed_guard_(b, "nls", c)) break;
-      c = current_position_(b);
     }
     exit_section_(b, m, null, r);
     return r;
@@ -4648,11 +4669,10 @@ public class HaskellParser implements PsiParser, LightPsiParser {
   // (DIRECTIVE? NEWLINE)*
   static boolean onl(PsiBuilder b, int l) {
     if (!recursion_guard_(b, l, "onl")) return false;
-    int c = current_position_(b);
     while (true) {
+      int c = current_position_(b);
       if (!onl_0(b, l + 1)) break;
       if (!empty_element_parsed_guard_(b, "onl", c)) break;
-      c = current_position_(b);
     }
     return true;
   }
@@ -4679,11 +4699,10 @@ public class HaskellParser implements PsiParser, LightPsiParser {
   // (&<<containsSpaces>> NEWLINE | DIRECTIVE NEWLINE !keyword)*
   static boolean onls(PsiBuilder b, int l) {
     if (!recursion_guard_(b, l, "onls")) return false;
-    int c = current_position_(b);
     while (true) {
+      int c = current_position_(b);
       if (!onls_0(b, l + 1)) break;
       if (!empty_element_parsed_guard_(b, "onls", c)) break;
-      c = current_position_(b);
     }
     return true;
   }
@@ -4814,11 +4833,10 @@ public class HaskellParser implements PsiParser, LightPsiParser {
     boolean r;
     Marker m = enter_section_(b);
     r = pragma_1_0(b, l + 1);
-    int c = current_position_(b);
     while (r) {
+      int c = current_position_(b);
       if (!pragma_1_0(b, l + 1)) break;
       if (!empty_element_parsed_guard_(b, "pragma_1", c)) break;
-      c = current_position_(b);
     }
     exit_section_(b, m, null, r);
     return r;
@@ -5100,11 +5118,10 @@ public class HaskellParser implements PsiParser, LightPsiParser {
   // (COMMA q_name)*
   private static boolean q_names_1(PsiBuilder b, int l) {
     if (!recursion_guard_(b, l, "q_names_1")) return false;
-    int c = current_position_(b);
     while (true) {
+      int c = current_position_(b);
       if (!q_names_1_0(b, l + 1)) break;
       if (!empty_element_parsed_guard_(b, "q_names_1", c)) break;
-      c = current_position_(b);
     }
     return true;
   }
@@ -5201,11 +5218,10 @@ public class HaskellParser implements PsiParser, LightPsiParser {
   // (DOT conid)*
   private static boolean qualifier_1(PsiBuilder b, int l) {
     if (!recursion_guard_(b, l, "qualifier_1")) return false;
-    int c = current_position_(b);
     while (true) {
+      int c = current_position_(b);
       if (!qualifier_1_0(b, l + 1)) break;
       if (!empty_element_parsed_guard_(b, "qualifier_1", c)) break;
-      c = current_position_(b);
     }
     return true;
   }
@@ -5297,11 +5313,10 @@ public class HaskellParser implements PsiParser, LightPsiParser {
   // (onls COMMA onls simpleclass)*
   private static boolean scontext_1_5(PsiBuilder b, int l) {
     if (!recursion_guard_(b, l, "scontext_1_5")) return false;
-    int c = current_position_(b);
     while (true) {
+      int c = current_position_(b);
       if (!scontext_1_5_0(b, l + 1)) break;
       if (!empty_element_parsed_guard_(b, "scontext_1_5", c)) break;
-      c = current_position_(b);
     }
     return true;
   }
@@ -5352,11 +5367,10 @@ public class HaskellParser implements PsiParser, LightPsiParser {
     boolean r;
     Marker m = enter_section_(b);
     r = q_name(b, l + 1);
-    int c = current_position_(b);
     while (r) {
+      int c = current_position_(b);
       if (!q_name(b, l + 1)) break;
       if (!empty_element_parsed_guard_(b, "simpleclass_1_0", c)) break;
-      c = current_position_(b);
     }
     exit_section_(b, m, null, r);
     return r;
@@ -5368,11 +5382,10 @@ public class HaskellParser implements PsiParser, LightPsiParser {
     boolean r;
     Marker m = enter_section_(b);
     r = q_name(b, l + 1);
-    int c = current_position_(b);
     while (r) {
+      int c = current_position_(b);
       if (!q_name(b, l + 1)) break;
       if (!empty_element_parsed_guard_(b, "simpleclass_1_2", c)) break;
-      c = current_position_(b);
     }
     exit_section_(b, m, null, r);
     return r;
@@ -5381,11 +5394,10 @@ public class HaskellParser implements PsiParser, LightPsiParser {
   // q_name*
   private static boolean simpleclass_1_4(PsiBuilder b, int l) {
     if (!recursion_guard_(b, l, "simpleclass_1_4")) return false;
-    int c = current_position_(b);
     while (true) {
+      int c = current_position_(b);
       if (!q_name(b, l + 1)) break;
       if (!empty_element_parsed_guard_(b, "simpleclass_1_4", c)) break;
-      c = current_position_(b);
     }
     return true;
   }
@@ -5396,11 +5408,10 @@ public class HaskellParser implements PsiParser, LightPsiParser {
     boolean r;
     Marker m = enter_section_(b);
     r = q_name(b, l + 1);
-    int c = current_position_(b);
     while (r) {
+      int c = current_position_(b);
       if (!q_name(b, l + 1)) break;
       if (!empty_element_parsed_guard_(b, "simpleclass_2", c)) break;
-      c = current_position_(b);
     }
     exit_section_(b, m, null, r);
     return r;
@@ -5432,11 +5443,10 @@ public class HaskellParser implements PsiParser, LightPsiParser {
     boolean r;
     Marker m = enter_section_(b);
     r = simpletype_1_0(b, l + 1);
-    int c = current_position_(b);
     while (r) {
+      int c = current_position_(b);
       if (!simpletype_1_0(b, l + 1)) break;
       if (!empty_element_parsed_guard_(b, "simpletype_1", c)) break;
-      c = current_position_(b);
     }
     exit_section_(b, m, null, r);
     return r;
@@ -5472,11 +5482,10 @@ public class HaskellParser implements PsiParser, LightPsiParser {
   // q_name*
   private static boolean simpletype_2_0(PsiBuilder b, int l) {
     if (!recursion_guard_(b, l, "simpletype_2_0")) return false;
-    int c = current_position_(b);
     while (true) {
+      int c = current_position_(b);
       if (!q_name(b, l + 1)) break;
       if (!empty_element_parsed_guard_(b, "simpletype_2_0", c)) break;
-      c = current_position_(b);
     }
     return true;
   }
@@ -5484,11 +5493,10 @@ public class HaskellParser implements PsiParser, LightPsiParser {
   // q_name*
   private static boolean simpletype_2_6(PsiBuilder b, int l) {
     if (!recursion_guard_(b, l, "simpletype_2_6")) return false;
-    int c = current_position_(b);
     while (true) {
+      int c = current_position_(b);
       if (!q_name(b, l + 1)) break;
       if (!empty_element_parsed_guard_(b, "simpletype_2_6", c)) break;
-      c = current_position_(b);
     }
     return true;
   }
@@ -5512,11 +5520,10 @@ public class HaskellParser implements PsiParser, LightPsiParser {
   // q_name*
   private static boolean simpletype_3_2(PsiBuilder b, int l) {
     if (!recursion_guard_(b, l, "simpletype_3_2")) return false;
-    int c = current_position_(b);
     while (true) {
+      int c = current_position_(b);
       if (!q_name(b, l + 1)) break;
       if (!empty_element_parsed_guard_(b, "simpletype_3_2", c)) break;
-      c = current_position_(b);
     }
     return true;
   }
@@ -5527,11 +5534,10 @@ public class HaskellParser implements PsiParser, LightPsiParser {
     boolean r;
     Marker m = enter_section_(b);
     r = simpletype_3_4_0(b, l + 1);
-    int c = current_position_(b);
     while (r) {
+      int c = current_position_(b);
       if (!simpletype_3_4_0(b, l + 1)) break;
       if (!empty_element_parsed_guard_(b, "simpletype_3_4", c)) break;
-      c = current_position_(b);
     }
     exit_section_(b, m, null, r);
     return r;
@@ -5552,11 +5558,10 @@ public class HaskellParser implements PsiParser, LightPsiParser {
   // q_name*
   private static boolean simpletype_3_6(PsiBuilder b, int l) {
     if (!recursion_guard_(b, l, "simpletype_3_6")) return false;
-    int c = current_position_(b);
     while (true) {
+      int c = current_position_(b);
       if (!q_name(b, l + 1)) break;
       if (!empty_element_parsed_guard_(b, "simpletype_3_6", c)) break;
-      c = current_position_(b);
     }
     return true;
   }
@@ -5575,11 +5580,10 @@ public class HaskellParser implements PsiParser, LightPsiParser {
   // q_name*
   private static boolean simpletype_6_2(PsiBuilder b, int l) {
     if (!recursion_guard_(b, l, "simpletype_6_2")) return false;
-    int c = current_position_(b);
     while (true) {
+      int c = current_position_(b);
       if (!q_name(b, l + 1)) break;
       if (!empty_element_parsed_guard_(b, "simpletype_6_2", c)) break;
-      c = current_position_(b);
     }
     return true;
   }
@@ -5613,7 +5617,6 @@ public class HaskellParser implements PsiParser, LightPsiParser {
   static boolean symbol_reserved_op(PsiBuilder b, int l) {
     if (!recursion_guard_(b, l, "symbol_reserved_op")) return false;
     boolean r;
-    Marker m = enter_section_(b);
     r = consumeToken(b, HS_DOT_DOT);
     if (!r) r = consumeToken(b, HS_COLON_COLON);
     if (!r) r = consumeToken(b, HS_EQUAL);
@@ -5624,7 +5627,6 @@ public class HaskellParser implements PsiParser, LightPsiParser {
     if (!r) r = consumeToken(b, HS_AT);
     if (!r) r = consumeToken(b, HS_TILDE);
     if (!r) r = consumeToken(b, HS_DOUBLE_RIGHT_ARROW);
-    exit_section_(b, m, null, r);
     return r;
   }
 
@@ -5670,11 +5672,10 @@ public class HaskellParser implements PsiParser, LightPsiParser {
   // (top_declaration (NEWLINE | DIRECTIVE)+)*
   private static boolean top_declarations_0(PsiBuilder b, int l) {
     if (!recursion_guard_(b, l, "top_declarations_0")) return false;
-    int c = current_position_(b);
     while (true) {
+      int c = current_position_(b);
       if (!top_declarations_0_0(b, l + 1)) break;
       if (!empty_element_parsed_guard_(b, "top_declarations_0", c)) break;
-      c = current_position_(b);
     }
     return true;
   }
@@ -5696,11 +5697,10 @@ public class HaskellParser implements PsiParser, LightPsiParser {
     boolean r;
     Marker m = enter_section_(b);
     r = top_declarations_0_0_1_0(b, l + 1);
-    int c = current_position_(b);
     while (r) {
+      int c = current_position_(b);
       if (!top_declarations_0_0_1_0(b, l + 1)) break;
       if (!empty_element_parsed_guard_(b, "top_declarations_0_0_1", c)) break;
-      c = current_position_(b);
     }
     exit_section_(b, m, null, r);
     return r;
@@ -5710,10 +5710,8 @@ public class HaskellParser implements PsiParser, LightPsiParser {
   private static boolean top_declarations_0_0_1_0(PsiBuilder b, int l) {
     if (!recursion_guard_(b, l, "top_declarations_0_0_1_0")) return false;
     boolean r;
-    Marker m = enter_section_(b);
     r = consumeToken(b, HS_NEWLINE);
     if (!r) r = consumeToken(b, HS_DIRECTIVE);
-    exit_section_(b, m, null, r);
     return r;
   }
 
@@ -5769,11 +5767,10 @@ public class HaskellParser implements PsiParser, LightPsiParser {
   // (oonls RIGHT_ARROW oonls ttype)*
   private static boolean ttype_1_0_1(PsiBuilder b, int l) {
     if (!recursion_guard_(b, l, "ttype_1_0_1")) return false;
-    int c = current_position_(b);
     while (true) {
+      int c = current_position_(b);
       if (!ttype_1_0_1_0(b, l + 1)) break;
       if (!empty_element_parsed_guard_(b, "ttype_1_0_1", c)) break;
-      c = current_position_(b);
     }
     return true;
   }
@@ -5805,11 +5802,10 @@ public class HaskellParser implements PsiParser, LightPsiParser {
   // q_name*
   private static boolean ttype_1_1_1(PsiBuilder b, int l) {
     if (!recursion_guard_(b, l, "ttype_1_1_1")) return false;
-    int c = current_position_(b);
     while (true) {
+      int c = current_position_(b);
       if (!q_name(b, l + 1)) break;
       if (!empty_element_parsed_guard_(b, "ttype_1_1_1", c)) break;
-      c = current_position_(b);
     }
     return true;
   }
@@ -5851,11 +5847,10 @@ public class HaskellParser implements PsiParser, LightPsiParser {
   // ((onl COMMA)? onl ttype)*
   private static boolean ttype1_3(PsiBuilder b, int l) {
     if (!recursion_guard_(b, l, "ttype1_3")) return false;
-    int c = current_position_(b);
     while (true) {
+      int c = current_position_(b);
       if (!ttype1_3_0(b, l + 1)) break;
       if (!empty_element_parsed_guard_(b, "ttype1_3", c)) break;
-      c = current_position_(b);
     }
     return true;
   }
@@ -6018,10 +6013,8 @@ public class HaskellParser implements PsiParser, LightPsiParser {
   private static boolean type_declaration_1_4(PsiBuilder b, int l) {
     if (!recursion_guard_(b, l, "type_declaration_1_4")) return false;
     boolean r;
-    Marker m = enter_section_(b);
     r = consumeToken(b, HS_EQUAL);
     if (!r) r = consumeToken(b, HS_WHERE);
-    exit_section_(b, m, null, r);
     return r;
   }
 
@@ -6029,10 +6022,8 @@ public class HaskellParser implements PsiParser, LightPsiParser {
   private static boolean type_declaration_1_6(PsiBuilder b, int l) {
     if (!recursion_guard_(b, l, "type_declaration_1_6")) return false;
     boolean r;
-    Marker m = enter_section_(b);
     r = ttype(b, l + 1);
     if (!r) r = type_signature(b, l + 1);
-    exit_section_(b, m, null, r);
     return r;
   }
 
@@ -6089,11 +6080,10 @@ public class HaskellParser implements PsiParser, LightPsiParser {
   // (LEFT_PAREN onls kind_signature onls RIGHT_PAREN)*
   private static boolean type_declaration_3_4(PsiBuilder b, int l) {
     if (!recursion_guard_(b, l, "type_declaration_3_4")) return false;
-    int c = current_position_(b);
     while (true) {
+      int c = current_position_(b);
       if (!type_declaration_3_4_0(b, l + 1)) break;
       if (!empty_element_parsed_guard_(b, "type_declaration_3_4", c)) break;
-      c = current_position_(b);
     }
     return true;
   }
@@ -6177,11 +6167,10 @@ public class HaskellParser implements PsiParser, LightPsiParser {
     boolean r;
     Marker m = enter_section_(b);
     r = q_name(b, l + 1);
-    int c = current_position_(b);
     while (r) {
+      int c = current_position_(b);
       if (!q_name(b, l + 1)) break;
       if (!empty_element_parsed_guard_(b, "type_equality_0", c)) break;
-      c = current_position_(b);
     }
     exit_section_(b, m, null, r);
     return r;
@@ -6193,11 +6182,10 @@ public class HaskellParser implements PsiParser, LightPsiParser {
     boolean r;
     Marker m = enter_section_(b);
     r = q_name(b, l + 1);
-    int c = current_position_(b);
     while (r) {
+      int c = current_position_(b);
       if (!q_name(b, l + 1)) break;
       if (!empty_element_parsed_guard_(b, "type_equality_2", c)) break;
-      c = current_position_(b);
     }
     exit_section_(b, m, null, r);
     return r;
@@ -6241,10 +6229,8 @@ public class HaskellParser implements PsiParser, LightPsiParser {
   private static boolean type_family_declaration_3_0_1(PsiBuilder b, int l) {
     if (!recursion_guard_(b, l, "type_family_declaration_3_0_1")) return false;
     boolean r;
-    Marker m = enter_section_(b);
     r = consumeToken(b, HS_WHERE);
     if (!r) r = consumeToken(b, HS_EQUAL);
-    exit_section_(b, m, null, r);
     return r;
   }
 
@@ -6284,11 +6270,10 @@ public class HaskellParser implements PsiParser, LightPsiParser {
     boolean r;
     Marker m = enter_section_(b);
     r = type_family_type_0_0(b, l + 1);
-    int c = current_position_(b);
     while (r) {
+      int c = current_position_(b);
       if (!type_family_type_0_0(b, l + 1)) break;
       if (!empty_element_parsed_guard_(b, "type_family_type_0", c)) break;
-      c = current_position_(b);
     }
     exit_section_(b, m, null, r);
     return r;
@@ -6433,11 +6418,10 @@ public class HaskellParser implements PsiParser, LightPsiParser {
   // (onls ccontext onls DOUBLE_RIGHT_ARROW)*
   private static boolean type_signature_0_3(PsiBuilder b, int l) {
     if (!recursion_guard_(b, l, "type_signature_0_3")) return false;
-    int c = current_position_(b);
     while (true) {
+      int c = current_position_(b);
       if (!type_signature_0_3_0(b, l + 1)) break;
       if (!empty_element_parsed_guard_(b, "type_signature_0_3", c)) break;
-      c = current_position_(b);
     }
     return true;
   }

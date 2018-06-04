@@ -26,6 +26,12 @@ public class HaskellCdeclsImpl extends HaskellCompositeElementImpl implements Ha
 
   @Override
   @NotNull
+  public List<HaskellCdeclDataDeclaration> getCdeclDataDeclarationList() {
+    return PsiTreeUtil.getChildrenOfTypeAsList(this, HaskellCdeclDataDeclaration.class);
+  }
+
+  @Override
+  @NotNull
   public List<HaskellCideclExpression> getCideclExpressionList() {
     return PsiTreeUtil.getChildrenOfTypeAsList(this, HaskellCideclExpression.class);
   }

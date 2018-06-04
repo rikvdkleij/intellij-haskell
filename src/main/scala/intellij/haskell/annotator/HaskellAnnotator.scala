@@ -293,11 +293,12 @@ class LanguageExtensionIntentionAction(languageExtension: String) extends Haskel
   override def getFamilyName: String = "Add language extension"
 
   override def invoke(project: Project, editor: Editor, file: PsiFile): Unit = {
-    val languagePragmaElement = HaskellElementFactory.createLanguagePragma(project, s"{-# LANGUAGE $languageExtension #-} \n")
+    val languagePragmaElement = HaskellElementFactory.createLanguagePragma(project, s"{-# LANGUAGE $languageExtension #-}")
     Option(PsiTreeUtil.findChildOfType(file, classOf[HaskellFileHeader])) match {
       case Some(fh) =>
         val lastPragmaElement = PsiTreeUtil.findChildrenOfType(fh, classOf[HaskellFileHeaderPragma]).asScala.lastOption.orNull
-        fh.addAfter(languagePragmaElement, lastPragmaElement)
+        val newline = fh.addAfter(HaskellElementFactory.createNewLine(project), lastPragmaElement)
+        fh.addAfter(languagePragmaElement, newline)
       case None => Option(file.getFirstChild) match {
         case Some(c) =>
           val addedPragmaElement = file.addBefore(languagePragmaElement, c)

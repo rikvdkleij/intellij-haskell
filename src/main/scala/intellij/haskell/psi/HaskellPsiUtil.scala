@@ -36,8 +36,8 @@ object HaskellPsiUtil {
     PsiTreeUtil.findChildrenOfType(psiFile.getOriginalFile, classOf[HaskellImportDeclaration]).asScala
   }
 
-  def findLanguageExtensions(psiFile: PsiFile): Iterable[HaskellLanguagePragma] = {
-    PsiTreeUtil.findChildrenOfType(psiFile.getOriginalFile, classOf[HaskellLanguagePragma]).asScala
+  def findLanguageExtensions(psiFile: PsiFile): Iterable[HaskellFileHeaderPragma] = {
+    PsiTreeUtil.findChildrenOfType(psiFile.getOriginalFile, classOf[HaskellFileHeaderPragma]).asScala
   }
 
   def findNamedElement(psiElement: PsiElement): Option[HaskellNamedElement] = {

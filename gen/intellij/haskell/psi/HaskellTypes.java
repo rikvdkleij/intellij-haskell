@@ -10,6 +10,7 @@ public interface HaskellTypes {
 
   IElementType HS_CCONTEXT = new HaskellCompositeElementType("HS_CCONTEXT");
   IElementType HS_CDECLS = new HaskellCompositeElementType("HS_CDECLS");
+  IElementType HS_CDECL_DATA_DECLARATION = new HaskellCompositeElementType("HS_CDECL_DATA_DECLARATION");
   IElementType HS_CFILES_PRAGMA = new HaskellCompositeElementType("HS_CFILES_PRAGMA");
   IElementType HS_CIDECLS = new HaskellCompositeElementType("HS_CIDECLS");
   IElementType HS_CIDECL_EXPRESSION = new HaskellCompositeElementType("HS_CIDECL_EXPRESSION");
@@ -182,6 +183,9 @@ public interface HaskellTypes {
       }
       else if (type == HS_CDECLS) {
         return new HaskellCdeclsImpl(node);
+      }
+      else if (type == HS_CDECL_DATA_DECLARATION) {
+        return new HaskellCdeclDataDeclarationImpl(node);
       }
       else if (type == HS_CFILES_PRAGMA) {
         return new HaskellCfilesPragmaImpl(node);

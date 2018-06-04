@@ -10,6 +10,10 @@ public class HaskellVisitor extends PsiElementVisitor {
     visitCompositeElement(o);
   }
 
+  public void visitCdeclDataDeclaration(@NotNull HaskellCdeclDataDeclaration o) {
+    visitCompositeElement(o);
+  }
+
   public void visitCdecls(@NotNull HaskellCdecls o) {
     visitCompositeElement(o);
   }
