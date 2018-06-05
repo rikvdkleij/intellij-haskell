@@ -172,4 +172,13 @@ object HaskellFileUtil {
   def getUrlByPath(absolutePath: String): String = {
     VirtualFileManager.constructUrl(LocalFileSystem.getInstance.getProtocol, absolutePath)
   }
+
+  def createDirectoryIfNotExists(directory: File): Unit = {
+    if (!directory.exists()) {
+      val result = FileUtil.createDirectory(directory)
+      if (!result) {
+        throw new RuntimeException(s"Could not create directory ${directory.getAbsolutePath}")
+      }
+    }
+  }
 }

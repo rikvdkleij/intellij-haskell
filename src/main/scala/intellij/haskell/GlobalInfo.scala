@@ -17,7 +17,9 @@ object GlobalInfo {
 
   def getIntelliJHaskellDirectory: File = {
     val homeDirectory = HaskellFileUtil.getAbsolutePath(VfsUtil.getUserHomeDir)
-    new File(homeDirectory, IntelliJHaskellDirName)
+    val directory = new File(homeDirectory, IntelliJHaskellDirName)
+    HaskellFileUtil.createDirectoryIfNotExists(directory)
+    directory
   }
 
   def getLibrarySourcesPath: String = {
@@ -25,7 +27,9 @@ object GlobalInfo {
   }
 
   def toolsStackRootPath: String = {
-    Paths.get(getIntelliJHaskellDirectory.getAbsolutePath, StackageLtsVersion).toString
+    val path = Paths.get(getIntelliJHaskellDirectory.getAbsolutePath, StackageLtsVersion).toString
+    HaskellFileUtil.createDirectoryIfNotExists(new File(path))
+    path
   }
 
   def toolsBinPath: String = {
