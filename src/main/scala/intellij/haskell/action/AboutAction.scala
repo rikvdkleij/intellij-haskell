@@ -20,8 +20,7 @@ import com.intellij.openapi.actionSystem.{AnAction, AnActionEvent}
 import com.intellij.openapi.ui.Messages
 import com.intellij.openapi.util.SystemInfo
 import intellij.haskell.external.component.{HLintComponent, HoogleComponent, StackProjectManager}
-import intellij.haskell.external.execution.{CommandLine, StackCommandLine}
-import intellij.haskell.settings.HaskellSettingsState
+import intellij.haskell.external.execution.StackCommandLine
 import intellij.haskell.util.HaskellEditorUtil
 
 import scala.collection.mutable.ArrayBuffer
@@ -48,10 +47,8 @@ class AboutAction extends AnAction {
     messages.+=(s"${boldToolName("Intero")}: " + StackCommandLine.run(project, Seq("exec", "--", "intero", "--version")).map(_.getStdout).getOrElse("-"))
     messages.+=(s"${boldToolName("HLint")}: " + HLintComponent.versionInfo(project))
     messages.+=(s"${boldToolName("Hoogle")}: " + HoogleComponent.versionInfo(project))
-    messages.+=(s"${boldToolName("Hindent")}: " + HaskellSettingsState.getHindentPath(project).map(hp =>
-      CommandLine.run(None, project.getBasePath, hp, Seq("--version")).getStdout).getOrElse("-"))
-    messages.+=(s"${boldToolName("Stylish-haskell")}: " + HaskellSettingsState.getStylishHaskellPath(project).map(sh =>
-      CommandLine.run(None, project.getBasePath, sh, Seq("--version")).getStdout).getOrElse("-"))
+    messages.+=(s"${boldToolName("Hindent")}: " + HindentFormatAction.versionInfo(project))
+    messages.+=(s"${boldToolName("Stylish-haskell")}: " + StylishHaskellFormatAction.versionInfo(project))
     Messages.showInfoMessage(project, messages.mkString("\n"), "About Haskell Project")
   }
 }

@@ -16,23 +16,8 @@
 
 package intellij.haskell.settings
 
-import com.intellij.openapi.project.Project
-import intellij.haskell.HaskellNotificationGroup
-
 object HaskellSettingsState {
   private def state = HaskellSettingsPersistentStateComponent.getInstance().getState
-
-  def getHindentPath(project: Project): Option[String] = {
-    val path = findPath(state.hindentPath)
-    notifyIfPathIsNotSet(project, path, HaskellConfigurable.Hindent)
-    path
-  }
-
-  def getStylishHaskellPath(project: Project): Option[String] = {
-    val path = findPath(state.stylishHaskellPath)
-    notifyIfPathIsNotSet(project, path, HaskellConfigurable.StylishHaskell)
-    path
-  }
 
   def getReplTimeout: Integer = {
     state.replTimeout
@@ -40,15 +25,5 @@ object HaskellSettingsState {
 
   def getHlintOptions: String = {
     state.hlintOptions
-  }
-
-  private def notifyIfPathIsNotSet(project: Project, path: Option[String], name: String) {
-    if (path.isEmpty) {
-      HaskellNotificationGroup.logErrorBalloonEvent(project, s"Path to <b>$name</b> is not set. Please do in <b>Settings</b>/<b>Other Settings</b>/<b>Haskell</b>.")
-    }
-  }
-
-  private def findPath(path: String): Option[String] = {
-    Option(path).filterNot(_.trim.isEmpty)
   }
 }

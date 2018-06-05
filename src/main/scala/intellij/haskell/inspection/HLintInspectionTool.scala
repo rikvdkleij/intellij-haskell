@@ -24,7 +24,9 @@ import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.util.Computable
 import com.intellij.psi.{PsiElement, PsiFile, TokenType}
 import com.intellij.util.WaitFor
-import intellij.haskell.external.component.{HLintComponent, HLintInfo}
+import intellij.haskell.HaskellNotificationGroup
+import intellij.haskell.external.component.HLintComponent.HLintName
+import intellij.haskell.external.component.{HLintComponent, HLintInfo, StackProjectManager}
 import intellij.haskell.psi.HaskellTypes._
 import intellij.haskell.util.{HaskellProjectUtil, LineColumnPosition}
 
@@ -32,8 +34,14 @@ import scala.annotation.tailrec
 
 class HLintInspectionTool extends LocalInspectionTool {
 
+
   override def checkFile(psiFile: PsiFile, manager: InspectionManager, isOnTheFly: Boolean): Array[ProblemDescriptor] = {
     ProgressManager.checkCanceled()
+
+    if (!StackProjectManager.isHlintAvailable(psiFile.getProject)) {
+      HaskellNotificationGroup.logInfoBalloonEvent(psiFile.getProject, s"$HLintName is not yet available")
+      return Array()
+    }
 
     if (HaskellProjectUtil.isLibraryFile(psiFile)) {
       return Array()

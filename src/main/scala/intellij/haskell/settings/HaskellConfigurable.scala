@@ -17,21 +17,16 @@
 package intellij.haskell.settings
 
 import java.awt.{GridBagConstraints, GridBagLayout, Insets}
+
+import com.intellij.openapi.options.{Configurable, ConfigurationException}
+import com.intellij.ui.DocumentAdapter
 import javax.swing._
 import javax.swing.event.DocumentEvent
-
-import com.intellij.openapi.fileChooser.FileChooserDescriptorFactory
-import com.intellij.openapi.options.{Configurable, ConfigurationException}
-import com.intellij.openapi.ui.TextFieldWithBrowseButton
-import com.intellij.openapi.util.SystemInfo
-import com.intellij.ui.DocumentAdapter
 
 import scala.language.{existentials, reflectiveCalls}
 
 class HaskellConfigurable extends Configurable {
   private var isModifiedByUser = false
-  private val hindentPathField = new TextFieldWithBrowseButton
-  private val stylishHaskellPathField = new TextFieldWithBrowseButton
   private val hlintOptionsField = new JTextField
   private val replTimeoutField = new JTextField
   private val replTimeoutLabel = new JLabel("Changed timeout will take effect after restarting project")
@@ -46,26 +41,12 @@ class HaskellConfigurable extends Configurable {
 
   override def createComponent: JComponent = {
 
-    hindentPathField.addBrowseFolderListener(
-      s"Select $Hindent",
-      null,
-      null,
-      FileChooserDescriptorFactory.createSingleLocalFileDescriptor())
-
-    stylishHaskellPathField.addBrowseFolderListener(
-      s"Select $StylishHaskell",
-      null,
-      null,
-      FileChooserDescriptorFactory.createSingleLocalFileDescriptor())
-
     val settingsPanel = new JPanel(new GridBagLayout())
 
     val listener: DocumentAdapter = (_: DocumentEvent) => {
       isModifiedByUser = true
     }
 
-    hindentPathField.getTextField.getDocument.addDocumentListener(listener)
-    stylishHaskellPathField.getTextField.getDocument.addDocumentListener(listener)
     hlintOptionsField.getDocument.addDocumentListener(listener)
     replTimeoutField.getDocument.addDocumentListener(listener)
 
@@ -104,37 +85,22 @@ class HaskellConfigurable extends Configurable {
       ))
     }
 
-    addLabeledControl(1, Hindent, hindentPathField)
-    addLabeledControl(2, StylishHaskell, stylishHaskellPathField)
-    addLabeledControl(3, HlintOptions, hlintOptionsField)
-    addLabeledControl(4, ReplTimout, replTimeoutField)
-    addLabeledControl(5, "", replTimeoutLabel)
+    addLabeledControl(1, HlintOptions, hlintOptionsField)
+    addLabeledControl(2, ReplTimout, replTimeoutField)
+    addLabeledControl(3, "", replTimeoutLabel)
 
     settingsPanel
   }
 
   override def apply() {
-    validatePaths()
     val validREPLTimeout = validateREPLTimeout()
 
     val state = HaskellSettingsPersistentStateComponent.getInstance().getState
-    state.hindentPath = hindentPathField.getText
-    state.stylishHaskellPath = stylishHaskellPathField.getText
     state.replTimeout = validREPLTimeout
     state.hlintOptions = hlintOptionsField.getText
   }
 
-  private def validatePaths() {
-    def validate(command: String, path: String) = {
-      val suffix = if (SystemInfo.isWindows) command + ".exe" else command
-      if (!path.endsWith(suffix) && !path.trim.isEmpty) {
-        throw new ConfigurationException(s"Invalid path to $command")
-      }
-    }
 
-    Seq((Hindent, hindentPathField.getText), (StylishHaskell, stylishHaskellPathField.getText)
-    ).foreach({ case (c, p) => validate(c, p) })
-  }
 
   private def validateREPLTimeout(): Integer = {
     val timeout = try {
@@ -156,16 +122,12 @@ class HaskellConfigurable extends Configurable {
 
   override def reset() {
     val state = HaskellSettingsPersistentStateComponent.getInstance().getState
-    hindentPathField.getTextField.setText(state.hindentPath)
-    stylishHaskellPathField.getTextField.setText(state.stylishHaskellPath)
     hlintOptionsField.setText(state.hlintOptions)
     replTimeoutField.setText(state.replTimeout.toString)
   }
 }
 
 object HaskellConfigurable {
-  final val Hindent = "hindent"
-  final val StylishHaskell = "stylish-haskell"
   final val ReplTimout = "Background REPL timeout in seconds"
   final val HlintOptions = "Hlint options"
 }

@@ -22,6 +22,7 @@ import com.intellij.openapi.progress.{PerformInBackgroundOption, ProgressIndicat
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.Messages
 import com.intellij.openapi.vfs.VirtualFileManager
+import intellij.haskell.action.{HindentFormatAction, StylishHaskellFormatAction}
 import intellij.haskell.external.execution.StackCommandLine
 import intellij.haskell.external.execution.StackCommandLine.build
 import intellij.haskell.external.repl.StackReplsManager
@@ -47,6 +48,14 @@ object StackProjectManager {
 
   def isHlintAvailable(project: Project): Boolean = {
     getStackProjectManager(project).exists(_.hlintAvailable)
+  }
+
+  def isStylishHaskellAvailable(project: Project): Boolean = {
+    getStackProjectManager(project).exists(_.stylishHaskellAvailable)
+  }
+
+  def isHindentAvailable(project: Project): Boolean = {
+    getStackProjectManager(project).exists(_.hindentAvailable)
   }
 
   def start(project: Project): Unit = {
@@ -132,6 +141,13 @@ object StackProjectManager {
               StackCommandLine.installTool(project, HoogleComponent.HoogleName)
               getStackProjectManager(project).foreach(_.hoogleAvailable = true)
 
+              progressIndicator.setText(s"Busy with installing ${StylishHaskellFormatAction.StylishHaskellName} in ${GlobalInfo.toolsBinPath}")
+              StackCommandLine.installTool(project, StylishHaskellFormatAction.StylishHaskellName)
+              getStackProjectManager(project).foreach(_.stylishHaskellAvailable = true)
+
+              progressIndicator.setText(s"Busy with installing ${HindentFormatAction.HindentName} in ${GlobalInfo.toolsBinPath}")
+              StackCommandLine.installTool(project, HindentFormatAction.HindentName)
+              getStackProjectManager(project).foreach(_.hindentAvailable = true)
 
               if (!HoogleComponent.doesHoogleDatabaseExist(project)) {
                 HoogleComponent.showHoogleDatabaseDoesNotExistNotification(project)
@@ -167,6 +183,12 @@ class StackProjectManager(project: Project) extends ProjectComponent {
 
   @volatile
   private var hlintAvailable = false
+
+  @volatile
+  private var stylishHaskellAvailable = false
+
+  @volatile
+  private var hindentAvailable = false
 
   @volatile
   private var replsManager: Option[StackReplsManager] = None

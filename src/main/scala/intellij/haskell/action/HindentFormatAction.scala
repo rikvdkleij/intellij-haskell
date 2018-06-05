@@ -23,11 +23,13 @@ import com.intellij.application.options.CodeStyle
 import com.intellij.openapi.actionSystem.{AnAction, AnActionEvent}
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.editor.SelectionModel
+import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Computable
 import com.intellij.psi.PsiFile
-import intellij.haskell.settings.HaskellSettingsState
+import intellij.haskell.external.component.StackProjectManager
+import intellij.haskell.external.execution.CommandLine
 import intellij.haskell.util.{FutureUtil, HaskellEditorUtil, HaskellFileUtil}
-import intellij.haskell.{HaskellLanguage, HaskellNotificationGroup}
+import intellij.haskell.{GlobalInfo, HaskellLanguage, HaskellNotificationGroup}
 
 import scala.annotation.tailrec
 import scala.collection.JavaConverters._
@@ -38,7 +40,7 @@ sealed case class SelectionContext(start: Int, end: Int, text: String)
 class HindentFormatAction extends AnAction {
 
   override def update(actionEvent: AnActionEvent) {
-    HaskellEditorUtil.enableAction(onlyForProjectFile = true, actionEvent)
+    HaskellEditorUtil.enableExternalAction(actionEvent, (project: Project) => StackProjectManager.isHindentAvailable(project))
   }
 
   override def actionPerformed(actionEvent: AnActionEvent): Unit = {
@@ -53,6 +55,7 @@ class HindentFormatAction extends AnAction {
 
 object HindentFormatAction {
   final val HindentName = "hindent"
+  private final val HindentPath = GlobalInfo.toolPath(HindentName)
 
   def format(psiFile: PsiFile, selectionContext: Option[SelectionContext] = None): Unit = {
     val lineLength = CodeStyle.getSettings(psiFile.getProject).getRightMargin(HaskellLanguage.Instance)
@@ -60,37 +63,36 @@ object HindentFormatAction {
     val project = psiFile.getProject
     HaskellFileUtil.saveFile(psiFile, checkCancelled = false)
 
-    HaskellSettingsState.getHindentPath(project) match {
-      case Some(hindentPath) =>
-        val command = Seq(hindentPath, "--line-length", lineLength.toString, "--indent-size", indentOptions.INDENT_SIZE.toString)
+    val command = Seq(HindentPath, "--line-length", lineLength.toString, "--indent-size", indentOptions.INDENT_SIZE.toString)
 
-        val formatAction = ApplicationManager.getApplication.executeOnPooledThread(new Callable[Either[String, String]] {
-          override def call(): Either[String, String] = {
-            selectionContext match {
-              case Some(sc) => writeToHindent(command, sc.text)
-              case None => writeToHindent(command, psiFile.getText)
-            }
-          }
-        })
-
-        val formattedSourceCode = FutureUtil.getValue(formatAction, project, s"formatting by `$HindentName`")
-        formattedSourceCode.foreach {
-          case Left(e) =>
-            HaskellNotificationGroup.logErrorEvent(project, e)
-            HaskellNotificationGroup.logErrorBalloonEvent(project, s"Error while formatting by <b>$HindentName</b>. Error: $e")
-          case Right(sourceCode) =>
-            selectionContext match {
-              case Some(sc) => HaskellFileUtil.saveFileWithPartlyNewContent(psiFile, sourceCode, sc)
-              case None => HaskellFileUtil.saveFileWithNewContent(psiFile, sourceCode)
-            }
+    val formatAction = ApplicationManager.getApplication.executeOnPooledThread(new Callable[Either[String, String]] {
+      override def call(): Either[String, String] = {
+        selectionContext match {
+          case Some(sc) => writeToHindent(command, sc.text)
+          case None => writeToHindent(command, psiFile.getText)
         }
+      }
+    })
 
-      case _ => HaskellNotificationGroup.logWarningEvent(project, s"Can not format code because path to `$HindentName` is not configured in IntelliJ")
+    val formattedSourceCode = FutureUtil.getValue(formatAction, project, s"formatting by `$HindentName`")
+    formattedSourceCode.foreach {
+      case Left(e) =>
+        HaskellNotificationGroup.logErrorEvent(project, e)
+        HaskellNotificationGroup.logErrorBalloonEvent(project, s"Error while formatting by <b>$HindentName</b>. Error: $e")
+      case Right(sourceCode) =>
+        selectionContext match {
+          case Some(sc) => HaskellFileUtil.saveFileWithPartlyNewContent(psiFile, sourceCode, sc)
+          case None => HaskellFileUtil.saveFileWithNewContent(psiFile, sourceCode)
+        }
     }
   }
 
   def translateSelectionModelToSelectionContext(selectionModel: SelectionModel): SelectionContext = {
     SelectionContext(selectionModel.getSelectionStart, selectionModel.getSelectionEnd, getSelectedText(selectionModel))
+  }
+
+  def versionInfo(project: Project): String = {
+    CommandLine.run(Some(project), project.getBasePath, HindentPath, Seq("--version")).getStdout
   }
 
   private def getSelectedText(selectionModel: SelectionModel) = {
