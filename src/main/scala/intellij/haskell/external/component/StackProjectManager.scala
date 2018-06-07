@@ -77,7 +77,27 @@ object StackProjectManager {
       } else {
         HaskellNotificationGroup.logInfoEvent(project, "Initializing Haskell project")
 
-        ProgressManager.getInstance().run(new Task.Backgroundable(project, "Building project, starting REPL(s), building tools and preloading cache", false, PerformInBackgroundOption.ALWAYS_BACKGROUND) {
+        ProgressManager.getInstance().run(new Task.Backgroundable(project, "Building tools", false, PerformInBackgroundOption.ALWAYS_BACKGROUND) {
+          override def run(progressIndicator: ProgressIndicator): Unit = {
+            progressIndicator.setText(s"Busy with installing ${HLintComponent.HLintName} in ${GlobalInfo.toolsBinPath}")
+            StackCommandLine.installTool(project, HLintComponent.HLintName)
+            getStackProjectManager(project).foreach(_.hlintAvailable = true)
+
+            progressIndicator.setText(s"Busy with installing ${HoogleComponent.HoogleName} in ${GlobalInfo.toolsBinPath}")
+            StackCommandLine.installTool(project, HoogleComponent.HoogleName)
+            getStackProjectManager(project).foreach(_.hoogleAvailable = true)
+
+            progressIndicator.setText(s"Busy with installing ${StylishHaskellFormatAction.StylishHaskellName} in ${GlobalInfo.toolsBinPath}")
+            StackCommandLine.installTool(project, StylishHaskellFormatAction.StylishHaskellName)
+            getStackProjectManager(project).foreach(_.stylishHaskellAvailable = true)
+
+            progressIndicator.setText(s"Busy with installing ${HindentFormatAction.HindentName} in ${GlobalInfo.toolsBinPath}")
+            StackCommandLine.installTool(project, HindentFormatAction.HindentName)
+            getStackProjectManager(project).foreach(_.hindentAvailable = true)
+          }
+        })
+
+        ProgressManager.getInstance().run(new Task.Backgroundable(project, "Building project, starting REPL(s) and preloading cache", false, PerformInBackgroundOption.ALWAYS_BACKGROUND) {
 
           def run(progressIndicator: ProgressIndicator) {
             getStackProjectManager(project).foreach(_.initializing = true)
@@ -132,22 +152,6 @@ object StackProjectManager {
                 HaskellNotificationGroup.logInfoEvent(project, "Restarting global REPL to release memory")
                 StackReplsManager.getGlobalRepl(project).foreach(_.restart())
               })
-
-              progressIndicator.setText(s"Busy with installing ${HLintComponent.HLintName} in ${GlobalInfo.toolsBinPath}")
-              StackCommandLine.installTool(project, HLintComponent.HLintName)
-              getStackProjectManager(project).foreach(_.hlintAvailable = true)
-
-              progressIndicator.setText(s"Busy with installing ${HoogleComponent.HoogleName} in ${GlobalInfo.toolsBinPath}")
-              StackCommandLine.installTool(project, HoogleComponent.HoogleName)
-              getStackProjectManager(project).foreach(_.hoogleAvailable = true)
-
-              progressIndicator.setText(s"Busy with installing ${StylishHaskellFormatAction.StylishHaskellName} in ${GlobalInfo.toolsBinPath}")
-              StackCommandLine.installTool(project, StylishHaskellFormatAction.StylishHaskellName)
-              getStackProjectManager(project).foreach(_.stylishHaskellAvailable = true)
-
-              progressIndicator.setText(s"Busy with installing ${HindentFormatAction.HindentName} in ${GlobalInfo.toolsBinPath}")
-              StackCommandLine.installTool(project, HindentFormatAction.HindentName)
-              getStackProjectManager(project).foreach(_.hindentAvailable = true)
 
               if (!HoogleComponent.doesHoogleDatabaseExist(project)) {
                 HoogleComponent.showHoogleDatabaseDoesNotExistNotification(project)
