@@ -219,7 +219,7 @@ object HaskellModuleBuilder {
       val dependenciesByModule = for {
         module <- projectModules
         packageName = module.getName
-        lines <- StackCommandLine.run(project, Seq("list-dependencies", packageName, "--test", "--bench"), timeoutInMillis = 60.seconds.toMillis).map(_.getStdoutLines)
+        lines <- StackCommandLine.run(project, Seq("ls", "dependencies", packageName, "--test", "--bench"), timeoutInMillis = 60.seconds.toMillis).map(_.getStdoutLines)
         dependencies = createDependencies(project, lines.asScala, projectModules).filterNot(p => packageName == p.name || p.name == "rts" || p.name == "ghc")
       } yield (module, dependencies)
 
