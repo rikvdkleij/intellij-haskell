@@ -89,6 +89,11 @@ class HaskellConfigurable extends Configurable {
     addLabeledControl(2, ReplTimout, replTimeoutField)
     addLabeledControl(3, "", replTimeoutLabel)
 
+    settingsPanel.add(new JPanel(), base.setConstraints(
+      gridx = 0,
+      gridy = 5,
+      weighty = 10.0
+    ))
     settingsPanel
   }
 
@@ -99,8 +104,6 @@ class HaskellConfigurable extends Configurable {
     state.replTimeout = validREPLTimeout
     state.hlintOptions = hlintOptionsField.getText
   }
-
-
 
   private def validateREPLTimeout(): Integer = {
     val timeout = try {
