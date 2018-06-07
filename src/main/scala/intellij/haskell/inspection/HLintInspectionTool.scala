@@ -24,9 +24,7 @@ import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.util.Computable
 import com.intellij.psi.{PsiElement, PsiFile, TokenType}
 import com.intellij.util.WaitFor
-import intellij.haskell.HaskellNotificationGroup
-import intellij.haskell.external.component.HLintComponent.HLintName
-import intellij.haskell.external.component.{HLintComponent, HLintInfo, StackProjectManager}
+import intellij.haskell.external.component.{HLintComponent, HLintInfo}
 import intellij.haskell.psi.HaskellTypes._
 import intellij.haskell.util.{HaskellProjectUtil, LineColumnPosition}
 
@@ -34,14 +32,8 @@ import scala.annotation.tailrec
 
 class HLintInspectionTool extends LocalInspectionTool {
 
-
   override def checkFile(psiFile: PsiFile, manager: InspectionManager, isOnTheFly: Boolean): Array[ProblemDescriptor] = {
     ProgressManager.checkCanceled()
-
-    if (!StackProjectManager.isHlintAvailable(psiFile.getProject)) {
-      HaskellNotificationGroup.logInfoBalloonEvent(psiFile.getProject, s"$HLintName is not yet available")
-      return Array()
-    }
 
     if (HaskellProjectUtil.isLibraryFile(psiFile)) {
       return Array()
@@ -72,11 +64,12 @@ class HLintInspectionTool extends LocalInspectionTool {
             override def run(): Unit = {
               ProgressManager.checkCanceled()
               hi.to match {
-                case Some(to) =>
+                case Some(to) if se.isValid && ee.isValid =>
                   problemsHolder.registerProblem(new ProblemDescriptorBase(se, ee, hi.hint, Array(createQuickfix(hi, se, ee, sl, el, to)), problemType, false, null, true, isOnTheFly))
                 case None =>
                   ProgressManager.checkCanceled()
                   problemsHolder.registerProblem(new ProblemDescriptorBase(se, ee, hi.hint, Array(), problemType, false, null, true, isOnTheFly))
+                case _ => ()
               }
             }
           })
@@ -154,7 +147,6 @@ class HLintInspectionTool extends LocalInspectionTool {
     Option(psiFile.findElementAt(offset)) match {
       case None => findHaskellIdentifier(psiFile, offset - 1)
       case Some(e) if HLintInspectionTool.NotHaskellIdentifiers.contains(e.getNode.getElementType) => findHaskellIdentifier(psiFile, offset - 1)
-      case e => e
     }
   }
 

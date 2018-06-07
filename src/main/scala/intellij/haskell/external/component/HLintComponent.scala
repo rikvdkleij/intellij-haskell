@@ -20,7 +20,7 @@ import com.intellij.openapi.project.Project
 import com.intellij.psi.PsiFile
 import intellij.haskell.external.execution.CommandLine
 import intellij.haskell.settings.HaskellSettingsState
-import intellij.haskell.util.HaskellFileUtil
+import intellij.haskell.util.{HaskellEditorUtil, HaskellFileUtil}
 import intellij.haskell.{GlobalInfo, HaskellNotificationGroup}
 import spray.json.JsonParser.ParsingException
 import spray.json.{DefaultJsonProtocol, _}
@@ -48,7 +48,7 @@ object HLintComponent {
           Seq()
       }
     } else {
-      HaskellNotificationGroup.logInfoEvent(psiFile.getProject, s"$HLintName is not yet available")
+      HaskellEditorUtil.showStatusBarNotificationBalloon(psiFile.getProject, s"$HLintName is not yet available")
       Seq()
     }
   }
