@@ -55,7 +55,7 @@ object StackCommandLine {
   def installTool(project: Project, toolName: String): Option[ProcessOutput] = {
     import intellij.haskell.GlobalInfo._
     val arguments = Seq("--stack-root", toolsStackRootPath, "--resolver", StackageLtsVersion, "--system-ghc", "--local-bin-path", toolsBinPath, "install", toolName)
-    run(project, arguments, -1, logOutput = true, workDir = Some(toolsStackRootPath), notifyBalloonError = true)
+    run(project, arguments, -1, logOutput = true, notifyBalloonError = true)
   }
 
   def buildProject(project: Project, logBuildResult: Boolean): Option[ProcessOutput] = {

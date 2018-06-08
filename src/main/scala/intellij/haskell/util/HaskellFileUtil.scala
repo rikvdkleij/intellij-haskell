@@ -173,8 +173,11 @@ object HaskellFileUtil {
     VirtualFileManager.constructUrl(LocalFileSystem.getInstance.getProtocol, absolutePath)
   }
 
-  def createDirectoryIfNotExists(directory: File): Unit = {
+  def createDirectoryIfNotExists(directory: File, onlyWriteableByOwner : Boolean ): Unit = {
     if (!directory.exists()) {
+      if (onlyWriteableByOwner) {
+        directory.setWritable(true, true)
+      }
       val result = FileUtil.createDirectory(directory)
       if (!result) {
         throw new RuntimeException(s"Could not create directory ${directory.getAbsolutePath}")

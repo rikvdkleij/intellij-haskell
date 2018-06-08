@@ -345,6 +345,7 @@ abstract class StackRepl(project: Project, componentInfo: Option[StackComponentI
   def createGhciOptionsFile: File = {
     val ghciOptionsFile = new File(GlobalInfo.getIntelliJHaskellDirectory, "repl.ghci")
     if (!ghciOptionsFile.exists()) {
+      ghciOptionsFile.setWritable(true, true)
       val writer = new BufferedWriter(new FileWriter(ghciOptionsFile))
       try {
         writer.write(s""":set prompt "$EndOfOutputIndicator\\n"""")

@@ -1,7 +1,8 @@
 package intellij.haskell
 
 import java.io.File
-import java.nio.file.Paths
+import java.nio.file.attribute.PosixFilePermission
+import java.nio.file.{Files, Paths}
 
 import com.intellij.openapi.vfs.VfsUtil
 import intellij.haskell.util.HaskellFileUtil
@@ -18,7 +19,16 @@ object GlobalInfo {
   def getIntelliJHaskellDirectory: File = {
     val homeDirectory = HaskellFileUtil.getAbsolutePath(VfsUtil.getUserHomeDir)
     val directory = new File(homeDirectory, IntelliJHaskellDirName)
-    HaskellFileUtil.createDirectoryIfNotExists(directory)
+    if (directory.exists()) {
+      val directoryPath = Paths.get(directory.getAbsolutePath)
+      val permissions = Files.getPosixFilePermissions(directoryPath)
+      if (permissions.contains(PosixFilePermission.GROUP_WRITE)) {
+        permissions.remove(PosixFilePermission.GROUP_WRITE)
+        Files.setPosixFilePermissions(directoryPath, permissions)
+      }
+    } else {
+      HaskellFileUtil.createDirectoryIfNotExists(directory, onlyWriteableByOwner = true)
+    }
     directory
   }
 
@@ -27,9 +37,7 @@ object GlobalInfo {
   }
 
   def toolsStackRootPath: String = {
-    val path = Paths.get(getIntelliJHaskellDirectory.getAbsolutePath, StackageLtsVersion).toString
-    HaskellFileUtil.createDirectoryIfNotExists(new File(path))
-    path
+    Paths.get(getIntelliJHaskellDirectory.getAbsolutePath, StackageLtsVersion).toString
   }
 
   def toolsBinPath: String = {

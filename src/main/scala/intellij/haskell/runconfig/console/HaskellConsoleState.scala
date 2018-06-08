@@ -31,11 +31,12 @@ class HaskellConsoleState(val configuration: HaskellConsoleConfiguration, val en
         val ghc821Compatible = ghcVersion.exists(_ >= GhcVersion(8, 2, 1))
         val ghciScriptName = if (ghc821Compatible) "8.2.1.ghci" else "default.ghci"
         val ghciScript = new File(GlobalInfo.getIntelliJHaskellDirectory, ghciScriptName)
-        
+
         if(!ghciScript.exists()) {
+          ghciScript.setWritable(true, true)
           HaskellFileUtil.copyStreamToFile(getClass.getResourceAsStream(s"/ghci/$ghciScriptName"), ghciScript)
         }
-        
+
         val commandLine = new GeneralCommandLine(stackPath)
           .withParameters(configuration.replCommand, "--ghci-options", s"-ghci-script ${ghciScript.getAbsolutePath}")
           .withWorkDirectory(project.getBasePath)
