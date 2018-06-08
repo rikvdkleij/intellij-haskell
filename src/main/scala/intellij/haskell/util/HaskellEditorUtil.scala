@@ -143,15 +143,20 @@ object HaskellEditorUtil {
   }
 
   def showStatusBarInfoMessage(project: Project, message: String): Unit = {
-    WindowManager.getInstance().getStatusBar(project).setInfo(message)
+    for {
+      wm <- Option(WindowManager.getInstance())
+      sb <- Option(wm.getStatusBar(project))
+    } yield sb.setInfo(message)
   }
 
   def showStatusBarNotificationBalloon(project: Project, message: String): Unit = {
     UIUtil.invokeLaterIfNeeded(() => {
       def run() = {
-        val ideFrame = WindowManager.getInstance.getIdeFrame(project)
-        if (ideFrame != null) {
-          val statusBar = ideFrame.getStatusBar.asInstanceOf[StatusBarEx]
+        for {
+          wm <- Option(WindowManager.getInstance)
+          f <- Option(wm.getIdeFrame(project))
+          statusBar <- Option(f.getStatusBar.asInstanceOf[StatusBarEx])
+        } yield {
           statusBar.notifyProgressByBalloon(MessageType.WARNING, message, null.asInstanceOf[Icon], null.asInstanceOf[HyperlinkListener])
         }
       }
