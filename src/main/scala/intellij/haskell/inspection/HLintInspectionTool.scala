@@ -147,6 +147,7 @@ class HLintInspectionTool extends LocalInspectionTool {
     Option(psiFile.findElementAt(offset)) match {
       case None => findHaskellIdentifier(psiFile, offset - 1)
       case Some(e) if HLintInspectionTool.NotHaskellIdentifiers.contains(e.getNode.getElementType) => findHaskellIdentifier(psiFile, offset - 1)
+      case e => e
     }
   }
 
