@@ -55,8 +55,15 @@ class ProjectStackRepl(project: Project, stackComponentInfo: StackComponentInfo,
   @volatile
   private var busy = false
 
+  @volatile
+  private var loading: Option[PsiFile] = None
+
   def isBusy: Boolean = {
     busy
+  }
+
+  def isLoading: Option[PsiFile] = {
+    loading
   }
 
   def findTypeInfo(moduleName: Option[String], psiFile: PsiFile, startLineNr: Int, startColumnNr: Int, endLineNr: Int, endColumnNr: Int, expression: String): Option[StackReplOutput] = {
@@ -95,9 +102,9 @@ class ProjectStackRepl(project: Project, stackComponentInfo: StackComponentInfo,
       val reload = loaded == Loaded || loaded == Failed
       val output = if (reload) {
         HaskellNotificationGroup.logInfoEvent(project, s"Reload of $filePath")
-        executeWithSettingBusy(s":reload")
+        executeWithSettingBusy(Seq(s":reload"), load = Some(psiFile))
       } else {
-        executeWithSettingBusy(s":load $filePath")
+        executeWithSettingBusy(Seq(s":load $filePath"), load = Some(psiFile))
       }
       output match {
         case Some(o) =>
@@ -134,11 +141,11 @@ class ProjectStackRepl(project: Project, stackComponentInfo: StackComponentInfo,
   // To retrieve only library module names, it will first execute `load` to remove all modules from scope
   def findAvailableLibraryModuleNames(project: Project): Option[StackReplOutput] = synchronized {
     loadedModule = None
-    executeWithSettingBusy(":load", """:complete repl "import " """)
+    executeWithSettingBusy(Seq(":load", """:complete repl "import " """))
   }
 
   def showActiveLanguageFlags: Option[StackReplOutput] = synchronized {
-    executeWithSettingBusy(":show language")
+    executeWithSettingBusy(Seq(":show language"))
   }
 
   override def restart(forceExit: Boolean): Unit = synchronized {
@@ -154,7 +161,7 @@ class ProjectStackRepl(project: Project, stackComponentInfo: StackComponentInfo,
       case Some(lf) if lf.loadFailed => Some(StackReplOutput())
       case Some(_) =>
         if (setBusy) {
-          executeWithSettingBusy(command)
+          executeWithSettingBusy(Seq(command))
         } else {
           executeWithoutSettingBusy(Seq(command))
         }
@@ -165,24 +172,26 @@ class ProjectStackRepl(project: Project, stackComponentInfo: StackComponentInfo,
 
   private def executeWithLoad(psiFile: PsiFile, command: String, moduleName: Option[String] = None): Option[StackReplOutput] = synchronized {
     loadedModule match {
-      case Some(info) if info.psiFile == psiFile && !info.loadFailed => executeWithSettingBusy(command)
+      case Some(info) if info.psiFile == psiFile && !info.loadFailed => executeWithSettingBusy(Seq(command))
       case Some(info) if info.psiFile == psiFile && info.loadFailed => Some(StackReplOutput())
       case _ =>
         load(psiFile)
         loadedModule match {
           case None => None
-          case Some(info) if info.psiFile == psiFile && !info.loadFailed => executeWithSettingBusy(command)
+          case Some(info) if info.psiFile == psiFile && !info.loadFailed => executeWithSettingBusy(Seq(command))
           case _ => Some(StackReplOutput())
         }
     }
   }
 
-  private def executeWithSettingBusy(commands: String*) = {
+  private def executeWithSettingBusy(commands: Seq[String], load: Option[PsiFile] = None) = {
     try {
       busy = true
+      loading = load
       executeWithoutSettingBusy(commands)
     } finally {
       busy = false
+      loading = None
     }
   }
 

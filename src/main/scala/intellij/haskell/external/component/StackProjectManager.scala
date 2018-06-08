@@ -18,16 +18,18 @@ package intellij.haskell.external.component
 
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.components.ProjectComponent
+import com.intellij.openapi.fileEditor.FileEditorManager
 import com.intellij.openapi.progress.{PerformInBackgroundOption, ProgressIndicator, ProgressManager, Task}
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.Messages
 import com.intellij.openapi.vfs.VirtualFileManager
 import intellij.haskell.action.{HindentFormatAction, StylishHaskellFormatAction}
+import intellij.haskell.annotator.HaskellAnnotator
 import intellij.haskell.external.execution.StackCommandLine
 import intellij.haskell.external.execution.StackCommandLine.build
 import intellij.haskell.external.repl.StackReplsManager
 import intellij.haskell.module.HaskellModuleBuilder
-import intellij.haskell.util.{HaskellProjectUtil, ScalaUtil}
+import intellij.haskell.util.{HaskellFileUtil, HaskellProjectUtil, ScalaUtil}
 import intellij.haskell.{GlobalInfo, HaskellNotificationGroup}
 
 object StackProjectManager {
@@ -132,6 +134,15 @@ object StackProjectManager {
 
                 progressIndicator.setText(s"Busy with building Intero ")
                 build(project, Seq("intero"), logBuildResult = true)
+
+                //  Force to load the module in REPL when REPL can be started. It could have happen that IntelliJ wanted to load file (via HaskellAnnotator)
+                // but REPL could not be started.
+                FileEditorManager.getInstance(project).getSelectedFiles.headOption match {
+                  case Some(vf) =>
+                    val psiFile = ApplicationManager.getApplication.runReadAction(ScalaUtil.computable(HaskellFileUtil.convertToHaskellFile(project, vf)))
+                    psiFile.foreach(HaskellAnnotator.restartDaemonCodeAnalyzerForFile)
+                  case None => ()
+                }
 
                 progressIndicator.setText("Busy with starting global Stack REPL")
                 StackReplsManager.getGlobalRepl(project).foreach(_.start())

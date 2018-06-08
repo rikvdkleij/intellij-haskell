@@ -19,14 +19,15 @@ package intellij.haskell.external.component
 import java.util.concurrent.TimeUnit
 
 import com.github.blemale.scaffeine.{AsyncLoadingCache, Scaffeine}
+import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.project.Project
 import com.intellij.psi.PsiFile
 import com.intellij.psi.search.GlobalSearchScope
 import intellij.haskell.external.repl.StackRepl.StackReplOutput
 import intellij.haskell.external.repl.StackReplsManager
 import intellij.haskell.psi._
-import intellij.haskell.util.LineColumnPosition
 import intellij.haskell.util.index.HaskellFilePathIndex
+import intellij.haskell.util.{LineColumnPosition, ScalaUtil}
 
 import scala.concurrent.duration.Duration
 import scala.concurrent.{Await, Future, TimeoutException}
@@ -132,7 +133,16 @@ private[component] object DefinitionLocationComponent {
       case Some(r) => matchResult(wait(r))
       case None =>
         if (!LoadComponent.isModuleLoaded(moduleName, psiFile) && isCurrentFile) {
-          Left(NoInfoAvailable)
+          if (LoadComponent.isLoading(psiFile)) {
+            Left(ReplIsBusy)
+          } else {
+            if (!LoadComponent.isFileLoadedFailed(psiFile)) {
+              ApplicationManager.getApplication.executeOnPooledThread(ScalaUtil.runnable(LoadComponent.load(psiFile, None)))
+              Left(ReplIsBusy)
+            } else {
+              Left(NoInfoAvailable)
+            }
+          }
         } else {
           matchResult(wait(Cache.get(key)))
         }

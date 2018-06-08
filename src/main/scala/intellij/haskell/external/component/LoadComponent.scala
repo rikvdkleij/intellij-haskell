@@ -21,7 +21,7 @@ import com.intellij.openapi.project.Project
 import com.intellij.psi.search.GlobalSearchScope
 import com.intellij.psi.{PsiElement, PsiFile}
 import intellij.haskell.external.execution.{CompilationResult, HaskellCompilationResultHelper}
-import intellij.haskell.external.repl.ProjectStackRepl.Loaded
+import intellij.haskell.external.repl.ProjectStackRepl.{Failed, Loaded}
 import intellij.haskell.external.repl.StackReplsManager.StackComponentInfo
 import intellij.haskell.external.repl._
 import intellij.haskell.util.ScalaUtil
@@ -32,6 +32,11 @@ private[component] object LoadComponent {
   def isFileLoaded(psiFile: PsiFile): Boolean = {
     val projectRepl = StackReplsManager.getProjectRepl(psiFile)
     projectRepl.map(_.isFileLoaded(psiFile)).contains(Loaded)
+  }
+
+  def isFileLoadedFailed(psiFile: PsiFile): Boolean = {
+    val projectRepl = StackReplsManager.getProjectRepl(psiFile)
+    projectRepl.map(_.isFileLoaded(psiFile)).contains(Failed)
   }
 
   def isModuleLoaded(moduleName: Option[String], psiFile: PsiFile): Boolean = {
@@ -51,6 +56,11 @@ private[component] object LoadComponent {
   def isBusy(psiFile: PsiFile): Boolean = {
     val projectRepl = StackReplsManager.getRunningProjectRepl(psiFile)
     projectRepl.exists(_.isBusy)
+  }
+
+  def isLoading(psiFile: PsiFile): Boolean = {
+    val projectRepl = StackReplsManager.getRunningProjectRepl(psiFile)
+    projectRepl.exists(_.isLoading.exists(_ == psiFile))
   }
 
   def load(psiFile: PsiFile, currentElement: Option[PsiElement]): Option[CompilationResult] = {
