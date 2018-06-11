@@ -146,7 +146,7 @@ private onls                ::= (&<<containsSpaces>> NEWLINE | DIRECTIVE NEWLINE
 private nls                 ::= (&<<containsSpaces>> NEWLINE)+                          // multiple new lines and spaces
 private oonls               ::= (&<<containsSpaces>> NEWLINE)?                         // optional one (new line and spaces)
 
-comments                    ::= COMMENT | NCOMMENT | NCOMMENT_START | NCOMMENT_END | HADDOCK | NHADDOCK | NOT_TERMINATED_COMMENT  // rule is necessary to refer to various comment types in code
+comments                    ::= COMMENT | NCOMMENT | HADDOCK | NHADDOCK | NOT_TERMINATED_COMMENT  // rule is necessary to refer to various comment types in code
 
 modid                       ::= (conid DOT)* conid {pin=1 recoverWhile=modid_recover_rule stubClass = "intellij.haskell.psi.stubs.HaskellModidStub"}
 private modid_recover_rule  ::= DOT

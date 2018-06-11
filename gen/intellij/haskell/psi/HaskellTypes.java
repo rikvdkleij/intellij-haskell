@@ -145,8 +145,6 @@ public interface HaskellTypes {
   IElementType HS_LET = new HaskellTokenType("LET");
   IElementType HS_MODULE = new HaskellTokenType("MODULE");
   IElementType HS_NCOMMENT = new HaskellTokenType("NCOMMENT");
-  IElementType HS_NCOMMENT_END = new HaskellTokenType("NCOMMENT_END");
-  IElementType HS_NCOMMENT_START = new HaskellTokenType("NCOMMENT_START");
   IElementType HS_NEWLINE = new HaskellTokenType("NEWLINE");
   IElementType HS_NEWTYPE = new HaskellTokenType("NEWTYPE");
   IElementType HS_NHADDOCK = new HaskellTokenType("NHADDOCK");

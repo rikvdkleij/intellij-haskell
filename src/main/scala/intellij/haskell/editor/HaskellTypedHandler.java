@@ -18,7 +18,6 @@ package intellij.haskell.editor;
 
 import com.intellij.codeInsight.CodeInsightSettings;
 import com.intellij.codeInsight.editorActions.TypedHandlerDelegate;
-import com.intellij.codeInsight.highlighting.BraceMatcher;
 import com.intellij.codeInsight.highlighting.BraceMatchingUtil;
 import com.intellij.openapi.application.TransactionGuard;
 import com.intellij.openapi.editor.Editor;
@@ -38,8 +37,9 @@ import org.jetbrains.annotations.NotNull;
  */
 public class HaskellTypedHandler extends TypedHandlerDelegate {
 
+    @NotNull
     @Override
-    public Result charTyped(char c, Project project, @NotNull Editor editor, @NotNull PsiFile file) {
+    public Result charTyped(char c, @NotNull Project project, @NotNull Editor editor, @NotNull PsiFile file) {
         if (!(file instanceof HaskellFile)) return super.charTyped(c, project, editor, file);
 
         if ((c != '{' && c != '-' && c != '#') || !CodeInsightSettings.getInstance().AUTOINSERT_PAIR_BRACKET) {
@@ -50,7 +50,7 @@ public class HaskellTypedHandler extends TypedHandlerDelegate {
     }
 
     /**
-     * this is almost complete c'n'p from TypedHandler,
+     * This is originally copied from TypedHandler,
      * This code should be generalized into BraceMatchingUtil to support custom matching braces for plugin developers
      *
      * @see com.intellij.codeInsight.editorActions.TypedHandler
@@ -64,31 +64,8 @@ public class HaskellTypedHandler extends TypedHandlerDelegate {
         FileType fileType = file.getFileType();
         int offset = editor.getCaretModel().getOffset();
         HighlighterIterator iterator = ((EditorEx) editor).getHighlighter().createIterator(offset);
-        boolean atEndOfDocument = offset == editor.getDocument().getTextLength();
-
-        if (!atEndOfDocument) iterator.retreat();
-        if (iterator.atEnd()) return;
-        BraceMatcher braceMatcher = BraceMatchingUtil.getBraceMatcher(fileType, iterator);
-        if (iterator.atEnd()) return;
         IElementType braceTokenType = iterator.getTokenType();
         final CharSequence fileText = editor.getDocument().getCharsSequence();
-        if (!braceMatcher.isLBraceToken(iterator, fileText, fileType)) return;
-
-        if (!iterator.atEnd()) {
-            iterator.advance();
-
-            if (!iterator.atEnd()) {
-                if (!BraceMatchingUtil.isPairedBracesAllowedBeforeTypeInFileType(braceTokenType, iterator.getTokenType(), fileType)) {
-                    return;
-                }
-                if (BraceMatchingUtil.isLBraceToken(iterator, fileText, fileType)) {
-                    return;
-                }
-            }
-
-            iterator.retreat();
-        }
-
         int lparenOffset = BraceMatchingUtil.findLeftmostLParen(iterator, braceTokenType, fileText, fileType);
         if (lparenOffset < 0) lparenOffset = 0;
 
