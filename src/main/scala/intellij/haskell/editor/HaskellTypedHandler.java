@@ -18,61 +18,47 @@ package intellij.haskell.editor;
 
 import com.intellij.codeInsight.CodeInsightSettings;
 import com.intellij.codeInsight.editorActions.TypedHandlerDelegate;
-import com.intellij.codeInsight.highlighting.BraceMatchingUtil;
 import com.intellij.openapi.application.TransactionGuard;
 import com.intellij.openapi.editor.Editor;
-import com.intellij.openapi.editor.ex.EditorEx;
-import com.intellij.openapi.editor.highlighter.HighlighterIterator;
-import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiFile;
-import com.intellij.psi.tree.IElementType;
 import com.intellij.util.text.CharArrayCharSequence;
 import intellij.haskell.HaskellFile;
 import org.jetbrains.annotations.NotNull;
 
 /**
- * Credits to Erlang plugin for this code that automatically closes paired braces.
+ * Credits to Erlang plugin for the initial code that automatically closes paired braces.
  */
 public class HaskellTypedHandler extends TypedHandlerDelegate {
 
     @NotNull
     @Override
-    public Result charTyped(char c, @NotNull Project project, @NotNull Editor editor, @NotNull PsiFile file) {
-        if (!(file instanceof HaskellFile)) return super.charTyped(c, project, editor, file);
+    public Result charTyped(char c, @NotNull Project project, @NotNull Editor editor, @NotNull PsiFile psiFile) {
+        if (!(psiFile instanceof HaskellFile)) return super.charTyped(c, project, editor, psiFile);
 
-        if ((c != '{' && c != '-' && c != '#') || !CodeInsightSettings.getInstance().AUTOINSERT_PAIR_BRACKET) {
+        if ((c != '-' && c != '#') || !CodeInsightSettings.getInstance().AUTOINSERT_PAIR_BRACKET) {
             return Result.CONTINUE;
         }
-        TransactionGuard.getInstance().submitTransactionAndWait(() -> insertMatchedEndComment(project, editor, file, c));
+
+        TransactionGuard.getInstance().submitTransactionAndWait(() -> insertMatchedEndComment(project, editor, psiFile, c));
         return Result.CONTINUE;
     }
 
     /**
      * This is originally copied from TypedHandler,
-     * This code should be generalized into BraceMatchingUtil to support custom matching braces for plugin developers
      *
      * @see com.intellij.codeInsight.editorActions.TypedHandler
-     * @see com.intellij.codeInsight.highlighting.BraceMatchingUtil
      */
-    private static void insertMatchedEndComment(Project project, Editor editor, PsiFile file, char c) {
-        if (!(file instanceof HaskellFile)) return;
+    private static void insertMatchedEndComment(Project project, Editor editor, PsiFile psiFile, char c) {
+        if (!(psiFile instanceof HaskellFile)) return;
 
         PsiDocumentManager.getInstance(project).commitAllDocuments();
 
-        FileType fileType = file.getFileType();
         int offset = editor.getCaretModel().getOffset();
-        HighlighterIterator iterator = ((EditorEx) editor).getHighlighter().createIterator(offset);
-        IElementType braceTokenType = iterator.getTokenType();
         final CharSequence fileText = editor.getDocument().getCharsSequence();
-        int lparenOffset = BraceMatchingUtil.findLeftmostLParen(iterator, braceTokenType, fileText, fileType);
-        if (lparenOffset < 0) lparenOffset = 0;
 
-        iterator = ((EditorEx) editor).getHighlighter().createIterator(lparenOffset);
-
-        if (!BraceMatchingUtil.matchBrace(fileText, fileType, iterator, true, true)) {
-            // Some other mechanism has put the closing '}' in the document already.
+        if ((offset > 1 && c == '-' && fileText.charAt(offset - 2) == '{') || ((offset > 2 && c == '#' && fileText.charAt(offset - 3) == '{'))) {
             editor.getDocument().insertString(offset, new CharArrayCharSequence(c));
         }
     }
