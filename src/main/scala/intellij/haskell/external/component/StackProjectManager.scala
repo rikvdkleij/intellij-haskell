@@ -78,6 +78,8 @@ object StackProjectManager {
         HaskellNotificationGroup.logWarningBalloonEvent(project, "Action is not possible because project is initializing")
       } else {
         HaskellNotificationGroup.logInfoEvent(project, "Initializing Haskell project")
+        getStackProjectManager(project).foreach(_.initializing = true)
+        getStackProjectManager(project).foreach(_.building = true)
 
         ProgressManager.getInstance().run(new Task.Backgroundable(project, "Building tools", false, PerformInBackgroundOption.ALWAYS_BACKGROUND) {
           override def run(progressIndicator: ProgressIndicator): Unit = {
@@ -102,12 +104,15 @@ object StackProjectManager {
         ProgressManager.getInstance().run(new Task.Backgroundable(project, "Building project, starting REPL(s) and preloading cache", false, PerformInBackgroundOption.ALWAYS_BACKGROUND) {
 
           def run(progressIndicator: ProgressIndicator) {
-            getStackProjectManager(project).foreach(_.initializing = true)
-            getStackProjectManager(project).foreach(_.building = true)
             try {
               try {
                 progressIndicator.setText("Busy with building project")
-                StackCommandLine.buildProjectInMessageView(project)
+                val result = StackCommandLine.buildProjectDependenciesInMessageView(project)
+                if (result.contains(true)) {
+                  StackCommandLine.buildProjectInMessageView(project)
+                } else {
+                  HaskellNotificationGroup.logErrorBalloonEvent(project, "Project will not be built because building it's dependencies failed")
+                }
 
                 ApplicationManager.getApplication.getMessageBus.connect(project).subscribe(VirtualFileManager.VFS_CHANGES, new ProjectLibraryFileWatcher(project))
 
