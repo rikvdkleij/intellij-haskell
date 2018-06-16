@@ -70,8 +70,7 @@ object HaskellFileUtil {
   def getAbsolutePath(psiFile: PsiFile): Option[String] = {
     Option(psiFile.getOriginalFile.getVirtualFile) match {
       case Some(vf) => Some(getAbsolutePath(vf))
-      case None =>
-        None
+      case None => None
     }
   }
 

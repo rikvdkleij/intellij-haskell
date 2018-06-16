@@ -28,6 +28,22 @@ import intellij.haskell.util.{HaskellEditorUtil, HaskellProjectUtil}
 
 class HaskellDocumentationProvider extends AbstractDocumentationProvider {
 
+  override def getQuickNavigateInfo(element: PsiElement, originalElement: PsiElement): String = {
+    val moduleName = HaskellFilePathIndex.findModuleName(element.getContainingFile, GlobalSearchScope.projectScope(element.getProject))
+    val projectFile = Option(originalElement.getContainingFile).exists(HaskellProjectUtil.isProjectFile)
+    val typeSignature = if (projectFile) {
+      TypeInfoComponent.findTypeInfoForElement(originalElement).toOption.map(_.typeSignature)
+    } else {
+      None
+    }
+    (moduleName, typeSignature) match {
+      case (Some(mn), Some(ts)) => s"""$ts &nbsp;&nbsp; -- $mn """
+      case (Some(mn), None) => s"""$mn &nbsp;&nbsp; -- No type info available""" + (if (projectFile) " (at this moment)" else "")
+      case (None, Some(ts)) => s"""$ts &nbsp;&nbsp; -- No module info available (at this moment)"""
+      case (None, None) => "No info available (at this moment)"
+    }
+  }
+
   override def generateDoc(psiElement: PsiElement, originalPsiElement: PsiElement): String = {
     val project = psiElement.getProject
     if (!StackProjectManager.isBuilding(project)) {

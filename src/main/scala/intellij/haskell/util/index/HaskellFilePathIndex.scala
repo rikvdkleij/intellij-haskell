@@ -19,7 +19,8 @@ package intellij.haskell.util.index
 import java.io.{DataInput, DataOutput}
 import java.util.Collections
 
-import com.intellij.openapi.project.DumbService
+import com.intellij.openapi.application.ApplicationManager
+import com.intellij.openapi.project.IndexNotReadyException
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.psi.PsiFile
 import com.intellij.psi.search.GlobalSearchScope
@@ -28,7 +29,7 @@ import com.intellij.util.indexing._
 import com.intellij.util.io.{DataExternalizer, EnumeratorStringDescriptor, IOUtil, KeyDescriptor}
 import intellij.haskell.HaskellFileType
 import intellij.haskell.psi.HaskellPsiUtil
-import intellij.haskell.util.ScalaUtil
+import intellij.haskell.util.{HaskellFileUtil, ScalaUtil}
 
 import scala.collection.JavaConverters._
 
@@ -45,12 +46,19 @@ object HaskellFilePathIndex {
   }
 
   def findModuleName(psiFile: PsiFile, searchScope: GlobalSearchScope): Option[String] = {
-    val path = psiFile.getVirtualFile.getPath
-    Option(DumbService.getInstance(psiFile.getProject).tryRunReadActionInSmartMode(ScalaUtil.computable(FileBasedIndex.getInstance.getValues(HaskellFilePathIndex, path, searchScope).asScala), null)) match {
-      case None => HaskellPsiUtil.findModuleName(psiFile, runInRead = true)
-      case Some(v) =>
-        // Should be only one entry max
-        v.headOption.flatten
+    HaskellFileUtil.getAbsolutePath(psiFile) match {
+      case Some(path) =>
+        val result =
+          try {
+            ApplicationManager.getApplication.runReadAction(ScalaUtil.computable(FileBasedIndex.getInstance.getValues(HaskellFilePathIndex, path, searchScope).asScala)).headOption.flatten
+          } catch {
+            case _: IndexNotReadyException => None
+          }
+        result match {
+          case None => HaskellPsiUtil.findModuleName(psiFile, runInRead = true)
+          case mn => mn
+        }
+      case None => None
     }
   }
 }
@@ -77,7 +85,7 @@ class HaskellFilePathIndex extends FileBasedIndexExtension[String, Option[String
     def map(fileContent: FileContent): java.util.Map[String, Option[String]] = {
       val psiFile = fileContent.getPsiFile
       val path = fileContent.getFile.getPath
-      HaskellPsiUtil.findModuleDeclaration(psiFile).flatMap(_.getModuleName) match {
+      HaskellPsiUtil.findModuleName(psiFile) match {
         case Some(mn) => Collections.singletonMap(path, Some(mn))
         case _ => Collections.singletonMap(path, None)
       }

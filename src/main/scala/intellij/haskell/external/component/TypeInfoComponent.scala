@@ -35,12 +35,12 @@ private[component] object TypeInfoComponent {
 
   import intellij.haskell.external.component.TypeInfoComponentResult._
 
-  private case class Key(psiFile: PsiFile, startLineNr: Int, startColumnNr: Int, endLineNr: Int, endColumnNr: Int, expression: String)
+  private case class Key(moduleName: Option[String], psiFile: PsiFile, startLineNr: Int, startColumnNr: Int, endLineNr: Int, endColumnNr: Int, expression: String)
 
   private final val Cache: AsyncLoadingCache[Key, TypeInfoResult] = Scaffeine().buildAsync((k: Key) => findTypeInfoResult(k))
 
-  def findTypeInfoForElement(psiElement: PsiElement): Option[TypeInfoResult] = {
-    val result = if (psiElement.isValid) {
+  def findTypeInfoForElement(psiElement: PsiElement): TypeInfoResult = {
+    if (psiElement.isValid) {
       ApplicationManager.getApplication.runReadAction(ScalaUtil.computable {
         for {
           qne <- HaskellPsiUtil.findQualifiedNameParent(psiElement)
@@ -48,20 +48,24 @@ private[component] object TypeInfoComponent {
           pf <- Option(psiElement.getContainingFile)
           sp <- LineColumnPosition.fromOffset(pf, to)
           ep <- LineColumnPosition.fromOffset(pf, to + qne.getText.length)
-        } yield Key(pf, sp.lineNr, sp.columnNr, ep.lineNr, ep.columnNr, qne.getName)
-      }).map(findTypeInfo)
+        } yield {
+          val moduleName = HaskellFilePathIndex.findModuleName(pf, GlobalSearchScope.projectScope(pf.getProject))
+          Key(moduleName, pf, sp.lineNr, sp.columnNr, ep.lineNr, ep.columnNr, qne.getName)
+        }
+      }).map(findTypeInfo).getOrElse(Left(NoInfoAvailable))
     } else {
-      None
+      Left(NoInfoAvailable)
     }
-    result
   }
 
   def findTypeInfoForSelection(psiFile: PsiFile, selectionModel: SelectionModel): Option[TypeInfoResult] = {
-    val result = for {
+    for {
       sp <- LineColumnPosition.fromOffset(psiFile, selectionModel.getSelectionStart)
       ep <- LineColumnPosition.fromOffset(psiFile, selectionModel.getSelectionEnd)
-    } yield findTypeInfo(Key(psiFile, sp.lineNr, sp.columnNr, ep.lineNr, ep.columnNr, selectionModel.getSelectedText))
-    result
+    } yield {
+      val moduleName = HaskellFilePathIndex.findModuleName(psiFile, GlobalSearchScope.projectScope(psiFile.getProject))
+      findTypeInfo(Key(moduleName, psiFile, sp.lineNr, sp.columnNr, ep.lineNr, ep.columnNr, selectionModel.getSelectedText))
+    }
   }
 
   def invalidate(psiFile: PsiFile): Unit = {
@@ -73,36 +77,26 @@ private[component] object TypeInfoComponent {
     if (LoadComponent.isBusy(psiFile)) {
       Left(ReplIsBusy)
     } else {
-      val moduleName = HaskellFilePathIndex.findModuleName(psiFile, GlobalSearchScope.projectScope(psiFile.getProject))
-      val typeInfo = StackReplsManager.getProjectRepl(key.psiFile).flatMap(_.findTypeInfo(moduleName, key.psiFile, key.startLineNr, key.startColumnNr, key.endLineNr, key.endColumnNr, key.expression)) match {
+      StackReplsManager.getProjectRepl(key.psiFile).flatMap(_.findTypeInfo(key.moduleName, key.psiFile, key.startLineNr, key.startColumnNr, key.endLineNr, key.endColumnNr, key.expression)) match {
         case Some(output) => output.stdoutLines.headOption.filterNot(_.trim.isEmpty).map(ti => Right(TypeInfo(ti, output.stderrLines.nonEmpty))).getOrElse(Left(NoInfoAvailable))
-        case _ => Left(ReplNotAvailable)
+        case None => Left(ReplNotAvailable)
       }
-      typeInfo
     }
   }
 
   private def findTypeInfo(key: Key): TypeInfoResult = {
-    Cache.getIfPresent(key) match {
-      case Some(r) => wait(r)
-      case None =>
-        if (LoadComponent.isModuleLoaded(HaskellFilePathIndex.findModuleName(key.psiFile, GlobalSearchScope.projectScope(key.psiFile.getProject)), key.psiFile)) {
-          val result = wait(Cache.get(key))
-          result match {
-            case Right(_) => result
-            case Left(NoInfoAvailable) =>
-              result
-            case Left(ReplNotAvailable) =>
-              Cache.synchronous().invalidate(key)
-              result
-            case Left(ReplIsBusy) =>
-              Cache.synchronous().invalidate(key)
-              result
-          }
-        }
-        else {
-          Left(NoInfoAvailable)
-        }
+    if (LoadComponent.isModuleLoaded(key.moduleName, key.psiFile)) {
+      val result = wait(Cache.get(key))
+      result match {
+        case Right(_) => result
+        case Left(NoInfoAvailable) =>
+          result
+        case Left(ReplNotAvailable) | Left(ReplIsBusy) | Left(IndexNotReady) =>
+          Cache.synchronous().invalidate(key)
+          result
+      }
+    } else {
+      Left(NoInfoAvailable)
     }
   }
 

@@ -18,4 +18,7 @@ package object component {
     override def message: String = "No info available for this request"
   }
 
+  case object IndexNotReady extends NoInfo {
+    override def message: String = "No info because index is not ready"
+  }
 }

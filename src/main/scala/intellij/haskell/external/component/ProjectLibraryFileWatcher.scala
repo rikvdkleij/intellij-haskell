@@ -85,7 +85,8 @@ class ProjectLibraryFileWatcher(project: Project) extends BulkFileListener {
                     def run(progressIndicator: ProgressIndicator) {
                       progressIndicator.setText(s"Building: ${currentlyBuildComponents.map(_.target).mkString(", ")}")
 
-                      val output = StackCommandLine.build(project, currentlyBuildComponents.map(_.target).toSeq, logBuildResult = true)
+                      // Forced `-Wwarn` otherwise build will fail in case of warnings and that will cause that REPLs of dependent targets will not start anymore
+                      val output = StackCommandLine.build(project, currentlyBuildComponents.map(_.target).toSeq ++ Seq("--ghc-options", "-Wwarn"), logBuildResult = true)
                       if (output.exists(_.getExitCode == 0) && !project.isDisposed) {
                         val projectRepls = StackReplsManager.getRunningProjectRepls(project)
                         val dependentRepls = projectRepls.filterNot(_.stanzaType == LibType).filter(repl => currentlyBuildComponents.map(_.packageName).contains(repl.packageName))

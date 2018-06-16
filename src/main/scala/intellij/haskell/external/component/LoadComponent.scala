@@ -80,8 +80,8 @@ private[component] object LoadComponent {
         case Some((loadOutput, loadFailed)) =>
           ApplicationManager.getApplication.executeOnPooledThread(ScalaUtil.runnable {
 
-            DefinitionLocationComponent.invalidate(psiFile)
             TypeInfoComponent.invalidate(psiFile)
+            DefinitionLocationComponent.invalidate(psiFile)
 
             if (!loadFailed) {
               NameInfoComponent.invalidate(psiFile)

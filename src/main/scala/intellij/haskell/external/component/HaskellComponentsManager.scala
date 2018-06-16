@@ -18,13 +18,11 @@ package intellij.haskell.external.component
 
 import java.util.concurrent.{Executors, TimeUnit}
 
-import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.editor.SelectionModel
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.project.{DumbService, Project}
 import com.intellij.psi.{PsiElement, PsiFile}
 import intellij.haskell.HaskellNotificationGroup
-import intellij.haskell.action.ShowTypeAction
 import intellij.haskell.cabal.CabalInfo
 import intellij.haskell.external.component.DefinitionLocationComponent.DefinitionLocationResult
 import intellij.haskell.external.component.NameInfoComponentResult.NameInfoResult
@@ -63,11 +61,6 @@ object HaskellComponentsManager {
   }
 
   def findDefinitionLocation(namedElement: HaskellNamedElement, isCurrentFile: Boolean = false): DefinitionLocationResult = {
-    if (isCurrentFile) {
-      ApplicationManager.getApplication.executeOnPooledThread(ScalaUtil.runnable(
-        ShowTypeAction.showTypeInStatusBar(namedElement.getProject, namedElement, namedElement.getContainingFile)
-      ))
-    }
     DefinitionLocationComponent.findDefinitionLocation(namedElement, isCurrentFile)
   }
 
@@ -149,7 +142,7 @@ object HaskellComponentsManager {
     HaskellNotificationGroup.logInfoEvent(project, "Finished with preloading library cache")
   }
 
-  def findTypeInfoForElement(psiElement: PsiElement): Option[TypeInfoResult] = {
+  def findTypeInfoForElement(psiElement: PsiElement): TypeInfoResult = {
     TypeInfoComponent.findTypeInfoForElement(psiElement)
   }
 
@@ -185,7 +178,7 @@ object HaskellComponentsManager {
 
             val libraryModuleNames = for {
               stackComponentInfo <- HaskellComponentsManager.findStackComponentInfo(f)
-              globalProjectInfo <- HaskellComponentsManager.findStackComponentGlobalInfo(stackComponentInfo)
+              globalProjectInfo <- HaskellComponentsManager.findStackComponentGlobalInfo(stackComponentInfo) // It can happen that REPL is busy and there is no globalProjectInfo available
             } yield globalProjectInfo.availableLibraryModuleNames
 
             libraryModuleNames match {

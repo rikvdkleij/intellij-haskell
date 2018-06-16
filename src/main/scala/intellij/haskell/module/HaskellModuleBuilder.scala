@@ -75,7 +75,7 @@ class HaskellModuleBuilder extends TemplateModuleBuilder(null, HaskellModuleType
       packageRelativePath.flatMap(pp => HaskellModuleBuilder.createCabalInfo(rootModel.getProject, HaskellFileUtil.getAbsolutePath(project.getBaseDir), pp)) match {
         case Some(ci) => cabalInfo = ci
         case None =>
-          Messages.showErrorDialog(s"Could not create Haskell module because could not retrieve or parse Cabal file for package path $packageRelativePath", "No Cabal file info")
+          Messages.showErrorDialog(s"Could not create Haskell module because could not retrieve or parse Cabal file for package path `$packageRelativePath`", "No Cabal file info")
       }
     }
 
@@ -193,7 +193,7 @@ object HaskellModuleBuilder {
     HaskellProjectUtil.findCabalFile(moduleDirectory) match {
       case Some(f) => Option(f)
       case None =>
-        Messages.showErrorDialog(s"Could not create Haskell module because Cabal file can not be found in $moduleDirectory", "Haskell module can not be created")
+        Messages.showErrorDialog(s"Could not create Haskell module because Cabal file can not be found in `$moduleDirectory`", "Haskell module can not be created")
         None
     }
   }
@@ -202,7 +202,7 @@ object HaskellModuleBuilder {
     CabalInfo.create(project, cabalFile) match {
       case Some(f) => Option(f)
       case None =>
-        Messages.showErrorDialog(project, s"Could not create Haskell module because Cabal file $cabalFile can not be parsed", "Haskell module can not be created")
+        Messages.showErrorDialog(project, s"Could not create Haskell module because Cabal file `$cabalFile` can not be parsed", "Haskell module can not be created")
         None
     }
   }

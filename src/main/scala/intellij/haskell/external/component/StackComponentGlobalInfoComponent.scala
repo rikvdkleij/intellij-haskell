@@ -30,6 +30,16 @@ private[component] object StackComponentGlobalInfoComponent {
 
   private final val Cache: LoadingCache[Key, Result] = Scaffeine().build((k: Key) => load(k))
 
+  def findStackComponentGlobalInfo(stackComponentInfo: StackComponentInfo): Option[StackComponentGlobalInfo] = {
+    val key = Key(stackComponentInfo)
+    Cache.get(key) match {
+      case Right(result) => Some(result)
+      case Left(_) =>
+        Cache.invalidate(key)
+        None
+    }
+  }
+
   private def load(key: Key): Result = {
     if (LoadComponent.isBusy(key.stackComponentInfo.module.getProject, key.stackComponentInfo)) {
       Left(ReplIsBusy)
@@ -71,22 +81,6 @@ private[component] object StackComponentGlobalInfoComponent {
     } else {
       lines.tail.map(m => m.substring(1, m.length - 1))
     }
-  }
-
-  def findStackComponentGlobalInfo(stackComponentInfo: StackComponentInfo): Option[StackComponentGlobalInfo] = {
-      val key = Key(stackComponentInfo)
-      Cache.get(key) match {
-        case Right(result) => Some(result)
-        case Left(NoInfoAvailable) =>
-          Cache.invalidate(key)
-          None
-        case Left(ReplNotAvailable) =>
-          Cache.invalidate(key)
-          None
-        case Left(ReplIsBusy) =>
-          Cache.invalidate(key)
-          None
-      }
   }
 
   def invalidate(project: Project): Unit = {

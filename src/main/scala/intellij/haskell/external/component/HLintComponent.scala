@@ -48,7 +48,7 @@ object HLintComponent {
           Seq()
       }
     } else {
-      HaskellEditorUtil.showStatusBarNotificationBalloon(psiFile.getProject, s"$HLintName is not yet available")
+      HaskellEditorUtil.showStatusBarMessage(psiFile.getProject, s"$HLintName is not yet available")
       Seq()
     }
   }
@@ -75,7 +75,7 @@ object HLintComponent {
         hlintInfo.parseJson.convertTo[Seq[HLintInfo]]
       } catch {
         case e: ParsingException =>
-          HaskellNotificationGroup.logErrorEvent(project, s"Error ${e.getMessage} while parsing $hlintInfo")
+          HaskellNotificationGroup.logErrorEvent(project, s"Error `${e.getMessage}` while parsing `$hlintInfo`")
           Seq()
       }
     }

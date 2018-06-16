@@ -20,14 +20,14 @@ import java.util.concurrent.TimeUnit
 
 import com.github.blemale.scaffeine.{AsyncLoadingCache, Scaffeine}
 import com.intellij.openapi.application.ApplicationManager
-import com.intellij.openapi.project.Project
-import com.intellij.psi.PsiFile
+import com.intellij.openapi.project.{IndexNotReadyException, Project}
 import com.intellij.psi.search.GlobalSearchScope
+import com.intellij.psi.{PsiElement, PsiFile}
 import intellij.haskell.external.repl.StackRepl.StackReplOutput
 import intellij.haskell.external.repl.StackReplsManager
 import intellij.haskell.psi._
-import intellij.haskell.util.index.HaskellFilePathIndex
-import intellij.haskell.util.{LineColumnPosition, ScalaUtil}
+import intellij.haskell.util.index.{HaskellFilePathIndex, HaskellModuleNameIndex}
+import intellij.haskell.util.{HaskellProjectUtil, LineColumnPosition, ScalaUtil}
 
 import scala.concurrent.duration.Duration
 import scala.concurrent.{Await, Future, TimeoutException}
@@ -55,8 +55,51 @@ private[component] object DefinitionLocationComponent {
     }
   }
 
-  def invalidate(psiFile: PsiFile): Unit = {
-    val keys = Cache.synchronous().asMap().filter(_._1.psiFile == psiFile).keys
+  private def findElement(lineNr: Int, columnNr: Int, psiFile: PsiFile): Option[PsiElement] = {
+    val fromPosition = LineColumnPosition(lineNr, columnNr)
+    ApplicationManager.getApplication.runReadAction(ScalaUtil.computable(
+      LineColumnPosition.getOffset(psiFile, fromPosition).flatMap(offset => Option(psiFile.findElementAt(offset)))
+    ))
+  }
+
+  private def findName(element: Option[PsiElement]) = {
+    ApplicationManager.getApplication.runReadAction(ScalaUtil.computable(
+      element.flatMap(HaskellPsiUtil.findQualifiedNameParent).map(_.getIdentifierElement).map(_.getName)
+    ))
+  }
+
+  def invalidate(fromFile: PsiFile): Unit = {
+    val keyValueMap = Cache.synchronous().asMap().filter(_._1.psiFile == fromFile)
+    val project = fromFile.getProject
+    val keys = keyValueMap.flatMap { case (k, v) =>
+      v.toOption match {
+        case Some(info) =>
+          val fromElement = findElement(k.startLineNr, k.startColumnNr, fromFile)
+          info match {
+            case DefinitionLocationInfo(filePath, startLineNr, startColumnNr, _, _) =>
+              val toFile = ApplicationManager.getApplication.runReadAction(ScalaUtil.computable(
+                HaskellProjectUtil.findFile(filePath, project)
+              ))
+              val toElement = toFile.flatMap(f => findElement(startLineNr, startColumnNr, f))
+              (fromElement, toElement) match {
+                case (Some(fe), Some(te)) if fe.getText == te.getText => None
+                case (_, _) => Some(k)
+              }
+            case ModuleLocationInfo(_, lib) =>
+              val name = findName(fromElement)
+              name match {
+                case None => Some(k)
+                case Some(n) =>
+                  if (lib) {
+                    None
+                  } else {
+                    Some(k)
+                  }
+              }
+          }
+        case None => Some(k)
+      }
+    }
     Cache.synchronous().invalidateAll(keys)
   }
 
@@ -82,7 +125,7 @@ private[component] object DefinitionLocationComponent {
 
   private def createLocationInfo(project: Project, psiFile: PsiFile, key: Key, withoutLastColumn: Boolean): DefinitionLocationResult = {
     findLocationInfo(key, psiFile, project, withoutLastColumn) match {
-      case Some(o) => o.stdoutLines.headOption.map(createLocationInfo) match {
+      case Some(o) => o.stdoutLines.headOption.map(l => createLocationInfo(project, psiFile, l)) match {
         case Some(r) => r
         case None => Left(NoInfoAvailable)
       }
@@ -95,10 +138,17 @@ private[component] object DefinitionLocationComponent {
     StackReplsManager.getProjectRepl(psiFile).flatMap(_.findLocationInfo(key.moduleName, psiFile, key.startLineNr, key.startColumnNr, key.endLineNr, endColumnNr, key.name))
   }
 
-  private def createLocationInfo(output: String): DefinitionLocationResult = {
+  private def createLocationInfo(project: Project, psiFile: PsiFile, output: String): DefinitionLocationResult = {
     output match {
       case LocAtPattern(filePath, startLineNr, startColumnNr, endLineNr, endColumnNr) => Right(DefinitionLocationInfo(filePath.trim, startLineNr.toInt, startColumnNr.toInt, endLineNr.toInt, endColumnNr.toInt))
-      case PackageModulePattern(moduleName) => Right(ModuleLocationInfo(moduleName))
+      case PackageModulePattern(moduleName) =>
+        val module = HaskellProjectUtil.findModuleForFile(psiFile)
+        try {
+          val library = !module.exists(m => ApplicationManager.getApplication.runReadAction(ScalaUtil.computable(HaskellModuleNameIndex.findHaskellFileByModuleName(project, moduleName, GlobalSearchScope.moduleScope(m)).isDefined)))
+          Right(ModuleLocationInfo(moduleName, library))
+        } catch {
+          case _: IndexNotReadyException => Left(IndexNotReady)
+        }
       case _ => Left(NoInfoAvailable)
     }
   }
@@ -113,7 +163,7 @@ private[component] object DefinitionLocationComponent {
     def matchResult(result: DefinitionLocationResult) = {
       result match {
         case Right(_) => result
-        case Left(ReplNotAvailable) =>
+        case Left(ReplNotAvailable) | Left(IndexNotReady) =>
           Cache.synchronous().invalidate(key)
           result
         case Left(NoInfoAvailable) =>
@@ -129,23 +179,10 @@ private[component] object DefinitionLocationComponent {
       }
     }
 
-    Cache.getIfPresent(key) match {
-      case Some(r) => matchResult(wait(r))
-      case None =>
-        if (!LoadComponent.isModuleLoaded(moduleName, psiFile) && isCurrentFile) {
-          if (LoadComponent.isLoading(psiFile)) {
-            Left(ReplIsBusy)
-          } else {
-            if (!LoadComponent.isFileLoadedFailed(psiFile)) {
-              ApplicationManager.getApplication.executeOnPooledThread(ScalaUtil.runnable(LoadComponent.load(psiFile, None)))
-              Left(ReplIsBusy)
-            } else {
-              Left(NoInfoAvailable)
-            }
-          }
-        } else {
-          matchResult(wait(Cache.get(key)))
-        }
+    if (!LoadComponent.isModuleLoaded(moduleName, psiFile) && isCurrentFile) {
+      Left(NoInfoAvailable)
+    } else {
+      matchResult(wait(Cache.get(key)))
     }
   }
 
@@ -163,4 +200,4 @@ sealed trait LocationInfo
 
 case class DefinitionLocationInfo(filePath: String, startLineNr: Int, startColumnNr: Int, endLineNr: Int, endColumnNr: Int) extends LocationInfo
 
-case class ModuleLocationInfo(moduleName: String) extends LocationInfo
+case class ModuleLocationInfo(moduleName: String, library: Boolean) extends LocationInfo

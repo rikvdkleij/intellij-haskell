@@ -76,13 +76,18 @@ class HaskellSdkType extends SdkType("Haskell Tool Stack SDK") {
       override def validateSelectedFiles(files: Array[VirtualFile]) {
         if (files.length != 0) {
           val selectedPath = HaskellFileUtil.getAbsolutePath(files(0))
-          var valid = isValidSdkHome(selectedPath)
-          if (!valid) {
-            valid = isValidSdkHome(adjustSelectedSdkHome(selectedPath))
-            if (!valid) {
+          var pathValid = isValidSdkHome(selectedPath)
+          if (!pathValid) {
+            pathValid = isValidSdkHome(adjustSelectedSdkHome(selectedPath))
+            if (!pathValid) {
               val message = "The selected file is not a valid Stack binary"
               throw new Exception(message)
             }
+          }
+          val version = HaskellSdkType.getNumericVersion(selectedPath)
+          if (version.isEmpty || version.exists(_ < "1.7.0")) {
+            val message = "Stack version should be > 1.7.0"
+            throw new Exception(message)
           }
         }
       }
@@ -99,12 +104,12 @@ object HaskellSdkType {
     SdkConfigurationUtil.findOrCreateSdk(null, getInstance)
   }
 
-  def getNumericVersion(sdkHome: String): Option[String] = {
-    val workDir = new File(sdkHome).getParent
+  def getNumericVersion(stackPath: String): Option[String] = {
+    val workDir = new File(stackPath).getParent
     val output = CommandLine.run(
       None,
       workDir,
-      sdkHome,
+      stackPath,
       Seq("--numeric-version"),
       notifyBalloonError = true
     )

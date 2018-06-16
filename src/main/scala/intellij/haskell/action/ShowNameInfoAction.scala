@@ -38,7 +38,7 @@ class ShowNameInfoAction extends AnAction {
           val result = HaskellComponentsManager.findNameInfo(psiElement)
           result match {
             case Some(r) => r match {
-              case Left(info) => info.message
+              case Left(info) => HaskellEditorUtil.showList(Seq(info.message), editor)
               case Right(nameInfos) => HaskellEditorUtil.showList(nameInfos.toSeq.map(createInfoText), editor)
             }
             case None => HaskellEditorUtil.showHint(editor, s"Could not determine info for ${StringUtil.escapeXml(psiElement.getText)}")

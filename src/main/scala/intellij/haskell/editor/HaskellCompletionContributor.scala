@@ -255,12 +255,7 @@ class HaskellCompletionContributor extends CompletionContributor {
   import HaskellCompletionContributor._
 
   private def createLocalLookupElement(namedElement: HaskellNamedElement): LookupElementBuilder = {
-    val typeSignature = for {
-      result <- HaskellComponentsManager.findTypeInfoForElement(namedElement)
-      ts <- result.toOption.map(_.typeSignature)
-    } yield {
-      ts
-    }
+    val typeSignature = HaskellComponentsManager.findTypeInfoForElement(namedElement).map(_.typeSignature)
     LookupElementBuilder.create(namedElement.getName).withTypeText(typeSignature.map(StringUtil.unescapeXml).getOrElse("")).withIcon(HaskellIcons.HaskellSmallBlueLogo)
   }
 
@@ -558,7 +553,7 @@ object HaskellCompletionContributor {
         )
         localLookupElements
       case None =>
-        HaskellNotificationGroup.logWarningEvent(psiFile.getProject, s"No support for suggesting local toplevel identtifiers because no module defined in ${psiFile.getName}")
+        HaskellNotificationGroup.logWarningEvent(psiFile.getProject, s"No support for suggesting local toplevel identtifiers because no module defined in `${psiFile.getName}`")
         Iterable()
     }
   }

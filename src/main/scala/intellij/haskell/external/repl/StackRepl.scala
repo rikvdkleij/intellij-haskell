@@ -92,7 +92,7 @@ abstract class StackRepl(project: Project, componentInfo: Option[StackComponentI
   protected def execute(command: String, forceExecute: Boolean = false): Option[StackReplOutput] = {
 
     if ((!available || starting) && !forceExecute) {
-      HaskellEditorUtil.showStatusBarInfoMessage(project, s"[$getComponentName] Haskell support is not available when Stack REPL is not (yet) running.")
+      HaskellEditorUtil.showStatusBarMessage(project, s"[$getComponentName] Haskell support is not available when Stack REPL is not (yet) running.")
       None
     } else if (!outputStreamSyncVar.isSet) {
       logError("Can not write to Stack repl. Check if your Stack project environment is working okay")
@@ -206,7 +206,7 @@ abstract class StackRepl(project: Project, componentInfo: Option[StackComponentI
       }
       catch {
         case e: Exception =>
-          logError(s"Error in communication with Stack repl: ${e.getMessage}. Check if your Haskell/Stack environment is working okay. Command was: $command")
+          logError(s"Error in communication with Stack repl: ${e.getMessage}. Check if your Haskell/Stack environment is working okay. Command was: `$command`")
           drainQueues()
           logOutput()
           exit()
@@ -298,9 +298,11 @@ abstract class StackRepl(project: Project, componentInfo: Option[StackComponentI
           } else {
             if (hasDependencyError) {
               if (!ProjectLibraryFileWatcher.isBuilding(project)) {
-                val message = s"Stack REPL could not be started for target `${componentInfo.map(_.target).getOrElse("-")}` because a dependency has build errors"
+                val target = componentInfo.map(_.target).getOrElse("-")
+                val error = stderrQueue.asScala.headOption.map(_.replace("<command line>:", "").trim).getOrElse("a dependency failed to build")
+                val message = s"Stack REPL could not be started for target `$target` because $error"
                 logInfo(message)
-                HaskellEditorUtil.showStatusBarNotificationBalloon(project, message)
+                HaskellEditorUtil.showStatusBarBalloonMessage(project, message)
               }
             } else {
               logError(s"Stack REPL could not be started within $DefaultTimeout")

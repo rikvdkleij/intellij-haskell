@@ -31,18 +31,8 @@ private[component] object BrowseModuleComponent {
 
   private case class Key(project: Project, moduleName: String, psiFile: Option[PsiFile], exported: Boolean)
 
-  private sealed trait NoBrowseInfo
-
-  private case object ReplNotAvailable extends NoBrowseInfo
-
-  private case object ReplIsBusy extends NoBrowseInfo
-
-  private case object NoInfoAvailable extends NoBrowseInfo
-
-  private case object IndexNotReady extends NoBrowseInfo
-
   type BrowseModuleResult = Iterable[ModuleIdentifier]
-  private type BrowseModuleInternalResult = Either[NoBrowseInfo, Iterable[ModuleIdentifier]]
+  private type BrowseModuleInternalResult = Either[NoInfo, Iterable[ModuleIdentifier]]
 
   private final val Cache: AsyncLoadingCache[Key, BrowseModuleInternalResult] = Scaffeine().buildAsync((k: Key) => {
     if (k.project.isDisposed) {
@@ -78,30 +68,22 @@ private[component] object BrowseModuleComponent {
             case Right(ids) => ids
             case Left(NoInfoAvailable) =>
               Iterable()
-            case Left(ReplNotAvailable) =>
+            case Left(ReplNotAvailable) | Left(ReplIsBusy) | Left(IndexNotReady) =>
               Cache.synchronous().invalidate(key)
-              Iterable()
-            case Left(ReplIsBusy) =>
-              Cache.synchronous.invalidate(key)
-              Iterable()
-            case Left(IndexNotReady) =>
-              Cache.synchronous.invalidate(key)
               Iterable()
           })
         }
 
-        Cache.getIfPresent(key) match {
-          case Some(r) => matchResult(r)
-          case None => key.psiFile match {
-            case None => matchResult(Cache.get(key))
-            case Some(pf) => if (!key.exported && LoadComponent.isFileLoaded(pf)) {
+        key.psiFile match {
+          case None => matchResult(Cache.get(key))
+          case Some(pf) =>
+            if (!key.exported && LoadComponent.isFileLoaded(pf)) {
               matchResult(Cache.get(key))
             } else if (key.exported && LoadComponent.isModuleLoaded(Some(moduleName), pf)) {
               matchResult(Cache.get(key))
             } else {
               Future.successful(Iterable())
             }
-          }
         }
       case None => Future.successful(Iterable())
     }
@@ -154,7 +136,7 @@ private[component] object BrowseModuleComponent {
     }
   }
 
-  private def findLibraryModuleIdentifiers(project: Project, moduleName: String): Either[NoBrowseInfo, Seq[ModuleIdentifier]] = {
+  private def findLibraryModuleIdentifiers(project: Project, moduleName: String): Either[NoInfo, Seq[ModuleIdentifier]] = {
     StackReplsManager.getGlobalRepl(project).flatMap(_.getModuleIdentifiers(moduleName)) match {
       case None => Left(ReplNotAvailable)
       case Some(o) if o.stdoutLines.nonEmpty => Right(o.stdoutLines.flatMap(l => findModuleIdentifiers(project, l, moduleName).toSeq))

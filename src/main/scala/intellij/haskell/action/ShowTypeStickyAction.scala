@@ -33,7 +33,7 @@ class ShowTypeStickyAction extends AnAction {
               untilNameElementBackwards(Some(PsiTreeUtil.getDeepestLast(psiElement)))
             }
           } yield {
-            ShowTypeAction.showTypeHint(actionContext.project, editor, namedElement, psiFile, sticky = true)
+            ShowTypeAction.showTypeAsHintAndInStatusBar(actionContext.project, editor, namedElement, psiFile, sticky = true)
           }
       }
     })

@@ -85,7 +85,7 @@ class HaskellModuleNameIndex extends ScalaScalarIndexExtension[String] {
 
     override def map(inputData: FileContent): java.util.Map[String, Unit] = {
       val psiFile = inputData.getPsiFile
-      HaskellPsiUtil.findModuleDeclaration(psiFile).map(_.getModid.getName) match {
+      HaskellPsiUtil.findModuleName(psiFile) match {
         case Some(n) => Collections.singletonMap(n, ())
         case _ => Collections.emptyMap()
       }

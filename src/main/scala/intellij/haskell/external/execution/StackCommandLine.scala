@@ -58,13 +58,9 @@ object StackCommandLine {
     run(project, arguments, -1, logOutput = true, notifyBalloonError = true)
   }
 
-  def buildProject(project: Project, logBuildResult: Boolean): Option[ProcessOutput] = {
-    build(project, Seq(), logBuildResult)
-  }
-
   def build(project: Project, buildTargets: Seq[String], logBuildResult: Boolean): Option[ProcessOutput] = {
     val arguments = Seq("build") ++ buildTargets ++ Seq("--fast")
-    val processOutput = run(project, arguments, -1, ignoreExitCode = true)
+    val processOutput = run(project, arguments, -1, ignoreExitCode = true, logOutput = logBuildResult)
     if (logBuildResult) {
       if (processOutput.isEmpty || processOutput.exists(_.getExitCode != 0)) {
         HaskellNotificationGroup.logErrorEvent(project, s"Building `${buildTargets.mkString(", ")}` has failed, see Haskell Event log for more information")
@@ -81,10 +77,6 @@ object StackCommandLine {
     } else {
       Seq()
     }
-  }
-
-  def buildProjectDependenciesInMessageView(project: Project): Option[Boolean] = {
-    StackCommandLine.executeInMessageView(project, Seq("build", "--fast", "--test", "--bench", "--no-run-tests", "--no-run-benchmarks", "--only-dependencies"))
   }
 
   def buildProjectInMessageView(project: Project): Option[Boolean] = {
@@ -104,7 +96,7 @@ object StackCommandLine {
 
         val handler = new BaseOSProcessHandler(process, cmd.getCommandLineString, CharsetToolkit.getDefaultSystemCharset)
 
-        val compilerTask = new CompilerTask(project, s"executing ${cmd.getCommandLineString}", false, false, true, true)
+        val compilerTask = new CompilerTask(project, s"executing `${cmd.getCommandLineString}`", false, false, true, true)
         val compileTask = new CompileTask {
 
           def execute(compileContext: CompileContext): Boolean = {

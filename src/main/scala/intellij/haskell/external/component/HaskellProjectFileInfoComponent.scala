@@ -32,7 +32,7 @@ private[component] object HaskellProjectFileInfoComponent {
 
   private case class Key(psiFile: PsiFile)
 
-  private final val Cache: LoadingCache[Key, Option[HaskellProjectFileInfo]] = Scaffeine().build((k: Key) => createHaskellFileInfo(k))
+  private final val Cache: LoadingCache[Key, Option[HaskellProjectFileInfo]] = Scaffeine().build((k: Key) => createFileInfo(k))
 
   def findHaskellProjectFileInfo(psiFile: PsiFile): Option[HaskellProjectFileInfo] = {
     val key = Key(psiFile)
@@ -53,7 +53,7 @@ private[component] object HaskellProjectFileInfoComponent {
     Cache.invalidate(Key(psiFile))
   }
 
-  private def createHaskellFileInfo(key: Key): Option[HaskellProjectFileInfo] = {
+  private def createFileInfo(key: Key): Option[HaskellProjectFileInfo] = {
     val psiFile = key.psiFile
     val project = psiFile.getProject
 
@@ -77,7 +77,7 @@ private[component] object HaskellProjectFileInfoComponent {
               val sourceDirByInfo = sourceDirsByInfo.map({ case (info, sds) => (info, sds.maxBy(sd => Paths.get(sd).getNameCount)) })
               val mostSpecificSourceDirByInfo = ScalaUtil.maxsBy(sourceDirByInfo)({ case (_, sd) => Paths.get(sd).getNameCount })
               if (mostSpecificSourceDirByInfo.size > 1) {
-                HaskellNotificationGroup.logWarningBalloonEvent(psiFile.getProject, s"Ambiguous Stack target: ${psiFile.getName} belongs to the source dir of more than one Stack target/Cabal stanza. The first one of ${mostSpecificSourceDirByInfo.map(_._1.target)} is chosen.")
+                HaskellNotificationGroup.logWarningBalloonEvent(psiFile.getProject, s"Ambiguous Stack target: `${psiFile.getName}` belongs to the source dir of more than one Stack target/Cabal stanza. The first one of ${mostSpecificSourceDirByInfo.map(_._1.target)} is chosen.")
               }
               mostSpecificSourceDirByInfo.headOption.map(_._1)
             } else {
@@ -86,7 +86,7 @@ private[component] object HaskellProjectFileInfoComponent {
             stackComponentInfo match {
               case info@Some(_) => info
               case None =>
-                HaskellNotificationGroup.logErrorBalloonEvent(psiFile.getProject, s"Could not determine Stack target for file ${psiFile.getName} because no accompanying `hs-source-dirs` or `main-is` can be found in Cabal file(s)")
+                HaskellNotificationGroup.logErrorBalloonEvent(psiFile.getProject, s"Could not determine Stack target for file `${psiFile.getName}` because no accompanying `hs-source-dirs` or `main-is` can be found in Cabal file(s)")
                 None
             }
           case None =>

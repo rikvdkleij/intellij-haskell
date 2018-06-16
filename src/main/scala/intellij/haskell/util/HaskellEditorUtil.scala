@@ -142,14 +142,14 @@ object HaskellEditorUtil {
     })
   }
 
-  def showStatusBarInfoMessage(project: Project, message: String): Unit = {
+  def showStatusBarMessage(project: Project, message: String): Unit = {
     for {
       wm <- Option(WindowManager.getInstance())
       sb <- Option(wm.getStatusBar(project))
     } yield sb.setInfo(message)
   }
 
-  def showStatusBarNotificationBalloon(project: Project, message: String): Unit = {
+  def showStatusBarBalloonMessage(project: Project, message: String): Unit = {
     UIUtil.invokeLaterIfNeeded(() => {
       def run() = {
         for {
@@ -174,7 +174,7 @@ object HaskellEditorUtil {
     offset.map(psiFile.findElementAt)
   }
 
-  def showHaskellSupportIsNotAvailableWhileBuilding(project: Project) = {
-    HaskellEditorUtil.showStatusBarInfoMessage(project, HaskellSupportIsNotAvailableWhileBuildingText)
+  def showHaskellSupportIsNotAvailableWhileBuilding(project: Project): Unit = {
+    HaskellEditorUtil.showStatusBarMessage(project, HaskellSupportIsNotAvailableWhileBuildingText)
   }
 }

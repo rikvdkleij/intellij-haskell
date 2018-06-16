@@ -63,8 +63,7 @@ private[component] object NameInfoComponent {
         }
       }
     } else {
-      val moduleName = HaskellFilePathIndex.findModuleName(psiFile, GlobalSearchScope.allScope(project))
-      moduleName match {
+      HaskellFilePathIndex.findModuleName(psiFile, GlobalSearchScope.allScope(project)) match {
         case None => Left(NoInfoAvailable)
         case Some(mn) =>
           StackReplsManager.getGlobalRepl(project).flatMap(_.findInfo(mn, name)) match {
@@ -89,10 +88,7 @@ private[component] object NameInfoComponent {
             case Right(_) => result
             case Left(NoInfoAvailable) =>
               result
-            case Left(ReplNotAvailable) =>
-              Cache.invalidate(key)
-              result
-            case Left(ReplIsBusy) =>
+            case Left(ReplNotAvailable) | Left(ReplIsBusy) | Left(IndexNotReady) =>
               Cache.invalidate(key)
               result
           }

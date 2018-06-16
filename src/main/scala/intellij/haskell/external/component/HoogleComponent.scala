@@ -23,6 +23,7 @@ import java.util.regex.Pattern
 import com.intellij.execution.process.ProcessOutput
 import com.intellij.openapi.project.Project
 import intellij.haskell.external.execution.{CommandLine, StackCommandLine}
+import intellij.haskell.util.HaskellEditorUtil
 import intellij.haskell.{GlobalInfo, HaskellNotificationGroup}
 
 import scala.collection.JavaConverters._
@@ -69,13 +70,10 @@ object HoogleComponent {
 
   private def isHoogleFeatureAvailable(project: Project): Boolean = {
     if (!StackProjectManager.isHoogleAvailable(project)) {
-      HaskellNotificationGroup.logWarningBalloonEvent(project, s"$HoogleName is not yet available")
-      false
-    } else if (!doesHoogleDatabaseExist(project)) {
-      showHoogleDatabaseDoesNotExistNotification(project)
+      HaskellEditorUtil.showStatusBarMessage(project, s"$HoogleName is not yet available")
       false
     } else {
-      true
+      doesHoogleDatabaseExist(project)
     }
   }
 

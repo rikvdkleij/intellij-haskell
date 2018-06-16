@@ -107,13 +107,9 @@ object StackProjectManager {
             try {
               try {
                 progressIndicator.setText("Busy with building project")
+                StackCommandLine.buildProjectInMessageView(project)
 
-                val result = StackCommandLine.buildProjectDependenciesInMessageView(project)
-                if (result.contains(true)) {
-                  StackCommandLine.buildProjectInMessageView(project)
-                } else {
-                  HaskellNotificationGroup.logInfoEvent(project, "Project will not be built because building it's dependencies failed")
-                }
+                ApplicationManager.getApplication.getMessageBus.connect(project).subscribe(VirtualFileManager.VFS_CHANGES, new ProjectLibraryFileWatcher(project))
 
                 if (restart) {
                   val projectRepsl = StackReplsManager.getRunningProjectRepls(project)
@@ -132,25 +128,24 @@ object StackProjectManager {
                   })
                 }
 
-                progressIndicator.setText(s"Busy with building Intero ")
+                progressIndicator.setText(s"Busy with building Intero")
                 build(project, Seq("intero"), logBuildResult = true)
-
-                //  Force to load the module in REPL when REPL can be started. It could have happen that IntelliJ wanted to load file (via HaskellAnnotator)
-                // but REPL could not be started.
-                FileEditorManager.getInstance(project).getSelectedFiles.headOption match {
-                  case Some(vf) =>
-                    val psiFile = ApplicationManager.getApplication.runReadAction(ScalaUtil.computable(HaskellFileUtil.convertToHaskellFile(project, vf)))
-                    psiFile.foreach(HaskellAnnotator.restartDaemonCodeAnalyzerForFile)
-                  case None => ()
-                }
 
                 progressIndicator.setText("Busy with starting global Stack REPL")
                 StackReplsManager.getGlobalRepl(project).foreach(_.start())
+
+                //  Force to load the module in REPL when REPL can be started. It could have happen that IntelliJ wanted to load file (via HaskellAnnotator)
+                // but REPL could not be started.
+                FileEditorManager.getInstance(project).getSelectedFiles foreach { vf =>
+                  val psiFile = ApplicationManager.getApplication.runReadAction(ScalaUtil.computable(HaskellFileUtil.convertToHaskellFile(project, vf)))
+                  psiFile.foreach(pf => {
+                    if (!LoadComponent.isFileLoaded(pf) || !LoadComponent.isFileLoaded(pf)) {
+                      HaskellAnnotator.restartDaemonCodeAnalyzerForFile(pf)
+                    }
+                  })
+                }
               } finally {
                 getStackProjectManager(project).foreach(_.building = false)
-                if (!project.isDisposed) {
-                  ApplicationManager.getApplication.getMessageBus.connect(project).subscribe(VirtualFileManager.VFS_CHANGES, new ProjectLibraryFileWatcher(project))
-                }
               }
 
               progressIndicator.setText("Busy with downloading library sources")
