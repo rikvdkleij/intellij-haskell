@@ -17,7 +17,8 @@
 package intellij.haskell.util
 
 import java.io.{File, FileOutputStream, InputStream}
-import java.nio.file.Paths
+import java.nio.file.attribute.PosixFilePermission
+import java.nio.file.{Files, Paths}
 
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.command.CommandProcessor
@@ -26,6 +27,7 @@ import com.intellij.openapi.fileEditor.FileDocumentManager
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.util.SystemInfo
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.vfs.{LocalFileSystem, VirtualFile, VirtualFileManager}
 import com.intellij.psi.{PsiDocumentManager, PsiFile, PsiManager}
@@ -172,14 +174,27 @@ object HaskellFileUtil {
     VirtualFileManager.constructUrl(LocalFileSystem.getInstance.getProtocol, absolutePath)
   }
 
-  def createDirectoryIfNotExists(directory: File, onlyWriteableByOwner : Boolean ): Unit = {
+  def createDirectoryIfNotExists(directory: File, onlyWriteableByOwner: Boolean): Unit = {
     if (!directory.exists()) {
-      if (onlyWriteableByOwner) {
-        directory.setWritable(true, true)
-      }
       val result = FileUtil.createDirectory(directory)
       if (!result) {
-        throw new RuntimeException(s"Could not create directory ${directory.getAbsolutePath}")
+        throw new RuntimeException(s"Could not create directory `${directory.getAbsolutePath}`")
+      }
+      if (onlyWriteableByOwner) {
+        directory.setWritable(true, true)
+        removeGroupWritePermission(directory)
+      }
+    }
+  }
+
+  // On Linux setting `directory.setWritable(true, true)` does not guarantee that group has NO write permissions
+  def removeGroupWritePermission(path: File): Unit = {
+    if (!SystemInfo.isWindows) {
+      val directoryPath = Paths.get(path.getAbsolutePath)
+      val permissions = Files.getPosixFilePermissions(directoryPath)
+      if (permissions.contains(PosixFilePermission.GROUP_WRITE)) {
+        permissions.remove(PosixFilePermission.GROUP_WRITE)
+        Files.setPosixFilePermissions(directoryPath, permissions)
       }
     }
   }

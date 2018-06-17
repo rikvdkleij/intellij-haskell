@@ -1,8 +1,7 @@
 package intellij.haskell
 
 import java.io.File
-import java.nio.file.attribute.PosixFilePermission
-import java.nio.file.{Files, Paths}
+import java.nio.file.Paths
 
 import com.intellij.openapi.vfs.VfsUtil
 import intellij.haskell.util.HaskellFileUtil
@@ -20,12 +19,7 @@ object GlobalInfo {
     val homeDirectory = HaskellFileUtil.getAbsolutePath(VfsUtil.getUserHomeDir)
     val directory = new File(homeDirectory, IntelliJHaskellDirName)
     if (directory.exists()) {
-      val directoryPath = Paths.get(directory.getAbsolutePath)
-      val permissions = Files.getPosixFilePermissions(directoryPath)
-      if (permissions.contains(PosixFilePermission.GROUP_WRITE)) {
-        permissions.remove(PosixFilePermission.GROUP_WRITE)
-        Files.setPosixFilePermissions(directoryPath, permissions)
-      }
+      HaskellFileUtil.removeGroupWritePermission(directory)
     } else {
       HaskellFileUtil.createDirectoryIfNotExists(directory, onlyWriteableByOwner = true)
     }

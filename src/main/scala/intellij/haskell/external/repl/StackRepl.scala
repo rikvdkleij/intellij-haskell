@@ -17,6 +17,7 @@
 package intellij.haskell.external.repl
 
 import java.io._
+import java.nio.file.Files
 import java.util.concurrent.LinkedBlockingQueue
 
 import com.intellij.openapi.project.Project
@@ -26,7 +27,7 @@ import intellij.haskell.external.execution.StackCommandLine
 import intellij.haskell.external.repl.StackRepl.{BenchmarkType, StackReplOutput, TestSuiteType}
 import intellij.haskell.external.repl.StackReplsManager.StackComponentInfo
 import intellij.haskell.sdk.HaskellSdkType
-import intellij.haskell.util.{HaskellEditorUtil, HaskellProjectUtil, StringUtil}
+import intellij.haskell.util.{HaskellEditorUtil, HaskellFileUtil, HaskellProjectUtil, StringUtil}
 import intellij.haskell.{GlobalInfo, HaskellNotificationGroup}
 
 import scala.collection.JavaConverters._
@@ -343,11 +344,13 @@ abstract class StackRepl(project: Project, componentInfo: Option[StackComponentI
     }
   }
 
-
-  def createGhciOptionsFile: File = {
+  private def createGhciOptionsFile: File = {
     val ghciOptionsFile = new File(GlobalInfo.getIntelliJHaskellDirectory, "repl.ghci")
     if (!ghciOptionsFile.exists()) {
+      ghciOptionsFile.createNewFile()
       ghciOptionsFile.setWritable(true, true)
+      HaskellFileUtil.removeGroupWritePermission(ghciOptionsFile)
+
       val writer = new BufferedWriter(new FileWriter(ghciOptionsFile))
       try {
         writer.write(s""":set prompt "$EndOfOutputIndicator\\n"""")

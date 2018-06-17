@@ -14,7 +14,7 @@ import intellij.haskell.util.{GhcVersion, HaskellFileUtil, HaskellProjectUtil}
 
 class HaskellConsoleState(val configuration: HaskellConsoleConfiguration, val environment: ExecutionEnvironment) extends CommandLineState(environment) {
 
-  val consoleBuilder = new TextConsoleBuilderImpl(configuration.getProject) {
+  val consoleBuilder: TextConsoleBuilderImpl = new TextConsoleBuilderImpl(configuration.getProject) {
     override def getConsole: ConsoleView = {
       new HaskellConsoleView(configuration.getProject, configuration)
     }
@@ -33,8 +33,9 @@ class HaskellConsoleState(val configuration: HaskellConsoleConfiguration, val en
         val ghciScript = new File(GlobalInfo.getIntelliJHaskellDirectory, ghciScriptName)
 
         if(!ghciScript.exists()) {
-          ghciScript.setWritable(true, true)
           HaskellFileUtil.copyStreamToFile(getClass.getResourceAsStream(s"/ghci/$ghciScriptName"), ghciScript)
+          ghciScript.setWritable(true, true)
+          HaskellFileUtil.removeGroupWritePermission(ghciScript)
         }
 
         val commandLine = new GeneralCommandLine(stackPath)
