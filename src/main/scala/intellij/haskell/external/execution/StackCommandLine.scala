@@ -58,6 +58,12 @@ object StackCommandLine {
     run(project, arguments, -1, logOutput = true, notifyBalloonError = true)
   }
 
+  def updateStackIndex(project: Project): Option[ProcessOutput] = {
+    import intellij.haskell.GlobalInfo._
+    val arguments = Seq("update", "--stack-root", toolsStackRootPath)
+    run(project, arguments, -1, logOutput = true, notifyBalloonError = true)
+  }
+
   def build(project: Project, buildTargets: Seq[String], logBuildResult: Boolean): Option[ProcessOutput] = {
     val arguments = Seq("build") ++ buildTargets ++ Seq("--fast")
     val processOutput = run(project, arguments, -1, ignoreExitCode = true, logOutput = logBuildResult)

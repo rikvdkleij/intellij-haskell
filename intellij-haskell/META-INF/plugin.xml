@@ -440,6 +440,11 @@
                     text="(Re)Build Hoogle database"
                     description="(Re)Generate Haskell documentation and (re)build local Hoogle database">
             </action>
+
+            <action id="Haskell.UpdateHaskellTools" class="intellij.haskell.action.UpdateHaskellToolsAction"
+                    text="Update Haskell Tools"
+                    description="Update Haskell Tools with latest version of LTS-11">
+            </action>
             <add-to-group group-id="ToolsMenu" anchor="first"/>
             <reference id="HaskellGhciMenu"/>
         </group>

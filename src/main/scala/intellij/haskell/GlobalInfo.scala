@@ -1,7 +1,7 @@
 package intellij.haskell
 
 import java.io.File
-import java.nio.file.Paths
+import java.nio.file.{Path, Paths}
 
 import com.intellij.openapi.vfs.VfsUtil
 import intellij.haskell.util.HaskellFileUtil
@@ -38,8 +38,8 @@ object GlobalInfo {
     Paths.get(toolsStackRootPath, ToolsBinDirName).toString
   }
 
-  def toolPath(toolName: String): String = {
-    Paths.get(GlobalInfo.toolsBinPath, toolName).toString
+  def toolPath(toolName: String): Path = {
+    Paths.get(GlobalInfo.toolsBinPath, toolName)
   }
 
 }

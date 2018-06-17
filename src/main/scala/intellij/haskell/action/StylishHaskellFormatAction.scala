@@ -43,7 +43,7 @@ class StylishHaskellFormatAction extends AnAction {
 
 object StylishHaskellFormatAction {
   final val StylishHaskellName = "stylish-haskell"
-  private final val StylishHaskellPath = GlobalInfo.toolPath(StylishHaskellName)
+  private final val StylishHaskellPath = GlobalInfo.toolPath(StylishHaskellName).toString
 
   def versionInfo(project: Project): String = {
     CommandLine.run(Some(project), project.getBasePath, StylishHaskellPath, Seq("--version")).getStdout

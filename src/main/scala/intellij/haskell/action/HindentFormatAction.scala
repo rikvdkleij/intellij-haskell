@@ -55,7 +55,7 @@ class HindentFormatAction extends AnAction {
 
 object HindentFormatAction {
   final val HindentName = "hindent"
-  private final val HindentPath = GlobalInfo.toolPath(HindentName)
+  private final val HindentPath = GlobalInfo.toolPath(HindentName).toString
 
   def format(psiFile: PsiFile, selectionContext: Option[SelectionContext] = None): Unit = {
     val lineLength = CodeStyle.getSettings(psiFile.getProject).getRightMargin(HaskellLanguage.Instance)

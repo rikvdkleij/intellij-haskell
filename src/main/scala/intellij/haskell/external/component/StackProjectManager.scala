@@ -60,6 +60,10 @@ object StackProjectManager {
     getStackProjectManager(project).exists(_.hindentAvailable)
   }
 
+  def isInstallingHaskellTools(project: Project): Boolean = {
+    getStackProjectManager(project).exists(_.installingHaskellTools)
+  }
+
   def start(project: Project): Unit = {
     init(project)
   }
@@ -72,6 +76,45 @@ object StackProjectManager {
     project.isDisposed.optionNot(project.getComponent(classOf[StackProjectManager]))
   }
 
+  def installHaskellTools(project: Project, update: Boolean): Unit = {
+    getStackProjectManager(project).foreach(_.installingHaskellTools = true)
+
+    val title = (if (update) "Updating" else "Installing") + " Haskell tools"
+
+    ProgressManager.getInstance().run(new Task.Backgroundable(project, title, false, PerformInBackgroundOption.ALWAYS_BACKGROUND) {
+
+      private def installTool(progressIndicator: ProgressIndicator, toolName: String) = {
+        if (!GlobalInfo.toolPath(toolName).toFile.exists() || update) {
+          progressIndicator.setText(s"Busy with installing $toolName in ${GlobalInfo.toolsBinPath}")
+          StackCommandLine.installTool(project, toolName)
+        }
+      }
+
+      override def run(progressIndicator: ProgressIndicator): Unit = {
+        try {
+          if (update) {
+            progressIndicator.setText(s"Busy with updating Stack's package index")
+            StackCommandLine.updateStackIndex(project)
+          }
+
+          installTool(progressIndicator, HLintComponent.HLintName)
+          getStackProjectManager(project).foreach(_.hlintAvailable = true)
+
+          installTool(progressIndicator, HoogleComponent.HoogleName)
+          getStackProjectManager(project).foreach(_.hoogleAvailable = true)
+
+          installTool(progressIndicator, StylishHaskellFormatAction.StylishHaskellName)
+          getStackProjectManager(project).foreach(_.stylishHaskellAvailable = true)
+
+          installTool(progressIndicator, HindentFormatAction.HindentName)
+          getStackProjectManager(project).foreach(_.hindentAvailable = true)
+        } finally {
+          getStackProjectManager(project).foreach(_.installingHaskellTools = false)
+        }
+      }
+    })
+  }
+
   private def init(project: Project, restart: Boolean = false): Unit = {
     if (HaskellProjectUtil.isValidHaskellProject(project, notifyNoSdk = true)) {
       if (isInitializing(project)) {
@@ -81,25 +124,7 @@ object StackProjectManager {
         getStackProjectManager(project).foreach(_.initializing = true)
         getStackProjectManager(project).foreach(_.building = true)
 
-        ProgressManager.getInstance().run(new Task.Backgroundable(project, "Building tools", false, PerformInBackgroundOption.ALWAYS_BACKGROUND) {
-          override def run(progressIndicator: ProgressIndicator): Unit = {
-            progressIndicator.setText(s"Busy with installing ${HLintComponent.HLintName} in ${GlobalInfo.toolsBinPath}")
-            StackCommandLine.installTool(project, HLintComponent.HLintName)
-            getStackProjectManager(project).foreach(_.hlintAvailable = true)
-
-            progressIndicator.setText(s"Busy with installing ${HoogleComponent.HoogleName} in ${GlobalInfo.toolsBinPath}")
-            StackCommandLine.installTool(project, HoogleComponent.HoogleName)
-            getStackProjectManager(project).foreach(_.hoogleAvailable = true)
-
-            progressIndicator.setText(s"Busy with installing ${StylishHaskellFormatAction.StylishHaskellName} in ${GlobalInfo.toolsBinPath}")
-            StackCommandLine.installTool(project, StylishHaskellFormatAction.StylishHaskellName)
-            getStackProjectManager(project).foreach(_.stylishHaskellAvailable = true)
-
-            progressIndicator.setText(s"Busy with installing ${HindentFormatAction.HindentName} in ${GlobalInfo.toolsBinPath}")
-            StackCommandLine.installTool(project, HindentFormatAction.HindentName)
-            getStackProjectManager(project).foreach(_.hindentAvailable = true)
-          }
-        })
+        installHaskellTools(project, update = false)
 
         ProgressManager.getInstance().run(new Task.Backgroundable(project, "Building project, starting REPL(s) and preloading cache", false, PerformInBackgroundOption.ALWAYS_BACKGROUND) {
 
@@ -177,7 +202,8 @@ object StackProjectManager {
               getStackProjectManager(project).foreach(_.initializing = false)
             }
           }
-        })
+        }
+        )
       }
     }
   }
@@ -204,6 +230,9 @@ class StackProjectManager(project: Project) extends ProjectComponent {
 
   @volatile
   private var hindentAvailable = false
+
+  @volatile
+  private var installingHaskellTools = false
 
   @volatile
   private var replsManager: Option[StackReplsManager] = None

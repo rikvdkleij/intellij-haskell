@@ -28,7 +28,7 @@ import spray.json.{DefaultJsonProtocol, _}
 object HLintComponent {
 
   final val HLintName = "hlint"
-  private final val HLintPath = GlobalInfo.toolPath(HLintName)
+  private final val HLintPath = GlobalInfo.toolPath(HLintName).toString
 
   def check(psiFile: PsiFile): Seq[HLintInfo] = {
     if (StackProjectManager.isHlintAvailable(psiFile.getProject)) {

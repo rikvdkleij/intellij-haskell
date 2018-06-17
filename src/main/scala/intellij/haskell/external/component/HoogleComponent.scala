@@ -31,7 +31,7 @@ import scala.collection.JavaConverters._
 object HoogleComponent {
 
   final val HoogleName = "hoogle"
-  private final val HooglePath = GlobalInfo.toolPath(HoogleName)
+  private final val HooglePath = GlobalInfo.toolPath(HoogleName).toString
   private final val HoogleDbName = "hoogle"
 
   def runHoogle(project: Project, pattern: String, count: Int = 100): Option[Seq[String]] = {
