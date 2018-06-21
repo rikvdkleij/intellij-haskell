@@ -26,7 +26,7 @@ import com.intellij.psi.{PsiElement, PsiFile}
 import intellij.haskell.external.repl.StackRepl.StackReplOutput
 import intellij.haskell.external.repl.StackReplsManager
 import intellij.haskell.psi._
-import intellij.haskell.util.index.{HaskellFilePathIndex, HaskellModuleNameIndex}
+import intellij.haskell.util.index.HaskellFilePathIndex
 import intellij.haskell.util.{ApplicationUtil, HaskellProjectUtil, LineColumnPosition, ScalaUtil}
 
 import scala.concurrent.duration.Duration
@@ -141,9 +141,8 @@ private[component] object DefinitionLocationComponent {
     output match {
       case LocAtPattern(filePath, startLineNr, startColumnNr, endLineNr, endColumnNr) => Right(DefinitionLocationInfo(filePath.trim, startLineNr.toInt, startColumnNr.toInt, endLineNr.toInt, endColumnNr.toInt))
       case PackageModulePattern(moduleName) =>
-        val module = HaskellProjectUtil.findModuleForFile(psiFile)
         try {
-          val library = !module.exists(m => ApplicationManager.getApplication.runReadAction(ScalaUtil.computable(HaskellModuleNameIndex.findHaskellFileByModuleName(project, moduleName, GlobalSearchScope.moduleScope(m)).isDefined)))
+          val library = HaskellProjectUtil.isLibraryFile(psiFile)
           Right(ModuleLocationInfo(moduleName, library))
         } catch {
           case _: IndexNotReadyException => Left(IndexNotReady)
@@ -225,7 +224,7 @@ object LocationInfoUtil {
             ApplicationManager.getApplication.executeOnPooledThread(ScalaUtil.runnable {
               try
                 namedElements.foreach { e =>
-                  if (!project.isDisposed) {
+                  if (!project.isDisposed && !LoadComponent.isBusy(psiFile)) {
                     DefinitionLocationComponent.findDefinitionLocation(e, psiFile, isCurrentFile = true, runInRead = true)
                     // We have to wait for other requests which have more priority because those are on dispatch thread
                     Thread.sleep(200)
