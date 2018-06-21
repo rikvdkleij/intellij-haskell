@@ -33,7 +33,7 @@ class DownloadLibrarySources extends AnAction {
       ProgressManager.getInstance().run(new Task.Backgroundable(project, "Downloading Haskell library sources and adding them as source libraries to module") {
 
         def run(progressIndicator: ProgressIndicator) {
-          HaskellModuleBuilder.addLibrarySources(project)
+          HaskellModuleBuilder.addLibrarySources(project, update = true)
         }
       })
     })

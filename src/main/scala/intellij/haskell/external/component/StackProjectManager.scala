@@ -21,6 +21,7 @@ import com.intellij.openapi.components.ProjectComponent
 import com.intellij.openapi.fileEditor.FileEditorManager
 import com.intellij.openapi.progress.{PerformInBackgroundOption, ProgressIndicator, ProgressManager, Task}
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.roots.{ModifiableRootModel, ModuleRootModificationUtil}
 import com.intellij.openapi.ui.Messages
 import com.intellij.openapi.vfs.VirtualFileManager
 import intellij.haskell.action.{HindentFormatAction, StylishHaskellFormatAction}
@@ -150,12 +151,24 @@ object StackProjectManager {
                   progressIndicator.setText("Busy with cleaning up cache")
                   HaskellComponentsManager.invalidateGlobalCaches(project)
 
-                  ApplicationManager.getApplication.runReadAction(new Runnable {
-
-                    override def run(): Unit = {
-                      getStackProjectManager(project).foreach(_.initStackReplsManager())
-                    }
+                  ApplicationManager.getApplication.runReadAction(ScalaUtil.runnable {
+                    getStackProjectManager(project).foreach(_.initStackReplsManager())
                   })
+
+                  progressIndicator.setText("Busy with updating mdule settings")
+                  StackReplsManager.getReplsManager(project).map(_.moduleCabalInfos).foreach { modueCabalInfos =>
+                    modueCabalInfos.foreach { case (module, cabalInfo) =>
+                      ModuleRootModificationUtil.updateModel(module, (modifiableRootModel: ModifiableRootModel) => {
+                        modifiableRootModel.getContentEntries.headOption.foreach { contentEntry =>
+                          contentEntry.clearSourceFolders()
+                          HaskellModuleBuilder.addSourceFolders(cabalInfo, contentEntry)
+                        }
+                      })
+                    }
+                  }
+
+                  progressIndicator.setText("Busy with downloading library sources")
+                  HaskellModuleBuilder.addLibrarySources(project, update = true)
                 }
 
                 progressIndicator.setText(s"Busy with building Intero")
@@ -179,7 +192,7 @@ object StackProjectManager {
               }
 
               progressIndicator.setText("Busy with downloading library sources")
-              HaskellModuleBuilder.addLibrarySources(project)
+              HaskellModuleBuilder.addLibrarySources(project, update = false)
 
               progressIndicator.setText("Busy with preloading libraries")
               val preloadCacheFuture = ApplicationManager.getApplication.executeOnPooledThread(ScalaUtil.runnable {
@@ -192,6 +205,16 @@ object StackProjectManager {
               if (!HoogleComponent.doesHoogleDatabaseExist(project)) {
                 HoogleComponent.showHoogleDatabaseDoesNotExistNotification(project)
               }
+
+              StackReplsManager.getReplsManager(project).foreach(_.moduleCabalInfos.foreach { case (module, cabalInfo) =>
+                val intersection = cabalInfo.sourceRoots.toSeq.intersect(cabalInfo.testSourceRoots.toSeq)
+                if (intersection.nonEmpty) {
+                  intersection.foreach(p => {
+                    val moduleName = module.getName
+                    HaskellNotificationGroup.logWarningBalloonEvent(project, s"Source folder `$p` of module `$moduleName` is defined as Source and as Test Source")
+                  })
+                }
+              })
 
               progressIndicator.setText("Busy with preloading libraries")
               if (!preloadCacheFuture.isDone) {

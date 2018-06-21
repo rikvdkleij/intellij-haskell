@@ -432,8 +432,8 @@
             </action>
 
             <action id="Haskell.RestartStackRepl" class="intellij.haskell.action.RestartStackReplsAction"
-                    text="Restart Haskell Stack REPLs"
-                    description="Restart Haskell Stack REPLs and refresh cache">
+                    text="Update Settings and restart REPLs"
+                    description="Update Module Settings and restart REPLs">
             </action>
 
             <action id="Haskell.BuildHoogleDatabase" class="intellij.haskell.action.BuildHoogleDbAction"

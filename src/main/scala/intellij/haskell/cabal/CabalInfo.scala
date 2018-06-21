@@ -51,7 +51,7 @@ object CabalInfo {
   }
 }
 
-class CabalInfo(cabalFile: CabalFile, val modulePath: String) {
+class CabalInfo(cabalFile: CabalFile, modulePath: String) {
 
   val packageName: String = (for {
     pkgName <- HaskellPsiUtil.getChildOfType(cabalFile, classOf[PkgName])

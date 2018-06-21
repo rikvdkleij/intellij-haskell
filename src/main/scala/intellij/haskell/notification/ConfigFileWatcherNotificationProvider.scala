@@ -40,7 +40,7 @@ class ConfigFileWatcherNotificationProvider(project: Project, notifications: Edi
   private def createPanel(project: Project, file: VirtualFile): EditorNotificationPanel = {
     val panel = new EditorNotificationPanel
     panel.setText("Haskell project configuration file is updated")
-    panel.createActionLabel("Restart Haskell Stack REPLs", () => {
+    panel.createActionLabel("Update Settings and restart REPLs", () => {
       ConfigFileWatcherNotificationProvider.showNotificationsByProject.put(project, false)
       notifications.updateAllNotifications()
       StackProjectManager.restart(project)
