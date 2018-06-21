@@ -44,30 +44,30 @@ class HaskellReference(element: HaskellNamedElement, textRange: TextRange) exten
       HaskellEditorUtil.showHaskellSupportIsNotAvailableWhileBuilding(project)
       Array()
     } else {
-      val psiFile = element.getContainingFile
-
       ProgressManager.checkCanceled()
+      val result = Option(element.getContainingFile).map { psiFile =>
 
-      val result = element match {
-        case mi: HaskellModid => HaskellReference.findHaskellFileByModuleNameIndex(project, mi.getName, GlobalSearchScope.allScope(project)).map(HaskellFileResolveResult).toIterable
-        case qe: HaskellQualifierElement =>
-          val importDeclarations = findImportDeclarations(psiFile)
-          findQualifier(importDeclarations, qe) match {
-            case Some(q) => findNamedElement(q).map(HaskellNamedElementResolveResult).toIterable
-            case None => val files = findHaskellFiles(importDeclarations, qe, project)
-              if (files.isEmpty) {
-                // return itself
-                findNamedElement(element).map(HaskellNamedElementResolveResult).toIterable
-              } else {
-                files.map(HaskellFileResolveResult)
-              }
-          }
-        case ne: HaskellNamedElement if findImportHidingDeclarationParent(ne).isDefined => Iterable()
-        case ne: HaskellNamedElement =>
-          ProgressManager.checkCanceled()
-          HaskellReference.resolveReferences(ne, psiFile, project).map(HaskellNamedElementResolveResult)
-        case _ => Iterable()
-      }
+        element match {
+          case mi: HaskellModid => HaskellReference.findHaskellFileByModuleNameIndex(project, mi.getName, GlobalSearchScope.allScope(project)).map(HaskellFileResolveResult).toIterable
+          case qe: HaskellQualifierElement =>
+            val importDeclarations = findImportDeclarations(psiFile)
+            findQualifier(importDeclarations, qe) match {
+              case Some(q) => findNamedElement(q).map(HaskellNamedElementResolveResult).toIterable
+              case None => val files = findHaskellFiles(importDeclarations, qe, project)
+                if (files.isEmpty) {
+                  // return itself
+                  findNamedElement(element).map(HaskellNamedElementResolveResult).toIterable
+                } else {
+                  files.map(HaskellFileResolveResult)
+                }
+            }
+          case ne: HaskellNamedElement if findImportHidingDeclarationParent(ne).isDefined => Iterable()
+          case ne: HaskellNamedElement =>
+            ProgressManager.checkCanceled()
+            HaskellReference.resolveReferences(ne, psiFile, project).map(HaskellNamedElementResolveResult)
+          case _ => Iterable()
+        }
+      }.getOrElse(Iterable())
       result.toArray[ResolveResult]
     }
   }
@@ -225,7 +225,7 @@ object HaskellReference {
 
     val isCurrentSelectedFile = HaskellFileUtil.findVirtualFile(psiFile).exists(vf => FileEditorManager.getInstance(project).getSelectedFiles.headOption.contains(vf))
 
-    HaskellComponentsManager.findDefinitionLocation(namedElement, isCurrentFile = isCurrentSelectedFile) match {
+    HaskellComponentsManager.findDefinitionLocation(namedElement, psiFile, isCurrentFile = isCurrentSelectedFile) match {
       case Right(DefinitionLocationInfo(filePath, startLineNr, startColumnNr, _, _)) =>
         findIdentifierByLocation(filePath, startLineNr, startColumnNr, namedElement.getName, project)
       case Right(ModuleLocationInfo(moduleName, _)) =>

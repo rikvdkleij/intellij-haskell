@@ -16,8 +16,6 @@
 
 package intellij.haskell.psi.impl
 
-import javax.swing._
-
 import com.intellij.navigation.ItemPresentation
 import com.intellij.psi.impl.source.resolve.reference.ReferenceProvidersRegistry
 import com.intellij.psi.{PsiElement, PsiReference}
@@ -27,6 +25,7 @@ import intellij.haskell.psi._
 import intellij.haskell.refactor.HaskellRenameFileProcessor
 import intellij.haskell.util.{HaskellFileUtil, StringUtil}
 import intellij.haskell.{HaskellFileType, HaskellIcons}
+import javax.swing._
 
 import scala.annotation.tailrec
 import scala.collection.JavaConverters._
@@ -298,8 +297,8 @@ object HaskellPsiImplUtil {
 
   private def getContainingLineText(namedElement: PsiElement) = {
     for {
-      virtualFile <- HaskellFileUtil.findVirtualFile(namedElement.getContainingFile)
-      doc <- HaskellFileUtil.findDocument(virtualFile)
+      psiFile <- Option(namedElement.getContainingFile)
+      doc <- HaskellFileUtil.findDocument(psiFile)
       element <- HaskellPsiUtil.findQualifiedNameParent(namedElement)
       start = findNewline(element, e => e.getPrevSibling).getTextOffset
       end = findNewline(element, e => e.getNextSibling).getTextOffset

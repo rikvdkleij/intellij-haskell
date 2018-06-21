@@ -17,15 +17,14 @@
 package intellij.haskell.psi
 
 import com.intellij.lang.ASTNode
-import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.editor.Editor
-import com.intellij.openapi.util.Computable
 import com.intellij.psi.tree.{IElementType, TokenSet}
 import com.intellij.psi.util.PsiTreeUtil
 import com.intellij.psi.{PsiElement, PsiFile, TokenType}
 import intellij.haskell.HaskellFile
 import intellij.haskell.psi.HaskellElementCondition._
 import intellij.haskell.psi.HaskellTypes._
+import intellij.haskell.util.ApplicationUtil
 
 import scala.annotation.tailrec
 import scala.collection.JavaConverters._
@@ -71,14 +70,14 @@ object HaskellPsiUtil {
   }
 
   def findModuleDeclaration(psiFile: PsiFile, runInRead: Boolean = false): Option[HaskellModuleDeclaration] = {
-    runReadAction(Option(PsiTreeUtil.findChildOfType(psiFile.getOriginalFile, classOf[HaskellModuleDeclaration])), runInRead)
+    ApplicationUtil.runReadAction(Option(PsiTreeUtil.findChildOfType(psiFile.getOriginalFile, classOf[HaskellModuleDeclaration])), runInRead)
   }
 
   /**
     * Use [[intellij.haskell.util.index.HaskellFilePathIndex.findModuleName()]]
     */
   def findModuleName(psiFile: PsiFile, runInRead: Boolean = false): Option[String] = {
-    runReadAction(Option(PsiTreeUtil.findChildOfType(psiFile.getOriginalFile, classOf[HaskellModuleDeclaration])).flatMap(_.getModuleName), runInRead)
+    ApplicationUtil.runReadAction(Option(PsiTreeUtil.findChildOfType(psiFile.getOriginalFile, classOf[HaskellModuleDeclaration])).flatMap(_.getModuleName), runInRead)
   }
 
   def findQualifiedNameParent(psiElement: PsiElement): Option[HaskellQualifiedNameElement] = {
@@ -190,18 +189,4 @@ object HaskellPsiUtil {
     Stream.iterate(psiElement.getParent)(_.getParent).takeWhile(_ != null).collectFirst(f)
   }
 
-  private def runReadAction[T](f: => T, runInRead: Boolean = false): T = {
-    if (runInRead) {
-      ApplicationManager.getApplication.runReadAction {
-        new Computable[T] {
-          override def compute(): T = {
-            f
-          }
-        }
-      }
-    }
-    else {
-      f
-    }
-  }
 }
