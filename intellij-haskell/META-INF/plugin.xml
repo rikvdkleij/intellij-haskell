@@ -1,7 +1,7 @@
 <idea-plugin>
     <id>intellij.haskell</id>
     <name>IntelliJ-Haskell</name>
-    <version>1.0.0-beta16</version>
+    <version>1.0.0-beta17</version>
     <vendor email="rikvdkleij@gmail.com">Rik van der Kleij</vendor>
 
     <description><![CDATA[
@@ -11,15 +11,17 @@
     ]]></description>
 
     <change-notes><![CDATA[
-        <p>1.0.0-beta16</p>
+        <p>1.0.0-beta17</p>
         <b>IMPORTANT: Stack version should be > 1.7.0 and please reimport your Haskell Stack project after updating the plugin.</b>
         <ul>
             <li>Improved responsivess, especially for multi-package projects</li>
-            <li>HLint, Hoogle, Hindent and Stylish-Haskell are automatically installed with LTS-11 for IntelliJ and they are used by all projects</li>
+            <li>HLint, Hoogle, Hindent and Stylish-Haskell are automatically installed in IntelliJ sandbox with LTS-11. These tools are used by all projects</li>
+            <li>Tools/Haskell menu contains option to update Haskell tools with latest LTS-11 version</li>
             <li>Various improvements and fixes</li>
             <li>Improved REPL (@solicode)</li>
             <li>Improved importer of multi-package projects</li>
             <li>Improved parser</li>
+            <li>Restarting the REPLs also includes updating the Module Settings</li>
         </ul>
         <p>1.0.0-beta12</p>
         <ul>
