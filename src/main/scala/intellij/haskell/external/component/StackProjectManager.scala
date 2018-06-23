@@ -182,7 +182,7 @@ object StackProjectManager {
                 FileEditorManager.getInstance(project).getSelectedFiles foreach { vf =>
                   val psiFile = ApplicationManager.getApplication.runReadAction(ScalaUtil.computable(HaskellFileUtil.convertToHaskellFile(project, vf)))
                   psiFile.foreach(pf => {
-                    if (!LoadComponent.isFileLoaded(pf) || !LoadComponent.isFileLoaded(pf)) {
+                    if (!LoadComponent.isFileLoaded(pf)) {
                       HaskellAnnotator.restartDaemonCodeAnalyzerForFile(pf)
                     }
                   })
@@ -225,8 +225,7 @@ object StackProjectManager {
               getStackProjectManager(project).foreach(_.initializing = false)
             }
           }
-        }
-        )
+        })
       }
     }
   }
