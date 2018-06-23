@@ -84,10 +84,12 @@ object StackProjectManager {
 
     ProgressManager.getInstance().run(new Task.Backgroundable(project, title, false, PerformInBackgroundOption.ALWAYS_BACKGROUND) {
 
-      private def installTool(progressIndicator: ProgressIndicator, toolName: String) = {
+      private def isToolAvailable(progressIndicator: ProgressIndicator, toolName: String) = {
         if (!GlobalInfo.toolPath(toolName).toFile.exists() || update) {
           progressIndicator.setText(s"Busy with installing $toolName in ${GlobalInfo.toolsBinPath}")
           StackCommandLine.installTool(project, toolName)
+        } else {
+          true
         }
       }
 
@@ -98,17 +100,13 @@ object StackProjectManager {
             StackCommandLine.updateStackIndex(project)
           }
 
-          installTool(progressIndicator, HLintComponent.HLintName)
-          getStackProjectManager(project).foreach(_.hlintAvailable = true)
+          getStackProjectManager(project).foreach(_.hlintAvailable = isToolAvailable(progressIndicator, HLintComponent.HLintName))
 
-          installTool(progressIndicator, HoogleComponent.HoogleName)
-          getStackProjectManager(project).foreach(_.hoogleAvailable = true)
+          getStackProjectManager(project).foreach(_.hoogleAvailable = isToolAvailable(progressIndicator, HoogleComponent.HoogleName))
 
-          installTool(progressIndicator, StylishHaskellFormatAction.StylishHaskellName)
-          getStackProjectManager(project).foreach(_.stylishHaskellAvailable = true)
+          getStackProjectManager(project).foreach(_.stylishHaskellAvailable = isToolAvailable(progressIndicator, StylishHaskellFormatAction.StylishHaskellName))
 
-          installTool(progressIndicator, HindentFormatAction.HindentName)
-          getStackProjectManager(project).foreach(_.hindentAvailable = true)
+          getStackProjectManager(project).foreach(_.hindentAvailable = isToolAvailable(progressIndicator, HindentFormatAction.HindentName))
         } finally {
           getStackProjectManager(project).foreach(_.installingHaskellTools = false)
         }

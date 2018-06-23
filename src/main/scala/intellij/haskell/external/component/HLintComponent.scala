@@ -48,7 +48,7 @@ object HLintComponent {
           Seq()
       }
     } else {
-      HaskellEditorUtil.showStatusBarMessage(psiFile.getProject, s"$HLintName is not yet available")
+      HaskellEditorUtil.showStatusBarMessage(psiFile.getProject, s"$HLintName is not (yet) available")
       Seq()
     }
   }

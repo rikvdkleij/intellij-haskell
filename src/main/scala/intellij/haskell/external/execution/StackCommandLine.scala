@@ -52,10 +52,11 @@ object StackCommandLine {
     })
   }
 
-  def installTool(project: Project, toolName: String): Option[ProcessOutput] = {
+  def installTool(project: Project, toolName: String): Boolean = {
     import intellij.haskell.GlobalInfo._
     val arguments = Seq("--stack-root", toolsStackRootPath, "--resolver", StackageLtsVersion, "--compiler", "ghc-8.2.2", "--system-ghc", "--local-bin-path", toolsBinPath, "install", toolName)
-    run(project, arguments, -1, logOutput = true, notifyBalloonError = true, workDir = Some(VfsUtil.getUserHomeDir.getPath))
+    val processOutput = run(project, arguments, -1, logOutput = true, notifyBalloonError = true, workDir = Some(VfsUtil.getUserHomeDir.getPath))
+    processOutput.exists(o => o.getExitCode == 0 && !o.isTimeout)
   }
 
   def updateStackIndex(project: Project): Option[ProcessOutput] = {

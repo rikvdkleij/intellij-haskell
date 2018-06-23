@@ -70,7 +70,7 @@ object HoogleComponent {
 
   private def isHoogleFeatureAvailable(project: Project): Boolean = {
     if (!StackProjectManager.isHoogleAvailable(project)) {
-      HaskellEditorUtil.showStatusBarMessage(project, s"$HoogleName is not yet available")
+      HaskellEditorUtil.showStatusBarMessage(project, s"$HoogleName is not (yet) available")
       false
     } else {
       doesHoogleDatabaseExist(project)
