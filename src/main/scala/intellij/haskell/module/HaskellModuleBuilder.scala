@@ -30,7 +30,7 @@ import com.intellij.openapi.roots.libraries.{Library, LibraryUtil}
 import com.intellij.openapi.roots.ui.configuration.ModulesProvider
 import com.intellij.openapi.ui.Messages
 import com.intellij.openapi.util.io.FileUtil
-import com.intellij.openapi.vfs.{LocalFileSystem, VirtualFileManager}
+import com.intellij.openapi.vfs.LocalFileSystem
 import com.intellij.platform.templates.TemplateModuleBuilder
 import intellij.haskell.cabal.CabalInfo
 import intellij.haskell.external.execution.{CommandLine, StackCommandLine}
@@ -184,9 +184,7 @@ object HaskellModuleBuilder {
     new File(moduleBuilder.getContentEntryPath, GlobalInfo.StackWorkDirName)
   }
 
-  private def getModuleRootDirectory(packagePath: String, modulePath: String): Option[File]
-
-  = {
+  private def getModuleRootDirectory(packagePath: String, modulePath: String): Option[File] = {
     val file = if (packagePath == ".") {
       new File(modulePath)
     } else {
@@ -195,9 +193,7 @@ object HaskellModuleBuilder {
     Option(file).filter(_.exists())
   }
 
-  private def getCabalFile(moduleDirectory: File): Option[File]
-
-  = {
+  private def getCabalFile(moduleDirectory: File): Option[File] = {
     HaskellProjectUtil.findCabalFile(moduleDirectory) match {
       case Some(f) => Option(f)
       case None =>
@@ -206,9 +202,7 @@ object HaskellModuleBuilder {
     }
   }
 
-  private def getCabalInfo(project: Project, cabalFile: File): Option[CabalInfo]
-
-  = {
+  private def getCabalInfo(project: Project, cabalFile: File): Option[CabalInfo] = {
     CabalInfo.create(project, cabalFile) match {
       case Some(f) => Option(f)
       case None =>
@@ -246,15 +240,11 @@ object HaskellModuleBuilder {
     }
   }
 
-  private def getProjectLibDirectory(project: Project): File
-
-  = {
+  private def getProjectLibDirectory(project: Project): File = {
     new File(new File(GlobalInfo.getLibrarySourcesPath), project.getName)
   }
 
-  private def createDependencies(project: Project, dependencyLines: Seq[String], projectModules: Iterable[Module]): Seq[HaskellDependency]
-
-  = {
+  private def createDependencies(project: Project, dependencyLines: Seq[String], projectModules: Iterable[Module]): Seq[HaskellDependency] = {
     dependencyLines.flatMap {
       case PackagePattern(name, version) =>
         projectModules.find(_.getName.toLowerCase == name.toLowerCase) match {
@@ -267,9 +257,7 @@ object HaskellModuleBuilder {
     }
   }
 
-  private def downloadHaskellPackageSources(project: Project, projectLibDirectory: File, stackPath: String, libraryDependencies: Seq[HaskellLibraryDependency]): Unit
-
-  = {
+  private def downloadHaskellPackageSources(project: Project, projectLibDirectory: File, stackPath: String, libraryDependencies: Seq[HaskellLibraryDependency]): Unit = {
     libraryDependencies.filterNot(libraryDependency => getPackageDirectory(projectLibDirectory, libraryDependency).exists()).flatMap(libraryDependency => {
       val stderr = CommandLine.run(Some(project), projectLibDirectory.getAbsolutePath, stackPath, Seq("unpack", libraryDependency.nameVersion), 10000).getStderr
       if (stderr.contains("not found")) {
@@ -278,27 +266,17 @@ object HaskellModuleBuilder {
         Seq(libraryDependency)
       }
     })
-
-    ApplicationManager.getApplication.invokeAndWait(() => {
-      VirtualFileManager.getInstance().syncRefresh()
-    })
   }
 
-  private def getPackageDirectory(projectLibDirectory: File, libraryDependency: HaskellLibraryDependency)
-
-  = {
+  private def getPackageDirectory(projectLibDirectory: File, libraryDependency: HaskellLibraryDependency) = {
     new File(projectLibDirectory, libraryDependency.nameVersion)
   }
 
-  private def getProjectLibraryTable(project: Project)
-
-  = {
+  private def getProjectLibraryTable(project: Project) = {
     ProjectLibraryTable.getInstance(project)
   }
 
-  private def addPackagesAsDependenciesToModule(module: Module, projectModules: Iterable[Module], dependencies: Seq[HaskellDependency], allDependencies: Seq[HaskellDependency], projectLibDirectory: File)
-
-  = {
+  private def addPackagesAsDependenciesToModule(module: Module, projectModules: Iterable[Module], dependencies: Seq[HaskellDependency], allDependencies: Seq[HaskellDependency], projectLibDirectory: File) = {
     val project = module.getProject
     getProjectLibraryTable(project).getLibraries.foreach(library => {
       dependencies.find(_.nameVersion == library.getName) match {
@@ -348,10 +326,7 @@ object HaskellModuleBuilder {
     })
   }
 
-  private def removeModuleLibrary(module: Module, library: Library): Unit
-
-  = {
-
+  private def removeModuleLibrary(module: Module, library: Library): Unit = {
     ModuleRootModificationUtil.updateModel(module, (modifiableRootModel: ModifiableRootModel) => {
       val moduleLibrary = LibraryUtil.findLibrary(module, library.getName)
       if (moduleLibrary != null) {
@@ -361,9 +336,7 @@ object HaskellModuleBuilder {
     })
   }
 
-  private def removeProjectLibrary(project: Project, library: Library): RunResult[Unit]
-
-  = {
+  private def removeProjectLibrary(project: Project, library: Library): RunResult[Unit] = {
     new WriteAction[Unit]() {
 
       def run(result: Result[Unit]): Unit = {
@@ -376,9 +349,7 @@ object HaskellModuleBuilder {
     }.execute()
   }
 
-  private def createProjectLibrary(project: Project, libraryDependency: HaskellLibraryDependency, projectLibDirectory: File): Library
-
-  = {
+  private def createProjectLibrary(project: Project, libraryDependency: HaskellLibraryDependency, projectLibDirectory: File): Library = {
     val library = new WriteAction[Library]() {
 
       def run(result: Result[Library]): Unit = {
@@ -398,9 +369,7 @@ object HaskellModuleBuilder {
     library.getResultObject
   }
 
-  private def addModuleLibrary(module: Module, library: Library): Unit
-
-  = {
+  private def addModuleLibrary(module: Module, library: Library): Unit = {
     ModuleRootModificationUtil.updateModel(module, (modifiableRootModel: ModifiableRootModel) => {
       modifiableRootModel.addLibraryEntry(library)
     })
