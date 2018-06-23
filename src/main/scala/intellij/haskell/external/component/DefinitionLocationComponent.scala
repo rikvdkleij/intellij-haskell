@@ -212,8 +212,9 @@ object LocationInfoUtil {
   private val activeTaskByTarget = new ConcurrentHashMap[String, Boolean]().asScala
 
   def preloadLocationsAround(project: Project, psiFile: PsiFile, namedElement: PsiElement): Unit = {
-    HaskellComponentsManager.findStackComponentInfo(psiFile).map(_.target) match {
-      case Some(target) =>
+    HaskellComponentsManager.findStackComponentInfo(psiFile) match {
+      case Some(stackComponentInfo) =>
+        val target = stackComponentInfo.target
         val putResult = activeTaskByTarget.put(target, true)
         if (putResult.isEmpty) {
           if (namedElement.isValid && !project.isDisposed) {
@@ -224,13 +225,12 @@ object LocationInfoUtil {
             ApplicationManager.getApplication.executeOnPooledThread(ScalaUtil.runnable {
               try
                 namedElements.foreach { e =>
-                  if (!project.isDisposed && !LoadComponent.isBusy(psiFile)) {
+                  if (!project.isDisposed && !LoadComponent.isBusy(project, stackComponentInfo)) {
                     DefinitionLocationComponent.findDefinitionLocation(e, psiFile, isCurrentFile = true, runInRead = true)
                     // We have to wait for other requests which have more priority because those are on dispatch thread
                     Thread.sleep(200)
                   }
-                }
-              finally {
+                } finally {
                 activeTaskByTarget.remove(target)
               }
             })
