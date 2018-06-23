@@ -47,18 +47,16 @@ object HaskellFilePathIndex {
 
   def findModuleName(psiFile: PsiFile, searchScope: GlobalSearchScope): Option[String] = {
     HaskellFileUtil.getAbsolutePath(psiFile) match {
-      case Some(path) =>
-        val result =
-          try {
-            ApplicationManager.getApplication.runReadAction(ScalaUtil.computable(FileBasedIndex.getInstance.getValues(HaskellFilePathIndex, path, searchScope).asScala)).headOption.flatten
-          } catch {
-            case _: IndexNotReadyException => None
-          }
-        result match {
+      case Some(path) if !psiFile.getProject.isDisposed =>
+        (try {
+          ApplicationManager.getApplication.runReadAction(ScalaUtil.computable(FileBasedIndex.getInstance.getValues(HaskellFilePathIndex, path, searchScope).asScala)).headOption.flatten
+        } catch {
+          case _: IndexNotReadyException => None
+        }) match {
           case None => HaskellPsiUtil.findModuleName(psiFile, runInRead = true)
           case mn => mn
         }
-      case None => None
+      case _ => None
     }
   }
 }
