@@ -24,7 +24,7 @@ import com.intellij.openapi.compiler.{CompileContext, CompileTask, CompilerMessa
 import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Key
-import com.intellij.openapi.vfs.CharsetToolkit
+import com.intellij.openapi.vfs.{CharsetToolkit, VfsUtil}
 import intellij.haskell.HaskellNotificationGroup
 import intellij.haskell.sdk.HaskellSdkType
 import intellij.haskell.util.{HaskellFileUtil, HaskellProjectUtil}
@@ -55,7 +55,7 @@ object StackCommandLine {
   def installTool(project: Project, toolName: String): Option[ProcessOutput] = {
     import intellij.haskell.GlobalInfo._
     val arguments = Seq("--stack-root", toolsStackRootPath, "--resolver", StackageLtsVersion, "--compiler", "ghc-8.2.2", "--system-ghc", "--local-bin-path", toolsBinPath, "install", toolName)
-    run(project, arguments, -1, logOutput = true, notifyBalloonError = true)
+    run(project, arguments, -1, logOutput = true, notifyBalloonError = true, workDir = Some(VfsUtil.getUserHomeDir.getPath))
   }
 
   def updateStackIndex(project: Project): Option[ProcessOutput] = {
