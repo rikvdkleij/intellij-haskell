@@ -15,7 +15,7 @@
         <b>IMPORTANT: Stack version should be > 1.7.0 and please reimport your Haskell Stack project after updating the plugin.</b>
         <ul>
             <li>Improved responsivess, especially for multi-package projects</li>
-            <li>HLint, Hoogle, Hindent and Stylish-Haskell are automatically installed in IntelliJ sandbox with LTS-11. These tools are used by all projects</li>
+            <li>HLint, Hoogle, Hindent and Stylish-Haskell are automatically installed in IntelliJ sandbox with LTS-11. Those binaries are used by all projects</li>
             <li>Tools/Haskell menu contains option to update Haskell tools with latest LTS-11 version</li>
             <li>Various improvements and fixes</li>
             <li>Improved REPL (@solicode)</li>
