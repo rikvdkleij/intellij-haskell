@@ -16,8 +16,6 @@
 
 package intellij.haskell.action
 
-import java.util.concurrent.Callable
-
 import com.intellij.execution.process.ProcessOutput
 import com.intellij.openapi.actionSystem.{AnAction, AnActionEvent}
 import com.intellij.openapi.application.ApplicationManager
@@ -25,7 +23,7 @@ import com.intellij.openapi.project.Project
 import com.intellij.psi.PsiFile
 import intellij.haskell.external.component.StackProjectManager
 import intellij.haskell.external.execution.CommandLine
-import intellij.haskell.util.{HaskellEditorUtil, HaskellFileUtil}
+import intellij.haskell.util.{FutureUtil, HaskellEditorUtil, HaskellFileUtil, ScalaUtil}
 import intellij.haskell.{GlobalInfo, HaskellNotificationGroup}
 
 class StylishHaskellFormatAction extends AnAction {
@@ -55,19 +53,20 @@ object StylishHaskellFormatAction {
 
     HaskellFileUtil.getAbsolutePath(psiFile) match {
       case Some(path) =>
-        val processOutputFuture = ApplicationManager.getApplication.executeOnPooledThread(new Callable[ProcessOutput] {
-          override def call(): ProcessOutput = {
-            CommandLine.run(Some(project), project.getBasePath, StylishHaskellPath, Seq(path))
-          }
+        val processOutputFuture = ApplicationManager.getApplication.executeOnPooledThread(ScalaUtil.callable[ProcessOutput] {
+          CommandLine.run(Some(project), project.getBasePath, StylishHaskellPath, Seq(path))
         })
 
-        val processOutput = processOutputFuture.get
-        if (processOutput.getStderrLines.isEmpty) {
-          HaskellFileUtil.saveFileWithNewContent(psiFile, processOutput.getStdout)
-        } else {
-          HaskellNotificationGroup.logErrorBalloonEvent(project, s"Error while formatting by `$StylishHaskellName`. Error: ${processOutput.getStderr}")
+        FutureUtil.waitForValue(project, processOutputFuture, s"reformatting by $StylishHaskellName") match {
+          case None => ()
+          case Some(processOutput) =>
+            if (processOutput.getStderrLines.isEmpty) {
+              HaskellFileUtil.saveFileWithNewContent(psiFile, processOutput.getStdout)
+            } else {
+              HaskellNotificationGroup.logErrorBalloonEvent(project, s"Error while reformatting by `$StylishHaskellName`. Error: ${processOutput.getStderr}")
+            }
         }
-      case None => HaskellNotificationGroup.logWarningBalloonEvent(psiFile.getProject, s"Can not format file because could not determine path for file `${psiFile.getName}`. File exists only in memory")
+      case None => HaskellNotificationGroup.logWarningBalloonEvent(psiFile.getProject, s"Can not reformat file because could not determine path for file `${psiFile.getName}`. File exists only in memory")
     }
   }
 }

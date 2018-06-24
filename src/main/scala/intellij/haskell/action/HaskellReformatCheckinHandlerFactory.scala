@@ -14,24 +14,14 @@
  * limitations under the License.
  */
 
-package intellij.haskell.settings
+package intellij.haskell.action
 
-object HaskellSettingsState {
-  private def state = HaskellSettingsPersistentStateComponent.getInstance().getState
+import com.intellij.openapi.vcs.CheckinProjectPanel
+import com.intellij.openapi.vcs.changes.CommitContext
+import com.intellij.openapi.vcs.checkin.{CheckinHandler, CheckinHandlerFactory}
 
-  def getReplTimeout: Integer = {
-    state.replTimeout
-  }
-
-  def getHlintOptions: String = {
-    state.hlintOptions
-  }
-
-  def isReformatCodeBeforeCommit: Boolean = {
-    state.reformatCodeBeforeCommit
-  }
-
-  def setReformatCodeBeforeCommit(reformat: Boolean): Unit = {
-    state.reformatCodeBeforeCommit = reformat
+class HaskellReformatCheckinHandlerFactory extends CheckinHandlerFactory {
+  override def createHandler(panel: CheckinProjectPanel, commitContext: CommitContext): CheckinHandler = {
+    new HaskellReformatBeforeCheckinHandler(panel.getProject, panel)
   }
 }
