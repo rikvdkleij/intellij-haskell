@@ -44,8 +44,8 @@ private[component] object DefinitionLocationComponent {
 
   def findDefinitionLocation(namedElement: HaskellNamedElement, psiFile: PsiFile, isCurrentFile: Boolean, runInRead: Boolean = false): DefinitionLocationResult = {
     (for {
-      ne <- HaskellPsiUtil.findQualifiedNameParent(namedElement).map(_.getIdentifierElement)
-      textOffset = ne.getTextOffset
+      ne <- ApplicationUtil.runReadAction(HaskellPsiUtil.findQualifiedNameParent(namedElement).map(_.getIdentifierElement), runInRead)
+      textOffset = ApplicationUtil.runReadAction(ne.getTextOffset, runInRead)
       sp <- LineColumnPosition.fromOffset(psiFile, textOffset, runInRead = runInRead)
       ep <- LineColumnPosition.fromOffset(psiFile, textOffset + ne.getTextLength, runInRead = runInRead)
     } yield find(psiFile, sp, ep, ApplicationUtil.runReadAction(ne.getName, runInRead), isCurrentFile, ne)) match {
