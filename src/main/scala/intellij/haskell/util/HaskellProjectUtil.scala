@@ -111,8 +111,19 @@ object HaskellProjectUtil {
     directory.listFiles.find(_.getName == "stack.yaml")
   }
 
+  def findPackageFiles(project: Project): Iterable[File] = {
+    val modules = findProjectModules(project)
+    val dirs = modules.map(getModuleDir)
+    dirs.flatMap(findCabalFile)
+    dirs.flatMap(findPackageFile)
+  }
+
   def findStackFile(project: Project): Option[File] = {
     findStackFile(new File(project.getBasePath))
+  }
+
+  def findPackageFile(directory: File): Option[File] = {
+    directory.listFiles.find(_.getName == "package.yaml")
   }
 
   def getProjectModulesSearchScope(project: Project): GlobalSearchScope = {

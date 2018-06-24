@@ -16,6 +16,8 @@
 
 package intellij.haskell.util
 
+import java.util.concurrent.Callable
+
 import com.intellij.openapi.util.{Computable, Condition}
 
 import scala.collection.mutable
@@ -36,6 +38,11 @@ object ScalaUtil {
   def computable[A](f: => A): Computable[A] {
     def compute(): A} = new Computable[A] {
     override def compute(): A = f
+  }
+
+  def callable[A](f: => A): Callable[A] {
+    def call(): A} = new Callable[A] {
+    override def call(): A = f
   }
 
   def condition[A](f: A => Boolean): Condition[A] {

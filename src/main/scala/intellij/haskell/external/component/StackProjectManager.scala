@@ -30,7 +30,7 @@ import intellij.haskell.external.execution.StackCommandLine
 import intellij.haskell.external.execution.StackCommandLine.build
 import intellij.haskell.external.repl.StackReplsManager
 import intellij.haskell.module.HaskellModuleBuilder
-import intellij.haskell.util.{HaskellFileUtil, HaskellProjectUtil, ScalaUtil}
+import intellij.haskell.util.{FutureUtil, HaskellFileUtil, HaskellProjectUtil, ScalaUtil}
 import intellij.haskell.{GlobalInfo, HaskellNotificationGroup}
 
 object StackProjectManager {
@@ -130,9 +130,14 @@ object StackProjectManager {
           def run(progressIndicator: ProgressIndicator) {
             try {
               try {
-                progressIndicator.setText("Busy with building project")
-                val result = StackCommandLine.buildProjectDependenciesInMessageView(project)
-                if (result.contains(true)) {
+                progressIndicator.setText("Busy with building project's dependencies")
+                val dependenciesBuildResult = StackCommandLine.buildProjectDependenciesInMessageView(project)
+
+                progressIndicator.setText(s"Busy with building Intero")
+                build(project, Seq("intero"), logBuildResult = true)
+
+                if (dependenciesBuildResult.contains(true)) {
+                  progressIndicator.setText("Busy with building project")
                   StackCommandLine.buildProjectInMessageView(project)
                 } else {
                   HaskellNotificationGroup.logErrorBalloonEvent(project, "Project will not be built because building it's dependencies failed")
@@ -153,9 +158,9 @@ object StackProjectManager {
                     getStackProjectManager(project).foreach(_.initStackReplsManager())
                   })
 
-                  progressIndicator.setText("Busy with updating mdule settings")
-                  StackReplsManager.getReplsManager(project).map(_.moduleCabalInfos).foreach { modueCabalInfos =>
-                    modueCabalInfos.foreach { case (module, cabalInfo) =>
+                  progressIndicator.setText("Busy with updating module settings")
+                  StackReplsManager.getReplsManager(project).map(_.moduleCabalInfos).foreach { moduleCabalInfos =>
+                    moduleCabalInfos.foreach { case (module, cabalInfo) =>
                       ModuleRootModificationUtil.updateModel(module, (modifiableRootModel: ModifiableRootModel) => {
                         modifiableRootModel.getContentEntries.headOption.foreach { contentEntry =>
                           contentEntry.clearSourceFolders()
@@ -168,9 +173,6 @@ object StackProjectManager {
                   progressIndicator.setText("Busy with downloading library sources")
                   HaskellModuleBuilder.addLibrarySources(project, update = true)
                 }
-
-                progressIndicator.setText(s"Busy with building Intero")
-                build(project, Seq("intero"), logBuildResult = true)
 
                 progressIndicator.setText("Busy with starting global Stack REPL")
                 StackReplsManager.getGlobalRepl(project).foreach(_.start())
@@ -216,7 +218,7 @@ object StackProjectManager {
 
               progressIndicator.setText("Busy with preloading libraries")
               if (!preloadCacheFuture.isDone) {
-                preloadCacheFuture.get
+                FutureUtil.waitForValue(project, preloadCacheFuture, "preloading libraries", 600)
               }
             }
             finally {

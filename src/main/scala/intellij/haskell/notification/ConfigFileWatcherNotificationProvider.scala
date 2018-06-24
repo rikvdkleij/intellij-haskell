@@ -57,7 +57,7 @@ private class ConfigFileWatcher(project: Project, notifications: EditorNotificat
 
   import scala.collection.JavaConverters._
 
-  private val watchFiles = HaskellProjectUtil.findStackFile(project).toIterable ++ HaskellProjectUtil.findCabalFiles(project)
+  private val watchFiles = HaskellProjectUtil.findStackFile(project).toIterable ++ HaskellProjectUtil.findCabalFiles(project) ++ HaskellProjectUtil.findPackageFiles(project)
 
   override def before(events: util.List[_ <: VFileEvent]): Unit = {}
 

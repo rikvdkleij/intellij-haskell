@@ -77,7 +77,7 @@ private[component] object HaskellProjectFileInfoComponent {
               val sourceDirByInfo = sourceDirsByInfo.map({ case (info, sds) => (info, sds.maxBy(sd => Paths.get(sd).getNameCount)) })
               val mostSpecificSourceDirByInfo = ScalaUtil.maxsBy(sourceDirByInfo)({ case (_, sd) => Paths.get(sd).getNameCount })
               if (mostSpecificSourceDirByInfo.size > 1) {
-                HaskellNotificationGroup.logWarningBalloonEvent(psiFile.getProject, s"Ambiguous Stack target: `${psiFile.getName}` belongs to the source dir of more than one Stack target/Cabal stanza. The first one of ${mostSpecificSourceDirByInfo.map(_._1.target)} is chosen.")
+                HaskellNotificationGroup.logWarningBalloonEvent(psiFile.getProject, s"Ambiguous Stack target for file `${psiFile.getName}`. It can belong to the source dir of more than one Stack target/Cabal stanza. The first one of `${mostSpecificSourceDirByInfo.map(_._1.target)}` is chosen.")
               }
               mostSpecificSourceDirByInfo.headOption.map(_._1)
             } else {

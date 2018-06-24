@@ -7,12 +7,12 @@ import intellij.haskell.HaskellNotificationGroup
 
 object FutureUtil {
 
-  def getValue[T](future: Future[T], project: Project, timeOutMessage: String): Option[T] = {
+  def waitForValue[T](project: Project, future: Future[T], actionDescription: String, timeoutInSeconds: Int = 5): Option[T] = {
     try {
-      Option(future.get(1, TimeUnit.SECONDS))
+      Option(future.get(timeoutInSeconds, TimeUnit.SECONDS))
     } catch {
       case _: TimeoutException =>
-        HaskellNotificationGroup.logErrorEvent(project, s"Timeout while $timeOutMessage")
+        HaskellNotificationGroup.logErrorEvent(project, s"Timeout while $actionDescription")
         None
     }
   }

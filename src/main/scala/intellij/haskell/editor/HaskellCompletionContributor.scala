@@ -30,14 +30,14 @@ import com.intellij.psi.search.GlobalSearchScope
 import com.intellij.psi.util.PsiTreeUtil
 import com.intellij.psi.{PsiElement, PsiFile, TokenType}
 import com.intellij.util.ProcessingContext
-import intellij.haskell.external.component.{HaskellComponentsManager, ModuleIdentifier}
+import intellij.haskell.external.component.{HaskellComponentsManager, ModuleIdentifier, StackProjectManager}
 import intellij.haskell.psi.HaskellElementCondition._
 import intellij.haskell.psi.HaskellPsiUtil._
 import intellij.haskell.psi.HaskellTypes._
 import intellij.haskell.psi._
 import intellij.haskell.runconfig.console.{HaskellConsoleView, HaskellConsoleViewMap}
-import intellij.haskell.util.HaskellProjectUtil
 import intellij.haskell.util.index.HaskellFilePathIndex
+import intellij.haskell.util.{HaskellEditorUtil, HaskellProjectUtil}
 import intellij.haskell.{HaskellFile, HaskellIcons, HaskellNotificationGroup, HaskellParserDefinition}
 
 import scala.collection.JavaConverters._
@@ -108,117 +108,121 @@ class HaskellCompletionContributor extends CompletionContributor {
       val project = parameters.getPosition.getProject
 
       val isConsoleFile = HaskellConsoleView.isConsoleFile(psiFile)
-      if (!isConsoleFile && (HaskellProjectUtil.isLibraryFile(psiFile) || Option(parameters.getOriginalPosition).map(_.getNode.getElementType).exists(t => HaskellParserDefinition.Literals.contains(t) || HaskellParserDefinition.Comments.contains(t)))) {
-        return
-      }
 
-      ProgressManager.checkCanceled()
-
-      val positionElement = if (isConsoleFile) {
-        None
+      if (StackProjectManager.isBuilding(project)) {
+        HaskellEditorUtil.showHaskellSupportIsNotAvailableWhileBuilding(project)
+      } else if (!isConsoleFile && (HaskellProjectUtil.isLibraryFile(psiFile) || Option(parameters.getOriginalPosition).map(_.getNode.getElementType).exists(t => HaskellParserDefinition.Literals.contains(t) || HaskellParserDefinition.Comments.contains(t)))) {
+        ()
       } else {
-        // In case element before caret is a qualifier, module name or a dot we have to "help" IntelliJ to get the right preselected elements behavior
-        // For example, asking for completion in case typing `Data.List.` will give without this help no prefix.
-        Option(parameters.getOriginalPosition).orElse(Option(parameters.getPosition))
-      }
-      val prefixText = (
-        for {
-          e <- positionElement
-          mie <- HaskellPsiUtil.findModIdElement(e)
-          start = mie.getTextRange.getStartOffset
-          end = parameters.getOffset
-        } yield psiFile.getText.substring(start, end)
-        ).orElse(
-        for {
-          e <- positionElement
-          if isFileHeaderPragmaInProgress(e) || isPragmaInProgress(e)
-          start = e.getTextRange.getStartOffset
-          end = parameters.getOffset
-        } yield psiFile.getText.substring(start, end)
-      ).orElse({
-        for {
-          e <- positionElement
-          if e.getNode.getElementType != HS_LEFT_PAREN && e.getNode.getElementType != HS_BACKQUOTE
-          qne <- findQualifiedNamedElementToComplete(e)
-          start = if (qne.getText.startsWith("(") || qne.getText.startsWith("`")) qne.getTextRange.getStartOffset + 1 else qne.getTextRange.getStartOffset
-          end = parameters.getOffset
-        } yield psiFile.getText.substring(start, end)
-      }).orElse(
-        for {
-          e <- positionElement
-          if e.getNode.getElementType != HS_RIGHT_PAREN && e.getNode.getElementType != HS_BACKQUOTE
-          t <- Option(e.getText).filter(_.trim.nonEmpty)
-        } yield t
-      ).flatMap(pt => if (pt.trim.isEmpty) None else Some(pt))
 
-      val resultSet = prefixText match {
-        case Some(t) => originalResultSet.withPrefixMatcher(originalResultSet.getPrefixMatcher.cloneWithPrefix(t))
-        case _ => originalResultSet
-      }
+        ProgressManager.checkCanceled()
 
-      ProgressManager.checkCanceled()
+        val positionElement = if (isConsoleFile) {
+          None
+        } else {
+          // In case element before caret is a qualifier, module name or a dot we have to "help" IntelliJ to get the right preselected elements behavior
+          // For example, asking for completion in case typing `Data.List.` will give without this help no prefix.
+          Option(parameters.getOriginalPosition).orElse(Option(parameters.getPosition))
+        }
+        val prefixText = (
+          for {
+            e <- positionElement
+            mie <- HaskellPsiUtil.findModIdElement(e)
+            start = mie.getTextRange.getStartOffset
+            end = parameters.getOffset
+          } yield psiFile.getText.substring(start, end)
+          ).orElse(
+          for {
+            e <- positionElement
+            if isFileHeaderPragmaInProgress(e) || isPragmaInProgress(e)
+            start = e.getTextRange.getStartOffset
+            end = parameters.getOffset
+          } yield psiFile.getText.substring(start, end)
+        ).orElse({
+          for {
+            e <- positionElement
+            if e.getNode.getElementType != HS_LEFT_PAREN && e.getNode.getElementType != HS_BACKQUOTE
+            qne <- findQualifiedNamedElementToComplete(e)
+            start = if (qne.getText.startsWith("(") || qne.getText.startsWith("`")) qne.getTextRange.getStartOffset + 1 else qne.getTextRange.getStartOffset
+            end = parameters.getOffset
+          } yield psiFile.getText.substring(start, end)
+        }).orElse(
+          for {
+            e <- positionElement
+            if e.getNode.getElementType != HS_RIGHT_PAREN && e.getNode.getElementType != HS_BACKQUOTE
+            t <- Option(e.getText).filter(_.trim.nonEmpty)
+          } yield t
+        ).flatMap(pt => if (pt.trim.isEmpty) None else Some(pt))
 
-      positionElement match {
-        case Some(e) if isFileHeaderPragmaInProgress(e) =>
-          resultSet.addAllElements(getLanguageExtensionsLookupElements(project).asJavaCollection)
-          resultSet.addAllElements(getPragmaStartEndIdsLookupElements.asJavaCollection)
-          resultSet.addAllElements(getFileHeaderPragmaIdsLookupElements.asJavaCollection)
-        case Some(e) if isPragmaInProgress(e) =>
-          resultSet.addAllElements(getModulePragmaIdsLookupElements.asJavaCollection)
-          resultSet.addAllElements(getPragmaStartEndIdsLookupElements.asJavaCollection)
-        case Some(e) if isImportSpecInProgress(e) =>
-          resultSet.addAllElements(findAvailableIdsForImportModuleSpec(e, psiFile).asJavaCollection)
-        case Some(e) if isImportModuleDeclarationInProgress(e) =>
-          // Do not give suggestions when defining import qualifier
-          if (e.getParent.getNode.getElementType != HS_QUALIFIER) {
-            resultSet.addAllElements(findAvailableModuleNamesLookupElements(project, psiFile).asJavaCollection)
-            resultSet.addAllElements(getInsideImportClausesLookupElements.asJavaCollection)
-            resultSet.addElement(createKeywordLookupElement("import"))
-          }
-        case Some(e) if isNCommentInProgress(e) =>
-          resultSet.addAllElements(getPragmaStartEndIdsLookupElements.asJavaCollection)
-          resultSet.addAllElements(getCommentIdsLookupElements.asJavaCollection)
-        case op =>
-          ProgressManager.checkCanceled()
+        val resultSet = prefixText match {
+          case Some(t) => originalResultSet.withPrefixMatcher(originalResultSet.getPrefixMatcher.cloneWithPrefix(t))
+          case _ => originalResultSet
+        }
 
-          // If file is console file, find the project file which corresponds to loaded file in console
-          val projectFile =
-            if (isConsoleFile) {
-              val stackComponentInfo = HaskellComponentsManager.findStackComponentInfo(psiFile)
-              stackComponentInfo.foreach(info => resultSet.addAllElements(HaskellComponentsManager.findAvailableProjectModuleNamesWithIndex(info).map(createModuleLookupElement).asJavaCollection))
-              for {
-                consoleInfo <- HaskellConsoleView.findConsoleInfo(psiFile)
-                configName = consoleInfo.configurationName
-                haskellFile <- HaskellConsoleViewMap.projectFileByConfigName.get(configName)
-              } yield haskellFile
-            } else {
-              Some(psiFile)
+        ProgressManager.checkCanceled()
+
+        positionElement match {
+          case Some(e) if isFileHeaderPragmaInProgress(e) =>
+            resultSet.addAllElements(getLanguageExtensionsLookupElements(project).asJavaCollection)
+            resultSet.addAllElements(getPragmaStartEndIdsLookupElements.asJavaCollection)
+            resultSet.addAllElements(getFileHeaderPragmaIdsLookupElements.asJavaCollection)
+          case Some(e) if isPragmaInProgress(e) =>
+            resultSet.addAllElements(getModulePragmaIdsLookupElements.asJavaCollection)
+            resultSet.addAllElements(getPragmaStartEndIdsLookupElements.asJavaCollection)
+          case Some(e) if isImportSpecInProgress(e) =>
+            resultSet.addAllElements(findAvailableIdsForImportModuleSpec(e, psiFile).asJavaCollection)
+          case Some(e) if isImportModuleDeclarationInProgress(e) =>
+            // Do not give suggestions when defining import qualifier
+            if (e.getParent.getNode.getElementType != HS_QUALIFIER) {
+              resultSet.addAllElements(findAvailableModuleNamesLookupElements(project, psiFile).asJavaCollection)
+              resultSet.addAllElements(getInsideImportClausesLookupElements.asJavaCollection)
+              resultSet.addElement(createKeywordLookupElement("import"))
             }
+          case Some(e) if isNCommentInProgress(e) =>
+            resultSet.addAllElements(getPragmaStartEndIdsLookupElements.asJavaCollection)
+            resultSet.addAllElements(getCommentIdsLookupElements.asJavaCollection)
+          case op =>
+            ProgressManager.checkCanceled()
 
-          ProgressManager.checkCanceled()
+            // If file is console file, find the project file which corresponds to loaded file in console
+            val projectFile =
+              if (isConsoleFile) {
+                val stackComponentInfo = HaskellComponentsManager.findStackComponentInfo(psiFile)
+                stackComponentInfo.foreach(info => resultSet.addAllElements(HaskellComponentsManager.findAvailableProjectModuleNamesWithIndex(info).map(createModuleLookupElement).asJavaCollection))
+                for {
+                  consoleInfo <- HaskellConsoleView.findConsoleInfo(psiFile)
+                  configName = consoleInfo.configurationName
+                  haskellFile <- HaskellConsoleViewMap.projectFileByConfigName.get(configName)
+                } yield haskellFile
+              } else {
+                Some(psiFile)
+              }
 
-          // Retrieve identifiers in scope by always using the project file
-          projectFile.foreach(file => {
-            resultSet.addAllElements(getAvailableLookupElements(file).asJava)
-          })
+            ProgressManager.checkCanceled()
 
-          ProgressManager.checkCanceled()
+            // Retrieve identifiers in scope by always using the project file
+            projectFile.foreach(file => {
+              resultSet.addAllElements(getAvailableLookupElements(file).asJava)
+            })
 
-          resultSet.addAllElements(getKeywordLookupElements.asJavaCollection)
-          resultSet.addAllElements(getSpecialReservedIdLookupElements.asJavaCollection)
-          resultSet.addAllElements(getPragmaStartEndIdsLookupElements.asJavaCollection)
-          resultSet.addAllElements(getCommentIdsLookupElements.asJavaCollection)
-          resultSet.addAllElements(getHaddockIdsLookupElements.asJavaCollection)
+            ProgressManager.checkCanceled()
 
-          ProgressManager.checkCanceled()
+            resultSet.addAllElements(getKeywordLookupElements.asJavaCollection)
+            resultSet.addAllElements(getSpecialReservedIdLookupElements.asJavaCollection)
+            resultSet.addAllElements(getPragmaStartEndIdsLookupElements.asJavaCollection)
+            resultSet.addAllElements(getCommentIdsLookupElements.asJavaCollection)
+            resultSet.addAllElements(getHaddockIdsLookupElements.asJavaCollection)
 
-          op.foreach(element => {
-            val localElements = HaskellPsiUtil.findNamedElement(element) match {
-              case Some(ne) => findLocalElements(element).filterNot(_ == ne)
-              case None => findLocalElements(element)
-            }
-            resultSet.addAllElements(localElements.map(createLocalLookupElement).asJavaCollection)
-          })
+            ProgressManager.checkCanceled()
+
+            op.foreach(element => {
+              val localElements = HaskellPsiUtil.findNamedElement(element) match {
+                case Some(ne) => findLocalElements(element).filterNot(_ == ne)
+                case None => findLocalElements(element)
+              }
+              resultSet.addAllElements(localElements.map(createLocalLookupElement).asJavaCollection)
+            })
+        }
       }
     }
   }

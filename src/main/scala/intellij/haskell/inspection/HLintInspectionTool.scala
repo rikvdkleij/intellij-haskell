@@ -16,17 +16,15 @@
 
 package intellij.haskell.inspection
 
-import java.util.concurrent.Callable
-
 import com.intellij.codeInspection._
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.progress.ProgressManager
-import com.intellij.openapi.util.Computable
 import com.intellij.psi.{PsiElement, PsiFile, TokenType}
 import com.intellij.util.WaitFor
+import intellij.haskell.HaskellNotificationGroup
 import intellij.haskell.external.component.{HLintComponent, HLintInfo}
 import intellij.haskell.psi.HaskellTypes._
-import intellij.haskell.util.{HaskellProjectUtil, LineColumnPosition}
+import intellij.haskell.util.{HaskellProjectUtil, LineColumnPosition, ScalaUtil}
 
 import scala.annotation.tailrec
 
@@ -45,49 +43,52 @@ class HLintInspectionTool extends LocalInspectionTool {
 
     ProgressManager.checkCanceled()
 
-    val hlintInfosFuture = ApplicationManager.getApplication.executeOnPooledThread(new Callable[Array[ProblemDescriptor]] {
-      override def call(): Array[ProblemDescriptor] = {
+    val hlintInfosFuture = ApplicationManager.getApplication.executeOnPooledThread(ScalaUtil.callable[Array[ProblemDescriptor]] {
+      ProgressManager.checkCanceled()
+      val result = HLintComponent.check(psiFile)
+      ProgressManager.checkCanceled()
+      for {
+        hi <- result
+        problemType = findProblemHighlightType(hi)
+        if problemType != ProblemHighlightType.GENERIC_ERROR
+        se <- findStartHaskellElement(psiFile, hi)
+        ee <- findEndHaskellElement(psiFile, hi)
+        sl <- fromOffset(psiFile, se)
+        el <- fromOffset(psiFile, ee)
+      } yield {
         ProgressManager.checkCanceled()
-        val result = HLintComponent.check(psiFile)
-        ProgressManager.checkCanceled()
-        for {
-          hi <- result
-          problemType = findProblemHighlightType(hi)
-          if problemType != ProblemHighlightType.GENERIC_ERROR
-          se <- findStartHaskellElement(psiFile, hi)
-          ee <- findEndHaskellElement(psiFile, hi)
-          sl <- fromOffset(psiFile, se)
-          el <- fromOffset(psiFile, ee)
-        } yield {
-          ProgressManager.checkCanceled()
-          ApplicationManager.getApplication.runReadAction(new Runnable() {
-            override def run(): Unit = {
-              ProgressManager.checkCanceled()
-              hi.to match {
-                case Some(to) if se.isValid && ee.isValid =>
-                  problemsHolder.registerProblem(new ProblemDescriptorBase(se, ee, hi.hint, Array(createQuickfix(hi, se, ee, sl, el, to)), problemType, false, null, true, isOnTheFly))
-                case None =>
-                  ProgressManager.checkCanceled()
-                  problemsHolder.registerProblem(new ProblemDescriptorBase(se, ee, hi.hint, Array(), problemType, false, null, true, isOnTheFly))
-                case _ => ()
-              }
+        ApplicationManager.getApplication.runReadAction(new Runnable() {
+          override def run(): Unit = {
+            ProgressManager.checkCanceled()
+            hi.to match {
+              case Some(to) if se.isValid && ee.isValid =>
+                problemsHolder.registerProblem(new ProblemDescriptorBase(se, ee, hi.hint, Array(createQuickfix(hi, se, ee, sl, el, to)), problemType, false, null, true, isOnTheFly))
+              case None =>
+                ProgressManager.checkCanceled()
+                problemsHolder.registerProblem(new ProblemDescriptorBase(se, ee, hi.hint, Array(), problemType, false, null, true, isOnTheFly))
+              case _ => ()
             }
-          })
-        }
-        problemsHolder.getResultsArray
+          }
+        })
       }
+      problemsHolder.getResultsArray
     })
 
     ProgressManager.checkCanceled()
 
-    new WaitFor(60000, 5) {
+    val wf = new WaitFor(60000, 5) {
       override def condition(): Boolean = {
         ProgressManager.checkCanceled()
         hlintInfosFuture.isDone
       }
     }
 
-    hlintInfosFuture.get()
+    if (wf.isConditionRealized) {
+      hlintInfosFuture.get()
+    } else {
+      HaskellNotificationGroup.logErrorEvent(psiFile.getProject, s"Timeout while running Hlint for file ${psiFile.getName}")
+      Array()
+    }
   }
 
   private def createQuickfix(hLintInfo: HLintInfo, startElement: PsiElement, endElement: PsiElement, startLineNumber: Int, endLineNumber: Int, to: String) = {
@@ -97,10 +98,8 @@ class HLintInspectionTool extends LocalInspectionTool {
   private def fromOffset(psiFile: PsiFile, psiElement: PsiElement): Option[Int] = {
     ProgressManager.checkCanceled()
 
-    ApplicationManager.getApplication.runReadAction(new Computable[Option[Int]] {
-      override def compute(): Option[Int] = {
-        LineColumnPosition.fromOffset(psiFile, psiElement.getTextOffset).map(_.lineNr)
-      }
+    ApplicationManager.getApplication.runReadAction(ScalaUtil.computable[Option[Int]] {
+      LineColumnPosition.fromOffset(psiFile, psiElement.getTextOffset).map(_.lineNr)
     })
   }
 
@@ -115,11 +114,9 @@ class HLintInspectionTool extends LocalInspectionTool {
   private def findStartHaskellElement(psiFile: PsiFile, hlintInfo: HLintInfo): Option[PsiElement] = {
     ProgressManager.checkCanceled()
 
-    val element = ApplicationManager.getApplication.runReadAction(new Computable[Option[PsiElement]] {
-      override def compute(): Option[PsiElement] = {
-        val offset = LineColumnPosition.getOffset(psiFile, LineColumnPosition(hlintInfo.startLine, hlintInfo.startColumn))
-        offset.flatMap(offset => Option(psiFile.findElementAt(offset)))
-      }
+    val element = ApplicationManager.getApplication.runReadAction(ScalaUtil.computable[Option[PsiElement]] {
+      val offset = LineColumnPosition.getOffset(psiFile, LineColumnPosition(hlintInfo.startLine, hlintInfo.startColumn))
+      offset.flatMap(offset => Option(psiFile.findElementAt(offset)))
     })
 
     element.filterNot(e => HLintInspectionTool.NotHaskellIdentifiers.contains(e.getNode.getElementType))
@@ -128,15 +125,13 @@ class HLintInspectionTool extends LocalInspectionTool {
   private def findEndHaskellElement(psiFile: PsiFile, hlintInfo: HLintInfo): Option[PsiElement] = {
     ProgressManager.checkCanceled()
 
-    ApplicationManager.getApplication.runReadAction(new Computable[Option[PsiElement]] {
-      override def compute(): Option[PsiElement] = {
-        val endOffset = if (hlintInfo.endLine >= hlintInfo.startLine && hlintInfo.endColumn > hlintInfo.startColumn) {
-          LineColumnPosition.getOffset(psiFile, LineColumnPosition(hlintInfo.endLine, hlintInfo.endColumn - 1))
-        } else {
-          LineColumnPosition.getOffset(psiFile, LineColumnPosition(hlintInfo.endLine, hlintInfo.endColumn))
-        }
-        endOffset.flatMap(offset => findHaskellIdentifier(psiFile, offset))
+    ApplicationManager.getApplication.runReadAction(ScalaUtil.computable[Option[PsiElement]] {
+      val endOffset = if (hlintInfo.endLine >= hlintInfo.startLine && hlintInfo.endColumn > hlintInfo.startColumn) {
+        LineColumnPosition.getOffset(psiFile, LineColumnPosition(hlintInfo.endLine, hlintInfo.endColumn - 1))
+      } else {
+        LineColumnPosition.getOffset(psiFile, LineColumnPosition(hlintInfo.endLine, hlintInfo.endColumn))
       }
+      endOffset.flatMap(offset => findHaskellIdentifier(psiFile, offset))
     })
   }
 
