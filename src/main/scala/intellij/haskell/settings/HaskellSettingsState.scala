@@ -34,4 +34,12 @@ object HaskellSettingsState {
   def setReformatCodeBeforeCommit(reformat: Boolean): Unit = {
     state.reformatCodeBeforeCommit = reformat
   }
+
+  def isOptmizeImportsBeforeCommit: Boolean = {
+    state.optimizeImportsBeforeCommit
+  }
+
+  def setOptimizeImportsBeforeCommit(optimize: Boolean): Unit = {
+    state.optimizeImportsBeforeCommit = optimize
+  }
 }

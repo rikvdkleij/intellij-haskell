@@ -51,5 +51,6 @@ public class HaskellSettingsPersistentStateComponent implements PersistentStateC
         public Integer replTimeout = 5;
         public String hlintOptions = "";
         public Boolean reformatCodeBeforeCommit = false;
+        public Boolean optimizeImportsBeforeCommit = false;
     }
 }
