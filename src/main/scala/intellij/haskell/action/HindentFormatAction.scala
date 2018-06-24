@@ -19,14 +19,15 @@ package intellij.haskell.action
 import java.io.{BufferedReader, BufferedWriter, InputStreamReader, OutputStreamWriter}
 
 import com.intellij.application.options.CodeStyle
-import com.intellij.openapi.actionSystem.{AnAction, AnActionEvent}
+import com.intellij.codeInsight.actions.ReformatCodeAction
+import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.editor.SelectionModel
 import com.intellij.openapi.project.Project
 import com.intellij.psi.PsiFile
 import intellij.haskell.external.component.StackProjectManager
 import intellij.haskell.external.execution.CommandLine
-import intellij.haskell.util.{FutureUtil, HaskellEditorUtil, HaskellFileUtil, ScalaUtil}
+import intellij.haskell.util._
 import intellij.haskell.{GlobalInfo, HaskellLanguage, HaskellNotificationGroup}
 
 import scala.annotation.tailrec
@@ -35,17 +36,25 @@ import scala.collection.mutable.ListBuffer
 
 sealed case class SelectionContext(start: Int, end: Int, text: String)
 
-class HindentFormatAction extends AnAction {
+class HindentFormatAction extends ReformatCodeAction {
 
   override def update(actionEvent: AnActionEvent) {
-    HaskellEditorUtil.enableExternalAction(actionEvent, (project: Project) => StackProjectManager.isHindentAvailable(project))
+    if (HaskellProjectUtil.isHaskellProject(actionEvent.getProject)) {
+      HaskellEditorUtil.enableExternalAction(actionEvent, (project: Project) => StackProjectManager.isHindentAvailable(project))
+    } else {
+      super.update(actionEvent)
+    }
   }
 
   override def actionPerformed(actionEvent: AnActionEvent): Unit = {
-    ActionUtil.findActionContext(actionEvent).foreach { actionContext =>
-      val psiFile = actionContext.psiFile
-      val selectionContext = actionContext.selectionModel.map(HindentFormatAction.translateSelectionModelToSelectionContext)
-      HindentFormatAction.format(psiFile, selectionContext)
+    if (HaskellProjectUtil.isHaskellProject(actionEvent.getProject)) {
+      ActionUtil.findActionContext(actionEvent).foreach { actionContext =>
+        val psiFile = actionContext.psiFile
+        val selectionContext = actionContext.selectionModel.map(HindentFormatAction.translateSelectionModelToSelectionContext)
+        HindentFormatAction.format(psiFile, selectionContext)
+      }
+    } else {
+      super.actionPerformed(actionEvent)
     }
   }
 }
