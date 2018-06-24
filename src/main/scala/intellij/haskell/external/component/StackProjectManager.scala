@@ -143,7 +143,9 @@ object StackProjectManager {
                   HaskellNotificationGroup.logErrorBalloonEvent(project, "Project will not be built because building it's dependencies failed")
                 }
 
-                ApplicationManager.getApplication.getMessageBus.connect(project).subscribe(VirtualFileManager.VFS_CHANGES, new ProjectLibraryFileWatcher(project))
+                if (!project.isDisposed) {
+                  ApplicationManager.getApplication.getMessageBus.connect(project).subscribe(VirtualFileManager.VFS_CHANGES, new ProjectLibraryFileWatcher(project))
+                }
 
                 if (restart) {
                   val projectRepsl = StackReplsManager.getRunningProjectRepls(project)
