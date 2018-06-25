@@ -273,6 +273,7 @@ class StackProjectManager(project: Project) extends ProjectComponent {
     if (HaskellProjectUtil.isHaskellProject(project)) {
       replsManager.foreach(_.getGlobalRepl.exit())
       replsManager.foreach(_.getRunningProjectRepls.foreach(_.exit()))
+      HaskellComponentsManager.invalidateGlobalCaches(project)
     }
   }
 
