@@ -212,10 +212,10 @@ object HaskellModuleBuilder {
   }
 
   def addLibrarySources(project: Project, update: Boolean): Unit = {
-    if (update || getProjectLibraryTable(project).getLibraries.isEmpty) {
+    val projectLibDirectory = getProjectLibDirectory(project)
+    if (update || getProjectLibraryTable(project).getLibraries.isEmpty || !projectLibDirectory.exists()) {
       HaskellSdkType.getStackPath(project).foreach(stackPath => {
 
-        val projectLibDirectory = getProjectLibDirectory(project)
         if (!projectLibDirectory.exists()) {
           FileUtil.createDirectory(projectLibDirectory)
         }
