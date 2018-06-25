@@ -110,11 +110,11 @@ private[external] class StackReplsManager(val project: Project) {
   private final val IgnoredHaskellFiles = Seq("setup.hs", "hlint.hs")
 
   def getRunningProjectRepl(stackComponentInfo: StackComponentInfo): Option[ProjectStackRepl] = {
-    projectRepls.get(stackComponentInfo)
+    projectRepls.get(stackComponentInfo).filter(_.available)
   }
 
   def getRunningProjectRepls: Iterable[ProjectStackRepl] = {
-    projectRepls.values
+    projectRepls.values.filter(_.available)
   }
 
   def getGlobalRepl: GlobalStackRepl = globalRepl
