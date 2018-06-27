@@ -17,7 +17,6 @@
 package intellij.haskell.external.repl
 
 import java.io._
-import java.nio.file.Files
 import java.util.concurrent.LinkedBlockingQueue
 
 import com.intellij.openapi.project.Project
