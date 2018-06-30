@@ -50,11 +50,12 @@ You can install this plugin using the [Jetbrains plugin repository](https://plug
 When used with `hindent`, `intellij-haskell` automatically sets `--indent-size` as a command-line option in `hindent` from the `Indent` option in your project code style settings. It also automatically sets the `--line-length` command-line option from your `Right margin (columns)` code style setting. This means that any `.hindent.yaml` files used for configuration will have these options overridden and may not fully work.
 
 
-# Getting started 
-- Install this plugin. Make sure no other Haskell plugin is installed in IntelliJ;
-- Install latest version of [Stack](https://github.com/commercialhaskell/stack);
+# Getting started
+- If you don't already have IntelliJ, [download it](https://www.jetbrains.com/idea/download/) - the Community Edition is sufficient.
+- Install this plugin using the [Jetbrains plugin repository](https://plugins.jetbrains.com/idea/plugin/8258-intellij-haskell): `Settings`/`Plugins`/`Browse repositories`/`Intellij-Haskell`. Make sure no other Haskell plugin is installed in IntelliJ;
+- Install latest version of [Stack](https://github.com/commercialhaskell/stack); use `stack upgrade` to confirm you are on the latest version.
 - Install latest versions of [Hindent](https://github.com/chrisdone/hindent) and [Stylish-Haskell](https://github.com/jaspervdj/stylish-haskell). 
-    You have to install version of Hindent > 5.0, for example by: `stack install --resolver nightly-2016-11-06 hindent`
+    You have to install version of Hindent > 5.0, for example by: `stack install --resolver=nightly hindent stylish-haskell`
     Set file paths to `hindent` and `stylish-haskell` in the `Settings`>`Other Settings`>`Haskell`;
 - Setup the project:
   - Make sure your Stack project builds without errors. Preferably by using: `stack build --test --haddock --fast`;
