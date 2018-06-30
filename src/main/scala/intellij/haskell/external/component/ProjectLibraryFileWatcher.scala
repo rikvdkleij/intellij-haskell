@@ -22,10 +22,11 @@ import java.util.concurrent.ConcurrentHashMap
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.fileEditor.FileEditorManager
 import com.intellij.openapi.progress.{PerformInBackgroundOption, ProgressIndicator, ProgressManager, Task}
-import com.intellij.openapi.project.{DumbService, Project}
+import com.intellij.openapi.project.{IndexNotReadyException, Project}
 import com.intellij.openapi.roots.ModuleRootManager
 import com.intellij.openapi.vfs.newvfs.BulkFileListener
 import com.intellij.openapi.vfs.newvfs.events.{VFileContentChangeEvent, VFileEvent}
+import intellij.haskell.HaskellNotificationGroup
 import intellij.haskell.annotator.HaskellAnnotator
 import intellij.haskell.external.component.ProjectLibraryFileWatcher.{Build, Building}
 import intellij.haskell.external.execution.StackCommandLine
@@ -33,7 +34,7 @@ import intellij.haskell.external.repl.StackRepl.LibType
 import intellij.haskell.external.repl.StackReplsManager
 import intellij.haskell.external.repl.StackReplsManager.StackComponentInfo
 import intellij.haskell.util.index.HaskellFileIndex
-import intellij.haskell.util.{HaskellFileUtil, HaskellProjectUtil, ScalaUtil}
+import intellij.haskell.util.{ApplicationUtil, HaskellFileUtil, HaskellProjectUtil, ScalaUtil}
 
 import scala.collection.JavaConverters._
 import scala.collection.concurrent
@@ -132,6 +133,12 @@ class ProjectLibraryFileWatcher(project: Project) extends BulkFileListener {
   }
 
   private def findProjectProductionFiles = {
-    Option(DumbService.getInstance(project).tryRunReadActionInSmartMode(ScalaUtil.computable(HaskellFileIndex.findProjectProductionFiles(project)), "Building changed libraries is not available until indices are ready"))
+    try {
+      Option(ApplicationUtil.runReadAction(HaskellFileIndex.findProjectProductionFiles(project)))
+    } catch {
+      case _: IndexNotReadyException =>
+        HaskellNotificationGroup.logInfoBalloonEvent(project, "Building changed libraries is not available until indices are ready")
+        None
+    }
   }
 }
