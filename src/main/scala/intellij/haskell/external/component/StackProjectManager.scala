@@ -30,7 +30,7 @@ import intellij.haskell.external.execution.StackCommandLine
 import intellij.haskell.external.execution.StackCommandLine.build
 import intellij.haskell.external.repl.StackReplsManager
 import intellij.haskell.module.HaskellModuleBuilder
-import intellij.haskell.util.{FutureUtil, HaskellFileUtil, HaskellProjectUtil, ScalaUtil}
+import intellij.haskell.util._
 import intellij.haskell.{GlobalInfo, HaskellNotificationGroup}
 
 object StackProjectManager {
@@ -179,10 +179,10 @@ object StackProjectManager {
                 progressIndicator.setText("Busy with starting global Stack REPL")
                 StackReplsManager.getGlobalRepl(project).foreach(_.start())
 
-                //  Force to load the module in REPL when REPL can be started. It could have happen that IntelliJ wanted to load file (via HaskellAnnotator)
+                // Force to load the module in REPL when REPL can be started. It could have happen that IntelliJ wanted to load file (via HaskellAnnotator)
                 // but REPL could not be started.
                 FileEditorManager.getInstance(project).getSelectedFiles foreach { vf =>
-                  val psiFile = ApplicationManager.getApplication.runReadAction(ScalaUtil.computable(HaskellFileUtil.convertToHaskellFile(project, vf)))
+                  val psiFile = ApplicationUtil.runReadAction(HaskellFileUtil.convertToHaskellFile(project, vf))
                   psiFile.foreach(pf => {
                     if (!LoadComponent.isFileLoaded(pf)) {
                       HaskellAnnotator.restartDaemonCodeAnalyzerForFile(pf)
