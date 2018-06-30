@@ -33,16 +33,16 @@ case class LineColumnPosition(lineNr: Int, columnNr: Int) extends Ordered[LineCo
 
 object LineColumnPosition {
 
-  def fromOffset(psiFile: PsiFile, offset: Int, runInRead: Boolean = false): Option[LineColumnPosition] = {
+  def fromOffset(psiFile: PsiFile, offset: Int): Option[LineColumnPosition] = {
     for {
-      doc <- HaskellFileUtil.findDocument(psiFile, runInRead)
+      doc <- HaskellFileUtil.findDocument(psiFile)
       li <- if (offset <= doc.getTextLength) Some(doc.getLineNumber(offset)) else None
     } yield LineColumnPosition(li + 1, offset - doc.getLineStartOffset(li) + 1)
   }
 
-  def getOffset(psiFile: PsiFile, lineColPos: LineColumnPosition, runInRead: Boolean = false): Option[Int] = {
+  def getOffset(psiFile: PsiFile, lineColPos: LineColumnPosition): Option[Int] = {
     for {
-      doc <- HaskellFileUtil.findDocument(psiFile, runInRead)
+      doc <- HaskellFileUtil.findDocument(psiFile)
       lineIndex <- getLineIndex(lineColPos.lineNr, doc)
       startOffsetLine = doc.getLineStartOffset(lineIndex)
     } yield startOffsetLine + lineColPos.columnNr - 1

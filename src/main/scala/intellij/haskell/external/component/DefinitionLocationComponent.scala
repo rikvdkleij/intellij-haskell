@@ -20,11 +20,12 @@ import java.util.concurrent.TimeUnit
 
 import com.github.blemale.scaffeine.{AsyncLoadingCache, Scaffeine}
 import com.intellij.openapi.application.ApplicationManager
-import com.intellij.openapi.project.{IndexNotReadyException, Project}
+import com.intellij.openapi.project.Project
+import com.intellij.psi.PsiFile
 import com.intellij.psi.search.GlobalSearchScope
-import com.intellij.psi.{PsiElement, PsiFile}
 import intellij.haskell.external.repl.StackRepl.StackReplOutput
 import intellij.haskell.external.repl.StackReplsManager
+import intellij.haskell.navigation.HaskellReference
 import intellij.haskell.psi._
 import intellij.haskell.util.index.HaskellFilePathIndex
 import intellij.haskell.util.{ApplicationUtil, HaskellProjectUtil, LineColumnPosition, ScalaUtil}
@@ -36,69 +37,32 @@ private[component] object DefinitionLocationComponent {
   private final val LocAtPattern = """(.+)\:\(([\d]+),([\d]+)\)-\(([\d]+),([\d]+)\)""".r
   private final val PackageModulePattern = """.+\:([\w\.\-]+)""".r
 
-  private case class Key(startLineNr: Int, startColumnNr: Int, endLineNr: Int, endColumnNr: Int, name: String, psiFile: PsiFile, moduleName: Option[String])
+  private case class Key(psiFile: PsiFile, namedElement: HaskellNamedElement, moduleName: Option[String], name: String)
 
-  type DefinitionLocationResult = Either[NoInfo, LocationInfo]
+  type DefinitionLocationResult = Either[NoInfo, DefinitionLocation]
 
-  private final val Cache: AsyncLoadingCache[Key, DefinitionLocationResult] = Scaffeine().buildAsync((k: Key) => findDefinitionLocation(k))
+  private final val Cache: AsyncLoadingCache[Key, DefinitionLocationResult] = Scaffeine().buildAsync((k: Key) => findDefinitionLocationResult(k))
 
-  def findDefinitionLocation(namedElement: HaskellNamedElement, psiFile: PsiFile, isCurrentFile: Boolean, runInRead: Boolean = false): DefinitionLocationResult = {
-    (for {
-      ne <- ApplicationUtil.runReadAction(HaskellPsiUtil.findQualifiedNameParent(namedElement).map(_.getIdentifierElement), runInRead)
-      textOffset = ApplicationUtil.runReadAction(ne.getTextOffset, runInRead)
-      sp <- LineColumnPosition.fromOffset(psiFile, textOffset, runInRead = runInRead)
-      ep <- LineColumnPosition.fromOffset(psiFile, textOffset + ne.getTextLength, runInRead = runInRead)
-    } yield find(psiFile, sp, ep, ApplicationUtil.runReadAction(ne.getName, runInRead), isCurrentFile, ne)) match {
+  def findDefinitionLocation(psiFile: PsiFile, namedElement: HaskellNamedElement, isCurrentFile: Boolean): DefinitionLocationResult = {
+    ApplicationUtil.runReadAction(HaskellPsiUtil.findQualifiedNameParent(namedElement).map(_.getIdentifierElement)).map(ne => find(psiFile, isCurrentFile, ne)) match {
       case Some(r) => r
       case None => Left(NoInfoAvailable)
     }
   }
 
-  private def findElement(lineNr: Int, columnNr: Int, psiFile: PsiFile): Option[PsiElement] = {
-    val fromPosition = LineColumnPosition(lineNr, columnNr)
-    ApplicationManager.getApplication.runReadAction(ScalaUtil.computable(
-      LineColumnPosition.getOffset(psiFile, fromPosition).flatMap(offset => Option(psiFile.findElementAt(offset)))
-    ))
-  }
-
-  private def findName(element: Option[PsiElement]) = {
-    ApplicationManager.getApplication.runReadAction(ScalaUtil.computable(
-      element.flatMap(HaskellPsiUtil.findQualifiedNameParent).map(_.getIdentifierElement).map(_.getName)
-    ))
-  }
-
-  def invalidate(fromFile: PsiFile): Unit = {
-    val keyValueMap = Cache.synchronous().asMap().filter(_._1.psiFile == fromFile)
-    val project = fromFile.getProject
-    val keys = keyValueMap.flatMap { case (k, v) =>
+  def invalidate(psiFile: PsiFile): Unit = {
+    val keys = Cache.synchronous().asMap().filter(_._1.psiFile == psiFile).flatMap { case (k, v) =>
       v.toOption match {
-        case Some(info) =>
-          val fromElement = findElement(k.startLineNr, k.startColumnNr, fromFile)
-          info match {
-            case DefinitionLocationInfo(filePath, startLineNr, startColumnNr, _, _) =>
-              val toFile = ApplicationManager.getApplication.runReadAction(ScalaUtil.computable(
-                HaskellProjectUtil.findFile(filePath, project)
-              ))
-              val toElement = toFile.flatMap(f => findElement(startLineNr, startColumnNr, f))
-              (fromElement, toElement) match {
-                case (Some(fe), Some(te)) if fe.getText == te.getText => None
-                case (_, _) => Some(k)
-              }
-            case ModuleLocationInfo(_, lib) =>
-              val name = findName(fromElement)
-              name match {
-                case None => Some(k)
-                case Some(n) =>
-                  if (lib) {
-                    None
-                  } else {
-                    Some(k)
-                  }
-              }
+        case Some(location) =>
+          if (k.namedElement.isValid && location.element.isValid && k.name == ApplicationUtil.runReadAction(location.element.getName)) {
+            None
+          } else {
+            Some(k)
           }
         case None => Some(k)
       }
     }
+
     Cache.synchronous().invalidateAll(keys)
   }
 
@@ -107,24 +71,26 @@ private[component] object DefinitionLocationComponent {
     files.foreach(invalidate)
   }
 
-  private def findDefinitionLocation(key: Key): DefinitionLocationResult = {
+  private def findDefinitionLocationResult(key: Key): DefinitionLocationResult = {
     if (LoadComponent.isBusy(key.psiFile)) {
       Left(ReplIsBusy)
     } else {
       val psiFile = key.psiFile
       val project = psiFile.getProject
 
-      if (key.name.headOption.exists(_.isUpper)) {
-        createLocationInfo(project, psiFile, key, withoutLastColumn = true)
+      val name = key.name
+      if (name.headOption.exists(_.isUpper)) {
+        createDefinitionLocationResult(project, psiFile, key, withoutLastColumn = true)
       } else {
-        createLocationInfo(project, psiFile, key, withoutLastColumn = false)
+        createDefinitionLocationResult(project, psiFile, key, withoutLastColumn = false)
       }
     }
   }
 
-  private def createLocationInfo(project: Project, psiFile: PsiFile, key: Key, withoutLastColumn: Boolean): DefinitionLocationResult = {
-    findLocationInfo(key, psiFile, project, withoutLastColumn) match {
-      case Some(o) => o.stdoutLines.headOption.map(l => createLocationInfo(project, psiFile, l)) match {
+  private def createDefinitionLocationResult(project: Project, psiFile: PsiFile, key: Key, withoutLastColumn: Boolean): DefinitionLocationResult = {
+    val name = key.name
+    findLocationInfo(key, psiFile, name: String, project, withoutLastColumn) match {
+      case Some(o) => o.stdoutLines.headOption.map(l => createDefinitionLocationResultFromLocationInfo(project, psiFile, l, name)) match {
         case Some(r) => r
         case None => Left(NoInfoAvailable)
       }
@@ -132,31 +98,39 @@ private[component] object DefinitionLocationComponent {
     }
   }
 
-  private def findLocationInfo(key: Key, psiFile: PsiFile, project: Project, withoutLastColumn: Boolean): Option[StackReplOutput] = {
-    val endColumnNr = if (withoutLastColumn) key.endColumnNr - 1 else key.endColumnNr
-    StackReplsManager.getProjectRepl(psiFile).flatMap(_.findLocationInfo(key.moduleName, psiFile, key.startLineNr, key.startColumnNr, key.endLineNr, endColumnNr, key.name))
+  private def findLocationInfo(key: Key, psiFile: PsiFile, name: String, project: Project, withoutLastColumn: Boolean): Option[StackReplOutput] = {
+    val namedElement = key.namedElement
+    for {
+      sp <- ApplicationUtil.runReadAction(LineColumnPosition.fromOffset(psiFile, namedElement.getTextRange.getStartOffset))
+      ep <- ApplicationUtil.runReadAction(LineColumnPosition.fromOffset(psiFile, namedElement.getTextRange.getEndOffset))
+      endColumnNr = if (withoutLastColumn) ep.columnNr - 1 else ep.columnNr
+      repl <- StackReplsManager.getProjectRepl(psiFile)
+      output <- repl.findLocationInfo(key.moduleName, psiFile, sp.lineNr, sp.columnNr, ep.lineNr, endColumnNr, name)
+    } yield output
   }
 
-  private def createLocationInfo(project: Project, psiFile: PsiFile, output: String): DefinitionLocationResult = {
-    output match {
-      case LocAtPattern(filePath, startLineNr, startColumnNr, endLineNr, endColumnNr) => Right(DefinitionLocationInfo(filePath.trim, startLineNr.toInt, startColumnNr.toInt, endLineNr.toInt, endColumnNr.toInt))
+  private def createDefinitionLocationResultFromLocationInfo(project: Project, psiFile: PsiFile, output: String, name: String): DefinitionLocationResult = {
+    val namedElement = output match {
+      case LocAtPattern(filePath, startLineNr, startColumnNr, _, _) =>
+        ApplicationUtil.runReadAction(HaskellReference.findIdentifierByLocation(filePath, startLineNr.toInt, startColumnNr.toInt, name, project))
       case PackageModulePattern(moduleName) =>
-        try {
-          val library = HaskellProjectUtil.isLibraryFile(psiFile)
-          Right(ModuleLocationInfo(moduleName, library))
-        } catch {
-          case _: IndexNotReadyException => Left(IndexNotReady)
-        }
-      case _ => Left(NoInfoAvailable)
+        val module = HaskellProjectUtil.findModuleForFile(psiFile)
+        ApplicationUtil.runReadAction(HaskellReference.findIdentifiersByModuleName(moduleName, name, project, module)).headOption
+      case _ => None
+    }
+    namedElement match {
+      case Some(e) => Right(DefinitionLocation(e))
+      case None => Left(NoInfoAvailable)
     }
   }
 
   private final val Timeout = Duration.create(100, TimeUnit.MILLISECONDS)
 
-  private def find(psiFile: PsiFile, startPosition: LineColumnPosition, endPosition: LineColumnPosition, expression: String, isCurrentFile: Boolean, namedElement: HaskellNamedElement): DefinitionLocationResult = {
+  private def find(psiFile: PsiFile, isCurrentFile: Boolean, namedElement: HaskellNamedElement): DefinitionLocationResult = {
     val project = psiFile.getProject
     val moduleName = HaskellFilePathIndex.findModuleName(psiFile, GlobalSearchScope.projectScope(project))
-    val key = Key(startPosition.lineNr, startPosition.columnNr, endPosition.lineNr, endPosition.columnNr, expression, psiFile, moduleName)
+    val name = ApplicationUtil.runReadAction(namedElement.getName)
+    val key = Key(psiFile, namedElement, moduleName, name)
 
     def matchResult(result: DefinitionLocationResult) = {
       result match {
@@ -169,7 +143,7 @@ private[component] object DefinitionLocationComponent {
         case Left(ReplIsBusy) =>
           if (!isCurrentFile && !project.isDisposed) {
             Thread.sleep(100)
-            find(psiFile, startPosition, endPosition, expression, isCurrentFile, namedElement)
+            find(psiFile, isCurrentFile, namedElement)
           } else {
             Cache.synchronous().invalidate(key)
             result
@@ -218,15 +192,12 @@ object LocationInfoUtil {
         val putResult = activeTaskByTarget.put(target, true)
         if (putResult.isEmpty) {
           if (namedElement.isValid && !project.isDisposed) {
-            val namedElements = ApplicationManager.getApplication.runReadAction(ScalaUtil.computable {
-              HaskellPsiUtil.findExpressionParent(namedElement).map(HaskellPsiUtil.findNamedElements).getOrElse(Iterable())
-            })
-
+            val namedElements = ApplicationUtil.runReadAction(HaskellPsiUtil.findExpressionParent(namedElement).map(HaskellPsiUtil.findNamedElements).getOrElse(Iterable()))
             ApplicationManager.getApplication.executeOnPooledThread(ScalaUtil.runnable {
               try
                 namedElements.foreach { e =>
                   if (!project.isDisposed && !LoadComponent.isBusy(project, stackComponentInfo)) {
-                    DefinitionLocationComponent.findDefinitionLocation(e, psiFile, isCurrentFile = true, runInRead = true)
+                    DefinitionLocationComponent.findDefinitionLocation(psiFile, e, isCurrentFile = true)
                     // We have to wait for other requests which have more priority because those are on dispatch thread
                     Thread.sleep(200)
                   }
@@ -241,8 +212,5 @@ object LocationInfoUtil {
   }
 }
 
-sealed trait LocationInfo
+case class DefinitionLocation(element: HaskellNamedElement)
 
-case class DefinitionLocationInfo(filePath: String, startLineNr: Int, startColumnNr: Int, endLineNr: Int, endColumnNr: Int) extends LocationInfo
-
-case class ModuleLocationInfo(moduleName: String, library: Boolean) extends LocationInfo

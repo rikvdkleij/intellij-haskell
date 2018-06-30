@@ -19,7 +19,6 @@ package intellij.haskell.util.index
 import java.io.{DataInput, DataOutput}
 import java.util.Collections
 
-import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.project.IndexNotReadyException
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.psi.PsiFile
@@ -29,7 +28,7 @@ import com.intellij.util.indexing._
 import com.intellij.util.io.{DataExternalizer, EnumeratorStringDescriptor, IOUtil, KeyDescriptor}
 import intellij.haskell.HaskellFileType
 import intellij.haskell.psi.HaskellPsiUtil
-import intellij.haskell.util.{HaskellFileUtil, ScalaUtil}
+import intellij.haskell.util.{ApplicationUtil, HaskellFileUtil}
 
 import scala.collection.JavaConverters._
 
@@ -49,11 +48,11 @@ object HaskellFilePathIndex {
     HaskellFileUtil.getAbsolutePath(psiFile) match {
       case Some(path) if !psiFile.getProject.isDisposed =>
         (try {
-          ApplicationManager.getApplication.runReadAction(ScalaUtil.computable(FileBasedIndex.getInstance.getValues(HaskellFilePathIndex, path, searchScope).asScala)).headOption.flatten
+          ApplicationUtil.runReadAction(FileBasedIndex.getInstance.getValues(HaskellFilePathIndex, path, searchScope).asScala).headOption.flatten
         } catch {
           case _: IndexNotReadyException => None
         }) match {
-          case None => HaskellPsiUtil.findModuleName(psiFile, runInRead = true)
+          case None => HaskellPsiUtil.findModuleName(psiFile)
           case mn => mn
         }
       case _ => None

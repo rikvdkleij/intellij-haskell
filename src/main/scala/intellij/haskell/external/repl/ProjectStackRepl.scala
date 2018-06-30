@@ -55,15 +55,8 @@ class ProjectStackRepl(project: Project, stackComponentInfo: StackComponentInfo,
   @volatile
   private var busy = false
 
-  @volatile
-  private var loading: Option[PsiFile] = None
-
   def isBusy: Boolean = {
     busy
-  }
-
-  def isLoading: Option[PsiFile] = {
-    loading
   }
 
   def findTypeInfo(moduleName: Option[String], psiFile: PsiFile, startLineNr: Int, startColumnNr: Int, endLineNr: Int, endColumnNr: Int, expression: String): Option[StackReplOutput] = {
@@ -187,11 +180,9 @@ class ProjectStackRepl(project: Project, stackComponentInfo: StackComponentInfo,
   private def executeWithSettingBusy(commands: Seq[String], load: Option[PsiFile] = None) = {
     try {
       busy = true
-      loading = load
       executeWithoutSettingBusy(commands)
     } finally {
       busy = false
-      loading = None
     }
   }
 

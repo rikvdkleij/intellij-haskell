@@ -4,12 +4,8 @@ import com.intellij.openapi.application.ApplicationManager
 
 object ApplicationUtil {
 
-  def runReadAction[T](f: => T, runInRead: Boolean = false): T = {
-    if (runInRead) {
-      ApplicationManager.getApplication.runReadAction(ScalaUtil.computable(f))
-    } else {
-      f
-    }
+  def runReadAction[T](f: => T): T = {
+    ApplicationManager.getApplication.runReadAction(ScalaUtil.computable(f))
   }
 }
 

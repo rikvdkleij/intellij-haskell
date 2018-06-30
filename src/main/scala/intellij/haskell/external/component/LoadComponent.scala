@@ -58,11 +58,6 @@ private[component] object LoadComponent {
     projectRepl.exists(_.isBusy)
   }
 
-  def isLoading(psiFile: PsiFile): Boolean = {
-    val projectRepl = StackReplsManager.getRunningProjectRepl(psiFile)
-    projectRepl.exists(_.isLoading.exists(_ == psiFile))
-  }
-
   def load(psiFile: PsiFile, currentElement: Option[PsiElement]): Option[CompilationResult] = {
     val project = psiFile.getProject
 

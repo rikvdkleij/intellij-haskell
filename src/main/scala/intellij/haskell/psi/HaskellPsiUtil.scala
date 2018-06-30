@@ -69,15 +69,15 @@ object HaskellPsiUtil {
     findHaskellDeclarationElements(psiFile).filterNot(e => e.getNode.getElementType == HS_IMPORT_DECLARATION)
   }
 
-  def findModuleDeclaration(psiFile: PsiFile, runInRead: Boolean = false): Option[HaskellModuleDeclaration] = {
-    ApplicationUtil.runReadAction(Option(PsiTreeUtil.findChildOfType(psiFile.getOriginalFile, classOf[HaskellModuleDeclaration])), runInRead)
+  def findModuleDeclaration(psiFile: PsiFile): Option[HaskellModuleDeclaration] = {
+    ApplicationUtil.runReadAction(Option(PsiTreeUtil.findChildOfType(psiFile.getOriginalFile, classOf[HaskellModuleDeclaration])))
   }
 
   /**
     * Use [[intellij.haskell.util.index.HaskellFilePathIndex.findModuleName()]]
     */
-  def findModuleName(psiFile: PsiFile, runInRead: Boolean = false): Option[String] = {
-    ApplicationUtil.runReadAction(Option(PsiTreeUtil.findChildOfType(psiFile.getOriginalFile, classOf[HaskellModuleDeclaration])).flatMap(_.getModuleName), runInRead)
+  def findModuleName(psiFile: PsiFile): Option[String] = {
+    ApplicationUtil.runReadAction(Option(PsiTreeUtil.findChildOfType(psiFile.getOriginalFile, classOf[HaskellModuleDeclaration])).flatMap(_.getModuleName))
   }
 
   def findQualifiedNameParent(psiElement: PsiElement): Option[HaskellQualifiedNameElement] = {

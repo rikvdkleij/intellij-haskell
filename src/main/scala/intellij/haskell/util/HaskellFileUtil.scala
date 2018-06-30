@@ -38,7 +38,7 @@ object HaskellFileUtil {
 
   def saveAllFiles(project: Project, psiFile: PsiFile): Unit = {
     val documentManager = PsiDocumentManager.getInstance(psiFile.getProject)
-    findDocument(psiFile, runInRead = false).foreach(documentManager.doPostponedOperationsAndUnblockDocument)
+    findDocument(psiFile).foreach(documentManager.doPostponedOperationsAndUnblockDocument)
     documentManager.performWhenAllCommitted(
       () => {
         FileDocumentManager.getInstance.saveAllDocuments()
@@ -60,13 +60,13 @@ object HaskellFileUtil {
     Option(psiFile.getOriginalFile.getVirtualFile)
   }
 
-  def findDocument(virtualFile: VirtualFile, runInRead: Boolean): Option[Document] = {
+  def findDocument(virtualFile: VirtualFile): Option[Document] = {
     val fileDocumentManager = FileDocumentManager.getInstance()
-    Option(ApplicationUtil.runReadAction(fileDocumentManager.getDocument(virtualFile), runInRead))
+    Option(ApplicationUtil.runReadAction(fileDocumentManager.getDocument(virtualFile)))
   }
 
-  def findDocument(psiFile: PsiFile, runInRead: Boolean = false): Option[Document] = {
-    findVirtualFile(psiFile).flatMap(vf => findDocument(vf, runInRead))
+  def findDocument(psiFile: PsiFile): Option[Document] = {
+    findVirtualFile(psiFile).flatMap(vf => findDocument(vf))
   }
 
   def getAbsolutePath(psiFile: PsiFile): Option[String] = {
