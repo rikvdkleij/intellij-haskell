@@ -48,7 +48,7 @@ class ShowTypeAction extends AnAction {
           }
           case _ => ()
             Option(psiFile.findElementAt(editor.getCaretModel.getOffset)).foreach { psiElement =>
-              ShowTypeAction.showTypeAsHintAndInStatusBar(actionContext.project, editor, psiElement, psiFile)
+              ShowTypeAction.showTypeAsHint(actionContext.project, editor, psiElement, psiFile)
             }
         }
       })
@@ -61,19 +61,12 @@ class ShowTypeAction extends AnAction {
 
 object ShowTypeAction {
 
-  def showTypeInStatusBar(project: Project, psiElement: PsiElement, psiFile: PsiFile): Unit = {
-    showTypeInfo(project, None, psiElement, psiFile)
+  def showTypeAsHint(project: Project, editor: Editor, psiElement: PsiElement, psiFile: PsiFile, sticky: Boolean = false): Unit = {
+    showTypeInfo(project, editor, psiElement, psiFile, sticky = sticky)
   }
 
-  def showTypeAsHintAndInStatusBar(project: Project, editor: Editor, psiElement: PsiElement, psiFile: PsiFile, sticky: Boolean = false): Unit = {
-    showTypeInfo(project, Some(editor), psiElement, psiFile, sticky = sticky)
-  }
-
-  private def showTypeInfo(project: Project, editor: Option[Editor], psiElement: PsiElement, psiFile: PsiFile, sticky: Boolean = false): Unit = {
-    editor match {
-      case Some(e) => showTypeSignatureAsHintAndInStatusBar(project, e, sticky, getTypeInfo(psiFile, psiElement))
-      case None => showTypeSignatureInStatusBar(project, getTypeInfo(psiFile, psiElement))
-    }
+  private def showTypeInfo(project: Project, editor: Editor, psiElement: PsiElement, psiFile: PsiFile, sticky: Boolean = false): Unit = {
+    showTypeSignatureAsHint(project, editor, sticky, getTypeInfo(psiFile, psiElement))
   }
 
   private def getTypeInfo(psiFile: PsiFile, psiElement: PsiElement): String = {
@@ -102,13 +95,8 @@ object ShowTypeAction {
     ApplicationManager.getApplication.runReadAction(ScalaUtil.computable(findTypeSignatureFromScope(psiFile, psiElement)))
   }
 
-  private def showTypeSignatureAsHintAndInStatusBar(project: Project, editor: Editor, sticky: Boolean, typeSignature: String) = {
-    showTypeSignatureInStatusBar(project, typeSignature)
+  private def showTypeSignatureAsHint(project: Project, editor: Editor, sticky: Boolean, typeSignature: String) = {
     HaskellEditorUtil.showHint(editor, StringUtil.escapeString(typeSignature), sticky)
-  }
-
-  private def showTypeSignatureInStatusBar(project: Project, typeSignature: String) = {
-    HaskellEditorUtil.showStatusBarMessage(project, typeSignature)
   }
 
   private def findTypeSignatureFromScope(psiFile: PsiFile, psiElement: PsiElement) = {

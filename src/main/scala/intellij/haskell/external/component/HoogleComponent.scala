@@ -51,9 +51,9 @@ object HoogleComponent {
     }
   }
 
-  def findDocumentation(project: Project, name: String, moduleName: Option[String]): Option[String] = {
+  def findDocumentation(project: Project, name: String, moduleName: String): Option[String] = {
     if (isHoogleFeatureAvailable(project)) {
-      runHoogle(project, Seq(name) ++ moduleName.map(mn => Seq(s"+$mn", "-i")).getOrElse(Seq())).
+      runHoogle(project, Seq(name, "-i", s"+$moduleName")).
         flatMap(processOutput =>
           if (processOutput.getStdoutLines.isEmpty || processOutput.getStdout.contains("No results found")) {
             None

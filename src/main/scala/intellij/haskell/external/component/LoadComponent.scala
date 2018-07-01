@@ -16,6 +16,7 @@
 
 package intellij.haskell.external.component
 
+import com.intellij.codeInsight.documentation.DocumentationManager
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.project.Project
 import com.intellij.psi.search.GlobalSearchScope
@@ -87,6 +88,7 @@ private[component] object LoadComponent {
                 BrowseModuleComponent.invalidateForModuleName(project, mn, psiFile)
               })
             }
+            DocumentationManager.getInstance(project).updateToolwindowContext()
           })
           Some(HaskellCompilationResultHelper.createCompilationResult(psiFile, loadOutput.stderrLines, loadFailed))
         case _ => None

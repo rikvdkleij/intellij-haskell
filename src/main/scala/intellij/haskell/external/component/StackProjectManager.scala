@@ -178,19 +178,19 @@ object StackProjectManager {
 
                 progressIndicator.setText("Busy with starting global Stack REPL")
                 StackReplsManager.getGlobalRepl(project).foreach(_.start())
-
-                // Force to load the module in REPL when REPL can be started. It could have happen that IntelliJ wanted to load file (via HaskellAnnotator)
-                // but REPL could not be started.
-                FileEditorManager.getInstance(project).getSelectedFiles foreach { vf =>
-                  val psiFile = ApplicationUtil.runReadAction(HaskellFileUtil.convertToHaskellFile(project, vf))
-                  psiFile.foreach(pf => {
-                    if (!LoadComponent.isFileLoaded(pf)) {
-                      HaskellAnnotator.restartDaemonCodeAnalyzerForFile(pf)
-                    }
-                  })
-                }
               } finally {
                 getStackProjectManager(project).foreach(_.building = false)
+              }
+
+              // Force to load the module in REPL when REPL can be started. It could have happen that IntelliJ wanted to load file (via HaskellAnnotator)
+              // but REPL could not be started.
+              FileEditorManager.getInstance(project).getSelectedFiles.headOption.foreach { vf =>
+                ApplicationUtil.runReadAction(HaskellFileUtil.convertToHaskellFile(project, vf)).foreach(psiFile => {
+                  if (!LoadComponent.isFileLoaded(psiFile)) {
+                    HaskellNotificationGroup.logInfoEvent(project, s"${psiFile.getName} will be forced loaded")
+                    HaskellAnnotator.restartDaemonCodeAnalyzerForFile(psiFile)
+                  }
+                })
               }
 
               progressIndicator.setText("Busy with downloading library sources")

@@ -21,7 +21,6 @@ import com.intellij.openapi.project.Project
 import com.intellij.psi.PsiElement
 import com.intellij.psi.search.GlobalSearchScope
 import intellij.haskell.HaskellNotificationGroup
-import intellij.haskell.external.component.NameInfoComponentResult.{BuiltInNameInfo, LibraryNameInfo, ProjectNameInfo}
 import intellij.haskell.psi.{HaskellPsiUtil, HaskellQualifiedNameElement}
 import intellij.haskell.util.index.HaskellFilePathIndex
 import intellij.haskell.util.{HaskellEditorUtil, HaskellProjectUtil}
@@ -29,8 +28,9 @@ import intellij.haskell.util.{HaskellEditorUtil, HaskellProjectUtil}
 class HaskellDocumentationProvider extends AbstractDocumentationProvider {
 
   override def getQuickNavigateInfo(element: PsiElement, originalElement: PsiElement): String = {
-    val moduleName = HaskellFilePathIndex.findModuleName(element.getContainingFile, GlobalSearchScope.projectScope(element.getProject))
-    val projectFile = Option(originalElement.getContainingFile).exists(HaskellProjectUtil.isProjectFile)
+    val psiFile = Option(element.getContainingFile)
+    val moduleName = psiFile.flatMap(pf => HaskellFilePathIndex.findModuleName(pf, GlobalSearchScope.projectScope(element.getProject)))
+    val projectFile = psiFile.exists(HaskellProjectUtil.isProjectFile)
     val typeSignature = if (projectFile) {
       TypeInfoComponent.findTypeInfoForElement(originalElement).toOption.map(_.typeSignature)
     } else {
@@ -44,33 +44,41 @@ class HaskellDocumentationProvider extends AbstractDocumentationProvider {
     }
   }
 
-  override def generateDoc(psiElement: PsiElement, originalPsiElement: PsiElement): String = {
-    val project = psiElement.getProject
+  override def generateDoc(element: PsiElement, originalElement: PsiElement): String = {
+    val project = element.getProject
     if (!StackProjectManager.isBuilding(project)) {
-      HaskellPsiUtil.findQualifiedNameParent(originalPsiElement) match {
-        case Some(ne) => findDocumentation(project, ne).getOrElse("No documentation found")
-        case _ => s"No documentation because this is not Haskell identifier: ${psiElement.getText}"
+      HaskellPsiUtil.findQualifiedNameParent(originalElement) match {
+        case Some(qne) =>
+          val doc = findDocumentation(project, qne).getOrElse("No documentation found")
+          getQuickNavigateInfo(element, originalElement) + "<br/><br/><hr/><br/>" + doc
+        case _ => getQuickNavigateInfo(element, originalElement) + "<br/><br/><hr/><br/>" + s"No documentation (yet) available for identifier: `${element.getText}`"
       }
     } else {
       HaskellEditorUtil.HaskellSupportIsNotAvailableWhileBuildingText
     }
   }
 
-  private def findDocumentation(project: Project, namedElement: HaskellQualifiedNameElement): Option[String] = {
-    val name = namedElement.getIdentifierElement.getName
-    val nameInfo = HaskellComponentsManager.findNameInfo(namedElement).flatMap(_.right.toOption)
-    nameInfo match {
-      case None =>
-        HaskellNotificationGroup.logWarningEvent(project, s"No documentation because no info could be found for identifier: $name")
-        None
-      case Some(ni) =>
-        val moduleName = ni match {
-          case lei: LibraryNameInfo => Option(lei.moduleName)
-          case _: ProjectNameInfo => HaskellFilePathIndex.findModuleName(namedElement.getContainingFile, GlobalSearchScope.projectScope(project))
-          case _: BuiltInNameInfo => Some(HaskellProjectUtil.Prelude)
-          case _ => None
+  private def findDocumentation(project: Project, qualifiedNameElement: HaskellQualifiedNameElement): Option[String] = {
+    val name = qualifiedNameElement.getIdentifierElement.getName
+    val namedElement = qualifiedNameElement.getIdentifierElement
+    Option(qualifiedNameElement.getContainingFile).flatMap { psiFile =>
+      if (HaskellProjectUtil.isProjectFile(psiFile)) {
+        DefinitionLocationComponent.findDefinitionLocation(psiFile, qualifiedNameElement, namedElement, isCurrentFile = true) match {
+          case Left(noInfo) =>
+            HaskellNotificationGroup.logWarningEvent(project, s"No documentation because no location info could be found for identifier `$name` because ${noInfo.message}")
+            None
+          case Right(info) =>
+            info.moduleName match {
+              case None =>
+                HaskellNotificationGroup.logWarningEvent(project, s"No documentation because could not find module for identifier `$name`")
+                None
+              case Some(moduleName) => HoogleComponent.findDocumentation(project, name, moduleName)
+            }
         }
-        HoogleComponent.findDocumentation(project, name, moduleName)
+      } else {
+        val moduleName = HaskellFilePathIndex.findModuleName(psiFile, GlobalSearchScope.allScope(project))
+        moduleName.flatMap(mn => HoogleComponent.findDocumentation(project, name, mn))
+      }
     }
   }
 }

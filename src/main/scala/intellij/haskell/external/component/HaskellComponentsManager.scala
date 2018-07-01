@@ -60,8 +60,8 @@ object HaskellComponentsManager {
     BrowseModuleComponent.findModuleIdentifiers(project, moduleName, Some(psiFile))
   }
 
-  def findDefinitionLocation(psiFile: PsiFile, namedElement: HaskellNamedElement, isCurrentFile: Boolean = false): DefinitionLocationResult = {
-    DefinitionLocationComponent.findDefinitionLocation(psiFile, namedElement, isCurrentFile)
+  def findDefinitionLocation(psiFile: PsiFile, qualifiedNameElement: HaskellQualifiedNameElement, namedElement: HaskellNamedElement, isCurrentFile: Boolean = false): DefinitionLocationResult = {
+    DefinitionLocationComponent.findDefinitionLocation(psiFile, qualifiedNameElement, namedElement, isCurrentFile)
   }
 
   def findNameInfo(qualifiedNameElement: HaskellQualifiedNameElement): Option[NameInfoResult] = {
