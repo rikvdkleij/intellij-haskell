@@ -63,8 +63,12 @@ class HaskellReference(element: HaskellNamedElement, textRange: TextRange) exten
             }
           case ne: HaskellNamedElement if findImportHidingDeclarationParent(ne).isDefined => None
           case ne: HaskellNamedElement =>
-            ProgressManager.checkCanceled()
-            resolveReference(ne, psiFile, project).map(HaskellNamedElementResolveResult)
+            if (HaskellPsiUtil.findQualifierParent(ne).isDefined) {
+              None
+            } else {
+              ProgressManager.checkCanceled()
+              resolveReference(ne, psiFile, project).map(HaskellNamedElementResolveResult)
+            }
           case _ => None
         }
       }
@@ -82,19 +86,19 @@ class HaskellReference(element: HaskellNamedElement, textRange: TextRange) exten
     HaskellPsiUtil.findQualifiedNameParent(namedElement).flatMap(qualifiedNameElement => {
       val isLibraryFile = HaskellProjectUtil.isLibraryFile(psiFile)
       if (isLibraryFile) {
-        resolveReferenceByNameInfo(qualifiedNameElement, namedElement, psiFile, project, preferExpression = false)
+        resolveReferenceByNameInfo(qualifiedNameElement, namedElement, psiFile, project)
       } else {
-        resolveReferenceByDefinitionLocation(qualifiedNameElement, namedElement, psiFile)
+        resolveReferenceByDefinitionLocation(qualifiedNameElement, psiFile)
       }
     })
   }
 
-  private def resolveReferenceByNameInfo(qualifiedNameElement: HaskellQualifiedNameElement, namedElement: HaskellNamedElement, psiFile: PsiFile, project: Project, preferExpression: Boolean): Option[HaskellNamedElement] = {
+  private def resolveReferenceByNameInfo(qualifiedNameElement: HaskellQualifiedNameElement, namedElement: HaskellNamedElement, psiFile: PsiFile, project: Project): Option[HaskellNamedElement] = {
     ProgressManager.checkCanceled()
 
     val referenceNamedElement = HaskellComponentsManager.findNameInfo(qualifiedNameElement) match {
       case Some(result) => result match {
-        case Right(infos) => infos.headOption.flatMap(info => HaskellReference.findIdentifiersByNameInfo(info, namedElement, project, preferExpression))
+        case Right(infos) => infos.headOption.flatMap(info => HaskellReference.findIdentifiersByNameInfo(info, namedElement, project))
         case Left(noInfo) =>
           HaskellEditorUtil.showStatusBarMessage(project, noInfo.message)
           None
@@ -110,9 +114,10 @@ class HaskellReference(element: HaskellNamedElement, textRange: TextRange) exten
     }
   }
 
-  private def resolveReferenceByDefinitionLocation(qualifiedNameElement: HaskellQualifiedNameElement, namedElement: HaskellNamedElement, psiFile: PsiFile): Option[HaskellNamedElement] = {
+  private def resolveReferenceByDefinitionLocation(qualifiedNameElement: HaskellQualifiedNameElement, psiFile: PsiFile): Option[HaskellNamedElement] = {
     ProgressManager.checkCanceled()
     val project = psiFile.getProject
+    val namedElement = qualifiedNameElement.getIdentifierElement
 
     def noNavigationMessage(noInfo: NoInfo) = {
       val message = s"Navigation is not available at this moment for ${namedElement.getName} because ${noInfo.message}"
@@ -122,7 +127,7 @@ class HaskellReference(element: HaskellNamedElement, textRange: TextRange) exten
 
     val isCurrentSelectedFile = HaskellFileUtil.findVirtualFile(psiFile).exists(vf => FileEditorManager.getInstance(project).getSelectedFiles.headOption.contains(vf))
 
-    HaskellComponentsManager.findDefinitionLocation(psiFile, qualifiedNameElement: HaskellQualifiedNameElement, namedElement, isCurrentFile = isCurrentSelectedFile) match {
+    HaskellComponentsManager.findDefinitionLocation(psiFile, qualifiedNameElement, isCurrentFile = isCurrentSelectedFile) match {
       case Right(DefinitionLocation(_, ne)) => Some(ne)
       case Left(noInfo) =>
         noNavigationMessage(noInfo)
@@ -151,54 +156,29 @@ object HaskellReference {
     }
   }
 
-  def resolveInstanceReferences(namedElement: HaskellNamedElement, nameInfos: Iterable[NameInfoComponentResult.NameInfo], project: Project): Seq[HaskellNamedElement] = {
-    nameInfos.flatMap(ni => findIdentifiersByNameInfo(ni, namedElement, project, preferExpressions = false)).toSeq.distinct
+  def resolveInstanceReferences(project: Project, namedElement: HaskellNamedElement, nameInfos: Iterable[NameInfoComponentResult.NameInfo]): Seq[HaskellNamedElement] = {
+    nameInfos.flatMap(ni => findIdentifiersByNameInfo(ni, namedElement, project)).toSeq.distinct
   }
 
-  def findIdentifiersByLibraryNameInfo(libraryNameInfo: LibraryNameInfo, name: String, project: Project, module: Option[Module], preferExpressions: Boolean): Iterable[HaskellNamedElement] = {
-    findHaskellFileByModuleName(project, module, libraryNameInfo.moduleName).map(haskellFile => {
-
-      def findDeclarationIdentifiers = {
-        val declarationElements = findHaskellDeclarationElements(haskellFile)
-
-        val identifiers = declarationElements.filter(_.getIdentifierElements.forall(e => libraryNameInfo.shortenedDeclaration.contains(e.getName))).flatMap(_.getIdentifierElements).filter(_.getName == name)
-        if (identifiers.isEmpty) {
-          findIdentifiersInDeclarations(haskellFile, name)
-        } else {
-          identifiers
-        }
-      }
-
-      ProgressManager.checkCanceled()
-
-      val identifiers =
-        if (preferExpressions) {
-          val identifiersInExpressions = findIdentifiersInExpressions(haskellFile, name)
-          if (identifiersInExpressions.isEmpty) {
-            findDeclarationIdentifiers
-          } else {
-            identifiersInExpressions
-          }
-        } else {
-          findDeclarationIdentifiers
-        }
-      identifiers.toSeq.sortWith(sortByClassDeclarationFirst)
-    }).getOrElse(Iterable())
+  def findIdentifiersByLibraryNameInfo(project: Project, module: Option[Module], libraryNameInfo: LibraryNameInfo, name: String): Iterable[HaskellNamedElement] = {
+    findIdentifiersByModuleName(project, module, libraryNameInfo.moduleName, name)
   }
 
   def findIdentifiersByModuleName(project: Project, module: Option[Module], moduleName: String, name: String): Iterable[HaskellNamedElement] = {
-    findHaskellFileByModuleName(project, module, moduleName).map { haskellFile =>
+    findHaskellFileByModuleName(project, module, moduleName).map(haskellFile => {
 
       ProgressManager.checkCanceled()
 
-      val expressionNamedElements = findIdentifiersInExpressions(haskellFile, name)
-      val namedElements = if (expressionNamedElements.isEmpty) {
+      val declarationElements = findHaskellDeclarationElements(haskellFile)
+      val namedElements = declarationElements.flatMap(_.getIdentifierElements).filter(_.getName == name)
+      val identifiers = if (namedElements.isEmpty) {
         findIdentifiersInDeclarations(haskellFile, name)
       } else {
-        expressionNamedElements
+        namedElements
       }
-      namedElements.toSeq.sortWith(sortByClassDeclarationFirst)
-    }.getOrElse(Iterable())
+
+      identifiers.toSeq.sortWith(sortByClassDeclarationFirst)
+    }).getOrElse(Iterable())
   }
 
   def findIdentifierByLocation(project: Project, filePath: String, lineNr: Integer, columnNr: Integer, name: String): (Option[String], Option[HaskellNamedElement]) = {
@@ -238,10 +218,10 @@ object HaskellReference {
   }
 
 
-  private def findIdentifiersByNameInfo(nameInfo: NameInfo, namedElement: HaskellNamedElement, project: Project, preferExpressions: Boolean): Option[HaskellNamedElement] = {
+  private def findIdentifiersByNameInfo(nameInfo: NameInfo, namedElement: HaskellNamedElement, project: Project): Option[HaskellNamedElement] = {
     nameInfo match {
       case pni: ProjectNameInfo => findIdentifierByLocation(project, pni.filePath, pni.lineNr, pni.columnNr, namedElement.getName)._2
-      case lni: LibraryNameInfo => findIdentifiersByLibraryNameInfo(lni, namedElement.getName, project, HaskellProjectUtil.findModule(namedElement), preferExpressions).headOption
+      case lni: LibraryNameInfo => findIdentifiersByLibraryNameInfo(project, HaskellProjectUtil.findModule(namedElement), lni, namedElement.getName).headOption
       case _ => None
     }
   }

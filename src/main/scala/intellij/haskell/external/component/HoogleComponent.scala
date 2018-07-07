@@ -18,12 +18,15 @@ package intellij.haskell.external.component
 
 import java.io.File
 import java.nio.file.Paths
-import java.util.regex.Pattern
 
 import com.intellij.execution.process.ProcessOutput
+import com.intellij.lang.documentation.DocumentationMarkup
 import com.intellij.openapi.project.Project
+import com.intellij.psi.search.GlobalSearchScope
 import intellij.haskell.external.execution.{CommandLine, StackCommandLine}
-import intellij.haskell.util.HaskellEditorUtil
+import intellij.haskell.psi.HaskellQualifiedNameElement
+import intellij.haskell.util.index.HaskellFilePathIndex
+import intellij.haskell.util.{HaskellProjectUtil, HtmlElement}
 import intellij.haskell.{GlobalInfo, HaskellNotificationGroup}
 
 import scala.collection.JavaConverters._
@@ -51,26 +54,64 @@ object HoogleComponent {
     }
   }
 
-  def findDocumentation(project: Project, name: String, moduleName: String): Option[String] = {
+  def findDocumentation(project: Project, qualifiedNameElement: HaskellQualifiedNameElement): Option[String] = {
     if (isHoogleFeatureAvailable(project)) {
-      runHoogle(project, Seq(name, "-i", s"+$moduleName")).
-        flatMap(processOutput =>
-          if (processOutput.getStdoutLines.isEmpty || processOutput.getStdout.contains("No results found")) {
-            None
-          } else {
-            // Remove excessive newlines that Hoogle outputs
-            val cleanOutput = processOutput.getStdout.trim.replaceAll("\n{3,}", "\n\n")
-            Some(s"${Pattern.compile("$", Pattern.MULTILINE).matcher(cleanOutput).replaceAll("<br>").replace(" ", "&nbsp;")}")
+      val name = qualifiedNameElement.getIdentifierElement.getName
+      Option(qualifiedNameElement.getContainingFile).flatMap { psiFile =>
+        if (HaskellProjectUtil.isProjectFile(psiFile)) {
+          DefinitionLocationComponent.findDefinitionLocation(psiFile, qualifiedNameElement, isCurrentFile = true) match {
+            case Left(noInfo) =>
+              HaskellNotificationGroup.logWarningEvent(project, s"No documentation because no location info could be found for identifier `$name` because ${noInfo.message}")
+              None
+            case Right(info) =>
+              info.moduleName match {
+                case None =>
+                  HaskellNotificationGroup.logWarningEvent(project, s"No documentation because could not find module for identifier `$name`")
+                  None
+                case Some(moduleName) => HoogleComponent.createDocumentation(project, name, moduleName)
+              }
           }
-        )
+        } else {
+          val moduleName = HaskellFilePathIndex.findModuleName(psiFile, GlobalSearchScope.allScope(project))
+          moduleName.flatMap(mn => createDocumentation(project, name, mn))
+        }
+      }
     } else {
       None
     }
   }
 
+  private def createDocumentation(project: Project, name: String, moduleName: String): Option[String] = {
+    def mkString(lines: Seq[String]) = {
+      lines.mkString("\n").
+        replace("<", HtmlElement.Lt).
+        replace(">", HtmlElement.Gt)
+    }
+
+    runHoogle(project, Seq(name, "-i", s"+$moduleName")).
+      flatMap(processOutput =>
+        if (processOutput.getStdoutLines.isEmpty || processOutput.getStdout.contains("No results found")) {
+          None
+        } else {
+          val output = processOutput.getStdoutLines
+          val (definition, content) = output.asScala.splitAt(2)
+          Some(
+            DocumentationMarkup.DEFINITION_START +
+              mkString(definition) +
+              DocumentationMarkup.DEFINITION_END +
+              DocumentationMarkup.CONTENT_START +
+              HtmlElement.PreStart +
+              mkString(content) +
+              HtmlElement.PreEnd +
+              DocumentationMarkup.CONTENT_END
+          )
+        }
+      )
+  }
+
   private def isHoogleFeatureAvailable(project: Project): Boolean = {
     if (!StackProjectManager.isHoogleAvailable(project)) {
-      HaskellEditorUtil.showStatusBarMessage(project, s"$HoogleName is not (yet) available")
+      HaskellNotificationGroup.logInfoEvent(project, s"$HoogleName is not (yet) available")
       false
     } else {
       doesHoogleDatabaseExist(project)

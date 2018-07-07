@@ -43,15 +43,15 @@ private[component] object DefinitionLocationComponent {
 
   private final val Cache: AsyncLoadingCache[Key, DefinitionLocationResult] = Scaffeine().buildAsync((k: Key) => findDefinitionLocationResult(k))
 
-  def findDefinitionLocation(psiFile: PsiFile, qualifiedNameElement: HaskellQualifiedNameElement, namedElement: HaskellNamedElement, isCurrentFile: Boolean): DefinitionLocationResult = {
-    find(psiFile, qualifiedNameElement, namedElement, isCurrentFile)
+  def findDefinitionLocation(psiFile: PsiFile, qualifiedNameElement: HaskellQualifiedNameElement, isCurrentFile: Boolean): DefinitionLocationResult = {
+    find(psiFile, qualifiedNameElement, isCurrentFile)
   }
 
   def invalidate(psiFile: PsiFile): Unit = {
     val keys = Cache.synchronous().asMap().filter(_._1.psiFile == psiFile).flatMap { case (k, v) =>
       v.toOption match {
-        case Some(location) =>
-          if (k.qualifiedNameElement.isValid && location.namedElement.isValid && k.name == ApplicationUtil.runReadAction(location.namedElement.getName)) {
+        case Some(definitionLocation) =>
+          if (k.qualifiedNameElement.isValid && definitionLocation.namedElement.isValid && k.name == ApplicationUtil.runReadAction(definitionLocation.namedElement.getName)) {
             None
           } else {
             Some(k)
@@ -64,8 +64,7 @@ private[component] object DefinitionLocationComponent {
   }
 
   def invalidateAll(project: Project): Unit = {
-    val files = Cache.synchronous().asMap().map(_._1.psiFile).filter(_.getProject == project)
-    files.foreach(invalidate)
+    Cache.synchronous().asMap().filter(_._1.psiFile.getProject == project).keys.foreach(Cache.synchronous.invalidate)
   }
 
   private def findDefinitionLocationResult(key: Key): DefinitionLocationResult = {
@@ -124,10 +123,10 @@ private[component] object DefinitionLocationComponent {
 
   private final val Timeout = Duration.create(100, TimeUnit.MILLISECONDS)
 
-  private def find(psiFile: PsiFile, qualifiedNameElement: HaskellQualifiedNameElement, namedElement: HaskellNamedElement, isCurrentFile: Boolean): DefinitionLocationResult = {
+  private def find(psiFile: PsiFile, qualifiedNameElement: HaskellQualifiedNameElement, isCurrentFile: Boolean): DefinitionLocationResult = {
     val project = psiFile.getProject
     val moduleName = HaskellFilePathIndex.findModuleName(psiFile, GlobalSearchScope.projectScope(project))
-    val name = ApplicationUtil.runReadAction(namedElement.getName)
+    val name = ApplicationUtil.runReadAction(qualifiedNameElement.getIdentifierElement.getName)
     val key = Key(psiFile, moduleName, qualifiedNameElement, name)
 
     def matchResult(result: DefinitionLocationResult) = {
@@ -141,7 +140,7 @@ private[component] object DefinitionLocationComponent {
         case Left(ReplIsBusy) =>
           if (!isCurrentFile && !project.isDisposed) {
             Thread.sleep(100)
-            find(psiFile, qualifiedNameElement, namedElement, isCurrentFile)
+            find(psiFile, qualifiedNameElement, isCurrentFile)
           } else {
             Cache.synchronous().invalidate(key)
             result
@@ -190,13 +189,12 @@ object LocationInfoUtil {
         val putResult = activeTaskByTarget.put(target, true)
         if (putResult.isEmpty) {
           if (namedElement.isValid && !project.isDisposed) {
-            val namedElements = ApplicationUtil.runReadAction(HaskellPsiUtil.findExpressionParent(namedElement).map(HaskellPsiUtil.findNamedElements).getOrElse(Iterable()))
+            val qualifiedNamedElements = ApplicationUtil.runReadAction(HaskellPsiUtil.findExpressionParent(namedElement).map(HaskellPsiUtil.findQualifiedNamedElements).getOrElse(Iterable()))
             ApplicationManager.getApplication.executeOnPooledThread(ScalaUtil.runnable {
               try
-                namedElements.foreach { e =>
+                qualifiedNamedElements.foreach { qne =>
                   if (!project.isDisposed && !LoadComponent.isBusy(project, stackComponentInfo)) {
-                    val qualifiedNameElement = ApplicationUtil.runReadAction(HaskellPsiUtil.findQualifiedNameParent(e))
-                    qualifiedNameElement.foreach(qe => DefinitionLocationComponent.findDefinitionLocation(psiFile, qe, e, isCurrentFile = true))
+                    DefinitionLocationComponent.findDefinitionLocation(psiFile, qne, isCurrentFile = true)
                     // We have to wait for other requests which have more priority because those are on dispatch thread
                     Thread.sleep(200)
                   }

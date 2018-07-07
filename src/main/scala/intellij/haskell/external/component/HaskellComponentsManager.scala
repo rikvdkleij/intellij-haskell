@@ -30,7 +30,7 @@ import intellij.haskell.external.component.TypeInfoComponentResult.TypeInfoResul
 import intellij.haskell.external.execution.CompilationResult
 import intellij.haskell.external.repl.StackReplsManager
 import intellij.haskell.external.repl.StackReplsManager.StackComponentInfo
-import intellij.haskell.psi.{HaskellNamedElement, HaskellPsiUtil, HaskellQualifiedNameElement}
+import intellij.haskell.psi.{HaskellPsiUtil, HaskellQualifiedNameElement}
 import intellij.haskell.util.index.HaskellFileIndex
 import intellij.haskell.util.{HaskellProjectUtil, ScalaUtil}
 
@@ -60,8 +60,8 @@ object HaskellComponentsManager {
     BrowseModuleComponent.findModuleIdentifiers(project, moduleName, Some(psiFile))
   }
 
-  def findDefinitionLocation(psiFile: PsiFile, qualifiedNameElement: HaskellQualifiedNameElement, namedElement: HaskellNamedElement, isCurrentFile: Boolean = false): DefinitionLocationResult = {
-    DefinitionLocationComponent.findDefinitionLocation(psiFile, qualifiedNameElement, namedElement, isCurrentFile)
+  def findDefinitionLocation(psiFile: PsiFile, qualifiedNameElement: HaskellQualifiedNameElement, isCurrentFile: Boolean = false): DefinitionLocationResult = {
+    DefinitionLocationComponent.findDefinitionLocation(psiFile, qualifiedNameElement, isCurrentFile)
   }
 
   def findNameInfo(qualifiedNameElement: HaskellQualifiedNameElement): Option[NameInfoResult] = {
@@ -133,6 +133,7 @@ object HaskellComponentsManager {
     BrowseModuleComponent.invalidate(project)
     NameInfoComponent.invalidateAll(project)
     DefinitionLocationComponent.invalidateAll(project)
+    TypeInfoComponent.invalidateAll(project)
     HaskellNotificationGroup.logInfoEvent(project, "Finished with invalidating cache")
   }
 
@@ -146,7 +147,7 @@ object HaskellComponentsManager {
     TypeInfoComponent.findTypeInfoForElement(psiElement)
   }
 
-  def findTypeInfoForSelection(psiFile: PsiFile, selectionModel: SelectionModel): Option[TypeInfoResult] = {
+  def findTypeInfoForSelection(psiFile: PsiFile, selectionModel: SelectionModel): TypeInfoResult = {
     TypeInfoComponent.findTypeInfoForSelection(psiFile, selectionModel)
   }
 

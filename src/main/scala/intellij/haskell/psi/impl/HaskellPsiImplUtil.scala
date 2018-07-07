@@ -259,32 +259,33 @@ object HaskellPsiImplUtil {
 
     new HaskellItemPresentation(declarationElement) {
       def getPresentableText: String = {
-        getDeclarationInfo(declarationElement)
+        getDeclarationInfo(declarationElement, shortened = true)
       }
     }
   }
 
-  def getItemPresentableText(element: PsiElement): String = {
+  def getItemPresentableText(element: PsiElement, shortened: Boolean = true): String = {
     HaskellPsiUtil.findNamedElement(element) match {
       case Some(namedElement) =>
         HaskellPsiUtil.findHighestDeclarationElementParent(element) match {
-          case Some(de) if de.getIdentifierElements.exists(_ == namedElement) => HaskellPsiUtil.findDeclarationElementParent(namedElement).map(de => getDeclarationInfo(de)).
+          case Some(de) if de.getIdentifierElements.exists(_ == namedElement) => HaskellPsiUtil.findDeclarationElementParent(namedElement).map(de => getDeclarationInfo(de, shortened)).
             orElse(HaskellPsiUtil.findExpressionParent(namedElement).map(e => StringUtil.removeCommentsAndWhiteSpaces(e.getText))).
-            getOrElse(s"${namedElement.getName} `in` ${getDeclarationInfo(de)}")
-          case Some(de) => s"${namedElement.getName} `in` ${getDeclarationInfo(de)}"
-          case _ if HaskellPsiUtil.findExpressionParent(namedElement).isDefined => getContainingLineText(namedElement).getOrElse(namedElement.getName).trim
-          case _ => namedElement.getName
+            getOrElse(s"${namedElement.getName} `in` ${getDeclarationInfo(de, shortened)}")
+          case Some(de) => s"${namedElement.getName} `in` ${getDeclarationInfo(de, shortened)}"
+          case _ if shortened && HaskellPsiUtil.findExpressionParent(namedElement).isDefined => getContainingLineText(namedElement).getOrElse(namedElement.getName).trim
+          case _ => HaskellPsiUtil.findExpressionParent(namedElement).map(_.getText).getOrElse(namedElement.getName)
         }
       case _ => element.getText
     }
   }
 
-  private def getDeclarationInfo(declarationElement: HaskellDeclarationElement): String = {
+  private def getDeclarationInfo(declarationElement: HaskellDeclarationElement, shortened: Boolean): String = {
     val info = declarationElement match {
       case md: HaskellModuleDeclaration => s"module  ${md.getModid.getName}"
-      case de => StringUtil.shortenHaskellDeclaration(de.getText)
+      case de if shortened => StringUtil.shortenHaskellDeclaration(de.getText)
+      case de => de.getText
     }
-    if (info.length > 50) {
+    if (shortened && info.length > 50) {
       getFirstLineDeclarationText(declarationElement) + "..."
     } else {
       info

@@ -18,6 +18,7 @@ package intellij.haskell.psi
 
 import com.intellij.lang.ASTNode
 import com.intellij.openapi.editor.Editor
+import com.intellij.psi.impl.source.tree.TreeUtil
 import com.intellij.psi.tree.{IElementType, TokenSet}
 import com.intellij.psi.util.PsiTreeUtil
 import com.intellij.psi.{PsiElement, PsiFile, TokenType}
@@ -78,6 +79,13 @@ object HaskellPsiUtil {
     */
   def findModuleName(psiFile: PsiFile): Option[String] = {
     ApplicationUtil.runReadAction(Option(PsiTreeUtil.findChildOfType(psiFile.getOriginalFile, classOf[HaskellModuleDeclaration])).flatMap(_.getModuleName))
+  }
+
+  def findQualifierParent(psiElement: PsiElement): Option[HaskellQualifier] = {
+    psiElement match {
+      case e: HaskellQualifier => Some(e)
+      case e => Option(TreeUtil.findParent(e.getNode, HaskellTypes.HS_QUALIFIER)).map(_.getPsi.asInstanceOf[HaskellQualifier])
+    }
   }
 
   def findQualifiedNameParent(psiElement: PsiElement): Option[HaskellQualifiedNameElement] = {

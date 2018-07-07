@@ -43,7 +43,7 @@ class ShowTypeAction extends AnAction {
 
         actionContext.selectionModel match {
           case Some(sm) => HaskellComponentsManager.findTypeInfoForSelection(psiFile, sm) match {
-            case Some(Right(info)) => HaskellEditorUtil.showHint(editor, StringUtil.escapeString(info.typeSignature))
+            case Right(info) => HaskellEditorUtil.showHint(editor, StringUtil.escapeString(info.typeSignature))
             case _ => HaskellEditorUtil.showHint(editor, "Could not determine type for selection")
           }
           case _ => ()

@@ -19,14 +19,14 @@ package intellij.haskell.external.component
 import java.util.concurrent.TimeUnit
 
 import com.github.blemale.scaffeine.{AsyncLoadingCache, Scaffeine}
-import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.editor.SelectionModel
+import com.intellij.openapi.project.Project
 import com.intellij.psi.search.GlobalSearchScope
 import com.intellij.psi.{PsiElement, PsiFile}
 import intellij.haskell.external.repl.StackReplsManager
 import intellij.haskell.psi._
 import intellij.haskell.util.index.HaskellFilePathIndex
-import intellij.haskell.util.{LineColumnPosition, ScalaUtil}
+import intellij.haskell.util.{ApplicationUtil, LineColumnPosition}
 
 import scala.concurrent.duration.Duration
 import scala.concurrent.{Await, Future, TimeoutException}
@@ -35,41 +35,87 @@ private[component] object TypeInfoComponent {
 
   import intellij.haskell.external.component.TypeInfoComponentResult._
 
-  private case class Key(moduleName: Option[String], psiFile: PsiFile, startLineNr: Int, startColumnNr: Int, endLineNr: Int, endColumnNr: Int, expression: String)
+  private case class Key(moduleName: Option[String], psiFile: PsiFile, qualifiedNameElement: HaskellQualifiedNameElement, expression: String)
 
   private final val Cache: AsyncLoadingCache[Key, TypeInfoResult] = Scaffeine().buildAsync((k: Key) => findTypeInfoResult(k))
 
-  def findTypeInfoForElement(psiElement: PsiElement): TypeInfoResult = {
-    if (psiElement.isValid) {
-      ApplicationManager.getApplication.runReadAction(ScalaUtil.computable {
-        for {
-          qne <- HaskellPsiUtil.findQualifiedNameParent(psiElement)
-          to = qne.getTextOffset
-          pf <- Option(psiElement.getContainingFile)
-          sp <- LineColumnPosition.fromOffset(pf, to)
-          ep <- LineColumnPosition.fromOffset(pf, to + qne.getText.length)
-        } yield {
-          val moduleName = HaskellFilePathIndex.findModuleName(pf, GlobalSearchScope.projectScope(pf.getProject))
-          Key(moduleName, pf, sp.lineNr, sp.columnNr, ep.lineNr, ep.columnNr, qne.getName)
-        }
+  def findTypeInfoForElement(element: PsiElement): TypeInfoResult = {
+    if (element.isValid) {
+      (for {
+        qne <- ApplicationUtil.runReadAction(HaskellPsiUtil.findQualifiedNameParent(element))
+        pf <- ApplicationUtil.runReadAction(Option(element.getContainingFile))
+      } yield {
+        val moduleName = HaskellFilePathIndex.findModuleName(pf, GlobalSearchScope.projectScope(pf.getProject))
+        Key(moduleName, pf, qne, qne.getName)
       }).map(findTypeInfo).getOrElse(Left(NoInfoAvailable))
     } else {
       Left(NoInfoAvailable)
     }
   }
 
-  def findTypeInfoForSelection(psiFile: PsiFile, selectionModel: SelectionModel): Option[TypeInfoResult] = {
-    for {
-      sp <- LineColumnPosition.fromOffset(psiFile, selectionModel.getSelectionStart)
-      ep <- LineColumnPosition.fromOffset(psiFile, selectionModel.getSelectionEnd)
-    } yield {
-      val moduleName = HaskellFilePathIndex.findModuleName(psiFile, GlobalSearchScope.projectScope(psiFile.getProject))
-      findTypeInfo(Key(moduleName, psiFile, sp.lineNr, sp.columnNr, ep.lineNr, ep.columnNr, selectionModel.getSelectedText))
+  def findTypeInfoForSelection(psiFile: PsiFile, selectionModel: SelectionModel): TypeInfoResult = {
+    val moduleName = HaskellFilePathIndex.findModuleName(psiFile, GlobalSearchScope.projectScope(psiFile.getProject))
+    if (LoadComponent.isModuleLoaded(moduleName, psiFile)) {
+      {
+        for {
+          sp <- LineColumnPosition.fromOffset(psiFile, selectionModel.getSelectionStart)
+          ep <- LineColumnPosition.fromOffset(psiFile, selectionModel.getSelectionEnd)
+        } yield {
+          StackReplsManager.getProjectRepl(psiFile).flatMap(_.findTypeInfo(moduleName, psiFile, sp.lineNr, sp.columnNr, ep.lineNr, ep.columnNr, selectionModel.getSelectedText)) match {
+            case Some(output) => output.stdoutLines.headOption.filterNot(_.trim.isEmpty).map(ti => Right(TypeInfo(ti, output.stderrLines.nonEmpty))).getOrElse(Left(NoInfoAvailable))
+            case None => Left(ReplNotAvailable)
+          }
+        }
+      }.getOrElse(Left(NoInfoAvailable))
+    } else {
+      Left(NoInfoAvailable)
     }
   }
 
   def invalidate(psiFile: PsiFile): Unit = {
-    Cache.synchronous().asMap().filter(_._1.psiFile == psiFile).keys.foreach(Cache.synchronous().invalidate)
+    val keys = Cache.synchronous().asMap().filter(_._1.psiFile == psiFile).flatMap { case (k, v) =>
+      v.toOption match {
+        case Some(_) =>
+          val sameFile = DefinitionLocationComponent.findDefinitionLocation(psiFile, k.qualifiedNameElement, isCurrentFile = false).toOption match {
+            case Some(definitionLocation) => Option(definitionLocation.namedElement.getContainingFile).contains(k.psiFile)
+            case None => false
+          }
+
+          if (!k.qualifiedNameElement.isValid || sameFile) {
+            Some(k)
+          } else {
+            None
+          }
+        case None => Some(k)
+      }
+    }
+
+    Cache.synchronous().invalidateAll(keys)
+  }
+
+  def invalidate(moduleName: String): Unit = {
+    val keys = Cache.synchronous().asMap().flatMap { case (k, v) =>
+      v.toOption match {
+        case Some(_) =>
+          val sameModule = DefinitionLocationComponent.findDefinitionLocation(k.psiFile, k.qualifiedNameElement, isCurrentFile = false).toOption match {
+            case Some(definitionLocation) => definitionLocation.moduleName.contains(moduleName)
+            case None => false
+          }
+
+          if (sameModule) {
+            Some(k)
+          } else {
+            None
+          }
+        case None => None
+      }
+    }
+
+    Cache.synchronous().invalidateAll(keys)
+  }
+
+  def invalidateAll(project: Project): Unit = {
+    Cache.synchronous().asMap().filter(_._1.psiFile.getProject == project).keys.foreach(Cache.synchronous().invalidate)
   }
 
   private def findTypeInfoResult(key: Key): TypeInfoResult = {
@@ -77,10 +123,20 @@ private[component] object TypeInfoComponent {
     if (LoadComponent.isBusy(psiFile)) {
       Left(ReplIsBusy)
     } else {
-      StackReplsManager.getProjectRepl(key.psiFile).flatMap(_.findTypeInfo(key.moduleName, key.psiFile, key.startLineNr, key.startColumnNr, key.endLineNr, key.endColumnNr, key.expression)) match {
-        case Some(output) => output.stdoutLines.headOption.filterNot(_.trim.isEmpty).map(ti => Right(TypeInfo(ti, output.stderrLines.nonEmpty))).getOrElse(Left(NoInfoAvailable))
-        case None => Left(ReplNotAvailable)
-      }
+      {
+        val qne = key.qualifiedNameElement
+        val to = qne.getTextOffset
+        for {
+          sp <- ApplicationUtil.runReadAction(LineColumnPosition.fromOffset(psiFile, to))
+          ep <- ApplicationUtil.runReadAction(LineColumnPosition.fromOffset(psiFile, to + qne.getText.length))
+        } yield {
+
+          StackReplsManager.getProjectRepl(key.psiFile).flatMap(_.findTypeInfo(key.moduleName, key.psiFile, sp.lineNr, sp.columnNr, ep.lineNr, ep.columnNr, key.expression)) match {
+            case Some(output) => output.stdoutLines.headOption.filterNot(_.trim.isEmpty).map(ti => Right(TypeInfo(ti, output.stderrLines.nonEmpty))).getOrElse(Left(NoInfoAvailable))
+            case None => Left(ReplNotAvailable)
+          }
+        }
+      }.getOrElse(Left(NoInfoAvailable))
     }
   }
 

@@ -82,10 +82,10 @@ private[component] object LoadComponent {
             if (!loadFailed) {
               NameInfoComponent.invalidate(psiFile)
 
-              val moduleName = HaskellFilePathIndex.findModuleName(psiFile, GlobalSearchScope.projectScope(project))
-              moduleName.foreach(mn => {
+              HaskellFilePathIndex.findModuleName(psiFile, GlobalSearchScope.projectScope(project)).foreach(mn => {
                 BrowseModuleComponent.refreshTopLevel(project, mn, psiFile)
                 BrowseModuleComponent.invalidateForModuleName(project, mn, psiFile)
+                TypeInfoComponent.invalidate(mn)
               })
             }
             DocumentationManager.getInstance(project).updateToolwindowContext()

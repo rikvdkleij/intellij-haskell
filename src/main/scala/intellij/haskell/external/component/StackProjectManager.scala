@@ -186,7 +186,7 @@ object StackProjectManager {
               // but REPL could not be started.
               FileEditorManager.getInstance(project).getSelectedFiles.headOption.foreach { vf =>
                 ApplicationUtil.runReadAction(HaskellFileUtil.convertToHaskellFile(project, vf)).foreach(psiFile => {
-                  if (!LoadComponent.isFileLoaded(psiFile)) {
+                  if (HaskellProjectUtil.isProjectFile(psiFile) && !LoadComponent.isFileLoaded(psiFile)) {
                     HaskellNotificationGroup.logInfoEvent(project, s"${psiFile.getName} will be forced loaded")
                     HaskellAnnotator.restartDaemonCodeAnalyzerForFile(psiFile)
                   }
