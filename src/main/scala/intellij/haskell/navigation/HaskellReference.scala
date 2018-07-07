@@ -23,13 +23,12 @@ import com.intellij.openapi.project.{IndexNotReadyException, Project}
 import com.intellij.openapi.util.TextRange
 import com.intellij.psi._
 import com.intellij.psi.search.GlobalSearchScope
+import intellij.haskell.HaskellFile
 import intellij.haskell.external.component.NameInfoComponentResult.{LibraryNameInfo, NameInfo, ProjectNameInfo}
 import intellij.haskell.external.component._
-import intellij.haskell.psi.HaskellPsiUtil._
 import intellij.haskell.psi._
 import intellij.haskell.util._
 import intellij.haskell.util.index.{HaskellFilePathIndex, HaskellModuleNameIndex}
-import intellij.haskell.{HaskellFile, HaskellNotificationGroup}
 
 class HaskellReference(element: HaskellNamedElement, textRange: TextRange) extends PsiPolyVariantReferenceBase[HaskellNamedElement](element, textRange) {
 
@@ -50,18 +49,18 @@ class HaskellReference(element: HaskellNamedElement, textRange: TextRange) exten
         element match {
           case mi: HaskellModid => HaskellReference.findHaskellFileByModuleNameIndex(project, mi.getName, GlobalSearchScope.allScope(project)).map(HaskellFileResolveResult)
           case qe: HaskellQualifierElement =>
-            val importDeclarations = findImportDeclarations(psiFile)
+            val importDeclarations = HaskellPsiUtil.findImportDeclarations(psiFile)
             findQualifier(importDeclarations, qe) match {
-              case Some(q) => findNamedElement(q).map(HaskellNamedElementResolveResult)
+              case Some(q) => HaskellPsiUtil.findNamedElement(q).map(HaskellNamedElementResolveResult)
               case None => val files = findHaskellFiles(importDeclarations, qe, project)
                 if (files.isEmpty) {
                   // return itself
-                  findNamedElement(element).map(HaskellNamedElementResolveResult)
+                  HaskellPsiUtil.findNamedElement(element).map(HaskellNamedElementResolveResult)
                 } else {
                   files.map(HaskellFileResolveResult).headOption
                 }
             }
-          case ne: HaskellNamedElement if findImportHidingDeclarationParent(ne).isDefined => None
+          case ne: HaskellNamedElement if HaskellPsiUtil.findImportHidingDeclarationParent(ne).isDefined => None
           case ne: HaskellNamedElement =>
             if (HaskellPsiUtil.findQualifierParent(ne).isDefined) {
               None
@@ -99,16 +98,14 @@ class HaskellReference(element: HaskellNamedElement, textRange: TextRange) exten
     val referenceNamedElement = HaskellComponentsManager.findNameInfo(qualifiedNameElement) match {
       case Some(result) => result match {
         case Right(infos) => infos.headOption.flatMap(info => HaskellReference.findIdentifiersByNameInfo(info, namedElement, project))
-        case Left(noInfo) =>
-          HaskellEditorUtil.showStatusBarMessage(project, noInfo.message)
-          None
+        case Left(_) => None
       }
       case None => None
     }
 
     if (referenceNamedElement.isEmpty) {
       ProgressManager.checkCanceled()
-      findHaskellDeclarationElements(psiFile).flatMap(_.getIdentifierElements).filter(_.getName == namedElement.getName).toSeq.headOption
+      HaskellPsiUtil.findHaskellDeclarationElements(psiFile).flatMap(_.getIdentifierElements).filter(_.getName == namedElement.getName).toSeq.headOption
     } else {
       referenceNamedElement
     }
@@ -121,8 +118,7 @@ class HaskellReference(element: HaskellNamedElement, textRange: TextRange) exten
 
     def noNavigationMessage(noInfo: NoInfo) = {
       val message = s"Navigation is not available at this moment for ${namedElement.getName} because ${noInfo.message}"
-      HaskellEditorUtil.showStatusBarMessage(project, message)
-      HaskellNotificationGroup.logInfoEvent(project, message)
+      HaskellEditorUtil.showStatusBarBalloonMessage(project, message)
     }
 
     val isCurrentSelectedFile = HaskellFileUtil.findVirtualFile(psiFile).exists(vf => FileEditorManager.getInstance(project).getSelectedFiles.headOption.contains(vf))
@@ -169,7 +165,7 @@ object HaskellReference {
 
       ProgressManager.checkCanceled()
 
-      val declarationElements = findHaskellDeclarationElements(haskellFile)
+      val declarationElements = HaskellPsiUtil.findHaskellDeclarationElements(haskellFile)
       val namedElements = declarationElements.flatMap(_.getIdentifierElements).filter(_.getName == name)
       val identifiers = if (namedElements.isEmpty) {
         findIdentifiersInDeclarations(haskellFile, name)
@@ -188,8 +184,8 @@ object HaskellReference {
       pf <- psiFile
       offset <- LineColumnPosition.getOffset(pf, LineColumnPosition(lineNr, columnNr))
       element <- Option(pf.findElementAt(offset))
-      namedElement <- HaskellPsiUtil.findNamedElement(element).find(_.getName == name).orElse(findHighestDeclarationElementParent(element).flatMap(_.getIdentifierElements.find(_.getName == name))).
-        orElse(findQualifiedNameParent(element).map(_.getIdentifierElement).find(_.getName == name))
+      namedElement <- HaskellPsiUtil.findNamedElement(element).find(_.getName == name).orElse(HaskellPsiUtil.findHighestDeclarationElementParent(element).flatMap(_.getIdentifierElements.find(_.getName == name))).
+        orElse(HaskellPsiUtil.findQualifiedNameParent(element).map(_.getIdentifierElement).find(_.getName == name))
     } yield namedElement
 
     (psiFile.flatMap(pf => HaskellFilePathIndex.findModuleName(pf, GlobalSearchScope.projectScope(project))), namedElement)
@@ -200,7 +196,7 @@ object HaskellReference {
   }
 
   private def findIdentifiersInExpressions(haskellFile: HaskellFile, name: String) = {
-    HaskellPsiUtil.findTopLevelExpressions(haskellFile).flatMap(e => getChildOfType(e, classOf[HaskellQName])).map(_.getIdentifierElement).filter(ne => ne.getName == name)
+    HaskellPsiUtil.findTopLevelExpressions(haskellFile).flatMap(e => HaskellPsiUtil.getChildOfType(e, classOf[HaskellQName])).map(_.getIdentifierElement).filter(ne => ne.getName == name)
   }
 
   private def sortByClassDeclarationFirst(namedElement1: HaskellNamedElement, namedElement2: HaskellNamedElement): Boolean = {

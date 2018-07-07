@@ -175,6 +175,6 @@ object HaskellEditorUtil {
   }
 
   def showHaskellSupportIsNotAvailableWhileBuilding(project: Project): Unit = {
-    HaskellEditorUtil.showStatusBarMessage(project, HaskellSupportIsNotAvailableWhileBuildingText)
+    HaskellEditorUtil.showStatusBarBalloonMessage(project, HaskellSupportIsNotAvailableWhileBuildingText)
   }
 }
