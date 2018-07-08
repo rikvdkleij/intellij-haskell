@@ -19,16 +19,16 @@ package intellij.haskell.external.component
 import com.intellij.codeInsight.documentation.DocumentationManager
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.project.Project
-import com.intellij.psi.search.GlobalSearchScope
 import com.intellij.psi.{PsiElement, PsiFile}
 import intellij.haskell.external.execution.{CompilationResult, HaskellCompilationResultHelper}
 import intellij.haskell.external.repl.ProjectStackRepl.{Failed, Loaded}
 import intellij.haskell.external.repl.StackReplsManager.StackComponentInfo
 import intellij.haskell.external.repl._
+import intellij.haskell.psi.HaskellPsiUtil
 import intellij.haskell.util.ScalaUtil
-import intellij.haskell.util.index.HaskellFilePathIndex
 
 private[component] object LoadComponent {
+
 
   def isFileLoaded(psiFile: PsiFile): Boolean = {
     val projectRepl = StackReplsManager.getProjectRepl(psiFile)
@@ -82,7 +82,7 @@ private[component] object LoadComponent {
             if (!loadFailed) {
               NameInfoComponent.invalidate(psiFile)
 
-              HaskellFilePathIndex.findModuleName(psiFile, GlobalSearchScope.projectScope(project)).foreach(mn => {
+              HaskellPsiUtil.findModuleName(psiFile).foreach(mn => {
                 BrowseModuleComponent.refreshTopLevel(project, mn, psiFile)
                 BrowseModuleComponent.invalidateForModuleName(project, mn, psiFile)
                 TypeInfoComponent.invalidate(mn)

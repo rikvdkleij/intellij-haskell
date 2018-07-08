@@ -16,6 +16,7 @@
 
 package intellij.haskell.psi
 
+import com.github.blemale.scaffeine.{LoadingCache, Scaffeine}
 import com.intellij.lang.ASTNode
 import com.intellij.openapi.editor.Editor
 import com.intellij.psi.impl.source.tree.TreeUtil
@@ -74,11 +75,25 @@ object HaskellPsiUtil {
     ApplicationUtil.runReadAction(Option(PsiTreeUtil.findChildOfType(psiFile.getOriginalFile, classOf[HaskellModuleDeclaration])))
   }
 
-  /**
-    * Use [[intellij.haskell.util.index.HaskellFilePathIndex.findModuleName()]]
-    */
+  def findModuleNameInPsiTree(psiFile: PsiFile): Option[String] = {
+    Option(PsiTreeUtil.findChildOfType(psiFile.getOriginalFile, classOf[HaskellModuleDeclaration])).flatMap(_.getModuleName)
+  }
+
+  private final val ModuleNameCache: LoadingCache[PsiFile, Option[String]] = Scaffeine().build((psiFile: PsiFile) => {
+    ApplicationUtil.runReadAction(findModuleNameInPsiTree(psiFile))
+  })
+
   def findModuleName(psiFile: PsiFile): Option[String] = {
-    ApplicationUtil.runReadAction(Option(PsiTreeUtil.findChildOfType(psiFile.getOriginalFile, classOf[HaskellModuleDeclaration])).flatMap(_.getModuleName))
+    ModuleNameCache.get(psiFile.getOriginalFile) match {
+      case mn@Some(_) => mn
+      case None =>
+        ModuleNameCache.invalidate(psiFile)
+        None
+    }
+  }
+
+  def invalidateModuleName(psiFile: PsiFile): Unit = {
+    ModuleNameCache.invalidate(psiFile)
   }
 
   def findQualifierParent(psiElement: PsiElement): Option[HaskellQualifier] = {

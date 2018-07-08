@@ -17,10 +17,12 @@
 package intellij.haskell.util
 
 import java.io.File
+import java.nio.file.Paths
 
 import com.intellij.openapi.module.{Module, ModuleManager, ModuleUtil, ModuleUtilCore}
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.roots.ProjectRootManager
+import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.vfs.{LocalFileSystem, VirtualFile}
 import com.intellij.psi.search.GlobalSearchScope
 import com.intellij.psi.{PsiElement, PsiFile, PsiManager}
@@ -62,22 +64,6 @@ object HaskellProjectUtil {
     !isProjectFile(psiFile)
   }
 
-  def isLibraryFile(virtualFile: VirtualFile, project: Project): Boolean = {
-    !isProjectFile(virtualFile, project)
-  }
-
-  def isProjectTestFile(psiFile: PsiFile): Boolean = {
-    HaskellFileUtil.findVirtualFile(psiFile).forall(vf => isProjectTestFile(vf, psiFile.getProject))
-  }
-
-  def isProjectTestFile(virtualFile: VirtualFile, project: Project): Boolean = {
-    if (project.isDisposed) {
-      false
-    } else {
-      getProjectRootManager(project).getFileIndex.isInTestSourceContent(virtualFile)
-    }
-  }
-
   /**
     * findVirtualFile returns null when file is only in memory so then is must be a project file
     */
@@ -89,7 +75,7 @@ object HaskellProjectUtil {
     if (project.isDisposed) {
       false
     } else {
-      getProjectRootManager(project).getFileIndex.isContentSourceFile(virtualFile)
+      FileUtil.isAncestor(Paths.get(project.getBasePath).toFile, Paths.get(virtualFile.getPath).toFile, true)
     }
   }
 

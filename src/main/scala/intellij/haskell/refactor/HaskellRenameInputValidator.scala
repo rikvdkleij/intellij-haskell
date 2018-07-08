@@ -10,7 +10,7 @@ import intellij.haskell.{HaskellFile, HaskellFileType}
 
 class HaskellRenameInputValidator extends RenameInputValidator {
 
-  override def getPattern = new ElementPattern[PsiElement]() {
+  override def getPattern: ElementPattern[PsiElement] = new ElementPattern[PsiElement]() {
     override def accepts(o: Any): Boolean = true
 
     override def accepts(o: Any, context: ProcessingContext): Boolean = {

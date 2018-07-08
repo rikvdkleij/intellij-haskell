@@ -23,8 +23,8 @@ import com.intellij.psi.search.FileTypeIndex
 import intellij.haskell.HaskellFileType
 import intellij.haskell.external.repl.StackRepl.{BenchmarkType, TestSuiteType}
 import intellij.haskell.external.repl.StackReplsManager.StackComponentInfo
+import intellij.haskell.psi.HaskellPsiUtil
 import intellij.haskell.util.HaskellFileUtil
-import intellij.haskell.util.index.HaskellFilePathIndex
 
 import scala.collection.JavaConverters._
 
@@ -41,16 +41,16 @@ private[component] object AvailableModuleNamesComponent {
     }
   }
 
+  def findAvailableLibraryModuleNamesWithIndex(module: Module): Iterable[String] = {
+    findModuleNamesInDirectories(module.getProject, module, includeTests = false)
+  }
+
   private final val TestStanzaTypes = Seq(TestSuiteType, BenchmarkType)
 
-  def findAvailableProjectModuleNamesWithIndex(stackComponentInfo: StackComponentInfo): Iterable[String] = {
+  private def findAvailableProjectModuleNamesWithIndex(stackComponentInfo: StackComponentInfo): Iterable[String] = {
     val module = stackComponentInfo.module
     val project = module.getProject
     findModuleNamesInDirectories(project, module, TestStanzaTypes.contains(stackComponentInfo.stanzaType))
-  }
-
-  def findAvailableLibraryModuleNamesWithIndex(module: Module): Iterable[String] = {
-    findModuleNamesInDirectories(module.getProject, module, includeTests = false)
   }
 
   private def findAvailableLibraryModuleNames(stackComponentInfo: StackComponentInfo): Iterable[String] = {
@@ -61,7 +61,7 @@ private[component] object AvailableModuleNamesComponent {
     for {
       vf <- FileTypeIndex.getFiles(HaskellFileType.Instance, module.getModuleScope(includeTests)).asScala
       hf <- HaskellFileUtil.convertToHaskellFile(project, vf)
-      mn <- HaskellFilePathIndex.findModuleName(hf, module.getModuleScope(includeTests))
+      mn <- HaskellPsiUtil.findModuleName(hf)
     } yield mn
   }
 }

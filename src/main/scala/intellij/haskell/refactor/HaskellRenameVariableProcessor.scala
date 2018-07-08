@@ -19,8 +19,7 @@ package intellij.haskell.refactor
 import com.intellij.psi.{PsiElement, PsiFile}
 import com.intellij.refactoring.listeners.RefactoringElementListener
 import com.intellij.refactoring.rename.RenamePsiElementProcessor
-import com.intellij.usageView.UsageInfo
-import intellij.haskell.util.{HaskellFileUtil, HaskellProjectUtil}
+import intellij.haskell.util.{HaskellFileUtil, HaskellProjectUtil, ScalaUtil}
 
 class HaskellRenameVariableProcessor extends RenamePsiElementProcessor {
 
@@ -35,10 +34,11 @@ class HaskellRenameVariableProcessor extends RenamePsiElementProcessor {
       })
   }
 
-  override def renameElement(psiElement: PsiElement, newName: String, usages: Array[UsageInfo], listener: RefactoringElementListener): Unit = {
-    super.renameElement(psiElement, newName, usages, listener)
-    val project = psiElement.getProject
-
-    HaskellFileUtil.saveAllFiles(project, psiElement.getContainingFile.getOriginalFile)
+  override def getPostRenameCallback(element: PsiElement, newName: String, elementListener: RefactoringElementListener): Runnable = {
+    ScalaUtil.runnable {
+      val psiFile = element.getContainingFile.getOriginalFile
+      val project = element.getProject
+      HaskellFileUtil.saveAllFiles(project, psiFile)
+    }
   }
 }

@@ -17,11 +17,9 @@
 package intellij.haskell.external.component
 
 import com.intellij.lang.documentation.AbstractDocumentationProvider
-import com.intellij.psi.search.GlobalSearchScope
 import com.intellij.psi.{PsiElement, PsiFile}
 import intellij.haskell.psi.HaskellPsiUtil
 import intellij.haskell.psi.impl.HaskellPsiImplUtil
-import intellij.haskell.util.index.HaskellFilePathIndex
 import intellij.haskell.util.{HaskellEditorUtil, HaskellProjectUtil, HtmlElement, StringUtil}
 
 class HaskellDocumentationProvider extends AbstractDocumentationProvider {
@@ -32,8 +30,9 @@ class HaskellDocumentationProvider extends AbstractDocumentationProvider {
     val project = Option(element).map(_.getProject)
     if (project.exists(p => !StackProjectManager.isBuilding(p))) {
       (Option(element), Option(originalElement)) match {
-        case (Some(e), Some(oe)) => val psiFile = Option(e.getContainingFile)
-          val moduleName = psiFile.flatMap(pf => HaskellFilePathIndex.findModuleName(pf, GlobalSearchScope.projectScope(e.getProject)))
+        case (Some(e), Some(oe)) =>
+          val psiFile = Option(e.getContainingFile)
+          val moduleName =  psiFile.flatMap(HaskellPsiUtil.findModuleName)
           val originalPsiFile = Option(oe.getContainingFile)
           val projectFile = originalPsiFile.exists(HaskellProjectUtil.isProjectFile)
           val typeSignature = if (projectFile) {
@@ -49,6 +48,7 @@ class HaskellDocumentationProvider extends AbstractDocumentationProvider {
             case (None, Some(ts)) => s"""$ts $DoubleNbsp -- No module info available (at this moment)"""
             case (None, None) => "No info available (at this moment)"
           }
+        case _ => null
       }
     } else {
       HaskellEditorUtil.HaskellSupportIsNotAvailableWhileBuildingText
@@ -87,7 +87,7 @@ class HaskellDocumentationProvider extends AbstractDocumentationProvider {
 
                 getQuickNavigateInfo(e, oe) + presentationText + documentationText
 
-              case _ => getQuickNavigateInfo(e, oe) + Separator + s"No documentation available for identifier: `${oe.getText}`"
+              case _ => getQuickNavigateInfo(e, oe)
             }
           }
         case _ => null

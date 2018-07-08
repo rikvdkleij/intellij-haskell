@@ -21,11 +21,9 @@ import java.util.concurrent.TimeUnit
 import com.github.blemale.scaffeine.{AsyncLoadingCache, Scaffeine}
 import com.intellij.openapi.editor.SelectionModel
 import com.intellij.openapi.project.Project
-import com.intellij.psi.search.GlobalSearchScope
 import com.intellij.psi.{PsiElement, PsiFile}
 import intellij.haskell.external.repl.StackReplsManager
 import intellij.haskell.psi._
-import intellij.haskell.util.index.HaskellFilePathIndex
 import intellij.haskell.util.{ApplicationUtil, LineColumnPosition}
 
 import scala.concurrent.duration.Duration
@@ -45,7 +43,7 @@ private[component] object TypeInfoComponent {
         qne <- ApplicationUtil.runReadAction(HaskellPsiUtil.findQualifiedNameParent(element))
         pf <- ApplicationUtil.runReadAction(Option(element.getContainingFile))
       } yield {
-        val moduleName = HaskellFilePathIndex.findModuleName(pf, GlobalSearchScope.projectScope(pf.getProject))
+        val moduleName = HaskellPsiUtil.findModuleName(pf)
         Key(moduleName, pf, qne, qne.getName)
       }).map(findTypeInfo).getOrElse(Left(NoInfoAvailable))
     } else {
@@ -54,7 +52,7 @@ private[component] object TypeInfoComponent {
   }
 
   def findTypeInfoForSelection(psiFile: PsiFile, selectionModel: SelectionModel): TypeInfoResult = {
-    val moduleName = HaskellFilePathIndex.findModuleName(psiFile, GlobalSearchScope.projectScope(psiFile.getProject))
+    val moduleName = HaskellPsiUtil.findModuleName(psiFile)
     if (LoadComponent.isModuleLoaded(moduleName, psiFile)) {
       {
         for {

@@ -28,7 +28,7 @@ import intellij.haskell.external.component.NameInfoComponentResult.{LibraryNameI
 import intellij.haskell.external.component._
 import intellij.haskell.psi._
 import intellij.haskell.util._
-import intellij.haskell.util.index.{HaskellFilePathIndex, HaskellModuleNameIndex}
+import intellij.haskell.util.index.HaskellModuleNameIndex
 
 class HaskellReference(element: HaskellNamedElement, textRange: TextRange) extends PsiPolyVariantReferenceBase[HaskellNamedElement](element, textRange) {
 
@@ -188,15 +188,11 @@ object HaskellReference {
         orElse(HaskellPsiUtil.findQualifiedNameParent(element).map(_.getIdentifierElement).find(_.getName == name))
     } yield namedElement
 
-    (psiFile.flatMap(pf => HaskellFilePathIndex.findModuleName(pf, GlobalSearchScope.projectScope(project))), namedElement)
+    (psiFile.flatMap(HaskellPsiUtil.findModuleName), namedElement)
   }
 
   private def findIdentifiersInDeclarations(haskellFile: HaskellFile, name: String) = {
     HaskellPsiUtil.findHaskellDeclarationElements(haskellFile).flatMap(_.getIdentifierElements).filter(_.getName == name)
-  }
-
-  private def findIdentifiersInExpressions(haskellFile: HaskellFile, name: String) = {
-    HaskellPsiUtil.findTopLevelExpressions(haskellFile).flatMap(e => HaskellPsiUtil.getChildOfType(e, classOf[HaskellQName])).map(_.getIdentifierElement).filter(ne => ne.getName == name)
   }
 
   private def sortByClassDeclarationFirst(namedElement1: HaskellNamedElement, namedElement2: HaskellNamedElement): Boolean = {

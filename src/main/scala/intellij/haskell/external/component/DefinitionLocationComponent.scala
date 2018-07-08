@@ -22,12 +22,10 @@ import com.github.blemale.scaffeine.{AsyncLoadingCache, Scaffeine}
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.project.Project
 import com.intellij.psi.PsiFile
-import com.intellij.psi.search.GlobalSearchScope
 import intellij.haskell.external.repl.StackRepl.StackReplOutput
 import intellij.haskell.external.repl.StackReplsManager
 import intellij.haskell.navigation.HaskellReference
 import intellij.haskell.psi._
-import intellij.haskell.util.index.HaskellFilePathIndex
 import intellij.haskell.util.{ApplicationUtil, HaskellProjectUtil, LineColumnPosition, ScalaUtil}
 
 import scala.concurrent.duration.Duration
@@ -125,7 +123,7 @@ private[component] object DefinitionLocationComponent {
 
   private def find(psiFile: PsiFile, qualifiedNameElement: HaskellQualifiedNameElement, isCurrentFile: Boolean): DefinitionLocationResult = {
     val project = psiFile.getProject
-    val moduleName = HaskellFilePathIndex.findModuleName(psiFile, GlobalSearchScope.projectScope(project))
+    val moduleName = HaskellPsiUtil.findModuleName(psiFile)
     val name = ApplicationUtil.runReadAction(qualifiedNameElement.getIdentifierElement.getName)
     val key = Key(psiFile, moduleName, qualifiedNameElement, name)
 

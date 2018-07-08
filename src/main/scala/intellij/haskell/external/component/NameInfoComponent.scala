@@ -18,13 +18,11 @@ package intellij.haskell.external.component
 
 import com.github.blemale.scaffeine.{LoadingCache, Scaffeine}
 import com.intellij.openapi.project.Project
-import com.intellij.psi.search.GlobalSearchScope
 import com.intellij.psi.{PsiElement, PsiFile}
 import intellij.haskell.external.repl.StackRepl.StackReplOutput
 import intellij.haskell.external.repl.StackReplsManager
 import intellij.haskell.psi._
 import intellij.haskell.util.StringUtil.escapeString
-import intellij.haskell.util.index.HaskellFilePathIndex
 import intellij.haskell.util.{HaskellProjectUtil, StringUtil}
 
 private[component] object NameInfoComponent {
@@ -63,7 +61,7 @@ private[component] object NameInfoComponent {
         }
       }
     } else {
-      HaskellFilePathIndex.findModuleName(psiFile, GlobalSearchScope.allScope(project)) match {
+      HaskellPsiUtil.findModuleName(psiFile) match {
         case None => Left(NoInfoAvailable)
         case Some(mn) =>
           StackReplsManager.getGlobalRepl(project).flatMap(_.findInfo(mn, name)) match {

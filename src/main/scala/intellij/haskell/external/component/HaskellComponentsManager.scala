@@ -52,6 +52,11 @@ object HaskellComponentsManager {
     })
   }
 
+  def clearLoadedModule(psiFile: PsiFile): Unit = {
+    val projectRepl = StackReplsManager.getProjectRepl(psiFile)
+    projectRepl.foreach(_.clearLoadedModule())
+  }
+
   def findModuleIdentifiers(project: Project, moduleName: String)(implicit ec: ExecutionContext): Future[Iterable[ModuleIdentifier]] = {
     BrowseModuleComponent.findModuleIdentifiers(project, moduleName, None)
   }
@@ -82,10 +87,6 @@ object HaskellComponentsManager {
 
   def findAvailableModuleLibraryModuleNamesWithIndex(module: Module): Iterable[String] = {
     AvailableModuleNamesComponent.findAvailableLibraryModuleNamesWithIndex(module)
-  }
-
-  def findAvailableProjectModuleNamesWithIndex(stackComponentInfo: StackComponentInfo): Iterable[String] = {
-    AvailableModuleNamesComponent.findAvailableProjectModuleNamesWithIndex(stackComponentInfo)
   }
 
   def findStackComponentGlobalInfo(stackComponentInfo: StackComponentInfo): Option[StackComponentGlobalInfo] = {

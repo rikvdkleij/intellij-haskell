@@ -22,10 +22,8 @@ import java.nio.file.Paths
 import com.intellij.execution.process.ProcessOutput
 import com.intellij.lang.documentation.DocumentationMarkup
 import com.intellij.openapi.project.Project
-import com.intellij.psi.search.GlobalSearchScope
 import intellij.haskell.external.execution.{CommandLine, StackCommandLine}
-import intellij.haskell.psi.HaskellQualifiedNameElement
-import intellij.haskell.util.index.HaskellFilePathIndex
+import intellij.haskell.psi.{HaskellPsiUtil, HaskellQualifiedNameElement}
 import intellij.haskell.util.{HaskellProjectUtil, HtmlElement}
 import intellij.haskell.{GlobalInfo, HaskellNotificationGroup}
 
@@ -72,7 +70,7 @@ object HoogleComponent {
               }
           }
         } else {
-          val moduleName = HaskellFilePathIndex.findModuleName(psiFile, GlobalSearchScope.allScope(project))
+          val moduleName = HaskellPsiUtil.findModuleName(psiFile)
           moduleName.flatMap(mn => createDocumentation(project, name, mn))
         }
       }

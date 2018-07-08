@@ -45,13 +45,7 @@ object HaskellModuleNameIndex {
   }
 
   def findHaskellFileByModuleName(project: Project, moduleName: String, searchScope: GlobalSearchScope): Option[HaskellFile] = {
-    val projectFile = if (searchScope.isSearchInLibraries) {
-      findFilesByModuleName(project, moduleName, GlobalSearchScope.projectScope(project)).headOption
-    } else {
-      None
-    }
-
-    val virtualFile = projectFile.orElse(findFilesByModuleName(project, moduleName, searchScope).headOption)
+    val virtualFile = findFilesByModuleName(project, moduleName, searchScope).headOption
     virtualFile.flatMap(vf => HaskellFileUtil.convertToHaskellFile(project, vf))
   }
 
@@ -85,7 +79,7 @@ class HaskellModuleNameIndex extends ScalaScalarIndexExtension[String] {
 
     override def map(inputData: FileContent): java.util.Map[String, Unit] = {
       val psiFile = inputData.getPsiFile
-      HaskellPsiUtil.findModuleName(psiFile) match {
+      HaskellPsiUtil.findModuleNameInPsiTree(psiFile) match {
         case Some(n) => Collections.singletonMap(n, ())
         case _ => Collections.emptyMap()
       }

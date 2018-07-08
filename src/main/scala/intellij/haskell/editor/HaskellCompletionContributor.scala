@@ -26,7 +26,6 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.patterns.PlatformPatterns
 import com.intellij.psi.impl.source.tree.TreeUtil
-import com.intellij.psi.search.GlobalSearchScope
 import com.intellij.psi.util.PsiTreeUtil
 import com.intellij.psi.{PsiElement, PsiFile, TokenType}
 import com.intellij.util.ProcessingContext
@@ -36,7 +35,6 @@ import intellij.haskell.psi.HaskellPsiUtil._
 import intellij.haskell.psi.HaskellTypes._
 import intellij.haskell.psi._
 import intellij.haskell.runconfig.console.{HaskellConsoleView, HaskellConsoleViewMap}
-import intellij.haskell.util.index.HaskellFilePathIndex
 import intellij.haskell.util.{HaskellEditorUtil, HaskellProjectUtil}
 import intellij.haskell.{HaskellFile, HaskellIcons, HaskellNotificationGroup, HaskellParserDefinition}
 
@@ -187,8 +185,6 @@ class HaskellCompletionContributor extends CompletionContributor {
             // If file is console file, find the project file which corresponds to loaded file in console
             val projectFile =
               if (isConsoleFile) {
-                val stackComponentInfo = HaskellComponentsManager.findStackComponentInfo(psiFile)
-                stackComponentInfo.foreach(info => resultSet.addAllElements(HaskellComponentsManager.findAvailableProjectModuleNamesWithIndex(info).map(createModuleLookupElement).asJavaCollection))
                 for {
                   consoleInfo <- HaskellConsoleView.findConsoleInfo(psiFile)
                   configName = consoleInfo.configurationName
@@ -353,7 +349,7 @@ class HaskellCompletionContributor extends CompletionContributor {
   }
 
   private def getAvailableLookupElements(psiFile: PsiFile): Iterable[LookupElementBuilder] = {
-    val moduleName = HaskellFilePathIndex.findModuleName(psiFile, GlobalSearchScope.projectScope(psiFile.getProject))
+    val moduleName = HaskellPsiUtil.findModuleName(psiFile)
     useAvailableModuleIdentifiers(psiFile, moduleName, (f1, f2, f3, f4) => (f1 ++ f2 ++ f3).map(mi => createLookupElement(mi)) ++ getLocalTopLevelLookupElments(psiFile, moduleName, f4))
   }
 

@@ -20,13 +20,11 @@ import com.intellij.openapi.actionSystem.{AnAction, AnActionEvent}
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.project.Project
-import com.intellij.psi.search.GlobalSearchScope
 import com.intellij.psi.{PsiElement, PsiFile}
 import intellij.haskell.HaskellNotificationGroup
 import intellij.haskell.editor.HaskellCompletionContributor
 import intellij.haskell.external.component.{HaskellComponentsManager, StackProjectManager}
 import intellij.haskell.psi._
-import intellij.haskell.util.index.HaskellFilePathIndex
 import intellij.haskell.util.{HaskellEditorUtil, ScalaUtil, StringUtil}
 
 class ShowTypeAction extends AnAction {
@@ -103,16 +101,12 @@ object ShowTypeAction {
     if (HaskellPsiUtil.findExpressionParent(psiElement).isDefined) {
       HaskellPsiUtil.findQualifiedNameParent(psiElement).flatMap(qualifiedNameElement => {
         val name = qualifiedNameElement.getName
-        val moduleName = findModuleName(psiFile)
+        val moduleName = HaskellPsiUtil.findModuleName(psiFile)
         HaskellCompletionContributor.getAvailableModuleIdentifiers(psiFile, moduleName).find(_.name == name).map(_.declaration).
           orElse(HaskellPsiUtil.findHaskellDeclarationElements(psiFile).find(_.getIdentifierElements.exists(_.getName == name)).map(_.getText.replaceAll("""\s+""", " ")))
       })
     } else {
       None
     }
-  }
-
-  private def findModuleName(psiFile: PsiFile): Option[String] = {
-    HaskellFilePathIndex.findModuleName(psiFile, GlobalSearchScope.projectScope(psiFile.getProject))
   }
 }

@@ -42,6 +42,10 @@ class ProjectStackRepl(project: Project, stackComponentInfo: StackComponentInfo,
     loadedDependentModules.clear()
   }
 
+  def clearLoadedModule(): Unit = {
+    loadedModule = None
+  }
+
   private case class ModuleInfo(psiFile: PsiFile, loadFailed: Boolean)
 
   @volatile
