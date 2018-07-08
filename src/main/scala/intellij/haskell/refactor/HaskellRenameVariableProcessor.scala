@@ -24,14 +24,18 @@ import intellij.haskell.util.{HaskellFileUtil, HaskellProjectUtil, ScalaUtil}
 class HaskellRenameVariableProcessor extends RenamePsiElementProcessor {
 
   override def canProcessElement(psiElement: PsiElement): Boolean = {
-    HaskellProjectUtil.isHaskellProject(psiElement.getProject) &&
-      (psiElement match {
-        case psiFile: PsiFile => HaskellProjectUtil.isProjectFile(psiFile)
-        case _ => Option(psiElement.getReference).map(_.getElement) match {
-          case Some(e: PsiElement) => HaskellProjectUtil.isProjectFile(e.getContainingFile)
-          case _ => false
-        }
-      })
+    val project = psiElement.getProject
+    Option(psiElement.getContainingFile).exists { psiFile =>
+      HaskellProjectUtil.isHaskellProject(project) &&
+        (psiElement match {
+          case psiFile: PsiFile => HaskellProjectUtil.isProjectFile(psiFile)
+          case _ =>
+            Option(psiElement.getReference).map(_.getElement) match {
+              case Some(e: PsiElement) => HaskellProjectUtil.isProjectFile(psiFile)
+              case _ => false
+            }
+        })
+    }
   }
 
   override def getPostRenameCallback(element: PsiElement, newName: String, elementListener: RefactoringElementListener): Runnable = {
