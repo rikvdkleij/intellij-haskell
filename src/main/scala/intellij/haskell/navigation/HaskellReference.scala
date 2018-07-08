@@ -23,6 +23,7 @@ import com.intellij.openapi.project.{IndexNotReadyException, Project}
 import com.intellij.openapi.util.TextRange
 import com.intellij.psi._
 import com.intellij.psi.search.GlobalSearchScope
+import com.intellij.psi.util.PsiTreeUtil
 import intellij.haskell.HaskellFile
 import intellij.haskell.external.component.NameInfoComponentResult.{LibraryNameInfo, NameInfo, ProjectNameInfo}
 import intellij.haskell.external.component._
@@ -66,7 +67,23 @@ class HaskellReference(element: HaskellNamedElement, textRange: TextRange) exten
               None
             } else {
               ProgressManager.checkCanceled()
-              resolveReference(ne, psiFile, project).map(HaskellNamedElementResolveResult)
+              HaskellPsiUtil.findTypeSignatureDeclarationParent(ne) match {
+                case None => resolveReference(ne, psiFile, project).map(HaskellNamedElementResolveResult)
+                case Some(ts) =>
+                  def find(e: PsiElement): Option[HaskellNamedElement] = {
+                    Option(PsiTreeUtil.findSiblingForward(e, HaskellTypes.HS_TOP_DECLARATION, null)) match {
+                      case Some(d) if Option(d.getFirstChild).exists(_.isInstanceOf[HaskellExpression]) => HaskellPsiUtil.findNamedElements(d).headOption.find(_.getName == ne.getName)
+                      case Some(_) => find(e)
+                      case None => None
+                    }
+                  }
+
+                  // Work around Intero bug.
+                  find(ts.getParent) match {
+                    case Some(ee) => Some(HaskellNamedElementResolveResult(ee))
+                    case None => resolveReference(ne, psiFile, project).map(HaskellNamedElementResolveResult)
+                  }
+              }
             }
           case _ => None
         }
@@ -161,19 +178,23 @@ object HaskellReference {
   }
 
   def findIdentifiersByModuleName(project: Project, module: Option[Module], moduleName: String, name: String): Iterable[HaskellNamedElement] = {
+    import scala.collection.JavaConverters._
     findHaskellFileByModuleName(project, module, moduleName).map(haskellFile => {
 
       ProgressManager.checkCanceled()
 
+      val topLevelExpressions = HaskellPsiUtil.findTopLevelExpressions(haskellFile)
+      val topLevelIdentifiers = topLevelExpressions.flatMap(_.getQNameList.asScala.headOption.map(_.getIdentifierElement)).filter(_.getName == name)
+
       val declarationElements = HaskellPsiUtil.findHaskellDeclarationElements(haskellFile)
       val namedElements = declarationElements.flatMap(_.getIdentifierElements).filter(_.getName == name)
       val identifiers = if (namedElements.isEmpty) {
-        findIdentifiersInDeclarations(haskellFile, name)
+        HaskellPsiUtil.findHaskellDeclarationElements(haskellFile).flatMap(_.getIdentifierElements).filter(_.getName == name)
       } else {
         namedElements
       }
 
-      identifiers.toSeq.sortWith(sortByClassDeclarationFirst)
+      topLevelIdentifiers.toSeq ++ identifiers.toSeq.sortWith(sortByClassDeclarationFirst)
     }).getOrElse(Iterable())
   }
 
@@ -189,10 +210,6 @@ object HaskellReference {
     } yield namedElement
 
     (psiFile.flatMap(HaskellPsiUtil.findModuleName), namedElement)
-  }
-
-  private def findIdentifiersInDeclarations(haskellFile: HaskellFile, name: String) = {
-    HaskellPsiUtil.findHaskellDeclarationElements(haskellFile).flatMap(_.getIdentifierElements).filter(_.getName == name)
   }
 
   private def sortByClassDeclarationFirst(namedElement1: HaskellNamedElement, namedElement2: HaskellNamedElement): Boolean = {

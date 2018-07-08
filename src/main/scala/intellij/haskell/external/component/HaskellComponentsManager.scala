@@ -57,6 +57,10 @@ object HaskellComponentsManager {
     projectRepl.foreach(_.clearLoadedModule())
   }
 
+  def isReplBusy(psiFile: PsiFile): Boolean = {
+    LoadComponent.isBusy(psiFile)
+  }
+
   def findModuleIdentifiers(project: Project, moduleName: String)(implicit ec: ExecutionContext): Future[Iterable[ModuleIdentifier]] = {
     BrowseModuleComponent.findModuleIdentifiers(project, moduleName, None)
   }

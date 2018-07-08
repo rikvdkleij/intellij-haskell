@@ -167,6 +167,13 @@ object HaskellPsiUtil {
     }
   }
 
+  def findTypeSignatureDeclarationParent(psiElement: PsiElement): Option[HaskellTypeSignature] = {
+    psiElement match {
+      case e: HaskellTypeSignature => Some(e)
+      case e => Option(PsiTreeUtil.findFirstParent(e, TypeSignatureCondition)).map(_.asInstanceOf[HaskellTypeSignature])
+    }
+  }
+
   def findExpressionParent(psiElement: PsiElement): Option[HaskellExpression] = {
     psiElement match {
       case e: HaskellExpression => Some(e)

@@ -103,6 +103,15 @@ object HaskellElementCondition {
     }
   }
 
+  final val TypeSignatureCondition = new Condition[PsiElement]() {
+    override def value(psiElement: PsiElement): Boolean = {
+      psiElement match {
+        case _: HaskellTypeSignature => true
+        case _ => false
+      }
+    }
+  }
+
   final val ExpressionCondition = new Condition[PsiElement]() {
     override def value(psiElement: PsiElement): Boolean = {
       psiElement match {

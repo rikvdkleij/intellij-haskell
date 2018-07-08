@@ -119,7 +119,7 @@ private[component] object DefinitionLocationComponent {
     }
   }
 
-  private final val Timeout = Duration.create(100, TimeUnit.MILLISECONDS)
+  private final val Timeout = Duration.create(5, TimeUnit.SECONDS)
 
   private def find(psiFile: PsiFile, qualifiedNameElement: HaskellQualifiedNameElement, isCurrentFile: Boolean): DefinitionLocationResult = {
     val project = psiFile.getProject
@@ -138,6 +138,7 @@ private[component] object DefinitionLocationComponent {
         case Left(ReplIsBusy) =>
           if (!isCurrentFile && !project.isDisposed) {
             Thread.sleep(100)
+            Cache.synchronous().invalidate(key)
             find(psiFile, qualifiedNameElement, isCurrentFile)
           } else {
             Cache.synchronous().invalidate(key)
@@ -173,24 +174,23 @@ object LocationInfoUtil {
   import java.util.concurrent.ConcurrentHashMap
 
   import com.intellij.openapi.application.ApplicationManager
-  import com.intellij.psi.PsiElement
   import intellij.haskell.psi.HaskellPsiUtil
 
   import scala.collection.JavaConverters._
 
   private val activeTaskByTarget = new ConcurrentHashMap[String, Boolean]().asScala
 
-  def preloadLocationsAround(project: Project, psiFile: PsiFile, namedElement: PsiElement): Unit = {
+  def preloadLocationsAround(project: Project, psiFile: PsiFile, qualifiedNameElement: HaskellQualifiedNameElement): Unit = {
     HaskellComponentsManager.findStackComponentInfo(psiFile) match {
       case Some(stackComponentInfo) =>
         val target = stackComponentInfo.target
         val putResult = activeTaskByTarget.put(target, true)
         if (putResult.isEmpty) {
-          if (namedElement.isValid && !project.isDisposed) {
-            val qualifiedNamedElements = ApplicationUtil.runReadAction(HaskellPsiUtil.findExpressionParent(namedElement).map(HaskellPsiUtil.findQualifiedNamedElements).getOrElse(Iterable()))
+          if (qualifiedNameElement.isValid && !project.isDisposed) {
+            val qualifiedNamedElements = ApplicationUtil.runReadAction(HaskellPsiUtil.findExpressionParent(qualifiedNameElement).map(HaskellPsiUtil.findQualifiedNamedElements).getOrElse(Iterable()))
             ApplicationManager.getApplication.executeOnPooledThread(ScalaUtil.runnable {
               try
-                qualifiedNamedElements.foreach { qne =>
+                qualifiedNamedElements.toSeq.diff(Seq(qualifiedNameElement)) foreach { qne =>
                   if (!project.isDisposed && !LoadComponent.isBusy(project, stackComponentInfo)) {
                     DefinitionLocationComponent.findDefinitionLocation(psiFile, qne, isCurrentFile = true)
                     // We have to wait for other requests which have more priority because those are on dispatch thread
