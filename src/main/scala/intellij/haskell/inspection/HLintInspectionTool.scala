@@ -115,6 +115,7 @@ class HLintInspectionTool extends LocalInspectionTool {
     ProgressManager.checkCanceled()
 
     val element = ApplicationManager.getApplication.runReadAction(ScalaUtil.computable[Option[PsiElement]] {
+      ProgressManager.checkCanceled()
       val offset = LineColumnPosition.getOffset(psiFile, LineColumnPosition(hlintInfo.startLine, hlintInfo.startColumn))
       offset.flatMap(offset => Option(psiFile.findElementAt(offset)))
     })
@@ -126,6 +127,7 @@ class HLintInspectionTool extends LocalInspectionTool {
     ProgressManager.checkCanceled()
 
     ApplicationManager.getApplication.runReadAction(ScalaUtil.computable[Option[PsiElement]] {
+      ProgressManager.checkCanceled()
       val endOffset = if (hlintInfo.endLine >= hlintInfo.startLine && hlintInfo.endColumn > hlintInfo.startColumn) {
         LineColumnPosition.getOffset(psiFile, LineColumnPosition(hlintInfo.endLine, hlintInfo.endColumn - 1))
       } else {
