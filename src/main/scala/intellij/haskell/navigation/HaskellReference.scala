@@ -134,7 +134,7 @@ class HaskellReference(element: HaskellNamedElement, textRange: TextRange) exten
     val namedElement = qualifiedNameElement.getIdentifierElement
 
     def noNavigationMessage(noInfo: NoInfo) = {
-      val message = s"Navigation is not available at this moment for ${namedElement.getName} because ${noInfo.message}"
+      val message = s"Navigation is not available at this moment"
       HaskellEditorUtil.showStatusBarBalloonMessage(project, message)
     }
 

@@ -75,7 +75,7 @@ object HoogleComponent {
         }
       }
     } else {
-      None
+      Some("No documentation because Hoogle (database) is not available")
     }
   }
 
