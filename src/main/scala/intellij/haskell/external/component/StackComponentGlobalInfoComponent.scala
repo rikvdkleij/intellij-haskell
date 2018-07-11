@@ -69,7 +69,7 @@ private[component] object StackComponentGlobalInfoComponent {
 
   private def isNoImplicitPreludeActive(project: Project, stackTargetBuildInfo: StackComponentInfo): Either[NoInfo, Boolean] = {
     StackReplsManager.getProjectRepl(project, stackTargetBuildInfo).flatMap(_.showActiveLanguageFlags) match {
-      case Some(o) => Right(o.stdoutLines.contains("-XNoImplicitPrelude"))
+      case Some(o) => Right(o.stdoutLines.mkString(" ").contains("-XNoImplicitPrelude"))
       case None => Left(ReplNotAvailable)
     }
   }
