@@ -1,7 +1,7 @@
 <idea-plugin>
     <id>intellij.haskell</id>
     <name>IntelliJ-Haskell</name>
-    <version>1.0.0-beta17</version>
+    <version>1.0.0-beta18</version>
     <vendor email="rikvdkleij@gmail.com">Rik van der Kleij</vendor>
 
     <description><![CDATA[
@@ -24,6 +24,7 @@
             <li>Included updating the Module Settings to the Restart REPLs action</li>
             <li>Changed default reformat shortcut to reformat by Hindent. Also added option to Commit Changes dialog to reformat by Hindent</li>
             <li>Added option to Commit Changes dialog to optimize imports by GHC warnings</li>
+            <li>Added type and definition info of the current identifier to the Documentation Tool window</li>
         </ul>
         <p>1.0.0-beta12</p>
         <ul>
