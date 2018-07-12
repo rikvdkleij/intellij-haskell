@@ -19,22 +19,19 @@ package intellij.haskell.external.component
 import java.util
 import java.util.concurrent.ConcurrentHashMap
 
-import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.fileEditor.FileEditorManager
 import com.intellij.openapi.progress.{PerformInBackgroundOption, ProgressIndicator, ProgressManager, Task}
-import com.intellij.openapi.project.{IndexNotReadyException, Project}
+import com.intellij.openapi.project.Project
 import com.intellij.openapi.roots.ModuleRootManager
 import com.intellij.openapi.vfs.newvfs.BulkFileListener
 import com.intellij.openapi.vfs.newvfs.events.{VFileContentChangeEvent, VFileEvent}
-import intellij.haskell.HaskellNotificationGroup
 import intellij.haskell.annotator.HaskellAnnotator
 import intellij.haskell.external.component.ProjectLibraryFileWatcher.{Build, Building}
 import intellij.haskell.external.execution.StackCommandLine
 import intellij.haskell.external.repl.StackRepl.LibType
 import intellij.haskell.external.repl.StackReplsManager
 import intellij.haskell.external.repl.StackReplsManager.StackComponentInfo
-import intellij.haskell.util.index.HaskellFileIndex
-import intellij.haskell.util.{ApplicationUtil, HaskellFileUtil, HaskellProjectUtil, ScalaUtil}
+import intellij.haskell.util.{ApplicationUtil, HaskellFileUtil, HaskellProjectUtil}
 
 import scala.collection.JavaConverters._
 import scala.collection.concurrent
@@ -64,81 +61,69 @@ class ProjectLibraryFileWatcher(project: Project) extends BulkFileListener {
   override def after(events: util.List[_ <: VFileEvent]): Unit = {
     if (!project.isDisposed) {
       synchronized {
-        findProjectProductionFiles match {
-          case Some(watchFiles) =>
-            val infos = for {
-              virtualFile <- watchFiles.filter(vf => events.asScala.exists(e => e.isInstanceOf[VFileContentChangeEvent] && e.getPath == vf.getPath))
-              haskellFile <- ApplicationManager.getApplication.runReadAction(ScalaUtil.computable(HaskellFileUtil.convertToHaskellFile(project, virtualFile)))
-              componentInfo <- HaskellComponentsManager.findStackComponentInfo(haskellFile)
-            } yield componentInfo
+        val infos = for {
+          virtualFile <- events.asScala.filter(e => e.isInstanceOf[VFileContentChangeEvent] && HaskellFileUtil.isHaskellFile(e.getFile) && HaskellProjectUtil.isProjectFile(e.getFile, project)).map(_.getFile)
+          componentInfo <- HaskellComponentsManager.findStackComponentInfo(project, HaskellFileUtil.getAbsolutePath(virtualFile))
+        } yield componentInfo
 
-            val componentLibInfos = infos.filter(info => info.stanzaType == LibType).toSet
-            if (componentLibInfos.nonEmpty) {
-              ProjectLibraryFileWatcher.buildStatus.get(project) match {
-                case Some(Building(_)) => ProjectLibraryFileWatcher.buildStatus.put(project, Build(componentLibInfos))
-                case Some(Build(componentInfos)) => ProjectLibraryFileWatcher.buildStatus.put(project, Build(componentInfos.++(componentLibInfos)))
-                case None =>
-                  ProjectLibraryFileWatcher.buildStatus.put(project, Building(componentLibInfos))
-                  currentlyBuildComponents = componentLibInfos
+        val componentLibInfos = infos.toSet.filter(info => info.stanzaType == LibType)
+        if (componentLibInfos.nonEmpty) {
+          ProjectLibraryFileWatcher.buildStatus.get(project) match {
+            case Some(Building(_)) => ProjectLibraryFileWatcher.buildStatus.put(project, Build(componentLibInfos))
+            case Some(Build(componentInfos)) => ProjectLibraryFileWatcher.buildStatus.put(project, Build(componentInfos.++(componentLibInfos)))
+            case None =>
+              ProjectLibraryFileWatcher.buildStatus.put(project, Building(componentLibInfos))
+              currentlyBuildComponents = componentLibInfos
 
-                  ProgressManager.getInstance().run(new Task.Backgroundable(project, "Building libraries", false, PerformInBackgroundOption.ALWAYS_BACKGROUND) {
+              ProgressManager.getInstance().run(new Task.Backgroundable(project, "Building libraries", false, PerformInBackgroundOption.ALWAYS_BACKGROUND) {
 
-                    def run(progressIndicator: ProgressIndicator) {
-                      progressIndicator.setText(s"Building: ${currentlyBuildComponents.map(_.target).mkString(", ")}")
+                def run(progressIndicator: ProgressIndicator) {
+                  progressIndicator.setText(s"Building: ${currentlyBuildComponents.map(_.target).mkString(", ")}")
 
-                      // Forced `-Wwarn` otherwise build will fail in case of warnings and that will cause that REPLs of dependent targets will not start anymore
-                      val output = StackCommandLine.build(project, currentlyBuildComponents.map(_.target).toSeq ++ Seq("--ghc-options", "-Wwarn"), logBuildResult = true)
-                      if (output.exists(_.getExitCode == 0) && !project.isDisposed) {
-                        val projectRepls = StackReplsManager.getRunningProjectRepls(project)
-                        val dependentRepls = projectRepls.filterNot(_.stanzaType == LibType).filter(repl => currentlyBuildComponents.map(_.packageName).contains(repl.packageName))
+                  // Forced `-Wwarn` otherwise build will fail in case of warnings and that will cause that REPLs of dependent targets will not start anymore
+                  val output = StackCommandLine.build(project, currentlyBuildComponents.map(_.target).toSeq ++ Seq("--ghc-options", "-Wwarn"), logBuildResult = true)
+                  if (output.exists(_.getExitCode == 0) && !project.isDisposed) {
+                    val projectRepls = StackReplsManager.getRunningProjectRepls(project)
+                    val dependentRepls = projectRepls.filterNot(_.stanzaType == LibType).filter(repl => currentlyBuildComponents.map(_.packageName).contains(repl.packageName))
 
-                        // module name == package name
-                        val dependentModules = HaskellProjectUtil.findProjectModules(project).filter(m => currentlyBuildComponents.exists(ci => ModuleRootManager.getInstance(m).getDependencyModuleNames.contains(ci.packageName))).toSeq
+                    // module name == package name
+                    val dependentModules = HaskellProjectUtil.findProjectModules(project).filter(m => currentlyBuildComponents.exists(ci => ModuleRootManager.getInstance(m).getDependencyModuleNames.contains(ci.packageName))).toSeq
 
-                        val dependentLibRepls = projectRepls.filter(repl => repl.stanzaType == LibType && dependentModules.map(_.getName).contains(repl.packageName))
+                    val dependentLibRepls = projectRepls.filter(repl => repl.stanzaType == LibType && dependentModules.map(_.getName).contains(repl.packageName))
 
-                        val openFiles = FileEditorManager.getInstance(project).getOpenFiles.filter(f => ApplicationManager.getApplication.runReadAction(ScalaUtil.computable(HaskellProjectUtil.isProjectFile(f, project))))
-                        val haskellFiles = ApplicationManager.getApplication.runReadAction(ScalaUtil.computable(HaskellFileUtil.convertToHaskellFiles(project, openFiles)))
-                        val dependentFiles = haskellFiles.filter(f => HaskellComponentsManager.findStackComponentInfo(f).exists(ci => ci.stanzaType != LibType && currentlyBuildComponents.map(_.packageName).contains(ci.packageName)))
-                        val dependentLibFiles = haskellFiles.toSeq.diff(dependentFiles.toSeq).filter(f => HaskellProjectUtil.findModuleForFile(f).exists(m => dependentModules.contains(m)))
+                    val openFiles = FileEditorManager.getInstance(project).getOpenFiles.filter( HaskellFileUtil.isHaskellFile)
+                    val openProjectFiles = openFiles.filter(f => HaskellProjectUtil.isProjectFile(f, project))
+                    val dependentFiles = openProjectFiles.filter(f => HaskellComponentsManager.findStackComponentInfo(project, HaskellFileUtil.getAbsolutePath(f)).exists(ci => ci.stanzaType != LibType && currentlyBuildComponents.map(_.packageName).contains(ci.packageName)))
+                    val dependentLibFiles = openProjectFiles.toSeq.diff(dependentFiles.toSeq).filter(f => HaskellProjectUtil.findModuleForVirtualFile(project, f).exists(m => dependentModules.contains(m)))
 
-                        (dependentRepls ++ dependentLibRepls).foreach(_.restart())
+                    (dependentRepls ++ dependentLibRepls).foreach(_.restart())
 
-                        (dependentFiles ++ dependentLibFiles).foreach { psiFile =>
-                          HaskellComponentsManager.invalidateLocationAndTypeInfo(psiFile)
-                          HaskellAnnotator.restartDaemonCodeAnalyzerForFile(psiFile)
-                        }
-                      }
-
-                      if (!project.isDisposed) {
-                        val buildStatus = ProjectLibraryFileWatcher.buildStatus.get(project)
-                        buildStatus match {
-                          case Some(Build(componentInfos)) =>
-                            currentlyBuildComponents = componentInfos
-                            ProjectLibraryFileWatcher.buildStatus.put(project, Building(componentInfos))
-                            run(progressIndicator)
-                          case _ =>
-                            currentlyBuildComponents = Set()
-                            ProjectLibraryFileWatcher.buildStatus.remove(project)
-                        }
+                    (dependentFiles ++ dependentLibFiles).foreach { vf =>
+                      ApplicationUtil.runReadActionWithWriteActionPriority(project, HaskellFileUtil.convertToHaskellFile(project, vf)).foreach { psiFile =>
+                        HaskellComponentsManager.invalidateLocationAndTypeInfo(psiFile)
+                        HaskellAnnotator.restartDaemonCodeAnalyzerForFile(psiFile)
                       }
                     }
-                  })
-              }
-            }
-          case None => ()
+
+                    if (!project.isDisposed) {
+                      val buildStatus = ProjectLibraryFileWatcher.buildStatus.get(project)
+                      buildStatus match {
+                        case Some(Build(componentInfos)) =>
+                          currentlyBuildComponents = componentInfos
+                          ProjectLibraryFileWatcher.buildStatus.put(project, Building(componentInfos))
+                          run(progressIndicator)
+                        case _ =>
+                          currentlyBuildComponents = Set()
+                          ProjectLibraryFileWatcher.buildStatus.remove(project)
+                      }
+                    }
+                  }
+                }
+              })
+          }
         }
       }
     }
-  }
 
-  private def findProjectProductionFiles = {
-    try {
-      Option(ApplicationUtil.runReadAction(HaskellFileIndex.findProjectProductionFiles(project)))
-    } catch {
-      case _: IndexNotReadyException =>
-        HaskellNotificationGroup.logInfoBalloonEvent(project, "Building changed libraries is not available until indices are ready")
-        None
-    }
   }
 }

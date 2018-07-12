@@ -67,7 +67,7 @@ class HoogleByNameContributor extends ChooseByNameContributor {
             case _ => None
           }
           navigationItemByNameInfo.orElse {
-            val identifier = HaskellReference.findIdentifiersByModuleName(project, None, moduleName, name).headOption
+            val identifier = HaskellReference.findIdentifiersByModuleAndName(project, None, moduleName, name).headOption
             if (identifier.isEmpty) {
               NotFoundResult(moduleName, declaration)
             } else {

@@ -40,6 +40,8 @@ class HaskellFile(viewProvider: FileViewProvider) extends PsiFileBase(viewProvid
 
 object HaskellFileType {
   final val Instance: HaskellFileType = new HaskellFileType
+
+  final val HaskellFileExtension = "hs"
 }
 
 class HaskellFileType extends LanguageFileType(HaskellLanguage.Instance) {
@@ -53,7 +55,7 @@ class HaskellFileType extends LanguageFileType(HaskellLanguage.Instance) {
   }
 
   def getDefaultExtension: String = {
-    "hs"
+    HaskellFileType.HaskellFileExtension
   }
 
   def getIcon: Icon = {

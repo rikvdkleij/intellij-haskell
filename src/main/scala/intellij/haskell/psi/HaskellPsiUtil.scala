@@ -19,6 +19,7 @@ package intellij.haskell.psi
 import com.github.blemale.scaffeine.{LoadingCache, Scaffeine}
 import com.intellij.lang.ASTNode
 import com.intellij.openapi.editor.Editor
+import com.intellij.openapi.project.Project
 import com.intellij.psi.impl.source.tree.TreeUtil
 import com.intellij.psi.tree.{IElementType, TokenSet}
 import com.intellij.psi.util.PsiTreeUtil
@@ -94,6 +95,10 @@ object HaskellPsiUtil {
 
   def invalidateModuleName(psiFile: PsiFile): Unit = {
     ModuleNameCache.invalidate(psiFile)
+  }
+
+  def invalidateAllModuleNames(project: Project): Unit = {
+    ModuleNameCache.asMap().keys.filter(_.getProject == project).foreach(ModuleNameCache.invalidate)
   }
 
   def findQualifierParent(psiElement: PsiElement): Option[HaskellQualifier] = {

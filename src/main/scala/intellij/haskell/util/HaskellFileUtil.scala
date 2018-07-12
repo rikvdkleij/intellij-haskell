@@ -31,8 +31,8 @@ import com.intellij.openapi.util.SystemInfo
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.vfs.{LocalFileSystem, VirtualFile, VirtualFileManager}
 import com.intellij.psi.{PsiDocumentManager, PsiFile, PsiManager}
-import intellij.haskell.HaskellFile
 import intellij.haskell.action.SelectionContext
+import intellij.haskell.{HaskellFile, HaskellFileType}
 
 object HaskellFileUtil {
 
@@ -154,6 +154,20 @@ object HaskellFileUtil {
       stream.close()
     }
     file
+  }
+
+  def isHaskellFile(psiFile: PsiFile): Boolean = {
+    isHaskellFileName(psiFile.getName)
+  }
+
+  def isHaskellFile(virtualFile: VirtualFile): Boolean = {
+    isHaskellFileName(virtualFile.getName)
+  }
+
+  private final val HaskellFileSuffix = "." + HaskellFileType.HaskellFileExtension
+
+  private def isHaskellFileName(name: String) = {
+    name.endsWith(HaskellFileSuffix)
   }
 
   def getFileNameWithoutExtension(psiFile: PsiFile): String = {

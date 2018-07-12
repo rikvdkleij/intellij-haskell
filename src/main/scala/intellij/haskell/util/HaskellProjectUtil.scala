@@ -143,6 +143,10 @@ object HaskellProjectUtil {
     Option(ModuleUtilCore.findModuleForFile(psiFile))
   }
 
+  def findModuleForVirtualFile(project: Project, virtualFile: VirtualFile): Option[Module] = {
+    Option(ModuleUtilCore.findModuleForFile(virtualFile, project))
+  }
+
   import scala.collection.JavaConverters._
 
   def findProjectModules(project: Project): Iterable[Module] = {

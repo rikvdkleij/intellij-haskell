@@ -131,7 +131,6 @@ class HaskellReference(element: HaskellNamedElement, textRange: TextRange) exten
   private def resolveReferenceByDefinitionLocation(qualifiedNameElement: HaskellQualifiedNameElement, psiFile: PsiFile): Option[HaskellNamedElement] = {
     ProgressManager.checkCanceled()
     val project = psiFile.getProject
-    val namedElement = qualifiedNameElement.getIdentifierElement
 
     def noNavigationMessage(noInfo: NoInfo) = {
       val message = s"Navigation is not available at this moment"
@@ -174,33 +173,48 @@ object HaskellReference {
   }
 
   def findIdentifiersByLibraryNameInfo(project: Project, module: Option[Module], libraryNameInfo: LibraryNameInfo, name: String): Iterable[HaskellNamedElement] = {
-    findIdentifiersByModuleName(project, module, libraryNameInfo.moduleName, name)
+    findIdentifiersByModuleAndName(project, module, libraryNameInfo.moduleName, name)
   }
 
-  def findIdentifiersByModuleName(project: Project, module: Option[Module], moduleName: String, name: String): Iterable[HaskellNamedElement] = {
-    import scala.collection.JavaConverters._
-    findHaskellFileByModuleName(project, module, moduleName).map(haskellFile => {
-
-      ProgressManager.checkCanceled()
-
-      val topLevelExpressions = HaskellPsiUtil.findTopLevelExpressions(haskellFile)
-      val topLevelIdentifiers = topLevelExpressions.flatMap(_.getQNameList.asScala.headOption.map(_.getIdentifierElement)).filter(_.getName == name)
-
-      val declarationElements = HaskellPsiUtil.findHaskellDeclarationElements(haskellFile)
-      val namedElements = declarationElements.flatMap(_.getIdentifierElements).filter(_.getName == name)
-      val identifiers = if (namedElements.isEmpty) {
-        HaskellPsiUtil.findHaskellDeclarationElements(haskellFile).flatMap(_.getIdentifierElements).filter(_.getName == name)
-      } else {
-        namedElements
-      }
-
-      topLevelIdentifiers.toSeq ++ identifiers.toSeq.sortWith(sortByClassDeclarationFirst)
+  def findIdentifiersByModuleAndName(project: Project, module: Option[Module], moduleName: String, name: String): Iterable[HaskellNamedElement] = {
+    findFileByModuleName(project, module, moduleName).map(file => {
+      findIdentifiersInFileByName(file, name)
     }).getOrElse(Iterable())
+  }
+
+  def findIdentifiersInFileByName(file: HaskellFile, name: String): Iterable[HaskellNamedElement] = {
+    import scala.collection.JavaConverters._
+
+    ProgressManager.checkCanceled()
+
+    val topLevelExpressions = HaskellPsiUtil.findTopLevelExpressions(file)
+
+    ProgressManager.checkCanceled()
+
+    val topLevelIdentifiers = topLevelExpressions.flatMap(_.getQNameList.asScala.headOption.map(_.getIdentifierElement)).filter(_.getName == name)
+
+    ProgressManager.checkCanceled()
+
+    val declarationElements = HaskellPsiUtil.findHaskellDeclarationElements(file)
+
+    ProgressManager.checkCanceled()
+    val namedElements = declarationElements.flatMap(_.getIdentifierElements).filter(_.getName == name)
+
+    ProgressManager.checkCanceled()
+
+    val identifiers = if (namedElements.isEmpty) {
+      HaskellPsiUtil.findHaskellDeclarationElements(file).flatMap(_.getIdentifierElements).filter(_.getName == name)
+    } else {
+      namedElements
+    }
+
+    topLevelIdentifiers.toSeq ++ identifiers.toSeq.sortWith(sortByClassDeclarationFirst)
   }
 
   def findIdentifierByLocation(project: Project, filePath: String, lineNr: Integer, columnNr: Integer, name: String): (Option[String], Option[HaskellNamedElement]) = {
     ProgressManager.checkCanceled()
     val psiFile = HaskellProjectUtil.findFile(filePath, project)
+    ProgressManager.checkCanceled()
     val namedElement = for {
       pf <- psiFile
       offset <- LineColumnPosition.getOffset(pf, LineColumnPosition(lineNr, columnNr))
@@ -219,7 +233,7 @@ object HaskellReference {
     }
   }
 
-  private def findHaskellFileByModuleName(project: Project, module: Option[Module], moduleName: String): Option[HaskellFile] = {
+  def findFileByModuleName(project: Project, module: Option[Module], moduleName: String): Option[HaskellFile] = {
     module match {
       case None => HaskellReference.findHaskellFileByModuleNameIndex(project, moduleName, GlobalSearchScope.allScope(project))
       case Some(m) => HaskellReference.findHaskellFileByModuleNameIndex(project, moduleName, m.getModuleWithDependenciesAndLibrariesScope(true))

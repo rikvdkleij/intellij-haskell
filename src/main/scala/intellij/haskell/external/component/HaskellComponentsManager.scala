@@ -101,6 +101,10 @@ object HaskellComponentsManager {
     HaskellProjectFileInfoComponent.findHaskellProjectFileInfo(psiFile).map(_.stackComponentInfo)
   }
 
+  def findStackComponentInfo(project: Project, filePath: String): Option[StackComponentInfo] = {
+    HaskellProjectFileInfoComponent.findHaskellProjectFileInfo(project, filePath).map(_.stackComponentInfo)
+  }
+
   def getSupportedLanguageExtension(project: Project): Iterable[String] = {
     GlobalProjectInfoComponent.findGlobalProjectInfo(project).map(_.supportedLanguageExtensions).getOrElse(Iterable())
   }
@@ -139,6 +143,7 @@ object HaskellComponentsManager {
     NameInfoComponent.invalidateAll(project)
     DefinitionLocationComponent.invalidateAll(project)
     TypeInfoComponent.invalidateAll(project)
+    HaskellPsiUtil.invalidateAllModuleNames(project)
     HaskellNotificationGroup.logInfoEvent(project, "Finished with invalidating cache")
   }
 

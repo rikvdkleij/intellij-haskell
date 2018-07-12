@@ -30,12 +30,12 @@ import intellij.haskell.util.{HaskellFileUtil, ScalaUtil}
 
 private[component] object HaskellProjectFileInfoComponent {
 
-  private case class Key(psiFile: PsiFile)
+  private case class Key(project: Project, filePath: String)
 
   private final val Cache: LoadingCache[Key, Option[HaskellProjectFileInfo]] = Scaffeine().build((k: Key) => createFileInfo(k))
 
-  def findHaskellProjectFileInfo(psiFile: PsiFile): Option[HaskellProjectFileInfo] = {
-    val key = Key(psiFile)
+  def findHaskellProjectFileInfo(project: Project, filePath: String): Option[HaskellProjectFileInfo] = {
+    val key = Key(project, filePath)
     Cache.get(key) match {
       case result@Some(_) => result
       case _ =>
@@ -44,53 +44,61 @@ private[component] object HaskellProjectFileInfoComponent {
     }
   }
 
+  def findHaskellProjectFileInfo(psiFile: PsiFile): Option[HaskellProjectFileInfo] = {
+    val project = psiFile.getProject
+
+    HaskellConsoleView.findConsoleInfo(psiFile) match {
+      case Some(consoleInfo) =>
+        val stackComponentInfos = StackReplsManager.getReplsManager(project).map(_.stackComponentInfos)
+        stackComponentInfos.flatMap(_.find(_.target == consoleInfo.stackTarget)).map(HaskellProjectFileInfo)
+      case None =>
+        val key = HaskellFileUtil.getAbsolutePath(psiFile).map(fp => Key(psiFile.getProject, fp))
+        key.flatMap(k => Cache.get(k) match {
+          case result@Some(_) => result
+          case _ =>
+            Cache.invalidate(k)
+            None
+        })
+    }
+  }
+
   def invalidate(project: Project): Unit = {
-    val keys = Cache.asMap().keys.filter(_.psiFile.getProject == project)
+    val keys = Cache.asMap().keys.filter(_.project == project)
     keys.foreach(Cache.invalidate)
   }
 
   def invalidate(psiFile: PsiFile): Unit = {
-    Cache.invalidate(Key(psiFile))
+    HaskellFileUtil.getAbsolutePath(psiFile).foreach(fp => Cache.invalidate(Key(psiFile.getProject, fp)))
   }
 
   private def createFileInfo(key: Key): Option[HaskellProjectFileInfo] = {
-    val psiFile = key.psiFile
-    val project = psiFile.getProject
+    val project = key.project
+    val filePath = key.filePath
 
     StackReplsManager.getReplsManager(project).map(_.stackComponentInfos).flatMap(stackComponentInfos => {
-      HaskellConsoleView.findConsoleInfo(psiFile).flatMap(consoleInfo => stackComponentInfos.find(_.target == consoleInfo.stackTarget)) match {
-        case Some(componentInfo) => Some(HaskellProjectFileInfo(componentInfo))
-        case None => getStackComponentInfo(psiFile, stackComponentInfos).map(buildInfo => HaskellProjectFileInfo(buildInfo))
-      }
+      getStackComponentInfo(project, filePath, stackComponentInfos).map(buildInfo => HaskellProjectFileInfo(buildInfo))
     })
   }
 
-  private def getStackComponentInfo(psiFile: PsiFile, stackTargetBuildInfos: Iterable[StackComponentInfo]): Option[StackComponentInfo] = {
-    val filePath = HaskellFileUtil.getAbsolutePath(psiFile)
+  private def getStackComponentInfo(project: Project, filePath: String, stackTargetBuildInfos: Iterable[StackComponentInfo]): Option[StackComponentInfo] = {
     stackTargetBuildInfos.find(_.mainIs.exists(filePath.contains)) match {
       case info@Some(_) => info
       case None =>
-        filePath match {
-          case Some(p) =>
-            val sourceDirsByInfo = stackTargetBuildInfos.map(info => (info, info.sourceDirs.filter(sd => FileUtil.isAncestor(sd, p, true)))).filterNot({ case (_, sd) => sd.isEmpty })
-            val stackComponentInfo = if (sourceDirsByInfo.size > 1) {
-              val sourceDirByInfo = sourceDirsByInfo.map({ case (info, sds) => (info, sds.maxBy(sd => Paths.get(sd).getNameCount)) })
-              val mostSpecificSourceDirByInfo = ScalaUtil.maxsBy(sourceDirByInfo)({ case (_, sd) => Paths.get(sd).getNameCount })
-              if (mostSpecificSourceDirByInfo.size > 1) {
-                HaskellNotificationGroup.logWarningBalloonEvent(psiFile.getProject, s"Ambiguous Stack target for file `${psiFile.getName}`. It can belong to the source dir of more than one Stack target/Cabal stanza. The first one of `${mostSpecificSourceDirByInfo.map(_._1.target)}` is chosen.")
-              }
-              mostSpecificSourceDirByInfo.headOption.map(_._1)
-            } else {
-              sourceDirsByInfo.headOption.map(_._1)
-            }
-            stackComponentInfo match {
-              case info@Some(_) => info
-              case None =>
-                HaskellNotificationGroup.logErrorBalloonEvent(psiFile.getProject, s"Could not determine Stack target for file `${psiFile.getName}` because no accompanying `hs-source-dirs` or `main-is` can be found in Cabal file(s)")
-                None
-            }
+        val sourceDirsByInfo = stackTargetBuildInfos.map(info => (info, info.sourceDirs.filter(sd => FileUtil.isAncestor(sd, filePath, true)))).filterNot({ case (_, sd) => sd.isEmpty })
+        val stackComponentInfo = if (sourceDirsByInfo.size > 1) {
+          val sourceDirByInfo = sourceDirsByInfo.map({ case (info, sds) => (info, sds.maxBy(sd => Paths.get(sd).getNameCount)) })
+          val mostSpecificSourceDirByInfo = ScalaUtil.maxsBy(sourceDirByInfo)({ case (_, sd) => Paths.get(sd).getNameCount })
+          if (mostSpecificSourceDirByInfo.size > 1) {
+            HaskellNotificationGroup.logWarningBalloonEvent(project, s"Ambiguous Stack target for file `$filePath`. It can belong to the source dir of more than one Stack target/Cabal stanza. The first one of `${mostSpecificSourceDirByInfo.map(_._1.target)}` is chosen.")
+          }
+          mostSpecificSourceDirByInfo.headOption.map(_._1)
+        } else {
+          sourceDirsByInfo.headOption.map(_._1)
+        }
+        stackComponentInfo match {
+          case info@Some(_) => info
           case None =>
-            HaskellNotificationGroup.logWarningBalloonEvent(psiFile.getProject, s"Could not determine Stack target because could not determine path for file `${psiFile.getName}`. File exists only in memory")
+            HaskellNotificationGroup.logErrorBalloonEvent(project, s"Could not determine Stack target for file `$filePath` because no accompanying `hs-source-dirs` or `main-is` can be found in Cabal file(s)")
             None
         }
     }

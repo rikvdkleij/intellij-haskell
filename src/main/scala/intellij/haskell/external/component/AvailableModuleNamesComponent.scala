@@ -31,9 +31,11 @@ import scala.collection.JavaConverters._
 // TODO Consider to use cache with expiring
 private[component] object AvailableModuleNamesComponent {
 
+  // TODO: Is called always from dispatch thread ?
   def findAvailableModuleNamesWithIndex(psiFile: PsiFile): Iterable[String] = {
     val stackComponentInfo = HaskellComponentsManager.findStackComponentInfo(psiFile)
     stackComponentInfo match {
+
       case Some(info) =>
         val libraryModuleNames = findAvailableLibraryModuleNames(info)
         findAvailableProjectModuleNamesWithIndex(info) ++ libraryModuleNames
