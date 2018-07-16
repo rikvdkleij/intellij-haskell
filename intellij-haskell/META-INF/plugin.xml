@@ -14,7 +14,7 @@
         <p>1.0.0-beta18</p>
         <b>IMPORTANT: Stack version should be > 1.7.0 and please reimport your Haskell Stack project after updating the plugin.</b>
         <ul>
-            <li>Improved responsivess, especially for multi-package projects</li>
+            <li>Improved responsiveness, especially for multi-package projects</li>
             <li>HLint, Hoogle, Hindent and Stylish-Haskell are automatically installed in IntelliJ sandbox with LTS-11. Those binaries are used by all projects</li>
             <li>Added option to Tools/Haskell menu to update Haskell tools with latest LTS-11 version</li>
             <li>Various improvements and fixes</li>
@@ -24,7 +24,7 @@
             <li>Included updating the Module Settings to the Restart REPLs action</li>
             <li>Changed default reformat shortcut to reformat by Hindent. Also added option to Commit Changes dialog to reformat by Hindent</li>
             <li>Added option to Commit Changes dialog to optimize imports by GHC warnings</li>
-            <li>Added type and definition info of the current identifier to the Documentation Tool window</li>
+            <li>Added type and definition info of the current identifier to the Documentation Tool window. That info is always up-to-date by enabling option `Auto-update from Source`</li>
         </ul>
         <p>1.0.0-beta12</p>
         <ul>
@@ -316,7 +316,6 @@
         <projectImportBuilder implementation="intellij.haskell.module.StackProjectImportBuilder"/>
 
         <!-- Index -->
-        <fileBasedIndex implementation="intellij.haskell.util.index.HaskellFilePathIndex"/>
         <fileBasedIndex implementation="intellij.haskell.util.index.HaskellModuleNameIndex"/>
         <stubIndex implementation="intellij.haskell.psi.stubs.index.HaskellAllNameIndex"/>
         <stubElementTypeHolder class="intellij.haskell.psi.HaskellTypes"/>
@@ -466,10 +465,10 @@
         </group>
 
         <!-- Overriding IntelliJ's default shortcut for formatting -->
-        <group id="CodeFormatGroup">
+        <!--<group id="CodeFormatGroup">-->
             <action id="ReformatCode" class="intellij.haskell.action.HindentFormatAction"
                      description="Reformat code by Hindent"/>
-        </group>
+        <!--</group>-->
 
         <group id="HaskellCodeMenu" text="Haskell" description="Haskell Code Tools" icon="/icons/haskell@16.png"
                popup="true">
