@@ -20,7 +20,7 @@ import java.io.File
 
 import com.intellij.ide.util.projectWizard._
 import com.intellij.openapi.Disposable
-import com.intellij.openapi.application.{ApplicationManager, Result, RunResult, WriteAction}
+import com.intellij.openapi.application.{ApplicationManager, WriteAction}
 import com.intellij.openapi.module.{ModifiableModuleModel, Module, ModuleType}
 import com.intellij.openapi.project.{Project, ProjectManager}
 import com.intellij.openapi.projectRoots.SdkTypeId
@@ -336,37 +336,26 @@ object HaskellModuleBuilder {
     })
   }
 
-  private def removeProjectLibrary(project: Project, library: Library): RunResult[Unit] = {
-    new WriteAction[Unit]() {
-
-      def run(result: Result[Unit]): Unit = {
-        getProjectLibraryTable(project).getLibraries.find(_.getName == library.getName).foreach(library => {
-          val model = getProjectLibraryTable(project).getModifiableModel
-          model.removeLibrary(library)
-          ApplicationManager.getApplication.invokeAndWait(ScalaUtil.runnable(WriteAction.run(() => model.commit())))
-        })
-      }
-    }.execute()
+  private def removeProjectLibrary(project: Project, library: Library): Unit = {
+    getProjectLibraryTable(project).getLibraries.find(_.getName == library.getName).foreach(library => {
+      val model = getProjectLibraryTable(project).getModifiableModel
+      model.removeLibrary(library)
+      ApplicationManager.getApplication.invokeAndWait(ScalaUtil.runnable(WriteAction.run(() => model.commit())))
+    })
   }
 
   private def createProjectLibrary(project: Project, libraryDependency: HaskellLibraryDependency, projectLibDirectory: File): Library = {
-    val library = new WriteAction[Library]() {
+    val projectLibraryTableModel = getProjectLibraryTable(project).getModifiableModel
+    val (libraryName, sourceRootPath) = (libraryDependency.nameVersion, getPackageDirectory(projectLibDirectory, libraryDependency).getAbsolutePath)
+    val library = projectLibraryTableModel.createLibrary(libraryName)
+    val libraryModel = library.getModifiableModel
+    val sourceRootUrl = HaskellFileUtil.getUrlByPath(sourceRootPath)
+    libraryModel.addRoot(sourceRootUrl, OrderRootType.CLASSES)
+    libraryModel.addRoot(sourceRootUrl, OrderRootType.SOURCES)
 
-      def run(result: Result[Library]): Unit = {
-        val projectLibraryTableModel = getProjectLibraryTable(project).getModifiableModel
-        val (libraryName, sourceRootPath) = (libraryDependency.nameVersion, getPackageDirectory(projectLibDirectory, libraryDependency).getAbsolutePath)
-        val library = projectLibraryTableModel.createLibrary(libraryName)
-        val libraryModel = library.getModifiableModel
-        val sourceRootUrl = HaskellFileUtil.getUrlByPath(sourceRootPath)
-        libraryModel.addRoot(sourceRootUrl, OrderRootType.CLASSES)
-        libraryModel.addRoot(sourceRootUrl, OrderRootType.SOURCES)
-
-        ApplicationManager.getApplication.invokeAndWait(ScalaUtil.runnable(WriteAction.run(() => libraryModel.commit())))
-        ApplicationManager.getApplication.invokeAndWait(ScalaUtil.runnable(WriteAction.run(() => projectLibraryTableModel.commit())))
-        result.setResult(library)
-      }
-    }.execute
-    library.getResultObject
+    ApplicationManager.getApplication.invokeAndWait(ScalaUtil.runnable(WriteAction.run(() => libraryModel.commit())))
+    ApplicationManager.getApplication.invokeAndWait(ScalaUtil.runnable(WriteAction.run(() => projectLibraryTableModel.commit())))
+    library
   }
 
   private def addModuleLibrary(module: Module, library: Library): Unit = {
