@@ -465,10 +465,8 @@
         </group>
 
         <!-- Overriding IntelliJ's default shortcut for formatting -->
-        <!--<group id="CodeFormatGroup">-->
-            <action id="ReformatCode" class="intellij.haskell.action.HindentFormatAction"
-                     description="Reformat code by Hindent"/>
-        <!--</group>-->
+        <action id="ReformatCode" class="intellij.haskell.action.HindentFormatAction"
+                description="Reformat code by Hindent"/>
 
         <group id="HaskellCodeMenu" text="Haskell" description="Haskell Code Tools" icon="/icons/haskell@16.png"
                popup="true">
