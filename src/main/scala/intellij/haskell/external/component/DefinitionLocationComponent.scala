@@ -19,7 +19,6 @@ package intellij.haskell.external.component
 import java.util.concurrent.TimeUnit
 
 import com.github.blemale.scaffeine.{AsyncLoadingCache, Scaffeine}
-import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.project.Project
 import com.intellij.psi.PsiFile
 import intellij.haskell.external.repl.StackRepl.StackReplOutput
@@ -50,7 +49,7 @@ private[component] object DefinitionLocationComponent {
     val keys = Cache.synchronous().asMap().filter(_._1.psiFile == psiFile).flatMap { case (k, v) =>
       v.toOption match {
         case Some(definitionLocation) =>
-          if (k.qualifiedNameElement.isValid && definitionLocation.namedElement.isValid && k.name == ApplicationUtil.runReadAction(definitionLocation.namedElement.getName)) {
+          if (ApplicationUtil.runReadAction(k.qualifiedNameElement.isValid) && ApplicationUtil.runReadAction(definitionLocation.namedElement.isValid) && k.name == ApplicationUtil.runReadAction(definitionLocation.namedElement.getName)) {
             None
           } else {
             Some(k)
@@ -141,9 +140,7 @@ private[component] object DefinitionLocationComponent {
     val key = Key(psiFile, moduleName, qualifiedNameElement, name)
 
     if (initialRequest && LoadComponent.isModuleLoaded(moduleName, psiFile)) {
-      ApplicationManager.getApplication.executeOnPooledThread(ScalaUtil.runnable {
-        LocationInfoUtil.preloadLocationsAround(project, psiFile, qualifiedNameElement)
-      })
+      LocationInfoUtil.preloadLocationsAround(project, psiFile, qualifiedNameElement)
     }
 
     if (!LoadComponent.isModuleLoaded(moduleName, psiFile) && isCurrentFile) {
@@ -191,7 +188,7 @@ object LocationInfoUtil {
         val target = stackComponentInfo.target
         val putResult = activeTaskByTarget.put(target, true)
         if (putResult.isEmpty) {
-          if (qualifiedNameElement.isValid && !project.isDisposed) {
+          if (ApplicationUtil.runReadAction(qualifiedNameElement.isValid) && !project.isDisposed) {
             val qualifiedNamedElements = findNameElements(project, qualifiedNameElement)
             ApplicationManager.getApplication.executeOnPooledThread(ScalaUtil.runnable {
               try

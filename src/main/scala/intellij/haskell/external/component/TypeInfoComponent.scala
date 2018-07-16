@@ -38,7 +38,7 @@ private[component] object TypeInfoComponent {
   private final val Cache: AsyncLoadingCache[Key, TypeInfoResult] = Scaffeine().buildAsync((k: Key) => findTypeInfoResult(k))
 
   def findTypeInfoForElement(element: PsiElement): TypeInfoResult = {
-    if (element.isValid) {
+    if (ApplicationUtil.runReadAction(element.isValid)) {
       (for {
         qne <- ApplicationUtil.runReadAction(HaskellPsiUtil.findQualifiedNameParent(element))
         pf <- ApplicationUtil.runReadAction(Option(element.getContainingFile))
@@ -79,7 +79,7 @@ private[component] object TypeInfoComponent {
             case None => false
           }
 
-          if (!k.qualifiedNameElement.isValid || sameFile) {
+          if (!ApplicationUtil.runReadAction(k.qualifiedNameElement.isValid) || sameFile) {
             Some(k)
           } else {
             None
