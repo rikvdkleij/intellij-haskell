@@ -492,7 +492,7 @@
                     class="intellij.haskell.action.HoogleNavigationAction"
                     text="Navigation by Hoogle"
                     description="Navigation powered by Hoogle">
-                <keyboard-shortcut first-keystroke="ctrl alt h" keymap="$default"/>
+                <keyboard-shortcut first-keystroke="shift alt h" keymap="$default"/>
             </action>
 
             <action id="Haskell.GotoInstanceDeclaration"
