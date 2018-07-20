@@ -350,7 +350,7 @@ class HaskellCompletionContributor extends CompletionContributor {
 
   private def getAvailableLookupElements(psiFile: PsiFile): Iterable[LookupElementBuilder] = {
     val moduleName = HaskellPsiUtil.findModuleName(psiFile)
-    useAvailableModuleIdentifiers(psiFile, moduleName, (f1, f2, f3, f4) => (f1 ++ f2 ++ f3).map(mi => createLookupElement(mi)) ++ getLocalTopLevelLookupElments(psiFile, moduleName, f4))
+    useAvailableModuleIdentifiers(psiFile, moduleName, (f1, f2, f3, f4) => (f1 ++ f2 ++ f3).map(mi => createLookupElement(mi)) ++ getLocalTopLevelLookupElements(psiFile, moduleName, f4))
   }
 
   private def getKeywordLookupElements = {
@@ -533,7 +533,7 @@ object HaskellCompletionContributor {
     ), moduleIdentifier)
   }
 
-  private def getLocalTopLevelLookupElments(psiFile: PsiFile, moduleName: Option[String], localIdentifiers: Iterable[ModuleIdentifier]): Iterable[LookupElementBuilder] = {
+  private def getLocalTopLevelLookupElements(psiFile: PsiFile, moduleName: Option[String], localIdentifiers: Iterable[ModuleIdentifier]): Iterable[LookupElementBuilder] = {
     moduleName match {
       case Some(_) =>
 
