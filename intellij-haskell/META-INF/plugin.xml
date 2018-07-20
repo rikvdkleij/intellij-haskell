@@ -464,12 +464,17 @@
             <reference id="HaskellGhciMenu"/>
         </group>
 
-        <!-- Overriding IntelliJ's default shortcut for formatting -->
-        <action id="ReformatCode" class="intellij.haskell.action.HindentFormatAction"
-                description="Reformat code by Hindent"/>
 
         <group id="HaskellCodeMenu" text="Haskell" description="Haskell Code Tools" icon="/icons/haskell@16.png"
                popup="true">
+
+            <!-- Overriding IntelliJ's default shortcut for formatting -->
+            <action id="Haskell.ReformatCode"
+                    class="intellij.haskell.action.HindentFormatAction"
+                    text="Reformat code by Hindent"
+                    description="Reformat code by Hindent"
+                    use-shortcut-of="ReformatCode"/>
+
             <action id="Haskell.StylishHaskellFormat"
                     class="intellij.haskell.action.StylishHaskellFormatAction"
                     text="Reformat code by Stylish-Haskell"

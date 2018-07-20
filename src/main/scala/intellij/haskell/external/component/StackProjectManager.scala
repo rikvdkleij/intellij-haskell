@@ -16,6 +16,7 @@
 
 package intellij.haskell.external.component
 
+import com.intellij.openapi.actionSystem.ActionManager
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.components.ProjectComponent
 import com.intellij.openapi.fileEditor.FileEditorManager
@@ -281,6 +282,7 @@ class StackProjectManager(project: Project) extends ProjectComponent {
 
   override def projectOpened(): Unit = {
     if (HaskellProjectUtil.isHaskellProject(project)) {
+      disableDefaultReformatAction()
       initStackReplsManager()
       if (replsManager.exists(_.stackComponentInfos.isEmpty)) {
         Messages.showErrorDialog(project, s"Can not start project because no Cabal file was found or could not be read", "Can not start project")
@@ -291,4 +293,9 @@ class StackProjectManager(project: Project) extends ProjectComponent {
   }
 
   override def disposeComponent(): Unit = {}
+
+  private def disableDefaultReformatAction() = {
+    val actionManager = ActionManager.getInstance
+    actionManager.unregisterAction("ReformatCode")
+  }
 }
