@@ -123,7 +123,7 @@ object HaskellSdkType {
 
   def getStackPath(project: Project, notifyNoSdk: Boolean = true): Option[String] = {
     val projectRootManager = HaskellProjectUtil.getProjectRootManager(project)
-    val stackPath = Option(projectRootManager.getProjectSdk).map(_.getHomePath)
+    val stackPath = projectRootManager.map(_.getProjectSdk).map(_.getHomePath)
     stackPath match {
       case Some(_) => stackPath
       case None =>
@@ -135,6 +135,6 @@ object HaskellSdkType {
   }
 
   def getSdkName(project: Project): Option[String] = {
-    Option(HaskellProjectUtil.getProjectRootManager(project).getProjectSdk).map(_.getName)
+    HaskellProjectUtil.getProjectRootManager(project).map(_.getProjectSdk).map(_.getName)
   }
 }

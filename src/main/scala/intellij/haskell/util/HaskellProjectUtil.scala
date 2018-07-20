@@ -127,8 +127,12 @@ object HaskellProjectUtil {
 
   import ScalaUtil._
 
-  def getProjectRootManager(project: Project): ProjectRootManager = {
-    ProjectRootManager.getInstance(project)
+  def getProjectRootManager(project: Project): Option[ProjectRootManager] = {
+    if (project.isDisposed) {
+      None
+    } else {
+      Option(ProjectRootManager.getInstance(project))
+    }
   }
 
   def getModuleManager(project: Project): Option[ModuleManager] = {
