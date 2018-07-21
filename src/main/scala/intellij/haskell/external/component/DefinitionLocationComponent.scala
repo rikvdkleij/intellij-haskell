@@ -125,7 +125,7 @@ private[component] object DefinitionLocationComponent {
   private final val Timeout = Duration.create(1, TimeUnit.SECONDS)
 
   @tailrec
-  private def find(psiFile: PsiFile, qualifiedNameElement: HaskellQualifiedNameElement, isCurrentFile: Boolean, initialRequest: Boolean): DefinitionLocationResult = {
+  private[component] def find(psiFile: PsiFile, qualifiedNameElement: HaskellQualifiedNameElement, isCurrentFile: Boolean, initialRequest: Boolean): DefinitionLocationResult = {
     def wait(f: => Future[DefinitionLocationResult]) = {
       try {
         Await.result(f, if (isCurrentFile) CurrentFileTimeout else Timeout)
@@ -140,7 +140,7 @@ private[component] object DefinitionLocationComponent {
     val key = Key(psiFile, moduleName, qualifiedNameElement, name)
 
     if (initialRequest && LoadComponent.isModuleLoaded(moduleName, psiFile)) {
-      LocationInfoUtil.preloadLocationsAround(project, psiFile, qualifiedNameElement)
+      LocationInfoUtil.preloadLocationsInExpression(project, psiFile, qualifiedNameElement)
     }
 
     if (!LoadComponent.isModuleLoaded(moduleName, psiFile) && isCurrentFile) {
@@ -178,27 +178,26 @@ object LocationInfoUtil {
 
   private val activeTaskByTarget = new ConcurrentHashMap[String, Boolean]().asScala
 
-  private def findNameElements(project: Project, qualifiedNameElement: HaskellQualifiedNameElement) = {
-    ApplicationUtil.runReadActionWithWriteActionPriority(project, HaskellPsiUtil.findExpressionParent(qualifiedNameElement).map(HaskellPsiUtil.findQualifiedNamedElements)).getOrElse(Iterable())
-  }
-
-  def preloadLocationsAround(project: Project, psiFile: PsiFile, qualifiedNameElement: HaskellQualifiedNameElement): Unit = {
+  def preloadLocationsInExpression(project: Project, psiFile: PsiFile, qualifiedNameElement: HaskellQualifiedNameElement): Unit = {
     HaskellComponentsManager.findStackComponentInfo(psiFile) match {
       case Some(stackComponentInfo) =>
         val target = stackComponentInfo.target
         val putResult = activeTaskByTarget.put(target, true)
         if (putResult.isEmpty) {
-          if (ApplicationUtil.runReadAction(qualifiedNameElement.isValid) && !project.isDisposed) {
-            val qualifiedNamedElements = findNameElements(project, qualifiedNameElement)
+          if (isPreloadValid(project, qualifiedNameElement)) {
             ApplicationManager.getApplication.executeOnPooledThread(ScalaUtil.runnable {
-              try
-                qualifiedNamedElements.toSeq.diff(Seq(qualifiedNameElement)).foreach { qne =>
-                  if (!project.isDisposed && !LoadComponent.isBusy(project, stackComponentInfo)) {
-                    DefinitionLocationComponent.findDefinitionLocation(psiFile, qne, isCurrentFile = true)
-                    // We have to wait for other requests which have more priority because those are on dispatch thread
-                    Thread.sleep(50)
+              try {
+                if (isPreloadValid(project, qualifiedNameElement)) {
+                  val namedElementsInsideExpression = findNameElementsInExpression(project, qualifiedNameElement)
+                  namedElementsInsideExpression.toSeq.diff(Seq(qualifiedNameElement)).foreach { ne =>
+                    if (!project.isDisposed && !LoadComponent.isBusy(project, stackComponentInfo)) {
+                      DefinitionLocationComponent.find(psiFile, ne, isCurrentFile = true, initialRequest = false)
+                      // We have to wait for other requests which have more priority because those are on dispatch thread
+                      Thread.sleep(50)
+                    }
                   }
-                } finally {
+                }
+              } finally {
                 activeTaskByTarget.remove(target)
               }
             })
@@ -206,6 +205,14 @@ object LocationInfoUtil {
         }
       case None => ()
     }
+  }
+
+  private def findNameElementsInExpression(project: Project, qualifiedNameElement: HaskellQualifiedNameElement) = {
+    ApplicationUtil.runReadActionWithWriteActionPriority(project, HaskellPsiUtil.findExpressionParent(qualifiedNameElement).map(HaskellPsiUtil.findQualifiedNamedElements)).getOrElse(Iterable())
+  }
+
+  private def isPreloadValid(project: Project, qualifiedNameElement: HaskellQualifiedNameElement) = {
+    ApplicationUtil.runReadAction(qualifiedNameElement.isValid) && !project.isDisposed
   }
 }
 
