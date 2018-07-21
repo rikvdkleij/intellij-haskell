@@ -76,8 +76,12 @@ private[component] object BrowseModuleComponent {
         key.psiFile match {
           case None => matchResult(Cache.get(key))
           case Some(pf) =>
-            if (!key.exported && LoadComponent.isFileLoaded(pf)) {
-              matchResult(Cache.get(key))
+            if (!key.exported) {
+              if (LoadComponent.isFileLoaded(pf)) {
+                matchResult(Cache.get(key))
+              } else {
+                matchResult(Cache.getIfPresent(key).getOrElse(Future.successful(Left(ReplIsBusy))))
+              }
             } else if (key.exported && LoadComponent.isModuleLoaded(Some(moduleName), pf)) {
               matchResult(Cache.get(key))
             } else {
