@@ -74,12 +74,18 @@ private[component] object TypeInfoComponent {
     val keys = Cache.synchronous().asMap().filter(_._1.psiFile == psiFile).flatMap { case (k, v) =>
       v.toOption match {
         case Some(_) =>
-          val sameFile = DefinitionLocationComponent.findDefinitionLocation(psiFile, k.qualifiedNameElement, isCurrentFile = false).toOption match {
-            case Some(definitionLocation) => Option(definitionLocation.namedElement.getContainingFile).contains(k.psiFile)
-            case None => false
+          val definedInSameFile = DefinitionLocationComponent.findDefinitionLocation(psiFile, k.qualifiedNameElement, isCurrentFile = false).toOption match {
+            case Some(definitionLocation) =>
+              val namedElement = definitionLocation.namedElement
+              if (ApplicationUtil.runReadAction(namedElement.isValid)) {
+                Option(namedElement.getContainingFile).map(_ == k.psiFile)
+              } else {
+                None
+              }
+            case None => None
           }
 
-          if (!ApplicationUtil.runReadAction(k.qualifiedNameElement.isValid) || sameFile) {
+          if (!ApplicationUtil.runReadAction(k.qualifiedNameElement.isValid) || !definedInSameFile.contains(false)) {
             Some(k)
           } else {
             None
