@@ -391,7 +391,7 @@ object HaskellCompletionContributor {
       Await.result(f, Timeout)
     } catch {
       case _: TimeoutException =>
-        HaskellNotificationGroup.logInfoEvent(psiFile.getProject, s"Timout while getting module identifiers for ${psiFile.getName}")
+        HaskellNotificationGroup.logInfoEvent(psiFile.getProject, s"Timeout while getting module identifiers for ${psiFile.getName}")
         doIt(getSuccessValue(idsF1), getSuccessValue(idsF2), getSuccessValue(idsF3), getSuccessValue(idsF4))
     }
   }
@@ -553,7 +553,7 @@ object HaskellCompletionContributor {
         )
         localLookupElements
       case None =>
-        HaskellNotificationGroup.logWarningEvent(psiFile.getProject, s"No support for suggesting local toplevel identtifiers because no module defined in `${psiFile.getName}`")
+        HaskellNotificationGroup.logWarningEvent(psiFile.getProject, s"No support for suggesting local top level identifiers because no module defined in `${psiFile.getName}`")
         Iterable()
     }
   }
