@@ -21,7 +21,7 @@ import com.intellij.openapi.project.Project
 import com.intellij.psi.stubs.StubIndex
 import com.intellij.util.ArrayUtil
 import intellij.haskell.psi.stubs.index.HaskellAllNameIndex
-import intellij.haskell.psi.{HaskellNamedElement, HaskellPsiUtil}
+import intellij.haskell.psi.{HaskellClassDeclaration, HaskellDeclarationElement, HaskellNamedElement, HaskellPsiUtil}
 import intellij.haskell.util.HaskellProjectUtil
 
 import scala.collection.JavaConverters._
@@ -39,8 +39,16 @@ class GotoByDeclarationContributor extends GotoClassContributor {
   override def getItemsByName(name: String, pattern: String, project: Project, includeNonProjectItems: Boolean): Array[NavigationItem] = {
     val searchScope = HaskellProjectUtil.getSearchScope(project, includeNonProjectItems)
     val namedElements = StubIndex.getElements(HaskellAllNameIndex.Key, name, project, searchScope, classOf[HaskellNamedElement])
-    val declarations = namedElements.asScala.filter(ne => HaskellPsiUtil.findHighestDeclarationElementParent(ne).exists(_.getIdentifierElements.exists(_ == ne && name.toLowerCase.contains(pattern.toLowerCase))))
-    declarations.toArray
+    val declarationIds = namedElements.asScala.map(ne => (ne, HaskellPsiUtil.findHighestDeclarationElementParent(ne))).
+      filter { case (ne, de) => de.exists(_.getIdentifierElements.exists(_ == ne && name.toLowerCase.contains(pattern.toLowerCase))) }
+    declarationIds.toSeq.sortWith(sortByClassDeclarationFirst).map(_._1).toArray
+  }
+
+  private def sortByClassDeclarationFirst(namedAndDeclarationElement1: (HaskellNamedElement, Option[HaskellDeclarationElement]), namedAndDeclarationElement2: (HaskellNamedElement, Option[HaskellDeclarationElement])): Boolean = {
+    (namedAndDeclarationElement1._2, namedAndDeclarationElement2._2) match {
+      case (Some(_: HaskellClassDeclaration), _) => true
+      case (_, _) => false
+    }
   }
 
   override def getQualifiedNameSeparator: String = "."
