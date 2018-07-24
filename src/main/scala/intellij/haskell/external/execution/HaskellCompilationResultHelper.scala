@@ -26,52 +26,37 @@ object HaskellCompilationResultHelper {
   private final val ProblemPattern = """(.+):([\d]+):([\d]+):(.+)""".r
 
   def createCompilationResult(currentPsiFile: PsiFile, errorLines: Seq[String], failed: Boolean): CompilationResult = {
-    val filePath = HaskellFileUtil.getAbsolutePath(currentPsiFile).getOrElse(throw new IllegalStateException(s"File `${currentPsiFile.getName}` exists only in memory"))
+    val currentFilePath = HaskellFileUtil.getAbsolutePath(currentPsiFile).getOrElse(throw new IllegalStateException(s"File `${currentPsiFile.getName}` exists only in memory"))
 
-    val compilationProblems = errorLines.flatMap(l => parseErrorLine(Some(filePath), l))
+    val compilationProblems = errorLines.flatMap(parseErrorLine)
 
-    val currentFileProblems = compilationProblems.flatMap(convertToCompilationProblemInCurrentFile)
-    val otherFileProblems = compilationProblems.diff(currentFileProblems)
+    val (currentFileProblems, otherFileProblems) = compilationProblems.partition(_.filePath == currentFilePath)
 
     CompilationResult(currentFileProblems, otherFileProblems, failed)
   }
 
-
   def createNotificationsForErrorsNotInCurrentFile(project: Project, compilationResult: CompilationResult): Unit = {
     if (compilationResult.currentFileProblems.isEmpty) {
       compilationResult.otherFileProblems.foreach {
-        case cpf: CompilationProblemInOtherFile if !cpf.isWarning => HaskellNotificationGroup.logErrorBalloonEventWithLink(project, cpf.filePath, cpf.htmlMessage, cpf.lineNr, cpf.columnNr)
+        case cpf: CompilationProblem if !cpf.isWarning => HaskellNotificationGroup.logErrorBalloonEventWithLink(project, cpf.filePath, cpf.htmlMessage, cpf.lineNr, cpf.columnNr)
         case _ => ()
       }
     }
   }
 
-  private def convertToCompilationProblemInCurrentFile(problem: CompilationProblem) = {
-    problem match {
-      case p: CompilationProblemInCurrentFile => Some(p)
-      case _ => None
-    }
-  }
-
-  def parseErrorLine(filePath: Option[String], errorLine: String): Option[CompilationProblem] = {
+  def parseErrorLine(errorLine: String): Option[CompilationProblem] = {
     errorLine match {
-      case ProblemPattern(problemFilePath, lineNr, columnNr, message) =>
+      case ProblemPattern(filePath, lineNr, columnNr, message) =>
         val displayMessage = message.trim.replaceAll("""(\s\s\s\s+)""", "\n" + "$1")
-        if (filePath.contains(problemFilePath)) {
-          Some(CompilationProblemInCurrentFile(problemFilePath, lineNr.toInt, columnNr.toInt, displayMessage))
-        } else {
-          Some(CompilationProblemInOtherFile(problemFilePath, lineNr.toInt, columnNr.toInt, displayMessage))
-        }
+        Some(CompilationProblem(filePath, lineNr.toInt, columnNr.toInt, displayMessage))
       case _ => None
     }
   }
 }
 
-case class CompilationResult(currentFileProblems: Iterable[CompilationProblemInCurrentFile], otherFileProblems: Iterable[CompilationProblem], failed: Boolean)
+case class CompilationResult(currentFileProblems: Iterable[CompilationProblem], otherFileProblems: Iterable[CompilationProblem], failed: Boolean)
 
-trait CompilationProblem {
-
-  def message: String
+case class CompilationProblem(filePath: String, lineNr: Int, columnNr: Int, message: String) {
 
   def plainMessage: String = {
     message.split("\n").mkString.replaceAll("\\s+", " ")
@@ -86,7 +71,4 @@ trait CompilationProblem {
   }
 }
 
-case class CompilationProblemInCurrentFile private(filePath: String, lineNr: Int, columnNr: Int, message: String) extends CompilationProblem
-
-case class CompilationProblemInOtherFile private(filePath: String, lineNr: Int, columnNr: Int, message: String) extends CompilationProblem
 

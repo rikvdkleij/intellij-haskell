@@ -19,16 +19,19 @@ package intellij.haskell.annotator
 import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer
 import com.intellij.codeInsight.daemon.impl._
 import com.intellij.codeInsight.intention.impl.BaseIntentionAction
+import com.intellij.compiler.{CompilerMessageImpl, ProblemsView}
 import com.intellij.lang.annotation.{AnnotationHolder, ExternalAnnotator, HighlightSeverity}
 import com.intellij.openapi.application.ApplicationManager
+import com.intellij.openapi.compiler.CompilerMessageCategory
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.TextRange
+import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.psi.impl.source.tree.TreeUtil
 import com.intellij.psi.util.PsiTreeUtil
 import com.intellij.psi.{PsiElement, PsiFile}
-import intellij.haskell.editor.HaskellImportOptimizer
+import intellij.haskell.editor.{HaskellImportOptimizer, HaskellProblemsView}
 import intellij.haskell.external.component._
 import intellij.haskell.external.execution._
 import intellij.haskell.psi._
@@ -73,7 +76,33 @@ class HaskellAnnotator extends ExternalAnnotator[(PsiFile, Option[PsiElement]), 
   }
 
   override def apply(psiFile: PsiFile, loadResult: CompilationResult, holder: AnnotationHolder): Unit = {
-    for (annotation <- HaskellAnnotator.createAnnotations(psiFile, loadResult)) {
+    val haskellProblemsView = ProblemsView.SERVICE.getInstance(psiFile.getProject).asInstanceOf[HaskellProblemsView]
+    val project = psiFile.getProject
+
+    HaskellFileUtil.findVirtualFile(psiFile).foreach { currentFile =>
+      ApplicationManager.getApplication.invokeLater { () =>
+        if (!project.isDisposed) {
+          haskellProblemsView.clearProgress()
+          haskellProblemsView.clearOldMessages(currentFile)
+
+          for (problem <- loadResult.currentFileProblems) {
+            val message = createCompilerMessage(currentFile, project, problem)
+            haskellProblemsView.addMessage(message)
+          }
+
+          for (problem <- loadResult.otherFileProblems) {
+            HaskellProjectUtil.findVirtualFile(problem.filePath, project).foreach { file =>
+              val message = createCompilerMessage(file, project, problem)
+              haskellProblemsView.addMessage(message)
+            }
+          }
+        }
+      }
+    }
+
+    HaskellCompilationResultHelper.createNotificationsForErrorsNotInCurrentFile(project, loadResult)
+
+    for (annotation <- HaskellAnnotator.createAnnotations(project, psiFile, loadResult.currentFileProblems)) {
       annotation match {
         case ErrorAnnotation(textRange, message, htmlMessage) => holder.createAnnotation(HighlightSeverity.ERROR, textRange, message, htmlMessage)
         case ErrorAnnotationWithIntentionActions(textRange, message, htmlMessage, intentionActions) =>
@@ -85,6 +114,11 @@ class HaskellAnnotator extends ExternalAnnotator[(PsiFile, Option[PsiElement]), 
           intentionActions.foreach(annotation.registerFix)
       }
     }
+  }
+
+  private def createCompilerMessage(file: VirtualFile, project: Project, problem: CompilationProblem) = {
+    val category = if (problem.isWarning) CompilerMessageCategory.WARNING else CompilerMessageCategory.ERROR
+    new CompilerMessageImpl(project, category, problem.message, file, problem.lineNr, problem.columnNr, null)
   }
 }
 
@@ -122,13 +156,9 @@ object HaskellAnnotator {
     }
   }
 
-  private def createAnnotations(psiFile: PsiFile, loadResult: CompilationResult): Iterable[Annotation] = {
-    val problems = loadResult.currentFileProblems.filter(problem => HaskellFileUtil.getAbsolutePath(psiFile).contains(problem.filePath))
-    val project = psiFile.getProject
+  private def createAnnotations(project: Project, psiFile: PsiFile, problems: Iterable[CompilationProblem]): Iterable[Annotation] = {
 
-    HaskellCompilationResultHelper.createNotificationsForErrorsNotInCurrentFile(project, loadResult)
-
-    def createErrorAnnotationWithMultiplePerhapsIntentions(problem: CompilationProblemInCurrentFile, tr: TextRange, notInScopeMessage: String, suggestionsList: String) = {
+    def createErrorAnnotationWithMultiplePerhapsIntentions(problem: CompilationProblem, tr: TextRange, notInScopeMessage: String, suggestionsList: String) = {
       val notInScopeName = extractName(notInScopeMessage)
       val annotations = suggestionsList.split(",").flatMap(s => extractPerhapsYouMeantAction(s))
       ErrorAnnotationWithIntentionActions(tr, problem.plainMessage, problem.htmlMessage, annotations.toStream ++ createNotInScopeIntentionActions(psiFile, notInScopeName))
@@ -206,19 +236,19 @@ object HaskellAnnotator {
     moduleIdentifiers.map(mi => new NotInScopeIntentionAction(mi.name, mi.moduleName, psiFile))
   }
 
-  private def createLanguageExtensionIntentionsAction(problem: CompilationProblemInCurrentFile, tr: TextRange, languageExtensions: Iterable[String]): ErrorAnnotationWithIntentionActions = {
+  private def createLanguageExtensionIntentionsAction(problem: CompilationProblem, tr: TextRange, languageExtensions: Iterable[String]): ErrorAnnotationWithIntentionActions = {
     ErrorAnnotationWithIntentionActions(tr, problem.plainMessage, problem.htmlMessage, languageExtensions.map(le => new LanguageExtensionIntentionAction(le)))
   }
 
-  private def importAloneInstancesAction(problem: CompilationProblemInCurrentFile, tr: TextRange, importDecl: String): WarningAnnotationWithIntentionActions = {
+  private def importAloneInstancesAction(problem: CompilationProblem, tr: TextRange, importDecl: String): WarningAnnotationWithIntentionActions = {
     WarningAnnotationWithIntentionActions(tr, problem.plainMessage, problem.htmlMessage, Stream(new ImportAloneInstancesAction(importDecl)))
   }
 
-  private def redundantImportAction(problem: CompilationProblemInCurrentFile, tr: TextRange, moduleName: String, redundants: String): WarningAnnotationWithIntentionActions = {
+  private def redundantImportAction(problem: CompilationProblem, tr: TextRange, moduleName: String, redundants: String): WarningAnnotationWithIntentionActions = {
     WarningAnnotationWithIntentionActions(tr, problem.plainMessage, problem.htmlMessage, Stream(new RedundantImportAction(moduleName, redundants)))
   }
 
-  private def getProblemTextRange(psiFile: PsiFile, problem: CompilationProblemInCurrentFile): Option[TextRange] = {
+  private def getProblemTextRange(psiFile: PsiFile, problem: CompilationProblem): Option[TextRange] = {
     LineColumnPosition.getOffset(psiFile, LineColumnPosition(problem.lineNr, problem.columnNr)).map(offset => {
       findTextRange(psiFile, offset)
     })

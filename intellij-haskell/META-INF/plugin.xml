@@ -354,6 +354,7 @@
         <checkinHandlerFactory implementation="intellij.haskell.action.HaskellReformatCheckinHandlerFactory"/>
         <checkinHandlerFactory implementation="intellij.haskell.action.HaskellOptimizeImportsCheckinHandlerFactory"/>
 
+        <projectService serviceInterface="com.intellij.compiler.ProblemsView" serviceImplementation="intellij.haskell.editor.HaskellProblemsView" overrides="true"/>
     </extensions>
 
     <application-components>

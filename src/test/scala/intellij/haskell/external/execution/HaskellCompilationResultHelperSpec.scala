@@ -26,7 +26,7 @@ class HaskellCompilationResultHelperSpec extends FunSpec with Matchers with Give
       val output = "/file/path/HaskellFile.hs:1:11:parse error on input     and so on"
 
       When("parsed to problem")
-      val problem = HaskellCompilationResultHelper.parseErrorLine(Some("/file/path/HaskellFile.hs"), output).asInstanceOf[Some[CompilationProblemInCurrentFile]].get
+      val problem = HaskellCompilationResultHelper.parseErrorLine(output).get
 
       Then("it should contain right data")
       problem.lineNr should equal(1)

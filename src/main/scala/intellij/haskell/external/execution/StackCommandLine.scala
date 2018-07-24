@@ -177,11 +177,11 @@ object StackCommandLine {
 
     private def addMessage() = {
       val errorMessageLine = previousMessageLines.mkString(" ")
-      val compilationProblem = HaskellCompilationResultHelper.parseErrorLine(None, errorMessageLine.replaceAll("\n", " "))
+      val compilationProblem = HaskellCompilationResultHelper.parseErrorLine(errorMessageLine.replaceAll("\n", " "))
       compilationProblem match {
-        case Some(p@CompilationProblemInOtherFile(filePath, lineNr, columnNr, message)) if p.isWarning =>
+        case Some(p@CompilationProblem(filePath, lineNr, columnNr, message)) if p.isWarning =>
           compileContext.addMessage(CompilerMessageCategory.WARNING, message, HaskellFileUtil.getUrlByPath(filePath), lineNr, columnNr)
-        case Some(CompilationProblemInOtherFile(filePath, lineNr, columnNr, message)) =>
+        case Some(CompilationProblem(filePath, lineNr, columnNr, message)) =>
           compileContext.addMessage(CompilerMessageCategory.ERROR, message, HaskellFileUtil.getUrlByPath(filePath), lineNr, columnNr)
         case _ =>
           val compilerMessageCategory =
