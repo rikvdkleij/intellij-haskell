@@ -1,7 +1,7 @@
 <idea-plugin>
     <id>intellij.haskell</id>
     <name>IntelliJ-Haskell</name>
-    <version>1.0.0-beta19</version>
+    <version>1.0.0-beta20</version>
     <vendor email="rikvdkleij@gmail.com">Rik van der Kleij</vendor>
 
     <description><![CDATA[
@@ -11,7 +11,7 @@
     ]]></description>
 
     <change-notes><![CDATA[
-        <p>1.0.0-beta19</p>
+        <p>1.0.0-beta20</p>
         <b>IMPORTANT: Stack version should be > 1.7.0 and please reimport your Haskell Stack project after updating the plugin.</b>
         <ul>
             <li>Improved responsiveness, especially for multi-package projects</li>
@@ -25,6 +25,7 @@
             <li>Changed default reformat shortcut to reformat by Hindent. Also added option to Commit Changes dialog to reformat by Hindent</li>
             <li>Added option to Commit Changes dialog to optimize imports by GHC warnings</li>
             <li>Added type and definition info of the current identifier to the Documentation Tool window. That info is always up-to-date by enabling option `Auto-update from Source`</li>
+            <li>Implemented Haskell Problems View</li>
         </ul>
         <p>1.0.0-beta12</p>
         <ul>
