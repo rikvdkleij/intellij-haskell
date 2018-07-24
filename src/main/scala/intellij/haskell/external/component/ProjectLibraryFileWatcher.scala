@@ -31,7 +31,7 @@ import intellij.haskell.external.execution.StackCommandLine
 import intellij.haskell.external.repl.StackRepl.LibType
 import intellij.haskell.external.repl.StackReplsManager
 import intellij.haskell.external.repl.StackReplsManager.StackComponentInfo
-import intellij.haskell.util.{ApplicationUtil, HaskellFileUtil, HaskellProjectUtil}
+import intellij.haskell.util.{HaskellFileUtil, HaskellProjectUtil}
 
 import scala.collection.JavaConverters._
 import scala.collection.concurrent
@@ -91,7 +91,7 @@ class ProjectLibraryFileWatcher(project: Project) extends BulkFileListener {
 
                     val dependentLibRepls = projectRepls.filter(repl => repl.stanzaType == LibType && dependentModules.map(_.getName).contains(repl.packageName))
 
-                    val openFiles = FileEditorManager.getInstance(project).getOpenFiles.filter( HaskellFileUtil.isHaskellFile)
+                    val openFiles = FileEditorManager.getInstance(project).getOpenFiles.filter(HaskellFileUtil.isHaskellFile)
                     val openProjectFiles = openFiles.filter(f => HaskellProjectUtil.isProjectFile(f, project))
                     val dependentFiles = openProjectFiles.filter(f => HaskellComponentsManager.findStackComponentInfo(project, HaskellFileUtil.getAbsolutePath(f)).exists(ci => ci.stanzaType != LibType && currentlyBuildComponents.map(_.packageName).contains(ci.packageName)))
                     val dependentLibFiles = openProjectFiles.toSeq.diff(dependentFiles.toSeq).filter(f => HaskellProjectUtil.findModuleForVirtualFile(project, f).exists(m => dependentModules.contains(m)))
@@ -99,23 +99,23 @@ class ProjectLibraryFileWatcher(project: Project) extends BulkFileListener {
                     (dependentRepls ++ dependentLibRepls).foreach(_.restart())
 
                     (dependentFiles ++ dependentLibFiles).foreach { vf =>
-                      ApplicationUtil.runReadActionWithWriteActionPriority(project, HaskellFileUtil.convertToHaskellFile(project, vf)).foreach { psiFile =>
+                      HaskellFileUtil.convertToHaskellFile(project, vf).foreach { psiFile =>
                         HaskellComponentsManager.invalidateLocationAndTypeInfo(psiFile)
                         HaskellAnnotator.restartDaemonCodeAnalyzerForFile(psiFile)
                       }
                     }
+                  }
 
-                    if (!project.isDisposed) {
-                      val buildStatus = ProjectLibraryFileWatcher.buildStatus.get(project)
-                      buildStatus match {
-                        case Some(Build(componentInfos)) =>
-                          currentlyBuildComponents = componentInfos
-                          ProjectLibraryFileWatcher.buildStatus.put(project, Building(componentInfos))
-                          run(progressIndicator)
-                        case _ =>
-                          currentlyBuildComponents = Set()
-                          ProjectLibraryFileWatcher.buildStatus.remove(project)
-                      }
+                  if (!project.isDisposed) {
+                    val buildStatus = ProjectLibraryFileWatcher.buildStatus.get(project)
+                    buildStatus match {
+                      case Some(Build(componentInfos)) =>
+                        currentlyBuildComponents = componentInfos
+                        ProjectLibraryFileWatcher.buildStatus.put(project, Building(componentInfos))
+                        run(progressIndicator)
+                      case _ =>
+                        currentlyBuildComponents = Set()
+                        ProjectLibraryFileWatcher.buildStatus.remove(project)
                     }
                   }
                 }

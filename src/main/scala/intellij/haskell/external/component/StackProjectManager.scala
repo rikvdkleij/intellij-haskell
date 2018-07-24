@@ -186,9 +186,11 @@ object StackProjectManager {
               // Force to load the module in REPL when REPL can be started. It could have happen that IntelliJ wanted to load file (via HaskellAnnotator)
               // but REPL could not be started.
               FileEditorManager.getInstance(project).getSelectedFiles.find(f => HaskellProjectUtil.isProjectFile(f, project)).foreach { vf =>
-                ApplicationUtil.runReadActionWithWriteActionPriority(project, HaskellFileUtil.convertToHaskellFile(project, vf)).foreach(psiFile => {
+                HaskellFileUtil.convertToHaskellFile(project, vf).foreach(psiFile => {
                   if (!LoadComponent.isFileLoaded(psiFile)) {
                     HaskellNotificationGroup.logInfoEvent(project, s"${psiFile.getName} will be forced loaded")
+                    HaskellAnnotator.restartDaemonCodeAnalyzerForFile(psiFile)
+                  } else {
                     HaskellAnnotator.restartDaemonCodeAnalyzerForFile(psiFile)
                   }
                 })

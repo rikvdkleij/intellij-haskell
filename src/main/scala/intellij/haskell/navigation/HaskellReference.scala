@@ -133,7 +133,12 @@ class HaskellReference(element: HaskellNamedElement, textRange: TextRange) exten
     val project = psiFile.getProject
 
     def noNavigationMessage(noInfo: NoInfo) = {
-      val message = s"Navigation is not available at this moment"
+      val message = s"Navigation is not available at this moment" + {
+        noInfo match {
+          case ReplIsBusy => ""
+          case info => ": " + info.message
+        }
+      }
       HaskellEditorUtil.showStatusBarBalloonMessage(project, message)
     }
 
@@ -176,51 +181,36 @@ object HaskellReference {
     findIdentifiersByModuleAndName(project, module, libraryNameInfo.moduleName, name)
   }
 
-  def findIdentifiersByModuleAndName(project: Project, module: Option[Module], moduleName: String, name: String): Iterable[HaskellNamedElement] = {
-    findFileByModuleName(project, module, moduleName).map(file => {
-      findIdentifiersInFileByName(file, name)
-    }).getOrElse(Iterable())
+  def findIdentifiersByModuleAndName(project: Project, module: Option[Module], moduleName: String, name: String): Option[HaskellNamedElement] = {
+    findFileByModuleName(project, module, moduleName).flatMap(file => {
+      findIdentifierInFileByName(file, name)
+    })
   }
 
-  def findIdentifiersInFileByName(file: HaskellFile, name: String): Iterable[HaskellNamedElement] = {
+  def findIdentifierInFileByName(file: HaskellFile, name: String): Option[HaskellNamedElement] = {
     import scala.collection.JavaConverters._
 
-    ProgressManager.checkCanceled()
+    val topLevelExpressions = ApplicationUtil.runReadAction(HaskellPsiUtil.findTopLevelExpressions(file))
+    val expressionIdentifiers = ApplicationUtil.runReadAction(topLevelExpressions.filterNot(_.getText.startsWith("infix")).flatMap(_.getQNameList.asScala.headOption.map(_.getIdentifierElement)).filter(_.getName == name))
 
-    val topLevelExpressions = HaskellPsiUtil.findTopLevelExpressions(file)
+    if (expressionIdentifiers.isEmpty) {
+      val declarationElements = ApplicationUtil.runReadAction(HaskellPsiUtil.findHaskellDeclarationElements(file))
+      val declarationIdentifiers = declarationElements.flatMap(_.getIdentifierElements).filter(e => ApplicationUtil.runReadAction(e.getName) == name)
 
-    ProgressManager.checkCanceled()
-
-    val topLevelIdentifiers = topLevelExpressions.flatMap(_.getQNameList.asScala.headOption.map(_.getIdentifierElement)).filter(_.getName == name)
-
-    ProgressManager.checkCanceled()
-
-    val declarationElements = HaskellPsiUtil.findHaskellDeclarationElements(file)
-
-    ProgressManager.checkCanceled()
-    val namedElements = declarationElements.flatMap(_.getIdentifierElements).filter(_.getName == name)
-
-    ProgressManager.checkCanceled()
-
-    val identifiers = if (namedElements.isEmpty) {
-      HaskellPsiUtil.findHaskellDeclarationElements(file).flatMap(_.getIdentifierElements).filter(_.getName == name)
+      declarationIdentifiers.toSeq.sortWith(sortByClassDeclarationFirst).headOption
     } else {
-      namedElements
+      expressionIdentifiers.headOption
     }
-
-    topLevelIdentifiers.toSeq ++ identifiers.toSeq.sortWith(sortByClassDeclarationFirst)
   }
 
-  def findIdentifierByLocation(project: Project, filePath: String, lineNr: Integer, columnNr: Integer, name: String): (Option[String], Option[HaskellNamedElement]) = {
-    ProgressManager.checkCanceled()
-    val psiFile = HaskellProjectUtil.findFile(filePath, project)
-    ProgressManager.checkCanceled()
+  def findIdentifierByLocation(project: Project, psiFile: Option[PsiFile], lineNr: Integer, columnNr: Integer, name: String): (Option[String], Option[HaskellNamedElement]) = {
     val namedElement = for {
       pf <- psiFile
       offset <- LineColumnPosition.getOffset(pf, LineColumnPosition(lineNr, columnNr))
-      element <- Option(pf.findElementAt(offset))
-      namedElement <- HaskellPsiUtil.findNamedElement(element).find(_.getName == name).orElse(HaskellPsiUtil.findHighestDeclarationElementParent(element).flatMap(_.getIdentifierElements.find(_.getName == name))).
-        orElse(HaskellPsiUtil.findQualifiedNameParent(element).map(_.getIdentifierElement).find(_.getName == name))
+      element <- ApplicationUtil.runReadAction(Option(pf.findElementAt(offset)))
+      namedElement <- ApplicationUtil.runReadAction(HaskellPsiUtil.findNamedElement(element).find(_.getName == name)).
+        orElse(ApplicationUtil.runReadAction(HaskellPsiUtil.findHighestDeclarationElementParent(element).flatMap(_.getIdentifierElements.find(_.getName == name)))).
+        orElse(ApplicationUtil.runReadAction(HaskellPsiUtil.findQualifiedNameParent(element).map(_.getIdentifierElement).find(_.getName == name)))
     } yield namedElement
 
     (psiFile.flatMap(HaskellPsiUtil.findModuleName), namedElement)
@@ -243,7 +233,9 @@ object HaskellReference {
 
   private def findIdentifiersByNameInfo(nameInfo: NameInfo, namedElement: HaskellNamedElement, project: Project): Option[HaskellNamedElement] = {
     nameInfo match {
-      case pni: ProjectNameInfo => findIdentifierByLocation(project, pni.filePath, pni.lineNr, pni.columnNr, namedElement.getName)._2
+      case pni: ProjectNameInfo =>
+        val psiFile = HaskellProjectUtil.findFile(pni.filePath, project)
+        findIdentifierByLocation(project, psiFile, pni.lineNr, pni.columnNr, namedElement.getName)._2
       case lni: LibraryNameInfo => findIdentifiersByLibraryNameInfo(project, HaskellProjectUtil.findModule(namedElement), lni, namedElement.getName).headOption
       case _ => None
     }

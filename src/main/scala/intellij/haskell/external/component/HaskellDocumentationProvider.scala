@@ -43,10 +43,10 @@ class HaskellDocumentationProvider extends AbstractDocumentationProvider {
           }
 
           (moduleName, typeSignature) match {
-            case (Some(mn), Some(ts)) => s"""$ts $DoubleNbsp -- $mn """
-            case (Some(mn), None) => s"""$mn $DoubleNbsp -- No type info available""" + (if (projectFile) " (at this moment)" else "")
-            case (None, Some(ts)) => s"""$ts $DoubleNbsp -- No module info available (at this moment)"""
-            case (None, None) => "No info available (at this moment)"
+            case (Some(mn), Some(ts)) => s"""$DoubleNbsp $ts $DoubleNbsp -- $mn """
+            case (Some(mn), None) => s"""$DoubleNbsp $mn $DoubleNbsp -- No type info available""" + (if (projectFile) " (at this moment)" else "")
+            case (None, Some(ts)) => s"""$DoubleNbsp $ts $DoubleNbsp -- No module info available (at this moment)"""
+            case (None, None) => s"${DoubleNbsp}No info available (at this moment)"
           }
         case _ => null
       }

@@ -41,7 +41,7 @@ private[component] object TypeInfoComponent {
     if (ApplicationUtil.runReadAction(element.isValid)) {
       (for {
         qne <- ApplicationUtil.runReadAction(HaskellPsiUtil.findQualifiedNameParent(element))
-        pf <- ApplicationUtil.runReadAction(Option(element.getContainingFile))
+        pf <- Option(element.getContainingFile)
       } yield {
         val moduleName = HaskellPsiUtil.findModuleName(pf)
         Key(moduleName, pf, qne, qne.getName)
@@ -56,8 +56,8 @@ private[component] object TypeInfoComponent {
     if (LoadComponent.isModuleLoaded(moduleName, psiFile)) {
       {
         for {
-          sp <- ApplicationUtil.runReadAction(LineColumnPosition.fromOffset(psiFile, selectionModel.getSelectionStart))
-          ep <- ApplicationUtil.runReadAction(LineColumnPosition.fromOffset(psiFile, selectionModel.getSelectionEnd))
+          sp <- LineColumnPosition.fromOffset(psiFile, selectionModel.getSelectionStart)
+          ep <- LineColumnPosition.fromOffset(psiFile, selectionModel.getSelectionEnd)
         } yield {
           StackReplsManager.getProjectRepl(psiFile).flatMap(_.findTypeInfo(moduleName, psiFile, sp.lineNr, sp.columnNr, ep.lineNr, ep.columnNr, selectionModel.getSelectedText)) match {
             case Some(output) => output.stdoutLines.headOption.filterNot(_.trim.isEmpty).map(ti => Right(TypeInfo(ti, output.stderrLines.nonEmpty))).getOrElse(Left(NoInfoAvailable))
@@ -129,11 +129,10 @@ private[component] object TypeInfoComponent {
     } else {
       {
         val qne = key.qualifiedNameElement
-        val project = key.psiFile.getProject
-        val to = ApplicationUtil.runReadActionWithWriteActionPriority(project, qne.getTextOffset)
+        val to = ApplicationUtil.runReadAction(qne.getTextOffset)
         for {
-          sp <- ApplicationUtil.runReadActionWithWriteActionPriority(project, LineColumnPosition.fromOffset(psiFile, to))
-          ep <- ApplicationUtil.runReadActionWithWriteActionPriority(project, LineColumnPosition.fromOffset(psiFile, to + qne.getText.length))
+          sp <- LineColumnPosition.fromOffset(psiFile, to)
+          ep <- LineColumnPosition.fromOffset(psiFile, to + ApplicationUtil.runReadAction(qne.getText).length)
         } yield {
 
           StackReplsManager.getProjectRepl(key.psiFile).flatMap(_.findTypeInfo(key.moduleName, key.psiFile, sp.lineNr, sp.columnNr, ep.lineNr, ep.columnNr, key.expression)) match {

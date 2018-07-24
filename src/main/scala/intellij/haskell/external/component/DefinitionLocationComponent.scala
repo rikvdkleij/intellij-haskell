@@ -95,8 +95,8 @@ private[component] object DefinitionLocationComponent {
     val qualifiedNameElement = key.qualifiedNameElement
     val name = key.name
     for {
-      sp <- ApplicationUtil.runReadActionWithWriteActionPriority(project, LineColumnPosition.fromOffset(psiFile, qualifiedNameElement.getTextRange.getStartOffset))
-      ep <- ApplicationUtil.runReadActionWithWriteActionPriority(project, LineColumnPosition.fromOffset(psiFile, qualifiedNameElement.getTextRange.getEndOffset))
+      sp <- LineColumnPosition.fromOffset(psiFile, qualifiedNameElement.getTextRange.getStartOffset)
+      ep <- LineColumnPosition.fromOffset(psiFile, qualifiedNameElement.getTextRange.getEndOffset)
       endColumnNr = if (withoutLastColumn) ep.columnNr - 1 else ep.columnNr
       repl <- StackReplsManager.getProjectRepl(psiFile)
       output <- repl.findLocationInfo(key.moduleName, psiFile, sp.lineNr, sp.columnNr, ep.lineNr, endColumnNr, name)
@@ -107,12 +107,13 @@ private[component] object DefinitionLocationComponent {
     val name = key.name
     val (moduleName, namedElement) = output match {
       case LocAtPattern(filePath, startLineNr, startColumnNr, _, _) =>
-        ApplicationUtil.runReadActionWithWriteActionPriority(project, HaskellReference.findIdentifierByLocation(project, filePath, startLineNr.toInt, startColumnNr.toInt, name))
+        val psiFile = HaskellProjectUtil.findFile(filePath, project)
+        HaskellReference.findIdentifierByLocation(project, psiFile, startLineNr.toInt, startColumnNr.toInt, name)
       case PackageModulePattern(mn) =>
         val module = HaskellProjectUtil.findModuleForFile(psiFile)
         val file = HaskellReference.findFileByModuleName(project, module, mn)
 
-        (Some(mn), file.flatMap(f => ApplicationUtil.runReadActionWithWriteActionPriority(project, HaskellReference.findIdentifiersInFileByName(f, name)).headOption))
+        (Some(mn), file.flatMap(f => HaskellReference.findIdentifierInFileByName(f, name)))
       case _ => (None, None)
     }
     namedElement match {
@@ -208,7 +209,12 @@ object LocationInfoUtil {
   }
 
   private def findNameElementsInExpression(project: Project, qualifiedNameElement: HaskellQualifiedNameElement) = {
-    ApplicationUtil.runReadActionWithWriteActionPriority(project, HaskellPsiUtil.findExpressionParent(qualifiedNameElement).map(HaskellPsiUtil.findQualifiedNamedElements)).getOrElse(Iterable())
+    val parent = ApplicationUtil.runReadAction(HaskellPsiUtil.findExpressionParent(qualifiedNameElement))
+    if (ApplicationUtil.runReadAction(parent.exists(_.isValid))) {
+      parent.map(p => ApplicationUtil.runReadAction(HaskellPsiUtil.findQualifiedNamedElements(p))).getOrElse(Iterable())
+    } else {
+      Iterable()
+    }
   }
 
   private def isPreloadValid(project: Project, qualifiedNameElement: HaskellQualifiedNameElement) = {

@@ -60,13 +60,12 @@ object HaskellFileUtil {
     Option(psiFile.getOriginalFile.getVirtualFile)
   }
 
-  def findDocument(virtualFile: VirtualFile): Option[Document] = {
-    val fileDocumentManager = FileDocumentManager.getInstance()
-    Option(ApplicationUtil.runReadAction(fileDocumentManager.getDocument(virtualFile)))
-  }
-
   def findDocument(psiFile: PsiFile): Option[Document] = {
-    findVirtualFile(psiFile).flatMap(vf => findDocument(vf))
+    for {
+      vf <- findVirtualFile(psiFile)
+      fileDocumentManager = FileDocumentManager.getInstance()
+      d <- ApplicationUtil.runReadAction(Option(fileDocumentManager.getDocument(vf)))
+    } yield d
   }
 
   def getAbsolutePath(psiFile: PsiFile): Option[String] = {
@@ -114,7 +113,7 @@ object HaskellFileUtil {
 
   def convertToHaskellFile(project: Project, virtualFile: VirtualFile): Option[HaskellFile] = {
     val psiManager = PsiManager.getInstance(project)
-    Option(psiManager.findFile(virtualFile)) match {
+    Option(ApplicationUtil.runReadAction(psiManager.findFile(virtualFile))) match {
       case Some(pf: HaskellFile) => Some(pf)
       case _ => None
     }

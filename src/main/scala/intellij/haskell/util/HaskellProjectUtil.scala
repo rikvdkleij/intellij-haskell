@@ -25,7 +25,7 @@ import com.intellij.openapi.roots.ProjectRootManager
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.vfs.{LocalFileSystem, VirtualFile}
 import com.intellij.psi.search.GlobalSearchScope
-import com.intellij.psi.{PsiElement, PsiFile, PsiManager}
+import com.intellij.psi.{PsiElement, PsiFile}
 import intellij.haskell.HaskellFile
 import intellij.haskell.external.execution.StackCommandLine
 import intellij.haskell.module.HaskellModuleType
@@ -52,10 +52,11 @@ object HaskellProjectUtil {
 
   def findFile(filePath: String, project: Project): Option[HaskellFile] = {
     val file = Option(LocalFileSystem.getInstance().findFileByPath(HaskellFileUtil.makeFilePathAbsolute(filePath, project)))
-    file.flatMap(f => Option(PsiManager.getInstance(project).findFile(f)).flatMap {
-      case f: HaskellFile => Some(f)
-      case _ => None
-    })
+    file.flatMap(f => HaskellFileUtil.convertToHaskellFile(project, f))
+  }
+
+  def findVirtualFile(filePath: String, project: Project): Option[VirtualFile] = {
+    Option(LocalFileSystem.getInstance().findFileByPath(HaskellFileUtil.makeFilePathAbsolute(filePath, project)))
   }
 
   // File can both project and library file in multi package projects

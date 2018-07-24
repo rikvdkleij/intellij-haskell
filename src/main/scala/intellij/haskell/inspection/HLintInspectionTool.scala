@@ -98,9 +98,7 @@ class HLintInspectionTool extends LocalInspectionTool {
   private def fromOffset(psiFile: PsiFile, psiElement: PsiElement): Option[Int] = {
     ProgressManager.checkCanceled()
 
-    ApplicationManager.getApplication.runReadAction(ScalaUtil.computable[Option[Int]] {
-      LineColumnPosition.fromOffset(psiFile, psiElement.getTextOffset).map(_.lineNr)
-    })
+    LineColumnPosition.fromOffset(psiFile, psiElement.getTextOffset).map(_.lineNr)
   }
 
   private def removeLineBreaksAndExtraSpaces(sl: Int, el: Int, s: String) = {

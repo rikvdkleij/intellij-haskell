@@ -140,9 +140,6 @@ abstract class StackRepl(project: Project, componentInfo: Option[StackComponentI
       }
 
       try {
-        stdoutResult.clear()
-        stderrResult.clear()
-
         cleanupOutputPreviousCommand()
 
         init()
@@ -196,8 +193,7 @@ abstract class StackRepl(project: Project, componentInfo: Option[StackComponentI
             stdoutResult
           }
           Some(StackReplOutput(convertOutputToOneMessagePerLine(project, removePrompt(result)), convertOutputToOneMessagePerLine(project, stderrResult)))
-        }
-        else {
+        } else {
           drainQueues()
           logError(s"No result from Stack REPL within $timeout. Command was: $command")
           exit(forceExit = true)
@@ -295,15 +291,13 @@ abstract class StackRepl(project: Project, componentInfo: Option[StackComponentI
             }
             logInfo("Stack REPL is started")
             available = true
-          } else {
-            if (hasDependencyError) {
-              if (!ProjectLibraryFileWatcher.isBuilding(project)) {
-                val target = componentInfo.map(_.target).getOrElse("-")
-                val error = stderrQueue.asScala.headOption.map(_.replace("<command line>:", "").trim).getOrElse("a dependency failed to build")
-                val message = s"Stack REPL could not be started for target `$target` because $error"
-                logInfo(message)
-                HaskellEditorUtil.showStatusBarBalloonMessage(project, message)
-              }
+          } else if (hasDependencyError) {
+            if (!ProjectLibraryFileWatcher.isBuilding(project)) {
+              val target = componentInfo.map(_.target).getOrElse("-")
+              val error = stderrQueue.asScala.headOption.map(_.replace("<command line>:", "").trim).getOrElse("a dependency failed to build")
+              val message = s"Stack REPL could not be started for target `$target` because $error"
+              logInfo(message)
+              HaskellEditorUtil.showStatusBarBalloonMessage(project, message)
             } else {
               logError(s"Stack REPL could not be started within $DefaultTimeout")
               writeOutputToLog()

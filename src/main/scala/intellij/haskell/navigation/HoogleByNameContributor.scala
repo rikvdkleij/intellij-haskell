@@ -23,7 +23,7 @@ import intellij.haskell.external.component.NameInfoComponentResult.{LibraryNameI
 import intellij.haskell.external.component._
 import intellij.haskell.psi.{HaskellDeclarationElement, HaskellPsiUtil}
 import intellij.haskell.util.index.HaskellModuleNameIndex
-import intellij.haskell.util.{ScalaUtil, StringUtil}
+import intellij.haskell.util.{HaskellProjectUtil, ScalaUtil, StringUtil}
 import javax.swing.Icon
 
 class HoogleByNameContributor extends ChooseByNameContributor {
@@ -63,11 +63,13 @@ class HoogleByNameContributor extends ChooseByNameContributor {
           val navigationItemByNameInfo = result.toOption.flatMap(_.headOption) match {
             case Some(lni: LibraryNameInfo) => HaskellReference.findIdentifiersByLibraryNameInfo(project, None, lni, name).
               headOption.flatMap(HaskellPsiUtil.findDeclarationElementParent).map(d => createLibraryNavigationItem(d, moduleName))
-            case Some(pni: ProjectNameInfo) => HaskellReference.findIdentifierByLocation(project, pni.filePath, pni.lineNr, pni.columnNr, name)._2.flatMap(HaskellPsiUtil.findDeclarationElementParent)
+            case Some(pni: ProjectNameInfo) =>
+              val psiFile = HaskellProjectUtil.findFile(pni.filePath, project)
+              HaskellReference.findIdentifierByLocation(project, psiFile, pni.lineNr, pni.columnNr, name)._2.flatMap(HaskellPsiUtil.findDeclarationElementParent)
             case _ => None
           }
           navigationItemByNameInfo.orElse {
-            val identifier = HaskellReference.findIdentifiersByModuleAndName(project, None, moduleName, name).headOption
+            val identifier = HaskellReference.findIdentifiersByModuleAndName(project, None, moduleName, name)
             if (identifier.isEmpty) {
               NotFoundResult(moduleName, declaration)
             } else {
