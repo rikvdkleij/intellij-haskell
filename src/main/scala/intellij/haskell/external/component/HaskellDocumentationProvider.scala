@@ -32,7 +32,7 @@ class HaskellDocumentationProvider extends AbstractDocumentationProvider {
       (Option(element), Option(originalElement)) match {
         case (Some(e), Some(oe)) =>
           val psiFile = Option(e.getContainingFile)
-          val moduleName =  psiFile.flatMap(HaskellPsiUtil.findModuleName)
+          val moduleName = psiFile.flatMap(HaskellPsiUtil.findModuleName)
           val originalPsiFile = Option(oe.getContainingFile)
           val projectFile = originalPsiFile.exists(HaskellProjectUtil.isProjectFile)
           val typeSignature = if (projectFile) {
@@ -63,31 +63,33 @@ class HaskellDocumentationProvider extends AbstractDocumentationProvider {
       (Option(element), Option(originalElement)) match {
         case (Some(e), Some(oe)) =>
           val project = e.getProject
-          val definedInSameFile = Option(e.getContainingFile) == Option(oe.getContainingFile)
           if (e.isInstanceOf[PsiFile]) {
             getQuickNavigateInfo(e, oe)
           } else {
-            HaskellPsiUtil.findQualifiedNameParent(oe) match {
-              case Some(qone) =>
-                val presentationText = HaskellPsiUtil.findNamedElement(e).map { ne =>
-                  Separator + "<code>" +
-                    HaskellPsiImplUtil.getItemPresentableText(ne, shortened = false).
-                      replace(" ", HtmlElement.Nbsp).
-                      replace("<", HtmlElement.Lt).
-                      replace(">", HtmlElement.Gt).
-                      replace("\n", HtmlElement.Break) +
-                    "</code>"
-                }.getOrElse("")
+            val definedInSameFile = Option(e.getContainingFile) == Option(oe.getContainingFile)
+            if (definedInSameFile) {
+              getQuickNavigateInfo(e, oe)
+            } else {
+              HaskellPsiUtil.findQualifiedNameParent(oe) match {
+                case Some(qone) =>
+                  val presentationText = HaskellPsiUtil.findNamedElement(e).flatMap { ne =>
+                    if (HaskellPsiUtil.findExpressionParent(ne).isDefined || HaskellPsiUtil.findTypeSignatureDeclarationParent(ne).isDefined) {
+                      None
+                    } else {
+                      Some(DoubleNbsp + "<code>" +
+                        HaskellPsiImplUtil.getItemPresentableText(ne, shortened = false).
+                          replace(" ", HtmlElement.Nbsp).
+                          replace("<", HtmlElement.Lt).
+                          replace(">", HtmlElement.Gt).
+                          replace("\n", HtmlElement.Break) +
+                        "</code>")
+                    }
+                  }
 
-                val documentationText = if (definedInSameFile) {
-                  ""
-                } else {
-                  Separator + HoogleComponent.findDocumentation(project, qone).getOrElse("No documentation found")
-                }
-
-                getQuickNavigateInfo(e, oe) + presentationText + documentationText
-
-              case _ => getQuickNavigateInfo(e, oe)
+                  val documentationText = HoogleComponent.findDocumentation(project, qone).getOrElse("No documentation found")
+                  (documentationText + Separator + getQuickNavigateInfo(e, oe) + presentationText.map(t => Separator + t).getOrElse("")) + Separator
+                case _ => getQuickNavigateInfo(e, oe)
+              }
             }
           }
         case _ => null
