@@ -64,7 +64,7 @@ object HaskellFileUtil {
     for {
       vf <- findVirtualFile(psiFile)
       fileDocumentManager = FileDocumentManager.getInstance()
-      d <- ApplicationUtil.runReadAction(Option(fileDocumentManager.getDocument(vf)))
+      d <- Option(fileDocumentManager.getCachedDocument(vf))
     } yield d
   }
 
