@@ -19,7 +19,6 @@ package intellij.haskell.external.component
 import com.intellij.openapi.actionSystem.ActionManager
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.components.ProjectComponent
-import com.intellij.openapi.fileEditor.FileEditorManager
 import com.intellij.openapi.progress.{PerformInBackgroundOption, ProgressIndicator, ProgressManager, Task}
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.roots.{ModifiableRootModel, ModuleRootModificationUtil}
@@ -185,15 +184,9 @@ object StackProjectManager {
 
               // Force to load the module in REPL when REPL can be started. It could have happen that IntelliJ wanted to load file (via HaskellAnnotator)
               // but REPL could not be started.
-              FileEditorManager.getInstance(project).getSelectedFiles.find(f => HaskellProjectUtil.isProjectFile(f, project)).foreach { vf =>
-                HaskellFileUtil.convertToHaskellFile(project, vf).foreach(psiFile => {
-                  if (!LoadComponent.isFileLoaded(psiFile)) {
-                    HaskellNotificationGroup.logInfoEvent(project, s"${psiFile.getName} will be forced loaded")
-                    HaskellAnnotator.restartDaemonCodeAnalyzerForFile(psiFile)
-                  } else {
-                    HaskellAnnotator.restartDaemonCodeAnalyzerForFile(psiFile)
-                  }
-                })
+              HaskellAnnotator.NotLoadedFile.remove(project) foreach { psiFile =>
+                HaskellNotificationGroup.logInfoEvent(project, s"${psiFile.getName} will be forced loaded")
+                HaskellAnnotator.restartDaemonCodeAnalyzerForFile(psiFile)
               }
 
               progressIndicator.setText("Busy with downloading library sources")

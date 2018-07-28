@@ -22,13 +22,12 @@ import com.intellij.execution.filters._
 import com.intellij.execution.process.ProcessHandler
 import com.intellij.execution.ui.ConsoleViewContentType
 import com.intellij.openapi.command.WriteCommandAction
-import com.intellij.openapi.project.{DumbService, Project, ProjectManager}
+import com.intellij.openapi.project.{Project, ProjectManager}
 import com.intellij.openapi.util.Key
 import com.intellij.psi.PsiFile
 import com.intellij.psi.search.GlobalSearchScope
 import com.intellij.util.DocumentUtil
 import intellij.haskell.runconfig.console.HaskellConsoleHighlightingUtil.LambdaArrow
-import intellij.haskell.util.ScalaUtil
 import intellij.haskell.util.index.HaskellModuleNameIndex
 import intellij.haskell.{HaskellFileType, HaskellNotificationGroup}
 
@@ -95,10 +94,8 @@ class HaskellConsoleView(val project: Project, val configuration: HaskellConsole
   def executeCommand(commandText: String, addToHistory: Boolean = true): Unit = {
     commandText.trim() match {
       case LoadPattern(moduleName) =>
-        val haskellFile = Option(DumbService.getInstance(project).tryRunReadActionInSmartMode(ScalaUtil.computable(
-          HaskellModuleNameIndex.findHaskellFileByModuleName(project, moduleName, GlobalSearchScope.projectScope(project))
-        ), "Haskell console features not available until indices are ready")).flatten
-        haskellFile.foreach(hf => HaskellConsoleViewMap.projectFileByConfigName.put(configuration.getName, hf))
+        val psiFile = HaskellModuleNameIndex.findHaskellFileByModuleName(project, moduleName, GlobalSearchScope.projectScope(project))
+        psiFile.foreach(hf => HaskellConsoleViewMap.projectFileByConfigName.put(configuration.getName, hf))
       case _ => ()
     }
 

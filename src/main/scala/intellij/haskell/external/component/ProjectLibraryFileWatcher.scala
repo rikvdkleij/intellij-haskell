@@ -99,7 +99,7 @@ class ProjectLibraryFileWatcher(project: Project) extends BulkFileListener {
                     (dependentRepls ++ dependentLibRepls).foreach(_.restart())
 
                     (dependentFiles ++ dependentLibFiles).foreach { vf =>
-                      HaskellFileUtil.convertToHaskellFile(project, vf).foreach { psiFile =>
+                      HaskellFileUtil.convertToHaskellFileInReadAction(project, vf).foreach { psiFile =>
                         HaskellComponentsManager.invalidateLocationAndTypeInfo(psiFile)
                         HaskellAnnotator.restartDaemonCodeAnalyzerForFile(psiFile)
                       }

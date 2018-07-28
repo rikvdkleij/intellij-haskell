@@ -62,7 +62,7 @@ private[component] object AvailableModuleNamesComponent {
   private def findModuleNamesInDirectories(project: Project, module: Module, includeTests: Boolean): Iterable[String] = {
     for {
       vf <- FileTypeIndex.getFiles(HaskellFileType.Instance, module.getModuleScope(includeTests)).asScala
-      hf <- HaskellFileUtil.convertToHaskellFile(project, vf)
+      hf <- HaskellFileUtil.convertToHaskellFileInReadAction(project, vf)
       mn <- HaskellPsiUtil.findModuleName(hf)
     } yield mn
   }

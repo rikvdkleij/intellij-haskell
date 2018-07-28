@@ -16,6 +16,8 @@
 
 package intellij.haskell.annotator
 
+import java.util.concurrent.ConcurrentHashMap
+
 import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer
 import com.intellij.codeInsight.daemon.impl._
 import com.intellij.codeInsight.intention.impl.BaseIntentionAction
@@ -32,7 +34,7 @@ import com.intellij.psi.impl.source.tree.TreeUtil
 import com.intellij.psi.util.PsiTreeUtil
 import com.intellij.psi.{PsiElement, PsiFile}
 import intellij.haskell.editor.{HaskellImportOptimizer, HaskellProblemsView}
-import intellij.haskell.external.component._
+import intellij.haskell.external.component.{StackProjectManager, _}
 import intellij.haskell.external.execution._
 import intellij.haskell.psi._
 import intellij.haskell.runconfig.console.HaskellConsoleView
@@ -46,7 +48,13 @@ import scala.collection.JavaConverters._
 class HaskellAnnotator extends ExternalAnnotator[(PsiFile, Option[PsiElement]), CompilationResult] {
 
   override def collectInformation(psiFile: PsiFile, editor: Editor, hasErrors: Boolean): (PsiFile, Option[PsiElement]) = {
-    if (HaskellConsoleView.isConsoleFile(psiFile) || StackProjectManager.isBuilding(psiFile.getProject) || HaskellProjectUtil.isLibraryFile(psiFile)) {
+    if (HaskellConsoleView.isConsoleFile(psiFile) || HaskellProjectUtil.isLibraryFile(psiFile)) {
+      null
+    } else if (StackProjectManager.isBuilding(psiFile.getProject)) {
+      val project = psiFile.getProject
+      // Last file is leading
+      HaskellNotificationGroup.logInfoEvent(project, s"File ${psiFile.getName} could not be loaded because project was still building")
+      HaskellAnnotator.NotLoadedFile.put(project, psiFile)
       null
     } else {
       (psiFile, HaskellFileUtil.findVirtualFile(psiFile)) match {
@@ -140,6 +148,9 @@ object HaskellAnnotator {
 
   private final val HolePattern = """.* Found hole: (.+) Where: .*""".r
   private final val HolePattern2 = """.* Found hole [`‘]([^‘’'`]+)['’] with type: ([^ ]+) .*""".r
+
+  // File which could not be loaded because project was not yet build
+  final val NotLoadedFile = new ConcurrentHashMap[Project, PsiFile].asScala
 
   def getDaemonCodeAnalyzer(project: Project): DaemonCodeAnalyzerImpl = {
     DaemonCodeAnalyzer.getInstance(project).asInstanceOf[DaemonCodeAnalyzerImpl]

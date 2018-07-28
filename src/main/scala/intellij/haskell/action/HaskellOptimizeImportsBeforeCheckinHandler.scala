@@ -80,7 +80,7 @@ class HaskellOptimizeImportsBeforeCheckinHandler(project: Project, checkinProjec
     }
 
     if (HaskellSettingsState.isReformatCodeBeforeCommit && !DumbService.isDumb(project)) {
-      val reformatResult = virtualFiles.asScala.forall(vf => HaskellFileUtil.convertToHaskellFile(project, vf).exists(HaskellImportOptimizer.removeRedundantImports))
+      val reformatResult = virtualFiles.asScala.forall(vf => HaskellFileUtil.convertToHaskellFileInReadAction(project, vf).exists(HaskellImportOptimizer.removeRedundantImports))
       if (reformatResult) {
         performCheckoutAction.run()
       }

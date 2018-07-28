@@ -31,8 +31,8 @@ import com.intellij.openapi.util.SystemInfo
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.vfs.{LocalFileSystem, VirtualFile, VirtualFileManager}
 import com.intellij.psi.{PsiDocumentManager, PsiFile, PsiManager}
+import intellij.haskell.HaskellFileType
 import intellij.haskell.action.SelectionContext
-import intellij.haskell.{HaskellFile, HaskellFileType}
 
 object HaskellFileUtil {
 
@@ -95,26 +95,32 @@ object HaskellFileUtil {
       Paths.get(parentFilePath, filePath).toAbsolutePath.normalize().toString
   }
 
-  def convertToHaskellFiles(project: Project, virtualFiles: Iterable[VirtualFile]): Iterable[HaskellFile] = {
+  def convertToHaskellFiles(project: Project, virtualFiles: Iterable[VirtualFile]): Iterable[PsiFile] = {
     if (project.isDisposed) {
       Iterable()
     } else {
       val psiManager = PsiManager.getInstance(project)
-      virtualFiles.flatMap(vf => convertToHaskellFile(vf, psiManager))
+      virtualFiles.flatMap(vf => findFile(psiManager, vf) match {
+        case Some(pf) => Some(pf)
+        case _ => None
+      })
     }
   }
 
-  def convertToHaskellFile(virtualFile: VirtualFile, psiManager: PsiManager): Option[HaskellFile] = {
-    Option(psiManager.findFile(virtualFile)) match {
-      case Some(pf: HaskellFile) => Some(pf)
-      case _ => None
-    }
+  private def findFile(psiManager: PsiManager, virtualFile: VirtualFile): Option[PsiFile] = {
+    Option(psiManager.findFile(virtualFile))
   }
 
-  def convertToHaskellFile(project: Project, virtualFile: VirtualFile): Option[HaskellFile] = {
+  def convertToHaskellFileInReadAction(project: Project, virtualFile: VirtualFile): Option[PsiFile] = {
     val psiManager = PsiManager.getInstance(project)
-    Option(ApplicationUtil.runReadAction(psiManager.findFile(virtualFile))) match {
-      case Some(pf: HaskellFile) => Some(pf)
+
+    val result = if (ApplicationManager.getApplication.isDispatchThread) {
+      Right(findFile(psiManager, virtualFile))
+    } else {
+      ApplicationUtil.runInReadActionWithWriteActionPriority(project, findFile(psiManager, virtualFile))
+    }
+    result match {
+      case Right(pf) => pf
       case _ => None
     }
   }

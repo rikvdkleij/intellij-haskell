@@ -21,8 +21,8 @@ import com.intellij.openapi.project.{IndexNotReadyException, Project}
 import com.intellij.psi.PsiFile
 import com.intellij.psi.search.GlobalSearchScope
 import intellij.haskell.external.repl._
+import intellij.haskell.util.StringUtil
 import intellij.haskell.util.index.HaskellModuleNameIndex
-import intellij.haskell.util.{ApplicationUtil, StringUtil}
 
 import scala.concurrent.{ExecutionContext, Future}
 
@@ -47,7 +47,7 @@ private[component] object BrowseModuleComponent {
       psiFile match {
         case None =>
           val projectPsiFile = try {
-            Right(ApplicationUtil.runReadAction(HaskellModuleNameIndex.findHaskellFileByModuleName(project, moduleName, GlobalSearchScope.projectScope(project))))
+           Right(HaskellModuleNameIndex.findHaskellFileByModuleName(project, moduleName, GlobalSearchScope.projectScope(project)))
           } catch {
             case _: IndexNotReadyException => Left("Indices not ready")
           }

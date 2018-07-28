@@ -18,6 +18,7 @@ package intellij.haskell.external.repl
 
 import java.util.concurrent.ConcurrentHashMap
 
+import com.intellij.openapi.fileEditor.FileDocumentManager
 import com.intellij.openapi.project.Project
 import com.intellij.psi.PsiFile
 import intellij.haskell.HaskellNotificationGroup
@@ -95,8 +96,14 @@ class ProjectStackRepl(project: Project, stackComponentInfo: StackComponentInfo,
   def load(psiFile: PsiFile): Option[(StackReplOutput, Boolean)] = {
     val filePath = getFilePath(psiFile)
     synchronized {
-      val loaded = isFileLoaded(psiFile)
-      val reload = loaded == Loaded || loaded == Failed
+      val fileChanged = HaskellFileUtil.findVirtualFile(psiFile).exists(FileDocumentManager.getInstance().isFileModified)
+      val reload = if (fileChanged) {
+        val loaded = isFileLoaded(psiFile)
+        loaded == Loaded || loaded == Failed
+      } else {
+        HaskellNotificationGroup.logInfoEvent(project, s"No reload of file ${psiFile.getName} because this fils is not changed")
+        false
+      }
       val output = if (reload) {
         HaskellNotificationGroup.logInfoEvent(project, s"Reload of $filePath")
         executeWithSettingBusy(Seq(s":reload"), load = Some(psiFile))

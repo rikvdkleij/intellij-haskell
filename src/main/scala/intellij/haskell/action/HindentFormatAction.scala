@@ -104,9 +104,7 @@ object HindentFormatAction {
   }
 
   private def getSelectedText(selectionModel: SelectionModel) = {
-    ApplicationManager.getApplication.runReadAction(ScalaUtil.computable {
-      selectionModel.getSelectedText
-    })
+    selectionModel.getSelectedText
   }
 
   private def writeToHindent(command: Seq[String], sourceCode: String): Either[String, String] = {

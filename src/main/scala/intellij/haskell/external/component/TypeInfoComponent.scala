@@ -38,9 +38,9 @@ private[component] object TypeInfoComponent {
   private final val Cache: AsyncLoadingCache[Key, TypeInfoResult] = Scaffeine().buildAsync((k: Key) => findTypeInfoResult(k))
 
   def findTypeInfoForElement(element: PsiElement): TypeInfoResult = {
-    if (ApplicationUtil.runReadAction(element.isValid)) {
+    if (element.isValid) {
       (for {
-        qne <- ApplicationUtil.runReadAction(HaskellPsiUtil.findQualifiedNameParent(element))
+        qne <- HaskellPsiUtil.findQualifiedNameParent(element)
         pf <- Option(element.getContainingFile)
       } yield {
         val moduleName = HaskellPsiUtil.findModuleName(pf)

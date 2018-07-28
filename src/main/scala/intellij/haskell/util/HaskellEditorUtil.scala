@@ -165,8 +165,8 @@ object HaskellEditorUtil {
     })
   }
 
-  def findCurrentEditorFile(project: Project): Option[HaskellFile] = {
-    Option(FileEditorManagerEx.getInstanceEx(project).getCurrentFile).flatMap(vf => HaskellFileUtil.convertToHaskellFile(project, vf))
+  def findCurrentEditorFile(project: Project): Option[PsiFile] = {
+    Option(FileEditorManagerEx.getInstanceEx(project).getCurrentFile).flatMap(vf => HaskellFileUtil.convertToHaskellFileInReadAction(project, vf))
   }
 
   def findCurrentElement(psiFile: PsiFile): Option[PsiElement] = {

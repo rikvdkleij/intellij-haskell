@@ -137,7 +137,8 @@ private[component] object DefinitionLocationComponent {
 
     val project = psiFile.getProject
     val moduleName = HaskellPsiUtil.findModuleName(psiFile)
-    val name = ApplicationUtil.runReadAction(qualifiedNameElement.getIdentifierElement.getName)
+    val identifierElement = qualifiedNameElement.getIdentifierElement
+    val name = ApplicationUtil.runReadAction(identifierElement.getName)
     val key = Key(psiFile, moduleName, qualifiedNameElement, name)
 
     if (initialRequest && LoadComponent.isModuleLoaded(moduleName, psiFile)) {
@@ -209,7 +210,7 @@ object LocationInfoUtil {
   }
 
   private def findNameElementsInExpression(project: Project, qualifiedNameElement: HaskellQualifiedNameElement) = {
-    val parent = ApplicationUtil.runReadAction(HaskellPsiUtil.findExpressionParent(qualifiedNameElement))
+    val parent = HaskellPsiUtil.findExpressionParent(qualifiedNameElement, inReadAction = true)
     if (ApplicationUtil.runReadAction(parent.exists(_.isValid))) {
       parent.map(p => ApplicationUtil.runReadAction(HaskellPsiUtil.findQualifiedNamedElements(p))).getOrElse(Iterable())
     } else {

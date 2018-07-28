@@ -18,14 +18,16 @@ package intellij.haskell.util.index
 
 import java.util.Collections
 
+import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.vfs.VirtualFile
+import com.intellij.psi.PsiFile
 import com.intellij.psi.search.GlobalSearchScope
 import com.intellij.util.indexing._
 import com.intellij.util.io.{EnumeratorStringDescriptor, KeyDescriptor}
+import intellij.haskell.HaskellFileType
 import intellij.haskell.psi.HaskellPsiUtil
-import intellij.haskell.util.HaskellFileUtil
-import intellij.haskell.{HaskellFile, HaskellFileType}
+import intellij.haskell.util.{ApplicationUtil, HaskellFileUtil}
 
 import scala.collection.JavaConverters._
 
@@ -44,18 +46,26 @@ object HaskellModuleNameIndex {
     }
   }
 
-  def findHaskellFileByModuleName(project: Project, moduleName: String, searchScope: GlobalSearchScope): Option[HaskellFile] = {
+  def findHaskellFileByModuleName(project: Project, moduleName: String, searchScope: GlobalSearchScope): Option[PsiFile] = {
     val virtualFile = findFilesByModuleName(project, moduleName, searchScope).headOption
-    virtualFile.flatMap(vf => HaskellFileUtil.convertToHaskellFile(project, vf))
+    virtualFile.flatMap(vf => HaskellFileUtil.convertToHaskellFileInReadAction(project, vf))
   }
 
-  def findHaskellFilesByModuleNameInAllScope(project: Project, moduleName: String): Iterable[HaskellFile] = {
+  def findHaskellFilesByModuleNameInAllScope(project: Project, moduleName: String): Iterable[PsiFile] = {
     HaskellFileUtil.convertToHaskellFiles(project, findFilesByModuleName(project, moduleName, GlobalSearchScope.allScope(project)))
   }
 
-  // Throws exception when index is not ready
   private def findFilesByModuleName(project: Project, moduleName: String, searchScope: GlobalSearchScope): Iterable[VirtualFile] = {
-    FileBasedIndex.getInstance.getContainingFiles(HaskellModuleNameIndex, moduleName, searchScope).asScala
+    val result =
+      if (ApplicationManager.getApplication.isDispatchThread) {
+        FileBasedIndex.getInstance.getContainingFiles(HaskellModuleNameIndex, moduleName, searchScope).asScala
+      } else {
+        ApplicationUtil.runInReadActionWithWriteActionPriority(project, FileBasedIndex.getInstance.getContainingFiles(HaskellModuleNameIndex, moduleName, searchScope)) match {
+          case Right(files) => files.asScala
+          case Left(_) => Iterable()
+        }
+      }
+    result
   }
 }
 

@@ -26,7 +26,6 @@ import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.vfs.{LocalFileSystem, VirtualFile}
 import com.intellij.psi.search.GlobalSearchScope
 import com.intellij.psi.{PsiElement, PsiFile}
-import intellij.haskell.HaskellFile
 import intellij.haskell.external.execution.StackCommandLine
 import intellij.haskell.module.HaskellModuleType
 import intellij.haskell.sdk.HaskellSdkType
@@ -50,9 +49,9 @@ object HaskellProjectUtil {
     findProjectModules(project).nonEmpty
   }
 
-  def findFile(filePath: String, project: Project): Option[HaskellFile] = {
+  def findFile(filePath: String, project: Project): Option[PsiFile] = {
     val file = Option(LocalFileSystem.getInstance().findFileByPath(HaskellFileUtil.makeFilePathAbsolute(filePath, project)))
-    file.flatMap(f => HaskellFileUtil.convertToHaskellFile(project, f))
+    file.flatMap(f => HaskellFileUtil.convertToHaskellFileInReadAction(project, f))
   }
 
   def findVirtualFile(filePath: String, project: Project): Option[VirtualFile] = {
@@ -73,11 +72,7 @@ object HaskellProjectUtil {
   }
 
   def isProjectFile(virtualFile: VirtualFile, project: Project): Boolean = {
-    if (project.isDisposed) {
-      false
-    } else {
-      FileUtil.isAncestor(Paths.get(project.getBasePath).toFile, Paths.get(virtualFile.getPath).toFile, true)
-    }
+    FileUtil.isAncestor(Paths.get(project.getBasePath).toFile, Paths.get(virtualFile.getPath).toFile, true)
   }
 
   def getModuleDir(module: Module): File = {

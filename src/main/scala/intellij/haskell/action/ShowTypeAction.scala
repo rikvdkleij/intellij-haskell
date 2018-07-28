@@ -17,7 +17,6 @@
 package intellij.haskell.action
 
 import com.intellij.openapi.actionSystem.{AnAction, AnActionEvent}
-import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.project.Project
 import com.intellij.psi.{PsiElement, PsiFile}
@@ -25,7 +24,7 @@ import intellij.haskell.HaskellNotificationGroup
 import intellij.haskell.editor.HaskellCompletionContributor
 import intellij.haskell.external.component.{HaskellComponentsManager, StackProjectManager}
 import intellij.haskell.psi._
-import intellij.haskell.util.{HaskellEditorUtil, ScalaUtil, StringUtil}
+import intellij.haskell.util.{HaskellEditorUtil, StringUtil}
 
 class ShowTypeAction extends AnAction {
 
@@ -72,14 +71,14 @@ object ShowTypeAction {
       case Right(info) =>
         val typeSignatureFromScope =
           if (info.withFailure) {
-            findTypeSignatureFromScopeInReadAction(psiFile, psiElement)
+            findTypeSignatureFromScope(psiFile, psiElement)
           } else {
             None
           }
         typeSignatureFromScope.getOrElse(info.typeSignature)
 
       case Left(noInfo) =>
-        findTypeSignatureFromScopeInReadAction(psiFile, psiElement) match {
+        findTypeSignatureFromScope(psiFile, psiElement) match {
           case Some(typeSignature) => typeSignature
           case None =>
             val message = s"Could not determine type for `${psiElement.getText}`. ${noInfo.message}"
@@ -87,10 +86,6 @@ object ShowTypeAction {
             message
         }
     }
-  }
-
-  private def findTypeSignatureFromScopeInReadAction(psiFile: PsiFile, psiElement: PsiElement) = {
-    ApplicationManager.getApplication.runReadAction(ScalaUtil.computable(findTypeSignatureFromScope(psiFile, psiElement)))
   }
 
   private def showTypeSignatureAsHint(project: Project, editor: Editor, sticky: Boolean, typeSignature: String) = {

@@ -19,12 +19,12 @@ package intellij.haskell.navigation
 import com.intellij.openapi.fileEditor.FileEditorManager
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.progress.ProgressManager
-import com.intellij.openapi.project.{IndexNotReadyException, Project}
+import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.TextRange
 import com.intellij.psi._
 import com.intellij.psi.search.GlobalSearchScope
 import com.intellij.psi.util.PsiTreeUtil
-import intellij.haskell.HaskellFile
+import intellij.haskell.HaskellNotificationGroup
 import intellij.haskell.external.component.NameInfoComponentResult.{LibraryNameInfo, NameInfo, ProjectNameInfo}
 import intellij.haskell.external.component._
 import intellij.haskell.psi._
@@ -133,13 +133,11 @@ class HaskellReference(element: HaskellNamedElement, textRange: TextRange) exten
     val project = psiFile.getProject
 
     def noNavigationMessage(noInfo: NoInfo) = {
-      val message = s"Navigation is not available at this moment" + {
-        noInfo match {
-          case ReplIsBusy => ""
-          case info => ": " + info.message
-        }
+      val message = s"Navigation is not available at this moment"
+      noInfo match {
+        case ReplIsBusy => HaskellEditorUtil.showStatusBarBalloonMessage(project, message)
+        case info => HaskellNotificationGroup.logInfoEvent(project, message + ": " + info.message)
       }
-      HaskellEditorUtil.showStatusBarBalloonMessage(project, message)
     }
 
     val isCurrentSelectedFile = HaskellFileUtil.findVirtualFile(psiFile).exists(vf => FileEditorManager.getInstance(project).getSelectedFiles.headOption.contains(vf))
@@ -157,7 +155,7 @@ class HaskellReference(element: HaskellNamedElement, textRange: TextRange) exten
       orElse(importDeclarations.filter(id => Option(id.getImportQualified).isDefined && Option(id.getImportQualifiedAs).isEmpty).find(mi => Option(mi.getModid).map(_.getName).contains(qualifierElement.getName)).map(_.getModid))
   }
 
-  private def findHaskellFiles(importDeclarations: Iterable[HaskellImportDeclaration], qualifierElement: HaskellQualifierElement, project: Project): Iterable[HaskellFile] = {
+  private def findHaskellFiles(importDeclarations: Iterable[HaskellImportDeclaration], qualifierElement: HaskellQualifierElement, project: Project): Iterable[PsiFile] = {
     importDeclarations.flatMap(id => Option(id.getModid).toIterable).find(_.getName == qualifierElement.getName).
       flatMap(mi => HaskellReference.findHaskellFileByModuleNameIndex(project, mi.getName, GlobalSearchScope.allScope(project)))
   }
@@ -165,12 +163,8 @@ class HaskellReference(element: HaskellNamedElement, textRange: TextRange) exten
 
 object HaskellReference {
 
-  private def findHaskellFileByModuleNameIndex(project: Project, moduleName: String, scope: GlobalSearchScope): Option[HaskellFile] = {
-    try {
-      ApplicationUtil.runReadAction(HaskellModuleNameIndex.findHaskellFileByModuleName(project, moduleName, scope))
-    } catch {
-      case _: IndexNotReadyException => None
-    }
+  private def findHaskellFileByModuleNameIndex(project: Project, moduleName: String, scope: GlobalSearchScope): Option[PsiFile] = {
+    HaskellModuleNameIndex.findHaskellFileByModuleName(project, moduleName, scope)
   }
 
   def resolveInstanceReferences(project: Project, namedElement: HaskellNamedElement, nameInfos: Iterable[NameInfoComponentResult.NameInfo]): Seq[HaskellNamedElement] = {
@@ -187,14 +181,15 @@ object HaskellReference {
     })
   }
 
-  def findIdentifierInFileByName(file: HaskellFile, name: String): Option[HaskellNamedElement] = {
+  def findIdentifierInFileByName(file: PsiFile, name: String): Option[HaskellNamedElement] = {
     import scala.collection.JavaConverters._
 
     val topLevelExpressions = ApplicationUtil.runReadAction(HaskellPsiUtil.findTopLevelExpressions(file))
-    val expressionIdentifiers = ApplicationUtil.runReadAction(topLevelExpressions.filterNot(_.getText.startsWith("infix")).flatMap(_.getQNameList.asScala.headOption.map(_.getIdentifierElement)).filter(_.getName == name))
+    val expressionIdentifiers = topLevelExpressions.flatMap(tle => tle.getQNameList.asScala.headOption.map(_.getIdentifierElement)).
+      filter(e => ApplicationUtil.runReadAction(e.getName) == name)
 
     if (expressionIdentifiers.isEmpty) {
-      val declarationElements = ApplicationUtil.runReadAction(HaskellPsiUtil.findHaskellDeclarationElements(file))
+      val declarationElements = HaskellPsiUtil.findHaskellDeclarationElements(file, inReadAction = true)
       val declarationIdentifiers = declarationElements.flatMap(_.getIdentifierElements).filter(e => ApplicationUtil.runReadAction(e.getName) == name)
 
       declarationIdentifiers.toSeq.sortWith(sortByClassDeclarationFirst).headOption
@@ -208,9 +203,9 @@ object HaskellReference {
       pf <- psiFile
       offset <- LineColumnPosition.getOffset(pf, LineColumnPosition(lineNr, columnNr))
       element <- ApplicationUtil.runReadAction(Option(pf.findElementAt(offset)))
-      namedElement <- ApplicationUtil.runReadAction(HaskellPsiUtil.findNamedElement(element).find(_.getName == name)).
-        orElse(ApplicationUtil.runReadAction(HaskellPsiUtil.findHighestDeclarationElementParent(element).flatMap(_.getIdentifierElements.find(_.getName == name)))).
-        orElse(ApplicationUtil.runReadAction(HaskellPsiUtil.findQualifiedNameParent(element).map(_.getIdentifierElement).find(_.getName == name)))
+      namedElement <- ApplicationUtil.runReadAction(HaskellPsiUtil.findNamedElement(element)).find(e => ApplicationUtil.runReadAction(e.getName) == name).
+        orElse(ApplicationUtil.runReadAction(HaskellPsiUtil.findHighestDeclarationElementParent(element)).flatMap(_.getIdentifierElements.find(e => ApplicationUtil.runReadAction(e.getName) == name))).
+        orElse(ApplicationUtil.runReadAction(HaskellPsiUtil.findQualifiedNameParent(element)).map(_.getIdentifierElement).find(e => ApplicationUtil.runReadAction(e.getName) == name))
     } yield namedElement
 
     (psiFile.flatMap(HaskellPsiUtil.findModuleName), namedElement)
@@ -223,7 +218,7 @@ object HaskellReference {
     }
   }
 
-  def findFileByModuleName(project: Project, module: Option[Module], moduleName: String): Option[HaskellFile] = {
+  def findFileByModuleName(project: Project, module: Option[Module], moduleName: String): Option[PsiFile] = {
     module match {
       case None => HaskellReference.findHaskellFileByModuleNameIndex(project, moduleName, GlobalSearchScope.allScope(project))
       case Some(m) => HaskellReference.findHaskellFileByModuleNameIndex(project, moduleName, m.getModuleWithDependenciesAndLibrariesScope(true))

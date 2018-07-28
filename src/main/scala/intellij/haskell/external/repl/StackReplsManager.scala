@@ -21,7 +21,6 @@ import java.util.concurrent.ConcurrentHashMap
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.util.Computable
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.psi.PsiFile
 import intellij.haskell.HaskellNotificationGroup
@@ -30,7 +29,7 @@ import intellij.haskell.external.component._
 import intellij.haskell.external.repl.StackRepl._
 import intellij.haskell.external.repl.StackReplsManager.StackComponentInfo
 import intellij.haskell.settings.HaskellSettingsState
-import intellij.haskell.util.{HaskellEditorUtil, HaskellFileUtil, HaskellProjectUtil, ScalaUtil}
+import intellij.haskell.util._
 
 private[external] object StackReplsManager {
 
@@ -83,12 +82,14 @@ private[external] object StackReplsManager {
   }
 
   private def createStackComponentInfo(project: Project, moduleCabalInfos: Iterable[(Module, CabalInfo)]): Iterable[StackComponentInfo] = {
-    moduleCabalInfos.flatMap { case (m: Module, cabalInfo: CabalInfo) => cabalInfo.cabalStanzas.map {
-      case cs: LibraryCabalStanza => StackComponentInfo(m, cs.packageName, cs.targetName, LibType, cs.sourceDirs, None)
-      case cs: ExecutableCabalStanza => StackComponentInfo(m, cs.packageName, cs.targetName, ExeType, cs.sourceDirs, cs.mainIs)
-      case cs: TestSuiteCabalStanza => StackComponentInfo(m, cs.packageName, cs.targetName, TestSuiteType, cs.sourceDirs, cs.mainIs)
-      case cs: BenchmarkCabalStanza => StackComponentInfo(m, cs.packageName, cs.targetName, BenchmarkType, cs.sourceDirs, cs.mainIs)
-    }}
+    moduleCabalInfos.flatMap {
+      case (m: Module, cabalInfo: CabalInfo) => cabalInfo.cabalStanzas.map {
+        case cs: LibraryCabalStanza => StackComponentInfo(m, cs.packageName, cs.targetName, LibType, cs.sourceDirs, None)
+        case cs: ExecutableCabalStanza => StackComponentInfo(m, cs.packageName, cs.targetName, ExeType, cs.sourceDirs, cs.mainIs)
+        case cs: TestSuiteCabalStanza => StackComponentInfo(m, cs.packageName, cs.targetName, TestSuiteType, cs.sourceDirs, cs.mainIs)
+        case cs: BenchmarkCabalStanza => StackComponentInfo(m, cs.packageName, cs.targetName, BenchmarkType, cs.sourceDirs, cs.mainIs)
+      }
+    }
   }
 
   case class StackComponentInfo(module: Module, packageName: String, target: String, stanzaType: StanzaType, sourceDirs: Seq[String], mainIs: Option[String])
@@ -141,11 +142,7 @@ private[external] class StackReplsManager(val project: Project) {
   }
 
   private def findContainingDirectory(psiFile: PsiFile): Option[VirtualFile] = {
-    ApplicationManager.getApplication.runReadAction(new Computable[Option[VirtualFile]] {
-      override def compute(): Option[VirtualFile] = {
-        Option(psiFile.getContainingDirectory).map(_.getVirtualFile)
-      }
-    })
+    ApplicationUtil.runReadAction(Option(psiFile.getContainingDirectory)).map(_.getVirtualFile)
   }
 
   private def getProjectRepl(componentInfo: StackComponentInfo, psiFile: Option[PsiFile]): ProjectStackRepl = {

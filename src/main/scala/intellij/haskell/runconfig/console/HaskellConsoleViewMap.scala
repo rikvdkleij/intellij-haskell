@@ -4,7 +4,7 @@ import java.util.concurrent.ConcurrentHashMap
 
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.project.Project
-import intellij.haskell.HaskellFile
+import com.intellij.psi.PsiFile
 
 import scala.collection.JavaConverters._
 
@@ -28,5 +28,5 @@ object HaskellConsoleViewMap {
   }
 
   // File is project file and not file which represents console
-  val projectFileByConfigName = new ConcurrentHashMap[String, HaskellFile]().asScala
+  val projectFileByConfigName = new ConcurrentHashMap[String, PsiFile]().asScala
 }

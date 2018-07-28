@@ -18,12 +18,12 @@ package intellij.haskell.navigation
 
 import com.intellij.navigation.{ChooseByNameContributor, ItemPresentation, NavigationItem}
 import com.intellij.openapi.progress.ProgressManager
-import com.intellij.openapi.project.{DumbService, Project}
+import com.intellij.openapi.project.Project
 import intellij.haskell.external.component.NameInfoComponentResult.{LibraryNameInfo, ProjectNameInfo}
 import intellij.haskell.external.component._
 import intellij.haskell.psi.{HaskellDeclarationElement, HaskellPsiUtil}
 import intellij.haskell.util.index.HaskellModuleNameIndex
-import intellij.haskell.util.{HaskellProjectUtil, ScalaUtil, StringUtil}
+import intellij.haskell.util.{HaskellProjectUtil, StringUtil}
 import javax.swing.Icon
 
 class HoogleByNameContributor extends ChooseByNameContributor {
@@ -51,7 +51,7 @@ class HoogleByNameContributor extends ChooseByNameContributor {
     val navigationItems = HoogleComponent.runHoogle(project, hooglePattern, count = 100000).getOrElse(Seq()).flatMap {
       case ModulePattern(moduleName) =>
         ProgressManager.checkCanceled()
-        Option(DumbService.getInstance(project).tryRunReadActionInSmartMode(ScalaUtil.computable(HaskellModuleNameIndex.findHaskellFilesByModuleNameInAllScope(project, moduleName)), "Hoogle not available until indices are ready")).getOrElse(Iterable())
+        HaskellModuleNameIndex.findHaskellFilesByModuleNameInAllScope(project, moduleName)
       case PackagePattern(packageName) =>
         ProgressManager.checkCanceled()
         Iterable(NotFoundNavigationItem(packageName))
