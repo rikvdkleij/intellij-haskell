@@ -87,7 +87,7 @@ class HaskellParserDefinition extends ParserDefinition {
     new HaskellFile(viewProvider)
   }
 
-  def spaceExistanceTypeBetweenTokens(left: ASTNode, right: ASTNode): ParserDefinition.SpaceRequirements = {
+  override def spaceExistanceTypeBetweenTokens(left: ASTNode, right: ASTNode): ParserDefinition.SpaceRequirements = {
     SpaceRequirements.MAY
   }
 }

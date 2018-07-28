@@ -1,10 +1,5 @@
 package intellij.haskell.cabal.lang.parser;
 
-import intellij.haskell.cabal.CabalLanguage;
-import intellij.haskell.cabal.lang.lexer.CabalParsingLexer;
-import intellij.haskell.cabal.lang.psi.CabalElementFactory;
-import intellij.haskell.cabal.CabalFile;
-import intellij.haskell.cabal.lang.psi.CabalTypes;
 import com.intellij.lang.ASTNode;
 import com.intellij.lang.ParserDefinition;
 import com.intellij.lang.PsiParser;
@@ -16,6 +11,11 @@ import com.intellij.psi.PsiFile;
 import com.intellij.psi.TokenType;
 import com.intellij.psi.tree.IFileElementType;
 import com.intellij.psi.tree.TokenSet;
+import intellij.haskell.cabal.CabalFile;
+import intellij.haskell.cabal.CabalLanguage;
+import intellij.haskell.cabal.lang.lexer.CabalParsingLexer;
+import intellij.haskell.cabal.lang.psi.CabalElementFactory;
+import intellij.haskell.cabal.lang.psi.CabalTypes;
 import org.jetbrains.annotations.NotNull;
 
 public class CabalParserDefinition implements ParserDefinition {
@@ -70,7 +70,7 @@ public class CabalParserDefinition implements ParserDefinition {
   }
 
   @Override
-  public SpaceRequirements spaceExistanceTypeBetweenTokens(ASTNode left, ASTNode right) {
+  public SpaceRequirements spaceExistenceTypeBetweenTokens(ASTNode left, ASTNode right) {
     return SpaceRequirements.MAY;
   }
 }
