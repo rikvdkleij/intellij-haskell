@@ -296,7 +296,7 @@
         <colorSettingsPage implementation="intellij.haskell.cabal.highlighting.CabalColorSettingsPage"/>
 
         <!-- Inspection -->
-        <localInspection runForWholeFile="false" language="Haskell" shortName="HLintInspection"
+        <localInspection language="Haskell" shortName="HLintInspection"
                          displayName="Inspection by HLint"
                          groupName="Haskell" enabledByDefault="true" level="WARNING"
                          implementationClass="intellij.haskell.inspection.HLintInspectionTool"/>
