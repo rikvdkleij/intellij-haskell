@@ -15,7 +15,7 @@ import org.jetbrains.annotations.NotNull;
 
 public class HaskellConidImpl extends HaskellNamedStubBasedPsiElementBase<HaskellConidStub> implements HaskellConid {
 
-  public HaskellConidImpl(HaskellConidStub stub, IStubElementType type) {
+  public HaskellConidImpl(@NotNull HaskellConidStub stub, IStubElementType type) {
     super(stub, type);
   }
 

@@ -15,7 +15,7 @@ import org.jetbrains.annotations.NotNull;
 
 public class HaskellVarsymImpl extends HaskellNamedStubBasedPsiElementBase<HaskellVarsymStub> implements HaskellVarsym {
 
-  public HaskellVarsymImpl(HaskellVarsymStub stub, IStubElementType type) {
+  public HaskellVarsymImpl(@NotNull HaskellVarsymStub stub, IStubElementType type) {
     super(stub, type);
   }
 

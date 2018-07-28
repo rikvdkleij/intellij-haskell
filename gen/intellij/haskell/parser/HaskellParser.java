@@ -5236,7 +5236,7 @@ public class HaskellParser implements PsiParser, LightPsiParser {
   }
 
   /* ********************************************************** */
-  // CASE | CLASS | DATA | DEFAULT | DERIVING | DO | ELSE | IF | IMPORT | IN | INFIX | INFIXL | INFIXR | INSTANCE | LET | MODULE | NEWTYPE | OF | THEN | TYPE | WHERE | UNDERSCORE
+  // CASE | CLASS | DATA | DEFAULT | DERIVING | DO | ELSE | IF | IMPORT | IN | INSTANCE | LET | MODULE | NEWTYPE | OF | THEN | TYPE | WHERE | UNDERSCORE
   public static boolean reserved_id(PsiBuilder b, int l) {
     if (!recursion_guard_(b, l, "reserved_id")) return false;
     boolean r;
@@ -5251,9 +5251,6 @@ public class HaskellParser implements PsiParser, LightPsiParser {
     if (!r) r = consumeToken(b, HS_IF);
     if (!r) r = consumeToken(b, HS_IMPORT);
     if (!r) r = consumeToken(b, HS_IN);
-    if (!r) r = consumeToken(b, HS_INFIX);
-    if (!r) r = consumeToken(b, HS_INFIXL);
-    if (!r) r = consumeToken(b, HS_INFIXR);
     if (!r) r = consumeToken(b, HS_INSTANCE);
     if (!r) r = consumeToken(b, HS_LET);
     if (!r) r = consumeToken(b, HS_MODULE);
@@ -5631,7 +5628,7 @@ public class HaskellParser implements PsiParser, LightPsiParser {
   /* ********************************************************** */
   // type_declaration | data_declaration | newtype_declaration | class_declaration | instance_declaration | default_declaration |
   //                                   foreign_declaration | type_family_declaration | deriving_declaration | type_instance_declaration | type_signature |
-  //                                   other_pragma | expression | fixity_declaration | DIRECTIVE
+  //                                   other_pragma | fixity_declaration | expression | DIRECTIVE
   public static boolean top_declaration(PsiBuilder b, int l) {
     if (!recursion_guard_(b, l, "top_declaration")) return false;
     boolean r;
@@ -5648,8 +5645,8 @@ public class HaskellParser implements PsiParser, LightPsiParser {
     if (!r) r = type_instance_declaration(b, l + 1);
     if (!r) r = type_signature(b, l + 1);
     if (!r) r = other_pragma(b, l + 1);
-    if (!r) r = expression(b, l + 1);
     if (!r) r = fixity_declaration(b, l + 1);
+    if (!r) r = expression(b, l + 1);
     if (!r) r = consumeToken(b, HS_DIRECTIVE);
     exit_section_(b, l, m, r, false, null);
     return r;

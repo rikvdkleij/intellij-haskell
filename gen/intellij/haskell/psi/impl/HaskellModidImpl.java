@@ -19,7 +19,7 @@ import java.util.List;
 
 public class HaskellModidImpl extends HaskellNamedStubBasedPsiElementBase<HaskellModidStub> implements HaskellModid {
 
-  public HaskellModidImpl(HaskellModidStub stub, IStubElementType type) {
+  public HaskellModidImpl(@NotNull HaskellModidStub stub, IStubElementType type) {
     super(stub, type);
   }
 

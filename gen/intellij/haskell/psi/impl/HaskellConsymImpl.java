@@ -15,7 +15,7 @@ import org.jetbrains.annotations.NotNull;
 
 public class HaskellConsymImpl extends HaskellNamedStubBasedPsiElementBase<HaskellConsymStub> implements HaskellConsym {
 
-  public HaskellConsymImpl(HaskellConsymStub stub, IStubElementType type) {
+  public HaskellConsymImpl(@NotNull HaskellConsymStub stub, IStubElementType type) {
     super(stub, type);
   }
 

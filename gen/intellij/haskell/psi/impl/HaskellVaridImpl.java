@@ -15,7 +15,7 @@ import org.jetbrains.annotations.NotNull;
 
 public class HaskellVaridImpl extends HaskellNamedStubBasedPsiElementBase<HaskellVaridStub> implements HaskellVarid {
 
-  public HaskellVaridImpl(HaskellVaridStub stub, IStubElementType type) {
+  public HaskellVaridImpl(@NotNull HaskellVaridStub stub, IStubElementType type) {
     super(stub, type);
   }
 
