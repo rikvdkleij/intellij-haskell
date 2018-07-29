@@ -59,7 +59,7 @@ private[component] object LoadComponent {
     projectRepl.exists(_.isBusy)
   }
 
-  def load(psiFile: PsiFile, currentElement: Option[PsiElement]): Option[CompilationResult] = {
+  def load(psiFile: PsiFile, fileChanged: Boolean, currentElement: Option[PsiElement]): Option[CompilationResult] = {
     val project = psiFile.getProject
 
     StackReplsManager.getProjectRepl(psiFile).flatMap(projectRepl => {
@@ -72,7 +72,7 @@ private[component] object LoadComponent {
         }
       }
 
-      projectRepl.load(psiFile) match {
+      projectRepl.load(psiFile, fileChanged) match {
         case Some((loadOutput, loadFailed)) =>
           ApplicationManager.getApplication.executeOnPooledThread(ScalaUtil.runnable {
 

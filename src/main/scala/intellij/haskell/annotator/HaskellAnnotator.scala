@@ -26,6 +26,7 @@ import com.intellij.lang.annotation.{AnnotationHolder, ExternalAnnotator, Highli
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.compiler.CompilerMessageCategory
 import com.intellij.openapi.editor.Editor
+import com.intellij.openapi.fileEditor.FileDocumentManager
 import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.TextRange
@@ -73,14 +74,21 @@ class HaskellAnnotator extends ExternalAnnotator[(PsiFile, Option[PsiElement]), 
   override def doAnnotate(psiFileElement: (PsiFile, Option[PsiElement])): CompilationResult = {
     ProgressManager.checkCanceled()
     val psiFile = psiFileElement._1
-    ApplicationManager.getApplication.invokeAndWait(() => {
-      if (!psiFile.getProject.isDisposed) {
-        ProgressManager.checkCanceled()
-        HaskellFileUtil.saveFile(psiFile, checkCancelled = true)
-      }
-    })
+    val fileChanged = HaskellFileUtil.findVirtualFile(psiFile).exists(FileDocumentManager.getInstance().isFileModified)
+
     ProgressManager.checkCanceled()
-    HaskellComponentsManager.loadHaskellFile(psiFile, psiFileElement._2).orNull
+
+    if (fileChanged) {
+      ApplicationManager.getApplication.invokeAndWait(() => {
+        if (!psiFile.getProject.isDisposed) {
+          ProgressManager.checkCanceled()
+          HaskellFileUtil.saveFile(psiFile, checkCancelled = true)
+        }
+      })
+    }
+
+    ProgressManager.checkCanceled()
+    HaskellComponentsManager.loadHaskellFile(psiFile, fileChanged, psiFileElement._2).orNull
   }
 
   override def apply(psiFile: PsiFile, loadResult: CompilationResult, holder: AnnotationHolder): Unit = {

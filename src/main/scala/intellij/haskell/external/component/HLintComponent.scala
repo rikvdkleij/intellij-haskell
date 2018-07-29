@@ -16,6 +16,9 @@
 
 package intellij.haskell.external.component
 
+import com.intellij.openapi.editor.Document
+import com.intellij.openapi.fileEditor.FileDocumentManager
+import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.project.Project
 import com.intellij.psi.PsiFile
 import intellij.haskell.external.execution.CommandLine
@@ -25,10 +28,13 @@ import intellij.haskell.{GlobalInfo, HaskellNotificationGroup}
 import spray.json.JsonParser.ParsingException
 import spray.json.{DefaultJsonProtocol, _}
 
+import scala.concurrent.duration._
+
 object HLintComponent {
 
   final val HLintName = "hlint"
   private final val HLintPath = GlobalInfo.toolPath(HLintName).toString
+  private final val Timeout = 1.seconds
 
   def check(psiFile: PsiFile): Seq[HLintInfo] = {
     if (StackProjectManager.isHlintAvailable(psiFile.getProject)) {
@@ -36,6 +42,17 @@ object HLintComponent {
       val hlintOptions = if (HaskellSettingsState.getHlintOptions.trim.isEmpty) Array[String]() else HaskellSettingsState.getHlintOptions.split("""\s+""")
       HaskellFileUtil.getAbsolutePath(psiFile) match {
         case Some(path) =>
+          HaskellFileUtil.findDocument(psiFile) match {
+            case None => ()
+            case Some(d) =>
+              val deadline = Timeout.fromNow
+
+              while (isFileUnsaved(d) && deadline.hasTimeLeft() && !project.isDisposed) {
+                ProgressManager.checkCanceled()
+                Thread.sleep(10)
+              }
+          }
+
           val output = runHLint(project, hlintOptions.toSeq ++ Seq("--json", path), ignoreExitCode = true)
           if (output.getExitCode > 0 && output.getStderr.nonEmpty) {
             HaskellNotificationGroup.logErrorBalloonEvent(project, s"Error while calling $HLintName: ${output.getStderr}")
@@ -53,12 +70,16 @@ object HLintComponent {
     }
   }
 
+  def isFileUnsaved(document: Document): Boolean = {
+    FileDocumentManager.getInstance().isDocumentUnsaved(document)
+  }
+
   def versionInfo(project: Project): String = {
     runHLint(project, Seq("--version"), ignoreExitCode = false).getStdout
   }
 
   private def runHLint(project: Project, arguments: Seq[String], ignoreExitCode: Boolean) = {
-    CommandLine.run(Some(project), project.getBasePath, HLintPath, arguments, logOutput = false, ignoreExitCode = ignoreExitCode)
+    CommandLine.run(Some(project), project.getBasePath, HLintPath, arguments, logOutput = true, ignoreExitCode = ignoreExitCode)
   }
 
   private object HlintJsonProtocol extends DefaultJsonProtocol {

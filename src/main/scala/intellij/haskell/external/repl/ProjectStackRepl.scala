@@ -18,7 +18,6 @@ package intellij.haskell.external.repl
 
 import java.util.concurrent.ConcurrentHashMap
 
-import com.intellij.openapi.fileEditor.FileDocumentManager
 import com.intellij.openapi.project.Project
 import com.intellij.psi.PsiFile
 import intellij.haskell.HaskellNotificationGroup
@@ -93,19 +92,17 @@ class ProjectStackRepl(project: Project, stackComponentInfo: StackComponentInfo,
 
   private final val OkModulesLoaded = "Ok, modules loaded: "
 
-  def load(psiFile: PsiFile): Option[(StackReplOutput, Boolean)] = {
+  def load(psiFile: PsiFile, fileChanged: Boolean): Option[(StackReplOutput, Boolean)] = {
     val filePath = getFilePath(psiFile)
+    val reload = if (fileChanged) {
+      val loaded = isFileLoaded(psiFile)
+      loaded == Loaded || loaded == Failed
+    } else {
+      HaskellNotificationGroup.logInfoEvent(project, s"No :reload of file ${psiFile.getName} because this file is not changed")
+      false
+    }
     synchronized {
-      val fileChanged = HaskellFileUtil.findVirtualFile(psiFile).exists(FileDocumentManager.getInstance().isFileModified)
-      val reload = if (fileChanged) {
-        val loaded = isFileLoaded(psiFile)
-        loaded == Loaded || loaded == Failed
-      } else {
-        HaskellNotificationGroup.logInfoEvent(project, s"No reload of file ${psiFile.getName} because this fils is not changed")
-        false
-      }
       val output = if (reload) {
-        HaskellNotificationGroup.logInfoEvent(project, s"Reload of $filePath")
         executeWithSettingBusy(Seq(s":reload"), load = Some(psiFile))
       } else {
         executeWithSettingBusy(Seq(s":load $filePath"), load = Some(psiFile))
@@ -179,7 +176,7 @@ class ProjectStackRepl(project: Project, stackComponentInfo: StackComponentInfo,
       case Some(info) if info.psiFile == psiFile && !info.loadFailed => executeWithSettingBusy(Seq(command))
       case Some(info) if info.psiFile == psiFile && info.loadFailed => Some(StackReplOutput())
       case _ =>
-        load(psiFile)
+        load(psiFile, fileChanged = false)
         loadedModule match {
           case None => None
           case Some(info) if info.psiFile == psiFile && !info.loadFailed => executeWithSettingBusy(Seq(command))
