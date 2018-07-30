@@ -21,6 +21,7 @@ import com.intellij.openapi.module.Module
 import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.TextRange
+import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.psi._
 import com.intellij.psi.search.GlobalSearchScope
 import com.intellij.psi.util.PsiTreeUtil
@@ -198,10 +199,11 @@ object HaskellReference {
     }
   }
 
-  def findIdentifierByLocation(project: Project, psiFile: Option[PsiFile], lineNr: Integer, columnNr: Integer, name: String): (Option[String], Option[HaskellNamedElement]) = {
+  def findIdentifierByLocation(project: Project, virtualFile: Option[VirtualFile], psiFile: Option[PsiFile], lineNr: Integer, columnNr: Integer, name: String): (Option[String], Option[HaskellNamedElement]) = {
     val namedElement = for {
       pf <- psiFile
-      offset <- LineColumnPosition.getOffset(pf, LineColumnPosition(lineNr, columnNr))
+      vf <- virtualFile
+      offset <- LineColumnPosition.getOffset(vf, LineColumnPosition(lineNr, columnNr))
       element <- ApplicationUtil.runReadAction(Option(pf.findElementAt(offset)))
       namedElement <- ApplicationUtil.runReadAction(HaskellPsiUtil.findNamedElement(element)).find(e => ApplicationUtil.runReadAction(e.getName) == name).
         orElse(ApplicationUtil.runReadAction(HaskellPsiUtil.findHighestDeclarationElementParent(element)).flatMap(_.getIdentifierElements.find(e => ApplicationUtil.runReadAction(e.getName) == name))).
@@ -229,8 +231,8 @@ object HaskellReference {
   private def findIdentifiersByNameInfo(nameInfo: NameInfo, namedElement: HaskellNamedElement, project: Project): Option[HaskellNamedElement] = {
     nameInfo match {
       case pni: ProjectNameInfo =>
-        val psiFile = HaskellProjectUtil.findFile(pni.filePath, project)
-        findIdentifierByLocation(project, psiFile, pni.lineNr, pni.columnNr, namedElement.getName)._2
+        val (virtualFile, psiFile) = HaskellProjectUtil.findFile(pni.filePath, project)
+        findIdentifierByLocation(project, virtualFile, psiFile, pni.lineNr, pni.columnNr, namedElement.getName)._2
       case lni: LibraryNameInfo => findIdentifiersByLibraryNameInfo(project, HaskellProjectUtil.findModule(namedElement), lni, namedElement.getName).headOption
       case _ => None
     }

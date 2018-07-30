@@ -95,8 +95,9 @@ private[component] object DefinitionLocationComponent {
     val qualifiedNameElement = key.qualifiedNameElement
     val name = key.name
     for {
-      sp <- LineColumnPosition.fromOffset(psiFile, qualifiedNameElement.getTextRange.getStartOffset)
-      ep <- LineColumnPosition.fromOffset(psiFile, qualifiedNameElement.getTextRange.getEndOffset)
+      vf <- HaskellFileUtil.findVirtualFile(psiFile)
+      sp <- LineColumnPosition.fromOffset(vf, qualifiedNameElement.getTextRange.getStartOffset)
+      ep <- LineColumnPosition.fromOffset(vf, qualifiedNameElement.getTextRange.getEndOffset)
       endColumnNr = if (withoutLastColumn) ep.columnNr - 1 else ep.columnNr
       repl <- StackReplsManager.getProjectRepl(psiFile)
       output <- repl.findLocationInfo(key.moduleName, psiFile, sp.lineNr, sp.columnNr, ep.lineNr, endColumnNr, name)
@@ -107,8 +108,8 @@ private[component] object DefinitionLocationComponent {
     val name = key.name
     val (moduleName, namedElement) = output match {
       case LocAtPattern(filePath, startLineNr, startColumnNr, _, _) =>
-        val psiFile = HaskellProjectUtil.findFile(filePath, project)
-        HaskellReference.findIdentifierByLocation(project, psiFile, startLineNr.toInt, startColumnNr.toInt, name)
+        val (virtualFile, psiFile) = HaskellProjectUtil.findFile(filePath, project)
+        HaskellReference.findIdentifierByLocation(project, virtualFile,  psiFile, startLineNr.toInt, startColumnNr.toInt, name)
       case PackageModulePattern(mn) =>
         val module = HaskellProjectUtil.findModuleForFile(psiFile)
         val file = HaskellReference.findFileByModuleName(project, module, mn)

@@ -24,7 +24,7 @@ import com.intellij.openapi.project.Project
 import com.intellij.psi.{PsiElement, PsiFile}
 import intellij.haskell.external.repl.StackReplsManager
 import intellij.haskell.psi._
-import intellij.haskell.util.{ApplicationUtil, LineColumnPosition}
+import intellij.haskell.util.{ApplicationUtil, HaskellFileUtil, LineColumnPosition}
 
 import scala.concurrent.duration.Duration
 import scala.concurrent.{Await, Future, TimeoutException}
@@ -56,8 +56,9 @@ private[component] object TypeInfoComponent {
     if (LoadComponent.isModuleLoaded(moduleName, psiFile)) {
       {
         for {
-          sp <- LineColumnPosition.fromOffset(psiFile, selectionModel.getSelectionStart)
-          ep <- LineColumnPosition.fromOffset(psiFile, selectionModel.getSelectionEnd)
+          vf <- HaskellFileUtil.findVirtualFile(psiFile)
+          sp <- LineColumnPosition.fromOffset(vf, selectionModel.getSelectionStart)
+          ep <- LineColumnPosition.fromOffset(vf, selectionModel.getSelectionEnd)
         } yield {
           StackReplsManager.getProjectRepl(psiFile).flatMap(_.findTypeInfo(moduleName, psiFile, sp.lineNr, sp.columnNr, ep.lineNr, ep.columnNr, selectionModel.getSelectedText)) match {
             case Some(output) => output.stdoutLines.headOption.filterNot(_.trim.isEmpty).map(ti => Right(TypeInfo(ti, output.stderrLines.nonEmpty))).getOrElse(Left(NoInfoAvailable))
@@ -131,8 +132,9 @@ private[component] object TypeInfoComponent {
         val qne = key.qualifiedNameElement
         val to = ApplicationUtil.runReadAction(qne.getTextOffset)
         for {
-          sp <- LineColumnPosition.fromOffset(psiFile, to)
-          ep <- LineColumnPosition.fromOffset(psiFile, to + ApplicationUtil.runReadAction(qne.getText).length)
+          vf <- HaskellFileUtil.findVirtualFile(psiFile)
+          sp <- LineColumnPosition.fromOffset(vf, to)
+          ep <- LineColumnPosition.fromOffset(vf, to + ApplicationUtil.runReadAction(qne.getText).length)
         } yield {
 
           StackReplsManager.getProjectRepl(key.psiFile).flatMap(_.findTypeInfo(key.moduleName, key.psiFile, sp.lineNr, sp.columnNr, ep.lineNr, ep.columnNr, key.expression)) match {

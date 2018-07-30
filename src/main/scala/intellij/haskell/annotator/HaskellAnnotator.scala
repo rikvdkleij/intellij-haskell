@@ -268,9 +268,9 @@ object HaskellAnnotator {
   }
 
   private def getProblemTextRange(psiFile: PsiFile, problem: CompilationProblem): Option[TextRange] = {
-    LineColumnPosition.getOffset(psiFile, LineColumnPosition(problem.lineNr, problem.columnNr)).map(offset => {
+    HaskellFileUtil.findVirtualFile(psiFile).flatMap(vf =>  LineColumnPosition.getOffset(vf, LineColumnPosition(problem.lineNr, problem.columnNr)).map(offset => {
       findTextRange(psiFile, offset)
-    })
+    }))
   }
 
   private def findTextRange(psiFile: PsiFile, offset: Int): TextRange = {

@@ -61,6 +61,11 @@ object HaskellFileUtil {
     Option(psiFile.getOriginalFile.getVirtualFile)
   }
 
+  def findDocument(virtualFile: VirtualFile): Option[Document] = {
+    val fileDocumentManager = FileDocumentManager.getInstance()
+    Option(fileDocumentManager.getCachedDocument(virtualFile))
+  }
+
   def findDocument(psiFile: PsiFile): Option[Document] = {
     for {
       vf <- findVirtualFile(psiFile)

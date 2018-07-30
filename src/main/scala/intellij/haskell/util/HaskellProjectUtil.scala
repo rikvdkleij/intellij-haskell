@@ -49,9 +49,10 @@ object HaskellProjectUtil {
     findProjectModules(project).nonEmpty
   }
 
-  def findFile(filePath: String, project: Project): Option[PsiFile] = {
-    val file = Option(LocalFileSystem.getInstance().findFileByPath(HaskellFileUtil.makeFilePathAbsolute(filePath, project)))
-    file.flatMap(f => HaskellFileUtil.convertToHaskellFileInReadAction(project, f))
+  def findFile(filePath: String, project: Project): (Option[VirtualFile], Option[PsiFile]) = {
+    val virtualFile = Option(LocalFileSystem.getInstance().findFileByPath(HaskellFileUtil.makeFilePathAbsolute(filePath, project)))
+    val psiFile = virtualFile.flatMap(f => HaskellFileUtil.convertToHaskellFileInReadAction(project, f))
+    (virtualFile, psiFile)
   }
 
   def findVirtualFile(filePath: String, project: Project): Option[VirtualFile] = {

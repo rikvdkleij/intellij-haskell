@@ -64,8 +64,8 @@ class HoogleByNameContributor extends ChooseByNameContributor {
             case Some(lni: LibraryNameInfo) => HaskellReference.findIdentifiersByLibraryNameInfo(project, None, lni, name).
               headOption.flatMap(HaskellPsiUtil.findDeclarationElementParent).map(d => createLibraryNavigationItem(d, moduleName))
             case Some(pni: ProjectNameInfo) =>
-              val psiFile = HaskellProjectUtil.findFile(pni.filePath, project)
-              HaskellReference.findIdentifierByLocation(project, psiFile, pni.lineNr, pni.columnNr, name)._2.flatMap(HaskellPsiUtil.findDeclarationElementParent)
+              val (virtualFile, psiFile) = HaskellProjectUtil.findFile(pni.filePath, project)
+              HaskellReference.findIdentifierByLocation(project, virtualFile, psiFile, pni.lineNr, pni.columnNr, name)._2.flatMap(HaskellPsiUtil.findDeclarationElementParent)
             case _ => None
           }
           navigationItemByNameInfo.orElse {

@@ -19,12 +19,13 @@ package intellij.haskell.inspection
 import com.intellij.codeInspection._
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.progress.ProgressManager
+import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.psi.{PsiElement, PsiFile, TokenType}
 import com.intellij.util.WaitFor
 import intellij.haskell.HaskellNotificationGroup
 import intellij.haskell.external.component.{HLintComponent, HLintInfo}
 import intellij.haskell.psi.HaskellTypes._
-import intellij.haskell.util.{HaskellProjectUtil, LineColumnPosition, ScalaUtil}
+import intellij.haskell.util.{HaskellFileUtil, HaskellProjectUtil, LineColumnPosition, ScalaUtil}
 
 import scala.annotation.tailrec
 
@@ -68,10 +69,11 @@ class HLintInspectionTool extends LocalInspectionTool {
       hi <- result
       problemType = findProblemHighlightType(hi)
       if problemType != ProblemHighlightType.GENERIC_ERROR
-      se <- findStartHaskellElement(psiFile, hi)
-      ee <- findEndHaskellElement(psiFile, hi)
-      sl <- fromOffset(psiFile, se)
-      el <- fromOffset(psiFile, ee)
+      vf <- HaskellFileUtil.findVirtualFile(psiFile)
+      se <- findStartHaskellElement(vf, psiFile, hi)
+      ee <- findEndHaskellElement(vf, psiFile, hi)
+      sl <- fromOffset(vf, se)
+      el <- fromOffset(vf, ee)
     } yield {
       ProgressManager.checkCanceled()
       hi.to match {
@@ -91,8 +93,8 @@ class HLintInspectionTool extends LocalInspectionTool {
     new HLintQuickfix(startElement, endElement, hLintInfo.startLine, hLintInfo.startColumn, removeLineBreaksAndExtraSpaces(startLineNumber, endLineNumber, to), hLintInfo.hint, hLintInfo.note)
   }
 
-  private def fromOffset(psiFile: PsiFile, psiElement: PsiElement): Option[Int] = {
-    LineColumnPosition.fromOffset(psiFile, psiElement.getTextOffset).map(_.lineNr)
+  private def fromOffset(virtualFile: VirtualFile, psiElement: PsiElement): Option[Int] = {
+    LineColumnPosition.fromOffset(virtualFile, psiElement.getTextOffset).map(_.lineNr)
   }
 
   private def removeLineBreaksAndExtraSpaces(sl: Int, el: Int, s: String) = {
@@ -103,17 +105,17 @@ class HLintInspectionTool extends LocalInspectionTool {
     }
   }
 
-  private def findStartHaskellElement(psiFile: PsiFile, hlintInfo: HLintInfo): Option[PsiElement] = {
-    val offset = LineColumnPosition.getOffset(psiFile, LineColumnPosition(hlintInfo.startLine, hlintInfo.startColumn))
+  private def findStartHaskellElement(virtualFile: VirtualFile, psiFile: PsiFile, hlintInfo: HLintInfo): Option[PsiElement] = {
+    val offset = LineColumnPosition.getOffset(virtualFile, LineColumnPosition(hlintInfo.startLine, hlintInfo.startColumn))
     val element = offset.flatMap(offset => Option(psiFile.findElementAt(offset)))
     element.filterNot(e => HLintInspectionTool.NotHaskellIdentifiers.contains(e.getNode.getElementType))
   }
 
-  private def findEndHaskellElement(psiFile: PsiFile, hlintInfo: HLintInfo): Option[PsiElement] = {
+  private def findEndHaskellElement(virtualFile: VirtualFile, psiFile: PsiFile, hlintInfo: HLintInfo): Option[PsiElement] = {
     val endOffset = if (hlintInfo.endLine >= hlintInfo.startLine && hlintInfo.endColumn > hlintInfo.startColumn) {
-      LineColumnPosition.getOffset(psiFile, LineColumnPosition(hlintInfo.endLine, hlintInfo.endColumn - 1))
+      LineColumnPosition.getOffset(virtualFile, LineColumnPosition(hlintInfo.endLine, hlintInfo.endColumn - 1))
     } else {
-      LineColumnPosition.getOffset(psiFile, LineColumnPosition(hlintInfo.endLine, hlintInfo.endColumn))
+      LineColumnPosition.getOffset(virtualFile, LineColumnPosition(hlintInfo.endLine, hlintInfo.endColumn))
     }
 
     endOffset.flatMap(offset => findHaskellIdentifier(psiFile, offset))
