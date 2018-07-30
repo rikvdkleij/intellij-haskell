@@ -11,7 +11,7 @@ import scala.concurrent.duration._
 
 object ApplicationUtil {
 
-  private final val Timeout = 1.seconds
+  private final val Timeout = 50.millis
 
   def runReadAction[T](f: => T): T = {
     ApplicationManager.getApplication.runReadAction(ScalaUtil.computable(f))
@@ -32,7 +32,7 @@ object ApplicationUtil {
     val deadline = Timeout.fromNow
 
     while (deadline.hasTimeLeft && !run() && !project.isDisposed) {
-      Thread.sleep(50)
+      Thread.sleep(1)
     }
 
     val result = r.get()

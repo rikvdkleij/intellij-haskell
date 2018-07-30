@@ -25,7 +25,7 @@ import intellij.haskell.external.repl.StackRepl.StackReplOutput
 import intellij.haskell.external.repl.StackReplsManager
 import intellij.haskell.navigation.HaskellReference
 import intellij.haskell.psi._
-import intellij.haskell.util.{ApplicationUtil, HaskellProjectUtil, LineColumnPosition, ScalaUtil}
+import intellij.haskell.util._
 
 import scala.annotation.tailrec
 import scala.concurrent.duration.Duration

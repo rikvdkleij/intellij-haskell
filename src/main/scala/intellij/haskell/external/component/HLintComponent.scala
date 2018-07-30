@@ -18,7 +18,6 @@ package intellij.haskell.external.component
 
 import com.intellij.openapi.editor.Document
 import com.intellij.openapi.fileEditor.FileDocumentManager
-import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.project.Project
 import com.intellij.psi.PsiFile
 import intellij.haskell.external.execution.CommandLine
@@ -48,8 +47,7 @@ object HLintComponent {
               val deadline = Timeout.fromNow
 
               while (isFileUnsaved(d) && deadline.hasTimeLeft() && !project.isDisposed) {
-                ProgressManager.checkCanceled()
-                Thread.sleep(10)
+                Thread.sleep(1)
               }
           }
 

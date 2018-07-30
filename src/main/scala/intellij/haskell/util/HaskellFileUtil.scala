@@ -30,6 +30,7 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.SystemInfo
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.vfs.{LocalFileSystem, VirtualFile, VirtualFileManager}
+import com.intellij.psi.impl.PsiManagerEx
 import com.intellij.psi.{PsiDocumentManager, PsiFile, PsiManager}
 import intellij.haskell.HaskellFileType
 import intellij.haskell.action.SelectionContext
@@ -100,28 +101,39 @@ object HaskellFileUtil {
       Iterable()
     } else {
       val psiManager = PsiManager.getInstance(project)
-      virtualFiles.flatMap(vf => findFile(psiManager, vf) match {
+      virtualFiles.flatMap(vf => findCachedPsiFile(psiManager, vf) match {
         case Some(pf) => Some(pf)
         case _ => None
       })
     }
   }
 
-  private def findFile(psiManager: PsiManager, virtualFile: VirtualFile): Option[PsiFile] = {
+  private def findCachedPsiFile(psiManager: PsiManager, virtualFile: VirtualFile): Option[PsiFile] = {
+    val manager = psiManager.asInstanceOf[PsiManagerEx]
+    val fileManager = manager.getFileManager
+    Option(fileManager.getCachedPsiFile(virtualFile))
+  }
+
+  private def findPsiFile(psiManager: PsiManager, virtualFile: VirtualFile): Option[PsiFile] = {
     Option(psiManager.findFile(virtualFile))
   }
 
   def convertToHaskellFileInReadAction(project: Project, virtualFile: VirtualFile): Option[PsiFile] = {
     val psiManager = PsiManager.getInstance(project)
 
-    val result = if (ApplicationManager.getApplication.isDispatchThread) {
-      Right(findFile(psiManager, virtualFile))
+    if (ApplicationManager.getApplication.isDispatchThread) {
+      findCachedPsiFile(psiManager, virtualFile) match {
+        case pf@Some(_) => pf
+        case None => findPsiFile(psiManager, virtualFile)
+      }
     } else {
-      ApplicationUtil.runInReadActionWithWriteActionPriority(project, findFile(psiManager, virtualFile))
-    }
-    result match {
-      case Right(pf) => pf
-      case _ => None
+      ApplicationUtil.runInReadActionWithWriteActionPriority(project, findCachedPsiFile(psiManager, virtualFile)) match {
+        case Right(pf) if pf.isDefined => pf
+        case _ => ApplicationUtil.runInReadActionWithWriteActionPriority(project, findPsiFile(psiManager, virtualFile)) match {
+          case Right(pf) => pf
+          case Left(_) => None
+        }
+      }
     }
   }
 

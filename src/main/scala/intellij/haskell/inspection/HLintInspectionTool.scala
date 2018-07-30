@@ -17,11 +17,14 @@
 package intellij.haskell.inspection
 
 import com.intellij.codeInspection._
+import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.progress.ProgressManager
 import com.intellij.psi.{PsiElement, PsiFile, TokenType}
+import com.intellij.util.WaitFor
+import intellij.haskell.HaskellNotificationGroup
 import intellij.haskell.external.component.{HLintComponent, HLintInfo}
 import intellij.haskell.psi.HaskellTypes._
-import intellij.haskell.util.{HaskellProjectUtil, LineColumnPosition}
+import intellij.haskell.util.{HaskellProjectUtil, LineColumnPosition, ScalaUtil}
 
 import scala.annotation.tailrec
 
@@ -40,9 +43,26 @@ class HLintInspectionTool extends LocalInspectionTool {
 
     ProgressManager.checkCanceled()
 
-    val result = HLintComponent.check(psiFile)
+    val hlintCheckFuture = ApplicationManager.getApplication.executeOnPooledThread(ScalaUtil.callable[Seq[HLintInfo]] {
+      HLintComponent.check(psiFile)
+    })
 
     ProgressManager.checkCanceled()
+
+    val wf = new WaitFor(5000, 1) {
+      override def condition(): Boolean = {
+        ProgressManager.checkCanceled()
+        hlintCheckFuture.isDone
+      }
+    }
+
+    val result = if (wf.isConditionRealized) {
+      HaskellNotificationGroup.logInfoEvent(psiFile.getProject, s"Running Hlint is finished for file ${psiFile.getName}")
+      hlintCheckFuture.get()
+    } else {
+      HaskellNotificationGroup.logErrorEvent(psiFile.getProject, s"Timeout while running HLint for file ${psiFile.getName}")
+      Seq()
+    }
 
     for {
       hi <- result
@@ -63,6 +83,7 @@ class HLintInspectionTool extends LocalInspectionTool {
         case _ => ()
       }
     }
+    HaskellNotificationGroup.logInfoEvent(psiFile.getProject, s"HLint inspection is finished for file ${psiFile.getName}")
     problemsHolder.getResultsArray
   }
 
@@ -71,8 +92,6 @@ class HLintInspectionTool extends LocalInspectionTool {
   }
 
   private def fromOffset(psiFile: PsiFile, psiElement: PsiElement): Option[Int] = {
-    ProgressManager.checkCanceled()
-
     LineColumnPosition.fromOffset(psiFile, psiElement.getTextOffset).map(_.lineNr)
   }
 
@@ -85,34 +104,23 @@ class HLintInspectionTool extends LocalInspectionTool {
   }
 
   private def findStartHaskellElement(psiFile: PsiFile, hlintInfo: HLintInfo): Option[PsiElement] = {
-    ProgressManager.checkCanceled()
-
     val offset = LineColumnPosition.getOffset(psiFile, LineColumnPosition(hlintInfo.startLine, hlintInfo.startColumn))
-
-    ProgressManager.checkCanceled()
-
     val element = offset.flatMap(offset => Option(psiFile.findElementAt(offset)))
     element.filterNot(e => HLintInspectionTool.NotHaskellIdentifiers.contains(e.getNode.getElementType))
   }
 
   private def findEndHaskellElement(psiFile: PsiFile, hlintInfo: HLintInfo): Option[PsiElement] = {
-    ProgressManager.checkCanceled()
-
     val endOffset = if (hlintInfo.endLine >= hlintInfo.startLine && hlintInfo.endColumn > hlintInfo.startColumn) {
       LineColumnPosition.getOffset(psiFile, LineColumnPosition(hlintInfo.endLine, hlintInfo.endColumn - 1))
     } else {
       LineColumnPosition.getOffset(psiFile, LineColumnPosition(hlintInfo.endLine, hlintInfo.endColumn))
     }
 
-    ProgressManager.checkCanceled()
-
     endOffset.flatMap(offset => findHaskellIdentifier(psiFile, offset))
   }
 
   @tailrec
   private def findHaskellIdentifier(psiFile: PsiFile, offset: Int): Option[PsiElement] = {
-    ProgressManager.checkCanceled()
-
     Option(psiFile.findElementAt(offset)) match {
       case None => findHaskellIdentifier(psiFile, offset - 1)
       case Some(e) if HLintInspectionTool.NotHaskellIdentifiers.contains(e.getNode.getElementType) => findHaskellIdentifier(psiFile, offset - 1)
