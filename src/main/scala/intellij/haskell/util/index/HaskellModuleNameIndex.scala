@@ -60,7 +60,7 @@ object HaskellModuleNameIndex {
       if (ApplicationManager.getApplication.isDispatchThread) {
         FileBasedIndex.getInstance.getContainingFiles(HaskellModuleNameIndex, moduleName, searchScope).asScala
       } else {
-        ApplicationUtil.runInReadActionWithWriteActionPriority(project, FileBasedIndex.getInstance.getContainingFiles(HaskellModuleNameIndex, moduleName, searchScope)) match {
+        ApplicationUtil.scheduleInReadActionWithWriteActionPriority(project, FileBasedIndex.getInstance.getContainingFiles(HaskellModuleNameIndex, moduleName, searchScope)) match {
           case Right(files) => files.asScala
           case Left(_) => Iterable()
         }
