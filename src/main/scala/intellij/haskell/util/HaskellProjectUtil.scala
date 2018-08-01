@@ -19,7 +19,7 @@ package intellij.haskell.util
 import java.io.File
 import java.nio.file.Paths
 
-import com.intellij.openapi.module.{Module, ModuleManager, ModuleUtil, ModuleUtilCore}
+import com.intellij.openapi.module.{Module, ModuleManager, ModuleUtilCore}
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.roots.ProjectRootManager
 import com.intellij.openapi.util.io.FileUtil
@@ -148,10 +148,8 @@ object HaskellProjectUtil {
     Option(ModuleUtilCore.findModuleForFile(virtualFile, project))
   }
 
-  import scala.collection.JavaConverters._
-
   def findProjectModules(project: Project): Iterable[Module] = {
-    ModuleUtil.getModulesOfType(project, HaskellModuleType.getInstance).asScala
+    ModuleManager.getInstance(project).getModules.filter(_.getModuleTypeName == HaskellModuleType.Id)
   }
 
   def getGhcVersion(project: Project): Option[GhcVersion] = {
