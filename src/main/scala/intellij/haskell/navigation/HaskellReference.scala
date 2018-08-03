@@ -214,7 +214,7 @@ object HaskellReference {
   }
 
   private def sortByClassDeclarationFirst(namedElement1: HaskellNamedElement, namedElement2: HaskellNamedElement): Boolean = {
-    (HaskellPsiUtil.findDeclarationElementParent(namedElement1), HaskellPsiUtil.findDeclarationElementParent(namedElement1)) match {
+    ApplicationUtil.runReadAction(HaskellPsiUtil.findDeclarationElementParent(namedElement1),ApplicationUtil.runReadAction(HaskellPsiUtil.findDeclarationElementParent(namedElement1))) match {
       case (Some(_: HaskellClassDeclaration), _) => true
       case (_, _) => false
     }
