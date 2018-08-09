@@ -21,10 +21,10 @@ import java.util.concurrent.LinkedBlockingQueue
 
 import com.intellij.openapi.project.Project
 import com.intellij.util.EnvironmentUtil
+import intellij.haskell.external.component.HaskellComponentsManager.StackComponentInfo
 import intellij.haskell.external.component.ProjectLibraryFileWatcher
 import intellij.haskell.external.execution.StackCommandLine
 import intellij.haskell.external.repl.StackRepl.{BenchmarkType, StackReplOutput, TestSuiteType}
-import intellij.haskell.external.repl.StackReplsManager.StackComponentInfo
 import intellij.haskell.sdk.HaskellSdkType
 import intellij.haskell.util.{HaskellEditorUtil, HaskellFileUtil, HaskellProjectUtil, StringUtil}
 import intellij.haskell.{GlobalInfo, HaskellNotificationGroup}

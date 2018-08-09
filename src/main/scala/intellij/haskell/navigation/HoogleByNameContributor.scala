@@ -61,15 +61,15 @@ class HoogleByNameContributor extends ChooseByNameContributor {
           val name = StringUtil.removeOuterParens(nd.name)
           val result = HaskellComponentsManager.findNameInfoByModuleName(project, moduleName, name)
           val navigationItemByNameInfo = result.toOption.flatMap(_.headOption) match {
-            case Some(lni: LibraryNameInfo) => HaskellReference.findIdentifiersByLibraryNameInfo(project, None, lni, name).
-              headOption.flatMap(HaskellPsiUtil.findDeclarationElementParent).map(d => createLibraryNavigationItem(d, moduleName))
+            case Some(lni: LibraryNameInfo) => HaskellReference.findIdentifiersByLibraryNameInfo(project, None, lni, name).toOption.flatten.
+              flatMap(HaskellPsiUtil.findDeclarationElementParent).map(d => createLibraryNavigationItem(d, moduleName))
             case Some(pni: ProjectNameInfo) =>
               val (virtualFile, psiFile) = HaskellProjectUtil.findFile(pni.filePath, project)
-              HaskellReference.findIdentifierByLocation(project, virtualFile, psiFile, pni.lineNr, pni.columnNr, name)._2.flatMap(HaskellPsiUtil.findDeclarationElementParent)
+              HaskellReference.findIdentifierByLocation(project, virtualFile, psiFile.toOption.flatten, pni.lineNr, pni.columnNr, name)._2.flatMap(HaskellPsiUtil.findDeclarationElementParent)
             case _ => None
           }
           navigationItemByNameInfo.orElse {
-            val identifier = HaskellReference.findIdentifiersByModuleAndName(project, None, moduleName, name)
+            val identifier = HaskellReference.findIdentifiersByModuleAndName(project, None, moduleName, name).toOption.flatten
             if (identifier.isEmpty) {
               NotFoundResult(moduleName, declaration)
             } else {

@@ -25,9 +25,9 @@ import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.psi.PsiFile
 import intellij.haskell.HaskellNotificationGroup
 import intellij.haskell.cabal._
+import intellij.haskell.external.component.HaskellComponentsManager.StackComponentInfo
 import intellij.haskell.external.component._
 import intellij.haskell.external.repl.StackRepl._
-import intellij.haskell.external.repl.StackReplsManager.StackComponentInfo
 import intellij.haskell.settings.HaskellSettingsState
 import intellij.haskell.util._
 
@@ -92,7 +92,6 @@ private[external] object StackReplsManager {
     }
   }
 
-  case class StackComponentInfo(module: Module, packageName: String, target: String, stanzaType: StanzaType, sourceDirs: Seq[String], mainIs: Option[String])
 
 }
 

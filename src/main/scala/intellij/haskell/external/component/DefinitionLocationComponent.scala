@@ -35,7 +35,7 @@ private[component] object DefinitionLocationComponent {
   private final val LocAtPattern = """(.+)\:\(([\d]+),([\d]+)\)-\(([\d]+),([\d]+)\)""".r
   private final val PackageModulePattern = """.+\:([\w\.\-]+)""".r
 
-  private case class Key(psiFile: PsiFile, moduleName: Option[String], qualifiedNameElement: HaskellQualifiedNameElement, name: String)
+  private case class Key(psiFile: PsiFile, moduleName: Option[String], qualifiedNameElement: HaskellQualifiedNameElement)
 
   type DefinitionLocationResult = Either[NoInfo, DefinitionLocation]
 
@@ -49,7 +49,9 @@ private[component] object DefinitionLocationComponent {
     val keys = Cache.synchronous().asMap().filter(_._1.psiFile == psiFile).flatMap { case (k, v) =>
       v.toOption match {
         case Some(definitionLocation) =>
-          if (ApplicationUtil.runReadAction(k.qualifiedNameElement.isValid) && ApplicationUtil.runReadAction(definitionLocation.namedElement.isValid) && k.name == ApplicationUtil.runReadAction(definitionLocation.namedElement.getName)) {
+          if (ApplicationUtil.runReadAction(k.qualifiedNameElement.isValid) &&
+            ApplicationUtil.runReadAction(definitionLocation.namedElement.isValid) &&
+            ApplicationUtil.runReadAction(k.qualifiedNameElement.getName) == ApplicationUtil.runReadAction(definitionLocation.namedElement.getName)) {
             None
           } else {
             Some(k)
@@ -59,6 +61,23 @@ private[component] object DefinitionLocationComponent {
     }
 
     Cache.synchronous().invalidateAll(keys)
+
+    val otherFileKeys = Cache.synchronous().asMap().flatMap { case (k, v) =>
+      v.toOption match {
+        case Some(definitionLocation) =>
+          if (ApplicationUtil.runReadAction(definitionLocation.namedElement.isValid) &&
+            ApplicationUtil.runReadAction(k.qualifiedNameElement.isValid) &&
+            definitionLocation.namedElement.getContainingFile == psiFile &&
+            ApplicationUtil.runReadAction(k.qualifiedNameElement.getName) == ApplicationUtil.runReadAction(definitionLocation.namedElement.getName)) {
+            None
+          } else {
+            Some(k)
+          }
+        case None => None
+      }
+    }
+
+    Cache.synchronous().invalidateAll(otherFileKeys)
   }
 
   def invalidateAll(project: Project): Unit = {
@@ -71,29 +90,29 @@ private[component] object DefinitionLocationComponent {
     } else {
       val psiFile = key.psiFile
       val project = psiFile.getProject
+      val identifierElement = key.qualifiedNameElement.getIdentifierElement
+      val name = ApplicationUtil.runReadAction(identifierElement.getName)
 
-      val name = key.name
       if (name.headOption.exists(_.isUpper)) {
-        createDefinitionLocationResult(project, psiFile, key, withoutLastColumn = true)
+        createDefinitionLocationResult(project, psiFile, key, name, withoutLastColumn = true)
       } else {
-        createDefinitionLocationResult(project, psiFile, key, withoutLastColumn = false)
+        createDefinitionLocationResult(project, psiFile, key, name, withoutLastColumn = false)
       }
     }
   }
 
-  private def createDefinitionLocationResult(project: Project, psiFile: PsiFile, key: Key, withoutLastColumn: Boolean): DefinitionLocationResult = {
-    findLocationInfo(project, psiFile, key, withoutLastColumn) match {
-      case Some(o) => o.stdoutLines.headOption.map(l => createDefinitionLocationResultFromLocationInfo(project, psiFile, l, key)) match {
+  private def createDefinitionLocationResult(project: Project, psiFile: PsiFile, key: Key, name: String, withoutLastColumn: Boolean): DefinitionLocationResult = {
+    findLocationInfo(project, psiFile, key, name, withoutLastColumn) match {
+      case Some(o) => o.stdoutLines.headOption.map(l => createDefinitionLocationResultFromLocationInfo(project, psiFile, l, key, name)) match {
         case Some(r) => r
-        case None => Left(NoInfoAvailable)
+        case None => Left(NoInfoAvailable(ApplicationUtil.runReadAction(key.qualifiedNameElement.getName), ApplicationUtil.runReadAction(key.psiFile.getName)))
       }
       case None => Left(ReplNotAvailable)
     }
   }
 
-  private def findLocationInfo(project: Project, psiFile: PsiFile, key: Key, withoutLastColumn: Boolean): Option[StackReplOutput] = {
+  private def findLocationInfo(project: Project, psiFile: PsiFile, key: Key, name: String, withoutLastColumn: Boolean): Option[StackReplOutput] = {
     val qualifiedNameElement = key.qualifiedNameElement
-    val name = key.name
     for {
       vf <- HaskellFileUtil.findVirtualFile(psiFile)
       sp <- LineColumnPosition.fromOffset(vf, qualifiedNameElement.getTextRange.getStartOffset)
@@ -104,26 +123,34 @@ private[component] object DefinitionLocationComponent {
     } yield output
   }
 
-  private def createDefinitionLocationResultFromLocationInfo(project: Project, psiFile: PsiFile, output: String, key: Key): DefinitionLocationResult = {
-    val name = key.name
+  private def createDefinitionLocationResultFromLocationInfo(project: Project, psiFile: PsiFile, output: String, key: Key, name: String): DefinitionLocationResult = {
     val (moduleName, namedElement) = output match {
       case LocAtPattern(filePath, startLineNr, startColumnNr, _, _) =>
         val (virtualFile, psiFile) = HaskellProjectUtil.findFile(filePath, project)
-        HaskellReference.findIdentifierByLocation(project, virtualFile,  psiFile, startLineNr.toInt, startColumnNr.toInt, name)
+        psiFile match {
+          case Right(pf) =>
+            val result = HaskellReference.findIdentifierByLocation(project, virtualFile, pf, startLineNr.toInt, startColumnNr.toInt, name)
+            (result._1, Right(result._2))
+          case Left(_) => (None, Left(IndexNotReady))
+        }
       case PackageModulePattern(mn) =>
         val module = HaskellProjectUtil.findModuleForFile(psiFile)
-        val file = HaskellReference.findFileByModuleName(project, module, mn)
-
-        (Some(mn), file.flatMap(f => HaskellReference.findIdentifierInFileByName(f, name)))
-      case _ => (None, None)
+        HaskellReference.findFileByModuleName(project, module, mn) match {
+          case Right(pf) => (Some(mn), Right(pf.flatMap(HaskellReference.findIdentifierInFileByName(_, name))))
+          case Left(_) => (None, Left(IndexNotReady))
+        }
+      case _ => (None, Right(None))
     }
     namedElement match {
-      case Some(e) => Right(DefinitionLocation(moduleName, e))
-      case None => Left(NoInfoAvailable)
+      case Right(ne) => ne match {
+        case Some(e) => Right(DefinitionLocation(moduleName, e))
+        case None => Left(NoInfoAvailable(ApplicationUtil.runReadAction(key.qualifiedNameElement.getName), ApplicationUtil.runReadAction(key.psiFile.getName)))
+      }
+      case Left(_) => Left(IndexNotReady)
     }
   }
 
-  private final val CurrentFileTimeout = Duration.create(50, TimeUnit.MILLISECONDS)
+  private[component] final val CurrentFileTimeout = Duration.create(150, TimeUnit.MILLISECONDS)
   private final val Timeout = Duration.create(1, TimeUnit.SECONDS)
 
   @tailrec
@@ -138,24 +165,28 @@ private[component] object DefinitionLocationComponent {
 
     val project = psiFile.getProject
     val moduleName = HaskellPsiUtil.findModuleName(psiFile)
-    val identifierElement = qualifiedNameElement.getIdentifierElement
-    val name = ApplicationUtil.runReadAction(identifierElement.getName)
-    val key = Key(psiFile, moduleName, qualifiedNameElement, name)
+    val key = Key(psiFile, moduleName, qualifiedNameElement)
 
     if (initialRequest && LoadComponent.isModuleLoaded(moduleName, psiFile)) {
       LocationInfoUtil.preloadLocationsInExpression(project, psiFile, qualifiedNameElement)
     }
 
     if (!LoadComponent.isModuleLoaded(moduleName, psiFile) && isCurrentFile) {
-      Left(NoInfoAvailable)
+      Left(ModuleNotLoaded(psiFile.getName))
     } else {
       val result = wait(Cache.get(key))
       result match {
-        case Right(_) => result
-        case Left(ReplNotAvailable) | Left(IndexNotReady) =>
+        case Right(r) =>
+          if (r.namedElement.isValid) {
+            result
+          } else {
+            Cache.synchronous.invalidate(key)
+            Left(NoInfoAvailable(ApplicationUtil.runReadAction(qualifiedNameElement.getName), psiFile.getName))
+          }
+        case Left(ReplNotAvailable) | Left(IndexNotReady) | Left(ModuleNotLoaded(_)) =>
           Cache.synchronous().invalidate(key)
           result
-        case Left(NoInfoAvailable) =>
+        case Left(NoInfoAvailable(_, _)) =>
           result
         case Left(ReplIsBusy) =>
           Cache.synchronous().invalidate(key)
@@ -196,7 +227,7 @@ object LocationInfoUtil {
                     if (!project.isDisposed && !LoadComponent.isBusy(project, stackComponentInfo)) {
                       DefinitionLocationComponent.find(psiFile, ne, isCurrentFile = true, initialRequest = false)
                       // We have to wait for other requests which have more priority because those are on dispatch thread
-                      Thread.sleep(50)
+                      Thread.sleep(DefinitionLocationComponent.CurrentFileTimeout.toMillis)
                     }
                   }
                 }

@@ -28,8 +28,8 @@ import intellij.haskell.external.component.DefinitionLocationComponent.Definitio
 import intellij.haskell.external.component.NameInfoComponentResult.NameInfoResult
 import intellij.haskell.external.component.TypeInfoComponentResult.TypeInfoResult
 import intellij.haskell.external.execution.CompilationResult
+import intellij.haskell.external.repl.StackRepl.StanzaType
 import intellij.haskell.external.repl.StackReplsManager
-import intellij.haskell.external.repl.StackReplsManager.StackComponentInfo
 import intellij.haskell.psi.{HaskellPsiUtil, HaskellQualifiedNameElement}
 import intellij.haskell.util.index.HaskellFileIndex
 import intellij.haskell.util.{HaskellProjectUtil, ScalaUtil}
@@ -38,6 +38,8 @@ import scala.concurrent._
 import scala.concurrent.duration.Duration
 
 object HaskellComponentsManager {
+
+  case class StackComponentInfo(module: Module, packageName: String, target: String, stanzaType: StanzaType, sourceDirs: Seq[String], mainIs: Option[String])
 
   private final val Timeout = Duration.create(100, TimeUnit.MILLISECONDS)
 
@@ -55,6 +57,10 @@ object HaskellComponentsManager {
   def clearLoadedModule(psiFile: PsiFile): Unit = {
     val projectRepl = StackReplsManager.getProjectRepl(psiFile)
     projectRepl.foreach(_.clearLoadedModule())
+  }
+
+  def isReplBusy(project: Project): Boolean = {
+    StackReplsManager.getRunningProjectRepls(project).exists(_.isBusy)
   }
 
   def isReplBusy(psiFile: PsiFile): Boolean = {
@@ -85,8 +91,8 @@ object HaskellComponentsManager {
     NameInfoComponent.NameInfoByModuleComponent.findNameInfoByModuleName(project, moduleName, name)
   }
 
-  def findAvailableModuleNamesWithIndex(psiFile: PsiFile): Iterable[String] = {
-    AvailableModuleNamesComponent.findAvailableModuleNamesWithIndex(psiFile)
+  def findAvailableModuleNamesWithIndex(stackComponentInfo: StackComponentInfo): Iterable[String] = {
+    AvailableModuleNamesComponent.findAvailableModuleNamesWithIndex(stackComponentInfo)
   }
 
   def findAvailableModuleLibraryModuleNamesWithIndex(module: Module): Iterable[String] = {

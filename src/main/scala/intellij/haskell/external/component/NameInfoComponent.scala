@@ -57,18 +57,18 @@ private[component] object NameInfoComponent {
             case Some(o) => Right(createNameInfos(project, o))
           }
         } else {
-          Left(NoInfoAvailable)
+          Left(NoInfoAvailable(key.name, psiFile.getName))
         }
       }
     } else {
       HaskellPsiUtil.findModuleName(psiFile) match {
-        case None => Left(NoInfoAvailable)
+        case None => Left(NoInfoAvailable(key.name, psiFile.getName))
         case Some(mn) =>
           StackReplsManager.getGlobalRepl(project).flatMap(_.findInfo(mn, name)) match {
             case None => Left(ReplNotAvailable)
             case Some(o) => createNameInfos(project, o) match {
               case infos if infos.nonEmpty => Right(infos)
-              case _ => Left(NoInfoAvailable)
+              case _ => Left(NoInfoAvailable(key.name, psiFile.getName))
             }
           }
       }
@@ -84,9 +84,9 @@ private[component] object NameInfoComponent {
           val result = Cache.get(key)
           result match {
             case Right(_) => result
-            case Left(NoInfoAvailable) =>
+            case Left(NoInfoAvailable(_, _)) =>
               result
-            case Left(ReplNotAvailable) | Left(ReplIsBusy) | Left(IndexNotReady) =>
+            case Left(ReplNotAvailable) | Left(ReplIsBusy) | Left(IndexNotReady) | Left(ModuleNotLoaded(_)) =>
               Cache.invalidate(key)
               result
           }

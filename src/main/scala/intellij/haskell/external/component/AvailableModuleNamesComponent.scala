@@ -17,52 +17,39 @@
 package intellij.haskell.external.component
 
 import com.intellij.openapi.module.Module
-import com.intellij.openapi.project.Project
-import com.intellij.psi.PsiFile
 import com.intellij.psi.search.FileTypeIndex
 import intellij.haskell.HaskellFileType
+import intellij.haskell.external.component.HaskellComponentsManager.StackComponentInfo
 import intellij.haskell.external.repl.StackRepl.{BenchmarkType, TestSuiteType}
-import intellij.haskell.external.repl.StackReplsManager.StackComponentInfo
 import intellij.haskell.psi.HaskellPsiUtil
 import intellij.haskell.util.HaskellFileUtil
 
 import scala.collection.JavaConverters._
 
-// TODO Consider to use cache with expiring
 private[component] object AvailableModuleNamesComponent {
-
-  // TODO: Is called always from dispatch thread ?
-  def findAvailableModuleNamesWithIndex(psiFile: PsiFile): Iterable[String] = {
-    val stackComponentInfo = HaskellComponentsManager.findStackComponentInfo(psiFile)
-    stackComponentInfo match {
-
-      case Some(info) =>
-        val libraryModuleNames = findAvailableLibraryModuleNames(info)
-        findAvailableProjectModuleNamesWithIndex(info) ++ libraryModuleNames
-      case None => Iterable()
-    }
-  }
-
-  def findAvailableLibraryModuleNamesWithIndex(module: Module): Iterable[String] = {
-    findModuleNamesInDirectories(module.getProject, module, includeTests = false)
-  }
 
   private final val TestStanzaTypes = Seq(TestSuiteType, BenchmarkType)
 
+  def findAvailableModuleNamesWithIndex(stackComponentInfo: StackComponentInfo): Iterable[String] = {
+    findAvailableProjectModuleNamesWithIndex(stackComponentInfo) ++ findAvailableLibraryModuleNames(stackComponentInfo)
+  }
+
+  def findAvailableLibraryModuleNamesWithIndex(module: Module): Iterable[String] = {
+    findModuleNamesInDirectories(module, includeTests = false)
+  }
+
   private def findAvailableProjectModuleNamesWithIndex(stackComponentInfo: StackComponentInfo): Iterable[String] = {
-    val module = stackComponentInfo.module
-    val project = module.getProject
-    findModuleNamesInDirectories(project, module, TestStanzaTypes.contains(stackComponentInfo.stanzaType))
+    findModuleNamesInDirectories(stackComponentInfo.module, TestStanzaTypes.contains(stackComponentInfo.stanzaType))
   }
 
   private def findAvailableLibraryModuleNames(stackComponentInfo: StackComponentInfo): Iterable[String] = {
     HaskellComponentsManager.findStackComponentGlobalInfo(stackComponentInfo).map(_.availableLibraryModuleNames).getOrElse(Iterable())
   }
 
-  private def findModuleNamesInDirectories(project: Project, module: Module, includeTests: Boolean): Iterable[String] = {
+  private def findModuleNamesInDirectories(module: Module, includeTests: Boolean): Iterable[String] = {
     for {
       vf <- FileTypeIndex.getFiles(HaskellFileType.Instance, module.getModuleScope(includeTests)).asScala
-      hf <- HaskellFileUtil.convertToHaskellFileInReadAction(project, vf)
+      hf <- HaskellFileUtil.convertToHaskellFileInReadAction(module.getProject, vf).toOption.flatten
       mn <- HaskellPsiUtil.findModuleName(hf)
     } yield mn
   }

@@ -26,11 +26,11 @@ import com.intellij.openapi.roots.ModuleRootManager
 import com.intellij.openapi.vfs.newvfs.BulkFileListener
 import com.intellij.openapi.vfs.newvfs.events.{VFileContentChangeEvent, VFileEvent}
 import intellij.haskell.annotator.HaskellAnnotator
+import intellij.haskell.external.component.HaskellComponentsManager.StackComponentInfo
 import intellij.haskell.external.component.ProjectLibraryFileWatcher.{Build, Building}
 import intellij.haskell.external.execution.StackCommandLine
 import intellij.haskell.external.repl.StackRepl.LibType
 import intellij.haskell.external.repl.StackReplsManager
-import intellij.haskell.external.repl.StackReplsManager.StackComponentInfo
 import intellij.haskell.util.{HaskellFileUtil, HaskellProjectUtil}
 
 import scala.collection.JavaConverters._
@@ -98,8 +98,10 @@ class ProjectLibraryFileWatcher(project: Project) extends BulkFileListener {
 
                     (dependentRepls ++ dependentLibRepls).foreach(_.restart())
 
+                    import scala.concurrent.duration._
+
                     (dependentFiles ++ dependentLibFiles).foreach { vf =>
-                      HaskellFileUtil.convertToHaskellFileInReadAction(project, vf).foreach { psiFile =>
+                      HaskellFileUtil.convertToHaskellFileInReadAction(project, vf, timeout = 1.second).toOption.flatten.foreach { psiFile =>
                         HaskellComponentsManager.invalidateLocationAndTypeInfo(psiFile)
                         HaskellAnnotator.restartDaemonCodeAnalyzerForFile(psiFile)
                       }

@@ -165,10 +165,6 @@ object HaskellEditorUtil {
     })
   }
 
-  def findCurrentEditorFile(project: Project): Option[PsiFile] = {
-    Option(FileEditorManagerEx.getInstanceEx(project).getCurrentFile).flatMap(vf => HaskellFileUtil.convertToHaskellFileInReadAction(project, vf))
-  }
-
   def findCurrentElement(psiFile: PsiFile): Option[PsiElement] = {
     val offset = Option(FileEditorManagerEx.getInstanceEx(psiFile.getProject).getSelectedTextEditor).map(_.getCaretModel.getCurrentCaret.getOffset)
     offset.map(psiFile.findElementAt)

@@ -21,8 +21,8 @@ import java.util.concurrent.ConcurrentHashMap
 import com.intellij.openapi.project.Project
 import com.intellij.psi.PsiFile
 import intellij.haskell.HaskellNotificationGroup
+import intellij.haskell.external.component.HaskellComponentsManager.StackComponentInfo
 import intellij.haskell.external.repl.StackRepl.StackReplOutput
-import intellij.haskell.external.repl.StackReplsManager.StackComponentInfo
 import intellij.haskell.util.HaskellFileUtil
 
 import scala.collection.JavaConverters._

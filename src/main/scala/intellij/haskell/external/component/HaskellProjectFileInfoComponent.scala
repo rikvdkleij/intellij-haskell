@@ -23,8 +23,8 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.psi.PsiFile
 import intellij.haskell.HaskellNotificationGroup
+import intellij.haskell.external.component.HaskellComponentsManager.StackComponentInfo
 import intellij.haskell.external.repl.StackReplsManager
-import intellij.haskell.external.repl.StackReplsManager.StackComponentInfo
 import intellij.haskell.runconfig.console.HaskellConsoleView
 import intellij.haskell.util.{HaskellFileUtil, ScalaUtil}
 

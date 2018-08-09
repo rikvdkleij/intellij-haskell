@@ -27,6 +27,7 @@ import com.intellij.util.indexing._
 import com.intellij.util.io.{EnumeratorStringDescriptor, KeyDescriptor}
 import intellij.haskell.HaskellFileType
 import intellij.haskell.psi.HaskellPsiUtil
+import intellij.haskell.util.ApplicationUtil.ReadActionTimeout
 import intellij.haskell.util.{ApplicationUtil, HaskellFileUtil}
 
 import scala.collection.JavaConverters._
@@ -46,26 +47,26 @@ object HaskellModuleNameIndex {
     }
   }
 
-  def findHaskellFileByModuleName(project: Project, moduleName: String, searchScope: GlobalSearchScope): Option[PsiFile] = {
-    val virtualFile = findFilesByModuleName(project, moduleName, searchScope).headOption
-    virtualFile.flatMap(vf => HaskellFileUtil.convertToHaskellFileInReadAction(project, vf))
+  def findHaskellFileByModuleName(project: Project, moduleName: String, searchScope: GlobalSearchScope): Either[ReadActionTimeout, Option[PsiFile]] = {
+    findFilesByModuleName(project, moduleName, searchScope) match {
+      case Right(vfs) => vfs.headOption match {
+        case Some(vf) => HaskellFileUtil.convertToHaskellFileInReadAction(project, vf)
+        case None => Right(None)
+      }
+      case Left(_) => Left(ReadActionTimeout)
+    }
   }
 
   def findHaskellFilesByModuleNameInAllScope(project: Project, moduleName: String): Iterable[PsiFile] = {
-    HaskellFileUtil.convertToHaskellFiles(project, findFilesByModuleName(project, moduleName, GlobalSearchScope.allScope(project)))
+    HaskellFileUtil.convertToHaskellFiles(project, findFilesByModuleName(project, moduleName, GlobalSearchScope.allScope(project)).getOrElse(Iterable()))
   }
 
-  private def findFilesByModuleName(project: Project, moduleName: String, searchScope: GlobalSearchScope): Iterable[VirtualFile] = {
-    val result =
-      if (ApplicationManager.getApplication.isDispatchThread) {
-        FileBasedIndex.getInstance.getContainingFiles(HaskellModuleNameIndex, moduleName, searchScope).asScala
-      } else {
-        ApplicationUtil.scheduleInReadActionWithWriteActionPriority(project, FileBasedIndex.getInstance.getContainingFiles(HaskellModuleNameIndex, moduleName, searchScope)) match {
-          case Right(files) => files.asScala
-          case Left(_) => Iterable()
-        }
-      }
-    result
+  private def findFilesByModuleName(project: Project, moduleName: String, searchScope: GlobalSearchScope): Either[ReadActionTimeout, Iterable[VirtualFile]] = {
+    if (ApplicationManager.getApplication.isDispatchThread) {
+      Right(FileBasedIndex.getInstance.getContainingFiles(HaskellModuleNameIndex, moduleName, searchScope).asScala)
+    } else {
+      ApplicationUtil.scheduleInReadActionWithWriteActionPriority(project, FileBasedIndex.getInstance.getContainingFiles(HaskellModuleNameIndex, moduleName, searchScope), s"finding file for module $moduleName").map(_.asScala)
+    }
   }
 }
 

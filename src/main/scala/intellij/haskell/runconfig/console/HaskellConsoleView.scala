@@ -94,7 +94,7 @@ class HaskellConsoleView(val project: Project, val configuration: HaskellConsole
   def executeCommand(commandText: String, addToHistory: Boolean = true): Unit = {
     commandText.trim() match {
       case LoadPattern(moduleName) =>
-        val psiFile = HaskellModuleNameIndex.findHaskellFileByModuleName(project, moduleName, GlobalSearchScope.projectScope(project))
+        val psiFile = HaskellModuleNameIndex.findHaskellFileByModuleName(project, moduleName, GlobalSearchScope.projectScope(project)).toOption.flatten
         psiFile.foreach(hf => HaskellConsoleViewMap.projectFileByConfigName.put(configuration.getName, hf))
       case _ => ()
     }

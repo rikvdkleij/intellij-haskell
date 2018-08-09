@@ -29,6 +29,7 @@ import com.intellij.psi.impl.source.tree.TreeUtil
 import com.intellij.psi.util.PsiTreeUtil
 import com.intellij.psi.{PsiElement, PsiFile, TokenType}
 import com.intellij.util.ProcessingContext
+import intellij.haskell.external.component.HaskellComponentsManager.StackComponentInfo
 import intellij.haskell.external.component.{HaskellComponentsManager, ModuleIdentifier, StackProjectManager}
 import intellij.haskell.psi.HaskellElementCondition._
 import intellij.haskell.psi.HaskellPsiUtil._
@@ -159,6 +160,8 @@ class HaskellCompletionContributor extends CompletionContributor {
 
         ProgressManager.checkCanceled()
 
+        lazy val stackComponentInfo = HaskellComponentsManager.findStackComponentInfo(psiFile)
+
         positionElement match {
           case Some(e) if isFileHeaderPragmaInProgress(e) =>
             resultSet.addAllElements(getLanguageExtensionsLookupElements(project).asJavaCollection)
@@ -172,7 +175,7 @@ class HaskellCompletionContributor extends CompletionContributor {
           case Some(e) if isImportModuleDeclarationInProgress(e) =>
             // Do not give suggestions when defining import qualifier
             if (e.getParent.getNode.getElementType != HS_QUALIFIER) {
-              resultSet.addAllElements(findAvailableModuleNamesLookupElements(project, psiFile).asJavaCollection)
+              stackComponentInfo.foreach(info => resultSet.addAllElements(findAvailableModuleNamesLookupElements(info).asJavaCollection))
               resultSet.addAllElements(getInsideImportClausesLookupElements.asJavaCollection)
               resultSet.addElement(createKeywordLookupElement("import"))
             }
@@ -196,10 +199,11 @@ class HaskellCompletionContributor extends CompletionContributor {
 
             ProgressManager.checkCanceled()
 
-            // Retrieve identifiers in scope by always using the project file
-            projectFile.foreach(file => {
-              resultSet.addAllElements(getAvailableLookupElements(file).asJava)
-            })
+            for {
+              info <- stackComponentInfo
+              file <- projectFile
+            } yield
+              resultSet.addAllElements(getAvailableLookupElements(info, file).asJava)
 
             ProgressManager.checkCanceled()
 
@@ -311,9 +315,8 @@ class HaskellCompletionContributor extends CompletionContributor {
     }
   }
 
-  private def findAvailableModuleNamesLookupElements(project: Project, psiFile: PsiFile) = {
-    val moduleNames = HaskellComponentsManager.findAvailableModuleNamesWithIndex(psiFile)
-    moduleNames.map(createModuleLookupElement)
+  private def findAvailableModuleNamesLookupElements(stackComponentInfo: StackComponentInfo) = {
+    HaskellComponentsManager.findAvailableModuleNamesWithIndex(stackComponentInfo).map(createModuleLookupElement)
   }
 
   private def createModuleLookupElement(moduleName: String) = {
@@ -348,9 +351,9 @@ class HaskellCompletionContributor extends CompletionContributor {
     HaddockIds.map(p => LookupElementBuilder.create(p).withIcon(HaskellIcons.HaskellSmallBlueLogo).withTailText(" haddock", true))
   }
 
-  private def getAvailableLookupElements(psiFile: PsiFile): Iterable[LookupElementBuilder] = {
+  private def getAvailableLookupElements(stackComponentInfo: StackComponentInfo, psiFile: PsiFile): Iterable[LookupElementBuilder] = {
     val moduleName = HaskellPsiUtil.findModuleName(psiFile)
-    useAvailableModuleIdentifiers(psiFile, moduleName, (f1, f2, f3, f4) => (f1 ++ f2 ++ f3).map(mi => createLookupElement(mi)) ++ getLocalTopLevelLookupElements(psiFile, moduleName, f4))
+    useAvailableModuleIdentifiers(stackComponentInfo, psiFile, moduleName, (f1, f2, f3, f4) => (f1 ++ f2 ++ f3).map(mi => createLookupElement(mi)) ++ getLocalTopLevelLookupElements(psiFile, moduleName, f4))
   }
 
   private def getKeywordLookupElements = {
@@ -372,11 +375,11 @@ object HaskellCompletionContributor {
 
   import scala.concurrent.ExecutionContext.Implicits.global
 
-  private def useAvailableModuleIdentifiers[A](psiFile: PsiFile, moduleName: Option[String],
+  private def useAvailableModuleIdentifiers[A](stackComponentInfo: StackComponentInfo, psiFile: PsiFile, moduleName: Option[String],
                                                doIt: (Iterable[ModuleIdentifier], Iterable[ModuleIdentifier], Iterable[ModuleIdentifier], Iterable[ModuleIdentifier]) => Iterable[A]): Iterable[A] = {
     val importDeclarations = findImportDeclarations(psiFile)
 
-    val idsF1 = getModuleIdentifiersFromFullImportedModules(psiFile, importDeclarations)
+    val idsF1 = getModuleIdentifiersFromFullImportedModules(stackComponentInfo, psiFile, importDeclarations)
     val idsF2 = getModuleIdentifiersFromHidingIdsImportedModules(psiFile, importDeclarations)
     val idsF3 = getModuleIdentifiersFromSpecIdsImportedModules(psiFile, importDeclarations)
     val idsF4 = moduleName.map(mn => HaskellComponentsManager.findLocalModuleIdentifiers(psiFile.getProject, psiFile, mn)).getOrElse(Future.successful(Iterable()))
@@ -404,8 +407,8 @@ object HaskellCompletionContributor {
     }
   }
 
-  def getAvailableModuleIdentifiers(psiFile: PsiFile, moduleName: Option[String]): Iterable[ModuleIdentifier] = {
-    useAvailableModuleIdentifiers(psiFile, moduleName, (f1, f2, f3, f4) => f1 ++ f2 ++ f3 ++ f4)
+  def getAvailableModuleIdentifiers(stackComponentInfo: StackComponentInfo, psiFile: PsiFile, moduleName: Option[String]): Iterable[ModuleIdentifier] = {
+    useAvailableModuleIdentifiers(stackComponentInfo, psiFile, moduleName, (f1, f2, f3, f4) => f1 ++ f2 ++ f3 ++ f4)
   }
 
   private sealed trait ImportInfo {
@@ -422,20 +425,19 @@ object HaskellCompletionContributor {
 
   private case class ImportWithIds(moduleName: String, ids: Iterable[String], qualified: Boolean, as: Option[String]) extends ImportInfo
 
-  private def isNoImplicitPreludeActive(psiFile: PsiFile): Boolean = {
-    val stackComponentInfo = HaskellComponentsManager.findStackComponentInfo(psiFile)
-    val globalInfo = stackComponentInfo.flatMap(HaskellComponentsManager.findStackComponentGlobalInfo)
+  private def isNoImplicitPreludeActive(stackComponentInfo: StackComponentInfo, psiFile: PsiFile): Boolean = {
+    val globalInfo = HaskellComponentsManager.findStackComponentGlobalInfo(stackComponentInfo)
     globalInfo.exists(_.noImplicitPreludeActive) || HaskellPsiUtil.findLanguageExtensions(psiFile).flatMap(_.getGeneralPragmaContentList.asScala).exists(_.getText.contains("NoImplicitPrelude"))
   }
 
-  private def getFullImportedModules(psiFile: PsiFile, importDeclarations: Iterable[HaskellImportDeclaration]): Iterable[ImportFull] = {
+  private def getFullImportedModules(stackComponentInfo: StackComponentInfo, psiFile: PsiFile, importDeclarations: Iterable[HaskellImportDeclaration]): Iterable[ImportFull] = {
     val moduleNames = for {
       id <- importDeclarations
       if Option(id.getImportSpec).isEmpty
       mn <- id.getModuleName
     } yield ImportFull(mn, Option(id.getImportQualified).isDefined, Option(id.getImportQualifiedAs).map(_.getQualifier.getName))
 
-    if (importDeclarations.exists(_.getModuleName == HaskellProjectUtil.Prelude) || isNoImplicitPreludeActive(psiFile)) {
+    if (importDeclarations.exists(_.getModuleName == HaskellProjectUtil.Prelude) || isNoImplicitPreludeActive(stackComponentInfo, psiFile)) {
       moduleNames
     } else {
       Iterable(ImportFull(HaskellProjectUtil.Prelude, qualified = false, None)) ++ moduleNames
@@ -468,8 +470,8 @@ object HaskellCompletionContributor {
     )
   }
 
-  private def getModuleIdentifiersFromFullImportedModules(psiFile: PsiFile, importDeclarations: Iterable[HaskellImportDeclaration]): Future[Iterable[ModuleIdentifier]] = {
-    val importInfos = getFullImportedModules(psiFile, importDeclarations)
+  private def getModuleIdentifiersFromFullImportedModules(stackComponentInfo: StackComponentInfo, psiFile: PsiFile, importDeclarations: Iterable[HaskellImportDeclaration]): Future[Iterable[ModuleIdentifier]] = {
+    val importInfos = getFullImportedModules(stackComponentInfo: StackComponentInfo, psiFile, importDeclarations)
 
     Future.sequence(importInfos.map(importInfo => {
       val allModuleIdentifiers = HaskellComponentsManager.findModuleIdentifiers(psiFile.getProject, importInfo.moduleName)

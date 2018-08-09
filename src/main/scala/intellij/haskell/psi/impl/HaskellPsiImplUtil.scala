@@ -246,7 +246,7 @@ object HaskellPsiImplUtil {
     new HaskellItemPresentation(namedElement) {
 
       def getPresentableText: String = {
-        getItemPresentableText(namedElement)
+        namedElement.getName
       }
 
       override def getIcon(unused: Boolean): Icon = {

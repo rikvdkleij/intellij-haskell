@@ -18,9 +18,9 @@ package intellij.haskell.external.component
 
 import com.github.blemale.scaffeine.{LoadingCache, Scaffeine}
 import com.intellij.openapi.project.Project
+import intellij.haskell.external.component.HaskellComponentsManager.StackComponentInfo
 import intellij.haskell.external.repl.StackRepl.StackReplOutput
 import intellij.haskell.external.repl.StackReplsManager
-import intellij.haskell.external.repl.StackReplsManager.StackComponentInfo
 
 private[component] object StackComponentGlobalInfoComponent {
 

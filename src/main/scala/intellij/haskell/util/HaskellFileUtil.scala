@@ -34,6 +34,9 @@ import com.intellij.psi.impl.PsiManagerEx
 import com.intellij.psi.{PsiDocumentManager, PsiFile, PsiManager}
 import intellij.haskell.HaskellFileType
 import intellij.haskell.action.SelectionContext
+import intellij.haskell.util.ApplicationUtil.{ReadActionTimeout, RunInTimeout}
+
+import scala.concurrent.duration.FiniteDuration
 
 object HaskellFileUtil {
 
@@ -123,20 +126,30 @@ object HaskellFileUtil {
     Option(psiManager.findFile(virtualFile))
   }
 
-  def convertToHaskellFileInReadAction(project: Project, virtualFile: VirtualFile): Option[PsiFile] = {
+  def convertToHaskellFileDispatchThread(project: Project, virtualFile: VirtualFile): Option[PsiFile] = {
+    val psiManager = PsiManager.getInstance(project)
+
+    findCachedPsiFile(psiManager, virtualFile) match {
+      case pf@Some(_) => pf
+      case None => findPsiFile(psiManager, virtualFile)
+    }
+  }
+
+  def convertToHaskellFileInReadAction(project: Project, virtualFile: VirtualFile, timeout: FiniteDuration = RunInTimeout): Either[ReadActionTimeout, Option[PsiFile]] = {
     val psiManager = PsiManager.getInstance(project)
 
     if (ApplicationManager.getApplication.isDispatchThread) {
       findCachedPsiFile(psiManager, virtualFile) match {
-        case pf@Some(_) => pf
-        case None => findPsiFile(psiManager, virtualFile)
+        case pf@Some(_) => Right(pf)
+        case None => Right(findPsiFile(psiManager, virtualFile))
       }
     } else {
-      ApplicationUtil.runInReadActionWithWriteActionPriority(project, findCachedPsiFile(psiManager, virtualFile)) match {
-        case Right(pf) if pf.isDefined => pf
-        case _ => ApplicationUtil.runInReadActionWithWriteActionPriority(project, findPsiFile(psiManager, virtualFile)) match {
-          case Right(pf) => pf
-          case Left(_) => None
+      val timeoutMessage = s"Converting $virtualFile to psi file"
+      ApplicationUtil.runInReadActionWithWriteActionPriority(project, findCachedPsiFile(psiManager, virtualFile), timeoutMessage = timeoutMessage, timeout) match {
+        case r@Right(pf) if pf.isDefined => r
+        case _ => ApplicationUtil.runInReadActionWithWriteActionPriority(project, findPsiFile(psiManager, virtualFile), timeoutMessage = timeoutMessage, timeout) match {
+          case r@Right(_) => r
+          case l@Left(_) => l
         }
       }
     }

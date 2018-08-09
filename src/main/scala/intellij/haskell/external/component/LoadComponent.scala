@@ -20,15 +20,14 @@ import com.intellij.codeInsight.documentation.DocumentationManager
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.project.Project
 import com.intellij.psi.{PsiElement, PsiFile}
+import intellij.haskell.external.component.HaskellComponentsManager.StackComponentInfo
 import intellij.haskell.external.execution.{CompilationResult, HaskellCompilationResultHelper}
 import intellij.haskell.external.repl.ProjectStackRepl.{Failed, Loaded}
-import intellij.haskell.external.repl.StackReplsManager.StackComponentInfo
 import intellij.haskell.external.repl._
 import intellij.haskell.psi.HaskellPsiUtil
 import intellij.haskell.util.ScalaUtil
 
 private[component] object LoadComponent {
-
 
   def isFileLoaded(psiFile: PsiFile): Boolean = {
     val projectRepl = StackReplsManager.getProjectRepl(psiFile)

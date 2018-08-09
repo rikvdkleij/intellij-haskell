@@ -21,7 +21,7 @@ import java.nio.file.Paths
 
 import com.intellij.openapi.module.{Module, ModuleManager, ModuleUtilCore}
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.roots.ProjectRootManager
+import com.intellij.openapi.roots.{ProjectRootManager, TestSourcesFilter}
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.vfs.{LocalFileSystem, VirtualFile}
 import com.intellij.psi.search.GlobalSearchScope
@@ -29,6 +29,7 @@ import com.intellij.psi.{PsiElement, PsiFile}
 import intellij.haskell.external.execution.StackCommandLine
 import intellij.haskell.module.HaskellModuleType
 import intellij.haskell.sdk.HaskellSdkType
+import intellij.haskell.util.ApplicationUtil.ReadActionTimeout
 
 object HaskellProjectUtil {
 
@@ -49,9 +50,12 @@ object HaskellProjectUtil {
     findProjectModules(project).nonEmpty
   }
 
-  def findFile(filePath: String, project: Project): (Option[VirtualFile], Option[PsiFile]) = {
+  def findFile(filePath: String, project: Project): (Option[VirtualFile], Either[ReadActionTimeout, Option[PsiFile]]) = {
     val virtualFile = Option(LocalFileSystem.getInstance().findFileByPath(HaskellFileUtil.makeFilePathAbsolute(filePath, project)))
-    val psiFile = virtualFile.flatMap(f => HaskellFileUtil.convertToHaskellFileInReadAction(project, f))
+    val psiFile = virtualFile.map(f => HaskellFileUtil.convertToHaskellFileInReadAction(project, f)) match {
+      case Some(r) => r
+      case None => Right(None)
+    }
     (virtualFile, psiFile)
   }
 
@@ -74,6 +78,14 @@ object HaskellProjectUtil {
 
   def isProjectFile(virtualFile: VirtualFile, project: Project): Boolean = {
     FileUtil.isAncestor(Paths.get(project.getBasePath).toFile, Paths.get(virtualFile.getPath).toFile, true)
+  }
+
+  def isProjectTestFile(psiFile: PsiFile): Option[Boolean] = {
+    Option(psiFile.getOriginalFile.getVirtualFile).map(vf => isProjectTestFile(vf, psiFile.getProject))
+  }
+
+  def isProjectTestFile(virtualFile: VirtualFile, project: Project): Boolean = {
+    TestSourcesFilter.isTestSources(virtualFile, project)
   }
 
   def getModuleDir(module: Module): File = {

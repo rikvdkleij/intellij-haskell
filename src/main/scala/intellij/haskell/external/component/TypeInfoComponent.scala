@@ -45,9 +45,9 @@ private[component] object TypeInfoComponent {
       } yield {
         val moduleName = HaskellPsiUtil.findModuleName(pf)
         Key(moduleName, pf, qne, qne.getName)
-      }).map(findTypeInfo).getOrElse(Left(NoInfoAvailable))
+      }).map(findTypeInfo).getOrElse(Left(NoInfoAvailable(element.getText, Option(element.getContainingFile).map(_.getName).getOrElse("-"))))
     } else {
-      Left(NoInfoAvailable)
+      Left(NoInfoAvailable(element.getText, Option(element.getContainingFile).map(_.getName).getOrElse("-")))
     }
   }
 
@@ -61,13 +61,13 @@ private[component] object TypeInfoComponent {
           ep <- LineColumnPosition.fromOffset(vf, selectionModel.getSelectionEnd)
         } yield {
           StackReplsManager.getProjectRepl(psiFile).flatMap(_.findTypeInfo(moduleName, psiFile, sp.lineNr, sp.columnNr, ep.lineNr, ep.columnNr, selectionModel.getSelectedText)) match {
-            case Some(output) => output.stdoutLines.headOption.filterNot(_.trim.isEmpty).map(ti => Right(TypeInfo(ti, output.stderrLines.nonEmpty))).getOrElse(Left(NoInfoAvailable))
+            case Some(output) => output.stdoutLines.headOption.filterNot(_.trim.isEmpty).map(ti => Right(TypeInfo(ti, output.stderrLines.nonEmpty))).getOrElse(Left(NoInfoAvailable(selectionModel.getSelectedText, psiFile.getName)))
             case None => Left(ReplNotAvailable)
           }
         }
-      }.getOrElse(Left(NoInfoAvailable))
+      }.getOrElse(Left(NoInfoAvailable(selectionModel.getSelectedText, psiFile.getName)))
     } else {
-      Left(NoInfoAvailable)
+      Left(ModuleNotLoaded(moduleName.getOrElse("-")))
     }
   }
 
@@ -136,13 +136,12 @@ private[component] object TypeInfoComponent {
           sp <- LineColumnPosition.fromOffset(vf, to)
           ep <- LineColumnPosition.fromOffset(vf, to + ApplicationUtil.runReadAction(qne.getText).length)
         } yield {
-
           StackReplsManager.getProjectRepl(key.psiFile).flatMap(_.findTypeInfo(key.moduleName, key.psiFile, sp.lineNr, sp.columnNr, ep.lineNr, ep.columnNr, key.expression)) match {
-            case Some(output) => output.stdoutLines.headOption.filterNot(_.trim.isEmpty).map(ti => Right(TypeInfo(ti, output.stderrLines.nonEmpty))).getOrElse(Left(NoInfoAvailable))
+            case Some(output) => output.stdoutLines.headOption.filterNot(_.trim.isEmpty).map(ti => Right(TypeInfo(ti, output.stderrLines.nonEmpty))).getOrElse(Left(NoInfoAvailable(key.expression, key.psiFile.getName)))
             case None => Left(ReplNotAvailable)
           }
         }
-      }.getOrElse(Left(NoInfoAvailable))
+      }.getOrElse(Left(NoInfoAvailable(key.expression, key.psiFile.getName)))
     }
   }
 
@@ -151,14 +150,14 @@ private[component] object TypeInfoComponent {
       val result = wait(Cache.get(key))
       result match {
         case Right(_) => result
-        case Left(NoInfoAvailable) =>
+        case Left(NoInfoAvailable(_, _)) =>
           result
-        case Left(ReplNotAvailable) | Left(ReplIsBusy) | Left(IndexNotReady) =>
+        case Left(ReplNotAvailable) | Left(ReplIsBusy) | Left(IndexNotReady) | Left(ModuleNotLoaded(_)) =>
           Cache.synchronous().invalidate(key)
           result
       }
     } else {
-      Left(NoInfoAvailable)
+      Left(ModuleNotLoaded(key.psiFile.getName))
     }
   }
 

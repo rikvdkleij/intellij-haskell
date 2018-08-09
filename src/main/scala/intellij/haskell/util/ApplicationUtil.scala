@@ -7,18 +7,22 @@ import com.intellij.openapi.progress.util.ReadTask.Continuation
 import com.intellij.openapi.progress.util.{ProgressIndicatorUtils, ReadTask}
 import com.intellij.openapi.progress.{ProgressIndicator, ProgressManager}
 import com.intellij.openapi.project.{DumbService, Project}
+import intellij.haskell.HaskellNotificationGroup
 
 import scala.concurrent.duration._
 
 object ApplicationUtil {
 
-  private final val Timeout = 50.millis
+  trait ReadActionTimeout
+  case object ReadActionTimeout extends ReadActionTimeout
 
   def runReadAction[T](f: => T): T = {
     ApplicationManager.getApplication.runReadAction(ScalaUtil.computable(f))
   }
 
-  def runInReadActionWithWriteActionPriority[A](project: Project, f: => A): Either[String, A] = {
+  final val RunInTimeout = 50.millis
+
+  def runInReadActionWithWriteActionPriority[A](project: Project, f: => A, timeoutMessage: => String, timeout: FiniteDuration = RunInTimeout): Either[ReadActionTimeout, A] = {
     val r = new AtomicReference[A]
 
     def run(): Boolean = {
@@ -30,7 +34,7 @@ object ApplicationUtil {
       }
     }
 
-    val deadline = Timeout.fromNow
+    val deadline = timeout.fromNow
 
     while (deadline.hasTimeLeft && !run() && !project.isDisposed) {
       Thread.sleep(1)
@@ -38,14 +42,16 @@ object ApplicationUtil {
 
     val result = r.get()
     if (result == null) {
-      Left("No result because of timeout")
+      HaskellNotificationGroup.logInfoEvent(project, s"Timout in runInReadActionWithWriteActionPriority while $timeoutMessage")
+      Left(ReadActionTimeout)
     } else {
       Right(result)
     }
   }
 
+  private final val ScheduleInWriteTimeout = 100.millis
 
-  def scheduleInReadActionWithWriteActionPriority[A](project: Project, f: => A): Either[String, A] = {
+  def scheduleInReadActionWithWriteActionPriority[A](project: Project, f: => A, timeoutMessage: => String): Either[ReadActionTimeout, A] = {
     val r = new AtomicReference[A]
 
     ProgressIndicatorUtils.scheduleWithWriteActionPriority {
@@ -67,7 +73,7 @@ object ApplicationUtil {
       }
     }
 
-    val deadline = Timeout.fromNow
+    val deadline = ScheduleInWriteTimeout.fromNow
 
     while (r.get == null && deadline.hasTimeLeft && !project.isDisposed) {
       Thread.sleep(1)
@@ -75,7 +81,8 @@ object ApplicationUtil {
 
     val result = r.get()
     if (result == null) {
-      Left("No result because of timeout")
+      HaskellNotificationGroup.logInfoEvent(project, s"Timout in scheduleInReadActionWithWriteActionPriority while $timeoutMessage")
+      Left(ReadActionTimeout)
     } else {
       Right(result)
     }
