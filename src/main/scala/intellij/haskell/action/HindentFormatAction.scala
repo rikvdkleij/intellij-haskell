@@ -20,7 +20,7 @@ import java.io.{BufferedReader, BufferedWriter, InputStreamReader, OutputStreamW
 
 import com.intellij.application.options.CodeStyle
 import com.intellij.codeInsight.actions.ReformatCodeAction
-import com.intellij.openapi.actionSystem.AnActionEvent
+import com.intellij.openapi.actionSystem.{AnActionEvent, Presentation}
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.editor.SelectionModel
 import com.intellij.openapi.project.Project
@@ -37,6 +37,9 @@ import scala.collection.mutable.ListBuffer
 sealed case class SelectionContext(start: Int, end: Int, text: String)
 
 class HindentFormatAction extends ReformatCodeAction {
+
+  val presentation: Presentation = getTemplatePresentation
+  presentation.setText("Reformat Code")
 
   override def update(actionEvent: AnActionEvent) {
     if (HaskellProjectUtil.isHaskellProject(actionEvent.getProject)) {

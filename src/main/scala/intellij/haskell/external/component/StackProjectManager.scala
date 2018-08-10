@@ -291,6 +291,8 @@ class StackProjectManager(project: Project) extends ProjectComponent {
 
   private def disableDefaultReformatAction() = {
     val actionManager = ActionManager.getInstance
+    // Overriding IntelliJ's default shortcut for formatting
     actionManager.unregisterAction("ReformatCode")
+    actionManager.registerAction("ReformatCode", new HindentFormatAction)
   }
 }
