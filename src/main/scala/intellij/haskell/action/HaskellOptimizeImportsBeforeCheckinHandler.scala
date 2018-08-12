@@ -48,7 +48,7 @@ import javax.swing.{JCheckBox, JComponent, JPanel}
 class HaskellOptimizeImportsBeforeCheckinHandler(project: Project, checkinProjectPanel: CheckinProjectPanel) extends CheckinHandler with CheckinMetaHandler {
 
   override def getBeforeCheckinConfigurationPanel: RefreshableOnComponent = {
-    val optimizeBox = new NonFocusableCheckBox("Optimize imports by GHC warnings")
+    val optimizeBox = new NonFocusableCheckBox("Haskell optimize imports")
     disableWhenDumb(project, optimizeBox, "Impossible until indices are up-to-date")
     new RefreshableOnComponent() {
       override def getComponent: JComponent = {

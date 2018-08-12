@@ -48,7 +48,7 @@ class HaskellReformatBeforeCheckinHandler(project: Project, checkinProjectPanel:
 
   override def getBeforeCheckinConfigurationPanel: RefreshableOnComponent = {
 
-    val reformatBox = new NonFocusableCheckBox("Reformat code by Hindent")
+    val reformatBox = new NonFocusableCheckBox("Haskell reformat code")
     disableWhenDumb(project, reformatBox, "Impossible until indices are up-to-date")
     new RefreshableOnComponent() {
       override def getComponent: JComponent = {
@@ -80,7 +80,7 @@ class HaskellReformatBeforeCheckinHandler(project: Project, checkinProjectPanel:
     }
 
     if (HaskellSettingsState.isReformatCodeBeforeCommit && !DumbService.isDumb(project)) {
-      val reformatResult = virtualFiles.asScala.forall(vf => HaskellFileUtil.convertToHaskellFileDispatchThread(project, vf).exists(pf => HindentReformatAction.format(pf, None)))
+      val reformatResult = virtualFiles.asScala.forall(vf => HaskellFileUtil.convertToHaskellFileDispatchThread(project, vf).exists(HaskellReformatAction.reformatFile))
       if (reformatResult) {
         performCheckoutAction.run()
       }

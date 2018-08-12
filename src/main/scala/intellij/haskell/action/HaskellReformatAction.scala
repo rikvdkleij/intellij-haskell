@@ -18,6 +18,7 @@ package intellij.haskell.action
 
 import com.intellij.openapi.actionSystem.{AnAction, AnActionEvent, Presentation}
 import com.intellij.openapi.project.Project
+import com.intellij.psi.PsiFile
 import intellij.haskell.external.component.StackProjectManager
 import intellij.haskell.util.HaskellEditorUtil
 
@@ -38,10 +39,17 @@ class HaskellReformatAction extends AnAction {
         case Some(_) =>
           HindentReformatAction.format(psiFile, selectionModel.map(m =>
             HindentReformatAction.translateSelectionModelToSelectionContext(m)))
-        case None =>
-          HindentReformatAction.format(psiFile)
-          StylishHaskellReformatAction.format(psiFile)
+        case None => HaskellReformatAction.reformatFile(psiFile)
       }
     })
+  }
+}
+
+object HaskellReformatAction {
+
+  def reformatFile(psiFile: PsiFile): Boolean = {
+    HindentReformatAction.format(psiFile)
+    StylishHaskellReformatAction.format(psiFile)
+    true
   }
 }
