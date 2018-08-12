@@ -54,7 +54,7 @@ object HaskellPsiImplUtil {
   }
 
   def getName(qName: HaskellQName): String = {
-    Option(qName.getVarCon).map(_.getName).getOrElse(qName.getQVarCon.getName)
+    Option(qName.getVarCon).map(_.getName).orElse(Option(qName.getQVarCon).map(_.getName)).getOrElse(qName.getText)
   }
 
   def getIdentifierElement(qName: HaskellQName): HaskellNamedElement = {
