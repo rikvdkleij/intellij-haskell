@@ -24,7 +24,7 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.roots.{ModifiableRootModel, ModuleRootModificationUtil}
 import com.intellij.openapi.ui.Messages
 import com.intellij.openapi.vfs.VirtualFileManager
-import intellij.haskell.action.{HindentFormatAction, StylishHaskellFormatAction}
+import intellij.haskell.action.{HaskellReformatAction, HindentReformatAction, StylishHaskellReformatAction}
 import intellij.haskell.annotator.HaskellAnnotator
 import intellij.haskell.external.execution.StackCommandLine
 import intellij.haskell.external.execution.StackCommandLine.build
@@ -104,9 +104,9 @@ object StackProjectManager {
 
           getStackProjectManager(project).foreach(_.hoogleAvailable = isToolAvailable(progressIndicator, HoogleComponent.HoogleName))
 
-          getStackProjectManager(project).foreach(_.stylishHaskellAvailable = isToolAvailable(progressIndicator, StylishHaskellFormatAction.StylishHaskellName))
+          getStackProjectManager(project).foreach(_.stylishHaskellAvailable = isToolAvailable(progressIndicator, StylishHaskellReformatAction.StylishHaskellName))
 
-          getStackProjectManager(project).foreach(_.hindentAvailable = isToolAvailable(progressIndicator, HindentFormatAction.HindentName))
+          getStackProjectManager(project).foreach(_.hindentAvailable = isToolAvailable(progressIndicator, HindentReformatAction.HindentName))
         } finally {
           getStackProjectManager(project).foreach(_.installingHaskellTools = false)
         }
@@ -293,6 +293,6 @@ class StackProjectManager(project: Project) extends ProjectComponent {
     val actionManager = ActionManager.getInstance
     // Overriding IntelliJ's default shortcut for formatting
     actionManager.unregisterAction("ReformatCode")
-    actionManager.registerAction("ReformatCode", new HindentFormatAction)
+    actionManager.registerAction("ReformatCode", new HaskellReformatAction)
   }
 }

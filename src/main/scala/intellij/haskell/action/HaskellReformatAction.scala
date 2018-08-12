@@ -16,12 +16,15 @@
 
 package intellij.haskell.action
 
-import com.intellij.openapi.actionSystem.{AnAction, AnActionEvent}
+import com.intellij.openapi.actionSystem.{AnAction, AnActionEvent, Presentation}
 import com.intellij.openapi.project.Project
 import intellij.haskell.external.component.StackProjectManager
 import intellij.haskell.util.HaskellEditorUtil
 
-class HaskellFormatAction extends AnAction {
+class HaskellReformatAction extends AnAction {
+
+  val presentation: Presentation = getTemplatePresentation
+  presentation.setText("Reformat Code")
 
   override def update(actionEvent: AnActionEvent) {
     HaskellEditorUtil.enableExternalAction(actionEvent, (project: Project) => StackProjectManager.isStylishHaskellAvailable(project) && StackProjectManager.isHindentAvailable(project))
@@ -33,11 +36,11 @@ class HaskellFormatAction extends AnAction {
       val selectionModel = actionContext.selectionModel
       selectionModel match {
         case Some(_) =>
-          HindentFormatAction.format(psiFile, selectionModel.map(m =>
-            HindentFormatAction.translateSelectionModelToSelectionContext(m)))
+          HindentReformatAction.format(psiFile, selectionModel.map(m =>
+            HindentReformatAction.translateSelectionModelToSelectionContext(m)))
         case None =>
-          HindentFormatAction.format(psiFile)
-          StylishHaskellFormatAction.format(psiFile)
+          HindentReformatAction.format(psiFile)
+          StylishHaskellReformatAction.format(psiFile)
       }
     })
   }

@@ -21,7 +21,7 @@ import com.intellij.openapi.command.CommandProcessor
 import com.intellij.openapi.project.Project
 import com.intellij.psi.util.PsiTreeUtil
 import com.intellij.psi.{PsiDocumentManager, PsiElement, PsiFile}
-import intellij.haskell.action.{HindentFormatAction, SelectionContext}
+import intellij.haskell.action.{HindentReformatAction, SelectionContext}
 import intellij.haskell.psi.{HaskellElementFactory, HaskellPsiUtil, HaskellTypes}
 
 import scala.annotation.tailrec
@@ -68,7 +68,7 @@ class HLintQuickfix(startElement: PsiElement, endElement: PsiElement, startLineN
           e.getTextRange.getEndOffset,
           e.getText
         )
-        HindentFormatAction.format(file, Some(context))
+        HindentReformatAction.format(file, Some(context))
       })
     }, null, null)
   }

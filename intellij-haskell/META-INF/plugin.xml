@@ -476,19 +476,20 @@
         <group id="HaskellCodeMenu" text="Haskell" description="Haskell Code Tools" icon="/icons/haskell@16.png"
                popup="true">
 
+            <action id="Haskell.ReformatCode"
+                    class="intellij.haskell.action.HindentReformatAction"
+                    text="Reformat code by Hindent"
+                    description="Reformat code by Hindent">
+                    <keyboard-shortcut first-keystroke="ctrl alt SEMICOLON" keymap="$default"/>
+            </action>
+
             <action id="Haskell.StylishHaskellFormat"
-                    class="intellij.haskell.action.StylishHaskellFormatAction"
+                    class="intellij.haskell.action.StylishHaskellReformatAction"
                     text="Reformat code by Stylish-Haskell"
                     description="Reformat current file by Stylish-Haskell">
                 <keyboard-shortcut first-keystroke="ctrl alt u" keymap="$default"/>
             </action>
 
-            <action id="Haskell.HaskellFormat"
-                    class="intellij.haskell.action.HaskellFormatAction"
-                    text="Reformat code by Hindent and then Stylish-Haskell"
-                    description="Reformat current file by Hindent and then Stylish-Haskell">
-                <keyboard-shortcut first-keystroke="ctrl alt SEMICOLON" keymap="$default"/>
-            </action>
             <add-to-group group-id="CodeMenu" anchor="last"/>
         </group>
 

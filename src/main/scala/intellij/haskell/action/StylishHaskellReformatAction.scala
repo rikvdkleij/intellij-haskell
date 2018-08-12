@@ -26,7 +26,7 @@ import intellij.haskell.external.execution.CommandLine
 import intellij.haskell.util.{FutureUtil, HaskellEditorUtil, HaskellFileUtil, ScalaUtil}
 import intellij.haskell.{GlobalInfo, HaskellNotificationGroup}
 
-class StylishHaskellFormatAction extends AnAction {
+class StylishHaskellReformatAction extends AnAction {
 
   override def update(actionEvent: AnActionEvent) {
     HaskellEditorUtil.enableExternalAction(actionEvent, (project: Project) => StackProjectManager.isStylishHaskellAvailable(project))
@@ -34,12 +34,12 @@ class StylishHaskellFormatAction extends AnAction {
 
   override def actionPerformed(actionEvent: AnActionEvent): Unit = {
     ActionUtil.findActionContext(actionEvent).foreach(actionContext => {
-      StylishHaskellFormatAction.format(actionContext.psiFile)
+      StylishHaskellReformatAction.format(actionContext.psiFile)
     })
   }
 }
 
-object StylishHaskellFormatAction {
+object StylishHaskellReformatAction {
   final val StylishHaskellName = "stylish-haskell"
   private final val StylishHaskellPath = GlobalInfo.toolPath(StylishHaskellName).toString
 

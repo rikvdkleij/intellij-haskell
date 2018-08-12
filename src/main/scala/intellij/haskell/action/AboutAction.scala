@@ -47,8 +47,8 @@ class AboutAction extends AnAction {
     messages.+=(s"${boldToolName("Intero")}: " + StackCommandLine.run(project, Seq("exec", "--", "intero", "--version")).map(_.getStdout).getOrElse("-"))
     messages.+=(s"${boldToolName("HLint")}: " + HLintComponent.versionInfo(project))
     messages.+=(s"${boldToolName("Hoogle")}: " + HoogleComponent.versionInfo(project))
-    messages.+=(s"${boldToolName("Hindent")}: " + HindentFormatAction.versionInfo(project))
-    messages.+=(s"${boldToolName("Stylish-haskell")}: " + StylishHaskellFormatAction.versionInfo(project))
+    messages.+=(s"${boldToolName("Hindent")}: " + HindentReformatAction.versionInfo(project))
+    messages.+=(s"${boldToolName("Stylish-haskell")}: " + StylishHaskellReformatAction.versionInfo(project))
     Messages.showInfoMessage(project, messages.mkString("\n"), "About Haskell Project")
   }
 }

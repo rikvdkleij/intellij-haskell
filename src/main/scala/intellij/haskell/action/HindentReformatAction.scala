@@ -20,7 +20,7 @@ import java.io.{BufferedReader, BufferedWriter, InputStreamReader, OutputStreamW
 
 import com.intellij.application.options.CodeStyle
 import com.intellij.codeInsight.actions.ReformatCodeAction
-import com.intellij.openapi.actionSystem.{AnActionEvent, Presentation}
+import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.editor.SelectionModel
 import com.intellij.openapi.project.Project
@@ -36,10 +36,7 @@ import scala.collection.mutable.ListBuffer
 
 sealed case class SelectionContext(start: Int, end: Int, text: String)
 
-class HindentFormatAction extends ReformatCodeAction {
-
-  val presentation: Presentation = getTemplatePresentation
-  presentation.setText("Reformat Code")
+class HindentReformatAction extends ReformatCodeAction {
 
   override def update(actionEvent: AnActionEvent) {
     if (HaskellProjectUtil.isHaskellProject(actionEvent.getProject)) {
@@ -53,8 +50,8 @@ class HindentFormatAction extends ReformatCodeAction {
     if (HaskellProjectUtil.isHaskellProject(actionEvent.getProject)) {
       ActionUtil.findActionContext(actionEvent).foreach { actionContext =>
         val psiFile = actionContext.psiFile
-        val selectionContext = actionContext.selectionModel.map(HindentFormatAction.translateSelectionModelToSelectionContext)
-        HindentFormatAction.format(psiFile, selectionContext)
+        val selectionContext = actionContext.selectionModel.map(HindentReformatAction.translateSelectionModelToSelectionContext)
+        HindentReformatAction.format(psiFile, selectionContext)
       }
     } else {
       super.actionPerformed(actionEvent)
@@ -62,7 +59,7 @@ class HindentFormatAction extends ReformatCodeAction {
   }
 }
 
-object HindentFormatAction {
+object HindentReformatAction {
   final val HindentName = "hindent"
   private final val HindentPath = GlobalInfo.toolPath(HindentName).toString
 
