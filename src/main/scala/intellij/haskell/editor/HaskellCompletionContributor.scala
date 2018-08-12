@@ -55,7 +55,7 @@ class HaskellCompletionContributor extends CompletionContributor {
   private final val HaskellStatic = Stream("static")
   private final val HaskellConditional = Stream("if", "then", "else")
   private final val HaskellInfix = Stream("infix", "infixl", "infixr")
-  private final val HaskellBottom = Stream("undefined", "error")
+  private final val HaskellBottom = Stream("undefined")
   private final val HaskellTodo = Stream("TODO", "FIXME")
   private final val HaskellTypeRoles = Stream("phantom", "representational", "nominal")
   private final val HaskellForall = Stream("forall")
