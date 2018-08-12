@@ -28,7 +28,7 @@ import com.intellij.util.io.{EnumeratorStringDescriptor, KeyDescriptor}
 import intellij.haskell.HaskellFileType
 import intellij.haskell.external.component.{IndexNotReady, NoInfo}
 import intellij.haskell.psi.HaskellPsiUtil
-import intellij.haskell.util.{ApplicationUtil, HaskellFileUtil}
+import intellij.haskell.util.{ApplicationUtil, HaskellFileUtil, HaskellProjectUtil}
 
 import scala.collection.JavaConverters._
 
@@ -62,7 +62,9 @@ object HaskellModuleNameIndex {
   }
 
   private def findFilesByModuleName(project: Project, moduleName: String, searchScope: GlobalSearchScope): Either[NoInfo, Iterable[VirtualFile]] = {
-    if (ApplicationManager.getApplication.isDispatchThread) {
+    if (moduleName == HaskellProjectUtil.Prelude) {
+      Right(Iterable())
+    } else if (ApplicationManager.getApplication.isDispatchThread) {
       Right(FileBasedIndex.getInstance.getContainingFiles(HaskellModuleNameIndex, moduleName, searchScope).asScala)
     } else {
       val result = {
