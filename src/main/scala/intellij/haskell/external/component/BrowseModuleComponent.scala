@@ -17,7 +17,7 @@
 package intellij.haskell.external.component
 
 import com.github.blemale.scaffeine.{AsyncLoadingCache, Scaffeine}
-import com.intellij.openapi.project.{IndexNotReadyException, Project}
+import com.intellij.openapi.project.Project
 import com.intellij.psi.PsiFile
 import com.intellij.psi.search.GlobalSearchScope
 import intellij.haskell.HaskellNotificationGroup
@@ -47,14 +47,9 @@ private[component] object BrowseModuleComponent {
     def findKey = {
       psiFile match {
         case None =>
-          val projectPsiFile = try {
-            HaskellModuleNameIndex.findHaskellFileByModuleName(project, moduleName, GlobalSearchScope.projectScope(project))
-          } catch {
-            case _: IndexNotReadyException => Left("Indices not ready")
-          }
-          projectPsiFile match {
+          HaskellModuleNameIndex.findHaskellFileByModuleName(project, moduleName, GlobalSearchScope.projectScope(project)) match {
             case Right(pf) => Right(Key(project, moduleName, pf, exported = true))
-            case Left(_) => Left(IndexNotReady)
+            case Left(noInfo) => Left(noInfo)
           }
         case pf@Some(_) => Right(Key(project, moduleName, pf, exported = false))
       }
@@ -68,7 +63,7 @@ private[component] object BrowseModuleComponent {
             case Right(ids) => ids
             case Left(NoInfoAvailable(_, _)) =>
               Iterable()
-            case Left(ReplNotAvailable) | Left(ReplIsBusy) | Left(IndexNotReady) | Left(ModuleNotLoaded(_)) =>
+            case Left(ReplNotAvailable) | Left(ReplIsBusy) | Left(IndexNotReady) | Left(ModuleNotLoaded(_)) | Left(ReadActionTimeout(_)) =>
               Cache.synchronous().invalidate(key)
               Iterable()
           })
@@ -89,8 +84,8 @@ private[component] object BrowseModuleComponent {
               matchResult(Cache.getIfPresent(key).getOrElse(Future.successful(Left(ModuleNotLoaded(key.moduleName)))))
             }
         }
-      case Left(IndexNotReady) =>
-        HaskellNotificationGroup.logInfoEvent(project, s"Project file could not be found for $moduleName because index was not ready or timeout")
+      case Left(noInfo) =>
+        HaskellNotificationGroup.logInfoEvent(project, s"Project file could not be found for $moduleName. ${noInfo.message}")
         Future.successful(Iterable())
     }
   }

@@ -92,10 +92,10 @@ abstract class StackRepl(project: Project, componentInfo: Option[StackComponentI
   protected def execute(command: String, forceExecute: Boolean = false): Option[StackReplOutput] = {
 
     if ((!available || starting) && !forceExecute) {
-      HaskellEditorUtil.showStatusBarBalloonMessage(project, s"[$getComponentName] Haskell support is not available when Stack REPL is not (yet) running.")
+      HaskellEditorUtil.showStatusBarBalloonMessage(project, s"[$getComponentName] Haskell support is not available when Stack REPL is not (yet) running")
       None
     } else if (!outputStreamSyncVar.isSet) {
-      logError("Can not write to Stack repl. Check if your Stack project environment is working okay")
+      logError("Can not write to Stack REPL. Check if your Stack project environment is working okay")
       None
     } else {
 

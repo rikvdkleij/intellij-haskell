@@ -19,15 +19,15 @@ package intellij.haskell.util.index
 import java.util.Collections
 
 import com.intellij.openapi.application.ApplicationManager
-import com.intellij.openapi.project.Project
+import com.intellij.openapi.project.{IndexNotReadyException, Project}
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.psi.PsiFile
 import com.intellij.psi.search.GlobalSearchScope
 import com.intellij.util.indexing._
 import com.intellij.util.io.{EnumeratorStringDescriptor, KeyDescriptor}
 import intellij.haskell.HaskellFileType
+import intellij.haskell.external.component.{IndexNotReady, NoInfo}
 import intellij.haskell.psi.HaskellPsiUtil
-import intellij.haskell.util.ApplicationUtil.ReadActionTimeout
 import intellij.haskell.util.{ApplicationUtil, HaskellFileUtil}
 
 import scala.collection.JavaConverters._
@@ -47,13 +47,13 @@ object HaskellModuleNameIndex {
     }
   }
 
-  def findHaskellFileByModuleName(project: Project, moduleName: String, searchScope: GlobalSearchScope): Either[ReadActionTimeout, Option[PsiFile]] = {
+  def findHaskellFileByModuleName(project: Project, moduleName: String, searchScope: GlobalSearchScope): Either[NoInfo, Option[PsiFile]] = {
     findFilesByModuleName(project, moduleName, searchScope) match {
       case Right(vfs) => vfs.headOption match {
         case Some(vf) => HaskellFileUtil.convertToHaskellFileInReadAction(project, vf)
         case None => Right(None)
       }
-      case Left(_) => Left(ReadActionTimeout)
+      case Left(noInfo) => Left(noInfo)
     }
   }
 
@@ -61,11 +61,26 @@ object HaskellModuleNameIndex {
     HaskellFileUtil.convertToHaskellFiles(project, findFilesByModuleName(project, moduleName, GlobalSearchScope.allScope(project)).getOrElse(Iterable()))
   }
 
-  private def findFilesByModuleName(project: Project, moduleName: String, searchScope: GlobalSearchScope): Either[ReadActionTimeout, Iterable[VirtualFile]] = {
+  private def findFilesByModuleName(project: Project, moduleName: String, searchScope: GlobalSearchScope): Either[NoInfo, Iterable[VirtualFile]] = {
     if (ApplicationManager.getApplication.isDispatchThread) {
       Right(FileBasedIndex.getInstance.getContainingFiles(HaskellModuleNameIndex, moduleName, searchScope).asScala)
     } else {
-      ApplicationUtil.scheduleInReadActionWithWriteActionPriority(project, FileBasedIndex.getInstance.getContainingFiles(HaskellModuleNameIndex, moduleName, searchScope), s"finding file for module $moduleName").map(_.asScala)
+      val result = {
+        ApplicationUtil.scheduleInReadActionWithWriteActionPriority(
+          project, {
+            try {
+              Right(FileBasedIndex.getInstance.getContainingFiles(HaskellModuleNameIndex, moduleName, searchScope).asScala)
+            } catch {
+              case _: IndexNotReadyException => Left(IndexNotReady)
+            }
+          },
+          s"finding file for module $moduleName by index"
+        )
+      }
+      for {
+        r <- result
+        vfs <- r
+      } yield vfs
     }
   }
 }

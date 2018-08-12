@@ -41,7 +41,7 @@ import scala.collection.JavaConverters._
 
 object HaskellEditorUtil {
 
-  final val HaskellSupportIsNotAvailableWhileBuildingText = "Haskell support is not available while project is being built."
+  final val HaskellSupportIsNotAvailableWhileBuildingText = "Haskell support is not available while project is being built"
 
   def enableExternalAction(actionEvent: AnActionEvent, enableCondition: Project => Boolean): Unit = {
     Option(actionEvent.getProject) match {

@@ -34,7 +34,8 @@ import com.intellij.psi.impl.PsiManagerEx
 import com.intellij.psi.{PsiDocumentManager, PsiFile, PsiManager}
 import intellij.haskell.HaskellFileType
 import intellij.haskell.action.SelectionContext
-import intellij.haskell.util.ApplicationUtil.{ReadActionTimeout, RunInTimeout}
+import intellij.haskell.external.component.NoInfo
+import intellij.haskell.util.ApplicationUtil.RunInReadActionTimeout
 
 import scala.concurrent.duration.FiniteDuration
 
@@ -135,7 +136,7 @@ object HaskellFileUtil {
     }
   }
 
-  def convertToHaskellFileInReadAction(project: Project, virtualFile: VirtualFile, timeout: FiniteDuration = RunInTimeout): Either[ReadActionTimeout, Option[PsiFile]] = {
+  def convertToHaskellFileInReadAction(project: Project, virtualFile: VirtualFile, timeout: FiniteDuration = RunInReadActionTimeout): Either[NoInfo, Option[PsiFile]] = {
     val psiManager = PsiManager.getInstance(project)
 
     if (ApplicationManager.getApplication.isDispatchThread) {
@@ -144,10 +145,10 @@ object HaskellFileUtil {
         case None => Right(findPsiFile(psiManager, virtualFile))
       }
     } else {
-      val timeoutMessage = s"Converting $virtualFile to psi file"
-      ApplicationUtil.runInReadActionWithWriteActionPriority(project, findCachedPsiFile(psiManager, virtualFile), timeoutMessage = timeoutMessage, timeout) match {
+      val actionMessage = s"Converting ${virtualFile.getName} to psi file"
+      ApplicationUtil.runInReadActionWithWriteActionPriority(project, findCachedPsiFile(psiManager, virtualFile), readActionDescription = actionMessage, timeout) match {
         case r@Right(pf) if pf.isDefined => r
-        case _ => ApplicationUtil.runInReadActionWithWriteActionPriority(project, findPsiFile(psiManager, virtualFile), timeoutMessage = timeoutMessage, timeout) match {
+        case _ => ApplicationUtil.runInReadActionWithWriteActionPriority(project, findPsiFile(psiManager, virtualFile), readActionDescription = actionMessage, timeout) match {
           case r@Right(_) => r
           case l@Left(_) => l
         }

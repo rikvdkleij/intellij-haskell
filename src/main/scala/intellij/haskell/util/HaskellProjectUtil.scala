@@ -26,10 +26,10 @@ import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.vfs.{LocalFileSystem, VirtualFile}
 import com.intellij.psi.search.GlobalSearchScope
 import com.intellij.psi.{PsiElement, PsiFile}
+import intellij.haskell.external.component.NoInfo
 import intellij.haskell.external.execution.StackCommandLine
 import intellij.haskell.module.HaskellModuleType
 import intellij.haskell.sdk.HaskellSdkType
-import intellij.haskell.util.ApplicationUtil.ReadActionTimeout
 
 object HaskellProjectUtil {
 
@@ -50,7 +50,7 @@ object HaskellProjectUtil {
     findProjectModules(project).nonEmpty
   }
 
-  def findFile(filePath: String, project: Project): (Option[VirtualFile], Either[ReadActionTimeout, Option[PsiFile]]) = {
+  def findFile(filePath: String, project: Project): (Option[VirtualFile], Either[NoInfo, Option[PsiFile]]) = {
     val virtualFile = Option(LocalFileSystem.getInstance().findFileByPath(HaskellFileUtil.makeFilePathAbsolute(filePath, project)))
     val psiFile = virtualFile.map(f => HaskellFileUtil.convertToHaskellFileInReadAction(project, f)) match {
       case Some(r) => r

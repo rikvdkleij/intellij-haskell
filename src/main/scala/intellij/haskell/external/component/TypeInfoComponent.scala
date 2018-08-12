@@ -38,6 +38,10 @@ private[component] object TypeInfoComponent {
   private final val Cache: AsyncLoadingCache[Key, TypeInfoResult] = Scaffeine().buildAsync((k: Key) => findTypeInfoResult(k))
 
   def findTypeInfoForElement(element: PsiElement): TypeInfoResult = {
+    def getFileName = {
+      Option(element.getContainingFile).map(_.getName).getOrElse("-")
+    }
+
     if (element.isValid) {
       (for {
         qne <- HaskellPsiUtil.findQualifiedNameParent(element)
@@ -45,9 +49,9 @@ private[component] object TypeInfoComponent {
       } yield {
         val moduleName = HaskellPsiUtil.findModuleName(pf)
         Key(moduleName, pf, qne, qne.getName)
-      }).map(findTypeInfo).getOrElse(Left(NoInfoAvailable(element.getText, Option(element.getContainingFile).map(_.getName).getOrElse("-"))))
+      }).map(findTypeInfo).getOrElse(Left(NoInfoAvailable(element.getText, getFileName)))
     } else {
-      Left(NoInfoAvailable(element.getText, Option(element.getContainingFile).map(_.getName).getOrElse("-")))
+      Left(NoInfoAvailable(element.getText, getFileName))
     }
   }
 
@@ -152,7 +156,7 @@ private[component] object TypeInfoComponent {
         case Right(_) => result
         case Left(NoInfoAvailable(_, _)) =>
           result
-        case Left(ReplNotAvailable) | Left(ReplIsBusy) | Left(IndexNotReady) | Left(ModuleNotLoaded(_)) =>
+        case Left(ReplNotAvailable) | Left(ReplIsBusy) | Left(IndexNotReady) | Left(ModuleNotLoaded(_)) | Left(ReadActionTimeout(_)) =>
           Cache.synchronous().invalidate(key)
           result
       }

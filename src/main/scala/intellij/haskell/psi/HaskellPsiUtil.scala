@@ -63,16 +63,9 @@ object HaskellPsiUtil {
     PsiTreeUtil.findChildrenOfType(psiElement, classOf[HaskellQualifiedNameElement]).asScala
   }
 
-  private final val FindHaskellDeclarationsActions = (e: PsiElement) => PsiTreeUtil.findChildrenOfType(e, classOf[HaskellDeclarationElement])
-
-  def findHaskellDeclarationElements(psiElement: PsiElement, inReadAction: Boolean = false): Iterable[HaskellDeclarationElement] = {
-    val result = if (inReadAction) {
-      ApplicationUtil.runReadAction(FindHaskellDeclarationsActions(psiElement))
-    } else {
-      FindHaskellDeclarationsActions(psiElement)
-    }
-
-    result.asScala.filter(e => e.getParent.getNode.getElementType == HS_TOP_DECLARATION || e.getNode.getElementType == HS_MODULE_DECLARATION)
+  def findHaskellDeclarationElements(psiElement: PsiElement): Iterable[HaskellDeclarationElement] = {
+    PsiTreeUtil.findChildrenOfType(psiElement, classOf[HaskellDeclarationElement]).asScala.
+      filter(e => e.getParent.getNode.getElementType == HS_TOP_DECLARATION || e.getNode.getElementType == HS_MODULE_DECLARATION)
   }
 
   def findTopLevelDeclarations(psiFile: PsiFile): Iterable[HaskellDeclarationElement] = {
@@ -186,18 +179,10 @@ object HaskellPsiUtil {
     }
   }
 
-  private final val FindExpressionParentAction = (e: PsiElement) => Option(PsiTreeUtil.findFirstParent(e, ExpressionCondition)).map(_.asInstanceOf[HaskellExpression])
-
-  def findExpressionParent(psiElement: PsiElement, inReadAction: Boolean = false): Option[HaskellExpression] = {
+  def findExpressionParent(psiElement: PsiElement): Option[HaskellExpression] = {
     psiElement match {
       case e: HaskellExpression => Some(e)
-      case e =>
-        if (inReadAction) {
-          ApplicationUtil.runReadAction(FindExpressionParentAction(e))
-        }
-        else {
-          FindExpressionParentAction(e)
-        }
+      case e => Option(PsiTreeUtil.findFirstParent(e, ExpressionCondition)).map(_.asInstanceOf[HaskellExpression])
     }
   }
 
