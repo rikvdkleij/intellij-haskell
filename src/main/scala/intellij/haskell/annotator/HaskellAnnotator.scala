@@ -133,7 +133,7 @@ class HaskellAnnotator extends ExternalAnnotator[(PsiFile, Option[PsiElement]), 
   }
 
   private def createCompilerMessage(file: VirtualFile, project: Project, problem: CompilationProblem) = {
-    val category = if (problem.isWarning) CompilerMessageCategory.WARNING else CompilerMessageCategory.ERROR
+    val category = if (problem.isWarning && !(problem.message.contains("not in scope") || problem.message.contains("Not in scope"))) CompilerMessageCategory.WARNING else CompilerMessageCategory.ERROR
     new CompilerMessageImpl(project, category, problem.message, file, problem.lineNr, problem.columnNr, null)
   }
 }
@@ -268,7 +268,7 @@ object HaskellAnnotator {
   }
 
   private def getProblemTextRange(psiFile: PsiFile, problem: CompilationProblem): Option[TextRange] = {
-    HaskellFileUtil.findVirtualFile(psiFile).flatMap(vf =>  LineColumnPosition.getOffset(vf, LineColumnPosition(problem.lineNr, problem.columnNr)).map(offset => {
+    HaskellFileUtil.findVirtualFile(psiFile).flatMap(vf => LineColumnPosition.getOffset(vf, LineColumnPosition(problem.lineNr, problem.columnNr)).map(offset => {
       findTextRange(psiFile, offset)
     }))
   }
