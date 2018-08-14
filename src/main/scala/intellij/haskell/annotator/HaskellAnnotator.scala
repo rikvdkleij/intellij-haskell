@@ -365,11 +365,11 @@ class PerhapsYouMeantIntentionAction(suggestion: String, message: String) extend
 
   override def invoke(project: Project, editor: Editor, file: PsiFile): Unit = {
     val offset = editor.getCaretModel.getOffset
-    Option(file.findElementAt(offset)).flatMap(e => Option(PsiTreeUtil.findFirstParent(e, HaskellElementCondition.QualifiedNameElementCondition))) match {
+    Option(file.findElementAt(offset)).flatMap(HaskellPsiUtil.findQualifiedNameParent) match {
       case Some(e) =>
         if (e.getText.startsWith("`") && e.getText.endsWith("`")) {
           e.replace(HaskellElementFactory.createQualifiedNameElement(project, s"`$suggestion`"))
-        } else if (DeclarationLineUtil.isOperator(e.getText)) {
+        } else if (DeclarationLineUtil.isWithinParens(e.getText)) {
           e.replace(HaskellElementFactory.createQualifiedNameElement(project, s"($suggestion)"))
         } else {
           e.replace(HaskellElementFactory.createQualifiedNameElement(project, suggestion))

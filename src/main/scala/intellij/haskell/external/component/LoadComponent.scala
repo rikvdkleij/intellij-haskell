@@ -83,7 +83,7 @@ private[component] object LoadComponent {
 
               HaskellPsiUtil.findModuleName(psiFile).foreach(mn => {
                 BrowseModuleComponent.refreshTopLevel(project, mn, psiFile)
-                BrowseModuleComponent.invalidateForModuleName(project, mn, psiFile)
+                BrowseModuleComponent.invalidateForModuleName(project, mn)
                 TypeInfoComponent.invalidate(mn)
               })
             }

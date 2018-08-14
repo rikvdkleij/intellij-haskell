@@ -97,8 +97,8 @@ object ShowTypeAction {
       HaskellPsiUtil.findQualifiedNameParent(psiElement).flatMap(qualifiedNameElement => {
         val name = qualifiedNameElement.getName
         val moduleName = HaskellPsiUtil.findModuleName(psiFile)
-        val stackComponentInfo = HaskellComponentsManager.findStackComponentInfo(psiFile)
-        stackComponentInfo.flatMap(info => HaskellCompletionContributor.getAvailableModuleIdentifiers(info, psiFile, moduleName).find(_.name == name).map(_.declaration)).
+        val globalInfo = HaskellComponentsManager.findStackComponentInfo(psiFile).flatMap(HaskellComponentsManager.findStackComponentGlobalInfo)
+        globalInfo.flatMap(info => HaskellCompletionContributor.getAvailableModuleIdentifiers(info, psiFile, moduleName).find(_.name == name).map(_.declaration)).
           orElse(HaskellPsiUtil.findHaskellDeclarationElements(psiFile).find(_.getIdentifierElements.exists(_.getName == name)).map(_.getText.replaceAll("""\s+""", " ")))
       })
     } else {

@@ -134,11 +134,12 @@ private[component] object TypeInfoComponent {
     } else {
       {
         val qne = key.qualifiedNameElement
-        val to = ApplicationUtil.runReadAction(qne.getTextOffset)
         for {
+          to <- ApplicationUtil.runInReadActionWithWriteActionPriority(key.psiFile.getProject, qne.getTextOffset, "getTextOffset").toOption
           vf <- HaskellFileUtil.findVirtualFile(psiFile)
           sp <- LineColumnPosition.fromOffset(vf, to)
-          ep <- LineColumnPosition.fromOffset(vf, to + ApplicationUtil.runReadAction(qne.getText).length)
+          t <- ApplicationUtil.runInReadActionWithWriteActionPriority(key.psiFile.getProject, qne.getText, "getText").toOption
+          ep <- LineColumnPosition.fromOffset(vf, to + t.length)
         } yield {
           StackReplsManager.getProjectRepl(key.psiFile).flatMap(_.findTypeInfo(key.moduleName, key.psiFile, sp.lineNr, sp.columnNr, ep.lineNr, ep.columnNr, key.expression)) match {
             case Some(output) => output.stdoutLines.headOption.filterNot(_.trim.isEmpty).map(ti => Right(TypeInfo(ti, output.stderrLines.nonEmpty))).getOrElse(Left(NoInfoAvailable(key.expression, key.psiFile.getName)))

@@ -130,9 +130,19 @@ object HaskellPsiImplUtil {
   }
 
   def setName(varsym: HaskellVarsym, newName: String): PsiElement = {
-    val newVarsym = HaskellElementFactory.createVarsym(varsym.getProject, newName)
-    newVarsym.foreach(vs => varsym.getNode.getTreeParent.replaceChild(varsym.getNode, vs.getNode))
-    varsym
+    if (varsym.getNode.getChildren(null).length == 1) {
+      val newVarsym = HaskellElementFactory.createVarsym(varsym.getProject, newName)
+      newVarsym.foreach(vs => varsym.getNode.getTreeParent.replaceChild(varsym.getNode, vs.getNode))
+      varsym
+    } else {
+      // In case Varsym contains Dot and Varsym_id node
+      val newVarsym = HaskellElementFactory.createVarsym(varsym.getProject, newName)
+      newVarsym.foreach { nv =>
+        varsym.getNode.getTreeParent.replaceChild(varsym.getNode.getFirstChildNode, nv.getNode.getFirstChildNode)
+        varsym.getNode.getTreeParent.replaceChild(varsym.getNode.getLastChildNode, nv.getNode.getLastChildNode)
+      }
+      varsym
+    }
   }
 
   def getName(conid: HaskellConid): String = {

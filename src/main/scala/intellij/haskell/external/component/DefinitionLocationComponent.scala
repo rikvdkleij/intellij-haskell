@@ -88,18 +88,28 @@ private[component] object DefinitionLocationComponent {
     if (LoadComponent.isBusy(key.psiFile)) {
       Left(ReplIsBusy)
     } else {
+      val psiFile = key.psiFile
+      val project = psiFile.getProject
       val identifierElement = key.qualifiedNameElement.getIdentifierElement
-      val name = ApplicationUtil.runReadAction(identifierElement.getName)
-      if (!ApplicationUtil.runReadAction(key.qualifiedNameElement.isValid)) {
-        Left(NoInfoAvailable(ApplicationUtil.runReadAction(key.qualifiedNameElement.getName), key.psiFile.getName))
-      } else {
-        val psiFile = key.psiFile
-        val project = psiFile.getProject
+      val name = ApplicationUtil.runInReadActionWithWriteActionPriority(project, {
+        if (key.qualifiedNameElement.isValid) {
+          Right(identifierElement.getName)
+        }
+        else {
+          Left(NoInfoAvailable("-- invalid PSI element", psiFile.getName))
+        }
+      }, "getName and check if PSI element is valid")
 
-        if (name.headOption.exists(_.isUpper)) {
-          createDefinitionLocationResult(project, psiFile, key, name, withoutLastColumn = true)
-        } else {
-          createDefinitionLocationResult(project, psiFile, key, name, withoutLastColumn = false)
+      name match {
+        case Left(noInfo) => Left(noInfo)
+        case Right(r) => r match {
+          case Left(noInfo) => Left(noInfo)
+          case Right(n) =>
+            if (n.headOption.exists(_.isUpper)) {
+              createDefinitionLocationResult(project, psiFile, key, n, withoutLastColumn = true)
+            } else {
+              createDefinitionLocationResult(project, psiFile, key, n, withoutLastColumn = false)
+            }
         }
       }
     }
@@ -158,7 +168,7 @@ private[component] object DefinitionLocationComponent {
     namedElement match {
       case Right(ne) => ne match {
         case Some(e) => Right(DefinitionLocation(moduleName, e))
-        case None => Left(NoInfoAvailable(ApplicationUtil.runReadAction(key.qualifiedNameElement.getName), key.psiFile.getName))
+        case None => Left(NoInfoAvailable(name, key.psiFile.getName))
       }
       case Left(noInfo) => Left(noInfo)
     }
@@ -195,7 +205,7 @@ private[component] object DefinitionLocationComponent {
             result
           } else {
             Cache.synchronous.invalidate(key)
-            Left(NoInfoAvailable(ApplicationUtil.runReadAction(qualifiedNameElement.getName), psiFile.getName))
+            Left(NoInfoAvailable("-- invalid PSI element", psiFile.getName))
           }
         case Left(ReplNotAvailable) | Left(IndexNotReady) | Left(ModuleNotLoaded(_)) | Left(ReadActionTimeout(_)) =>
           Cache.synchronous().invalidate(key)
@@ -256,16 +266,24 @@ object LocationInfoUtil {
   }
 
   private def findNameElementsInExpression(project: Project, qualifiedNameElement: HaskellQualifiedNameElement) = {
-    val parent = ApplicationUtil.runReadAction(HaskellPsiUtil.findExpressionParent(qualifiedNameElement))
-    if (ApplicationUtil.runReadAction(parent.exists(_.isValid))) {
-      parent.map(p => ApplicationUtil.runReadAction(HaskellPsiUtil.findQualifiedNamedElements(p))).getOrElse(Iterable())
-    } else {
-      Iterable()
+    ApplicationUtil.runInReadActionWithWriteActionPriority(project, HaskellPsiUtil.findExpressionParent(qualifiedNameElement), "findExpressionParent").toOption.flatten match {
+      case Some(p) => ApplicationUtil.runInReadActionWithWriteActionPriority(project, {
+        if (qualifiedNameElement.isValid) {
+          HaskellPsiUtil.findQualifiedNamedElements(p)
+        } else {
+          Iterable()
+        }
+      }, "isValid and findQualifiedNameElements").toOption.getOrElse(Iterable())
+      case None => Iterable()
     }
   }
 
   private def isPreloadValid(project: Project, qualifiedNameElement: HaskellQualifiedNameElement) = {
-    ApplicationUtil.runReadAction(qualifiedNameElement.isValid) && !project.isDisposed
+    if (ApplicationManager.getApplication.isDispatchThread) {
+      qualifiedNameElement.isValid && !project.isDisposed
+    } else {
+      ApplicationUtil.runInReadActionWithWriteActionPriority(project, qualifiedNameElement.isValid, "isValid").toOption.contains(true) && !project.isDisposed
+    }
   }
 }
 

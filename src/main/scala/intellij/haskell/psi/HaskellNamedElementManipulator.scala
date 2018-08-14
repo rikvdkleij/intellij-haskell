@@ -19,20 +19,9 @@ package intellij.haskell.psi
 import com.intellij.openapi.util.TextRange
 import com.intellij.psi.AbstractElementManipulator
 
-object HaskellNamedElementManipulator {
-  def getStringTokenRange(element: HaskellNamedElement): TextRange = {
-    TextRange.from(1, element.getTextLength - 2)
-  }
-}
-
 class HaskellNamedElementManipulator extends AbstractElementManipulator[HaskellNamedElement] {
   def handleContentChange(psi: HaskellNamedElement, range: TextRange, newContent: String): HaskellNamedElement = {
-    val oldName = psi.getName
-    val newName = oldName.substring(0, range.getStartOffset) + newContent + oldName.substring(range.getEndOffset)
-    psi.setName(newName).asInstanceOf[HaskellNamedElement]
-  }
-
-  override def getRangeInElement(element: HaskellNamedElement): TextRange = {
-    HaskellNamedElementManipulator.getStringTokenRange(element)
+    psi.setName(newContent)
+    psi
   }
 }

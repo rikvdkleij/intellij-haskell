@@ -25,6 +25,7 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.roots.ModuleRootManager
 import com.intellij.openapi.vfs.newvfs.BulkFileListener
 import com.intellij.openapi.vfs.newvfs.events.{VFileContentChangeEvent, VFileEvent}
+import intellij.haskell.HaskellNotificationGroup
 import intellij.haskell.annotator.HaskellAnnotator
 import intellij.haskell.external.component.HaskellComponentsManager.StackComponentInfo
 import intellij.haskell.external.component.ProjectLibraryFileWatcher.{Build, Building}
@@ -101,9 +102,11 @@ class ProjectLibraryFileWatcher(project: Project) extends BulkFileListener {
                     import scala.concurrent.duration._
 
                     (dependentFiles ++ dependentLibFiles).foreach { vf =>
-                      HaskellFileUtil.convertToHaskellFileInReadAction(project, vf, timeout = 1.second).toOption.flatten.foreach { psiFile =>
-                        HaskellComponentsManager.invalidateLocationAndTypeInfo(psiFile)
-                        HaskellAnnotator.restartDaemonCodeAnalyzerForFile(psiFile)
+                      HaskellFileUtil.convertToHaskellFileInReadAction(project, vf, timeout = 1.second).toOption.flatten match {
+                        case Some(psiFile) =>
+                          HaskellComponentsManager.invalidateCachesForFile(psiFile)
+                          HaskellAnnotator.restartDaemonCodeAnalyzerForFile(psiFile)
+                        case None => HaskellNotificationGroup.logInfoEvent(project, s"Could not invalidate cache and restart daemon analyzer for file ${vf.getName}")
                       }
                     }
                   }

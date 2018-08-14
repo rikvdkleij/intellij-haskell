@@ -50,7 +50,7 @@ object DeclarationLineUtil {
     name.map(n => NameAndShortDeclaration(n, declaration))
   }
 
-  def isOperator(name: String): Boolean = {
+  def isWithinParens(name: String): Boolean = {
     name.startsWith("(") && name.endsWith(")")
   }
 }

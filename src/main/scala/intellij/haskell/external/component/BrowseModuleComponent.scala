@@ -20,7 +20,6 @@ import com.github.blemale.scaffeine.{AsyncLoadingCache, Scaffeine}
 import com.intellij.openapi.project.Project
 import com.intellij.psi.PsiFile
 import com.intellij.psi.search.GlobalSearchScope
-import intellij.haskell.HaskellNotificationGroup
 import intellij.haskell.external.repl._
 import intellij.haskell.util.StringUtil
 import intellij.haskell.util.index.HaskellModuleNameIndex
@@ -36,57 +35,49 @@ private[component] object BrowseModuleComponent {
 
   private final val Cache: AsyncLoadingCache[Key, BrowseModuleInternalResult] = Scaffeine().buildAsync((k: Key) => {
     if (k.project.isDisposed) {
-      Left(NoInfoAvailable(k.moduleName, k.psiFile.map(_.getName).getOrElse("-")))
+      Left(NoInfoAvailable(k.moduleName, "-"))
     } else {
       findModuleIdentifiers(k)
     }
   })
 
-  def findModuleIdentifiers(project: Project, moduleName: String, psiFile: Option[PsiFile])(implicit ec: ExecutionContext): Future[Iterable[ModuleIdentifier]] = {
+  private def matchResult(key: Key, result: Future[BrowseModuleInternalResult])(implicit ec: ExecutionContext): Future[Iterable[ModuleIdentifier]] = {
+    concurrent.blocking(result.map {
+      case Right(ids) => ids
+      case Left(NoInfoAvailable(_, _)) =>
+        Iterable()
+      case Left(ReplNotAvailable) | Left(ReplIsBusy) | Left(IndexNotReady) | Left(ModuleNotLoaded(_)) | Left(ReadActionTimeout(_)) =>
+        Cache.synchronous().invalidate(key)
+        Iterable()
+    })
+  }
 
-    def findKey = {
-      psiFile match {
-        case None =>
-          HaskellModuleNameIndex.findHaskellFileByModuleName(project, moduleName, GlobalSearchScope.projectScope(project)) match {
-            case Right(pf) => Right(Key(project, moduleName, pf, exported = true))
-            case Left(noInfo) => Left(noInfo)
-          }
-        case pf@Some(_) => Right(Key(project, moduleName, pf, exported = false))
-      }
+  def findLibraryModuleIdentifiers(project: Project, moduleName: String)(implicit ec: ExecutionContext): Future[Iterable[ModuleIdentifier]] = {
+    val key = Key(project, moduleName, None, exported = true)
+    matchResult(key, Cache.get(key))
+  }
+
+  def findTopLevelIdentifiers(psiFile: PsiFile, moduleName: String)(implicit ec: ExecutionContext): Future[Iterable[ModuleIdentifier]] = {
+    val key = Key(psiFile.getProject, moduleName, Some(psiFile), exported = false)
+
+    if (LoadComponent.isFileLoaded(psiFile)) {
+      matchResult(key, Cache.get(key))
+    } else {
+      matchResult(key, Cache.getIfPresent(key).getOrElse(Future.successful(Left(ModuleNotLoaded(key.moduleName)))))
     }
+  }
 
-    findKey match {
-      case Right(key) =>
-
-        def matchResult(result: Future[BrowseModuleInternalResult]) = {
-          concurrent.blocking(result.map {
-            case Right(ids) => ids
-            case Left(NoInfoAvailable(_, _)) =>
-              Iterable()
-            case Left(ReplNotAvailable) | Left(ReplIsBusy) | Left(IndexNotReady) | Left(ModuleNotLoaded(_)) | Left(ReadActionTimeout(_)) =>
-              Cache.synchronous().invalidate(key)
-              Iterable()
-          })
+  def findExportedIdentifiers(stackComponentGlobalInfo: StackComponentGlobalInfo, psiFile: PsiFile, moduleName: String)(implicit ec: ExecutionContext): Future[Iterable[ModuleIdentifier]] = {
+    val project = psiFile.getProject
+    HaskellModuleNameIndex.findHaskellFileByModuleName(project, moduleName, GlobalSearchScope.projectScope(project)) match {
+      case Right(f) =>
+        if (f.isDefined) {
+          val key = Key(psiFile.getProject, moduleName, Some(psiFile), exported = true)
+          matchResult(key, Cache.get(key))
+        } else {
+          findLibraryModuleIdentifiers(psiFile.getProject, moduleName)
         }
-
-        key.psiFile match {
-          case None => matchResult(Cache.get(key))
-          case Some(pf) =>
-            if (!key.exported) {
-              if (LoadComponent.isFileLoaded(pf)) {
-                matchResult(Cache.get(key))
-              } else {
-                matchResult(Cache.getIfPresent(key).getOrElse(Future.successful(Left(ModuleNotLoaded(key.moduleName)))))
-              }
-            } else if (key.exported && LoadComponent.isModuleLoaded(Some(moduleName), pf)) {
-              matchResult(Cache.get(key))
-            } else {
-              matchResult(Cache.getIfPresent(key).getOrElse(Future.successful(Left(ModuleNotLoaded(key.moduleName)))))
-            }
-        }
-      case Left(noInfo) =>
-        HaskellNotificationGroup.logInfoEvent(project, s"Project file could not be found for $moduleName. ${noInfo.message}")
-        Future.successful(Iterable())
+      case Left(noInfo) => matchResult(Key(project, moduleName, Some(psiFile), exported = true), Future.successful(Left(noInfo)))
     }
   }
 
@@ -99,9 +90,14 @@ private[component] object BrowseModuleComponent {
     Cache.synchronous().refresh(key)
   }
 
-  def invalidateForModuleName(project: Project, moduleName: String, psiFile: PsiFile): Unit = {
-    val key = Key(project, moduleName, Some(psiFile), exported = true)
-    Cache.synchronous.invalidate(key)
+  def invalidateForModuleName(project: Project, moduleName: String): Unit = {
+    val keys = Cache.synchronous.asMap().keys.filter(_.moduleName == moduleName)
+    Cache.synchronous.invalidateAll(keys)
+  }
+
+  def invalidateForFile(psiFile: PsiFile): Unit = {
+    val keys = Cache.synchronous.asMap().keys.filter(_.psiFile.contains(psiFile))
+    Cache.synchronous.invalidateAll(keys)
   }
 
   def invalidate(project: Project): Unit = {
@@ -133,11 +129,11 @@ private[component] object BrowseModuleComponent {
           }
           case _ => Left(ReplNotAvailable)
         }
-      case None => findLibraryModuleIdentifiers(project, moduleName)
+      case None => findLibModuleIdentifiers(project, moduleName)
     }
   }
 
-  private def findLibraryModuleIdentifiers(project: Project, moduleName: String): Either[NoInfo, Seq[ModuleIdentifier]] = {
+  private def findLibModuleIdentifiers(project: Project, moduleName: String): Either[NoInfo, Seq[ModuleIdentifier]] = {
     StackReplsManager.getGlobalRepl(project).flatMap(_.getModuleIdentifiers(moduleName)) match {
       case None => Left(ReplNotAvailable)
       case Some(o) if o.stdoutLines.nonEmpty => Right(o.stdoutLines.flatMap(l => findModuleIdentifiers(project, l, moduleName).toSeq))
@@ -157,7 +153,7 @@ private[component] object BrowseModuleComponent {
   }
 
   private def createModuleIdentifier(name: String, moduleName: String, declaration: String) = {
-    ModuleIdentifier(StringUtil.removeOuterParens(name), moduleName, declaration, isOperator = DeclarationLineUtil.isOperator(name))
+    ModuleIdentifier(StringUtil.removeOuterParens(name), moduleName, declaration, isOperator = DeclarationLineUtil.isWithinParens(name))
   }
 }
 

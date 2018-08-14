@@ -86,7 +86,7 @@ private[component] object NameInfoComponent {
             case Right(_) => result
             case Left(NoInfoAvailable(_, _)) =>
               result
-            case Left(ReplNotAvailable) | Left(ReplIsBusy) | Left(IndexNotReady) | Left(ModuleNotLoaded(_)) =>
+            case Left(ReplNotAvailable) | Left(ReplIsBusy) | Left(IndexNotReady) | Left(ModuleNotLoaded(_)) | Left(ReadActionTimeout(_)) =>
               Cache.invalidate(key)
               result
           }

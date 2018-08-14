@@ -65,7 +65,11 @@ object HaskellModuleNameIndex {
     if (moduleName == HaskellProjectUtil.Prelude) {
       Right(Iterable())
     } else if (ApplicationManager.getApplication.isDispatchThread) {
-      Right(FileBasedIndex.getInstance.getContainingFiles(HaskellModuleNameIndex, moduleName, searchScope).asScala)
+      try {
+        Right(FileBasedIndex.getInstance.getContainingFiles(HaskellModuleNameIndex, moduleName, searchScope).asScala)
+      } catch {
+        case _: IndexNotReadyException => Left(IndexNotReady)
+      }
     } else {
       val result = {
         ApplicationUtil.scheduleInReadActionWithWriteActionPriority(

@@ -47,7 +47,7 @@ object ApplicationUtil {
     }
   }
 
-  private final val ScheduleInReadActionTimeout = 100.millis
+  private final val ScheduleInReadActionTimeout = 200.millis
 
   def scheduleInReadActionWithWriteActionPriority[A](project: Project, f: => A, scheduleInReadActionDescription: => String): Either[NoInfo, A] = {
     val r = new AtomicReference[A]

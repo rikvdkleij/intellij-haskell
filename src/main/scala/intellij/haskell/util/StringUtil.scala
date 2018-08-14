@@ -40,7 +40,7 @@ object StringUtil {
   }
 
   def removeOuterParens(name: String): String = {
-    if (DeclarationLineUtil.isOperator(name)) {
+    if (DeclarationLineUtil.isWithinParens(name)) {
       name.substring(1, name.length - 1)
     } else {
       name
