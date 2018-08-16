@@ -264,7 +264,6 @@ class HaskellCompletionContributor extends CompletionContributor {
     LookupElementBuilder.create(namedElement.getName).withTypeText(typeSignature.map(StringUtil.unescapeXml).getOrElse("")).withIcon(HaskellIcons.HaskellSmallBlueLogo)
   }
 
-
   private def findLocalElements(element: PsiElement) = {
     HaskellPsiUtil.findExpressionParent(element).toStream.flatMap(e => HaskellPsiUtil.findNamedElements(e)).filter {
       case _: HaskellVarid => true
@@ -498,19 +497,23 @@ object HaskellCompletionContributor {
   }
 
   private def createLocalTopLevelLookupElement(moduleIdentifier: ModuleIdentifier): LookupElementBuilder = {
-    LookupElementBuilder.create(moduleIdentifier.name).withTypeText(moduleIdentifier.declaration).withIcon(findIcon(moduleIdentifier))
+    createLocalTopLevelLookupElement(moduleIdentifier.name, moduleIdentifier.declaration, moduleIdentifier.moduleName)
+  }
+
+  private def createLocalTopLevelLookupElement(name: String, declaration: String, module: String): LookupElementBuilder = {
+    LookupElementBuilder.create(name).withTypeText(declaration).withIcon(findIcon(declaration))
   }
 
   private def addWiths(lookupElementBuilder: LookupElementBuilder, moduleIdentifier: ModuleIdentifier) = {
     lookupElementBuilder.
       withTailText(" " + moduleIdentifier.moduleName, true).
-      withIcon(findIcon(moduleIdentifier)).
+      withIcon(findIcon(moduleIdentifier.declaration)).
       withTypeText(moduleIdentifier.declaration)
   }
 
-  private def findIcon(moduleIdentifier: ModuleIdentifier) = {
+  private def findIcon(declaration: String) = {
     import intellij.haskell.HaskellIcons._
-    moduleIdentifier.declaration match {
+    declaration match {
       case d if d.startsWith("class ") => Class
       case d if d.startsWith("data ") => Data
       case d if d.startsWith("default ") => Default
@@ -553,11 +556,22 @@ object HaskellCompletionContributor {
             }
           }
         )
-        localLookupElements
+
+        localLookupElements ++ findRemainingTopLeveLookupElements(psiFile, moduleName, localIdentifiers)
       case None =>
         HaskellNotificationGroup.logWarningEvent(psiFile.getProject, s"No support for suggesting local top level identifiers because no module defined in `${psiFile.getName}`")
         Iterable()
     }
+  }
+
+  private def findRemainingTopLeveLookupElements(psiFile: PsiFile, moduleName: Option[String], localIdentifiers: Iterable[ModuleIdentifier]) = {
+    val allLocalNames = localIdentifiers.map(_.name)
+    HaskellPsiUtil.findTopLevelDeclarations(psiFile).filterNot(d => d.isInstanceOf[HaskellModuleDeclaration] || allLocalNames.exists(n => getDeclarationName(d).contains(n))).
+      map(d => createLocalTopLevelLookupElement(getDeclarationName(d).getOrElse("-"), ApplicationUtil.runReadAction(d.getPresentation.getPresentableText), moduleName.getOrElse("-")))
+  }
+
+  private def getDeclarationName(declarationElement: HaskellDeclarationElement) = {
+    ApplicationUtil.runReadAction(declarationElement.getIdentifierElements.headOption.map(_.getName))
   }
 
   private def createQualifiedModuleIdentifiers(importInfo: ImportInfo, moduleIdentifiers: Iterable[ModuleIdentifier]): Iterable[ModuleIdentifier] = {

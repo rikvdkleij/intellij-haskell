@@ -19,10 +19,8 @@ package intellij.haskell.external.component
 import com.github.blemale.scaffeine.{AsyncLoadingCache, Scaffeine}
 import com.intellij.openapi.project.Project
 import com.intellij.psi.PsiFile
-import com.intellij.psi.search.GlobalSearchScope
 import intellij.haskell.external.repl._
 import intellij.haskell.util.StringUtil
-import intellij.haskell.util.index.HaskellModuleNameIndex
 
 import scala.concurrent.{ExecutionContext, Future}
 
@@ -69,15 +67,12 @@ private[component] object BrowseModuleComponent {
 
   def findExportedIdentifiers(stackComponentGlobalInfo: StackComponentGlobalInfo, psiFile: PsiFile, moduleName: String)(implicit ec: ExecutionContext): Future[Iterable[ModuleIdentifier]] = {
     val project = psiFile.getProject
-    HaskellModuleNameIndex.findHaskellFileByModuleName(project, moduleName, GlobalSearchScope.projectScope(project)) match {
-      case Right(f) =>
-        if (f.isDefined) {
-          val key = Key(psiFile.getProject, moduleName, Some(psiFile), exported = true)
-          matchResult(key, Cache.get(key))
-        } else {
-          findLibraryModuleIdentifiers(psiFile.getProject, moduleName)
-        }
-      case Left(noInfo) => matchResult(Key(project, moduleName, Some(psiFile), exported = true), Future.successful(Left(noInfo)))
+    val exposedModuleNames = StackReplsManager.findExposedModules(project)
+    if (stackComponentGlobalInfo.availableLibraryModuleNames.exists(_ == moduleName) && !exposedModuleNames.exists(_ == moduleName)) {
+      findLibraryModuleIdentifiers(psiFile.getProject, moduleName)
+    } else {
+      val key = Key(psiFile.getProject, moduleName, Some(psiFile), exported = true)
+      matchResult(key, Cache.get(key))
     }
   }
 

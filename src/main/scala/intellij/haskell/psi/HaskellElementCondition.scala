@@ -66,6 +66,15 @@ object HaskellElementCondition {
     }
   }
 
+  final val TtypeElementCondition = new Condition[PsiElement]() {
+    override def value(psiElement: PsiElement): Boolean = {
+      psiElement match {
+        case _: HaskellTtype => true
+        case _ => false
+      }
+    }
+  }
+
   final val DeclarationElementCondition = new Condition[PsiElement]() {
     override def value(psiElement: PsiElement): Boolean = {
       psiElement match {

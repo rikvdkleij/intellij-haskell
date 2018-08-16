@@ -11,6 +11,21 @@ import scala.collection.JavaConverters._
 
 object StackYamlComponent {
 
+  def isNixEnabled(project: Project): Boolean = {
+    {
+      for {
+        items <- getYamlItems(project)
+        nix <- items.get("nix").flatMap(Option(_)).map(_.asInstanceOf[java.util.LinkedHashMap[String, Any]].asScala.toMap)
+        enabled <- nix.get("enable").flatMap(Option(_))
+      } yield {
+        enabled match {
+          case b: Boolean if b => b
+          case _ => false
+        }
+      }
+    }.contains(true)
+  }
+
   def getResolver(project: Project): Option[String] = {
     getYamlItems(project).flatMap(_.get("resolver")).map(_.asInstanceOf[String])
   }

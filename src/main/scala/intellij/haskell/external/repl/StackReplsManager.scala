@@ -61,6 +61,10 @@ private[external] object StackReplsManager {
     getReplsManager(project).map(_.getGlobalRepl)
   }
 
+  def findExposedModules(project: Project): Iterable[String] = {
+    getReplsManager(project).map(_.exposedModuleNames).getOrElse(Iterable())
+  }
+
   private def createCabalInfos(project: Project): Iterable[(Module, CabalInfo)] = {
     val modules = HaskellProjectUtil.findProjectModules(project)
     val moduleDirs = modules.map(HaskellProjectUtil.getModuleDir)
@@ -81,18 +85,16 @@ private[external] object StackReplsManager {
     }
   }
 
-  private def createStackComponentInfo(project: Project, moduleCabalInfos: Iterable[(Module, CabalInfo)]): Iterable[StackComponentInfo] = {
+  private def createStackComponentInfoWithExposedModuleNames(project: Project, moduleCabalInfos: Iterable[(Module, CabalInfo)]): Iterable[(StackComponentInfo, Array[String])] = {
     moduleCabalInfos.flatMap {
       case (m: Module, cabalInfo: CabalInfo) => cabalInfo.cabalStanzas.map {
-        case cs: LibraryCabalStanza => StackComponentInfo(m, cs.packageName, cs.targetName, LibType, cs.sourceDirs, None)
-        case cs: ExecutableCabalStanza => StackComponentInfo(m, cs.packageName, cs.targetName, ExeType, cs.sourceDirs, cs.mainIs)
-        case cs: TestSuiteCabalStanza => StackComponentInfo(m, cs.packageName, cs.targetName, TestSuiteType, cs.sourceDirs, cs.mainIs)
-        case cs: BenchmarkCabalStanza => StackComponentInfo(m, cs.packageName, cs.targetName, BenchmarkType, cs.sourceDirs, cs.mainIs)
+        case cs: LibraryCabalStanza => (StackComponentInfo(m, cs.packageName, cs.targetName, LibType, cs.sourceDirs, None), cs.exposedModuleNames)
+        case cs: ExecutableCabalStanza => (StackComponentInfo(m, cs.packageName, cs.targetName, ExeType, cs.sourceDirs, cs.mainIs), Array[String]())
+        case cs: TestSuiteCabalStanza => (StackComponentInfo(m, cs.packageName, cs.targetName, TestSuiteType, cs.sourceDirs, cs.mainIs), Array[String]())
+        case cs: BenchmarkCabalStanza => (StackComponentInfo(m, cs.packageName, cs.targetName, BenchmarkType, cs.sourceDirs, cs.mainIs), Array[String]())
       }
     }
   }
-
-
 }
 
 private[external] class StackReplsManager(val project: Project) {
@@ -105,9 +107,13 @@ private[external] class StackReplsManager(val project: Project) {
 
   val moduleCabalInfos: Iterable[(Module, CabalInfo)] = StackReplsManager.createCabalInfos(project)
 
-  val stackComponentInfos: Iterable[StackComponentInfo] = StackReplsManager.createStackComponentInfo(project, moduleCabalInfos)
+  private val infoWithExposedModuleNames = StackReplsManager.createStackComponentInfoWithExposedModuleNames(project, moduleCabalInfos)
 
   private final val IgnoredHaskellFiles = Seq("setup.hs", "hlint.hs")
+
+  val stackComponentInfos: Iterable[StackComponentInfo] = infoWithExposedModuleNames.map(_._1)
+
+  val exposedModuleNames: Iterable[String] = infoWithExposedModuleNames.filter(_._1.stanzaType == LibType).flatMap(_._2)
 
   def getRunningProjectRepl(stackComponentInfo: StackComponentInfo): Option[ProjectStackRepl] = {
     projectRepls.get(stackComponentInfo).filter(_.available)

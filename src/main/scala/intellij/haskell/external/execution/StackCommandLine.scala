@@ -27,6 +27,7 @@ import com.intellij.openapi.util.Key
 import com.intellij.openapi.vfs.{CharsetToolkit, VfsUtil}
 import intellij.haskell.HaskellNotificationGroup
 import intellij.haskell.sdk.HaskellSdkType
+import intellij.haskell.stackyaml.StackYamlComponent
 import intellij.haskell.util.{HaskellFileUtil, HaskellProjectUtil}
 
 import scala.collection.mutable.ListBuffer
@@ -54,7 +55,12 @@ object StackCommandLine {
 
   def installTool(project: Project, toolName: String): Boolean = {
     import intellij.haskell.GlobalInfo._
-    val arguments = Seq("--stack-root", toolsStackRootPath, "--resolver", StackageLtsVersion, "--compiler", "ghc-8.2.2", "--system-ghc", "--local-bin-path", toolsBinPath, "install", toolName)
+    val systemGhcOption = if (StackYamlComponent.isNixEnabled(project)) {
+      Seq()
+    } else {
+      Seq("--system-ghc")
+    }
+    val arguments = systemGhcOption ++ Seq("--stack-root", toolsStackRootPath, "--resolver", StackageLtsVersion, "--compiler", "ghc-8.2.2", "--local-bin-path", toolsBinPath, "install", toolName)
     val processOutput = run(project, arguments, -1, logOutput = true, notifyBalloonError = true, workDir = Some(VfsUtil.getUserHomeDir.getPath))
     processOutput.exists(o => o.getExitCode == 0 && !o.isTimeout)
   }

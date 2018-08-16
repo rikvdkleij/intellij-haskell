@@ -73,8 +73,7 @@ class HaskellReference(element: HaskellNamedElement, textRange: TextRange) exten
                   def find(e: PsiElement): Option[HaskellNamedElement] = {
                     Option(PsiTreeUtil.findSiblingForward(e, HaskellTypes.HS_TOP_DECLARATION, null)) match {
                       case Some(d) if Option(d.getFirstChild).exists(_.isInstanceOf[HaskellExpression]) => HaskellPsiUtil.findNamedElements(d).headOption.find(_.getName == ne.getName)
-                      case Some(_) => find(e)
-                      case None => None
+                      case _ => None
                     }
                   }
 
@@ -201,7 +200,7 @@ object HaskellReference {
 
     ProgressManager.checkCanceled()
 
-    val expressionIdentifiers = topLevelExpressions.flatMap(_.getQNameList.asScala.headOption.map(_.getIdentifierElement)).filter(_.getName == name)
+    val expressionIdentifiers = topLevelExpressions.flatMap(_.getQNameList.asScala.map(_.getIdentifierElement)).filter(_.getName == name)
 
     ProgressManager.checkCanceled()
 
@@ -220,6 +219,7 @@ object HaskellReference {
     }
   }
 
+  import scala.collection.JavaConverters._
   def findIdentifierByLocation(project: Project, virtualFile: Option[VirtualFile], psiFile: Option[PsiFile], lineNr: Integer, columnNr: Integer, name: String): (Option[String], Option[HaskellNamedElement]) = {
     ProgressManager.checkCanceled()
     val namedElement = for {
@@ -231,15 +231,17 @@ object HaskellReference {
       () = ProgressManager.checkCanceled()
       element <- Option(pf.findElementAt(offset))
       () = ProgressManager.checkCanceled()
-      namedElement <- HaskellPsiUtil.findNamedElement(element).find(e => e.getName == name).
+      namedElement <- HaskellPsiUtil.findNamedElement(element).find(_.getName == name).
         orElse {
           ProgressManager.checkCanceled()
           None
-        }.orElse(HaskellPsiUtil.findHighestDeclarationElementParent(element).flatMap(_.getIdentifierElements.find(e => e.getName == name)).
+        }.orElse(HaskellPsiUtil.findHighestDeclarationElementParent(element).flatMap(_.getIdentifierElements.find(_.getName == name)).
         orElse {
           ProgressManager.checkCanceled()
           None
-        }.orElse(HaskellPsiUtil.findQualifiedNameParent(element).map(_.getIdentifierElement).find(e => e.getName == name)))
+        }.orElse(HaskellPsiUtil.findQualifiedNameParent(element).map(_.getIdentifierElement)).find(_.getName == name)).orElse {
+        HaskellPsiUtil.findTypeParent(element).flatMap(_.getQNameList.asScala.map(_.getIdentifierElement).find(_.getName == name))
+      }
     } yield namedElement
 
     ProgressManager.checkCanceled()

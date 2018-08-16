@@ -129,6 +129,7 @@ sealed trait CabalStanza {
   }
 
   lazy val name: Option[String] = nameElementType.flatMap(net => HaskellPsiUtil.getChildNodes(sectionRootElement, net).headOption).map(_.getText)
+
 }
 
 case class LibraryCabalStanza(sectionRootElement: PsiElement, packageName: String, modulePath: String) extends CabalStanza {
@@ -137,6 +138,12 @@ case class LibraryCabalStanza(sectionRootElement: PsiElement, packageName: Strin
   val targetName: String = s"$packageName:lib"
 
   lazy val sourceDirs: Array[String] = findSourceDirsOrElseModuleDir
+
+  val exposedModuleNames = findExposedModuleNames
+
+  private def findExposedModuleNames: Array[String] = {
+    HaskellPsiUtil.getChildOfType(sectionRootElement, classOf[ExposedModules]).map(_.getModuleNames).getOrElse(Array())
+  }
 }
 
 case class ExecutableCabalStanza(sectionRootElement: PsiElement, packageName: String, modulePath: String) extends CabalStanza {
