@@ -174,7 +174,7 @@ private[component] object DefinitionLocationComponent {
     }
   }
 
-  private[component] final val CurrentFileTimeout = Duration.create(150, TimeUnit.MILLISECONDS)
+  private[component] final val CurrentFileTimeout = Duration.create(50, TimeUnit.MILLISECONDS)
   private final val Timeout = Duration.create(1, TimeUnit.SECONDS)
 
   @tailrec
@@ -195,7 +195,9 @@ private[component] object DefinitionLocationComponent {
       LocationInfoUtil.preloadLocationsInExpression(project, psiFile, qualifiedNameElement)
     }
 
-    if (!LoadComponent.isModuleLoaded(moduleName, psiFile) && isCurrentFile) {
+    if (isCurrentFile && LoadComponent.isBusy(psiFile)) {
+      Left(ReplIsBusy)
+    } else if (isCurrentFile && !LoadComponent.isModuleLoaded(moduleName, psiFile)) {
       Left(ModuleNotLoaded(psiFile.getName))
     } else {
       val result = wait(Cache.get(key))
