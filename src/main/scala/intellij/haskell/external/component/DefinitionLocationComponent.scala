@@ -19,6 +19,7 @@ package intellij.haskell.external.component
 import java.util.concurrent.TimeUnit
 
 import com.github.blemale.scaffeine.{AsyncLoadingCache, Scaffeine}
+import com.intellij.openapi.application._
 import com.intellij.openapi.project.Project
 import com.intellij.psi.PsiFile
 import intellij.haskell.external.repl.StackRepl.StackReplOutput
@@ -27,7 +28,6 @@ import intellij.haskell.navigation.HaskellReference
 import intellij.haskell.psi._
 import intellij.haskell.util._
 
-import scala.annotation.tailrec
 import scala.concurrent.duration.Duration
 import scala.concurrent.{Await, Future, TimeoutException}
 
@@ -174,16 +174,16 @@ private[component] object DefinitionLocationComponent {
     }
   }
 
-  private[component] final val CurrentFileTimeout = Duration.create(50, TimeUnit.MILLISECONDS)
-  private final val Timeout = Duration.create(1, TimeUnit.SECONDS)
+  private[component] final val Timeout = Duration.create(50, TimeUnit.MILLISECONDS)
 
-  @tailrec
   private[component] def find(psiFile: PsiFile, qualifiedNameElement: HaskellQualifiedNameElement, isCurrentFile: Boolean, initialRequest: Boolean): DefinitionLocationResult = {
-    def wait(f: => Future[DefinitionLocationResult]) = {
+    def wait(f: => Future[DefinitionLocationResult]): DefinitionLocationResult = {
       try {
-        Await.result(f, if (isCurrentFile) CurrentFileTimeout else Timeout)
+        Await.result(f, Timeout)
       } catch {
-        case _: TimeoutException => Left(ReplIsBusy)
+        case _: TimeoutException =>
+          val name = ApplicationUtil.runReadAction(qualifiedNameElement.getName)
+          Left(ReadActionTimeout(s"waiting for definition location result $name in ${psiFile.getName}"))
       }
     }
 
@@ -202,26 +202,59 @@ private[component] object DefinitionLocationComponent {
     } else {
       val result = wait(Cache.get(key))
       result match {
-        case Right(r) =>
-          if (r.namedElement.isValid) {
+        case Right(location) =>
+          if (ApplicationUtil.runReadAction(location.namedElement.isValid)) {
             result
           } else {
             Cache.synchronous.invalidate(key)
             Left(NoInfoAvailable("-- invalid PSI element", psiFile.getName))
           }
-        case Left(ReplNotAvailable) | Left(IndexNotReady) | Left(ModuleNotLoaded(_)) | Left(ReadActionTimeout(_)) =>
+        case Left(ReplIsBusy) | Left(ReadActionTimeout(_)) | Left(IndexNotReady) =>
           Cache.synchronous().invalidate(key)
-          result
-        case Left(NoInfoAvailable(_, _)) =>
-          result
-        case Left(ReplIsBusy) =>
-          Cache.synchronous().invalidate(key)
-          if (!isCurrentFile && !project.isDisposed) {
-            Thread.sleep(100)
-            find(psiFile, qualifiedNameElement, isCurrentFile, initialRequest = false)
+
+          val application = ApplicationManager.getApplication
+
+          import scala.concurrent.duration._
+
+          if (!project.isDisposed) {
+            if (application.isDispatchThread) {
+              ApplicationUtil.scheduleInReadActionWithWriteActionPriority(project, {
+
+                def find() = {
+                  val result = Cache.synchronous.get(key)
+                  result match {
+                    case Right(_) => result
+                    case Left(ReplIsBusy) | Left(ReadActionTimeout(_)) | Left(IndexNotReady) =>
+                      Cache.synchronous.invalidate(key)
+                      result
+                    case l@Left(_) => l
+                  }
+                }
+
+                find() match {
+                  case r@Right(_) => r
+                  case Left(ReplIsBusy) | Left(ReadActionTimeout(_)) | Left(IndexNotReady) =>
+                    // Wait a moment to let the read actions breath
+                    Thread.sleep(50)
+                    find()
+                  case l@Left(_) => l
+                }
+
+              }, s"finding location for for ${qualifiedNameElement.getName} in file ${psiFile.getName}", 60.seconds) match {
+                case Right(location) => location
+                case Left(noInfo) =>
+                  HaskellEditorUtil.showStatusBarBalloonMessage(project, s"No result after waiting one minute to find all locations for ${qualifiedNameElement.getName}")
+                  Left(noInfo)
+              }
+            } else {
+              find(psiFile, qualifiedNameElement, isCurrentFile, initialRequest = false)
+            }
           } else {
             result
           }
+        case _ =>
+          Cache.synchronous().invalidate(key)
+          result
       }
     }
   }
@@ -253,7 +286,7 @@ object LocationInfoUtil {
                     if (!project.isDisposed && !LoadComponent.isBusy(project, stackComponentInfo)) {
                       DefinitionLocationComponent.find(psiFile, ne, isCurrentFile = true, initialRequest = false)
                       // We have to wait for other requests which have more priority because those are on dispatch thread
-                      Thread.sleep(DefinitionLocationComponent.CurrentFileTimeout.toMillis)
+                      Thread.sleep(DefinitionLocationComponent.Timeout.toMillis)
                     }
                   }
                 }

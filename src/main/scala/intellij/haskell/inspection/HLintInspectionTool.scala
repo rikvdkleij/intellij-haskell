@@ -69,8 +69,11 @@ class HLintInspectionTool extends LocalInspectionTool {
       hi <- result
       problemType = findProblemHighlightType(hi)
       if problemType != ProblemHighlightType.GENERIC_ERROR
+      () = ProgressManager.checkCanceled()
       vf <- HaskellFileUtil.findVirtualFile(psiFile)
+      () = ProgressManager.checkCanceled()
       se <- findStartHaskellElement(vf, psiFile, hi)
+      () = ProgressManager.checkCanceled()
       ee <- findEndHaskellElement(vf, psiFile, hi)
       sl <- fromOffset(vf, se)
       el <- fromOffset(vf, ee)

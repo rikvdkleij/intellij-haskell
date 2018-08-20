@@ -77,6 +77,8 @@ class HaskellReference(element: HaskellNamedElement, textRange: TextRange) exten
                     }
                   }
 
+                  ProgressManager.checkCanceled()
+
                   // Work around Intero bug.
                   find(ts.getParent) match {
                     case Some(ee) => Some(HaskellNamedElementResolveResult(ee))
@@ -107,6 +109,8 @@ class HaskellReference(element: HaskellNamedElement, textRange: TextRange) exten
         ProgressManager.checkCanceled()
 
         val isLibraryFile = HaskellProjectUtil.isLibraryFile(psiFile)
+
+        ProgressManager.checkCanceled()
         if (isLibraryFile) {
           resolveReferenceByNameInfo(qualifiedNameElement, namedElement, psiFile, project)
         } else {
@@ -132,7 +136,7 @@ class HaskellReference(element: HaskellNamedElement, textRange: TextRange) exten
 
     if (referenceNamedElement.exists(_.isEmpty)) {
       ProgressManager.checkCanceled()
-      Right(HaskellPsiUtil.findHaskellDeclarationElements(psiFile).flatMap(_.getIdentifierElements).filter(_.getName == namedElement.getName).toSeq.headOption)
+      Right(HaskellPsiUtil.findHaskellDeclarationElements(psiFile).toSeq.flatMap(_.getIdentifierElements).find(_.getName == namedElement.getName))
     } else {
       referenceNamedElement
     }
@@ -143,6 +147,8 @@ class HaskellReference(element: HaskellNamedElement, textRange: TextRange) exten
     val project = psiFile.getProject
 
     val isCurrentSelectedFile = HaskellFileUtil.findVirtualFile(psiFile).exists(vf => FileEditorManager.getInstance(project).getSelectedFiles.headOption.contains(vf))
+
+    ProgressManager.checkCanceled()
 
     HaskellComponentsManager.findDefinitionLocation(psiFile, qualifiedNameElement, isCurrentFile = isCurrentSelectedFile) match {
       case Right(DefinitionLocation(_, ne)) => Right(Some(ne))
@@ -185,6 +191,8 @@ object HaskellReference {
   }
 
   def findIdentifiersByModuleAndName(project: Project, module: Option[Module], moduleName: String, name: String): Either[NoInfo, Option[HaskellNamedElement]] = {
+    ProgressManager.checkCanceled()
+
     for {
       file <- findFileByModuleName(project, module, moduleName)
       ne <- Right(file.flatMap(findIdentifierInFileByName(_, name)))
@@ -200,7 +208,7 @@ object HaskellReference {
 
     ProgressManager.checkCanceled()
 
-    val expressionIdentifiers = topLevelExpressions.flatMap(_.getQNameList.asScala.map(_.getIdentifierElement)).filter(_.getName == name)
+    val expressionIdentifiers = topLevelExpressions.flatMap(_.getQNameList.asScala.headOption.map(_.getIdentifierElement)).find(_.getName == name)
 
     ProgressManager.checkCanceled()
 
@@ -215,11 +223,12 @@ object HaskellReference {
 
       declarationIdentifiers.toSeq.sortWith(sortByClassDeclarationFirst).headOption
     } else {
-      expressionIdentifiers.headOption
+      expressionIdentifiers
     }
   }
 
   import scala.collection.JavaConverters._
+
   def findIdentifierByLocation(project: Project, virtualFile: Option[VirtualFile], psiFile: Option[PsiFile], lineNr: Integer, columnNr: Integer, name: String): (Option[String], Option[HaskellNamedElement]) = {
     ProgressManager.checkCanceled()
     val namedElement = for {
@@ -257,17 +266,21 @@ object HaskellReference {
   }
 
   def findFileByModuleName(project: Project, module: Option[Module], moduleName: String): Either[NoInfo, Option[PsiFile]] = {
+    ProgressManager.checkCanceled()
+
     module match {
       case None => HaskellModuleNameIndex.findHaskellFileByModuleName(project, moduleName, GlobalSearchScope.allScope(project))
       case Some(m) => HaskellModuleNameIndex.findHaskellFileByModuleName(project, moduleName, m.getModuleWithDependenciesAndLibrariesScope(true))
     }
   }
 
-
   private def findIdentifiersByNameInfo(nameInfo: NameInfo, namedElement: HaskellNamedElement, project: Project): Either[NoInfo, Option[HaskellNamedElement]] = {
+    ProgressManager.checkCanceled()
+
     nameInfo match {
       case pni: ProjectNameInfo =>
         val (virtualFile, psiFile) = HaskellProjectUtil.findFile(pni.filePath, project)
+        ProgressManager.checkCanceled()
         psiFile match {
           case Right(pf) => Right(findIdentifierByLocation(project, virtualFile, pf, pni.lineNr, pni.columnNr, namedElement.getName)._2)
           case Left(noInfo) => Left(noInfo)

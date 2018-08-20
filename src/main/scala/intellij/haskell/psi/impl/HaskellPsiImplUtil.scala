@@ -347,7 +347,7 @@ object HaskellPsiImplUtil {
 
   def getIdentifierElements(newtypeDeclaration: HaskellNewtypeDeclaration): Seq[HaskellNamedElement] = {
     newtypeDeclaration.getSimpletype.getIdentifierElements ++
-    Option(newtypeDeclaration.getNewconstr.getNewconstrFielddecl).flatMap(_.getTypeSignature.getQNamesList.asScala.headOption).map(_.getQNameList.asScala.headOption.map(_.getIdentifierElement).toSeq).getOrElse(Seq()) ++
+      Option(newtypeDeclaration.getNewconstr.getNewconstrFielddecl).flatMap(_.getTypeSignature.getQNamesList.asScala.headOption).map(_.getQNameList.asScala.headOption.map(_.getIdentifierElement).toSeq).getOrElse(Seq()) ++
       Option(newtypeDeclaration.getNewconstr.getNewconstrFielddecl).map(_.getQName.getIdentifierElement).toSeq ++
       newtypeDeclaration.getNewconstr.getQNameList.asScala.headOption.map(_.getIdentifierElement).toSeq
   }
@@ -379,9 +379,11 @@ object HaskellPsiImplUtil {
   }
 
   def getIdentifierElements(simpleType: HaskellSimpletype): Seq[HaskellNamedElement] = {
-    Option(simpleType.getTtype) match {
-      case Some(t) => t.getQNameList.asScala.headOption.map(_.getIdentifierElement).toSeq
-      case None => simpleType.getQNameList.asScala.headOption.map(_.getIdentifierElement).toSeq
+    simpleType.getQNameList.asScala.map(_.getIdentifierElement) ++ {
+      Option(simpleType.getTtype) match {
+        case Some(t) => t.getQNameList.asScala.headOption.map(_.getIdentifierElement).toSeq
+        case None => simpleType.getQNameList.asScala.headOption.map(_.getIdentifierElement).toSeq
+      }
     }
   }
 

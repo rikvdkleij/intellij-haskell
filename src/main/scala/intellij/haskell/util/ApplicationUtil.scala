@@ -47,9 +47,9 @@ object ApplicationUtil {
     }
   }
 
-  private final val ScheduleInReadActionTimeout = 200.millis
+  private final val ScheduleInReadActionTimeout = 50.millis
 
-  def scheduleInReadActionWithWriteActionPriority[A](project: Project, f: => A, scheduleInReadActionDescription: => String): Either[NoInfo, A] = {
+  def scheduleInReadActionWithWriteActionPriority[A](project: Project, f: => A, scheduleInReadActionDescription: => String, timeout: FiniteDuration = ScheduleInReadActionTimeout): Either[NoInfo, A] = {
     val r = new AtomicReference[A]
 
     ProgressIndicatorUtils.scheduleWithWriteActionPriority {
@@ -71,7 +71,7 @@ object ApplicationUtil {
       }
     }
 
-    val deadline = ScheduleInReadActionTimeout.fromNow
+    val deadline = timeout.fromNow
 
     while (r.get == null && deadline.hasTimeLeft && !project.isDisposed) {
       Thread.sleep(1)

@@ -18,6 +18,7 @@ package intellij.haskell.psi
 
 import com.github.blemale.scaffeine.{LoadingCache, Scaffeine}
 import com.intellij.lang.ASTNode
+import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.project.Project
 import com.intellij.psi.impl.source.tree.TreeUtil
@@ -81,7 +82,14 @@ object HaskellPsiUtil {
   }
 
   private final val ModuleNameCache: LoadingCache[PsiFile, Option[String]] = Scaffeine().build((psiFile: PsiFile) => {
-    ApplicationUtil.runReadAction(findModuleNameInPsiTree(psiFile))
+    if (ApplicationManager.getApplication.isDispatchThread) {
+      findModuleNameInPsiTree(psiFile)
+    } else {
+      ApplicationUtil.runInReadActionWithWriteActionPriority(psiFile.getProject, findModuleNameInPsiTree(psiFile), s"find module name in ${psiFile.getName}") match {
+        case Right(mn) => mn
+        case Left(_) => None
+      }
+    }
   })
 
   def findModuleName(psiFile: PsiFile): Option[String] = {

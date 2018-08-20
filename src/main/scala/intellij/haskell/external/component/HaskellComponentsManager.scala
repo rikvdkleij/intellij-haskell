@@ -217,7 +217,7 @@ object HaskellComponentsManager {
         importedLibraryModuleNames.toSeq.distinct.foreach(mn => {
           if (!project.isDisposed) {
             if (StackReplsManager.getGlobalRepl(project).exists(_.available)) {
-              DumbService.getInstance(project).runReadActionInSmartMode(ScalaUtil.computable(BrowseModuleComponent.findLibraryModuleIdentifiers(project, mn)))
+              BrowseModuleComponent.findLibraryModuleIdentifiers(project, mn)
               // We have to wait for other requests which have more priority because those are on dispatch thread
               Thread.sleep(100)
             }

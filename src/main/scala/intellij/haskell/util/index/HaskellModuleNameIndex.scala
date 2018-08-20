@@ -18,7 +18,8 @@ package intellij.haskell.util.index
 
 import java.util.Collections
 
-import com.intellij.openapi.application.ApplicationManager
+import com.github.blemale.scaffeine.{LoadingCache, Scaffeine}
+import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.project.{IndexNotReadyException, Project}
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.psi.PsiFile
@@ -26,7 +27,7 @@ import com.intellij.psi.search.GlobalSearchScope
 import com.intellij.util.indexing._
 import com.intellij.util.io.{EnumeratorStringDescriptor, KeyDescriptor}
 import intellij.haskell.HaskellFileType
-import intellij.haskell.external.component.{IndexNotReady, NoInfo}
+import intellij.haskell.external.component._
 import intellij.haskell.psi.HaskellPsiUtil
 import intellij.haskell.util.{ApplicationUtil, HaskellFileUtil, HaskellProjectUtil}
 
@@ -47,13 +48,30 @@ object HaskellModuleNameIndex {
     }
   }
 
-  def findHaskellFileByModuleName(project: Project, moduleName: String, searchScope: GlobalSearchScope): Either[NoInfo, Option[PsiFile]] = {
-    findFilesByModuleName(project, moduleName, searchScope) match {
+  private case class Key(project: Project, moduleName: String, searchScope: GlobalSearchScope)
+
+  type Result = Either[NoInfo, Option[PsiFile]]
+
+  private final val Cache: LoadingCache[Key, Result] = Scaffeine().build((k: Key) => find(k))
+
+  private def find(key: Key): Either[NoInfo, Option[PsiFile]] = {
+    findFilesByModuleName(key.project, key.moduleName, key.searchScope) match {
       case Right(vfs) => vfs.headOption match {
-        case Some(vf) => HaskellFileUtil.convertToHaskellFileInReadAction(project, vf)
+        case Some(vf) => HaskellFileUtil.convertToHaskellFileInReadAction(key.project, vf)
         case None => Right(None)
       }
       case Left(noInfo) => Left(noInfo)
+    }
+  }
+
+  def findHaskellFileByModuleName(project: Project, moduleName: String, searchScope: GlobalSearchScope): Either[NoInfo, Option[PsiFile]] = {
+    val key = Key(project, moduleName, searchScope)
+    Cache.get(key) match {
+      case r@Right(_) => r
+      case l@Left(NoInfoAvailable(_, _)) => l
+      case noInfo =>
+        Cache.invalidate(key)
+        noInfo
     }
   }
 
@@ -64,17 +82,13 @@ object HaskellModuleNameIndex {
   private def findFilesByModuleName(project: Project, moduleName: String, searchScope: GlobalSearchScope): Either[NoInfo, Iterable[VirtualFile]] = {
     if (moduleName == HaskellProjectUtil.Prelude) {
       Right(Iterable())
-    } else if (ApplicationManager.getApplication.isDispatchThread) {
-      try {
-        Right(FileBasedIndex.getInstance.getContainingFiles(HaskellModuleNameIndex, moduleName, searchScope).asScala)
-      } catch {
-        case _: IndexNotReadyException => Left(IndexNotReady)
-      }
     } else {
       val result = {
         ApplicationUtil.scheduleInReadActionWithWriteActionPriority(
           project, {
             try {
+              ProgressManager.checkCanceled()
+
               Right(FileBasedIndex.getInstance.getContainingFiles(HaskellModuleNameIndex, moduleName, searchScope).asScala)
             } catch {
               case _: IndexNotReadyException => Left(IndexNotReady)
