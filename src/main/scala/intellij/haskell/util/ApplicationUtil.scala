@@ -18,7 +18,7 @@ object ApplicationUtil {
     ApplicationManager.getApplication.runReadAction(ScalaUtil.computable(f))
   }
 
-  final val RunInReadActionTimeout = 50.millis
+  final val RunInReadActionTimeout = 10.millis
 
   def runInReadActionWithWriteActionPriority[A](project: Project, f: => A, readActionDescription: => String, timeout: FiniteDuration = RunInReadActionTimeout): Either[NoInfo, A] = {
     val r = new AtomicReference[A]
@@ -34,7 +34,7 @@ object ApplicationUtil {
 
     val deadline = timeout.fromNow
 
-    while (deadline.hasTimeLeft && !run() && !project.isDisposed) {
+    while (!run() && deadline.hasTimeLeft && !project.isDisposed) {
       Thread.sleep(1)
     }
 
@@ -47,7 +47,7 @@ object ApplicationUtil {
     }
   }
 
-  private final val ScheduleInReadActionTimeout = 50.millis
+  private final val ScheduleInReadActionTimeout = 10.millis
 
   def scheduleInReadActionWithWriteActionPriority[A](project: Project, f: => A, scheduleInReadActionDescription: => String, timeout: FiniteDuration = ScheduleInReadActionTimeout): Either[NoInfo, A] = {
     val r = new AtomicReference[A]
