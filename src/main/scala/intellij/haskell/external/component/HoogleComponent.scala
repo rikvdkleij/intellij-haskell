@@ -17,7 +17,6 @@
 package intellij.haskell.external.component
 
 import java.io.File
-import java.nio.file.Paths
 
 import com.intellij.execution.process.ProcessOutput
 import com.intellij.lang.documentation.DocumentationMarkup
@@ -173,6 +172,6 @@ object HoogleComponent {
   }
 
   private def hoogleDbPath(project: Project) = {
-    Paths.get(project.getBasePath, GlobalInfo.StackWorkDirName, HoogleDbName).toString
+    GlobalInfo.getIntelliJProjectDirectory(project).resolve(HoogleDbName).toString
   }
 }

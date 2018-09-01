@@ -3,6 +3,8 @@ package intellij.haskell
 import java.io.File
 import java.nio.file.{Path, Paths}
 
+import com.intellij.openapi.project.Project
+import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.vfs.VfsUtil
 import intellij.haskell.util.HaskellFileUtil
 
@@ -42,4 +44,12 @@ object GlobalInfo {
     Paths.get(GlobalInfo.toolsBinPath, toolName)
   }
 
+  def getIntelliJProjectDirectory(project: Project): Path = {
+    val intelliJProjectDirectory = Paths.get(GlobalInfo.getIntelliJHaskellDirectory.getAbsolutePath, project.getName)
+    val intelliJProjectFile = new File(intelliJProjectDirectory.toString)
+    if (!intelliJProjectFile.exists()) {
+      FileUtil.createDirectory(intelliJProjectFile)
+    }
+    intelliJProjectDirectory
+  }
 }
