@@ -37,8 +37,8 @@ white_char          = [\ \t\f\x0B\ \x0D ] | {unispace}    // second "space" is 
 directive           = "#"{white_char}*("if"|"ifdef"|"ifndef"|"define"|"elif"|"else"|"error"|"endif"|"include"|"undef")  ("\\" (\r|\n|\r\n) | [^\r\n])*
 white_space         = {white_char}+
 
-small               = [a-z_] | [\u03B1-\u03C9]
-large               = [A-Z] | [\u0391-\u03A9]
+small               = [a-z_] | [\u03B1-\u03C9] | "𝑖" | "𝕧"
+large               = [A-Z] | [\u0391-\u03A9] | "ℝ" | "ℂ" | "ℕ" | "ℤ"
 
 digit               = [0-9] | [\u2070-\u2079] | [\u2080-\u2089]
 decimal             = [-+]?{digit}+
@@ -89,7 +89,6 @@ colon_colon         = "::" | "∷"
 left_arrow          = "<-" | "←"
 right_arrow         = "->" | "→"
 double_right_arrow  = "=>" | "⇒"
-dot_dot             = ".."
 
  // special
 left_paren          = "("
@@ -107,11 +106,11 @@ quote               = "'"
 forall              = "∀"
 
 symbol_no_dot       = {equal} | {at} | {backslash} | {vertical_bar} | {tilde} | {exclamation_mark} | {hash} | {dollar} | {percentage} | {ampersand} | {star} |
-                        {plus} | {slash} | {lt} | {gt} | {question_mark} | {caret} | {dash} | "⊜" | "≣" | "≤" | "≥"
+                        {plus} | {slash} | {lt} | {gt} | {question_mark} | {caret} | {dash} | "⊜" | "≣" | "≤" | "≥" | "·"
 symbol              = {symbol_no_dot} | {dot}
 
 var_id              = {question_mark}? {small} ({small} | {large} | {digit} | {quote})*
-varsym_id           = (({dot_dot} | {colon} | {colon_colon} | {equal} | {backslash} | {vertical_bar} | {left_arrow} | {right_arrow} | {at} | {tilde} | {double_right_arrow}) ({symbol} | {colon})+) |
+varsym_id           = (({colon} | {colon_colon} | {equal} | {backslash} | {vertical_bar} | {left_arrow} | {right_arrow} | {at} | {tilde} | {double_right_arrow}) ({symbol} | {colon})+) |
                         {symbol_no_dot} ({symbol} | {colon})*
 
 con_id              = {large} ({small} | {large} | {digit} | {quote})*
@@ -298,8 +297,6 @@ nhaddock_start      = {left_brace}{dash}{white_char}?{vertical_bar}
     {backslash}           { return HS_BACKSLASH; }
     {vertical_bar}        { return HS_VERTICAL_BAR; }
     {tilde}               { return HS_TILDE; }
-
-    {dot_dot}             { return HS_DOT_DOT; }
 
     // symbol identifiers
     {varsym_id}           { return HS_VARSYM_ID; }

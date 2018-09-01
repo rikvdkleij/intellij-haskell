@@ -153,7 +153,7 @@ private modid_recover_rule  ::= DOT
 
 varid                       ::= VAR_ID "#"? {stubClass = "intellij.haskell.psi.stubs.HaskellVaridStub"}
 conid                       ::= CON_ID "#"? {stubClass = "intellij.haskell.psi.stubs.HaskellConidStub"}
-varsym                      ::= VARSYM_ID | DOT VARSYM_ID | DOT     {stubClass = "intellij.haskell.psi.stubs.HaskellVarsymStub"}
+varsym                      ::= VARSYM_ID | DOT VARSYM_ID | DOT EQUAL | DOT BACKSLASH | DOT TILDE | DOT AT | DOT CONSYM_ID | DOT     {stubClass = "intellij.haskell.psi.stubs.HaskellVarsymStub"}
 consym                      ::= CONSYM_ID   {stubClass = "intellij.haskell.psi.stubs.HaskellConsymStub"}
 
 cname                       ::= var | con | conop | varop
@@ -167,7 +167,7 @@ q_var_con                   ::= &<<noSpaceAfterQualifier>> qualifier DOT (varid 
 
 qualifier                   ::= conid (DOT conid)*
 
-q_con                       ::= q_con_qualifier4 DOT conid | q_con_qualifier3 DOT conid | q_con_qualifier2 DOT conid | q_con_qualifier1 DOT conid
+q_con                       ::= &<<noSpaceAfterQualifier>> q_con_qualifier4 DOT conid | &<<noSpaceAfterQualifier>> q_con_qualifier3 DOT conid | &<<noSpaceAfterQualifier>> q_con_qualifier2 DOT conid | &<<noSpaceAfterQualifier>> q_con_qualifier1 DOT conid
 q_con_qualifier4            ::= conid DOT conid DOT conid DOT conid
 q_con_qualifier3            ::= conid DOT conid DOT conid
 q_con_qualifier2            ::= conid DOT conid
@@ -188,7 +188,7 @@ constr3                     ::= (onls unpack_nounpack_pragma? onls ttype)+
 
 fielddecl                   ::= q_names (onl COLON_COLON unpack_nounpack_pragma? (onls ("forall" | FORALL) (onls q_name)+)? (onls scontext onls DOUBLE_RIGHT_ARROW)? unpack_nounpack_pragma? onls ttype)?
 
-private atype               ::= (("forall" | FORALL) (onl q_name | LEFT_PAREN (type_signature | ttype) RIGHT_PAREN)+ (onl DOUBLE_RIGHT_ARROW onl ttype)? |
+private atype               ::= (("forall" | FORALL) (onl q_name | LEFT_PAREN (type_signature | ttype) (COMMA (type_signature | ttype))* RIGHT_PAREN)+ (onl DOUBLE_RIGHT_ARROW onl ttype)? |
                                   (q_name | UNDERSCORE)* LEFT_PAREN ttype1 RIGHT_PAREN |
                                   (q_name | UNDERSCORE)* LEFT_BRACE ttype1 RIGHT_BRACE |
                                   (q_name | UNDERSCORE)* LEFT_PAREN ttype2 RIGHT_PAREN |
@@ -265,9 +265,9 @@ private line_expression     ::= general_id+ nls
 private last_line_expression::= general_id+
 
 scc_pragma                  ::= pragma
-private general_id          ::= QUASIQUOTE | q_name | LEFT_PAREN | RIGHT_PAREN | FLOAT |
+private general_id          ::= QUASIQUOTE | symbol_reserved_op | reserved_id | q_name | LEFT_PAREN | RIGHT_PAREN | FLOAT |
                                   SEMICOLON | LEFT_BRACKET | RIGHT_BRACKET | literal | LEFT_BRACE | RIGHT_BRACE |
-                                  COMMA | symbol_reserved_op | QUOTE | BACKQUOTE | fixity | reserved_id |
+                                  COMMA | QUOTE | BACKQUOTE | fixity |
                                   inlinelike_pragma | NEWLINE DIRECTIVE | scc_pragma
 
 private symbol_reserved_op  ::= DOT_DOT | COLON_COLON | EQUAL | BACKSLASH | VERTICAL_BAR | LEFT_ARROW | RIGHT_ARROW | AT | TILDE | DOUBLE_RIGHT_ARROW

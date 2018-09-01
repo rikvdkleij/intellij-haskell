@@ -224,7 +224,7 @@ object HaskellPsiImplUtil {
   private abstract class HaskellItemPresentation(haskellElement: PsiElement) extends ItemPresentation {
 
     def getLocationString: String = {
-      val psiFile = haskellElement.getContainingFile
+      val psiFile = haskellElement.getContainingFile.getOriginalFile
       HaskellPsiUtil.findModuleDeclaration(psiFile).flatMap(_.getModuleName).getOrElse("Unknown module")
     }
 
@@ -307,8 +307,8 @@ object HaskellPsiImplUtil {
   }
 
   private def getContainingLineText(namedElement: PsiElement) = {
+    val psiFile = namedElement.getContainingFile.getOriginalFile
     for {
-      psiFile <- Option(namedElement.getContainingFile)
       doc <- HaskellFileUtil.findDocument(psiFile)
       element <- HaskellPsiUtil.findQualifiedNameParent(namedElement)
       start = findNewline(element, e => e.getPrevSibling).getTextOffset
@@ -335,6 +335,7 @@ object HaskellPsiImplUtil {
 
   def getIdentifierElements(dataDeclaration: HaskellDataDeclaration): Seq[HaskellNamedElement] = {
     dataDeclaration.getSimpletype.getIdentifierElements ++
+      dataDeclaration.getTypeSignatureList.asScala.flatMap(_.getIdentifierElements) ++
       dataDeclaration.getConstr1List.asScala.flatMap(c => Option(c.getQName).map(_.getIdentifierElement).toSeq ++
         c.getFielddeclList.asScala.flatMap(_.getQNames.getQNameList.asScala.headOption.map(_.getIdentifierElement))) ++
       dataDeclaration.getConstr3List.asScala.flatMap(_.getTtypeList.asScala.headOption.flatMap(_.getQNameList.asScala.headOption.map(_.getIdentifierElement))) ++

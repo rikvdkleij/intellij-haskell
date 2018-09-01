@@ -31,6 +31,7 @@ public interface HaskellTypes {
   IElementType HS_DATA_DECLARATION_DERIVING = new HaskellCompositeElementType("HS_DATA_DECLARATION_DERIVING");
   IElementType HS_DEFAULT_DECLARATION = new HaskellCompositeElementType("HS_DEFAULT_DECLARATION");
   IElementType HS_DERIVING_DECLARATION = new HaskellCompositeElementType("HS_DERIVING_DECLARATION");
+  IElementType HS_DOT_DOT = new HaskellCompositeElementType("HS_DOT_DOT");
   IElementType HS_EXPORT = new HaskellCompositeElementType("HS_EXPORT");
   IElementType HS_EXPORTS = new HaskellCompositeElementType("HS_EXPORTS");
   IElementType HS_EXPRESSION = new HaskellCompositeElementType("HS_EXPRESSION");
@@ -120,7 +121,6 @@ public interface HaskellTypes {
   IElementType HS_DIRECTIVE = new HaskellTokenType("DIRECTIVE");
   IElementType HS_DO = new HaskellTokenType("DO");
   IElementType HS_DOT = new HaskellTokenType("DOT");
-  IElementType HS_DOT_DOT = new HaskellTokenType("DOT_DOT");
   IElementType HS_DOUBLE_QUOTE = new HaskellTokenType("DOUBLE_QUOTE");
   IElementType HS_DOUBLE_RIGHT_ARROW = new HaskellTokenType("DOUBLE_RIGHT_ARROW");
   IElementType HS_ELSE = new HaskellTokenType("ELSE");
@@ -244,6 +244,9 @@ public interface HaskellTypes {
       }
       else if (type == HS_DERIVING_DECLARATION) {
         return new HaskellDerivingDeclarationImpl(node);
+      }
+      else if (type == HS_DOT_DOT) {
+        return new HaskellDotDotImpl(node);
       }
       else if (type == HS_EXPORT) {
         return new HaskellExportImpl(node);

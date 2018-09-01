@@ -99,6 +99,10 @@ public class HaskellVisitor extends PsiElementVisitor {
     visitDeclarationElement(o);
   }
 
+  public void visitDotDot(@NotNull HaskellDotDot o) {
+    visitCompositeElement(o);
+  }
+
   public void visitExport(@NotNull HaskellExport o) {
     visitCompositeElement(o);
   }

@@ -6,6 +6,7 @@ import com.intellij.psi.PsiElementVisitor;
 import com.intellij.psi.util.PsiTreeUtil;
 import intellij.haskell.psi.HaskellCname;
 import intellij.haskell.psi.HaskellCnameDotDot;
+import intellij.haskell.psi.HaskellDotDot;
 import intellij.haskell.psi.HaskellVisitor;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -29,6 +30,12 @@ public class HaskellCnameDotDotImpl extends HaskellCompositeElementImpl implemen
   @Nullable
   public HaskellCname getCname() {
     return PsiTreeUtil.getChildOfType(this, HaskellCname.class);
+  }
+
+  @Override
+  @Nullable
+  public HaskellDotDot getDotDot() {
+    return PsiTreeUtil.getChildOfType(this, HaskellDotDot.class);
   }
 
 }

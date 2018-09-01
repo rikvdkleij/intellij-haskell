@@ -26,6 +26,12 @@ public class HaskellExpressionImpl extends HaskellCompositeElementImpl implement
 
   @Override
   @NotNull
+  public List<HaskellDotDot> getDotDotList() {
+    return PsiTreeUtil.getChildrenOfTypeAsList(this, HaskellDotDot.class);
+  }
+
+  @Override
+  @NotNull
   public List<HaskellInlinelikePragma> getInlinelikePragmaList() {
     return PsiTreeUtil.getChildrenOfTypeAsList(this, HaskellInlinelikePragma.class);
   }

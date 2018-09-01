@@ -8,4 +8,7 @@ public interface HaskellCnameDotDot extends HaskellCompositeElement {
   @Nullable
   HaskellCname getCname();
 
+  @Nullable
+  HaskellDotDot getDotDot();
+
 }

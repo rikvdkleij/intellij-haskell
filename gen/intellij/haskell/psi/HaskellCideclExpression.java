@@ -8,6 +8,9 @@ import java.util.List;
 public interface HaskellCideclExpression extends HaskellCompositeElement {
 
   @NotNull
+  List<HaskellDotDot> getDotDotList();
+
+  @NotNull
   List<HaskellInlinelikePragma> getInlinelikePragmaList();
 
   @NotNull
