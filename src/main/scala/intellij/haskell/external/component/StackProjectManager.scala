@@ -77,6 +77,10 @@ object StackProjectManager {
     project.isDisposed.optionNot(project.getComponent(classOf[StackProjectManager]))
   }
 
+  def getProjectLibraryFileWatcher(project: Project): Option[ProjectLibraryFileWatcher] = {
+    getStackProjectManager(project).map(_.projectLibraryFileWatcher)
+  }
+
   def installHaskellTools(project: Project, update: Boolean): Unit = {
     getStackProjectManager(project).foreach(_.installingHaskellTools = true)
 
@@ -134,7 +138,7 @@ object StackProjectManager {
                 val dependenciesBuildResult = StackCommandLine.buildProjectDependenciesInMessageView(project)
 
                 progressIndicator.setText(s"Busy with building Intero")
-                build(project, Seq("intero"), logBuildResult = true)
+                build(project, Seq("intero"))
 
                 if (dependenciesBuildResult.contains(true)) {
                   progressIndicator.setText("Busy with building project")
@@ -144,7 +148,9 @@ object StackProjectManager {
                 }
 
                 if (!project.isDisposed) {
-                  ApplicationManager.getApplication.getMessageBus.connect(project).subscribe(VirtualFileManager.VFS_CHANGES, new ProjectLibraryFileWatcher(project))
+                  getStackProjectManager(project).map(_.projectLibraryFileWatcher).foreach { watcher =>
+                    ApplicationManager.getApplication.getMessageBus.connect(project).subscribe(VirtualFileManager.VFS_CHANGES, watcher)
+                  }
                 }
 
                 if (restart) {
@@ -256,6 +262,8 @@ class StackProjectManager(project: Project) extends ProjectComponent {
 
   @volatile
   private var replsManager: Option[StackReplsManager] = None
+
+  private val projectLibraryFileWatcher = new ProjectLibraryFileWatcher(project)
 
   def getStackReplsManager: Option[StackReplsManager] = {
     replsManager

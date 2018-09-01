@@ -35,8 +35,9 @@ object CommandLine {
           notifyBalloonError: Boolean = false, ignoreExitCode: Boolean = false, logOutput: Boolean = false): ProcessOutput = {
 
     val commandLine = createCommandLine(workDir, commandPath, arguments)
+
     if (!logOutput) {
-      HaskellNotificationGroup.logInfoEvent(s"Executing: `${commandLine.getCommandLineString}`")
+      HaskellNotificationGroup.logInfoEvent(project, s"Executing: `${commandLine.getCommandLineString}`")
     }
 
     val processHandler = createProcessHandler(project, commandLine, logOutput)

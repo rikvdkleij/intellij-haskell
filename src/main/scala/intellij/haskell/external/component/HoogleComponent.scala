@@ -21,10 +21,13 @@ import java.nio.file.Paths
 
 import com.intellij.execution.process.ProcessOutput
 import com.intellij.lang.documentation.DocumentationMarkup
+import com.intellij.openapi.application.ApplicationManager
+import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.project.Project
+import com.intellij.util.WaitFor
 import intellij.haskell.external.execution.{CommandLine, StackCommandLine}
 import intellij.haskell.psi.{HaskellPsiUtil, HaskellQualifiedNameElement}
-import intellij.haskell.util.{HaskellProjectUtil, HtmlElement}
+import intellij.haskell.util.{HaskellProjectUtil, HtmlElement, ScalaUtil}
 import intellij.haskell.{GlobalInfo, HaskellNotificationGroup}
 
 import scala.collection.JavaConverters._
@@ -37,6 +40,8 @@ object HoogleComponent {
 
   def runHoogle(project: Project, pattern: String, count: Int = 100): Option[Seq[String]] = {
     if (isHoogleFeatureAvailable(project)) {
+      ProgressManager.checkCanceled()
+
       runHoogle(project, Seq( s""""$pattern"""", s"--count=$count")).
         map(o =>
           if (o.getStdoutLines.isEmpty || o.getStdout.contains("No results found"))
@@ -54,25 +59,32 @@ object HoogleComponent {
 
   def findDocumentation(project: Project, qualifiedNameElement: HaskellQualifiedNameElement): Option[String] = {
     if (isHoogleFeatureAvailable(project)) {
+      ProgressManager.checkCanceled()
+
       val name = qualifiedNameElement.getIdentifierElement.getName
-      Option(qualifiedNameElement.getContainingFile).flatMap { psiFile =>
-        if (HaskellProjectUtil.isProjectFile(psiFile)) {
-          DefinitionLocationComponent.findDefinitionLocation(psiFile, qualifiedNameElement, isCurrentFile = true) match {
-            case Left(noInfo) =>
-              HaskellNotificationGroup.logWarningEvent(project, s"No documentation because no location info could be found for identifier `$name` because ${noInfo.message}")
-              None
-            case Right(info) =>
-              info.moduleName match {
-                case None =>
-                  HaskellNotificationGroup.logWarningEvent(project, s"No documentation because could not find module for identifier `$name`")
-                  None
-                case Some(moduleName) => HoogleComponent.createDocumentation(project, name, moduleName)
-              }
-          }
-        } else {
-          val moduleName = HaskellPsiUtil.findModuleName(psiFile)
-          moduleName.flatMap(mn => createDocumentation(project, name, mn))
+      val psiFile = qualifiedNameElement.getContainingFile.getOriginalFile
+      if (HaskellProjectUtil.isProjectFile(psiFile)) {
+        DefinitionLocationComponent.findDefinitionLocation(psiFile, qualifiedNameElement) match {
+          case Left(noInfo) =>
+            HaskellNotificationGroup.logWarningEvent(project, s"No documentation because no location info could be found for identifier `$name` because ${noInfo.message}")
+            None
+          case Right(info) =>
+            val moduleName = info match {
+              case PackageModuleLocation(mn, _) => Some(mn)
+              case LocalModuleLocation(pf, _) => HaskellPsiUtil.findModuleName(pf)
+            }
+            moduleName match {
+              case None =>
+                HaskellNotificationGroup.logWarningEvent(project, s"No documentation because could not find module for identifier `$name`")
+                None
+              case Some(mn) =>
+                ProgressManager.checkCanceled()
+                HoogleComponent.createDocumentation(project, name, mn)
+            }
         }
+      } else {
+        val moduleName = HaskellPsiUtil.findModuleName(psiFile)
+        moduleName.flatMap(mn => createDocumentation(project, name, mn))
       }
     } else {
       Some("No documentation because Hoogle (database) is not available")
@@ -85,6 +97,8 @@ object HoogleComponent {
         replace("<", HtmlElement.Lt).
         replace(">", HtmlElement.Gt)
     }
+
+    ProgressManager.checkCanceled()
 
     runHoogle(project, Seq(name, "-i", s"+$moduleName")).
       flatMap(processOutput =>
@@ -136,7 +150,26 @@ object HoogleComponent {
   }
 
   private def runHoogle(project: Project, arguments: Seq[String]): Option[ProcessOutput] = {
-    StackCommandLine.run(project, Seq("exec", "--", HooglePath, s"--database=${hoogleDbPath(project)}") ++ arguments, logOutput = true)
+    ProgressManager.checkCanceled()
+
+    val hoogleFuture = ApplicationManager.getApplication.executeOnPooledThread(ScalaUtil.callable[Option[ProcessOutput]] {
+      StackCommandLine.run(project, Seq("exec", "--", HooglePath, s"--database=${hoogleDbPath(project)}") ++ arguments, logOutput = true)
+    })
+
+    ProgressManager.checkCanceled()
+
+    val wf = new WaitFor(5000, 1) {
+      override def condition(): Boolean = {
+        ProgressManager.checkCanceled()
+        hoogleFuture.isDone
+      }
+    }
+
+    if (wf.isConditionRealized) {
+      hoogleFuture.get()
+    } else {
+      None
+    }
   }
 
   private def hoogleDbPath(project: Project) = {

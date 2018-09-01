@@ -25,7 +25,6 @@ import com.intellij.openapi.command.WriteCommandAction
 import com.intellij.openapi.project.{Project, ProjectManager}
 import com.intellij.openapi.util.Key
 import com.intellij.psi.PsiFile
-import com.intellij.psi.search.GlobalSearchScope
 import com.intellij.util.DocumentUtil
 import intellij.haskell.runconfig.console.HaskellConsoleHighlightingUtil.LambdaArrow
 import intellij.haskell.util.index.HaskellModuleNameIndex
@@ -94,7 +93,7 @@ class HaskellConsoleView(val project: Project, val configuration: HaskellConsole
   def executeCommand(commandText: String, addToHistory: Boolean = true): Unit = {
     commandText.trim() match {
       case LoadPattern(moduleName) =>
-        val psiFile = HaskellModuleNameIndex.findHaskellFileByModuleName(project, moduleName, GlobalSearchScope.projectScope(project)).toOption.flatten
+        val psiFile = HaskellModuleNameIndex.findFileByModuleName(project, moduleName).toOption.flatten
         psiFile.foreach(hf => HaskellConsoleViewMap.projectFileByConfigName.put(configuration.getName, hf))
       case _ => ()
     }

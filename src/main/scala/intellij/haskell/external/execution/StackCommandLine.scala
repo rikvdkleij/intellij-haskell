@@ -71,15 +71,13 @@ object StackCommandLine {
     run(project, arguments, -1, logOutput = true, notifyBalloonError = true)
   }
 
-  def build(project: Project, buildTargets: Seq[String], logBuildResult: Boolean): Option[ProcessOutput] = {
+  def build(project: Project, buildTargets: Seq[String]): Option[ProcessOutput] = {
     val arguments = Seq("build") ++ buildTargets ++ Seq("--fast")
-    val processOutput = run(project, arguments, -1, ignoreExitCode = true, logOutput = logBuildResult)
-    if (logBuildResult) {
-      if (processOutput.isEmpty || processOutput.exists(_.getExitCode != 0)) {
-        HaskellNotificationGroup.logErrorEvent(project, s"Building `${buildTargets.mkString(", ")}` has failed, see Haskell Event log for more information")
-      } else {
-        HaskellNotificationGroup.logInfoEvent(project, s"Building `${buildTargets.mkString(", ")}` is finished successfully")
-      }
+    val processOutput = run(project, arguments, -1, notifyBalloonError = true)
+    if (processOutput.isEmpty || processOutput.exists(_.getExitCode != 0)) {
+      HaskellNotificationGroup.logErrorEvent(project, s"Building `${buildTargets.mkString(", ")}` has failed")
+    } else {
+      HaskellNotificationGroup.logInfoEvent(project, s"Building `${buildTargets.mkString(", ")}` is finished successfully")
     }
     processOutput
   }
@@ -145,6 +143,7 @@ object StackCommandLine {
     private final var whileBuildingTextIsPassed = false
 
     private val previousMessageLines = ListBuffer[String]()
+    private var globalError = false
 
     override def onTextAvailable(event: ProcessEvent, outputType: Key[_]) {
       // Workaround to remove the indentation after `-- While building` so the error/warning lines can be properly  parsed.
@@ -169,12 +168,20 @@ object StackCommandLine {
     private def addToMessageView(text: String, outputType: Key[_]) {
       if (text.trim.nonEmpty) {
         if (outputType == ProcessOutputTypes.STDERR) {
+          if (text.startsWith("Error:") && text.trim.endsWith(":")) {
+            globalError = true // To get also all lines after this line indicated as error AND in order
+          }
+
+          // End of sentence which was over multiple lines
           if (previousMessageLines.nonEmpty && !text.startsWith("  ")) {
             addMessage()
           }
+
           previousMessageLines.append(text)
         } else if (text.startsWith("Warning:")) {
           compileContext.addMessage(CompilerMessageCategory.WARNING, text, null, -1, -1)
+        } else if (text.startsWith("Error:")) {
+          compileContext.addMessage(CompilerMessageCategory.ERROR, text, null, -1, -1)
         } else {
           compileContext.addMessage(CompilerMessageCategory.INFORMATION, text, null, -1, -1)
         }
@@ -191,7 +198,7 @@ object StackCommandLine {
           compileContext.addMessage(CompilerMessageCategory.ERROR, message, HaskellFileUtil.getUrlByPath(filePath), lineNr, columnNr)
         case _ =>
           val compilerMessageCategory =
-            if (errorMessageLine.contains("ExitFailure")) {
+            if (globalError || errorMessageLine.contains("ExitFailure") || errorMessageLine.startsWith("Error:")) {
               CompilerMessageCategory.ERROR
             } else if (errorMessageLine.startsWith("Warning:")) {
               CompilerMessageCategory.WARNING

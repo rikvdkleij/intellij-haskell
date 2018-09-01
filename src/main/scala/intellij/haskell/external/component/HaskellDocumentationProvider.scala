@@ -17,6 +17,7 @@
 package intellij.haskell.external.component
 
 import com.intellij.lang.documentation.AbstractDocumentationProvider
+import com.intellij.openapi.progress.ProgressManager
 import com.intellij.psi.{PsiElement, PsiFile}
 import intellij.haskell.psi.HaskellPsiUtil
 import intellij.haskell.psi.impl.HaskellPsiImplUtil
@@ -31,10 +32,10 @@ class HaskellDocumentationProvider extends AbstractDocumentationProvider {
     if (project.exists(p => !StackProjectManager.isBuilding(p))) {
       (Option(element), Option(originalElement)) match {
         case (Some(e), Some(oe)) =>
-          val psiFile = Option(e.getContainingFile)
-          val moduleName = psiFile.flatMap(HaskellPsiUtil.findModuleName)
-          val originalPsiFile = Option(oe.getContainingFile)
-          val projectFile = originalPsiFile.exists(HaskellProjectUtil.isProjectFile)
+          val psiFile = e.getContainingFile.getOriginalFile
+          val moduleName = HaskellPsiUtil.findModuleName(psiFile)
+          val originalPsiFile = e.getContainingFile.getOriginalFile
+          val projectFile = HaskellProjectUtil.isProjectFile(originalPsiFile)
           val typeSignature = if (projectFile) {
             val typeInfo = TypeInfoComponent.findTypeInfoForElement(oe).toOption.map(_.typeSignature)
             typeInfo.map(StringUtil.escapeString)
@@ -58,6 +59,8 @@ class HaskellDocumentationProvider extends AbstractDocumentationProvider {
   private final val Separator = HtmlElement.Break + HtmlElement.Break + HtmlElement.HorizontalLine + HtmlElement.Break
 
   override def generateDoc(element: PsiElement, originalElement: PsiElement): String = {
+    ProgressManager.checkCanceled()
+
     val project = Option(element).map(_.getProject)
     if (project.exists(p => !StackProjectManager.isBuilding(p))) {
       (Option(element), Option(originalElement)) match {
@@ -66,7 +69,7 @@ class HaskellDocumentationProvider extends AbstractDocumentationProvider {
           if (e.isInstanceOf[PsiFile]) {
             getQuickNavigateInfo(e, oe)
           } else {
-            val definedInSameFile = Option(e.getContainingFile) == Option(oe.getContainingFile)
+            val definedInSameFile = Option(e.getContainingFile).map(_.getOriginalFile) == Option(oe.getContainingFile).map(_.getOriginalFile)
             if (definedInSameFile) {
               getQuickNavigateInfo(e, oe)
             } else {
@@ -86,6 +89,7 @@ class HaskellDocumentationProvider extends AbstractDocumentationProvider {
                     }
                   }
 
+                  ProgressManager.checkCanceled()
                   val documentationText = HoogleComponent.findDocumentation(project, qone).getOrElse("No documentation found")
                   (documentationText + Separator + getQuickNavigateInfo(e, oe) + presentationText.map(t => Separator + t).getOrElse("")) + Separator
                 case _ => getQuickNavigateInfo(e, oe)

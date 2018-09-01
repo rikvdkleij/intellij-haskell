@@ -139,19 +139,12 @@ object HaskellFileUtil {
   def convertToHaskellFileInReadAction(project: Project, virtualFile: VirtualFile, timeout: FiniteDuration = RunInReadActionTimeout): Either[NoInfo, Option[PsiFile]] = {
     val psiManager = PsiManager.getInstance(project)
 
-    if (ApplicationManager.getApplication.isDispatchThread) {
-      findCachedPsiFile(psiManager, virtualFile) match {
-        case pf@Some(_) => Right(pf)
-        case None => Right(findPsiFile(psiManager, virtualFile))
-      }
-    } else {
-      val actionMessage = s"Converting ${virtualFile.getName} to psi file"
-      ApplicationUtil.runInReadActionWithWriteActionPriority(project, findCachedPsiFile(psiManager, virtualFile), readActionDescription = actionMessage, timeout) match {
-        case r@Right(pf) if pf.isDefined => r
-        case _ => ApplicationUtil.runInReadActionWithWriteActionPriority(project, findPsiFile(psiManager, virtualFile), readActionDescription = actionMessage, timeout) match {
-          case r@Right(_) => r
-          case l@Left(_) => l
-        }
+    val actionMessage = s"Converting ${virtualFile.getName} to psi file"
+    ApplicationUtil.runInReadActionWithWriteActionPriority(project, findCachedPsiFile(psiManager, virtualFile), readActionDescription = actionMessage, timeout) match {
+      case r@Right(pf) if pf.isDefined => r
+      case _ => ApplicationUtil.runInReadActionWithWriteActionPriority(project, findPsiFile(psiManager, virtualFile), readActionDescription = actionMessage, timeout) match {
+        case r@Right(_) => r
+        case l@Left(_) => l
       }
     }
   }

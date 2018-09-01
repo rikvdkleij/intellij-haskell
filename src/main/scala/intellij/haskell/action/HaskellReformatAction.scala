@@ -16,30 +16,42 @@
 
 package intellij.haskell.action
 
-import com.intellij.openapi.actionSystem.{AnAction, AnActionEvent, Presentation}
+import com.intellij.codeInsight.actions.ReformatCodeAction
+import com.intellij.openapi.actionSystem.{AnActionEvent, Presentation}
 import com.intellij.openapi.project.Project
 import com.intellij.psi.PsiFile
 import intellij.haskell.external.component.StackProjectManager
-import intellij.haskell.util.HaskellEditorUtil
+import intellij.haskell.util.{HaskellEditorUtil, HaskellFileUtil}
 
-class HaskellReformatAction extends AnAction {
+class HaskellReformatAction extends ReformatCodeAction {
 
-  val presentation: Presentation = getTemplatePresentation
+  private val presentation: Presentation = getTemplatePresentation
   presentation.setText("Reformat Code")
 
   override def update(actionEvent: AnActionEvent) {
-    HaskellEditorUtil.enableExternalAction(actionEvent, (project: Project) => StackProjectManager.isStylishHaskellAvailable(project) && StackProjectManager.isHindentAvailable(project))
+    ActionUtil.findActionContext(actionEvent).foreach(actionContext => {
+      val psiFile = actionContext.psiFile
+      if (HaskellFileUtil.isHaskellFile(psiFile)) {
+        HaskellEditorUtil.enableExternalAction(actionEvent, (project: Project) => StackProjectManager.isStylishHaskellAvailable(project) && StackProjectManager.isHindentAvailable(project))
+      } else {
+        super.update(actionEvent)
+      }
+    })
   }
 
   override def actionPerformed(actionEvent: AnActionEvent): Unit = {
     ActionUtil.findActionContext(actionEvent).foreach(actionContext => {
       val psiFile = actionContext.psiFile
-      val selectionModel = actionContext.selectionModel
-      selectionModel match {
-        case Some(_) =>
-          HindentReformatAction.format(psiFile, selectionModel.map(m =>
-            HindentReformatAction.translateSelectionModelToSelectionContext(m)))
-        case None => HaskellReformatAction.reformatFile(psiFile)
+      if (HaskellFileUtil.isHaskellFile(psiFile)) {
+        val selectionModel = actionContext.selectionModel
+        selectionModel match {
+          case Some(_) =>
+            HindentReformatAction.format(psiFile, selectionModel.map(m =>
+              HindentReformatAction.translateSelectionModelToSelectionContext(m)))
+          case None => HaskellReformatAction.reformatFile(psiFile)
+        }
+      } else {
+        super.actionPerformed(actionEvent)
       }
     })
   }

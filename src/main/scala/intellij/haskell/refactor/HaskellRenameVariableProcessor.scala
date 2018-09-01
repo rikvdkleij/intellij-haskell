@@ -16,6 +16,8 @@
 
 package intellij.haskell.refactor
 
+import java.util
+
 import com.intellij.psi.{PsiElement, PsiFile}
 import com.intellij.refactoring.listeners.RefactoringElementListener
 import com.intellij.refactoring.rename.RenamePsiElementProcessor
@@ -25,16 +27,26 @@ import intellij.haskell.util.{HaskellFileUtil, HaskellProjectUtil, ScalaUtil}
 
 class HaskellRenameVariableProcessor extends RenamePsiElementProcessor {
 
+  // Target element is element of the definition
+  // Invalidate cache is necessary because during (inline) renaming the id of psi element is changed
+  override def prepareRenaming(targetElement: PsiElement, newName: String, allRenames: util.Map[PsiElement, String]): Unit = {
+    val targetFile = targetElement.getContainingFile.getOriginalFile
+    val usageElements = HaskellComponentsManager.findReferencesInCache(targetFile).filterNot(_._1 == targetFile).map(_._2)
+    if (usageElements.nonEmpty) {
+      HaskellComponentsManager.invalidateDefinitionLocationCache(usageElements)
+    }
+  }
+
   override def canProcessElement(psiElement: PsiElement): Boolean = {
     if (HaskellComponentsManager.isReplBusy(psiElement.getProject)) {
-      HaskellNotificationGroup.logInfoEvent(psiElement.getProject, "Renaming is not available while a REPL is busy")
+      HaskellNotificationGroup.logInfoEvent(psiElement.getProject, "Renaming is not available while REPL is busy")
       false
     } else {
       val project = psiElement.getProject
       Option(psiElement.getContainingFile).exists { psiFile =>
         HaskellProjectUtil.isHaskellProject(project) &&
           (psiElement match {
-            case psiFile: PsiFile => HaskellProjectUtil.isProjectFile(psiFile)
+            case pf: PsiFile => HaskellProjectUtil.isProjectFile(pf)
             case _ =>
               Option(psiElement.getReference).map(_.getElement) match {
                 case Some(e: PsiElement) => HaskellProjectUtil.isProjectFile(psiFile)

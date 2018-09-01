@@ -58,10 +58,8 @@ class HLintInspectionTool extends LocalInspectionTool {
     }
 
     val result = if (wf.isConditionRealized) {
-      HaskellNotificationGroup.logInfoEvent(psiFile.getProject, s"Running Hlint is finished for file ${psiFile.getName}")
       hlintCheckFuture.get()
     } else {
-      HaskellNotificationGroup.logErrorEvent(psiFile.getProject, s"Timeout while running HLint for file ${psiFile.getName}")
       Seq()
     }
 

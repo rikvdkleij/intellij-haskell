@@ -106,23 +106,33 @@ private[component] object BrowseModuleComponent {
 
     key.psiFile match {
       case Some(psiFile) if !key.exported =>
-        if (LoadComponent.isBusy(psiFile)) {
-          Left(ReplIsBusy)
-        } else if (LoadComponent.isFileLoaded(psiFile)) {
-          StackReplsManager.getProjectRepl(psiFile).flatMap(_.getLocalModuleIdentifiers(moduleName, psiFile)).map { output =>
-            Right(output.stdoutLines.takeWhile(l => !l.startsWith("-- imported via")).flatMap(l => findModuleIdentifiers(project, l, moduleName)))
-          }.getOrElse(Left(ReplNotAvailable))
+        if (LoadComponent.isFileLoaded(psiFile)) {
+          StackReplsManager.getProjectRepl(psiFile) match {
+            case Some(repl) =>
+              if (repl.isBusy) {
+                Left(ReplIsBusy)
+              } else {
+                repl.getLocalModuleIdentifiers(moduleName, psiFile) match {
+                  case Some(output) if output.stderrLines.isEmpty => Right(output.stdoutLines.takeWhile(l => !l.startsWith("-- imported via")).flatMap(l => findModuleIdentifiers(project, l, moduleName)))
+                  case _ => Left(ReplNotAvailable)
+                }
+              }
+            case _ => Left(ReplNotAvailable)
+          }
         } else {
           Left(ModuleNotLoaded(key.moduleName))
         }
       case Some(psiFile) if key.exported =>
-        val output = StackReplsManager.getProjectRepl(psiFile).flatMap(_.getModuleIdentifiers(moduleName, psiFile))
-        output match {
-          case Some(o) if o.stderrLines.isEmpty => output.map(_.stdoutLines.flatMap(l => findModuleIdentifiers(project, l, moduleName))) match {
-            case Some(ids) => Right(ids)
-            case None => Left(NoInfoAvailable(key.moduleName, key.psiFile.map(_.getName).getOrElse("-")))
-          }
-          case _ => Left(ReplNotAvailable)
+        StackReplsManager.getProjectRepl(psiFile) match {
+          case Some(repl) =>
+            repl.getModuleIdentifiers(moduleName, psiFile) match {
+              case Some(output) if output.stderrLines.isEmpty => repl.getModuleIdentifiers(moduleName, psiFile).map(_.stdoutLines.flatMap(l => findModuleIdentifiers(project, l, moduleName))) match {
+                case Some(ids) => Right(ids)
+                case None => Left(NoInfoAvailable(key.moduleName, key.psiFile.map(_.getName).getOrElse("-")))
+              }
+              case _ => Left(ReplNotAvailable)
+            }
+          case None => Left(ReplIsBusy)
         }
       case None => findLibModuleIdentifiers(project, moduleName)
     }

@@ -297,7 +297,7 @@ abstract class StackRepl(project: Project, componentInfo: Option[StackComponentI
               val error = stderrQueue.asScala.headOption.map(_.replace("<command line>:", "").trim).getOrElse("a dependency failed to build")
               val message = s"Stack REPL could not be started for target `$target` because $error"
               logInfo(message)
-              HaskellEditorUtil.showStatusBarBalloonMessage(project, message)
+              HaskellNotificationGroup.logWarningBalloonEvent(project, message)
             } else {
               logError(s"Stack REPL could not be started within $DefaultTimeout")
               writeOutputToLog()

@@ -17,7 +17,6 @@
 package intellij.haskell.editor
 
 import java.util
-import java.util.concurrent.TimeUnit
 
 import com.intellij.codeInsight.completion._
 import com.intellij.codeInsight.lookup.LookupElementBuilder
@@ -28,9 +27,9 @@ import com.intellij.patterns.PlatformPatterns
 import com.intellij.psi.impl.source.tree.TreeUtil
 import com.intellij.psi.util.PsiTreeUtil
 import com.intellij.psi.{PsiElement, PsiFile, TokenType}
-import com.intellij.util.ProcessingContext
+import com.intellij.util.{ProcessingContext, WaitFor}
 import intellij.haskell.external.component.HaskellComponentsManager.StackComponentInfo
-import intellij.haskell.external.component.{HaskellComponentsManager, ModuleIdentifier, StackComponentGlobalInfo, StackProjectManager}
+import intellij.haskell.external.component._
 import intellij.haskell.psi.HaskellElementCondition._
 import intellij.haskell.psi.HaskellPsiUtil._
 import intellij.haskell.psi.HaskellTypes._
@@ -41,7 +40,7 @@ import intellij.haskell.{HaskellFile, HaskellIcons, HaskellNotificationGroup, Ha
 
 import scala.collection.JavaConverters._
 import scala.concurrent._
-import scala.concurrent.duration.Duration
+import scala.concurrent.duration._
 
 class HaskellCompletionContributor extends CompletionContributor {
 
@@ -79,7 +78,7 @@ class HaskellCompletionContributor extends CompletionContributor {
 
   def findQualifiedNamedElementToComplete(element: PsiElement): Option[HaskellQualifiedNameElement] = {
     val elementType = Option(element.getNode.getElementType)
-    val psiFile = element.getContainingFile
+    val psiFile = element.getContainingFile.getOriginalFile
     (for {
       et <- elementType
       if et == HS_DOT
@@ -306,11 +305,20 @@ class HaskellCompletionContributor extends CompletionContributor {
     HaskellPsiUtil.findImportDeclarationParent(element).flatMap(_.getModuleName) match {
       case Some(moduleName) =>
         val ids = HaskellComponentsManager.findExportedModuleIdentifiers(stackComponentGlobalInfo, psiFile, moduleName).map(_.map(i => createLookupElement(i, addParens = true)))
-        try {
-          Await.result(ids, Timeout)
-        } catch {
-          case _: TimeoutException => Iterable()
+
+        val wf = new WaitFor(5000, 1) {
+          override def condition(): Boolean = {
+            ProgressManager.checkCanceled()
+            ids.isCompleted
+          }
         }
+
+        if (wf.isConditionRealized) {
+          Await.result(ids, -1.milli)
+        } else {
+          Iterable()
+        }
+
       case None => Iterable()
     }
   }
@@ -371,8 +379,6 @@ class HaskellCompletionContributor extends CompletionContributor {
 
 object HaskellCompletionContributor {
 
-  private final val Timeout = Duration.create(1, TimeUnit.SECONDS)
-
   import scala.concurrent.ExecutionContext.Implicits.global
 
   private def useAvailableModuleIdentifiers[A](globalInfo: StackComponentGlobalInfo, psiFile: PsiFile, moduleName: Option[String],
@@ -390,12 +396,19 @@ object HaskellCompletionContributor {
       f3 <- idsF3
       f4 <- idsF4
     } yield doIt(f1, f2, f3, f4)
-    try {
-      Await.result(f, Timeout)
-    } catch {
-      case _: TimeoutException =>
-        HaskellNotificationGroup.logInfoEvent(psiFile.getProject, s"Timeout while getting module identifiers for ${psiFile.getName}")
-        doIt(getSuccessValue(idsF1), getSuccessValue(idsF2), getSuccessValue(idsF3), getSuccessValue(idsF4))
+
+    val wf = new WaitFor(5000, 1) {
+      override def condition(): Boolean = {
+        ProgressManager.checkCanceled()
+        f.isCompleted
+      }
+    }
+
+    if (wf.isConditionRealized) {
+      Await.result(f, 1.milli)
+    } else {
+      HaskellNotificationGroup.logInfoEvent(psiFile.getProject, s"Timeout while getting module identifiers for ${psiFile.getName}")
+      doIt(getSuccessValue(idsF1), getSuccessValue(idsF2), getSuccessValue(idsF3), getSuccessValue(idsF4))
     }
   }
 

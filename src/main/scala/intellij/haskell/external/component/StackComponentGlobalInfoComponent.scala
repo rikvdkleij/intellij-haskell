@@ -42,6 +42,7 @@ private[component] object StackComponentGlobalInfoComponent {
 
   private def load(key: Key): Result = {
     if (LoadComponent.isBusy(key.stackComponentInfo.module.getProject, key.stackComponentInfo)) {
+      // TODO Check this when REPL is retrieved
       Left(ReplIsBusy)
     } else {
       createStackInfo(key)
@@ -60,6 +61,7 @@ private[component] object StackComponentGlobalInfoComponent {
     }
   }
 
+  // TODO get exposed modules of package, stack exec -- ghc-pkg describe MonadRandom
   private def findAvailableModuleNames(project: Project, componentInfo: StackComponentInfo): Either[NoInfo, Iterable[String]] = {
     StackReplsManager.getProjectRepl(project, componentInfo).flatMap(_.findAvailableLibraryModuleNames(project)) match {
       case Some(o) => Right(getModuleNames(o))

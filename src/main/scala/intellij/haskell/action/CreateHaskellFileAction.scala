@@ -86,7 +86,7 @@ class CreateHaskellFileAction extends CreateFileFromTemplateAction(CreateHaskell
         props.setProperty("NAME", nameWithmodulePrefix)
 
         val element = FileTemplateUtil.createFromTemplate(template, name, props, dir)
-        val psiFile = element.getContainingFile
+        val psiFile = element.getContainingFile.getOriginalFile
 
         try {
           val virtualFile = HaskellFileUtil.findVirtualFile(psiFile)

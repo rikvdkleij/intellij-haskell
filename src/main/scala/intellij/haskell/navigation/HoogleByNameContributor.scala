@@ -48,10 +48,15 @@ class HoogleByNameContributor extends ChooseByNameContributor {
         HaskellComponentsManager.findProjectPackageNames(project).map(_.foldLeft("")((s: String, pn: String) => s + s"+$pn")).map(_ + s" $pattern").getOrElse(pattern)
       }
 
-    val navigationItems = HoogleComponent.runHoogle(project, hooglePattern, count = 100000).getOrElse(Seq()).flatMap {
+    ProgressManager.checkCanceled()
+
+    val navigationItems = HoogleComponent.runHoogle(project, hooglePattern, count = 25).getOrElse(Seq()).flatMap {
       case ModulePattern(moduleName) =>
         ProgressManager.checkCanceled()
-        HaskellModuleNameIndex.findHaskellFilesByModuleNameInAllScope(project, moduleName)
+        HaskellModuleNameIndex.findFileByModuleName(project, moduleName) match {
+          case Right(r) => r.toSeq
+          case _ => Seq()
+        }
       case PackagePattern(packageName) =>
         ProgressManager.checkCanceled()
         Iterable(NotFoundNavigationItem(packageName))
@@ -59,17 +64,22 @@ class HoogleByNameContributor extends ChooseByNameContributor {
         ProgressManager.checkCanceled()
         DeclarationLineUtil.findName(declaration).map(nd => {
           val name = StringUtil.removeOuterParens(nd.name)
+          ProgressManager.checkCanceled()
           val result = HaskellComponentsManager.findNameInfoByModuleName(project, moduleName, name)
+          ProgressManager.checkCanceled()
           val navigationItemByNameInfo = result.toOption.flatMap(_.headOption) match {
-            case Some(lni: LibraryNameInfo) => HaskellReference.findIdentifiersByLibraryNameInfo(project, None, lni, name).toOption.flatten.
+            case Some(lni: LibraryNameInfo) => HaskellReference.findIdentifiersByLibraryNameInfo(project, lni, name).toOption.flatten.
               flatMap(HaskellPsiUtil.findDeclarationElementParent).map(d => createLibraryNavigationItem(d, moduleName))
             case Some(pni: ProjectNameInfo) =>
-              val (virtualFile, psiFile) = HaskellProjectUtil.findFile(pni.filePath, project)
-              HaskellReference.findIdentifierByLocation(project, virtualFile, psiFile.toOption.flatten, pni.lineNr, pni.columnNr, name)._2.flatMap(HaskellPsiUtil.findDeclarationElementParent)
+              HaskellProjectUtil.findFile(pni.filePath, project) match {
+                case (Some(virtualFile), Right(Some(psiFile))) => HaskellReference.findIdentifierByLocation(project, virtualFile, psiFile, pni.lineNr, pni.columnNr, name).flatMap(HaskellPsiUtil.findDeclarationElementParent)
+                case (_, _) => None
+              }
             case _ => None
           }
+          ProgressManager.checkCanceled()
           navigationItemByNameInfo.orElse {
-            val identifier = HaskellReference.findIdentifiersByModuleAndName(project, None, moduleName, name).toOption.flatten
+            val identifier = HaskellReference.findIdentifiersByModuleAndName(project, moduleName, name).toOption.flatten
             if (identifier.isEmpty) {
               NotFoundResult(moduleName, declaration)
             } else {
@@ -82,22 +92,21 @@ class HoogleByNameContributor extends ChooseByNameContributor {
         Iterable(NotFoundNavigationItem(d))
     }
 
-    var i = 0
-    navigationItems.map(item => new NavigationItem {
+    navigationItems.zipWithIndex.map({ case (item, i) => new NavigationItem {
 
       // Hack to display items in same order as given by Hoogle
       override def getName: String = {
-        i = i + 1
-        f"$i%06d" + " " + item.getName
+        f"$pattern$i%06d" + " " + item.getName
       }
 
       override def getPresentation: ItemPresentation = item.getPresentation
 
       override def navigate(b: Boolean): Unit = item.navigate(b)
 
-      override def canNavigate: Boolean = canNavigate
+      override def canNavigate: Boolean = item.canNavigate
 
-      override def canNavigateToSource: Boolean = canNavigateToSource
+      override def canNavigateToSource: Boolean = item.canNavigateToSource
+    }
     }).toArray
   }
 

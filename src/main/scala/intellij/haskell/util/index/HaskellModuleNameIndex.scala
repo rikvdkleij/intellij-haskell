@@ -51,11 +51,14 @@ object HaskellModuleNameIndex {
 
   type Result = Either[NoInfo, Option[PsiFile]]
 
+  // This should be a synchronous cache because in case of calling dispatch thread
   private final val Cache: LoadingCache[Key, Result] = Scaffeine().build((k: Key) => find(k))
 
-  private def find(key: Key): Either[NoInfo, Option[PsiFile]] = {
-    findFilesByModuleName(key.project, key.moduleName) match {
-      case Right(vfs) => vfs.headOption match {
+  import scala.concurrent.duration._
+
+  private def find(key: Key, timeout: FiniteDuration = ApplicationUtil.ScheduleInReadActionTimeout): Either[NoInfo, Option[PsiFile]] = {
+    findFile(key.project, key.moduleName, timeout) match {
+      case Right(vfs) => vfs match {
         case Some(vf) => HaskellFileUtil.convertToHaskellFileInReadAction(key.project, vf)
         case None => Right(None)
       }
@@ -63,40 +66,47 @@ object HaskellModuleNameIndex {
     }
   }
 
-  // TODO: Fix Search scope
-  def findHaskellFileByModuleName(project: Project, moduleName: String, searchScope: GlobalSearchScope): Either[NoInfo, Option[PsiFile]] = {
+  def fillCache(project: Project, moduleNames: Iterable[String]): Unit = {
+    moduleNames.foreach(mn => {
+      val key = Key(project, mn)
+      find(key, 1.seconds) match {
+        case Right(vf) => Cache.put(key, Right(vf))
+        case Left(noInfo) => Left(noInfo)
+      }
+    })
+  }
+
+  def findFileByModuleName(project: Project, moduleName: String): Either[NoInfo, Option[PsiFile]] = {
     val key = Key(project, moduleName)
     Cache.get(key) match {
       case r@Right(_) => r
       case l@Left(NoInfoAvailable(_, _)) => l
+      case l@Left(ReadActionTimeout(_)) => l
       case noInfo =>
         Cache.invalidate(key)
         noInfo
     }
   }
 
-  def findHaskellFilesByModuleNameInAllScope(project: Project, moduleName: String): Iterable[PsiFile] = {
-    HaskellFileUtil.convertToHaskellFiles(project, findFilesByModuleName(project, moduleName).getOrElse(Iterable()))
-  }
-
-  private def findFilesByModuleName(project: Project, moduleName: String): Either[NoInfo, Iterable[VirtualFile]] = {
+  private def findFile(project: Project, moduleName: String, timeout: FiniteDuration): Either[NoInfo, Option[VirtualFile]] = {
     if (moduleName == HaskellProjectUtil.Prelude) {
-      Right(Iterable())
+      Right(None)
     } else {
       val result = ApplicationUtil.scheduleInReadActionWithWriteActionPriority(
         project, {
           try {
-            Right(FileBasedIndex.getInstance.getContainingFiles(HaskellModuleNameIndex, moduleName, GlobalSearchScope.allScope(project)).asScala)
+            Right(FileBasedIndex.getInstance.getContainingFiles(HaskellModuleNameIndex, moduleName, GlobalSearchScope.allScope(project)).asScala.headOption)
           } catch {
             case _: IndexNotReadyException => Left(IndexNotReady)
           }
         },
-        s"finding file for module $moduleName by index"
+        s"finding file for module $moduleName by index",
+        timeout
       )
       for {
         r <- result
-        vfs <- r
-      } yield vfs
+        vf <- r
+      } yield vf
     }
   }
 }

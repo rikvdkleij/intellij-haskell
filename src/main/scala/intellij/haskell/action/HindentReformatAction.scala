@@ -19,8 +19,7 @@ package intellij.haskell.action
 import java.io.{BufferedReader, BufferedWriter, InputStreamReader, OutputStreamWriter}
 
 import com.intellij.application.options.CodeStyle
-import com.intellij.codeInsight.actions.ReformatCodeAction
-import com.intellij.openapi.actionSystem.AnActionEvent
+import com.intellij.openapi.actionSystem.{AnAction, AnActionEvent}
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.editor.SelectionModel
 import com.intellij.openapi.project.Project
@@ -36,25 +35,17 @@ import scala.collection.mutable.ListBuffer
 
 sealed case class SelectionContext(start: Int, end: Int, text: String)
 
-class HindentReformatAction extends ReformatCodeAction {
+class HindentReformatAction extends AnAction {
 
   override def update(actionEvent: AnActionEvent) {
-    if (HaskellProjectUtil.isHaskellProject(actionEvent.getProject)) {
-      HaskellEditorUtil.enableExternalAction(actionEvent, (project: Project) => StackProjectManager.isHindentAvailable(project))
-    } else {
-      super.update(actionEvent)
-    }
+    HaskellEditorUtil.enableExternalAction(actionEvent, (project: Project) => StackProjectManager.isHindentAvailable(project))
   }
 
   override def actionPerformed(actionEvent: AnActionEvent): Unit = {
-    if (HaskellProjectUtil.isHaskellProject(actionEvent.getProject)) {
-      ActionUtil.findActionContext(actionEvent).foreach { actionContext =>
-        val psiFile = actionContext.psiFile
-        val selectionContext = actionContext.selectionModel.map(HindentReformatAction.translateSelectionModelToSelectionContext)
-        HindentReformatAction.format(psiFile, selectionContext)
-      }
-    } else {
-      super.actionPerformed(actionEvent)
+    ActionUtil.findActionContext(actionEvent).foreach { actionContext =>
+      val psiFile = actionContext.psiFile
+      val selectionContext = actionContext.selectionModel.map(HindentReformatAction.translateSelectionModelToSelectionContext)
+      HindentReformatAction.format(psiFile, selectionContext)
     }
   }
 }

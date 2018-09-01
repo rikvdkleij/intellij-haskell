@@ -42,7 +42,7 @@ class GotoByHoogleModel(val project: Project, val contributors: Array[ChooseByNa
   }
 
   def getNotInMessage: String = {
-    IdeBundle.message("label.no.matches.found.in.project")
+    IdeBundle.message("label.no.matches.found.in.project", project.getName)
   }
 
   def getNotFoundMessage: String = {

@@ -60,7 +60,7 @@ other_pragma                ::= pragma
 general_pragma_content      ::= (CON_ID | VAR_ID | CONSYM_ID | VARSYM_ID |
                                   LEFT_PAREN | RIGHT_PAREN | FLOAT | UNDERSCORE |
                                   SEMICOLON | LEFT_BRACKET | RIGHT_BRACKET | literal | LEFT_BRACE | RIGHT_BRACE |
-                                  COMMA | QUOTE | BACKQUOTE | NEWLINE | DOUBLE_QUOTE | TILDE | DOT | DOT_DOT | VERTICAL_BAR |
+                                  COMMA | QUOTE | BACKQUOTE | NEWLINE | DOUBLE_QUOTE | TILDE | DOT | dot_dot | VERTICAL_BAR |
                                   EQUAL | DOUBLE_RIGHT_ARROW | COLON_COLON | RIGHT_ARROW | LEFT_ARROW | BACKSLASH | TYPE |
                                   INSTANCE | MODULE | WHERE | DO | LET | IN | CASE | OF | IF | THEN | ELSE | DIRECTIVE)+
 
@@ -240,7 +240,7 @@ export                      ::= export3 | export2 | export4
 private export3             ::= (q_con | cname) onl LEFT_PAREN (onl cname_dot_dot (onl COMMA onl cname_dot_dot)*)? onl RIGHT_PAREN
 private export2             ::= TYPE? onl cname+
 private export4             ::= MODULE modid
-cname_dot_dot               ::= cname | DOT_DOT
+cname_dot_dot               ::= cname | dot_dot
 
 newconstr                   ::= newconstr_fielddecl | q_name atype
 newconstr_fielddecl         ::= q_name onls LEFT_BRACE? onls type_signature onls RIGHT_BRACE?
@@ -270,6 +270,7 @@ private general_id          ::= QUASIQUOTE | symbol_reserved_op | reserved_id | 
                                   COMMA | QUOTE | BACKQUOTE | fixity |
                                   inlinelike_pragma | NEWLINE DIRECTIVE | scc_pragma
 
-private symbol_reserved_op  ::= DOT_DOT | COLON_COLON | EQUAL | BACKSLASH | VERTICAL_BAR | LEFT_ARROW | RIGHT_ARROW | AT | TILDE | DOUBLE_RIGHT_ARROW
+dot_dot                     ::= DOT DOT
+private symbol_reserved_op  ::= dot_dot | COLON_COLON | EQUAL | BACKSLASH | VERTICAL_BAR | LEFT_ARROW | RIGHT_ARROW | AT | TILDE | DOUBLE_RIGHT_ARROW
 
 reserved_id                 ::= CASE | CLASS | DATA | DEFAULT | DERIVING | DO | ELSE | IF | IMPORT | IN | INSTANCE | LET | MODULE | NEWTYPE | OF | THEN | TYPE | WHERE | UNDERSCORE

@@ -48,17 +48,20 @@ private[component] object NameInfoComponent {
     val name = key.name
     val isProjectFile = HaskellProjectUtil.isProjectFile(psiFile)
     if (isProjectFile) {
-      if (LoadComponent.isBusy(psiFile)) {
-        Left(ReplIsBusy)
-      } else {
-        if (LoadComponent.isFileLoaded(psiFile)) {
-          StackReplsManager.getProjectRepl(psiFile).flatMap(_.findInfo(psiFile, name)) match {
-            case None => Left(ReplNotAvailable)
-            case Some(o) => Right(createNameInfos(project, o))
+      if (LoadComponent.isFileLoaded(psiFile)) {
+        StackReplsManager.getProjectRepl(psiFile) match {
+          case Some(repl) => if (repl.isBusy) {
+            Left(ReplIsBusy)
+          } else {
+            repl.findInfo(psiFile, name) match {
+              case None => Left(ReplNotAvailable)
+              case Some(output) => Right(createNameInfos(project, output))
+            }
           }
-        } else {
-          Left(NoInfoAvailable(key.name, psiFile.getName))
+          case None => Left(ReplNotAvailable)
         }
+      } else {
+        Left(ModuleNotLoaded(psiFile.getName))
       }
     } else {
       HaskellPsiUtil.findModuleName(psiFile) match {
@@ -66,7 +69,7 @@ private[component] object NameInfoComponent {
         case Some(mn) =>
           StackReplsManager.getGlobalRepl(project).flatMap(_.findInfo(mn, name)) match {
             case None => Left(ReplNotAvailable)
-            case Some(o) => createNameInfos(project, o) match {
+            case Some(output) => createNameInfos(project, output) match {
               case infos if infos.nonEmpty => Right(infos)
               case _ => Left(NoInfoAvailable(key.name, psiFile.getName))
             }
@@ -76,22 +79,21 @@ private[component] object NameInfoComponent {
   }
 
   def findNameInfo(qualifiedNameElement: HaskellQualifiedNameElement): Option[NameInfoResult] = {
-    Option(qualifiedNameElement.getContainingFile).map(_.getOriginalFile).map(pf =>
-      Key(pf, qualifiedNameElement.getName.replaceAll("""\s+""", ""))).map(key => {
-      Cache.getIfPresent(key) match {
-        case Some(r) => r
-        case None =>
-          val result = Cache.get(key)
-          result match {
-            case Right(_) => result
-            case Left(NoInfoAvailable(_, _)) =>
-              result
-            case Left(ReplNotAvailable) | Left(ReplIsBusy) | Left(IndexNotReady) | Left(ModuleNotLoaded(_)) | Left(ReadActionTimeout(_)) =>
-              Cache.invalidate(key)
-              result
-          }
-      }
-    })
+    val psiFile = qualifiedNameElement.getContainingFile.getOriginalFile
+    val key = Key(psiFile, qualifiedNameElement.getName.replaceAll("""\s+""", ""))
+    Cache.getIfPresent(key) match {
+      case Some(r) => Some(r)
+      case None =>
+        val result = Cache.get(key)
+        result match {
+          case Right(_) => Some(result)
+          case Left(NoInfoAvailable(_, _)) =>
+            None
+          case Left(ReplNotAvailable) | Left(ReplIsBusy) | Left(IndexNotReady) | Left(ModuleNotLoaded(_)) | Left(ReadActionTimeout(_)) =>
+            Cache.invalidate(key)
+            None
+        }
+    }
   }
 
   def invalidate(psiFile: PsiFile): Unit = {

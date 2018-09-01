@@ -202,7 +202,7 @@ object HaskellPsiUtil {
   }
 
   def getSelectionStartEnd(psiElement: PsiElement, editor: Editor): Option[(PsiElement, PsiElement)] = {
-    val psiFile = psiElement.getContainingFile
+    val psiFile = psiElement.getContainingFile.getOriginalFile
     if (Option(editor.getSelectionModel.getSelectedText).isDefined) {
       for {
         start <- Option(psiFile.findElementAt(editor.getSelectionModel.getSelectionStart))

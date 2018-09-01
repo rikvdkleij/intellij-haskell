@@ -95,24 +95,26 @@ class HaskellAnnotator extends ExternalAnnotator[(PsiFile, Option[PsiElement]), 
     val haskellProblemsView = ProblemsView.SERVICE.getInstance(psiFile.getProject).asInstanceOf[HaskellProblemsView]
     val project = psiFile.getProject
 
-    HaskellFileUtil.findVirtualFile(psiFile).foreach { currentFile =>
-      ApplicationManager.getApplication.invokeLater { () =>
-        if (!project.isDisposed) {
+    val currentFile = HaskellFileUtil.findVirtualFile(psiFile)
+    val currentFileMessages = currentFile.map { cf =>
+      loadResult.currentFileProblems.map(p => createCompilerMessage(cf, project, p))
+    }
+
+    val otherFileMessages = loadResult.otherFileProblems.flatMap { problem =>
+      HaskellProjectUtil.findVirtualFile(problem.filePath, project).map { file =>
+        createCompilerMessage(file, project, problem)
+      }
+    }
+
+    ApplicationManager.getApplication.invokeLater { () =>
+      if (!project.isDisposed) {
+        currentFile.foreach(cf => {
           haskellProblemsView.clearProgress()
-          haskellProblemsView.clearOldMessages(currentFile)
+          haskellProblemsView.clearOldMessages(cf)
+        })
 
-          for (problem <- loadResult.currentFileProblems) {
-            val message = createCompilerMessage(currentFile, project, problem)
-            haskellProblemsView.addMessage(message)
-          }
-
-          for (problem <- loadResult.otherFileProblems) {
-            HaskellProjectUtil.findVirtualFile(problem.filePath, project).foreach { file =>
-              val message = createCompilerMessage(file, project, problem)
-              haskellProblemsView.addMessage(message)
-            }
-          }
-        }
+        currentFileMessages.foreach(_.foreach(haskellProblemsView.addMessage))
+        otherFileMessages.foreach(haskellProblemsView.addMessage)
       }
     }
 

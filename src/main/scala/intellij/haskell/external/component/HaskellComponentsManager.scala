@@ -18,6 +18,7 @@ package intellij.haskell.external.component
 
 import java.util.concurrent.Executors
 
+import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.editor.SelectionModel
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.project.{DumbService, Project}
@@ -31,7 +32,7 @@ import intellij.haskell.external.execution.CompilationResult
 import intellij.haskell.external.repl.StackRepl.StanzaType
 import intellij.haskell.external.repl.StackReplsManager
 import intellij.haskell.psi.{HaskellPsiUtil, HaskellQualifiedNameElement}
-import intellij.haskell.util.index.HaskellFileIndex
+import intellij.haskell.util.index.{HaskellFileIndex, HaskellModuleNameIndex}
 import intellij.haskell.util.{HaskellProjectUtil, ScalaUtil}
 
 import scala.concurrent._
@@ -79,8 +80,8 @@ object HaskellComponentsManager {
     BrowseModuleComponent.findTopLevelIdentifiers(psiFile, moduleName)
   }
 
-  def findDefinitionLocation(psiFile: PsiFile, qualifiedNameElement: HaskellQualifiedNameElement, isCurrentFile: Boolean = false): DefinitionLocationResult = {
-    DefinitionLocationComponent.findDefinitionLocation(psiFile, qualifiedNameElement, isCurrentFile)
+  def findDefinitionLocation(psiFile: PsiFile, qualifiedNameElement: HaskellQualifiedNameElement): DefinitionLocationResult = {
+    DefinitionLocationComponent.findDefinitionLocation(psiFile, qualifiedNameElement)
   }
 
   def findNameInfo(qualifiedNameElement: HaskellQualifiedNameElement): Option[NameInfoResult] = {
@@ -137,6 +138,14 @@ object HaskellComponentsManager {
 
   def invalidateHaskellFileInfoCache(psiFile: PsiFile): Unit = {
     HaskellProjectFileInfoComponent.invalidate(psiFile)
+  }
+
+  def invalidateDefinitionLocationCache(elements: Seq[HaskellQualifiedNameElement]): Unit = {
+    DefinitionLocationComponent.invalidate(elements)
+  }
+
+  def findReferencesInCache(targetFile: PsiFile) = {
+    DefinitionLocationComponent.findReferencesInCache(targetFile)
   }
 
   def invalidateCachesForFile(psiFile: PsiFile): Unit = {
@@ -202,6 +211,10 @@ object HaskellComponentsManager {
               stackComponentInfo <- HaskellComponentsManager.findStackComponentInfo(f)
               globalProjectInfo <- HaskellComponentsManager.findStackComponentGlobalInfo(stackComponentInfo) // It can happen that REPL is busy and there is no globalProjectInfo available
             } yield globalProjectInfo.availableLibraryModuleNames
+
+            ApplicationManager.getApplication.executeOnPooledThread(ScalaUtil.runnable {
+              HaskellModuleNameIndex.fillCache(project, libraryModuleNames.getOrElse(Iterable()))
+            })
 
             libraryModuleNames match {
               case Some(moduleNames) =>

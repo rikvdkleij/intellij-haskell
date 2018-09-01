@@ -139,7 +139,7 @@ case class LibraryCabalStanza(sectionRootElement: PsiElement, packageName: Strin
 
   lazy val sourceDirs: Array[String] = findSourceDirsOrElseModuleDir
 
-  val exposedModuleNames = findExposedModuleNames
+  val exposedModuleNames: Array[String] = findExposedModuleNames
 
   private def findExposedModuleNames: Array[String] = {
     HaskellPsiUtil.getChildOfType(sectionRootElement, classOf[ExposedModules]).map(_.getModuleNames).getOrElse(Array())

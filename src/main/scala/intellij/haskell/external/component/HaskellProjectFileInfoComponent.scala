@@ -32,12 +32,20 @@ private[component] object HaskellProjectFileInfoComponent {
 
   private case class Key(project: Project, filePath: String)
 
-  private final val Cache: LoadingCache[Key, Option[HaskellProjectFileInfo]] = Scaffeine().build((k: Key) => createFileInfo(k))
+  private final val Cache: LoadingCache[Key, Option[InternalHaskellProjectFileInfo]] = Scaffeine().build((k: Key) => createFileInfo(k))
 
   def findHaskellProjectFileInfo(project: Project, filePath: String): Option[HaskellProjectFileInfo] = {
     val key = Key(project, filePath)
     Cache.get(key) match {
-      case result@Some(_) => result
+      case Some(internalInfo) =>
+        internalInfo.message match {
+          case Some(m) => HaskellNotificationGroup.logWarningBalloonEvent(project, m)
+          case None => None
+        }
+        internalInfo.stackComponentInfo match {
+          case Some(info) => Some(HaskellProjectFileInfo(info))
+          case _ => None
+        }
       case _ =>
         Cache.invalidate(key)
         None
@@ -52,13 +60,8 @@ private[component] object HaskellProjectFileInfoComponent {
         val stackComponentInfos = StackReplsManager.getReplsManager(project).map(_.stackComponentInfos)
         stackComponentInfos.flatMap(_.find(_.target == consoleInfo.stackTarget)).map(HaskellProjectFileInfo)
       case None =>
-        val key = HaskellFileUtil.getAbsolutePath(psiFile).map(fp => Key(psiFile.getProject, fp))
-        key.flatMap(k => Cache.get(k) match {
-          case result@Some(_) => result
-          case _ =>
-            Cache.invalidate(k)
-            None
-        })
+        val filePath = HaskellFileUtil.getAbsolutePath(psiFile)
+        filePath.flatMap(k => findHaskellProjectFileInfo(project, k))
     }
   }
 
@@ -71,39 +74,46 @@ private[component] object HaskellProjectFileInfoComponent {
     HaskellFileUtil.getAbsolutePath(psiFile).foreach(fp => Cache.invalidate(Key(psiFile.getProject, fp)))
   }
 
-  private def createFileInfo(key: Key): Option[HaskellProjectFileInfo] = {
+  private def createFileInfo(key: Key): Option[InternalHaskellProjectFileInfo] = {
     val project = key.project
     val filePath = key.filePath
 
-    StackReplsManager.getReplsManager(project).map(_.stackComponentInfos).flatMap(stackComponentInfos => {
-      getStackComponentInfo(project, filePath, stackComponentInfos).map(buildInfo => HaskellProjectFileInfo(buildInfo))
+    StackReplsManager.getReplsManager(project).map(_.stackComponentInfos).map(stackComponentInfos => {
+      val info = getStackComponentInfo(project, filePath, stackComponentInfos)
+      InternalHaskellProjectFileInfo(info._1, info._2)
     })
   }
 
-  private def getStackComponentInfo(project: Project, filePath: String, stackTargetBuildInfos: Iterable[StackComponentInfo]): Option[StackComponentInfo] = {
+  // Messages are not displayed directly here because it can cause deadlock
+  // For some reason a notify can trigger ProjectLibraryFileWatcher which also asks for HaskellProjectFileInfo
+  private def getStackComponentInfo(project: Project, filePath: String, stackTargetBuildInfos: Iterable[StackComponentInfo]): (Option[StackComponentInfo], Option[String]) = {
     stackTargetBuildInfos.find(_.mainIs.exists(filePath.contains)) match {
-      case info@Some(_) => info
+      case info@Some(_) => (info, None)
       case None =>
         val sourceDirsByInfo = stackTargetBuildInfos.map(info => (info, info.sourceDirs.filter(sd => FileUtil.isAncestor(sd, filePath, true)))).filterNot({ case (_, sd) => sd.isEmpty })
-        val stackComponentInfo = if (sourceDirsByInfo.size > 1) {
+        val (stackComponentInfo, message) = if (sourceDirsByInfo.size > 1) {
           val sourceDirByInfo = sourceDirsByInfo.map({ case (info, sds) => (info, sds.maxBy(sd => Paths.get(sd).getNameCount)) })
           val mostSpecificSourceDirByInfo = ScalaUtil.maxsBy(sourceDirByInfo)({ case (_, sd) => Paths.get(sd).getNameCount })
-          if (mostSpecificSourceDirByInfo.size > 1) {
-            HaskellNotificationGroup.logWarningBalloonEvent(project, s"Ambiguous Stack target for file `$filePath`. It can belong to the source dir of more than one Stack target/Cabal stanza. The first one of `${mostSpecificSourceDirByInfo.map(_._1.target)}` is chosen.")
+          val message = if (mostSpecificSourceDirByInfo.size > 1) {
+            Some(s"Ambiguous Stack target for file `$filePath`. It can belong to the source dir of more than one Stack target/Cabal stanza. The first one of `${mostSpecificSourceDirByInfo.map(_._1.target)}` is chosen.")
+          } else {
+            None
           }
-          mostSpecificSourceDirByInfo.headOption.map(_._1)
+          (mostSpecificSourceDirByInfo.headOption.map(_._1), message)
         } else {
-          sourceDirsByInfo.headOption.map(_._1)
+          (sourceDirsByInfo.headOption.map(_._1), None)
         }
         stackComponentInfo match {
-          case info@Some(_) => info
+          case info@Some(_) => (info, message)
           case None =>
-            HaskellNotificationGroup.logErrorBalloonEvent(project, s"Could not determine Stack target for file `$filePath` because no accompanying `hs-source-dirs` or `main-is` can be found in Cabal file(s)")
-            None
+            val message = Some(s"Could not determine Stack target for file `$filePath` because no accompanying `hs-source-dirs` or `main-is` can be found in Cabal file(s)")
+            (None, message)
         }
     }
   }
 }
+
+case class InternalHaskellProjectFileInfo(stackComponentInfo: Option[StackComponentInfo], message: Option[String])
 
 case class HaskellProjectFileInfo(stackComponentInfo: StackComponentInfo)
 
