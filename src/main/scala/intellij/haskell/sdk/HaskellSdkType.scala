@@ -25,6 +25,7 @@ import com.intellij.openapi.projectRoots.impl.SdkConfigurationUtil
 import com.intellij.openapi.roots.OrderRootType
 import com.intellij.openapi.util.SystemInfo
 import com.intellij.openapi.vfs.VirtualFile
+import com.intellij.util.text.VersionComparatorUtil
 import intellij.haskell.external.execution.CommandLine
 import intellij.haskell.util.{HaskellFileUtil, HaskellProjectUtil}
 import intellij.haskell.{HaskellIcons, HaskellNotificationGroup}
@@ -84,11 +85,7 @@ class HaskellSdkType extends SdkType("Haskell Tool Stack SDK") {
               throw new Exception(message)
             }
           }
-          val version = HaskellSdkType.getNumericVersion(selectedPath)
-          if (version.isEmpty || version.exists(_ < "1.7.0")) {
-            val message = "Stack version should be > 1.7.0"
-            throw new Exception(message)
-          }
+          HaskellStackVersionValidator.validate(HaskellSdkType.getNumericVersion(selectedPath))
         }
       }
     }
