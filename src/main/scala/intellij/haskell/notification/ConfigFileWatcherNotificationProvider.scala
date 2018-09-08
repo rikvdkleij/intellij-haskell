@@ -62,7 +62,7 @@ private class ConfigFileWatcher(project: Project, notifications: EditorNotificat
   override def before(events: util.List[_ <: VFileEvent]): Unit = {}
 
   override def after(events: util.List[_ <: VFileEvent]): Unit = {
-    if (!StackProjectManager.isBuilding(project)) {
+    if (!StackProjectManager.isInitializing(project)) {
       val readTask = new ReadTask {
 
         override def runBackgroundProcess(indicator: ProgressIndicator): Continuation = {

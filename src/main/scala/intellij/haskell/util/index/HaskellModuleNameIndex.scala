@@ -54,10 +54,8 @@ object HaskellModuleNameIndex {
   // This should be a synchronous cache because in case of calling dispatch thread
   private final val Cache: LoadingCache[Key, Result] = Scaffeine().build((k: Key) => find(k))
 
-  import scala.concurrent.duration._
-
-  private def find(key: Key, timeout: FiniteDuration = ApplicationUtil.ScheduleInReadActionTimeout): Either[NoInfo, Option[PsiFile]] = {
-    findFile(key.project, key.moduleName, timeout) match {
+  private def find(key: Key): Either[NoInfo, Option[PsiFile]] = {
+    findFile(key.project, key.moduleName) match {
       case Right(vfs) => vfs match {
         case Some(vf) => HaskellFileUtil.convertToHaskellFileInReadAction(key.project, vf)
         case None => Right(None)
@@ -69,7 +67,7 @@ object HaskellModuleNameIndex {
   def fillCache(project: Project, moduleNames: Iterable[String]): Unit = {
     moduleNames.foreach(mn => {
       val key = Key(project, mn)
-      find(key, 1.seconds) match {
+      find(key) match {
         case Right(vf) => Cache.put(key, Right(vf))
         case Left(noInfo) => Left(noInfo)
       }
@@ -81,14 +79,13 @@ object HaskellModuleNameIndex {
     Cache.get(key) match {
       case r@Right(_) => r
       case l@Left(NoInfoAvailable(_, _)) => l
-      case l@Left(ReadActionTimeout(_)) => l
       case noInfo =>
         Cache.invalidate(key)
         noInfo
     }
   }
 
-  private def findFile(project: Project, moduleName: String, timeout: FiniteDuration): Either[NoInfo, Option[VirtualFile]] = {
+  private def findFile(project: Project, moduleName: String): Either[NoInfo, Option[VirtualFile]] = {
     if (moduleName == HaskellProjectUtil.Prelude) {
       Right(None)
     } else {
@@ -100,8 +97,7 @@ object HaskellModuleNameIndex {
             case _: IndexNotReadyException => Left(IndexNotReady)
           }
         },
-        s"finding file for module $moduleName by index",
-        timeout
+        s"finding file for module $moduleName by index"
       )
       for {
         r <- result

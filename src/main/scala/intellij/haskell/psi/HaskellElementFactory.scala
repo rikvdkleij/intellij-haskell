@@ -45,7 +45,7 @@ object HaskellElementFactory {
   }
 
   def createVarsym(project: Project, name: String): Option[HaskellVarsym] = {
-    createElementFromText(project, name, HS_VARSYM).map(_.asInstanceOf[HaskellVarsym]).filter(_.getChildren.length == 0)
+    createElementFromText(project, name, HS_VARSYM).map(_.asInstanceOf[HaskellVarsym])
   }
 
   def createConsym(project: Project, name: String): Option[HaskellConsym] = {

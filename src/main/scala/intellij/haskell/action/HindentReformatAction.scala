@@ -58,7 +58,7 @@ object HindentReformatAction {
     val lineLength = CodeStyle.getSettings(psiFile.getProject).getRightMargin(HaskellLanguage.Instance)
     val indentOptions = CodeStyle.getSettings(psiFile.getProject).getCommonSettings(HaskellLanguage.Instance).getIndentOptions
     val project = psiFile.getProject
-    HaskellFileUtil.saveFile(psiFile, checkCancelled = false)
+    HaskellFileUtil.saveFile(psiFile)
 
     val command = Seq(HindentPath, "--line-length", lineLength.toString, "--indent-size", indentOptions.INDENT_SIZE.toString)
 
@@ -91,7 +91,11 @@ object HindentReformatAction {
   }
 
   def versionInfo(project: Project): String = {
-    CommandLine.run(Some(project), project.getBasePath, HindentPath, Seq("--version")).getStdout
+    if (StackProjectManager.isHindentAvailable(project)) {
+      CommandLine.run(Some(project), project.getBasePath, HindentPath, Seq("--version")).getStdout
+    } else {
+      "-"
+    }
   }
 
   private def getSelectedText(selectionModel: SelectionModel) = {

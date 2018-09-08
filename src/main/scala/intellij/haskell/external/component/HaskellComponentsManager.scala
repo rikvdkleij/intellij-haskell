@@ -18,11 +18,12 @@ package intellij.haskell.external.component
 
 import java.util.concurrent.Executors
 
-import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.editor.SelectionModel
 import com.intellij.openapi.module.Module
+import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.project.{DumbService, Project}
 import com.intellij.psi.{PsiElement, PsiFile}
+import com.intellij.util.WaitFor
 import intellij.haskell.HaskellNotificationGroup
 import intellij.haskell.cabal.CabalInfo
 import intellij.haskell.external.component.DefinitionLocationComponent.DefinitionLocationResult
@@ -40,15 +41,26 @@ import scala.concurrent.duration._
 
 object HaskellComponentsManager {
 
-  case class StackComponentInfo(module: Module, packageName: String, target: String, stanzaType: StanzaType, sourceDirs: Seq[String], mainIs: Option[String])
-
-  private final val Timeout = 100.millis
+  case class StackComponentInfo(module: Module, packageName: String, target: String, stanzaType: StanzaType, sourceDirs: Seq[String], mainIs: Option[String], isImplicitPreludeActive: Boolean)
 
   def findPreloadedModuleIdentifiers(project: Project)(implicit ec: ExecutionContext): Iterable[ModuleIdentifier] = {
     val moduleNames = BrowseModuleComponent.findModuleNamesInCache(project)
     moduleNames.flatMap(mn => {
       try {
-        Await.result(findLibraryModuleIdentifiers(project, mn), Timeout)
+        val f = findLibraryModuleIdentifiers(project, mn)
+        val wf = new WaitFor(1000, 1) {
+          override def condition(): Boolean = {
+            ProgressManager.checkCanceled()
+            f.isCompleted
+          }
+        }
+
+        if (wf.isConditionRealized) {
+          Await.result(f, 1.milli)
+        } else {
+          None
+        }
+
       } catch {
         case _: TimeoutException => Iterable()
       }
@@ -144,7 +156,7 @@ object HaskellComponentsManager {
     DefinitionLocationComponent.invalidate(elements)
   }
 
-  def findReferencesInCache(targetFile: PsiFile) = {
+  def findReferencesInCache(targetFile: PsiFile): Seq[(PsiFile, HaskellQualifiedNameElement)] = {
     DefinitionLocationComponent.findReferencesInCache(targetFile)
   }
 
@@ -157,20 +169,34 @@ object HaskellComponentsManager {
   def invalidateGlobalCaches(project: Project): Unit = {
     HaskellNotificationGroup.logInfoEvent(project, "Start to invalidate cache")
     GlobalProjectInfoComponent.invalidate(project)
-    StackComponentGlobalInfoComponent.invalidate(project)
+    LibraryModuleNamesComponent.invalidate(project)
     HaskellProjectFileInfoComponent.invalidate(project)
     BrowseModuleComponent.invalidate(project)
     NameInfoComponent.invalidateAll(project)
     DefinitionLocationComponent.invalidateAll(project)
     TypeInfoComponent.invalidateAll(project)
     HaskellPsiUtil.invalidateAllModuleNames(project)
+    LibraryModuleNamesComponent.invalidate(project)
     HaskellNotificationGroup.logInfoEvent(project, "Finished with invalidating cache")
   }
 
   def preloadLibraryIdentifiersCaches(project: Project): Unit = {
-    HaskellNotificationGroup.logInfoEvent(project, "Start to preload library cache")
+    HaskellNotificationGroup.logInfoEvent(project, "Start to preload library identifiers cache")
     preloadLibraryIdentifiers(project)
-    HaskellNotificationGroup.logInfoEvent(project, "Finished with preloading library cache")
+    HaskellNotificationGroup.logInfoEvent(project, "Finished with preloading library identifiers cache")
+  }
+
+  def preloadLibraryModuleNamesCache(project: Project): Iterable[LibraryModuleNames] = {
+    HaskellNotificationGroup.logInfoEvent(project, "Start to preload library modules cache")
+    val result = preloadAllLibraryModuleNames(project)
+    HaskellNotificationGroup.logInfoEvent(project, "Finished with preloading library modules cache")
+    result
+  }
+
+  def preloadLibraryFilesCache(project: Project, libraryModuleNames: Iterable[LibraryModuleNames]): Unit = {
+    HaskellNotificationGroup.logInfoEvent(project, "Start to preload library files cache")
+    preloadAllLibraryFiles(project, libraryModuleNames)
+    HaskellNotificationGroup.logInfoEvent(project, "Finished with preloading library files cache")
   }
 
   def findTypeInfoForElement(psiElement: PsiElement): TypeInfoResult = {
@@ -181,9 +207,28 @@ object HaskellComponentsManager {
     TypeInfoComponent.findTypeInfoForSelection(psiFile, selectionModel)
   }
 
+  private def preloadAllLibraryModuleNames(project: Project): Iterable[LibraryModuleNames] = {
+    if (!project.isDisposed) {
+      val libraryModuleNames = for {
+        info <- StackReplsManager.getReplsManager(project).map(_.stackComponentInfos).getOrElse(Iterable())
+        globalProjectInfo <- HaskellComponentsManager.findStackComponentGlobalInfo(info)
+      } yield globalProjectInfo.allLibraryModuleNames
+      libraryModuleNames.flatten
+    } else {
+      Iterable()
+    }
+  }
+
+  private def preloadAllLibraryFiles(project: Project, libraryModuleNames: Iterable[LibraryModuleNames]): Unit = {
+    if (!project.isDisposed) {
+      HaskellModuleNameIndex.fillCache(project, libraryModuleNames.flatMap(libraryModuleNames => libraryModuleNames.exposed ++ libraryModuleNames.hidden))
+    }
+  }
+
+  private val ExecutorService = Executors.newCachedThreadPool()
+  implicit val ExecContext: ExecutionContextExecutorService = ExecutionContext.fromExecutorService(ExecutorService)
+
   private def preloadLibraryIdentifiers(project: Project): Unit = {
-    val ExecutorService = Executors.newCachedThreadPool()
-    implicit val ExecContext: ExecutionContextExecutorService = ExecutionContext.fromExecutorService(ExecutorService)
 
     if (!project.isDisposed) {
       DumbService.getInstance(project).runReadActionInSmartMode(ScalaUtil.computable(BrowseModuleComponent.findLibraryModuleIdentifiers(project, HaskellProjectUtil.Prelude)))
@@ -199,30 +244,19 @@ object HaskellComponentsManager {
           }
         ))
 
+      val componentInfos = projectHaskellFiles.flatMap(f => HaskellComponentsManager.findStackComponentInfo(f)).toSeq.distinct
+
       val importedLibraryModuleNames =
         projectHaskellFiles.flatMap(f => {
           if (project.isDisposed) {
             Iterable()
           } else {
-            // We have to wait for other requests which have more priority because those are on dispatch thread
-            Thread.sleep(100)
+            val libraryModuleNames = componentInfos.flatMap(HaskellComponentsManager.findStackComponentGlobalInfo).flatMap(_.availableLibraryModuleNames)
 
-            val libraryModuleNames = for {
-              stackComponentInfo <- HaskellComponentsManager.findStackComponentInfo(f)
-              globalProjectInfo <- HaskellComponentsManager.findStackComponentGlobalInfo(stackComponentInfo) // It can happen that REPL is busy and there is no globalProjectInfo available
-            } yield globalProjectInfo.availableLibraryModuleNames
-
-            ApplicationManager.getApplication.executeOnPooledThread(ScalaUtil.runnable {
-              HaskellModuleNameIndex.fillCache(project, libraryModuleNames.getOrElse(Iterable()))
+            val exposedlibraryModuleNames = libraryModuleNames.map(_.exposed)
+            DumbService.getInstance(project).runReadActionInSmartMode(ScalaUtil.computable {
+              HaskellPsiUtil.findImportDeclarations(f).flatMap(_.getModuleName).filter(exposedlibraryModuleNames.contains).filterNot(_ == HaskellProjectUtil.Prelude)
             })
-
-            libraryModuleNames match {
-              case Some(moduleNames) =>
-                DumbService.getInstance(project).runReadActionInSmartMode(ScalaUtil.computable(
-                  HaskellPsiUtil.findImportDeclarations(f).flatMap(_.getModuleName.filter(_.nonEmpty)).filter(mn => moduleNames.exists(_ == mn))
-                    .filterNot(_ == HaskellProjectUtil.Prelude)))
-              case None => Iterable()
-            }
           }
         })
 

@@ -94,8 +94,8 @@ object StackCommandLine {
     }
   }
 
-  def buildProjectInMessageView(project: Project): Option[Boolean] = {
-    StackCommandLine.executeInMessageView(project, Seq("build", "--fast") ++ ghcOptions(project))
+  def buildProjectInMessageView(project: Project, arguments: Seq[String]): Option[Boolean] = {
+    StackCommandLine.executeInMessageView(project, Seq("build", "--fast") ++ arguments ++ ghcOptions(project))
   }
 
   def executeInMessageView(project: Project, arguments: Seq[String]): Option[Boolean] = {

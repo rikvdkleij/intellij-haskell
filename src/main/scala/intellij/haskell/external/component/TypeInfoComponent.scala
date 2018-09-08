@@ -47,14 +47,14 @@ private[component] object TypeInfoComponent {
     }
 
     val isDispatchThread = ApplicationManager.getApplication.isDispatchThread
-    if (isDispatchThread) ProgressManager.checkCanceled()
+    if (!isDispatchThread) ProgressManager.checkCanceled()
 
     if (element.isValid) {
       (for {
         qne <- HaskellPsiUtil.findQualifiedNameParent(element)
         pf <- getFile
       } yield {
-        if (isDispatchThread) ProgressManager.checkCanceled()
+        if (!isDispatchThread) ProgressManager.checkCanceled()
         val moduleName = HaskellPsiUtil.findModuleName(pf)
         Key(moduleName, pf, qne, qne.getName)
       }).map(k => findTypeInfo(k, isDispatchThread)).getOrElse(Left(NoInfoAvailable(element.getText, getFileName)))

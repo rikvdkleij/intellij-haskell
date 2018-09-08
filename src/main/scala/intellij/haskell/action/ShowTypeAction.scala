@@ -33,7 +33,7 @@ class ShowTypeAction extends AnAction {
   }
 
   def actionPerformed(actionEvent: AnActionEvent) {
-    if (!StackProjectManager.isBuilding(actionEvent.getProject)) {
+    if (!StackProjectManager.isInitializing(actionEvent.getProject)) {
       ActionUtil.findActionContext(actionEvent).foreach(actionContext => {
         val editor = actionContext.editor
         val psiFile = actionContext.psiFile
@@ -51,7 +51,7 @@ class ShowTypeAction extends AnAction {
       })
     }
     else {
-      HaskellEditorUtil.showHaskellSupportIsNotAvailableWhileBuilding(actionEvent.getProject)
+      HaskellEditorUtil.showHaskellSupportIsNotAvailableWhileInitializing(actionEvent.getProject)
     }
   }
 }
@@ -88,7 +88,7 @@ object ShowTypeAction {
     }
   }
 
-  private def showTypeSignatureAsHint(project: Project, editor: Editor, sticky: Boolean, typeSignature: String) = {
+  private def showTypeSignatureAsHint(project: Project, editor: Editor, sticky: Boolean, typeSignature: String): Unit = {
     HaskellEditorUtil.showHint(editor, StringUtil.escapeString(typeSignature), sticky)
   }
 
@@ -96,10 +96,15 @@ object ShowTypeAction {
     if (HaskellPsiUtil.findExpressionParent(psiElement).isDefined) {
       HaskellPsiUtil.findQualifiedNameParent(psiElement).flatMap(qualifiedNameElement => {
         val name = qualifiedNameElement.getName
-        val moduleName = HaskellPsiUtil.findModuleName(psiFile)
-        val globalInfo = HaskellComponentsManager.findStackComponentInfo(psiFile).flatMap(HaskellComponentsManager.findStackComponentGlobalInfo)
-        globalInfo.flatMap(info => HaskellCompletionContributor.getAvailableModuleIdentifiers(info, psiFile, moduleName).find(_.name == name).map(_.declaration)).
-          orElse(HaskellPsiUtil.findHaskellDeclarationElements(psiFile).find(_.getIdentifierElements.exists(_.getName == name)).map(_.getText.replaceAll("""\s+""", " ")))
+        val result = for {
+          moduleName <- HaskellPsiUtil.findModuleName(psiFile)
+          stackInfo <- HaskellComponentsManager.findStackComponentInfo(psiFile)
+          globalInfo <- HaskellComponentsManager.findStackComponentGlobalInfo(stackInfo)
+          declaration <- HaskellCompletionContributor.getAvailableModuleIdentifiers(globalInfo, stackInfo, psiFile, Some(moduleName)).find(_.name == name).map(_.declaration)
+        } yield {
+          declaration
+        }
+        result.orElse(HaskellPsiUtil.findHaskellDeclarationElements(psiFile).find(_.getIdentifierElements.exists(_.getName == name)).map(_.getText.replaceAll("""\s+""", " ")))
       })
     } else {
       None

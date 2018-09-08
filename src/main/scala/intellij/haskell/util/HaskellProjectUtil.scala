@@ -47,7 +47,7 @@ object HaskellProjectUtil {
   }
 
   def isHaskellProject(project: Project): Boolean = {
-    findProjectModules(project).nonEmpty
+    findProjectHaskellModules(project).nonEmpty
   }
 
   def findFile(filePath: String, project: Project): (Option[VirtualFile], Either[NoInfo, Option[PsiFile]]) = {
@@ -93,7 +93,7 @@ object HaskellProjectUtil {
   }
 
   def findCabalFiles(project: Project): Iterable[File] = {
-    val modules = findProjectModules(project)
+    val modules = findProjectHaskellModules(project)
     val dirs = modules.map(getModuleDir)
     dirs.flatMap(findCabalFile)
   }
@@ -107,7 +107,7 @@ object HaskellProjectUtil {
   }
 
   def findPackageFiles(project: Project): Iterable[File] = {
-    val modules = findProjectModules(project)
+    val modules = findProjectHaskellModules(project)
     val dirs = modules.map(getModuleDir)
     dirs.flatMap(findCabalFile)
     dirs.flatMap(findPackageFile)
@@ -122,7 +122,7 @@ object HaskellProjectUtil {
   }
 
   def getProjectModulesSearchScope(project: Project): GlobalSearchScope = {
-    val projectModules = findProjectModules(project).map(GlobalSearchScope.moduleScope)
+    val projectModules = findProjectHaskellModules(project).map(GlobalSearchScope.moduleScope)
     if (projectModules.isEmpty) {
       GlobalSearchScope.EMPTY_SCOPE
     } else {
@@ -160,7 +160,7 @@ object HaskellProjectUtil {
     Option(ModuleUtilCore.findModuleForFile(virtualFile, project))
   }
 
-  def findProjectModules(project: Project): Iterable[Module] = {
+  def findProjectHaskellModules(project: Project): Iterable[Module] = {
     ModuleManager.getInstance(project).getModules.filter(_.getModuleTypeName == HaskellModuleType.Id)
   }
 

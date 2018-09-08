@@ -206,7 +206,7 @@ object HaskellPsiUtil {
     if (Option(editor.getSelectionModel.getSelectedText).isDefined) {
       for {
         start <- Option(psiFile.findElementAt(editor.getSelectionModel.getSelectionStart))
-        end <- Option(psiFile.findElementAt(editor.getSelectionModel.getSelectionEnd - (if (editor.getSelectionModel.getSelectedText.length > 1) 1 else 0)))
+        end <- Option(psiFile.findElementAt(editor.getSelectionModel.getSelectionEnd - (if (Option(editor.getSelectionModel.getSelectedText).exists(_.length > 1)) 1 else 0)))
       } yield (start, end)
     } else {
       None

@@ -41,7 +41,7 @@ import scala.collection.JavaConverters._
 
 object HaskellEditorUtil {
 
-  final val HaskellSupportIsNotAvailableWhileBuildingText = "Haskell support is not available while project is being built"
+  final val HaskellSupportIsNotAvailableWhileInitializingText = "Haskell support is not available while project is initializing"
 
   def enableExternalAction(actionEvent: AnActionEvent, enableCondition: Project => Boolean): Unit = {
     Option(actionEvent.getProject) match {
@@ -170,7 +170,7 @@ object HaskellEditorUtil {
     offset.map(psiFile.findElementAt)
   }
 
-  def showHaskellSupportIsNotAvailableWhileBuilding(project: Project): Unit = {
-    HaskellEditorUtil.showStatusBarBalloonMessage(project, HaskellSupportIsNotAvailableWhileBuildingText)
+  def showHaskellSupportIsNotAvailableWhileInitializing(project: Project): Unit = {
+    HaskellEditorUtil.showStatusBarBalloonMessage(project, HaskellSupportIsNotAvailableWhileInitializingText)
   }
 }

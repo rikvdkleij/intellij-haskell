@@ -61,12 +61,8 @@ private[external] object StackReplsManager {
     getReplsManager(project).map(_.getGlobalRepl)
   }
 
-  def findExposedModules(project: Project): Iterable[String] = {
-    getReplsManager(project).map(_.exposedModuleNames).getOrElse(Iterable())
-  }
-
   private def createCabalInfos(project: Project): Iterable[(Module, CabalInfo)] = {
-    val modules = HaskellProjectUtil.findProjectModules(project)
+    val modules = HaskellProjectUtil.findProjectHaskellModules(project)
     val moduleDirs = modules.map(HaskellProjectUtil.getModuleDir)
     if (moduleDirs.isEmpty) {
       HaskellNotificationGroup.logWarningBalloonEvent(project, s"No Haskell modules found for project `${project.getName}`. Check your project configuration.")
@@ -85,13 +81,13 @@ private[external] object StackReplsManager {
     }
   }
 
-  private def createStackComponentInfoWithExposedModuleNames(project: Project, moduleCabalInfos: Iterable[(Module, CabalInfo)]): Iterable[(StackComponentInfo, Array[String])] = {
+  private def createStackComponentInfos(project: Project, moduleCabalInfos: Iterable[(Module, CabalInfo)]): Iterable[StackComponentInfo] = {
     moduleCabalInfos.flatMap {
       case (m: Module, cabalInfo: CabalInfo) => cabalInfo.cabalStanzas.map {
-        case cs: LibraryCabalStanza => (StackComponentInfo(m, cs.packageName, cs.targetName, LibType, cs.sourceDirs, None), cs.exposedModuleNames)
-        case cs: ExecutableCabalStanza => (StackComponentInfo(m, cs.packageName, cs.targetName, ExeType, cs.sourceDirs, cs.mainIs), Array[String]())
-        case cs: TestSuiteCabalStanza => (StackComponentInfo(m, cs.packageName, cs.targetName, TestSuiteType, cs.sourceDirs, cs.mainIs), Array[String]())
-        case cs: BenchmarkCabalStanza => (StackComponentInfo(m, cs.packageName, cs.targetName, BenchmarkType, cs.sourceDirs, cs.mainIs), Array[String]())
+        case cs: LibraryCabalStanza => StackComponentInfo(m, cs.packageName, cs.targetName, LibType, cs.sourceDirs, None, cs.isNoImplicitPreludeActive)
+        case cs: ExecutableCabalStanza => StackComponentInfo(m, cs.packageName, cs.targetName, ExeType, cs.sourceDirs, cs.mainIs, cs.isNoImplicitPreludeActive)
+        case cs: TestSuiteCabalStanza => StackComponentInfo(m, cs.packageName, cs.targetName, TestSuiteType, cs.sourceDirs, cs.mainIs, cs.isNoImplicitPreludeActive)
+        case cs: BenchmarkCabalStanza => StackComponentInfo(m, cs.packageName, cs.targetName, BenchmarkType, cs.sourceDirs, cs.mainIs, cs.isNoImplicitPreludeActive)
       }
     }
   }
@@ -107,13 +103,9 @@ private[external] class StackReplsManager(val project: Project) {
 
   val moduleCabalInfos: Iterable[(Module, CabalInfo)] = StackReplsManager.createCabalInfos(project)
 
-  private val infoWithExposedModuleNames = StackReplsManager.createStackComponentInfoWithExposedModuleNames(project, moduleCabalInfos)
-
   private final val IgnoredHaskellFiles = Seq("setup.hs", "hlint.hs")
 
-  val stackComponentInfos: Iterable[StackComponentInfo] = infoWithExposedModuleNames.map(_._1)
-
-  val exposedModuleNames: Iterable[String] = infoWithExposedModuleNames.filter(_._1.stanzaType == LibType).flatMap(_._2)
+  val stackComponentInfos: Iterable[StackComponentInfo] = StackReplsManager.createStackComponentInfos(project, moduleCabalInfos)
 
   def getRunningProjectRepl(stackComponentInfo: StackComponentInfo): Option[ProjectStackRepl] = {
     projectRepls.get(stackComponentInfo).filter(_.available)
@@ -131,8 +123,8 @@ private[external] class StackReplsManager(val project: Project) {
       HaskellNotificationGroup.logInfoEvent(psiFile.getProject, s"`${psiFile.getName}` can not be loaded in REPL")
       None
     } else {
-      if (StackProjectManager.isBuilding(project)) {
-        HaskellEditorUtil.showHaskellSupportIsNotAvailableWhileBuilding(project)
+      if (StackProjectManager.isInitializing(project)) {
+        HaskellEditorUtil.showHaskellSupportIsNotAvailableWhileInitializing(project)
         None
       } else {
         val componentInfo = HaskellComponentsManager.findStackComponentInfo(psiFile)
@@ -161,10 +153,10 @@ private[external] class StackReplsManager(val project: Project) {
               val repl = createAndStartProjectRepl(componentInfo)
               projectRepls.put(componentInfo, repl)
 
-                // Already load global info in cache here to prevent a file has to be loaded twice because library modules are obtained in REPL without any module loaded.
-                ApplicationManager.getApplication.executeOnPooledThread(ScalaUtil.runnable {
-                  HaskellComponentsManager.findStackComponentGlobalInfo(componentInfo)
-                })
+              // Already load global info in cache here to prevent a file has to be loaded twice because library modules are obtained in REPL without any module loaded.
+              ApplicationManager.getApplication.executeOnPooledThread(ScalaUtil.runnable {
+                HaskellComponentsManager.findStackComponentGlobalInfo(componentInfo)
+              })
 
               repl
           }

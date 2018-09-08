@@ -23,8 +23,16 @@ class GlobalStackRepl(project: Project, replTimeout: Int) extends StackRepl(proj
 
   private[this] var loadedModuleName: Option[String] = None
 
+  @volatile
+  var isBusy = false
+
   def getModuleIdentifiers(moduleName: String): Option[StackReplOutput] = synchronized {
-    execute(s":browse! $moduleName")
+    try {
+      isBusy = true
+      execute(s":browse! $moduleName")
+    } finally {
+      isBusy = false
+    }
   }
 
   def findInfo(moduleName: String, name: String): Option[StackReplOutput] = synchronized {

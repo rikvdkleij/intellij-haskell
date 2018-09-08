@@ -22,7 +22,7 @@ import com.intellij.psi.search.FileTypeIndex
 import intellij.haskell.external.component.HaskellComponentsManager.StackComponentInfo
 import intellij.haskell.external.repl.StackRepl.{BenchmarkType, TestSuiteType}
 import intellij.haskell.psi.HaskellPsiUtil
-import intellij.haskell.util.HaskellFileUtil
+import intellij.haskell.util.{ApplicationUtil, HaskellFileUtil}
 import intellij.haskell.{HaskellFileType, HaskellNotificationGroup}
 
 import scala.collection.JavaConverters._
@@ -45,7 +45,7 @@ private[component] object AvailableModuleNamesComponent {
   }
 
   private def findAvailableLibraryModuleNames(stackComponentInfo: StackComponentInfo): Iterable[String] = {
-    HaskellComponentsManager.findStackComponentGlobalInfo(stackComponentInfo).map(_.availableLibraryModuleNames).getOrElse(Iterable())
+    HaskellComponentsManager.findStackComponentGlobalInfo(stackComponentInfo).map(_.availableLibraryModuleNames.flatMap(_.exposed)).getOrElse(Iterable())
   }
 
   private def findModuleNamesInModule(module: Module, includeTests: Boolean): Iterable[String] = {
@@ -57,12 +57,14 @@ private[component] object AvailableModuleNamesComponent {
   }
 
   private def findHaskellFiles(module: Module, includeTests: Boolean) = {
-    try {
-      FileTypeIndex.getFiles(HaskellFileType.Instance, module.getModuleScope(includeTests)).asScala
-    } catch {
-      case _: IndexNotReadyException =>
-        HaskellNotificationGroup.logInfoEvent(module.getProject, s"Index not ready while findHaskellFiles for module ${module.getName} ")
-        Iterable()
-    }
+    ApplicationUtil.scheduleInReadActionWithWriteActionPriority(module.getProject, {
+      try {
+        FileTypeIndex.getFiles(HaskellFileType.Instance, module.getModuleScope(includeTests)).asScala
+      } catch {
+        case _: IndexNotReadyException =>
+          HaskellNotificationGroup.logInfoEvent(module.getProject, s"Index not ready while findHaskellFiles for module ${module.getName} ")
+          Iterable()
+      }
+    }, s"find Haskell files for module ${module.getName}").toOption.toIterable.flatten
   }
 }

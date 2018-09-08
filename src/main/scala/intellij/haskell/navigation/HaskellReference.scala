@@ -32,8 +32,8 @@ class HaskellReference(element: HaskellNamedElement, textRange: TextRange) exten
 
   override def multiResolve(incompleteCode: Boolean): Array[ResolveResult] = {
     val project = element.getProject
-    if (StackProjectManager.isBuilding(project)) {
-      HaskellEditorUtil.showHaskellSupportIsNotAvailableWhileBuilding(project)
+    if (StackProjectManager.isInitializing(project)) {
+      HaskellEditorUtil.showHaskellSupportIsNotAvailableWhileInitializing(project)
       Array()
     } else {
       ProgressManager.checkCanceled()

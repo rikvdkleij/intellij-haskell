@@ -44,12 +44,16 @@ object StylishHaskellReformatAction {
   private final val StylishHaskellPath = GlobalInfo.toolPath(StylishHaskellName).toString
 
   def versionInfo(project: Project): String = {
-    CommandLine.run(Some(project), project.getBasePath, StylishHaskellPath, Seq("--version")).getStdout
+    if (StackProjectManager.isStylishHaskellAvailable(project)) {
+      CommandLine.run(Some(project), project.getBasePath, StylishHaskellPath, Seq("--version")).getStdout
+    } else {
+      "-"
+    }
   }
 
   private[action] def format(psiFile: PsiFile): Unit = {
     val project = psiFile.getProject
-    HaskellFileUtil.saveFile(psiFile, checkCancelled = false)
+    HaskellFileUtil.saveFile(psiFile)
 
     HaskellFileUtil.getAbsolutePath(psiFile) match {
       case Some(path) =>

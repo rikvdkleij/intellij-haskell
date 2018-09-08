@@ -25,7 +25,6 @@ import com.intellij.openapi.projectRoots.impl.SdkConfigurationUtil
 import com.intellij.openapi.roots.OrderRootType
 import com.intellij.openapi.util.SystemInfo
 import com.intellij.openapi.vfs.VirtualFile
-import com.intellij.util.text.VersionComparatorUtil
 import intellij.haskell.external.execution.CommandLine
 import intellij.haskell.util.{HaskellFileUtil, HaskellProjectUtil}
 import intellij.haskell.{HaskellIcons, HaskellNotificationGroup}
@@ -137,6 +136,6 @@ object HaskellSdkType {
   }
 
   def getSdkName(project: Project): Option[String] = {
-    HaskellProjectUtil.getProjectRootManager(project).map(_.getProjectSdk).map(_.getName)
+    HaskellProjectUtil.getProjectRootManager(project).flatMap(p => Option(p.getProjectSdk)).map(_.getName)
   }
 }

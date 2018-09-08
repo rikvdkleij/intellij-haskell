@@ -145,7 +145,11 @@ object HoogleComponent {
   }
 
   def versionInfo(project: Project): String = {
-    CommandLine.run(Some(project), project.getBasePath, HooglePath, Seq("--version")).getStdout
+    if (StackProjectManager.isHoogleAvailable(project)) {
+      CommandLine.run(Some(project), project.getBasePath, HooglePath, Seq("--version")).getStdout
+    } else {
+      "-"
+    }
   }
 
   private def runHoogle(project: Project, arguments: Seq[String]): Option[ProcessOutput] = {

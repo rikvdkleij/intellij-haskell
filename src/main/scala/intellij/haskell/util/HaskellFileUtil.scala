@@ -25,7 +25,6 @@ import com.intellij.openapi.command.CommandProcessor
 import com.intellij.openapi.editor.Document
 import com.intellij.openapi.fileEditor.FileDocumentManager
 import com.intellij.openapi.module.Module
-import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.SystemInfo
 import com.intellij.openapi.util.io.FileUtil
@@ -51,12 +50,18 @@ object HaskellFileUtil {
     )
   }
 
-  def saveFile(psiFile: PsiFile, checkCancelled: Boolean): Unit = {
+  def saveFileInDispatchThread(psiFile: PsiFile): Unit = {
     findDocument(psiFile).foreach(d => {
       PsiDocumentManager.getInstance(psiFile.getProject).doPostponedOperationsAndUnblockDocument(d)
-      if (checkCancelled) {
-        ProgressManager.checkCanceled()
-      }
+      ApplicationManager.getApplication.invokeAndWait(() => {
+        HaskellFileUtil.saveFile(psiFile)
+      })
+    })
+  }
+
+  def saveFile(psiFile: PsiFile): Unit = {
+    findDocument(psiFile).foreach(d => {
+      PsiDocumentManager.getInstance(psiFile.getProject).doPostponedOperationsAndUnblockDocument(d)
       FileDocumentManager.getInstance.saveDocument(d)
     })
   }

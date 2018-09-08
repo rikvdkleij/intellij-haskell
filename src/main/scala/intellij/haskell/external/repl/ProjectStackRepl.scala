@@ -139,12 +139,6 @@ class ProjectStackRepl(project: Project, val stackComponentInfo: StackComponentI
     executeWithLoad(psiFile, s":browse! *$moduleName", Some(moduleName))
   }
 
-  // To retrieve only library module names, it will first execute `load` to remove all modules from scope
-  def findAvailableLibraryModuleNames(project: Project): Option[StackReplOutput] = synchronized {
-    loadedModule = None
-    executeWithSettingBusy(Seq(":load", """:complete repl "import " """))
-  }
-
   def showActiveLanguageFlags: Option[StackReplOutput] = synchronized {
     executeWithSettingBusy(Seq(":show language"))
   }

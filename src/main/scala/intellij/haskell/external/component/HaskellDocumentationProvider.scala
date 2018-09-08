@@ -29,7 +29,7 @@ class HaskellDocumentationProvider extends AbstractDocumentationProvider {
 
   override def getQuickNavigateInfo(element: PsiElement, originalElement: PsiElement): String = {
     val project = Option(element).map(_.getProject)
-    if (project.exists(p => !StackProjectManager.isBuilding(p))) {
+    if (project.exists(p => !StackProjectManager.isInitializing(p))) {
       (Option(element), Option(originalElement)) match {
         case (Some(e), Some(oe)) =>
           val psiFile = e.getContainingFile.getOriginalFile
@@ -52,7 +52,7 @@ class HaskellDocumentationProvider extends AbstractDocumentationProvider {
         case _ => null
       }
     } else {
-      HaskellEditorUtil.HaskellSupportIsNotAvailableWhileBuildingText
+      HaskellEditorUtil.HaskellSupportIsNotAvailableWhileInitializingText
     }
   }
 
@@ -62,7 +62,7 @@ class HaskellDocumentationProvider extends AbstractDocumentationProvider {
     ProgressManager.checkCanceled()
 
     val project = Option(element).map(_.getProject)
-    if (project.exists(p => !StackProjectManager.isBuilding(p))) {
+    if (project.exists(p => !StackProjectManager.isInitializing(p))) {
       (Option(element), Option(originalElement)) match {
         case (Some(e), Some(oe)) =>
           val project = e.getProject
@@ -99,7 +99,7 @@ class HaskellDocumentationProvider extends AbstractDocumentationProvider {
         case _ => null
       }
     } else {
-      HaskellEditorUtil.HaskellSupportIsNotAvailableWhileBuildingText
+      HaskellEditorUtil.HaskellSupportIsNotAvailableWhileInitializingText
     }
   }
 }

@@ -29,7 +29,7 @@ class ShowNameInfoAction extends AnAction {
   }
 
   def actionPerformed(actionEvent: AnActionEvent) {
-    if (!StackProjectManager.isBuilding(actionEvent.getProject)) {
+    if (!StackProjectManager.isInitializing(actionEvent.getProject)) {
       ActionUtil.findActionContext(actionEvent).foreach(actionContext => {
         val editor = actionContext.editor
         val psiFile = actionContext.psiFile
@@ -46,7 +46,7 @@ class ShowNameInfoAction extends AnAction {
         })
       })
     } else {
-      HaskellEditorUtil.showHaskellSupportIsNotAvailableWhileBuilding(actionEvent.getProject)
+      HaskellEditorUtil.showHaskellSupportIsNotAvailableWhileInitializing(actionEvent.getProject)
     }
   }
 

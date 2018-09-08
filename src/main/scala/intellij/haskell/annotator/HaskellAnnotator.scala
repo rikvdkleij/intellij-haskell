@@ -27,7 +27,6 @@ import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.compiler.CompilerMessageCategory
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.fileEditor.FileDocumentManager
-import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.TextRange
 import com.intellij.openapi.vfs.VirtualFile
@@ -51,7 +50,7 @@ class HaskellAnnotator extends ExternalAnnotator[(PsiFile, Option[PsiElement]), 
   override def collectInformation(psiFile: PsiFile, editor: Editor, hasErrors: Boolean): (PsiFile, Option[PsiElement]) = {
     if (HaskellConsoleView.isConsoleFile(psiFile) || HaskellProjectUtil.isLibraryFile(psiFile)) {
       null
-    } else if (StackProjectManager.isBuilding(psiFile.getProject)) {
+    } else if (StackProjectManager.isInitializing(psiFile.getProject)) {
       val project = psiFile.getProject
       // Last file is leading
       HaskellNotificationGroup.logInfoEvent(project, s"File ${psiFile.getName} could not be loaded because project was still building")
@@ -72,22 +71,13 @@ class HaskellAnnotator extends ExternalAnnotator[(PsiFile, Option[PsiElement]), 
   }
 
   override def doAnnotate(psiFileElement: (PsiFile, Option[PsiElement])): CompilationResult = {
-    ProgressManager.checkCanceled()
     val psiFile = psiFileElement._1
     val fileChanged = HaskellFileUtil.findVirtualFile(psiFile).exists(FileDocumentManager.getInstance().isFileModified)
 
-    ProgressManager.checkCanceled()
-
     if (fileChanged) {
-      ApplicationManager.getApplication.invokeAndWait(() => {
-        if (!psiFile.getProject.isDisposed) {
-          ProgressManager.checkCanceled()
-          HaskellFileUtil.saveFile(psiFile, checkCancelled = true)
-        }
-      })
+      HaskellFileUtil.saveFileInDispatchThread(psiFile)
     }
 
-    ProgressManager.checkCanceled()
     HaskellComponentsManager.loadHaskellFile(psiFile, fileChanged, psiFileElement._2).orNull
   }
 
@@ -135,7 +125,8 @@ class HaskellAnnotator extends ExternalAnnotator[(PsiFile, Option[PsiElement]), 
   }
 
   private def createCompilerMessage(file: VirtualFile, project: Project, problem: CompilationProblem) = {
-    val category = if (problem.isWarning && !(problem.message.contains("not in scope") || problem.message.contains("Not in scope"))) CompilerMessageCategory.WARNING else CompilerMessageCategory.ERROR
+    val category = if (problem.isWarning && !(problem.message.contains("-Wdeferred-type-error") || problem.message.contains("not in scope") || problem.message.contains("Not in scope"))) CompilerMessageCategory.WARNING
+    else CompilerMessageCategory.ERROR
     new CompilerMessageImpl(project, category, problem.message, file, problem.lineNr, problem.columnNr, null)
   }
 }

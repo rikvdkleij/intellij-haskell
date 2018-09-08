@@ -184,6 +184,17 @@ object HaskellModuleBuilder {
     new File(moduleBuilder.getContentEntryPath, GlobalInfo.StackWorkDirName)
   }
 
+  def getDependencies(project: Project, target: String, depth: Option[Int]): Iterable[HaskellDependency] = {
+    val projectModules = HaskellProjectUtil.findProjectHaskellModules(project)
+
+    for {
+      module <- projectModules
+      packageName = module.getName
+      lines <- StackCommandLine.run(project, Seq("ls", "dependencies", target, "--test", "--bench") ++ depth.map(d => s"--depth=$d").toSeq, timeoutInMillis = 60.seconds.toMillis).map(_.getStdoutLines).toSeq
+      dependencies <- createDependencies(project, lines.asScala, projectModules).filterNot(p => packageName == p.name || p.name == "rts" || p.name == "ghc")
+    } yield dependencies
+  }
+
   private def getModuleRootDirectory(packagePath: String, modulePath: String): Option[File] = {
     val file = if (packagePath == ".") {
       new File(modulePath)
@@ -220,12 +231,11 @@ object HaskellModuleBuilder {
           FileUtil.createDirectory(projectLibDirectory)
         }
 
-        val projectModules = HaskellProjectUtil.findProjectModules(project)
+        val projectModules = HaskellProjectUtil.findProjectHaskellModules(project)
         val dependenciesByModule = for {
           module <- projectModules
           packageName = module.getName
-          lines <- StackCommandLine.run(project, Seq("ls", "dependencies", packageName, "--test", "--bench"), timeoutInMillis = 60.seconds.toMillis).map(_.getStdoutLines)
-          dependencies = createDependencies(project, lines.asScala, projectModules).filterNot(p => packageName == p.name || p.name == "rts" || p.name == "ghc")
+          dependencies = getDependencies(project, packageName, None)
         } yield (module, dependencies)
 
         val allDependencies = dependenciesByModule.flatMap(_._2).toSeq.distinct
@@ -244,7 +254,7 @@ object HaskellModuleBuilder {
     new File(new File(GlobalInfo.getLibrarySourcesPath), project.getName)
   }
 
-  private def createDependencies(project: Project, dependencyLines: Seq[String], projectModules: Iterable[Module]): Seq[HaskellDependency] = {
+  private def createDependencies(project: Project, dependencyLines: Iterable[String], projectModules: Iterable[Module]): Iterable[HaskellDependency] = {
     dependencyLines.flatMap {
       case PackagePattern(name, version) =>
         projectModules.find(_.getName.toLowerCase == name.toLowerCase) match {
@@ -276,7 +286,7 @@ object HaskellModuleBuilder {
     ProjectLibraryTable.getInstance(project)
   }
 
-  private def addPackagesAsDependenciesToModule(module: Module, projectModules: Iterable[Module], dependencies: Seq[HaskellDependency], allDependencies: Seq[HaskellDependency], projectLibDirectory: File) = {
+  private def addPackagesAsDependenciesToModule(module: Module, projectModules: Iterable[Module], dependencies: Iterable[HaskellDependency], allDependencies: Seq[HaskellDependency], projectLibDirectory: File): Unit = {
     val project = module.getProject
     getProjectLibraryTable(project).getLibraries.foreach(library => {
       dependencies.find(_.nameVersion == library.getName) match {
@@ -364,7 +374,7 @@ object HaskellModuleBuilder {
     })
   }
 
-  private trait HaskellDependency {
+  trait HaskellDependency {
     def name: String
 
     def version: String
@@ -372,9 +382,9 @@ object HaskellModuleBuilder {
     def nameVersion: String = s"$name-$version"
   }
 
-  private case class HaskellLibraryDependency(name: String, version: String) extends HaskellDependency
+  case class HaskellLibraryDependency(name: String, version: String) extends HaskellDependency
 
-  private case class HaskellProjectModuleDependency(name: String, version: String, projectModule: Module) extends HaskellDependency
+  case class HaskellProjectModuleDependency(name: String, version: String, projectModule: Module) extends HaskellDependency
 
 
 }

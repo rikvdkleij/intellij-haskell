@@ -16,72 +16,67 @@
 
 package intellij.haskell.external.component
 
+import java.util.concurrent.Executors
+
 import com.github.blemale.scaffeine.{LoadingCache, Scaffeine}
 import com.intellij.openapi.project.Project
 import intellij.haskell.external.component.HaskellComponentsManager.StackComponentInfo
-import intellij.haskell.external.repl.StackRepl.StackReplOutput
-import intellij.haskell.external.repl.StackReplsManager
+import intellij.haskell.module.HaskellModuleBuilder
+import intellij.haskell.module.HaskellModuleBuilder.HaskellLibraryDependency
+
+import scala.concurrent.{Await, ExecutionContext, ExecutionContextExecutorService, Future}
 
 private[component] object StackComponentGlobalInfoComponent {
 
   private case class Key(stackComponentInfo: StackComponentInfo)
 
-  private type Result = Either[NoInfo, StackComponentGlobalInfo]
+  private type Result = Option[StackComponentGlobalInfo]
 
-  private final val Cache: LoadingCache[Key, Result] = Scaffeine().build((k: Key) => load(k))
+  private final val Cache: LoadingCache[Key, Result] = Scaffeine().build((k: Key) => createStackInfo(k))
 
   def findStackComponentGlobalInfo(stackComponentInfo: StackComponentInfo): Option[StackComponentGlobalInfo] = {
     val key = Key(stackComponentInfo)
     Cache.get(key) match {
-      case Right(result) => Some(result)
-      case Left(_) =>
+      case result@Some(_) => result
+      case _ =>
         Cache.invalidate(key)
         None
-    }
-  }
-
-  private def load(key: Key): Result = {
-    if (LoadComponent.isBusy(key.stackComponentInfo.module.getProject, key.stackComponentInfo)) {
-      // TODO Check this when REPL is retrieved
-      Left(ReplIsBusy)
-    } else {
-      createStackInfo(key)
     }
   }
 
   private def createStackInfo(key: Key): Result = {
     val project = key.stackComponentInfo.module.getProject
     val stackComponentInfo = key.stackComponentInfo
-    findAvailableModuleNames(project, stackComponentInfo) match {
-      case Left(noInfo) => Left(noInfo)
-      case Right(mn) => isNoImplicitPreludeActive(project, stackComponentInfo) match {
-        case Left(noInfo) => Left(noInfo)
-        case Right(noImplicitPrelude) => Right(StackComponentGlobalInfo(stackComponentInfo, mn, noImplicitPrelude))
+    findAvailableModuleNames(project, stackComponentInfo)
+  }
+
+  private val ExecutorService = Executors.newCachedThreadPool()
+  implicit val ExecContext: ExecutionContextExecutorService = ExecutionContext.fromExecutorService(ExecutorService)
+
+  import scala.concurrent.duration._
+
+  private def findAvailableModuleNames(project: Project, componentInfo: StackComponentInfo): Result = {
+    val allDependencies = HaskellModuleBuilder.getDependencies(project, componentInfo.target, None)
+    val packageNameLibraryModuleNamesFutures = allDependencies.grouped(5).flatMap {
+      _.map {
+        case HaskellLibraryDependency(name, _) =>
+          if (project.isDisposed) {
+            Future.successful(None)
+          } else {
+            Future(LibraryModuleNamesComponent.findLibraryModuleNames(project, name).map((name, _)))
+          }
+        case _ => Future.successful(None)
       }
     }
-  }
 
-  // TODO get exposed modules of package, stack exec -- ghc-pkg describe MonadRandom
-  private def findAvailableModuleNames(project: Project, componentInfo: StackComponentInfo): Either[NoInfo, Iterable[String]] = {
-    StackReplsManager.getProjectRepl(project, componentInfo).flatMap(_.findAvailableLibraryModuleNames(project)) match {
-      case Some(o) => Right(getModuleNames(o))
-      case None => Left(ReplNotAvailable)
-    }
-  }
+    val packageNameLibraryModuleNames = Await.result(Future.sequence(packageNameLibraryModuleNamesFutures), 60.second).flatten.toIterable
 
-  private def isNoImplicitPreludeActive(project: Project, stackTargetBuildInfo: StackComponentInfo): Either[NoInfo, Boolean] = {
-    StackReplsManager.getProjectRepl(project, stackTargetBuildInfo).flatMap(_.showActiveLanguageFlags) match {
-      case Some(o) => Right(o.stdoutLines.mkString(" ").contains("-XNoImplicitPrelude"))
-      case None => Left(ReplNotAvailable)
-    }
-  }
-
-  private def getModuleNames(output: StackReplOutput) = {
-    val lines = output.stdoutLines
-    if (lines.isEmpty) {
-      Iterable()
+    val availableDependencyPackages = HaskellModuleBuilder.getDependencies(project, componentInfo.target, Some(1)).map(_.name).toSeq
+    val availableLibraryModuleNames = packageNameLibraryModuleNames.filter { case (n, _) => availableDependencyPackages.contains(n) }.map(_._2)
+    if (packageNameLibraryModuleNames.isEmpty) {
+      None
     } else {
-      lines.tail.map(m => m.substring(1, m.length - 1))
+      Some(StackComponentGlobalInfo(componentInfo, availableLibraryModuleNames, packageNameLibraryModuleNames.map(_._2)))
     }
   }
 
@@ -91,4 +86,4 @@ private[component] object StackComponentGlobalInfoComponent {
   }
 }
 
-case class StackComponentGlobalInfo(stackComponentInfo: StackComponentInfo, availableLibraryModuleNames: Iterable[String], noImplicitPreludeActive: Boolean)
+case class StackComponentGlobalInfo(stackComponentInfo: StackComponentInfo, availableLibraryModuleNames: Iterable[LibraryModuleNames], allLibraryModuleNames: Iterable[LibraryModuleNames])

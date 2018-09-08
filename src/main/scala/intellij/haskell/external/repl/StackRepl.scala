@@ -47,6 +47,7 @@ abstract class StackRepl(project: Project, componentInfo: Option[StackComponentI
     case object Load extends Command
 
     case object LocalBrowse extends Command
+    case object Browse extends Command
 
     case object Set extends Command
 
@@ -99,7 +100,7 @@ abstract class StackRepl(project: Project, componentInfo: Option[StackComponentI
       None
     } else {
 
-      def init() = {
+      def init(): Unit = {
         stdoutQueue.clear()
         stderrQueue.clear()
 
@@ -146,6 +147,7 @@ abstract class StackRepl(project: Project, componentInfo: Option[StackComponentI
 
         val ghciCommand = command match {
           case c if c.startsWith(":browse! *") => GhciCommand.LocalBrowse
+          case c if c.startsWith(":browse!") => GhciCommand.Browse
           case c if c.startsWith(":load") | c.startsWith(":reload") => GhciCommand.Load
           case c if c.startsWith(":module") => GhciCommand.Module
           case c if c.startsWith(":set") => GhciCommand.Set
@@ -165,7 +167,7 @@ abstract class StackRepl(project: Project, componentInfo: Option[StackComponentI
             outputContainsEndOfOutputIndicator && (ghciCommand == GhciCommand.Module || ghciCommand == GhciCommand.Set || stdoutResult.length > 1 || stderrResult.nonEmpty)
           }
 
-        def writeToOutputStream(command: String) = {
+        def writeToOutputStream(command: String): Unit = {
           val output = outputStreamSyncVar.get
           output.write(command.getBytes)
           output.write(LineSeparator)
@@ -174,7 +176,7 @@ abstract class StackRepl(project: Project, componentInfo: Option[StackComponentI
 
         writeToOutputStream(command)
 
-        val timeout = if (ghciCommand == GhciCommand.Load) LoadTimeout else DefaultTimeout
+        val timeout = if (ghciCommand == GhciCommand.Load || ghciCommand == GhciCommand.Browse || ghciCommand == GhciCommand.LocalBrowse) LoadTimeout else DefaultTimeout
 
         val deadline = timeout.fromNow
         while (deadline.hasTimeLeft && !hasReachedEndOfOutput) {
@@ -354,7 +356,7 @@ abstract class StackRepl(project: Project, componentInfo: Option[StackComponentI
     ghciOptionsFile
   }
 
-  private def closeResources() = {
+  private def closeResources(): Unit = {
     try {
       closeResource(stdin)
       closeResource(stdout)

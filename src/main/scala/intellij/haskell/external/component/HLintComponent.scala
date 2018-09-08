@@ -73,7 +73,11 @@ object HLintComponent {
   }
 
   def versionInfo(project: Project): String = {
-    runHLint(project, Seq("--version"), ignoreExitCode = false).getStdout
+    if (StackProjectManager.isHlintAvailable(project)) {
+      runHLint(project, Seq("--version"), ignoreExitCode = false).getStdout
+    } else {
+      "-"
+    }
   }
 
   private def runHLint(project: Project, arguments: Seq[String], ignoreExitCode: Boolean) = {

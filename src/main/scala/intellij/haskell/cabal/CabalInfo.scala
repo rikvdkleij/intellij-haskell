@@ -25,7 +25,7 @@ import com.intellij.psi.{PsiElement, PsiFileFactory}
 import intellij.haskell.HaskellNotificationGroup
 import intellij.haskell.cabal.lang.psi
 import intellij.haskell.cabal.lang.psi._
-import intellij.haskell.cabal.lang.psi.impl.{MainIsImpl, SourceDirsImpl}
+import intellij.haskell.cabal.lang.psi.impl.{ExtensionsImpl, MainIsImpl, SourceDirsImpl}
 import intellij.haskell.psi.HaskellPsiUtil
 import intellij.haskell.util.HaskellFileUtil
 
@@ -113,6 +113,14 @@ sealed trait CabalStanza {
     HaskellPsiUtil.getChildOfType(sectionRootElement, classOf[SourceDirsImpl]).map(_.getValue).getOrElse(Array()).map(p => HaskellFileUtil.makeFilePathAbsolute(p, modulePath))
   }
 
+  private def findLanguageExtensions: Set[String] = {
+    HaskellPsiUtil.getChildOfType(sectionRootElement, classOf[ExtensionsImpl]).map(_.getValue.toSet).getOrElse(Set())
+  }
+
+  def isNoImplicitPreludeActive: Boolean = {
+    findLanguageExtensions.contains("NoImplicitPrelude")
+  }
+
   protected def findSourceDirsOrElseModuleDir: Array[String] = {
     val sourceDirs = findSourceDirs
     if (sourceDirs.isEmpty) {
@@ -139,7 +147,7 @@ case class LibraryCabalStanza(sectionRootElement: PsiElement, packageName: Strin
 
   lazy val sourceDirs: Array[String] = findSourceDirsOrElseModuleDir
 
-  val exposedModuleNames: Array[String] = findExposedModuleNames
+  lazy val exposedModuleNames: Array[String] = findExposedModuleNames
 
   private def findExposedModuleNames: Array[String] = {
     HaskellPsiUtil.getChildOfType(sectionRootElement, classOf[ExposedModules]).map(_.getModuleNames).getOrElse(Array())
