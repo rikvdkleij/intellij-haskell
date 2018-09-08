@@ -16,7 +16,7 @@
 
 package intellij.haskell.action
 
-import java.io.{BufferedReader, BufferedWriter, InputStreamReader, OutputStreamWriter}
+import java.io._
 
 import com.intellij.application.options.CodeStyle
 import com.intellij.openapi.actionSystem.{AnAction, AnActionEvent}
@@ -64,8 +64,8 @@ object HindentReformatAction {
 
     val formatAction = ApplicationManager.getApplication.executeOnPooledThread(ScalaUtil.callable[Either[String, String]] {
       selectionContext match {
-        case Some(sc) => writeToHindent(command, sc.text)
-        case None => writeToHindent(command, psiFile.getText)
+        case Some(sc) => writeToHindent(command, sc.text,project)
+        case None => writeToHindent(command, psiFile.getText, project)
       }
     })
 
@@ -102,8 +102,9 @@ object HindentReformatAction {
     selectionModel.getSelectedText
   }
 
-  private def writeToHindent(command: Seq[String], sourceCode: String): Either[String, String] = {
+  private def writeToHindent(command: Seq[String], sourceCode: String, project: Project): Either[String, String] = {
     val builder = new ProcessBuilder(command.asJava)
+    builder.directory(new File(project.getBasePath))
     val process = builder.start()
 
     val stdout = process.getInputStream
@@ -114,19 +115,31 @@ object HindentReformatAction {
     val errorReader = new BufferedReader(new InputStreamReader(stderr))
     val writer = new BufferedWriter(new OutputStreamWriter(stdin))
 
-    writer.write(sourceCode)
-    writer.flush()
-    writer.close()
+    try {
+      try {
+        writer.write(sourceCode)
+        writer.flush()
+      } finally {
+        writer.close()
+      }
 
-    val buffer = ListBuffer[String]()
-    val result = read(reader, buffer).mkString("\n")
+      val buffer = ListBuffer[String]()
+      val result = read(reader, buffer).mkString("\n")
 
-    val errorBuffer = ListBuffer[String]()
-    val errors = read(errorReader, errorBuffer).mkString("\n")
-    if (errors.isEmpty) {
-      Right(result)
-    } else {
-      Left(errors)
+      val errorBuffer = ListBuffer[String]()
+      val errors = read(errorReader, errorBuffer).mkString("\n")
+      if (errors.isEmpty) {
+        Right(result)
+      } else {
+        Left(errors)
+      }
+    } finally {
+      errorReader.close()
+      reader.close()
+      stdin.close()
+      stderr.close()
+      stdout.close()
+
     }
   }
 
