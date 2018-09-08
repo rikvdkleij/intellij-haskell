@@ -245,6 +245,9 @@ public class HaskellParser implements PsiParser, LightPsiParser {
     else if (t == HS_SCONTEXT) {
       r = scontext(b, 0);
     }
+    else if (t == HS_SHEBANG_LINE) {
+      r = shebang_line(b, 0);
+    }
     else if (t == HS_SIMPLECLASS) {
       r = simpleclass(b, 0);
     }
@@ -1554,13 +1557,13 @@ public class HaskellParser implements PsiParser, LightPsiParser {
   }
 
   /* ********************************************************** */
-  // cname | dot_dot
+  // dot_dot | cname
   public static boolean cname_dot_dot(PsiBuilder b, int l) {
     if (!recursion_guard_(b, l, "cname_dot_dot")) return false;
     boolean r;
     Marker m = enter_section_(b, l, _NONE_, HS_CNAME_DOT_DOT, "<cname dot dot>");
-    r = cname(b, l + 1);
-    if (!r) r = dot_dot(b, l + 1);
+    r = dot_dot(b, l + 1);
+    if (!r) r = cname(b, l + 1);
     exit_section_(b, l, m, r, false, null);
     return r;
   }
@@ -3056,18 +3059,18 @@ public class HaskellParser implements PsiParser, LightPsiParser {
   }
 
   /* ********************************************************** */
-  // QUASIQUOTE | symbol_reserved_op | reserved_id | q_name | LEFT_PAREN | RIGHT_PAREN | FLOAT |
+  // QUASIQUOTE | q_name | symbol_reserved_op | reserved_id | LEFT_PAREN | RIGHT_PAREN | FLOAT |
   //                                   SEMICOLON | LEFT_BRACKET | RIGHT_BRACKET | literal | LEFT_BRACE | RIGHT_BRACE |
-  //                                   COMMA | QUOTE | BACKQUOTE | fixity | 
+  //                                   COMMA | QUOTE | BACKQUOTE | fixity |
   //                                   inlinelike_pragma | NEWLINE DIRECTIVE | scc_pragma
   static boolean general_id(PsiBuilder b, int l) {
     if (!recursion_guard_(b, l, "general_id")) return false;
     boolean r;
     Marker m = enter_section_(b);
     r = consumeToken(b, HS_QUASIQUOTE);
+    if (!r) r = q_name(b, l + 1);
     if (!r) r = symbol_reserved_op(b, l + 1);
     if (!r) r = reserved_id(b, l + 1);
-    if (!r) r = q_name(b, l + 1);
     if (!r) r = consumeToken(b, HS_LEFT_PAREN);
     if (!r) r = consumeToken(b, HS_RIGHT_PAREN);
     if (!r) r = consumeToken(b, HS_FLOAT);
@@ -4969,7 +4972,7 @@ public class HaskellParser implements PsiParser, LightPsiParser {
   }
 
   /* ********************************************************** */
-  // onl SHEBANG_LINE? onl file_header? onl module_body
+  // onl shebang_line? onl file_header? onl module_body
   static boolean program(PsiBuilder b, int l) {
     if (!recursion_guard_(b, l, "program")) return false;
     boolean r;
@@ -4984,10 +4987,10 @@ public class HaskellParser implements PsiParser, LightPsiParser {
     return r;
   }
 
-  // SHEBANG_LINE?
+  // shebang_line?
   private static boolean program_1(PsiBuilder b, int l) {
     if (!recursion_guard_(b, l, "program_1")) return false;
-    consumeToken(b, HS_SHEBANG_LINE);
+    shebang_line(b, l + 1);
     return true;
   }
 
@@ -5447,6 +5450,33 @@ public class HaskellParser implements PsiParser, LightPsiParser {
     r = r && consumeToken(b, HS_COMMA);
     r = r && onls(b, l + 1);
     r = r && simpleclass(b, l + 1);
+    exit_section_(b, m, null, r);
+    return r;
+  }
+
+  /* ********************************************************** */
+  // "#!" general_id+
+  public static boolean shebang_line(PsiBuilder b, int l) {
+    if (!recursion_guard_(b, l, "shebang_line")) return false;
+    boolean r;
+    Marker m = enter_section_(b, l, _NONE_, HS_SHEBANG_LINE, "<shebang line>");
+    r = consumeToken(b, "#!");
+    r = r && shebang_line_1(b, l + 1);
+    exit_section_(b, l, m, r, false, null);
+    return r;
+  }
+
+  // general_id+
+  private static boolean shebang_line_1(PsiBuilder b, int l) {
+    if (!recursion_guard_(b, l, "shebang_line_1")) return false;
+    boolean r;
+    Marker m = enter_section_(b);
+    r = general_id(b, l + 1);
+    while (r) {
+      int c = current_position_(b);
+      if (!general_id(b, l + 1)) break;
+      if (!empty_element_parsed_guard_(b, "shebang_line_1", c)) break;
+    }
     exit_section_(b, m, null, r);
     return r;
   }
@@ -6686,21 +6716,204 @@ public class HaskellParser implements PsiParser, LightPsiParser {
   }
 
   /* ********************************************************** */
-  // VARSYM_ID | DOT VARSYM_ID | DOT EQUAL | DOT BACKSLASH | DOT TILDE | DOT AT | DOT CONSYM_ID | DOT
+  // VARSYM_ID | DOT+ VARSYM_ID | DOT+ EQUAL | DOT+ BACKSLASH | DOT+ TILDE | DOT+ AT | DOT+ CONSYM_ID | DOT DOT DOT+ | DOT
   public static boolean varsym(PsiBuilder b, int l) {
     if (!recursion_guard_(b, l, "varsym")) return false;
     if (!nextTokenIs(b, "<varsym>", HS_DOT, HS_VARSYM_ID)) return false;
     boolean r;
     Marker m = enter_section_(b, l, _NONE_, HS_VARSYM, "<varsym>");
     r = consumeToken(b, HS_VARSYM_ID);
-    if (!r) r = parseTokens(b, 0, HS_DOT, HS_VARSYM_ID);
-    if (!r) r = parseTokens(b, 0, HS_DOT, HS_EQUAL);
-    if (!r) r = parseTokens(b, 0, HS_DOT, HS_BACKSLASH);
-    if (!r) r = parseTokens(b, 0, HS_DOT, HS_TILDE);
-    if (!r) r = parseTokens(b, 0, HS_DOT, HS_AT);
-    if (!r) r = parseTokens(b, 0, HS_DOT, HS_CONSYM_ID);
+    if (!r) r = varsym_1(b, l + 1);
+    if (!r) r = varsym_2(b, l + 1);
+    if (!r) r = varsym_3(b, l + 1);
+    if (!r) r = varsym_4(b, l + 1);
+    if (!r) r = varsym_5(b, l + 1);
+    if (!r) r = varsym_6(b, l + 1);
+    if (!r) r = varsym_7(b, l + 1);
     if (!r) r = consumeToken(b, HS_DOT);
     exit_section_(b, l, m, r, false, null);
+    return r;
+  }
+
+  // DOT+ VARSYM_ID
+  private static boolean varsym_1(PsiBuilder b, int l) {
+    if (!recursion_guard_(b, l, "varsym_1")) return false;
+    boolean r;
+    Marker m = enter_section_(b);
+    r = varsym_1_0(b, l + 1);
+    r = r && consumeToken(b, HS_VARSYM_ID);
+    exit_section_(b, m, null, r);
+    return r;
+  }
+
+  // DOT+
+  private static boolean varsym_1_0(PsiBuilder b, int l) {
+    if (!recursion_guard_(b, l, "varsym_1_0")) return false;
+    boolean r;
+    Marker m = enter_section_(b);
+    r = consumeToken(b, HS_DOT);
+    while (r) {
+      int c = current_position_(b);
+      if (!consumeToken(b, HS_DOT)) break;
+      if (!empty_element_parsed_guard_(b, "varsym_1_0", c)) break;
+    }
+    exit_section_(b, m, null, r);
+    return r;
+  }
+
+  // DOT+ EQUAL
+  private static boolean varsym_2(PsiBuilder b, int l) {
+    if (!recursion_guard_(b, l, "varsym_2")) return false;
+    boolean r;
+    Marker m = enter_section_(b);
+    r = varsym_2_0(b, l + 1);
+    r = r && consumeToken(b, HS_EQUAL);
+    exit_section_(b, m, null, r);
+    return r;
+  }
+
+  // DOT+
+  private static boolean varsym_2_0(PsiBuilder b, int l) {
+    if (!recursion_guard_(b, l, "varsym_2_0")) return false;
+    boolean r;
+    Marker m = enter_section_(b);
+    r = consumeToken(b, HS_DOT);
+    while (r) {
+      int c = current_position_(b);
+      if (!consumeToken(b, HS_DOT)) break;
+      if (!empty_element_parsed_guard_(b, "varsym_2_0", c)) break;
+    }
+    exit_section_(b, m, null, r);
+    return r;
+  }
+
+  // DOT+ BACKSLASH
+  private static boolean varsym_3(PsiBuilder b, int l) {
+    if (!recursion_guard_(b, l, "varsym_3")) return false;
+    boolean r;
+    Marker m = enter_section_(b);
+    r = varsym_3_0(b, l + 1);
+    r = r && consumeToken(b, HS_BACKSLASH);
+    exit_section_(b, m, null, r);
+    return r;
+  }
+
+  // DOT+
+  private static boolean varsym_3_0(PsiBuilder b, int l) {
+    if (!recursion_guard_(b, l, "varsym_3_0")) return false;
+    boolean r;
+    Marker m = enter_section_(b);
+    r = consumeToken(b, HS_DOT);
+    while (r) {
+      int c = current_position_(b);
+      if (!consumeToken(b, HS_DOT)) break;
+      if (!empty_element_parsed_guard_(b, "varsym_3_0", c)) break;
+    }
+    exit_section_(b, m, null, r);
+    return r;
+  }
+
+  // DOT+ TILDE
+  private static boolean varsym_4(PsiBuilder b, int l) {
+    if (!recursion_guard_(b, l, "varsym_4")) return false;
+    boolean r;
+    Marker m = enter_section_(b);
+    r = varsym_4_0(b, l + 1);
+    r = r && consumeToken(b, HS_TILDE);
+    exit_section_(b, m, null, r);
+    return r;
+  }
+
+  // DOT+
+  private static boolean varsym_4_0(PsiBuilder b, int l) {
+    if (!recursion_guard_(b, l, "varsym_4_0")) return false;
+    boolean r;
+    Marker m = enter_section_(b);
+    r = consumeToken(b, HS_DOT);
+    while (r) {
+      int c = current_position_(b);
+      if (!consumeToken(b, HS_DOT)) break;
+      if (!empty_element_parsed_guard_(b, "varsym_4_0", c)) break;
+    }
+    exit_section_(b, m, null, r);
+    return r;
+  }
+
+  // DOT+ AT
+  private static boolean varsym_5(PsiBuilder b, int l) {
+    if (!recursion_guard_(b, l, "varsym_5")) return false;
+    boolean r;
+    Marker m = enter_section_(b);
+    r = varsym_5_0(b, l + 1);
+    r = r && consumeToken(b, HS_AT);
+    exit_section_(b, m, null, r);
+    return r;
+  }
+
+  // DOT+
+  private static boolean varsym_5_0(PsiBuilder b, int l) {
+    if (!recursion_guard_(b, l, "varsym_5_0")) return false;
+    boolean r;
+    Marker m = enter_section_(b);
+    r = consumeToken(b, HS_DOT);
+    while (r) {
+      int c = current_position_(b);
+      if (!consumeToken(b, HS_DOT)) break;
+      if (!empty_element_parsed_guard_(b, "varsym_5_0", c)) break;
+    }
+    exit_section_(b, m, null, r);
+    return r;
+  }
+
+  // DOT+ CONSYM_ID
+  private static boolean varsym_6(PsiBuilder b, int l) {
+    if (!recursion_guard_(b, l, "varsym_6")) return false;
+    boolean r;
+    Marker m = enter_section_(b);
+    r = varsym_6_0(b, l + 1);
+    r = r && consumeToken(b, HS_CONSYM_ID);
+    exit_section_(b, m, null, r);
+    return r;
+  }
+
+  // DOT+
+  private static boolean varsym_6_0(PsiBuilder b, int l) {
+    if (!recursion_guard_(b, l, "varsym_6_0")) return false;
+    boolean r;
+    Marker m = enter_section_(b);
+    r = consumeToken(b, HS_DOT);
+    while (r) {
+      int c = current_position_(b);
+      if (!consumeToken(b, HS_DOT)) break;
+      if (!empty_element_parsed_guard_(b, "varsym_6_0", c)) break;
+    }
+    exit_section_(b, m, null, r);
+    return r;
+  }
+
+  // DOT DOT DOT+
+  private static boolean varsym_7(PsiBuilder b, int l) {
+    if (!recursion_guard_(b, l, "varsym_7")) return false;
+    boolean r;
+    Marker m = enter_section_(b);
+    r = consumeTokens(b, 0, HS_DOT, HS_DOT);
+    r = r && varsym_7_2(b, l + 1);
+    exit_section_(b, m, null, r);
+    return r;
+  }
+
+  // DOT+
+  private static boolean varsym_7_2(PsiBuilder b, int l) {
+    if (!recursion_guard_(b, l, "varsym_7_2")) return false;
+    boolean r;
+    Marker m = enter_section_(b);
+    r = consumeToken(b, HS_DOT);
+    while (r) {
+      int c = current_position_(b);
+      if (!consumeToken(b, HS_DOT)) break;
+      if (!empty_element_parsed_guard_(b, "varsym_7_2", c)) break;
+    }
+    exit_section_(b, m, null, r);
     return r;
   }
 

@@ -135,11 +135,8 @@ object HaskellPsiImplUtil {
       newVarsym.foreach(vs => varsym.getNode.getTreeParent.replaceChild(varsym.getNode, vs.getNode))
       varsym
     } else {
-      // In case Varsym contains Dot and Varsym_id node
-      val newVarsym = HaskellElementFactory.createVarsym(varsym.getProject, newName)
-      newVarsym.foreach { nv =>
-        varsym.getNode.getTreeParent.replaceChild(varsym.getNode.getFirstChildNode, nv.getNode.getFirstChildNode)
-        varsym.getNode.getTreeParent.replaceChild(varsym.getNode.getLastChildNode, nv.getNode.getLastChildNode)
+      HaskellElementFactory.createVarsym(varsym.getProject, newName).foreach { newVarsym =>
+        varsym.getNode.replaceAllChildrenToChildrenOf(newVarsym.getNode)
       }
       varsym
     }

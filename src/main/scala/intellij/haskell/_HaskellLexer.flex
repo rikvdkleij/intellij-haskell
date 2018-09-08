@@ -49,7 +49,7 @@ hexadecimal         = 0[xX]{hexit}+
 octit               = [0-7]
 octal               = 0[oO]{octit}+
 
-float               = [-+]?([0-9]+(\.[0-9]+)?|\.[0-9]+)([eE][-+]?[0-9]+)?
+float               = [-+]?([0-9]+(\.[0-9]+)?|\ \.[0-9]+)([eE][-+]?[0-9]+)?
 
 gap                 = \\({white_char}|{newline})*\\
 cntrl               = {large} | [@\[\\\]\^_]
@@ -106,17 +106,17 @@ quote               = "'"
 forall              = "∀"
 
 symbol_no_dot       = {equal} | {at} | {backslash} | {vertical_bar} | {tilde} | {exclamation_mark} | {hash} | {dollar} | {percentage} | {ampersand} | {star} |
-                        {plus} | {slash} | {lt} | {gt} | {question_mark} | {caret} | {dash} | "⊜" | "≣" | "≤" | "≥" | "·"
+                        {plus} | {slash} | {lt} | {gt} | {question_mark} | {caret} | {dash} | "⊜" | "≣" | "≤" | "≥" | "·" | "&" | "¦" | "¿" | "—"
+
 symbol              = {symbol_no_dot} | {dot}
 
 var_id              = {question_mark}? {small} ({small} | {large} | {digit} | {quote})*
-varsym_id           = (({colon} | {colon_colon} | {equal} | {backslash} | {vertical_bar} | {left_arrow} | {right_arrow} | {at} | {tilde} | {double_right_arrow}) ({symbol} | {colon})+) |
+varsym_id           = (({symbol_no_dot} | {colon} | {colon_colon} | {left_arrow} | {right_arrow} | {double_right_arrow}) ({symbol} | {colon})+) |
                         {symbol_no_dot} ({symbol} | {colon})*
 
 con_id              = {large} ({small} | {large} | {digit} | {quote})*
 consym_id           = {quote}? {colon} ({symbol} | {colon})*
 
-shebang_line        = {hash} {exclamation_mark} [^\r\n]*
 
 pragma_start        = {left_brace}{dash}{hash}
 pragma_end          = {hash}{dash}{right_brace}
@@ -316,8 +316,6 @@ nhaddock_start      = {left_brace}{dash}{white_char}?{vertical_bar}
     {right_brace}         { return HS_RIGHT_BRACE; }
 
     {quote}               { return HS_QUOTE; }
-
-    {shebang_line}        { return HS_SHEBANG_LINE; }
 
     {directive}           { return HS_DIRECTIVE; }
 

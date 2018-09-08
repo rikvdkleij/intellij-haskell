@@ -303,6 +303,10 @@ public class HaskellVisitor extends PsiElementVisitor {
     visitCompositeElement(o);
   }
 
+  public void visitShebangLine(@NotNull HaskellShebangLine o) {
+    visitCompositeElement(o);
+  }
+
   public void visitSimpleclass(@NotNull HaskellSimpleclass o) {
     visitCompositeElement(o);
   }

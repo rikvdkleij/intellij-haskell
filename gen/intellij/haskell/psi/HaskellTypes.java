@@ -82,6 +82,7 @@ public interface HaskellTypes {
   IElementType HS_RESERVED_ID = new HaskellCompositeElementType("HS_RESERVED_ID");
   IElementType HS_SCC_PRAGMA = new HaskellCompositeElementType("HS_SCC_PRAGMA");
   IElementType HS_SCONTEXT = new HaskellCompositeElementType("HS_SCONTEXT");
+  IElementType HS_SHEBANG_LINE = new HaskellCompositeElementType("HS_SHEBANG_LINE");
   IElementType HS_SIMPLECLASS = new HaskellCompositeElementType("HS_SIMPLECLASS");
   IElementType HS_SIMPLETYPE = new HaskellCompositeElementType("HS_SIMPLETYPE");
   IElementType HS_SOURCE_PRAGMA = new HaskellCompositeElementType("HS_SOURCE_PRAGMA");
@@ -160,7 +161,6 @@ public interface HaskellTypes {
   IElementType HS_RIGHT_BRACKET = new HaskellTokenType("RIGHT_BRACKET");
   IElementType HS_RIGHT_PAREN = new HaskellTokenType("RIGHT_PAREN");
   IElementType HS_SEMICOLON = new HaskellTokenType("SEMICOLON");
-  IElementType HS_SHEBANG_LINE = new HaskellTokenType("SHEBANG_LINE");
   IElementType HS_STRING_LITERAL = new HaskellTokenType("STRING_LITERAL");
   IElementType HS_THEN = new HaskellTokenType("THEN");
   IElementType HS_TILDE = new HaskellTokenType("TILDE");
@@ -397,6 +397,9 @@ public interface HaskellTypes {
       }
       else if (type == HS_SCONTEXT) {
         return new HaskellScontextImpl(node);
+      }
+      else if (type == HS_SHEBANG_LINE) {
+        return new HaskellShebangLineImpl(node);
       }
       else if (type == HS_SIMPLECLASS) {
         return new HaskellSimpleclassImpl(node);

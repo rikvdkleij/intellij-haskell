@@ -49,8 +49,9 @@
   mixin("q_con_qualifier1|q_con_qualifier2|q_con_qualifier3|q_con_qualifier4|qualifier")="intellij.haskell.psi.impl.HaskellQualifierElementImpl"
 }
 
-program                     ::= onl SHEBANG_LINE? onl file_header? onl module_body
+program                     ::= onl shebang_line? onl file_header? onl module_body
 
+shebang_line                ::= "#!" general_id+
 file_header                 ::= (file_header_pragma onl)+
 private pragma              ::= PRAGMA_START (onl CON_ID? onl general_pragma_content? onl PRAGMA_END)+ {pin=1}
 file_header_pragma          ::= pragma
@@ -153,7 +154,7 @@ private modid_recover_rule  ::= DOT
 
 varid                       ::= VAR_ID "#"? {stubClass = "intellij.haskell.psi.stubs.HaskellVaridStub"}
 conid                       ::= CON_ID "#"? {stubClass = "intellij.haskell.psi.stubs.HaskellConidStub"}
-varsym                      ::= VARSYM_ID | DOT VARSYM_ID | DOT EQUAL | DOT BACKSLASH | DOT TILDE | DOT AT | DOT CONSYM_ID | DOT     {stubClass = "intellij.haskell.psi.stubs.HaskellVarsymStub"}
+varsym                      ::= VARSYM_ID | DOT+ VARSYM_ID | DOT+ EQUAL | DOT+ BACKSLASH | DOT+ TILDE | DOT+ AT | DOT+ CONSYM_ID | DOT DOT DOT+ | DOT     {stubClass = "intellij.haskell.psi.stubs.HaskellVarsymStub"}
 consym                      ::= CONSYM_ID   {stubClass = "intellij.haskell.psi.stubs.HaskellConsymStub"}
 
 cname                       ::= var | con | conop | varop
@@ -240,7 +241,7 @@ export                      ::= export3 | export2 | export4
 private export3             ::= (q_con | cname) onl LEFT_PAREN (onl cname_dot_dot (onl COMMA onl cname_dot_dot)*)? onl RIGHT_PAREN
 private export2             ::= TYPE? onl cname+
 private export4             ::= MODULE modid
-cname_dot_dot               ::= cname | dot_dot
+cname_dot_dot               ::= dot_dot | cname
 
 newconstr                   ::= newconstr_fielddecl | q_name atype
 newconstr_fielddecl         ::= q_name onls LEFT_BRACE? onls type_signature onls RIGHT_BRACE?
@@ -265,7 +266,7 @@ private line_expression     ::= general_id+ nls
 private last_line_expression::= general_id+
 
 scc_pragma                  ::= pragma
-private general_id          ::= QUASIQUOTE | symbol_reserved_op | reserved_id | q_name | LEFT_PAREN | RIGHT_PAREN | FLOAT |
+private general_id          ::= QUASIQUOTE | q_name | symbol_reserved_op | reserved_id | LEFT_PAREN | RIGHT_PAREN | FLOAT |
                                   SEMICOLON | LEFT_BRACKET | RIGHT_BRACKET | literal | LEFT_BRACE | RIGHT_BRACE |
                                   COMMA | QUOTE | BACKQUOTE | fixity |
                                   inlinelike_pragma | NEWLINE DIRECTIVE | scc_pragma
