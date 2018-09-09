@@ -21,7 +21,7 @@ import java.nio.file.Paths
 
 import com.intellij.openapi.module.{Module, ModuleManager, ModuleUtilCore}
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.roots.{ProjectRootManager, TestSourcesFilter}
+import com.intellij.openapi.roots.{ModuleRootManager, ProjectRootManager, TestSourcesFilter}
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.vfs.{LocalFileSystem, VirtualFile}
 import com.intellij.psi.search.GlobalSearchScope
@@ -42,8 +42,9 @@ object HaskellProjectUtil {
   }
 
   def isValidHaskellProject(project: Project, notifyNoSdk: Boolean): Boolean = {
-    val stackPath = HaskellSdkType.getStackPath(project, notifyNoSdk)
-    isHaskellProject(project) && stackPath.isDefined
+    val haskellModules = HaskellProjectUtil.findProjectHaskellModules(project)
+    val stackPathsDefined = haskellModules.map(m => HaskellSdkType.getStackPath(project, notifyNoSdk)).forall(_.isDefined)
+    isHaskellProject(project) && stackPathsDefined
   }
 
   def isHaskellProject(project: Project): Boolean = {
@@ -73,10 +74,10 @@ object HaskellProjectUtil {
     * findVirtualFile returns null when file is only in memory so then is must be a project file
     */
   def isProjectFile(psiFile: PsiFile): Boolean = {
-    HaskellFileUtil.findVirtualFile(psiFile).forall(vf => isProjectFile(vf, psiFile.getProject))
+    HaskellFileUtil.findVirtualFile(psiFile).forall(vf => isProjectFile(psiFile.getProject, vf))
   }
 
-  def isProjectFile(virtualFile: VirtualFile, project: Project): Boolean = {
+  def isProjectFile(project: Project, virtualFile: VirtualFile): Boolean = {
     FileUtil.isAncestor(Paths.get(project.getBasePath).toFile, Paths.get(virtualFile.getPath).toFile, true)
   }
 
@@ -137,15 +138,15 @@ object HaskellProjectUtil {
   import ScalaUtil._
 
   def getProjectRootManager(project: Project): Option[ProjectRootManager] = {
-    if (project.isDisposed) {
-      None
-    } else {
-      Option(ProjectRootManager.getInstance(project))
-    }
+    project.isDisposed.optionNot(Option(ProjectRootManager.getInstance(project))).flatten
   }
 
   def getModuleManager(project: Project): Option[ModuleManager] = {
-    project.isDisposed.optionNot(ModuleManager.getInstance(project))
+    project.isDisposed.optionNot(Option(ModuleManager.getInstance(project))).flatten
+  }
+
+  def getModuleRootManager(project: Project, module: Module): Option[ModuleRootManager] = {
+    project.isDisposed.optionNot(Option(ModuleRootManager.getInstance(module))).flatten
   }
 
   def findModule(psiElement: PsiElement): Option[Module] = {

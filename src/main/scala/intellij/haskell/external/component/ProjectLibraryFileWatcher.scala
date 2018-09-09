@@ -71,7 +71,7 @@ object ProjectLibraryFileWatcher {
           if (output.contains(true) && !project.isDisposed) {
             val projectRepls = StackReplsManager.getRunningProjectRepls(project)
             val openFiles = FileEditorManager.getInstance(project).getOpenFiles.filter(HaskellFileUtil.isHaskellFile)
-            val openProjectFiles = openFiles.filter(f => HaskellProjectUtil.isProjectFile(f, project))
+            val openProjectFiles = openFiles.filter(vf => HaskellProjectUtil.isProjectFile(project, vf))
             val openInfoFiles = openProjectFiles.flatMap(f =>
               HaskellComponentsManager.findStackComponentInfo(project, HaskellFileUtil.getAbsolutePath(f)) match {
                 case Some(i) => Some((i, f))
@@ -125,7 +125,7 @@ class ProjectLibraryFileWatcher(project: Project) extends BulkFileListener {
   override def after(events: util.List[_ <: VFileEvent]): Unit = {
     if (!project.isDisposed) {
       val libComponentInfos = (for {
-        virtualFile <- events.asScala.filter(e => e.isInstanceOf[VFileContentChangeEvent] && HaskellFileUtil.isHaskellFile(e.getFile) && HaskellProjectUtil.isProjectFile(e.getFile, project)).map(_.getFile)
+        virtualFile <- events.asScala.filter(e => e.isInstanceOf[VFileContentChangeEvent] && HaskellFileUtil.isHaskellFile(e.getFile) && HaskellProjectUtil.isProjectFile(project, e.getFile)).map(_.getFile)
         componentInfo <- HaskellComponentsManager.findStackComponentInfo(project, HaskellFileUtil.getAbsolutePath(virtualFile))
         if componentInfo.stanzaType == LibType
       } yield componentInfo).toSet

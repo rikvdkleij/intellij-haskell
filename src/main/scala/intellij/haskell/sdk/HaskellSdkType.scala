@@ -19,6 +19,7 @@ package intellij.haskell.sdk
 import java.io.File
 
 import com.intellij.openapi.fileChooser.FileChooserDescriptor
+import com.intellij.openapi.module.Module
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.projectRoots._
 import com.intellij.openapi.projectRoots.impl.SdkConfigurationUtil
@@ -118,10 +119,11 @@ object HaskellSdkType {
   }
 
   def getStackPath(project: Project, notifyNoSdk: Boolean = true): Option[String] = {
-    val projectRootManager = HaskellProjectUtil.getProjectRootManager(project)
+    val haskellProjectModule = HaskellProjectUtil.findProjectHaskellModules(project).headOption
     val stackPath = for {
-      pm <- projectRootManager
-      sdk <- Option(pm.getProjectSdk)
+      hpm <- haskellProjectModule
+      m <- HaskellProjectUtil.getModuleRootManager(project, hpm)
+      sdk <- Option(m.getSdk)
       p <- Option(sdk.getHomePath)
     } yield p
 
@@ -129,13 +131,13 @@ object HaskellSdkType {
       case Some(_) => stackPath
       case None =>
         if (notifyNoSdk) {
-          HaskellNotificationGroup.logErrorBalloonEvent(project, "Path to Haskell Stack binary is not configured in Project SDK setting.")
+          HaskellNotificationGroup.logErrorBalloonEvent(project, "Path to Haskell Stack binary is not configured in Project SDK setting / Modules.")
         }
         None
     }
   }
 
-  def getSdkName(project: Project): Option[String] = {
-    HaskellProjectUtil.getProjectRootManager(project).flatMap(p => Option(p.getProjectSdk)).map(_.getName)
+  def getSdkName(project: Project, module: Module): Option[String] = {
+    HaskellProjectUtil.getModuleRootManager(project, module).map(_.getModifiableModel.getSdkName)
   }
 }
