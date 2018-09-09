@@ -1,7 +1,7 @@
 <idea-plugin>
     <id>intellij.haskell</id>
     <name>IntelliJ-Haskell</name>
-    <version>1.0.0-beta26</version>
+    <version>1.0.0-beta27</version>
     <vendor email="rikvdkleij@gmail.com">Rik van der Kleij</vendor>
 
     <description><![CDATA[
@@ -11,7 +11,7 @@
     ]]></description>
 
     <change-notes><![CDATA[
-        <p>1.0.0-beta26</p>
+        <p>1.0.0-beta27</p>
         <b>IMPORTANT: Stack version should be > 1.7.0 and please reimport your Haskell Stack project after updating the plugin.</b>
         <ul>
             <li>Improved responsiveness, especially for multi-package projects</li>
