@@ -22,7 +22,9 @@ import com.intellij.openapi.project.Project
 import com.intellij.psi.util.PsiTreeUtil
 import com.intellij.psi.{PsiDocumentManager, PsiElement, PsiFile}
 import intellij.haskell.action.{HindentReformatAction, SelectionContext}
+import intellij.haskell.annotator.HaskellAnnotator
 import intellij.haskell.psi.{HaskellElementFactory, HaskellPsiUtil, HaskellTypes}
+import intellij.haskell.util.HaskellFileUtil
 
 import scala.annotation.tailrec
 
@@ -37,7 +39,7 @@ class HLintQuickfix(startElement: PsiElement, endElement: PsiElement, startLineN
 
   override def getFamilyName: String = "Inspection by HLint"
 
-  override def invoke(project: Project, file: PsiFile, startElement: PsiElement, endElement: PsiElement): Unit = {
+  override def invoke(project: Project, psiFile: PsiFile, startElement: PsiElement, endElement: PsiElement): Unit = {
     CommandProcessor.getInstance().executeCommand(project, () => {
       val commonParent = PsiTreeUtil.findCommonParent(startElement, endElement)
       for {
@@ -60,7 +62,7 @@ class HLintQuickfix(startElement: PsiElement, endElement: PsiElement, startLineN
 
       HaskellPsiUtil.findExpressionParent(commonParent).foreach(e => {
         val manager = PsiDocumentManager.getInstance(project)
-        val document = manager.getDocument(file)
+        val document = manager.getDocument(psiFile)
         manager.doPostponedOperationsAndUnblockDocument(document)
 
         val context = SelectionContext(
@@ -68,8 +70,11 @@ class HLintQuickfix(startElement: PsiElement, endElement: PsiElement, startLineN
           e.getTextRange.getEndOffset,
           e.getText
         )
-        HindentReformatAction.format(file, Some(context))
+        HindentReformatAction.format(psiFile, Some(context))
       })
+
+      HaskellFileUtil.saveFile(psiFile)
+      HaskellAnnotator.restartDaemonCodeAnalyzerForFile(psiFile)
     }, null, null)
   }
 
