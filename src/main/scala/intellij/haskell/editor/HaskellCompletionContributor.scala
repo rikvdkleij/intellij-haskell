@@ -70,9 +70,10 @@ class HaskellCompletionContributor extends CompletionContributor {
   private final val SpecialReservedIds = Stream("safe", "unsafe")
   private final val PragmaIds = Stream("{-#", "#-}")
   private final val Ann = "ANN"
-  private final val FileHeaderPragmaIds = Stream("LANGUAGE", "OPTIONS_HADDOCK", "INCLUDE", "OPTIONS", "OPTIONS_GHC", Ann)
+  private final val FileHeaderPragmaIds = Stream("LANGUAGE", "OPTIONS_HADDOCK", "INCLUDE", "OPTIONS", "OPTIONS_GHC", "language", "options_haddock", "include", "options", "options_ghc", Ann)
   private final val ModulePragmaIds = Stream(Ann, "DEPRECATED", "WARING", "INLINE", "INLINE_FUSED", "INLINE_INNER", "NOINLINE", "NOTINLINE", "INLINABEL", "LINE", "RULES",
-    "SPECIALIZE", "SPECIALISE", "MINIMAL", "SOURCE", "UNPACK", "NOUNPACK", "OVERLAPPING", "OVERLAPPABLE", "OVERLAPS", "CONSTANT_FOLDED", "SCC", "INCOHERENT", "CFILES")
+    "SPECIALIZE", "SPECIALISE", "MINIMAL", "SOURCE", "UNPACK", "NOUNPACK", "OVERLAPPING", "OVERLAPPABLE", "OVERLAPS", "CONSTANT_FOLDED", "SCC", "INCOHERENT", "CFILES", "deprecated", "waring", "inline", "inline_fused", "inline_inner", "noinline", "notinline", "inlinabel", "line", "rules",
+    "specialize", "specialise", "minimal", "source", "unpack", "nounpack", "overlapping", "overlappable", "overlaps", "constant_folded", "scc", "incoherent", "cfiles")
   private final val InsideImportKeywords = Stream("as", "hiding", "qualified")
   private final val CommentIds = Stream("{-", "-}", "--")
   private final val HaddockIds = Stream("{-|", "-- |", "-- ^")
