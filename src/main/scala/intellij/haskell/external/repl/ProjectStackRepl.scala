@@ -27,7 +27,7 @@ import intellij.haskell.util.HaskellFileUtil
 
 import scala.collection.JavaConverters._
 
-class ProjectStackRepl(project: Project, val stackComponentInfo: StackComponentInfo, replTimeout: Int) extends StackRepl(project, Some(stackComponentInfo), Seq(), replTimeout: Int) {
+case class ProjectStackRepl(project: Project, stackComponentInfo: StackComponentInfo, replTimeout: Int) extends StackRepl(project, Some(stackComponentInfo), Seq(), replTimeout: Int) {
 
   import intellij.haskell.external.repl.ProjectStackRepl._
 

@@ -83,7 +83,7 @@ object StackCommandLine {
   }
 
   def buildProjectDependenciesInMessageView(project: Project): Option[Boolean] = {
-    StackCommandLine.executeInMessageView(project, Seq("build", "--fast", "--test", "--bench", "--no-run-tests", "--no-run-benchmarks", "--only-dependencies"))
+    StackCommandLine.executeInMessageView(project, Seq("build", "--test", "--bench", "--no-run-tests", "--no-run-benchmarks", "--only-dependencies"))
   }
 
   private def ghcOptions(project: Project) = {

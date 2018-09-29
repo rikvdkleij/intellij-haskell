@@ -121,7 +121,11 @@ class HaskellCompletionContributor extends CompletionContributor {
         } else {
           // In case element before caret is a qualifier, module name or a dot we have to "help" IntelliJ to get the right preselected elements behavior
           // For example, asking for completion in case typing `Data.List.` will give without this help no prefix.
-          Option(parameters.getOriginalPosition).orElse(Option(parameters.getPosition))
+          if (Option(parameters.getOriginalPosition).exists(_.getNode.getElementType == HS_NEWLINE)) {
+            Option(parameters.getPosition)
+          } else {
+            Option(parameters.getOriginalPosition).orElse(Option(parameters.getPosition))
+          }
         }
         val prefixText = (
           for {
@@ -241,7 +245,10 @@ class HaskellCompletionContributor extends CompletionContributor {
       case Some(ce) if ce.getNode.getElementType == HS_NEWLINE | ce.getNode.getElementType == HS_LEFT_PAREN => context.setDummyIdentifier("a")
       case Some(ce) =>
         HaskellPsiUtil.findModIdElement(ce) match {
-          case Some(modid) => context.setDummyIdentifier(modid.getName)
+          case Some(modid) =>
+            val start = modid.getTextRange.getStartOffset
+            val end = context.getCaret.getOffset
+            context.setDummyIdentifier(psiFile.getText.substring(start, end))
           case _ => findQualifiedNamedElementToComplete(ce) match {
             case Some(qualifiedNameElement) =>
               context.setDummyIdentifier(qualifiedNameElement.getName)

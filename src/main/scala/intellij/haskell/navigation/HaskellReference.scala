@@ -35,6 +35,9 @@ class HaskellReference(element: HaskellNamedElement, textRange: TextRange) exten
     if (StackProjectManager.isInitializing(project)) {
       HaskellEditorUtil.showHaskellSupportIsNotAvailableWhileInitializing(project)
       Array()
+    } else if (!element.isPhysical) {
+      // Can happen during code completion that element is virtual element
+      Array()
     } else {
       ProgressManager.checkCanceled()
       val psiFile = element.getContainingFile.getOriginalFile

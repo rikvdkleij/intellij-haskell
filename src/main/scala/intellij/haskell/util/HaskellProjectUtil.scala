@@ -26,6 +26,7 @@ import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.vfs.{LocalFileSystem, VirtualFile}
 import com.intellij.psi.search.GlobalSearchScope
 import com.intellij.psi.{PsiElement, PsiFile}
+import intellij.haskell.HaskellNotificationGroup
 import intellij.haskell.external.component.NoInfo
 import intellij.haskell.external.execution.StackCommandLine
 import intellij.haskell.module.HaskellModuleType
@@ -78,7 +79,23 @@ object HaskellProjectUtil {
   }
 
   def isProjectFile(project: Project, virtualFile: VirtualFile): Boolean = {
-    FileUtil.isAncestor(Paths.get(project.getBasePath).toFile, Paths.get(virtualFile.getPath).toFile, true)
+    !isIgnoredFile(project, virtualFile) && findProjectHaskellModules(project).exists(m => FileUtil.isAncestor(Paths.get(getModuleDir(m).getAbsolutePath).toFile, Paths.get(virtualFile.getPath).toFile, true))
+  }
+
+  private final val IgnoredHaskellFiles = Seq("setup.hs", "hlint.hs")
+
+  private def isIgnoredFile(project: Project, virtualFile: VirtualFile): Boolean = {
+    if (IgnoredHaskellFiles.contains(virtualFile.getName.toLowerCase) &&
+      HaskellProjectUtil.findModuleForVirtualFile(project, virtualFile).exists(m => findContainingDirectory(virtualFile).exists(vf => HaskellFileUtil.getAbsolutePath(vf) == HaskellProjectUtil.getModuleDir(m).getPath))) {
+      HaskellNotificationGroup.logInfoEvent(project, s"`${virtualFile.getName}` is ignored")
+      true
+    } else {
+      false
+    }
+  }
+
+  private def findContainingDirectory(virtualFile: VirtualFile): Option[VirtualFile] = {
+    Option(virtualFile.getParent)
   }
 
   def isProjectTestFile(psiFile: PsiFile): Option[Boolean] = {

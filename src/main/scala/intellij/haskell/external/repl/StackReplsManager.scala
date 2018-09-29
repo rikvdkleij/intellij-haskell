@@ -21,7 +21,6 @@ import java.util.concurrent.ConcurrentHashMap
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.psi.PsiFile
 import intellij.haskell.HaskellNotificationGroup
 import intellij.haskell.cabal._
@@ -97,13 +96,12 @@ private[external] class StackReplsManager(val project: Project) {
 
   import scala.collection.JavaConverters._
 
-  private val globalRepl: GlobalStackRepl = new GlobalStackRepl(project, HaskellSettingsState.getReplTimeout)
+  private val globalRepl: GlobalStackRepl = GlobalStackRepl(project, HaskellSettingsState.getReplTimeout)
 
   private val projectRepls = new ConcurrentHashMap[StackComponentInfo, ProjectStackRepl]().asScala
 
   val moduleCabalInfos: Iterable[(Module, CabalInfo)] = StackReplsManager.createCabalInfos(project)
 
-  private final val IgnoredHaskellFiles = Seq("setup.hs", "hlint.hs")
 
   val stackComponentInfos: Iterable[StackComponentInfo] = StackReplsManager.createStackComponentInfos(project, moduleCabalInfos)
 
@@ -118,11 +116,7 @@ private[external] class StackReplsManager(val project: Project) {
   def getGlobalRepl: GlobalStackRepl = globalRepl
 
   private def findProjectRepl(psiFile: PsiFile): Option[ProjectStackRepl] = {
-    if (IgnoredHaskellFiles.contains(psiFile.getName.toLowerCase) &&
-      HaskellProjectUtil.findModuleForFile(psiFile).exists(m => findContainingDirectory(psiFile).exists(vf => HaskellFileUtil.getAbsolutePath(vf) == HaskellProjectUtil.getModuleDir(m).getPath))) {
-      HaskellNotificationGroup.logInfoEvent(psiFile.getProject, s"`${psiFile.getName}` can not be loaded in REPL")
-      None
-    } else {
+    if (HaskellProjectUtil.isProjectFile(psiFile)) {
       if (StackProjectManager.isInitializing(project)) {
         HaskellEditorUtil.showHaskellSupportIsNotAvailableWhileInitializing(project)
         None
@@ -135,11 +129,9 @@ private[external] class StackReplsManager(val project: Project) {
             None
         }
       }
+    } else {
+      None
     }
-  }
-
-  private def findContainingDirectory(psiFile: PsiFile): Option[VirtualFile] = {
-    ApplicationUtil.runReadAction(Option(psiFile.getContainingDirectory)).map(_.getVirtualFile)
   }
 
   private def getProjectRepl(componentInfo: StackComponentInfo, psiFile: Option[PsiFile]): ProjectStackRepl = {

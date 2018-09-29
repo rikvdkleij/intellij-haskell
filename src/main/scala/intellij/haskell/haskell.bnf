@@ -75,7 +75,7 @@ import_declarations         ::= ((import_declaration | cfiles_pragma | DIRECTIVE
 private top_declarations    ::= (top_declaration (NEWLINE | DIRECTIVE)+)* top_declaration?
 
 source_pragma               ::= pragma
-import_declaration          ::= IMPORT (onls source_pragma)? (onls import_qualified)? (onls import_package_name)? onls modid onls import_qualified_as? onls import_spec? NEWLINE?   {methods=[getModuleName] pin=1}
+import_declaration          ::= IMPORT (onls source_pragma)? (onls import_qualified)? (onls import_package_name)? onls modid onls import_qualified_as? onls import_spec?    {methods=[getModuleName] pin=1}
 import_qualified            ::= "qualified"
 import_qualified_as         ::= "as" qualifier
 import_spec                 ::= import_ids_spec |
@@ -149,8 +149,7 @@ private oonls               ::= (&<<containsSpaces>> NEWLINE)?                  
 
 comments                    ::= COMMENT | NCOMMENT | HADDOCK | NHADDOCK | NOT_TERMINATED_COMMENT  // rule is necessary to refer to various comment types in code
 
-modid                       ::= (conid DOT)* conid {pin=1 recoverWhile=modid_recover_rule stubClass = "intellij.haskell.psi.stubs.HaskellModidStub"}
-private modid_recover_rule  ::= DOT
+modid                       ::= (conid DOT)* conid {pin=1 stubClass = "intellij.haskell.psi.stubs.HaskellModidStub"}
 
 varid                       ::= VAR_ID "#"? {stubClass = "intellij.haskell.psi.stubs.HaskellVaridStub"}
 conid                       ::= CON_ID "#"? {stubClass = "intellij.haskell.psi.stubs.HaskellConidStub"}

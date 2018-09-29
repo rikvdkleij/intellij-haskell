@@ -20,6 +20,7 @@ import java.util
 import java.util.concurrent.ConcurrentHashMap
 
 import com.intellij.openapi.fileEditor.FileEditorManager
+import com.intellij.openapi.module.{Module, ModuleUtilCore}
 import com.intellij.openapi.progress.{PerformInBackgroundOption, ProgressIndicator, ProgressManager, Task}
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.vfs.newvfs.BulkFileListener
@@ -31,7 +32,7 @@ import intellij.haskell.external.component.ProjectLibraryFileWatcher.{Build, Bui
 import intellij.haskell.external.execution.StackCommandLine
 import intellij.haskell.external.repl.StackRepl.LibType
 import intellij.haskell.external.repl.StackReplsManager
-import intellij.haskell.util.{HaskellFileUtil, HaskellProjectUtil}
+import intellij.haskell.util.{ApplicationUtil, HaskellFileUtil, HaskellProjectUtil}
 
 import scala.collection.JavaConverters._
 import scala.collection.concurrent
@@ -52,7 +53,7 @@ object ProjectLibraryFileWatcher {
 
   def checkLibraryBuild(project: Project, currentInfo: StackComponentInfo): Unit = synchronized {
     ProjectLibraryFileWatcher.buildStatus.get(project) match {
-      case Some(Build(infos)) if !infos.contains(currentInfo) => build(project, infos)
+      case Some(Build(infos)) if infos.exists(_ != currentInfo) => build(project, infos)
       case _ => ()
     }
   }
@@ -64,7 +65,9 @@ object ProjectLibraryFileWatcher {
       ProgressManager.getInstance().run(new Task.Backgroundable(project, "Building libraries", false, PerformInBackgroundOption.ALWAYS_BACKGROUND) {
 
         def run(progressIndicator: ProgressIndicator) {
-          progressIndicator.setText(s"Building: ${libComponentInfos.map(_.target).mkString(", ")}")
+          val buildMessage = s"Building: ${libComponentInfos.map(_.target).mkString(", ")}"
+          HaskellNotificationGroup.logInfoEvent(project, buildMessage)
+          progressIndicator.setText(buildMessage)
 
           // Forced `-Wwarn` otherwise build will fail in case of warnings and that will cause that REPLs of dependent targets will not start anymore
           val output = StackCommandLine.executeInMessageView(project, Seq("build") ++ libComponentInfos.map(_.target).toSeq ++ Seq("--ghc-options", "-Wwarn"))
@@ -80,21 +83,28 @@ object ProjectLibraryFileWatcher {
 
             import scala.concurrent.duration._
 
-            libComponentInfos.foreach(libInfo => {
-              val dependentFiles = openInfoFiles.filterNot(_._1 == libInfo).map(_._2)
-              val dependentRepls = projectRepls.find(_.target != libInfo.target)
+            val isDependentResult = libComponentInfos.map(libInfo => {
+              val module = libInfo.module
+              val dependentModules = ApplicationUtil.runReadAction(ModuleUtilCore.getAllDependentModules(module))
 
-              dependentRepls.foreach(_.restart())
-
-              dependentFiles.foreach { vf =>
-                HaskellFileUtil.convertToHaskellFileInReadAction(project, vf, timeout = 1.second).toOption.flatten match {
-                  case Some(psiFile) =>
-                    HaskellComponentsManager.invalidateCachesForFile(psiFile)
-                    HaskellAnnotator.restartDaemonCodeAnalyzerForFile(psiFile)
-                  case None => HaskellNotificationGroup.logInfoEvent(project, s"Could not invalidate cache and restart daemon analyzer for file ${vf.getName}")
-                }
-              }
+              val dependentFiles = openInfoFiles.filter { case (info, _) => isDependent(libInfo, dependentModules, info) }.map(_._2)
+              val dependentRepls = projectRepls.filter(r => isDependent(libInfo, dependentModules, r.stackComponentInfo))
+              (dependentFiles, dependentRepls)
             })
+
+            val dependentFiles = isDependentResult.flatMap(_._1)
+            val dependentRepls = isDependentResult.flatMap(_._2)
+
+            dependentRepls.foreach(_.restart())
+
+            dependentFiles.foreach { vf =>
+              HaskellFileUtil.convertToHaskellFileInReadAction(project, vf, timeout = 1.second).toOption.flatten match {
+                case Some(psiFile) =>
+                  HaskellComponentsManager.invalidateCachesForFile(psiFile)
+                  HaskellAnnotator.restartDaemonCodeAnalyzerForFile(psiFile)
+                case None => HaskellNotificationGroup.logInfoEvent(project, s"Could not invalidate cache and restart daemon analyzer for file ${vf.getName}")
+              }
+            }
           }
 
           if (!project.isDisposed) {
@@ -112,6 +122,10 @@ object ProjectLibraryFileWatcher {
         }
       })
     }
+  }
+
+  private def isDependent(libInfo: StackComponentInfo, dependentModules: util.List[Module], info: StackComponentInfo) = {
+    (info.module == libInfo.module && info.stanzaType != LibType) || (info.stanzaType == LibType && dependentModules.contains(info.module))
   }
 }
 

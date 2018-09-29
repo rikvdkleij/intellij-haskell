@@ -31,6 +31,7 @@ import intellij.haskell.psi.HaskellPsiUtil
 import intellij.haskell.util.{ApplicationUtil, HaskellFileUtil, HaskellProjectUtil}
 
 import scala.collection.JavaConverters._
+import scala.concurrent.duration.{FiniteDuration, _}
 
 /**
   * Notice that Haskell modules in libraries can be found which are not exposed
@@ -51,11 +52,11 @@ object HaskellModuleNameIndex {
 
   type Result = Either[NoInfo, Option[PsiFile]]
 
-  // This should be a synchronous cache because in case of calling dispatch thread
-  private final val Cache: LoadingCache[Key, Result] = Scaffeine().build((k: Key) => find(k))
+  // This should be a synchronous cache because in case caller is on dispatch thread
+  private final val Cache: LoadingCache[Key, Result] = Scaffeine().build((k: Key) => find(k, ApplicationUtil.ScheduleInReadActionTimeout))
 
-  private def find(key: Key): Either[NoInfo, Option[PsiFile]] = {
-    findFile(key.project, key.moduleName) match {
+  private def find(key: Key, timeout: FiniteDuration): Either[NoInfo, Option[PsiFile]] = {
+    findFile(key.project, key.moduleName, timeout) match {
       case Right(vfs) => vfs match {
         case Some(vf) => HaskellFileUtil.convertToHaskellFileInReadAction(key.project, vf)
         case None => Right(None)
@@ -67,7 +68,7 @@ object HaskellModuleNameIndex {
   def fillCache(project: Project, moduleNames: Iterable[String]): Unit = {
     moduleNames.foreach(mn => {
       val key = Key(project, mn)
-      find(key) match {
+      find(key, 5.seconds) match {
         case Right(vf) => Cache.put(key, Right(vf))
         case Left(noInfo) => Left(noInfo)
       }
@@ -85,7 +86,7 @@ object HaskellModuleNameIndex {
     }
   }
 
-  private def findFile(project: Project, moduleName: String): Either[NoInfo, Option[VirtualFile]] = {
+  private def findFile(project: Project, moduleName: String, timeout: FiniteDuration): Either[NoInfo, Option[VirtualFile]] = {
     if (moduleName == HaskellProjectUtil.Prelude) {
       Right(None)
     } else {
@@ -97,7 +98,8 @@ object HaskellModuleNameIndex {
             case _: IndexNotReadyException => Left(IndexNotReady)
           }
         },
-        s"finding file for module $moduleName by index"
+        s"finding file for module $moduleName by index",
+        timeout
       )
       for {
         r <- result

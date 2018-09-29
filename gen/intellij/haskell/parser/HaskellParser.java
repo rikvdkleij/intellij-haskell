@@ -3241,7 +3241,7 @@ public class HaskellParser implements PsiParser, LightPsiParser {
   }
 
   /* ********************************************************** */
-  // IMPORT (onls source_pragma)? (onls import_qualified)? (onls import_package_name)? onls modid onls import_qualified_as? onls import_spec? NEWLINE?
+  // IMPORT (onls source_pragma)? (onls import_qualified)? (onls import_package_name)? onls modid onls import_qualified_as? onls import_spec?
   public static boolean import_declaration(PsiBuilder b, int l) {
     if (!recursion_guard_(b, l, "import_declaration")) return false;
     if (!nextTokenIs(b, HS_IMPORT)) return false;
@@ -3257,8 +3257,7 @@ public class HaskellParser implements PsiParser, LightPsiParser {
     r = p && report_error_(b, onls(b, l + 1)) && r;
     r = p && report_error_(b, import_declaration_7(b, l + 1)) && r;
     r = p && report_error_(b, onls(b, l + 1)) && r;
-    r = p && report_error_(b, import_declaration_9(b, l + 1)) && r;
-    r = p && import_declaration_10(b, l + 1) && r;
+      r = p && import_declaration_9(b, l + 1) && r;
     exit_section_(b, l, m, r, p, null);
     return r || p;
   }
@@ -3328,13 +3327,6 @@ public class HaskellParser implements PsiParser, LightPsiParser {
   private static boolean import_declaration_9(PsiBuilder b, int l) {
     if (!recursion_guard_(b, l, "import_declaration_9")) return false;
     import_spec(b, l + 1);
-    return true;
-  }
-
-  // NEWLINE?
-  private static boolean import_declaration_10(PsiBuilder b, int l) {
-    if (!recursion_guard_(b, l, "import_declaration_10")) return false;
-    consumeToken(b, HS_NEWLINE);
     return true;
   }
 
@@ -4486,7 +4478,7 @@ public class HaskellParser implements PsiParser, LightPsiParser {
     r = modid_0(b, l + 1);
     p = r; // pin = 1
     r = r && conid(b, l + 1);
-    exit_section_(b, l, m, r, p, modid_recover_rule_parser_);
+      exit_section_(b, l, m, r, p, null);
     return r || p;
   }
 
@@ -4510,12 +4502,6 @@ public class HaskellParser implements PsiParser, LightPsiParser {
     r = r && consumeToken(b, HS_DOT);
     exit_section_(b, m, null, r);
     return r;
-  }
-
-  /* ********************************************************** */
-  // DOT
-  static boolean modid_recover_rule(PsiBuilder b, int l) {
-    return consumeToken(b, HS_DOT);
   }
 
   /* ********************************************************** */
@@ -6917,9 +6903,4 @@ public class HaskellParser implements PsiParser, LightPsiParser {
     return r;
   }
 
-  final static Parser modid_recover_rule_parser_ = new Parser() {
-    public boolean parse(PsiBuilder b, int l) {
-      return modid_recover_rule(b, l + 1);
-    }
-  };
 }

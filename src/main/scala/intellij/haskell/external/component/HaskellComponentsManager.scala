@@ -209,6 +209,8 @@ object HaskellComponentsManager {
 
   private def preloadAllLibraryModuleNames(project: Project): Iterable[LibraryModuleNames] = {
     if (!project.isDisposed) {
+      LibraryModuleNamesComponent.preloadLibraryModuleNames(project)
+
       val libraryModuleNames = for {
         info <- StackReplsManager.getReplsManager(project).map(_.stackComponentInfos).getOrElse(Iterable())
         globalProjectInfo <- HaskellComponentsManager.findStackComponentGlobalInfo(info)

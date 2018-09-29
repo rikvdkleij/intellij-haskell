@@ -17,11 +17,14 @@
 package intellij.haskell.external.component
 
 import com.github.blemale.scaffeine.{LoadingCache, Scaffeine}
-import com.intellij.execution.process.ProcessOutput
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.util.text.StringUtil
+import intellij.haskell.HaskellNotificationGroup
 import intellij.haskell.external.execution.StackCommandLine
 
 private[component] object LibraryModuleNamesComponent {
+
+  import scala.collection.JavaConverters._
 
   private case class Key(project: Project, packageName: String)
 
@@ -29,27 +32,49 @@ private[component] object LibraryModuleNamesComponent {
 
   private final val Cache: LoadingCache[Key, Result] = Scaffeine().build((k: Key) => findAvailableModuleNames(k))
 
+  private def splitLines(s: String, excludeEmptyLines: Boolean) = {
+    val converted = StringUtil.convertLineSeparators(s)
+    StringUtil.split(converted, "\n", true, excludeEmptyLines).asScala
+  }
+
+  import scala.concurrent.duration._
+
+  def preloadLibraryModuleNames(project: Project): Unit = {
+    val result = StackCommandLine.run(project, Seq("exec", "--", "ghc-pkg", "dump"), notifyBalloonError = true, timeoutInMillis = 60.seconds.toMillis).map { processOutput =>
+      val packageOutputs = processOutput.getStdout.split("(?m)^---\n")
+      packageOutputs.map(o => {
+        val outputLines = splitLines(o, excludeEmptyLines = true)
+        val (packageName, exposedModuleNames, hiddenModuleNames) = findPackageModuleNames(outputLines)
+        (packageName, LibraryModuleNames(exposedModuleNames, hiddenModuleNames))
+      })
+    }.getOrElse(Array())
+
+    result.foreach { case (name, lmn) =>
+      name.foreach { n =>
+        Cache.put(Key(project, n), Some(lmn))
+      }
+    }
+  }
+
   def findLibraryModuleNames(project: Project, packageName: String): Option[LibraryModuleNames] = {
     val key = Key(project, packageName)
     Cache.get(key) match {
       case result@Some(_) => result
-      case _ =>
-        Cache.invalidate(key)
-        None
+      case _ => None
     }
   }
 
-  import scala.collection.JavaConverters._
 
   private def findAvailableModuleNames(key: Key): Option[LibraryModuleNames] = {
-    StackCommandLine.run(key.project, Seq("exec", "--", "ghc-pkg", "describe", key.packageName)).flatMap { processOutput =>
-      val (axposedModuleNames, hiddenModuleNames) = findModuleNames(processOutput)
-      Some(LibraryModuleNames(axposedModuleNames, hiddenModuleNames))
-    }
+    // Because preloadLibraryModuleNames should already have done all the work, something is wrong if this method is called
+    HaskellNotificationGroup.logErrorBalloonEvent(key.project, s"Package ${key.packageName} is not in library module names cache")
+    None
   }
 
-  private def findModuleNames(processOutput: ProcessOutput) = {
-    val lines = processOutput.getStdoutLines.asScala
+  private final val NameKey = "name: "
+
+  private def findPackageModuleNames(lines: Seq[String]): (Option[String], Iterable[String], Iterable[String]) = {
+    val name = lines.find(_.startsWith(NameKey)).map(_.replace(NameKey, ""))
     val exposedModuleNameLines = lines.dropWhile(_ != "exposed-modules:").drop(1)
     val hiddenModuleNameLines = lines.dropWhile(_ != "hidden-modules:").drop(1)
 
@@ -59,7 +84,7 @@ private[component] object LibraryModuleNamesComponent {
 
     val exposedModulenames = findModuleNames(exposedModuleNameLines)
     val hiddenModulenames = findModuleNames(hiddenModuleNameLines)
-    (exposedModulenames.toIterable, hiddenModulenames.toIterable)
+    (name, exposedModulenames.toIterable, hiddenModulenames.toIterable)
   }
 
   def invalidate(project: Project): Unit = {

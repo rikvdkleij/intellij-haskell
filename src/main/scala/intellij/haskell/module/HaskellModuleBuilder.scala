@@ -17,6 +17,7 @@
 package intellij.haskell.module
 
 import java.io.File
+import java.nio.file.Paths
 
 import com.intellij.ide.util.projectWizard._
 import com.intellij.openapi.Disposable
@@ -173,8 +174,8 @@ object HaskellModuleBuilder {
   }
 
   def createCabalInfo(project: Project, modulePath: String, packageRelativePath: String): Option[CabalInfo] = {
+    val moduleDirectory = getModuleRootDirectory(packageRelativePath, modulePath)
     for {
-      moduleDirectory <- getModuleRootDirectory(packageRelativePath, modulePath)
       cabalFile <- getCabalFile(moduleDirectory)
       cabalInfo <- getCabalInfo(project, cabalFile)
     } yield cabalInfo
@@ -184,24 +185,20 @@ object HaskellModuleBuilder {
     new File(moduleBuilder.getContentEntryPath, GlobalInfo.StackWorkDirName)
   }
 
-  def getDependencies(project: Project, target: String, depth: Option[Int]): Iterable[HaskellDependency] = {
+  def getDependencies(project: Project, module: Module, target: String, depth: Option[Int]): Iterable[HaskellDependency] = {
     val projectModules = HaskellProjectUtil.findProjectHaskellModules(project)
-
     for {
-      module <- projectModules
-      packageName = module.getName
       lines <- StackCommandLine.run(project, Seq("ls", "dependencies", target, "--test", "--bench") ++ depth.map(d => s"--depth=$d").toSeq, timeoutInMillis = 60.seconds.toMillis).map(_.getStdoutLines).toSeq
-      dependencies <- createDependencies(project, lines.asScala, projectModules).filterNot(p => packageName == p.name || p.name == "rts" || p.name == "ghc")
+      dependencies <- createDependencies(project, lines.asScala, projectModules).filterNot(p => p.name.toLowerCase == module.getName.toLowerCase || p.name == "rts" || p.name == "ghc")
     } yield dependencies
   }
 
-  private def getModuleRootDirectory(packagePath: String, modulePath: String): Option[File] = {
-    val file = if (packagePath == ".") {
+  def getModuleRootDirectory(packagePath: String, modulePath: String): File = {
+    if (packagePath == ".") {
       new File(modulePath)
     } else {
-      new File(modulePath, packagePath)
+      new File(Paths.get(modulePath, packagePath).toRealPath().toString)
     }
-    Option(file).filter(_.exists())
   }
 
   private def getCabalFile(moduleDirectory: File): Option[File] = {
@@ -235,13 +232,15 @@ object HaskellModuleBuilder {
         val dependenciesByModule = for {
           module <- projectModules
           packageName = module.getName
-          dependencies = getDependencies(project, packageName, None)
+          dependencies = getDependencies(project, module, packageName, None)
         } yield (module, dependencies)
 
         val allDependencies = dependenciesByModule.flatMap(_._2).toSeq.distinct
         val libraryDependencies = allDependencies.filter(_.isInstanceOf[HaskellLibraryDependency]).map(_.asInstanceOf[HaskellLibraryDependency])
 
         downloadHaskellPackageSources(project, projectLibDirectory, stackPath, libraryDependencies)
+
+        LocalFileSystem.getInstance().refresh(true)
 
         dependenciesByModule.foreach { case (module, dependencies) =>
           addPackagesAsDependenciesToModule(module, projectModules, dependencies, allDependencies, projectLibDirectory)
@@ -328,9 +327,8 @@ object HaskellModuleBuilder {
 
     projectModuleDependencies.foreach(dependency => {
       ModuleRootModificationUtil.updateModel(module, (modifiableRootModel: ModifiableRootModel) => {
-        if (modifiableRootModel.findModuleOrderEntry(dependency.projectModule) == null) {
-          val moduleOrderEntry = modifiableRootModel.addModuleOrderEntry(dependency.projectModule)
-          moduleOrderEntry.setExported(true)
+        if (module != dependency.projectModule && modifiableRootModel.findModuleOrderEntry(dependency.projectModule) == null) {
+          modifiableRootModel.addModuleOrderEntry(dependency.projectModule)
         }
       })
     })

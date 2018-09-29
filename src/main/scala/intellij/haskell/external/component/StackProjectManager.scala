@@ -132,10 +132,6 @@ object StackProjectManager {
               progressIndicator.setText("Busy with building project's dependencies")
               val dependenciesBuildResult = StackCommandLine.buildProjectDependenciesInMessageView(project)
 
-              progressIndicator.setText("Busy with preloading library files")
-              val preloadLibraryModuleNamesCache = ApplicationManager.getApplication.executeOnPooledThread(ScalaUtil.callable {
-                HaskellComponentsManager.preloadLibraryModuleNamesCache(project)
-              })
 
               if (dependenciesBuildResult.contains(true)) {
                 progressIndicator.setText("Busy with building project")
@@ -144,6 +140,11 @@ object StackProjectManager {
               } else {
                 HaskellNotificationGroup.logErrorBalloonEvent(project, "Project will not be built because building it's dependencies failed")
               }
+
+              progressIndicator.setText("Busy with preloading library files")
+              val preloadLibraryModuleNamesCache = ApplicationManager.getApplication.executeOnPooledThread(ScalaUtil.callable {
+                HaskellComponentsManager.preloadLibraryModuleNamesCache(project)
+              })
 
               if (!project.isDisposed) {
                 progressIndicator.setText(s"Busy with building Intero")

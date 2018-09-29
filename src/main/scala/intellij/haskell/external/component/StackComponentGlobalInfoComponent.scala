@@ -22,7 +22,6 @@ import com.github.blemale.scaffeine.{LoadingCache, Scaffeine}
 import com.intellij.openapi.project.Project
 import intellij.haskell.external.component.HaskellComponentsManager.StackComponentInfo
 import intellij.haskell.module.HaskellModuleBuilder
-import intellij.haskell.module.HaskellModuleBuilder.HaskellLibraryDependency
 
 import scala.concurrent.{Await, ExecutionContext, ExecutionContextExecutorService, Future}
 
@@ -56,22 +55,23 @@ private[component] object StackComponentGlobalInfoComponent {
   import scala.concurrent.duration._
 
   private def findAvailableModuleNames(project: Project, componentInfo: StackComponentInfo): Result = {
-    val allDependencies = HaskellModuleBuilder.getDependencies(project, componentInfo.target, None)
-    val packageNameLibraryModuleNamesFutures = allDependencies.grouped(5).flatMap {
-      _.map {
-        case HaskellLibraryDependency(name, _) =>
+    val allDependencies = HaskellModuleBuilder.getDependencies(project, componentInfo.module, componentInfo.target, None)
+    val packageNameLibraryModuleNamesFutures = allDependencies.grouped(5).map { dependencies =>
+      Future {
+        dependencies.flatMap { d =>
+          val name = d.name
           if (project.isDisposed) {
-            Future.successful(None)
+            None
           } else {
-            Future(LibraryModuleNamesComponent.findLibraryModuleNames(project, name).map((name, _)))
+            LibraryModuleNamesComponent.findLibraryModuleNames(project, name).map((name, _))
           }
-        case _ => Future.successful(None)
+        }
       }
     }
 
     val packageNameLibraryModuleNames = Await.result(Future.sequence(packageNameLibraryModuleNamesFutures), 60.second).flatten.toIterable
 
-    val availableDependencyPackages = HaskellModuleBuilder.getDependencies(project, componentInfo.target, Some(1)).map(_.name).toSeq
+    val availableDependencyPackages = HaskellModuleBuilder.getDependencies(project, componentInfo.module, componentInfo.target, Some(1)).map(_.name).toSeq
     val availableLibraryModuleNames = packageNameLibraryModuleNames.filter { case (n, _) => availableDependencyPackages.contains(n) }.map(_._2)
     if (packageNameLibraryModuleNames.isEmpty) {
       None

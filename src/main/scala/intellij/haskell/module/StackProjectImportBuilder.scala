@@ -56,7 +56,7 @@ class StackProjectImportBuilder extends ProjectImportBuilder[Unit] {
     val packagePaths = StackYamlComponent.getPackagePaths(project).getOrElse(Seq(projectRootRelativePath))
 
     packagePaths.foreach(packageRelativePath => {
-      val moduleDirectory = getModuleRootDirectory(packageRelativePath)
+      val moduleDirectory = HaskellModuleBuilder.getModuleRootDirectory(packageRelativePath, getFileToImport)
       HaskellModuleBuilder.createCabalInfo(project, getFileToImport, packageRelativePath) match {
         case Some(cabalInfo) =>
           val packageName = cabalInfo.packageName
@@ -82,14 +82,6 @@ class StackProjectImportBuilder extends ProjectImportBuilder[Unit] {
     }
 
     HaskellProjectUtil.getModuleManager(project).map(_.getModules).getOrElse(Array()).toList.asJava
-  }
-
-  private def getModuleRootDirectory(packagePath: String): File = {
-    if (packagePath == projectRootRelativePath) {
-      new File(getFileToImport)
-    } else {
-      new File(getFileToImport, packagePath)
-    }
   }
 
   private def getModuleImlFilePath(moduleDirectory: File, packageName: String): String = {

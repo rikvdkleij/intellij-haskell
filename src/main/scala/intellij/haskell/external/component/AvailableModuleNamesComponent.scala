@@ -26,6 +26,7 @@ import intellij.haskell.util.{ApplicationUtil, HaskellFileUtil}
 import intellij.haskell.{HaskellFileType, HaskellNotificationGroup}
 
 import scala.collection.JavaConverters._
+import scala.concurrent.duration._
 
 private[component] object AvailableModuleNamesComponent {
 
@@ -65,6 +66,6 @@ private[component] object AvailableModuleNamesComponent {
           HaskellNotificationGroup.logInfoEvent(module.getProject, s"Index not ready while findHaskellFiles for module ${module.getName} ")
           Iterable()
       }
-    }, s"find Haskell files for module ${module.getName}").toOption.toIterable.flatten
+    }, s"find Haskell files for module ${module.getName}", 5.seconds).toOption.toIterable.flatten
   }
 }
