@@ -16,10 +16,12 @@
 
 package intellij.haskell.navigation
 
+import com.intellij.lang.Language
 import com.intellij.navigation.{GotoClassContributor, NavigationItem}
 import com.intellij.openapi.project.Project
 import com.intellij.psi.stubs.StubIndex
 import com.intellij.util.ArrayUtil
+import intellij.haskell.HaskellLanguage
 import intellij.haskell.psi.stubs.index.HaskellAllNameIndex
 import intellij.haskell.psi.{HaskellClassDeclaration, HaskellDeclarationElement, HaskellNamedElement, HaskellPsiUtil}
 import intellij.haskell.util.HaskellProjectUtil
@@ -51,7 +53,19 @@ class GotoByDeclarationContributor extends GotoClassContributor {
     }
   }
 
-  override def getQualifiedNameSeparator: String = "."
+  override def getQualifiedName(item: NavigationItem): String = {
+    item.getPresentation.getPresentableText
+  }
 
-  override def getQualifiedName(item: NavigationItem): String = null
+  override def getQualifiedNameSeparator: String = {
+    "."
+  }
+
+  override def getElementKind: String = {
+    "declaration"
+  }
+
+  override def getElementLanguage: Language = {
+    HaskellLanguage.Instance
+  }
 }
