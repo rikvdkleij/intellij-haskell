@@ -64,7 +64,7 @@ object HindentReformatAction {
 
     val formatAction = ApplicationManager.getApplication.executeOnPooledThread(ScalaUtil.callable[Either[String, String]] {
       selectionContext match {
-        case Some(sc) => writeToHindent(command, sc.text,project)
+        case Some(sc) => writeToHindent(command, sc.text, project)
         case None => writeToHindent(command, psiFile.getText, project)
       }
     })
@@ -73,8 +73,7 @@ object HindentReformatAction {
       case None => false
       case Some(r) => r match {
         case Left(e) =>
-          HaskellNotificationGroup.logErrorEvent(project, e)
-          HaskellNotificationGroup.logErrorBalloonEvent(project, s"Error while reformatting by `$HindentName`. Error: $e")
+          HaskellNotificationGroup.logInfoEvent(project, s"Error while reformatting by `$HindentName`. Error: $e")
           false
         case Right(sourceCode) =>
           selectionContext match {

@@ -67,7 +67,7 @@ object StylishHaskellReformatAction {
             if (processOutput.getStderrLines.isEmpty) {
               HaskellFileUtil.saveFileWithNewContent(psiFile, processOutput.getStdout)
             } else {
-              HaskellNotificationGroup.logErrorBalloonEvent(project, s"Error while reformatting by `$StylishHaskellName`. Error: ${processOutput.getStderr}")
+              HaskellNotificationGroup.logInfoEvent(project, s"Error while reformatting by `$StylishHaskellName`. Error: ${processOutput.getStderr}")
             }
         }
       case None => HaskellNotificationGroup.logWarningBalloonEvent(psiFile.getProject, s"Can not reformat file because could not determine path for file `${psiFile.getName}`. File exists only in memory")
