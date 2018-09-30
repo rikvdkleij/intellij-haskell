@@ -20,10 +20,10 @@ import com.intellij.lang.{BracePair, PairedBraceMatcher}
 import com.intellij.psi.PsiFile
 import com.intellij.psi.tree.IElementType
 import intellij.haskell.HaskellParserDefinition._
+import intellij.haskell.psi.HaskellTypes._
 
 object HaskellBraceMatcher {
 
-  import intellij.haskell.psi.HaskellTypes._
 
   private final val PAIRS = Array(
     new BracePair(HS_LEFT_PAREN, HS_RIGHT_PAREN, false),
@@ -36,8 +36,8 @@ object HaskellBraceMatcher {
 class HaskellBraceMatcher extends PairedBraceMatcher {
   def getPairs: Array[BracePair] = HaskellBraceMatcher.PAIRS
 
-  def isPairedBracesAllowedBeforeType(lbraceType: IElementType, elementType: IElementType): Boolean = {
-    !Ids.contains(elementType) && !Literals.contains(elementType)
+  def isPairedBracesAllowedBeforeType(lbraceType: IElementType, contextType: IElementType): Boolean = {
+    !Ids.contains(contextType) && !Literals.contains(contextType) && contextType != HS_LEFT_PAREN && contextType != HS_LEFT_BRACE && contextType != HS_LEFT_BRACKET
   }
 
   def getCodeConstructStart(file: PsiFile, openingBraceOffset: Int): Int = {
