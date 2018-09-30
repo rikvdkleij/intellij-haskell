@@ -91,14 +91,14 @@ private[component] object TypeInfoComponent {
             case Some(definitionLocation) =>
               val namedElement = definitionLocation.namedElement
               if (ApplicationUtil.runReadAction(namedElement.isValid)) {
-                namedElement.getContainingFile.getOriginalFile == k.psiFile
+                Some(namedElement.getContainingFile.getOriginalFile == k.psiFile)
               } else {
-                false
+                None
               }
-            case None => false
+            case None => None
           }
 
-          if (!ApplicationUtil.runReadAction(k.qualifiedNameElement.isValid) || !definedInSameFile) {
+          if (!ApplicationUtil.runReadAction(k.qualifiedNameElement.isValid) || !definedInSameFile.contains(false)) {
             Some(k)
           } else {
             None
