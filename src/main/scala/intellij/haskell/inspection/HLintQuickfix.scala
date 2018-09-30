@@ -55,7 +55,8 @@ class HLintQuickfix(startElement: PsiElement, endElement: PsiElement, startLineN
         } else {
           Option(se.getNextSibling).foreach(ns => {
             commonParent.deleteChildRange(ns, ee)
-            HaskellElementFactory.createBody(project, toSuggestion).foreach(se.replace)
+            // Adding spaces in case of line break to get the indentation right for valid Haskell code (should eventually be solved by BNF which is indentation sensitive)
+            HaskellElementFactory.createBody(project, toSuggestion.replaceAll("\n", "\n" + " " * (startColumnNr - 1))).foreach(se.replace)
           })
         }
       }
