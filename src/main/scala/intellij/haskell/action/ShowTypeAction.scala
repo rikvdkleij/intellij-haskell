@@ -95,16 +95,22 @@ object ShowTypeAction {
   private def findTypeSignatureFromScope(psiFile: PsiFile, psiElement: PsiElement) = {
     if (HaskellPsiUtil.findExpressionParent(psiElement).isDefined) {
       HaskellPsiUtil.findQualifiedNameParent(psiElement).flatMap(qualifiedNameElement => {
-        val name = qualifiedNameElement.getName
-        val result = for {
-          moduleName <- HaskellPsiUtil.findModuleName(psiFile)
-          stackInfo <- HaskellComponentsManager.findStackComponentInfo(psiFile)
-          globalInfo <- HaskellComponentsManager.findStackComponentGlobalInfo(stackInfo)
-          declaration <- HaskellCompletionContributor.getAvailableModuleIdentifiers(globalInfo, stackInfo, psiFile, Some(moduleName)).find(_.name == name).map(_.declaration)
-        } yield {
-          declaration
+        val definedInFile = HaskellComponentsManager.findDefinitionLocation(psiFile, qualifiedNameElement).toOption.map(_.namedElement.getContainingFile)
+        if (definedInFile.contains(psiFile)) {
+          // To prevent stale type info while compilation errors
+          None
+        } else {
+          val name = qualifiedNameElement.getName
+          val result = for {
+            moduleName <- HaskellPsiUtil.findModuleName(psiFile)
+            stackInfo <- HaskellComponentsManager.findStackComponentInfo(psiFile)
+            globalInfo <- HaskellComponentsManager.findStackComponentGlobalInfo(stackInfo)
+            declaration <- HaskellCompletionContributor.getAvailableModuleIdentifiers(globalInfo, stackInfo, psiFile, Some(moduleName)).find(_.name == name).map(_.declaration)
+          } yield {
+            declaration
+          }
+          result.orElse(HaskellPsiUtil.findHaskellDeclarationElements(psiFile).find(_.getIdentifierElements.exists(_.getName == name)).map(_.getText.replaceAll("""\s+""", " ")))
         }
-        result.orElse(HaskellPsiUtil.findHaskellDeclarationElements(psiFile).find(_.getIdentifierElements.exists(_.getName == name)).map(_.getText.replaceAll("""\s+""", " ")))
       })
     } else {
       None

@@ -80,11 +80,7 @@ private[component] object LoadComponent {
             TypeInfoComponent.invalidate(psiFile)
             DefinitionLocationComponent.invalidate(psiFile)
 
-            if (loadFailed) {
-              HaskellPsiUtil.findModuleName(psiFile).foreach(mn => {
-                BrowseModuleComponent.invalidateTopLevel(project, mn, psiFile)
-              })
-            } else {
+            if (!loadFailed) {
               NameInfoComponent.invalidate(psiFile)
 
               HaskellPsiUtil.findModuleName(psiFile).foreach(mn => {
