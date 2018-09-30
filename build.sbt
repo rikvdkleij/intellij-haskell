@@ -1,6 +1,6 @@
 lazy val commonSettings = Seq(
   version := "1.0.0-beta27",
-  scalaVersion := "2.12.6"
+  scalaVersion := "2.12.7"
 )
 
 val scalaTest = "org.scalatest" %% "scalatest" % "3.0.4" % Test
@@ -23,4 +23,4 @@ lazy val intellijHaskell = (project in file(".")).
   )
 
 
-ideaBuild in ThisBuild := "182.4129.4"
+ideaBuild in ThisBuild := "182.4505.22"
