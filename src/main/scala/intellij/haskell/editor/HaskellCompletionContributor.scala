@@ -512,7 +512,7 @@ object HaskellCompletionContributor {
       mn <- id.getModuleName
     } yield ImportFull(mn, Option(id.getImportQualified).isDefined, Option(id.getImportQualifiedAs).map(_.getQualifier.getName))
 
-    if (importDeclarations.exists(_.getModuleName == HaskellProjectUtil.Prelude) || isNoImplicitPreludeActive(info, psiFile)) {
+    if (importDeclarations.exists(_.getModuleName.contains(HaskellProjectUtil.Prelude)) || isNoImplicitPreludeActive(info, psiFile)) {
       moduleNames
     } else {
       Iterable(ImportFull(HaskellProjectUtil.Prelude, qualified = false, None)) ++ moduleNames
