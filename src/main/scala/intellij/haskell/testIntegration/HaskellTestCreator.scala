@@ -1,19 +1,3 @@
-/*
- * Copyright 2014-2018 Rik van der Kleij
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
-
 package intellij.haskell.testIntegration
 
 import com.intellij.navigation.ItemPresentation
@@ -33,7 +17,7 @@ class HaskellTestCreator extends TestCreator with ItemPresentation {
     * Should this action be available for this context?
     */
   override def isAvailable(project: Project, editor: Editor, psiFile: PsiFile): Boolean = {
-    //TODO
+    //TODO Is there any check we should do here?
     true
   }
 
@@ -41,16 +25,11 @@ class HaskellTestCreator extends TestCreator with ItemPresentation {
     * What to do if the user actually clicked on the "Create new test" action
     */
   override def createTest(project: Project, editor: Editor, psiFile: PsiFile): Unit = {
-    val action = new CreateHaskellTestAction
-    //TODO Check this
-    val element = findElement(psiFile, editor.getCaretModel.getOffset)
-    action.invoke(project, editor, element)
-  }
+    val offset = editor.getCaretModel.getOffset
+    var element = psiFile.findElementAt(offset)
+    if (element == null && offset == psiFile.getTextLength) element = psiFile.findElementAt(offset - 1)
 
-  private def findElement(file: PsiFile, offset: Int) = {
-    var element = file.findElementAt(offset)
-    if (element == null && offset == file.getTextLength) element = file.findElementAt(offset - 1)
-    element
+    new CreateHaskellTestAction().invoke(project, editor, element)
   }
 
   override def getPresentableText: String = {
@@ -58,9 +37,13 @@ class HaskellTestCreator extends TestCreator with ItemPresentation {
   }
 
   override def getLocationString: String = {
+    //TODO What's this?
     "This is my location string"
   }
 
+  /**
+    * Would be cool to have a Haskell Test icon, unfortunately I suck really hard at anything graphical...
+    */
   override def getIcon(unused: Boolean): Icon = {
     HaskellIcons.HaskellSmallLogo
   }

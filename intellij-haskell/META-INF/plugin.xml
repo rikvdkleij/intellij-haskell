@@ -341,6 +341,7 @@
 
         <!-- Module -->
         <internalFileTemplate name="Haskell Module"/>
+        <internalFileTemplate name="Haskell Test Module"/>
         <moduleType id="HASKELL_MODULE" implementationClass="intellij.haskell.module.HaskellModuleType"/>
         <moduleConfigurationEditorProvider implementation="intellij.haskell.settings.HaskellModuleEditorsProvider"
                                            order="first"/>

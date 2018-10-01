@@ -65,6 +65,34 @@ class CreateHaskellFileAction extends CreateFileFromTemplateAction(CreateHaskell
     })
   }
 
+  override def createFileFromTemplate(fileName: String, template: FileTemplate, fileDir: PsiDirectory): PsiFile = {
+    val path = HaskellFileUtil.getAbsolutePath(fileDir.getVirtualFile)
+    val pathItems = ProjectRootManager.getInstance(fileDir.getProject)
+      .getContentSourceRoots
+      .map(HaskellFileUtil.getAbsolutePath)
+      .find(path.startsWith)
+      .map(s => if (s != path) {
+        path.replace(s + File.separator, "").split(File.separator).toList
+      } else {
+        List()
+      })
+
+    if (fileName.contains(".")) {
+      var targetDir = fileDir
+      val names = fileName.trim().split("\\.").toList
+      val moduleName = names.last
+      val prefixes = names.dropRight(1)
+
+      prefixes.foreach(dirName => {
+        targetDir = Option(targetDir.findSubdirectory(dirName)).getOrElse(targetDir.createSubdirectory(dirName))
+      })
+
+      createFileFromTemplate(pathItems.map(_ ++ prefixes), moduleName, template, targetDir)
+    } else {
+      createFileFromTemplate(pathItems, fileName, template, fileDir)
+    }
+  }
+
   private def createFileFromTemplate(pathItems: Option[List[String]], fileName: String, template: FileTemplate, fileDir: PsiDirectory): PsiFile = {
     pathItems match {
       case None => null
@@ -101,34 +129,6 @@ class CreateHaskellFileAction extends CreateFileFromTemplateAction(CreateHaskell
         }
 
         psiFile
-    }
-  }
-
-  override def createFileFromTemplate(fileName: String, template: FileTemplate, fileDir: PsiDirectory): PsiFile = {
-    val path = HaskellFileUtil.getAbsolutePath(fileDir.getVirtualFile)
-    val pathItems = ProjectRootManager.getInstance(fileDir.getProject)
-      .getContentSourceRoots
-      .map(HaskellFileUtil.getAbsolutePath)
-      .find(path.startsWith)
-      .map(s => if (s != path) {
-        path.replace(s + File.separator, "").split(File.separator).toList
-      } else {
-        List()
-      })
-
-    if (fileName.contains(".")) {
-      var targetDir = fileDir
-      val names = fileName.trim().split("\\.").toList
-      val moduleName = names.last
-      val prefixes = names.dropRight(1)
-
-      prefixes.foreach(dirName => {
-        targetDir = Option(targetDir.findSubdirectory(dirName)).getOrElse(targetDir.createSubdirectory(dirName))
-      })
-
-      createFileFromTemplate(pathItems.map(_ ++ prefixes), moduleName, template, targetDir)
-    } else {
-      createFileFromTemplate(pathItems, fileName, template, fileDir)
     }
   }
 

@@ -1,9 +1,7 @@
 package intellij.haskell.testIntegration;
 
-import com.intellij.openapi.fileChooser.FileChooserDescriptorFactory;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
-import com.intellij.openapi.ui.TextFieldWithBrowseButton;
 import com.intellij.openapi.util.text.StringUtil;
 import org.jetbrains.annotations.Nullable;
 
@@ -18,24 +16,26 @@ import javax.swing.event.DocumentListener;
  */
 public class CreateHaskellTestDialog extends DialogWrapper {
     private JPanel mainPanel;
-    private TextFieldWithBrowseButton targetDir;
-    private JTextField fileName;
+    private JTextField moduleName;
 
     public CreateHaskellTestDialog(@Nullable Project project) {
         // Basic configuration required by DialogWrapper
         super(project);
         init();
-        setTitle("Create New Test");
+        setTitle("Create New Test Module");
 
-        // Fields initialization
-        targetDir.addBrowseFolderListener("Select Target Directory", null, project,
-                FileChooserDescriptorFactory.createSingleFolderDescriptor());
-        targetDir.setEditable(false);
-        targetDir.addActionListener(actionEvent -> getOKAction().setEnabled(isValid()));
-
-        fileName.getDocument().addDocumentListener(new MandatoryTextFieldListener());
+        // Fields configuration
+        moduleName.getDocument().addDocumentListener(new MandatoryTextFieldListener());
     }
 
+    /**
+     * @return A unique key so that dialog window resizing is remembered for future tests dialog creation
+     */
+    @Nullable
+    @Override
+    protected String getDimensionServiceKey() {
+        return "#haskell.test.module.creation.dialog";
+    }
     /**
      * Needed by Intellij to bind this class to the form.
      */
@@ -45,19 +45,13 @@ public class CreateHaskellTestDialog extends DialogWrapper {
     }
 
     private boolean isValid() {
-        return !StringUtil.isEmptyOrSpaces(getTargetDir());
+        return !StringUtil.isEmptyOrSpaces(moduleName.getText());
     }
-    public String getTargetDir() {
-        return targetDir.getText().trim();
+    public String getModuleName() {
+        return moduleName.getText().trim();
     }
-    public void setTargetDir(String text) {
-        targetDir.setText(text);
-    }
-    public String getFileName() {
-        return fileName.getText().trim();
-    }
-    public void setFileName(String text) {
-        fileName.setText(text);
+    public void setModuleName(String text) {
+        moduleName.setText(text);
     }
 
     private class MandatoryTextFieldListener implements DocumentListener {
