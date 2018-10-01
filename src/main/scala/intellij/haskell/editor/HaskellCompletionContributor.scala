@@ -642,7 +642,7 @@ object HaskellCompletionContributor {
 
   private def findRemainingTopLeveLookupElements(psiFile: PsiFile, moduleName: Option[String], localIdentifiers: Iterable[ModuleIdentifier]) = {
     val allLocalNames = localIdentifiers.map(_.name)
-    HaskellPsiUtil.findTopLevelDeclarations(psiFile).filterNot(d => d.isInstanceOf[HaskellModuleDeclaration] || allLocalNames.exists(n => getDeclarationName(d).contains(n))).
+    ApplicationUtil.runReadAction(HaskellPsiUtil.findTopLevelDeclarations(psiFile)).filterNot(d => d.isInstanceOf[HaskellModuleDeclaration] || allLocalNames.exists(n => getDeclarationName(d).contains(n))).
       map(d => createLocalTopLevelLookupElement(getDeclarationName(d).getOrElse("-"), ApplicationUtil.runReadAction(d.getPresentation.getPresentableText), moduleName.getOrElse("-")))
   }
 
