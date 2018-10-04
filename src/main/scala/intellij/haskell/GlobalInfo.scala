@@ -6,6 +6,7 @@ import java.nio.file.{Path, Paths}
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.vfs.VfsUtil
+import io.github.soc.directories.ProjectDirectories
 import intellij.haskell.util.HaskellFileUtil
 
 object GlobalInfo {
@@ -17,15 +18,23 @@ object GlobalInfo {
 
   private final val IntelliJHaskellDirName = ".intellij-haskell"
 
+  private final val IntelliJHaskellDirectories = ProjectDirectories.from("com.github", "rikvdkleij", "intellij-haskell")
+
   def getIntelliJHaskellDirectory: File = {
     val homeDirectory = HaskellFileUtil.getAbsolutePath(VfsUtil.getUserHomeDir)
-    val directory = new File(homeDirectory, IntelliJHaskellDirName)
-    if (directory.exists()) {
-      HaskellFileUtil.removeGroupWritePermission(directory)
+    val dotDirectory = new File(homeDirectory, IntelliJHaskellDirName)
+    if (dotDirectory.exists()) {
+      HaskellFileUtil.removeGroupWritePermission(dotDirectory)
+      dotDirectory
     } else {
-      HaskellFileUtil.createDirectoryIfNotExists(directory, onlyWriteableByOwner = true)
+      val directory = new File(IntelliJHaskellDirectories.cacheDir)
+      if (directory.exists()) {
+        HaskellFileUtil.removeGroupWritePermission(directory)
+      } else {
+        HaskellFileUtil.createDirectoryIfNotExists(directory, onlyWriteableByOwner = true)
+      }
+      directory
     }
-    directory
   }
 
   def getLibrarySourcesPath: String = {
