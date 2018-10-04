@@ -263,6 +263,10 @@
         <gotoClassContributor implementation="intellij.haskell.navigation.GotoByDeclarationContributor"/>
         <gotoSymbolContributor implementation="intellij.haskell.navigation.GotoByNameContributor"/>
 
+        <!-- Test Integration -->
+        <testFinder implementation="intellij.haskell.testIntegration.HaskellTestFinder"/>
+        <testCreator language="Haskell" implementationClass="intellij.haskell.testIntegration.HaskellTestCreator"/>
+
         <!-- Annotator -->
         <externalAnnotator language="Haskell"
                            implementationClass="intellij.haskell.annotator.HaskellAnnotator"/>
@@ -337,6 +341,7 @@
 
         <!-- Module -->
         <internalFileTemplate name="Haskell Module"/>
+        <internalFileTemplate name="Haskell Test Module"/>
         <moduleType id="HASKELL_MODULE" implementationClass="intellij.haskell.module.HaskellModuleType"/>
         <moduleConfigurationEditorProvider implementation="intellij.haskell.settings.HaskellModuleEditorsProvider"
                                            order="first"/>
@@ -480,7 +485,7 @@
                     class="intellij.haskell.action.HindentReformatAction"
                     text="Reformat code by Hindent"
                     description="Reformat code by Hindent">
-                    <keyboard-shortcut first-keystroke="ctrl alt SEMICOLON" keymap="$default"/>
+                <keyboard-shortcut first-keystroke="ctrl alt SEMICOLON" keymap="$default"/>
             </action>
 
             <action id="Haskell.StylishHaskellFormat"
