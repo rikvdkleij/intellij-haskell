@@ -18,15 +18,17 @@ package intellij.haskell.navigation
 
 import com.intellij.lang.Language
 import com.intellij.navigation.{GotoClassContributor, NavigationItem}
+import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.project.Project
 import com.intellij.psi.stubs.StubIndex
-import com.intellij.util.ArrayUtil
+import com.intellij.util.{ArrayUtil, Processor}
 import intellij.haskell.HaskellLanguage
 import intellij.haskell.psi.stubs.index.HaskellAllNameIndex
 import intellij.haskell.psi.{HaskellClassDeclaration, HaskellDeclarationElement, HaskellNamedElement, HaskellPsiUtil}
 import intellij.haskell.util.HaskellProjectUtil
 
 import scala.collection.JavaConverters._
+import scala.collection.mutable.ListBuffer
 
 class GotoByDeclarationContributor extends GotoClassContributor {
 
@@ -40,10 +42,23 @@ class GotoByDeclarationContributor extends GotoClassContributor {
 
   override def getItemsByName(name: String, pattern: String, project: Project, includeNonProjectItems: Boolean): Array[NavigationItem] = {
     val searchScope = HaskellProjectUtil.getSearchScope(project, includeNonProjectItems)
-    val namedElements = StubIndex.getElements(HaskellAllNameIndex.Key, name, project, searchScope, classOf[HaskellNamedElement])
-    val declarationIds = namedElements.asScala.map(ne => (ne, HaskellPsiUtil.findHighestDeclarationElementParent(ne))).
-      filter { case (ne, de) => de.exists(_.getIdentifierElements.exists(_ == ne && name.toLowerCase.contains(pattern.toLowerCase))) }
-    declarationIds.toSeq.sortWith(sortByClassDeclarationFirst).map(_._1).toArray
+    val result = ListBuffer[String]()
+    val re = pattern.toLowerCase.flatMap(_ + ".*")
+    val processor = new Processor[String]() {
+      override def process(ne: String): Boolean = {
+        ProgressManager.checkCanceled()
+        if (ne.toLowerCase.matches(re)) {
+          result.+=(ne)
+        }
+        true
+      }
+    }
+
+    StubIndex.getInstance().processAllKeys(HaskellAllNameIndex.Key, processor, searchScope, null)
+
+    val namedElements = result.flatMap(name => StubIndex.getElements(HaskellAllNameIndex.Key, name, project, searchScope, classOf[HaskellNamedElement]).asScala)
+    val declarationElements = namedElements.map(ne => (ne, HaskellPsiUtil.findHighestDeclarationElementParent(ne)))
+    declarationElements.sortWith(sortByClassDeclarationFirst).map(_._1).toArray
   }
 
   private def sortByClassDeclarationFirst(namedAndDeclarationElement1: (HaskellNamedElement, Option[HaskellDeclarationElement]), namedAndDeclarationElement2: (HaskellNamedElement, Option[HaskellDeclarationElement])): Boolean = {
