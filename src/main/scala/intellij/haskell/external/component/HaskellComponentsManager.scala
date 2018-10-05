@@ -48,14 +48,14 @@ object HaskellComponentsManager {
     moduleNames.flatMap(mn => {
       try {
         val f = findLibraryModuleIdentifiers(project, mn)
-        val wf = new WaitFor(1000, 1) {
+        new WaitFor(1000, 1) {
           override def condition(): Boolean = {
             ProgressManager.checkCanceled()
             f.isCompleted
           }
         }
 
-        if (wf.isConditionRealized) {
+        if (f.isCompleted) {
           Await.result(f, 1.milli)
         } else {
           None

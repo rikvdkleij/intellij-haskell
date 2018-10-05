@@ -68,7 +68,7 @@ private[component] object DefinitionLocationComponent {
         case Some(definitionLocation) =>
           if (ApplicationUtil.runReadAction(k.qualifiedNameElement.isValid) &&
             ApplicationUtil.runReadAction(definitionLocation.namedElement.isValid) &&
-            ApplicationUtil.runReadAction(k.qualifiedNameElement.getName) == ApplicationUtil.runReadAction(definitionLocation.namedElement.getName)) {
+            ApplicationUtil.runReadAction(k.qualifiedNameElement.getIdentifierElement.getName) == ApplicationUtil.runReadAction(definitionLocation.namedElement.getName)) {
             None
           } else {
             Some(k)
@@ -81,16 +81,17 @@ private[component] object DefinitionLocationComponent {
 
     val otherFileKeys = Cache.synchronous().asMap().flatMap { case (k, v) =>
       v.toOption match {
-        case Some(definitionLocation) =>
-          if (ApplicationUtil.runReadAction(definitionLocation.namedElement.isValid) &&
-            ApplicationUtil.runReadAction(k.qualifiedNameElement.isValid) &&
-            definitionLocation.namedElement.getContainingFile.getOriginalFile == psiFile &&
-            ApplicationUtil.runReadAction(k.qualifiedNameElement.getName) == ApplicationUtil.runReadAction(definitionLocation.namedElement.getName)) {
-            None
+        case Some(definitionLocation) if definitionLocation.namedElement.getContainingFile.getOriginalFile == psiFile =>
+          if (ApplicationUtil.runReadAction(definitionLocation.namedElement.isValid) && ApplicationUtil.runReadAction(k.qualifiedNameElement.isValid)) {
+            if (ApplicationUtil.runReadAction(k.qualifiedNameElement.getIdentifierElement.getName) == ApplicationUtil.runReadAction(definitionLocation.namedElement.getName)) {
+              None
+            } else {
+              Some(k)
+            }
           } else {
             Some(k)
           }
-        case None => None
+        case _ => None
       }
     }
 
@@ -209,14 +210,14 @@ private[component] object DefinitionLocationComponent {
 
       // This timeout is not used by dispatch thread so can be relatively long
       // Same timeout as REPL, so give enough time to start REPL
-      val wf = new WaitFor(5000, 1) {
+      new WaitFor(5000, 1) {
         override def condition(): Boolean = {
           ProgressManager.checkCanceled()
           f.isCompleted
         }
       }
 
-      if (wf.isConditionRealized) {
+      if (f.isCompleted) {
         Await.result(f, 1.milli)
       } else {
         Left(ReplNotAvailable)

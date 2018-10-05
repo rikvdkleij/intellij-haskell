@@ -132,7 +132,6 @@ object StackProjectManager {
               progressIndicator.setText("Busy with building project's dependencies")
               val dependenciesBuildResult = StackCommandLine.buildProjectDependenciesInMessageView(project)
 
-
               if (dependenciesBuildResult.contains(true)) {
                 progressIndicator.setText("Busy with building project")
                 val libTargets = getStackProjectManager(project).flatMap(_.replsManager).map(_.stackComponentInfos.filter(_.stanzaType == LibType).map(_.target)).getOrElse(Iterable())

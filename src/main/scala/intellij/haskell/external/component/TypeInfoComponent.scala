@@ -85,25 +85,29 @@ private[component] object TypeInfoComponent {
 
   def invalidate(psiFile: PsiFile): Unit = {
     val keys = Cache.synchronous().asMap().filter(_._1.psiFile == psiFile).flatMap { case (k, v) =>
-      v.toOption match {
-        case Some(_) =>
-          val definedInSameFile = DefinitionLocationComponent.findDefinitionLocation(psiFile, k.qualifiedNameElement).toOption match {
-            case Some(definitionLocation) =>
-              val namedElement = definitionLocation.namedElement
-              if (ApplicationUtil.runReadAction(namedElement.isValid)) {
-                Some(namedElement.getContainingFile.getOriginalFile == k.psiFile)
-              } else {
-                None
-              }
-            case None => None
-          }
+      if (ApplicationUtil.runReadAction(k.qualifiedNameElement.isValid)) {
+        v.toOption match {
+          case Some(_) =>
+            val definedInSameFile = DefinitionLocationComponent.findDefinitionLocation(psiFile, k.qualifiedNameElement).toOption match {
+              case Some(definitionLocation) =>
+                val namedElement = definitionLocation.namedElement
+                if (ApplicationUtil.runReadAction(namedElement.isValid)) {
+                  Some(namedElement.getContainingFile.getOriginalFile == k.psiFile)
+                } else {
+                  None
+                }
+              case None => None
+            }
 
-          if (!ApplicationUtil.runReadAction(k.qualifiedNameElement.isValid) || !definedInSameFile.contains(false)) {
-            Some(k)
-          } else {
-            None
-          }
-        case None => Some(k)
+            if (!definedInSameFile.contains(false)) {
+              Some(k)
+            } else {
+              None
+            }
+          case None => Some(k)
+        }
+      } else {
+        Some(k)
       }
     }
 
@@ -220,14 +224,14 @@ private[component] object TypeInfoComponent {
   import scala.concurrent.duration._
 
   private def wait(f: => Future[TypeInfoResult]) = {
-    val wf = new WaitFor(5000, 1) {
+    new WaitFor(5000, 1) {
       override def condition(): Boolean = {
         ProgressManager.checkCanceled()
         f.isCompleted
       }
     }
 
-    if (wf.isConditionRealized) {
+    if (f.isCompleted) {
       Await.result(f, 1.milli)
     } else {
       Left(ReplNotAvailable)

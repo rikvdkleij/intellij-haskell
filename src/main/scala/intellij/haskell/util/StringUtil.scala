@@ -25,7 +25,7 @@ import scala.collection.mutable.ListBuffer
 
 object StringUtil {
 
-  private final val PackageQualifierPattern = """([a-z\-]+\-[\.0-9]+\:)?([A-Z][A-Za-z\-\']*\.)+"""
+  private final val PackageQualifierPattern = """([a-zA-Z\-]+\-[\.0-9]+\:)?([A-Z][A-Za-z\-\']*\.)+"""
 
   def escapeString(s: String): String = {
     XmlStringUtil.escapeString(s, false, false)

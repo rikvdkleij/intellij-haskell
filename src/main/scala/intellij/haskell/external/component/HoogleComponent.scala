@@ -161,14 +161,14 @@ object HoogleComponent {
 
     ProgressManager.checkCanceled()
 
-    val wf = new WaitFor(5000, 1) {
+    new WaitFor(5000, 1) {
       override def condition(): Boolean = {
         ProgressManager.checkCanceled()
         hoogleFuture.isDone
       }
     }
 
-    if (wf.isConditionRealized) {
+    if (hoogleFuture.isDone) {
       hoogleFuture.get()
     } else {
       None

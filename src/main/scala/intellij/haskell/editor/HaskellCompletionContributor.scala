@@ -318,14 +318,14 @@ class HaskellCompletionContributor extends CompletionContributor {
       } yield (info, globalInfo)
     })
 
-    val wf = new WaitFor(1000, 1) {
+    new WaitFor(2000, 1) {
       override def condition(): Boolean = {
         ProgressManager.checkCanceled()
         globalInfo.isDone
       }
     }
 
-    if (wf.isConditionRealized) {
+    if (globalInfo.isDone) {
       globalInfo.get()
     } else {
       None
@@ -339,14 +339,14 @@ class HaskellCompletionContributor extends CompletionContributor {
       case Some(moduleName) =>
         val ids = HaskellComponentsManager.findExportedModuleIdentifiers(stackComponentGlobalInfo, psiFile, moduleName).map(_.map(i => createLookupElement(i, addParens = true)))
 
-        val wf = new WaitFor(1000, 1) {
+        new WaitFor(2000, 1) {
           override def condition(): Boolean = {
             ProgressManager.checkCanceled()
             ids.isCompleted
           }
         }
 
-        if (wf.isConditionRealized) {
+        if (ids.isCompleted) {
           Await.result(ids, -1.milli)
         } else {
           Iterable()
@@ -362,14 +362,14 @@ class HaskellCompletionContributor extends CompletionContributor {
     ))
 
     // findHaskellFiles in AvailableModuleNamesComponent further on has a default timeout of 1 second
-    val wf = new WaitFor(2000, 1) {
+    new WaitFor(2000, 1) {
       override def condition(): Boolean = {
         ProgressManager.checkCanceled()
         result.isDone
       }
     }
 
-    if (wf.isConditionRealized) {
+    if (result.isDone) {
       result.get()
     } else {
       Iterable()
@@ -460,14 +460,15 @@ object HaskellCompletionContributor {
       f4 <- idsF4
     } yield doIt(f1, f2, f3, f4)
 
-    val wf = new WaitFor(1000, 1) {
+    new WaitFor(5000, 10) {
       override def condition(): Boolean = {
         ProgressManager.checkCanceled()
         f.isCompleted
       }
     }
 
-    if (wf.isConditionRealized) {
+
+    if (f.isCompleted) {
       Await.result(f, 1.milli)
     } else {
       HaskellNotificationGroup.logInfoEvent(psiFile.getProject, s"Timeout while getting module identifiers for ${psiFile.getName}")
