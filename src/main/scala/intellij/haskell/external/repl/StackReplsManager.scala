@@ -18,7 +18,6 @@ package intellij.haskell.external.repl
 
 import java.util.concurrent.ConcurrentHashMap
 
-import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.project.Project
 import com.intellij.psi.PsiFile
@@ -144,12 +143,6 @@ private[external] class StackReplsManager(val project: Project) {
             case None =>
               val repl = createAndStartProjectRepl(componentInfo)
               projectRepls.put(componentInfo, repl)
-
-              // Already load global info in cache here to prevent a file has to be loaded twice because library modules are obtained in REPL without any module loaded.
-              ApplicationManager.getApplication.executeOnPooledThread(ScalaUtil.runnable {
-                HaskellComponentsManager.findStackComponentGlobalInfo(componentInfo)
-              })
-
               repl
           }
         }
