@@ -268,12 +268,7 @@ object HaskellModuleBuilder {
 
   private def downloadHaskellPackageSources(project: Project, projectLibDirectory: File, stackPath: String, libraryDependencies: Seq[HaskellLibraryDependency]): Unit = {
     libraryDependencies.filterNot(libraryDependency => getPackageDirectory(projectLibDirectory, libraryDependency).exists()).flatMap(libraryDependency => {
-      val stderr = CommandLine.run(Some(project), projectLibDirectory.getAbsolutePath, stackPath, Seq("unpack", libraryDependency.nameVersion), 10000).getStderr
-      if (stderr.contains("not found")) {
-        Seq()
-      } else {
-        Seq(libraryDependency)
-      }
+      CommandLine.run(Some(project), projectLibDirectory.getAbsolutePath, stackPath, Seq("unpack", libraryDependency.nameVersion), 10000).getStderr
     })
   }
 
