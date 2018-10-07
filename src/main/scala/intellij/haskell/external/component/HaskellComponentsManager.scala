@@ -108,7 +108,7 @@ object HaskellComponentsManager {
     NameInfoComponent.NameInfoByModuleComponent.findNameInfoByModuleName(project, moduleName, name)
   }
 
-  def findAvailableModuleNamesWithIndex(stackComponentInfo: StackComponentInfo): Iterable[String] = {
+  def findAvailableModuleNamesWithIndex(stackComponentInfo: StackComponentInfo): Stream[String] = {
     AvailableModuleNamesComponent.findAvailableModuleNamesWithIndex(stackComponentInfo)
   }
 
@@ -213,8 +213,8 @@ object HaskellComponentsManager {
 
       val libraryModuleNames = for {
         info <- StackReplsManager.getReplsManager(project).map(_.stackComponentInfos).getOrElse(Iterable())
-        globalProjectInfo <- HaskellComponentsManager.findStackComponentGlobalInfo(info)
-      } yield globalProjectInfo.allLibraryModuleNames
+        globalInfo <- HaskellComponentsManager.findStackComponentGlobalInfo(info)
+      } yield globalInfo.allLibraryModuleNames
       libraryModuleNames.flatten
     } else {
       Iterable()

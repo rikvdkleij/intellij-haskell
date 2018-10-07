@@ -182,7 +182,7 @@ class HaskellCompletionContributor extends CompletionContributor {
           case Some(e) if isImportModuleDeclarationInProgress(e) =>
             // Do not give suggestions when defining import qualifier
             if (e.getParent.getNode.getElementType != HS_QUALIFIER) {
-              stackComponentInfo.foreach(info => resultSet.addAllElements(findAvailableModuleNamesLookupElements(info).asJavaCollection))
+              stackComponentInfo.foreach(info => resultSet.addAllElements(HaskellComponentsManager.findAvailableModuleNamesWithIndex(info).map(createModuleLookupElement).asJavaCollection))
               resultSet.addAllElements(getInsideImportClausesLookupElements.asJavaCollection)
               resultSet.addElement(createKeywordLookupElement("import"))
             }
@@ -353,26 +353,6 @@ class HaskellCompletionContributor extends CompletionContributor {
         }
 
       case None => Iterable()
-    }
-  }
-
-  private def findAvailableModuleNamesLookupElements(stackComponentInfo: StackComponentInfo) = {
-    val result = ApplicationManager.getApplication.executeOnPooledThread(ScalaUtil.callable(
-      HaskellComponentsManager.findAvailableModuleNamesWithIndex(stackComponentInfo).map(createModuleLookupElement)
-    ))
-
-    // findHaskellFiles in AvailableModuleNamesComponent further on has a default timeout of 1 second
-    new WaitFor(2000, 1) {
-      override def condition(): Boolean = {
-        ProgressManager.checkCanceled()
-        result.isDone
-      }
-    }
-
-    if (result.isDone) {
-      result.get()
-    } else {
-      Iterable()
     }
   }
 

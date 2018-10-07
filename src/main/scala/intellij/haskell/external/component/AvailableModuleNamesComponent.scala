@@ -17,6 +17,7 @@
 package intellij.haskell.external.component
 
 import com.intellij.openapi.module.Module
+import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.project.IndexNotReadyException
 import com.intellij.psi.search.FileTypeIndex
 import intellij.haskell.external.component.HaskellComponentsManager.StackComponentInfo
@@ -32,9 +33,9 @@ private[component] object AvailableModuleNamesComponent {
 
   private final val TestStanzaTypes = Seq(TestSuiteType, BenchmarkType)
 
-  def findAvailableModuleNamesWithIndex(stackComponentInfo: StackComponentInfo): Iterable[String] = {
+  def findAvailableModuleNamesWithIndex(stackComponentInfo: StackComponentInfo): Stream[String] = {
     // A module can be a project module AND library module
-    (findAvailableProjectModuleNamesWithIndex(stackComponentInfo) ++ findAvailableLibraryModuleNames(stackComponentInfo)).toSeq.distinct
+    findAvailableLibraryModuleNames(stackComponentInfo).toStream.#:::(findAvailableProjectModuleNamesWithIndex(stackComponentInfo).toStream)
   }
 
   def findAvailableModuleLibraryModuleNamesWithIndex(module: Module): Iterable[String] = {
@@ -52,6 +53,7 @@ private[component] object AvailableModuleNamesComponent {
   private def findModuleNamesInModule(module: Module, includeTests: Boolean): Iterable[String] = {
     for {
       vf <- findHaskellFiles(module, includeTests)
+      () = ProgressManager.checkCanceled()
       hf <- HaskellFileUtil.convertToHaskellFileInReadAction(module.getProject, vf).toOption.flatten
       mn <- HaskellPsiUtil.findModuleName(hf)
     } yield mn
