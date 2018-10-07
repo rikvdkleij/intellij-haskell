@@ -7,6 +7,7 @@ val scalaTest = "org.scalatest" %% "scalatest" % "3.0.4" % Test
 val sprayJson = "io.spray" %% "spray-json" % "1.3.4"
 val snakeYaml = "org.yaml" % "snakeyaml" % "1.19"
 val scaffeine = "com.github.blemale" %% "scaffeine" % "2.5.0"
+val directories = "io.github.soc" % "directories" % "10"
 
 lazy val intellijHaskell = (project in file(".")).
   enablePlugins(SbtIdeaPlugin).
@@ -19,6 +20,7 @@ lazy val intellijHaskell = (project in file(".")).
     libraryDependencies += sprayJson,
     libraryDependencies += snakeYaml,
     libraryDependencies += scaffeine,
+    libraryDependencies += directories,
     unmanagedSourceDirectories in Compile += baseDirectory.value / "gen"
   )
 
