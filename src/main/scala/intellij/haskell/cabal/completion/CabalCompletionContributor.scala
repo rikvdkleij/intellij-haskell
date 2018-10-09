@@ -10,7 +10,7 @@ import intellij.haskell.cabal.CabalLanguage
 import intellij.haskell.cabal.lang.psi.impl.ExtensionsImpl
 import intellij.haskell.cabal.lang.psi.{BuildDepends, CabalPsiUtil, ExposedModules}
 import intellij.haskell.external.component.HaskellComponentsManager
-import intellij.haskell.external.component.HaskellComponentsManager.{getAvailablePackages, getSupportedLanguageExtension}
+import intellij.haskell.external.component.HaskellComponentsManager.{getAvailableStackagePackages, getSupportedLanguageExtension}
 import intellij.haskell.util.HaskellProjectUtil
 
 final class CabalCompletionContributor extends CompletionContributor {
@@ -65,7 +65,7 @@ final class CabalCompletionContributor extends CompletionContributor {
 
     private def filterPackageNames(el: BuildDepends): Iterable[LookupElement] = {
       val skipPackageNames = el.getPackageNames.toSet
-      getAvailablePackages(position.getProject)
+      getAvailableStackagePackages(position.getProject)
         .filter(!skipPackageNames.contains(_))
         .map(n => LookupElementBuilder.create(n).withIcon(HaskellIcons.HaskellSmallLogo))
     }

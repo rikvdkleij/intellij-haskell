@@ -25,7 +25,7 @@ import com.intellij.psi.{PsiElement, PsiFileFactory}
 import intellij.haskell.HaskellNotificationGroup
 import intellij.haskell.cabal.lang.psi
 import intellij.haskell.cabal.lang.psi._
-import intellij.haskell.cabal.lang.psi.impl.{ExtensionsImpl, MainIsImpl, SourceDirsImpl}
+import intellij.haskell.cabal.lang.psi.impl.{BuildDependsImpl, ExtensionsImpl, MainIsImpl, SourceDirsImpl}
 import intellij.haskell.psi.HaskellPsiUtil
 import intellij.haskell.util.HaskellFileUtil
 
@@ -111,6 +111,10 @@ sealed trait CabalStanza {
 
   protected def findSourceDirs: Array[String] = {
     HaskellPsiUtil.getChildOfType(sectionRootElement, classOf[SourceDirsImpl]).map(_.getValue).getOrElse(Array()).map(p => HaskellFileUtil.makeFilePathAbsolute(p, modulePath))
+  }
+
+  lazy val buildDepends: Array[String] = {
+    HaskellPsiUtil.getChildOfType(sectionRootElement, classOf[BuildDependsImpl]).map(_.getPackageNames).getOrElse(Array())
   }
 
   private def findLanguageExtensions: Set[String] = {

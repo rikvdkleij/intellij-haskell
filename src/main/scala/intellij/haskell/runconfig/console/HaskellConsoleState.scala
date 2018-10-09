@@ -9,8 +9,9 @@ import com.intellij.execution.process.{ProcessHandler, ProcessTerminatedListener
 import com.intellij.execution.runners.ExecutionEnvironment
 import com.intellij.execution.ui.ConsoleView
 import intellij.haskell.GlobalInfo
+import intellij.haskell.external.component.HaskellComponentsManager
 import intellij.haskell.sdk.HaskellSdkType
-import intellij.haskell.util.{GhcVersion, HaskellFileUtil, HaskellProjectUtil}
+import intellij.haskell.util.{GhcVersion, HaskellFileUtil}
 
 class HaskellConsoleState(val configuration: HaskellConsoleConfiguration, val environment: ExecutionEnvironment) extends CommandLineState(environment) {
 
@@ -27,12 +28,12 @@ class HaskellConsoleState(val configuration: HaskellConsoleConfiguration, val en
     HaskellSdkType.getStackPath(project) match {
       case Some(stackPath) =>
         val stackTarget = configuration.getStackTarget
-        val ghcVersion = HaskellProjectUtil.getGhcVersion(project)
+        val ghcVersion = HaskellComponentsManager.getGhcVersion(project)
         val ghc821Compatible = ghcVersion.exists(_ >= GhcVersion(8, 2, 1))
         val ghciScriptName = if (ghc821Compatible) "8.2.1.ghci" else "default.ghci"
         val ghciScript = new File(GlobalInfo.getIntelliJHaskellDirectory, ghciScriptName)
 
-        if(!ghciScript.exists()) {
+        if (!ghciScript.exists()) {
           HaskellFileUtil.copyStreamToFile(getClass.getResourceAsStream(s"/ghci/$ghciScriptName"), ghciScript)
           ghciScript.setWritable(true, true)
           HaskellFileUtil.removeGroupWritePermission(ghciScript)

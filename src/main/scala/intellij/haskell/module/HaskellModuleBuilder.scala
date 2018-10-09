@@ -185,6 +185,14 @@ object HaskellModuleBuilder {
     new File(moduleBuilder.getContentEntryPath, GlobalInfo.StackWorkDirName)
   }
 
+  def getProjectDependencies(project: Project): Iterable[HaskellDependency] = {
+    val projectModules = HaskellProjectUtil.findProjectHaskellModules(project).map(_.getName.toLowerCase).toSeq
+    for {
+      lines <- StackCommandLine.run(project, Seq("ls", "dependencies", "--test", "--bench"), timeoutInMillis = 60.seconds.toMillis).map(_.getStdoutLines).toSeq
+      dependencies <- createDependencies(project, lines.asScala, Seq.empty).filterNot(p => projectModules.contains(p.name.toLowerCase) && p.name == "rts" || p.name == "ghc")
+    } yield dependencies
+  }
+
   def getDependencies(project: Project, module: Module, target: String, depth: Option[Int]): Iterable[HaskellDependency] = {
     val projectModules = HaskellProjectUtil.findProjectHaskellModules(project)
     for {

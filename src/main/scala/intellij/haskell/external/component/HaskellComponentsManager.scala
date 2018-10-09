@@ -32,16 +32,17 @@ import intellij.haskell.external.component.TypeInfoComponentResult.TypeInfoResul
 import intellij.haskell.external.execution.CompilationResult
 import intellij.haskell.external.repl.StackRepl.StanzaType
 import intellij.haskell.external.repl.StackReplsManager
+import intellij.haskell.module.HaskellModuleBuilder.HaskellDependency
 import intellij.haskell.psi.{HaskellPsiUtil, HaskellQualifiedNameElement}
 import intellij.haskell.util.index.{HaskellFileIndex, HaskellModuleNameIndex}
-import intellij.haskell.util.{HaskellProjectUtil, ScalaUtil}
+import intellij.haskell.util.{GhcVersion, HaskellProjectUtil, ScalaUtil}
 
 import scala.concurrent._
 import scala.concurrent.duration._
 
 object HaskellComponentsManager {
 
-  case class StackComponentInfo(module: Module, packageName: String, target: String, stanzaType: StanzaType, sourceDirs: Seq[String], mainIs: Option[String], isImplicitPreludeActive: Boolean)
+  case class StackComponentInfo(module: Module, packageName: String, target: String, stanzaType: StanzaType, sourceDirs: Seq[String], mainIs: Option[String], isImplicitPreludeActive: Boolean, buildDepends: Seq[String])
 
   def findPreloadedModuleIdentifiers(project: Project)(implicit ec: ExecutionContext): Iterable[ModuleIdentifier] = {
     val moduleNames = BrowseModuleComponent.findModuleNamesInCache(project)
@@ -108,7 +109,7 @@ object HaskellComponentsManager {
     NameInfoComponent.NameInfoByModuleComponent.findNameInfoByModuleName(project, moduleName, name)
   }
 
-  def findAvailableModuleNamesWithIndex(stackComponentInfo: StackComponentInfo): Stream[String] = {
+  def findAvailableModuleNamesWithIndex(stackComponentInfo: StackComponentInfo): Iterable[String] = {
     AvailableModuleNamesComponent.findAvailableModuleNamesWithIndex(stackComponentInfo)
   }
 
@@ -132,8 +133,16 @@ object HaskellComponentsManager {
     GlobalProjectInfoComponent.findGlobalProjectInfo(project).map(_.supportedLanguageExtensions).getOrElse(Iterable())
   }
 
-  def getAvailablePackages(project: Project): Iterable[String] = {
-    GlobalProjectInfoComponent.findGlobalProjectInfo(project).map(_.availablePackageNames).getOrElse(Iterable())
+  def getGhcVersion(project: Project): Option[GhcVersion] = {
+    GlobalProjectInfoComponent.findGlobalProjectInfo(project).map(_.ghcVersion)
+  }
+
+  def getAvailableStackagePackages(project: Project): Iterable[String] = {
+    GlobalProjectInfoComponent.findGlobalProjectInfo(project).map(_.availableStackagePackageNames).getOrElse(Iterable())
+  }
+
+  def getDependencies(project: Project): Iterable[HaskellDependency] = {
+    GlobalProjectInfoComponent.findGlobalProjectInfo(project).map(_.dependencies).getOrElse(Iterable())
   }
 
   def findProjectPackageNames(project: Project): Option[Iterable[String]] = {
@@ -188,7 +197,7 @@ object HaskellComponentsManager {
 
   def preloadLibraryModuleNamesCache(project: Project): Iterable[LibraryModuleNames] = {
     HaskellNotificationGroup.logInfoEvent(project, "Start to preload library modules cache")
-    val result = preloadAllLibraryModuleNames(project)
+    val result = preloadLibraryModuleNames(project)
     HaskellNotificationGroup.logInfoEvent(project, "Finished with preloading library modules cache")
     result
   }
@@ -207,17 +216,17 @@ object HaskellComponentsManager {
     TypeInfoComponent.findTypeInfoForSelection(psiFile, selectionModel)
   }
 
-  private def preloadAllLibraryModuleNames(project: Project): Iterable[LibraryModuleNames] = {
+  private def preloadLibraryModuleNames(project: Project): Seq[LibraryModuleNames] = {
     if (!project.isDisposed) {
-      LibraryModuleNamesComponent.preloadLibraryModuleNames(project)
+      val projectLibraryModuleNames = HaskellComponentsManager.getDependencies(project).flatMap(d => LibraryModuleNamesComponent.findLibraryModuleNames(project, d.name))
 
       val libraryModuleNames = for {
-        info <- StackReplsManager.getReplsManager(project).map(_.stackComponentInfos).getOrElse(Iterable())
-        globalInfo <- HaskellComponentsManager.findStackComponentGlobalInfo(info)
-      } yield globalInfo.allLibraryModuleNames
-      libraryModuleNames.flatten
+        componentInfo <- StackReplsManager.getReplsManager(project).map(_.stackComponentInfos).getOrElse(Iterable())
+        componentGlobalInfo <- HaskellComponentsManager.findStackComponentGlobalInfo(componentInfo)
+      } yield componentGlobalInfo.libraryModuleNames
+      (libraryModuleNames.flatten.toSeq ++ projectLibraryModuleNames.toSeq).distinct
     } else {
-      Iterable()
+      Seq()
     }
   }
 
@@ -253,11 +262,11 @@ object HaskellComponentsManager {
           if (project.isDisposed) {
             Iterable()
           } else {
-            val libraryModuleNames = componentInfos.flatMap(HaskellComponentsManager.findStackComponentGlobalInfo).flatMap(_.availableLibraryModuleNames)
+            val libraryModuleNames = componentInfos.flatMap(HaskellComponentsManager.findStackComponentGlobalInfo).flatMap(_.libraryModuleNames)
 
-            val exposedlibraryModuleNames = libraryModuleNames.map(_.exposed)
+            val exposedlibraryModuleNames = libraryModuleNames.flatMap(_.exposed).distinct
             DumbService.getInstance(project).runReadActionInSmartMode(ScalaUtil.computable {
-              HaskellPsiUtil.findImportDeclarations(f).flatMap(_.getModuleName).filter(exposedlibraryModuleNames.contains).filterNot(_ == HaskellProjectUtil.Prelude)
+              HaskellPsiUtil.findImportDeclarations(f).flatMap(_.getModuleName).filter(mn => exposedlibraryModuleNames.contains(mn)).filterNot(_ == HaskellProjectUtil.Prelude)
             })
           }
         })

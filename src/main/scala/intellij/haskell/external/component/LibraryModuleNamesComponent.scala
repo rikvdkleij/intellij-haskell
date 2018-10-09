@@ -47,12 +47,16 @@ private[component] object LibraryModuleNamesComponent {
         val (packageName, exposedModuleNames, hiddenModuleNames) = findPackageModuleNames(outputLines)
         (packageName, LibraryModuleNames(exposedModuleNames, hiddenModuleNames))
       })
-    }.getOrElse(Array())
+    }
 
-    result.foreach { case (name, lmn) =>
-      name.foreach { n =>
-        Cache.put(Key(project, n), Some(lmn))
-      }
+    result match {
+      case Some(r) =>
+        r.foreach { case (name, lmn) =>
+          name.foreach { n =>
+            Cache.put(Key(project, n), Some(lmn))
+          }
+        }
+      case None => HaskellNotificationGroup.logErrorBalloonEvent(project, "No module names")
     }
   }
 
@@ -63,7 +67,6 @@ private[component] object LibraryModuleNamesComponent {
       case _ => None
     }
   }
-
 
   private def findAvailableModuleNames(key: Key): Option[LibraryModuleNames] = {
     // Because preloadLibraryModuleNames should already have done all the work, something is wrong if this method is called
@@ -93,5 +96,7 @@ private[component] object LibraryModuleNamesComponent {
   }
 }
 
+
+case class Dependency(packageName: String, libraryModuleNames: LibraryModuleNames)
 
 case class LibraryModuleNames(exposed: Iterable[String], hidden: Iterable[String])

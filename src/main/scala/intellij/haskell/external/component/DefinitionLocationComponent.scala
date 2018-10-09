@@ -64,34 +64,36 @@ private[component] object DefinitionLocationComponent {
 
   def invalidate(psiFile: PsiFile): Unit = {
     val keys = Cache.synchronous().asMap().filter(_._1.psiFile == psiFile).flatMap { case (k, v) =>
-      v.toOption match {
-        case Some(definitionLocation) =>
-          if (ApplicationUtil.runReadAction(k.qualifiedNameElement.isValid) &&
-            ApplicationUtil.runReadAction(definitionLocation.namedElement.isValid) &&
-            ApplicationUtil.runReadAction(k.qualifiedNameElement.getIdentifierElement.getName) == ApplicationUtil.runReadAction(definitionLocation.namedElement.getName)) {
-            None
-          } else {
-            Some(k)
-          }
-        case None => Some(k)
+      if (ApplicationUtil.runReadAction(k.qualifiedNameElement.isValid)) {
+        v.toOption match {
+          case Some(definitionLocation) if ApplicationUtil.runReadAction(definitionLocation.namedElement.isValid) =>
+            if (ApplicationUtil.runReadAction(k.qualifiedNameElement.getIdentifierElement.getName) == ApplicationUtil.runReadAction(definitionLocation.namedElement.getName)) {
+              None
+            } else {
+              Some(k)
+            }
+          case _ => Some(k)
+        }
+      } else {
+        Some(k)
       }
     }
 
     Cache.synchronous().invalidateAll(keys)
 
     val otherFileKeys = Cache.synchronous().asMap().flatMap { case (k, v) =>
-      v.toOption match {
-        case Some(definitionLocation) if definitionLocation.namedElement.getContainingFile.getOriginalFile == psiFile =>
-          if (ApplicationUtil.runReadAction(definitionLocation.namedElement.isValid) && ApplicationUtil.runReadAction(k.qualifiedNameElement.isValid)) {
+      if (ApplicationUtil.runReadAction(k.qualifiedNameElement.isValid)) {
+        v.toOption match {
+          case Some(definitionLocation) if ApplicationUtil.runReadAction(definitionLocation.namedElement.isValid) && definitionLocation.namedElement.getContainingFile.getOriginalFile == psiFile =>
             if (ApplicationUtil.runReadAction(k.qualifiedNameElement.getIdentifierElement.getName) == ApplicationUtil.runReadAction(definitionLocation.namedElement.getName)) {
               None
             } else {
               Some(k)
             }
-          } else {
-            Some(k)
-          }
-        case _ => None
+          case _ => None
+        }
+      } else {
+        Some(k)
       }
     }
 

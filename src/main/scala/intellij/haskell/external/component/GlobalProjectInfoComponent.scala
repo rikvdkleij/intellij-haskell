@@ -19,6 +19,9 @@ package intellij.haskell.external.component
 import com.github.blemale.scaffeine.{LoadingCache, Scaffeine}
 import com.intellij.openapi.project.Project
 import intellij.haskell.external.execution.{CommandLine, StackCommandLine}
+import intellij.haskell.module.HaskellModuleBuilder
+import intellij.haskell.module.HaskellModuleBuilder.HaskellDependency
+import intellij.haskell.util.GhcVersion
 
 import scala.collection.JavaConverters._
 
@@ -50,7 +53,7 @@ private[component] object GlobalProjectInfoComponent {
     })
   }
 
-  def getAvailablePackages(project: Project): Iterable[String] = {
+  def getAvailableStackagesPackages(project: Project): Iterable[String] = {
     CabalConfigComponent.getAvailablePackageNames(project)
   }
 
@@ -61,14 +64,27 @@ private[component] object GlobalProjectInfoComponent {
 
   private def createGlobalProjectInfo(key: Key): Option[GlobalProjectInfo] = {
     val project = key.project
-    val extensions = getSupportedLanguageExtensions(project)
-    val packageNames = getAvailablePackages(project)
-    extensions.map(exts => GlobalProjectInfo(exts, packageNames))
+    for {
+      extensions <- getSupportedLanguageExtensions(project)
+      stackagePackageNames = getAvailableStackagesPackages(project)
+      ghcVersion <- findGhcVersion(project)
+      projectDependencies = findProjectDependencies(project)
+    } yield GlobalProjectInfo(ghcVersion, extensions, projectDependencies, stackagePackageNames)
   }
 
   private def findGhcPath(project: Project) = {
     StackCommandLine.run(project, Seq("path", "--compiler-exe")).flatMap(_.getStdoutLines.asScala.headOption)
   }
+
+  private def findProjectDependencies(project: Project): Iterable[HaskellDependency] = {
+    HaskellModuleBuilder.getProjectDependencies(project)
+  }
+
+  private def findGhcVersion(project: Project): Option[GhcVersion] = {
+    StackCommandLine.run(project, Seq("exec", "--", "ghc", "--numeric-version"))
+      .map(o => GhcVersion.parse(o.getStdout.trim))
+  }
 }
 
-case class GlobalProjectInfo(supportedLanguageExtensions: Iterable[String], availablePackageNames: Iterable[String])
+
+case class GlobalProjectInfo(ghcVersion: GhcVersion, supportedLanguageExtensions: Iterable[String], dependencies: Iterable[HaskellDependency], availableStackagePackageNames: Iterable[String])

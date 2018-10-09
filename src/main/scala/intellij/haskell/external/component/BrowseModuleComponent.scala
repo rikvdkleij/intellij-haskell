@@ -66,7 +66,7 @@ private[component] object BrowseModuleComponent {
   }
 
   def findExportedIdentifiers(stackComponentGlobalInfo: StackComponentGlobalInfo, psiFile: PsiFile, moduleName: String)(implicit ec: ExecutionContext): Future[Iterable[ModuleIdentifier]] = {
-    if (stackComponentGlobalInfo.availableLibraryModuleNames.exists(_.exposed.toSeq.contains(moduleName))) {
+    if (stackComponentGlobalInfo.libraryModuleNames.exists(_.exposed.toSeq.contains(moduleName))) {
       findLibraryModuleIdentifiers(psiFile.getProject, moduleName)
     } else {
       val key = Key(psiFile.getProject, moduleName, Some(psiFile), exported = true)

@@ -26,18 +26,17 @@ import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.vfs.{LocalFileSystem, VirtualFile}
 import com.intellij.psi.search.GlobalSearchScope
 import com.intellij.psi.{PsiElement, PsiFile}
-import intellij.haskell.HaskellNotificationGroup
-import intellij.haskell.external.component.NoInfo
-import intellij.haskell.external.execution.StackCommandLine
+import intellij.haskell.external.component.{HaskellComponentsManager, NoInfo}
 import intellij.haskell.module.HaskellModuleType
 import intellij.haskell.sdk.HaskellSdkType
+import intellij.haskell.{GlobalInfo, HaskellNotificationGroup}
 
 object HaskellProjectUtil {
 
   final val Prelude = "Prelude"
 
   def setNoDiagnosticsShowCaretFlag(project: Project): Boolean = {
-    HaskellProjectUtil.getGhcVersion(project).exists(ghcVersion =>
+    HaskellComponentsManager.getGhcVersion(project).exists(ghcVersion =>
       ghcVersion >= GhcVersion(8, 2, 1)
     )
   }
@@ -65,10 +64,16 @@ object HaskellProjectUtil {
     Option(LocalFileSystem.getInstance().findFileByPath(HaskellFileUtil.makeFilePathAbsolute(filePath, project)))
   }
 
+  // TODO Refactor to ADT: projectFile, libraryFile, otherFile
+
   // File can both project and library file in multi package projects
   // Being project file is leading
   def isLibraryFile(psiFile: PsiFile): Boolean = {
-    !isProjectFile(psiFile)
+    if (psiFile.getVirtualFile == null) {
+      false
+    } else {
+      !isProjectFile(psiFile) && !isIgnoredFile(psiFile.getProject, psiFile.getVirtualFile) && !isGeneratedFile(psiFile.getProject, psiFile.getVirtualFile)
+    }
   }
 
   /**
@@ -79,7 +84,7 @@ object HaskellProjectUtil {
   }
 
   def isProjectFile(project: Project, virtualFile: VirtualFile): Boolean = {
-    !isIgnoredFile(project, virtualFile) && findProjectHaskellModules(project).exists(m => FileUtil.isAncestor(Paths.get(getModuleDir(m).getAbsolutePath).toFile, Paths.get(virtualFile.getPath).toFile, true))
+    !isIgnoredFile(project, virtualFile) && !isGeneratedFile(project, virtualFile) && findProjectHaskellModules(project).exists(m => FileUtil.isAncestor(Paths.get(getModuleDir(m).getAbsolutePath).toFile, Paths.get(virtualFile.getPath).toFile, true))
   }
 
   private final val IgnoredHaskellFiles = Seq("setup.hs", "hlint.hs")
@@ -92,6 +97,14 @@ object HaskellProjectUtil {
     } else {
       false
     }
+  }
+
+  private def isGeneratedFile(project: Project, virtualFile: VirtualFile) = {
+    virtualFile.getName.startsWith("Paths_") && FileUtil.isAncestor(getStackWorkDirectory(project).toFile, Paths.get(virtualFile.getPath).toFile, true)
+  }
+
+  private def getStackWorkDirectory(project: Project) = {
+    Paths.get(project.getBasePath, GlobalInfo.StackWorkDirName)
   }
 
   private def findContainingDirectory(virtualFile: VirtualFile): Option[VirtualFile] = {
@@ -181,12 +194,6 @@ object HaskellProjectUtil {
   def findProjectHaskellModules(project: Project): Iterable[Module] = {
     ModuleManager.getInstance(project).getModules.filter(_.getModuleTypeName == HaskellModuleType.Id)
   }
-
-  def getGhcVersion(project: Project): Option[GhcVersion] = {
-    StackCommandLine.run(project, Seq("exec", "--", "ghc", "--numeric-version"))
-      .map(o => GhcVersion.parse(o.getStdout.trim))
-  }
-
 }
 
 case class GhcVersion(major: Int, minor: Int, patch: Int) extends Ordered[GhcVersion] {

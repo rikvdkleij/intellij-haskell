@@ -5,7 +5,6 @@ import java.nio.file.{Path, Paths}
 
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.io.FileUtil
-import com.intellij.openapi.vfs.VfsUtil
 import intellij.haskell.util.HaskellFileUtil
 import io.github.soc.directories.ProjectDirectories
 
@@ -19,7 +18,6 @@ object GlobalInfo {
   private final val IntelliJHaskellDirectories = ProjectDirectories.from("com.github", "rikvdkleij", "intellij-haskell")
 
   def getIntelliJHaskellDirectory: File = {
-    val homeDirectory = HaskellFileUtil.getAbsolutePath(VfsUtil.getUserHomeDir)
     val directory = new File(IntelliJHaskellDirectories.cacheDir)
     if (directory.exists()) {
       HaskellFileUtil.removeGroupWritePermission(directory)

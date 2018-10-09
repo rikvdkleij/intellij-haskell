@@ -21,7 +21,6 @@ import java.util.concurrent.Executors
 import com.github.blemale.scaffeine.{LoadingCache, Scaffeine}
 import com.intellij.openapi.project.Project
 import intellij.haskell.external.component.HaskellComponentsManager.StackComponentInfo
-import intellij.haskell.module.HaskellModuleBuilder
 
 import scala.concurrent.{Await, ExecutionContext, ExecutionContextExecutorService, Future}
 
@@ -46,7 +45,7 @@ private[component] object StackComponentGlobalInfoComponent {
   private def createStackInfo(key: Key): Result = {
     val project = key.stackComponentInfo.module.getProject
     val stackComponentInfo = key.stackComponentInfo
-    findAvailableModuleNames(project, stackComponentInfo)
+    findAvailableLibraryModuleNames(project, stackComponentInfo)
   }
 
   private val ExecutorService = Executors.newCachedThreadPool()
@@ -54,30 +53,24 @@ private[component] object StackComponentGlobalInfoComponent {
 
   import scala.concurrent.duration._
 
-  private def findAvailableModuleNames(project: Project, componentInfo: StackComponentInfo): Result = {
-    val allDependencies = HaskellModuleBuilder.getDependencies(project, componentInfo.module, componentInfo.target, None)
-    val packageNameLibraryModuleNamesFutures = allDependencies.grouped(5).map { dependencies =>
+  private def findAvailableLibraryModuleNames(project: Project, componentInfo: StackComponentInfo): Result = {
+    val buildDependsPackages = componentInfo.buildDepends
+
+    val libraryModuleNamesFutures = buildDependsPackages.grouped(5).map { packageNames =>
       Future {
-        dependencies.flatMap { d =>
-          val name = d.name
+        packageNames.flatMap { packageName =>
           if (project.isDisposed) {
             None
           } else {
-            LibraryModuleNamesComponent.findLibraryModuleNames(project, name).map((name, _))
+            LibraryModuleNamesComponent.findLibraryModuleNames(project, packageName)
           }
         }
       }
     }
 
-    val packageNameLibraryModuleNames = Await.result(Future.sequence(packageNameLibraryModuleNamesFutures), 60.second).flatten.toIterable
+    val libraryModuleNames = Await.result(Future.sequence(libraryModuleNamesFutures), 60.second).flatten.toIterable
 
-    val availableDependencyPackages = HaskellModuleBuilder.getDependencies(project, componentInfo.module, componentInfo.target, Some(1)).map(_.name).toSeq
-    val availableLibraryModuleNames = packageNameLibraryModuleNames.filter { case (n, _) => availableDependencyPackages.contains(n) }.map(_._2)
-    if (packageNameLibraryModuleNames.isEmpty) {
-      None
-    } else {
-      Some(StackComponentGlobalInfo(componentInfo, availableLibraryModuleNames, packageNameLibraryModuleNames.map(_._2)))
-    }
+    Some(StackComponentGlobalInfo(componentInfo, libraryModuleNames))
   }
 
   def invalidate(project: Project): Unit = {
@@ -86,4 +79,4 @@ private[component] object StackComponentGlobalInfoComponent {
   }
 }
 
-case class StackComponentGlobalInfo(stackComponentInfo: StackComponentInfo, availableLibraryModuleNames: Iterable[LibraryModuleNames], allLibraryModuleNames: Iterable[LibraryModuleNames])
+case class StackComponentGlobalInfo(stackComponentInfo: StackComponentInfo, libraryModuleNames: Iterable[LibraryModuleNames])

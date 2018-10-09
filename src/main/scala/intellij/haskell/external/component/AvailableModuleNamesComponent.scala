@@ -16,10 +16,12 @@
 
 package intellij.haskell.external.component
 
+import com.github.blemale.scaffeine.{AsyncLoadingCache, Scaffeine}
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.project.IndexNotReadyException
 import com.intellij.psi.search.FileTypeIndex
+import com.intellij.util.WaitFor
 import intellij.haskell.external.component.HaskellComponentsManager.StackComponentInfo
 import intellij.haskell.external.repl.StackRepl.{BenchmarkType, TestSuiteType}
 import intellij.haskell.psi.HaskellPsiUtil
@@ -27,19 +29,43 @@ import intellij.haskell.util.{ApplicationUtil, HaskellFileUtil}
 import intellij.haskell.{HaskellFileType, HaskellNotificationGroup}
 
 import scala.collection.JavaConverters._
+import scala.concurrent.Await
 import scala.concurrent.duration._
 
 private[component] object AvailableModuleNamesComponent {
 
   private final val TestStanzaTypes = Seq(TestSuiteType, BenchmarkType)
 
-  def findAvailableModuleNamesWithIndex(stackComponentInfo: StackComponentInfo): Stream[String] = {
+  private case class Key(stackComponentInfo: StackComponentInfo)
+
+  private final val Cache: AsyncLoadingCache[Key, Iterable[String]] = Scaffeine().expireAfterWrite(10.seconds).buildAsync((k: Key) => findAvailableProjectModuleNamesWithIndex(k.stackComponentInfo))
+
+  def findAvailableModuleNamesWithIndex(stackComponentInfo: StackComponentInfo): Iterable[String] = {
     // A module can be a project module AND library module
-    findAvailableLibraryModuleNames(stackComponentInfo).toStream.#:::(findAvailableProjectModuleNamesWithIndex(stackComponentInfo).toStream)
+    findAvailableLibraryModuleNames(stackComponentInfo) ++ findAvailableProjectModuleNames(stackComponentInfo)
   }
 
   def findAvailableModuleLibraryModuleNamesWithIndex(module: Module): Iterable[String] = {
     findModuleNamesInModule(module, includeTests = false)
+  }
+
+  private def findAvailableProjectModuleNames(stackComponentInfo: StackComponentInfo): Iterable[String] = {
+    val key = Key(stackComponentInfo)
+
+    val f = Cache.get(key)
+    new WaitFor(5000, 1) {
+      override def condition(): Boolean = {
+        ProgressManager.checkCanceled()
+        f.isCompleted
+      }
+    }
+
+    if (f.isCompleted) {
+      Await.result(f, 1.milli)
+    } else {
+      Cache.synchronous().invalidate(key)
+      Iterable()
+    }
   }
 
   private def findAvailableProjectModuleNamesWithIndex(stackComponentInfo: StackComponentInfo): Iterable[String] = {
@@ -47,13 +73,12 @@ private[component] object AvailableModuleNamesComponent {
   }
 
   private def findAvailableLibraryModuleNames(stackComponentInfo: StackComponentInfo): Iterable[String] = {
-    HaskellComponentsManager.findStackComponentGlobalInfo(stackComponentInfo).map(_.availableLibraryModuleNames.flatMap(_.exposed)).getOrElse(Iterable())
+    HaskellComponentsManager.findStackComponentGlobalInfo(stackComponentInfo).map(_.libraryModuleNames.flatMap(_.exposed)).getOrElse(Iterable())
   }
 
   private def findModuleNamesInModule(module: Module, includeTests: Boolean): Iterable[String] = {
     for {
       vf <- findHaskellFiles(module, includeTests)
-      () = ProgressManager.checkCanceled()
       hf <- HaskellFileUtil.convertToHaskellFileInReadAction(module.getProject, vf).toOption.flatten
       mn <- HaskellPsiUtil.findModuleName(hf)
     } yield mn
@@ -70,4 +95,8 @@ private[component] object AvailableModuleNamesComponent {
       }
     }, s"find Haskell files for module ${module.getName}", 5.seconds).toOption.toIterable.flatten
   }
+
+
 }
+
+

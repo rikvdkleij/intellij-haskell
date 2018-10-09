@@ -440,7 +440,7 @@ object HaskellCompletionContributor {
       f4 <- idsF4
     } yield doIt(f1, f2, f3, f4)
 
-    new WaitFor(5000, 10) {
+    new WaitFor(2000, 10) {
       override def condition(): Boolean = {
         ProgressManager.checkCanceled()
         f.isCompleted

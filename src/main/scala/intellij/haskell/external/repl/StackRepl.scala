@@ -22,7 +22,6 @@ import java.util.concurrent.LinkedBlockingQueue
 import com.intellij.openapi.project.Project
 import com.intellij.util.EnvironmentUtil
 import intellij.haskell.external.component.HaskellComponentsManager.StackComponentInfo
-import intellij.haskell.external.component.ProjectLibraryFileWatcher
 import intellij.haskell.external.execution.StackCommandLine
 import intellij.haskell.external.repl.StackRepl.{BenchmarkType, StackReplOutput, TestSuiteType}
 import intellij.haskell.sdk.HaskellSdkType
@@ -47,6 +46,7 @@ abstract class StackRepl(project: Project, componentInfo: Option[StackComponentI
     case object Load extends Command
 
     case object LocalBrowse extends Command
+
     case object Browse extends Command
 
     case object Set extends Command
@@ -294,16 +294,15 @@ abstract class StackRepl(project: Project, componentInfo: Option[StackComponentI
             logInfo("Stack REPL is started")
             available = true
           } else if (hasDependencyError) {
-            if (!ProjectLibraryFileWatcher.isBuilding(project)) {
-              val target = componentInfo.map(_.target).getOrElse("-")
-              val error = stderrQueue.asScala.headOption.map(_.replace("<command line>:", "").trim).getOrElse("a dependency failed to build")
-              val message = s"Stack REPL could not be started for target `$target` because $error"
-              logInfo(message)
-              HaskellNotificationGroup.logWarningBalloonEvent(project, message)
-            } else {
-              logError(s"Stack REPL could not be started within $DefaultTimeout")
-              writeOutputToLog()
-            }
+            val target = componentInfo.map(_.target).getOrElse("-")
+            val error = stderrQueue.asScala.headOption.map(_.replace("<command line>:", "").trim).getOrElse("a dependency failed to build")
+            val message = s"Stack REPL could not be started for target `$target` because $error"
+            logInfo(message)
+            HaskellNotificationGroup.logWarningBalloonEvent(project, message)
+            closeResources()
+          } else {
+            logError(s"Stack REPL could not be started within $DefaultTimeout")
+            writeOutputToLog()
             closeResources()
           }
         }

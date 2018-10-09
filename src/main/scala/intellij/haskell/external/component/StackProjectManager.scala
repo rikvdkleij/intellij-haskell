@@ -140,6 +140,12 @@ object StackProjectManager {
                 HaskellNotificationGroup.logErrorBalloonEvent(project, "Project will not be built because building it's dependencies failed")
               }
 
+              progressIndicator.setText("Busy with preloading library module names")
+              LibraryModuleNamesComponent.preloadLibraryModuleNames(project)
+
+              progressIndicator.setText("Busy with preloading global project info")
+              GlobalProjectInfoComponent.findGlobalProjectInfo(project)
+
               progressIndicator.setText("Busy with preloading library files")
               val preloadLibraryModuleNamesCache = ApplicationManager.getApplication.executeOnPooledThread(ScalaUtil.callable {
                 HaskellComponentsManager.preloadLibraryModuleNamesCache(project)
@@ -148,12 +154,6 @@ object StackProjectManager {
               if (!project.isDisposed) {
                 progressIndicator.setText(s"Busy with building Intero")
                 build(project, Seq("intero"))
-              }
-
-              if (!project.isDisposed) {
-                getStackProjectManager(project).map(_.projectLibraryFileWatcher).foreach { watcher =>
-                  ApplicationManager.getApplication.getMessageBus.connect(project).subscribe(VirtualFileManager.VFS_CHANGES, watcher)
-                }
               }
 
               if (restart) {
@@ -191,10 +191,6 @@ object StackProjectManager {
               progressIndicator.setText("Busy with downloading library sources")
               HaskellModuleBuilder.addLibrarySources(project, update = false)
 
-              ApplicationManager.getApplication.executeOnPooledThread(ScalaUtil.runnable {
-                progressIndicator.setText("Busy with preloading global project info")
-                GlobalProjectInfoComponent.findGlobalProjectInfo(project)
-              })
 
               val preloadLibraryFilesCacheFuture = ApplicationManager.getApplication.executeOnPooledThread(ScalaUtil.runnable {
                 val result = FutureUtil.waitForValue(project, preloadLibraryModuleNamesCache, "preloading library module names", 600)
@@ -209,6 +205,11 @@ object StackProjectManager {
                 StackReplsManager.getGlobalRepl(project).foreach(_.restart())
               })
 
+              if (!project.isDisposed) {
+                getStackProjectManager(project).map(_.projectLibraryFileWatcher).foreach { watcher =>
+                  ApplicationManager.getApplication.getMessageBus.connect(project).subscribe(VirtualFileManager.VFS_CHANGES, watcher)
+                }
+              }
 
               progressIndicator.setText("Busy with preloading library caches")
               if (!preloadCacheFuture.isDone || !preloadLibraryFilesCacheFuture.isDone) {

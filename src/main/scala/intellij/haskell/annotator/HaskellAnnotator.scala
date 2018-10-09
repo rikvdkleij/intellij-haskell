@@ -53,7 +53,7 @@ class HaskellAnnotator extends ExternalAnnotator[(PsiFile, Option[PsiElement]), 
     } else if (StackProjectManager.isInitializing(psiFile.getProject)) {
       val project = psiFile.getProject
       // Last file is leading
-      HaskellNotificationGroup.logInfoEvent(project, s"File ${psiFile.getName} could not be loaded because project was still building")
+      HaskellNotificationGroup.logInfoEvent(project, s"File ${psiFile.getName} could not be loaded because project is still initializing")
       HaskellAnnotator.NotLoadedFile.put(project, psiFile)
       null
     } else {
