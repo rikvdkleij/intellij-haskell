@@ -3097,7 +3097,7 @@ public class HaskellParser implements PsiParser, LightPsiParser {
   //                                   SEMICOLON | LEFT_BRACKET | RIGHT_BRACKET | literal | LEFT_BRACE | RIGHT_BRACE |
   //                                   COMMA | QUOTE | BACKQUOTE | NEWLINE | DOUBLE_QUOTE | TILDE | DOT | dot_dot | VERTICAL_BAR |
   //                                   EQUAL | DOUBLE_RIGHT_ARROW | COLON_COLON | RIGHT_ARROW | LEFT_ARROW | BACKSLASH | TYPE |
-  //                                   INSTANCE | MODULE | WHERE | DO | LET | IN | CASE | OF | IF | THEN | ELSE | DIRECTIVE)+
+  //                                   INSTANCE | MODULE | WHERE | DO | LET | IN | CASE | OF | IF | THEN | ELSE | IMPORT | DIRECTIVE)+
   public static boolean general_pragma_content(PsiBuilder b, int l) {
     if (!recursion_guard_(b, l, "general_pragma_content")) return false;
     boolean r;
@@ -3117,7 +3117,7 @@ public class HaskellParser implements PsiParser, LightPsiParser {
   //                                   SEMICOLON | LEFT_BRACKET | RIGHT_BRACKET | literal | LEFT_BRACE | RIGHT_BRACE |
   //                                   COMMA | QUOTE | BACKQUOTE | NEWLINE | DOUBLE_QUOTE | TILDE | DOT | dot_dot | VERTICAL_BAR |
   //                                   EQUAL | DOUBLE_RIGHT_ARROW | COLON_COLON | RIGHT_ARROW | LEFT_ARROW | BACKSLASH | TYPE |
-  //                                   INSTANCE | MODULE | WHERE | DO | LET | IN | CASE | OF | IF | THEN | ELSE | DIRECTIVE
+  //                                   INSTANCE | MODULE | WHERE | DO | LET | IN | CASE | OF | IF | THEN | ELSE | IMPORT | DIRECTIVE
   private static boolean general_pragma_content_0(PsiBuilder b, int l) {
     if (!recursion_guard_(b, l, "general_pragma_content_0")) return false;
     boolean r;
@@ -3162,6 +3162,7 @@ public class HaskellParser implements PsiParser, LightPsiParser {
     if (!r) r = consumeToken(b, HS_IF);
     if (!r) r = consumeToken(b, HS_THEN);
     if (!r) r = consumeToken(b, HS_ELSE);
+      if (!r) r = consumeToken(b, HS_IMPORT);
     if (!r) r = consumeToken(b, HS_DIRECTIVE);
     return r;
   }
