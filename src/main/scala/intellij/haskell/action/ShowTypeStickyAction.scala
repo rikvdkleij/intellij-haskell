@@ -12,7 +12,7 @@ import scala.annotation.tailrec
 class ShowTypeStickyAction extends AnAction {
 
   override def update(actionEvent: AnActionEvent) {
-    HaskellEditorUtil.enableAction(onlyForProjectFile = true, actionEvent)
+    HaskellEditorUtil.enableAction(onlyForSourceFile = true, actionEvent)
   }
 
   def actionPerformed(actionEvent: AnActionEvent) {

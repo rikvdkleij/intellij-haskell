@@ -52,7 +52,7 @@ object HaskellEditorUtil {
     }
   }
 
-  def enableAction(onlyForProjectFile: Boolean, actionEvent: AnActionEvent): Unit = {
+  def enableAction(onlyForSourceFile: Boolean, actionEvent: AnActionEvent): Unit = {
     val presentation = actionEvent.getPresentation
 
     def enable() {
@@ -70,8 +70,8 @@ object HaskellEditorUtil {
       val psiFile = CommonDataKeys.PSI_FILE.getData(dataContext)
       if (HaskellProjectUtil.isHaskellProject(psiFile.getProject)) {
         psiFile match {
-          case _: HaskellFile if !onlyForProjectFile => enable()
-          case _: HaskellFile if onlyForProjectFile && !HaskellProjectUtil.isLibraryFile(psiFile) => enable()
+          case _: HaskellFile if !onlyForSourceFile => enable()
+          case _: HaskellFile if onlyForSourceFile && HaskellProjectUtil.isSourceFile(psiFile) => enable()
           case _ => disable()
         }
       } else {

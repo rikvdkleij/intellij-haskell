@@ -114,7 +114,7 @@ private[external] class StackReplsManager(val project: Project) {
   def getGlobalRepl: GlobalStackRepl = globalRepl
 
   private def findProjectRepl(psiFile: PsiFile): Option[ProjectStackRepl] = {
-    if (HaskellProjectUtil.isProjectFile(psiFile)) {
+    if (HaskellProjectUtil.isSourceFile(psiFile)) {
       if (StackProjectManager.isInitializing(project)) {
         HaskellEditorUtil.showHaskellSupportIsNotAvailableWhileInitializing(project)
         None

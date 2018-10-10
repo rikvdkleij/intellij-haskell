@@ -27,7 +27,7 @@ class SetupHaskellSdkNotificationProvider(project: Project, notifications: Edito
   override def getKey: Key[EditorNotificationPanel] = SetupHaskellSdkNotificationProvider.SdkNotificationPanelKey
 
   override def createNotificationPanel(virtualFile: VirtualFile, fileEditor: FileEditor): EditorNotificationPanel = {
-    if (HaskellProjectUtil.isHaskellProject(project) && HaskellProjectUtil.isProjectFile(project, virtualFile)) {
+    if (HaskellProjectUtil.isHaskellProject(project) && HaskellProjectUtil.isSourceFile(project, virtualFile)) {
       HaskellProjectUtil.findModuleForVirtualFile(project, virtualFile).flatMap(m => HaskellSdkType.getSdkName(project, m)) match {
         case None => createSdkSetupPanel(project)
         case _ => null

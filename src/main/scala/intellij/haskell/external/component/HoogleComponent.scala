@@ -62,7 +62,7 @@ object HoogleComponent {
 
       val name = qualifiedNameElement.getIdentifierElement.getName
       val psiFile = qualifiedNameElement.getContainingFile.getOriginalFile
-      if (HaskellProjectUtil.isProjectFile(psiFile)) {
+      if (HaskellProjectUtil.isSourceFile(psiFile)) {
         DefinitionLocationComponent.findDefinitionLocation(psiFile, qualifiedNameElement) match {
           case Left(noInfo) =>
             HaskellNotificationGroup.logWarningEvent(project, s"No documentation because no location info could be found for identifier `$name` because ${noInfo.message}")
@@ -81,9 +81,11 @@ object HoogleComponent {
                 HoogleComponent.createDocumentation(project, name, mn)
             }
         }
-      } else {
+      } else if (HaskellProjectUtil.isLibraryFile(psiFile)) {
         val moduleName = HaskellPsiUtil.findModuleName(psiFile)
         moduleName.flatMap(mn => createDocumentation(project, name, mn))
+      } else {
+        None
       }
     } else {
       Some("No documentation because Hoogle (database) is not available")

@@ -23,7 +23,7 @@ import intellij.haskell.util.HaskellEditorUtil
 class ShowProblemMessageAction extends AnAction {
 
   override def update(actionEvent: AnActionEvent) {
-    HaskellEditorUtil.enableAction(onlyForProjectFile = true, actionEvent)
+    HaskellEditorUtil.enableAction(onlyForSourceFile = true, actionEvent)
   }
 
   override def actionPerformed(actionEvent: AnActionEvent): Unit = {

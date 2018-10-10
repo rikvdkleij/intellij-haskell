@@ -25,7 +25,7 @@ import intellij.haskell.util.HaskellEditorUtil
 class ShowNameInfoAction extends AnAction {
 
   override def update(actionEvent: AnActionEvent) {
-    HaskellEditorUtil.enableAction(onlyForProjectFile = false, actionEvent)
+    HaskellEditorUtil.enableAction(onlyForSourceFile = false, actionEvent)
   }
 
   def actionPerformed(actionEvent: AnActionEvent) {

@@ -30,7 +30,7 @@ import intellij.haskell.util.HaskellEditorUtil
 class GotoInstanceDeclarationAction extends AnAction {
 
   override def update(actionEvent: AnActionEvent) {
-    HaskellEditorUtil.enableAction(onlyForProjectFile = false, actionEvent)
+    HaskellEditorUtil.enableAction(onlyForSourceFile = false, actionEvent)
   }
 
   def actionPerformed(actionEvent: AnActionEvent) {

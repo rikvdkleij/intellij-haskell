@@ -29,7 +29,7 @@ import intellij.haskell.util.{HaskellEditorUtil, StringUtil}
 class ShowTypeAction extends AnAction {
 
   override def update(actionEvent: AnActionEvent) {
-    HaskellEditorUtil.enableAction(onlyForProjectFile = true, actionEvent)
+    HaskellEditorUtil.enableAction(onlyForSourceFile = true, actionEvent)
   }
 
   def actionPerformed(actionEvent: AnActionEvent) {

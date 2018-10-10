@@ -110,7 +110,7 @@ class HaskellCompletionContributor extends CompletionContributor {
 
       if (StackProjectManager.isInitializing(project)) {
         HaskellEditorUtil.showHaskellSupportIsNotAvailableWhileInitializing(project)
-      } else if (!isConsoleFile && (HaskellProjectUtil.isLibraryFile(psiFile) || Option(parameters.getOriginalPosition).map(_.getNode.getElementType).exists(t => HaskellParserDefinition.Literals.contains(t) || HaskellParserDefinition.Comments.contains(t)))) {
+      } else if (!isConsoleFile && (!HaskellProjectUtil.isSourceFile(psiFile) || Option(parameters.getOriginalPosition).map(_.getNode.getElementType).exists(t => HaskellParserDefinition.Literals.contains(t) || HaskellParserDefinition.Comments.contains(t)))) {
         ()
       } else {
 

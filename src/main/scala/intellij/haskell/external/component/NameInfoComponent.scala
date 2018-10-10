@@ -46,8 +46,8 @@ private[component] object NameInfoComponent {
     val psiFile = key.psiFile
     val project = psiFile.getProject
     val name = key.name
-    val isProjectFile = HaskellProjectUtil.isProjectFile(psiFile)
-    if (isProjectFile) {
+    val isSourceFile = HaskellProjectUtil.isSourceFile(psiFile)
+    if (isSourceFile) {
       if (LoadComponent.isFileLoaded(psiFile)) {
         StackReplsManager.getProjectRepl(psiFile) match {
           case Some(repl) => if (repl.isBusy) {
@@ -63,7 +63,7 @@ private[component] object NameInfoComponent {
       } else {
         Left(ModuleNotLoaded(psiFile.getName))
       }
-    } else {
+    } else if (HaskellProjectUtil.isLibraryFile(psiFile)) {
       HaskellPsiUtil.findModuleName(psiFile) match {
         case None => Left(NoInfoAvailable(key.name, psiFile.getName))
         case Some(mn) =>
@@ -75,6 +75,8 @@ private[component] object NameInfoComponent {
             }
           }
       }
+    } else {
+      Left(NoInfoAvailable(key.name, psiFile.getName))
     }
   }
 

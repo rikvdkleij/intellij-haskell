@@ -64,39 +64,55 @@ object HaskellProjectUtil {
     Option(LocalFileSystem.getInstance().findFileByPath(HaskellFileUtil.makeFilePathAbsolute(filePath, project)))
   }
 
-  // TODO Refactor to ADT: projectFile, libraryFile, otherFile
+  trait HaskellProjectFileType
 
-  // File can both project and library file in multi package projects
-  // Being project file is leading
-  def isLibraryFile(psiFile: PsiFile): Boolean = {
-    if (psiFile.getVirtualFile == null) {
-      false
-    } else {
-      !isProjectFile(psiFile) && !isIgnoredFile(psiFile.getProject, psiFile.getVirtualFile) && !isGeneratedFile(psiFile.getProject, psiFile.getVirtualFile)
+  case object SourceFile extends HaskellProjectFileType
+
+  case object LibraryFile extends HaskellProjectFileType
+
+  case object Other extends HaskellProjectFileType
+
+  def getHaskellProjectFileType(psiFile: PsiFile): Option[HaskellProjectFileType] = {
+    HaskellFileUtil.findVirtualFile(psiFile) match {
+      case None => None
+      case Some(vf) =>
+        val project = psiFile.getProject
+        Some(getHaskellProjectFileType(project, vf))
     }
   }
 
-  /**
-    * findVirtualFile returns null when file is only in memory so then is must be a project file
-    */
-  def isProjectFile(psiFile: PsiFile): Boolean = {
-    HaskellFileUtil.findVirtualFile(psiFile).forall(vf => isProjectFile(psiFile.getProject, vf))
-  }
-
-  def isProjectFile(project: Project, virtualFile: VirtualFile): Boolean = {
-    !isIgnoredFile(project, virtualFile) && !isGeneratedFile(project, virtualFile) && findProjectHaskellModules(project).exists(m => FileUtil.isAncestor(Paths.get(getModuleDir(m).getAbsolutePath).toFile, Paths.get(virtualFile.getPath).toFile, true))
-  }
-
-  private final val IgnoredHaskellFiles = Seq("setup.hs", "hlint.hs")
-
-  private def isIgnoredFile(project: Project, virtualFile: VirtualFile): Boolean = {
-    if (IgnoredHaskellFiles.contains(virtualFile.getName.toLowerCase) &&
-      HaskellProjectUtil.findModuleForVirtualFile(project, virtualFile).exists(m => findContainingDirectory(virtualFile).exists(vf => HaskellFileUtil.getAbsolutePath(vf) == HaskellProjectUtil.getModuleDir(m).getPath))) {
+  def getHaskellProjectFileType(project: Project, virtualFile: VirtualFile): HaskellProjectFileType = {
+    if (isConfigFile(project, virtualFile) || isGeneratedFile(project, virtualFile)) {
       HaskellNotificationGroup.logInfoEvent(project, s"`${virtualFile.getName}` is ignored")
-      true
+      Other
+    } else if (isModuleFile(project, virtualFile)) {
+      SourceFile
     } else {
-      false
+      LibraryFile
     }
+  }
+
+  def isSourceFile(project: Project, virtualFile: VirtualFile): Boolean = {
+    getHaskellProjectFileType(project, virtualFile) == SourceFile
+  }
+
+  def isSourceFile(psiFile: PsiFile): Boolean = {
+    getHaskellProjectFileType(psiFile).contains(SourceFile)
+  }
+
+  def isLibraryFile(psiFile: PsiFile): Boolean = {
+    getHaskellProjectFileType(psiFile).contains(LibraryFile)
+  }
+
+  private def isModuleFile(project: Project, virtualFile: VirtualFile): Boolean = {
+    findProjectHaskellModules(project).exists(m => FileUtil.isAncestor(Paths.get(getModuleDir(m).getAbsolutePath).toFile, Paths.get(virtualFile.getPath).toFile, true))
+  }
+
+  private final val ConfigHaskellFiles = Seq("setup.hs", "hlint.hs")
+
+  private def isConfigFile(project: Project, virtualFile: VirtualFile): Boolean = {
+    ConfigHaskellFiles.contains(virtualFile.getName.toLowerCase) &&
+      HaskellProjectUtil.findModuleForVirtualFile(project, virtualFile).exists(m => findContainingDirectory(virtualFile).exists(vf => HaskellFileUtil.getAbsolutePath(vf) == HaskellProjectUtil.getModuleDir(m).getPath))
   }
 
   private def isGeneratedFile(project: Project, virtualFile: VirtualFile) = {

@@ -48,7 +48,7 @@ import scala.collection.JavaConverters._
 class HaskellAnnotator extends ExternalAnnotator[(PsiFile, Option[PsiElement]), CompilationResult] {
 
   override def collectInformation(psiFile: PsiFile, editor: Editor, hasErrors: Boolean): (PsiFile, Option[PsiElement]) = {
-    if (HaskellConsoleView.isConsoleFile(psiFile) || HaskellProjectUtil.isLibraryFile(psiFile)) {
+    if (HaskellConsoleView.isConsoleFile(psiFile) || !HaskellProjectUtil.isSourceFile(psiFile)) {
       null
     } else if (StackProjectManager.isInitializing(psiFile.getProject)) {
       val project = psiFile.getProject

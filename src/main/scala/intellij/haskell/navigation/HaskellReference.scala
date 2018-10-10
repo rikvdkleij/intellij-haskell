@@ -104,19 +104,23 @@ class HaskellReference(element: HaskellNamedElement, textRange: TextRange) exten
   private def resolveReference(namedElement: HaskellNamedElement, psiFile: PsiFile, project: Project): Either[NoInfo, Option[HaskellNamedElement]] = {
     ProgressManager.checkCanceled()
 
+    def noInfo = {
+      NoInfoAvailable(ApplicationUtil.runReadAction(namedElement.getName), psiFile.getName)
+    }
+
     HaskellPsiUtil.findQualifiedNameParent(namedElement) match {
       case Some(qualifiedNameElement) =>
         ProgressManager.checkCanceled()
 
-        val isLibraryFile = HaskellProjectUtil.isLibraryFile(psiFile)
-
         ProgressManager.checkCanceled()
-        if (isLibraryFile) {
+        if (HaskellProjectUtil.isSourceFile(psiFile)) {
+          resolveReferenceByDefinitionLocation(qualifiedNameElement, psiFile)
+        } else if (HaskellProjectUtil.isLibraryFile(psiFile)) {
           resolveReferenceByNameInfo(qualifiedNameElement, namedElement, psiFile, project)
         } else {
-          resolveReferenceByDefinitionLocation(qualifiedNameElement, psiFile)
+          Left(noInfo)
         }
-      case None => Left(NoInfoAvailable(ApplicationUtil.runReadAction(namedElement.getName), psiFile.getName))
+      case None => Left(noInfo)
     }
   }
 
@@ -215,7 +219,7 @@ object HaskellReference {
 
     if (HaskellProjectUtil.isLibraryFile(psifile)) {
       findInDeclarations
-    } else {
+    } else if (HaskellProjectUtil.isSourceFile(psifile)) {
       ProgressManager.checkCanceled()
 
       val topLevelExpressions = HaskellPsiUtil.findTopLevelExpressions(psifile)
@@ -231,6 +235,8 @@ object HaskellReference {
       } else {
         expressionIdentifiers
       }
+    } else {
+      None
     }
   }
 
