@@ -1,7 +1,7 @@
 <idea-plugin>
     <id>intellij.haskell</id>
     <name>IntelliJ-Haskell</name>
-    <version>1.0.0-beta28</version>
+    <version>1.0.0-beta29</version>
     <vendor email="rikvdkleij@gmail.com">Rik van der Kleij</vendor>
 
     <description><![CDATA[
@@ -11,7 +11,7 @@
     ]]></description>
 
     <change-notes><![CDATA[
-        <p>1.0.0-beta28</p>
+        <p>1.0.0-beta29</p>
         <b>IMPORTANT: Stack version should be > 1.7.0 and please reimport your Haskell Stack project after updating the plugin.</b>
         <ul>
             <li>Improved responsiveness, especially for multi-package projects</li>
@@ -26,6 +26,8 @@
             <li>Added option to Commit Changes dialog to optimize imports</li>
             <li>Added type and definition info of the current identifier to the Documentation Tool window. That info is always up-to-date by enabling option `Auto-update from Source`</li>
             <li>Implemented Haskell Problems View</li>
+            <li>Added feature to jump from/to test and added action to create test. See #314 (@Sir4ur0n)</li>
+            <li>Made location of IntelliJ sandbox depending on OS. Location `~/.intellij-haskell` is not used anymore. See #316 (@liff)</li>
         </ul>
         <p>1.0.0-beta12</p>
         <ul>
