@@ -208,7 +208,7 @@ object HaskellReference {
 
       ProgressManager.checkCanceled()
 
-      val declarationIdentifiers = declarationElements.flatMap(_.getIdentifierElements).filter(_.getName == name)
+      val declarationIdentifiers = declarationElements.flatMap(_.getIdentifierElements).filter(d => d.getName == name || d.getName == "_" + name)
 
       ProgressManager.checkCanceled()
 

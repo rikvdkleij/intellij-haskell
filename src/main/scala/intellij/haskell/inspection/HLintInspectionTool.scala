@@ -35,7 +35,7 @@ class HLintInspectionTool extends LocalInspectionTool {
     ProgressManager.checkCanceled()
 
     if (!HaskellProjectUtil.isSourceFile(psiFile)) {
-      return Array()
+      return null
     }
 
     ProgressManager.checkCanceled()
@@ -50,14 +50,14 @@ class HLintInspectionTool extends LocalInspectionTool {
 
     ProgressManager.checkCanceled()
 
-    val wf = new WaitFor(5000, 1) {
+    new WaitFor(2000, 1) {
       override def condition(): Boolean = {
         ProgressManager.checkCanceled()
         hlintCheckFuture.isDone
       }
     }
 
-    val result = if (wf.isConditionRealized) {
+    val result = if (hlintCheckFuture.isDone) {
       hlintCheckFuture.get()
     } else {
       Seq()
@@ -86,8 +86,14 @@ class HLintInspectionTool extends LocalInspectionTool {
         case _ => ()
       }
     }
+
     HaskellNotificationGroup.logInfoEvent(psiFile.getProject, s"HLint inspection is finished for file ${psiFile.getName}")
-    problemsHolder.getResultsArray
+
+    if (result.isEmpty) {
+      null
+    } else {
+      problemsHolder.getResultsArray
+    }
   }
 
   private def createQuickfix(hLintInfo: HLintInfo, startElement: PsiElement, endElement: PsiElement, startLineNumber: Int, endLineNumber: Int, to: String) = {

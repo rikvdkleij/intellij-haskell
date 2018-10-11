@@ -108,8 +108,6 @@ class HaskellAnnotator extends ExternalAnnotator[(PsiFile, Option[PsiElement]), 
       }
     }
 
-    HaskellCompilationResultHelper.createNotificationsForErrorsNotInCurrentFile(project, loadResult)
-
     for (annotation <- HaskellAnnotator.createAnnotations(project, psiFile, loadResult.currentFileProblems)) {
       annotation match {
         case ErrorAnnotation(textRange, message, htmlMessage) => holder.createAnnotation(HighlightSeverity.ERROR, textRange, message, htmlMessage)

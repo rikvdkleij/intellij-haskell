@@ -85,7 +85,7 @@ private[component] object TypeInfoComponent {
 
   def invalidate(psiFile: PsiFile): Unit = {
     val keys = Cache.synchronous().asMap().filter(_._1.psiFile == psiFile).flatMap { case (k, v) =>
-      if (ApplicationUtil.runReadAction(k.qualifiedNameElement.isValid)) {
+      if (ApplicationUtil.runReadAction(k.qualifiedNameElement.getIdentifierElement.isValid)) {
         v.toOption match {
           case Some(_) =>
             val definedInSameFile = DefinitionLocationComponent.findDefinitionLocation(psiFile, k.qualifiedNameElement).toOption match {
@@ -116,24 +116,28 @@ private[component] object TypeInfoComponent {
 
   def invalidate(moduleName: String): Unit = {
     val keys = Cache.synchronous().asMap().flatMap { case (k, v) =>
-      v.toOption match {
-        case Some(_) =>
-          val sameModule = DefinitionLocationComponent.findDefinitionLocation(k.psiFile, k.qualifiedNameElement).toOption match {
-            case Some(definitionLocation) =>
-              val locationModuleName = definitionLocation match {
-                case PackageModuleLocation(mn, _) => Some(mn)
-                case LocalModuleLocation(pf, _) => HaskellPsiUtil.findModuleName(pf)
-              }
-              locationModuleName.contains(moduleName)
-            case None => false
-          }
+      if (ApplicationUtil.runReadAction(k.qualifiedNameElement.getIdentifierElement.isValid)) {
+        v.toOption match {
+          case Some(_) =>
+            val sameModule = DefinitionLocationComponent.findDefinitionLocation(k.psiFile, k.qualifiedNameElement).toOption match {
+              case Some(definitionLocation) =>
+                val locationModuleName = definitionLocation match {
+                  case PackageModuleLocation(mn, _) => Some(mn)
+                  case LocalModuleLocation(pf, _) => HaskellPsiUtil.findModuleName(pf)
+                }
+                locationModuleName.contains(moduleName)
+              case None => false
+            }
 
-          if (sameModule) {
-            Some(k)
-          } else {
-            None
-          }
-        case None => None
+            if (sameModule) {
+              Some(k)
+            } else {
+              None
+            }
+          case None => None
+        }
+      } else {
+        Some(k)
       }
     }
 

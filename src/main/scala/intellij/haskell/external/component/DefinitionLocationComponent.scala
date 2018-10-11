@@ -62,12 +62,25 @@ private[component] object DefinitionLocationComponent {
     Cache.synchronous().invalidateAll(keys)
   }
 
+  private def checkNameInRead(key: Key, definitionLocation: DefinitionLocation): Boolean = {
+    ApplicationUtil.runReadAction(key.qualifiedNameElement.getIdentifierElement.getName) == ApplicationUtil.runReadAction(definitionLocation.namedElement.getName) ||
+      (ApplicationUtil.runReadAction("_" + key.qualifiedNameElement.getIdentifierElement.getName) == ApplicationUtil.runReadAction(definitionLocation.namedElement.getName))
+  }
+
+  private def checkValidKeyInRead(key: Key): Boolean = {
+    ApplicationUtil.runReadAction(key.qualifiedNameElement.getIdentifierElement.isValid)
+  }
+
+  private def checkValidLocationInRead(definitionLocation: DefinitionLocation): Boolean = {
+    ApplicationUtil.runReadAction(definitionLocation.namedElement.isValid)
+  }
+
   def invalidate(psiFile: PsiFile): Unit = {
     val keys = Cache.synchronous().asMap().filter(_._1.psiFile == psiFile).flatMap { case (k, v) =>
-      if (ApplicationUtil.runReadAction(k.qualifiedNameElement.isValid)) {
+      if (checkValidKeyInRead(k)) {
         v.toOption match {
-          case Some(definitionLocation) if ApplicationUtil.runReadAction(definitionLocation.namedElement.isValid) =>
-            if (ApplicationUtil.runReadAction(k.qualifiedNameElement.getIdentifierElement.getName) == ApplicationUtil.runReadAction(definitionLocation.namedElement.getName)) {
+          case Some(definitionLocation) if checkValidLocationInRead(definitionLocation) =>
+            if (checkNameInRead(k, definitionLocation)) {
               None
             } else {
               Some(k)
@@ -82,10 +95,10 @@ private[component] object DefinitionLocationComponent {
     Cache.synchronous().invalidateAll(keys)
 
     val otherFileKeys = Cache.synchronous().asMap().flatMap { case (k, v) =>
-      if (ApplicationUtil.runReadAction(k.qualifiedNameElement.isValid)) {
+      if (checkValidKeyInRead(k)) {
         v.toOption match {
-          case Some(definitionLocation) if ApplicationUtil.runReadAction(definitionLocation.namedElement.isValid) && definitionLocation.namedElement.getContainingFile.getOriginalFile == psiFile =>
-            if (ApplicationUtil.runReadAction(k.qualifiedNameElement.getIdentifierElement.getName) == ApplicationUtil.runReadAction(definitionLocation.namedElement.getName)) {
+          case Some(definitionLocation) if checkValidLocationInRead(definitionLocation) && definitionLocation.namedElement.getContainingFile.getOriginalFile == psiFile =>
+            if (checkNameInRead(k, definitionLocation)) {
               None
             } else {
               Some(k)
@@ -249,8 +262,9 @@ private[component] object DefinitionLocationComponent {
             result match {
               case Right(location) =>
                 if (location.namedElement.isValid &&
-                  key.qualifiedNameElement.isValid &&
-                  key.qualifiedNameElement.getIdentifierElement.getName == location.namedElement.getName) {
+                  key.qualifiedNameElement.getIdentifierElement.isValid &&
+                  (key.qualifiedNameElement.getIdentifierElement.getName == location.namedElement.getName || "_" + key.qualifiedNameElement.getIdentifierElement.getName == location.namedElement.getName)
+                ) {
                   result
                 } else {
                   Cache.synchronous.invalidate(key)
@@ -279,8 +293,8 @@ private[component] object DefinitionLocationComponent {
         result match {
           case Right(location) =>
             if (ApplicationUtil.runReadAction(location.namedElement.isValid) &&
-              ApplicationUtil.runReadAction(key.qualifiedNameElement.isValid) &&
-              ApplicationUtil.runReadAction(key.qualifiedNameElement.getIdentifierElement.getName) == ApplicationUtil.runReadAction(location.namedElement.getName)) {
+              ApplicationUtil.runReadAction(key.qualifiedNameElement.getIdentifierElement.isValid) &&
+              checkNameInRead(key, location)) {
               result
             } else {
               Cache.synchronous.invalidate(key)

@@ -38,7 +38,7 @@ object HaskellPsiImplUtil {
 
   def getIdentifierElement(qVarCon: HaskellQVarCon): HaskellNamedElement = {
     Option(qVarCon.getVarid).orElse(Option(qVarCon.getQCon).map(_.getConid)).orElse(Option(qVarCon.getConsym)).orElse(Option(qVarCon.getVarsym)).
-      getOrElse(throw new IllegalStateException(s"Identifier for $qVarCon should exist"))
+      getOrElse(throw new IllegalStateException(s"Identifier for ${qVarCon.getText} should exist"))
   }
 
   def getName(varCon: HaskellVarCon): String = {
@@ -50,7 +50,7 @@ object HaskellPsiImplUtil {
       orElse(Option(varCon.getConsym)).
       orElse(Option(varCon.getVarid)).
       orElse(Option(varCon.getVarsym)).
-      getOrElse(throw new IllegalStateException(s"Identifier for $varCon should exist"))
+      getOrElse(throw new IllegalStateException(s"Identifier for ${varCon.getText} should exist"))
   }
 
   def getName(qName: HaskellQName): String = {
@@ -60,7 +60,7 @@ object HaskellPsiImplUtil {
   def getIdentifierElement(qName: HaskellQName): HaskellNamedElement = {
     Option(qName.getVarCon).map(_.getIdentifierElement).
       orElse(Option(qName.getQVarCon).map(_.getIdentifierElement)).
-      getOrElse(throw new IllegalStateException(s"Identifier for $qName should exist"))
+      getOrElse(throw new IllegalStateException(s"Identifier for ${qName.getText} should exist"))
   }
 
   def getQualifierName(qName: HaskellQName): Option[String] = {

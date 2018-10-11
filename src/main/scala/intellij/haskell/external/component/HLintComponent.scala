@@ -41,22 +41,28 @@ object HLintComponent {
       val hlintOptions = if (HaskellSettingsState.getHlintOptions.trim.isEmpty) Array[String]() else HaskellSettingsState.getHlintOptions.split("""\s+""")
       HaskellFileUtil.getAbsolutePath(psiFile) match {
         case Some(path) =>
-          HaskellFileUtil.findDocument(psiFile) match {
-            case None => ()
+          val fileUnsaved = HaskellFileUtil.findDocument(psiFile) match {
+            case None => true
             case Some(d) =>
               val deadline = Timeout.fromNow
 
               while (isFileUnsaved(d) && deadline.hasTimeLeft() && !project.isDisposed) {
                 Thread.sleep(1)
               }
+
+              isFileUnsaved(d)
           }
 
-          val output = runHLint(project, hlintOptions.toSeq ++ Seq("--json", path), ignoreExitCode = true)
-          if (output.getExitCode > 0 && output.getStderr.nonEmpty) {
-            HaskellNotificationGroup.logErrorBalloonEvent(project, s"Error while calling $HLintName: ${output.getStderr}")
+          if (fileUnsaved) {
             Seq()
           } else {
-            deserializeHLintInfo(project, output.getStdout)
+            val output = runHLint(project, hlintOptions.toSeq ++ Seq("--json", path), ignoreExitCode = true)
+            if (output.getExitCode > 0 && output.getStderr.nonEmpty) {
+              HaskellNotificationGroup.logErrorBalloonEvent(project, s"Error while calling $HLintName: ${output.getStderr}")
+              Seq()
+            } else {
+              deserializeHLintInfo(project, output.getStdout)
+            }
           }
         case None => ()
           HaskellNotificationGroup.logWarningBalloonEvent(psiFile.getProject, s"Can not display HLint suggestions because can not determine path for file `${psiFile.getName}`. File exists only in memory")

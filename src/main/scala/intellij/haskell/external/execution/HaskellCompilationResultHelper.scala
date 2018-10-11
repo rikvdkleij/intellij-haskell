@@ -16,9 +16,7 @@
 
 package intellij.haskell.external.execution
 
-import com.intellij.openapi.project.Project
 import com.intellij.psi.PsiFile
-import intellij.haskell.HaskellNotificationGroup
 import intellij.haskell.util.{HaskellFileUtil, StringUtil}
 
 object HaskellCompilationResultHelper {
@@ -33,15 +31,6 @@ object HaskellCompilationResultHelper {
     val (currentFileProblems, otherFileProblems) = compilationProblems.partition(_.filePath == currentFilePath)
 
     CompilationResult(currentFileProblems, otherFileProblems, failed)
-  }
-
-  def createNotificationsForErrorsNotInCurrentFile(project: Project, compilationResult: CompilationResult): Unit = {
-    if (compilationResult.currentFileProblems.isEmpty) {
-      compilationResult.otherFileProblems.foreach {
-        case cpf: CompilationProblem if !cpf.isWarning => HaskellNotificationGroup.logErrorBalloonEventWithLink(project, cpf.filePath, cpf.htmlMessage, cpf.lineNr, cpf.columnNr)
-        case _ => ()
-      }
-    }
   }
 
   def parseErrorLine(errorLine: String): Option[CompilationProblem] = {
