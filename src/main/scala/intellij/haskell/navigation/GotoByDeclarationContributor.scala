@@ -20,6 +20,7 @@ import com.intellij.lang.Language
 import com.intellij.navigation.{ChooseByNameContributor, GotoClassContributor, NavigationItem}
 import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.util.text.StringUtil
 import com.intellij.psi.stubs.StubIndex
 import com.intellij.util.{ArrayUtil, Processor}
 import intellij.haskell.HaskellLanguage
@@ -91,7 +92,7 @@ private object GotoHelper {
   def getNamedElements(name: String, pattern: String, project: Project, includeNonProjectItems: Boolean): Seq[HaskellNamedElement] = {
     val searchScope = HaskellProjectUtil.getSearchScope(project, includeNonProjectItems)
     val result = ListBuffer[String]()
-    val re = pattern.toLowerCase.flatMap(_ + ".*")
+    val re = pattern.toLowerCase.flatMap(c => StringUtil.escapeToRegexp(c.toString) + ".*")
     val processor = new Processor[String]() {
       override def process(ne: String): Boolean = {
         ProgressManager.checkCanceled()
