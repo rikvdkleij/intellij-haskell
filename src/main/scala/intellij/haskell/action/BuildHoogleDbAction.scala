@@ -20,13 +20,13 @@ import com.intellij.openapi.actionSystem.{AnAction, AnActionEvent}
 import com.intellij.openapi.progress.{ProgressIndicator, ProgressManager, Task}
 import com.intellij.openapi.project.Project
 import intellij.haskell.HaskellNotificationGroup
-import intellij.haskell.external.component.{HoogleComponent, StackProjectManager}
+import intellij.haskell.external.component.{HoogleComponent, ProjectLibraryFileWatcher, StackProjectManager}
 import intellij.haskell.util.HaskellEditorUtil
 
 class BuildHoogleDbAction extends AnAction {
 
   override def update(actionEvent: AnActionEvent) {
-    HaskellEditorUtil.enableExternalAction(actionEvent, (project: Project) => !StackProjectManager.isInitializing(project) && StackProjectManager.isHoogleAvailable(project))
+    HaskellEditorUtil.enableExternalAction(actionEvent, (project: Project) => !StackProjectManager.isInitializing(project) && StackProjectManager.isHoogleAvailable(project) && !ProjectLibraryFileWatcher.isBuilding(project))
   }
 
   def actionPerformed(actionEvent: AnActionEvent) {

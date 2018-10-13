@@ -37,6 +37,9 @@ object HoogleComponent {
   private final val HooglePath = GlobalInfo.toolPath(HoogleName).toString
   private final val HoogleDbName = "hoogle"
 
+  @volatile
+  var haddockIsBuilding = false
+
   def runHoogle(project: Project, pattern: String, count: Int = 100): Option[Seq[String]] = {
     if (isHoogleFeatureAvailable(project)) {
       ProgressManager.checkCanceled()
@@ -132,10 +135,17 @@ object HoogleComponent {
   }
 
   def rebuildHoogle(project: Project): Unit = {
-    val buildHaddockOutput = StackCommandLine.executeInMessageView(project, Seq("haddock"))
+    val buildHaddockOutput = try {
+      haddockIsBuilding = true
+      StackCommandLine.executeInMessageView(project, Seq("haddock"))
+    } finally {
+      haddockIsBuilding = false
+    }
+
     if (buildHaddockOutput.contains(true)) {
       StackCommandLine.executeInMessageView(project, Seq("exec", "--", HooglePath, "generate", "--local", s"--database=${hoogleDbPath(project)}"))
     }
+
   }
 
   def doesHoogleDatabaseExist(project: Project): Boolean = {

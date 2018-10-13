@@ -52,9 +52,11 @@ object ProjectLibraryFileWatcher {
   private val buildStatus: concurrent.Map[Project, BuildStatus] = new ConcurrentHashMap[Project, BuildStatus]().asScala
 
   def checkLibraryBuild(project: Project, currentInfo: StackComponentInfo): Unit = synchronized {
-    ProjectLibraryFileWatcher.buildStatus.get(project) match {
-      case Some(Build(infos)) if infos.exists(_ != currentInfo) => build(project, infos)
-      case _ => ()
+    if (!StackProjectManager.isInitializing(project) && !HoogleComponent.haddockIsBuilding && !project.isDisposed) {
+      ProjectLibraryFileWatcher.buildStatus.get(project) match {
+        case Some(Build(infos)) if infos.exists(_ != currentInfo) => build(project, infos)
+        case _ => ()
+      }
     }
   }
 
