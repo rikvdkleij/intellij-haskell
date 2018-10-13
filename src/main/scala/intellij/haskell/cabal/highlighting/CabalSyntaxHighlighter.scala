@@ -12,7 +12,7 @@ object CabalSyntaxHighlighter {
   final val COMMENT: TextAttributesKey = TextAttributesKey.createTextAttributesKey("CABAL_COMMENT", DefaultLanguageHighlighterColors.LINE_COMMENT)
   final val CONFIG: TextAttributesKey = TextAttributesKey.createTextAttributesKey("CABAL_CONFIG", DefaultLanguageHighlighterColors.NUMBER)
   final val CONDITIONAL: TextAttributesKey = TextAttributesKey.createTextAttributesKey("CABAL_CONDITIONAL", DefaultLanguageHighlighterColors.INSTANCE_METHOD)
-  final val BRACES: TextAttributesKey = TextAttributesKey.createTextAttributesKey("CABAL_COLON", DefaultLanguageHighlighterColors.BRACES)
+  final val BRACES: TextAttributesKey = TextAttributesKey.createTextAttributesKey("CABAL_BRACES", DefaultLanguageHighlighterColors.BRACES)
 }
 
 class CabalSyntaxHighlighter extends SyntaxHighlighterBase {

@@ -26,6 +26,10 @@ case class GlobalStackRepl(project: Project, replTimeout: Int) extends StackRepl
   @volatile
   var isBusy = false
 
+  override def clearLoadedModules(): Unit = {
+    loadedModuleName = None
+  }
+
   def getModuleIdentifiers(moduleName: String): Option[StackReplOutput] = synchronized {
     try {
       isBusy = true
@@ -54,7 +58,7 @@ case class GlobalStackRepl(project: Project, replTimeout: Int) extends StackRepl
     }
   }
 
-  private def loadModule(moduleName: String) = {
+  private def loadModule(moduleName: String): Unit = {
     if (!loadedModuleName.contains(moduleName)) {
       val output = execute(s":module $moduleName")
       if (output.exists(_.stderrLines.isEmpty)) {

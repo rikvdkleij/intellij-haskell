@@ -146,7 +146,6 @@ case class ProjectStackRepl(project: Project, stackComponentInfo: StackComponent
   override def restart(forceExit: Boolean): Unit = synchronized {
     if (available && !starting) {
       exit(forceExit)
-      clearLoadedModules()
       start()
     }
   }

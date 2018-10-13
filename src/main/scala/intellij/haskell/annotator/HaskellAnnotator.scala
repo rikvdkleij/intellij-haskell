@@ -145,6 +145,8 @@ object HaskellAnnotator {
   private final val PerhapsYouMeantImportedFromPattern = """.*[`‘]([^‘’'`]+)['’] \(imported from (.*)\)""".r
   private final val PerhapsYouMeantLocalPattern = """.*[`‘]([^‘’'`]+)['’].*""".r
 
+  private final val DeprecatedPattern = """.*In the use of.*[‘`](.*)[’'].*Deprecated: "Use ([^ ]+).*"""".r
+
   private final val HolePattern = """.* Found hole: (.+) Where: .*""".r
   private final val HolePattern2 = """.* Found hole [`‘]([^‘’'`]+)['’] with type: ([^ ]+) .*""".r
 
@@ -204,6 +206,7 @@ object HaskellAnnotator {
               case NoTypeSignaturePattern(typeSignature) => WarningAnnotationWithIntentionActions(tr, problem.plainMessage, problem.htmlMessage, Iterable(new TypeSignatureIntentionAction(typeSignature)))
               case HaskellImportOptimizer.WarningRedundantImport(moduleName) => WarningAnnotationWithIntentionActions(tr, problem.plainMessage, problem.htmlMessage, Iterable(new OptimizeImportIntentionAction(moduleName, tr.getStartOffset)))
               case DefinedButNotUsedPattern(n) => WarningAnnotationWithIntentionActions(tr, problem.plainMessage, problem.htmlMessage, Iterable(new DefinedButNotUsedRemoveIntentionAction(n), new DefinedButNotUsedUnderscoreIntentionAction(n)))
+              case DeprecatedPattern(name, suggestion) => WarningAnnotationWithIntentionActions(tr, problem.plainMessage, problem.htmlMessage, Iterable(new DeprecatedUseAction(name, StringUtil.removeOuterQuotes(suggestion))))
               case _ =>
                 findSuggestedLanguageExtension(project, plainMessage) match {
                   case les if les.nonEmpty => createLanguageExtensionIntentionsAction(problem, tr, les)
@@ -355,15 +358,31 @@ class PerhapsYouMeantIntentionAction(suggestion: String, message: String) extend
   override def getFamilyName: String = "Perhaps you meant"
 
   override def invoke(project: Project, editor: Editor, file: PsiFile): Unit = {
+    IntentionHelper.replace(project, editor, file, suggestion)
+  }
+}
+
+class DeprecatedUseAction(name: String, suggestion: String) extends HaskellBaseIntentionAction {
+  setText(s"`$name` is deprecated. Use `$suggestion`")
+
+  override def getFamilyName: String = "Deprecated"
+
+  override def invoke(project: Project, editor: Editor, file: PsiFile): Unit = {
+    IntentionHelper.replace(project, editor, file, suggestion)
+  }
+}
+
+private object IntentionHelper {
+  def replace(project: Project, editor: Editor, file: PsiFile, newName: String): Unit = {
     val offset = editor.getCaretModel.getOffset
     Option(file.findElementAt(offset)).flatMap(HaskellPsiUtil.findQualifiedNameParent) match {
       case Some(e) =>
         if (e.getText.startsWith("`") && e.getText.endsWith("`")) {
-          e.replace(HaskellElementFactory.createQualifiedNameElement(project, s"`$suggestion`"))
-        } else if (DeclarationLineUtil.isWithinParens(e.getText)) {
-          e.replace(HaskellElementFactory.createQualifiedNameElement(project, s"($suggestion)"))
+          e.replace(HaskellElementFactory.createQualifiedNameElement(project, s"`$newName`"))
+        } else if (StringUtil.isWithinParens(e.getText)) {
+          e.replace(HaskellElementFactory.createQualifiedNameElement(project, s"($newName)"))
         } else {
-          e.replace(HaskellElementFactory.createQualifiedNameElement(project, suggestion))
+          e.replace(HaskellElementFactory.createQualifiedNameElement(project, newName))
         }
       case None => ()
     }

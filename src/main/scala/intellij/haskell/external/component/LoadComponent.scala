@@ -66,7 +66,6 @@ private[component] object LoadComponent {
       // The REPL is not started if target which it's depends on has compile errors at the moment of start.
       synchronized {
         if (!projectRepl.available && !projectRepl.starting) {
-          projectRepl.clearLoadedModules()
           projectRepl.start()
         }
       }

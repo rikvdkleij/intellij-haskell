@@ -232,7 +232,10 @@ object HaskellComponentsManager {
 
   private def preloadAllLibraryFiles(project: Project, libraryModuleNames: Iterable[LibraryModuleNames]): Unit = {
     if (!project.isDisposed) {
-      HaskellModuleNameIndex.fillCache(project, libraryModuleNames.flatMap(libraryModuleNames => libraryModuleNames.exposed ++ libraryModuleNames.hidden))
+      DumbService.getInstance(project).waitForSmartMode()
+      if (!project.isDisposed) {
+        HaskellModuleNameIndex.fillCache(project, libraryModuleNames.flatMap(libraryModuleNames => libraryModuleNames.exposed ++ libraryModuleNames.hidden))
+      }
     }
   }
 

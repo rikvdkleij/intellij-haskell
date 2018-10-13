@@ -50,9 +50,6 @@ object DeclarationLineUtil {
     name.map(n => NameAndShortDeclaration(n, declaration))
   }
 
-  def isWithinParens(name: String): Boolean = {
-    name.startsWith("(") && name.endsWith(")")
-  }
 }
 
 case class NameAndShortDeclaration(name: String, declaration: String)

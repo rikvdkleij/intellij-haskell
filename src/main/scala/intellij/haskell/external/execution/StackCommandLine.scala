@@ -168,7 +168,7 @@ object StackCommandLine {
     private def addToMessageView(text: String, outputType: Key[_]) {
       if (text.trim.nonEmpty) {
         if (outputType == ProcessOutputTypes.STDERR) {
-          if (text.startsWith("Error:") && text.trim.endsWith(":")) {
+          if (text.startsWith("Error:") && text.trim.endsWith(":") || text.startsWith("Unable to parse")) {
             globalError = true // To get also all lines after this line indicated as error AND in order
           }
 
@@ -188,7 +188,7 @@ object StackCommandLine {
       }
     }
 
-    private def addMessage() = {
+    private def addMessage(): Unit = {
       val errorMessageLine = previousMessageLines.mkString(" ")
       val compilationProblem = HaskellCompilationResultHelper.parseErrorLine(errorMessageLine.replaceAll("\n", " "))
       compilationProblem match {

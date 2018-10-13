@@ -172,7 +172,7 @@ private[component] object BrowseModuleComponent {
   }
 
   private def createModuleIdentifier(name: String, moduleName: String, declaration: String) = {
-    ModuleIdentifier(StringUtil.removeOuterParens(name), moduleName, declaration, isOperator = DeclarationLineUtil.isWithinParens(name))
+    ModuleIdentifier(StringUtil.removeOuterParens(name), moduleName, declaration, isOperator = StringUtil.isWithinParens(name))
   }
 }
 

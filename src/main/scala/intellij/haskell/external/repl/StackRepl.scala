@@ -85,6 +85,8 @@ abstract class StackRepl(project: Project, componentInfo: Option[StackComponentI
 
   private final val LocalBrowseStopReadingIndicator = "-- imported via"
 
+  protected def clearLoadedModules()
+
   def getComponentName: String = componentInfo.map(_.target).map(t => "project-stack-repl-" + t).getOrElse("global-stack-repl")
 
   private val stdoutResult = new ArrayBuffer[String]
@@ -233,9 +235,11 @@ abstract class StackRepl(project: Project, componentInfo: Option[StackComponentI
     }
 
     if (available || starting) {
-      logError("Stack REPL can not be started because it's already starting or running")
+      logInfo("Stack REPL can not be started because it's already starting or running")
     } else {
       starting = true
+      clearLoadedModules()
+
       HaskellSdkType.getStackPath(project).foreach(stackPath => {
         try {
           val extraOptions = if (stanzaType.contains(TestSuiteType)) {

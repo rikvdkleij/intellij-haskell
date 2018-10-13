@@ -19,7 +19,6 @@ package intellij.haskell.util
 import com.intellij.openapi.project.Project
 import com.intellij.xml.util.XmlStringUtil
 import intellij.haskell.HaskellNotificationGroup
-import intellij.haskell.external.component.DeclarationLineUtil
 
 import scala.collection.mutable.ListBuffer
 
@@ -40,11 +39,27 @@ object StringUtil {
   }
 
   def removeOuterParens(name: String): String = {
-    if (DeclarationLineUtil.isWithinParens(name)) {
+    if (isWithinParens(name)) {
       name.substring(1, name.length - 1)
     } else {
       name
     }
+  }
+
+  def removeOuterQuotes(name: String): String = {
+    if (isWithinQuotes(name)) {
+      name.substring(1, name.length - 1)
+    } else {
+      name
+    }
+  }
+
+  def isWithinQuotes(name: String): Boolean = {
+    name.startsWith("'") && name.endsWith("'")
+  }
+
+  def isWithinParens(name: String): Boolean = {
+    name.startsWith("(") && name.endsWith(")")
   }
 
   def joinIndentedLines(project: Project, lines: Seq[String]): Seq[String] = {
