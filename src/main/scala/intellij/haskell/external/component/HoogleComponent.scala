@@ -132,7 +132,7 @@ object HoogleComponent {
   }
 
   def rebuildHoogle(project: Project): Unit = {
-    val buildHaddockOutput = StackCommandLine.executeInMessageView(project, Seq("haddock", "--test", "--bench", "--no-run-tests", "--no-run-benchmarks"))
+    val buildHaddockOutput = StackCommandLine.executeInMessageView(project, Seq("haddock"))
     if (buildHaddockOutput.contains(true)) {
       StackCommandLine.executeInMessageView(project, Seq("exec", "--", HooglePath, "generate", "--local", s"--database=${hoogleDbPath(project)}"))
     }
