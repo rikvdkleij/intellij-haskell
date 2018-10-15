@@ -68,7 +68,7 @@ private[component] object DefinitionLocationComponent {
   }
 
   private def checkValidKeyInRead(key: Key): Boolean = {
-    ApplicationUtil.runReadAction(key.qualifiedNameElement.getIdentifierElement.isValid)
+    ApplicationUtil.runReadAction(key.qualifiedNameElement.isValid && key.qualifiedNameElement.getIdentifierElement.isValid)
   }
 
   private def checkValidLocationInRead(definitionLocation: DefinitionLocation): Boolean = {
