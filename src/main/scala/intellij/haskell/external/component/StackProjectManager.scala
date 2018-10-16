@@ -120,8 +120,12 @@ object StackProjectManager {
       if (isInitializing(project)) {
         HaskellNotificationGroup.logWarningBalloonEvent(project, "Action is not possible because project is initializing")
       } else {
-        HaskellNotificationGroup.logInfoEvent(project, "Initializing Haskell project")
         getStackProjectManager(project).foreach(_.initializing = true)
+        if (restart) {
+          HaskellNotificationGroup.logInfoEvent(project, "Restarting Haskell project")
+        } else {
+          HaskellNotificationGroup.logInfoEvent(project, "Initializing Haskell project")
+        }
 
         installHaskellTools(project, update = false)
 
@@ -138,22 +142,6 @@ object StackProjectManager {
                 StackCommandLine.buildProjectInMessageView(project, libTargets.toSeq)
               } else {
                 HaskellNotificationGroup.logErrorBalloonEvent(project, "Project will not be built because building it's dependencies failed")
-              }
-
-              progressIndicator.setText("Busy with preloading library module names")
-              LibraryModuleNamesComponent.preloadLibraryModuleNames(project)
-
-              progressIndicator.setText("Busy with preloading global project info")
-              GlobalProjectInfoComponent.findGlobalProjectInfo(project)
-
-              progressIndicator.setText("Busy with preloading library files")
-              val preloadLibraryModuleNamesCache = ApplicationManager.getApplication.executeOnPooledThread(ScalaUtil.callable {
-                HaskellComponentsManager.preloadLibraryModuleNamesCache(project)
-              })
-
-              if (!project.isDisposed) {
-                progressIndicator.setText(s"Busy with building Intero")
-                build(project, Seq("intero"))
               }
 
               if (restart) {
@@ -183,6 +171,22 @@ object StackProjectManager {
 
                 progressIndicator.setText("Busy with downloading library sources")
                 HaskellModuleBuilder.addLibrarySources(project, update = true)
+              }
+
+              progressIndicator.setText("Busy with preloading library module names")
+              LibraryModuleNamesComponent.preloadLibraryModuleNames(project)
+
+              progressIndicator.setText("Busy with preloading global project info")
+              GlobalProjectInfoComponent.findGlobalProjectInfo(project)
+
+              progressIndicator.setText("Busy with preloading library files")
+              val preloadLibraryModuleNamesCache = ApplicationManager.getApplication.executeOnPooledThread(ScalaUtil.callable {
+                HaskellComponentsManager.preloadLibraryModuleNamesCache(project)
+              })
+
+              if (!project.isDisposed) {
+                progressIndicator.setText(s"Busy with building Intero")
+                build(project, Seq("intero"))
               }
 
               progressIndicator.setText("Busy with starting global Stack REPL")
