@@ -248,8 +248,6 @@ object HaskellModuleBuilder {
 
         downloadHaskellPackageSources(project, projectLibDirectory, stackPath, libraryDependencies)
 
-        LocalFileSystem.getInstance().refresh(true)
-
         dependenciesByModule.foreach { case (module, dependencies) =>
           addPackagesAsDependenciesToModule(module, projectModules, dependencies, allDependencies, projectLibDirectory)
         }
