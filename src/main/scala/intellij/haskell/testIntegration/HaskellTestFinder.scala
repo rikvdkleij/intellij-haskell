@@ -4,7 +4,9 @@ import java.util
 
 import com.intellij.psi.PsiElement
 import com.intellij.psi.search.{FilenameIndex, GlobalSearchScope}
+import com.intellij.psi.util.PsiTreeUtil
 import com.intellij.testIntegration.TestFinder
+import intellij.haskell.HaskellFile
 
 import scala.collection.JavaConverters
 
@@ -13,9 +15,11 @@ import scala.collection.JavaConverters
   */
 class HaskellTestFinder extends TestFinder {
 
+  /**
+    * Return the parent PsiFile of the PsiElement where the cursor was when the test finder was invoked, to handle some magic stuff, like the name displayed in "Choose Test for {file name}".
+    */
   override def findSourceElement(psiElement: PsiElement): PsiElement = {
-    //TODO Check the use of this function
-    psiElement
+    PsiTreeUtil.getParentOfType(psiElement, classOf[HaskellFile])
   }
 
   /**
