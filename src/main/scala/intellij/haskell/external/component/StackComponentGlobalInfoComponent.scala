@@ -21,6 +21,7 @@ import java.util.concurrent.Executors
 import com.github.blemale.scaffeine.{LoadingCache, Scaffeine}
 import com.intellij.openapi.project.Project
 import intellij.haskell.external.component.HaskellComponentsManager.StackComponentInfo
+import intellij.haskell.util.HaskellProjectUtil
 
 import scala.concurrent.{Await, ExecutionContext, ExecutionContextExecutorService, Future}
 
@@ -54,9 +55,10 @@ private[component] object StackComponentGlobalInfoComponent {
   import scala.concurrent.duration._
 
   private def findAvailableLibraryModuleNames(project: Project, componentInfo: StackComponentInfo): Result = {
-    val buildDependsPackages = componentInfo.buildDepends
+    val projectPackageNames = HaskellProjectUtil.findProjectPackageNames(project)
+    val buildDependsLibraryPackages = componentInfo.buildDepends.filterNot(projectPackageNames.contains)
 
-    val libraryModuleNamesFutures = buildDependsPackages.grouped(5).map { packageNames =>
+    val libraryModuleNamesFutures = buildDependsLibraryPackages.grouped(5).map { packageNames =>
       Future {
         packageNames.flatMap { packageName =>
           if (project.isDisposed) {

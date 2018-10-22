@@ -34,6 +34,7 @@ import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.vfs.LocalFileSystem
 import com.intellij.platform.templates.TemplateModuleBuilder
 import intellij.haskell.cabal.CabalInfo
+import intellij.haskell.external.component.HaskellComponentsManager
 import intellij.haskell.external.execution.{CommandLine, StackCommandLine}
 import intellij.haskell.sdk.HaskellSdkType
 import intellij.haskell.stackyaml.StackYamlComponent
@@ -185,19 +186,17 @@ object HaskellModuleBuilder {
     new File(moduleBuilder.getContentEntryPath, GlobalInfo.StackWorkDirName)
   }
 
-  def getProjectDependencies(project: Project): Iterable[HaskellDependency] = {
-    val projectModules = HaskellProjectUtil.findProjectHaskellModules(project).map(_.getName.toLowerCase).toSeq
+  def getProjectLibraryDependencies(project: Project): Iterable[HaskellDependency] = {
     for {
       lines <- StackCommandLine.run(project, Seq("ls", "dependencies", "--test", "--bench"), timeoutInMillis = 60.seconds.toMillis).map(_.getStdoutLines).toSeq
-      dependencies <- createDependencies(project, lines.asScala, Seq.empty).filterNot(p => projectModules.contains(p.name.toLowerCase) && p.name == "rts" || p.name == "ghc")
+      dependencies <- createDependencies(project, lines.asScala).filterNot(d => d.isInstanceOf[HaskellProjectModuleDependency] || d.name == "rts" || d.name == "ghc")
     } yield dependencies
   }
 
-  def getDependencies(project: Project, module: Module, target: String, depth: Option[Int]): Iterable[HaskellDependency] = {
-    val projectModules = HaskellProjectUtil.findProjectHaskellModules(project)
+  def getDependencies(project: Project, module: Module, packageName: String): Iterable[HaskellDependency] = {
     for {
-      lines <- StackCommandLine.run(project, Seq("ls", "dependencies", target, "--test", "--bench") ++ depth.map(d => s"--depth=$d").toSeq, timeoutInMillis = 60.seconds.toMillis).map(_.getStdoutLines).toSeq
-      dependencies <- createDependencies(project, lines.asScala, projectModules).filterNot(p => p.name.toLowerCase == module.getName.toLowerCase || p.name == "rts" || p.name == "ghc")
+      lines <- StackCommandLine.run(project, Seq("ls", "dependencies", packageName, "--test", "--bench"), timeoutInMillis = 60.seconds.toMillis).map(_.getStdoutLines).toSeq
+      dependencies <- createDependencies(project, lines.asScala).filterNot(d => d.name == packageName || d.name == "rts" || d.name == "ghc")
     } yield dependencies
   }
 
@@ -236,11 +235,10 @@ object HaskellModuleBuilder {
           FileUtil.createDirectory(projectLibDirectory)
         }
 
-        val projectModules = HaskellProjectUtil.findProjectHaskellModules(project)
+        val projectModulePackageNames = HaskellComponentsManager.findProjectModulePackageNames(project)
         val dependenciesByModule = for {
-          module <- projectModules
-          packageName = module.getName
-          dependencies = getDependencies(project, module, packageName, None)
+          (module, packageName) <- projectModulePackageNames
+          dependencies = getDependencies(project, module, packageName)
         } yield (module, dependencies)
 
         val allDependencies = dependenciesByModule.flatMap(_._2).toSeq.distinct
@@ -249,7 +247,7 @@ object HaskellModuleBuilder {
         downloadHaskellPackageSources(project, projectLibDirectory, stackPath, libraryDependencies)
 
         dependenciesByModule.foreach { case (module, dependencies) =>
-          addPackagesAsDependenciesToModule(module, projectModules, dependencies, allDependencies, projectLibDirectory)
+          addPackagesAsDependenciesToModule(module, projectModulePackageNames.map(_._1), dependencies, allDependencies, projectLibDirectory)
         }
       })
     }
@@ -259,10 +257,11 @@ object HaskellModuleBuilder {
     new File(new File(GlobalInfo.getLibrarySourcesPath), project.getName)
   }
 
-  private def createDependencies(project: Project, dependencyLines: Iterable[String], projectModules: Iterable[Module]): Iterable[HaskellDependency] = {
+  private def createDependencies(project: Project, dependencyLines: Iterable[String]): Iterable[HaskellDependency] = {
+    val projectModulePackageNames = HaskellComponentsManager.findProjectModulePackageNames(project)
     dependencyLines.flatMap {
       case PackagePattern(name, version) =>
-        projectModules.find(_.getName.toLowerCase == name.toLowerCase) match {
+        projectModulePackageNames.find(_._2 == name).map(_._1) match {
           case Some(pm) => Some(HaskellProjectModuleDependency(name, version, pm))
           case None => Some(HaskellLibraryDependency(name, version))
         }
@@ -274,7 +273,7 @@ object HaskellModuleBuilder {
 
   private def downloadHaskellPackageSources(project: Project, projectLibDirectory: File, stackPath: String, libraryDependencies: Seq[HaskellLibraryDependency]): Unit = {
     libraryDependencies.filterNot(libraryDependency => getPackageDirectory(projectLibDirectory, libraryDependency).exists()).flatMap(libraryDependency => {
-      CommandLine.run(Some(project), projectLibDirectory.getAbsolutePath, stackPath, Seq("unpack", libraryDependency.nameVersion), 10000).getStderr
+      CommandLine.run(Some(project), projectLibDirectory.getAbsolutePath, stackPath, Seq("--no-nix", "unpack", libraryDependency.nameVersion), 10000).getStderr
     })
   }
 

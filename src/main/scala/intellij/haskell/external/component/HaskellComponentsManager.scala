@@ -42,7 +42,7 @@ import scala.concurrent.duration._
 
 object HaskellComponentsManager {
 
-  case class StackComponentInfo(module: Module, packageName: String, target: String, stanzaType: StanzaType, sourceDirs: Seq[String], mainIs: Option[String], isImplicitPreludeActive: Boolean, buildDepends: Seq[String])
+  case class StackComponentInfo(module: Module, packageName: String, target: String, stanzaType: StanzaType, sourceDirs: Seq[String], mainIs: Option[String], isImplicitPreludeActive: Boolean, buildDepends: Seq[String], exposedModuleNames: Seq[String] = Seq.empty)
 
   def findPreloadedModuleIdentifiers(project: Project)(implicit ec: ExecutionContext): Iterable[ModuleIdentifier] = {
     val moduleNames = BrowseModuleComponent.findModuleNamesInCache(project)
@@ -165,14 +165,18 @@ object HaskellComponentsManager {
     DefinitionLocationComponent.invalidate(elements)
   }
 
+  def findProjectModulePackageNames(project: Project): Iterable[(Module, String)] = {
+    StackReplsManager.getReplsManager(project).map(_.stackComponentInfos).getOrElse(Seq()).map(info => (info.module, info.packageName))
+  }
+
   def findReferencesInCache(targetFile: PsiFile): Seq[(PsiFile, HaskellQualifiedNameElement)] = {
     DefinitionLocationComponent.findReferencesInCache(targetFile)
   }
 
-  def invalidateCachesForFile(psiFile: PsiFile): Unit = {
-    DefinitionLocationComponent.invalidate(psiFile)
-    TypeInfoComponent.invalidate(psiFile)
-    BrowseModuleComponent.invalidateForFile(psiFile)
+  def invalidateCachesForModules(project: Project, moduleNames: Seq[String]): Unit = {
+    //    DefinitionLocationComponent.invalidate(psiFile)
+    //    TypeInfoComponent.invalidate(psiFile)
+    moduleNames.foreach(mn => BrowseModuleComponent.invalidateForModuleName(project, mn))
   }
 
   def invalidateGlobalCaches(project: Project): Unit = {
@@ -218,13 +222,11 @@ object HaskellComponentsManager {
 
   private def preloadLibraryModuleNames(project: Project): Seq[LibraryModuleNames] = {
     if (!project.isDisposed) {
-      val projectLibraryModuleNames = HaskellComponentsManager.getDependencies(project).flatMap(d => LibraryModuleNamesComponent.findLibraryModuleNames(project, d.name))
+      val projectLibraryModuleNames = getDependencies(project).flatMap(d => LibraryModuleNamesComponent.findLibraryModuleNames(project, d.name))
 
-      val libraryModuleNames = for {
-        componentInfo <- StackReplsManager.getReplsManager(project).map(_.stackComponentInfos).getOrElse(Iterable())
-        componentGlobalInfo <- HaskellComponentsManager.findStackComponentGlobalInfo(componentInfo)
-      } yield componentGlobalInfo.libraryModuleNames
-      (libraryModuleNames.flatten.toSeq ++ projectLibraryModuleNames.toSeq).distinct
+      StackReplsManager.getReplsManager(project).foreach(_.stackComponentInfos.foreach(findStackComponentGlobalInfo))
+
+      projectLibraryModuleNames.toSeq
     } else {
       Seq()
     }

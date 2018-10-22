@@ -102,7 +102,7 @@ object ProjectLibraryFileWatcher {
             dependentFiles.foreach { vf =>
               HaskellFileUtil.convertToHaskellFileInReadAction(project, vf, timeout = 1.second).toOption.flatten match {
                 case Some(psiFile) =>
-                  HaskellComponentsManager.invalidateCachesForFile(psiFile)
+                  HaskellComponentsManager.invalidateCachesForModules(project, libComponentInfos.flatMap(_.exposedModuleNames).toSeq)
                   HaskellAnnotator.restartDaemonCodeAnalyzerForFile(psiFile)
                 case None => HaskellNotificationGroup.logInfoEvent(project, s"Could not invalidate cache and restart daemon analyzer for file ${vf.getName}")
               }

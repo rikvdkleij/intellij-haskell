@@ -137,13 +137,13 @@ object HoogleComponent {
   def rebuildHoogle(project: Project): Unit = {
     val buildHaddockOutput = try {
       haddockIsBuilding = true
-      StackCommandLine.executeInMessageView(project, Seq("haddock"))
+      StackCommandLine.executeStackCommandInMessageView(project, Seq("haddock"))
     } finally {
       haddockIsBuilding = false
     }
 
     if (buildHaddockOutput.contains(true)) {
-      StackCommandLine.executeInMessageView(project, Seq("exec", "--", HooglePath, "generate", "--local", s"--database=${hoogleDbPath(project)}"))
+      StackCommandLine.executeInMessageView(project, HooglePath, Seq("generate", "--local", s"--database=${hoogleDbPath(project)}"))
     }
 
   }
@@ -167,8 +167,8 @@ object HoogleComponent {
   private def runHoogle(project: Project, arguments: Seq[String]): Option[ProcessOutput] = {
     ProgressManager.checkCanceled()
 
-    val hoogleFuture = ApplicationManager.getApplication.executeOnPooledThread(ScalaUtil.callable[Option[ProcessOutput]] {
-      StackCommandLine.run(project, Seq("exec", "--", HooglePath, s"--database=${hoogleDbPath(project)}") ++ arguments, logOutput = true)
+    val hoogleFuture = ApplicationManager.getApplication.executeOnPooledThread(ScalaUtil.callable[ProcessOutput] {
+      CommandLine.run(Some(project), project.getBasePath, HooglePath, Seq(s"--database=${hoogleDbPath(project)}") ++ arguments, logOutput = true)
     })
 
     ProgressManager.checkCanceled()
@@ -181,7 +181,7 @@ object HoogleComponent {
     }
 
     if (hoogleFuture.isDone) {
-      hoogleFuture.get()
+      Some(hoogleFuture.get())
     } else {
       None
     }

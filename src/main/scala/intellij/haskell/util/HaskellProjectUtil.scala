@@ -210,6 +210,10 @@ object HaskellProjectUtil {
   def findProjectHaskellModules(project: Project): Iterable[Module] = {
     ModuleManager.getInstance(project).getModules.filter(_.getModuleTypeName == HaskellModuleType.Id)
   }
+
+  def findProjectPackageNames(project: Project): Seq[String] = {
+    HaskellComponentsManager.findProjectModulePackageNames(project).map(_._2).toSeq
+  }
 }
 
 case class GhcVersion(major: Int, minor: Int, patch: Int) extends Ordered[GhcVersion] {

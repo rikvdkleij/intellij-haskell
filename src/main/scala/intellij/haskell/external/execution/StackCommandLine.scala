@@ -83,7 +83,7 @@ object StackCommandLine {
   }
 
   def buildProjectDependenciesInMessageView(project: Project): Option[Boolean] = {
-    StackCommandLine.executeInMessageView(project, Seq("build", "--test", "--bench", "--no-run-tests", "--no-run-benchmarks", "--only-dependencies"))
+    StackCommandLine.executeStackCommandInMessageView(project, Seq("build", "--test", "--bench", "--no-run-tests", "--no-run-benchmarks", "--only-dependencies"))
   }
 
   private def ghcOptions(project: Project) = {
@@ -95,47 +95,52 @@ object StackCommandLine {
   }
 
   def buildProjectInMessageView(project: Project, arguments: Seq[String]): Option[Boolean] = {
-    StackCommandLine.executeInMessageView(project, Seq("build") ++ arguments ++ ghcOptions(project))
+    StackCommandLine.executeStackCommandInMessageView(project, Seq("build") ++ arguments ++ ghcOptions(project))
   }
 
-  def executeInMessageView(project: Project, arguments: Seq[String]): Option[Boolean] = {
+  def executeStackCommandInMessageView(project: Project, arguments: Seq[String]): Option[Boolean] = {
     HaskellSdkType.getStackPath(project).flatMap(stackPath => {
-      val cmd = CommandLine.createCommandLine(project.getBasePath, stackPath, arguments)
-      (try {
-        Option(cmd.createProcess())
-      } catch {
-        case e: ExecutionException =>
-          HaskellNotificationGroup.logErrorBalloonEvent(project, s"Error while starting `${cmd.getCommandLineString}`: ${e.getMessage}")
-          None
-      }).map(process => {
-
-        val handler = new BaseOSProcessHandler(process, cmd.getCommandLineString, CharsetToolkit.getDefaultSystemCharset)
-
-        val compilerTask = new CompilerTask(project, s"executing `${cmd.getCommandLineString}`", false, false, true, true)
-        val compileTask = new CompileTask {
-
-          def execute(compileContext: CompileContext): Boolean = {
-            val adapter = new MessageViewProcessAdapter(compileContext, compilerTask.getIndicator)
-            handler.addProcessListener(adapter)
-            handler.startNotify()
-            handler.waitFor()
-            adapter.addLastMessage()
-            handler.getExitCode == 0
-          }
-        }
-
-        val compileContext = new CompileContextImpl(project, compilerTask, new ProjectCompileScope(project), false, false)
-
-        val compileResult = new SyncVar[Boolean]
-
-        compilerTask.start(() => {
-          compileResult.put(compileTask.execute(compileContext))
-        }, null)
-
-        compileResult.get
-      })
+      executeInMessageView(project, stackPath, arguments)
     })
   }
+
+  def executeInMessageView(project: Project, commandPath: String, arguments: Seq[String]): Option[Boolean] = {
+    val cmd = CommandLine.createCommandLine(project.getBasePath, commandPath, arguments)
+    (try {
+      Option(cmd.createProcess())
+    } catch {
+      case e: ExecutionException =>
+        HaskellNotificationGroup.logErrorBalloonEvent(project, s"Error while starting `${cmd.getCommandLineString}`: ${e.getMessage}")
+        None
+    }).map(process => {
+
+      val handler = new BaseOSProcessHandler(process, cmd.getCommandLineString, CharsetToolkit.getDefaultSystemCharset)
+
+      val compilerTask = new CompilerTask(project, s"executing `${cmd.getCommandLineString}`", false, false, true, true)
+      val compileTask = new CompileTask {
+
+        def execute(compileContext: CompileContext): Boolean = {
+          val adapter = new MessageViewProcessAdapter(compileContext, compilerTask.getIndicator)
+          handler.addProcessListener(adapter)
+          handler.startNotify()
+          handler.waitFor()
+          adapter.addLastMessage()
+          handler.getExitCode == 0
+        }
+      }
+
+      val compileContext = new CompileContextImpl(project, compilerTask, new ProjectCompileScope(project), false, false)
+
+      val compileResult = new SyncVar[Boolean]
+
+      compilerTask.start(() => {
+        compileResult.put(compileTask.execute(compileContext))
+      }, null)
+
+      compileResult.get
+    })
+  }
+
 
   private class MessageViewProcessAdapter(val compileContext: CompileContext, val progressIndicator: ProgressIndicator) extends ProcessAdapter() {
 

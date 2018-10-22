@@ -132,10 +132,7 @@ private[component] object BrowseModuleComponent {
               Left(ReplIsBusy)
             } else {
               repl.getModuleIdentifiers(moduleName, psiFile) match {
-                case Some(output) if output.stderrLines.isEmpty => repl.getModuleIdentifiers(moduleName, psiFile).map(_.stdoutLines.flatMap(l => findModuleIdentifiers(project, l, moduleName))) match {
-                  case Some(ids) => Right(ids)
-                  case None => Left(NoInfoAvailable(key.moduleName, key.psiFile.map(_.getName).getOrElse("-")))
-                }
+                case Some(output) if output.stderrLines.isEmpty => Right(output.stdoutLines.flatMap(l => findModuleIdentifiers(project, l, moduleName)))
                 case _ => Left(ReplNotAvailable)
               }
             }

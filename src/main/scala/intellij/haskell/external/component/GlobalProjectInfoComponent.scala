@@ -68,16 +68,12 @@ private[component] object GlobalProjectInfoComponent {
       extensions <- getSupportedLanguageExtensions(project)
       stackagePackageNames = getAvailableStackagesPackages(project)
       ghcVersion <- findGhcVersion(project)
-      projectDependencies = findProjectDependencies(project)
+      projectDependencies = HaskellModuleBuilder.getProjectLibraryDependencies(project)
     } yield GlobalProjectInfo(ghcVersion, extensions, projectDependencies, stackagePackageNames)
   }
 
   private def findGhcPath(project: Project) = {
     StackCommandLine.run(project, Seq("path", "--compiler-exe")).flatMap(_.getStdoutLines.asScala.headOption)
-  }
-
-  private def findProjectDependencies(project: Project): Iterable[HaskellDependency] = {
-    HaskellModuleBuilder.getProjectDependencies(project)
   }
 
   private def findGhcVersion(project: Project): Option[GhcVersion] = {

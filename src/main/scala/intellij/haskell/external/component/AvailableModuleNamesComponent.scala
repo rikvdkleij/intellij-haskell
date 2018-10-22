@@ -19,8 +19,8 @@ package intellij.haskell.external.component
 import com.github.blemale.scaffeine.{AsyncLoadingCache, Scaffeine}
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.progress.ProgressManager
-import com.intellij.openapi.project.IndexNotReadyException
-import com.intellij.psi.search.FileTypeIndex
+import com.intellij.openapi.project.{IndexNotReadyException, Project}
+import com.intellij.psi.search.{FileTypeIndex, GlobalSearchScope}
 import com.intellij.util.WaitFor
 import intellij.haskell.external.component.HaskellComponentsManager.StackComponentInfo
 import intellij.haskell.external.repl.StackRepl.{BenchmarkType, TestSuiteType}
@@ -46,7 +46,7 @@ private[component] object AvailableModuleNamesComponent {
   }
 
   def findAvailableModuleLibraryModuleNamesWithIndex(module: Module): Iterable[String] = {
-    findModuleNamesInModule(module, includeTests = false)
+    findModuleNamesInModule(module.getProject, module, Seq.empty, includeTests = false)
   }
 
   private def findAvailableProjectModuleNames(stackComponentInfo: StackComponentInfo): Iterable[String] = {
@@ -69,31 +69,35 @@ private[component] object AvailableModuleNamesComponent {
   }
 
   private def findAvailableProjectModuleNamesWithIndex(stackComponentInfo: StackComponentInfo): Iterable[String] = {
-    findModuleNamesInModule(stackComponentInfo.module, TestStanzaTypes.contains(stackComponentInfo.stanzaType))
+    val projectModulePackageNames = HaskellComponentsManager.findProjectModulePackageNames(stackComponentInfo.module.getProject)
+    val libraryProjectModules = projectModulePackageNames.filter { case (m, n) => stackComponentInfo.buildDepends.contains(n) }.map(_._1)
+    findModuleNamesInModule(stackComponentInfo.module.getProject, stackComponentInfo.module, libraryProjectModules.toSeq, TestStanzaTypes.contains(stackComponentInfo.stanzaType))
   }
 
   private def findAvailableLibraryModuleNames(stackComponentInfo: StackComponentInfo): Iterable[String] = {
     HaskellComponentsManager.findStackComponentGlobalInfo(stackComponentInfo).map(_.libraryModuleNames.flatMap(_.exposed)).getOrElse(Iterable())
   }
 
-  private def findModuleNamesInModule(module: Module, includeTests: Boolean): Iterable[String] = {
+  private def findModuleNamesInModule(project: Project, currentModule: Module, modules: Seq[Module], includeTests: Boolean): Iterable[String] = {
     for {
-      vf <- findHaskellFiles(module, includeTests)
-      hf <- HaskellFileUtil.convertToHaskellFileInReadAction(module.getProject, vf).toOption.flatten
+      vf <- findHaskellFiles(project, currentModule, modules, includeTests)
+      hf <- HaskellFileUtil.convertToHaskellFileInReadAction(project, vf).toOption.flatten
       mn <- HaskellPsiUtil.findModuleName(hf)
     } yield mn
   }
 
-  private def findHaskellFiles(module: Module, includeTests: Boolean) = {
-    ApplicationUtil.scheduleInReadActionWithWriteActionPriority(module.getProject, {
+  private def findHaskellFiles(project: Project, currentModule: Module, projectModules: Seq[Module], includeTests: Boolean) = {
+    ApplicationUtil.scheduleInReadActionWithWriteActionPriority(project, {
       try {
-        FileTypeIndex.getFiles(HaskellFileType.Instance, module.getModuleScope(includeTests)).asScala
+        val projectModulesScope = projectModules.foldLeft(GlobalSearchScope.EMPTY_SCOPE)({ case (x, y) => x.uniteWith(y.getModuleScope(false)) })
+        val searchScope = currentModule.getModuleScope(includeTests).uniteWith(projectModulesScope)
+        FileTypeIndex.getFiles(HaskellFileType.Instance, searchScope).asScala
       } catch {
         case _: IndexNotReadyException =>
-          HaskellNotificationGroup.logInfoEvent(module.getProject, s"Index not ready while findHaskellFiles for module ${module.getName} ")
+          HaskellNotificationGroup.logInfoEvent(project, s"Index not ready while findHaskellFiles for module ${currentModule.getName} ")
           Iterable()
       }
-    }, s"find Haskell files for module ${module.getName}", 5.seconds).toOption.toIterable.flatten
+    }, s"find Haskell files for module ${currentModule.getName}", 5.seconds).toOption.toIterable.flatten
   }
 
 
