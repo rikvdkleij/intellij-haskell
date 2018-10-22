@@ -104,7 +104,7 @@ class HaskellModuleBuilder extends TemplateModuleBuilder(null, HaskellModuleType
     val project = module.getProject
 
     if (isNewProjectWithoutExistingSources) {
-      val processOutput = StackCommandLine.run(project, Seq("new", project.getName, "--bare", "hspec"), timeoutInMillis = 60.seconds.toMillis)
+      val processOutput = StackCommandLine.run(project, Seq("new", project.getName, "--bare", "new-template"), timeoutInMillis = 60.seconds.toMillis)
       processOutput match {
         case None =>
           throw new RuntimeException("Could not create new Stack project because could not execute Stack command for creating new project on file system")
