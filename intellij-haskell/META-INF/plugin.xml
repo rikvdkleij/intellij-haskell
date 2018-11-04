@@ -1,7 +1,7 @@
 <idea-plugin>
     <id>intellij.haskell</id>
     <name>IntelliJ-Haskell</name>
-    <version>1.0.0-beta30</version>
+    <version>1.0.0-beta31</version>
     <vendor email="rikvdkleij@gmail.com">Rik van der Kleij</vendor>
 
     <description><![CDATA[
@@ -439,7 +439,7 @@
             <add-to-group group-id="CodeEditorViewGroup" anchor="last"/>
         </group>
 
-        <group id="HaskellGhciMenu" text="GHCi" description="GHCi" popup="true">
+        <group id="HaskellGhciMenu" text="GHCi" description="GHCi" popup="true" keep-content="true">
             <action id="Haskell.SendToGhci" class="intellij.haskell.action.ghci.SendToConsoleAction"
                     text="Send to GHCi" description="Execute selected command in GHCi"/>
 
@@ -455,7 +455,7 @@
         </group>
 
         <group id="HaskellToolsMenu" text="Haskell" description="Haskell Tools" icon="/icons/haskell@16.png"
-               popup="true">
+               keep-content="true" popup="true">
             <action id="Haskell.DownloadLibSources" class="intellij.haskell.action.DownloadLibrarySources"
                     text="Download Haskell Library Sources"
                     description="Download Haskell library sources and add them as source libraries to project">
@@ -475,6 +475,8 @@
                     text="Update Haskell Tools"
                     description="Update Haskell Tools with latest version of LTS-11">
             </action>
+
+            <separator></separator>
             <add-to-group group-id="ToolsMenu" anchor="first"/>
             <reference id="HaskellGhciMenu"/>
         </group>
