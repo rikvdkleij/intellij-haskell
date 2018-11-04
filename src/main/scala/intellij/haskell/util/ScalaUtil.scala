@@ -21,6 +21,7 @@ import java.util.concurrent.Callable
 import com.intellij.openapi.util.{Computable, Condition}
 
 import scala.collection.mutable
+import scala.collection.mutable.ListBuffer
 
 object ScalaUtil {
 
@@ -62,5 +63,19 @@ object ScalaUtil {
       maxElems.put(elem, fx)
     }
     maxElems.keys
+  }
+
+  def linesToMap(lines: Seq[String]): Map[String, String] = {
+    val linePerKey = lines.foldLeft(ListBuffer[String]()) { case (xs, s) =>
+      if (s.startsWith("  ")) {
+        xs.update(xs.length - 1, xs.last + s)
+        xs
+      } else xs.+=(s)
+    }
+
+    linePerKey.map(x => {
+      val keyValuePair = x.split(": ", 2)
+      (keyValuePair(0), keyValuePair(1))
+    }).toMap
   }
 }

@@ -91,7 +91,7 @@ object HindentReformatAction {
 
   def versionInfo(project: Project): String = {
     if (StackProjectManager.isHindentAvailable(project)) {
-      CommandLine.run(Some(project), project.getBasePath, HindentPath, Seq("--version")).getStdout
+      CommandLine.run(project, HindentPath, Seq("--version")).getStdout
     } else {
       "-"
     }

@@ -120,15 +120,15 @@ object HaskellElementFactory {
   }
 
   def createImportDeclaration(project: Project, moduleName: String, identifier: String): Option[HaskellImportDeclaration] = {
-    val haskellImportDeclaration = createElementFromText(project, s"import $moduleName (${surroundWithParensIfSymbol(project, identifier)}) \n", HS_IMPORT_DECLARATION)
+    val haskellImportDeclaration = createElementFromText(project, s"import $moduleName (${surroundWithParensIfSymbol(project, identifier)})", HS_IMPORT_DECLARATION)
     haskellImportDeclaration.map(_.asInstanceOf[HaskellImportDeclaration])
   }
 
   private def surroundWithParensIfSymbol(project: Project, identifier: String) = {
-    if (createVarsym(project, identifier).isDefined || createConsym(project, identifier).isDefined) {
-      s"($identifier)"
-    } else {
+    if (createVarid(project, identifier).isDefined || createConid(project, identifier).isDefined) {
       identifier
+    } else {
+      s"($identifier)"
     }
   }
 

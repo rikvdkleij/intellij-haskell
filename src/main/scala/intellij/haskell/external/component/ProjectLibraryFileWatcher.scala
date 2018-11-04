@@ -40,7 +40,7 @@ import scala.collection.concurrent
 object ProjectLibraryFileWatcher {
 
   def isBuilding(project: Project): Boolean = {
-    ProjectLibraryFileWatcher.buildStatus.get(project).isDefined
+    StackProjectManager.getProjectLibraryFileWatcher(project).exists(_.currentlyBuildLibComponents.nonEmpty)
   }
 
   sealed trait BuildStatus

@@ -40,8 +40,8 @@ object StackCommandLine {
   def run(project: Project, arguments: Seq[String], timeoutInMillis: Long = CommandLine.DefaultTimeout.toMillis,
           ignoreExitCode: Boolean = false, logOutput: Boolean = false, workDir: Option[String] = None, notifyBalloonError: Boolean = false): Option[ProcessOutput] = {
     HaskellSdkType.getStackPath(project).map(stackPath => {
-      CommandLine.run(
-        Some(project),
+      CommandLine.run1(
+        project,
         workDir.getOrElse(project.getBasePath),
         stackPath,
         arguments,
@@ -72,7 +72,7 @@ object StackCommandLine {
   }
 
   def build(project: Project, buildTargets: Seq[String]): Option[ProcessOutput] = {
-    val arguments = Seq("build") ++ buildTargets ++ Seq("--fast")
+    val arguments = Seq("build") ++ buildTargets
     val processOutput = run(project, arguments, -1, notifyBalloonError = true)
     if (processOutput.isEmpty || processOutput.exists(_.getExitCode != 0)) {
       HaskellNotificationGroup.logErrorEvent(project, s"Building `${buildTargets.mkString(", ")}` has failed")

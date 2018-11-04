@@ -58,6 +58,11 @@ class CabalInfo(cabalFile: CabalFile, modulePath: String) {
     ff <- HaskellPsiUtil.getChildOfType(pkgName, classOf[Freeform])
   } yield ff.getText).getOrElse(throw new IllegalStateException(s"Can not find package name in Cabal file ${cabalFile.getName}"))
 
+  val packageVersion: String = (for {
+    pkgVersion <- HaskellPsiUtil.getChildOfType(cabalFile, classOf[PkgVersion])
+    ff <- HaskellPsiUtil.getChildOfType(pkgVersion, classOf[Freeform])
+  } yield ff.getText).getOrElse(throw new IllegalStateException(s"Can not find package version in Cabal file ${cabalFile.getName}"))
+
   lazy val library: Option[LibraryCabalStanza] = {
     cabalFile.getChildren.collectFirst {
       case c: Library => LibraryCabalStanza(c, packageName, modulePath)

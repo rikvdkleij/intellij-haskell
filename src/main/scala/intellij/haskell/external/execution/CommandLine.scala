@@ -30,9 +30,27 @@ import scala.concurrent.duration._
 
 object CommandLine {
   val DefaultTimeout: FiniteDuration = 30.seconds
+  val DefaultNotifyBalloonError = false
+  val DefaultIgnoreExitCode = false
+  val DefaultLogOutput = false
 
-  def run(project: Option[Project], workDir: String, commandPath: String, arguments: Seq[String], timeoutInMillis: Long = DefaultTimeout.toMillis,
-          notifyBalloonError: Boolean = false, ignoreExitCode: Boolean = false, logOutput: Boolean = false): ProcessOutput = {
+  def run(project: Project, commandPath: String, arguments: Seq[String], timeoutInMillis: Long = DefaultTimeout.toMillis,
+          notifyBalloonError: Boolean = DefaultNotifyBalloonError, ignoreExitCode: Boolean = DefaultIgnoreExitCode, logOutput: Boolean = DefaultLogOutput): ProcessOutput = {
+    run2(Some(project), project.getBasePath, commandPath, arguments, timeoutInMillis, notifyBalloonError, ignoreExitCode, logOutput)
+  }
+
+  def run0(workDir: String, commandPath: String, arguments: Seq[String], timeoutInMillis: Long = DefaultTimeout.toMillis,
+           notifyBalloonError: Boolean = DefaultNotifyBalloonError, ignoreExitCode: Boolean = DefaultIgnoreExitCode, logOutput: Boolean = DefaultLogOutput): ProcessOutput = {
+    run2(None, workDir, commandPath, arguments, timeoutInMillis, notifyBalloonError, ignoreExitCode, logOutput)
+  }
+
+  def run1(project: Project, workDir: String, commandPath: String, arguments: Seq[String], timeoutInMillis: Long = DefaultTimeout.toMillis,
+           notifyBalloonError: Boolean = DefaultNotifyBalloonError, ignoreExitCode: Boolean = DefaultIgnoreExitCode, logOutput: Boolean = DefaultLogOutput): ProcessOutput = {
+    run2(Some(project), workDir, commandPath, arguments, timeoutInMillis, notifyBalloonError, ignoreExitCode, logOutput)
+  }
+
+  private def run2(project: Option[Project], workDir: String, commandPath: String, arguments: Seq[String], timeoutInMillis: Long = DefaultTimeout.toMillis,
+                   notifyBalloonError: Boolean = DefaultNotifyBalloonError, ignoreExitCode: Boolean = DefaultIgnoreExitCode, logOutput: Boolean = DefaultLogOutput): ProcessOutput = {
 
     val commandLine = createCommandLine(workDir, commandPath, arguments)
 

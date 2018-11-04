@@ -432,10 +432,10 @@ class NotInScopeIntentionAction(identifier: String, moduleName: String, psiFile:
                     val commaElement = importIdsSpec.addAfter(HaskellElementFactory.createComma(project), importId)
                     HaskellElementFactory.createImportId(project, identifier).foreach(mi => importIdsSpec.addAfter(mi, commaElement))
                   })
-                case None => createImportDeclaration(importDeclarationElement, ids)
+                case None => createImportDeclaration(importDeclarationElement, ids, project)
               }
             case None =>
-              createImportDeclaration(importDeclarationElement, ids)
+              createImportDeclaration(importDeclarationElement, ids, project)
           }
         case _ =>
           HaskellPsiUtil.findModuleDeclaration(psiFile) match {
@@ -448,9 +448,13 @@ class NotInScopeIntentionAction(identifier: String, moduleName: String, psiFile:
     )
   }
 
-  private def createImportDeclaration(importDeclarationElement: HaskellImportDeclaration, ids: HaskellImportDeclarations) = {
-    val lastImportDeclaration = HaskellPsiUtil.findImportDeclarations(psiFile).lastOption.orNull
-    ids.addAfter(importDeclarationElement, lastImportDeclaration)
+  private def createImportDeclaration(importDeclarationElement: HaskellImportDeclaration, ids: HaskellImportDeclarations, project: Project) = {
+    HaskellPsiUtil.findImportDeclarations(psiFile).lastOption match {
+      case Some(id) =>
+        val newLine = ids.addAfter(HaskellElementFactory.createNewLine(project), id)
+        ids.addAfter(importDeclarationElement, newLine)
+      case None => ids.addAfter(importDeclarationElement, null)
+    }
   }
 }
 

@@ -75,7 +75,7 @@ private[component] object AvailableModuleNamesComponent {
   }
 
   private def findAvailableLibraryModuleNames(stackComponentInfo: StackComponentInfo): Iterable[String] = {
-    HaskellComponentsManager.findStackComponentGlobalInfo(stackComponentInfo).map(_.libraryModuleNames.flatMap(_.exposed)).getOrElse(Iterable())
+    HaskellComponentsManager.findStackComponentGlobalInfo(stackComponentInfo).map(_.libraryModuleNames.flatMap(_.exposedModuleNames)).getOrElse(Iterable())
   }
 
   private def findModuleNamesInModule(project: Project, currentModule: Module, modules: Seq[Module], includeTests: Boolean): Iterable[String] = {

@@ -173,9 +173,11 @@ private[component] object DefinitionLocationComponent {
           case Some(repl) =>
             if (repl.isBusy) {
               Left(ReplIsBusy)
+            } else if (!repl.available) {
+              Left(ReplNotAvailable)
             } else {
               f(repl) match {
-                case Some(o) if o.stderrLines.isEmpty => Right(o)
+                case Some(o) if o.stderrLines.isEmpty && o.stdoutLines.nonEmpty => Right(o)
                 case _ => Left(ReplNotAvailable)
               }
             }

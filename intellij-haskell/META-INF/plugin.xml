@@ -11,7 +11,7 @@
     ]]></description>
 
     <change-notes><![CDATA[
-        <p>1.0.0-beta30</p>
+        <p>1.0.0-beta31</p>
         <b>IMPORTANT: Stack version should be > 1.7.0 and please reimport your Haskell Stack project after updating the plugin.</b>
         <ul>
             <li>Improved responsiveness, especially for multi-package projects</li>

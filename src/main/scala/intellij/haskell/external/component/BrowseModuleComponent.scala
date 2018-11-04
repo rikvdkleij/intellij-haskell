@@ -66,7 +66,7 @@ private[component] object BrowseModuleComponent {
   }
 
   def findExportedIdentifiers(stackComponentGlobalInfo: StackComponentGlobalInfo, psiFile: PsiFile, moduleName: String)(implicit ec: ExecutionContext): Future[Iterable[ModuleIdentifier]] = {
-    if (stackComponentGlobalInfo.libraryModuleNames.exists(_.exposed.toSeq.contains(moduleName))) {
+    if (stackComponentGlobalInfo.libraryModuleNames.exists(_.exposedModuleNames.contains(moduleName))) {
       findLibraryModuleIdentifiers(psiFile.getProject, moduleName)
     } else {
       val key = Key(psiFile.getProject, moduleName, Some(psiFile), exported = true)
@@ -114,9 +114,11 @@ private[component] object BrowseModuleComponent {
             case Some(repl) =>
               if (repl.isBusy) {
                 Left(ReplIsBusy)
+              } else if (!repl.available) {
+                Left(ReplNotAvailable)
               } else {
                 repl.getLocalModuleIdentifiers(moduleName, psiFile) match {
-                  case Some(output) if output.stderrLines.isEmpty => Right(output.stdoutLines.takeWhile(l => !l.startsWith("-- imported via")).flatMap(l => findModuleIdentifiers(project, l, moduleName)))
+                  case Some(output) if output.stderrLines.isEmpty && output.stdoutLines.nonEmpty => Right(output.stdoutLines.takeWhile(l => !l.startsWith("-- imported via")).flatMap(l => findModuleIdentifiers(project, l, moduleName)))
                   case _ => Left(ReplNotAvailable)
                 }
               }
@@ -130,9 +132,11 @@ private[component] object BrowseModuleComponent {
           case Some(repl) =>
             if (repl.isBusy) {
               Left(ReplIsBusy)
+            } else if (!repl.available) {
+              Left(ReplNotAvailable)
             } else {
               repl.getModuleIdentifiers(moduleName, psiFile) match {
-                case Some(output) if output.stderrLines.isEmpty => Right(output.stdoutLines.flatMap(l => findModuleIdentifiers(project, l, moduleName)))
+                case Some(output) if output.stderrLines.isEmpty && output.stdoutLines.nonEmpty => Right(output.stdoutLines.flatMap(l => findModuleIdentifiers(project, l, moduleName)))
                 case _ => Left(ReplNotAvailable)
               }
             }
@@ -144,15 +148,18 @@ private[component] object BrowseModuleComponent {
 
   private def findLibModuleIdentifiers(project: Project, moduleName: String): Either[NoInfo, Seq[ModuleIdentifier]] = {
     StackReplsManager.getGlobalRepl(project) match {
-      case Some(repl) => if (repl.isBusy) {
-        Left(ReplIsBusy)
-      } else {
-        repl.getModuleIdentifiers(moduleName) match {
-          case None => Left(ReplNotAvailable)
-          case Some(o) if o.stdoutLines.nonEmpty => Right(o.stdoutLines.flatMap(l => findModuleIdentifiers(project, l, moduleName).toSeq))
-          case _ => Left(NoInfoAvailable(moduleName, "-"))
+      case Some(repl) =>
+        if (repl.isBusy) {
+          Left(ReplIsBusy)
+        } else if (!repl.available) {
+          Left(ReplNotAvailable)
+        } else {
+          repl.getModuleIdentifiers(moduleName) match {
+            case None => Left(ReplNotAvailable)
+            case Some(o) if o.stdoutLines.nonEmpty => Right(o.stdoutLines.flatMap(l => findModuleIdentifiers(project, l, moduleName).toSeq))
+            case _ => Left(NoInfoAvailable(moduleName, "-"))
+          }
         }
-      }
       case None => Left(ReplNotAvailable)
     }
   }

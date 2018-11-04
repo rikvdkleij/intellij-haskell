@@ -218,6 +218,10 @@ object HaskellProjectUtil {
 
 case class GhcVersion(major: Int, minor: Int, patch: Int) extends Ordered[GhcVersion] {
   def compare(that: GhcVersion): Int = GhcVersion.asc.compare(this, that)
+
+  def prettyString = {
+    s"$major.$minor.$patch"
+  }
 }
 
 object GhcVersion {

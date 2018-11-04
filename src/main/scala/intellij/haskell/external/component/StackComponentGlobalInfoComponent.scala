@@ -64,7 +64,7 @@ private[component] object StackComponentGlobalInfoComponent {
           if (project.isDisposed) {
             None
           } else {
-            LibraryModuleNamesComponent.findLibraryModuleNames(project, packageName)
+            LibraryPackageInfoComponent.findLibraryPackageInfo(project, packageName)
           }
         }
       }
@@ -81,4 +81,4 @@ private[component] object StackComponentGlobalInfoComponent {
   }
 }
 
-case class StackComponentGlobalInfo(stackComponentInfo: StackComponentInfo, libraryModuleNames: Iterable[LibraryModuleNames])
+case class StackComponentGlobalInfo(stackComponentInfo: StackComponentInfo, libraryModuleNames: Iterable[PackageInfo])

@@ -158,7 +158,7 @@ object HoogleComponent {
 
   def versionInfo(project: Project): String = {
     if (StackProjectManager.isHoogleAvailable(project)) {
-      CommandLine.run(Some(project), project.getBasePath, HooglePath, Seq("--version")).getStdout
+      CommandLine.run(project, HooglePath, Seq("--version")).getStdout
     } else {
       "-"
     }
@@ -168,7 +168,7 @@ object HoogleComponent {
     ProgressManager.checkCanceled()
 
     val hoogleFuture = ApplicationManager.getApplication.executeOnPooledThread(ScalaUtil.callable[ProcessOutput] {
-      CommandLine.run(Some(project), project.getBasePath, HooglePath, Seq(s"--database=${hoogleDbPath(project)}") ++ arguments, logOutput = true)
+      CommandLine.run(project, HooglePath, Seq(s"--database=${hoogleDbPath(project)}") ++ arguments, logOutput = true)
     })
 
     ProgressManager.checkCanceled()

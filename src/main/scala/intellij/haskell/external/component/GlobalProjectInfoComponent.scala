@@ -16,12 +16,12 @@
 
 package intellij.haskell.external.component
 
+import java.nio.file.Paths
+
 import com.github.blemale.scaffeine.{LoadingCache, Scaffeine}
 import com.intellij.openapi.project.Project
 import intellij.haskell.external.execution.{CommandLine, StackCommandLine}
-import intellij.haskell.module.HaskellModuleBuilder
-import intellij.haskell.module.HaskellModuleBuilder.HaskellDependency
-import intellij.haskell.util.GhcVersion
+import intellij.haskell.util.{GhcVersion, ScalaUtil}
 
 import scala.collection.JavaConverters._
 
@@ -41,16 +41,13 @@ private[component] object GlobalProjectInfoComponent {
     }
   }
 
-  def getSupportedLanguageExtensions(project: Project): Option[Iterable[String]] = {
-    findGhcPath(project).map(ghcPath => {
-      CommandLine.run(
-        Some(project),
-        project.getBasePath,
-        ghcPath,
-        Seq("--supported-languages"),
-        notifyBalloonError = true
-      ).getStdoutLines.asScala
-    })
+  def getSupportedLanguageExtensions(project: Project, ghcPath: String): Seq[String] = {
+    CommandLine.run(
+      project,
+      ghcPath,
+      Seq("--supported-languages"),
+      notifyBalloonError = true
+    ).getStdoutLines.asScala
   }
 
   def getAvailableStackagesPackages(project: Project): Iterable[String] = {
@@ -65,22 +62,47 @@ private[component] object GlobalProjectInfoComponent {
   private def createGlobalProjectInfo(key: Key): Option[GlobalProjectInfo] = {
     val project = key.project
     for {
-      extensions <- getSupportedLanguageExtensions(project)
+      pathLines <- findPathLines(project)
+      pathInfoMap = ScalaUtil.linesToMap(pathLines)
+      binPaths <- findBinPaths(pathInfoMap)
+      packageDbPaths <- findPackageDbPaths(pathInfoMap)
+      ghcPath = Paths.get(binPaths.compilerBinPath, "ghc").toString
+      ghcPkgPath = Paths.get(binPaths.compilerBinPath, "ghc-pkg").toString
+      interoPath = Paths.get(binPaths.localBinPath, "intero").toString
+      extensions = getSupportedLanguageExtensions(project, ghcPath)
       stackagePackageNames = getAvailableStackagesPackages(project)
-      ghcVersion <- findGhcVersion(project)
-      projectDependencies = HaskellModuleBuilder.getProjectLibraryDependencies(project)
-    } yield GlobalProjectInfo(ghcVersion, extensions, projectDependencies, stackagePackageNames)
+      ghcVersion = findGhcVersion(project, ghcPath)
+    } yield GlobalProjectInfo(ghcVersion, ghcPath, ghcPkgPath, interoPath, packageDbPaths, binPaths, extensions, stackagePackageNames)
   }
 
-  private def findGhcPath(project: Project) = {
-    StackCommandLine.run(project, Seq("path", "--compiler-exe")).flatMap(_.getStdoutLines.asScala.headOption)
+  private def findPathLines(project: Project) = {
+    StackCommandLine.run(project, Seq("path")).map(_.getStdoutLines.asScala.toSeq)
   }
 
-  private def findGhcVersion(project: Project): Option[GhcVersion] = {
-    StackCommandLine.run(project, Seq("exec", "--", "ghc", "--numeric-version"))
-      .map(o => GhcVersion.parse(o.getStdout.trim))
+  private def findGhcVersion(project: Project, ghcPath: String): GhcVersion = {
+    val output = CommandLine.run(project, ghcPath, Seq("--numeric-version"))
+    GhcVersion.parse(output.getStdout.trim)
+  }
+
+  private def findBinPaths(pathInfoMap: Map[String, String]): Option[ProjectBinPaths] = {
+    for {
+      compilerBinPath <- pathInfoMap.get("compiler-bin")
+      localBinPath <- pathInfoMap.get("local-install-root").map(p => Paths.get(p, "bin").toString)
+    } yield ProjectBinPaths(compilerBinPath, localBinPath)
+  }
+
+  private def findPackageDbPaths(pathInfoMap: Map[String, String]): Option[PackageDbPaths] = {
+    for {
+      globalPackageDbPath <- pathInfoMap.get("global-pkg-db")
+      snapshotPackageDbPath <- pathInfoMap.get("snapshot-pkg-db")
+      localPackageDbPath <- pathInfoMap.get("local-pkg-db")
+    } yield PackageDbPaths(globalPackageDbPath, snapshotPackageDbPath, localPackageDbPath)
   }
 }
 
 
-case class GlobalProjectInfo(ghcVersion: GhcVersion, supportedLanguageExtensions: Iterable[String], dependencies: Iterable[HaskellDependency], availableStackagePackageNames: Iterable[String])
+case class GlobalProjectInfo(ghcVersion: GhcVersion, ghcPath: String, ghcPkgPath: String, interoPath: String, packageDbPaths: PackageDbPaths, projectBinPaths: ProjectBinPaths, supportedLanguageExtensions: Iterable[String], availableStackagePackageNames: Iterable[String])
+
+case class PackageDbPaths(globalPackageDbPath: String, snapshotPackageDbPath: String, localPackageDbPath: String)
+
+case class ProjectBinPaths(compilerBinPath: String, localBinPath: String)

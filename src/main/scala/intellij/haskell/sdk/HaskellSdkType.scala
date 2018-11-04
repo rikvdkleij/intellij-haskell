@@ -103,8 +103,7 @@ object HaskellSdkType {
 
   def getNumericVersion(stackPath: String): Option[String] = {
     val workDir = new File(stackPath).getParent
-    val output = CommandLine.run(
-      None,
+    val output = CommandLine.run0(
       workDir,
       stackPath,
       Seq("--numeric-version"),

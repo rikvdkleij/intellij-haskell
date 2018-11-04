@@ -52,6 +52,8 @@ private[component] object NameInfoComponent {
         StackReplsManager.getProjectRepl(psiFile) match {
           case Some(repl) => if (repl.isBusy) {
             Left(ReplIsBusy)
+          } else if (!repl.available) {
+            Left(ReplNotAvailable)
           } else {
             repl.findInfo(psiFile, name) match {
               case None => Left(ReplNotAvailable)

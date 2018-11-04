@@ -39,7 +39,7 @@ import intellij.haskell.external.execution.{CommandLine, StackCommandLine}
 import intellij.haskell.sdk.HaskellSdkType
 import intellij.haskell.stackyaml.StackYamlComponent
 import intellij.haskell.util.{HaskellFileUtil, HaskellProjectUtil, ScalaUtil}
-import intellij.haskell.{GlobalInfo, HaskellIcons, HaskellNotificationGroup}
+import intellij.haskell.{GlobalInfo, HaskellIcons}
 import javax.swing.Icon
 
 import scala.collection.JavaConverters._
@@ -186,18 +186,29 @@ object HaskellModuleBuilder {
     new File(moduleBuilder.getContentEntryPath, GlobalInfo.StackWorkDirName)
   }
 
-  def getProjectLibraryDependencies(project: Project): Iterable[HaskellDependency] = {
-    for {
-      lines <- StackCommandLine.run(project, Seq("ls", "dependencies", "--test", "--bench"), timeoutInMillis = 60.seconds.toMillis).map(_.getStdoutLines).toSeq
-      dependencies <- createDependencies(project, lines.asScala).filterNot(d => d.isInstanceOf[HaskellProjectModuleDependency] || d.name == "rts" || d.name == "ghc")
-    } yield dependencies
-  }
+  def getDependencies(project: Project, module: Module, packageName: String): Seq[HaskellDependency] = {
+    val cabalInfo = HaskellComponentsManager.findCabalInfos(project).find(_.packageName == packageName)
+    val libPackages = cabalInfo.flatMap(_.library.map(_.buildDepends)).getOrElse(Array())
+    val exePackages = cabalInfo.map(_.executables.flatMap(_.buildDepends)).getOrElse(Seq())
+    val testPackages = cabalInfo.map(_.testSuites.flatMap(_.buildDepends)).getOrElse(Seq())
+    val benchPackages = cabalInfo.map(_.benchmarks.flatMap(_.buildDepends)).getOrElse(Seq())
 
-  def getDependencies(project: Project, module: Module, packageName: String): Iterable[HaskellDependency] = {
-    for {
-      lines <- StackCommandLine.run(project, Seq("ls", "dependencies", packageName, "--test", "--bench"), timeoutInMillis = 60.seconds.toMillis).map(_.getStdoutLines).toSeq
-      dependencies <- createDependencies(project, lines.asScala).filterNot(d => d.name == packageName || d.name == "rts" || d.name == "ghc")
-    } yield dependencies
+    val packages = (libPackages ++ exePackages ++ testPackages ++ benchPackages).distinct.filterNot(n => n == packageName || n == "rts" || n == "ghc")
+
+    val projectModulePackageNames = HaskellComponentsManager.findProjectModulePackageNames(project)
+
+    packages.flatMap(n => {
+      projectModulePackageNames.find(_._2 == n).map(_._1) match {
+        case None =>
+          HaskellComponentsManager.findPackageInfo(project, n) match {
+            case Some(info) => Some(HaskellLibraryDependency(info.packageName, info.version))
+            case None => None
+          }
+        case Some(m) =>
+          val cabalInfo = HaskellComponentsManager.findCabalInfos(project).find(_.packageName == n)
+          cabalInfo.map(ci => HaskellProjectModuleDependency(ci.packageName, ci.packageVersion, m))
+      }
+    })
   }
 
   def getModuleRootDirectory(packagePath: String, modulePath: String): File = {
@@ -257,23 +268,9 @@ object HaskellModuleBuilder {
     new File(new File(GlobalInfo.getLibrarySourcesPath), project.getName)
   }
 
-  private def createDependencies(project: Project, dependencyLines: Iterable[String]): Iterable[HaskellDependency] = {
-    val projectModulePackageNames = HaskellComponentsManager.findProjectModulePackageNames(project)
-    dependencyLines.flatMap {
-      case PackagePattern(name, version) =>
-        projectModulePackageNames.find(_._2 == name).map(_._1) match {
-          case Some(pm) => Some(HaskellProjectModuleDependency(name, version, pm))
-          case None => Some(HaskellLibraryDependency(name, version))
-        }
-      case x =>
-        HaskellNotificationGroup.logWarningEvent(project, s"Could not determine package for line `$x`")
-        None
-    }
-  }
-
   private def downloadHaskellPackageSources(project: Project, projectLibDirectory: File, stackPath: String, libraryDependencies: Seq[HaskellLibraryDependency]): Unit = {
     libraryDependencies.filterNot(libraryDependency => getPackageDirectory(projectLibDirectory, libraryDependency).exists()).flatMap(libraryDependency => {
-      CommandLine.run(Some(project), projectLibDirectory.getAbsolutePath, stackPath, Seq("--no-nix", "unpack", libraryDependency.nameVersion), 10000).getStderr
+      CommandLine.run1(project, projectLibDirectory.getAbsolutePath, stackPath, Seq("--no-nix", "unpack", libraryDependency.nameVersion), 10000).getStderr
     })
   }
 

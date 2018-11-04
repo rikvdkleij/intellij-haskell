@@ -45,7 +45,7 @@ object StylishHaskellReformatAction {
 
   def versionInfo(project: Project): String = {
     if (StackProjectManager.isStylishHaskellAvailable(project)) {
-      CommandLine.run(Some(project), project.getBasePath, StylishHaskellPath, Seq("--version")).getStdout
+      CommandLine.run(project, StylishHaskellPath, Seq("--version")).getStdout
     } else {
       "-"
     }
@@ -58,7 +58,7 @@ object StylishHaskellReformatAction {
     HaskellFileUtil.getAbsolutePath(psiFile) match {
       case Some(path) =>
         val processOutputFuture = ApplicationManager.getApplication.executeOnPooledThread(ScalaUtil.callable[ProcessOutput] {
-          CommandLine.run(Some(project), project.getBasePath, StylishHaskellPath, Seq(path))
+          CommandLine.run(project, StylishHaskellPath, Seq(path))
         })
 
         FutureUtil.waitForValue(project, processOutputFuture, s"reformatting by $StylishHaskellName") match {

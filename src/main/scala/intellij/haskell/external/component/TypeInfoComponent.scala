@@ -83,9 +83,13 @@ private[component] object TypeInfoComponent {
     }
   }
 
+  private def checkValidKey(key: Key): Boolean = {
+    ApplicationUtil.runReadAction(key.qualifiedNameElement.isValid && key.qualifiedNameElement.getIdentifierElement.isValid)
+  }
+
   def invalidate(psiFile: PsiFile): Unit = {
     val keys = Cache.synchronous().asMap().filter(_._1.psiFile == psiFile).flatMap { case (k, v) =>
-      if (ApplicationUtil.runReadAction(k.qualifiedNameElement.getIdentifierElement.isValid)) {
+      if (checkValidKey(k)) {
         v.toOption match {
           case Some(_) =>
             val definedInSameFile = DefinitionLocationComponent.findDefinitionLocation(psiFile, k.qualifiedNameElement).toOption match {
@@ -116,7 +120,7 @@ private[component] object TypeInfoComponent {
 
   def invalidate(moduleName: String): Unit = {
     val keys = Cache.synchronous().asMap().flatMap { case (k, v) =>
-      if (ApplicationUtil.runReadAction(k.qualifiedNameElement.getIdentifierElement.isValid)) {
+      if (checkValidKey(k)) {
         v.toOption match {
           case Some(_) =>
             val sameModule = DefinitionLocationComponent.findDefinitionLocation(k.psiFile, k.qualifiedNameElement).toOption match {
@@ -168,6 +172,8 @@ private[component] object TypeInfoComponent {
         case Some(repl) =>
           if (repl.isBusy) {
             Left(ReplIsBusy)
+          } else if (!repl.available) {
+            Left(ReplNotAvailable)
           } else {
             f(repl) match {
               case Some(output) => output.stdoutLines.filterNot(_.trim.isEmpty).headOption.map(ti => Right(TypeInfo(ti, output.stderrLines.nonEmpty))).getOrElse(Left(NoInfoAvailable(key.expression, key.psiFile.getName)))
