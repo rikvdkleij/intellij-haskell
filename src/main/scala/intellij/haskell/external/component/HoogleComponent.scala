@@ -137,13 +137,14 @@ object HoogleComponent {
   def rebuildHoogle(project: Project): Unit = {
     val buildHaddockOutput = try {
       haddockIsBuilding = true
-      StackCommandLine.executeStackCommandInMessageView(project, Seq("haddock"))
+      StackCommandLine.executeStackCommandInMessageView(project, Seq("haddock", "--no-haddock-hyperlink-source"))
     } finally {
       haddockIsBuilding = false
     }
 
     if (buildHaddockOutput.contains(true)) {
-      StackCommandLine.executeInMessageView(project, HooglePath, Seq("generate", "--local", s"--database=${hoogleDbPath(project)}"))
+      val localDocRoot = GlobalProjectInfoComponent.findGlobalProjectInfo(project).map(_.localDocRoot)
+      StackCommandLine.executeInMessageView(project, HooglePath, Seq("generate", s"--local=$localDocRoot", s"--database=${hoogleDbPath(project)}"))
     }
 
   }

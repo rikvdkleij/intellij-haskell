@@ -72,7 +72,8 @@ private[component] object GlobalProjectInfoComponent {
       extensions = getSupportedLanguageExtensions(project, ghcPath)
       stackagePackageNames = getAvailableStackagesPackages(project)
       ghcVersion = findGhcVersion(project, ghcPath)
-    } yield GlobalProjectInfo(ghcVersion, ghcPath, ghcPkgPath, interoPath, packageDbPaths, binPaths, extensions, stackagePackageNames)
+      localDocRoot <- pathInfoMap.get("local-doc-root")
+    } yield GlobalProjectInfo(ghcVersion, ghcPath, ghcPkgPath, interoPath, localDocRoot, packageDbPaths, binPaths, extensions, stackagePackageNames)
   }
 
   private def findPathLines(project: Project) = {
@@ -101,7 +102,7 @@ private[component] object GlobalProjectInfoComponent {
 }
 
 
-case class GlobalProjectInfo(ghcVersion: GhcVersion, ghcPath: String, ghcPkgPath: String, interoPath: String, packageDbPaths: PackageDbPaths, projectBinPaths: ProjectBinPaths, supportedLanguageExtensions: Iterable[String], availableStackagePackageNames: Iterable[String])
+case class GlobalProjectInfo(ghcVersion: GhcVersion, ghcPath: String, ghcPkgPath: String, interoPath: String, localDocRoot: String,  packageDbPaths: PackageDbPaths, projectBinPaths: ProjectBinPaths, supportedLanguageExtensions: Iterable[String], availableStackagePackageNames: Iterable[String])
 
 case class PackageDbPaths(globalPackageDbPath: String, snapshotPackageDbPath: String, localPackageDbPath: String)
 
