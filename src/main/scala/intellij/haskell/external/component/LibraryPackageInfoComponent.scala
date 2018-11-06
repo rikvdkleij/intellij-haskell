@@ -59,7 +59,7 @@ private[component] object LibraryPackageInfoComponent {
 
     result match {
       case Some(r) => r.foreach {
-        case d@Some(packageInfo) => if (!projectPackageNames.toSeq.contains(packageInfo.packageName)) Cache.put(Key(project, packageInfo.packageName), d)
+        case d@Some(packageInfo) => if (!projectPackageNames.toSeq.contains(packageInfo.packageName) && packageInfo.packageName != "rts") Cache.put(Key(project, packageInfo.packageName), d)
         case None => HaskellNotificationGroup.logInfoBalloonEvent(project, s"Could not retrieve all package information via `ghc-pkg dump`")
       }
       case None => HaskellNotificationGroup.logErrorBalloonEvent(project, "Executing `ghc-pkg dunp` failed")

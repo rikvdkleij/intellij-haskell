@@ -153,7 +153,7 @@ object HaskellComponentsManager {
   }
 
   def findCabalInfos(project: Project): Iterable[CabalInfo] = {
-    StackReplsManager.getReplsManager(project).map(_.moduleCabalInfos.map { case (m, ci) => ci }).getOrElse(Iterable())
+    StackReplsManager.getReplsManager(project).map(_.moduleCabalInfos.map { case (_, ci) => ci }).getOrElse(Iterable())
   }
 
   def loadHaskellFile(psiFile: PsiFile, fileChanged: Boolean, psiElement: Option[PsiElement]): Option[CompilationResult] = {
@@ -176,8 +176,8 @@ object HaskellComponentsManager {
     DefinitionLocationComponent.findReferencesInCache(targetFile)
   }
 
-  def findPackageInfo(project: Project, packageName: String): Option[PackageInfo] = {
-    LibraryPackageInfoComponent.findLibraryPackageInfo(project, packageName)
+  def findLibraryPackageInfos(project: Project): Seq[PackageInfo] = {
+    LibraryPackageInfoComponent.libraryPackageInfos(project).toSeq
   }
 
   def invalidateCachesForModules(project: Project, moduleNames: Seq[String]): Unit = {
