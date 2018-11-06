@@ -192,8 +192,6 @@ object StackProjectManager {
               progressIndicator.setText("Busy with starting global Stack REPL")
               StackReplsManager.getGlobalRepl(project).foreach(_.start())
 
-              StackReplsManager.getReplsManager(project).foreach(_.stackComponentInfos.filter(_.stanzaType == LibType).foreach(info => StackReplsManager.getProjectRepl(project, info).foreach(_.start())))
-
               val preloadLibraryFilesCacheFuture = ApplicationManager.getApplication.executeOnPooledThread(ScalaUtil.runnable {
                 HaskellComponentsManager.preloadLibraryFilesCache(project)
               })
@@ -211,6 +209,9 @@ object StackProjectManager {
                   ApplicationManager.getApplication.getMessageBus.connect(project).subscribe(VirtualFileManager.VFS_CHANGES, watcher)
                 }
               }
+
+              progressIndicator.setText("Busy with starting REPLs")
+              StackReplsManager.getReplsManager(project).foreach(_.stackComponentInfos.filter(_.stanzaType == LibType).foreach(info => StackReplsManager.getProjectRepl(project, info)))
 
               progressIndicator.setText("Busy with preloading library caches")
               if (!preloadCacheFuture.isDone || !preloadLibraryFilesCacheFuture.isDone || !preloadStackComponentInfoCache.isDone) {
