@@ -64,15 +64,15 @@ object ProjectLibraryFileWatcher {
     StackProjectManager.getProjectLibraryFileWatcher(project).foreach { watcher =>
       watcher.currentlyBuildLibComponents = libComponentInfos
 
-      ProgressManager.getInstance().run(new Task.Backgroundable(project, "Building libraries", false, PerformInBackgroundOption.ALWAYS_BACKGROUND) {
+      ProgressManager.getInstance().run(new Task.Backgroundable(project, "Building project", false, PerformInBackgroundOption.ALWAYS_BACKGROUND) {
 
         def run(progressIndicator: ProgressIndicator) {
-          val buildMessage = s"Building: ${libComponentInfos.map(_.target).mkString(", ")}"
+          val buildMessage = s"Building project"
           HaskellNotificationGroup.logInfoEvent(project, buildMessage)
           progressIndicator.setText(buildMessage)
 
           // Forced `-Wwarn` otherwise build will fail in case of warnings and that will cause that REPLs of dependent targets will not start anymore
-          val output = StackCommandLine.buildProjectInMessageView(project, libComponentInfos.map(_.target).toSeq ++ Seq("--ghc-options", "-Wwarn"))
+          val output = StackCommandLine.buildProjectInMessageView(project, Seq("--ghc-options", "-Wwarn"))
           if (output.contains(true) && !project.isDisposed) {
             val projectRepls = StackReplsManager.getRunningProjectRepls(project)
             val openFiles = FileEditorManager.getInstance(project).getOpenFiles.filter(HaskellFileUtil.isHaskellFile)
