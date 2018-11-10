@@ -39,7 +39,7 @@ object StackCommandLine {
 
   def run(project: Project, arguments: Seq[String], timeoutInMillis: Long = CommandLine.DefaultTimeout.toMillis,
           ignoreExitCode: Boolean = false, logOutput: Boolean = false, workDir: Option[String] = None, notifyBalloonError: Boolean = false): Option[ProcessOutput] = {
-    HaskellSdkType.getStackPath(project).map(stackPath => {
+    HaskellSdkType.getStackBinaryPath(project).map(stackPath => {
       CommandLine.run1(
         project,
         workDir.getOrElse(project.getBasePath),
@@ -99,7 +99,7 @@ object StackCommandLine {
   }
 
   def executeStackCommandInMessageView(project: Project, arguments: Seq[String]): Option[Boolean] = {
-    HaskellSdkType.getStackPath(project).flatMap(stackPath => {
+    HaskellSdkType.getStackBinaryPath(project).flatMap(stackPath => {
       executeInMessageView(project, stackPath, arguments)
     })
   }

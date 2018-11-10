@@ -45,7 +45,7 @@ private[external] object StackReplsManager {
   }
 
   def getProjectRepl(project: Project, stackComponentInfo: StackComponentInfo): Option[ProjectStackRepl] = {
-    getReplsManager(project).map(_.getProjectRepl(stackComponentInfo, None))
+    getReplsManager(project).map(_.getProjectRepl(stackComponentInfo))
   }
 
   def getRunningProjectRepl(psiFile: PsiFile): Option[ProjectStackRepl] = {
@@ -124,7 +124,7 @@ private[external] class StackReplsManager(val project: Project) {
       } else {
         val componentInfo = HaskellComponentsManager.findStackComponentInfo(psiFile)
         componentInfo match {
-          case Some(ci) => Some(getProjectRepl(ci, Some(psiFile)))
+          case Some(ci) => Some(getProjectRepl(ci))
           case None =>
             HaskellNotificationGroup.logErrorBalloonEvent(project, s"No Haskell support for file `${psiFile.getName}` because no Stack target could be found for this file")
             None
@@ -135,11 +135,11 @@ private[external] class StackReplsManager(val project: Project) {
     }
   }
 
-  private def getProjectRepl(componentInfo: StackComponentInfo, psiFile: Option[PsiFile]): ProjectStackRepl = {
+  private def getProjectRepl(componentInfo: StackComponentInfo): ProjectStackRepl = {
     projectRepls.get(componentInfo) match {
       case Some(repl) => repl
       case None =>
-        synchronized {
+        componentInfo.synchronized {
           projectRepls.get(componentInfo) match {
             case Some(r) => r
             case None =>

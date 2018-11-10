@@ -240,7 +240,7 @@ abstract class StackRepl(project: Project, componentInfo: Option[StackComponentI
       starting = true
       clearLoadedModules()
 
-      HaskellSdkType.getStackPath(project).foreach(stackPath => {
+      HaskellSdkType.getStackBinaryPath(project).foreach(stackPath => {
         try {
           val extraOptions = if (stanzaType.contains(TestSuiteType)) {
             extraReplOptions ++ Seq("--test")

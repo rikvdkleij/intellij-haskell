@@ -24,9 +24,10 @@ import com.intellij.openapi.util.io.FileUtil
 import com.intellij.psi.PsiFile
 import intellij.haskell.HaskellNotificationGroup
 import intellij.haskell.external.component.HaskellComponentsManager.StackComponentInfo
+import intellij.haskell.external.repl.StackRepl.LibType
 import intellij.haskell.external.repl.StackReplsManager
 import intellij.haskell.runconfig.console.HaskellConsoleView
-import intellij.haskell.util.{HaskellFileUtil, ScalaUtil}
+import intellij.haskell.util.{HaskellFileUtil, HaskellProjectUtil, ScalaUtil}
 
 private[component] object HaskellProjectFileInfoComponent {
 
@@ -106,8 +107,11 @@ private[component] object HaskellProjectFileInfoComponent {
         stackComponentInfo match {
           case info@Some(_) => (info, message)
           case None =>
-            val message = Some(s"Could not determine Stack target for file `$filePath` because no accompanying `hs-source-dirs` or `main-is` can be found in Cabal file(s)")
-            (None, message)
+            stackTargetBuildInfos.find(info => info.stanzaType == LibType && FileUtil.isAncestor(HaskellProjectUtil.getModuleDir(info.module).getAbsolutePath, filePath, true)) match {
+              case Some(info) => (Some(info), None)
+              case None => val message = Some(s"Could not determine Stack target for file `$filePath` because no accompanying `hs-source-dirs` or `main-is` can be found in Cabal file(s)")
+                (None, message)
+            }
         }
     }
   }

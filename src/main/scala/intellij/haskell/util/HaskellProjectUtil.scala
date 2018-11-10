@@ -26,10 +26,10 @@ import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.vfs.{LocalFileSystem, VirtualFile}
 import com.intellij.psi.search.GlobalSearchScope
 import com.intellij.psi.{PsiElement, PsiFile}
+import intellij.haskell.HaskellNotificationGroup
 import intellij.haskell.external.component.{HaskellComponentsManager, NoInfo}
 import intellij.haskell.module.HaskellModuleType
 import intellij.haskell.sdk.HaskellSdkType
-import intellij.haskell.{GlobalInfo, HaskellNotificationGroup}
 
 object HaskellProjectUtil {
 
@@ -42,9 +42,7 @@ object HaskellProjectUtil {
   }
 
   def isValidHaskellProject(project: Project, notifyNoSdk: Boolean): Boolean = {
-    val haskellModules = HaskellProjectUtil.findProjectHaskellModules(project)
-    val stackPathsDefined = haskellModules.map(m => HaskellSdkType.getStackPath(project, notifyNoSdk)).forall(_.isDefined)
-    isHaskellProject(project) && stackPathsDefined
+    isHaskellProject(project) && HaskellSdkType.getStackBinaryPath(project, notifyNoSdk).isDefined
   }
 
   def isHaskellProject(project: Project): Boolean = {
@@ -82,7 +80,7 @@ object HaskellProjectUtil {
   }
 
   def getHaskellProjectFileType(project: Project, virtualFile: VirtualFile): HaskellProjectFileType = {
-    if (isConfigFile(project, virtualFile) || isGeneratedFile(project, virtualFile)) {
+    if (isConfigFile(project, virtualFile)) {
       HaskellNotificationGroup.logInfoEvent(project, s"`${virtualFile.getName}` is ignored")
       Other
     } else if (isModuleFile(project, virtualFile)) {
@@ -113,14 +111,6 @@ object HaskellProjectUtil {
   private def isConfigFile(project: Project, virtualFile: VirtualFile): Boolean = {
     ConfigHaskellFiles.contains(virtualFile.getName.toLowerCase) &&
       HaskellProjectUtil.findModuleForVirtualFile(project, virtualFile).exists(m => findContainingDirectory(virtualFile).exists(vf => HaskellFileUtil.getAbsolutePath(vf) == HaskellProjectUtil.getModuleDir(m).getPath))
-  }
-
-  private def isGeneratedFile(project: Project, virtualFile: VirtualFile) = {
-    virtualFile.getName.startsWith("Paths_") && FileUtil.isAncestor(getStackWorkDirectory(project).toFile, Paths.get(virtualFile.getPath).toFile, true)
-  }
-
-  private def getStackWorkDirectory(project: Project) = {
-    Paths.get(project.getBasePath, GlobalInfo.StackWorkDirName)
   }
 
   private def findContainingDirectory(virtualFile: VirtualFile): Option[VirtualFile] = {
@@ -219,7 +209,7 @@ object HaskellProjectUtil {
 case class GhcVersion(major: Int, minor: Int, patch: Int) extends Ordered[GhcVersion] {
   def compare(that: GhcVersion): Int = GhcVersion.asc.compare(this, that)
 
-  def prettyString = {
+  def prettyString: String = {
     s"$major.$minor.$patch"
   }
 }

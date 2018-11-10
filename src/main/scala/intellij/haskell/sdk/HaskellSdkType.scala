@@ -127,7 +127,7 @@ object HaskellSdkType {
     stackPath
   }
 
-  def getStackPath(project: Project, notifyNoSdk: Boolean = true): Option[String] = {
+  def getStackBinaryPath(project: Project, notifyNoSdk: Boolean = true): Option[String] = {
     val haskellProjectModule = HaskellProjectUtil.findProjectHaskellModules(project).headOption
     val stackPath = for {
       hpm <- haskellProjectModule

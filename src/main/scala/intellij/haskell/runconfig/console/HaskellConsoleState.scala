@@ -25,7 +25,7 @@ class HaskellConsoleState(val configuration: HaskellConsoleConfiguration, val en
   protected def startProcess: ProcessHandler = {
     val project = configuration.getProject
 
-    HaskellSdkType.getStackPath(project) match {
+    HaskellSdkType.getStackBinaryPath(project) match {
       case Some(stackPath) =>
         val stackTarget = configuration.getStackTarget
         val ghcVersion = HaskellComponentsManager.getGhcVersion(project)

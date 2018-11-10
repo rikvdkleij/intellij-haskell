@@ -238,7 +238,7 @@ object HaskellModuleBuilder {
   def addLibrarySources(project: Project, update: Boolean): Unit = {
     val projectLibDirectory = getProjectLibDirectory(project)
     if (update || getProjectLibraryTable(project).getLibraries.isEmpty || !projectLibDirectory.exists()) {
-      HaskellSdkType.getStackPath(project).foreach(stackPath => {
+      HaskellSdkType.getStackBinaryPath(project).foreach(stackPath => {
 
         if (!projectLibDirectory.exists()) {
           FileUtil.createDirectory(projectLibDirectory)
@@ -342,7 +342,7 @@ object HaskellModuleBuilder {
     getProjectLibraryTable(project).getLibraries.find(_.getName == library.getName).foreach(library => {
       val model = getProjectLibraryTable(project).getModifiableModel
       model.removeLibrary(library)
-      ApplicationManager.getApplication.invokeAndWait(ScalaUtil.runnable(WriteAction.run(() => model.commit())))
+      ApplicationManager.getApplication.invokeLater(ScalaUtil.runnable(WriteAction.run(() => model.commit())))
     })
   }
 
@@ -355,8 +355,8 @@ object HaskellModuleBuilder {
     libraryModel.addRoot(sourceRootUrl, OrderRootType.CLASSES)
     libraryModel.addRoot(sourceRootUrl, OrderRootType.SOURCES)
 
-    ApplicationManager.getApplication.invokeAndWait(ScalaUtil.runnable(WriteAction.run(() => libraryModel.commit())))
-    ApplicationManager.getApplication.invokeAndWait(ScalaUtil.runnable(WriteAction.run(() => projectLibraryTableModel.commit())))
+    ApplicationManager.getApplication.invokeLater(ScalaUtil.runnable(WriteAction.run(() => libraryModel.commit())))
+    ApplicationManager.getApplication.invokeLater(ScalaUtil.runnable(WriteAction.run(() => projectLibraryTableModel.commit())))
     library
   }
 
