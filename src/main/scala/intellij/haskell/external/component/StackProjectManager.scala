@@ -189,7 +189,7 @@ object StackProjectManager {
               }
 
               progressIndicator.setText("Busy with starting global Stack REPL")
-              StackReplsManager.getGlobalRepl(project).foreach(_.start())
+              StackReplsManager.getGlobalRepl(project)
 
               val preloadLibraryFilesCacheFuture = ApplicationManager.getApplication.executeOnPooledThread(ScalaUtil.runnable {
                 HaskellComponentsManager.preloadLibraryFilesCache(project)
@@ -210,7 +210,10 @@ object StackProjectManager {
               }
 
               progressIndicator.setText("Busy with starting REPLs")
-              StackReplsManager.getReplsManager(project).foreach(_.stackComponentInfos.filter(_.stanzaType == LibType).foreach(info => StackReplsManager.getProjectRepl(project, info)))
+              StackReplsManager.getReplsManager(project).foreach(_.stackComponentInfos.filter(_.stanzaType == LibType).foreach { info =>
+                StackReplsManager.getProjectRepl(project, info)
+                Thread.sleep(1000) // Have to wait between starting the REPLs otherwise timeouts while starting
+              })
 
               progressIndicator.setText("Busy with preloading library caches")
               if (!preloadCacheFuture.isDone || !preloadLibraryFilesCacheFuture.isDone || !preloadStackComponentInfoCache.isDone) {
