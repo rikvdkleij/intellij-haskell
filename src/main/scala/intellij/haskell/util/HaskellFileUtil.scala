@@ -23,7 +23,7 @@ import java.nio.file.{Files, Paths}
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.command.CommandProcessor
 import com.intellij.openapi.editor.Document
-import com.intellij.openapi.fileEditor.FileDocumentManager
+import com.intellij.openapi.fileEditor.{FileDocumentManager, FileEditorManager}
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.SystemInfo
@@ -40,9 +40,10 @@ import scala.concurrent.duration.FiniteDuration
 
 object HaskellFileUtil {
 
-  def saveAllFiles(project: Project, psiFile: PsiFile): Unit = {
-    val documentManager = PsiDocumentManager.getInstance(psiFile.getProject)
-    findDocument(psiFile).foreach(documentManager.doPostponedOperationsAndUnblockDocument)
+  def saveAllFiles(project: Project): Unit = {
+    val openFiles = FileEditorManager.getInstance(project).getOpenFiles.filter(HaskellFileUtil.isHaskellFile)
+    val documentManager = PsiDocumentManager.getInstance(project)
+    openFiles.flatMap(f => findDocument(f)).foreach(documentManager.doPostponedOperationsAndUnblockDocument)
     documentManager.performWhenAllCommitted(
       () => {
         FileDocumentManager.getInstance.saveAllDocuments()

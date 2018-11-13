@@ -92,6 +92,16 @@ case class ProjectStackRepl(project: Project, stackComponentInfo: StackComponent
 
   private final val OkModulesLoaded = "Ok, modules loaded: "
 
+  private def setLoadedModules(o: StackReplOutput) = {
+    val loadedModuleNames = o.stdoutLines.find(l => l.startsWith(OkModulesLoaded)).map(findLoadedModuleNames).getOrElse(Array())
+    loadedModuleNames.foreach(mn => loadedDependentModules.put(mn, DependentModuleInfo(false)))
+  }
+
+  def load(moduleNames: Seq[String]): Unit = {
+    val moduleNamesString = moduleNames.mkString(" ")
+    executeWithSettingBusy(s":load $moduleNamesString").foreach(setLoadedModules)
+  }
+
   def load(psiFile: PsiFile, fileChanged: Boolean): Option[(StackReplOutput, Boolean)] = {
     val filePath = getFilePath(psiFile)
     val reload = if (fileChanged) {
@@ -101,17 +111,17 @@ case class ProjectStackRepl(project: Project, stackComponentInfo: StackComponent
       HaskellNotificationGroup.logInfoEvent(project, s"No :reload of file ${psiFile.getName} because this file is not changed")
       false
     }
+
     synchronized {
       val output = if (reload) {
-        executeWithSettingBusy(Seq(s":reload"), load = Some(psiFile))
+        executeWithSettingBusy(s":reload")
       } else {
-        executeWithSettingBusy(Seq(s":load $filePath"), load = Some(psiFile))
+        executeWithSettingBusy(s":load $filePath")
       }
       output match {
         case Some(o) =>
           val loadFailed = isLoadFailed(o)
-          val loadedModuleNames = o.stdoutLines.find(l => l.startsWith(OkModulesLoaded)).map(findLoadedModuleNames).getOrElse(Array())
-          loadedModuleNames.foreach(mn => loadedDependentModules.put(mn, DependentModuleInfo(loadFailed)))
+          setLoadedModules(o)
 
           loadedModule = Some(ModuleInfo(psiFile, loadFailed))
           Some(o, loadFailed)
@@ -140,7 +150,7 @@ case class ProjectStackRepl(project: Project, stackComponentInfo: StackComponent
   }
 
   def showActiveLanguageFlags: Option[StackReplOutput] = synchronized {
-    executeWithSettingBusy(Seq(":show language"))
+    executeWithSettingBusy(":show language")
   }
 
   override def restart(forceExit: Boolean): Unit = synchronized {
@@ -155,40 +165,39 @@ case class ProjectStackRepl(project: Project, stackComponentInfo: StackComponent
       case Some(lf) if lf.loadFailed => Some(StackReplOutput())
       case Some(_) =>
         if (setBusy) {
-          executeWithSettingBusy(Seq(command))
+          executeWithSettingBusy(command)
         } else {
-          executeWithoutSettingBusy(Seq(command))
+          executeWithoutSettingBusy(command)
         }
-      case None =>
-        executeWithLoad(psiFile, command)
+      case None => executeWithLoad(psiFile, command)
     }
   }
 
   private def executeWithLoad(psiFile: PsiFile, command: String, moduleName: Option[String] = None): Option[StackReplOutput] = synchronized {
     loadedModule match {
-      case Some(info) if info.psiFile == psiFile && !info.loadFailed => executeWithSettingBusy(Seq(command))
+      case Some(info) if info.psiFile == psiFile && !info.loadFailed => executeWithSettingBusy(command)
       case Some(info) if info.psiFile == psiFile && info.loadFailed => Some(StackReplOutput())
       case _ =>
         load(psiFile, fileChanged = false)
         loadedModule match {
           case None => None
-          case Some(info) if info.psiFile == psiFile && !info.loadFailed => executeWithSettingBusy(Seq(command))
+          case Some(info) if info.psiFile == psiFile && !info.loadFailed => executeWithSettingBusy(command)
           case _ => Some(StackReplOutput())
         }
     }
   }
 
-  private def executeWithSettingBusy(commands: Seq[String], load: Option[PsiFile] = None) = {
+  private def executeWithSettingBusy(command: String) = {
     try {
       busy = true
-      executeWithoutSettingBusy(commands)
+      executeWithoutSettingBusy(command)
     } finally {
       busy = false
     }
   }
 
-  private def executeWithoutSettingBusy(commands: Seq[String]) = {
-    commands.map(c => execute(c)).lastOption.flatten
+  private def executeWithoutSettingBusy(command: String) = {
+    execute(command)
   }
 
   private def isLoadFailed(output: StackReplOutput): Boolean = {

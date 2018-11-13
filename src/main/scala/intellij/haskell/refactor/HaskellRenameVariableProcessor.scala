@@ -59,9 +59,8 @@ class HaskellRenameVariableProcessor extends RenamePsiElementProcessor {
 
   override def getPostRenameCallback(element: PsiElement, newName: String, elementListener: RefactoringElementListener): Runnable = {
     ScalaUtil.runnable {
-      val psiFile = element.getContainingFile.getOriginalFile
       val project = element.getProject
-      HaskellFileUtil.saveAllFiles(project, psiFile)
+      HaskellFileUtil.saveAllFiles(project)
     }
   }
 }

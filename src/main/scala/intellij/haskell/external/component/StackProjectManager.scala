@@ -24,6 +24,7 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.roots.{ModifiableRootModel, ModuleRootModificationUtil}
 import com.intellij.openapi.ui.Messages
 import com.intellij.openapi.vfs.VirtualFileManager
+import com.intellij.util.WaitFor
 import intellij.haskell.action.{HaskellReformatAction, HindentReformatAction, StylishHaskellReformatAction}
 import intellij.haskell.annotator.HaskellAnnotator
 import intellij.haskell.external.execution.StackCommandLine
@@ -169,20 +170,6 @@ object StackProjectManager {
                 }
               }
 
-              progressIndicator.setText("Busy with preloading global project info")
-              GlobalProjectInfoComponent.findGlobalProjectInfo(project)
-
-              progressIndicator.setText("Busy with preloading library packages info")
-              LibraryPackageInfoComponent.preloadLibraryPackageInfos(project)
-
-              progressIndicator.setText("Busy with downloading library sources")
-              HaskellModuleBuilder.addLibrarySources(project, update = restart)
-
-              progressIndicator.setText("Busy with preloading stack component info cache")
-              val preloadStackComponentInfoCache = ApplicationManager.getApplication.executeOnPooledThread(ScalaUtil.callable {
-                HaskellComponentsManager.preloadStackComponentInfoCache(project)
-              })
-
               if (!project.isDisposed) {
                 progressIndicator.setText(s"Busy with building Intero")
                 build(project, Seq("intero"))
@@ -191,16 +178,43 @@ object StackProjectManager {
               progressIndicator.setText("Busy with starting global Stack REPL")
               StackReplsManager.getGlobalRepl(project)
 
+              progressIndicator.setText("Busy with starting project REPLs")
+              val replLoads = StackReplsManager.getReplsManager(project).map(_.stackComponentInfos.filter(_.stanzaType == LibType).flatMap { info =>
+                StackReplsManager.getProjectRepl(project, info).map(repl => {
+                  val replLoad = ApplicationManager.getApplication.executeOnPooledThread(ScalaUtil.runnable {
+                    repl.load(info.exposedModuleNames)
+                  })
+                  Thread.sleep(1000) // Have to wait between starting the REPLs otherwise timeouts while starting
+                  replLoad
+                })
+              })
+
+              progressIndicator.setText("Busy with preloading global project info")
+              GlobalProjectInfoComponent.findGlobalProjectInfo(project)
+
+              progressIndicator.setText("Busy with preloading library packages info")
+              LibraryPackageInfoComponent.preloadLibraryPackageInfos(project)
+
+              progressIndicator.setText("Busy with preloading stack component info cache")
+              val preloadStackComponentInfoCache = ApplicationManager.getApplication.executeOnPooledThread(ScalaUtil.callable {
+                HaskellComponentsManager.preloadStackComponentInfoCache(project)
+              })
+
               val preloadLibraryFilesCacheFuture = ApplicationManager.getApplication.executeOnPooledThread(ScalaUtil.runnable {
+                progressIndicator.setText("Busy with downloading library sources")
+                HaskellModuleBuilder.addLibrarySources(project, update = restart)
+
                 HaskellComponentsManager.preloadLibraryFilesCache(project)
               })
 
-              progressIndicator.setText("Busy with preloading libraries")
-              val preloadCacheFuture = ApplicationManager.getApplication.executeOnPooledThread(ScalaUtil.runnable {
+              progressIndicator.setText("Busy with preloading library identifiers")
+              ApplicationManager.getApplication.executeOnPooledThread(ScalaUtil.runnable {
                 HaskellComponentsManager.preloadLibraryIdentifiersCaches(project)
 
-                HaskellNotificationGroup.logInfoEvent(project, "Restarting global REPL to release memory")
-                StackReplsManager.getGlobalRepl(project).foreach(_.restart())
+                if (!project.isDisposed) {
+                  HaskellNotificationGroup.logInfoEvent(project, "Restarting global REPL to release memory")
+                  StackReplsManager.getGlobalRepl(project).foreach(_.restart())
+                }
               })
 
               if (!project.isDisposed) {
@@ -209,24 +223,30 @@ object StackProjectManager {
                 }
               }
 
-              progressIndicator.setText("Busy with starting REPLs")
-              StackReplsManager.getReplsManager(project).foreach(_.stackComponentInfos.filter(_.stanzaType == LibType).foreach { info =>
-                StackReplsManager.getProjectRepl(project, info)
-                Thread.sleep(1000) // Have to wait between starting the REPLs otherwise timeouts while starting
-              })
-
-              progressIndicator.setText("Busy with preloading library caches")
-              if (!preloadCacheFuture.isDone || !preloadLibraryFilesCacheFuture.isDone || !preloadStackComponentInfoCache.isDone) {
+              progressIndicator.setText("Busy with preloading caches")
+              if (preloadLibraryFilesCacheFuture.isDone || !preloadStackComponentInfoCache.isDone || replLoads.exists(_.forall(_.isDone))) {
                 FutureUtil.waitForValue(project, preloadStackComponentInfoCache, "preloading library caches", 600)
                 FutureUtil.waitForValue(project, preloadLibraryFilesCacheFuture, "preloading library caches", 600)
-                FutureUtil.waitForValue(project, preloadCacheFuture, "preloading library caches", 600)
+
+                progressIndicator.setText("Busy with loading library modules in REPLs")
+                replLoads.foreach { rl =>
+                  new WaitFor(300000, 1000) {
+                    override def condition(): Boolean = {
+                      rl.forall(_.isDone)
+                    }
+                  }
+
+                  if (!rl.forall(_.isDone)) {
+                    HaskellNotificationGroup.logInfoEvent(project, "Not all library modules are loaded")
+                  }
+                }
               }
             } finally {
               getStackProjectManager(project).foreach(_.initializing = false)
             }
 
             // Force to load the module in REPL when REPL can be started. It could have happen that IntelliJ wanted to load file (via HaskellAnnotator)
-            // but REPL could not be started.
+            // but REPL could not yet be started.
             HaskellAnnotator.NotLoadedFile.remove(project) foreach { psiFile =>
               HaskellNotificationGroup.logInfoEvent(project, s"${psiFile.getName} will be forced loaded")
               HaskellAnnotator.restartDaemonCodeAnalyzerForFile(psiFile)

@@ -245,7 +245,7 @@ object HaskellAnnotator {
     import scala.concurrent.ExecutionContext.Implicits.global
 
     val nameWithoutParens = StringUtil.removeOuterParens(name)
-    val moduleIdentifiers = HaskellComponentsManager.findPreloadedModuleIdentifiers(psiFile.getProject).filter(_.name == nameWithoutParens)
+    val moduleIdentifiers = HaskellComponentsManager.findModuleIdentifiersInCache(psiFile.getProject).filter(_.name == nameWithoutParens)
     moduleIdentifiers.map(mi => new NotInScopeIntentionAction(mi.name, mi.moduleName, psiFile))
   }
 

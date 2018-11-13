@@ -26,7 +26,7 @@ case class GlobalStackRepl(project: Project, replTimeout: Int) extends StackRepl
   @volatile
   var isBusy = false
 
-  override def clearLoadedModules(): Unit = {
+  def clearLoadedModules(): Unit = {
     loadedModuleName = None
   }
 

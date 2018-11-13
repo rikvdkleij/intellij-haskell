@@ -20,10 +20,8 @@ import java.util.concurrent.Executors
 
 import com.intellij.openapi.editor.SelectionModel
 import com.intellij.openapi.module.Module
-import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.project.{DumbService, Project}
 import com.intellij.psi.{PsiElement, PsiFile}
-import com.intellij.util.WaitFor
 import intellij.haskell.HaskellNotificationGroup
 import intellij.haskell.cabal.CabalInfo
 import intellij.haskell.external.component.DefinitionLocationComponent.DefinitionLocationResult
@@ -33,38 +31,17 @@ import intellij.haskell.external.execution.CompilationResult
 import intellij.haskell.external.repl.StackRepl.StanzaType
 import intellij.haskell.external.repl.StackReplsManager
 import intellij.haskell.psi.{HaskellPsiUtil, HaskellQualifiedNameElement}
-import intellij.haskell.util.index.{HaskellFileIndex, HaskellModuleNameIndex}
+import intellij.haskell.util.index.HaskellModuleNameIndex
 import intellij.haskell.util.{GhcVersion, HaskellProjectUtil, ScalaUtil}
 
 import scala.concurrent._
-import scala.concurrent.duration._
 
 object HaskellComponentsManager {
 
   case class StackComponentInfo(module: Module, packageName: String, target: String, stanzaType: StanzaType, sourceDirs: Seq[String], mainIs: Option[String], isImplicitPreludeActive: Boolean, buildDepends: Seq[String], exposedModuleNames: Seq[String] = Seq.empty)
 
-  def findPreloadedModuleIdentifiers(project: Project)(implicit ec: ExecutionContext): Iterable[ModuleIdentifier] = {
-    val moduleNames = BrowseModuleComponent.findModuleNamesInCache(project)
-    moduleNames.flatMap(mn => {
-      try {
-        val f = findLibraryModuleIdentifiers(project, mn)
-        new WaitFor(1000, 1) {
-          override def condition(): Boolean = {
-            ProgressManager.checkCanceled()
-            f.isCompleted
-          }
-        }
-
-        if (f.isCompleted) {
-          Await.result(f, 1.milli)
-        } else {
-          None
-        }
-
-      } catch {
-        case _: TimeoutException => Iterable()
-      }
-    })
+  def findModuleIdentifiersInCache(project: Project)(implicit ec: ExecutionContext): Iterable[ModuleIdentifier] = {
+    BrowseModuleComponent.findModuleIdentifiersInCache(project)
   }
 
   def clearLoadedModule(psiFile: PsiFile): Unit = {
@@ -250,38 +227,17 @@ object HaskellComponentsManager {
     }
 
     if (!project.isDisposed) {
-      val projectHaskellFiles =
-        DumbService.getInstance(project).runReadActionInSmartMode(ScalaUtil.computable(
-          if (project.isDisposed) {
-            Iterable()
-          } else {
-            HaskellFileIndex.findProjectProductionHaskellFiles(project)
-          }
-        ))
-
-      val componentInfos = projectHaskellFiles.flatMap(f => HaskellComponentsManager.findStackComponentInfo(f)).toSeq.distinct
-
-      val importedLibraryModuleNames =
-        projectHaskellFiles.flatMap(f => {
-          if (project.isDisposed) {
-            Iterable()
-          } else {
-            val libraryModuleNames = componentInfos.flatMap(HaskellComponentsManager.findStackComponentGlobalInfo).flatMap(_.libraryModuleNames)
-
-            val exposedlibraryModuleNames = libraryModuleNames.flatMap(_.exposedModuleNames).distinct
-            DumbService.getInstance(project).runReadActionInSmartMode(ScalaUtil.computable {
-              HaskellPsiUtil.findImportDeclarations(f).flatMap(_.getModuleName).filter(mn => exposedlibraryModuleNames.contains(mn)).filterNot(_ == HaskellProjectUtil.Prelude)
-            })
-          }
-        })
+      val componentInfos = StackReplsManager.getReplsManager(project).map(_.stackComponentInfos).getOrElse(Seq())
+      val libraryModuleNames = componentInfos.flatMap(info => findStackComponentGlobalInfo(info).map(_.libraryModuleNames).getOrElse(Seq())).toSeq.distinct
 
       if (!project.isDisposed) {
-        importedLibraryModuleNames.toSeq.distinct.foreach(mn => {
+        libraryModuleNames.flatMap(_.exposedModuleNames).distinct.foreach(mn => {
           if (!project.isDisposed) {
             if (StackReplsManager.getGlobalRepl(project).exists(_.available)) {
               BrowseModuleComponent.findLibraryModuleIdentifiers(project, mn)
               // We have to wait for other requests which have more priority because those are on dispatch thread
               Thread.sleep(100)
+
             }
           }
         })

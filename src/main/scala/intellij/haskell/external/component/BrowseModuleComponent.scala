@@ -74,8 +74,8 @@ private[component] object BrowseModuleComponent {
     }
   }
 
-  def findModuleNamesInCache(project: Project): Iterable[String] = {
-    Cache.synchronous().asMap().filter(_._1.project == project).map(_._1.moduleName)
+  def findModuleIdentifiersInCache(project: Project): Iterable[ModuleIdentifier] = {
+    Cache.synchronous().asMap().filter(_._1.project == project).values.flatMap(_.toSeq).flatten
   }
 
   def refreshTopLevel(project: Project, moduleName: String, psiFile: PsiFile): Unit = {
@@ -128,7 +128,11 @@ private[component] object BrowseModuleComponent {
           Left(ModuleNotLoaded(key.moduleName))
         }
       case Some(psiFile) if key.exported =>
-        StackReplsManager.getProjectRepl(psiFile) match {
+        val projectRepl = StackReplsManager.getReplsManager(project).flatMap(_.stackComponentInfos.find(_.exposedModuleNames.contains(key.moduleName))) match {
+          case Some(componentInfo) => StackReplsManager.getRunningProjectRepl(project, componentInfo).orElse(StackReplsManager.getProjectRepl(psiFile))
+          case None => StackReplsManager.getProjectRepl(psiFile)
+        }
+        projectRepl match {
           case Some(repl) =>
             if (repl.isBusy) {
               Left(ReplIsBusy)

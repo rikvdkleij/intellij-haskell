@@ -283,7 +283,7 @@ abstract class StackRepl(project: Project, componentInfo: Option[StackComponentI
           }
 
           val deadline = DefaultTimeout.fromNow
-          while (deadline.hasTimeLeft && !isStarted && !hasDependencyError) {
+          while (process.isAlive() && deadline.hasTimeLeft && !isStarted && !hasDependencyError) {
             // We have to wait till REPL is started
             Thread.sleep(DelayBetweenReadsInMillis)
           }
@@ -375,7 +375,7 @@ abstract class StackRepl(project: Project, componentInfo: Option[StackComponentI
     }
   }
 
-  private def closeResource(closeable: Closeable) = {
+  private def closeResource(closeable: Closeable): Unit = {
     try {
       if (closeable != null) {
         closeable.close()
@@ -387,11 +387,11 @@ abstract class StackRepl(project: Project, componentInfo: Option[StackComponentI
 
   def restart(forceExit: Boolean = false): Unit
 
-  private def logError(message: String) = {
+  private def logError(message: String): Unit = {
     HaskellNotificationGroup.logErrorBalloonEvent(project, s"[$getComponentName] $message")
   }
 
-  private def logInfo(message: String) = {
+  private def logInfo(message: String): Unit = {
     HaskellNotificationGroup.logInfoEvent(project, s"[$getComponentName] $message")
   }
 

@@ -154,9 +154,7 @@ private[external] class StackReplsManager(val project: Project) {
   private def createAndStartProjectRepl(componentInfo: StackComponentInfo): ProjectStackRepl = {
     val repl = new ProjectStackRepl(project, componentInfo, HaskellSettingsState.getReplTimeout)
     if (!project.isDisposed) {
-      ApplicationManager.getApplication.executeOnPooledThread(ScalaUtil.runnable {
-        repl.start()
-      })
+      repl.start()
     }
     repl
   }
