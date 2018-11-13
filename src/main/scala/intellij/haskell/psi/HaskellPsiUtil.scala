@@ -151,13 +151,6 @@ object HaskellPsiUtil {
     }
   }
 
-  def findTopDeclarationParent(psiElement: PsiElement): Option[HaskellTopDeclaration] = {
-    psiElement match {
-      case e: HaskellTopDeclaration => Some(e)
-      case e => Option(PsiTreeUtil.findFirstParent(e, TopDeclarationElementCondition)).map(_.asInstanceOf[HaskellTopDeclaration])
-    }
-  }
-
   def findHighestDeclarationElementParent(psiElement: PsiElement): Option[HaskellDeclarationElement] = {
     psiElement match {
       case e: HaskellDeclarationElement => Some(e)

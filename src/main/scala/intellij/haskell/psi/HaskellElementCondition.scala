@@ -94,15 +94,6 @@ object HaskellElementCondition {
     }
   }
 
-  final val TopDeclarationElementCondition = new Condition[PsiElement]() {
-    override def value(psiElement: PsiElement): Boolean = {
-      psiElement match {
-        case _: HaskellTopDeclaration => true
-        case _ => false
-      }
-    }
-  }
-
   final val ModuleDeclarationCondition = new Condition[PsiElement]() {
     override def value(psiElement: PsiElement): Boolean = {
       psiElement match {

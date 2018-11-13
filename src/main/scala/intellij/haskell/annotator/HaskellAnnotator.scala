@@ -319,10 +319,10 @@ class TypeSignatureIntentionAction(typeSignature: String) extends HaskellBaseInt
     Option(file.findElementAt(offset)) match {
       case Some(e) =>
         for {
-          topDeclaration <- Option(TreeUtil.findParent(e.getNode, HaskellTypes.HS_TOP_DECLARATION))
+          topDeclaration <- Option(TreeUtil.findParent(e.getNode, HaskellTypes.HS_TOP_DECLARATION_LINE))
           psi <- Option(topDeclaration.getPsi)
           moduleBody <- Option(psi.getParent)
-          typeSignatureElement <- HaskellElementFactory.createTopDeclaration(project, typeSignature)
+          typeSignatureElement <- HaskellElementFactory.createTopDeclarationLine(project, typeSignature)
           typeSignature = moduleBody.addBefore(typeSignatureElement, psi)
         } yield moduleBody.addAfter(HaskellElementFactory.createNewLine(project), typeSignature)
       case None => ()
@@ -336,18 +336,18 @@ class LanguageExtensionIntentionAction(languageExtension: String) extends Haskel
   override def getFamilyName: String = "Add language extension"
 
   override def invoke(project: Project, editor: Editor, file: PsiFile): Unit = {
-    val languagePragmaElement = HaskellElementFactory.createLanguagePragma(project, s"{-# LANGUAGE $languageExtension #-}")
+    val languagePragmaElement = HaskellElementFactory.createLanguagePragma(project, s"{-# LANGUAGE $languageExtension #-}\n")
     Option(PsiTreeUtil.findChildOfType(file, classOf[HaskellFileHeader])) match {
       case Some(fh) =>
         val lastPragmaElement = PsiTreeUtil.findChildrenOfType(fh, classOf[HaskellFileHeaderPragma]).asScala.lastOption.orNull
-        val newline = fh.addAfter(HaskellElementFactory.createNewLine(project), lastPragmaElement)
-        fh.addAfter(languagePragmaElement, newline)
-      case None => Option(file.getFirstChild) match {
-        case Some(c) =>
-          val addedPragmaElement = file.addBefore(languagePragmaElement, c)
-          file.addAfter(HaskellElementFactory.createNewLine(project), addedPragmaElement)
-        case None => file.add(languagePragmaElement)
-      }
+        fh.addAfter(languagePragmaElement, lastPragmaElement)
+      case None =>
+        Option(file.getFirstChild) match {
+          case Some(c) =>
+            val addedPragmaElement = file.addBefore(languagePragmaElement, c)
+            file.addAfter(HaskellElementFactory.createNewLine(project), addedPragmaElement)
+          case None => file.add(languagePragmaElement)
+        }
     }
   }
 }
@@ -430,7 +430,10 @@ class NotInScopeIntentionAction(identifier: String, moduleName: String, psiFile:
                 case Some(importIdsSpec) =>
                   importIdsSpec.getImportIdList.asScala.lastOption.foreach(importId => {
                     val commaElement = importIdsSpec.addAfter(HaskellElementFactory.createComma(project), importId)
-                    HaskellElementFactory.createImportId(project, identifier).foreach(mi => importIdsSpec.addAfter(mi, commaElement))
+                    HaskellElementFactory.createImportId(project, identifier).foreach { ii =>
+                      val iiElement = importIdsSpec.addAfter(ii, commaElement)
+                      importIdsSpec.addBefore(HaskellElementFactory.createWhiteSpace(project), iiElement)
+                    }
                   })
                 case None => createImportDeclaration(importDeclarationElement, ids, project)
               }
@@ -441,8 +444,10 @@ class NotInScopeIntentionAction(identifier: String, moduleName: String, psiFile:
           HaskellPsiUtil.findModuleDeclaration(psiFile) match {
             case Some(md) =>
               val newLine = md.getParent.addAfter(HaskellElementFactory.createNewLine(project), md.getNextSibling)
-              md.getParent.addAfter(importDeclarationElement, newLine)
-            case None => file.add(importDeclarationElement)
+              val bla = md.getParent.addAfter(importDeclarationElement, newLine)
+              md.getParent.addAfter(HaskellElementFactory.createNewLine(project), bla)
+            case None =>
+              file.add(importDeclarationElement)
           }
       }
     )
@@ -451,9 +456,11 @@ class NotInScopeIntentionAction(identifier: String, moduleName: String, psiFile:
   private def createImportDeclaration(importDeclarationElement: HaskellImportDeclaration, ids: HaskellImportDeclarations, project: Project) = {
     HaskellPsiUtil.findImportDeclarations(psiFile).lastOption match {
       case Some(id) =>
-        val newLine = ids.addAfter(HaskellElementFactory.createNewLine(project), id)
-        ids.addAfter(importDeclarationElement, newLine)
-      case None => ids.addAfter(importDeclarationElement, null)
+        val importELement = ids.addAfter(importDeclarationElement, id)
+        ids.addAfter(HaskellElementFactory.createNewLine(project), importELement)
+      case None =>
+        val importElement = ids.addAfter(importDeclarationElement, null)
+        ids.addAfter(HaskellElementFactory.createNewLine(project), importElement)
     }
   }
 }

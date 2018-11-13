@@ -327,6 +327,10 @@ public class HaskellVisitor extends PsiElementVisitor {
     visitCompositeElement(o);
   }
 
+    public void visitTopDeclarationLine(@NotNull HaskellTopDeclarationLine o) {
+        visitCompositeElement(o);
+    }
+
   public void visitTtype(@NotNull HaskellTtype o) {
     visitCompositeElement(o);
   }

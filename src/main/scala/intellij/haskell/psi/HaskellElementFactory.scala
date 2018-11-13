@@ -65,8 +65,8 @@ object HaskellElementFactory {
     createElementFromText(project, body, HS_MODULE_BODY).map(_.asInstanceOf[HaskellModuleBody])
   }
 
-  def createTopDeclaration(project: Project, declaration: String): Option[HaskellTopDeclaration] = {
-    createElementFromText(project, declaration, HS_TOP_DECLARATION).map(_.asInstanceOf[HaskellTopDeclaration])
+  def createTopDeclarationLine(project: Project, declaration: String): Option[HaskellTopDeclarationLine] = {
+    createElementFromText(project, declaration, HS_TOP_DECLARATION_LINE).map(_.asInstanceOf[HaskellTopDeclarationLine])
   }
 
   def createLanguagePragma(project: Project, languagePragma: String): HaskellFileHeaderPragma = {
@@ -94,7 +94,7 @@ object HaskellElementFactory {
 
   def createComma(project: Project): PsiElement = {
     val haskellFile = createFileFromText(project, ",")
-    PsiTreeUtil.findChildOfType(haskellFile, classOf[PsiElement])
+    haskellFile.getLastChild
   }
 
   def createTab(project: Project): PsiWhiteSpace = {
