@@ -31,6 +31,7 @@ import com.intellij.openapi.util.text.StringUtil
 import com.intellij.psi.{PsiDirectory, PsiFile}
 import intellij.haskell.HaskellIcons
 import intellij.haskell.util.HaskellFileUtil
+import intellij.haskell.util.index.HaskellModuleNameIndex
 
 object CreateHaskellFileAction {
   private final val NEW_HASKELL_FILE = "New Haskell File"
@@ -77,7 +78,7 @@ class CreateHaskellFileAction extends CreateFileFromTemplateAction(CreateHaskell
         List()
       })
 
-    if (fileName.contains(".")) {
+    val createFileResult = if (fileName.contains(".")) {
       var targetDir = fileDir
       val names = fileName.trim().split("\\.").toList
       val moduleName = names.last
@@ -91,11 +92,18 @@ class CreateHaskellFileAction extends CreateFileFromTemplateAction(CreateHaskell
     } else {
       createFileFromTemplate(pathItems, fileName, template, fileDir)
     }
+
+    createFileResult match {
+      case None => null
+      case Some((psiFile, moduleName)) =>
+        HaskellModuleNameIndex.invalidateModuleName(psiFile.getProject, moduleName)
+        psiFile
+    }
   }
 
-  private def createFileFromTemplate(pathItems: Option[List[String]], fileName: String, template: FileTemplate, fileDir: PsiDirectory): PsiFile = {
+  private def createFileFromTemplate(pathItems: Option[List[String]], fileName: String, template: FileTemplate, fileDir: PsiDirectory): Option[(PsiFile, String)] = {
     pathItems match {
-      case None => null
+      case None => None
       case Some(items) =>
         // Adapted from super definition.
         val mkdirs = new CreateFileAction.MkDirs(fileName, fileDir)
@@ -128,7 +136,7 @@ class CreateHaskellFileAction extends CreateFileFromTemplateAction(CreateHaskell
           case e: ParseException => Messages.showErrorDialog(project, "Error parsing Haskell Module template: " + e.getMessage, "Create File from Template");
         }
 
-        psiFile
+        Some(psiFile, nameWithmodulePrefix)
     }
   }
 

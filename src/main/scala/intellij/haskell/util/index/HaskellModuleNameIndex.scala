@@ -86,6 +86,15 @@ object HaskellModuleNameIndex {
     }
   }
 
+  def invalidate(project: Project): Unit = {
+    val keys = Cache.asMap().keys.filter(_.project == project)
+    keys.foreach(Cache.invalidate)
+  }
+
+  def invalidateModuleName(project: Project, moduleName: String): Unit = {
+    Cache.invalidate(Key(project, moduleName))
+  }
+
   private def findFile(project: Project, moduleName: String, timeout: FiniteDuration): Either[NoInfo, Option[VirtualFile]] = {
     if (moduleName == HaskellProjectUtil.Prelude) {
       Right(None)
@@ -93,7 +102,12 @@ object HaskellModuleNameIndex {
       val result = ApplicationUtil.scheduleInReadActionWithWriteActionPriority(
         project, {
           try {
-            Right(FileBasedIndex.getInstance.getContainingFiles(HaskellModuleNameIndex, moduleName, GlobalSearchScope.allScope(project)).asScala.headOption)
+            val files = FileBasedIndex.getInstance.getContainingFiles(HaskellModuleNameIndex, moduleName, GlobalSearchScope.allScope(project)).asScala
+            if (files.size > 1) {
+              Right(files.find(f => HaskellProjectUtil.isSourceFile(project, f)).orElse(files.headOption))
+            } else {
+              Right(files.headOption)
+            }
           } catch {
             case _: IndexNotReadyException => Left(IndexNotReady)
           }

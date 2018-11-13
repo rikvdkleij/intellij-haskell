@@ -172,6 +172,7 @@ object HaskellComponentsManager {
     TypeInfoComponent.invalidateAll(project)
     HaskellPsiUtil.invalidateAllModuleNames(project)
     LibraryPackageInfoComponent.invalidate(project)
+    HaskellModuleNameIndex.invalidate(project)
     HaskellNotificationGroup.logInfoEvent(project, "Finished with invalidating cache")
   }
 
