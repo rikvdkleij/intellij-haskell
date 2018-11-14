@@ -208,6 +208,11 @@ object StackProjectManager {
               })
 
               progressIndicator.setText("Busy with preloading library identifiers")
+              val preloadLibraryIdentifiersCacheFuture = ApplicationManager.getApplication.executeOnPooledThread(ScalaUtil.runnable {
+                HaskellComponentsManager.preloadLibraryIdentifiersCaches(project)
+              })
+
+              progressIndicator.setText("Busy with preloading all library identifiers")
               ApplicationManager.getApplication.executeOnPooledThread(ScalaUtil.runnable {
                 HaskellComponentsManager.preloadLibraryIdentifiersCaches(project)
 
@@ -224,9 +229,10 @@ object StackProjectManager {
               }
 
               progressIndicator.setText("Busy with preloading caches")
-              if (preloadLibraryFilesCacheFuture.isDone || !preloadStackComponentInfoCache.isDone || replLoads.exists(_.forall(_.isDone))) {
+              if (preloadLibraryFilesCacheFuture.isDone || !preloadStackComponentInfoCache.isDone || !preloadLibraryIdentifiersCacheFuture.isDone || replLoads.exists(_.forall(_.isDone))) {
                 FutureUtil.waitForValue(project, preloadStackComponentInfoCache, "preloading library caches", 600)
                 FutureUtil.waitForValue(project, preloadLibraryFilesCacheFuture, "preloading library caches", 600)
+                FutureUtil.waitForValue(project, preloadLibraryIdentifiersCacheFuture, "preloading library caches", 600)
 
                 progressIndicator.setText("Busy with loading library modules in REPLs")
                 replLoads.foreach { rl =>

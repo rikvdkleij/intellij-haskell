@@ -31,7 +31,7 @@ import intellij.haskell.external.execution.CompilationResult
 import intellij.haskell.external.repl.StackRepl.StanzaType
 import intellij.haskell.external.repl.StackReplsManager
 import intellij.haskell.psi.{HaskellPsiUtil, HaskellQualifiedNameElement}
-import intellij.haskell.util.index.HaskellModuleNameIndex
+import intellij.haskell.util.index.{HaskellFileIndex, HaskellModuleNameIndex}
 import intellij.haskell.util.{GhcVersion, HaskellProjectUtil, ScalaUtil}
 
 import scala.concurrent._
@@ -182,6 +182,12 @@ object HaskellComponentsManager {
     HaskellNotificationGroup.logInfoEvent(project, "Finished with preloading library identifiers cache")
   }
 
+  def preloadAllLibraryIdentifiersCaches(project: Project): Unit = {
+    HaskellNotificationGroup.logInfoEvent(project, "Start to preload all library identifiers cache")
+    preloadAllLibraryIdentifiers(project)
+    HaskellNotificationGroup.logInfoEvent(project, "Finished with preloading all library identifiers cache")
+  }
+
   def preloadStackComponentInfoCache(project: Project): Unit = {
     HaskellNotificationGroup.logInfoEvent(project, "Start to preload stack component info cache")
     preloadStackComponentInfos(project)
@@ -228,6 +234,46 @@ object HaskellComponentsManager {
     }
 
     if (!project.isDisposed) {
+      val projectHaskellFiles =
+        DumbService.getInstance(project).runReadActionInSmartMode(ScalaUtil.computable(
+          if (project.isDisposed) {
+            Iterable()
+          } else {
+            HaskellFileIndex.findProjectProductionHaskellFiles(project)
+          }
+        ))
+
+      val componentInfos = projectHaskellFiles.flatMap(f => HaskellComponentsManager.findStackComponentInfo(f)).toSeq.distinct
+
+      val importedLibraryModuleNames =
+        projectHaskellFiles.flatMap(f => {
+          if (project.isDisposed) {
+            Iterable()
+          } else {
+            val libraryModuleNames = componentInfos.flatMap(HaskellComponentsManager.findStackComponentGlobalInfo).flatMap(_.libraryModuleNames)
+
+            val exposedlibraryModuleNames = libraryModuleNames.flatMap(_.exposedModuleNames).distinct
+            DumbService.getInstance(project).runReadActionInSmartMode(ScalaUtil.computable {
+              HaskellPsiUtil.findImportDeclarations(f).flatMap(_.getModuleName).filter(mn => exposedlibraryModuleNames.contains(mn)).filterNot(_ == HaskellProjectUtil.Prelude)
+            })
+          }
+        })
+
+      if (!project.isDisposed) {
+        importedLibraryModuleNames.toSeq.distinct.foreach(mn => {
+          if (!project.isDisposed) {
+            if (StackReplsManager.getGlobalRepl(project).exists(_.available)) {
+              BrowseModuleComponent.findLibraryModuleIdentifiers(project, mn)
+            }
+          }
+        })
+      }
+    }
+  }
+
+  private def preloadAllLibraryIdentifiers(project: Project): Unit = {
+
+    if (!project.isDisposed) {
       val componentInfos = StackReplsManager.getReplsManager(project).map(_.stackComponentInfos).getOrElse(Seq())
       val libraryModuleNames = componentInfos.flatMap(info => findStackComponentGlobalInfo(info).map(_.libraryModuleNames).getOrElse(Seq())).toSeq.distinct
 
@@ -238,7 +284,6 @@ object HaskellComponentsManager {
               BrowseModuleComponent.findLibraryModuleIdentifiers(project, mn)
               // We have to wait for other requests which have more priority because those are on dispatch thread
               Thread.sleep(100)
-
             }
           }
         })
