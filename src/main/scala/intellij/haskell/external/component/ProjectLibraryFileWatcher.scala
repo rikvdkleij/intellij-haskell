@@ -63,6 +63,7 @@ object ProjectLibraryFileWatcher {
   private def build(project: Project, libComponentInfos: Set[StackComponentInfo]): Unit = {
     StackProjectManager.getProjectLibraryFileWatcher(project).foreach { watcher =>
       watcher.currentlyBuildLibComponents = libComponentInfos
+      ProjectLibraryFileWatcher.buildStatus.put(project, Building(libComponentInfos))
 
       ProgressManager.getInstance().run(new Task.Backgroundable(project, "Building project", false, PerformInBackgroundOption.ALWAYS_BACKGROUND) {
 
