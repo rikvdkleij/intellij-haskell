@@ -26,7 +26,7 @@ import intellij.haskell.util.HaskellEditorUtil
 class BuildHoogleDbAction extends AnAction {
 
   override def update(actionEvent: AnActionEvent) {
-    HaskellEditorUtil.enableExternalAction(actionEvent, (project: Project) => !StackProjectManager.isInitializing(project) && StackProjectManager.isHoogleAvailable(project) && !ProjectLibraryFileWatcher.isBuilding(project))
+    HaskellEditorUtil.enableExternalAction(actionEvent, (project: Project) => !StackProjectManager.isInitializing(project) && StackProjectManager.isHoogleAvailable(project) && !ProjectLibraryFileWatcher.isBuilding(project) && !HoogleComponent.haddockIsBuilding)
   }
 
   def actionPerformed(actionEvent: AnActionEvent) {
