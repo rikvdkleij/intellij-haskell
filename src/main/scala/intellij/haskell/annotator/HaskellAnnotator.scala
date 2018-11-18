@@ -135,8 +135,8 @@ object HaskellAnnotator {
   private final val DefinedButNotUsedPattern = """.* Defined but not used: [‘`](.+)[’']""".r
   private final val NotInScopePattern = """.*ot in scope:[^‘`']*[‘`']([^’']+)[’'].*""".r
   private final val NotInScopePattern2 = """.*ot in scope: ([^ ]+).*""".r
-  private final val UseAloneInstancesImportPattern = """.* To import instances alone, use: (.+)""".r
-  private final val RedundantImportPattern = """.* The import of [‘`](.*)[’'] from module [‘`](.*)[’'] is redundant""".r
+  private final val UseAloneInstancesImportPattern = """.* The import of [‘`](.*)[’'] is redundant except perhaps to import instances from [‘`].*[’'] To import instances alone, use: (.+)""".r
+  private final val RedundantImportPattern = """.* The import of [‘`](.*)[’'] from module [‘`](.*)[’'] is redundant.*""".r
 
   private final val PerhapsYouMeantNamePattern = """.*[`‘]([^‘’'`]+)['’]""".r
   private final val PerhapsYouMeantMultiplePattern = """.*ot in scope: (.+) Perhaps you meant one of these: (.+)""".r
@@ -196,7 +196,7 @@ object HaskellAnnotator {
                 ErrorAnnotationWithIntentionActions(tr, problem.plainMessage, problem.htmlMessage, createNotInScopeIntentionActions(psiFile, name))
               case NotInScopePattern2(name) =>
                 ErrorAnnotationWithIntentionActions(tr, problem.plainMessage, problem.htmlMessage, createNotInScopeIntentionActions(psiFile, name.split("::").headOption.getOrElse(name).trim))
-              case UseAloneInstancesImportPattern(importDecl) => importAloneInstancesAction(problem, tr, importDecl)
+              case UseAloneInstancesImportPattern(importDecl, useImport) => importAloneInstancesAction(problem, tr, importDecl, useImport)
               case RedundantImportPattern(redundants, moduleName) => redundantImportAction(problem, tr, moduleName, redundants)
               case HolePattern(_) =>
                 ErrorAnnotation(tr, problem.plainMessage, problem.htmlMessage)
@@ -253,8 +253,8 @@ object HaskellAnnotator {
     ErrorAnnotationWithIntentionActions(tr, problem.plainMessage, problem.htmlMessage, languageExtensions.map(le => new LanguageExtensionIntentionAction(le)))
   }
 
-  private def importAloneInstancesAction(problem: CompilationProblem, tr: TextRange, importDecl: String): WarningAnnotationWithIntentionActions = {
-    WarningAnnotationWithIntentionActions(tr, problem.plainMessage, problem.htmlMessage, Stream(new ImportAloneInstancesAction(importDecl)))
+  private def importAloneInstancesAction(problem: CompilationProblem, tr: TextRange, importDecl: String, useImport: String): WarningAnnotationWithIntentionActions = {
+    WarningAnnotationWithIntentionActions(tr, problem.plainMessage, problem.htmlMessage, Stream(new ImportAloneInstancesAction(importDecl), new OptimizeImportIntentionAction(importDecl, tr.getStartOffset)))
   }
 
   private def redundantImportAction(problem: CompilationProblem, tr: TextRange, moduleName: String, redundants: String): WarningAnnotationWithIntentionActions = {
@@ -471,7 +471,7 @@ class OptimizeImportIntentionAction(moduleName: String, offset: Int) extends Has
   override def getFamilyName: String = "Optimize imports"
 
   override def invoke(project: Project, editor: Editor, psiFile: PsiFile): Unit = {
-    HaskellImportOptimizer.removeRedundantImport(psiFile, offset)
+    HaskellImportOptimizer.removeRedundantImport(psiFile, Seq(offset))
   }
 }
 

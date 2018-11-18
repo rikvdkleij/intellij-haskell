@@ -49,14 +49,17 @@ object HaskellImportOptimizer {
       case _ => false
     })
 
-    redundantImports.map(_.getStartOffset).foreach(HaskellImportOptimizer.removeRedundantImport(psiFile, _))
+
+    HaskellImportOptimizer.removeRedundantImport(psiFile, redundantImports.map(_.getStartOffset))
     true
   }
 
-  def removeRedundantImport(psiFile: PsiFile, offset: Int): Unit = {
-    val redundantImportDeclaration = Option(psiFile.findElementAt(offset)).flatMap(HaskellPsiUtil.findImportDeclarationParent)
-    WriteCommandAction.runWriteCommandAction(psiFile.getProject, ScalaUtil.computable {
-      redundantImportDeclaration.foreach(_.delete)
-    })
+  def removeRedundantImport(psiFile: PsiFile, offsets: Seq[Int]): Unit = {
+    val redundantImportDeclarations = offsets.flatMap(offset => Option(psiFile.findElementAt(offset)).flatMap(HaskellPsiUtil.findImportDeclarationParent))
+    redundantImportDeclarations.foreach { redundantImportDeclaration =>
+      WriteCommandAction.runWriteCommandAction(psiFile.getProject, ScalaUtil.computable {
+        redundantImportDeclaration.delete
+      })
+    }
   }
 }
