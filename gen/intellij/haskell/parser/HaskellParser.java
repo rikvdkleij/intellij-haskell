@@ -1800,7 +1800,7 @@ public class HaskellParser implements PsiParser, LightPsiParser {
   }
 
   /* ********************************************************** */
-  // unpack_nounpack_pragma? onls (ttype | q_name | LEFT_PAREN q_name* RIGHT_PAREN | LEFT_BRACKET q_name* RIGHT_BRACKET) unpack_nounpack_pragma? onls ((onls unpack_nounpack_pragma)? onls ttype (onls unpack_nounpack_pragma)?)*
+  // unpack_nounpack_pragma? onls (ttype | q_name | LEFT_PAREN q_name* RIGHT_PAREN | LEFT_BRACKET q_name* RIGHT_BRACKET) (onls unpack_nounpack_pragma onls)? ((onls unpack_nounpack_pragma)? onls ttype (onls unpack_nounpack_pragma)?)*
   public static boolean constr2(PsiBuilder b, int l) {
     if (!recursion_guard_(b, l, "constr2")) return false;
     boolean r;
@@ -1809,8 +1809,7 @@ public class HaskellParser implements PsiParser, LightPsiParser {
     r = r && onls(b, l + 1);
     r = r && constr2_2(b, l + 1);
     r = r && constr2_3(b, l + 1);
-    r = r && onls(b, l + 1);
-    r = r && constr2_5(b, l + 1);
+      r = r && constr2_4(b, l + 1);
     exit_section_(b, l, m, r, false, null);
     return r;
   }
@@ -1881,47 +1880,59 @@ public class HaskellParser implements PsiParser, LightPsiParser {
     return true;
   }
 
-  // unpack_nounpack_pragma?
+    // (onls unpack_nounpack_pragma onls)?
   private static boolean constr2_3(PsiBuilder b, int l) {
     if (!recursion_guard_(b, l, "constr2_3")) return false;
-    unpack_nounpack_pragma(b, l + 1);
+      constr2_3_0(b, l + 1);
     return true;
   }
 
+    // onls unpack_nounpack_pragma onls
+    private static boolean constr2_3_0(PsiBuilder b, int l) {
+        if (!recursion_guard_(b, l, "constr2_3_0")) return false;
+        boolean r;
+        Marker m = enter_section_(b);
+        r = onls(b, l + 1);
+        r = r && unpack_nounpack_pragma(b, l + 1);
+        r = r && onls(b, l + 1);
+        exit_section_(b, m, null, r);
+        return r;
+    }
+
   // ((onls unpack_nounpack_pragma)? onls ttype (onls unpack_nounpack_pragma)?)*
-  private static boolean constr2_5(PsiBuilder b, int l) {
-    if (!recursion_guard_(b, l, "constr2_5")) return false;
+  private static boolean constr2_4(PsiBuilder b, int l) {
+      if (!recursion_guard_(b, l, "constr2_4")) return false;
     while (true) {
       int c = current_position_(b);
-      if (!constr2_5_0(b, l + 1)) break;
-      if (!empty_element_parsed_guard_(b, "constr2_5", c)) break;
+        if (!constr2_4_0(b, l + 1)) break;
+        if (!empty_element_parsed_guard_(b, "constr2_4", c)) break;
     }
     return true;
   }
 
   // (onls unpack_nounpack_pragma)? onls ttype (onls unpack_nounpack_pragma)?
-  private static boolean constr2_5_0(PsiBuilder b, int l) {
-    if (!recursion_guard_(b, l, "constr2_5_0")) return false;
+  private static boolean constr2_4_0(PsiBuilder b, int l) {
+      if (!recursion_guard_(b, l, "constr2_4_0")) return false;
     boolean r;
     Marker m = enter_section_(b);
-    r = constr2_5_0_0(b, l + 1);
+      r = constr2_4_0_0(b, l + 1);
     r = r && onls(b, l + 1);
     r = r && ttype(b, l + 1);
-    r = r && constr2_5_0_3(b, l + 1);
+      r = r && constr2_4_0_3(b, l + 1);
     exit_section_(b, m, null, r);
     return r;
   }
 
   // (onls unpack_nounpack_pragma)?
-  private static boolean constr2_5_0_0(PsiBuilder b, int l) {
-    if (!recursion_guard_(b, l, "constr2_5_0_0")) return false;
-    constr2_5_0_0_0(b, l + 1);
+  private static boolean constr2_4_0_0(PsiBuilder b, int l) {
+      if (!recursion_guard_(b, l, "constr2_4_0_0")) return false;
+      constr2_4_0_0_0(b, l + 1);
     return true;
   }
 
   // onls unpack_nounpack_pragma
-  private static boolean constr2_5_0_0_0(PsiBuilder b, int l) {
-    if (!recursion_guard_(b, l, "constr2_5_0_0_0")) return false;
+  private static boolean constr2_4_0_0_0(PsiBuilder b, int l) {
+      if (!recursion_guard_(b, l, "constr2_4_0_0_0")) return false;
     boolean r;
     Marker m = enter_section_(b);
     r = onls(b, l + 1);
@@ -1931,15 +1942,15 @@ public class HaskellParser implements PsiParser, LightPsiParser {
   }
 
   // (onls unpack_nounpack_pragma)?
-  private static boolean constr2_5_0_3(PsiBuilder b, int l) {
-    if (!recursion_guard_(b, l, "constr2_5_0_3")) return false;
-    constr2_5_0_3_0(b, l + 1);
+  private static boolean constr2_4_0_3(PsiBuilder b, int l) {
+      if (!recursion_guard_(b, l, "constr2_4_0_3")) return false;
+      constr2_4_0_3_0(b, l + 1);
     return true;
   }
 
   // onls unpack_nounpack_pragma
-  private static boolean constr2_5_0_3_0(PsiBuilder b, int l) {
-    if (!recursion_guard_(b, l, "constr2_5_0_3_0")) return false;
+  private static boolean constr2_4_0_3_0(PsiBuilder b, int l) {
+      if (!recursion_guard_(b, l, "constr2_4_0_3_0")) return false;
     boolean r;
     Marker m = enter_section_(b);
     r = onls(b, l + 1);

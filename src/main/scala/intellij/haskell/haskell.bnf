@@ -185,7 +185,7 @@ unpack_nounpack_pragma      ::= pragma
 private constrs             ::= constr (onls VERTICAL_BAR onls constr)*
 private constr              ::= (type_signature | constr1 | constr2 | constr3)
 constr1                     ::= unpack_nounpack_pragma? (onls q_name)? (onls unpack_nounpack_pragma)? onls LEFT_BRACE onl fielddecl? ((onl COMMA)? onl fielddecl)* onl RIGHT_BRACE
-constr2                     ::= unpack_nounpack_pragma? onls (ttype | q_name | LEFT_PAREN q_name* RIGHT_PAREN | LEFT_BRACKET q_name* RIGHT_BRACKET) unpack_nounpack_pragma? onls ((onls unpack_nounpack_pragma)? onls ttype (onls unpack_nounpack_pragma)?)*  // Base.hs: data () = () and GHC.Types.hs: data [] a = [] | a : [a]
+constr2                     ::= unpack_nounpack_pragma? onls (ttype | q_name | LEFT_PAREN q_name* RIGHT_PAREN | LEFT_BRACKET q_name* RIGHT_BRACKET) (onls unpack_nounpack_pragma onls)? ((onls unpack_nounpack_pragma)? onls ttype (onls unpack_nounpack_pragma)?)*  // Base.hs: data () = () and GHC.Types.hs: data [] a = [] | a : [a]
 constr3                     ::= (onls unpack_nounpack_pragma? onls ttype)+
 
 fielddecl                   ::= q_names (onl COLON_COLON unpack_nounpack_pragma? (onls ("forall" | FORALL) (onls q_name)+)? (onls scontext onls DOUBLE_RIGHT_ARROW)? unpack_nounpack_pragma? onls ttype)?
