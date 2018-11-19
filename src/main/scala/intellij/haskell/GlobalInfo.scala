@@ -12,7 +12,7 @@ object GlobalInfo {
 
   final val LibrarySourcedDirName = "lib"
   final val StackWorkDirName = ".stack-work"
-  final val StackageLtsVersion = "lts-11"
+  final val StackageLtsVersion = "lts-12"
   private final val ToolsBinDirName = "bin"
 
   private final val IntelliJHaskellDirectories = ProjectDirectories.from("com.github", "rikvdkleij", "intellij-haskell")
