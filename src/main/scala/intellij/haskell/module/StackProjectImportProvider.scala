@@ -37,4 +37,6 @@ class StackProjectImportProvider(builder: StackProjectImportBuilder) extends Pro
       false
     }
   }
+
+  override def getFileSample: String = "which contains stack.yaml"
 }

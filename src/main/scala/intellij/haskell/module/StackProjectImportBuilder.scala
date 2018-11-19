@@ -50,6 +50,8 @@ class StackProjectImportBuilder extends ProjectImportBuilder[Unit] {
 
   private final val projectRootRelativePath = "."
 
+  override def getTitle: String = "Stack project importer"
+
   override def commit(project: Project, model: ModifiableModuleModel, modulesProvider: ModulesProvider, artifactModel: ModifiableArtifactModel): java.util.List[Module] = {
     val moduleBuilder = HaskellModuleType.getInstance.createModuleBuilder()
 
