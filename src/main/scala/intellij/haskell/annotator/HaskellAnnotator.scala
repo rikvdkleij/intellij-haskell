@@ -319,7 +319,7 @@ class TypeSignatureIntentionAction(typeSignature: String) extends HaskellBaseInt
     Option(file.findElementAt(offset)) match {
       case Some(e) =>
         for {
-          topDeclaration <- Option(TreeUtil.findParent(e.getNode, HaskellTypes.HS_TOP_DECLARATION_LINE))
+          topDeclaration <- Option(TreeUtil.findParent(e.getNode, HaskellTypes.HS_TOP_DECLARATION))
           psi <- Option(topDeclaration.getPsi)
           moduleBody <- Option(psi.getParent)
           typeSignatureElement <- HaskellElementFactory.createTopDeclarationLine(project, typeSignature)
