@@ -37,8 +37,8 @@
   methods("q_name|cname")=[getName getIdentifierElement getQualifierName]
   implements("q_name|cname")="intellij.haskell.psi.HaskellQualifiedNameElement"
 
-  implements("line_expression|last_line_expression")="intellij.haskell.psi.HaskellLineExpressionElement"
-  mixin("|line_expression|last_line_expression")="intellij.haskell.psi.impl.HaskellLineExpressionElementImpl"
+  implements("expression")="intellij.haskell.psi.HaskellExpressionElement"
+  mixin("expression")="intellij.haskell.psi.impl.HaskellExpressionElementImpl"
 
   methods("var|con|varop|conop")=[getName]
   implements("var|con|varop|conop")="intellij.haskell.psi.HaskellCNameElement"
@@ -260,17 +260,16 @@ private cdecl               ::= type_signature | cdecl_data_declaration | cidecl
 
 private cidecl              ::= inlinelike_pragma | specialize_pragma | instance_declaration | default_declaration |
                                   newtype_declaration | data_declaration | minimal_pragma | type_declaration | type_family_declaration | cidecl_expression
-cidecl_expression           ::= general_id+
+cidecl_expression           ::= expression
 
-expression                  ::= line_expression+ last_line_expression | last_line_expression
-private line_expression     ::= general_id+ nls
-private last_line_expression::= general_id+
+expression                  ::= line_expression (nls line_expression)*
+private line_expression     ::= general_id+
 
 scc_pragma                  ::= pragma
 private general_id          ::= QUASIQUOTE | q_name | symbol_reserved_op | reserved_id | LEFT_PAREN | RIGHT_PAREN | FLOAT |
                                   SEMICOLON | LEFT_BRACKET | RIGHT_BRACKET | literal | LEFT_BRACE | RIGHT_BRACE |
                                   COMMA | QUOTE | BACKQUOTE | fixity |
-                                  inlinelike_pragma | NEWLINE DIRECTIVE | scc_pragma
+                                  inlinelike_pragma | DIRECTIVE | scc_pragma
 
 dot_dot                     ::= DOT DOT
 private symbol_reserved_op  ::= dot_dot | COLON_COLON | EQUAL | BACKSLASH | VERTICAL_BAR | LEFT_ARROW | RIGHT_ARROW | AT | TILDE | DOUBLE_RIGHT_ARROW

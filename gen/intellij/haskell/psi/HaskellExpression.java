@@ -5,7 +5,7 @@ import org.jetbrains.annotations.NotNull;
 
 import java.util.List;
 
-public interface HaskellExpression extends HaskellCompositeElement {
+public interface HaskellExpression extends HaskellExpressionElement {
 
   @NotNull
   List<HaskellDotDot> getDotDotList();

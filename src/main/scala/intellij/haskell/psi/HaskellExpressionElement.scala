@@ -16,4 +16,4 @@
 
 package intellij.haskell.psi
 
-trait HaskellLineExpressionElement extends HaskellCompositeElement
+trait HaskellExpressionElement extends HaskellCompositeElement

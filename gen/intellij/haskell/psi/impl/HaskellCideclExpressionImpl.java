@@ -4,10 +4,10 @@ package intellij.haskell.psi.impl;
 import com.intellij.lang.ASTNode;
 import com.intellij.psi.PsiElementVisitor;
 import com.intellij.psi.util.PsiTreeUtil;
-import intellij.haskell.psi.*;
+import intellij.haskell.psi.HaskellCideclExpression;
+import intellij.haskell.psi.HaskellExpression;
+import intellij.haskell.psi.HaskellVisitor;
 import org.jetbrains.annotations.NotNull;
-
-import java.util.List;
 
 public class HaskellCideclExpressionImpl extends HaskellCompositeElementImpl implements HaskellCideclExpression {
 
@@ -26,32 +26,8 @@ public class HaskellCideclExpressionImpl extends HaskellCompositeElementImpl imp
 
   @Override
   @NotNull
-  public List<HaskellDotDot> getDotDotList() {
-    return PsiTreeUtil.getChildrenOfTypeAsList(this, HaskellDotDot.class);
-  }
-
-  @Override
-  @NotNull
-  public List<HaskellInlinelikePragma> getInlinelikePragmaList() {
-    return PsiTreeUtil.getChildrenOfTypeAsList(this, HaskellInlinelikePragma.class);
-  }
-
-  @Override
-  @NotNull
-  public List<HaskellQName> getQNameList() {
-    return PsiTreeUtil.getChildrenOfTypeAsList(this, HaskellQName.class);
-  }
-
-  @Override
-  @NotNull
-  public List<HaskellReservedId> getReservedIdList() {
-    return PsiTreeUtil.getChildrenOfTypeAsList(this, HaskellReservedId.class);
-  }
-
-  @Override
-  @NotNull
-  public List<HaskellSccPragma> getSccPragmaList() {
-    return PsiTreeUtil.getChildrenOfTypeAsList(this, HaskellSccPragma.class);
+  public HaskellExpression getExpression() {
+      return notNullChild(PsiTreeUtil.getChildOfType(this, HaskellExpression.class));
   }
 
 }

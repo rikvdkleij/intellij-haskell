@@ -9,7 +9,7 @@ import org.jetbrains.annotations.NotNull;
 
 import java.util.List;
 
-public class HaskellExpressionImpl extends HaskellCompositeElementImpl implements HaskellExpression {
+public class HaskellExpressionImpl extends HaskellExpressionElementImpl implements HaskellExpression {
 
   public HaskellExpressionImpl(ASTNode node) {
     super(node);

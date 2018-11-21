@@ -29,7 +29,7 @@ class HaskellCompositeElementImpl(node: ASTNode) extends ASTWrapperPsiElement(no
 
 abstract class HaskellCNameElementImpl private[impl](node: ASTNode) extends HaskellCompositeElementImpl(node) with HaskellCNameElement
 
-abstract class HaskellLineExpressionElementImpl private[impl](node: ASTNode) extends HaskellCompositeElementImpl(node) with HaskellLineExpressionElement
+abstract class HaskellExpressionElementImpl private[impl](node: ASTNode) extends HaskellCompositeElementImpl(node) with HaskellExpressionElement
 
 abstract class HaskellNamedElementImpl private[impl](node: ASTNode) extends HaskellCompositeElementImpl(node) with HaskellNamedElement
 
