@@ -285,6 +285,10 @@
                 implementationClass="intellij.haskell.cabal.completion.CabalCompletionContributor"/>
         <lookup.charFilter implementation="intellij.haskell.editor.HaskellCompletionCharFilter"/>
         <psi.referenceContributor language="Haskell" implementation="intellij.haskell.psi.HaskellReferenceContributor"/>
+        <liveTemplateContext implementation="intellij.haskell.editor.HaskellTemplateContextType"/>
+        <liveTemplateContext implementation="intellij.haskell.editor.HaskellPragmaTemplateContextType"/>
+        <liveTemplateContext implementation="intellij.haskell.editor.HaskellGlobalDefinitionTemplateContextType"/>
+        <defaultLiveTemplatesProvider implementation="intellij.haskell.editor.HaskellLiveTemplateProvider"/>
 
         <!-- Handler -->
         <typedHandler implementation="intellij.haskell.editor.HaskellTypedHandler" id="HaskellFile"/>

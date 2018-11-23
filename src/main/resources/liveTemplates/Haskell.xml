@@ -1,0 +1,78 @@
+<templateSet group="Haskell">
+  <template name="language"
+            value="{-# LANGUAGE $END$ #-}"
+            description="LANGUAGE Pragma"
+            toReformat="true"
+            toShortenFQNames="true">
+    <context>
+      <option name="HASKELL_PRAGMA" value="true" />
+    </context>
+  </template>
+  <template name="include"
+            value="{-# INCLUDE $END$ #-}"
+            description="INLCUDE Pragma"
+            toReformat="true"
+            toShortenFQNames="true">
+    <context>
+      <option name="HASKELL_PRAGMA" value="true" />
+    </context>
+  </template>
+  <template name="optionsghc"
+            value="{-# GHC_OPTIONS $END$ #-}"
+            description="OPTIONS_GHC Pragma"
+            toReformat="true"
+            toShortenFQNames="true">
+    <context>
+      <option name="HASKELL_PRAGMA" value="true" />
+    </context>
+  </template>
+  <template name="instance"
+            value="instance $EXPR$ where&#10;  $END$"
+            description="Type instance declaration"
+            toReformat="false"
+            toShortenFQNames="false">
+    <variable name="EXPR" expression="" defaultValue="" alwaysStopAt="true" />
+    <context>
+      <option name="HASKELL_GLOB_DEF" value="true" />
+    </context>
+  </template>
+  <template name="deriving"
+            value="deriving instance $EXPR$"
+            description="Standalone deriving declaration"
+            toReformat="true" toShortenFQNames="true">
+    <variable name="EXPR" expression="" defaultValue="" alwaysStopAt="true" />
+    <context>
+      <option name="HASKELL_GLOB_DEF" value="true" />
+    </context>
+  </template>
+  <template name="class"
+            value="class $EXPR$ where&#10;  $END$"
+            description="Type class declaration"
+            toReformat="true"
+            toShortenFQNames="true">
+    <variable name="EXPR" expression="" defaultValue="" alwaysStopAt="true" />
+    <context>
+      <option name="HASKELL_GLOB_DEF" value="true" />
+    </context>
+  </template>
+  <template name="data"
+            value="data $NAME$ = $END$"
+            description="Data type declaration"
+            toReformat="false"
+            toShortenFQNames="true">
+    <variable name="NAME" expression="" defaultValue="" alwaysStopAt="true" />
+    <context>
+      <option name="HASKELL_GLOB_DEF" value="true" />
+    </context>
+  </template>
+  <template name="datag"
+            value="data $NAME$ where&#10;  $END$"
+            description="Generalized data type declaration"
+            toReformat="false"
+            toShortenFQNames="true">
+    <variable name="NAME" expression="" defaultValue="" alwaysStopAt="true" />
+    <context>
+      <option name="HASKELL_GLOB_DEF" value="true" />
+    </context>
+  </template>
+</templateSet>
