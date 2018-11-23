@@ -272,6 +272,8 @@
         <!-- Annotator -->
         <externalAnnotator language="Haskell"
                            implementationClass="intellij.haskell.annotator.HaskellAnnotator"/>
+        <annotator language="Haskell"
+                   implementationClass="intellij.haskell.highlighter.HaskellSoftKeywordsAnnotator"/>
         <annotator language="Cabal"
                    implementationClass="intellij.haskell.cabal.highlighting.CabalAnnotator"/>
 
