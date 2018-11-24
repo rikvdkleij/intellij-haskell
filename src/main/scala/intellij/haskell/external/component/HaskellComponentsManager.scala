@@ -16,12 +16,15 @@
 
 package intellij.haskell.external.component
 
-import java.util.concurrent.Executors
+import java.util.concurrent.{Executors, TimeUnit}
 
+import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.editor.SelectionModel
 import com.intellij.openapi.module.Module
+import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.project.{DumbService, Project}
 import com.intellij.psi.{PsiElement, PsiFile}
+import com.intellij.util.WaitFor
 import intellij.haskell.HaskellNotificationGroup
 import intellij.haskell.cabal.CabalInfo
 import intellij.haskell.external.component.DefinitionLocationComponent.DefinitionLocationResult
@@ -41,7 +44,22 @@ object HaskellComponentsManager {
   case class StackComponentInfo(module: Module, packageName: String, target: String, stanzaType: StanzaType, sourceDirs: Seq[String], mainIs: Option[String], isImplicitPreludeActive: Boolean, buildDepends: Seq[String], exposedModuleNames: Seq[String] = Seq.empty)
 
   def findModuleIdentifiersInCache(project: Project)(implicit ec: ExecutionContext): Iterable[ModuleIdentifier] = {
-    BrowseModuleComponent.findModuleIdentifiersInCache(project)
+    val f = ApplicationManager.getApplication.executeOnPooledThread(ScalaUtil.callable {
+      BrowseModuleComponent.findModuleIdentifiersInCache(project)
+    })
+
+    new WaitFor(1000, 1) {
+      override def condition(): Boolean = {
+        ProgressManager.checkCanceled()
+        f.isDone
+      }
+    }
+
+    if (f.isDone) {
+      f.get(1, TimeUnit.MILLISECONDS)
+    } else {
+      Iterable()
+    }
   }
 
   def clearLoadedModule(psiFile: PsiFile): Unit = {
