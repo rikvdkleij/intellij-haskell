@@ -175,19 +175,19 @@ object StackProjectManager {
                 build(project, Seq("intero"))
               }
 
-              progressIndicator.setText("Busy with starting global Stack REPL")
-              StackReplsManager.getGlobalRepl(project)
-
               progressIndicator.setText("Busy with starting project REPLs")
               val replLoads = StackReplsManager.getReplsManager(project).map(_.stackComponentInfos.filter(_.stanzaType == LibType).flatMap { info =>
                 StackReplsManager.getProjectRepl(project, info).map(repl => {
                   val replLoad = ApplicationManager.getApplication.executeOnPooledThread(ScalaUtil.runnable {
                     repl.load(info.exposedModuleNames)
                   })
-                  Thread.sleep(1000) // Have to wait between starting the REPLs otherwise timeouts while starting
+                  Thread.sleep(5000) // Have to wait between starting the REPLs otherwise timeouts while starting
                   replLoad
                 })
               })
+
+              progressIndicator.setText("Busy with starting global Stack REPL")
+              StackReplsManager.getGlobalRepl(project)
 
               progressIndicator.setText("Busy with preloading global project info")
               GlobalProjectInfoComponent.findGlobalProjectInfo(project)
@@ -214,7 +214,7 @@ object StackProjectManager {
 
               progressIndicator.setText("Busy with preloading all library identifiers")
               ApplicationManager.getApplication.executeOnPooledThread(ScalaUtil.runnable {
-                HaskellComponentsManager.preloadLibraryIdentifiersCaches(project)
+                HaskellComponentsManager.preloadAllLibraryIdentifiersCaches(project)
 
                 if (!project.isDisposed) {
                   HaskellNotificationGroup.logInfoEvent(project, "Restarting global REPL to release memory")
