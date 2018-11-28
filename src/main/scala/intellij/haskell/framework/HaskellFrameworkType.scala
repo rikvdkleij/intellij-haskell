@@ -26,7 +26,7 @@ class HaskellFrameworkType extends FrameworkTypeEx("haskell-framework-id") {
 
   override def createProvider(): FrameworkSupportInModuleProvider = new HaskellFrameworkSupportProvider
 
-  override def getIcon: Icon = HaskellIcons.HaskellSmallLogo
+  override def getIcon: Icon = HaskellIcons.HaskellLogo
 
   override def getPresentableName: String = "Haskell"
 }

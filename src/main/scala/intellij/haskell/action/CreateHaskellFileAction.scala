@@ -37,10 +37,10 @@ object CreateHaskellFileAction {
   private final val NEW_HASKELL_FILE = "New Haskell File"
 }
 
-class CreateHaskellFileAction extends CreateFileFromTemplateAction(CreateHaskellFileAction.NEW_HASKELL_FILE, "", HaskellIcons.HaskellSmallLogo) with DumbAware {
+class CreateHaskellFileAction extends CreateFileFromTemplateAction(CreateHaskellFileAction.NEW_HASKELL_FILE, "", HaskellIcons.HaskellLogo) with DumbAware {
 
   override def buildDialog(project: Project, directory: PsiDirectory, builder: Builder): Unit = {
-    builder.setTitle(CreateHaskellFileAction.NEW_HASKELL_FILE).addKind("Empty module", HaskellIcons.HaskellSmallLogo, "Haskell Module").setValidator(new InputValidatorEx {
+    builder.setTitle(CreateHaskellFileAction.NEW_HASKELL_FILE).addKind("Empty module", HaskellIcons.HaskellLogo, "Haskell Module").setValidator(new InputValidatorEx {
 
       def checkInput(inputString: String): Boolean = {
         true

@@ -29,7 +29,7 @@ class HaskellModuleType extends ModuleType[HaskellModuleBuilder](HaskellModuleTy
 
   def getDescription: String = "Haskell module for Haskell project"
 
-  def getNodeIcon(isOpened: Boolean): Icon = HaskellIcons.HaskellSmallLogo
+  def getNodeIcon(isOpened: Boolean): Icon = HaskellIcons.HaskellLogo
 
   def getBigIcon: Icon = HaskellIcons.HaskellLogo
 }

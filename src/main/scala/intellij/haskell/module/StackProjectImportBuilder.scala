@@ -40,7 +40,7 @@ class StackProjectImportBuilder extends ProjectImportBuilder[Unit] {
 
   override def getList: util.List[Unit] = new util.ArrayList[Unit]()
 
-  override def getIcon: Icon = HaskellIcons.HaskellSmallLogo
+  override def getIcon: Icon = HaskellIcons.HaskellLogo
 
   override def setOpenProjectSettingsAfter(on: Boolean): Unit = {}
 

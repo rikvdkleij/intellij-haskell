@@ -60,14 +60,14 @@ final class CabalCompletionContributor extends CompletionContributor {
       val skipExts = currentExts ++ negExts
       getSupportedLanguageExtension(position.getProject)
         .filter(!skipExts.contains(_))
-        .map(n => LookupElementBuilder.create(n).withIcon(HaskellIcons.HaskellSmallLogo))
+        .map(n => LookupElementBuilder.create(n).withIcon(HaskellIcons.HaskellSmallBlueLogo))
     }
 
     private def filterPackageNames(el: BuildDepends): Iterable[LookupElement] = {
       val skipPackageNames = el.getPackageNames.toSet
       getAvailableStackagePackages(position.getProject)
         .filter(!skipPackageNames.contains(_))
-        .map(n => LookupElementBuilder.create(n).withIcon(HaskellIcons.HaskellSmallLogo))
+        .map(n => LookupElementBuilder.create(n).withIcon(HaskellIcons.HaskellSmallBlueLogo))
     }
 
     // TODO Take into account stanza type, currently always project library module names are suggested.
@@ -77,7 +77,7 @@ final class CabalCompletionContributor extends CompletionContributor {
       val moduleNames = module.map(HaskellComponentsManager.findAvailableModuleLibraryModuleNamesWithIndex).getOrElse(Iterable())
       moduleNames
         .filterNot(skipModuleNames.contains)
-        .map(n => LookupElementBuilder.create(n).withIcon(HaskellIcons.HaskellSmallLogo))
+        .map(n => LookupElementBuilder.create(n).withIcon(HaskellIcons.HaskellSmallBlueLogo))
     }
   }
 }

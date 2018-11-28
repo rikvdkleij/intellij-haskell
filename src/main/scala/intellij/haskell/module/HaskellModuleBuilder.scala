@@ -61,7 +61,7 @@ class HaskellModuleBuilder extends TemplateModuleBuilder(null, HaskellModuleType
     sdkType == HaskellSdkType.getInstance
   }
 
-  override def getNodeIcon: Icon = HaskellIcons.HaskellSmallLogo
+  override def getNodeIcon: Icon = HaskellIcons.HaskellLogo
 
   override def setupRootModel(rootModel: ModifiableRootModel): Unit = {
     if (rootModel.getSdk == null) {
