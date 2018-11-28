@@ -342,7 +342,10 @@
                 implementation="intellij.haskell.spellchecker.HaskellBundledDictionaryProvider"/>
 
         <!-- Configuration -->
-        <applicationConfigurable instance="intellij.haskell.settings.HaskellConfigurable"/>
+        <applicationConfigurable
+            groupId="language"
+            id="Haskell.Configurable"
+            instance="intellij.haskell.settings.HaskellConfigurable"/>
         <applicationService serviceImplementation="intellij.haskell.settings.HaskellSettingsPersistentStateComponent"/>
         <framework.type implementation="intellij.haskell.framework.HaskellFrameworkType"/>
         <lang.importOptimizer language="Haskell" implementationClass="intellij.haskell.editor.HaskellImportOptimizer"/>

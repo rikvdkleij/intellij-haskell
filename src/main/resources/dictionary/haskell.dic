@@ -20,11 +20,13 @@ forall
 frac
 frob
 functor
+ghci
 hashable
 hashmap
 hcollapse
 hlift
 homogenous
+hoogle
 hspec
 hsubparser
 intercalate
