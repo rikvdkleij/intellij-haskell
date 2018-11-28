@@ -342,7 +342,10 @@
                 implementation="intellij.haskell.spellchecker.HaskellBundledDictionaryProvider"/>
 
         <!-- Configuration -->
-        <applicationConfigurable instance="intellij.haskell.settings.HaskellConfigurable"/>
+        <applicationConfigurable
+            groupId="language"
+            id="Haskell.Configurable"
+            instance="intellij.haskell.settings.HaskellConfigurable"/>
         <applicationService serviceImplementation="intellij.haskell.settings.HaskellSettingsPersistentStateComponent"/>
         <framework.type implementation="intellij.haskell.framework.HaskellFrameworkType"/>
         <lang.importOptimizer language="Haskell" implementationClass="intellij.haskell.editor.HaskellImportOptimizer"/>
@@ -398,7 +401,7 @@
             <add-to-group group-id="NewGroup" anchor="before" relative-to-action="NewFile"/>
         </action>
 
-        <group id="HaskellCodeEditor" text="Haskell" description="Haskell View Tools" icon="/icons/haskell@16.png"
+        <group id="HaskellCodeEditor" text="Haskell" description="Haskell View Tools" icon="/icons/hs.png"
                popup="true">
             <action id="Haskell.ShowType" class="intellij.haskell.action.ShowTypeAction"
                     text="Show Type" description="Show type of (selected) expression">
@@ -460,7 +463,7 @@
                     text="Reload GHCi with last command" description="Re-execute last command after reloading modules"/>
         </group>
 
-        <group id="HaskellToolsMenu" text="Haskell" description="Haskell Tools" icon="/icons/haskell@16.png"
+        <group id="HaskellToolsMenu" text="Haskell" description="Haskell Tools" icon="/icons/hs.png"
                keep-content="true" popup="true">
             <action id="Haskell.DownloadLibSources" class="intellij.haskell.action.DownloadLibrarySources"
                     text="Download Haskell Library Sources"
@@ -488,7 +491,7 @@
         </group>
 
 
-        <group id="HaskellCodeMenu" text="Haskell" description="Haskell Code Tools" icon="/icons/haskell@16.png"
+        <group id="HaskellCodeMenu" text="Haskell" description="Haskell Code Tools" icon="/icons/hs.png"
                popup="true">
 
             <action id="Haskell.ReformatCode"
@@ -508,7 +511,7 @@
             <add-to-group group-id="CodeMenu" anchor="last"/>
         </group>
 
-        <group id="HaskellGoToMenu" text="Haskell" description="Haskell Goto Tools" icon="/icons/haskell@16.png"
+        <group id="HaskellGoToMenu" text="Haskell" description="Haskell Goto Tools" icon="/icons/hs.png"
                popup="true">
             <action id="Haskell.Hoogle.Navigation"
                     class="intellij.haskell.action.HoogleNavigationAction"
@@ -529,7 +532,7 @@
         <action id="Haskell.Project.About"
                 class="intellij.haskell.action.AboutAction"
                 text="About Haskell Project"
-                icon="/icons/haskell@16.png"
+                icon="/icons/hs.png"
                 description="About Haskell GHC/tools used in project">
             <add-to-group group-id="HelpMenu" anchor="last"/>
         </action>
