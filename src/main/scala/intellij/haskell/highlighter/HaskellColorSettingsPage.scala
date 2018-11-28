@@ -49,6 +49,7 @@ object HaskellColorSettingsPage {
 
   private final val AttributesKeyMap = Map[String, TextAttributesKey](
     "keyword" -> Keyword,
+    "functionName" -> FunctionName,
     "pragmaContent" -> PragmaContent
   )
 }
@@ -86,7 +87,8 @@ class HaskellColorSettingsPage extends ColorSettingsPage {
       |import <keyword>qualified</keyword> ImportModuleName
       |"string literal"
       |'c'
-      |x = (456,434)
+      |<functionName>intPair</functionName> :: (Int, Int)
+      |intPair = (456,434)
       |-- line comment
       |{- nested
       |comment -}
