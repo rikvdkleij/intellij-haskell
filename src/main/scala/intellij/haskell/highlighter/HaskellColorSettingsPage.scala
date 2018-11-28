@@ -39,6 +39,7 @@ object HaskellColorSettingsPage {
     new AttributesDescriptor("Brace", Brace),
     new AttributesDescriptor("Bracket", Bracket),
     new AttributesDescriptor("Variable", Variable),
+    new AttributesDescriptor("Function name", FunctionName),
     new AttributesDescriptor("Constructor", Constructor),
     new AttributesDescriptor("Operator", Operator),
     new AttributesDescriptor("Reserved symbol", ReservedSymbol),
