@@ -43,9 +43,14 @@ object HaskellColorSettingsPage {
     new AttributesDescriptor("Operator", Operator),
     new AttributesDescriptor("Reserved symbol", ReservedSymbol),
     new AttributesDescriptor("Pragma", Pragma),
+    new AttributesDescriptor("Pragma content", PragmaContent),
     new AttributesDescriptor("Quasiquote", Quasiquote),
     new AttributesDescriptor("Default", Default))
-  private final val AttributesKeyMap = Map[String, TextAttributesKey]()
+
+  private final val AttributesKeyMap = Map[String, TextAttributesKey](
+    "keyword" -> Keyword,
+    "pragmaContent" -> PragmaContent
+  )
 }
 
 class HaskellColorSettingsPage extends ColorSettingsPage {
@@ -76,21 +81,21 @@ class HaskellColorSettingsPage extends ColorSettingsPage {
 
   @NotNull
   def getDemoText: String = {
-    "{-# LANGUAGE CPP #-}\n" +
-      "module ModuleName\n" +
-      "import ImportModuleName\n" +
-      "\"string literal\"\n" +
-      "'c'\n" +
-      "x = (456,434)\n" +
-      "-- line comment\n" +
-      "{- nested \n" +
-      "comment -}\n" +
-      "data Bool = True | False\n" +
-      "let l1 = [1, 2] \n" +
-      "let l2 = 1 : [] \n" +
-      "let two = 1 + 1 \n" +
-      "let f = \\_ + 1 \n" +
-      "[t|select * from foo|]"
+    """{-# LANGUAGE <pragmaContent>CPP</pragmaContent> #-}
+      |module ModuleName
+      |import <keyword>qualified</keyword> ImportModuleName
+      |"string literal"
+      |'c'
+      |x = (456,434)
+      |-- line comment
+      |{- nested
+      |comment -}
+      |data Bool = True | False
+      |let l1 = [1, 2]
+      |let l2 = 1 : []
+      |let two = 1 + 1
+      |let f = \_ + 1
+      |[t|select * from foo|]""".stripMargin
   }
 
   @NotNull

@@ -14,7 +14,7 @@ class HaskellSoftKeywordsAnnotator extends Annotator {
       case _: HaskellImportHiding => holder.createInfoAnnotation(element, null)
         .setTextAttributes(HaskellSyntaxHighlighter.Keyword)
       case psi: HaskellFileHeaderPragma => psi.getGeneralPragmaContentList.forEach((t: HaskellGeneralPragmaContent) =>
-        holder.createInfoAnnotation(t, null).setTextAttributes(HaskellSyntaxHighlighter.Variable))
+        holder.createInfoAnnotation(t, null).setTextAttributes(HaskellSyntaxHighlighter.PragmaContent))
       case _ =>
     }
   }
