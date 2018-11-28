@@ -45,6 +45,6 @@ class HaskellTestCreator extends TestCreator with ItemPresentation {
     * Would be cool to have a Haskell Test icon, unfortunately I suck really hard at anything graphical...
     */
   override def getIcon(unused: Boolean): Icon = {
-    HaskellIcons.HaskellSmallLogo
+    HaskellIcons.HaskellLogo
   }
 }

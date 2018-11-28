@@ -13,7 +13,7 @@ class HaskellStackConfigurationType extends ConfigurationType {
 
   def getConfigurationTypeDescription: String = "Haskell Stack configuration"
 
-  def getIcon: Icon = HaskellIcons.HaskellSmallLogo
+  def getIcon: Icon = HaskellIcons.HaskellLogo
 
   def getId = "HaskellStackConfigurationType"
 
