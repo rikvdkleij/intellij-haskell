@@ -275,7 +275,7 @@ abstract class StackRepl(project: Project, componentInfo: Option[StackComponentI
             ))
 
           def isStarted = {
-            process.isAlive() && stdoutQueue.toArray[String](Array()).lastOption.exists(_.contains(EndOfOutputIndicator))
+            process.isAlive() && stdoutQueue.toArray(Array[String]()).lastOption.exists(_.contains(EndOfOutputIndicator))
           }
 
           def hasDependencyError = {
