@@ -21,8 +21,10 @@ import com.intellij.lang.ImportOptimizer
 import com.intellij.lang.annotation.HighlightSeverity
 import com.intellij.openapi.command.WriteCommandAction
 import com.intellij.psi.PsiFile
+import com.intellij.psi.util.PsiTreeUtil
 import intellij.haskell.HaskellFile
 import intellij.haskell.psi.HaskellPsiUtil
+import intellij.haskell.psi.HaskellTypes._
 import intellij.haskell.util.{HaskellFileUtil, HaskellProjectUtil, ScalaUtil}
 
 import scala.collection.JavaConverters._
@@ -39,27 +41,43 @@ class HaskellImportOptimizer extends ImportOptimizer {
 
 object HaskellImportOptimizer {
   final val WarningRedundantImport: Regex = """.*The (?:qualified )?import of [`|‘]([^'’]+)['|’] is redundant.*""".r
+  final val WarningRedundant2Import: Regex = """.*The (?:qualified )?import of [`|‘]([^'’]+)['|’] from module [`|‘]([^'’]+)['|’] is redundant.*""".r
 
   def removeRedundantImports(psiFile: PsiFile): Boolean = {
     val document = HaskellFileUtil.findDocument(psiFile)
     val warnings = document.map(d => DaemonCodeAnalyzerImpl.getHighlights(d, HighlightSeverity.WARNING, psiFile.getProject)).map(_.asScala).getOrElse(Seq())
 
-    val redundantImports = warnings.filter(_.getDescription match {
-      case HaskellImportOptimizer.WarningRedundantImport(_) => true
-      case _ => false
+    warnings.foreach(_.getDescription match {
+      case HaskellImportOptimizer.WarningRedundantImport(mn) => removeRedundantImport(psiFile, mn)
+      case HaskellImportOptimizer.WarningRedundant2Import(mn, idNames) => removeRedundantImportIds(psiFile, mn, idNames.split(',').map(_.trim))
+      case _ => ()
     })
-
-
-    HaskellImportOptimizer.removeRedundantImport(psiFile, redundantImports.map(_.getStartOffset))
     true
   }
 
-  def removeRedundantImport(psiFile: PsiFile, offsets: Seq[Int]): Unit = {
-    val redundantImportDeclarations = offsets.flatMap(offset => Option(psiFile.findElementAt(offset)).flatMap(HaskellPsiUtil.findImportDeclarationParent))
-    redundantImportDeclarations.foreach { redundantImportDeclaration =>
+  def removeRedundantImport(psiFile: PsiFile, moduleName: String): Unit = {
+    HaskellPsiUtil.findImportDeclarations(psiFile).find(_.getModuleName.contains(moduleName)).foreach { importDeclaration =>
+      val newline = Option(PsiTreeUtil.findSiblingForward(importDeclaration, HS_NEWLINE, true, null))
       WriteCommandAction.runWriteCommandAction(psiFile.getProject, ScalaUtil.computable {
-        redundantImportDeclaration.delete
+        importDeclaration.delete()
+        newline.foreach(_.delete())
       })
+    }
+  }
+
+  import intellij.haskell.psi.HaskellTypes._
+
+  def removeRedundantImportIds(psiFile: PsiFile, moduleName: String, idNames: Seq[String]): Unit = {
+    HaskellPsiUtil.findImportDeclarations(psiFile).find(_.getModuleName.contains(moduleName)).foreach { importDeclaration =>
+      val prefix = Option(importDeclaration.getImportQualifiedAs).map(_.getQualifier.getName).orElse(importDeclaration.getModuleName)
+      val idsToRemove = importDeclaration.getImportSpec.getImportIdsSpec.getImportIdList.asScala.filter(iid => idNames.exists(idn => idn == iid.getCname.getName || prefix.exists(p => idn == p + "." + iid.getCname.getName)))
+      idsToRemove.foreach { iid =>
+        val commaToRemove = Option(PsiTreeUtil.findSiblingBackward(iid, HS_COMMA, true, null)).orElse(Option(PsiTreeUtil.findSiblingForward(iid, HS_COMMA, true, null)))
+        WriteCommandAction.runWriteCommandAction(psiFile.getProject, ScalaUtil.computable {
+          commaToRemove.foreach(_.delete())
+          iid.delete()
+        })
+      }
     }
   }
 }

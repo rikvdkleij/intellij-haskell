@@ -112,7 +112,7 @@ public class HaskellVisitor extends PsiElementVisitor {
   }
 
   public void visitExpression(@NotNull HaskellExpression o) {
-      visitLineExpressionElement(o);
+      visitExpressionElement(o);
   }
 
   public void visitFielddecl(@NotNull HaskellFielddecl o) {
@@ -403,7 +403,7 @@ public class HaskellVisitor extends PsiElementVisitor {
     visitCompositeElement(o);
   }
 
-    public void visitLineExpressionElement(@NotNull HaskellExpressionElement o) {
+    public void visitExpressionElement(@NotNull HaskellExpressionElement o) {
         visitCompositeElement(o);
     }
 

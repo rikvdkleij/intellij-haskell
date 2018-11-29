@@ -3274,7 +3274,7 @@ public class HaskellParser implements PsiParser, LightPsiParser {
   }
 
   /* ********************************************************** */
-  // IMPORT (onls source_pragma)? (onls import_qualified)? (onls import_package_name)? onls modid onls import_qualified_as? onls import_spec? NEWLINE?
+  // IMPORT (onls source_pragma)? (onls import_qualified)? (onls import_package_name)? onls modid onls import_qualified_as? onls import_spec?
   public static boolean import_declaration(PsiBuilder b, int l) {
     if (!recursion_guard_(b, l, "import_declaration")) return false;
     if (!nextTokenIs(b, HS_IMPORT)) return false;
@@ -3290,8 +3290,7 @@ public class HaskellParser implements PsiParser, LightPsiParser {
     r = p && report_error_(b, onls(b, l + 1)) && r;
     r = p && report_error_(b, import_declaration_7(b, l + 1)) && r;
     r = p && report_error_(b, onls(b, l + 1)) && r;
-      r = p && report_error_(b, import_declaration_9(b, l + 1)) && r;
-      r = p && import_declaration_10(b, l + 1) && r;
+      r = p && import_declaration_9(b, l + 1) && r;
     exit_section_(b, l, m, r, p, null);
     return r || p;
   }
@@ -3363,13 +3362,6 @@ public class HaskellParser implements PsiParser, LightPsiParser {
     import_spec(b, l + 1);
     return true;
   }
-
-    // NEWLINE?
-    private static boolean import_declaration_10(PsiBuilder b, int l) {
-        if (!recursion_guard_(b, l, "import_declaration_10")) return false;
-        consumeToken(b, HS_NEWLINE);
-        return true;
-    }
 
   /* ********************************************************** */
   // ((import_declaration | cfiles_pragma | DIRECTIVE) onl)*
