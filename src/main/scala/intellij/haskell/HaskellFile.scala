@@ -59,7 +59,7 @@ class HaskellFileType extends LanguageFileType(HaskellLanguage.Instance) {
   }
 
   def getIcon: Icon = {
-    HaskellIcons.HaskellLogo
+    HaskellIcons.HaskellFileLogo
   }
 }
 
