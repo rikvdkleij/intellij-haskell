@@ -27,6 +27,7 @@ import com.intellij.psi.{PsiElement, PsiFile}
 import com.intellij.util.WaitFor
 import intellij.haskell.HaskellNotificationGroup
 import intellij.haskell.cabal.CabalInfo
+import intellij.haskell.editor.FileModuleIdentifiers
 import intellij.haskell.external.component.DefinitionLocationComponent.DefinitionLocationResult
 import intellij.haskell.external.component.NameInfoComponentResult.NameInfoResult
 import intellij.haskell.external.component.TypeInfoComponentResult.TypeInfoResult
@@ -75,15 +76,15 @@ object HaskellComponentsManager {
     LoadComponent.isBusy(psiFile)
   }
 
-  def findLibraryModuleIdentifiers(project: Project, moduleName: String)(implicit ec: ExecutionContext): Future[Iterable[ModuleIdentifier]] = {
+  def findLibraryModuleIdentifiers(project: Project, moduleName: String)(implicit ec: ExecutionContext): Future[Option[Iterable[ModuleIdentifier]]] = {
     BrowseModuleComponent.findLibraryModuleIdentifiers(project, moduleName)
   }
 
-  def findExportedModuleIdentifiers(stackComponentGlobalInfo: StackComponentGlobalInfo, psiFile: PsiFile, moduleName: String)(implicit ec: ExecutionContext): Future[Iterable[ModuleIdentifier]] = {
-    BrowseModuleComponent.findExportedIdentifiers(stackComponentGlobalInfo, psiFile, moduleName)
+  def findExportedModuleIdentifiers(psiFile: PsiFile, moduleName: String)(implicit ec: ExecutionContext): Future[Option[Iterable[ModuleIdentifier]]] = {
+    BrowseModuleComponent.findExportedIdentifiers(psiFile, moduleName)
   }
 
-  def findTopLevelModuleIdentifiers(psiFile: PsiFile, moduleName: String)(implicit ec: ExecutionContext): Future[Iterable[ModuleIdentifier]] = {
+  def findTopLevelModuleIdentifiers(psiFile: PsiFile, moduleName: String)(implicit ec: ExecutionContext): Future[Option[Iterable[ModuleIdentifier]]] = {
     BrowseModuleComponent.findTopLevelIdentifiers(psiFile, moduleName)
   }
 
@@ -191,6 +192,7 @@ object HaskellComponentsManager {
     HaskellPsiUtil.invalidateAllModuleNames(project)
     LibraryPackageInfoComponent.invalidate(project)
     HaskellModuleNameIndex.invalidate(project)
+    FileModuleIdentifiers.invalidateAll(project)
     HaskellNotificationGroup.logInfoEvent(project, "Finished with invalidating cache")
   }
 

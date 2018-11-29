@@ -20,6 +20,8 @@ import com.intellij.codeInsight.documentation.DocumentationManager
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.project.Project
 import com.intellij.psi.{PsiElement, PsiFile}
+import intellij.haskell.editor.FileModuleIdentifiers
+//import intellij.haskell.editor.FileModuleIdentifiers
 import intellij.haskell.external.component.HaskellComponentsManager.StackComponentInfo
 import intellij.haskell.external.execution.{CompilationResult, HaskellCompilationResultHelper}
 import intellij.haskell.external.repl.ProjectStackRepl.{Failed, Loaded}
@@ -79,15 +81,17 @@ private[component] object LoadComponent {
             TypeInfoComponent.invalidate(psiFile)
             DefinitionLocationComponent.invalidate(psiFile)
 
+            val moduleName = HaskellPsiUtil.findModuleName(psiFile)
             if (!loadFailed) {
               NameInfoComponent.invalidate(psiFile)
-
-              HaskellPsiUtil.findModuleName(psiFile).foreach(mn => {
+              moduleName.foreach(mn => {
                 BrowseModuleComponent.refreshTopLevel(project, mn, psiFile)
                 BrowseModuleComponent.invalidateForModuleName(project, mn)
                 TypeInfoComponent.invalidate(mn)
               })
+
             }
+            FileModuleIdentifiers.invalidate(psiFile, moduleName)
             DocumentationManager.getInstance(project).updateToolwindowContext()
           })
           Some(HaskellCompilationResultHelper.createCompilationResult(psiFile, loadOutput.stderrLines, loadFailed))

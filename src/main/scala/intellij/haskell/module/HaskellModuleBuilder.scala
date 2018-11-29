@@ -23,7 +23,7 @@ import com.intellij.ide.util.projectWizard._
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.{ApplicationManager, WriteAction}
 import com.intellij.openapi.module.{ModifiableModuleModel, Module, ModuleType}
-import com.intellij.openapi.project.{Project, ProjectManager}
+import com.intellij.openapi.project.{DumbService, Project, ProjectManager}
 import com.intellij.openapi.projectRoots.SdkTypeId
 import com.intellij.openapi.roots._
 import com.intellij.openapi.roots.impl.libraries.ProjectLibraryTable
@@ -254,6 +254,8 @@ object HaskellModuleBuilder {
 
 
         downloadHaskellPackageSources(project, projectLibDirectory, stackPath, libraryDependencies)
+
+        DumbService.getInstance(project).waitForSmartMode()
 
         dependenciesByModule.foreach { case (module, moduledependencies) =>
           addPackagesAsDependenciesToModule(module, projectModulePackageNames.map(_._1), moduledependencies, libraryDependencies, projectLibDirectory)

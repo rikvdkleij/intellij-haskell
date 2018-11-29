@@ -50,17 +50,20 @@ object HaskellModuleNameIndex {
 
   private case class Key(project: Project, moduleName: String)
 
-  type Result = Either[NoInfo, Option[PsiFile]]
+  type Result = Either[NoInfo, Seq[PsiFile]]
 
   // This should be a synchronous cache because in case caller is on dispatch thread
   private final val Cache: LoadingCache[Key, Result] = Scaffeine().build((k: Key) => find(k, ApplicationUtil.ScheduleInReadActionTimeout))
 
-  private def find(key: Key, timeout: FiniteDuration): Either[NoInfo, Option[PsiFile]] = {
-    findFile(key.project, key.moduleName, timeout) match {
-      case Right(vfs) => vfs match {
-        case Some(vf) => HaskellFileUtil.convertToHaskellFileInReadAction(key.project, vf)
-        case None => Right(None)
-      }
+  private def find(key: Key, timeout: FiniteDuration): Either[NoInfo, Seq[PsiFile]] = {
+    findFiles(key.project, key.moduleName, timeout) match {
+      case Right(files) =>
+        val result = files.map(vf => HaskellFileUtil.convertToHaskellFileInReadAction(key.project, vf))
+        if (result.exists(_.isLeft)) {
+          Left(ReadActionTimeout(""))
+        } else {
+          Right(result.flatMap(_.toOption).flatten)
+        }
       case Left(noInfo) => Left(noInfo)
     }
   }
@@ -70,12 +73,13 @@ object HaskellModuleNameIndex {
       val key = Key(project, mn)
       find(key, 5.seconds) match {
         case Right(vf) => Cache.put(key, Right(vf))
-        case Left(noInfo) => Left(noInfo)
+        case Left(NoInfoAvailable(_, _)) => ()
+        case Left(_) => Cache.invalidate(key)
       }
     })
   }
 
-  def findFileByModuleName(project: Project, moduleName: String): Either[NoInfo, Option[PsiFile]] = {
+  def findFileByModuleName(project: Project, moduleName: String): Either[NoInfo, Seq[PsiFile]] = {
     val key = Key(project, moduleName)
     Cache.get(key) match {
       case r@Right(_) => r
@@ -95,19 +99,16 @@ object HaskellModuleNameIndex {
     Cache.invalidate(Key(project, moduleName))
   }
 
-  private def findFile(project: Project, moduleName: String, timeout: FiniteDuration): Either[NoInfo, Option[VirtualFile]] = {
+  private def findFiles(project: Project, moduleName: String, timeout: FiniteDuration): Either[NoInfo, Seq[VirtualFile]] = {
     if (moduleName == HaskellProjectUtil.Prelude) {
-      Right(None)
+      Right(Seq())
     } else {
       val result = ApplicationUtil.scheduleInReadActionWithWriteActionPriority(
         project, {
           try {
-            val files = FileBasedIndex.getInstance.getContainingFiles(HaskellModuleNameIndex, moduleName, GlobalSearchScope.allScope(project)).asScala
-            if (files.size > 1) {
-              Right(files.find(f => HaskellProjectUtil.isSourceFile(project, f)).orElse(files.headOption))
-            } else {
-              Right(files.headOption)
-            }
+            val files = FileBasedIndex.getInstance.getContainingFiles(HaskellModuleNameIndex, moduleName, GlobalSearchScope.allScope(project)).asScala.toSeq
+            val firstFile = files.find(f => HaskellProjectUtil.isSourceFile(project, f)).orElse(files.headOption)
+            Right(firstFile.toSeq ++ firstFile.map(pf => files.filterNot(_ == pf)).getOrElse(Seq()))
           } catch {
             case _: IndexNotReadyException => Left(IndexNotReady)
           }

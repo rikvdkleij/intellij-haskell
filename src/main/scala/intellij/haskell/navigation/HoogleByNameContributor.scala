@@ -37,8 +37,8 @@ class HoogleByNameContributor extends ChooseByNameContributor {
   }
 
   override def getItemsByName(name: String, pattern: String, project: Project, includeNonProjectItems: Boolean): Array[NavigationItem] = {
-    def NotFoundResult(moduleName: String, declaration: String): Option[NotFoundNavigationItem] = {
-      Some(NotFoundNavigationItem(declaration, Some(moduleName)))
+    def NotFoundResult(moduleName: String, declaration: String): Seq[NotFoundNavigationItem] = {
+      Seq(NotFoundNavigationItem(declaration, Some(moduleName)))
     }
 
     val hooglePattern =
@@ -54,42 +54,44 @@ class HoogleByNameContributor extends ChooseByNameContributor {
       case ModulePattern(moduleName) =>
         ProgressManager.checkCanceled()
         HaskellModuleNameIndex.findFileByModuleName(project, moduleName) match {
-          case Right(r) => r.toSeq
+          case Right(files) => files
           case _ => Seq()
         }
       case PackagePattern(packageName) =>
         ProgressManager.checkCanceled()
-        Iterable(NotFoundNavigationItem(packageName))
+        Seq(NotFoundNavigationItem(packageName))
       case DeclarationPattern(moduleName, declaration) =>
         ProgressManager.checkCanceled()
-        DeclarationLineUtil.findName(declaration).map(nd => {
+        DeclarationLineUtil.findName(declaration).toSeq.flatMap(nd => {
           val name = StringUtil.removeOuterParens(nd.name)
           ProgressManager.checkCanceled()
           val result = HaskellComponentsManager.findNameInfoByModuleName(project, moduleName, name)
           ProgressManager.checkCanceled()
           val navigationItemByNameInfo = result.toOption.flatMap(_.headOption) match {
-            case Some(lni: LibraryNameInfo) => HaskellReference.findIdentifiersByLibraryNameInfo(project, lni, name).toOption.flatten.
+            case Some(lni: LibraryNameInfo) => HaskellReference.findIdentifiersByLibraryNameInfo(project, lni, name).toOption.getOrElse(Seq()).
               flatMap(HaskellPsiUtil.findDeclarationElementParent).map(d => createLibraryNavigationItem(d, moduleName))
             case Some(pni: ProjectNameInfo) =>
               HaskellProjectUtil.findFile(pni.filePath, project) match {
-                case (Some(virtualFile), Right(Some(psiFile))) => HaskellReference.findIdentifierByLocation(project, virtualFile, psiFile, pni.lineNr, pni.columnNr, name).flatMap(HaskellPsiUtil.findDeclarationElementParent)
-                case (_, _) => None
+                case (Some(virtualFile), Right(Some(psiFile))) => HaskellReference.findIdentifierByLocation(project, virtualFile, psiFile, pni.lineNr, pni.columnNr, name).flatMap(HaskellPsiUtil.findDeclarationElementParent).toSeq
+                case (_, _) => Seq()
               }
-            case _ => None
+            case _ => Seq()
           }
           ProgressManager.checkCanceled()
-          navigationItemByNameInfo.orElse {
-            val identifier = HaskellReference.findIdentifiersByModuleAndName(project, moduleName, name).toOption.flatten
+          if (navigationItemByNameInfo.nonEmpty) {
+            navigationItemByNameInfo
+          } else {
+            val identifier = HaskellReference.findIdentifiersByModuleAndName(project, moduleName, name).toOption
             if (identifier.isEmpty) {
               NotFoundResult(moduleName, declaration)
             } else {
-              identifier.flatMap(HaskellPsiUtil.findDeclarationElementParent)
+              identifier.getOrElse(Seq()).flatMap(HaskellPsiUtil.findDeclarationElementParent)
             }
           }
-        }).getOrElse(NotFoundResult(moduleName, declaration))
+        })
       case d =>
         ProgressManager.checkCanceled()
-        Iterable(NotFoundNavigationItem(d))
+        Seq(NotFoundNavigationItem(d))
     }
 
     navigationItems.zipWithIndex.map({ case (item, i) => new NavigationItem {

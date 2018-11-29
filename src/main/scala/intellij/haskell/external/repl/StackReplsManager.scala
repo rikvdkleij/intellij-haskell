@@ -18,7 +18,6 @@ package intellij.haskell.external.repl
 
 import java.util.concurrent.ConcurrentHashMap
 
-import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.project.Project
 import com.intellij.psi.PsiFile
@@ -58,7 +57,7 @@ private[external] object StackReplsManager {
 
   def getGlobalRepl(project: Project): Option[GlobalStackRepl] = {
     val repl = getReplsManager(project).map(_.getGlobalRepl)
-    repl.foreach(r => if (!r.available && !r.starting) ApplicationManager.getApplication.executeOnPooledThread(ScalaUtil.runnable(r.start())))
+    repl.foreach(r => if (!r.available && !r.starting) r.start())
     repl
   }
 

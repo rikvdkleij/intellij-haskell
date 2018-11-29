@@ -23,7 +23,7 @@ import intellij.haskell.external.repl.StackRepl.StackReplOutput
 import intellij.haskell.external.repl.StackReplsManager
 import intellij.haskell.psi._
 import intellij.haskell.util.StringUtil.escapeString
-import intellij.haskell.util.{HaskellProjectUtil, StringUtil}
+import intellij.haskell.util.{ApplicationUtil, HaskellProjectUtil, StringUtil}
 
 private[component] object NameInfoComponent {
 
@@ -84,7 +84,7 @@ private[component] object NameInfoComponent {
 
   def findNameInfo(qualifiedNameElement: HaskellQualifiedNameElement): Option[NameInfoResult] = {
     val psiFile = qualifiedNameElement.getContainingFile.getOriginalFile
-    val key = Key(psiFile, qualifiedNameElement.getName.replaceAll("""\s+""", ""))
+    val key = Key(psiFile, ApplicationUtil.runReadAction(qualifiedNameElement.getName).replaceAll("""\s+""", ""))
     Cache.getIfPresent(key) match {
       case Some(r) => Some(r)
       case None =>

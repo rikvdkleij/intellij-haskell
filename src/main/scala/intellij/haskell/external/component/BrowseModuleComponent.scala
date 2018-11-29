@@ -20,7 +20,8 @@ import com.github.blemale.scaffeine.{AsyncLoadingCache, Scaffeine}
 import com.intellij.openapi.project.Project
 import com.intellij.psi.PsiFile
 import intellij.haskell.external.repl._
-import intellij.haskell.util.StringUtil
+import intellij.haskell.util.index.HaskellModuleNameIndex
+import intellij.haskell.util.{HaskellProjectUtil, StringUtil}
 
 import scala.concurrent.{ExecutionContext, Future}
 
@@ -39,23 +40,23 @@ private[component] object BrowseModuleComponent {
     }
   })
 
-  private def matchResult(key: Key, result: Future[BrowseModuleInternalResult])(implicit ec: ExecutionContext): Future[Iterable[ModuleIdentifier]] = {
+  private def matchResult(key: Key, result: Future[BrowseModuleInternalResult])(implicit ec: ExecutionContext): Future[Option[Iterable[ModuleIdentifier]]] = {
     concurrent.blocking(result.map {
-      case Right(ids) => ids
+      case Right(ids) => Some(ids)
       case Left(NoInfoAvailable(_, _)) =>
-        Iterable()
+        None
       case Left(ReplNotAvailable) | Left(ReplIsBusy) | Left(IndexNotReady) | Left(ModuleNotLoaded(_)) | Left(ReadActionTimeout(_)) =>
         Cache.synchronous().invalidate(key)
-        Iterable()
+        None
     })
   }
 
-  def findLibraryModuleIdentifiers(project: Project, moduleName: String)(implicit ec: ExecutionContext): Future[Iterable[ModuleIdentifier]] = {
+  def findLibraryModuleIdentifiers(project: Project, moduleName: String)(implicit ec: ExecutionContext): Future[Option[Iterable[ModuleIdentifier]]] = {
     val key = Key(project, moduleName, None, exported = true)
     matchResult(key, Cache.get(key))
   }
 
-  def findTopLevelIdentifiers(psiFile: PsiFile, moduleName: String)(implicit ec: ExecutionContext): Future[Iterable[ModuleIdentifier]] = {
+  def findTopLevelIdentifiers(psiFile: PsiFile, moduleName: String)(implicit ec: ExecutionContext): Future[Option[Iterable[ModuleIdentifier]]] = {
     val key = Key(psiFile.getProject, moduleName, Some(psiFile), exported = false)
 
     if (LoadComponent.isFileLoaded(psiFile)) {
@@ -65,12 +66,15 @@ private[component] object BrowseModuleComponent {
     }
   }
 
-  def findExportedIdentifiers(stackComponentGlobalInfo: StackComponentGlobalInfo, psiFile: PsiFile, moduleName: String)(implicit ec: ExecutionContext): Future[Iterable[ModuleIdentifier]] = {
-    if (stackComponentGlobalInfo.libraryModuleNames.exists(_.exposedModuleNames.contains(moduleName))) {
-      findLibraryModuleIdentifiers(psiFile.getProject, moduleName)
-    } else {
+  def findExportedIdentifiers(psiFile: PsiFile, moduleName: String)(implicit ec: ExecutionContext): Future[Option[Iterable[ModuleIdentifier]]] = {
+    val moduleFiles = HaskellModuleNameIndex.findFileByModuleName(psiFile.getProject, moduleName)
+    val projectFile = moduleFiles.toOption.exists(_.headOption.exists(HaskellProjectUtil.isSourceFile))
+
+    if (projectFile) {
       val key = Key(psiFile.getProject, moduleName, Some(psiFile), exported = true)
       matchResult(key, Cache.get(key))
+    } else {
+      findLibraryModuleIdentifiers(psiFile.getProject, moduleName)
     }
   }
 

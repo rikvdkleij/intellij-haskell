@@ -74,6 +74,11 @@ private[component] object LibraryPackageInfoComponent {
     }
   }
 
+  def findOtherModuleNames(project: Project, moduleName: String): Seq[String] = {
+    val info = Cache.asMap().find(_._2.exists(pi => pi.exposedModuleNames.contains(moduleName) || pi.hiddenModuleNames.contains(moduleName))).map(_._2)
+    info.flatMap(i => i.map(r => r.hiddenModuleNames ++ r.exposedModuleNames)).getOrElse(Seq())
+  }
+
   def libraryPackageInfos(project: Project): Iterable[PackageInfo] = {
     Cache.asMap().values.flatten
   }
