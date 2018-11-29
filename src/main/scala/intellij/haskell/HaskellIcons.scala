@@ -19,7 +19,8 @@ package intellij.haskell
 import com.intellij.openapi.util.IconLoader
 
 object HaskellIcons {
-  final val HaskellLogo = IconLoader.getIcon("/icons/hs.png")
+  final val HaskellLogo = IconLoader.getIcon("/icons/haskell@16.png")
+  final val HaskellFileLogo = IconLoader.getIcon("/icons/hs.png")
   final val HaskellSmallBlueLogo = IconLoader.getIcon("/icons/haskell-blue@16.png")
 
   final val Module = IconLoader.getIcon("/icons/module.png")
