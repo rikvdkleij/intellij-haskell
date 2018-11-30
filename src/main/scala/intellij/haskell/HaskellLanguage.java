@@ -30,7 +30,7 @@ public class HaskellLanguage extends Language {
     @NotNull
     @Override
     public String getDisplayName() {
-        return "Haskell language";
+        return "Haskell";
     }
 
     @Override

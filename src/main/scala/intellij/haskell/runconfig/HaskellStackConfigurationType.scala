@@ -1,9 +1,8 @@
 package intellij.haskell.runconfig
 
 import javax.swing.Icon
-
 import com.intellij.execution.configurations.{ConfigurationFactory, ConfigurationType}
-import intellij.haskell.HaskellIcons
+import icons.HaskellIcons
 import intellij.haskell.runconfig.console.HaskellConsoleConfigurationFactory
 import intellij.haskell.runconfig.run.HaskellRunConfigurationFactory
 import intellij.haskell.runconfig.test.HaskellTestConfigurationFactory

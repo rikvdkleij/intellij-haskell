@@ -20,11 +20,12 @@ import com.intellij.navigation.ItemPresentation
 import com.intellij.psi.impl.source.resolve.reference.ReferenceProvidersRegistry
 import com.intellij.psi.{PsiElement, PsiReference}
 import com.intellij.util.ArrayUtil
+import icons.HaskellIcons
 import intellij.haskell.psi.HaskellTypes._
 import intellij.haskell.psi._
 import intellij.haskell.refactor.HaskellRenameFileProcessor
 import intellij.haskell.util.{HaskellFileUtil, StringUtil}
-import intellij.haskell.{HaskellFileType, HaskellIcons}
+import intellij.haskell.HaskellFileType
 import javax.swing._
 
 import scala.annotation.tailrec
@@ -230,7 +231,7 @@ object HaskellPsiImplUtil {
     }
 
     protected def findIcon(element: PsiElement): Icon = {
-      import intellij.haskell.HaskellIcons._
+      import icons.HaskellIcons._
       element match {
         case _: HaskellTypeDeclaration => Type
         case _: HaskellDataDeclaration => Data

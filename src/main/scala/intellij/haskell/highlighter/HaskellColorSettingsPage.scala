@@ -17,11 +17,10 @@
 package intellij.haskell.highlighter
 
 import javax.swing._
-
 import com.intellij.openapi.editor.colors.TextAttributesKey
 import com.intellij.openapi.fileTypes.SyntaxHighlighter
 import com.intellij.openapi.options.colors.{AttributesDescriptor, ColorDescriptor, ColorSettingsPage}
-import intellij.haskell.HaskellIcons
+import icons.HaskellIcons
 import intellij.haskell.highlighter.HaskellSyntaxHighlighter._
 import org.jetbrains.annotations.NotNull
 

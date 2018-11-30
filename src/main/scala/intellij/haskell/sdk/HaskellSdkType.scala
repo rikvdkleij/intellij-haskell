@@ -26,9 +26,10 @@ import com.intellij.openapi.projectRoots.impl.SdkConfigurationUtil
 import com.intellij.openapi.roots.OrderRootType
 import com.intellij.openapi.util.SystemInfo
 import com.intellij.openapi.vfs.VirtualFile
+import icons.HaskellIcons
 import intellij.haskell.external.execution.CommandLine
 import intellij.haskell.util.{HaskellFileUtil, HaskellProjectUtil}
-import intellij.haskell.{HaskellIcons, HaskellNotificationGroup}
+import intellij.haskell.HaskellNotificationGroup
 import javax.swing.Icon
 import org.jdom.Element
 

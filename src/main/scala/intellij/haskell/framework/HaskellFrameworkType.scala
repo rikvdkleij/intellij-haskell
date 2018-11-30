@@ -17,10 +17,9 @@
 package intellij.haskell.framework
 
 import javax.swing.Icon
-
 import com.intellij.framework.FrameworkTypeEx
 import com.intellij.framework.addSupport.FrameworkSupportInModuleProvider
-import intellij.haskell.HaskellIcons
+import icons.HaskellIcons
 
 class HaskellFrameworkType extends FrameworkTypeEx("haskell-framework-id") {
 

@@ -5,7 +5,9 @@
     <vendor email="rikvdkleij@gmail.com">Rik van der Kleij</vendor>
 
     <description><![CDATA[
-        Haskell support.
+        Haskell language support.
+        This plugin depends mainly on Stack and Intero.
+        It can create new Stack projects (by using template <code>hspec</code>) and import existing Stack projects.
 
         Please <a href="https://github.com/rikvdkleij/intellij-haskell/blob/master/README.md">README</a>
     ]]></description>
@@ -217,7 +219,6 @@
     <extensions defaultExtensionNs="com.intellij">
         <!-- File-type Factory -->
         <fileTypeFactory implementation="intellij.haskell.HaskellLanguageFileTypeFactory"/>
-        <fileTypeFactory implementation="intellij.haskell.cabal.CabalFileTypeFactory"/>
 
         <!-- Parser -->
         <lang.parserDefinition language="Haskell" implementationClass="intellij.haskell.HaskellParserDefinition"/>

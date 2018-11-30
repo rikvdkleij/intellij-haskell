@@ -33,13 +33,14 @@ import com.intellij.openapi.ui.Messages
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.vfs.LocalFileSystem
 import com.intellij.platform.templates.TemplateModuleBuilder
+import icons.HaskellIcons
 import intellij.haskell.cabal.CabalInfo
 import intellij.haskell.external.component.HaskellComponentsManager
 import intellij.haskell.external.execution.{CommandLine, StackCommandLine}
 import intellij.haskell.sdk.HaskellSdkType
 import intellij.haskell.stackyaml.StackYamlComponent
 import intellij.haskell.util.{HaskellFileUtil, HaskellProjectUtil, ScalaUtil}
-import intellij.haskell.{GlobalInfo, HaskellIcons}
+import intellij.haskell.GlobalInfo
 import javax.swing.Icon
 
 import scala.collection.JavaConverters._
