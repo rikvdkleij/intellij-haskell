@@ -1628,18 +1628,18 @@ public class _CabalParsingLexer implements FlexLexer {
         switch (zzAction < 0 ? zzAction : ZZ_ACTION[zzAction]) {
           case 1: 
             { yypushback(yylength()); yybegin(MAIN); return CabalTypes.WHITE_SPACE;
-            }
-          // fall through
+            } 
+            // fall through
           case 107: break;
           case 2: 
             { return CabalTypes.WHITE_SPACE;
-            }
-          // fall through
+            } 
+            // fall through
           case 108: break;
           case 3: 
             { return CabalTypes.OTHER_CHAR;
-            }
-          // fall through
+            } 
+            // fall through
           case 109: break;
           case 4: 
             { final Matcher m = NEWLINE_INDENT_REGEX.matcher(yytext());
@@ -1648,85 +1648,90 @@ public class _CabalParsingLexer implements FlexLexer {
     yypushback(indent.length());
     yybegin(INDENT);
     return CabalTypes.EOL;
-            }
-          // fall through
+            } 
+            // fall through
           case 110: break;
           case 5: 
             { return CabalTypes.UNKNOWN_KEY;
-            }
-          // fall through
+            } 
+            // fall through
           case 111: break;
           case 6: 
             { return CabalTypes.DOT;
-            }
-          // fall through
+            } 
+            // fall through
           case 112: break;
-          case 7: {
-              return CabalTypes.DASH;
-          }
-          // fall through
+          case 7: 
+            { return CabalTypes.NUMBERS;
+            } 
+            // fall through
           case 113: break;
-          case 8: {
-              return CabalTypes.COLON;
-          }
-          // fall through
+          case 8: 
+            { return CabalTypes.DASH;
+            } 
+            // fall through
           case 114: break;
-          case 9: {
-              return CabalTypes.LPAREN;
-          }
-          // fall through
+          case 9: 
+            { return CabalTypes.COLON;
+            } 
+            // fall through
           case 115: break;
-          case 10: {
-              return CabalTypes.RPAREN;
-          }
-          // fall through
+          case 10: 
+            { return CabalTypes.LPAREN;
+            } 
+            // fall through
           case 116: break;
-          case 11: {
-              return CabalTypes.LBRACKET;
-          }
-          // fall through
+          case 11: 
+            { return CabalTypes.RPAREN;
+            } 
+            // fall through
           case 117: break;
-          case 12: {
-              return CabalTypes.RBRACKET;
-          }
-          // fall through
+          case 12: 
+            { return CabalTypes.LBRACKET;
+            } 
+            // fall through
           case 118: break;
-          case 13: {
-              return CabalTypes.LBRACE;
-          }
-          // fall through
+          case 13: 
+            { return CabalTypes.RBRACKET;
+            } 
+            // fall through
           case 119: break;
-          case 14: {
-              return CabalTypes.RBRACE;
-          }
-          // fall through
+          case 14: 
+            { return CabalTypes.LBRACE;
+            } 
+            // fall through
           case 120: break;
-          case 15: {
-              return CabalTypes.GT;
-          }
-          // fall through
+          case 15: 
+            { return CabalTypes.RBRACE;
+            } 
+            // fall through
           case 121: break;
-          case 16: {
-              return CabalTypes.LT;
-          }
-          // fall through
+          case 16: 
+            { return CabalTypes.GT;
+            } 
+            // fall through
           case 122: break;
-          case 17: {
-              return CabalTypes.COMMA;
-          }
-          // fall through
+          case 17: 
+            { return CabalTypes.LT;
+            } 
+            // fall through
           case 123: break;
-          case 18: {
-              return CabalTypes.BANG;
-          }
-          // fall through
+          case 18: 
+            { return CabalTypes.COMMA;
+            } 
+            // fall through
           case 124: break;
-          case 19: {
-              return CabalTypes.TAB;
-          }
-          // fall through
+          case 19: 
+            { return CabalTypes.BANG;
+            } 
+            // fall through
           case 125: break;
           case 20: 
+            { return CabalTypes.TAB;
+            } 
+            // fall through
+          case 126: break;
+          case 21: 
             { final int numWhitespace = yylength() - 1;
 
     if (currentLineIndent == 0) {
@@ -1769,440 +1774,433 @@ public class _CabalParsingLexer implements FlexLexer {
     // Consume 1 whitespace char.
     yypushback(yylength() - 1);
     return CabalTypes.INDENT;
-            }
-          // fall through
-            case 126:
-                break;
-            case 21: {
-                currentLineIndent = 0;
-                return CabalTypes.WHITE_SPACE;
-            }
+            } 
             // fall through
           case 127: break;
-          case 22: {
-              return CabalTypes.COMMENT;
-          }
-          // fall through
+          case 22: 
+            { currentLineIndent = 0; return CabalTypes.WHITE_SPACE;
+            } 
+            // fall through
           case 128: break;
-          case 23: {
-              return CabalTypes.EQ;
-          }
-          // fall through
+          case 23: 
+            { return CabalTypes.COMMENT;
+            } 
+            // fall through
           case 129: break;
-          case 24: {
-              return CabalTypes.GTE;
-          }
-          // fall through
+          case 24: 
+            { return CabalTypes.EQ;
+            } 
+            // fall through
           case 130: break;
-          case 25: {
-              return CabalTypes.LTE;
-          }
-          // fall through
+          case 25: 
+            { return CabalTypes.GTE;
+            } 
+            // fall through
           case 131: break;
-          case 26: {
-              return CabalTypes.AND;
-          }
-          // fall through
+          case 26: 
+            { return CabalTypes.LTE;
+            } 
+            // fall through
           case 132: break;
-          case 27: {
-              return CabalTypes.OR;
-          }
-          // fall through
+          case 27: 
+            { return CabalTypes.AND;
+            } 
+            // fall through
           case 133: break;
-          case 28: {
-              return CabalTypes.AS;
-          }
-          // fall through
+          case 28: 
+            { return CabalTypes.OR;
+            } 
+            // fall through
           case 134: break;
-          case 29: {
-              return CabalTypes.IF;
-          }
-          // fall through
+          case 29: 
+            { return CabalTypes.AS;
+            } 
+            // fall through
           case 135: break;
-          case 30: {
-              return CabalTypes.OS;
-          }
-          // fall through
+          case 30: 
+            { return CabalTypes.IF;
+            } 
+            // fall through
           case 136: break;
-          case 31: {
-              return CabalTypes.NUMBERS;
-          }
-          // fall through
+          case 31: 
+            { return CabalTypes.OS;
+            } 
+            // fall through
           case 137: break;
           case 32: 
             { return CabalTypes.TAG_KEY;
-            }
-          // fall through
+            } 
+            // fall through
           case 138: break;
           case 33: 
             { return CabalTypes.CUSTOM_KEY;
-            }
-          // fall through
+            } 
+            // fall through
           case 139: break;
           case 34: 
             { return CabalTypes.ARCH;
-            }
-          // fall through
+            } 
+            // fall through
           case 140: break;
           case 35: 
             { return CabalTypes.WITH;
-            }
-          // fall through
+            } 
+            // fall through
           case 141: break;
           case 36: 
             { return CabalTypes.IMPL;
-            }
-          // fall through
+            } 
+            // fall through
           case 142: break;
           case 37: 
             { return CabalTypes.TRUE;
-            }
-          // fall through
+            } 
+            // fall through
           case 143: break;
           case 38: 
             { return CabalTypes.TYPE_KEY;
-            }
-          // fall through
+            } 
+            // fall through
           case 144: break;
           case 39: 
             { return CabalTypes.ELSE;
-            }
-          // fall through
+            } 
+            // fall through
           case 145: break;
           case 40: 
             { return CabalTypes.FLAG;
-            }
-          // fall through
+            } 
+            // fall through
           case 146: break;
           case 41: 
             { return CabalTypes.NAME_KEY;
-            }
-          // fall through
+            } 
+            // fall through
           case 147: break;
           case 42: 
             { return CabalTypes.FALSE;
-            }
-          // fall through
+            } 
+            // fall through
           case 148: break;
           case 43: 
             { return CabalTypes.AUTHOR_KEY;
-            }
-          // fall through
+            } 
+            // fall through
           case 149: break;
           case 44: 
             { return CabalTypes.SUBDIR_KEY;
-            }
-          // fall through
+            } 
+            // fall through
           case 150: break;
           case 45: 
             { return CabalTypes.MANUAL_KEY;
-            }
-          // fall through
+            } 
+            // fall through
           case 151: break;
           case 46: 
             { return CabalTypes.BRANCH_KEY;
-            }
-          // fall through
+            } 
+            // fall through
           case 152: break;
           case 47: 
             { return CabalTypes.EXPOSED_KEY;
-            }
-          // fall through
+            } 
+            // fall through
           case 153: break;
           case 48: 
             { return CabalTypes.LICENSE_KEY;
-            }
-          // fall through
+            } 
+            // fall through
           case 154: break;
           case 49: 
             { return CabalTypes.LIBRARY_KEY;
-            }
-          // fall through
+            } 
+            // fall through
           case 155: break;
           case 50: 
             { return CabalTypes.MAIN_IS_KEY;
-            }
-          // fall through
+            } 
+            // fall through
           case 156: break;
           case 51: 
             { return CabalTypes.VERSION_KEY;
-            }
-          // fall through
+            } 
+            // fall through
           case 157: break;
           case 52: 
             { return CabalTypes.DEFAULT_KEY;
-            }
-          // fall through
+            } 
+            // fall through
           case 158: break;
           case 53: 
             { return CabalTypes.SYNOPSIS_KEY;
-            }
-          // fall through
+            } 
+            // fall through
           case 159: break;
           case 54: 
             { return CabalTypes.INCLUDES_KEY;
-            }
-          // fall through
+            } 
+            // fall through
           case 160: break;
           case 55: 
             { return CabalTypes.HOMEPAGE_KEY;
-            }
-          // fall through
+            } 
+            // fall through
           case 161: break;
           case 56: 
             { return CabalTypes.LOCATION_KEY;
-            }
-          // fall through
+            } 
+            // fall through
           case 162: break;
           case 57: 
             { return CabalTypes.CATEGORY_KEY;
-            }
-          // fall through
+            } 
+            // fall through
           case 163: break;
           case 58: 
             { return CabalTypes.DATA_DIR_KEY;
-            }
-          // fall through
+            } 
+            // fall through
           case 164: break;
           case 59: 
             { return CabalTypes.STABILITY_KEY;
-            }
-          // fall through
+            } 
+            // fall through
           case 165: break;
           case 60: 
             { return CabalTypes.C_SOURCES_KEY;
-            }
-          // fall through
+            } 
+            // fall through
           case 166: break;
           case 61: 
             { return CabalTypes.COPYRIGHT_KEY;
-            }
-          // fall through
+            } 
+            // fall through
           case 167: break;
           case 62: 
             { return CabalTypes.BUILDABLE_KEY;
-            }
-          // fall through
+            } 
+            // fall through
           case 168: break;
           case 63: 
             { return CabalTypes.BENCHMARK_KEY;
-            }
-          // fall through
+            } 
+            // fall through
           case 169: break;
           case 64: 
             { return CabalTypes.TEST_SUITE_KEY;
-            }
-          // fall through
+            } 
+            // fall through
           case 170: break;
           case 65: 
             { return CabalTypes.EXTENSIONS_KEY;
-            }
-          // fall through
+            } 
+            // fall through
           case 171: break;
           case 66: 
             { return CabalTypes.EXECUTABLE_KEY;
-            }
-          // fall through
+            } 
+            // fall through
           case 172: break;
           case 67: 
             { return CabalTypes.FRAMEWORKS_KEY;
-            }
-          // fall through
+            } 
+            // fall through
           case 173: break;
           case 68: 
             { return CabalTypes.LD_OPTIONS_KEY;
-            }
-          // fall through
+            } 
+            // fall through
           case 174: break;
           case 69: 
             { return CabalTypes.CC_OPTIONS_KEY;
-            }
-          // fall through
+            } 
+            // fall through
           case 175: break;
           case 70: 
             { return CabalTypes.MAINTAINER_KEY;
-            }
-          // fall through
+            } 
+            // fall through
           case 176: break;
           case 71: 
             { return CabalTypes.BUILD_TYPE_KEY;
-            }
-          // fall through
+            } 
+            // fall through
           case 177: break;
           case 72: 
             { return CabalTypes.DATA_FILES_KEY;
-            }
-          // fall through
+            } 
+            // fall through
           case 178: break;
           case 73: 
             { return CabalTypes.JS_SOURCES_KEY;
-            }
-          // fall through
+            } 
+            // fall through
           case 179: break;
           case 74: 
             { return CabalTypes.TESTED_WITH_KEY;
-            }
-          // fall through
+            } 
+            // fall through
           case 180: break;
           case 75: 
             { return CabalTypes.GHC_OPTIONS_KEY;
-            }
-          // fall through
+            } 
+            // fall through
           case 181: break;
           case 76: 
             { return CabalTypes.CPP_OPTIONS_KEY;
-            }
-          // fall through
+            } 
+            // fall through
           case 182: break;
           case 77: 
             { return CabalTypes.PACKAGE_URL_KEY;
-            }
-          // fall through
+            } 
+            // fall through
           case 183: break;
           case 78: 
             { return CabalTypes.BUILD_TOOLS_KEY;
-            }
-          // fall through
+            } 
+            // fall through
           case 184: break;
           case 79: 
             { return CabalTypes.BUG_REPORTS_KEY;
-            }
-          // fall through
+            } 
+            // fall through
           case 185: break;
           case 80: 
             { return CabalTypes.DESCRIPTION_KEY;
-            }
-          // fall through
+            } 
+            // fall through
           case 186: break;
           case 81: 
             { return CabalTypes.INCLUDE_DIRS_KEY;
-            }
-          // fall through
+            } 
+            // fall through
           case 187: break;
           case 82: 
             { return CabalTypes.LICENSE_FILE_KEY;
-            }
-          // fall through
+            } 
+            // fall through
           case 188: break;
           case 83: 
             { return CabalTypes.HS_SOURCE_DIR_KEY;
-            }
-          // fall through
+            } 
+            // fall through
           case 189: break;
           case 84: 
             { return CabalTypes.LICENSE_FILES_KEY;
-            }
-          // fall through
+            } 
+            // fall through
           case 190: break;
           case 85: 
             { return CabalTypes.OTHER_MODULES_KEY;
-            }
-          // fall through
+            } 
+            // fall through
           case 191: break;
           case 86: 
             { return CabalTypes.CABAL_VERSION_KEY;
-            }
-          // fall through
+            } 
+            // fall through
           case 192: break;
           case 87: 
             { return CabalTypes.BUILD_DEPENDS_KEY;
-            }
-          // fall through
+            } 
+            // fall through
           case 193: break;
           case 88: 
             { return CabalTypes.HS_SOURCE_DIRS_KEY;
-            }
-          // fall through
+            } 
+            // fall through
           case 194: break;
           case 89: 
             { return CabalTypes.EXTRA_LIB_DIRS_KEY;
-            }
-          // fall through
+            } 
+            // fall through
           case 195: break;
           case 90: 
             { return CabalTypes.EXTRA_TMP_FILES_KEY;
-            }
-          // fall through
+            } 
+            // fall through
           case 196: break;
           case 91: 
             { return CabalTypes.EXTRA_LIBRARIES_KEY;
-            }
-          // fall through
+            } 
+            // fall through
           case 197: break;
           case 92: 
             { return CabalTypes.EXTRA_DOC_FILES_KEY;
-            }
-          // fall through
+            } 
+            // fall through
           case 198: break;
           case 93: 
             { return CabalTypes.EXPOSED_MODULES_KEY;
-            }
-          // fall through
+            } 
+            // fall through
           case 199: break;
           case 94: 
             { return CabalTypes.OTHER_LANGUAGES_KEY;
-            }
-          // fall through
+            } 
+            // fall through
           case 200: break;
           case 95: 
             { return CabalTypes.INSTALL_INCLUDES_KEY;
-            }
-          // fall through
+            } 
+            // fall through
           case 201: break;
           case 96: 
             { return CabalTypes.GHC_PROF_OPTIONS_KEY;
-            }
-          // fall through
+            } 
+            // fall through
           case 202: break;
           case 97: 
             { return CabalTypes.OTHER_EXTENSIONS_KEY;
-            }
-          // fall through
+            } 
+            // fall through
           case 203: break;
           case 98: 
             { return CabalTypes.DEFAULT_LANGUAGE_KEY;
-            }
-          // fall through
+            } 
+            // fall through
           case 204: break;
           case 99: 
             { return CabalTypes.SOURCE_REPO_KEY;
-            }
-          // fall through
+            } 
+            // fall through
           case 205: break;
           case 100: 
             { return CabalTypes.PKGCONFIG_DEPENDS_KEY;
-            }
-          // fall through
+            } 
+            // fall through
           case 206: break;
           case 101: 
             { return CabalTypes.REEXPORTED_MODULES_KEY;
-            }
-          // fall through
+            } 
+            // fall through
           case 207: break;
           case 102: 
             { return CabalTypes.EXTRA_SOURCE_FILES_KEY;
-            }
-          // fall through
+            } 
+            // fall through
           case 208: break;
           case 103: 
             { return CabalTypes.GHC_SHARED_OPTIONS_KEY;
-            }
-          // fall through
+            } 
+            // fall through
           case 209: break;
           case 104: 
             { return CabalTypes.DEFAULT_EXTENSIONS_KEY;
-            }
-          // fall through
+            } 
+            // fall through
           case 210: break;
           case 105: 
             { return CabalTypes.REQUIRED_SIGNATURES_KEY;
-            }
-          // fall through
+            } 
+            // fall through
           case 211: break;
           case 106: 
             { return CabalTypes.EXTRA_GHCI_LIBRARIES_KEY;
-            }
-          // fall through
+            } 
+            // fall through
           case 212: break;
           default:
             zzScanError(ZZ_NO_MATCH);
