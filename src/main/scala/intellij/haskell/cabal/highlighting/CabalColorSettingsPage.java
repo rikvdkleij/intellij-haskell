@@ -1,6 +1,6 @@
 package intellij.haskell.cabal.highlighting;
 
-import intellij.haskell.HaskellIcons;
+import icons.HaskellIcons;
 import com.intellij.openapi.editor.colors.TextAttributesKey;
 import com.intellij.openapi.fileTypes.SyntaxHighlighter;
 import com.intellij.openapi.options.colors.AttributesDescriptor;
@@ -26,7 +26,7 @@ public class CabalColorSettingsPage implements ColorSettingsPage {
     @Nullable
     @Override
     public Icon getIcon() {
-        return HaskellIcons.CabalLogo();
+        return HaskellIcons.CabalLogo;
     }
 
     @NotNull
