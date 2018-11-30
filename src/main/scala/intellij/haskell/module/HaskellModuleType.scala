@@ -17,9 +17,8 @@
 package intellij.haskell.module
 
 import javax.swing.Icon
-
 import com.intellij.openapi.module.{ModuleType, ModuleTypeManager}
-import intellij.haskell.HaskellIcons
+import icons.HaskellIcons
 
 class HaskellModuleType extends ModuleType[HaskellModuleBuilder](HaskellModuleType.Id) {
 

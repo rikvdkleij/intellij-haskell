@@ -17,7 +17,6 @@
 package intellij.haskell.navigation
 
 import javax.swing.Icon
-
 import com.intellij.ide.structureView._
 import com.intellij.ide.util.treeView.smartTree.TreeElement
 import com.intellij.lang.PsiStructureViewFactory
@@ -25,8 +24,9 @@ import com.intellij.navigation.ItemPresentation
 import com.intellij.openapi.editor.Editor
 import com.intellij.pom.Navigatable
 import com.intellij.psi.{PsiElement, PsiFile}
+import icons.HaskellIcons
 import intellij.haskell.psi.{HaskellDeclarationElement, HaskellPsiUtil}
-import intellij.haskell.{HaskellFile, HaskellIcons}
+import intellij.haskell.HaskellFile
 
 class HaskellStructureViewFactory extends PsiStructureViewFactory {
   def getStructureViewBuilder(psiFile: PsiFile): StructureViewBuilder = {

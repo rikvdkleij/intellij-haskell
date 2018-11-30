@@ -29,7 +29,7 @@ import com.intellij.openapi.roots.ProjectRootManager
 import com.intellij.openapi.ui.{InputValidatorEx, Messages}
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.psi.{PsiDirectory, PsiFile}
-import intellij.haskell.HaskellIcons
+import icons.HaskellIcons
 import intellij.haskell.util.HaskellFileUtil
 import intellij.haskell.util.index.HaskellModuleNameIndex
 

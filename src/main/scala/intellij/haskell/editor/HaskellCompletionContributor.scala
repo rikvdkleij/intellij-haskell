@@ -31,6 +31,7 @@ import com.intellij.psi.impl.source.tree.TreeUtil
 import com.intellij.psi.util.PsiTreeUtil
 import com.intellij.psi.{PsiElement, PsiFile, TokenType}
 import com.intellij.util.{ProcessingContext, WaitFor}
+import icons.HaskellIcons
 import intellij.haskell.external.component.HaskellComponentsManager.StackComponentInfo
 import intellij.haskell.external.component._
 import intellij.haskell.psi.HaskellElementCondition._
@@ -39,7 +40,7 @@ import intellij.haskell.psi.HaskellTypes._
 import intellij.haskell.psi._
 import intellij.haskell.runconfig.console.{HaskellConsoleView, HaskellConsoleViewMap}
 import intellij.haskell.util._
-import intellij.haskell.{HaskellFile, HaskellIcons, HaskellNotificationGroup, HaskellParserDefinition}
+import intellij.haskell.{HaskellFile, HaskellNotificationGroup, HaskellParserDefinition}
 
 import scala.collection.JavaConverters._
 import scala.concurrent._
@@ -616,7 +617,7 @@ object HaskellCompletionContributor {
   }
 
   private def findIcon(declaration: String) = {
-    import intellij.haskell.HaskellIcons._
+    import icons.HaskellIcons._
     declaration match {
       case d if d.startsWith("class ") => Class
       case d if d.startsWith("data ") => Data

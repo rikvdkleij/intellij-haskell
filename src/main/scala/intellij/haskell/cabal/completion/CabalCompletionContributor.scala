@@ -5,7 +5,7 @@ import com.intellij.codeInsight.lookup.{LookupElement, LookupElementBuilder}
 import com.intellij.patterns.PlatformPatterns
 import com.intellij.psi.PsiElement
 import com.intellij.util.ProcessingContext
-import intellij.haskell.HaskellIcons
+import icons.HaskellIcons
 import intellij.haskell.cabal.CabalLanguage
 import intellij.haskell.cabal.lang.psi.impl.ExtensionsImpl
 import intellij.haskell.cabal.lang.psi.{BuildDepends, CabalPsiUtil, ExposedModules}
