@@ -64,11 +64,10 @@ class HaskellCompletionContributor extends CompletionContributor {
   private final val HaskellForall = Stream("forall")
   private final val HaskellRecursiveDo = Stream("mdo", "rec")
   private final val HaskellArrowSyntax = Stream("proc")
-  private final val HaskellPatternKeyword = Stream("pattern")
 
   private final val Keywords = HaskellWhere ++ HaskellLet ++ haskellDeclKeywords ++ HaskellDefault ++ HaskellImportKeywords ++
     HaskellForeignKeywords ++ HaskellKeyword ++ HaskellStatic ++ HaskellConditional ++ HaskellInfix ++ HaskellBottom ++
-    HaskellTodo ++ HaskellTypeRoles ++ HaskellForall ++ HaskellRecursiveDo ++ HaskellArrowSyntax ++ HaskellPatternKeyword
+    HaskellTodo ++ HaskellTypeRoles ++ HaskellForall ++ HaskellRecursiveDo ++ HaskellArrowSyntax
 
   private final val SpecialReservedIds = Stream("safe", "unsafe")
   private final val PragmaIds = Stream("{-#", "#-}")
