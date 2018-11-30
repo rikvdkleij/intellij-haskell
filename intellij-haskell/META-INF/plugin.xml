@@ -217,7 +217,6 @@
     <extensions defaultExtensionNs="com.intellij">
         <!-- File-type Factory -->
         <fileTypeFactory implementation="intellij.haskell.HaskellLanguageFileTypeFactory"/>
-        <fileTypeFactory implementation="intellij.haskell.cabal.CabalFileTypeFactory"/>
 
         <!-- Parser -->
         <lang.parserDefinition language="Haskell" implementationClass="intellij.haskell.HaskellParserDefinition"/>

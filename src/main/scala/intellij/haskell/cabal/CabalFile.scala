@@ -61,9 +61,3 @@ class CabalFileType extends LanguageFileType(CabalLanguage.Instance) {
     HaskellIcons.CabalLogo
   }
 }
-
-class CabalFileTypeFactory extends FileTypeFactory {
-  def createFileTypes(consumer: FileTypeConsumer) {
-    consumer.consume(CabalFileType.INSTANCE, CabalFileType.INSTANCE.getDefaultExtension)
-  }
-}
