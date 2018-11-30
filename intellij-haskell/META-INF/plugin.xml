@@ -1,19 +1,19 @@
 <idea-plugin>
     <id>intellij.haskell</id>
     <name>IntelliJ-Haskell</name>
-    <version>1.0.0-beta35</version>
+    <version>1.0.0-beta36</version>
     <vendor email="rikvdkleij@gmail.com">Rik van der Kleij</vendor>
 
     <description><![CDATA[
         Haskell language support.
         This plugin depends mainly on Stack and Intero.
-        It can create new Stack projects (by using template <code>hspec</code>) and import existing Stack projects.
+        It can create new Stack projects and import existing Stack projects.
 
         Please <a href="https://github.com/rikvdkleij/intellij-haskell/blob/master/README.md">README</a>
     ]]></description>
 
     <change-notes><![CDATA[
-        <p>1.0.0-beta35</p>
+        <p>1.0.0-beta36</p>
         <b>IMPORTANT: Stack version should be > 1.7.0 and please reimport your Haskell Stack project after updating the plugin.</b>
         <ul>
             <li>Improved responsiveness, especially for multi-package projects</li>
@@ -30,6 +30,9 @@
             <li>Implemented Haskell Problems View</li>
             <li>Added feature to jump from/to test and added action to create test. See #314 (@Sir4ur0n)</li>
             <li>Made location of IntelliJ sandbox depending on OS. Location `~/.intellij-haskell` is not used anymore. See #316 (@liff)</li>
+            <li>Improved syntax highlighting. See #330 and #334 (@ice1000)</li>
+            <li>New file icons. See #333 (@ice1000)</li>
+            <li>Haskell settings are moved to Languages & Frameworks. See #334 (@ice1000)</li>
         </ul>
         <p>1.0.0-beta12</p>
         <ul>
