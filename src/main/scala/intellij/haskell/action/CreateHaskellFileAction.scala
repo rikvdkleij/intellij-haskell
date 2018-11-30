@@ -73,7 +73,8 @@ class CreateHaskellFileAction extends CreateFileFromTemplateAction(CreateHaskell
       .map(HaskellFileUtil.getAbsolutePath)
       .find(path.startsWith)
       .map(s => if (s != path) {
-        path.replace(s + File.separator, "").split(File.separator).toList
+        // See https://github.com/rikvdkleij/intellij-haskell/issues/339
+        path.replace(s + "/", "").split("/").toList
       } else {
         List()
       })
