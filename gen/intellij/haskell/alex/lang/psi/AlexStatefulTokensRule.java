@@ -5,9 +5,12 @@ import java.util.List;
 import org.jetbrains.annotations.*;
 import com.intellij.psi.PsiElement;
 
-public interface AlexTokensSection extends AlexElement {
+public interface AlexStatefulTokensRule extends AlexElement {
+
+  @Nullable
+  AlexIdentifier getIdentifier();
 
   @NotNull
-  List<AlexTokensRule> getTokensRuleList();
+  List<AlexStatelessTokensRule> getStatelessTokensRuleList();
 
 }

@@ -10,9 +10,13 @@ public interface AlexTypes {
 
   IElementType ALEX_DECLARATION = new AlexTokenType("ALEX_DECLARATION");
   IElementType ALEX_DECLARATIONS_SECTION = new AlexTokenType("ALEX_DECLARATIONS_SECTION");
+  IElementType ALEX_IDENTIFIER = new AlexTokenType("ALEX_IDENTIFIER");
   IElementType ALEX_REGEX = new AlexTokenType("ALEX_REGEX");
   IElementType ALEX_REGEX_PART = new AlexTokenType("ALEX_REGEX_PART");
   IElementType ALEX_RULE_DECLARATION = new AlexTokenType("ALEX_RULE_DECLARATION");
+  IElementType ALEX_STATEFUL_TOKENS_RULE = new AlexTokenType("ALEX_STATEFUL_TOKENS_RULE");
+  IElementType ALEX_STATELESS_TOKENS_RULE = new AlexTokenType("ALEX_STATELESS_TOKENS_RULE");
+  IElementType ALEX_TOKENS_RULE = new AlexTokenType("ALEX_TOKENS_RULE");
   IElementType ALEX_TOKENS_SECTION = new AlexTokenType("ALEX_TOKENS_SECTION");
   IElementType ALEX_TOKEN_SET_DECLARATION = new AlexTokenType("ALEX_TOKEN_SET_DECLARATION");
   IElementType ALEX_TOP_MODULE_SECTION = new AlexTokenType("ALEX_TOP_MODULE_SECTION");
@@ -24,10 +28,14 @@ public interface AlexTypes {
   IElementType ALEX_EMAIL_AND_IDENTIFIER = new AlexTokenType("EMAIL_AND_IDENTIFIER");
   IElementType ALEX_EOL = new AlexTokenType("EOL");
   IElementType ALEX_EQUAL = new AlexTokenType("EQUAL");
+  IElementType ALEX_HASKELL_IDENTIFIER = new AlexTokenType("HASKELL_IDENTIFIER");
   IElementType ALEX_REGEX_PART_TOKEN = new AlexTokenType("REGEX_PART_TOKEN");
+  IElementType ALEX_SEMICOLON = new AlexTokenType("SEMICOLON");
   IElementType ALEX_SOMETHING_HAS_ALREADY_HAPPENED = new AlexTokenType("SOMETHING_HAS_ALREADY_HAPPENED");
   IElementType ALEX_SOMETHING_IS_GONNA_HAPPEN = new AlexTokenType("SOMETHING_IS_GONNA_HAPPEN");
   IElementType ALEX_SOMETHING_IS_HAPPENING = new AlexTokenType("SOMETHING_IS_HAPPENING");
+  IElementType ALEX_STATEFUL_TOKENS_RULE_END = new AlexTokenType("STATEFUL_TOKENS_RULE_END");
+  IElementType ALEX_STATEFUL_TOKENS_RULE_START = new AlexTokenType("STATEFUL_TOKENS_RULE_START");
   IElementType ALEX_STRING = new AlexTokenType("STRING");
   IElementType ALEX_TOKENS = new AlexTokenType("TOKENS");
   IElementType ALEX_WRAPPER_TYPE_IS_GONNA_BE_HERE = new AlexTokenType("WRAPPER_TYPE_IS_GONNA_BE_HERE");
@@ -41,6 +49,9 @@ public interface AlexTypes {
       else if (type == ALEX_DECLARATIONS_SECTION) {
         return new AlexDeclarationsSectionImpl(node);
       }
+      else if (type == ALEX_IDENTIFIER) {
+        return new AlexIdentifierImpl(node);
+      }
       else if (type == ALEX_REGEX) {
         return new AlexRegexImpl(node);
       }
@@ -49,6 +60,15 @@ public interface AlexTypes {
       }
       else if (type == ALEX_RULE_DECLARATION) {
         return new AlexRuleDeclarationImpl(node);
+      }
+      else if (type == ALEX_STATEFUL_TOKENS_RULE) {
+        return new AlexStatefulTokensRuleImpl(node);
+      }
+      else if (type == ALEX_STATELESS_TOKENS_RULE) {
+        return new AlexStatelessTokensRuleImpl(node);
+      }
+      else if (type == ALEX_TOKENS_RULE) {
+        return new AlexTokensRuleImpl(node);
       }
       else if (type == ALEX_TOKENS_SECTION) {
         return new AlexTokensSectionImpl(node);

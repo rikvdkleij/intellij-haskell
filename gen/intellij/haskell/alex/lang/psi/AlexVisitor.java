@@ -14,6 +14,10 @@ public class AlexVisitor extends PsiElementVisitor {
     visitElement(o);
   }
 
+  public void visitIdentifier(@NotNull AlexIdentifier o) {
+    visitElement(o);
+  }
+
   public void visitRegex(@NotNull AlexRegex o) {
     visitElement(o);
   }
@@ -26,7 +30,19 @@ public class AlexVisitor extends PsiElementVisitor {
     visitElement(o);
   }
 
+  public void visitStatefulTokensRule(@NotNull AlexStatefulTokensRule o) {
+    visitElement(o);
+  }
+
+  public void visitStatelessTokensRule(@NotNull AlexStatelessTokensRule o) {
+    visitElement(o);
+  }
+
   public void visitTokenSetDeclaration(@NotNull AlexTokenSetDeclaration o) {
+    visitElement(o);
+  }
+
+  public void visitTokensRule(@NotNull AlexTokensRule o) {
     visitElement(o);
   }
 

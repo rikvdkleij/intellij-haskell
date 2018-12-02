@@ -26,12 +26,13 @@ alex_file ::=
   pin=1
 }
 
-private endOfLine ::= EOL
+private endOfLine ::= EOL+
 
-declarations_section ::= (declaration endOfLine+)*
+declarations_section ::= (declaration endOfLine)*
 declaration ::= token_set_declaration | rule_declaration
 
 regex_part ::= REGEX_PART_TOKEN
+identifier ::= HASKELL_IDENTIFIER
 regex ::= (regex_part | DOLLAR_AND_IDENTIFIER)*
 token_set_declaration ::= DOLLAR_AND_IDENTIFIER EQUAL regex {
   pin=1
@@ -53,9 +54,34 @@ wrapper_type ::= WRAPPER_TYPE_IS_GONNA_BE_HERE STRING {
   pin=1
 }
 
-tokens_section ::= TOKENS A_SYMBOL_FOLLOWED_BY_TOKENS {
+tokens_section ::=
+ TOKENS A_SYMBOL_FOLLOWED_BY_TOKENS endOfLine
+ tokens_rule* {
   pin=1
 }
+
+tokens_rule ::= stateful_tokens_rule | stateless_tokens_rule
+
+stateless_tokens_rule ::=
+ EMAIL_AND_IDENTIFIER
+ SOMETHING_IS_GONNA_HAPPEN
+ (SOMETHING_IS_HAPPENING | endOfLine)*
+ SOMETHING_HAS_ALREADY_HAPPENED {
+  pin=1
+}
+
+stateful_tokens_rule ::=
+ STATEFUL_TOKENS_RULE_START
+ identifier
+ STATEFUL_TOKENS_RULE_END endOfLine?
+ tokens_rule_body endOfLine? {
+  pin=1
+}
+
+private tokens_rule_body ::= SEMICOLON |
+ SOMETHING_IS_GONNA_HAPPEN endOfLine?
+ (stateless_tokens_rule | endOfLine)*
+ SOMETHING_HAS_ALREADY_HAPPENED
 
 user_code_section ::=
  SOMETHING_IS_GONNA_HAPPEN

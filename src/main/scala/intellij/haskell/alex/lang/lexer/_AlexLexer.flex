@@ -13,6 +13,8 @@ import static com.intellij.psi.TokenType.WHITE_SPACE;
   public _AlexLexer() { this((java.io.Reader)null); }
 
   private int nestedLeftBraces = 0;
+  private boolean afterTokens = false;
+  private boolean insideState = false;
 %}
 
 %public
@@ -25,7 +27,7 @@ import static com.intellij.psi.TokenType.WHITE_SPACE;
 %eof{ return;
 %eof}
 
-%xstate SOMETHING, AFTER_EQ
+%xstate SOMETHING, AFTER_EQ, AFTER_STATE
 
 CRLF=\n|\r|\r\n
 WHITE_SPACE=[\ \t\f]
@@ -54,14 +56,30 @@ STRING_FINISHED={STRING_UNFINISHED}\"
   [^\}\{]+ { return AlexTypes.ALEX_SOMETHING_IS_HAPPENING; }
 }
 
+<AFTER_STATE> {
+  "{" { insideState = true; yybegin(YYINITIAL); return AlexTypes.ALEX_SOMETHING_IS_GONNA_HAPPEN; }
+  {CRLF} { return AlexTypes.ALEX_EOL; }
+  {WHITE_SPACE} { return WHITE_SPACE; }
+  [^] { return BAD_CHARACTER; }
+}
+
 {CRLF} { return AlexTypes.ALEX_EOL; }
 {WHITE_SPACE} { return WHITE_SPACE; }
+"<" { return AlexTypes.ALEX_STATEFUL_TOKENS_RULE_START; }
+">" { yybegin(AFTER_STATE); return AlexTypes.ALEX_STATEFUL_TOKENS_RULE_END; }
 tokens { return AlexTypes.ALEX_TOKENS; }
-:- { return AlexTypes.ALEX_A_SYMBOL_FOLLOWED_BY_TOKENS; }
+:- { afterTokens = true; return AlexTypes.ALEX_A_SYMBOL_FOLLOWED_BY_TOKENS; }
 = { yybegin(AFTER_EQ); return AlexTypes.ALEX_EQUAL; }
 "{" { nestedLeftBraces++; yybegin(SOMETHING); return AlexTypes.ALEX_SOMETHING_IS_GONNA_HAPPEN; }
 %wrapper { return AlexTypes.ALEX_WRAPPER_TYPE_IS_GONNA_BE_HERE; }
-"}" { return BAD_CHARACTER; }
+"}" {
+  if (insideState) {
+    insideState = false;
+    return AlexTypes.ALEX_SOMETHING_HAS_ALREADY_HAPPENED;
+  } else return BAD_CHARACTER;
+}
+; { return AlexTypes.ALEX_SEMICOLON; }
+{IDENTIFIER} { return AlexTypes.ALEX_HASKELL_IDENTIFIER; }
 \${IDENTIFIER} { return AlexTypes.ALEX_DOLLAR_AND_IDENTIFIER; }
 \@{IDENTIFIER} { return AlexTypes.ALEX_EMAIL_AND_IDENTIFIER; }
 

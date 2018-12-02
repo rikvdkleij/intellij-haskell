@@ -27,6 +27,7 @@ public class _AlexLexer implements FlexLexer {
   public static final int YYINITIAL = 0;
   public static final int SOMETHING = 2;
   public static final int AFTER_EQ = 4;
+  public static final int AFTER_STATE = 6;
 
   /**
    * ZZ_LEXSTATE[l] is the state in the DFA for the lexical state l
@@ -35,7 +36,7 @@ public class _AlexLexer implements FlexLexer {
    * l is of the form l = 2*k, k a non negative integer
    */
   private static final int ZZ_LEXSTATE[] = { 
-     0,  0,  1,  1,  2, 2
+     0,  0,  1,  1,  2,  2,  3, 3
   };
 
   /** 
@@ -57,11 +58,11 @@ public class _AlexLexer implements FlexLexer {
 
   /* The ZZ_CMAP_A table has 320 entries */
   static final char ZZ_CMAP_A[] = zzUnpackCMap(
-    "\11\0\1\3\1\1\1\0\1\3\1\2\22\0\1\3\1\0\1\6\1\0\1\10\1\25\7\0\1\7\2\0\12\5"+
-    "\1\23\2\0\1\24\2\0\1\32\1\30\3\4\1\17\5\4\1\16\2\4\1\20\1\14\1\31\1\4\1\27"+
-    "\1\22\1\13\2\4\1\26\3\4\4\0\1\4\1\0\1\30\3\4\1\17\5\4\1\16\2\4\1\20\1\14\1"+
-    "\31\1\4\1\27\1\22\1\13\2\4\1\26\3\4\1\11\1\0\1\12\201\0\1\21\52\0\1\15\25"+
-    "\0");
+    "\11\0\1\3\1\1\1\0\1\3\1\2\22\0\1\3\1\0\1\6\1\0\1\10\1\27\7\0\1\7\2\0\12\5"+
+    "\1\25\1\34\1\13\1\26\1\14\1\0\1\35\1\32\3\4\1\21\5\4\1\20\2\4\1\22\1\16\1"+
+    "\33\1\4\1\31\1\24\1\15\2\4\1\30\3\4\4\0\1\4\1\0\1\32\3\4\1\21\5\4\1\20\2\4"+
+    "\1\22\1\16\1\33\1\4\1\31\1\24\1\15\2\4\1\30\3\4\1\11\1\0\1\12\201\0\1\23\52"+
+    "\0\1\17\25\0");
 
   /** 
    * Translates DFA states to action switch labels.
@@ -69,13 +70,14 @@ public class _AlexLexer implements FlexLexer {
   private static final int [] ZZ_ACTION = zzUnpackAction();
 
   private static final String ZZ_ACTION_PACKED_0 =
-    "\3\0\1\1\2\2\1\3\2\1\1\4\2\1\1\5"+
-    "\2\1\1\6\1\7\1\10\1\11\2\12\1\11\1\13"+
-    "\1\14\1\0\1\15\1\0\1\16\6\0\1\17\2\0"+
-    "\1\20";
+    "\4\0\1\1\2\2\1\3\1\4\2\1\1\5\1\6"+
+    "\1\7\1\10\1\4\1\1\1\11\1\1\1\12\1\1"+
+    "\1\13\1\14\1\15\1\16\2\17\1\16\1\20\1\21"+
+    "\1\22\1\4\1\23\1\0\1\24\1\0\1\4\2\0"+
+    "\1\4\2\0\1\4\1\0\2\25\2\0\1\26";
 
   private static int [] zzUnpackAction() {
-    int [] result = new int[38];
+    int [] result = new int[49];
     int offset = 0;
     offset = zzUnpackAction(ZZ_ACTION_PACKED_0, offset, result);
     return result;
@@ -100,14 +102,16 @@ public class _AlexLexer implements FlexLexer {
   private static final int [] ZZ_ROWMAP = zzUnpackRowMap();
 
   private static final String ZZ_ROWMAP_PACKED_0 =
-    "\0\0\0\33\0\66\0\121\0\121\0\154\0\121\0\207"+
-    "\0\242\0\121\0\275\0\330\0\121\0\363\0\u010e\0\u0129"+
-    "\0\121\0\121\0\u0144\0\121\0\u015f\0\242\0\121\0\u017a"+
-    "\0\u0195\0\121\0\u01b0\0\u01cb\0\u01e6\0\u0201\0\u021c\0\u0237"+
-    "\0\u0252\0\u026d\0\121\0\u0288\0\u02a3\0\121";
+    "\0\0\0\36\0\74\0\132\0\170\0\170\0\226\0\170"+
+    "\0\264\0\322\0\360\0\170\0\170\0\170\0\170\0\u010e"+
+    "\0\u012c\0\170\0\u014a\0\170\0\u0168\0\u0186\0\170\0\170"+
+    "\0\u01a4\0\170\0\u01c2\0\360\0\170\0\170\0\u01e0\0\u01fe"+
+    "\0\170\0\u021c\0\u023a\0\u0258\0\u0276\0\u0294\0\u02b2\0\u02d0"+
+    "\0\u02ee\0\u030c\0\u032a\0\u0348\0\170\0\264\0\u0366\0\u0384"+
+    "\0\170";
 
   private static int [] zzUnpackRowMap() {
-    int [] result = new int[38];
+    int [] result = new int[49];
     int offset = 0;
     offset = zzUnpackRowMap(ZZ_ROWMAP_PACKED_0, offset, result);
     return result;
@@ -130,24 +134,34 @@ public class _AlexLexer implements FlexLexer {
   private static final int [] ZZ_TRANS = zzUnpackTrans();
 
   private static final String ZZ_TRANS_PACKED_0 =
-    "\1\4\1\5\1\6\1\7\2\4\1\10\1\4\1\11"+
-    "\1\12\1\4\1\13\7\4\1\14\1\15\1\16\4\4"+
-    "\1\17\11\20\1\21\1\22\20\20\1\23\1\24\1\25"+
-    "\5\23\1\26\22\23\34\0\1\5\35\0\1\10\1\0"+
-    "\1\27\1\10\3\0\2\10\1\0\3\10\1\0\1\10"+
-    "\3\0\4\10\5\0\1\30\6\0\2\30\1\0\3\30"+
-    "\1\0\1\30\3\0\4\30\15\0\1\31\25\0\1\32"+
-    "\51\0\1\33\10\0\1\34\6\0\2\34\1\0\3\34"+
-    "\1\0\1\34\3\0\4\34\1\0\11\20\2\0\20\20"+
-    "\1\23\2\0\5\23\1\0\22\23\1\0\1\24\35\0"+
-    "\2\30\5\0\2\30\1\0\3\30\1\0\1\30\3\0"+
-    "\4\30\16\0\2\35\43\0\1\36\7\0\2\34\5\0"+
-    "\2\34\1\0\3\34\1\0\1\34\3\0\4\34\20\0"+
-    "\1\37\43\0\1\40\22\0\1\41\43\0\1\42\22\0"+
-    "\2\43\41\0\1\44\20\0\1\45\42\0\1\46\3\0";
+    "\1\5\1\6\1\7\1\10\1\11\1\5\1\12\1\5"+
+    "\1\13\1\14\1\15\1\16\1\17\1\20\1\11\1\5"+
+    "\3\11\1\5\1\11\1\21\1\22\1\23\4\11\1\24"+
+    "\1\25\11\26\1\27\1\30\23\26\1\31\1\32\1\33"+
+    "\5\31\1\34\25\31\1\5\1\6\1\7\1\10\5\5"+
+    "\1\35\24\5\37\0\1\6\40\0\2\11\7\0\2\11"+
+    "\1\0\3\11\1\0\1\11\3\0\4\11\6\0\1\12"+
+    "\1\0\1\36\1\12\5\0\2\12\1\0\3\12\1\0"+
+    "\1\12\3\0\4\12\6\0\1\37\10\0\2\37\1\0"+
+    "\3\37\1\0\1\37\3\0\4\37\6\0\2\11\7\0"+
+    "\1\11\1\40\1\0\3\11\1\0\1\11\3\0\4\11"+
+    "\11\0\1\41\56\0\1\42\11\0\1\43\10\0\2\43"+
+    "\1\0\3\43\1\0\1\43\3\0\4\43\2\0\11\26"+
+    "\2\0\23\26\1\31\2\0\5\31\1\0\25\31\1\0"+
+    "\1\32\40\0\2\37\7\0\2\37\1\0\3\37\1\0"+
+    "\1\37\3\0\4\37\6\0\2\11\7\0\2\11\1\44"+
+    "\1\45\2\11\1\0\1\11\3\0\4\11\33\0\1\46"+
+    "\10\0\2\43\7\0\2\43\1\0\3\43\1\0\1\43"+
+    "\3\0\4\43\23\0\1\47\20\0\2\11\7\0\2\11"+
+    "\1\0\1\11\1\50\1\11\1\0\1\11\3\0\4\11"+
+    "\34\0\1\51\25\0\1\52\17\0\2\11\7\0\2\11"+
+    "\1\0\2\11\1\53\1\0\1\11\3\0\4\11\35\0"+
+    "\1\54\25\0\2\55\15\0\2\11\7\0\2\11\1\0"+
+    "\3\11\1\55\1\56\3\0\4\11\35\0\1\57\23\0"+
+    "\1\60\45\0\1\61\4\0";
 
   private static int [] zzUnpackTrans() {
-    int [] result = new int[702];
+    int [] result = new int[930];
     int offset = 0;
     offset = zzUnpackTrans(ZZ_TRANS_PACKED_0, offset, result);
     return result;
@@ -185,12 +199,13 @@ public class _AlexLexer implements FlexLexer {
   private static final int [] ZZ_ATTRIBUTE = zzUnpackAttribute();
 
   private static final String ZZ_ATTRIBUTE_PACKED_0 =
-    "\3\0\2\11\1\1\1\11\2\1\1\11\2\1\1\11"+
-    "\3\1\2\11\1\1\1\11\2\1\1\11\1\1\1\0"+
-    "\1\11\1\0\1\1\6\0\1\11\2\0\1\11";
+    "\4\0\2\11\1\1\1\11\3\1\4\11\2\1\1\11"+
+    "\1\1\1\11\2\1\2\11\1\1\1\11\2\1\2\11"+
+    "\2\1\1\11\1\0\1\1\1\0\1\1\2\0\1\1"+
+    "\2\0\1\1\1\0\1\11\1\1\2\0\1\11";
 
   private static int [] zzUnpackAttribute() {
-    int [] result = new int[38];
+    int [] result = new int[49];
     int offset = 0;
     offset = zzUnpackAttribute(ZZ_ATTRIBUTE_PACKED_0, offset, result);
     return result;
@@ -249,6 +264,8 @@ public class _AlexLexer implements FlexLexer {
   public _AlexLexer() { this((java.io.Reader)null); }
 
   private int nestedLeftBraces = 0;
+  private boolean afterTokens = false;
+  private boolean insideState = false;
 
 
   /**
@@ -512,38 +529,66 @@ public class _AlexLexer implements FlexLexer {
             { return BAD_CHARACTER;
             } 
             // fall through
-          case 17: break;
+          case 23: break;
           case 2: 
             { return AlexTypes.ALEX_EOL;
             } 
             // fall through
-          case 18: break;
+          case 24: break;
           case 3: 
             { return WHITE_SPACE;
             } 
             // fall through
-          case 19: break;
+          case 25: break;
           case 4: 
+            { return AlexTypes.ALEX_HASKELL_IDENTIFIER;
+            } 
+            // fall through
+          case 26: break;
+          case 5: 
             { nestedLeftBraces++; yybegin(SOMETHING); return AlexTypes.ALEX_SOMETHING_IS_GONNA_HAPPEN;
             } 
             // fall through
-          case 20: break;
-          case 5: 
+          case 27: break;
+          case 6: 
+            { if (insideState) {
+    insideState = false;
+    return AlexTypes.ALEX_SOMETHING_HAS_ALREADY_HAPPENED;
+  } else return BAD_CHARACTER;
+            } 
+            // fall through
+          case 28: break;
+          case 7: 
+            { return AlexTypes.ALEX_STATEFUL_TOKENS_RULE_START;
+            } 
+            // fall through
+          case 29: break;
+          case 8: 
+            { yybegin(AFTER_STATE); return AlexTypes.ALEX_STATEFUL_TOKENS_RULE_END;
+            } 
+            // fall through
+          case 30: break;
+          case 9: 
             { yybegin(AFTER_EQ); return AlexTypes.ALEX_EQUAL;
             } 
             // fall through
-          case 21: break;
-          case 6: 
+          case 31: break;
+          case 10: 
+            { return AlexTypes.ALEX_SEMICOLON;
+            } 
+            // fall through
+          case 32: break;
+          case 11: 
             { return AlexTypes.ALEX_SOMETHING_IS_HAPPENING;
             } 
             // fall through
-          case 22: break;
-          case 7: 
+          case 33: break;
+          case 12: 
             { nestedLeftBraces++; return AlexTypes.ALEX_SOMETHING_IS_HAPPENING;
             } 
             // fall through
-          case 23: break;
-          case 8: 
+          case 34: break;
+          case 13: 
             { if (--nestedLeftBraces == 0) {
       yybegin(YYINITIAL);
       return AlexTypes.ALEX_SOMETHING_HAS_ALREADY_HAPPENED;
@@ -551,47 +596,52 @@ public class _AlexLexer implements FlexLexer {
     return AlexTypes.ALEX_SOMETHING_IS_HAPPENING;
             } 
             // fall through
-          case 24: break;
-          case 9: 
+          case 35: break;
+          case 14: 
             { return AlexTypes.ALEX_REGEX_PART_TOKEN;
             } 
             // fall through
-          case 25: break;
-          case 10: 
+          case 36: break;
+          case 15: 
             { yybegin(YYINITIAL); return AlexTypes.ALEX_EOL;
             } 
             // fall through
-          case 26: break;
-          case 11: 
+          case 37: break;
+          case 16: 
+            { insideState = true; yybegin(YYINITIAL); return AlexTypes.ALEX_SOMETHING_IS_GONNA_HAPPEN;
+            } 
+            // fall through
+          case 38: break;
+          case 17: 
             { return AlexTypes.ALEX_STRING;
             } 
             // fall through
-          case 27: break;
-          case 12: 
+          case 39: break;
+          case 18: 
             { return AlexTypes.ALEX_DOLLAR_AND_IDENTIFIER;
             } 
             // fall through
-          case 28: break;
-          case 13: 
-            { return AlexTypes.ALEX_A_SYMBOL_FOLLOWED_BY_TOKENS;
+          case 40: break;
+          case 19: 
+            { afterTokens = true; return AlexTypes.ALEX_A_SYMBOL_FOLLOWED_BY_TOKENS;
             } 
             // fall through
-          case 29: break;
-          case 14: 
+          case 41: break;
+          case 20: 
             { return AlexTypes.ALEX_EMAIL_AND_IDENTIFIER;
             } 
             // fall through
-          case 30: break;
-          case 15: 
+          case 42: break;
+          case 21: 
             { return AlexTypes.ALEX_TOKENS;
             } 
             // fall through
-          case 31: break;
-          case 16: 
+          case 43: break;
+          case 22: 
             { return AlexTypes.ALEX_WRAPPER_TYPE_IS_GONNA_BE_HERE;
             } 
             // fall through
-          case 32: break;
+          case 44: break;
           default:
             zzScanError(ZZ_NO_MATCH);
           }

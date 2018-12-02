@@ -10,14 +10,14 @@ import com.intellij.psi.util.PsiTreeUtil;
 import static intellij.haskell.alex.lang.psi.AlexTypes.*;
 import intellij.haskell.alex.lang.psi.*;
 
-public class AlexTokensSectionImpl extends AlexElementImpl implements AlexTokensSection {
+public class AlexStatefulTokensRuleImpl extends AlexElementImpl implements AlexStatefulTokensRule {
 
-  public AlexTokensSectionImpl(ASTNode node) {
+  public AlexStatefulTokensRuleImpl(ASTNode node) {
     super(node);
   }
 
   public void accept(@NotNull AlexVisitor visitor) {
-    visitor.visitTokensSection(this);
+    visitor.visitStatefulTokensRule(this);
   }
 
   public void accept(@NotNull PsiElementVisitor visitor) {
@@ -26,9 +26,15 @@ public class AlexTokensSectionImpl extends AlexElementImpl implements AlexTokens
   }
 
   @Override
+  @Nullable
+  public AlexIdentifier getIdentifier() {
+    return findChildByClass(AlexIdentifier.class);
+  }
+
+  @Override
   @NotNull
-  public List<AlexTokensRule> getTokensRuleList() {
-    return PsiTreeUtil.getChildrenOfTypeAsList(this, AlexTokensRule.class);
+  public List<AlexStatelessTokensRule> getStatelessTokensRuleList() {
+    return PsiTreeUtil.getChildrenOfTypeAsList(this, AlexStatelessTokensRule.class);
   }
 
 }
