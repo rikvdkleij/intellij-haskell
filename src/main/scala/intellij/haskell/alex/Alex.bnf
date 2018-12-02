@@ -55,8 +55,8 @@ wrapper_type ::= WRAPPER_TYPE_IS_GONNA_BE_HERE STRING {
 }
 
 tokens_section ::=
- TOKENS A_SYMBOL_FOLLOWED_BY_TOKENS endOfLine
- tokens_rule* {
+ TOKENS A_SYMBOL_FOLLOWED_BY_TOKENS
+ (endOfLine? tokens_rule)* {
   pin=1
 }
 
@@ -79,11 +79,11 @@ stateful_tokens_rule ::=
  STATEFUL_TOKENS_RULE_START
  identifier
  STATEFUL_TOKENS_RULE_END
- tokens_rule_body endOfLine? {
+ (tokens_rule_body | SEMICOLON) endOfLine? {
   pin=1
 }
 
-private tokens_rule_body ::= SEMICOLON |
+private tokens_rule_body ::=
  SOMETHING_IS_GONNA_HAPPEN endOfLine?
  (stateless_tokens_rule | endOfLine)*
  SOMETHING_HAS_ALREADY_HAPPENED

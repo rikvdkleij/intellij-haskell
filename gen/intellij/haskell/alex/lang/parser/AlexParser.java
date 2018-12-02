@@ -359,7 +359,7 @@ public class AlexParser implements PsiParser, LightPsiParser {
   // STATEFUL_TOKENS_RULE_START
   //  identifier
   //  STATEFUL_TOKENS_RULE_END
-  //  tokens_rule_body endOfLine?
+  //  (tokens_rule_body | SEMICOLON) endOfLine?
   public static boolean stateful_tokens_rule(PsiBuilder builder, int level) {
     if (!recursion_guard_(builder, level, "stateful_tokens_rule")) return false;
     if (!nextTokenIs(builder, ALEX_STATEFUL_TOKENS_RULE_START)) return false;
@@ -369,10 +369,19 @@ public class AlexParser implements PsiParser, LightPsiParser {
     pinned = result; // pin = 1
     result = result && report_error_(builder, identifier(builder, level + 1));
     result = pinned && report_error_(builder, consumeToken(builder, ALEX_STATEFUL_TOKENS_RULE_END)) && result;
-    result = pinned && report_error_(builder, tokens_rule_body(builder, level + 1)) && result;
+    result = pinned && report_error_(builder, stateful_tokens_rule_3(builder, level + 1)) && result;
     result = pinned && stateful_tokens_rule_4(builder, level + 1) && result;
     exit_section_(builder, level, marker, result, pinned, null);
     return result || pinned;
+  }
+
+  // tokens_rule_body | SEMICOLON
+  private static boolean stateful_tokens_rule_3(PsiBuilder builder, int level) {
+    if (!recursion_guard_(builder, level, "stateful_tokens_rule_3")) return false;
+    boolean result;
+    result = tokens_rule_body(builder, level + 1);
+    if (!result) result = consumeToken(builder, ALEX_SEMICOLON);
+    return result;
   }
 
   // endOfLine?
@@ -458,57 +467,43 @@ public class AlexParser implements PsiParser, LightPsiParser {
   }
 
   /* ********************************************************** */
-  // SEMICOLON |
-  //  SOMETHING_IS_GONNA_HAPPEN endOfLine?
+  // SOMETHING_IS_GONNA_HAPPEN endOfLine?
   //  (stateless_tokens_rule | endOfLine)*
   //  SOMETHING_HAS_ALREADY_HAPPENED
   static boolean tokens_rule_body(PsiBuilder builder, int level) {
     if (!recursion_guard_(builder, level, "tokens_rule_body")) return false;
-    if (!nextTokenIs(builder, "", ALEX_SEMICOLON, ALEX_SOMETHING_IS_GONNA_HAPPEN)) return false;
-    boolean result;
-    Marker marker = enter_section_(builder);
-    result = consumeToken(builder, ALEX_SEMICOLON);
-    if (!result) result = tokens_rule_body_1(builder, level + 1);
-    exit_section_(builder, marker, null, result);
-    return result;
-  }
-
-  // SOMETHING_IS_GONNA_HAPPEN endOfLine?
-  //  (stateless_tokens_rule | endOfLine)*
-  //  SOMETHING_HAS_ALREADY_HAPPENED
-  private static boolean tokens_rule_body_1(PsiBuilder builder, int level) {
-    if (!recursion_guard_(builder, level, "tokens_rule_body_1")) return false;
+    if (!nextTokenIs(builder, ALEX_SOMETHING_IS_GONNA_HAPPEN)) return false;
     boolean result;
     Marker marker = enter_section_(builder);
     result = consumeToken(builder, ALEX_SOMETHING_IS_GONNA_HAPPEN);
-    result = result && tokens_rule_body_1_1(builder, level + 1);
-    result = result && tokens_rule_body_1_2(builder, level + 1);
+    result = result && tokens_rule_body_1(builder, level + 1);
+    result = result && tokens_rule_body_2(builder, level + 1);
     result = result && consumeToken(builder, ALEX_SOMETHING_HAS_ALREADY_HAPPENED);
     exit_section_(builder, marker, null, result);
     return result;
   }
 
   // endOfLine?
-  private static boolean tokens_rule_body_1_1(PsiBuilder builder, int level) {
-    if (!recursion_guard_(builder, level, "tokens_rule_body_1_1")) return false;
+  private static boolean tokens_rule_body_1(PsiBuilder builder, int level) {
+    if (!recursion_guard_(builder, level, "tokens_rule_body_1")) return false;
     endOfLine(builder, level + 1);
     return true;
   }
 
   // (stateless_tokens_rule | endOfLine)*
-  private static boolean tokens_rule_body_1_2(PsiBuilder builder, int level) {
-    if (!recursion_guard_(builder, level, "tokens_rule_body_1_2")) return false;
+  private static boolean tokens_rule_body_2(PsiBuilder builder, int level) {
+    if (!recursion_guard_(builder, level, "tokens_rule_body_2")) return false;
     while (true) {
       int pos = current_position_(builder);
-      if (!tokens_rule_body_1_2_0(builder, level + 1)) break;
-      if (!empty_element_parsed_guard_(builder, "tokens_rule_body_1_2", pos)) break;
+      if (!tokens_rule_body_2_0(builder, level + 1)) break;
+      if (!empty_element_parsed_guard_(builder, "tokens_rule_body_2", pos)) break;
     }
     return true;
   }
 
   // stateless_tokens_rule | endOfLine
-  private static boolean tokens_rule_body_1_2_0(PsiBuilder builder, int level) {
-    if (!recursion_guard_(builder, level, "tokens_rule_body_1_2_0")) return false;
+  private static boolean tokens_rule_body_2_0(PsiBuilder builder, int level) {
+    if (!recursion_guard_(builder, level, "tokens_rule_body_2_0")) return false;
     boolean result;
     result = stateless_tokens_rule(builder, level + 1);
     if (!result) result = endOfLine(builder, level + 1);
@@ -516,8 +511,8 @@ public class AlexParser implements PsiParser, LightPsiParser {
   }
 
   /* ********************************************************** */
-  // TOKENS A_SYMBOL_FOLLOWED_BY_TOKENS endOfLine
-  //  tokens_rule*
+  // TOKENS A_SYMBOL_FOLLOWED_BY_TOKENS
+  //  (endOfLine? tokens_rule)*
   public static boolean tokens_section(PsiBuilder builder, int level) {
     if (!recursion_guard_(builder, level, "tokens_section")) return false;
     if (!nextTokenIs(builder, ALEX_TOKENS)) return false;
@@ -525,20 +520,37 @@ public class AlexParser implements PsiParser, LightPsiParser {
     Marker marker = enter_section_(builder, level, _NONE_, ALEX_TOKENS_SECTION, null);
     result = consumeTokens(builder, 1, ALEX_TOKENS, ALEX_A_SYMBOL_FOLLOWED_BY_TOKENS);
     pinned = result; // pin = 1
-    result = result && report_error_(builder, endOfLine(builder, level + 1));
-    result = pinned && tokens_section_3(builder, level + 1) && result;
+    result = result && tokens_section_2(builder, level + 1);
     exit_section_(builder, level, marker, result, pinned, null);
     return result || pinned;
   }
 
-  // tokens_rule*
-  private static boolean tokens_section_3(PsiBuilder builder, int level) {
-    if (!recursion_guard_(builder, level, "tokens_section_3")) return false;
+  // (endOfLine? tokens_rule)*
+  private static boolean tokens_section_2(PsiBuilder builder, int level) {
+    if (!recursion_guard_(builder, level, "tokens_section_2")) return false;
     while (true) {
       int pos = current_position_(builder);
-      if (!tokens_rule(builder, level + 1)) break;
-      if (!empty_element_parsed_guard_(builder, "tokens_section_3", pos)) break;
+      if (!tokens_section_2_0(builder, level + 1)) break;
+      if (!empty_element_parsed_guard_(builder, "tokens_section_2", pos)) break;
     }
+    return true;
+  }
+
+  // endOfLine? tokens_rule
+  private static boolean tokens_section_2_0(PsiBuilder builder, int level) {
+    if (!recursion_guard_(builder, level, "tokens_section_2_0")) return false;
+    boolean result;
+    Marker marker = enter_section_(builder);
+    result = tokens_section_2_0_0(builder, level + 1);
+    result = result && tokens_rule(builder, level + 1);
+    exit_section_(builder, marker, null, result);
+    return result;
+  }
+
+  // endOfLine?
+  private static boolean tokens_section_2_0_0(PsiBuilder builder, int level) {
+    if (!recursion_guard_(builder, level, "tokens_section_2_0_0")) return false;
+    endOfLine(builder, level + 1);
     return true;
   }
 
