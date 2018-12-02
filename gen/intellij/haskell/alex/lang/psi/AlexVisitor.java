@@ -3,6 +3,7 @@ package intellij.haskell.alex.lang.psi;
 
 import org.jetbrains.annotations.*;
 import com.intellij.psi.PsiElementVisitor;
+import com.intellij.psi.PsiNameIdentifierOwner;
 
 public class AlexVisitor extends PsiElementVisitor {
 
@@ -46,6 +47,10 @@ public class AlexVisitor extends PsiElementVisitor {
     visitElement(o);
   }
 
+  public void visitTokenSetId(@NotNull AlexTokenSetId o) {
+    visitPsiNameIdentifierOwner(o);
+  }
+
   public void visitTokensRule(@NotNull AlexTokensRule o) {
     visitElement(o);
   }
@@ -63,6 +68,10 @@ public class AlexVisitor extends PsiElementVisitor {
   }
 
   public void visitWrapperType(@NotNull AlexWrapperType o) {
+    visitElement(o);
+  }
+
+  public void visitPsiNameIdentifierOwner(@NotNull PsiNameIdentifierOwner o) {
     visitElement(o);
   }
 

@@ -31,4 +31,10 @@ public class AlexRegexImpl extends AlexElementImpl implements AlexRegex {
     return findChildByClass(AlexRegexPart.class);
   }
 
+  @Override
+  @Nullable
+  public AlexTokenSetId getTokenSetId() {
+    return findChildByClass(AlexTokenSetId.class);
+  }
+
 }

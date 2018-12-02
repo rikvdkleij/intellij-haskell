@@ -10,4 +10,7 @@ public interface AlexTokenSetDeclaration extends AlexElement {
   @NotNull
   List<AlexRegex> getRegexList();
 
+  @NotNull
+  AlexTokenSetId getTokenSetId();
+
 }

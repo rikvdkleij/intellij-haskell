@@ -10,4 +10,7 @@ public interface AlexRegex extends AlexElement {
   @Nullable
   AlexRegexPart getRegexPart();
 
+  @Nullable
+  AlexTokenSetId getTokenSetId();
+
 }

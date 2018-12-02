@@ -53,6 +53,9 @@ public class AlexParser implements PsiParser, LightPsiParser {
     else if (type == ALEX_TOKEN_SET_DECLARATION) {
       result = token_set_declaration(builder, 0);
     }
+    else if (type == ALEX_TOKEN_SET_ID) {
+      result = token_set_id(builder, 0);
+    }
     else if (type == ALEX_TOKENS_RULE) {
       result = tokens_rule(builder, 0);
     }
@@ -276,14 +279,14 @@ public class AlexParser implements PsiParser, LightPsiParser {
   }
 
   /* ********************************************************** */
-  // regex_part | DOLLAR_AND_IDENTIFIER
+  // regex_part | token_set_id
   public static boolean regex(PsiBuilder builder, int level) {
     if (!recursion_guard_(builder, level, "regex")) return false;
     if (!nextTokenIs(builder, "<regex>", ALEX_DOLLAR_AND_IDENTIFIER, ALEX_REGEX_PART_TOKEN)) return false;
     boolean result;
     Marker marker = enter_section_(builder, level, _NONE_, ALEX_REGEX, "<regex>");
     result = regex_part(builder, level + 1);
-    if (!result) result = consumeToken(builder, ALEX_DOLLAR_AND_IDENTIFIER);
+    if (!result) result = token_set_id(builder, level + 1);
     exit_section_(builder, level, marker, result, false, null);
     return result;
   }
@@ -474,15 +477,16 @@ public class AlexParser implements PsiParser, LightPsiParser {
   }
 
   /* ********************************************************** */
-  // DOLLAR_AND_IDENTIFIER EQUAL regex*
+  // token_set_id EQUAL regex*
   public static boolean token_set_declaration(PsiBuilder builder, int level) {
     if (!recursion_guard_(builder, level, "token_set_declaration")) return false;
     if (!nextTokenIs(builder, ALEX_DOLLAR_AND_IDENTIFIER)) return false;
     boolean result, pinned;
     Marker marker = enter_section_(builder, level, _NONE_, ALEX_TOKEN_SET_DECLARATION, null);
-    result = consumeTokens(builder, 1, ALEX_DOLLAR_AND_IDENTIFIER, ALEX_EQUAL);
+    result = token_set_id(builder, level + 1);
     pinned = result; // pin = 1
-    result = result && token_set_declaration_2(builder, level + 1);
+    result = result && report_error_(builder, consumeToken(builder, ALEX_EQUAL));
+    result = pinned && token_set_declaration_2(builder, level + 1) && result;
     exit_section_(builder, level, marker, result, pinned, null);
     return result || pinned;
   }
@@ -496,6 +500,18 @@ public class AlexParser implements PsiParser, LightPsiParser {
       if (!empty_element_parsed_guard_(builder, "token_set_declaration_2", pos)) break;
     }
     return true;
+  }
+
+  /* ********************************************************** */
+  // DOLLAR_AND_IDENTIFIER
+  public static boolean token_set_id(PsiBuilder builder, int level) {
+    if (!recursion_guard_(builder, level, "token_set_id")) return false;
+    if (!nextTokenIs(builder, ALEX_DOLLAR_AND_IDENTIFIER)) return false;
+    boolean result;
+    Marker marker = enter_section_(builder);
+    result = consumeToken(builder, ALEX_DOLLAR_AND_IDENTIFIER);
+    exit_section_(builder, marker, ALEX_TOKEN_SET_ID, result);
+    return result;
   }
 
   /* ********************************************************** */

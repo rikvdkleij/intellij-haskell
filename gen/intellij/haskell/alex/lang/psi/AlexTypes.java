@@ -20,6 +20,7 @@ public interface AlexTypes {
   IElementType ALEX_TOKENS_RULE = new AlexTokenType("ALEX_TOKENS_RULE");
   IElementType ALEX_TOKENS_SECTION = new AlexTokenType("ALEX_TOKENS_SECTION");
   IElementType ALEX_TOKEN_SET_DECLARATION = new AlexTokenType("ALEX_TOKEN_SET_DECLARATION");
+  IElementType ALEX_TOKEN_SET_ID = new AlexTokenType("ALEX_TOKEN_SET_ID");
   IElementType ALEX_TOP_MODULE_SECTION = new AlexTokenType("ALEX_TOP_MODULE_SECTION");
   IElementType ALEX_USER_CODE_SECTION = new AlexTokenType("ALEX_USER_CODE_SECTION");
   IElementType ALEX_WRAPPER_TYPE = new AlexTokenType("ALEX_WRAPPER_TYPE");
@@ -81,6 +82,9 @@ public interface AlexTypes {
       }
       else if (type == ALEX_TOKEN_SET_DECLARATION) {
         return new AlexTokenSetDeclarationImpl(node);
+      }
+      else if (type == ALEX_TOKEN_SET_ID) {
+        return new AlexTokenSetIdImpl(node);
       }
       else if (type == ALEX_TOP_MODULE_SECTION) {
         return new AlexTopModuleSectionImpl(node);

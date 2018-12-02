@@ -31,4 +31,10 @@ public class AlexTokenSetDeclarationImpl extends AlexElementImpl implements Alex
     return PsiTreeUtil.getChildrenOfTypeAsList(this, AlexRegex.class);
   }
 
+  @Override
+  @NotNull
+  public AlexTokenSetId getTokenSetId() {
+    return findNotNullChildByClass(AlexTokenSetId.class);
+  }
+
 }

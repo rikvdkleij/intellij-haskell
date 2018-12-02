@@ -33,8 +33,13 @@ declaration ::= token_set_declaration | rule_declaration
 
 regex_part ::= REGEX_PART_TOKEN
 identifier ::= HASKELL_IDENTIFIER
-regex ::= (regex_part | DOLLAR_AND_IDENTIFIER)
-token_set_declaration ::= DOLLAR_AND_IDENTIFIER EQUAL regex* {
+regex ::= (regex_part | token_set_id)
+token_set_id ::= DOLLAR_AND_IDENTIFIER {
+  mixin='intellij.haskell.alex.lang.psi.impl.AlexTokenSetIdMixin'
+  implements='com.intellij.psi.PsiNameIdentifierOwner'
+}
+
+token_set_declaration ::= token_set_id EQUAL regex* {
   pin=1
 }
 
