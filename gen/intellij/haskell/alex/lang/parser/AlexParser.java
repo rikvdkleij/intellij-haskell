@@ -44,6 +44,9 @@ public class AlexParser implements PsiParser, LightPsiParser {
     else if (type == ALEX_RULE_DESCRIPTION) {
       result = rule_description(builder, 0);
     }
+    else if (type == ALEX_RULE_ID) {
+      result = rule_id(builder, 0);
+    }
     else if (type == ALEX_STATEFUL_TOKENS_RULE) {
       result = stateful_tokens_rule(builder, 0);
     }
@@ -304,15 +307,16 @@ public class AlexParser implements PsiParser, LightPsiParser {
   }
 
   /* ********************************************************** */
-  // EMAIL_AND_IDENTIFIER EQUAL regex*
+  // rule_id EQUAL regex*
   public static boolean rule_declaration(PsiBuilder builder, int level) {
     if (!recursion_guard_(builder, level, "rule_declaration")) return false;
     if (!nextTokenIs(builder, ALEX_EMAIL_AND_IDENTIFIER)) return false;
     boolean result, pinned;
     Marker marker = enter_section_(builder, level, _NONE_, ALEX_RULE_DECLARATION, null);
-    result = consumeTokens(builder, 1, ALEX_EMAIL_AND_IDENTIFIER, ALEX_EQUAL);
+    result = rule_id(builder, level + 1);
     pinned = result; // pin = 1
-    result = result && rule_declaration_2(builder, level + 1);
+    result = result && report_error_(builder, consumeToken(builder, ALEX_EQUAL));
+    result = pinned && rule_declaration_2(builder, level + 1) && result;
     exit_section_(builder, level, marker, result, pinned, null);
     return result || pinned;
   }
@@ -329,7 +333,7 @@ public class AlexParser implements PsiParser, LightPsiParser {
   }
 
   /* ********************************************************** */
-  // EMAIL_AND_IDENTIFIER
+  // rule_id
   //  | STRING
   //  | HASKELL_IDENTIFIER
   //  | LEFT_LISP RIGHT_LISP
@@ -339,7 +343,7 @@ public class AlexParser implements PsiParser, LightPsiParser {
     if (!recursion_guard_(builder, level, "rule_description")) return false;
     boolean result;
     Marker marker = enter_section_(builder, level, _NONE_, ALEX_RULE_DESCRIPTION, "<rule description>");
-    result = consumeToken(builder, ALEX_EMAIL_AND_IDENTIFIER);
+    result = rule_id(builder, level + 1);
     if (!result) result = consumeToken(builder, ALEX_STRING);
     if (!result) result = consumeToken(builder, ALEX_HASKELL_IDENTIFIER);
     if (!result) result = parseTokens(builder, 0, ALEX_LEFT_LISP, ALEX_RIGHT_LISP);
@@ -361,6 +365,18 @@ public class AlexParser implements PsiParser, LightPsiParser {
       if (!empty_element_parsed_guard_(builder, "rule_description_5", pos)) break;
     }
     exit_section_(builder, marker, null, result);
+    return result;
+  }
+
+  /* ********************************************************** */
+  // EMAIL_AND_IDENTIFIER
+  public static boolean rule_id(PsiBuilder builder, int level) {
+    if (!recursion_guard_(builder, level, "rule_id")) return false;
+    if (!nextTokenIs(builder, ALEX_EMAIL_AND_IDENTIFIER)) return false;
+    boolean result;
+    Marker marker = enter_section_(builder);
+    result = consumeToken(builder, ALEX_EMAIL_AND_IDENTIFIER);
+    exit_section_(builder, marker, ALEX_RULE_ID, result);
     return result;
   }
 

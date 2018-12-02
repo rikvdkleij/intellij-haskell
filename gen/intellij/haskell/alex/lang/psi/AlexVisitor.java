@@ -35,6 +35,10 @@ public class AlexVisitor extends PsiElementVisitor {
     visitElement(o);
   }
 
+  public void visitRuleId(@NotNull AlexRuleId o) {
+    visitPsiNameIdentifierOwner(o);
+  }
+
   public void visitStatefulTokensRule(@NotNull AlexStatefulTokensRule o) {
     visitElement(o);
   }

@@ -15,6 +15,7 @@ public interface AlexTypes {
   IElementType ALEX_REGEX_PART = new AlexTokenType("ALEX_REGEX_PART");
   IElementType ALEX_RULE_DECLARATION = new AlexTokenType("ALEX_RULE_DECLARATION");
   IElementType ALEX_RULE_DESCRIPTION = new AlexTokenType("ALEX_RULE_DESCRIPTION");
+  IElementType ALEX_RULE_ID = new AlexTokenType("ALEX_RULE_ID");
   IElementType ALEX_STATEFUL_TOKENS_RULE = new AlexTokenType("ALEX_STATEFUL_TOKENS_RULE");
   IElementType ALEX_STATELESS_TOKENS_RULE = new AlexTokenType("ALEX_STATELESS_TOKENS_RULE");
   IElementType ALEX_TOKENS_RULE = new AlexTokenType("ALEX_TOKENS_RULE");
@@ -67,6 +68,9 @@ public interface AlexTypes {
       }
       else if (type == ALEX_RULE_DESCRIPTION) {
         return new AlexRuleDescriptionImpl(node);
+      }
+      else if (type == ALEX_RULE_ID) {
+        return new AlexRuleIdImpl(node);
       }
       else if (type == ALEX_STATEFUL_TOKENS_RULE) {
         return new AlexStatefulTokensRuleImpl(node);

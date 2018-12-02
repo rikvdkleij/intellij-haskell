@@ -31,4 +31,10 @@ public class AlexRuleDescriptionImpl extends AlexElementImpl implements AlexRule
     return PsiTreeUtil.getChildrenOfTypeAsList(this, AlexRegex.class);
   }
 
+  @Override
+  @Nullable
+  public AlexRuleId getRuleId() {
+    return findChildByClass(AlexRuleId.class);
+  }
+
 }

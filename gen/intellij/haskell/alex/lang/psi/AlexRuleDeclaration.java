@@ -10,4 +10,7 @@ public interface AlexRuleDeclaration extends AlexElement {
   @NotNull
   List<AlexRegex> getRegexList();
 
+  @NotNull
+  AlexRuleId getRuleId();
+
 }

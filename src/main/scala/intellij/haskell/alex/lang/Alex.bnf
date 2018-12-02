@@ -34,8 +34,14 @@ declaration ::= token_set_declaration | rule_declaration
 regex_part ::= REGEX_PART_TOKEN
 identifier ::= HASKELL_IDENTIFIER
 regex ::= (regex_part | token_set_id)
+
 token_set_id ::= DOLLAR_AND_IDENTIFIER {
-  mixin='intellij.haskell.alex.lang.psi.impl.AlexTokenSetIdMixin'
+  mixin='intellij.haskell.alex.lang.psi.impl.AlexIdMixin'
+  implements='com.intellij.psi.PsiNameIdentifierOwner'
+}
+
+rule_id ::= EMAIL_AND_IDENTIFIER {
+  mixin='intellij.haskell.alex.lang.psi.impl.AlexIdMixin'
   implements='com.intellij.psi.PsiNameIdentifierOwner'
 }
 
@@ -43,7 +49,7 @@ token_set_declaration ::= token_set_id EQUAL regex* {
   pin=1
 }
 
-rule_declaration ::= EMAIL_AND_IDENTIFIER EQUAL regex* {
+rule_declaration ::= rule_id EQUAL regex* {
   pin=1
 }
 
@@ -81,7 +87,7 @@ private token_rule_body ::=
 }
 
 rule_description ::=
-   EMAIL_AND_IDENTIFIER
+   rule_id
  | STRING
  | HASKELL_IDENTIFIER
  | LEFT_LISP RIGHT_LISP

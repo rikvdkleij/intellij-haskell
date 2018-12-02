@@ -1,5 +1,6 @@
 package intellij.haskell.alex.lang.psi.impl
 
+import java.util
 import java.util.Objects
 
 import com.intellij.lang.ASTNode
@@ -9,12 +10,14 @@ import com.intellij.psi.util.PsiTreeUtil
 import com.intellij.util.IncorrectOperationException
 import intellij.haskell.alex.lang.psi._
 
+import scala.collection.mutable
+
 /**
   * @author ice1000
   * @param node ast node
   */
-abstract class AlexTokenSetIdMixin(node: ASTNode) extends AlexElementImpl(node)
-  with AlexTokenSetId with PsiNameIdentifierOwner with PsiPolyVariantReference {
+abstract class AlexIdMixin(node: ASTNode) extends AlexElementImpl(node)
+  with PsiNameIdentifierOwner with PsiPolyVariantReference {
   override def resolve(): PsiElement = {
     val r = multiResolve(false)
     if (r.isEmpty) null
@@ -24,13 +27,16 @@ abstract class AlexTokenSetIdMixin(node: ASTNode) extends AlexElementImpl(node)
   override def multiResolve(b: Boolean): Array[ResolveResult] = {
     val declarations = getAlexDeclarationsSection
     if (declarations == null) return Array()
-    declarations
-      .getDeclarationList
-      .stream
-      .map[AlexTokenSetDeclaration](_.getTokenSetDeclaration)
-      .filter(o => Objects.nonNull(o))
-      .filter(o => o.getTokenSetId.getText eq getText)
-      .toArray(s => new Array[ResolveResult](s))
+    val variants = mutable.MutableList[ResolveResult]()
+    declarations.getDeclarationList.forEach { decl =>
+      val tokenSet = decl.getTokenSetDeclaration
+      if (tokenSet != null && (tokenSet.getTokenSetId.getText equals getText))
+        variants += new PsiElementResolveResult(tokenSet.getTokenSetId)
+      val rules = decl.getRuleDeclaration
+      if (rules != null && (rules.getRuleId.getText equals getText))
+        variants += new PsiElementResolveResult(rules.getRuleId)
+    }
+    variants.toArray
   }
 
   private def getAlexDeclarationsSection: AlexDeclarationsSection = {
@@ -44,13 +50,14 @@ abstract class AlexTokenSetIdMixin(node: ASTNode) extends AlexElementImpl(node)
   override def getVariants: Array[AnyRef] = {
     val declarations = getAlexDeclarationsSection
     if (declarations == null) return Array()
-    declarations
-      .getDeclarationList
-      .stream
-      .map[AlexTokenSetDeclaration](_.getTokenSetDeclaration)
-      .filter(o => Objects.nonNull(o))
-      .map[String](o => o.getTokenSetId.getText)
-      .toArray(s => new Array[AnyRef](s))
+    val variants = mutable.MutableList[AnyRef]()
+    declarations.getDeclarationList.forEach { decl =>
+      val tokenSet = decl.getTokenSetDeclaration
+      if (tokenSet != null) variants += tokenSet.getTokenSetId.getText
+      val rules = decl.getRuleDeclaration
+      if (rules != null) variants += rules.getRuleId.getText
+    }
+    variants.toArray
   }
 
   override def getElement: PsiElement = {
@@ -63,7 +70,7 @@ abstract class AlexTokenSetIdMixin(node: ASTNode) extends AlexElementImpl(node)
     range
   }
 
-  override def getReference: AlexTokenSetIdMixin = {
+  override def getReference: AlexIdMixin = {
     this
   }
 

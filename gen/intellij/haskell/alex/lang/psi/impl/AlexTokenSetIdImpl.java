@@ -10,7 +10,7 @@ import com.intellij.psi.util.PsiTreeUtil;
 import static intellij.haskell.alex.lang.psi.AlexTypes.*;
 import intellij.haskell.alex.lang.psi.*;
 
-public class AlexTokenSetIdImpl extends AlexTokenSetIdMixin implements AlexTokenSetId {
+public class AlexTokenSetIdImpl extends AlexIdMixin implements AlexTokenSetId {
 
   public AlexTokenSetIdImpl(ASTNode node) {
     super(node);
