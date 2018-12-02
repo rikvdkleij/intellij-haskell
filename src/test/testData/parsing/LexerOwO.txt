@@ -245,7 +245,7 @@ Alex file
     PsiElement(EOL)('\n')
     PsiElement(EOL)('\n')
   AlexTokensSectionImpl(ALEX_TOKENS_SECTION)
-    PsiElement(TOKENS)('tokens')
+    PsiElement(HASKELL_IDENTIFIER)('tokens')
     PsiWhiteSpace(' ')
     PsiElement(A_SYMBOL_FOLLOWED_BY_TOKENS)(':-')
     PsiElement(EOL)('\n')

@@ -511,14 +511,14 @@ public class AlexParser implements PsiParser, LightPsiParser {
   }
 
   /* ********************************************************** */
-  // TOKENS A_SYMBOL_FOLLOWED_BY_TOKENS
+  // HASKELL_IDENTIFIER A_SYMBOL_FOLLOWED_BY_TOKENS
   //  (endOfLine? tokens_rule)*
   public static boolean tokens_section(PsiBuilder builder, int level) {
     if (!recursion_guard_(builder, level, "tokens_section")) return false;
-    if (!nextTokenIs(builder, ALEX_TOKENS)) return false;
+    if (!nextTokenIs(builder, ALEX_HASKELL_IDENTIFIER)) return false;
     boolean result, pinned;
     Marker marker = enter_section_(builder, level, _NONE_, ALEX_TOKENS_SECTION, null);
-    result = consumeTokens(builder, 1, ALEX_TOKENS, ALEX_A_SYMBOL_FOLLOWED_BY_TOKENS);
+    result = consumeTokens(builder, 1, ALEX_HASKELL_IDENTIFIER, ALEX_A_SYMBOL_FOLLOWED_BY_TOKENS);
     pinned = result; // pin = 1
     result = result && tokens_section_2(builder, level + 1);
     exit_section_(builder, level, marker, result, pinned, null);

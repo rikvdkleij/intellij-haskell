@@ -31,10 +31,10 @@ class AlexSyntaxHighlighter extends SyntaxHighlighter {
 
   override def getTokenHighlights(t: IElementType): Array[TextAttributesKey] = {
     t match {
-      case AlexTypes.ALEX_TOKENS => pack(AlexSyntaxHighlighter.KEYWORD)
       case AlexTypes.ALEX_A_SYMBOL_FOLLOWED_BY_TOKENS => pack(AlexSyntaxHighlighter.KEYWORD)
       case AlexTypes.ALEX_STRING => pack(AlexSyntaxHighlighter.STRINGS)
       case AlexTypes.ALEX_PUBLIC_REGEX => pack(AlexSyntaxHighlighter.STRINGS)
+      case AlexTypes.ALEX_HASKELL_IDENTIFIER => pack(AlexSyntaxHighlighter.STRINGS)
       case AlexTypes.ALEX_SOMETHING_IS_GONNA_HAPPEN => pack(AlexSyntaxHighlighter.BRACES)
       case AlexTypes.ALEX_SOMETHING_HAS_ALREADY_HAPPENED => pack(AlexSyntaxHighlighter.BRACES)
       case AlexTypes.ALEX_LEFT_LISP => pack(AlexSyntaxHighlighter.PARENTHESIS)

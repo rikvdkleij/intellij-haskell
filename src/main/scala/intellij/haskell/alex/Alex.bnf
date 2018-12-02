@@ -55,7 +55,7 @@ wrapper_type ::= WRAPPER_TYPE_IS_GONNA_BE_HERE STRING {
 }
 
 tokens_section ::=
- TOKENS A_SYMBOL_FOLLOWED_BY_TOKENS
+ HASKELL_IDENTIFIER A_SYMBOL_FOLLOWED_BY_TOKENS
  (endOfLine? tokens_rule)* {
   pin=1
 }

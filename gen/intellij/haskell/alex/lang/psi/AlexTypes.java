@@ -41,7 +41,6 @@ public interface AlexTypes {
   IElementType ALEX_STATEFUL_TOKENS_RULE_END = new AlexTokenType("STATEFUL_TOKENS_RULE_END");
   IElementType ALEX_STATEFUL_TOKENS_RULE_START = new AlexTokenType("STATEFUL_TOKENS_RULE_START");
   IElementType ALEX_STRING = new AlexTokenType("STRING");
-  IElementType ALEX_TOKENS = new AlexTokenType("TOKENS");
   IElementType ALEX_WRAPPER_TYPE_IS_GONNA_BE_HERE = new AlexTokenType("WRAPPER_TYPE_IS_GONNA_BE_HERE");
 
   class Factory {

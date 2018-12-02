@@ -69,7 +69,6 @@ PUBLIC_REGEX=\\[^]|{IDENTIFIER_CHAR}|[\?\*\^\#]
 {WHITE_SPACE} { return WHITE_SPACE; }
 "<" { return AlexTypes.ALEX_STATEFUL_TOKENS_RULE_START; }
 ">" { yybegin(AFTER_STATE); return AlexTypes.ALEX_STATEFUL_TOKENS_RULE_END; }
-tokens { return AlexTypes.ALEX_TOKENS; }
 :- { afterTokens = true; return AlexTypes.ALEX_A_SYMBOL_FOLLOWED_BY_TOKENS; }
 = { yybegin(AFTER_EQ); return AlexTypes.ALEX_EQUAL; }
 "{" { nestedLeftBraces++; yybegin(SOMETHING); return AlexTypes.ALEX_SOMETHING_IS_GONNA_HAPPEN; }
