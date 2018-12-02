@@ -259,6 +259,8 @@
         <!-- Matcher -->
         <lang.braceMatcher language="Haskell"
                            implementationClass="intellij.haskell.highlighter.HaskellBraceMatcher"/>
+        <lang.braceMatcher language="Alex"
+                           implementationClass="intellij.haskell.alex.lang.AlexBraceMatcher"/>
 
         <!-- Doc-Provider -->
         <lang.documentationProvider language="Haskell"
