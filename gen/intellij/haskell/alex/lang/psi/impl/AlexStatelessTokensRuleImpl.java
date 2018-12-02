@@ -25,4 +25,10 @@ public class AlexStatelessTokensRuleImpl extends AlexElementImpl implements Alex
     else super.accept(visitor);
   }
 
+  @Override
+  @NotNull
+  public AlexRuleDescription getRuleDescription() {
+    return findNotNullChildByClass(AlexRuleDescription.class);
+  }
+
 }

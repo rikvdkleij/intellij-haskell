@@ -7,4 +7,7 @@ import com.intellij.psi.PsiElement;
 
 public interface AlexStatelessTokensRule extends AlexElement {
 
+  @NotNull
+  AlexRuleDescription getRuleDescription();
+
 }

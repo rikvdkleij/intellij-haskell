@@ -26,9 +26,9 @@ public class AlexTokenSetDeclarationImpl extends AlexElementImpl implements Alex
   }
 
   @Override
-  @Nullable
-  public AlexRegex getRegex() {
-    return findChildByClass(AlexRegex.class);
+  @NotNull
+  public List<AlexRegex> getRegexList() {
+    return PsiTreeUtil.getChildrenOfTypeAsList(this, AlexRegex.class);
   }
 
 }

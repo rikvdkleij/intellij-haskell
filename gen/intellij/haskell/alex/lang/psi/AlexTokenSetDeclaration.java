@@ -7,7 +7,7 @@ import com.intellij.psi.PsiElement;
 
 public interface AlexTokenSetDeclaration extends AlexElement {
 
-  @Nullable
-  AlexRegex getRegex();
+  @NotNull
+  List<AlexRegex> getRegexList();
 
 }

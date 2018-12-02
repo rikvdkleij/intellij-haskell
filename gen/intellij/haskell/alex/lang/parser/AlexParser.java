@@ -41,6 +41,9 @@ public class AlexParser implements PsiParser, LightPsiParser {
     else if (type == ALEX_RULE_DECLARATION) {
       result = rule_declaration(builder, 0);
     }
+    else if (type == ALEX_RULE_DESCRIPTION) {
+      result = rule_description(builder, 0);
+    }
     else if (type == ALEX_STATEFUL_TOKENS_RULE) {
       result = stateful_tokens_rule(builder, 0);
     }
@@ -79,7 +82,7 @@ public class AlexParser implements PsiParser, LightPsiParser {
   // (top_module_section endOfLine+)
   //  (wrapper_type endOfLine+)?
   //  (declarations_section)
-  //  (tokens_section endOfLine+)
+  //  (tokens_section endOfLine?)
   //  (user_code_section endOfLine*)
   static boolean alex_file(PsiBuilder builder, int level) {
     if (!recursion_guard_(builder, level, "alex_file")) return false;
@@ -165,7 +168,7 @@ public class AlexParser implements PsiParser, LightPsiParser {
     return result;
   }
 
-  // tokens_section endOfLine+
+  // tokens_section endOfLine?
   private static boolean alex_file_3(PsiBuilder builder, int level) {
     if (!recursion_guard_(builder, level, "alex_file_3")) return false;
     boolean result;
@@ -176,19 +179,11 @@ public class AlexParser implements PsiParser, LightPsiParser {
     return result;
   }
 
-  // endOfLine+
+  // endOfLine?
   private static boolean alex_file_3_1(PsiBuilder builder, int level) {
     if (!recursion_guard_(builder, level, "alex_file_3_1")) return false;
-    boolean result;
-    Marker marker = enter_section_(builder);
-    result = endOfLine(builder, level + 1);
-    while (result) {
-      int pos = current_position_(builder);
-      if (!endOfLine(builder, level + 1)) break;
-      if (!empty_element_parsed_guard_(builder, "alex_file_3_1", pos)) break;
-    }
-    exit_section_(builder, marker, null, result);
-    return result;
+    endOfLine(builder, level + 1);
+    return true;
   }
 
   // user_code_section endOfLine*
@@ -281,25 +276,15 @@ public class AlexParser implements PsiParser, LightPsiParser {
   }
 
   /* ********************************************************** */
-  // (regex_part | DOLLAR_AND_IDENTIFIER)*
+  // regex_part | DOLLAR_AND_IDENTIFIER
   public static boolean regex(PsiBuilder builder, int level) {
     if (!recursion_guard_(builder, level, "regex")) return false;
-    Marker marker = enter_section_(builder, level, _NONE_, ALEX_REGEX, "<regex>");
-    while (true) {
-      int pos = current_position_(builder);
-      if (!regex_0(builder, level + 1)) break;
-      if (!empty_element_parsed_guard_(builder, "regex", pos)) break;
-    }
-    exit_section_(builder, level, marker, true, false, null);
-    return true;
-  }
-
-  // regex_part | DOLLAR_AND_IDENTIFIER
-  private static boolean regex_0(PsiBuilder builder, int level) {
-    if (!recursion_guard_(builder, level, "regex_0")) return false;
+    if (!nextTokenIs(builder, "<regex>", ALEX_DOLLAR_AND_IDENTIFIER, ALEX_REGEX_PART_TOKEN)) return false;
     boolean result;
+    Marker marker = enter_section_(builder, level, _NONE_, ALEX_REGEX, "<regex>");
     result = regex_part(builder, level + 1);
     if (!result) result = consumeToken(builder, ALEX_DOLLAR_AND_IDENTIFIER);
+    exit_section_(builder, level, marker, result, false, null);
     return result;
   }
 
@@ -316,7 +301,7 @@ public class AlexParser implements PsiParser, LightPsiParser {
   }
 
   /* ********************************************************** */
-  // EMAIL_AND_IDENTIFIER EQUAL regex
+  // EMAIL_AND_IDENTIFIER EQUAL regex*
   public static boolean rule_declaration(PsiBuilder builder, int level) {
     if (!recursion_guard_(builder, level, "rule_declaration")) return false;
     if (!nextTokenIs(builder, ALEX_EMAIL_AND_IDENTIFIER)) return false;
@@ -324,15 +309,56 @@ public class AlexParser implements PsiParser, LightPsiParser {
     Marker marker = enter_section_(builder, level, _NONE_, ALEX_RULE_DECLARATION, null);
     result = consumeTokens(builder, 1, ALEX_EMAIL_AND_IDENTIFIER, ALEX_EQUAL);
     pinned = result; // pin = 1
-    result = result && regex(builder, level + 1);
+    result = result && rule_declaration_2(builder, level + 1);
     exit_section_(builder, level, marker, result, pinned, null);
     return result || pinned;
+  }
+
+  // regex*
+  private static boolean rule_declaration_2(PsiBuilder builder, int level) {
+    if (!recursion_guard_(builder, level, "rule_declaration_2")) return false;
+    while (true) {
+      int pos = current_position_(builder);
+      if (!regex(builder, level + 1)) break;
+      if (!empty_element_parsed_guard_(builder, "rule_declaration_2", pos)) break;
+    }
+    return true;
+  }
+
+  /* ********************************************************** */
+  // EMAIL_AND_IDENTIFIER
+  //  | STRING
+  //  | regex+
+  public static boolean rule_description(PsiBuilder builder, int level) {
+    if (!recursion_guard_(builder, level, "rule_description")) return false;
+    boolean result;
+    Marker marker = enter_section_(builder, level, _NONE_, ALEX_RULE_DESCRIPTION, "<rule description>");
+    result = consumeToken(builder, ALEX_EMAIL_AND_IDENTIFIER);
+    if (!result) result = consumeToken(builder, ALEX_STRING);
+    if (!result) result = rule_description_2(builder, level + 1);
+    exit_section_(builder, level, marker, result, false, null);
+    return result;
+  }
+
+  // regex+
+  private static boolean rule_description_2(PsiBuilder builder, int level) {
+    if (!recursion_guard_(builder, level, "rule_description_2")) return false;
+    boolean result;
+    Marker marker = enter_section_(builder);
+    result = regex(builder, level + 1);
+    while (result) {
+      int pos = current_position_(builder);
+      if (!regex(builder, level + 1)) break;
+      if (!empty_element_parsed_guard_(builder, "rule_description_2", pos)) break;
+    }
+    exit_section_(builder, marker, null, result);
+    return result;
   }
 
   /* ********************************************************** */
   // STATEFUL_TOKENS_RULE_START
   //  identifier
-  //  STATEFUL_TOKENS_RULE_END endOfLine?
+  //  STATEFUL_TOKENS_RULE_END
   //  tokens_rule_body endOfLine?
   public static boolean stateful_tokens_rule(PsiBuilder builder, int level) {
     if (!recursion_guard_(builder, level, "stateful_tokens_rule")) return false;
@@ -343,40 +369,32 @@ public class AlexParser implements PsiParser, LightPsiParser {
     pinned = result; // pin = 1
     result = result && report_error_(builder, identifier(builder, level + 1));
     result = pinned && report_error_(builder, consumeToken(builder, ALEX_STATEFUL_TOKENS_RULE_END)) && result;
-    result = pinned && report_error_(builder, stateful_tokens_rule_3(builder, level + 1)) && result;
     result = pinned && report_error_(builder, tokens_rule_body(builder, level + 1)) && result;
-    result = pinned && stateful_tokens_rule_5(builder, level + 1) && result;
+    result = pinned && stateful_tokens_rule_4(builder, level + 1) && result;
     exit_section_(builder, level, marker, result, pinned, null);
     return result || pinned;
   }
 
   // endOfLine?
-  private static boolean stateful_tokens_rule_3(PsiBuilder builder, int level) {
-    if (!recursion_guard_(builder, level, "stateful_tokens_rule_3")) return false;
-    endOfLine(builder, level + 1);
-    return true;
-  }
-
-  // endOfLine?
-  private static boolean stateful_tokens_rule_5(PsiBuilder builder, int level) {
-    if (!recursion_guard_(builder, level, "stateful_tokens_rule_5")) return false;
+  private static boolean stateful_tokens_rule_4(PsiBuilder builder, int level) {
+    if (!recursion_guard_(builder, level, "stateful_tokens_rule_4")) return false;
     endOfLine(builder, level + 1);
     return true;
   }
 
   /* ********************************************************** */
-  // EMAIL_AND_IDENTIFIER
+  // rule_description
   //  SOMETHING_IS_GONNA_HAPPEN
   //  (SOMETHING_IS_HAPPENING | endOfLine)*
   //  SOMETHING_HAS_ALREADY_HAPPENED
   public static boolean stateless_tokens_rule(PsiBuilder builder, int level) {
     if (!recursion_guard_(builder, level, "stateless_tokens_rule")) return false;
-    if (!nextTokenIs(builder, ALEX_EMAIL_AND_IDENTIFIER)) return false;
     boolean result, pinned;
-    Marker marker = enter_section_(builder, level, _NONE_, ALEX_STATELESS_TOKENS_RULE, null);
-    result = consumeTokens(builder, 1, ALEX_EMAIL_AND_IDENTIFIER, ALEX_SOMETHING_IS_GONNA_HAPPEN);
+    Marker marker = enter_section_(builder, level, _NONE_, ALEX_STATELESS_TOKENS_RULE, "<stateless tokens rule>");
+    result = rule_description(builder, level + 1);
     pinned = result; // pin = 1
-    result = result && report_error_(builder, stateless_tokens_rule_2(builder, level + 1));
+    result = result && report_error_(builder, consumeToken(builder, ALEX_SOMETHING_IS_GONNA_HAPPEN));
+    result = pinned && report_error_(builder, stateless_tokens_rule_2(builder, level + 1)) && result;
     result = pinned && consumeToken(builder, ALEX_SOMETHING_HAS_ALREADY_HAPPENED) && result;
     exit_section_(builder, level, marker, result, pinned, null);
     return result || pinned;
@@ -403,7 +421,7 @@ public class AlexParser implements PsiParser, LightPsiParser {
   }
 
   /* ********************************************************** */
-  // DOLLAR_AND_IDENTIFIER EQUAL regex
+  // DOLLAR_AND_IDENTIFIER EQUAL regex*
   public static boolean token_set_declaration(PsiBuilder builder, int level) {
     if (!recursion_guard_(builder, level, "token_set_declaration")) return false;
     if (!nextTokenIs(builder, ALEX_DOLLAR_AND_IDENTIFIER)) return false;
@@ -411,16 +429,26 @@ public class AlexParser implements PsiParser, LightPsiParser {
     Marker marker = enter_section_(builder, level, _NONE_, ALEX_TOKEN_SET_DECLARATION, null);
     result = consumeTokens(builder, 1, ALEX_DOLLAR_AND_IDENTIFIER, ALEX_EQUAL);
     pinned = result; // pin = 1
-    result = result && regex(builder, level + 1);
+    result = result && token_set_declaration_2(builder, level + 1);
     exit_section_(builder, level, marker, result, pinned, null);
     return result || pinned;
+  }
+
+  // regex*
+  private static boolean token_set_declaration_2(PsiBuilder builder, int level) {
+    if (!recursion_guard_(builder, level, "token_set_declaration_2")) return false;
+    while (true) {
+      int pos = current_position_(builder);
+      if (!regex(builder, level + 1)) break;
+      if (!empty_element_parsed_guard_(builder, "token_set_declaration_2", pos)) break;
+    }
+    return true;
   }
 
   /* ********************************************************** */
   // stateful_tokens_rule | stateless_tokens_rule
   public static boolean tokens_rule(PsiBuilder builder, int level) {
     if (!recursion_guard_(builder, level, "tokens_rule")) return false;
-    if (!nextTokenIs(builder, "<tokens rule>", ALEX_EMAIL_AND_IDENTIFIER, ALEX_STATEFUL_TOKENS_RULE_START)) return false;
     boolean result;
     Marker marker = enter_section_(builder, level, _NONE_, ALEX_TOKENS_RULE, "<tokens rule>");
     result = stateful_tokens_rule(builder, level + 1);

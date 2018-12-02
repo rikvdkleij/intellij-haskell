@@ -9,7 +9,12 @@ class AlexParsingTest extends ParsingTestCase("", "x", new AlexParserDefinition)
   def testSimple(): Unit = {
     doTest(true)
   }
+
   def testRules(): Unit = {
+    doTest(true)
+  }
+
+  def testRuleDescription(): Unit = {
     doTest(true)
   }
 }

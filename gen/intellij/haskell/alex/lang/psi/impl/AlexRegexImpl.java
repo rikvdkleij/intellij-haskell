@@ -26,9 +26,9 @@ public class AlexRegexImpl extends AlexElementImpl implements AlexRegex {
   }
 
   @Override
-  @NotNull
-  public List<AlexRegexPart> getRegexPartList() {
-    return PsiTreeUtil.getChildrenOfTypeAsList(this, AlexRegexPart.class);
+  @Nullable
+  public AlexRegexPart getRegexPart() {
+    return findChildByClass(AlexRegexPart.class);
   }
 
 }

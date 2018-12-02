@@ -32,7 +32,7 @@ import static com.intellij.psi.TokenType.WHITE_SPACE;
 CRLF=\n|\r|\r\n
 WHITE_SPACE=[\ \t\f]
 IDENTIFIER=[a-zA-Z_][a-zA-Z_0-9]*
-STRING_UNFINISHED=\"[a-zA-Z_-]*
+STRING_UNFINISHED=\"([^\"\\]|(\\[^]))*
 STRING_FINISHED={STRING_UNFINISHED}\"
 
 %%

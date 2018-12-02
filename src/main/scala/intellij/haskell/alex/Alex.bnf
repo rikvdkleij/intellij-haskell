@@ -21,7 +21,7 @@ alex_file ::=
  (top_module_section endOfLine+)
  (wrapper_type endOfLine+)?
  (declarations_section)
- (tokens_section endOfLine+)
+ (tokens_section endOfLine?)
  (user_code_section endOfLine*) {
   pin=1
 }
@@ -33,12 +33,12 @@ declaration ::= token_set_declaration | rule_declaration
 
 regex_part ::= REGEX_PART_TOKEN
 identifier ::= HASKELL_IDENTIFIER
-regex ::= (regex_part | DOLLAR_AND_IDENTIFIER)*
-token_set_declaration ::= DOLLAR_AND_IDENTIFIER EQUAL regex {
+regex ::= (regex_part | DOLLAR_AND_IDENTIFIER)
+token_set_declaration ::= DOLLAR_AND_IDENTIFIER EQUAL regex* {
   pin=1
 }
 
-rule_declaration ::= EMAIL_AND_IDENTIFIER EQUAL regex {
+rule_declaration ::= EMAIL_AND_IDENTIFIER EQUAL regex* {
   pin=1
 }
 
@@ -63,17 +63,22 @@ tokens_section ::=
 tokens_rule ::= stateful_tokens_rule | stateless_tokens_rule
 
 stateless_tokens_rule ::=
- EMAIL_AND_IDENTIFIER
+ rule_description
  SOMETHING_IS_GONNA_HAPPEN
  (SOMETHING_IS_HAPPENING | endOfLine)*
  SOMETHING_HAS_ALREADY_HAPPENED {
   pin=1
 }
 
+rule_description ::=
+   EMAIL_AND_IDENTIFIER
+ | STRING
+ | regex+
+
 stateful_tokens_rule ::=
  STATEFUL_TOKENS_RULE_START
  identifier
- STATEFUL_TOKENS_RULE_END endOfLine?
+ STATEFUL_TOKENS_RULE_END
  tokens_rule_body endOfLine? {
   pin=1
 }
