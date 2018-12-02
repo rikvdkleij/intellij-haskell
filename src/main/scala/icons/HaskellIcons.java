@@ -24,5 +24,5 @@ public interface HaskellIcons {
 
   @NotNull Icon CabalLogo = IconLoader.getIcon("/icons/cabal.png");
 
-  @NotNull Icon AlexLogo = IconLoader.getIcon("/icons/haskell@16.png");
+  @NotNull Icon AlexLogo = IconLoader.getIcon("/icons/alex.png");
 }
