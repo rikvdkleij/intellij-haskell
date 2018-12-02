@@ -364,6 +364,7 @@
 
         <!-- Module -->
         <internalFileTemplate name="Haskell Module"/>
+        <internalFileTemplate name="Alex Source"/>
         <internalFileTemplate name="Haskell Test Module"/>
         <moduleType id="HASKELL_MODULE" implementationClass="intellij.haskell.module.HaskellModuleType"/>
         <moduleConfigurationEditorProvider implementation="intellij.haskell.settings.HaskellModuleEditorsProvider"
@@ -410,6 +411,10 @@
     <actions>
         <action id="Haskell.HaskellFile" class="intellij.haskell.action.CreateHaskellFileAction"
                 text="Haskell Module" description="Create new Haskell module">
+            <add-to-group group-id="NewGroup" anchor="before" relative-to-action="NewFile"/>
+        </action>
+
+        <action id="Haskell.AlexFile" class="intellij.haskell.alex.NewAlexFileAction">
             <add-to-group group-id="NewGroup" anchor="before" relative-to-action="NewFile"/>
         </action>
 
