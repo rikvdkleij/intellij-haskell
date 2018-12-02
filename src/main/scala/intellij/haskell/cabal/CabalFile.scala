@@ -16,11 +16,11 @@
 
 package intellij.haskell.cabal
 
-import javax.swing._
 import com.intellij.extapi.psi.PsiFileBase
-import com.intellij.openapi.fileTypes.{FileType, FileTypeConsumer, FileTypeFactory, LanguageFileType}
+import com.intellij.openapi.fileTypes.{FileType, LanguageFileType}
 import com.intellij.psi.FileViewProvider
 import icons.HaskellIcons
+import javax.swing._
 import org.jetbrains.annotations.NotNull
 
 class CabalFile(viewProvider: FileViewProvider) extends PsiFileBase(viewProvider, CabalLanguage.Instance) {

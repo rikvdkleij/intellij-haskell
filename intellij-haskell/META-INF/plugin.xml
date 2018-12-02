@@ -227,12 +227,16 @@
         <lang.parserDefinition language="Haskell" implementationClass="intellij.haskell.HaskellParserDefinition"/>
         <lang.parserDefinition language="Cabal"
                                implementationClass="intellij.haskell.cabal.lang.parser.CabalParserDefinition"/>
+        <lang.parserDefinition language="Alex"
+                               implementationClass="intellij.haskell.alex.lang.parser.AlexParserDefinition"/>
 
         <!-- Syntax Highlighter -->
         <lang.syntaxHighlighterFactory language="Haskell"
                                        implementationClass="intellij.haskell.highlighter.HaskellSyntaxHighlighterFactory"/>
         <lang.syntaxHighlighterFactory language="Cabal"
                                        implementationClass="intellij.haskell.cabal.highlighting.CabalSyntaxHighlighterFactory"/>
+        <lang.syntaxHighlighterFactory language="Alex"
+                                       implementationClass="intellij.haskell.alex.highlighting.AlexSyntaxHighlighterFactory"/>
 
         <!-- Refactoring support -->
         <lang.refactoringSupport language="Haskell"
@@ -243,7 +247,10 @@
         <renameInputValidator implementation="intellij.haskell.refactor.HaskellRenameInputValidator"/>
         <lang.elementManipulator forClass="intellij.haskell.psi.HaskellNamedElement"
                                  implementationClass="intellij.haskell.psi.HaskellNamedElementManipulator"/>
+        <lang.elementManipulator forClass="intellij.haskell.alex.lang.psi.impl.AlexHaskellCodeInjectionHost"
+                                 implementationClass="intellij.haskell.alex.lang.psi.impl.AlexElementManipulator"/>
         <lang.namesValidator language="Haskell" implementationClass="intellij.haskell.refactor.HaskellNamesValidator"/>
+        <languageInjector implementation="intellij.haskell.alex.lang.psi.AlexHaskellInjector"/>
 
         <!-- Commenter -->
         <lang.commenter language="Haskell" implementationClass="intellij.haskell.editor.HaskellCommenter"/>
@@ -405,7 +412,7 @@
             <add-to-group group-id="NewGroup" anchor="before" relative-to-action="NewFile"/>
         </action>
 
-        <group id="HaskellCodeEditor" text="Haskell" description="Haskell View Tools" icon="/icons/hs.png"
+        <group id="HaskellCodeEditor" text="Haskell" description="Haskell View Tools" icon="HaskellIcons.HaskellLogo"
                popup="true">
             <action id="Haskell.ShowType" class="intellij.haskell.action.ShowTypeAction"
                     text="Show Type" description="Show type of (selected) expression">
@@ -467,7 +474,7 @@
                     text="Reload GHCi with last command" description="Re-execute last command after reloading modules"/>
         </group>
 
-        <group id="HaskellToolsMenu" text="Haskell" description="Haskell Tools" icon="/icons/hs.png"
+        <group id="HaskellToolsMenu" text="Haskell" description="Haskell Tools" icon="HaskellIcons.HaskellLogo"
                keep-content="true" popup="true">
             <action id="Haskell.DownloadLibSources" class="intellij.haskell.action.DownloadLibrarySources"
                     text="Download Haskell Library Sources"
@@ -495,7 +502,7 @@
         </group>
 
 
-        <group id="HaskellCodeMenu" text="Haskell" description="Haskell Code Tools" icon="/icons/hs.png"
+        <group id="HaskellCodeMenu" text="Haskell" description="Haskell Code Tools" icon="HaskellIcons.HaskellLogo"
                popup="true">
 
             <action id="Haskell.ReformatCode"
@@ -515,7 +522,7 @@
             <add-to-group group-id="CodeMenu" anchor="last"/>
         </group>
 
-        <group id="HaskellGoToMenu" text="Haskell" description="Haskell Goto Tools" icon="/icons/hs.png"
+        <group id="HaskellGoToMenu" text="Haskell" description="Haskell Goto Tools" icon="HaskellIcons.HaskellLogo"
                popup="true">
             <action id="Haskell.Hoogle.Navigation"
                     class="intellij.haskell.action.HoogleNavigationAction"
@@ -536,7 +543,7 @@
         <action id="Haskell.Project.About"
                 class="intellij.haskell.action.AboutAction"
                 text="About Haskell Project"
-                icon="/icons/hs.png"
+                icon="HaskellIcons.HaskellLogo"
                 description="About Haskell GHC/tools used in project">
             <add-to-group group-id="HelpMenu" anchor="last"/>
         </action>
