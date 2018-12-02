@@ -6,6 +6,9 @@ import com.intellij.lang.ASTNode
 import com.intellij.psi.{PsiFileFactory, PsiLanguageInjectionHost}
 import intellij.haskell.alex.AlexLanguage
 
+/**
+  * @author ice1000
+  */
 abstract class AlexHaskellCodeInjectionHost(node: ASTNode)
   extends AlexElementImpl(node) with PsiLanguageInjectionHost {
 

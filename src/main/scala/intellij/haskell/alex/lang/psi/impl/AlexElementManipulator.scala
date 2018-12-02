@@ -5,6 +5,9 @@ import com.intellij.psi.AbstractElementManipulator
 import com.intellij.util.IncorrectOperationException
 import org.jetbrains.annotations.Nullable
 
+/**
+  * @author ice1000
+  */
 class AlexElementManipulator extends AbstractElementManipulator[AlexHaskellCodeInjectionHost] {
   @Nullable
   @throws[IncorrectOperationException]

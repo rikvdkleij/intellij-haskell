@@ -317,6 +317,7 @@
         <!-- Color Setting -->
         <colorSettingsPage implementation="intellij.haskell.highlighter.HaskellColorSettingsPage"/>
         <colorSettingsPage implementation="intellij.haskell.cabal.highlighting.CabalColorSettingsPage"/>
+        <colorSettingsPage implementation="intellij.haskell.alex.highlighting.AlexColorSettingsPage"/>
 
         <!-- Inspection -->
         <localInspection language="Haskell" shortName="HLintInspection"

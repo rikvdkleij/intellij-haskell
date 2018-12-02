@@ -6,6 +6,9 @@ import com.intellij.psi.FileViewProvider
 import icons.HaskellIcons
 import javax.swing.Icon
 
+/**
+  * @author ice1000
+  */
 class AlexFile(viewProvider: FileViewProvider) extends PsiFileBase(viewProvider, AlexLanguage.Instance) {
 
   def getFileType: FileType = {
@@ -15,16 +18,18 @@ class AlexFile(viewProvider: FileViewProvider) extends PsiFileBase(viewProvider,
   override def toString: String = {
     " Alex file"
   }
-
-  override def getIcon(flags: Int): Icon = {
-    super.getIcon(flags)
-  }
 }
 
+/**
+  * @author ice1000
+  */
 object AlexFileType {
   final val INSTANCE = new AlexFileType
 }
 
+/**
+  * @author ice1000
+  */
 class AlexFileType extends LanguageFileType(AlexLanguage.Instance) {
 
   def getName: String = {
@@ -40,6 +45,6 @@ class AlexFileType extends LanguageFileType(AlexLanguage.Instance) {
   }
 
   def getIcon: Icon = {
-    HaskellIcons.HaskellFileLogo
+    HaskellIcons.AlexLogo
   }
 }

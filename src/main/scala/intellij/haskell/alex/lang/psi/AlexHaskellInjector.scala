@@ -4,6 +4,9 @@ import com.intellij.openapi.util.TextRange
 import com.intellij.psi.{InjectedLanguagePlaces, LanguageInjector, PsiLanguageInjectionHost}
 import intellij.haskell.HaskellLanguage
 
+/**
+  * @author ice1000
+  */
 class AlexHaskellInjector extends LanguageInjector {
   override def getLanguagesToInject(host: PsiLanguageInjectionHost, places: InjectedLanguagePlaces): Unit = {
     host match {
