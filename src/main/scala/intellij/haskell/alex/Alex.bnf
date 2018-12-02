@@ -64,6 +64,11 @@ tokens_rule ::= stateful_tokens_rule | stateless_tokens_rule
 
 stateless_tokens_rule ::=
  rule_description
+ ( token_rule_body
+ | SEMICOLON
+ )
+
+private token_rule_body ::=
  SOMETHING_IS_GONNA_HAPPEN
  (SOMETHING_IS_HAPPENING | endOfLine)*
  SOMETHING_HAS_ALREADY_HAPPENED {
@@ -73,20 +78,20 @@ stateless_tokens_rule ::=
 rule_description ::=
    EMAIL_AND_IDENTIFIER
  | STRING
+ | HASKELL_IDENTIFIER
+ | LEFT_LISP RIGHT_LISP
+ | PUBLIC_REGEX
  | regex+
 
 stateful_tokens_rule ::=
  STATEFUL_TOKENS_RULE_START
  identifier
  STATEFUL_TOKENS_RULE_END
- (tokens_rule_body | SEMICOLON) endOfLine? {
-  pin=1
-}
-
-private tokens_rule_body ::=
  SOMETHING_IS_GONNA_HAPPEN endOfLine?
  (stateless_tokens_rule | endOfLine)*
- SOMETHING_HAS_ALREADY_HAPPENED
+ SOMETHING_HAS_ALREADY_HAPPENED {
+  pin=1
+}
 
 user_code_section ::=
  SOMETHING_IS_GONNA_HAPPEN

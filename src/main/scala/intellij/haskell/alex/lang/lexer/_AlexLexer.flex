@@ -31,9 +31,11 @@ import static com.intellij.psi.TokenType.WHITE_SPACE;
 
 CRLF=\n|\r|\r\n
 WHITE_SPACE=[\ \t\f]
-IDENTIFIER=[a-zA-Z_0-9]+
+IDENTIFIER_CHAR=[a-zA-Z_0-9]
+IDENTIFIER={IDENTIFIER_CHAR}+
 STRING_UNFINISHED=\"([^\"\\]|(\\[^]))*
 STRING_FINISHED={STRING_UNFINISHED}\"
+PUBLIC_REGEX=\\[^]|{IDENTIFIER_CHAR}|[\?\*\^\#]
 
 %%
 
@@ -82,6 +84,9 @@ tokens { return AlexTypes.ALEX_TOKENS; }
 {IDENTIFIER} { return AlexTypes.ALEX_HASKELL_IDENTIFIER; }
 \${IDENTIFIER} { return AlexTypes.ALEX_DOLLAR_AND_IDENTIFIER; }
 \@{IDENTIFIER} { return AlexTypes.ALEX_EMAIL_AND_IDENTIFIER; }
+\( { return AlexTypes.ALEX_LEFT_LISP; }
+\) { return AlexTypes.ALEX_RIGHT_LISP; }
+{PUBLIC_REGEX}+ { return AlexTypes.ALEX_PUBLIC_REGEX; }
 
 {STRING_FINISHED} { return AlexTypes.ALEX_STRING; }
 {STRING_UNFINISHED} { return BAD_CHARACTER; }

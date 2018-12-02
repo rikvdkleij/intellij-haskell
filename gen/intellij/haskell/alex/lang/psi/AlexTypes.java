@@ -30,7 +30,10 @@ public interface AlexTypes {
   IElementType ALEX_EOL = new AlexTokenType("EOL");
   IElementType ALEX_EQUAL = new AlexTokenType("EQUAL");
   IElementType ALEX_HASKELL_IDENTIFIER = new AlexTokenType("HASKELL_IDENTIFIER");
+  IElementType ALEX_LEFT_LISP = new AlexTokenType("LEFT_LISP");
+  IElementType ALEX_PUBLIC_REGEX = new AlexTokenType("PUBLIC_REGEX");
   IElementType ALEX_REGEX_PART_TOKEN = new AlexTokenType("REGEX_PART_TOKEN");
+  IElementType ALEX_RIGHT_LISP = new AlexTokenType("RIGHT_LISP");
   IElementType ALEX_SEMICOLON = new AlexTokenType("SEMICOLON");
   IElementType ALEX_SOMETHING_HAS_ALREADY_HAPPENED = new AlexTokenType("SOMETHING_HAS_ALREADY_HAPPENED");
   IElementType ALEX_SOMETHING_IS_GONNA_HAPPEN = new AlexTokenType("SOMETHING_IS_GONNA_HAPPEN");

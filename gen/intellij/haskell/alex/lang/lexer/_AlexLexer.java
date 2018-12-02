@@ -58,11 +58,11 @@ public class _AlexLexer implements FlexLexer {
 
   /* The ZZ_CMAP_A table has 320 entries */
   static final char ZZ_CMAP_A[] = zzUnpackCMap(
-    "\11\0\1\3\1\1\1\0\1\3\1\2\22\0\1\3\1\0\1\5\1\0\1\7\1\27\7\0\1\25\2\0\12\4"+
-    "\1\24\1\34\1\12\1\26\1\13\1\0\1\35\1\32\3\4\1\20\5\4\1\17\2\4\1\21\1\15\1"+
-    "\33\1\4\1\31\1\23\1\14\2\4\1\30\3\4\1\0\1\6\2\0\1\4\1\0\1\32\3\4\1\20\5\4"+
-    "\1\17\2\4\1\21\1\15\1\33\1\4\1\31\1\23\1\14\2\4\1\30\3\4\1\10\1\0\1\11\201"+
-    "\0\1\22\52\0\1\16\25\0");
+    "\11\0\1\3\1\1\1\0\1\3\1\2\22\0\1\3\1\0\1\5\1\7\1\10\1\30\2\0\1\37\1\40\1\7"+
+    "\2\0\1\26\2\0\12\4\1\25\1\35\1\13\1\27\1\14\1\7\1\36\1\33\3\4\1\21\5\4\1\20"+
+    "\2\4\1\22\1\16\1\34\1\4\1\32\1\24\1\15\2\4\1\31\3\4\1\0\1\6\1\0\1\7\1\4\1"+
+    "\0\1\33\3\4\1\21\5\4\1\20\2\4\1\22\1\16\1\34\1\4\1\32\1\24\1\15\2\4\1\31\3"+
+    "\4\1\11\1\0\1\12\201\0\1\23\52\0\1\17\25\0");
 
   /** 
    * Translates DFA states to action switch labels.
@@ -70,14 +70,15 @@ public class _AlexLexer implements FlexLexer {
   private static final int [] ZZ_ACTION = zzUnpackAction();
 
   private static final String ZZ_ACTION_PACKED_0 =
-    "\4\0\1\1\2\2\1\3\1\4\2\1\1\5\1\6"+
-    "\1\7\1\10\1\4\1\1\1\11\1\1\1\12\1\1"+
-    "\1\13\1\14\1\15\1\16\2\17\1\16\1\20\1\21"+
-    "\1\0\1\22\1\4\1\23\1\0\1\24\1\0\1\4"+
-    "\2\0\1\4\2\0\1\4\1\0\2\25\2\0\1\26";
+    "\4\0\1\1\2\2\1\3\1\4\2\1\1\5\1\1"+
+    "\1\6\1\7\1\10\1\11\1\4\1\1\1\12\1\1"+
+    "\1\13\1\1\1\14\1\15\1\16\1\17\1\20\1\21"+
+    "\2\22\1\21\1\23\1\0\1\24\1\0\1\25\1\4"+
+    "\1\26\1\0\1\27\1\0\1\4\2\0\1\4\2\0"+
+    "\1\4\1\0\2\30\2\0\1\31";
 
   private static int [] zzUnpackAction() {
-    int [] result = new int[50];
+    int [] result = new int[55];
     int offset = 0;
     offset = zzUnpackAction(ZZ_ACTION_PACKED_0, offset, result);
     return result;
@@ -102,16 +103,16 @@ public class _AlexLexer implements FlexLexer {
   private static final int [] ZZ_ROWMAP = zzUnpackRowMap();
 
   private static final String ZZ_ROWMAP_PACKED_0 =
-    "\0\0\0\36\0\74\0\132\0\170\0\170\0\226\0\170"+
-    "\0\264\0\322\0\360\0\170\0\170\0\170\0\170\0\u010e"+
-    "\0\u012c\0\170\0\u014a\0\170\0\u0168\0\u0186\0\170\0\170"+
-    "\0\u01a4\0\170\0\u01c2\0\360\0\170\0\170\0\u01e0\0\360"+
-    "\0\u01fe\0\170\0\u021c\0\u0168\0\u023a\0\u0258\0\u0276\0\u0294"+
-    "\0\u02b2\0\u02d0\0\u02ee\0\u030c\0\u032a\0\170\0\264\0\u0348"+
-    "\0\u0366\0\170";
+    "\0\0\0\41\0\102\0\143\0\204\0\204\0\245\0\204"+
+    "\0\306\0\347\0\u0108\0\u0129\0\u014a\0\204\0\204\0\204"+
+    "\0\204\0\u016b\0\u018c\0\204\0\u01ad\0\204\0\u01ce\0\204"+
+    "\0\204\0\u01ef\0\204\0\204\0\u0210\0\204\0\u0231\0\u014a"+
+    "\0\204\0\u0108\0\204\0\u0252\0\u014a\0\u0273\0\204\0\u0294"+
+    "\0\u01ce\0\u02b5\0\u02d6\0\u02f7\0\u0318\0\u0339\0\u035a\0\u037b"+
+    "\0\u039c\0\u03bd\0\204\0\306\0\u03de\0\u03ff\0\204";
 
   private static int [] zzUnpackRowMap() {
-    int [] result = new int[50];
+    int [] result = new int[55];
     int offset = 0;
     offset = zzUnpackRowMap(ZZ_ROWMAP_PACKED_0, offset, result);
     return result;
@@ -134,31 +135,35 @@ public class _AlexLexer implements FlexLexer {
   private static final int [] ZZ_TRANS = zzUnpackTrans();
 
   private static final String ZZ_TRANS_PACKED_0 =
-    "\1\5\1\6\1\7\1\10\1\11\1\12\1\5\1\13"+
-    "\1\14\1\15\1\16\1\17\1\20\1\11\1\5\3\11"+
-    "\1\5\1\11\1\21\1\5\1\22\1\23\4\11\1\24"+
-    "\1\25\10\26\1\27\1\30\24\26\1\31\1\32\1\33"+
-    "\4\31\1\34\26\31\1\5\1\6\1\7\1\10\4\5"+
-    "\1\35\25\5\37\0\1\6\40\0\1\11\7\0\2\11"+
-    "\1\0\3\11\1\0\1\11\4\0\4\11\2\0\5\12"+
-    "\1\36\1\37\27\12\4\0\1\40\7\0\2\40\1\0"+
-    "\3\40\1\0\1\40\4\0\4\40\6\0\1\11\7\0"+
-    "\1\11\1\41\1\0\3\11\1\0\1\11\4\0\4\11"+
-    "\27\0\1\42\40\0\1\43\11\0\1\44\7\0\2\44"+
-    "\1\0\3\44\1\0\1\44\4\0\4\44\2\0\10\26"+
-    "\2\0\24\26\1\31\2\0\4\31\1\0\26\31\1\0"+
-    "\1\32\34\0\36\12\4\0\1\11\7\0\2\11\1\45"+
-    "\1\46\2\11\1\0\1\11\4\0\4\11\33\0\1\47"+
-    "\24\0\1\50\21\0\1\11\7\0\2\11\1\0\1\11"+
-    "\1\51\1\11\1\0\1\11\4\0\4\11\34\0\1\52"+
-    "\24\0\1\53\20\0\1\11\7\0\2\11\1\0\2\11"+
-    "\1\54\1\0\1\11\4\0\4\11\35\0\1\55\24\0"+
-    "\2\56\16\0\1\11\7\0\2\11\1\0\3\11\1\56"+
-    "\1\57\4\0\4\11\35\0\1\60\22\0\1\61\46\0"+
-    "\1\62\4\0";
+    "\1\5\1\6\1\7\1\10\1\11\1\12\1\13\1\14"+
+    "\1\15\1\16\1\17\1\20\1\21\1\22\1\11\1\5"+
+    "\3\11\1\5\1\11\1\23\1\5\1\24\1\25\4\11"+
+    "\1\26\1\27\1\30\1\31\11\32\1\33\1\34\26\32"+
+    "\1\35\1\36\1\37\5\35\1\40\30\35\1\5\1\6"+
+    "\1\7\1\10\5\5\1\41\27\5\42\0\1\6\43\0"+
+    "\1\11\1\0\1\42\1\14\5\0\2\11\1\0\3\11"+
+    "\1\0\1\11\4\0\4\11\4\0\5\12\1\43\1\44"+
+    "\32\12\41\14\4\0\1\14\1\0\1\42\1\14\5\0"+
+    "\2\14\1\0\3\14\1\0\1\14\4\0\4\14\10\0"+
+    "\1\45\10\0\2\45\1\0\3\45\1\0\1\45\4\0"+
+    "\4\45\10\0\1\11\1\0\1\42\1\14\5\0\1\11"+
+    "\1\46\1\0\3\11\1\0\1\11\4\0\4\11\32\0"+
+    "\1\47\43\0\1\50\13\0\1\51\10\0\2\51\1\0"+
+    "\3\51\1\0\1\51\4\0\4\51\4\0\11\32\2\0"+
+    "\26\32\1\35\2\0\5\35\1\0\30\35\1\0\1\36"+
+    "\37\0\41\12\4\0\1\11\1\0\1\42\1\14\5\0"+
+    "\2\11\1\52\1\53\2\11\1\0\1\11\4\0\4\11"+
+    "\36\0\1\54\27\0\1\55\23\0\1\11\1\0\1\42"+
+    "\1\14\5\0\2\11\1\0\1\11\1\56\1\11\1\0"+
+    "\1\11\4\0\4\11\37\0\1\57\27\0\1\60\22\0"+
+    "\1\11\1\0\1\42\1\14\5\0\2\11\1\0\2\11"+
+    "\1\61\1\0\1\11\4\0\4\11\40\0\1\62\27\0"+
+    "\2\63\20\0\1\11\1\0\1\42\1\14\5\0\2\11"+
+    "\1\0\3\11\1\63\1\64\4\0\4\11\40\0\1\65"+
+    "\25\0\1\66\51\0\1\67\6\0";
 
   private static int [] zzUnpackTrans() {
-    int [] result = new int[900];
+    int [] result = new int[1056];
     int offset = 0;
     offset = zzUnpackTrans(ZZ_TRANS_PACKED_0, offset, result);
     return result;
@@ -196,13 +201,14 @@ public class _AlexLexer implements FlexLexer {
   private static final int [] ZZ_ATTRIBUTE = zzUnpackAttribute();
 
   private static final String ZZ_ATTRIBUTE_PACKED_0 =
-    "\4\0\2\11\1\1\1\11\3\1\4\11\2\1\1\11"+
-    "\1\1\1\11\2\1\2\11\1\1\1\11\2\1\2\11"+
-    "\1\0\2\1\1\11\1\0\1\1\1\0\1\1\2\0"+
-    "\1\1\2\0\1\1\1\0\1\11\1\1\2\0\1\11";
+    "\4\0\2\11\1\1\1\11\5\1\4\11\2\1\1\11"+
+    "\1\1\1\11\1\1\2\11\1\1\2\11\1\1\1\11"+
+    "\2\1\1\11\1\0\1\11\1\0\2\1\1\11\1\0"+
+    "\1\1\1\0\1\1\2\0\1\1\2\0\1\1\1\0"+
+    "\1\11\1\1\2\0\1\11";
 
   private static int [] zzUnpackAttribute() {
-    int [] result = new int[50];
+    int [] result = new int[55];
     int offset = 0;
     offset = zzUnpackAttribute(ZZ_ATTRIBUTE_PACKED_0, offset, result);
     return result;
@@ -526,66 +532,81 @@ public class _AlexLexer implements FlexLexer {
             { return BAD_CHARACTER;
             } 
             // fall through
-          case 23: break;
+          case 26: break;
           case 2: 
             { return AlexTypes.ALEX_EOL;
             } 
             // fall through
-          case 24: break;
+          case 27: break;
           case 3: 
             { return WHITE_SPACE;
             } 
             // fall through
-          case 25: break;
+          case 28: break;
           case 4: 
             { return AlexTypes.ALEX_HASKELL_IDENTIFIER;
             } 
             // fall through
-          case 26: break;
+          case 29: break;
           case 5: 
+            { return AlexTypes.ALEX_PUBLIC_REGEX;
+            } 
+            // fall through
+          case 30: break;
+          case 6: 
             { nestedLeftBraces++; yybegin(SOMETHING); return AlexTypes.ALEX_SOMETHING_IS_GONNA_HAPPEN;
             } 
             // fall through
-          case 27: break;
-          case 6: 
+          case 31: break;
+          case 7: 
             { if (insideState) {
     insideState = false;
     return AlexTypes.ALEX_SOMETHING_HAS_ALREADY_HAPPENED;
   } else return BAD_CHARACTER;
             } 
             // fall through
-          case 28: break;
-          case 7: 
+          case 32: break;
+          case 8: 
             { return AlexTypes.ALEX_STATEFUL_TOKENS_RULE_START;
             } 
             // fall through
-          case 29: break;
-          case 8: 
+          case 33: break;
+          case 9: 
             { yybegin(AFTER_STATE); return AlexTypes.ALEX_STATEFUL_TOKENS_RULE_END;
             } 
             // fall through
-          case 30: break;
-          case 9: 
+          case 34: break;
+          case 10: 
             { yybegin(AFTER_EQ); return AlexTypes.ALEX_EQUAL;
             } 
             // fall through
-          case 31: break;
-          case 10: 
+          case 35: break;
+          case 11: 
             { return AlexTypes.ALEX_SEMICOLON;
             } 
             // fall through
-          case 32: break;
-          case 11: 
+          case 36: break;
+          case 12: 
+            { return AlexTypes.ALEX_LEFT_LISP;
+            } 
+            // fall through
+          case 37: break;
+          case 13: 
+            { return AlexTypes.ALEX_RIGHT_LISP;
+            } 
+            // fall through
+          case 38: break;
+          case 14: 
             { return AlexTypes.ALEX_SOMETHING_IS_HAPPENING;
             } 
             // fall through
-          case 33: break;
-          case 12: 
+          case 39: break;
+          case 15: 
             { nestedLeftBraces++; return AlexTypes.ALEX_SOMETHING_IS_HAPPENING;
             } 
             // fall through
-          case 34: break;
-          case 13: 
+          case 40: break;
+          case 16: 
             { if (--nestedLeftBraces == 0) {
       yybegin(YYINITIAL);
       return AlexTypes.ALEX_SOMETHING_HAS_ALREADY_HAPPENED;
@@ -593,52 +614,52 @@ public class _AlexLexer implements FlexLexer {
     return AlexTypes.ALEX_SOMETHING_IS_HAPPENING;
             } 
             // fall through
-          case 35: break;
-          case 14: 
+          case 41: break;
+          case 17: 
             { return AlexTypes.ALEX_REGEX_PART_TOKEN;
             } 
             // fall through
-          case 36: break;
-          case 15: 
+          case 42: break;
+          case 18: 
             { yybegin(YYINITIAL); return AlexTypes.ALEX_EOL;
             } 
             // fall through
-          case 37: break;
-          case 16: 
+          case 43: break;
+          case 19: 
             { insideState = true; yybegin(YYINITIAL); return AlexTypes.ALEX_SOMETHING_IS_GONNA_HAPPEN;
             } 
             // fall through
-          case 38: break;
-          case 17: 
+          case 44: break;
+          case 20: 
             { return AlexTypes.ALEX_STRING;
             } 
             // fall through
-          case 39: break;
-          case 18: 
+          case 45: break;
+          case 21: 
             { return AlexTypes.ALEX_DOLLAR_AND_IDENTIFIER;
             } 
             // fall through
-          case 40: break;
-          case 19: 
+          case 46: break;
+          case 22: 
             { afterTokens = true; return AlexTypes.ALEX_A_SYMBOL_FOLLOWED_BY_TOKENS;
             } 
             // fall through
-          case 41: break;
-          case 20: 
+          case 47: break;
+          case 23: 
             { return AlexTypes.ALEX_EMAIL_AND_IDENTIFIER;
             } 
             // fall through
-          case 42: break;
-          case 21: 
+          case 48: break;
+          case 24: 
             { return AlexTypes.ALEX_TOKENS;
             } 
             // fall through
-          case 43: break;
-          case 22: 
+          case 49: break;
+          case 25: 
             { return AlexTypes.ALEX_WRAPPER_TYPE_IS_GONNA_BE_HERE;
             } 
             // fall through
-          case 44: break;
+          case 50: break;
           default:
             zzScanError(ZZ_NO_MATCH);
           }

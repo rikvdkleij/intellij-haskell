@@ -18,6 +18,10 @@ class AlexParsingTest extends ParsingTestCase("", "x", new AlexParserDefinition)
     doTest(true)
   }
 
+  def testLexerOwO(): Unit = {
+    doTest(true)
+  }
+
   def testMixedStatefulStateless(): Unit = {
     doTest(true)
   }
