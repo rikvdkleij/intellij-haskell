@@ -21,11 +21,11 @@ import com.intellij.psi.impl.source.resolve.reference.ReferenceProvidersRegistry
 import com.intellij.psi.{PsiElement, PsiReference}
 import com.intellij.util.ArrayUtil
 import icons.HaskellIcons
+import intellij.haskell.HaskellFileType
 import intellij.haskell.psi.HaskellTypes._
 import intellij.haskell.psi._
 import intellij.haskell.refactor.HaskellRenameFileProcessor
 import intellij.haskell.util.{HaskellFileUtil, StringUtil}
-import intellij.haskell.HaskellFileType
 import javax.swing._
 
 import scala.annotation.tailrec
@@ -254,7 +254,7 @@ object HaskellPsiImplUtil {
     new HaskellItemPresentation(namedElement) {
 
       def getPresentableText: String = {
-        namedElement.getName
+        getItemPresentableText(namedElement, true)
       }
 
       override def getIcon(unused: Boolean): Icon = {
