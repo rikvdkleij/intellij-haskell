@@ -20,6 +20,7 @@ import com.intellij.extapi.psi.PsiFileBase
 import com.intellij.openapi.fileTypes._
 import com.intellij.psi.FileViewProvider
 import icons.HaskellIcons
+import intellij.haskell.alex.AlexFileType
 import intellij.haskell.cabal.CabalFileType
 import javax.swing._
 import org.jetbrains.annotations.NotNull
@@ -67,6 +68,7 @@ class HaskellFileType extends LanguageFileType(HaskellLanguage.Instance) {
 
 class HaskellLanguageFileTypeFactory extends FileTypeFactory {
   def createFileTypes(consumer: FileTypeConsumer) {
+    consumer.consume(AlexFileType.INSTANCE, AlexFileType.INSTANCE.getDefaultExtension)
     consumer.consume(CabalFileType.INSTANCE, CabalFileType.INSTANCE.getDefaultExtension)
     consumer.consume(CabalFileType.INSTANCE, new ExactFileNameMatcher("cabal.config"))
     consumer.consume(HaskellFileType.Instance, HaskellFileType.Instance.getDefaultExtension)

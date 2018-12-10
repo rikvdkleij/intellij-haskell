@@ -23,4 +23,6 @@ public interface HaskellIcons {
   @NotNull Icon Foreign = IconLoader.getIcon("/icons/foreign.png");
 
   @NotNull Icon CabalLogo = IconLoader.getIcon("/icons/cabal.png");
+
+  @NotNull Icon AlexLogo = IconLoader.getIcon("/icons/alex.png");
 }

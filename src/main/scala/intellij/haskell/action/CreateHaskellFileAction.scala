@@ -16,7 +16,6 @@
 
 package intellij.haskell.action
 
-import java.io.File
 import java.text.ParseException
 
 import com.intellij.ide.actions.CreateFileFromTemplateDialog.Builder

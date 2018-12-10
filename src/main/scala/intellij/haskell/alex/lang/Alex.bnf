@@ -1,0 +1,113 @@
+{
+  generate=[java="8" names="long"]
+
+  parserClass="intellij.haskell.alex.lang.parser.AlexParser"
+
+  implements="intellij.haskell.alex.lang.psi.AlexElement"
+  extends="intellij.haskell.alex.lang.psi.impl.AlexElementImpl"
+
+  psiClassPrefix="Alex"
+  psiImplClassSuffix="Impl"
+  psiPackage="intellij.haskell.alex.lang.psi"
+  psiImplPackage="intellij.haskell.alex.lang.psi.impl"
+
+  elementTypeHolderClass="intellij.haskell.alex.lang.psi.AlexTypes"
+  elementTypePrefix="ALEX_"
+  elementTypeClass="intellij.haskell.alex.lang.psi.AlexTokenType"
+  tokenTypeClass="intellij.haskell.alex.lang.psi.AlexTokenType"
+}
+
+alex_file ::=
+ (top_module_section endOfLine+)
+ (wrapper_type endOfLine+)?
+ (declarations_section)
+ (tokens_section endOfLine?)
+ (user_code_section endOfLine*) {
+  pin=1
+}
+
+private endOfLine ::= EOL+
+
+declarations_section ::= (declaration endOfLine)*
+declaration ::= token_set_declaration | rule_declaration
+
+regex_part ::= REGEX_PART_TOKEN
+identifier ::= HASKELL_IDENTIFIER
+regex ::= (regex_part | token_set_id)
+
+token_set_id ::= DOLLAR_AND_IDENTIFIER {
+  mixin='intellij.haskell.alex.lang.psi.impl.AlexIdMixin'
+  implements='com.intellij.psi.PsiNameIdentifierOwner'
+}
+
+rule_id ::= EMAIL_AND_IDENTIFIER {
+  mixin='intellij.haskell.alex.lang.psi.impl.AlexIdMixin'
+  implements='com.intellij.psi.PsiNameIdentifierOwner'
+}
+
+token_set_declaration ::= token_set_id EQUAL regex* {
+  pin=1
+}
+
+rule_declaration ::= rule_id EQUAL regex* {
+  pin=1
+}
+
+top_module_section ::=
+ SOMETHING_IS_GONNA_HAPPEN
+ (SOMETHING_IS_HAPPENING | endOfLine)*
+ SOMETHING_HAS_ALREADY_HAPPENED {
+  pin=1
+  mixin='intellij.haskell.alex.lang.psi.impl.AlexHaskellCodeInjectionHost'
+}
+
+wrapper_type ::= WRAPPER_TYPE_IS_GONNA_BE_HERE STRING {
+  pin=1
+}
+
+tokens_section ::=
+ HASKELL_IDENTIFIER A_SYMBOL_FOLLOWED_BY_TOKENS
+ (endOfLine? tokens_rule)* {
+  pin=1
+}
+
+tokens_rule ::= stateful_tokens_rule | stateless_tokens_rule
+
+stateless_tokens_rule ::=
+ rule_description
+ ( token_rule_body
+ | SEMICOLON
+ )
+
+private token_rule_body ::=
+ SOMETHING_IS_GONNA_HAPPEN
+ (SOMETHING_IS_HAPPENING | endOfLine)*
+ SOMETHING_HAS_ALREADY_HAPPENED {
+  pin=1
+}
+
+rule_description ::=
+   rule_id
+ | STRING
+ | HASKELL_IDENTIFIER
+ | LEFT_LISP RIGHT_LISP
+ | PUBLIC_REGEX
+ | regex+
+
+stateful_tokens_rule ::=
+ STATEFUL_TOKENS_RULE_START
+ identifier
+ STATEFUL_TOKENS_RULE_END
+ SOMETHING_IS_GONNA_HAPPEN endOfLine?
+ (stateless_tokens_rule | endOfLine)*
+ SOMETHING_HAS_ALREADY_HAPPENED {
+  pin=1
+}
+
+user_code_section ::=
+ SOMETHING_IS_GONNA_HAPPEN
+ (SOMETHING_IS_HAPPENING | endOfLine)*
+ SOMETHING_HAS_ALREADY_HAPPENED {
+  pin=1
+  mixin='intellij.haskell.alex.lang.psi.impl.AlexHaskellCodeInjectionHost'
+}
