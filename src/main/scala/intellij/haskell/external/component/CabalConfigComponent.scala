@@ -5,9 +5,9 @@ import java.net.URL
 
 import com.intellij.openapi.project.Project
 import com.intellij.util.io.URLUtil
-import intellij.haskell.HaskellNotificationGroup
 import intellij.haskell.stackyaml.StackYamlComponent
 import intellij.haskell.util.HaskellFileUtil
+import intellij.haskell.{GlobalInfo, HaskellNotificationGroup}
 
 import scala.collection.Iterator
 import scala.io.Source
@@ -18,7 +18,7 @@ object CabalConfigComponent {
   private final val NightlyResolverPattern = """.*/(nightly-\d{4}-\d{2}-\d{2})""".r
 
   private def getCabalConfigFilePath(project: Project): String = {
-    project.getBasePath + File.separator + "cabal.config"
+    GlobalInfo.getIntelliJProjectDirectory(project) + File.separator + "cabal.config"
   }
 
   def getAvailablePackageNames(project: Project): Iterable[String] = {
