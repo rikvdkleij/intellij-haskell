@@ -214,7 +214,7 @@ private[component] object DefinitionLocationComponent {
                 case Right(ne) => ne match {
                   case Right(nee) =>
                     if (nee.isEmpty) {
-                      HaskellPsiUtil.findHaskellDeclarationElements(psiFile).toSeq.flatMap(_.getIdentifierElements).find(_.getName == name).map(e => Right(PackageModuleLocation("-", e))).getOrElse(Left(NoInfoAvailable(name, psiFile.getName)))
+                      HaskellPsiUtil.findHaskellDeclarationElements(psiFile).toSeq.flatMap(_.getIdentifierElements).find(e => ApplicationUtil.runReadAction(e.getName) == name).map(e => Right(PackageModuleLocation("-", e))).getOrElse(Left(NoInfoAvailable(name, psiFile.getName)))
                     } else {
                       nee.headOption.map(e => Right(PackageModuleLocation("-", e))).getOrElse(Left(NoInfoAvailable(name, psiFile.getName)))
                     }
