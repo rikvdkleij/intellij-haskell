@@ -37,8 +37,8 @@ white_char          = [\ \t\f\x0B\ \x0D ] | {unispace}    // second "space" is 
 directive           = "#"{white_char}*("if"|"ifdef"|"ifndef"|"define"|"elif"|"else"|"error"|"endif"|"include"|"undef")  ("\\" (\r|\n|\r\n) | [^\r\n])*
 white_space         = {white_char}+
 
-small               = [a-z_] | [\u03B1-\u03C9] | "𝑖" | "𝕧"
-large               = [A-Z] | [\u0391-\u03A9] | "ℝ" | "ℂ" | "ℕ" | "ℤ"
+small               = [a-z_] | [\u03B1-\u03C9] | 𝑖 | 𝕧
+large               = [A-Z] | [\u0391-\u03A9] | ℝ | ℂ | ℕ | ℤ | ℚ
 
 digit               = [0-9] | [\u2070-\u2079] | [\u2080-\u2089]
 decimal             = [-+]?{digit}+
@@ -106,7 +106,9 @@ quote               = "'"
 forall              = "∀"
 
 symbol_no_dot       = {equal} | {at} | {backslash} | {vertical_bar} | {tilde} | {exclamation_mark} | {hash} | {dollar} | {percentage} | {ampersand} | {star} |
-                        {plus} | {slash} | {lt} | {gt} | {question_mark} | {caret} | {dash} | "⊜" | "≣" | "≤" | "≥" | "·" | "&" | "¦" | "¿" | "—"
+                        {plus} | {slash} | {lt} | {gt} | {question_mark} | {caret} | {dash} | ⊜ | ≣ | ≤ | ≥ | · | & | ¦ | ¿ | — | ⊕ | ∅ | ¬ | ∧ | ∨ | ≡ | ≢ | ≠ |
+                        ≮| ≯ | − |÷ |⋅ |∘ | ⧺ | ∈ |∉ |‼ | ⊥ | ∣ | ∤ | 𝜀
+
 
 symbol              = {symbol_no_dot} | {dot}
 
