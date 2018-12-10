@@ -449,7 +449,7 @@ object FileModuleIdentifiers {
 
     import scala.concurrent.duration._
 
-    ApplicationUtil.scheduleInReadActionWithWriteActionPriority(project, findImportDeclarations(psiFile), "find import declarations", 10.seconds) match {
+    ApplicationUtil.scheduleInReadActionWithWriteActionPriority(project, findImportDeclarations(psiFile), "find import declarations") match {
       case Right(importDeclarations) =>
         val noImplicitPrelude = if (HaskellProjectUtil.isSourceFile(psiFile)) {
           HaskellComponentsManager.findStackComponentInfo(psiFile).exists(info => HaskellCompletionContributor.isNoImplicitPreludeActive(info, psiFile))
@@ -472,7 +472,7 @@ object FileModuleIdentifiers {
         } yield (f1, f2, f3, f4)
 
         try {
-          val (x, y, z, w) = Await.result(f, 5.second)
+          val (x, y, z, w) = Await.result(f, 1.second)
           Some((x ++ y ++ z, w))
         } catch {
           case _: TimeoutException =>
