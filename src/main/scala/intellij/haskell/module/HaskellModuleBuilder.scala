@@ -23,7 +23,7 @@ import com.intellij.ide.util.projectWizard._
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.{ApplicationManager, WriteAction}
 import com.intellij.openapi.module.{ModifiableModuleModel, Module, ModuleType}
-import com.intellij.openapi.project.{DumbService, Project, ProjectManager}
+import com.intellij.openapi.project.{DumbService, Project, ProjectManager, ProjectUtil}
 import com.intellij.openapi.projectRoots.SdkTypeId
 import com.intellij.openapi.roots._
 import com.intellij.openapi.roots.impl.libraries.ProjectLibraryTable
@@ -34,13 +34,13 @@ import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.vfs.LocalFileSystem
 import com.intellij.platform.templates.TemplateModuleBuilder
 import icons.HaskellIcons
+import intellij.haskell.GlobalInfo
 import intellij.haskell.cabal.CabalInfo
 import intellij.haskell.external.component.HaskellComponentsManager
 import intellij.haskell.external.execution.{CommandLine, StackCommandLine}
 import intellij.haskell.sdk.HaskellSdkType
 import intellij.haskell.stackyaml.StackYamlComponent
 import intellij.haskell.util.{HaskellFileUtil, HaskellProjectUtil, ScalaUtil}
-import intellij.haskell.GlobalInfo
 import javax.swing.Icon
 
 import scala.collection.JavaConverters._
@@ -75,7 +75,7 @@ class HaskellModuleBuilder extends TemplateModuleBuilder(null, HaskellModuleType
 
     if (isNewProjectWithoutExistingSources) {
       val packageRelativePath = StackYamlComponent.getPackagePaths(project).flatMap(_.headOption)
-      packageRelativePath.flatMap(pp => HaskellModuleBuilder.createCabalInfo(rootModel.getProject, HaskellFileUtil.getAbsolutePath(project.getBaseDir), pp)) match {
+      packageRelativePath.flatMap(pp => HaskellModuleBuilder.createCabalInfo(rootModel.getProject, HaskellFileUtil.getAbsolutePath(ProjectUtil.guessProjectDir(project)), pp)) match {
         case Some(ci) => cabalInfo = ci
         case None =>
           Messages.showErrorDialog(s"Could not create Haskell module because could not retrieve or parse Cabal file for package path `$packageRelativePath`", "No Cabal file info")

@@ -26,7 +26,7 @@ class HaskellCodeStyleSettingsProvider extends CodeStyleSettingsProvider {
   }
 
   @NotNull
-  def createSettingsPage(settings: CodeStyleSettings, originalSettings: CodeStyleSettings): Configurable = {
+  override def createSettingsPage(settings: CodeStyleSettings, originalSettings: CodeStyleSettings): Configurable = {
     new HaskellCodeStyleConfigurable(settings, originalSettings)
   }
 

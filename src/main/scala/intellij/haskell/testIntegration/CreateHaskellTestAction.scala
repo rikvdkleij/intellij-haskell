@@ -5,7 +5,7 @@ import com.intellij.codeInsight.intention.PsiElementBaseIntentionAction
 import com.intellij.ide.fileTemplates.FileTemplateManager
 import com.intellij.openapi.command.WriteCommandAction
 import com.intellij.openapi.editor.Editor
-import com.intellij.openapi.project.Project
+import com.intellij.openapi.project.{Project, ProjectUtil}
 import com.intellij.openapi.ui.Messages
 import com.intellij.psi._
 import com.intellij.psi.util.PsiTreeUtil
@@ -30,7 +30,7 @@ class CreateHaskellTestAction extends PsiElementBaseIntentionAction {
         // Prefill the Create Test dialog with decent default values
         createTestDialog.setModuleName(testModuleName)
 
-        val testRootDirectory = PsiManager.getInstance(project).findDirectory(project.getBaseDir.findChild("test"))
+        val testRootDirectory = PsiManager.getInstance(project).findDirectory(ProjectUtil.guessProjectDir(project).findChild("test"))
 
         val testTemplate = FileTemplateManager.getInstance(project).getInternalTemplate("Haskell Test Module")
 

@@ -26,7 +26,7 @@ import org.jetbrains.annotations.NotNull
 class HaskellLanguageCodeStyleSettingsProvider extends LanguageCodeStyleSettingsProvider {
 
   @NotNull
-  def getLanguage: Language = {
+  override def getLanguage: Language = {
     HaskellLanguage.Instance
   }
 

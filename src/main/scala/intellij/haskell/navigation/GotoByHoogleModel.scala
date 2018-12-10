@@ -49,7 +49,7 @@ class GotoByHoogleModel(val project: Project, val contributors: Array[ChooseByNa
     IdeBundle.message("label.no.matches.found")
   }
 
-  def getCheckBoxMnemonic: Char = {
+  override def getCheckBoxMnemonic: Char = {
     // Some combination like Alt+N, Ant+O, etc are a dead symbols, therefore
     // we have to change mnemonics for Mac users.
     if (SystemInfo.isMac) 'P' else 'n'

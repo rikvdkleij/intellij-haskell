@@ -11,7 +11,7 @@ import org.jdom.Element
 import scala.collection.JavaConverters._
 
 abstract class HaskellStackConfigurationBase(name: String, project: Project, configurationFactory: ConfigurationFactory)
-  extends ModuleBasedConfiguration[RunConfigurationModule](name, new RunConfigurationModule(project), configurationFactory) {
+  extends ModuleBasedConfiguration[RunConfigurationModule, HaskellStackConfigurationBase](name, new RunConfigurationModule(project), configurationFactory) {
 
   private var workingDirPath: String = ""
   private var stackArgs: String = ""

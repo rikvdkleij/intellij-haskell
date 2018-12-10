@@ -25,4 +25,4 @@ lazy val intellijHaskell = (project in file(".")).
   )
 
 
-ideaBuild in ThisBuild := "182.4505.22"
+ideaBuild in ThisBuild := "183.4588.61"
