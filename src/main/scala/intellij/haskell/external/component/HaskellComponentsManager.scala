@@ -164,8 +164,8 @@ object HaskellComponentsManager {
     DefinitionLocationComponent.invalidate(elements)
   }
 
-  def findProjectModulePackageNames(project: Project): Iterable[(Module, String)] = {
-    StackReplsManager.getReplsManager(project).map(_.stackComponentInfos).getOrElse(Seq()).map(info => (info.module, info.packageName))
+  def findProjectModulePackageNames(project: Project): Seq[(Module, String)] = {
+    findStackComponentInfos(project).map(info => (info.module, info.packageName))
   }
 
   def findReferencesInCache(targetFile: PsiFile): Seq[(PsiFile, HaskellQualifiedNameElement)] = {
@@ -178,6 +178,10 @@ object HaskellComponentsManager {
 
   def invalidateCachesForModules(project: Project, moduleNames: Seq[String]): Unit = {
     moduleNames.foreach(mn => BrowseModuleComponent.invalidateForModuleName(project, mn))
+  }
+
+  def findStackComponentInfos(project: Project): Seq[StackComponentInfo] = {
+    StackReplsManager.getReplsManager(project).map(_.stackComponentInfos.toSeq).getOrElse(Seq())
   }
 
   def invalidateGlobalCaches(project: Project): Unit = {
@@ -230,7 +234,7 @@ object HaskellComponentsManager {
 
   private def preloadStackComponentInfos(project: Project): Unit = {
     if (!project.isDisposed) {
-      StackReplsManager.getReplsManager(project).foreach(_.stackComponentInfos.foreach(findStackComponentGlobalInfo))
+      findStackComponentInfos(project).foreach(findStackComponentGlobalInfo)
     }
   }
 
@@ -294,7 +298,7 @@ object HaskellComponentsManager {
   private def preloadAllLibraryIdentifiers(project: Project): Unit = {
 
     if (!project.isDisposed) {
-      val componentInfos = StackReplsManager.getReplsManager(project).map(_.stackComponentInfos).getOrElse(Seq())
+      val componentInfos = findStackComponentInfos(project)
       val libraryModuleNames = componentInfos.flatMap(info => findStackComponentGlobalInfo(info).map(_.libraryModuleNames).getOrElse(Seq())).toSeq.distinct
 
       if (!project.isDisposed) {
