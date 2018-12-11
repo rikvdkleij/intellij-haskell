@@ -75,7 +75,7 @@ object ScalaUtil {
 
     linePerKey.map(x => {
       val keyValuePair = x.split(": ", 2)
-      (keyValuePair(0), keyValuePair(1))
+      (keyValuePair(0), keyValuePair(1).trim)
     }).toMap
   }
 }
