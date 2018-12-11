@@ -472,7 +472,7 @@ object FileModuleIdentifiers {
         } yield (f1, f2, f3, f4)
 
         try {
-          val (x, y, z, w) = Await.result(f, 1.second)
+          val (x, y, z, w) = Await.result(f, 5.second)
           Some((x ++ y ++ z, w))
         } catch {
           case _: TimeoutException =>
