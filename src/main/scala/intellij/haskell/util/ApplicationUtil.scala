@@ -18,7 +18,7 @@ object ApplicationUtil {
     ApplicationManager.getApplication.runReadAction(ScalaUtil.computable(f))
   }
 
-  final val RunInReadActionTimeout = 5.millis
+  final val RunInReadActionTimeout = 10.millis
 
   def runInReadActionWithWriteActionPriority[A](project: Project, f: => A, readActionDescription: => String, timeout: FiniteDuration = RunInReadActionTimeout): Either[NoInfo, A] = {
     val r = new AtomicReference[A]
