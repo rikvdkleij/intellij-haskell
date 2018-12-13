@@ -363,6 +363,9 @@ private[component] object DefinitionLocationComponent {
                     location.namedElement.getName
                   }", psiFile.getName))
                 }
+              case Left(ReplIsBusy) | Left(ReadActionTimeout(_)) | Left(IndexNotReady) | Left(ReplNotAvailable) =>
+                Cache.synchronous.invalidate(key)
+                result
               case Left(_) => result
             }
           case None =>
