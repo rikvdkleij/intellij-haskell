@@ -7,7 +7,7 @@ import java.util.List;
 
 public interface HaskellFileHeaderPragma extends HaskellCompositeElement {
 
-  @NotNull
-  List<HaskellGeneralPragmaContent> getGeneralPragmaContentList();
+    @NotNull
+    List<HaskellGeneralPragmaContent> getGeneralPragmaContentList();
 
 }

@@ -5,10 +5,10 @@ import org.jetbrains.annotations.NotNull;
 
 public interface HaskellNewconstrFielddecl extends HaskellCompositeElement {
 
-  @NotNull
-  HaskellQName getQName();
+    @NotNull
+    HaskellQName getQName();
 
-  @NotNull
-  HaskellTypeSignature getTypeSignature();
+    @NotNull
+    HaskellTypeSignature getTypeSignature();
 
 }

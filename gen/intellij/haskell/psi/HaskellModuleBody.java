@@ -8,16 +8,16 @@ import java.util.List;
 
 public interface HaskellModuleBody extends HaskellCompositeElement {
 
-  @NotNull
-  HaskellImportDeclarations getImportDeclarations();
+    @NotNull
+    HaskellImportDeclarations getImportDeclarations();
 
-  @Nullable
-  HaskellModuleDeclaration getModuleDeclaration();
+    @Nullable
+    HaskellModuleDeclaration getModuleDeclaration();
 
     @Nullable
     HaskellTopDeclaration getTopDeclaration();
 
-  @NotNull
-  List<HaskellTopDeclarationLine> getTopDeclarationLineList();
+    @NotNull
+    List<HaskellTopDeclarationLine> getTopDeclarationLineList();
 
 }

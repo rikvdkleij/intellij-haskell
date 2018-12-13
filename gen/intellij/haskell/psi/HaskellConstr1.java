@@ -8,13 +8,13 @@ import java.util.List;
 
 public interface HaskellConstr1 extends HaskellCompositeElement {
 
-  @NotNull
-  List<HaskellFielddecl> getFielddeclList();
+    @NotNull
+    List<HaskellFielddecl> getFielddeclList();
 
-  @Nullable
-  HaskellQName getQName();
+    @Nullable
+    HaskellQName getQName();
 
-  @NotNull
-  List<HaskellUnpackNounpackPragma> getUnpackNounpackPragmaList();
+    @NotNull
+    List<HaskellUnpackNounpackPragma> getUnpackNounpackPragmaList();
 
 }

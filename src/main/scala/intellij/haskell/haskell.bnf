@@ -47,6 +47,9 @@
   methods("q_con_qualifier1|q_con_qualifier2|q_con_qualifier3|q_con_qualifier4|qualifier")=[getName setName getNameIdentifier getReference getPresentation]
   implements("q_con_qualifier1|q_con_qualifier2|q_con_qualifier3|q_con_qualifier4|qualifier")="intellij.haskell.psi.HaskellQualifierElement"
   mixin("q_con_qualifier1|q_con_qualifier2|q_con_qualifier3|q_con_qualifier4|qualifier")="intellij.haskell.psi.impl.HaskellQualifierElementImpl"
+
+  implements("text_literal")="intellij.haskell.psi.HaskellStringLiteralElement"
+  mixin("text_literal")="intellij.haskell.psi.impl.HaskellStringLiteralElementImpl"
 }
 
 program                     ::= onl shebang_line? onl file_header onl module_body
@@ -88,7 +91,7 @@ import_hiding_spec          ::= import_hiding onls LEFT_PAREN onls (import_id on
 import_empty_spec           ::= LEFT_PAREN RIGHT_PAREN
 import_hiding               ::= "hiding"
 import_id                   ::= TYPE? (cname LEFT_PAREN onls (cname_dot_dot onls (COMMA onls cname_dot_dot onls)* onls)? RIGHT_PAREN | cname)
-import_package_name         ::= STRING_LITERAL
+import_package_name         ::= text_literal
 
 top_declaration_line        ::= top_declaration NEWLINE
 top_declaration             ::= type_declaration | data_declaration | newtype_declaration | class_declaration | instance_declaration | default_declaration |
@@ -139,8 +142,9 @@ type_family_declaration     ::= TYPE_FAMILY onls type_family_type (onls (WHERE |
 
 deriving_declaration        ::= DERIVING INSTANCE (scontext onls DOUBLE_RIGHT_ARROW)? onls q_name onls inst
 
+text_literal                ::= STRING_LITERAL
 
-private literal             ::= DECIMAL | HEXADECIMAL | OCTAL | FLOAT | CHARACTER_LITERAL | STRING_LITERAL
+private literal             ::= DECIMAL | HEXADECIMAL | OCTAL | FLOAT | CHARACTER_LITERAL | text_literal
 
 private keyword             ::= DATA | CLASS | INSTANCE | NEWTYPE | DERIVING | DEFAULT | TYPE_FAMILY | TYPE | TYPE_INSTANCE | IMPORT | MODULE
 

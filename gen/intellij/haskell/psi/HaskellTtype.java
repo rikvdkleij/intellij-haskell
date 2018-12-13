@@ -8,22 +8,25 @@ import java.util.List;
 
 public interface HaskellTtype extends HaskellCompositeElement {
 
-  @Nullable
-  HaskellListType getListType();
+    @Nullable
+    HaskellListType getListType();
 
-  @NotNull
-  List<HaskellQName> getQNameList();
+    @NotNull
+    List<HaskellQName> getQNameList();
 
-  @NotNull
-  List<HaskellTtype> getTtypeList();
+    @NotNull
+    List<HaskellTextLiteral> getTextLiteralList();
 
-  @NotNull
-  List<HaskellTtype1> getTtype1List();
+    @NotNull
+    List<HaskellTtype> getTtypeList();
 
-  @NotNull
-  List<HaskellTtype2> getTtype2List();
+    @NotNull
+    List<HaskellTtype1> getTtype1List();
 
-  @NotNull
-  List<HaskellTypeSignature> getTypeSignatureList();
+    @NotNull
+    List<HaskellTtype2> getTtype2List();
+
+    @NotNull
+    List<HaskellTypeSignature> getTypeSignatureList();
 
 }

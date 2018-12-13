@@ -8,17 +8,17 @@ import org.jetbrains.annotations.NotNull;
 
 public interface HaskellQConQualifier1 extends HaskellQualifierElement {
 
-  @NotNull
-  HaskellConid getConid();
+    @NotNull
+    HaskellConid getConid();
 
-  String getName();
+    String getName();
 
-  PsiElement setName(String newName);
+    PsiElement setName(String newName);
 
-  HaskellNamedElement getNameIdentifier();
+    HaskellNamedElement getNameIdentifier();
 
-  PsiReference getReference();
+    PsiReference getReference();
 
-  ItemPresentation getPresentation();
+    ItemPresentation getPresentation();
 
 }

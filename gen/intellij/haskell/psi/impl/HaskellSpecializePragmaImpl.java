@@ -13,23 +13,23 @@ import java.util.List;
 
 public class HaskellSpecializePragmaImpl extends HaskellCompositeElementImpl implements HaskellSpecializePragma {
 
-  public HaskellSpecializePragmaImpl(ASTNode node) {
-    super(node);
-  }
+    public HaskellSpecializePragmaImpl(ASTNode node) {
+        super(node);
+    }
 
-  public void accept(@NotNull HaskellVisitor visitor) {
-    visitor.visitSpecializePragma(this);
-  }
+    public void accept(@NotNull HaskellVisitor visitor) {
+        visitor.visitSpecializePragma(this);
+    }
 
-  public void accept(@NotNull PsiElementVisitor visitor) {
-    if (visitor instanceof HaskellVisitor) accept((HaskellVisitor)visitor);
-    else super.accept(visitor);
-  }
+    public void accept(@NotNull PsiElementVisitor visitor) {
+        if (visitor instanceof HaskellVisitor) accept((HaskellVisitor) visitor);
+        else super.accept(visitor);
+    }
 
-  @Override
-  @NotNull
-  public List<HaskellGeneralPragmaContent> getGeneralPragmaContentList() {
-    return PsiTreeUtil.getChildrenOfTypeAsList(this, HaskellGeneralPragmaContent.class);
-  }
+    @Override
+    @NotNull
+    public List<HaskellGeneralPragmaContent> getGeneralPragmaContentList() {
+        return PsiTreeUtil.getChildrenOfTypeAsList(this, HaskellGeneralPragmaContent.class);
+    }
 
 }

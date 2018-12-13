@@ -7,10 +7,10 @@ import java.util.List;
 
 public interface HaskellConstr3 extends HaskellCompositeElement {
 
-  @NotNull
-  List<HaskellTtype> getTtypeList();
+    @NotNull
+    List<HaskellTtype> getTtypeList();
 
-  @NotNull
-  List<HaskellUnpackNounpackPragma> getUnpackNounpackPragmaList();
+    @NotNull
+    List<HaskellUnpackNounpackPragma> getUnpackNounpackPragmaList();
 
 }

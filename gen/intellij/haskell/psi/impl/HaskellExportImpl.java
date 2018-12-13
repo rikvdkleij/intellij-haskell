@@ -12,41 +12,41 @@ import java.util.List;
 
 public class HaskellExportImpl extends HaskellCompositeElementImpl implements HaskellExport {
 
-  public HaskellExportImpl(ASTNode node) {
-    super(node);
-  }
+    public HaskellExportImpl(ASTNode node) {
+        super(node);
+    }
 
-  public void accept(@NotNull HaskellVisitor visitor) {
-    visitor.visitExport(this);
-  }
+    public void accept(@NotNull HaskellVisitor visitor) {
+        visitor.visitExport(this);
+    }
 
-  public void accept(@NotNull PsiElementVisitor visitor) {
-    if (visitor instanceof HaskellVisitor) accept((HaskellVisitor)visitor);
-    else super.accept(visitor);
-  }
+    public void accept(@NotNull PsiElementVisitor visitor) {
+        if (visitor instanceof HaskellVisitor) accept((HaskellVisitor) visitor);
+        else super.accept(visitor);
+    }
 
-  @Override
-  @Nullable
-  public HaskellCname getCname() {
-    return PsiTreeUtil.getChildOfType(this, HaskellCname.class);
-  }
+    @Override
+    @Nullable
+    public HaskellCname getCname() {
+        return PsiTreeUtil.getChildOfType(this, HaskellCname.class);
+    }
 
-  @Override
-  @NotNull
-  public List<HaskellCnameDotDot> getCnameDotDotList() {
-    return PsiTreeUtil.getChildrenOfTypeAsList(this, HaskellCnameDotDot.class);
-  }
+    @Override
+    @NotNull
+    public List<HaskellCnameDotDot> getCnameDotDotList() {
+        return PsiTreeUtil.getChildrenOfTypeAsList(this, HaskellCnameDotDot.class);
+    }
 
-  @Override
-  @Nullable
-  public HaskellModid getModid() {
-    return PsiTreeUtil.getChildOfType(this, HaskellModid.class);
-  }
+    @Override
+    @Nullable
+    public HaskellModid getModid() {
+        return PsiTreeUtil.getChildOfType(this, HaskellModid.class);
+    }
 
-  @Override
-  @Nullable
-  public HaskellQCon getQCon() {
-    return PsiTreeUtil.getChildOfType(this, HaskellQCon.class);
-  }
+    @Override
+    @Nullable
+    public HaskellQCon getQCon() {
+        return PsiTreeUtil.getChildOfType(this, HaskellQCon.class);
+    }
 
 }

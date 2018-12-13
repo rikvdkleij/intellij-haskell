@@ -15,103 +15,103 @@ import java.util.List;
 
 public class HaskellDataDeclarationImpl extends HaskellCompositeElementImpl implements HaskellDataDeclaration {
 
-  public HaskellDataDeclarationImpl(ASTNode node) {
-    super(node);
-  }
+    public HaskellDataDeclarationImpl(ASTNode node) {
+        super(node);
+    }
 
-  public void accept(@NotNull HaskellVisitor visitor) {
-    visitor.visitDataDeclaration(this);
-  }
+    public void accept(@NotNull HaskellVisitor visitor) {
+        visitor.visitDataDeclaration(this);
+    }
 
-  public void accept(@NotNull PsiElementVisitor visitor) {
-    if (visitor instanceof HaskellVisitor) accept((HaskellVisitor)visitor);
-    else super.accept(visitor);
-  }
+    public void accept(@NotNull PsiElementVisitor visitor) {
+        if (visitor instanceof HaskellVisitor) accept((HaskellVisitor) visitor);
+        else super.accept(visitor);
+    }
 
-  @Override
-  @Nullable
-  public HaskellCcontext getCcontext() {
-    return PsiTreeUtil.getChildOfType(this, HaskellCcontext.class);
-  }
+    @Override
+    @Nullable
+    public HaskellCcontext getCcontext() {
+        return PsiTreeUtil.getChildOfType(this, HaskellCcontext.class);
+    }
 
-  @Override
-  @NotNull
-  public List<HaskellConstr1> getConstr1List() {
-    return PsiTreeUtil.getChildrenOfTypeAsList(this, HaskellConstr1.class);
-  }
+    @Override
+    @NotNull
+    public List<HaskellConstr1> getConstr1List() {
+        return PsiTreeUtil.getChildrenOfTypeAsList(this, HaskellConstr1.class);
+    }
 
-  @Override
-  @NotNull
-  public List<HaskellConstr2> getConstr2List() {
-    return PsiTreeUtil.getChildrenOfTypeAsList(this, HaskellConstr2.class);
-  }
+    @Override
+    @NotNull
+    public List<HaskellConstr2> getConstr2List() {
+        return PsiTreeUtil.getChildrenOfTypeAsList(this, HaskellConstr2.class);
+    }
 
-  @Override
-  @NotNull
-  public List<HaskellConstr3> getConstr3List() {
-    return PsiTreeUtil.getChildrenOfTypeAsList(this, HaskellConstr3.class);
-  }
+    @Override
+    @NotNull
+    public List<HaskellConstr3> getConstr3List() {
+        return PsiTreeUtil.getChildrenOfTypeAsList(this, HaskellConstr3.class);
+    }
 
-  @Override
-  @Nullable
-  public HaskellCtypePragma getCtypePragma() {
-    return PsiTreeUtil.getChildOfType(this, HaskellCtypePragma.class);
-  }
+    @Override
+    @Nullable
+    public HaskellCtypePragma getCtypePragma() {
+        return PsiTreeUtil.getChildOfType(this, HaskellCtypePragma.class);
+    }
 
-  @Override
-  @Nullable
-  public HaskellDataDeclarationDeriving getDataDeclarationDeriving() {
-    return PsiTreeUtil.getChildOfType(this, HaskellDataDeclarationDeriving.class);
-  }
+    @Override
+    @Nullable
+    public HaskellDataDeclarationDeriving getDataDeclarationDeriving() {
+        return PsiTreeUtil.getChildOfType(this, HaskellDataDeclarationDeriving.class);
+    }
 
-  @Override
-  @NotNull
-  public List<HaskellKindSignature> getKindSignatureList() {
-    return PsiTreeUtil.getChildrenOfTypeAsList(this, HaskellKindSignature.class);
-  }
+    @Override
+    @NotNull
+    public List<HaskellKindSignature> getKindSignatureList() {
+        return PsiTreeUtil.getChildrenOfTypeAsList(this, HaskellKindSignature.class);
+    }
 
-  @Override
-  @NotNull
-  public List<HaskellQName> getQNameList() {
-    return PsiTreeUtil.getChildrenOfTypeAsList(this, HaskellQName.class);
-  }
+    @Override
+    @NotNull
+    public List<HaskellQName> getQNameList() {
+        return PsiTreeUtil.getChildrenOfTypeAsList(this, HaskellQName.class);
+    }
 
-  @Override
-  @NotNull
-  public HaskellSimpletype getSimpletype() {
-    return notNullChild(PsiTreeUtil.getChildOfType(this, HaskellSimpletype.class));
-  }
+    @Override
+    @NotNull
+    public HaskellSimpletype getSimpletype() {
+        return notNullChild(PsiTreeUtil.getChildOfType(this, HaskellSimpletype.class));
+    }
 
-  @Override
-  @Nullable
-  public HaskellTtype getTtype() {
-    return PsiTreeUtil.getChildOfType(this, HaskellTtype.class);
-  }
+    @Override
+    @Nullable
+    public HaskellTtype getTtype() {
+        return PsiTreeUtil.getChildOfType(this, HaskellTtype.class);
+    }
 
-  @Override
-  @NotNull
-  public List<HaskellTypeSignature> getTypeSignatureList() {
-    return PsiTreeUtil.getChildrenOfTypeAsList(this, HaskellTypeSignature.class);
-  }
+    @Override
+    @NotNull
+    public List<HaskellTypeSignature> getTypeSignatureList() {
+        return PsiTreeUtil.getChildrenOfTypeAsList(this, HaskellTypeSignature.class);
+    }
 
-  public String getName() {
-    return HaskellPsiImplUtil.getName(this);
-  }
+    public String getName() {
+        return HaskellPsiImplUtil.getName(this);
+    }
 
-  public ItemPresentation getPresentation() {
-    return HaskellPsiImplUtil.getPresentation(this);
-  }
+    public ItemPresentation getPresentation() {
+        return HaskellPsiImplUtil.getPresentation(this);
+    }
 
-  public Seq<HaskellNamedElement> getIdentifierElements() {
-    return HaskellPsiImplUtil.getIdentifierElements(this);
-  }
+    public Seq<HaskellNamedElement> getIdentifierElements() {
+        return HaskellPsiImplUtil.getIdentifierElements(this);
+    }
 
-  public Option<String> getModuleName() {
-    return HaskellPsiImplUtil.getModuleName(this);
-  }
+    public Option<String> getModuleName() {
+        return HaskellPsiImplUtil.getModuleName(this);
+    }
 
-  public HaskellNamedElement getDataTypeConstructor() {
-    return HaskellPsiImplUtil.getDataTypeConstructor(this);
-  }
+    public HaskellNamedElement getDataTypeConstructor() {
+        return HaskellPsiImplUtil.getDataTypeConstructor(this);
+    }
 
 }

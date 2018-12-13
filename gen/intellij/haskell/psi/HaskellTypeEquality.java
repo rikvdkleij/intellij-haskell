@@ -7,7 +7,7 @@ import java.util.List;
 
 public interface HaskellTypeEquality extends HaskellCompositeElement {
 
-  @NotNull
-  List<HaskellQName> getQNameList();
+    @NotNull
+    List<HaskellQName> getQNameList();
 
 }

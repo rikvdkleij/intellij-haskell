@@ -13,23 +13,23 @@ import java.util.List;
 
 public class HaskellTtype1Impl extends HaskellCompositeElementImpl implements HaskellTtype1 {
 
-  public HaskellTtype1Impl(ASTNode node) {
-    super(node);
-  }
+    public HaskellTtype1Impl(ASTNode node) {
+        super(node);
+    }
 
-  public void accept(@NotNull HaskellVisitor visitor) {
-    visitor.visitTtype1(this);
-  }
+    public void accept(@NotNull HaskellVisitor visitor) {
+        visitor.visitTtype1(this);
+    }
 
-  public void accept(@NotNull PsiElementVisitor visitor) {
-    if (visitor instanceof HaskellVisitor) accept((HaskellVisitor)visitor);
-    else super.accept(visitor);
-  }
+    public void accept(@NotNull PsiElementVisitor visitor) {
+        if (visitor instanceof HaskellVisitor) accept((HaskellVisitor) visitor);
+        else super.accept(visitor);
+    }
 
-  @Override
-  @NotNull
-  public List<HaskellTtype> getTtypeList() {
-    return PsiTreeUtil.getChildrenOfTypeAsList(this, HaskellTtype.class);
-  }
+    @Override
+    @NotNull
+    public List<HaskellTtype> getTtypeList() {
+        return PsiTreeUtil.getChildrenOfTypeAsList(this, HaskellTtype.class);
+    }
 
 }

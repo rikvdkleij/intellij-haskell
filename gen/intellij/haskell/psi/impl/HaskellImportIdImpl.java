@@ -14,29 +14,29 @@ import java.util.List;
 
 public class HaskellImportIdImpl extends HaskellCompositeElementImpl implements HaskellImportId {
 
-  public HaskellImportIdImpl(ASTNode node) {
-    super(node);
-  }
+    public HaskellImportIdImpl(ASTNode node) {
+        super(node);
+    }
 
-  public void accept(@NotNull HaskellVisitor visitor) {
-    visitor.visitImportId(this);
-  }
+    public void accept(@NotNull HaskellVisitor visitor) {
+        visitor.visitImportId(this);
+    }
 
-  public void accept(@NotNull PsiElementVisitor visitor) {
-    if (visitor instanceof HaskellVisitor) accept((HaskellVisitor)visitor);
-    else super.accept(visitor);
-  }
+    public void accept(@NotNull PsiElementVisitor visitor) {
+        if (visitor instanceof HaskellVisitor) accept((HaskellVisitor) visitor);
+        else super.accept(visitor);
+    }
 
-  @Override
-  @NotNull
-  public HaskellCname getCname() {
-    return notNullChild(PsiTreeUtil.getChildOfType(this, HaskellCname.class));
-  }
+    @Override
+    @NotNull
+    public HaskellCname getCname() {
+        return notNullChild(PsiTreeUtil.getChildOfType(this, HaskellCname.class));
+    }
 
-  @Override
-  @NotNull
-  public List<HaskellCnameDotDot> getCnameDotDotList() {
-    return PsiTreeUtil.getChildrenOfTypeAsList(this, HaskellCnameDotDot.class);
-  }
+    @Override
+    @NotNull
+    public List<HaskellCnameDotDot> getCnameDotDotList() {
+        return PsiTreeUtil.getChildrenOfTypeAsList(this, HaskellCnameDotDot.class);
+    }
 
 }

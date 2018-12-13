@@ -7,7 +7,7 @@ import java.util.List;
 
 public interface HaskellUnpackNounpackPragma extends HaskellCompositeElement {
 
-  @NotNull
-  List<HaskellGeneralPragmaContent> getGeneralPragmaContentList();
+    @NotNull
+    List<HaskellGeneralPragmaContent> getGeneralPragmaContentList();
 
 }

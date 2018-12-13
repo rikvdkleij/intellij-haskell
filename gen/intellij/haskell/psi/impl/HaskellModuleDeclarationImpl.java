@@ -15,51 +15,51 @@ import java.util.List;
 
 public class HaskellModuleDeclarationImpl extends HaskellCompositeElementImpl implements HaskellModuleDeclaration {
 
-  public HaskellModuleDeclarationImpl(ASTNode node) {
-    super(node);
-  }
+    public HaskellModuleDeclarationImpl(ASTNode node) {
+        super(node);
+    }
 
-  public void accept(@NotNull HaskellVisitor visitor) {
-    visitor.visitModuleDeclaration(this);
-  }
+    public void accept(@NotNull HaskellVisitor visitor) {
+        visitor.visitModuleDeclaration(this);
+    }
 
-  public void accept(@NotNull PsiElementVisitor visitor) {
-    if (visitor instanceof HaskellVisitor) accept((HaskellVisitor)visitor);
-    else super.accept(visitor);
-  }
+    public void accept(@NotNull PsiElementVisitor visitor) {
+        if (visitor instanceof HaskellVisitor) accept((HaskellVisitor) visitor);
+        else super.accept(visitor);
+    }
 
-  @Override
-  @Nullable
-  public HaskellExports getExports() {
-    return PsiTreeUtil.getChildOfType(this, HaskellExports.class);
-  }
+    @Override
+    @Nullable
+    public HaskellExports getExports() {
+        return PsiTreeUtil.getChildOfType(this, HaskellExports.class);
+    }
 
-  @Override
-  @NotNull
-  public List<HaskellGeneralPragmaContent> getGeneralPragmaContentList() {
-    return PsiTreeUtil.getChildrenOfTypeAsList(this, HaskellGeneralPragmaContent.class);
-  }
+    @Override
+    @NotNull
+    public List<HaskellGeneralPragmaContent> getGeneralPragmaContentList() {
+        return PsiTreeUtil.getChildrenOfTypeAsList(this, HaskellGeneralPragmaContent.class);
+    }
 
-  @Override
-  @NotNull
-  public HaskellModid getModid() {
-    return notNullChild(PsiTreeUtil.getChildOfType(this, HaskellModid.class));
-  }
+    @Override
+    @NotNull
+    public HaskellModid getModid() {
+        return notNullChild(PsiTreeUtil.getChildOfType(this, HaskellModid.class));
+    }
 
-  public String getName() {
-    return HaskellPsiImplUtil.getName(this);
-  }
+    public String getName() {
+        return HaskellPsiImplUtil.getName(this);
+    }
 
-  public ItemPresentation getPresentation() {
-    return HaskellPsiImplUtil.getPresentation(this);
-  }
+    public ItemPresentation getPresentation() {
+        return HaskellPsiImplUtil.getPresentation(this);
+    }
 
-  public Seq<HaskellNamedElement> getIdentifierElements() {
-    return HaskellPsiImplUtil.getIdentifierElements(this);
-  }
+    public Seq<HaskellNamedElement> getIdentifierElements() {
+        return HaskellPsiImplUtil.getIdentifierElements(this);
+    }
 
-  public Option<String> getModuleName() {
-    return HaskellPsiImplUtil.getModuleName(this);
-  }
+    public Option<String> getModuleName() {
+        return HaskellPsiImplUtil.getModuleName(this);
+    }
 
 }

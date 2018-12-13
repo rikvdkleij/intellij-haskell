@@ -8,16 +8,16 @@ import java.util.List;
 
 public interface HaskellExport extends HaskellCompositeElement {
 
-  @Nullable
-  HaskellCname getCname();
+    @Nullable
+    HaskellCname getCname();
 
-  @NotNull
-  List<HaskellCnameDotDot> getCnameDotDotList();
+    @NotNull
+    List<HaskellCnameDotDot> getCnameDotDotList();
 
-  @Nullable
-  HaskellModid getModid();
+    @Nullable
+    HaskellModid getModid();
 
-  @Nullable
-  HaskellQCon getQCon();
+    @Nullable
+    HaskellQCon getQCon();
 
 }

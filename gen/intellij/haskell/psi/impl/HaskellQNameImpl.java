@@ -11,41 +11,41 @@ import scala.Option;
 
 public class HaskellQNameImpl extends HaskellCompositeElementImpl implements HaskellQName {
 
-  public HaskellQNameImpl(ASTNode node) {
-    super(node);
-  }
+    public HaskellQNameImpl(ASTNode node) {
+        super(node);
+    }
 
-  public void accept(@NotNull HaskellVisitor visitor) {
-    visitor.visitQName(this);
-  }
+    public void accept(@NotNull HaskellVisitor visitor) {
+        visitor.visitQName(this);
+    }
 
-  public void accept(@NotNull PsiElementVisitor visitor) {
-    if (visitor instanceof HaskellVisitor) accept((HaskellVisitor)visitor);
-    else super.accept(visitor);
-  }
+    public void accept(@NotNull PsiElementVisitor visitor) {
+        if (visitor instanceof HaskellVisitor) accept((HaskellVisitor) visitor);
+        else super.accept(visitor);
+    }
 
-  @Override
-  @Nullable
-  public HaskellQVarCon getQVarCon() {
-    return PsiTreeUtil.getChildOfType(this, HaskellQVarCon.class);
-  }
+    @Override
+    @Nullable
+    public HaskellQVarCon getQVarCon() {
+        return PsiTreeUtil.getChildOfType(this, HaskellQVarCon.class);
+    }
 
-  @Override
-  @Nullable
-  public HaskellVarCon getVarCon() {
-    return PsiTreeUtil.getChildOfType(this, HaskellVarCon.class);
-  }
+    @Override
+    @Nullable
+    public HaskellVarCon getVarCon() {
+        return PsiTreeUtil.getChildOfType(this, HaskellVarCon.class);
+    }
 
-  public String getName() {
-    return HaskellPsiImplUtil.getName(this);
-  }
+    public String getName() {
+        return HaskellPsiImplUtil.getName(this);
+    }
 
-  public HaskellNamedElement getIdentifierElement() {
-    return HaskellPsiImplUtil.getIdentifierElement(this);
-  }
+    public HaskellNamedElement getIdentifierElement() {
+        return HaskellPsiImplUtil.getIdentifierElement(this);
+    }
 
-  public Option<String> getQualifierName() {
-    return HaskellPsiImplUtil.getQualifierName(this);
-  }
+    public Option<String> getQualifierName() {
+        return HaskellPsiImplUtil.getQualifierName(this);
+    }
 
 }

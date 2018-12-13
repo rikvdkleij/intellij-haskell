@@ -9,14 +9,14 @@ import intellij.haskell.psi.stubs.HaskellConidStub;
 
 public interface HaskellConid extends HaskellNamedElement, StubBasedPsiElement<HaskellConidStub> {
 
-  String getName();
+    String getName();
 
-  PsiElement setName(String newName);
+    PsiElement setName(String newName);
 
-  HaskellNamedElement getNameIdentifier();
+    HaskellNamedElement getNameIdentifier();
 
-  PsiReference getReference();
+    PsiReference getReference();
 
-  ItemPresentation getPresentation();
+    ItemPresentation getPresentation();
 
 }

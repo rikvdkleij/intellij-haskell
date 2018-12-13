@@ -5,46 +5,46 @@ import org.jetbrains.annotations.Nullable;
 
 public interface HaskellTopDeclaration extends HaskellCompositeElement {
 
-  @Nullable
-  HaskellClassDeclaration getClassDeclaration();
+    @Nullable
+    HaskellClassDeclaration getClassDeclaration();
 
-  @Nullable
-  HaskellDataDeclaration getDataDeclaration();
+    @Nullable
+    HaskellDataDeclaration getDataDeclaration();
 
-  @Nullable
-  HaskellDefaultDeclaration getDefaultDeclaration();
+    @Nullable
+    HaskellDefaultDeclaration getDefaultDeclaration();
 
-  @Nullable
-  HaskellDerivingDeclaration getDerivingDeclaration();
+    @Nullable
+    HaskellDerivingDeclaration getDerivingDeclaration();
 
-  @Nullable
-  HaskellExpression getExpression();
+    @Nullable
+    HaskellExpression getExpression();
 
-  @Nullable
-  HaskellFixityDeclaration getFixityDeclaration();
+    @Nullable
+    HaskellFixityDeclaration getFixityDeclaration();
 
-  @Nullable
-  HaskellForeignDeclaration getForeignDeclaration();
+    @Nullable
+    HaskellForeignDeclaration getForeignDeclaration();
 
-  @Nullable
-  HaskellInstanceDeclaration getInstanceDeclaration();
+    @Nullable
+    HaskellInstanceDeclaration getInstanceDeclaration();
 
-  @Nullable
-  HaskellNewtypeDeclaration getNewtypeDeclaration();
+    @Nullable
+    HaskellNewtypeDeclaration getNewtypeDeclaration();
 
-  @Nullable
-  HaskellOtherPragma getOtherPragma();
+    @Nullable
+    HaskellOtherPragma getOtherPragma();
 
-  @Nullable
-  HaskellTypeDeclaration getTypeDeclaration();
+    @Nullable
+    HaskellTypeDeclaration getTypeDeclaration();
 
-  @Nullable
-  HaskellTypeFamilyDeclaration getTypeFamilyDeclaration();
+    @Nullable
+    HaskellTypeFamilyDeclaration getTypeFamilyDeclaration();
 
-  @Nullable
-  HaskellTypeInstanceDeclaration getTypeInstanceDeclaration();
+    @Nullable
+    HaskellTypeInstanceDeclaration getTypeInstanceDeclaration();
 
-  @Nullable
-  HaskellTypeSignature getTypeSignature();
+    @Nullable
+    HaskellTypeSignature getTypeSignature();
 
 }

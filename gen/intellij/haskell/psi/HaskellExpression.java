@@ -7,19 +7,22 @@ import java.util.List;
 
 public interface HaskellExpression extends HaskellExpressionElement {
 
-  @NotNull
-  List<HaskellDotDot> getDotDotList();
+    @NotNull
+    List<HaskellDotDot> getDotDotList();
 
-  @NotNull
-  List<HaskellInlinelikePragma> getInlinelikePragmaList();
+    @NotNull
+    List<HaskellInlinelikePragma> getInlinelikePragmaList();
 
-  @NotNull
-  List<HaskellQName> getQNameList();
+    @NotNull
+    List<HaskellQName> getQNameList();
 
-  @NotNull
-  List<HaskellReservedId> getReservedIdList();
+    @NotNull
+    List<HaskellReservedId> getReservedIdList();
 
-  @NotNull
-  List<HaskellSccPragma> getSccPragmaList();
+    @NotNull
+    List<HaskellSccPragma> getSccPragmaList();
+
+    @NotNull
+    List<HaskellTextLiteral> getTextLiteralList();
 
 }

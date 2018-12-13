@@ -11,21 +11,21 @@ import java.util.List;
 
 public interface HaskellModuleDeclaration extends HaskellDeclarationElement {
 
-  @Nullable
-  HaskellExports getExports();
+    @Nullable
+    HaskellExports getExports();
 
-  @NotNull
-  List<HaskellGeneralPragmaContent> getGeneralPragmaContentList();
+    @NotNull
+    List<HaskellGeneralPragmaContent> getGeneralPragmaContentList();
 
-  @NotNull
-  HaskellModid getModid();
+    @NotNull
+    HaskellModid getModid();
 
-  String getName();
+    String getName();
 
-  ItemPresentation getPresentation();
+    ItemPresentation getPresentation();
 
-  Seq<HaskellNamedElement> getIdentifierElements();
+    Seq<HaskellNamedElement> getIdentifierElements();
 
-  Option<String> getModuleName();
+    Option<String> getModuleName();
 
 }

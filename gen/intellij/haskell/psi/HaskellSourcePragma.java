@@ -7,7 +7,7 @@ import java.util.List;
 
 public interface HaskellSourcePragma extends HaskellCompositeElement {
 
-  @NotNull
-  List<HaskellGeneralPragmaContent> getGeneralPragmaContentList();
+    @NotNull
+    List<HaskellGeneralPragmaContent> getGeneralPragmaContentList();
 
 }

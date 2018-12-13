@@ -5,7 +5,7 @@ import org.jetbrains.annotations.NotNull;
 
 public interface HaskellCideclExpression extends HaskellCompositeElement {
 
-  @NotNull
-  HaskellExpression getExpression();
+    @NotNull
+    HaskellExpression getExpression();
 
 }

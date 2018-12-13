@@ -8,19 +8,19 @@ import java.util.List;
 
 public interface HaskellFielddecl extends HaskellCompositeElement {
 
-  @NotNull
-  List<HaskellQName> getQNameList();
+    @NotNull
+    List<HaskellQName> getQNameList();
 
-  @NotNull
-  HaskellQNames getQNames();
+    @NotNull
+    HaskellQNames getQNames();
 
-  @Nullable
-  HaskellScontext getScontext();
+    @Nullable
+    HaskellScontext getScontext();
 
-  @Nullable
-  HaskellTtype getTtype();
+    @Nullable
+    HaskellTtype getTtype();
 
-  @NotNull
-  List<HaskellUnpackNounpackPragma> getUnpackNounpackPragmaList();
+    @NotNull
+    List<HaskellUnpackNounpackPragma> getUnpackNounpackPragmaList();
 
 }

@@ -5,10 +5,10 @@ import org.jetbrains.annotations.Nullable;
 
 public interface HaskellInstvar extends HaskellCompositeElement {
 
-  @Nullable
-  HaskellQName getQName();
+    @Nullable
+    HaskellQName getQName();
 
-  @Nullable
-  HaskellTtype getTtype();
+    @Nullable
+    HaskellTtype getTtype();
 
 }

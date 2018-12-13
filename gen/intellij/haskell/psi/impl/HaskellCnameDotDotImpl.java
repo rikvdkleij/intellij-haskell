@@ -13,29 +13,29 @@ import org.jetbrains.annotations.Nullable;
 
 public class HaskellCnameDotDotImpl extends HaskellCompositeElementImpl implements HaskellCnameDotDot {
 
-  public HaskellCnameDotDotImpl(ASTNode node) {
-    super(node);
-  }
+    public HaskellCnameDotDotImpl(ASTNode node) {
+        super(node);
+    }
 
-  public void accept(@NotNull HaskellVisitor visitor) {
-    visitor.visitCnameDotDot(this);
-  }
+    public void accept(@NotNull HaskellVisitor visitor) {
+        visitor.visitCnameDotDot(this);
+    }
 
-  public void accept(@NotNull PsiElementVisitor visitor) {
-    if (visitor instanceof HaskellVisitor) accept((HaskellVisitor)visitor);
-    else super.accept(visitor);
-  }
+    public void accept(@NotNull PsiElementVisitor visitor) {
+        if (visitor instanceof HaskellVisitor) accept((HaskellVisitor) visitor);
+        else super.accept(visitor);
+    }
 
-  @Override
-  @Nullable
-  public HaskellCname getCname() {
-    return PsiTreeUtil.getChildOfType(this, HaskellCname.class);
-  }
+    @Override
+    @Nullable
+    public HaskellCname getCname() {
+        return PsiTreeUtil.getChildOfType(this, HaskellCname.class);
+    }
 
-  @Override
-  @Nullable
-  public HaskellDotDot getDotDot() {
-    return PsiTreeUtil.getChildOfType(this, HaskellDotDot.class);
-  }
+    @Override
+    @Nullable
+    public HaskellDotDot getDotDot() {
+        return PsiTreeUtil.getChildOfType(this, HaskellDotDot.class);
+    }
 
 }

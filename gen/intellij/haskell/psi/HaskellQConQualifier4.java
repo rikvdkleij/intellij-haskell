@@ -10,17 +10,17 @@ import java.util.List;
 
 public interface HaskellQConQualifier4 extends HaskellQualifierElement {
 
-  @NotNull
-  List<HaskellConid> getConidList();
+    @NotNull
+    List<HaskellConid> getConidList();
 
-  String getName();
+    String getName();
 
-  PsiElement setName(String newName);
+    PsiElement setName(String newName);
 
-  HaskellNamedElement getNameIdentifier();
+    HaskellNamedElement getNameIdentifier();
 
-  PsiReference getReference();
+    PsiReference getReference();
 
-  ItemPresentation getPresentation();
+    ItemPresentation getPresentation();
 
 }

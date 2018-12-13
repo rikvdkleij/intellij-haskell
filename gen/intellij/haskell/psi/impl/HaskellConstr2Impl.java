@@ -12,35 +12,35 @@ import java.util.List;
 
 public class HaskellConstr2Impl extends HaskellCompositeElementImpl implements HaskellConstr2 {
 
-  public HaskellConstr2Impl(ASTNode node) {
-    super(node);
-  }
+    public HaskellConstr2Impl(ASTNode node) {
+        super(node);
+    }
 
-  public void accept(@NotNull HaskellVisitor visitor) {
-    visitor.visitConstr2(this);
-  }
+    public void accept(@NotNull HaskellVisitor visitor) {
+        visitor.visitConstr2(this);
+    }
 
-  public void accept(@NotNull PsiElementVisitor visitor) {
-    if (visitor instanceof HaskellVisitor) accept((HaskellVisitor)visitor);
-    else super.accept(visitor);
-  }
+    public void accept(@NotNull PsiElementVisitor visitor) {
+        if (visitor instanceof HaskellVisitor) accept((HaskellVisitor) visitor);
+        else super.accept(visitor);
+    }
 
-  @Override
-  @Nullable
-  public HaskellQName getQName() {
-    return PsiTreeUtil.getChildOfType(this, HaskellQName.class);
-  }
+    @Override
+    @Nullable
+    public HaskellQName getQName() {
+        return PsiTreeUtil.getChildOfType(this, HaskellQName.class);
+    }
 
-  @Override
-  @NotNull
-  public List<HaskellTtype> getTtypeList() {
-    return PsiTreeUtil.getChildrenOfTypeAsList(this, HaskellTtype.class);
-  }
+    @Override
+    @NotNull
+    public List<HaskellTtype> getTtypeList() {
+        return PsiTreeUtil.getChildrenOfTypeAsList(this, HaskellTtype.class);
+    }
 
-  @Override
-  @NotNull
-  public List<HaskellUnpackNounpackPragma> getUnpackNounpackPragmaList() {
-    return PsiTreeUtil.getChildrenOfTypeAsList(this, HaskellUnpackNounpackPragma.class);
-  }
+    @Override
+    @NotNull
+    public List<HaskellUnpackNounpackPragma> getUnpackNounpackPragmaList() {
+        return PsiTreeUtil.getChildrenOfTypeAsList(this, HaskellUnpackNounpackPragma.class);
+    }
 
 }

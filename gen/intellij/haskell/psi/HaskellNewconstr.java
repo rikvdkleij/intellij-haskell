@@ -8,22 +8,25 @@ import java.util.List;
 
 public interface HaskellNewconstr extends HaskellCompositeElement {
 
-  @Nullable
-  HaskellNewconstrFielddecl getNewconstrFielddecl();
+    @Nullable
+    HaskellNewconstrFielddecl getNewconstrFielddecl();
 
-  @NotNull
-  List<HaskellQName> getQNameList();
+    @NotNull
+    List<HaskellQName> getQNameList();
 
-  @NotNull
-  List<HaskellTtype> getTtypeList();
+    @Nullable
+    HaskellTextLiteral getTextLiteral();
 
-  @Nullable
-  HaskellTtype1 getTtype1();
+    @NotNull
+    List<HaskellTtype> getTtypeList();
 
-  @Nullable
-  HaskellTtype2 getTtype2();
+    @Nullable
+    HaskellTtype1 getTtype1();
 
-  @NotNull
-  List<HaskellTypeSignature> getTypeSignatureList();
+    @Nullable
+    HaskellTtype2 getTtype2();
+
+    @NotNull
+    List<HaskellTypeSignature> getTypeSignatureList();
 
 }

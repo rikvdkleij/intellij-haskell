@@ -7,10 +7,10 @@ import java.util.List;
 
 public interface HaskellImportId extends HaskellCompositeElement {
 
-  @NotNull
-  HaskellCname getCname();
+    @NotNull
+    HaskellCname getCname();
 
-  @NotNull
-  List<HaskellCnameDotDot> getCnameDotDotList();
+    @NotNull
+    List<HaskellCnameDotDot> getCnameDotDotList();
 
 }

@@ -5,10 +5,10 @@ import org.jetbrains.annotations.Nullable;
 
 public interface HaskellCnameDotDot extends HaskellCompositeElement {
 
-  @Nullable
-  HaskellCname getCname();
+    @Nullable
+    HaskellCname getCname();
 
-  @Nullable
-  HaskellDotDot getDotDot();
+    @Nullable
+    HaskellDotDot getDotDot();
 
 }

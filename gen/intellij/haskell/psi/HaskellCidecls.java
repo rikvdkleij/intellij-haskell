@@ -7,34 +7,34 @@ import java.util.List;
 
 public interface HaskellCidecls extends HaskellCompositeElement {
 
-  @NotNull
-  List<HaskellCideclExpression> getCideclExpressionList();
+    @NotNull
+    List<HaskellCideclExpression> getCideclExpressionList();
 
-  @NotNull
-  List<HaskellDataDeclaration> getDataDeclarationList();
+    @NotNull
+    List<HaskellDataDeclaration> getDataDeclarationList();
 
-  @NotNull
-  List<HaskellDefaultDeclaration> getDefaultDeclarationList();
+    @NotNull
+    List<HaskellDefaultDeclaration> getDefaultDeclarationList();
 
-  @NotNull
-  List<HaskellInlinelikePragma> getInlinelikePragmaList();
+    @NotNull
+    List<HaskellInlinelikePragma> getInlinelikePragmaList();
 
-  @NotNull
-  List<HaskellInstanceDeclaration> getInstanceDeclarationList();
+    @NotNull
+    List<HaskellInstanceDeclaration> getInstanceDeclarationList();
 
-  @NotNull
-  List<HaskellMinimalPragma> getMinimalPragmaList();
+    @NotNull
+    List<HaskellMinimalPragma> getMinimalPragmaList();
 
-  @NotNull
-  List<HaskellNewtypeDeclaration> getNewtypeDeclarationList();
+    @NotNull
+    List<HaskellNewtypeDeclaration> getNewtypeDeclarationList();
 
-  @NotNull
-  List<HaskellSpecializePragma> getSpecializePragmaList();
+    @NotNull
+    List<HaskellSpecializePragma> getSpecializePragmaList();
 
-  @NotNull
-  List<HaskellTypeDeclaration> getTypeDeclarationList();
+    @NotNull
+    List<HaskellTypeDeclaration> getTypeDeclarationList();
 
-  @NotNull
-  List<HaskellTypeFamilyDeclaration> getTypeFamilyDeclarationList();
+    @NotNull
+    List<HaskellTypeFamilyDeclaration> getTypeFamilyDeclarationList();
 
 }

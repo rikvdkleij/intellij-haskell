@@ -6,22 +6,22 @@ import scala.Option;
 
 public interface HaskellCname extends HaskellQualifiedNameElement {
 
-  @Nullable
-  HaskellCon getCon();
+    @Nullable
+    HaskellCon getCon();
 
-  @Nullable
-  HaskellConop getConop();
+    @Nullable
+    HaskellConop getConop();
 
-  @Nullable
-  HaskellVar getVar();
+    @Nullable
+    HaskellVar getVar();
 
-  @Nullable
-  HaskellVarop getVarop();
+    @Nullable
+    HaskellVarop getVarop();
 
-  String getName();
+    String getName();
 
-  HaskellNamedElement getIdentifierElement();
+    HaskellNamedElement getIdentifierElement();
 
-  Option<String> getQualifierName();
+    Option<String> getQualifierName();
 
 }

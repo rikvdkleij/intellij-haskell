@@ -11,23 +11,23 @@ import org.jetbrains.annotations.NotNull;
 
 public class HaskellCideclExpressionImpl extends HaskellCompositeElementImpl implements HaskellCideclExpression {
 
-  public HaskellCideclExpressionImpl(ASTNode node) {
-    super(node);
-  }
+    public HaskellCideclExpressionImpl(ASTNode node) {
+        super(node);
+    }
 
-  public void accept(@NotNull HaskellVisitor visitor) {
-    visitor.visitCideclExpression(this);
-  }
+    public void accept(@NotNull HaskellVisitor visitor) {
+        visitor.visitCideclExpression(this);
+    }
 
-  public void accept(@NotNull PsiElementVisitor visitor) {
-    if (visitor instanceof HaskellVisitor) accept((HaskellVisitor)visitor);
-    else super.accept(visitor);
-  }
+    public void accept(@NotNull PsiElementVisitor visitor) {
+        if (visitor instanceof HaskellVisitor) accept((HaskellVisitor) visitor);
+        else super.accept(visitor);
+    }
 
-  @Override
-  @NotNull
-  public HaskellExpression getExpression() {
-      return notNullChild(PsiTreeUtil.getChildOfType(this, HaskellExpression.class));
-  }
+    @Override
+    @NotNull
+    public HaskellExpression getExpression() {
+        return notNullChild(PsiTreeUtil.getChildOfType(this, HaskellExpression.class));
+    }
 
 }

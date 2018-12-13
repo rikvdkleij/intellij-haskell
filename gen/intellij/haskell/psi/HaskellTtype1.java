@@ -7,7 +7,7 @@ import java.util.List;
 
 public interface HaskellTtype1 extends HaskellCompositeElement {
 
-  @NotNull
-  List<HaskellTtype> getTtypeList();
+    @NotNull
+    List<HaskellTtype> getTtypeList();
 
 }

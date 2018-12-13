@@ -12,29 +12,29 @@ import org.jetbrains.annotations.NotNull;
 
 public class HaskellNewconstrFielddeclImpl extends HaskellCompositeElementImpl implements HaskellNewconstrFielddecl {
 
-  public HaskellNewconstrFielddeclImpl(ASTNode node) {
-    super(node);
-  }
+    public HaskellNewconstrFielddeclImpl(ASTNode node) {
+        super(node);
+    }
 
-  public void accept(@NotNull HaskellVisitor visitor) {
-    visitor.visitNewconstrFielddecl(this);
-  }
+    public void accept(@NotNull HaskellVisitor visitor) {
+        visitor.visitNewconstrFielddecl(this);
+    }
 
-  public void accept(@NotNull PsiElementVisitor visitor) {
-    if (visitor instanceof HaskellVisitor) accept((HaskellVisitor)visitor);
-    else super.accept(visitor);
-  }
+    public void accept(@NotNull PsiElementVisitor visitor) {
+        if (visitor instanceof HaskellVisitor) accept((HaskellVisitor) visitor);
+        else super.accept(visitor);
+    }
 
-  @Override
-  @NotNull
-  public HaskellQName getQName() {
-    return notNullChild(PsiTreeUtil.getChildOfType(this, HaskellQName.class));
-  }
+    @Override
+    @NotNull
+    public HaskellQName getQName() {
+        return notNullChild(PsiTreeUtil.getChildOfType(this, HaskellQName.class));
+    }
 
-  @Override
-  @NotNull
-  public HaskellTypeSignature getTypeSignature() {
-    return notNullChild(PsiTreeUtil.getChildOfType(this, HaskellTypeSignature.class));
-  }
+    @Override
+    @NotNull
+    public HaskellTypeSignature getTypeSignature() {
+        return notNullChild(PsiTreeUtil.getChildOfType(this, HaskellTypeSignature.class));
+    }
 
 }

@@ -14,29 +14,29 @@ import java.util.List;
 
 public class HaskellConstr3Impl extends HaskellCompositeElementImpl implements HaskellConstr3 {
 
-  public HaskellConstr3Impl(ASTNode node) {
-    super(node);
-  }
+    public HaskellConstr3Impl(ASTNode node) {
+        super(node);
+    }
 
-  public void accept(@NotNull HaskellVisitor visitor) {
-    visitor.visitConstr3(this);
-  }
+    public void accept(@NotNull HaskellVisitor visitor) {
+        visitor.visitConstr3(this);
+    }
 
-  public void accept(@NotNull PsiElementVisitor visitor) {
-    if (visitor instanceof HaskellVisitor) accept((HaskellVisitor)visitor);
-    else super.accept(visitor);
-  }
+    public void accept(@NotNull PsiElementVisitor visitor) {
+        if (visitor instanceof HaskellVisitor) accept((HaskellVisitor) visitor);
+        else super.accept(visitor);
+    }
 
-  @Override
-  @NotNull
-  public List<HaskellTtype> getTtypeList() {
-    return PsiTreeUtil.getChildrenOfTypeAsList(this, HaskellTtype.class);
-  }
+    @Override
+    @NotNull
+    public List<HaskellTtype> getTtypeList() {
+        return PsiTreeUtil.getChildrenOfTypeAsList(this, HaskellTtype.class);
+    }
 
-  @Override
-  @NotNull
-  public List<HaskellUnpackNounpackPragma> getUnpackNounpackPragmaList() {
-    return PsiTreeUtil.getChildrenOfTypeAsList(this, HaskellUnpackNounpackPragma.class);
-  }
+    @Override
+    @NotNull
+    public List<HaskellUnpackNounpackPragma> getUnpackNounpackPragmaList() {
+        return PsiTreeUtil.getChildrenOfTypeAsList(this, HaskellUnpackNounpackPragma.class);
+    }
 
 }

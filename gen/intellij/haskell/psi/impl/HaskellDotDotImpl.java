@@ -9,17 +9,17 @@ import org.jetbrains.annotations.NotNull;
 
 public class HaskellDotDotImpl extends HaskellCompositeElementImpl implements HaskellDotDot {
 
-  public HaskellDotDotImpl(ASTNode node) {
-    super(node);
-  }
+    public HaskellDotDotImpl(ASTNode node) {
+        super(node);
+    }
 
-  public void accept(@NotNull HaskellVisitor visitor) {
-    visitor.visitDotDot(this);
-  }
+    public void accept(@NotNull HaskellVisitor visitor) {
+        visitor.visitDotDot(this);
+    }
 
-  public void accept(@NotNull PsiElementVisitor visitor) {
-    if (visitor instanceof HaskellVisitor) accept((HaskellVisitor)visitor);
-    else super.accept(visitor);
-  }
+    public void accept(@NotNull PsiElementVisitor visitor) {
+        if (visitor instanceof HaskellVisitor) accept((HaskellVisitor) visitor);
+        else super.accept(visitor);
+    }
 
 }

@@ -7,10 +7,10 @@ import java.util.List;
 
 public interface HaskellInst extends HaskellCompositeElement {
 
-  @NotNull
-  List<HaskellGtycon> getGtyconList();
+    @NotNull
+    List<HaskellGtycon> getGtyconList();
 
-  @NotNull
-  List<HaskellInstvar> getInstvarList();
+    @NotNull
+    List<HaskellInstvar> getInstvarList();
 
 }

@@ -7,7 +7,10 @@ import java.util.List;
 
 public interface HaskellGeneralPragmaContent extends HaskellCompositeElement {
 
-  @NotNull
-  List<HaskellDotDot> getDotDotList();
+    @NotNull
+    List<HaskellDotDot> getDotDotList();
+
+    @NotNull
+    List<HaskellTextLiteral> getTextLiteralList();
 
 }
