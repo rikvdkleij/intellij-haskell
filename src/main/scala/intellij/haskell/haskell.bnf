@@ -48,7 +48,7 @@
   implements("q_con_qualifier1|q_con_qualifier2|q_con_qualifier3|q_con_qualifier4|qualifier")="intellij.haskell.psi.HaskellQualifierElement"
   mixin("q_con_qualifier1|q_con_qualifier2|q_con_qualifier3|q_con_qualifier4|qualifier")="intellij.haskell.psi.impl.HaskellQualifierElementImpl"
 
-  implements("text_literal")="intellij.haskell.psi.HaskellStringLiteralElement"
+  implements("text_literal")=["intellij.haskell.psi.HaskellStringLiteralElement", "com.intellij.psi.PsiLanguageInjectionHost"]
   mixin("text_literal")="intellij.haskell.psi.impl.HaskellStringLiteralElementImpl"
 }
 
