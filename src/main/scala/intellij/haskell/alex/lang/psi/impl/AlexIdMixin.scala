@@ -1,8 +1,5 @@
 package intellij.haskell.alex.lang.psi.impl
 
-import java.util
-import java.util.Objects
-
 import com.intellij.lang.ASTNode
 import com.intellij.openapi.util.TextRange
 import com.intellij.psi._

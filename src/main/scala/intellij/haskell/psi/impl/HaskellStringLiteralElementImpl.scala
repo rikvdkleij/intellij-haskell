@@ -19,7 +19,7 @@ abstract class HaskellStringLiteralElementImpl private[impl](node: ASTNode)
   override def updateText(text: String): HaskellStringLiteralElementImpl = {
     val newElement = PsiFileFactory
       .getInstance(getProject)
-      .createFileFromText("a.x", AlexLanguage.Instance, text, false, false)
+      .createFileFromText("a.hs", AlexLanguage.Instance, text, false, false)
     this.replace(newElement).asInstanceOf[HaskellStringLiteralElementImpl]
   }
 
