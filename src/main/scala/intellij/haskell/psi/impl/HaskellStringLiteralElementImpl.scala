@@ -24,23 +24,6 @@ abstract class HaskellStringLiteralElementImpl private[impl](node: ASTNode)
   }
 
   override def createLiteralTextEscaper(): LiteralTextEscaper[HaskellStringLiteralElementImpl] = {
-    new LiteralTextEscaper[HaskellStringLiteralElementImpl](this) {
-      override def decode(textRange: TextRange, stringBuilder: lang.StringBuilder): Boolean = {
-        stringBuilder.append(myHost.getText, textRange.getStartOffset, textRange.getEndOffset)
-        true
-      }
-
-      override def getOffsetInHost(i: Int, textrange: TextRange): Int = {
-        // TODO: deal with escaping
-        var j = i + textrange.getStartOffset
-        if (j < textrange.getStartOffset) j = textrange.getStartOffset
-        if (j > textrange.getEndOffset) j = textrange.getEndOffset
-        j
-      }
-
-      override def isOneLine: Boolean = {
-        false
-      }
-    }
+    LiteralTextEscaper.createSimple(this)
   }
 }
