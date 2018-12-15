@@ -2,7 +2,7 @@ package intellij.haskell.codeinsight
 
 import com.intellij.codeInsight.hint.ImplementationTextSelectioner
 import com.intellij.psi.PsiElement
-import intellij.haskell.psi.{HaskellPsiUtil, HaskellTopDeclarationLine}
+import intellij.haskell.psi.{HaskellPsiUtil, HaskellTopDeclaration, HaskellTopDeclarationLine}
 
 class HaskellImplementationTextSelectioner extends ImplementationTextSelectioner {
 
@@ -18,6 +18,7 @@ class HaskellImplementationTextSelectioner extends ImplementationTextSelectioner
     HaskellPsiUtil.findTopDeclarationLineParent(element) match {
       case Some(dp) => Option(dp.getNextSibling) match {
         case Some(e: HaskellTopDeclarationLine) => (dp.getTextRange.getStartOffset, e.getTextRange.getEndOffset)
+        case Some(e: HaskellTopDeclaration) => (dp.getTextRange.getStartOffset, e.getTextRange.getEndOffset)
         case _ => Option(dp.getPrevSibling) match {
           case Some(e: HaskellTopDeclarationLine) => (e.getTextRange.getStartOffset, dp.getTextRange.getEndOffset)
           case _ => (dp.getTextRange.getStartOffset, dp.getTextRange.getEndOffset)
