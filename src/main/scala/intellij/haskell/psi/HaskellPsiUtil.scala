@@ -109,6 +109,13 @@ object HaskellPsiUtil {
     ModuleNameCache.asMap().keys.filter(_.getProject == project).foreach(ModuleNameCache.invalidate)
   }
 
+  def findTopDeclarationLineParent(psiElement: PsiElement): Option[HaskellTopDeclarationLine] = {
+    psiElement match {
+      case e: HaskellTopDeclarationLine => Some(e)
+      case e => Option(TreeUtil.findParent(e.getNode, HaskellTypes.HS_TOP_DECLARATION_LINE)).map(_.getPsi.asInstanceOf[HaskellTopDeclarationLine])
+    }
+  }
+
   def findQualifierParent(psiElement: PsiElement): Option[HaskellQualifier] = {
     psiElement match {
       case e: HaskellQualifier => Some(e)

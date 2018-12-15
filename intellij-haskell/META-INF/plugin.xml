@@ -266,6 +266,10 @@
         <lang.documentationProvider language="Haskell"
                                     implementationClass="intellij.haskell.external.component.HaskellDocumentationProvider"/>
 
+        <!-- Quick definition -->
+        <lang.implementationTextSelectioner language="Haskell"
+                                            implementationClass="intellij.haskell.codeinsight.HaskellImplementationTextSelectioner"/>
+
         <!-- Structure View -->
         <lang.psiStructureViewFactory language="Haskell"
                                       implementationClass="intellij.haskell.navigation.HaskellStructureViewFactory"/>
