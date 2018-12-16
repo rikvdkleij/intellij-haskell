@@ -138,10 +138,14 @@ object HaskellAnnotator {
   private final val UseAloneInstancesImportPattern = """.* The import of [‘`](.*)[’'] is redundant except perhaps to import instances from [‘`].*[’'] To import instances alone, use: (.+)""".r
 
   private final val PerhapsYouMeantNamePattern = """.*[`‘]([^‘’'`]+)['’]""".r
-  private final val PerhapsYouMeantMultiplePattern = """.*ot in scope: (.+) Perhaps you meant one of these: (.+)""".r
-  private final val PerhapsYouMeantSingleMultiplePattern = """.*ot in scope: (.+) Perhaps you meant one of these: (.+) Perhaps you want to add .*""".r
-  private final val PerhapsYouMeantSinglePattern = """.*ot in scope: (.+) Perhaps you meant (.+)""".r
-  private final val PerhapsYouMeantImportedFromPattern = """.*[`‘]([^‘’'`]+)['’] \(imported from (.*)\)""".r
+  private final val PerhapsYouMeantMultiplePattern = """.*ot in scope: [`‘]([^‘’'`]+)['’] Perhaps you meant one of these: (.+)""".r
+  private final val PerhapsYouMeantSingleMultiplePattern = """.*ot in scope: [`‘]([^‘’'`]+)['’] Perhaps you meant one of these: (((?!Perhaps you).)+) Perhaps you want to add [`‘]([^‘’'`]+)['’] to the import list in the import of [`‘]([^‘’'`]+)['’].*""".r
+  //  (((?!Perhaps you).)+) does not work here
+  private final val PerhapsYouMeantSingleMultiplePattern3 =
+    """.*ot in scope: [`‘]([^‘’'`]+)['’] Perhaps you meant (.+\)) Perhaps you want to add [`‘]([^‘’'`]+)['’] to the import list in the import of [`‘]([^‘’'`]+)['’].*""".r
+  private final val PerhapsYouMeantSingleMultiplePattern2 = """.*ot in scope: [`‘]([^‘’'`]+)['’] Perhaps you want to add [`‘]([^‘’'`]+)['’] to the import list in the import of [`‘]([^‘’'`]+)['’].*""".r
+  private final val PerhapsYouMeantSinglePattern = """.*ot in scope: [`‘]([^‘’'`]+)['’] Perhaps you meant (.+)""".r
+  private final val PerhapsYouMeantImportedFromPattern = """.*[`‘]([^‘’'`]+)['’] \(imported from (.*)\).*""".r
   private final val PerhapsYouMeantLocalPattern = """.*[`‘]([^‘’'`]+)['’].*""".r
 
   private final val DeprecatedPattern = """.*In the use of.*[‘`](.*)[’'].*Deprecated: "Use ([^ ]+).*"""".r
@@ -169,10 +173,10 @@ object HaskellAnnotator {
 
   private def createAnnotations(project: Project, psiFile: PsiFile, problems: Iterable[CompilationProblem]): Iterable[Annotation] = {
 
-    def createErrorAnnotationWithMultiplePerhapsIntentions(problem: CompilationProblem, tr: TextRange, notInScopeMessage: String, suggestionsList: String) = {
+    def createErrorAnnotationWithMultiplePerhapsIntentions(problem: CompilationProblem, tr: TextRange, notInScopeMessage: String, suggestionsList: String, add: Option[(String, String)]) = {
       val notInScopeName = extractName(notInScopeMessage)
       val annotations = suggestionsList.split(",").flatMap(s => extractPerhapsYouMeantAction(s))
-      ErrorAnnotationWithIntentionActions(tr, problem.plainMessage, problem.htmlMessage, annotations.toStream ++ createNotInScopeIntentionActions(psiFile, notInScopeName))
+      ErrorAnnotationWithIntentionActions(tr, problem.plainMessage, problem.htmlMessage, annotations.toStream ++ createNotInScopeIntentionActions(psiFile, notInScopeName) ++ add.map(a => new NotInScopeIntentionAction(a._2, a._1, psiFile)))
     }
 
     problems.flatMap {
@@ -183,10 +187,14 @@ object HaskellAnnotator {
             val plainMessage = problem.plainMessage
             plainMessage match {
               // Because of setting `-fdefer-type-errors` the following problems are displayed as error
-              case PerhapsYouMeantSingleMultiplePattern(notInScopeMessage, suggestionsList, perhapsLine) =>
-                createErrorAnnotationWithMultiplePerhapsIntentions(problem, tr, notInScopeMessage, suggestionsList)
+              case PerhapsYouMeantSingleMultiplePattern(notInScopeMessage, suggestionsList, perhapsLine, addName, addModule) =>
+                createErrorAnnotationWithMultiplePerhapsIntentions(problem, tr, notInScopeMessage, suggestionsList, Some((addModule, addName)))
+              case PerhapsYouMeantSingleMultiplePattern3(notInScopeMessage, suggestionsList, addName, addModule) =>
+                createErrorAnnotationWithMultiplePerhapsIntentions(problem, tr, notInScopeMessage, suggestionsList, Some((addModule, addName)))
+              case PerhapsYouMeantSingleMultiplePattern2(notInScopeMessage, addName, addModule) =>
+                createErrorAnnotationWithMultiplePerhapsIntentions(problem, tr, notInScopeMessage, "", Some(addModule, addName))
               case PerhapsYouMeantMultiplePattern(notInScopeMessage, suggestionsList) =>
-                createErrorAnnotationWithMultiplePerhapsIntentions(problem, tr, notInScopeMessage, suggestionsList)
+                createErrorAnnotationWithMultiplePerhapsIntentions(problem, tr, notInScopeMessage, suggestionsList, None)
               case PerhapsYouMeantSinglePattern(notInScopeMessage, suggestion) =>
                 val notInScopeName = extractName(notInScopeMessage)
                 val annotation = extractPerhapsYouMeantAction(suggestion)
