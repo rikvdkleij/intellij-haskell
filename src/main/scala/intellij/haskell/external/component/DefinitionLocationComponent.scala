@@ -195,7 +195,7 @@ private[component] object DefinitionLocationComponent {
 
         result match {
           case Some(Right(location)) => Right(location)
-          case None | Some(Left(NoInfoAvailable(_, _))) => findLocationResultWithRepl(project, psiFile, key, name, qName, withoutLastColumn)
+          case None => Left(NoInfoAvailable(name, psiFile.getName))
           case Some(l) => l
         }
       }
