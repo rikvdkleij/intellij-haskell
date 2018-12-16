@@ -1,7 +1,7 @@
 <idea-plugin>
     <id>intellij.haskell</id>
     <name>IntelliJ-Haskell</name>
-    <version>1.0.0-beta36</version>
+    <version>1.0.0-beta37</version>
     <vendor email="rikvdkleij@gmail.com">Rik van der Kleij</vendor>
 
     <description><![CDATA[
@@ -33,6 +33,7 @@
             <li>Improved syntax highlighting. See #330 and #334 (@ice1000)</li>
             <li>New file icons. See #333 (@ice1000)</li>
             <li>Haskell settings are moved to Languages & Frameworks. See #334 (@ice1000)</li>
+            <li>Support Alex files. See #335 (@ice1000)</li>
         </ul>
         <p>1.0.0-beta12</p>
         <ul>
