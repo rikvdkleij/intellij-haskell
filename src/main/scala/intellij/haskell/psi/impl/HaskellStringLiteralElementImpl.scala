@@ -1,11 +1,7 @@
 package intellij.haskell.psi.impl
 
-import java.lang
-
 import com.intellij.lang.ASTNode
-import com.intellij.openapi.util.TextRange
-import com.intellij.psi.{LiteralTextEscaper, PsiFileFactory, PsiLanguageInjectionHost}
-import intellij.haskell.alex.AlexLanguage
+import com.intellij.psi.{ElementManipulators, LiteralTextEscaper, PsiLanguageInjectionHost}
 import intellij.haskell.psi.HaskellStringLiteralElement
 
 abstract class HaskellStringLiteralElementImpl private[impl](node: ASTNode)
@@ -17,13 +13,10 @@ abstract class HaskellStringLiteralElementImpl private[impl](node: ASTNode)
   }
 
   override def updateText(text: String): HaskellStringLiteralElementImpl = {
-    val newElement = PsiFileFactory
-      .getInstance(getProject)
-      .createFileFromText("a.hs", AlexLanguage.Instance, text, false, false)
-    this.replace(newElement).asInstanceOf[HaskellStringLiteralElementImpl]
+    ElementManipulators.handleContentChange(this, text)
   }
 
   override def createLiteralTextEscaper(): LiteralTextEscaper[HaskellStringLiteralElementImpl] = {
-    LiteralTextEscaper.createSimple(this)
+    new HaskellStringEscaper(this)
   }
 }
