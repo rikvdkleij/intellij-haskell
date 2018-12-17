@@ -50,11 +50,11 @@ object HaskellFileType {
 class HaskellFileType extends LanguageFileType(HaskellLanguage.Instance) {
 
   def getName: String = {
-    "Haskell file"
+    "Haskell"
   }
 
   def getDescription: String = {
-    "Haskell language file"
+    "Haskell"
   }
 
   def getDefaultExtension: String = {

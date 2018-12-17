@@ -24,13 +24,13 @@ public class HaskellLanguage extends Language {
     public static final HaskellLanguage Instance = new HaskellLanguage();
 
     public HaskellLanguage() {
-        super("Haskell");
+        super("Haskell Language");
     }
 
     @NotNull
     @Override
     public String getDisplayName() {
-        return "Haskell";
+        return "Haskell Language";
     }
 
     @Override
