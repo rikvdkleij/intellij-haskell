@@ -132,7 +132,7 @@ nhaddock_start      = {left_brace}{dash}{white_char}?{vertical_bar}
 %%
 
 <NHADDOCK> {
-    {nhaddock_start} {
+    {ncomment_start} {
         haddockDepth++;
     }
 
