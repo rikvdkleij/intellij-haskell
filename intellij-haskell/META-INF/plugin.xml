@@ -250,6 +250,8 @@
                                  implementationClass="intellij.haskell.psi.HaskellNamedElementManipulator"/>
         <lang.elementManipulator forClass="intellij.haskell.alex.lang.psi.impl.AlexHaskellCodeInjectionHost"
                                  implementationClass="intellij.haskell.alex.lang.psi.impl.AlexElementManipulator"/>
+        <lang.elementManipulator forClass="intellij.haskell.psi.impl.HaskellStringLiteralElementImpl"
+                                 implementationClass="intellij.haskell.psi.impl.HaskellStringLiteralManipulator"/>
         <lang.namesValidator language="Haskell" implementationClass="intellij.haskell.refactor.HaskellNamesValidator"/>
         <languageInjector implementation="intellij.haskell.alex.lang.psi.AlexHaskellInjector"/>
 
@@ -291,7 +293,7 @@
         <externalAnnotator language="Haskell"
                            implementationClass="intellij.haskell.annotator.HaskellAnnotator"/>
         <annotator language="Haskell"
-                   implementationClass="intellij.haskell.highlighter.HaskellSoftKeywordsAnnotator"/>
+                   implementationClass="intellij.haskell.highlighter.HaskellHighlightingAnnotator"/>
         <annotator language="Cabal"
                    implementationClass="intellij.haskell.cabal.highlighting.CabalAnnotator"/>
 

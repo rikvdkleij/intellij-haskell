@@ -9,7 +9,7 @@ import intellij.haskell.alex.AlexLanguage
 /**
   * @author ice1000
   */
-abstract class AlexHaskellCodeInjectionHost(node: ASTNode)
+abstract class AlexHaskellCodeInjectionHost private[impl](node: ASTNode)
   extends AlexElementImpl(node) with PsiLanguageInjectionHost {
 
   import com.intellij.openapi.util.TextRange

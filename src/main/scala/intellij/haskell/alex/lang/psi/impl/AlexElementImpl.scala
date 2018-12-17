@@ -7,5 +7,5 @@ import intellij.haskell.alex.lang.psi.AlexElement
 /**
   * @author ice1000
   */
-class AlexElementImpl(node: ASTNode) extends ASTWrapperPsiElement(node) with AlexElement {
+class AlexElementImpl private[impl](node: ASTNode) extends ASTWrapperPsiElement(node) with AlexElement {
 }

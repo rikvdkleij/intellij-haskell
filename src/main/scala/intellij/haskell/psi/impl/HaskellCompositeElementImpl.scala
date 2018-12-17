@@ -34,5 +34,3 @@ abstract class HaskellExpressionElementImpl private[impl](node: ASTNode) extends
 abstract class HaskellNamedElementImpl private[impl](node: ASTNode) extends HaskellCompositeElementImpl(node) with HaskellNamedElement
 
 abstract class HaskellQualifierElementImpl private[impl](node: ASTNode) extends HaskellNamedElementImpl(node) with HaskellQualifierElement
-
-abstract class HaskellStringLiteralElementImpl private[impl](node: ASTNode) extends HaskellCompositeElementImpl(node) with HaskellStringLiteralElement
