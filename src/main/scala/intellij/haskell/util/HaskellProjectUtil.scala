@@ -103,7 +103,7 @@ object HaskellProjectUtil {
   }
 
   private def isModuleFile(project: Project, virtualFile: VirtualFile): Boolean = {
-    findProjectHaskellModules(project).exists(m => FileUtil.isAncestor(Paths.get(getModuleDir(m).getAbsolutePath).toFile, Paths.get(virtualFile.getPath).toFile, true))
+    findProjectHaskellModules(project).exists(m => FileUtil.isAncestor(getModuleDir(m), new File(virtualFile.getPath), true))
   }
 
   private final val ConfigHaskellFiles = Seq("setup.hs", "hlint.hs")
