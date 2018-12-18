@@ -15,9 +15,13 @@ class HaskellStringLiteralManipulator extends AbstractElementManipulator[Haskell
   override def handleContentChange(psi: HaskellStringLiteralElementImpl,
                                    range: TextRange,
                                    newContent: String): HaskellStringLiteralElementImpl = {
+    val oldText = psi.getText
+    val newText = oldText.substring(0, range.getStartOffset) + newContent + oldText.substring(range.getEndOffset)
     val newElement = PsiFileFactory
       .getInstance(psi.getProject)
-      .createFileFromText("a.hs", HaskellLanguage.Instance, newContent, false, false)
+      .createFileFromText("a.hs", HaskellLanguage.Instance, newText, false, false)
+      .getLastChild
+      .getLastChild
     psi.replace(newElement).asInstanceOf[HaskellStringLiteralElementImpl]
   }
 
