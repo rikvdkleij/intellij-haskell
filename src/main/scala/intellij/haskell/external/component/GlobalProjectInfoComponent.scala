@@ -16,7 +16,7 @@
 
 package intellij.haskell.external.component
 
-import java.nio.file.Paths
+import java.io.File
 
 import com.github.blemale.scaffeine.{LoadingCache, Scaffeine}
 import com.intellij.openapi.project.Project
@@ -66,9 +66,9 @@ private[component] object GlobalProjectInfoComponent {
       pathInfoMap = ScalaUtil.linesToMap(pathLines)
       binPaths <- findBinPaths(pathInfoMap)
       packageDbPaths <- findPackageDbPaths(pathInfoMap)
-      ghcPath = Paths.get(binPaths.compilerBinPath, "ghc").toString
-      ghcPkgPath = Paths.get(binPaths.compilerBinPath, "ghc-pkg").toString
-      interoPath = Paths.get(binPaths.localBinPath, "intero").toString
+      ghcPath = new File(binPaths.compilerBinPath, "ghc").getPath
+      ghcPkgPath = new File(binPaths.compilerBinPath, "ghc-pkg").getPath
+      interoPath = new File(binPaths.localBinPath, "intero").getPath
       extensions = getSupportedLanguageExtensions(project, ghcPath)
       stackagePackageNames = getAvailableStackagesPackages(project)
       ghcVersion = findGhcVersion(project, ghcPath)
@@ -88,7 +88,7 @@ private[component] object GlobalProjectInfoComponent {
   private def findBinPaths(pathInfoMap: Map[String, String]): Option[ProjectBinPaths] = {
     for {
       compilerBinPath <- pathInfoMap.get("compiler-bin")
-      localBinPath <- pathInfoMap.get("local-install-root").map(p => Paths.get(p, "bin").toString)
+      localBinPath <- pathInfoMap.get("local-install-root").map(p => new File(p, "bin").getPath)
     } yield ProjectBinPaths(compilerBinPath, localBinPath)
   }
 

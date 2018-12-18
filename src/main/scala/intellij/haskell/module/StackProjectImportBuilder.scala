@@ -17,7 +17,6 @@
 package intellij.haskell.module
 
 import java.io.File
-import java.nio.file.Paths
 import java.util
 
 import com.intellij.ide.util.projectWizard.ModuleBuilder
@@ -75,7 +74,7 @@ class StackProjectImportBuilder extends ProjectImportBuilder[Unit] {
 
     if (!packagePaths.contains(projectRootRelativePath)) {
       val parentModuleBuilder = new ParentModuleBuilder(project)
-      parentModuleBuilder.setModuleFilePath(Paths.get(project.getBasePath, project.getName + "-parent.iml").toString)
+      parentModuleBuilder.setModuleFilePath(new File(project.getBasePath, project.getName + "-parent.iml").getPath)
       parentModuleBuilder.setName("Parent module")
       parentModuleBuilder.commit(project)
       parentModuleBuilder.addModuleConfigurationUpdater((_: Module, rootModel: ModifiableRootModel) => {
@@ -87,7 +86,7 @@ class StackProjectImportBuilder extends ProjectImportBuilder[Unit] {
   }
 
   private def getModuleImlFilePath(moduleDirectory: File, packageName: String): String = {
-    Paths.get(moduleDirectory.getAbsolutePath, packageName + ".iml").toString
+    new File(moduleDirectory, packageName + ".iml").getAbsolutePath
   }
 }
 

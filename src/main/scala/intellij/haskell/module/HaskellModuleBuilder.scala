@@ -17,7 +17,6 @@
 package intellij.haskell.module
 
 import java.io.File
-import java.nio.file.Paths
 
 import com.intellij.ide.util.projectWizard._
 import com.intellij.openapi.Disposable
@@ -212,9 +211,9 @@ object HaskellModuleBuilder {
 
   def getModuleRootDirectory(packagePath: String, modulePath: String): File = {
     if (packagePath == ".") {
-      new File(modulePath)
+      new File(modulePath).getCanonicalFile
     } else {
-      new File(Paths.get(modulePath, packagePath).toRealPath().toString)
+      new File(modulePath, packagePath).getCanonicalFile
     }
   }
 
@@ -263,7 +262,7 @@ object HaskellModuleBuilder {
   }
 
   private def getProjectLibDirectory(project: Project): File = {
-    new File(new File(GlobalInfo.getLibrarySourcesPath), project.getName)
+    new File(GlobalInfo.getLibrarySourcesPath, project.getName)
   }
 
   private def downloadHaskellPackageSources(project: Project, projectLibDirectory: File, stackPath: String, libraryDependencies: Seq[HaskellLibraryDependency]): Unit = {

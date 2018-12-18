@@ -1,7 +1,6 @@
 package intellij.haskell
 
 import java.io.File
-import java.nio.file.{Path, Paths}
 
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.io.FileUtil
@@ -27,27 +26,26 @@ object GlobalInfo {
     directory
   }
 
-  def getLibrarySourcesPath: String = {
-    Paths.get(getIntelliJHaskellDirectory.getAbsolutePath, GlobalInfo.LibrarySourcedDirName).toString
+  def getLibrarySourcesPath: File = {
+    new File(getIntelliJHaskellDirectory, GlobalInfo.LibrarySourcedDirName)
   }
 
-  def toolsStackRootPath: String = {
-    Paths.get(getIntelliJHaskellDirectory.getAbsolutePath, StackageLtsVersion).toString
+  def toolsStackRootPath: File = {
+    new File(getIntelliJHaskellDirectory, StackageLtsVersion)
   }
 
-  def toolsBinPath: String = {
-    Paths.get(toolsStackRootPath, ToolsBinDirName).toString
+  def toolsBinPath: File = {
+    new File(toolsStackRootPath, ToolsBinDirName)
   }
 
-  def toolPath(toolName: String): Path = {
-    Paths.get(GlobalInfo.toolsBinPath, toolName)
+  def toolPath(toolName: String): File = {
+    new File(toolsBinPath, toolName)
   }
 
-  def getIntelliJProjectDirectory(project: Project): Path = {
-    val intelliJProjectDirectory = Paths.get(GlobalInfo.getIntelliJHaskellDirectory.getAbsolutePath, project.getName)
-    val intelliJProjectFile = new File(intelliJProjectDirectory.toString)
-    if (!intelliJProjectFile.exists()) {
-      FileUtil.createDirectory(intelliJProjectFile)
+  def getIntelliJProjectDirectory(project: Project): File = {
+    val intelliJProjectDirectory = new File(GlobalInfo.getIntelliJHaskellDirectory, project.getName)
+    if (!intelliJProjectDirectory.exists()) {
+      FileUtil.createDirectory(intelliJProjectDirectory)
     }
     intelliJProjectDirectory
   }

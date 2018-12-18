@@ -60,14 +60,14 @@ object StackCommandLine {
     } else {
       Seq("--system-ghc")
     }
-    val arguments = systemGhcOption ++ Seq("-j1", "--stack-root", toolsStackRootPath, "--resolver", StackageLtsVersion, "--compiler", "ghc-8.4.4", "--local-bin-path", toolsBinPath, "install", toolName)
+    val arguments = systemGhcOption ++ Seq("-j1", "--stack-root", toolsStackRootPath.getPath, "--resolver", StackageLtsVersion, "--compiler", "ghc-8.4.4", "--local-bin-path", toolsBinPath.getPath, "install", toolName)
     val processOutput = run(project, arguments, -1, logOutput = true, notifyBalloonError = true, workDir = Some(VfsUtil.getUserHomeDir.getPath))
     processOutput.exists(o => o.getExitCode == 0 && !o.isTimeout)
   }
 
   def updateStackIndex(project: Project): Option[ProcessOutput] = {
     import intellij.haskell.GlobalInfo._
-    val arguments = Seq("update", "--stack-root", toolsStackRootPath)
+    val arguments = Seq("update", "--stack-root", toolsStackRootPath.getPath)
     run(project, arguments, -1, logOutput = true, notifyBalloonError = true)
   }
 

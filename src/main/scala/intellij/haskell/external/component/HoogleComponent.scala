@@ -151,7 +151,7 @@ object HoogleComponent {
   }
 
   def doesHoogleDatabaseExist(project: Project): Boolean = {
-    new File(hoogleDbPath(project)).exists()
+    hoogleDbPath(project).exists()
   }
 
   def showHoogleDatabaseDoesNotExistNotification(project: Project): Unit = {
@@ -190,6 +190,6 @@ object HoogleComponent {
   }
 
   private def hoogleDbPath(project: Project) = {
-    GlobalInfo.getIntelliJProjectDirectory(project).resolve(HoogleDbName).toString
+    new File(GlobalInfo.getIntelliJProjectDirectory(project), HoogleDbName)
   }
 }

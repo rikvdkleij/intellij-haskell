@@ -87,7 +87,7 @@ object StackProjectManager {
     ProgressManager.getInstance().run(new Task.Backgroundable(project, title, false, PerformInBackgroundOption.ALWAYS_BACKGROUND) {
 
       private def isToolAvailable(progressIndicator: ProgressIndicator, toolName: String) = {
-        if (!GlobalInfo.toolPath(toolName).toFile.exists() || update) {
+        if (!GlobalInfo.toolPath(toolName).exists() || update) {
           progressIndicator.setText(s"Busy with installing $toolName in ${GlobalInfo.toolsBinPath}")
           StackCommandLine.installTool(project, toolName)
         } else {
@@ -140,7 +140,7 @@ object StackProjectManager {
               if (dependenciesBuildResult.contains(true)) {
                 progressIndicator.setText("Busy with building project")
                 val projectLibTargets = HaskellComponentsManager.findStackComponentInfos(project).filter(_.stanzaType == LibType).map(_.target)
-                StackCommandLine.buildProjectInMessageView(project, projectLibTargets.toSeq)
+                StackCommandLine.buildProjectInMessageView(project, projectLibTargets)
               } else {
                 HaskellNotificationGroup.logErrorBalloonEvent(project, "Project will not be built because building it's dependencies failed")
               }

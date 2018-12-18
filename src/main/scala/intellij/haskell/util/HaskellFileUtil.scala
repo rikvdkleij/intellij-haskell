@@ -92,7 +92,7 @@ object HaskellFileUtil {
   }
 
   def getAbsolutePath(virtualFile: VirtualFile): String = {
-    Paths.get(virtualFile.getPath).toAbsolutePath.normalize().toString
+    new File(virtualFile.getPath).getAbsolutePath
   }
 
   def makeFilePathAbsolute(filePath: String, project: Project): String = {
@@ -104,11 +104,11 @@ object HaskellFileUtil {
   }
 
   def makeFilePathAbsolute(filePath: String, parentFilePath: String): String = {
-    val path = Paths.get(filePath)
+    val path = new File(filePath)
     if (path.isAbsolute)
-      path.normalize().toString
+      path.getCanonicalPath
     else
-      Paths.get(parentFilePath, filePath).toAbsolutePath.normalize().toString
+      new File(parentFilePath, filePath).getCanonicalPath
   }
 
   def convertToHaskellFiles(project: Project, virtualFiles: Iterable[VirtualFile]): Iterable[PsiFile] = {
