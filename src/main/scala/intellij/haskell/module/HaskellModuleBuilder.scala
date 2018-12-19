@@ -310,10 +310,10 @@ object HaskellModuleBuilder {
       val projectLibrary = getProjectLibraryTable(project).getLibraryByName(dependency.nameVersion)
       if (projectLibrary == null) {
         val projectLibrary = createProjectLibrary(module.getProject, dependency, projectLibDirectory)
-        addModuleLibrary(module, projectLibrary)
+        ApplicationManager.getApplication.invokeLater(ScalaUtil.runnable(addModuleLibrary(module, projectLibrary)))
       } else {
         if (LibraryUtil.findLibrary(module, projectLibrary.getName) == null) {
-          addModuleLibrary(module, projectLibrary)
+          ApplicationManager.getApplication.invokeLater(ScalaUtil.runnable(addModuleLibrary(module, projectLibrary)))
         }
       }
     })
