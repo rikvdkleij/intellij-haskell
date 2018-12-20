@@ -22,7 +22,7 @@ import com.intellij.ide.util.projectWizard._
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.{ApplicationManager, WriteAction}
 import com.intellij.openapi.module.{ModifiableModuleModel, Module, ModuleType}
-import com.intellij.openapi.project.{Project, ProjectManager, ProjectUtil}
+import com.intellij.openapi.project.{DumbService, Project, ProjectManager, ProjectUtil}
 import com.intellij.openapi.projectRoots.SdkTypeId
 import com.intellij.openapi.roots._
 import com.intellij.openapi.roots.impl.libraries.ProjectLibraryTable
@@ -282,13 +282,14 @@ object HaskellModuleBuilder {
   private def addPackagesAsDependenciesToModule(module: Module, projectModules: Iterable[Module], moduleDependencies: Iterable[HaskellDependency], libraryDependencies: Seq[HaskellLibraryDependency], projectLibDirectory: File): Unit = {
     val project = module.getProject
     getProjectLibraryTable(project).getLibraries.foreach(library => {
+      DumbService.getInstance(project).waitForSmartMode()
       moduleDependencies.find(_.nameVersion == library.getName) match {
         case Some(_) =>
           if (LibraryUtil.findLibrary(module, library.getName) == null) {
-            ApplicationManager.getApplication.invokeLater(ScalaUtil.runnable(addModuleLibrary(module, library)))
+            addModuleLibrary(module, library)
           }
         case None =>
-          ApplicationManager.getApplication.invokeLater(ScalaUtil.runnable(removeModuleLibrary(module, library)))
+          removeModuleLibrary(module, library)
           if (!libraryDependencies.exists(_.nameVersion == library.getName)) {
             removeProjectLibrary(module.getProject, library)
             FileUtil.delete(new File(projectLibDirectory, library.getName))
@@ -299,6 +300,7 @@ object HaskellModuleBuilder {
     val projectModuleDependencies = moduleDependencies.filter(_.isInstanceOf[HaskellProjectModuleDependency]).map(_.asInstanceOf[HaskellProjectModuleDependency])
 
     ModuleRootModificationUtil.updateModel(module, (modifiableRootModel: ModifiableRootModel) => {
+      DumbService.getInstance(project).waitForSmartMode()
       modifiableRootModel.getModuleDependencies.foreach(m => {
         if (!projectModuleDependencies.exists(_.projectModule == m)) {
           Option(modifiableRootModel.findModuleOrderEntry(m)).foreach(modifiableRootModel.removeOrderEntry)
@@ -307,18 +309,20 @@ object HaskellModuleBuilder {
     })
 
     libraryDependencies.foreach(dependency => {
+      DumbService.getInstance(project).waitForSmartMode()
       val projectLibrary = getProjectLibraryTable(project).getLibraryByName(dependency.nameVersion)
       if (projectLibrary == null) {
         val projectLibrary = createProjectLibrary(module.getProject, dependency, projectLibDirectory)
-        ApplicationManager.getApplication.invokeLater(ScalaUtil.runnable(addModuleLibrary(module, projectLibrary)))
+        addModuleLibrary(module, projectLibrary)
       } else {
         if (LibraryUtil.findLibrary(module, projectLibrary.getName) == null) {
-          ApplicationManager.getApplication.invokeLater(ScalaUtil.runnable(addModuleLibrary(module, projectLibrary)))
+          addModuleLibrary(module, projectLibrary)
         }
       }
     })
 
     projectModuleDependencies.foreach(dependency => {
+      DumbService.getInstance(project).waitForSmartMode()
       ModuleRootModificationUtil.updateModel(module, (modifiableRootModel: ModifiableRootModel) => {
         if (module != dependency.projectModule && modifiableRootModel.findModuleOrderEntry(dependency.projectModule) == null) {
           modifiableRootModel.addModuleOrderEntry(dependency.projectModule)
