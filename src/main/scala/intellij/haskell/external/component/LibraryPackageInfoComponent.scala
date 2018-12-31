@@ -59,7 +59,7 @@ private[component] object LibraryPackageInfoComponent {
 
     result match {
       case Some(r) => r.foreach {
-        case d@Some(packageInfo) => if (!projectPackageNames.toSeq.contains(packageInfo.packageName) && packageInfo.packageName != "rts") Cache.put(Key(project, packageInfo.packageName), d)
+        case d@Some(packageInfo) => if (!projectPackageNames.contains(packageInfo.packageName) && packageInfo.packageName != "rts") Cache.put(Key(project, packageInfo.packageName), d)
         case None => HaskellNotificationGroup.logInfoBalloonEvent(project, s"Could not retrieve all package information via `ghc-pkg dump`")
       }
       case None => HaskellNotificationGroup.logErrorBalloonEvent(project, "Executing `ghc-pkg dunp` failed")
@@ -89,6 +89,15 @@ private[component] object LibraryPackageInfoComponent {
     None
   }
 
+  private final val PackageNameVersionPattern = """([\w\-]+)-([\d\.]+)(?:\-.*)?""".r
+
+  private def toPackageNameversion(depends: String): Option[PackageNameVersion] = {
+    depends match {
+      case PackageNameVersionPattern(name, version) => Some(PackageNameVersion(name, version))
+      case _ => None
+    }
+  }
+
   private def findPackageInfo(lines: Seq[String]): Option[PackageInfo] = {
     val packageInfoMap = ScalaUtil.linesToMap(lines)
 
@@ -98,7 +107,8 @@ private[component] object LibraryPackageInfoComponent {
       id <- packageInfoMap.get("id")
       exposedModuleNames = packageInfoMap.get("exposed-modules").map(_.split("""\s+""").toSeq).getOrElse(Seq())
       hiddenModuleNames = packageInfoMap.get("hidden-modules").map(_.split("""\s+""").toSeq).getOrElse(Seq())
-    } yield PackageInfo(name, version, id, exposedModuleNames, hiddenModuleNames)
+      dependsPackageNames = packageInfoMap.get("depends").map(_.split("""\s+""").toSeq).getOrElse(Seq()).flatMap(toPackageNameversion)
+    } yield PackageInfo(name, version, id, exposedModuleNames, hiddenModuleNames, dependsPackageNames)
   }
 
   def invalidate(project: Project): Unit = {
@@ -108,4 +118,6 @@ private[component] object LibraryPackageInfoComponent {
 }
 
 
-case class PackageInfo(packageName: String, version: String, id: String, exposedModuleNames: Seq[String], hiddenModuleNames: Seq[String])
+case class PackageInfo(packageName: String, version: String, id: String, exposedModuleNames: Seq[String], hiddenModuleNames: Seq[String], dependsPackageNames: Seq[PackageNameVersion])
+
+case class PackageNameVersion(name: String, version: String)

@@ -63,11 +63,17 @@ object StackProjectManager {
     getStackProjectManager(project).exists(_.installingHaskellTools)
   }
 
+  def isPreloadingAllLibraryIdentifiers(project: Project): Boolean = {
+    getStackProjectManager(project).exists(_.preloadingAllLibraryIdentifiers)
+  }
+
   def start(project: Project): Unit = {
     init(project)
   }
 
   def restart(project: Project): Unit = {
+    HaskellFileUtil.saveAllFiles(project)
+
     init(project, restart = true)
   }
 
@@ -215,11 +221,16 @@ object StackProjectManager {
 
               progressIndicator.setText("Busy with preloading all library identifiers")
               ApplicationManager.getApplication.executeOnPooledThread(ScalaUtil.runnable {
-                HaskellComponentsManager.preloadAllLibraryIdentifiersCaches(project)
+                getStackProjectManager(project).foreach(_.preloadingAllLibraryIdentifiers = true)
+                try {
+                  HaskellComponentsManager.preloadAllLibraryIdentifiersCaches(project)
 
-                if (!project.isDisposed) {
-                  HaskellNotificationGroup.logInfoEvent(project, "Restarting global REPL to release memory")
-                  StackReplsManager.getGlobalRepl(project).foreach(_.restart())
+                  if (!project.isDisposed) {
+                    HaskellNotificationGroup.logInfoEvent(project, "Restarting global REPL to release memory")
+                    StackReplsManager.getGlobalRepl(project).foreach(_.restart())
+                  }
+                } finally {
+                  getStackProjectManager(project).foreach(_.preloadingAllLibraryIdentifiers = false)
                 }
               })
 
@@ -230,12 +241,12 @@ object StackProjectManager {
               }
 
               progressIndicator.setText("Busy with preloading caches")
-              if (preloadLibraryFilesCacheFuture.isDone || !preloadStackComponentInfoCache.isDone || !preloadLibraryIdentifiersCacheFuture.isDone || replLoads.exists(_.forall(_.isDone))) {
+              if (!preloadLibraryFilesCacheFuture.isDone || !preloadStackComponentInfoCache.isDone || !preloadLibraryIdentifiersCacheFuture.isDone || !replLoads.exists(_.forall(_.isDone))) {
                 FutureUtil.waitForValue(project, preloadStackComponentInfoCache, "preloading library caches", 600)
                 FutureUtil.waitForValue(project, preloadLibraryFilesCacheFuture, "preloading library caches", 600)
                 FutureUtil.waitForValue(project, preloadLibraryIdentifiersCacheFuture, "preloading library caches", 600)
 
-                progressIndicator.setText("Busy with loading library modules in REPLs")
+                progressIndicator.setText("Busy with loading project modules in REPLs")
                 replLoads.foreach { rl =>
                   new WaitFor(300000, 1000) {
                     override def condition(): Boolean = {
@@ -244,7 +255,7 @@ object StackProjectManager {
                   }
 
                   if (!rl.forall(_.isDone)) {
-                    HaskellNotificationGroup.logInfoEvent(project, "Not all library modules are loaded")
+                    HaskellNotificationGroup.logInfoEvent(project, "Not all project modules are loaded")
                   }
                 }
               }
@@ -301,6 +312,9 @@ class StackProjectManager(project: Project) extends ProjectComponent {
 
   @volatile
   private var installingHaskellTools = false
+
+  @volatile
+  private var preloadingAllLibraryIdentifiers = false
 
   @volatile
   private var replsManager: Option[StackReplsManager] = None
