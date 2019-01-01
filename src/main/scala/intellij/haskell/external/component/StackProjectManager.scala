@@ -23,6 +23,7 @@ import com.intellij.openapi.progress.{PerformInBackgroundOption, ProgressIndicat
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.roots.{ModifiableRootModel, ModuleRootModificationUtil}
 import com.intellij.openapi.ui.Messages
+import com.intellij.openapi.util.SystemInfo
 import com.intellij.openapi.vfs.VirtualFileManager
 import com.intellij.util.WaitFor
 import intellij.haskell.action.{HaskellReformatAction, HindentReformatAction, StylishHaskellReformatAction}
@@ -93,7 +94,8 @@ object StackProjectManager {
     ProgressManager.getInstance().run(new Task.Backgroundable(project, title, false, PerformInBackgroundOption.ALWAYS_BACKGROUND) {
 
       private def isToolAvailable(progressIndicator: ProgressIndicator, toolName: String) = {
-        if (!GlobalInfo.toolPath(toolName).exists() || update) {
+        val toolNameExe = if (SystemInfo.isWindows) toolName + ".exe" else toolName
+        if (!GlobalInfo.toolPath(toolNameExe).exists() || update) {
           progressIndicator.setText(s"Busy with installing $toolName in ${GlobalInfo.toolsBinPath}")
           StackCommandLine.installTool(project, toolName)
         } else {
