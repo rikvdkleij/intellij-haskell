@@ -21,7 +21,7 @@ import intellij.haskell.util.{HaskellFileUtil, StringUtil}
 
 object HaskellCompilationResultHelper {
 
-  private final val ProblemPattern = """([^:]+):([\d]+):([\d]+):(.+)""".r
+  private final val ProblemPattern = """((?:[A-Z]:\\)?[^:]+):([\d]+):([\d]+):(.+)""".r
 
   def createCompilationResult(currentPsiFile: PsiFile, errorLines: Seq[String], failed: Boolean): CompilationResult = {
     val currentFilePath = HaskellFileUtil.getAbsolutePath(currentPsiFile).getOrElse(throw new IllegalStateException(s"File `${currentPsiFile.getName}` exists only in memory"))
