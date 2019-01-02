@@ -22,7 +22,7 @@ import com.intellij.ide.util.projectWizard._
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.{ApplicationManager, WriteAction}
 import com.intellij.openapi.module.{ModifiableModuleModel, Module, ModuleType}
-import com.intellij.openapi.project.{DumbService, Project, ProjectManager, ProjectUtil}
+import com.intellij.openapi.project.{Project, ProjectManager, ProjectUtil}
 import com.intellij.openapi.projectRoots.SdkTypeId
 import com.intellij.openapi.roots._
 import com.intellij.openapi.roots.impl.libraries.ProjectLibraryTable
@@ -314,7 +314,6 @@ object HaskellModuleBuilder {
 
   private def setupProjectLibraries(project: Project, libraryDependencies: Seq[HaskellLibraryDependency], projectLibDirectory: File): Unit = {
     getProjectLibraryTable(project).getLibraries.foreach(library => {
-      DumbService.getInstance(project).waitForSmartMode()
       libraryDependencies.find(_.nameVersion == library.getName) match {
         case Some(_) => ()
         case None => removeProjectLibrary(project, library)
@@ -322,7 +321,6 @@ object HaskellModuleBuilder {
     })
 
     libraryDependencies.foreach(dependency => {
-      DumbService.getInstance(project).waitForSmartMode()
       val projectLibrary = getProjectLibraryTable(project).getLibraryByName(dependency.nameVersion)
       if (projectLibrary == null) {
         createProjectLibrary(project, dependency, projectLibDirectory)
@@ -348,8 +346,6 @@ object HaskellModuleBuilder {
     val project = module.getProject
 
     ModuleRootModificationUtil.updateModel(module, (modifiableRootModel: ModifiableRootModel) => {
-      DumbService.getInstance(project).waitForSmartMode()
-
       modifiableRootModel.getOrderEntries.foreach {
         case e: LibraryOrderEntry => if (findLibraryDependency(moduleDependencies, e.getLibraryName).isEmpty) modifiableRootModel.removeOrderEntry(e)
         case e: ModuleOrderEntry => if (findModuleDependency(moduleDependencies, e.getModule).isEmpty) modifiableRootModel.removeOrderEntry(e)
@@ -359,7 +355,6 @@ object HaskellModuleBuilder {
 
     moduleDependencies.foreach {
       case d: HaskellLibraryDependency =>
-        DumbService.getInstance(project).waitForSmartMode()
         if (LibraryUtil.findLibrary(module, d.nameVersion) == null) {
           val projectLibrary = getProjectLibraryTable(project).getLibraryByName(d.nameVersion)
           if (projectLibrary == null) {
@@ -368,7 +363,6 @@ object HaskellModuleBuilder {
           addModuleLibrary(module, projectLibrary)
         }
       case d: HaskellModuleDependency =>
-        DumbService.getInstance(project).waitForSmartMode()
         ModuleRootModificationUtil.updateModel(module, (modifiableRootModel: ModifiableRootModel) => {
           if (module != d.module && modifiableRootModel.findModuleOrderEntry(d.module) == null) {
             modifiableRootModel.addModuleOrderEntry(d.module)
