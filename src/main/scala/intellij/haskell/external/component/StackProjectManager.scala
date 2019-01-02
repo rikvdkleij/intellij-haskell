@@ -243,7 +243,7 @@ object StackProjectManager {
               }
 
               progressIndicator.setText("Busy with preloading caches")
-              if (!preloadLibraryFilesCacheFuture.isDone || !preloadStackComponentInfoCache.isDone || !preloadLibraryIdentifiersCacheFuture.isDone || !replLoads.exists(_.forall(_.isDone))) {
+              if (!preloadLibraryFilesCacheFuture.isDone || !preloadStackComponentInfoCache.isDone || !preloadLibraryIdentifiersCacheFuture.isDone || replLoads.exists(_.exists(!_.isDone))) {
                 FutureUtil.waitForValue(project, preloadStackComponentInfoCache, "preloading library caches", 600)
                 FutureUtil.waitForValue(project, preloadLibraryFilesCacheFuture, "preloading library caches", 600)
                 FutureUtil.waitForValue(project, preloadLibraryIdentifiersCacheFuture, "preloading library caches", 600)
