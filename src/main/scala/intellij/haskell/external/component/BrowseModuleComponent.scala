@@ -174,11 +174,11 @@ private[component] object BrowseModuleComponent {
 
   // This kind of declarations are returned in case DuplicateRecordFields are enabled
   private final val Module$SelPattern =
-    """([\w\.\-]+)\.\$sel:(.+)""".r
+    """([\w\.\-]+)\.\$sel:([^:]+)(?::[^:]+)?::(.*)""".r
 
   private def findModuleIdentifiers(project: Project, declarationLine: String, moduleName: String): Option[ModuleIdentifier] = {
     declarationLine match {
-      case Module$SelPattern(mn, declaration) => DeclarationLineUtil.findName(declaration).map(nd => createModuleIdentifier(nd.name, mn, nd.declaration))
+      case Module$SelPattern(mn, name, fieldType) => Some(createModuleIdentifier(name, mn, s"$name :: $fieldType"))
       case _ => DeclarationLineUtil.findName(declarationLine) map (nd => createModuleIdentifier(nd.name, moduleName, nd.declaration))
     }
   }
