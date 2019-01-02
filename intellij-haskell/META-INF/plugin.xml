@@ -492,11 +492,6 @@
 
         <group id="HaskellToolsMenu" text="Haskell" description="Haskell Tools" icon="HaskellIcons.HaskellLogo"
                keep-content="true" popup="true">
-            <action id="Haskell.DownloadLibSources" class="intellij.haskell.action.DownloadLibrarySources"
-                    text="Download Haskell Library Sources"
-                    description="Download Haskell library sources and add them as source libraries to project">
-            </action>
-
             <action id="Haskell.RestartStackRepl" class="intellij.haskell.action.RestartStackReplsAction"
                     text="Update Settings and restart REPLs"
                     description="Update Module Settings and restart REPLs">
