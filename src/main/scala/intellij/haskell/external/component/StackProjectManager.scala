@@ -183,13 +183,13 @@ object StackProjectManager {
                 build(project, Seq("intero"))
               }
 
-              progressIndicator.setText("Busy with starting project REPLs")
-              StackReplsManager.getReplsManager(project).foreach(_.stackComponentInfos.filter(_.stanzaType == LibType).foreach { info =>
-                StackReplsManager.getProjectRepl(project, info).foreach(repl => {
-                  ApplicationManager.getApplication.executeOnPooledThread(ScalaUtil.runnable {
+              val replsLoad = ApplicationManager.getApplication.executeOnPooledThread(ScalaUtil.runnable {
+                StackReplsManager.getReplsManager(project).foreach(_.stackComponentInfos.filter(_.stanzaType == LibType).foreach { info =>
+                  progressIndicator.setText("Busy with starting project REPL " + info.packageName)
+                  StackReplsManager.getProjectRepl(project, info).foreach(repl => {
                     repl.load(info.exposedModuleNames)
                   })
-                  Thread.sleep(5000) // Have to wait between starting the REPLs otherwise timeouts while starting
+                  Thread.sleep(3000) // Have to wait between starting the REPLs otherwise timeouts while starting
                 })
               })
 
@@ -241,10 +241,11 @@ object StackProjectManager {
               }
 
               progressIndicator.setText("Busy with preloading caches")
-              if (!preloadLibraryFilesCacheFuture.isDone || !preloadStackComponentInfoCache.isDone || !preloadLibraryIdentifiersCacheFuture.isDone) {
+              if (!preloadLibraryFilesCacheFuture.isDone || !preloadStackComponentInfoCache.isDone || !preloadLibraryIdentifiersCacheFuture.isDone || !replsLoad.isDone) {
                 FutureUtil.waitForValue(project, preloadStackComponentInfoCache, "preloading project cache", 600)
                 FutureUtil.waitForValue(project, preloadLibraryFilesCacheFuture, "preloading library files caches", 600)
                 FutureUtil.waitForValue(project, preloadLibraryIdentifiersCacheFuture, "preloading library identifiers caches", 600)
+                FutureUtil.waitForValue(project, replsLoad, "starting and loading REPLs", 600)
               }
             } finally {
               getStackProjectManager(project).foreach(_.initializing = false)
