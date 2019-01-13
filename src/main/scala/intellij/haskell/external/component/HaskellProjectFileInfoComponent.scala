@@ -40,7 +40,7 @@ private[component] object HaskellProjectFileInfoComponent {
     Cache.get(key) match {
       case Some(internalInfo) =>
         internalInfo.message match {
-          case Some(m) => HaskellNotificationGroup.logWarningBalloonEvent(project, m)
+          case Some(m) => HaskellNotificationGroup.logWarningEvent(project, m)
           case None => None
         }
         internalInfo.stackComponentInfo match {
