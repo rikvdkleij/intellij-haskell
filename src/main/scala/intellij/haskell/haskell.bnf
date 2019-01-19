@@ -48,7 +48,7 @@
   implements("q_con_qualifier1|q_con_qualifier2|q_con_qualifier3|q_con_qualifier4|qualifier")="intellij.haskell.psi.HaskellQualifierElement"
   mixin("q_con_qualifier1|q_con_qualifier2|q_con_qualifier3|q_con_qualifier4|qualifier")="intellij.haskell.psi.impl.HaskellQualifierElementImpl"
 
-  implements("text_literal")=["intellij.haskell.psi.HaskellStringLiteralElement", "com.intellij.psi.PsiLanguageInjectionHost"]
+  implements("text_literal")=["intellij.haskell.psi.HaskellStringLiteralElement" "com.intellij.psi.PsiLanguageInjectionHost"]
   mixin("text_literal")="intellij.haskell.psi.impl.HaskellStringLiteralElementImpl"
 }
 
@@ -242,10 +242,11 @@ instvar                     ::= ttype | q_name | LEFT_BRACKET q_name+ RIGHT_BRAC
 private fixity              ::= INFIXL | INFIXR | INFIX
 
 exports                     ::= LEFT_PAREN onl export ((onl COMMA)? onl export)* (onl COMMA)? onl RIGHT_PAREN | LEFT_PAREN RIGHT_PAREN
-export                      ::= export3 | export2 | export4
+export                      ::= export3 | export2 | export4 | export5
 private export3             ::= (q_con | cname) onl LEFT_PAREN (onl cname_dot_dot (onl COMMA onl cname_dot_dot)*)? onl RIGHT_PAREN
 private export2             ::= TYPE? onl cname+
 private export4             ::= MODULE modid
+private export5             ::= conid DOT cname | LEFT_PAREN con DOT cname RIGHT_PAREN
 cname_dot_dot               ::= dot_dot | cname
 
 newconstr                   ::= newconstr_fielddecl | q_name atype

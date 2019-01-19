@@ -2536,7 +2536,7 @@ public class HaskellParser implements PsiParser, LightPsiParser {
     }
 
     /* ********************************************************** */
-    // export3 | export2 | export4
+    // export3 | export2 | export4 | export5
     public static boolean export(PsiBuilder b, int l) {
         if (!recursion_guard_(b, l, "export")) return false;
         boolean r;
@@ -2544,6 +2544,7 @@ public class HaskellParser implements PsiParser, LightPsiParser {
         r = export3(b, l + 1);
         if (!r) r = export2(b, l + 1);
         if (!r) r = export4(b, l + 1);
+        if (!r) r = export5(b, l + 1);
         exit_section_(b, l, m, r, false, null);
         return r;
     }
@@ -2660,6 +2661,45 @@ public class HaskellParser implements PsiParser, LightPsiParser {
         Marker m = enter_section_(b);
         r = consumeToken(b, HS_MODULE);
         r = r && modid(b, l + 1);
+        exit_section_(b, m, null, r);
+        return r;
+    }
+
+    /* ********************************************************** */
+    // conid DOT cname | LEFT_PAREN con DOT cname RIGHT_PAREN
+    static boolean export5(PsiBuilder b, int l) {
+        if (!recursion_guard_(b, l, "export5")) return false;
+        if (!nextTokenIs(b, "", HS_CON_ID, HS_LEFT_PAREN)) return false;
+        boolean r;
+        Marker m = enter_section_(b);
+        r = export5_0(b, l + 1);
+        if (!r) r = export5_1(b, l + 1);
+        exit_section_(b, m, null, r);
+        return r;
+    }
+
+    // conid DOT cname
+    private static boolean export5_0(PsiBuilder b, int l) {
+        if (!recursion_guard_(b, l, "export5_0")) return false;
+        boolean r;
+        Marker m = enter_section_(b);
+        r = conid(b, l + 1);
+        r = r && consumeToken(b, HS_DOT);
+        r = r && cname(b, l + 1);
+        exit_section_(b, m, null, r);
+        return r;
+    }
+
+    // LEFT_PAREN con DOT cname RIGHT_PAREN
+    private static boolean export5_1(PsiBuilder b, int l) {
+        if (!recursion_guard_(b, l, "export5_1")) return false;
+        boolean r;
+        Marker m = enter_section_(b);
+        r = consumeToken(b, HS_LEFT_PAREN);
+        r = r && con(b, l + 1);
+        r = r && consumeToken(b, HS_DOT);
+        r = r && cname(b, l + 1);
+        r = r && consumeToken(b, HS_RIGHT_PAREN);
         exit_section_(b, m, null, r);
         return r;
     }

@@ -15,6 +15,12 @@ public interface HaskellExport extends HaskellCompositeElement {
     List<HaskellCnameDotDot> getCnameDotDotList();
 
     @Nullable
+    HaskellCon getCon();
+
+    @Nullable
+    HaskellConid getConid();
+
+    @Nullable
     HaskellModid getModid();
 
     @Nullable

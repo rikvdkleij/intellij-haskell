@@ -39,6 +39,18 @@ public class HaskellExportImpl extends HaskellCompositeElementImpl implements Ha
 
     @Override
     @Nullable
+    public HaskellCon getCon() {
+        return PsiTreeUtil.getChildOfType(this, HaskellCon.class);
+    }
+
+    @Override
+    @Nullable
+    public HaskellConid getConid() {
+        return PsiTreeUtil.getChildOfType(this, HaskellConid.class);
+    }
+
+    @Override
+    @Nullable
     public HaskellModid getModid() {
         return PsiTreeUtil.getChildOfType(this, HaskellModid.class);
     }

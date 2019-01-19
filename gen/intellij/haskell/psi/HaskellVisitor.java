@@ -325,6 +325,7 @@ public class HaskellVisitor extends PsiElementVisitor {
 
     public void visitTextLiteral(@NotNull HaskellTextLiteral o) {
         visitStringLiteralElement(o);
+        // visitPsiLanguageInjectionHost(o);
     }
 
     public void visitTopDeclaration(@NotNull HaskellTopDeclaration o) {
