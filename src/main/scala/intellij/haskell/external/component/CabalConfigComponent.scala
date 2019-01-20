@@ -21,9 +21,12 @@ object CabalConfigComponent {
     GlobalInfo.getIntelliJProjectDirectory(project) + File.separator + "cabal.config"
   }
 
+  private def getCabalConfigFile(project: Project): File = {
+    new File(getCabalConfigFilePath(project))
+  }
+
   def getAvailablePackageNames(project: Project): Iterable[String] = {
-    val cabalConfigFilePath = getCabalConfigFilePath(project)
-    val cabalConfigFile = new File(cabalConfigFilePath)
+    val cabalConfigFile = getCabalConfigFile(project)
 
     StackYamlComponent.getResolver(project).map(resolver => {
       if (resolver.startsWith("lts") || resolver.startsWith("nightly")) {
@@ -64,7 +67,11 @@ object CabalConfigComponent {
   }
 
   private def parseDefaultCabalConfigFile(project: Project): Iterable[String] = {
-    parseCabalConfigFileBase(project, Source.fromURL(getClass.getResource("/cabal/cabal.config")).getLines())
+    if (getCabalConfigFile(project).exists()) {
+      parseCabalConfigFileBase(project, Source.fromURL(getClass.getResource("/cabal/cabal.config")).getLines())
+    } else {
+      Iterable()
+    }
   }
 
   private def parseCabalConfigFile(project: Project): Iterable[String] = {
@@ -74,8 +81,7 @@ object CabalConfigComponent {
   def downloadCabalConfig(project: Project): Unit = {
     StackYamlComponent.getResolver(project).foreach(resolver => {
       val url = new URL(s"https://www.stackage.org/$resolver/cabal.config")
-      val configFilePath = getCabalConfigFilePath(project)
-      val targetFile = new File(configFilePath)
+      val targetFile = getCabalConfigFile(project)
 
       try {
         val in = URLUtil.openStream(url)
@@ -88,8 +94,7 @@ object CabalConfigComponent {
   }
 
   def removeCabalConfig(project: Project): Unit = {
-    val configFilePath = getCabalConfigFilePath(project)
-    val configFile = new File(configFilePath)
+    val configFile = getCabalConfigFile(project)
     if (configFile.exists()) {
       configFile.delete()
     }
