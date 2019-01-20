@@ -63,6 +63,14 @@ object StackProjectManager {
     getStackProjectManager(project).exists(_.installingHaskellTools)
   }
 
+  def isHaddockBuilding(project: Project): Boolean = {
+    getStackProjectManager(project).exists(_.haddockBuilding)
+  }
+
+  def setHaddockBuilding(project: Project, state: Boolean): Unit = {
+    getStackProjectManager(project).foreach(_.haddockBuilding = state)
+  }
+
   def isPreloadingAllLibraryIdentifiers(project: Project): Boolean = {
     getStackProjectManager(project).exists(_.preloadingAllLibraryIdentifiers)
   }
@@ -303,6 +311,9 @@ class StackProjectManager(project: Project) extends ProjectComponent {
 
   @volatile
   private var preloadingAllLibraryIdentifiers = false
+
+  @volatile
+  private var haddockBuilding = false
 
   @volatile
   private var replsManager: Option[StackReplsManager] = None

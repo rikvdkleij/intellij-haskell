@@ -37,9 +37,6 @@ object HoogleComponent {
   private final val HooglePath = GlobalInfo.toolPath(HoogleName).toString
   private final val HoogleDbName = "hoogle"
 
-  @volatile
-  var haddockIsBuilding = false
-
   def runHoogle(project: Project, pattern: String, count: Int = 100): Option[Seq[String]] = {
     if (isHoogleFeatureAvailable(project)) {
       ProgressManager.checkCanceled()
@@ -136,10 +133,10 @@ object HoogleComponent {
 
   def rebuildHoogle(project: Project): Unit = {
     val buildHaddockOutput = try {
-      haddockIsBuilding = true
+      StackProjectManager.setHaddockBuilding(project, state = true)
       StackCommandLine.executeStackCommandInMessageView(project, Seq("haddock", "--no-haddock-hyperlink-source"))
     } finally {
-      haddockIsBuilding = false
+      StackProjectManager.setHaddockBuilding(project, state = false)
     }
 
     if (buildHaddockOutput.contains(true)) {

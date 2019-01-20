@@ -173,7 +173,7 @@ object StackCommandLine {
     private def addToMessageView(text: String, outputType: Key[_]) {
       if (text.trim.nonEmpty) {
         if (outputType == ProcessOutputTypes.STDERR) {
-          if (text.startsWith("Error:") && text.trim.endsWith(":") || text.startsWith("Unable to parse")) {
+          if (text.startsWith("Error:") && text.trim.endsWith(":") || text.startsWith("Unable to parse") || text.startsWith("Error parsing")) {
             globalError = true // To get also all lines after this line indicated as error AND in order
           }
 
