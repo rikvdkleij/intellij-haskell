@@ -42,7 +42,7 @@ class AboutAction extends AnAction {
   def actionPerformed(actionEvent: AnActionEvent) {
     val messages = new ArrayBuffer[String]
     val project = actionEvent.getProject
-    messages.+=(s"${boldToolName("Stack")} version: " + StackCommandLine.run(project, Seq("--numeric-version")).map(_.getStdout).getOrElse("-"))
+    messages.+=(s"${boldToolName("Stack")} version: " + StackCommandLine.run(project, Seq("--numeric-version"), enableExtraArguments = false).map(_.getStdout).getOrElse("-"))
     messages.+=(s"${boldToolName("GHC")}: " + HaskellComponentsManager.getGhcVersion(project).map(_.prettyString).getOrElse("-"))
     messages.+=(s"${boldToolName("Intero")}: " + HaskellComponentsManager.getInteroPath(project).map(p => CommandLine.run(project, p, Seq("--version")).getStdout).getOrElse("-"))
     messages.+=(s"${boldToolName("HLint")}: " + HLintComponent.versionInfo(project))

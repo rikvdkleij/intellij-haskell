@@ -30,6 +30,8 @@ class HaskellConfigurable extends Configurable {
   private val hlintOptionsField = new JTextField
   private val replTimeoutField = new JTextField
   private val replTimeoutLabel = new JLabel("Changed timeout will take effect after restarting project")
+  private val extraStackArgumentsField = new JTextField
+  private val extraStackArgumentsLabel = new JLabel("Space separated options")
 
   override def getDisplayName: String = {
     "Haskell"
@@ -49,6 +51,7 @@ class HaskellConfigurable extends Configurable {
 
     hlintOptionsField.getDocument.addDocumentListener(listener)
     replTimeoutField.getDocument.addDocumentListener(listener)
+    extraStackArgumentsField.getDocument.addDocumentListener(listener)
 
     val base = new GridBagConstraints {
       insets = new Insets(2, 0, 2, 3)
@@ -88,10 +91,12 @@ class HaskellConfigurable extends Configurable {
     addLabeledControl(1, HlintOptions, hlintOptionsField)
     addLabeledControl(2, ReplTimout, replTimeoutField)
     addLabeledControl(3, "", replTimeoutLabel)
+    addLabeledControl(4, ExtraStackArguments, extraStackArgumentsField)
+    addLabeledControl(5, "", extraStackArgumentsLabel)
 
     settingsPanel.add(new JPanel(), base.setConstraints(
       gridx = 0,
-      gridy = 5,
+      gridy = 7,
       weighty = 10.0
     ))
     settingsPanel
@@ -103,6 +108,7 @@ class HaskellConfigurable extends Configurable {
     val state = HaskellSettingsPersistentStateComponent.getInstance().getState
     state.replTimeout = validREPLTimeout
     state.hlintOptions = hlintOptionsField.getText
+    state.extraStackArguments = extraStackArgumentsField.getText
   }
 
   private def validateREPLTimeout(): Integer = {
@@ -127,10 +133,12 @@ class HaskellConfigurable extends Configurable {
     val state = HaskellSettingsPersistentStateComponent.getInstance().getState
     hlintOptionsField.setText(state.hlintOptions)
     replTimeoutField.setText(state.replTimeout.toString)
+    extraStackArgumentsField.setText(state.extraStackArguments)
   }
 }
 
 object HaskellConfigurable {
   final val ReplTimout = "Background REPL timeout in seconds"
   final val HlintOptions = "Hlint options"
+  final val ExtraStackArguments = "Extra stack arguments"
 }

@@ -27,6 +27,7 @@ import com.intellij.openapi.util.Key
 import com.intellij.openapi.vfs.{CharsetToolkit, VfsUtil}
 import intellij.haskell.HaskellNotificationGroup
 import intellij.haskell.sdk.HaskellSdkType
+import intellij.haskell.settings.HaskellSettingsState
 import intellij.haskell.stackyaml.StackYamlComponent
 import intellij.haskell.util.{HaskellFileUtil, HaskellProjectUtil}
 
@@ -37,14 +38,23 @@ object StackCommandLine {
 
   final val NoDiagnosticsShowCaretFlag = "-fno-diagnostics-show-caret"
 
+  private def extraStackArguments: Seq[String] = {
+    val extraStackArgumentsString = HaskellSettingsState.getExtraStackArguments
+    if (extraStackArgumentsString.nonEmpty) {
+      extraStackArgumentsString.split("""\s+""").toSeq
+    } else {
+      Seq()
+    }
+  }
+
   def run(project: Project, arguments: Seq[String], timeoutInMillis: Long = CommandLine.DefaultTimeout.toMillis,
-          ignoreExitCode: Boolean = false, logOutput: Boolean = false, workDir: Option[String] = None, notifyBalloonError: Boolean = false): Option[ProcessOutput] = {
+          ignoreExitCode: Boolean = false, logOutput: Boolean = false, workDir: Option[String] = None, notifyBalloonError: Boolean = false, enableExtraArguments: Boolean = true): Option[ProcessOutput] = {
     HaskellSdkType.getStackBinaryPath(project).map(stackPath => {
       CommandLine.run1(
         project,
         workDir.getOrElse(project.getBasePath),
         stackPath,
-        arguments,
+        arguments ++ (if (enableExtraArguments) extraStackArguments else Seq()),
         timeoutInMillis.toInt,
         ignoreExitCode = ignoreExitCode,
         logOutput = logOutput,
@@ -95,7 +105,7 @@ object StackCommandLine {
   }
 
   def buildProjectInMessageView(project: Project, arguments: Seq[String]): Option[Boolean] = {
-    StackCommandLine.executeStackCommandInMessageView(project, Seq("build") ++ arguments ++ ghcOptions(project))
+    executeStackCommandInMessageView(project, Seq("build") ++ arguments ++ ghcOptions(project))
   }
 
   def executeStackCommandInMessageView(project: Project, arguments: Seq[String]): Option[Boolean] = {
@@ -105,7 +115,7 @@ object StackCommandLine {
   }
 
   def executeInMessageView(project: Project, commandPath: String, arguments: Seq[String]): Option[Boolean] = {
-    val cmd = CommandLine.createCommandLine(project.getBasePath, commandPath, arguments)
+    val cmd = CommandLine.createCommandLine(project.getBasePath, commandPath, arguments ++ extraStackArguments)
     (try {
       Option(cmd.createProcess())
     } catch {

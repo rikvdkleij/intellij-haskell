@@ -77,7 +77,7 @@ private[component] object GlobalProjectInfoComponent {
   }
 
   private def findPathLines(project: Project) = {
-    StackCommandLine.run(project, Seq("path")).map(_.getStdoutLines.asScala.toSeq)
+    StackCommandLine.run(project, Seq("path"), enableExtraArguments = false).map(_.getStdoutLines.asScala.toSeq)
   }
 
   private def findGhcVersion(project: Project, ghcPath: String): GhcVersion = {
@@ -102,7 +102,7 @@ private[component] object GlobalProjectInfoComponent {
 }
 
 
-case class GlobalProjectInfo(ghcVersion: GhcVersion, ghcPath: String, ghcPkgPath: String, interoPath: String, localDocRoot: String,  packageDbPaths: PackageDbPaths, projectBinPaths: ProjectBinPaths, supportedLanguageExtensions: Iterable[String], availableStackagePackageNames: Iterable[String])
+case class GlobalProjectInfo(ghcVersion: GhcVersion, ghcPath: String, ghcPkgPath: String, interoPath: String, localDocRoot: String, packageDbPaths: PackageDbPaths, projectBinPaths: ProjectBinPaths, supportedLanguageExtensions: Iterable[String], availableStackagePackageNames: Iterable[String])
 
 case class PackageDbPaths(globalPackageDbPath: String, snapshotPackageDbPath: String, localPackageDbPath: String)
 

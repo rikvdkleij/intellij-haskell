@@ -42,4 +42,8 @@ object HaskellSettingsState {
   def setOptimizeImportsBeforeCommit(optimize: Boolean): Unit = {
     state.optimizeImportsBeforeCommit = optimize
   }
+
+  def getExtraStackArguments: String = {
+    state.extraStackArguments.trim
+  }
 }
