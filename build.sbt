@@ -1,5 +1,5 @@
 lazy val commonSettings = Seq(
-  version := "1.0.0-beta40",
+  version := "1.0.0-beta41",
   scalaVersion := "2.12.8"
 )
 
@@ -25,4 +25,4 @@ lazy val intellijHaskell = (project in file(".")).
   )
 
 
-ideaBuild in ThisBuild := "183.4588.61"
+ideaBuild in ThisBuild := "183.5153.38"
