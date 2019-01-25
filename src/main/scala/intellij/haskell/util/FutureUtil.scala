@@ -12,8 +12,9 @@ object FutureUtil {
       Option(future.get(timeoutInSeconds, TimeUnit.SECONDS))
     } catch {
       case _: TimeoutException =>
-        HaskellNotificationGroup.logErrorEvent(project, s"Timeout while $actionDescription")
+        HaskellNotificationGroup.logInfoEvent(project, s"Timeout while $actionDescription")
         None
     }
   }
+
 }

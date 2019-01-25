@@ -320,7 +320,7 @@ class HaskellCompletionContributor extends CompletionContributor {
       } yield (info, globalInfo)
     })
 
-    new WaitFor(2000, 1) {
+    new WaitFor(ApplicationUtil.timeout, 1) {
       override def condition(): Boolean = {
         ProgressManager.checkCanceled()
         globalInfo.isDone
@@ -330,6 +330,7 @@ class HaskellCompletionContributor extends CompletionContributor {
     if (globalInfo.isDone) {
       globalInfo.get()
     } else {
+      HaskellNotificationGroup.logInfoEvent(psiFile.getProject, "Timeout in getGlobalInfo for " + psiFile.getName)
       None
     }
   }
@@ -341,7 +342,7 @@ class HaskellCompletionContributor extends CompletionContributor {
       case Some(moduleName) =>
         val ids = HaskellComponentsManager.findExportedModuleIdentifiers(psiFile, moduleName).map(_.map(i => i.map(x => createLookupElement(x, addParens = true))).getOrElse(Iterable()))
 
-        new WaitFor(2000, 1) {
+        new WaitFor(ApplicationUtil.timeout, 1) {
           override def condition(): Boolean = {
             ProgressManager.checkCanceled()
             ids.isCompleted
@@ -349,8 +350,9 @@ class HaskellCompletionContributor extends CompletionContributor {
         }
 
         if (ids.isCompleted) {
-          Await.result(ids, -1.milli)
+          Await.result(ids, 1.milli)
         } else {
+          HaskellNotificationGroup.logInfoEvent(psiFile.getProject, "Timeout in findAvailableIdsForImportModuleSpec for " + psiFile.getName)
           Iterable()
         }
 
@@ -414,72 +416,102 @@ object FileModuleIdentifiers {
 
   private case class Key(psiFile: PsiFile)
 
-  private type Result = Option[(ModuleIdentifiers, Option[Iterable[ModuleIdentifier]])]
+  private type Result = Option[ModuleIdentifiers]
 
+  // TODO Maybe use the buildAsyncFuture
   private final val Cache: LoadingCache[Key, Result] = Scaffeine().build((k: Key) => findModuleIdentifiers(k))
 
   import scala.concurrent.ExecutionContext.Implicits.global
 
-  def invalidate(psiFile: PsiFile, moduleName: Option[String]): Unit = {
+  def invalidate(psiFile: PsiFile): Unit = {
     Cache.invalidate(Key(psiFile))
+  }
+
+  def refresh(psiFile: PsiFile): Unit = {
+    Cache.refresh(Key(psiFile))
   }
 
   def invalidateAll(project: Project): Unit = {
     Cache.asMap().filter(_._1.psiFile.getProject == project).keys.foreach(Cache.invalidate)
   }
 
-  def getModuleIdentifiers(psiFile: PsiFile, moduleName: Option[String]): Option[(Iterable[ModuleIdentifier], Iterable[ModuleIdentifier])] = {
+  def getModuleIdentifiers(psiFile: PsiFile): Option[Iterable[ModuleIdentifier]] = {
     val key = Key(psiFile)
-    Cache.get(key) match {
-      case Some((x, y)) =>
-        if (x.toSeq.contains(None) || y.contains(None)) Cache.invalidate(key)
-        Some((x.flatten.flatten, y.getOrElse(Iterable())))
-      case None =>
+    Cache.getIfPresent(key) match {
+      case Some(Some(x)) =>
+        if (x.toSeq.contains(None)) {
+          Cache.invalidate(key)
+        }
+        Some(x.flatten.flatten)
+      case Some(None) =>
         Cache.invalidate(key)
         None
+      case None =>
+        if (ApplicationManager.getApplication.isReadAccessAllowed) {
+          val f = Future(Cache.get(key))
+          ScalaFutureUtil.waitWithCheckCancelled(psiFile.getProject, f, "getModuleIdentifiers", 4900.millis).flatten match {
+            case Some(x) =>
+              if (x.toSeq.contains(None)) {
+                Cache.invalidate(key)
+              }
+              Some(x.flatten.flatten)
+            case None =>
+              Cache.invalidate(key)
+              None
+          }
+        } else {
+          Cache.get(key) match {
+            case Some(x) =>
+              if (x.toSeq.contains(None)) {
+                Cache.invalidate(key)
+              }
+              Some(x.flatten.flatten)
+            case None =>
+              Cache.invalidate(key)
+              None
+          }
+        }
     }
   }
 
   private type ModuleIdentifiers = Iterable[Option[Iterable[ModuleIdentifier]]]
 
-  private def findModuleIdentifiers(k: Key): Option[(ModuleIdentifiers, Option[Iterable[ModuleIdentifier]])] = {
+  private def findModuleIdentifiers(k: Key): Option[ModuleIdentifiers] = {
     val project = k.psiFile.getProject
     val psiFile = k.psiFile
-    val moduleName = HaskellPsiUtil.findModuleName(psiFile)
 
-    import scala.concurrent.duration._
+    val importDeclarations = ApplicationUtil.runReadAction(findImportDeclarations(psiFile))
 
-    ApplicationUtil.scheduleInReadActionWithWriteActionPriority(project, findImportDeclarations(psiFile), "find import declarations") match {
-      case Right(importDeclarations) =>
-        val noImplicitPrelude = if (HaskellProjectUtil.isSourceFile(psiFile)) {
-          HaskellComponentsManager.findStackComponentInfo(psiFile).exists(info => HaskellCompletionContributor.isNoImplicitPreludeActive(info, psiFile))
-        } else {
-          false
-        }
-        val idsF1 = HaskellCompletionContributor.getModuleIdentifiersFromFullImportedModules(noImplicitPrelude, psiFile, importDeclarations)
+    val noImplicitPrelude = if (HaskellProjectUtil.isSourceFile(psiFile)) {
+      HaskellComponentsManager.findStackComponentInfo(psiFile).exists(info => HaskellCompletionContributor.isNoImplicitPreludeActive(info, psiFile))
+    } else {
+      false
+    }
+    val idsF1 = HaskellCompletionContributor.getModuleIdentifiersFromFullImportedModules(noImplicitPrelude, psiFile, importDeclarations)
 
-        val idsF2 = HaskellCompletionContributor.getModuleIdentifiersFromHidingIdsImportedModules(psiFile, importDeclarations)
+    val idsF2 = HaskellCompletionContributor.getModuleIdentifiersFromHidingIdsImportedModules(psiFile, importDeclarations)
 
-        val idsF3 = HaskellCompletionContributor.getModuleIdentifiersFromSpecIdsImportedModules(psiFile, importDeclarations)
+    val idsF3 = HaskellCompletionContributor.getModuleIdentifiersFromSpecIdsImportedModules(psiFile, importDeclarations)
 
-        val idsF4 = moduleName.map(mn => HaskellComponentsManager.findTopLevelModuleIdentifiers(psiFile, mn)).getOrElse(Future.successful(Some(Iterable())))
+    val f = for {
+      f1 <- idsF1
+      f2 <- idsF2
+      f3 <- idsF3
+    } yield (f1, f2, f3)
 
-        val f = for {
-          f1 <- idsF1
-          f2 <- idsF2
-          f3 <- idsF3
-          f4 <- idsF4
-        } yield (f1, f2, f3, f4)
+    new WaitFor(4800, 1) {
+      override def condition(): Boolean = {
+        f.isCompleted
+      }
+    }
 
-        try {
-          val (x, y, z, w) = Await.result(f, 5.second)
-          Some((x ++ y ++ z, w))
-        } catch {
-          case _: TimeoutException =>
-            HaskellNotificationGroup.logInfoEvent(project, s"Timeout while find module identifiers")
-            None
-        }
-      case _ => None
+    try {
+      val (x, y, z) = Await.result(f, 1.milli)
+      Some(x ++ y ++ z)
+    } catch {
+      case _: TimeoutException =>
+        HaskellNotificationGroup.logInfoEvent(project, s"Timeout while find module identifiers for file ${k.psiFile.getName}")
+        None
     }
   }
 }
@@ -488,26 +520,29 @@ object HaskellCompletionContributor {
 
   import scala.concurrent.ExecutionContext.Implicits.global
 
+  // TODO Create cache for this one instead of the downstream one???
   private def useAvailableModuleIdentifiers[A](globalInfo: StackComponentGlobalInfo, info: StackComponentInfo, psiFile: PsiFile, moduleName: Option[String],
                                                doIt: (Iterable[ModuleIdentifier], Iterable[ModuleIdentifier]) => Iterable[A]): Iterable[A] = {
 
-    val f = ApplicationManager.getApplication.executeOnPooledThread(ScalaUtil.callable(FileModuleIdentifiers.getModuleIdentifiers(psiFile, moduleName)))
+    val fileModuleIdentifiers = Future(FileModuleIdentifiers.getModuleIdentifiers(psiFile))
+    val moduleIdentifiers = moduleName.map(mn => HaskellComponentsManager.findTopLevelModuleIdentifiers(psiFile, mn)).getOrElse(Future.successful(None))
 
-    new WaitFor(5000, 1) {
-      override def condition(): Boolean = {
-        ProgressManager.checkCanceled()
-        f.isDone
-      }
+    val result = for {
+      r1 <- fileModuleIdentifiers
+      r2 <- moduleIdentifiers
+    } yield {
+      (r1, r2)
     }
 
-    if (f.isDone) {
-      f.get() match {
-        case Some((x, y)) => doIt(x, y)
-        case None => Iterable()
-      }
-    } else {
-      HaskellNotificationGroup.logInfoEvent(psiFile.getProject, s"Timeout while getting module identifiers for ${psiFile.getName}")
-      Iterable()
+    ScalaFutureUtil.waitWithCheckCancelled(psiFile.getProject, result, s"In useAvailableModuleIdentifiers wait for all module identifiers for ${psiFile.getName} ", 5.seconds) match {
+      case Some((result1, result2)) =>
+        (result1, result2) match {
+          case (Some(x), Some(y)) => doIt(x, y)
+          case (_, Some(y)) => doIt(Iterable(), y)
+          case (Some(x), _) => doIt(x, Iterable())
+          case (_, _) => Iterable()
+        }
+      case _ => Iterable()
     }
   }
 

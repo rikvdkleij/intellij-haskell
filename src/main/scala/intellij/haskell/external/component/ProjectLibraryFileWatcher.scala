@@ -74,7 +74,7 @@ object ProjectLibraryFileWatcher {
 
           // Forced `-Wwarn` otherwise build will fail in case of warnings and that will cause that REPLs of dependent targets will not start anymore
           val projectLibTargets = HaskellComponentsManager.findStackComponentInfos(project).filter(_.stanzaType == LibType).map(_.target)
-          val output = StackCommandLine.buildProjectInMessageView(project, projectLibTargets.toSeq ++ Seq("--ghc-options", "-Wwarn"))
+          val output = StackCommandLine.buildProjectInMessageView(project, projectLibTargets ++ Seq("--ghc-options", "-Wwarn"))
           if (output.contains(true) && !project.isDisposed) {
             val projectRepls = StackReplsManager.getRunningProjectRepls(project)
             val openFiles = FileEditorManager.getInstance(project).getOpenFiles.filter(HaskellFileUtil.isHaskellFile)
@@ -84,8 +84,6 @@ object ProjectLibraryFileWatcher {
                 case Some(i) => Some((i, f))
                 case None => None
               })
-
-            import scala.concurrent.duration._
 
             val isDependentResult = libComponentInfos.map(libInfo => {
               val module = libInfo.module
@@ -99,12 +97,26 @@ object ProjectLibraryFileWatcher {
             val dependentFiles = isDependentResult.flatMap(_._1)
             val dependentRepls = isDependentResult.flatMap(_._2)
 
-            dependentRepls.foreach(_.restart())
+            dependentRepls.foreach { repl =>
+              repl.restart()
+              if (repl.available && repl.stanzaType == LibType) {
+                repl.load(repl.stackComponentInfo.exposedModuleNames)
+              }
+            }
+
+            // When project is opened and has build errors some REPLs could not have been started
+            StackReplsManager.getReplsManager(project).foreach(_.stackComponentInfos.filter(_.stanzaType == LibType).foreach { info =>
+              StackReplsManager.getProjectRepl(project, info).foreach { repl =>
+                if (!repl.available && !repl.starting) {
+                  repl.start()
+                }
+              }
+            })
 
             dependentFiles.foreach { vf =>
-              HaskellFileUtil.convertToHaskellFileInReadAction(project, vf, timeout = 1.second).toOption.flatten match {
+              HaskellFileUtil.convertToHaskellFileInReadAction(project, vf).toOption.flatten match {
                 case Some(psiFile) =>
-                  HaskellComponentsManager.invalidateCachesForModules(project, libComponentInfos.flatMap(_.exposedModuleNames).toSeq)
+                  HaskellComponentsManager.refreshCacheForModules(project, libComponentInfos.flatMap(_.exposedModuleNames).toSeq)
                   HaskellAnnotator.restartDaemonCodeAnalyzerForFile(psiFile)
                 case None => HaskellNotificationGroup.logInfoEvent(project, s"Could not invalidate cache and restart daemon analyzer for file ${vf.getName}")
               }
@@ -129,7 +141,7 @@ object ProjectLibraryFileWatcher {
   }
 
   private def isDependent(libInfo: StackComponentInfo, dependentModules: util.List[Module], info: StackComponentInfo) = {
-    (info.module == libInfo.module && info.stanzaType != LibType) || (info.stanzaType == LibType && dependentModules.contains(info.module))
+    (info.module == libInfo.module && info.stanzaType != LibType) || dependentModules.contains(info.module)
   }
 }
 

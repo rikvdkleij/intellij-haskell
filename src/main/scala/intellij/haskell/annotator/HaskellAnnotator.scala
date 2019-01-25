@@ -133,25 +133,25 @@ object HaskellAnnotator {
 
   private final val NoTypeSignaturePattern = """.* Top-level binding with no type signature: (.+)""".r
   private final val DefinedButNotUsedPattern = """.* Defined but not used: [‘`](.+)[’']""".r
-  private final val NotInScopePattern = """.*ot in scope:[^‘`']*[‘`']([^’']+)[’'].*""".r
+  private final val NotInScopePattern = """.*ot in scope:[^‘`']*[‘`']([^’]+)[’'].*""".r
   private final val NotInScopePattern2 = """.*ot in scope: ([^ ]+).*""".r
   private final val UseAloneInstancesImportPattern = """.* The import of [‘`](.*)[’'] is redundant except perhaps to import instances from [‘`].*[’'] To import instances alone, use: (.+)""".r
 
-  private final val PerhapsYouMeantNamePattern = """.*[`‘]([^‘’'`]+)['’]""".r
-  private final val PerhapsYouMeantMultiplePattern = """.*ot in scope: [`‘]([^‘’'`]+)['’] Perhaps you meant one of these: (.+)""".r
-  private final val PerhapsYouMeantSingleMultiplePattern = """.*ot in scope: [`‘]([^‘’'`]+)['’] Perhaps you meant one of these: (((?!Perhaps you).)+) Perhaps you want to add [`‘]([^‘’'`]+)['’] to the import list in the import of [`‘]([^‘’'`]+)['’].*""".r
+  private final val PerhapsYouMeantNamePattern = """.*[`‘]([^‘’`]+)['’]""".r
+  private final val PerhapsYouMeantMultiplePattern = """.*ot in scope: [`‘]?([^‘’`]+)['’]? Perhaps you meant one of these: (.+)""".r
+  private final val PerhapsYouMeantSingleMultiplePattern = """.*ot in scope: [`‘]?([^‘’`]+)['’]? Perhaps you meant one of these: (((?!Perhaps you).)+) Perhaps you want to add [`‘]?([^‘’`]+)['’]? to the import list in the import of [`‘]?([^‘’`]+)['’]?.*""".r
   //  (((?!Perhaps you).)+) does not work here
   private final val PerhapsYouMeantSingleMultiplePattern3 =
-    """.*ot in scope: [`‘]([^‘’'`]+)['’] Perhaps you meant (.+\)) Perhaps you want to add [`‘]([^‘’'`]+)['’] to the import list in the import of [`‘]([^‘’'`]+)['’].*""".r
-  private final val PerhapsYouMeantSingleMultiplePattern2 = """.*ot in scope: [`‘]([^‘’'`]+)['’] Perhaps you want to add [`‘]([^‘’'`]+)['’] to the import list in the import of [`‘]([^‘’'`]+)['’].*""".r
-  private final val PerhapsYouMeantSinglePattern = """.*ot in scope: [`‘]([^‘’'`]+)['’] Perhaps you meant (.+)""".r
-  private final val PerhapsYouMeantImportedFromPattern = """.*[`‘]([^‘’'`]+)['’] \(imported from (.*)\).*""".r
-  private final val PerhapsYouMeantLocalPattern = """.*[`‘]([^‘’'`]+)['’].*""".r
+    """.*ot in scope: [`‘]?([^‘’`]+)['’]? Perhaps you meant (.+\)) Perhaps you want to add [`‘]?([^‘’`]+)['’]? to the import list in the import of [`‘]?([^‘’`]+)['’]?.*""".r
+  private final val PerhapsYouMeantSingleMultiplePattern2 = """.*ot in scope: [`‘]?([^‘’`]+)['’]? Perhaps you want to add [`‘]?([^‘’`]+)['’]? to the import list in the import of [`‘]?([^‘’`]+)['’]?.*""".r
+  private final val PerhapsYouMeantSinglePattern = """.*ot in scope: (?:type constructor or class )?[`‘]?([^‘’`]+)['’]? Perhaps you meant (.+)""".r
+  private final val PerhapsYouMeantImportedFromPattern = """.*[`‘]([^‘’`]+)['’] \(imported from (.*)\).*""".r
+  private final val PerhapsYouMeantLocalPattern = """.*[`‘]([^‘’`]+)['’].*""".r
 
   private final val DeprecatedPattern = """.*In the use of.*[‘`](.*)[’'].*Deprecated: "Use ([^ ]+).*"""".r
 
   private final val HolePattern = """.* Found hole: (.+) Where: .*""".r
-  private final val HolePattern2 = """.* Found hole [`‘]([^‘’'`]+)['’] with type: ([^ ]+) .*""".r
+  private final val HolePattern2 = """.* Found hole [`‘]([^‘’`]+)['’] with type: ([^ ]+) .*""".r
 
   // File which could not be loaded because project was not yet build
   final val NotLoadedFile = new ConcurrentHashMap[Project, PsiFile].asScala
@@ -184,7 +184,7 @@ object HaskellAnnotator {
         val textRange = getProblemTextRange(psiFile, problem)
         textRange.map {
           tr =>
-            val plainMessage = problem.plainMessage
+            val plainMessage = problem.plainMessage.replaceAll(" •", "")
             plainMessage match {
               // Because of setting `-fdefer-type-errors` the following problems are displayed as error
               case PerhapsYouMeantSingleMultiplePattern(notInScopeMessage, suggestionsList, perhapsLine, addName, addModule) =>

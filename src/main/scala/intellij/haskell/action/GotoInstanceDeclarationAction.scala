@@ -41,11 +41,10 @@ class GotoInstanceDeclarationAction extends AnAction {
       val offset = editor.getCaretModel.getOffset
       Option(psiFile.findElementAt(offset)).flatMap(HaskellPsiUtil.findNamedElement).foreach(namedElement => {
         val instanceElements = HaskellComponentsManager.findNameInfo(namedElement) match {
-          case Some(Right(nameInfos)) => HaskellReference.resolveInstanceReferences(project, namedElement, nameInfos)
-          case Some(Left(info)) =>
+          case Right(nameInfos) => HaskellReference.resolveInstanceReferences(project, namedElement, nameInfos)
+          case Left(info) =>
             HaskellEditorUtil.showHint(editor, info.message)
             Seq()
-          case _ => Seq()
         }
 
         if (instanceElements.nonEmpty) {

@@ -117,17 +117,12 @@ private[external] class StackReplsManager(val project: Project) {
 
   private def findProjectRepl(psiFile: PsiFile): Option[ProjectStackRepl] = {
     if (HaskellProjectUtil.isSourceFile(psiFile)) {
-      if (StackProjectManager.isInitializing(project)) {
-        HaskellEditorUtil.showHaskellSupportIsNotAvailableWhileInitializing(project)
-        None
-      } else {
-        val componentInfo = HaskellComponentsManager.findStackComponentInfo(psiFile)
-        componentInfo match {
-          case Some(ci) => Some(getProjectRepl(ci))
-          case None =>
-            HaskellNotificationGroup.logWarningEvent(project, s"No Haskell support for file `${psiFile.getName}` because no Stack target could be found for this file")
-            None
-        }
+      val componentInfo = HaskellComponentsManager.findStackComponentInfo(psiFile)
+      componentInfo match {
+        case Some(ci) => Some(getProjectRepl(ci))
+        case None =>
+          HaskellNotificationGroup.logWarningEvent(project, s"No Haskell support for file `${psiFile.getName}` because no Stack target could be found for this file")
+          None
       }
     } else {
       None

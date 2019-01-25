@@ -17,7 +17,6 @@
 package intellij.haskell.action
 
 import com.intellij.openapi.actionSystem.{AnAction, AnActionEvent}
-import com.intellij.openapi.util.text.StringUtil
 import intellij.haskell.external.component.NameInfoComponentResult._
 import intellij.haskell.external.component._
 import intellij.haskell.util.HaskellEditorUtil
@@ -37,11 +36,8 @@ class ShowNameInfoAction extends AnAction {
         Option(psiFile.findElementAt(offset)).foreach(psiElement => {
           val result = HaskellComponentsManager.findNameInfo(psiElement)
           result match {
-            case Some(r) => r match {
-              case Left(info) => HaskellEditorUtil.showList(Seq(info.message), editor)
-              case Right(nameInfos) => HaskellEditorUtil.showList(nameInfos.toSeq.map(createInfoText), editor)
-            }
-            case None => HaskellEditorUtil.showHint(editor, s"Could not determine info for ${StringUtil.escapeXml(psiElement.getText)}")
+            case Right(nameInfos) => HaskellEditorUtil.showList(nameInfos.toSeq.map(createInfoText), editor)
+            case Left(info) => HaskellEditorUtil.showList(Seq(info.message), editor)
           }
         })
       })

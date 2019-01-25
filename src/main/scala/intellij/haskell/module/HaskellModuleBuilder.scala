@@ -375,7 +375,7 @@ object HaskellModuleBuilder {
     getProjectLibraryTable(project).getLibraries.find(_.getName == library.getName).foreach(library => {
       val model = getProjectLibraryTable(project).getModifiableModel
       model.removeLibrary(library)
-      ApplicationManager.getApplication.invokeLater(ScalaUtil.runnable(WriteAction.run(() => model.commit())))
+      ApplicationManager.getApplication.invokeAndWait(ScalaUtil.runnable(WriteAction.run(() => model.commit())))
     })
   }
 
@@ -388,8 +388,8 @@ object HaskellModuleBuilder {
     libraryModel.addRoot(sourceRootUrl, OrderRootType.CLASSES)
     libraryModel.addRoot(sourceRootUrl, OrderRootType.SOURCES)
 
-    ApplicationManager.getApplication.invokeLater(ScalaUtil.runnable(WriteAction.run(() => libraryModel.commit())))
-    ApplicationManager.getApplication.invokeLater(ScalaUtil.runnable(WriteAction.run(() => projectLibraryTableModel.commit())))
+    ApplicationManager.getApplication.invokeAndWait(ScalaUtil.runnable(WriteAction.run(() => libraryModel.commit())))
+    ApplicationManager.getApplication.invokeAndWait(ScalaUtil.runnable(WriteAction.run(() => projectLibraryTableModel.commit())))
     library
   }
 

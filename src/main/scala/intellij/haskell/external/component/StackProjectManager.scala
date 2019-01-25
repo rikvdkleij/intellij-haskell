@@ -32,7 +32,9 @@ import intellij.haskell.external.execution.StackCommandLine.build
 import intellij.haskell.external.repl.StackRepl.LibType
 import intellij.haskell.external.repl.StackReplsManager
 import intellij.haskell.module.HaskellModuleBuilder
+import intellij.haskell.psi.HaskellPsiUtil
 import intellij.haskell.util._
+import intellij.haskell.util.index.{HaskellFileIndex, HaskellModuleNameIndex}
 import intellij.haskell.{GlobalInfo, HaskellNotificationGroup}
 
 object StackProjectManager {
@@ -148,6 +150,8 @@ object StackProjectManager {
         ProgressManager.getInstance().run(new Task.Backgroundable(project, "Building project, starting REPL(s) and preloading cache", false, PerformInBackgroundOption.ALWAYS_BACKGROUND) {
 
           def run(progressIndicator: ProgressIndicator) {
+            HaskellNotificationGroup.logInfoEvent(project, "Starting initializing Haskell project")
+
             try {
               progressIndicator.setText("Busy with building project's dependencies")
               val dependenciesBuildResult = StackCommandLine.buildProjectDependenciesInMessageView(project)
@@ -194,11 +198,42 @@ object StackProjectManager {
               val replsLoad = ApplicationManager.getApplication.executeOnPooledThread(ScalaUtil.runnable {
                 StackReplsManager.getReplsManager(project).foreach(_.stackComponentInfos.filter(_.stanzaType == LibType).foreach { info =>
                   progressIndicator.setText("Busy with starting project REPL " + info.packageName)
-                  StackReplsManager.getProjectRepl(project, info).foreach(repl => {
-                    repl.load(info.exposedModuleNames)
-                  })
-                  Thread.sleep(3000) // Have to wait between starting the REPLs otherwise timeouts while starting
+                  val repl = StackReplsManager.getProjectRepl(project, info)
+                  if (repl.exists(_.available)) {
+                    repl match {
+                      case Some(r) =>
+                        val moduleNames = info.exposedModuleNames
+                        HaskellNotificationGroup.logInfoEvent(project, s"Loading project modules in REPL ${info.packageName} " + moduleNames.mkString(", "))
+                        r.load(moduleNames)
+                      case None => HaskellNotificationGroup.logWarningEvent(project, s"REPL ${info.packageName} is not started")
+                    }
+                    Thread.sleep(1000) // Have to wait between starting the REPLs otherwise timeouts while starting
+                  }
                 })
+
+                val projectFiles = ApplicationUtil.scheduleInReadActionWithWriteActionPriority(project,
+                  if (project.isDisposed) {
+                    Iterable()
+                  } else {
+                    HaskellFileIndex.findProjectHaskellFiles(project)
+                  }, "Finding project files with imported module names")
+
+                val projectFilesWithImportedModuleNames = projectFiles match {
+                  case Right(files) => Some(files.map(pf => (pf, ApplicationUtil.runReadAction(HaskellPsiUtil.findImportDeclarations(pf)).flatMap(id => ApplicationUtil.runReadAction(id.getModuleName)))))
+                  case Left(_) =>
+                    HaskellNotificationGroup.logInfoEvent(project, "Could not retrieve project files")
+                    None
+                }
+
+                projectFilesWithImportedModuleNames match {
+                  case Some(fm) =>
+                    fm.foreach { case (f, moduleNames) =>
+                      moduleNames.foreach(mn => HaskellModuleNameIndex.findFileByModuleName(project, mn))
+                      HaskellNotificationGroup.logInfoEvent(project, "Loading module identifiers " + moduleNames.mkString(", "))
+                      moduleNames.foreach(m => BrowseModuleComponent.loadExportedIdentifiersSync(project, f, m))
+                    }
+                  case None => HaskellNotificationGroup.logInfoEvent(project, "Could not loaded module identifiers because of timeout ")
+                }
               })
 
               progressIndicator.setText("Busy with starting global Stack REPL")
@@ -279,7 +314,7 @@ object StackProjectManager {
                 })
               }
             })
-
+            HaskellNotificationGroup.logInfoEvent(project, "Initializing Haskell project is finished")
           }
         })
       }

@@ -49,11 +49,11 @@ private[component] object AvailableModuleNamesComponent {
     findModuleNamesInModule(module.getProject, module, Seq.empty, includeTests = false)
   }
 
-  private def findAvailableProjectModuleNames(stackComponentInfo: StackComponentInfo): Iterable[String] = {
+  def findAvailableProjectModuleNames(stackComponentInfo: StackComponentInfo): Iterable[String] = {
     val key = Key(stackComponentInfo)
 
     val f = Cache.get(key)
-    new WaitFor(5000, 1) {
+    new WaitFor(ApplicationUtil.timeout, 1) {
       override def condition(): Boolean = {
         ProgressManager.checkCanceled()
         f.isCompleted
@@ -63,6 +63,7 @@ private[component] object AvailableModuleNamesComponent {
     if (f.isCompleted) {
       Await.result(f, 1.milli)
     } else {
+      HaskellNotificationGroup.logInfoEvent(stackComponentInfo.module.getProject, "Timeout in findAvailableProjectModuleNames " + stackComponentInfo)
       Cache.synchronous().invalidate(key)
       Iterable()
     }
@@ -70,12 +71,12 @@ private[component] object AvailableModuleNamesComponent {
 
   private def findAvailableProjectModuleNamesWithIndex(stackComponentInfo: StackComponentInfo): Iterable[String] = {
     val projectModulePackageNames = HaskellComponentsManager.findProjectModulePackageNames(stackComponentInfo.module.getProject)
-    val libraryProjectModules = projectModulePackageNames.filter { case (m, n) => stackComponentInfo.buildDepends.contains(n) }.map(_._1)
-    findModuleNamesInModule(stackComponentInfo.module.getProject, stackComponentInfo.module, libraryProjectModules.toSeq, TestStanzaTypes.contains(stackComponentInfo.stanzaType))
+    val libraryProjectModules = projectModulePackageNames.filter { case (_, n) => stackComponentInfo.buildDepends.contains(n) }.map(_._1)
+    findModuleNamesInModule(stackComponentInfo.module.getProject, stackComponentInfo.module, libraryProjectModules, TestStanzaTypes.contains(stackComponentInfo.stanzaType))
   }
 
   private def findAvailableLibraryModuleNames(stackComponentInfo: StackComponentInfo): Iterable[String] = {
-    HaskellComponentsManager.findStackComponentGlobalInfo(stackComponentInfo).map(_.libraryModuleNames.flatMap(_.exposedModuleNames)).getOrElse(Iterable())
+    HaskellComponentsManager.findStackComponentGlobalInfo(stackComponentInfo).map(_.packageInfos.flatMap(_.exposedModuleNames)).getOrElse(Iterable())
   }
 
   private def findModuleNamesInModule(project: Project, currentModule: Module, modules: Seq[Module], includeTests: Boolean): Iterable[String] = {

@@ -25,6 +25,7 @@ import com.intellij.openapi.command.CommandProcessor
 import com.intellij.openapi.editor.Document
 import com.intellij.openapi.fileEditor.{FileDocumentManager, FileEditorManager}
 import com.intellij.openapi.module.Module
+import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.SystemInfo
 import com.intellij.openapi.util.io.FileUtil
@@ -34,9 +35,6 @@ import com.intellij.psi.{PsiDocumentManager, PsiFile, PsiManager}
 import intellij.haskell.HaskellFileType
 import intellij.haskell.action.SelectionContext
 import intellij.haskell.external.component.NoInfo
-import intellij.haskell.util.ApplicationUtil.RunInReadActionTimeout
-
-import scala.concurrent.duration.FiniteDuration
 
 object HaskellFileUtil {
 
@@ -126,6 +124,7 @@ object HaskellFileUtil {
   private def findCachedPsiFile(psiManager: PsiManager, virtualFile: VirtualFile): Option[PsiFile] = {
     val manager = psiManager.asInstanceOf[PsiManagerEx]
     val fileManager = manager.getFileManager
+    ProgressManager.checkCanceled()
     Option(fileManager.getCachedPsiFile(virtualFile))
   }
 
@@ -142,13 +141,13 @@ object HaskellFileUtil {
     }
   }
 
-  def convertToHaskellFileInReadAction(project: Project, virtualFile: VirtualFile, timeout: FiniteDuration = RunInReadActionTimeout): Either[NoInfo, Option[PsiFile]] = {
+  def convertToHaskellFileInReadAction(project: Project, virtualFile: VirtualFile): Either[NoInfo, Option[PsiFile]] = {
     val psiManager = PsiManager.getInstance(project)
 
     val actionMessage = s"Converting ${virtualFile.getName} to psi file"
-    ApplicationUtil.runInReadActionWithWriteActionPriority(project, findCachedPsiFile(psiManager, virtualFile), readActionDescription = actionMessage, timeout) match {
-      case r@Right(pf) if pf.isDefined => r
-      case _ => ApplicationUtil.runInReadActionWithWriteActionPriority(project, findPsiFile(psiManager, virtualFile), readActionDescription = actionMessage, timeout) match {
+    ApplicationUtil.runReadAction(findCachedPsiFile(psiManager, virtualFile)) match {
+      case pf@Some(_) => Right(pf)
+      case None => ApplicationUtil.runInReadActionWithWriteActionPriority(project, findPsiFile(psiManager, virtualFile), readActionDescription = actionMessage) match {
         case r@Right(_) => r
         case l@Left(_) => l
       }

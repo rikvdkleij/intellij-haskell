@@ -17,6 +17,8 @@
 package intellij.haskell.external.component
 
 import com.github.blemale.scaffeine.{LoadingCache, Scaffeine}
+import com.intellij.openapi.application.ApplicationManager
+import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.project.Project
 import com.intellij.psi.{PsiElement, PsiFile}
 import intellij.haskell.external.repl.StackRepl.StackReplOutput
@@ -38,43 +40,49 @@ private[component] object NameInfoComponent {
 
   private case class Key(psiFile: PsiFile, name: String)
 
-  def findNameInfo(psiElement: PsiElement): Option[NameInfoResult] = {
-    HaskellPsiUtil.findQualifiedNameParent(psiElement).flatMap(p => findNameInfo(p))
+  def findNameInfo(psiElement: PsiElement): NameInfoResult = {
+    HaskellPsiUtil.findQualifiedNameParent(psiElement) match {
+      case Some(p) => findNameInfo(p, None)
+      case None => Left(NoInfoAvailable(ApplicationUtil.runReadAction(psiElement.getText), ApplicationUtil.runReadAction(psiElement.getContainingFile.getName)))
+    }
   }
 
   private def findNameInfos(key: Key): NameInfoResult = {
+    ProgressManager.checkCanceled()
+
     val psiFile = key.psiFile
     val project = psiFile.getProject
     val name = key.name
     val isSourceFile = HaskellProjectUtil.isSourceFile(psiFile)
+    ProgressManager.checkCanceled()
     if (isSourceFile) {
-      if (LoadComponent.isFileLoaded(psiFile)) {
-        StackReplsManager.getProjectRepl(psiFile) match {
-          case Some(repl) => if (repl.isBusy) {
-            Left(ReplIsBusy)
-          } else if (!repl.available) {
-            Left(ReplNotAvailable)
-          } else {
-            repl.findInfo(psiFile, name) match {
-              case None => Left(ReplNotAvailable)
-              case Some(output) => Right(createNameInfos(project, output))
-            }
+      StackReplsManager.getProjectRepl(psiFile) match {
+        case Some(repl) => if (repl.isBusy) {
+          Left(ReplIsBusy)
+        } else if (!repl.available) {
+          Left(ReplNotAvailable)
+        } else {
+          ProgressManager.checkCanceled()
+          repl.findInfo(psiFile, name) match {
+            case Some(output) if output.stdoutLines.nonEmpty & output.stderrLines.isEmpty => Right(createNameInfos(project, output))
+            case None => Left(ReplNotAvailable)
+            case _ => Left(NoInfoAvailable(key.name, psiFile.getName))
           }
-          case None => Left(ReplNotAvailable)
         }
-      } else {
-        Left(ModuleNotLoaded(psiFile.getName))
+        case None => Left(ReplNotAvailable)
       }
     } else if (HaskellProjectUtil.isLibraryFile(psiFile)) {
       HaskellPsiUtil.findModuleName(psiFile) match {
         case None => Left(NoInfoAvailable(key.name, psiFile.getName))
         case Some(mn) =>
-          StackReplsManager.getGlobalRepl(project).flatMap(_.findInfo(mn, name)) match {
+          ProgressManager.checkCanceled()
+          StackReplsManager.getGlobalRepl(project) match {
+            case Some(repl) =>
+              repl.findInfo(mn, name) match {
+                case Some(output) if output.stdoutLines.nonEmpty & output.stderrLines.isEmpty => Right(createNameInfos(project, output))
+                case _ => Left(NoInfoAvailable(key.name, psiFile.getName))
+              }
             case None => Left(ReplNotAvailable)
-            case Some(output) => createNameInfos(project, output) match {
-              case infos if infos.nonEmpty => Right(infos)
-              case _ => Left(NoInfoAvailable(key.name, psiFile.getName))
-            }
           }
       }
     } else {
@@ -82,20 +90,52 @@ private[component] object NameInfoComponent {
     }
   }
 
-  def findNameInfo(qualifiedNameElement: HaskellQualifiedNameElement): Option[NameInfoResult] = {
+  def findNameInfo(qualifiedNameElement: HaskellQualifiedNameElement, importQualifier: Option[String]): NameInfoResult = {
+    ProgressManager.checkCanceled()
+    val isReadAccessAllowed = ApplicationManager.getApplication.isReadAccessAllowed
+
     val psiFile = qualifiedNameElement.getContainingFile.getOriginalFile
-    val key = Key(psiFile, ApplicationUtil.runReadAction(qualifiedNameElement.getName).replaceAll("""\s+""", ""))
+    val qName1 = qualifiedNameElement.getName.replaceAll("""\s+""", "")
+    val qName = importQualifier match {
+      case None => qName1
+      case Some(q) => q + "." + qName1
+    }
+    val key = Key(psiFile, qName)
+
+    ProgressManager.checkCanceled()
+
     Cache.getIfPresent(key) match {
-      case Some(r) => Some(r)
-      case None =>
-        val result = Cache.get(key)
+      case Some(result) =>
         result match {
-          case Right(_) => Some(result)
-          case Left(NoInfoAvailable(_, _)) =>
-            None
-          case Left(ReplNotAvailable) | Left(ReplIsBusy) | Left(IndexNotReady) | Left(ModuleNotLoaded(_)) | Left(ReadActionTimeout(_)) =>
+          case Right(_) => result
+          case Left(ReplIsBusy) | Left(ReadActionTimeout(_)) | Left(IndexNotReady) | Left(ModuleNotLoaded(_)) | Left(ReplNotAvailable) =>
             Cache.invalidate(key)
-            None
+            result
+          case _ => result
+        }
+      case None =>
+        if (isReadAccessAllowed && LoadComponent.isFileLoaded(psiFile)) {
+          val result = findNameInfos(key)
+          result match {
+            case Right(_) =>
+              Cache.put(key, result)
+              result
+            case Left(ReplIsBusy) | Left(ReadActionTimeout(_)) | Left(IndexNotReady) | Left(ReplNotAvailable) | Left(ModuleNotLoaded(_)) =>
+              result
+            case Left(_) =>
+              Cache.put(key, result)
+              result
+          }
+        } else {
+          val result = Cache.get(key)
+          result match {
+            case Right(_) => result
+            case Left(NoInfoAvailable(_, _)) =>
+              Cache.put(key, result)
+              result
+            case Left(ReplNotAvailable) | Left(ReplIsBusy) | Left(IndexNotReady) | Left(ModuleNotLoaded(_)) | Left(ReadActionTimeout(_)) =>
+              result
+          }
         }
     }
   }

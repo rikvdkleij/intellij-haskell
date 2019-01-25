@@ -95,7 +95,7 @@ object ShowTypeAction {
   private def findTypeSignatureFromScope(psiFile: PsiFile, psiElement: PsiElement) = {
     if (HaskellPsiUtil.findExpressionParent(psiElement).isDefined) {
       HaskellPsiUtil.findQualifiedNameParent(psiElement).flatMap(qualifiedNameElement => {
-        val definedInFile = HaskellComponentsManager.findDefinitionLocation(psiFile, qualifiedNameElement).toOption.map(_.namedElement.getContainingFile)
+        val definedInFile = HaskellComponentsManager.findDefinitionLocation(psiFile, qualifiedNameElement, None).toOption.map(_.namedElement.getContainingFile)
         if (definedInFile.contains(psiFile)) {
           // To prevent stale type info while compilation errors
           None

@@ -57,38 +57,46 @@ class HaskellReference(element: HaskellNamedElement, textRange: TextRange) exten
               case Left(noInfo) => Some(NoResolveResult(noInfo))
             }
           }
-        case ne: HaskellNamedElement if HaskellPsiUtil.findImportHidingDeclarationParent(ne).isDefined => None
         case ne: HaskellNamedElement =>
-          if (HaskellPsiUtil.findQualifierParent(ne).isDefined || HaskellPsiUtil.findModIdElement(element).isDefined) {
-            // Because they are already handled by HaskellQualifierElement and HaskellModId case
-            None
-          } else {
-            ProgressManager.checkCanceled()
-            HaskellPsiUtil.findTypeSignatureDeclarationParent(ne) match {
-              case None => resolveReference(ne, psiFile, project) match {
+          HaskellPsiUtil.findImportDeclarationParent(ne) match {
+            case Some(id) =>
+              val importQualifier = Option(id.getImportQualifiedAs).map(_.getQualifier.getName).orElse(id.getModuleName)
+              resolveReference(ne, psiFile, project, importQualifier) match {
                 case Right(r) => Some(HaskellNamedElementResolveResult(r))
                 case Left(noInfo) => Some(NoResolveResult(noInfo))
               }
-              case Some(ts) =>
-
-                def find(e: PsiElement): Option[HaskellNamedElement] = {
-                  Option(PsiTreeUtil.findSiblingForward(e, HaskellTypes.HS_TOP_DECLARATION, null)) match {
-                    case Some(d) if Option(d.getFirstChild).exists(_.isInstanceOf[HaskellExpression]) => HaskellPsiUtil.findNamedElements(d).headOption.find(_.getName == ne.getName)
-                    case _ => None
-                  }
-                }
-
+            case None =>
+              if (HaskellPsiUtil.findQualifierParent(ne).isDefined || HaskellPsiUtil.findModIdElement(element).isDefined) {
+                // Because they are already handled by HaskellQualifierElement and HaskellModId case
+                None
+              } else {
                 ProgressManager.checkCanceled()
-
-                // Work around Intero bug.
-                find(ts.getParent) match {
-                  case Some(ee) => Some(HaskellNamedElementResolveResult(ee))
-                  case None => resolveReference(ne, psiFile, project) match {
+                HaskellPsiUtil.findTypeSignatureDeclarationParent(ne) match {
+                  case None => resolveReference(ne, psiFile, project = project, None) match {
                     case Right(r) => Some(HaskellNamedElementResolveResult(r))
                     case Left(noInfo) => Some(NoResolveResult(noInfo))
                   }
+                  case Some(ts) =>
+
+                    def find(e: PsiElement): Option[HaskellNamedElement] = {
+                      Option(PsiTreeUtil.findSiblingForward(e, HaskellTypes.HS_TOP_DECLARATION, null)) match {
+                        case Some(d) if Option(d.getFirstChild).exists(_.isInstanceOf[HaskellExpression]) => HaskellPsiUtil.findNamedElements(d).headOption.find(_.getName == ne.getName)
+                        case _ => None
+                      }
+                    }
+
+                    ProgressManager.checkCanceled()
+
+                    // Work around Intero bug.
+                    find(ts.getParent) match {
+                      case Some(ee) => Some(HaskellNamedElementResolveResult(ee))
+                      case None => resolveReference(ne, psiFile, project, None) match {
+                        case Right(r) => Some(HaskellNamedElementResolveResult(r))
+                        case Left(noInfo) => Some(NoResolveResult(noInfo))
+                      }
+                    }
                 }
-            }
+              }
           }
         case _ => None
       }
@@ -101,7 +109,7 @@ class HaskellReference(element: HaskellNamedElement, textRange: TextRange) exten
     Array()
   }
 
-  private def resolveReference(namedElement: HaskellNamedElement, psiFile: PsiFile, project: Project): Either[NoInfo, HaskellNamedElement] = {
+  private def resolveReference(namedElement: HaskellNamedElement, psiFile: PsiFile, project: Project, importQualifier: Option[String]): Either[NoInfo, HaskellNamedElement] = {
     ProgressManager.checkCanceled()
 
     def noInfo = {
@@ -111,17 +119,17 @@ class HaskellReference(element: HaskellNamedElement, textRange: TextRange) exten
     HaskellPsiUtil.findQualifiedNameParent(namedElement) match {
       case Some(qualifiedNameElement) =>
         ProgressManager.checkCanceled()
-        resolveReferenceByDefinitionLocation(qualifiedNameElement, psiFile)
+        resolveReferenceByDefinitionLocation(qualifiedNameElement, psiFile, importQualifier)
       case None => Left(noInfo)
     }
   }
 
-  private def resolveReferenceByDefinitionLocation(qualifiedNameElement: HaskellQualifiedNameElement, psiFile: PsiFile): Either[NoInfo, HaskellNamedElement] = {
+  private def resolveReferenceByDefinitionLocation(qualifiedNameElement: HaskellQualifiedNameElement, psiFile: PsiFile, importQualifier: Option[String]): Either[NoInfo, HaskellNamedElement] = {
     ProgressManager.checkCanceled()
 
-    HaskellComponentsManager.findDefinitionLocation(psiFile, qualifiedNameElement) match {
-      case Right(PackageModuleLocation(_, ne)) => Right(ne)
-      case Right(LocalModuleLocation(_, ne)) => Right(ne)
+    HaskellComponentsManager.findDefinitionLocation(psiFile, qualifiedNameElement, importQualifier) match {
+      case Right(PackageModuleLocation(_, ne, _, _)) => Right(ne)
+      case Right(LocalModuleLocation(_, ne, _, _)) => Right(ne)
       case Left(noInfo) => Left(noInfo)
     }
   }
@@ -249,7 +257,7 @@ object HaskellReference {
   def findIdentifiersByNameInfo(nameInfo: NameInfo, namedElement: HaskellNamedElement, project: Project): Either[NoInfo, Seq[HaskellNamedElement]] = {
     ProgressManager.checkCanceled()
 
-    val name = ApplicationUtil.runReadAction(namedElement.getName)
+    val name = namedElement.getName
     nameInfo match {
       case pni: ProjectNameInfo =>
         val (virtualFile, psiFile) = HaskellProjectUtil.findFile(pni.filePath, project)

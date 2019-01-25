@@ -21,13 +21,13 @@ import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.project.Project
 import com.intellij.psi.{PsiElement, PsiFile}
 import intellij.haskell.editor.FileModuleIdentifiers
-//import intellij.haskell.editor.FileModuleIdentifiers
 import intellij.haskell.external.component.HaskellComponentsManager.StackComponentInfo
 import intellij.haskell.external.execution.{CompilationResult, HaskellCompilationResultHelper}
 import intellij.haskell.external.repl.ProjectStackRepl.{Failed, Loaded}
 import intellij.haskell.external.repl._
 import intellij.haskell.psi.HaskellPsiUtil
 import intellij.haskell.util.ScalaUtil
+import intellij.haskell.util.index.HaskellModuleNameIndex
 
 private[component] object LoadComponent {
 
@@ -74,24 +74,24 @@ private[component] object LoadComponent {
 
       ProjectLibraryFileWatcher.checkLibraryBuild(project, projectRepl.stackComponentInfo)
 
-      projectRepl.load(psiFile, fileChanged) match {
+      projectRepl.load(psiFile, Some(fileChanged)) match {
         case Some((loadOutput, loadFailed)) =>
           ApplicationManager.getApplication.executeOnPooledThread(ScalaUtil.runnable {
 
             TypeInfoComponent.invalidate(psiFile)
             DefinitionLocationComponent.invalidate(psiFile)
+            HaskellModuleNameIndex.invalidateNotFoundEntries(project)
 
             val moduleName = HaskellPsiUtil.findModuleName(psiFile)
             if (!loadFailed) {
               NameInfoComponent.invalidate(psiFile)
               moduleName.foreach(mn => {
+                BrowseModuleComponent.invalidateExportedModuleName(project, mn)
                 BrowseModuleComponent.refreshTopLevel(project, mn, psiFile)
-                BrowseModuleComponent.invalidateForModuleName(project, mn)
-                TypeInfoComponent.invalidate(mn)
+                FileModuleIdentifiers.refresh(psiFile)
               })
 
             }
-            FileModuleIdentifiers.invalidate(psiFile, moduleName)
             DocumentationManager.getInstance(project).updateToolwindowContext()
           })
           Some(HaskellCompilationResultHelper.createCompilationResult(psiFile, loadOutput.stderrLines, loadFailed))

@@ -22,6 +22,8 @@ import com.intellij.openapi.util.text.StringUtil
 import intellij.haskell.HaskellNotificationGroup
 import intellij.haskell.external.execution.CommandLine
 import intellij.haskell.util.ScalaUtil
+import intellij.haskell.util.StringUtil.removePackageQualifier
+
 
 private[component] object LibraryPackageInfoComponent {
 
@@ -105,10 +107,14 @@ private[component] object LibraryPackageInfoComponent {
       name <- packageInfoMap.get("name")
       version <- packageInfoMap.get("version")
       id <- packageInfoMap.get("id")
-      exposedModuleNames = packageInfoMap.get("exposed-modules").map(_.split("""\s+""").toSeq).getOrElse(Seq())
-      hiddenModuleNames = packageInfoMap.get("hidden-modules").map(_.split("""\s+""").toSeq).getOrElse(Seq())
-      dependsPackageNames = packageInfoMap.get("depends").map(_.split("""\s+""").toSeq).getOrElse(Seq()).flatMap(toPackageNameversion)
+      exposedModuleNames = packageInfoMap.get("exposed-modules").map(splitLine).getOrElse(Seq())
+      hiddenModuleNames = packageInfoMap.get("hidden-modules").map(splitLine).getOrElse(Seq())
+      dependsPackageNames = packageInfoMap.get("depends").map(splitLine).getOrElse(Seq()).flatMap(toPackageNameversion)
     } yield PackageInfo(name, version, id, exposedModuleNames, hiddenModuleNames, dependsPackageNames)
+  }
+
+  private def splitLine(s: String): Seq[String] = {
+    s.replaceAll("""\s+""", ",").split(",").map(_.trim).filterNot(_ == "from").map(removePackageQualifier).toSeq
   }
 
   def invalidate(project: Project): Unit = {

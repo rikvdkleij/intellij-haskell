@@ -17,7 +17,6 @@
 package intellij.haskell.util
 
 import java.io.File
-import java.nio.file.Paths
 
 import com.intellij.openapi.module.{Module, ModuleManager, ModuleUtilCore}
 import com.intellij.openapi.project.Project
@@ -54,6 +53,15 @@ object HaskellProjectUtil {
     val psiFile = virtualFile.map(f => HaskellFileUtil.convertToHaskellFileInReadAction(project, f)) match {
       case Some(r) => r
       case None => Right(None)
+    }
+    (virtualFile, psiFile)
+  }
+
+  def findFile2(filePath: String, project: Project): (Option[VirtualFile], Option[PsiFile]) = {
+    val virtualFile = Option(LocalFileSystem.getInstance().findFileByPath(HaskellFileUtil.makeFilePathAbsolute(filePath, project)))
+    val psiFile = virtualFile.map(f => HaskellFileUtil.convertToHaskellFileDispatchThread(project, f)) match {
+      case Some(r) => r
+      case None => None
     }
     (virtualFile, psiFile)
   }
@@ -158,8 +166,8 @@ object HaskellProjectUtil {
     directory.listFiles.find(_.getName == "package.yaml")
   }
 
-  def getProjectModulesSearchScope(project: Project): GlobalSearchScope = {
-    val projectModules = findProjectHaskellModules(project).map(GlobalSearchScope.moduleScope)
+  def getProjectAndLibrariesModulesSearchScope(project: Project): GlobalSearchScope = {
+    val projectModules = findProjectHaskellModules(project).map(m => GlobalSearchScope.moduleWithDependenciesAndLibrariesScope(m, true))
     if (projectModules.isEmpty) {
       GlobalSearchScope.EMPTY_SCOPE
     } else {
@@ -168,7 +176,7 @@ object HaskellProjectUtil {
   }
 
   def getSearchScope(project: Project, includeNonProjectItems: Boolean): GlobalSearchScope = {
-    if (includeNonProjectItems) GlobalSearchScope.allScope(project) else HaskellProjectUtil.getProjectModulesSearchScope(project)
+    if (includeNonProjectItems) getProjectAndLibrariesModulesSearchScope(project) else GlobalSearchScope.projectScope(project)
   }
 
   import ScalaUtil._
@@ -202,7 +210,7 @@ object HaskellProjectUtil {
   }
 
   def findProjectPackageNames(project: Project): Seq[String] = {
-    HaskellComponentsManager.findProjectModulePackageNames(project).map(_._2).toSeq
+    HaskellComponentsManager.findProjectModulePackageNames(project).map(_._2)
   }
 }
 

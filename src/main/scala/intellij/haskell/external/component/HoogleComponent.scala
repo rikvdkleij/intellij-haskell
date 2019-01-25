@@ -63,14 +63,14 @@ object HoogleComponent {
       val name = qualifiedNameElement.getIdentifierElement.getName
       val psiFile = qualifiedNameElement.getContainingFile.getOriginalFile
       if (HaskellProjectUtil.isSourceFile(psiFile)) {
-        DefinitionLocationComponent.findDefinitionLocation(psiFile, qualifiedNameElement) match {
+        DefinitionLocationComponent.findDefinitionLocation(psiFile, qualifiedNameElement, None) match {
           case Left(noInfo) =>
             HaskellNotificationGroup.logWarningEvent(project, s"No documentation because no location info could be found for identifier `$name` because ${noInfo.message}")
             None
           case Right(info) =>
             val moduleName = info match {
-              case PackageModuleLocation(mn, _) => Some(mn)
-              case LocalModuleLocation(pf, _) => HaskellPsiUtil.findModuleName(pf)
+              case PackageModuleLocation(mn, _, _, _) => Some(mn)
+              case LocalModuleLocation(pf, _, _, _) => HaskellPsiUtil.findModuleName(pf)
             }
             moduleName match {
               case None =>

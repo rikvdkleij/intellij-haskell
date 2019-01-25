@@ -3,20 +3,20 @@ package intellij.haskell.util.index
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.psi.PsiFile
-import com.intellij.psi.search.{FileTypeIndex, GlobalSearchScope, GlobalSearchScopesCore}
+import com.intellij.psi.search.{FileTypeIndex, GlobalSearchScope}
 import intellij.haskell.HaskellFileType
-import intellij.haskell.util.{HaskellFileUtil, HaskellProjectUtil}
+import intellij.haskell.util.HaskellFileUtil
 
 import scala.collection.JavaConverters._
 
 object HaskellFileIndex {
 
-  def findProjectProductionHaskellFiles(project: Project): Iterable[PsiFile] = {
-    HaskellFileUtil.convertToHaskellFiles(project, findProjectProductionFiles(project))
+  def findProjectHaskellFiles(project: Project): Iterable[PsiFile] = {
+    HaskellFileUtil.convertToHaskellFiles(project, findProjectFiles(project))
   }
 
-  def findProjectProductionFiles(project: Project): Iterable[VirtualFile] = {
-    findFiles(project, GlobalSearchScopesCore.projectProductionScope(project)).filter(vf => HaskellProjectUtil.isSourceFile(project, vf))
+  def findProjectFiles(project: Project): Iterable[VirtualFile] = {
+    findFiles(project, GlobalSearchScope.projectScope(project))
   }
 
   private def findFiles(project: Project, searchScope: GlobalSearchScope): Iterable[VirtualFile] = {

@@ -147,7 +147,7 @@ object StackCommandLine {
         compileResult.put(compileTask.execute(compileContext))
       }, null)
 
-      compileResult.get
+      compileResult.get(1800000).getOrElse(false) // Wait max half an hour
     })
   }
 

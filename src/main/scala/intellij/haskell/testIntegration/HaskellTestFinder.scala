@@ -27,7 +27,7 @@ class HaskellTestFinder extends TestFinder {
     */
   override def findTestsForClass(psiElement: PsiElement): util.Collection[PsiElement] = {
     val testFileName = psiElement.getContainingFile.getName.replace(".hs", "Spec.hs")
-    val testFiles = FilenameIndex.getFilesByName(psiElement.getProject, testFileName, GlobalSearchScope.allScope(psiElement.getProject))
+    val testFiles = FilenameIndex.getFilesByName(psiElement.getProject, testFileName, GlobalSearchScope.projectScope(psiElement.getProject))
     JavaConverters.asJavaCollection(testFiles)
   }
 
@@ -36,7 +36,7 @@ class HaskellTestFinder extends TestFinder {
     */
   override def findClassesForTest(psiElement: PsiElement): util.Collection[PsiElement] = {
     val sourceFileName = psiElement.getContainingFile.getName.replace("Spec.hs", ".hs")
-    val sourceFiles = FilenameIndex.getFilesByName(psiElement.getProject, sourceFileName, GlobalSearchScope.allScope(psiElement.getProject))
+    val sourceFiles = FilenameIndex.getFilesByName(psiElement.getProject, sourceFileName, GlobalSearchScope.projectScope(psiElement.getProject))
     JavaConverters.asJavaCollection(sourceFiles)
   }
 

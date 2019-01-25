@@ -81,4 +81,4 @@ private[component] object StackComponentGlobalInfoComponent {
   }
 }
 
-case class StackComponentGlobalInfo(stackComponentInfo: StackComponentInfo, libraryModuleNames: Iterable[PackageInfo])
+case class StackComponentGlobalInfo(stackComponentInfo: StackComponentInfo, packageInfos: Iterable[PackageInfo])

@@ -38,23 +38,25 @@ case class ProjectStackRepl(project: Project, stackComponentInfo: StackComponent
   val packageName: String = stackComponentInfo.packageName
 
   def clearLoadedModules(): Unit = {
-    loadedModule = None
+    loadedFile = None
     loadedDependentModules.clear()
+    everLoadedDependentModules.clear()
   }
 
   def clearLoadedModule(): Unit = {
-    loadedModule = None
+    loadedFile = None
   }
 
   private case class ModuleInfo(psiFile: PsiFile, loadFailed: Boolean)
 
   @volatile
-  private[this] var loadedModule: Option[ModuleInfo] = None
+  private[this] var loadedFile: Option[ModuleInfo] = None
 
-  private case class DependentModuleInfo(loadFailed: Boolean)
+  private case class DependentModuleInfo()
 
   private type ModuleName = String
   private[this] val loadedDependentModules = new ConcurrentHashMap[ModuleName, DependentModuleInfo]().asScala
+  private[this] val everLoadedDependentModules = new ConcurrentHashMap[ModuleName, DependentModuleInfo]().asScala
 
   @volatile
   private var busy = false
@@ -65,12 +67,12 @@ case class ProjectStackRepl(project: Project, stackComponentInfo: StackComponent
 
   def findTypeInfo(moduleName: Option[String], psiFile: PsiFile, startLineNr: Int, startColumnNr: Int, endLineNr: Int, endColumnNr: Int, expression: String): Option[StackReplOutput] = {
     val filePath = getFilePath(psiFile)
-    findInfoForCommand(moduleName, psiFile, s":type-at $filePath $startLineNr $startColumnNr $endLineNr $endColumnNr $expression", setBusy = false)
+    findInfoForCommand(moduleName, psiFile, s":type-at $filePath $startLineNr $startColumnNr $endLineNr $endColumnNr $expression", setBusy = true)
   }
 
   def findLocationInfo(moduleName: Option[String], psiFile: PsiFile, startLineNr: Int, startColumnNr: Int, endLineNr: Int, endColumnNr: Int, expression: String): Option[StackReplOutput] = {
     val filePath = getFilePath(psiFile)
-    findInfoForCommand(moduleName, psiFile, s":loc-at $filePath $startLineNr $startColumnNr $endLineNr $endColumnNr $expression", setBusy = false)
+    findInfoForCommand(moduleName, psiFile, s":loc-at $filePath $startLineNr $startColumnNr $endLineNr $endColumnNr $expression", setBusy = true)
   }
 
   def findInfo(psiFile: PsiFile, name: String): Option[StackReplOutput] = {
@@ -78,11 +80,15 @@ case class ProjectStackRepl(project: Project, stackComponentInfo: StackComponent
   }
 
   def isModuleLoaded(moduleName: String): Boolean = {
+    everLoadedDependentModules.get(moduleName).isDefined
+  }
+
+  def isBrowseModuleLoaded(moduleName: String): Boolean = {
     loadedDependentModules.get(moduleName).isDefined
   }
 
   def isFileLoaded(psiFile: PsiFile): IsFileLoaded = {
-    loadedModule match {
+    loadedFile match {
       case Some(info) if psiFile == info.psiFile && !info.loadFailed => Loaded
       case Some(info) if psiFile == info.psiFile && info.loadFailed => Failed
       case Some(_) => OtherFileIsLoaded
@@ -92,44 +98,44 @@ case class ProjectStackRepl(project: Project, stackComponentInfo: StackComponent
 
   private final val OkModulesLoaded = "Ok, modules loaded: "
 
-  private def setLoadedModules(o: StackReplOutput) = {
+  private def setLoadedModules(o: StackReplOutput): Unit = {
+    loadedDependentModules.clear()
     val loadedModuleNames = o.stdoutLines.find(l => l.startsWith(OkModulesLoaded)).map(findLoadedModuleNames).getOrElse(Array())
-    loadedModuleNames.foreach(mn => loadedDependentModules.put(mn, DependentModuleInfo(false)))
+    loadedModuleNames.foreach(mn => loadedDependentModules.put(mn, DependentModuleInfo()))
+    loadedModuleNames.foreach(mn => everLoadedDependentModules.put(mn, DependentModuleInfo()))
   }
 
-  def load(moduleNames: Seq[String]): Unit = {
+  def load(moduleNames: Seq[String]): Unit = synchronized {
     val moduleNamesString = moduleNames.mkString(" ")
     executeWithSettingBusy(s":load $moduleNamesString").foreach(setLoadedModules)
   }
 
-  def load(psiFile: PsiFile, fileChanged: Boolean): Option[(StackReplOutput, Boolean)] = {
+  def load(psiFile: PsiFile, fileChanged: Option[Boolean]): Option[(StackReplOutput, Boolean)] = synchronized {
     val filePath = getFilePath(psiFile)
-    val reload = if (fileChanged) {
+    val reload = if (fileChanged.contains(true)) {
       val loaded = isFileLoaded(psiFile)
       loaded == Loaded || loaded == Failed
     } else {
-      HaskellNotificationGroup.logInfoEvent(project, s"No :reload of file ${psiFile.getName} because this file is not changed")
+      HaskellNotificationGroup.logInfoEvent(project, s"No :reload of file ${psiFile.getName} because this file is not changed or module not yet loaded")
       false
     }
 
-    synchronized {
-      val output = if (reload) {
-        executeWithSettingBusy(s":reload")
-      } else {
-        executeWithSettingBusy(s":load $filePath")
-      }
-      output match {
-        case Some(o) =>
-          val loadFailed = isLoadFailed(o)
-          setLoadedModules(o)
+    val output = if (reload) {
+      executeWithSettingBusy(s":reload")
+    } else {
+      executeWithSettingBusy(s":load $filePath")
+    }
+    output match {
+      case Some(o) =>
+        val loadFailed = isLoadFailed(o)
+        setLoadedModules(o)
 
-          loadedModule = Some(ModuleInfo(psiFile, loadFailed))
-          Some(o, loadFailed)
-        case _ =>
-          loadedDependentModules.clear()
-          loadedModule = None
-          None
-      }
+        loadedFile = Some(ModuleInfo(psiFile, loadFailed))
+        Some(o, loadFailed)
+      case _ =>
+        loadedDependentModules.clear()
+        loadedFile = None
+        None
     }
   }
 
@@ -141,16 +147,17 @@ case class ProjectStackRepl(project: Project, stackComponentInfo: StackComponent
     }
   }
 
-  def getModuleIdentifiers(moduleName: String, psiFile: PsiFile): Option[StackReplOutput] = {
-    findInfoForCommand(Some(moduleName), psiFile, s":browse! $moduleName", setBusy = true)
+  def getModuleIdentifiers(moduleName: String, psiFile: PsiFile): Option[StackReplOutput] = synchronized {
+    if (isBrowseModuleLoaded(moduleName) || load(psiFile, None).exists(_._2 == false)) {
+      executeWithSettingBusy(s":browse! $moduleName")
+    } else {
+      HaskellNotificationGroup.logInfoEvent(project, s"Could not get module identifiers for module $moduleName because file ${psiFile.getName} is not loaded")
+      None
+    }
   }
 
   def getLocalModuleIdentifiers(moduleName: String, psiFile: PsiFile): Option[StackReplOutput] = {
     executeWithLoad(psiFile, s":browse! *$moduleName", Some(moduleName))
-  }
-
-  def showActiveLanguageFlags: Option[StackReplOutput] = synchronized {
-    executeWithSettingBusy(":show language")
   }
 
   override def restart(forceExit: Boolean): Unit = synchronized {
@@ -161,25 +168,24 @@ case class ProjectStackRepl(project: Project, stackComponentInfo: StackComponent
   }
 
   private def findInfoForCommand(moduleName: Option[String], psiFile: PsiFile, command: String, setBusy: Boolean): Option[StackReplOutput] = synchronized {
-    moduleName.flatMap(loadedDependentModules.get) match {
-      case Some(lf) if lf.loadFailed => Some(StackReplOutput())
-      case Some(_) =>
-        if (setBusy) {
-          executeWithSettingBusy(command)
-        } else {
-          executeWithoutSettingBusy(command)
-        }
-      case None => executeWithLoad(psiFile, command)
+    if (moduleName.exists(isModuleLoaded)) {
+      if (setBusy) {
+        executeWithSettingBusy(command)
+      } else {
+        executeWithoutSettingBusy(command)
+      }
+    } else {
+      executeWithLoad(psiFile, command)
     }
   }
 
   private def executeWithLoad(psiFile: PsiFile, command: String, moduleName: Option[String] = None): Option[StackReplOutput] = synchronized {
-    loadedModule match {
+    loadedFile match {
       case Some(info) if info.psiFile == psiFile && !info.loadFailed => executeWithSettingBusy(command)
       case Some(info) if info.psiFile == psiFile && info.loadFailed => Some(StackReplOutput())
       case _ =>
-        load(psiFile, fileChanged = false)
-        loadedModule match {
+        load(psiFile, fileChanged = None)
+        loadedFile match {
           case None => None
           case Some(info) if info.psiFile == psiFile && !info.loadFailed => executeWithSettingBusy(command)
           case _ => Some(StackReplOutput())

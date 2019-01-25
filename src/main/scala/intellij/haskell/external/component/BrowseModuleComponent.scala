@@ -21,7 +21,7 @@ import com.intellij.openapi.project.Project
 import com.intellij.psi.PsiFile
 import intellij.haskell.external.repl._
 import intellij.haskell.util.index.HaskellModuleNameIndex
-import intellij.haskell.util.{HaskellProjectUtil, StringUtil}
+import intellij.haskell.util.{HaskellProjectUtil, ScalaFutureUtil, StringUtil}
 
 import scala.concurrent.{ExecutionContext, Future}
 
@@ -56,6 +56,17 @@ private[component] object BrowseModuleComponent {
     matchResult(key, Cache.get(key))
   }
 
+  def findLibraryModuleIdentifiersSync(project: Project, moduleName: String): BrowseModuleInternalResult = {
+    val key = Key(project, moduleName, None, exported = true)
+    Cache.synchronous().get(key)
+  }
+
+  def loadExportedIdentifiersSync(project: Project, psiFile: PsiFile, moduleName: String): Unit = {
+    import scala.concurrent.ExecutionContext.Implicits.global
+    val result = findExportedIdentifiers(psiFile, moduleName)
+    ScalaFutureUtil.waitForValue(project, result, "findExportedIdentifiersSync")
+  }
+
   def findTopLevelIdentifiers(psiFile: PsiFile, moduleName: String)(implicit ec: ExecutionContext): Future[Option[Iterable[ModuleIdentifier]]] = {
     val key = Key(psiFile.getProject, moduleName, Some(psiFile), exported = false)
 
@@ -69,10 +80,18 @@ private[component] object BrowseModuleComponent {
   def findExportedIdentifiers(psiFile: PsiFile, moduleName: String)(implicit ec: ExecutionContext): Future[Option[Iterable[ModuleIdentifier]]] = {
     val moduleFiles = HaskellModuleNameIndex.findFileByModuleName(psiFile.getProject, moduleName)
     val projectFile = moduleFiles.toOption.exists(_.headOption.exists(HaskellProjectUtil.isSourceFile))
+    val project = psiFile.getProject
 
     if (projectFile) {
-      val key = Key(psiFile.getProject, moduleName, Some(psiFile), exported = true)
-      matchResult(key, Cache.get(key))
+      val key = Key(project, moduleName, Some(psiFile), exported = true)
+      val result = matchResult(key, Cache.get(key))
+      result.map {
+        case r@Some(_) => r
+        case None =>
+          val result = Cache.synchronous().asMap().find { case (k, _) => k.project == project && k.moduleName == moduleName }.map(_._2).flatMap(_.toOption)
+          result.foreach(r => Cache.synchronous().put(key, Right(r)))
+          result
+      }
     } else {
       findLibraryModuleIdentifiers(psiFile.getProject, moduleName)
     }
@@ -87,24 +106,22 @@ private[component] object BrowseModuleComponent {
     Cache.synchronous().refresh(key)
   }
 
-  def invalidateTopLevel(project: Project, moduleName: String, psiFile: PsiFile): Unit = {
-    val keys = Cache.synchronous().asMap().filter(k => k._1.project == project && k._1.moduleName == moduleName && k._1.psiFile.contains(psiFile) && !k._1.exported).keys
-    Cache.synchronous().invalidateAll(keys)
+  def invalidateExportedModuleName(project: Project, moduleName: String): Unit = {
+    val synchronousCache = Cache.synchronous
+    val key = synchronousCache.asMap().keys.filter(k => k.moduleName == moduleName && k.exported) // Can be more than one for a module name if file of module can not be found
+    key.foreach(synchronousCache.invalidate)
   }
 
-  def invalidateForModuleName(project: Project, moduleName: String): Unit = {
-    val keys = Cache.synchronous.asMap().keys.filter(_.moduleName == moduleName)
-    Cache.synchronous.invalidateAll(keys)
-  }
-
-  def invalidateForFile(psiFile: PsiFile): Unit = {
-    val keys = Cache.synchronous.asMap().keys.filter(_.psiFile.contains(psiFile))
-    Cache.synchronous.invalidateAll(keys)
+  def refreshExportedModuleNames(project: Project, moduleNames: Seq[String]): Unit = {
+    val synchronousCache = Cache.synchronous
+    val keys = synchronousCache.asMap().keys.filter(k => moduleNames.contains(k.moduleName))
+    keys.foreach(synchronousCache.refresh)
   }
 
   def invalidate(project: Project): Unit = {
-    val keys = Cache.synchronous().asMap().keys.filter(_.project == project)
-    Cache.synchronous.invalidateAll(keys)
+    val synchronousCache = Cache.synchronous
+    val keys = synchronousCache.asMap().keys.filter(_.project == project)
+    synchronousCache.invalidateAll(keys)
   }
 
   private def findModuleIdentifiers(key: Key): BrowseModuleInternalResult = {
@@ -132,25 +149,60 @@ private[component] object BrowseModuleComponent {
           Left(ModuleNotLoaded(key.moduleName))
         }
       case Some(psiFile) if key.exported =>
-        val projectRepl = StackReplsManager.getReplsManager(project).flatMap(_.stackComponentInfos.find(_.exposedModuleNames.contains(key.moduleName))) match {
-          case Some(componentInfo) => StackReplsManager.getRunningProjectRepl(project, componentInfo).orElse(StackReplsManager.getProjectRepl(psiFile))
-          case None => StackReplsManager.getProjectRepl(psiFile)
-        }
+        val projectRepl = StackReplsManager.getProjectRepl(psiFile)
         projectRepl match {
           case Some(repl) =>
             if (repl.isBusy) {
-              Left(ReplIsBusy)
+              findInOtherRepl(project, psiFile, moduleName, repl) match {
+                case r@Right(_) => r
+                case _ => Left(ReplIsBusy)
+              }
             } else if (!repl.available) {
-              Left(ReplNotAvailable)
-            } else {
-              repl.getModuleIdentifiers(moduleName, psiFile) match {
-                case Some(output) if output.stderrLines.isEmpty && output.stdoutLines.nonEmpty => Right(output.stdoutLines.flatMap(l => findModuleIdentifiers(project, l, moduleName)))
+              findInOtherRepl(project, psiFile, moduleName, repl) match {
+                case r@Right(_) => r
                 case _ => Left(ReplNotAvailable)
               }
+            } else {
+              if (repl.isBrowseModuleLoaded(moduleName)) {
+                repl.getModuleIdentifiers(moduleName, psiFile) match {
+                  case Some(output) if output.stderrLines.isEmpty && output.stdoutLines.nonEmpty => Right(output.stdoutLines.flatMap(l => findModuleIdentifiers(project, l, moduleName)))
+                  case _ => Left(ReplNotAvailable)
+                }
+              } else {
+                findInOtherRepl(project, psiFile, moduleName, repl)
+              }
             }
-          case None => Left(ReplIsBusy)
+          case None => Left(ReplNotAvailable)
         }
       case None => findLibModuleIdentifiers(project, moduleName)
+    }
+  }
+
+  private def findInOtherRepl(project: Project, psiFile: PsiFile, moduleName: String, repl: ProjectStackRepl) = {
+    HaskellModuleNameIndex.findFileByModuleName(project, moduleName) match {
+      case Right(files) => files.headOption match {
+        case Some(f) => val otherRepl = StackReplsManager.getProjectRepl(f)
+          if (otherRepl.contains(repl)) {
+            Left(ReplNotAvailable)
+          } else {
+            otherRepl match {
+              case Some(oRepl) =>
+                if (oRepl.isBusy) {
+                  Left(ReplIsBusy)
+                } else if (!oRepl.available) {
+                  Left(ReplNotAvailable)
+                } else {
+                  oRepl.getModuleIdentifiers(moduleName, f) match {
+                    case Some(output) if output.stderrLines.isEmpty && output.stdoutLines.nonEmpty => Right(output.stdoutLines.flatMap(l => findModuleIdentifiers(project, l, moduleName)))
+                    case _ => Left(ReplNotAvailable)
+                  }
+                }
+              case None => Left(ReplNotAvailable)
+            }
+          }
+        case None => Left(NoInfoAvailable(moduleName, "-"))
+      }
+      case Left(noInfo) => Left(noInfo)
     }
   }
 
@@ -163,9 +215,8 @@ private[component] object BrowseModuleComponent {
           Left(ReplNotAvailable)
         } else {
           repl.getModuleIdentifiers(moduleName) match {
-            case None => Left(ReplNotAvailable)
-            case Some(o) if o.stdoutLines.nonEmpty => Right(o.stdoutLines.flatMap(l => findModuleIdentifiers(project, l, moduleName).toSeq))
-            case _ => Left(NoInfoAvailable(moduleName, "-"))
+            case Some(o) if o.stderrLines.isEmpty && o.stdoutLines.nonEmpty => Right(o.stdoutLines.flatMap(l => findModuleIdentifiers(project, l, moduleName).toSeq))
+            case _ => Left(ReplNotAvailable)
           }
         }
       case None => Left(ReplNotAvailable)

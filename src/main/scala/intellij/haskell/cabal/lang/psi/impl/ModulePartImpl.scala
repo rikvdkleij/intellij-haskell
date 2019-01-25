@@ -38,7 +38,7 @@ trait ModulePartImpl extends CabalNamedElementImpl {
       case s if s.isEmpty => ""
       case s => s + "."
     }
-    DumbService.getInstance(getProject).tryRunReadActionInSmartMode(ScalaUtil.computable(HaskellFileIndex.findProjectProductionHaskellFiles(getProject)), "Finding modules is not available until indices are ready").flatMap { file =>
+    DumbService.getInstance(getProject).tryRunReadActionInSmartMode(ScalaUtil.computable(HaskellFileIndex.findProjectHaskellFiles(getProject)), "Finding modules is not available until indices are ready").flatMap { file =>
       HaskellPsiUtil.findModuleDeclaration(file).flatMap(decl => Option(decl.getModid)).map(_.getText) match {
         case None => None
         case Some(name) if name.startsWith(text) =>
