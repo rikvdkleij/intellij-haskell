@@ -150,8 +150,7 @@ object HaskellAnnotator {
 
   private final val DeprecatedPattern = """.*In the use of.*[‘`](.*)[’'].*Deprecated: "Use ([^ ]+).*"""".r
 
-  private final val HolePattern = """.* Found hole: (.+) Where: .*""".r
-  private final val HolePattern2 = """.* Found hole [`‘]([^‘’`]+)['’] with type: ([^ ]+) .*""".r
+  private final val HolePattern = """warning: \[\-Wtyped-holes\] (.+)""".r
 
   // File which could not be loaded because project was not yet build
   final val NotLoadedFile = new ConcurrentHashMap[Project, PsiFile].asScala
@@ -205,8 +204,6 @@ object HaskellAnnotator {
                 ErrorAnnotationWithIntentionActions(tr, problem.plainMessage, problem.htmlMessage, createNotInScopeIntentionActions(psiFile, name.split("::").headOption.getOrElse(name).trim))
               case UseAloneInstancesImportPattern(importDecl, useImport) => importAloneInstancesAction(problem, tr, importDecl, useImport)
               case HolePattern(_) =>
-                ErrorAnnotation(tr, problem.plainMessage, problem.htmlMessage)
-              case HolePattern2(_, _) =>
                 ErrorAnnotation(tr, problem.plainMessage, problem.htmlMessage)
               //
               case NoTypeSignaturePattern(typeSignature) => WarningAnnotationWithIntentionActions(tr, problem.plainMessage, problem.htmlMessage, Iterable(new TypeSignatureIntentionAction(typeSignature)))
