@@ -170,6 +170,10 @@ object HaskellAnnotator {
     }
   }
 
+  def findHighlightInfo(project: Project, offset: Int, editor: Editor): Option[HighlightInfo] = {
+    Option(getDaemonCodeAnalyzer(project).findHighlightByOffset(editor.getDocument, offset, false))
+  }
+
   private def createAnnotations(project: Project, psiFile: PsiFile, problems: Iterable[CompilationProblem]): Iterable[Annotation] = {
 
     def createErrorAnnotationWithMultiplePerhapsIntentions(problem: CompilationProblem, tr: TextRange, notInScopeMessage: String, suggestionsList: String, add: Option[(String, String)]) = {

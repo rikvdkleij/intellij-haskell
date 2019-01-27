@@ -23,6 +23,8 @@ object HaskellCompilationResultHelper {
 
   private final val ProblemPattern = """((?:[A-Z]:\\)?[^:]+):([\d]+):([\d]+):(.+)""".r
 
+  final val LayoutSpaceChar = '\u00A0'
+
   def createCompilationResult(currentPsiFile: PsiFile, errorLines: Seq[String], failed: Boolean): CompilationResult = {
     val currentFilePath = HaskellFileUtil.getAbsolutePath(currentPsiFile).getOrElse(throw new IllegalStateException(s"File `${currentPsiFile.getName}` exists only in memory"))
 
@@ -47,12 +49,14 @@ case class CompilationResult(currentFileProblems: Iterable[CompilationProblem], 
 
 case class CompilationProblem(filePath: String, lineNr: Int, columnNr: Int, message: String) {
 
+  import intellij.haskell.external.execution.HaskellCompilationResultHelper.LayoutSpaceChar
+
   def plainMessage: String = {
     message.split("\n").mkString.replaceAll("\\s+", " ")
   }
 
   def htmlMessage: String = {
-    StringUtil.escapeString(message.replace(' ', '\u00A0'))
+    StringUtil.escapeString(message.replace(' ', LayoutSpaceChar))
   }
 
   def isWarning: Boolean = {

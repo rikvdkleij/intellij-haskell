@@ -31,7 +31,7 @@ class ShowProblemMessageAction extends AnAction {
       val project = actionContext.project
       val editor = actionContext.editor
       val offset = editor.getCaretModel.getOffset
-      Option(HaskellAnnotator.getDaemonCodeAnalyzer(project).findHighlightByOffset(editor.getDocument, offset, false)).foreach(info => {
+      HaskellAnnotator.findHighlightInfo(project, offset, editor).foreach(info => {
         val message = info.getToolTip
         HaskellEditorUtil.showHint(editor, message)
       })

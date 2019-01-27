@@ -32,6 +32,7 @@ import com.intellij.psi.util.PsiTreeUtil
 import com.intellij.psi.{PsiElement, PsiFile, TokenType}
 import com.intellij.util.{ProcessingContext, WaitFor}
 import icons.HaskellIcons
+import intellij.haskell.annotator.HaskellAnnotator
 import intellij.haskell.external.component.HaskellComponentsManager.StackComponentInfo
 import intellij.haskell.external.component._
 import intellij.haskell.psi.HaskellElementCondition._
@@ -41,6 +42,7 @@ import intellij.haskell.psi._
 import intellij.haskell.runconfig.console.{HaskellConsoleView, HaskellConsoleViewMap}
 import intellij.haskell.util._
 import intellij.haskell.{HaskellFile, HaskellNotificationGroup, HaskellParserDefinition}
+import org.apache.commons.lang.StringEscapeUtils
 
 import scala.collection.JavaConverters._
 import scala.concurrent._
@@ -99,7 +101,7 @@ class HaskellCompletionContributor extends CompletionContributor {
   }
 
 
-  val provider: CompletionProvider[CompletionParameters] = new CompletionProvider[CompletionParameters] {
+  private val provider: CompletionProvider[CompletionParameters] = new CompletionProvider[CompletionParameters] {
     def addCompletions(parameters: CompletionParameters, context: ProcessingContext, originalResultSet: CompletionResultSet) {
 
       ProgressManager.checkCanceled()
@@ -237,7 +239,49 @@ class HaskellCompletionContributor extends CompletionContributor {
     }
   }
 
+  val smartProvider: CompletionProvider[CompletionParameters] = new CompletionProvider[CompletionParameters] {
+
+    import intellij.haskell.external.execution.HaskellCompilationResultHelper.LayoutSpaceChar
+
+    def addCompletions(parameters: CompletionParameters, context: ProcessingContext, originalResultSet: CompletionResultSet): Unit = {
+      ProgressManager.checkCanceled()
+
+      Option(parameters.getOriginalPosition) match {
+        case Some(position) if HaskellPsiUtil.findExpressionParent(position).isDefined & position.getNode.getElementType == HaskellTypes.HS_UNDERSCORE =>
+          val project = parameters.getPosition.getProject
+          val offset = position.getTextOffset
+          val editor = parameters.getEditor
+          HaskellAnnotator.findHighlightInfo(project, offset, editor) match {
+            case Some(highlightInfo) =>
+              val message = highlightInfo.getToolTip
+              val typedHoleLines = message.split("\n").
+                map(_.replaceAll(s"$LayoutSpaceChar{2,}", "").
+                  replaceAll(s"$LayoutSpaceChar", " "))
+              val typedHoleSuggestionsWithHeader = typedHoleLines.dropWhile(_ != "Valid substitutions include")
+              if (typedHoleSuggestionsWithHeader.nonEmpty) {
+                val typedHoleSuggestionLines = typedHoleSuggestionsWithHeader.tail
+                val typedHoleSuggestions = typedHoleSuggestionLines.filterNot(_.trim.startsWith("("))
+                val lookupElements = typedHoleSuggestions.flatMap(createLookupElement).toStream
+                originalResultSet.addAllElements(lookupElements.asJavaCollection)
+              }
+            case None => ()
+          }
+
+        case _ => ()
+      }
+    }
+
+    private def createLookupElement(typeSignature: String): Option[LookupElementBuilder] = {
+      typeSignature.split("::", 2).toSeq match {
+        case Seq(n, t) => Some(LookupElementBuilder.create(n.trim).withTypeText(StringEscapeUtils.unescapeHtml(typeSignature)))
+        case _ => None
+      }
+    }
+  }
+
   extend(CompletionType.BASIC, PlatformPatterns.psiElement(), provider)
+
+  extend(CompletionType.SMART, PlatformPatterns.psiElement(), smartProvider)
 
   override def beforeCompletion(context: CompletionInitializationContext): Unit = {
     val psiFile = context.getFile

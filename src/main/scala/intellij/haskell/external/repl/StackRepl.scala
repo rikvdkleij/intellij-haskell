@@ -291,6 +291,7 @@ abstract class StackRepl(project: Project, componentInfo: Option[StackComponentI
           if (isStarted && !hasDependencyError) {
             if (stanzaType.isDefined) {
               execute(":set -fdefer-type-errors", forceExecute = true)
+              execute(":set -fno-max-valid-substitutions", forceExecute = true)
               if (HaskellProjectUtil.setNoDiagnosticsShowCaretFlag(project)) {
                 execute(s":set ${StackCommandLine.NoDiagnosticsShowCaretFlag}", forceExecute = true)
               }
