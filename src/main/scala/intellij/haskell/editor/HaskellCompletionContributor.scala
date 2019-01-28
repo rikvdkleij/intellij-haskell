@@ -257,7 +257,7 @@ class HaskellCompletionContributor extends CompletionContributor {
               val typedHoleLines = message.split("\n").
                 map(_.replaceAll(s"$LayoutSpaceChar{2,}", "").
                   replaceAll(s"$LayoutSpaceChar", " "))
-              val typedHoleSuggestionsWithHeader = typedHoleLines.dropWhile(_ != "Valid substitutions include")
+              val typedHoleSuggestionsWithHeader = typedHoleLines.dropWhile(l => l != "Valid substitutions include" && l != "Valid hole fits include")
               if (typedHoleSuggestionsWithHeader.nonEmpty) {
                 val typedHoleSuggestionLines = typedHoleSuggestionsWithHeader.tail
                 val typedHoleSuggestions = typedHoleSuggestionLines.filterNot(_.trim.startsWith("("))
