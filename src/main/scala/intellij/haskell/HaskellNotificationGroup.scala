@@ -16,18 +16,18 @@
 
 package intellij.haskell
 
-import javax.swing.event.HyperlinkEvent
-
 import com.intellij.notification._
 import com.intellij.openapi.fileEditor.OpenFileDescriptor
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.MessageType
 import com.intellij.openapi.ui.MessageType._
 import com.intellij.openapi.vfs.LocalFileSystem
+import javax.swing.event.HyperlinkEvent
 
 object HaskellNotificationGroup {
 
   private val LogOnlyGroup = new NotificationGroup("Haskell Log", NotificationDisplayType.NONE, false)
+  private val WarningGroup = new NotificationGroup("Haskell Warning", NotificationDisplayType.NONE, true)
   private val BalloonGroup = new NotificationGroup("Haskell Balloon", NotificationDisplayType.BALLOON, true)
 
   def logErrorEvent(project: Option[Project], message: String) {
@@ -44,6 +44,10 @@ object HaskellNotificationGroup {
 
   def logWarningEvent(project: Project, message: String) {
     logEvent(Option(project), message, WARNING, LogOnlyGroup.createNotification)
+  }
+
+  def warningEvent(project: Project, message: String) {
+    logEvent(Option(project), message, WARNING, WarningGroup.createNotification)
   }
 
   def logWarningEvent(message: String) {
@@ -114,7 +118,7 @@ object HaskellNotificationGroup {
   }
 
   private def logEvent(project: Option[Project], message: String, messageType: MessageType, notification: (String, MessageType) => Notification) = {
-    log(project, message, messageType, LogOnlyGroup.createNotification)
+    log(project, message, messageType, notification)
   }
 
   private def balloonEvent(project: Option[Project], message: String, messageType: MessageType) = {

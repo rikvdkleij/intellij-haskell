@@ -121,7 +121,7 @@ private[external] class StackReplsManager(val project: Project) {
       componentInfo match {
         case Some(ci) => Some(getProjectRepl(ci))
         case None =>
-          HaskellNotificationGroup.logWarningEvent(project, s"No Haskell support for file `${psiFile.getName}` because no Stack target could be found for this file")
+          HaskellNotificationGroup.warningEvent(project, s"No Haskell support for file `${psiFile.getName}` because no Stack target could be found for this file")
           None
       }
     } else {
