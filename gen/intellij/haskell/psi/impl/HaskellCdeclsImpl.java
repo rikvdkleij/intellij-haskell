@@ -32,12 +32,6 @@ public class HaskellCdeclsImpl extends HaskellCompositeElementImpl implements Ha
 
     @Override
     @NotNull
-    public List<HaskellCideclExpression> getCideclExpressionList() {
-        return PsiTreeUtil.getChildrenOfTypeAsList(this, HaskellCideclExpression.class);
-    }
-
-    @Override
-    @NotNull
     public List<HaskellDataDeclaration> getDataDeclarationList() {
         return PsiTreeUtil.getChildrenOfTypeAsList(this, HaskellDataDeclaration.class);
     }
@@ -46,6 +40,12 @@ public class HaskellCdeclsImpl extends HaskellCompositeElementImpl implements Ha
     @NotNull
     public List<HaskellDefaultDeclaration> getDefaultDeclarationList() {
         return PsiTreeUtil.getChildrenOfTypeAsList(this, HaskellDefaultDeclaration.class);
+    }
+
+    @Override
+    @NotNull
+    public List<HaskellDotDot> getDotDotList() {
+        return PsiTreeUtil.getChildrenOfTypeAsList(this, HaskellDotDot.class);
     }
 
     @Override
@@ -74,8 +74,32 @@ public class HaskellCdeclsImpl extends HaskellCompositeElementImpl implements Ha
 
     @Override
     @NotNull
+    public List<HaskellQName> getQNameList() {
+        return PsiTreeUtil.getChildrenOfTypeAsList(this, HaskellQName.class);
+    }
+
+    @Override
+    @NotNull
+    public List<HaskellReservedId> getReservedIdList() {
+        return PsiTreeUtil.getChildrenOfTypeAsList(this, HaskellReservedId.class);
+    }
+
+    @Override
+    @NotNull
+    public List<HaskellSccPragma> getSccPragmaList() {
+        return PsiTreeUtil.getChildrenOfTypeAsList(this, HaskellSccPragma.class);
+    }
+
+    @Override
+    @NotNull
     public List<HaskellSpecializePragma> getSpecializePragmaList() {
         return PsiTreeUtil.getChildrenOfTypeAsList(this, HaskellSpecializePragma.class);
+    }
+
+    @Override
+    @NotNull
+    public List<HaskellTextLiteral> getTextLiteralList() {
+        return PsiTreeUtil.getChildrenOfTypeAsList(this, HaskellTextLiteral.class);
     }
 
     @Override

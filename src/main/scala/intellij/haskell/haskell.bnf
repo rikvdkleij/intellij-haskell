@@ -264,8 +264,7 @@ cdecl_data_declaration      ::= DATA (onls ctype_pragma)? onls (LEFT_PAREN onls 
 private cdecl               ::= type_signature | cdecl_data_declaration | cidecl
 
 private cidecl              ::= inlinelike_pragma | specialize_pragma | instance_declaration | default_declaration |
-                                  newtype_declaration | data_declaration | minimal_pragma | type_declaration | type_family_declaration | cidecl_expression
-cidecl_expression           ::= expression
+                                  newtype_declaration | data_declaration | minimal_pragma | type_declaration | type_family_declaration | line_expression
 
 expression                  ::= line_expression (nls line_expression)*
 private line_expression     ::= general_id+

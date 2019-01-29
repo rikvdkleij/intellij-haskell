@@ -22,10 +22,6 @@ public class HaskellVisitor extends PsiElementVisitor {
         visitCompositeElement(o);
     }
 
-    public void visitCideclExpression(@NotNull HaskellCideclExpression o) {
-        visitCompositeElement(o);
-    }
-
     public void visitCidecls(@NotNull HaskellCidecls o) {
         visitCompositeElement(o);
     }

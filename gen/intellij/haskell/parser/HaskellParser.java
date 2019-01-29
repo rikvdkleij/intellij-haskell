@@ -31,8 +31,6 @@ public class HaskellParser implements PsiParser, LightPsiParser {
             r = cdecls(b, 0);
         } else if (t == HS_CFILES_PRAGMA) {
             r = cfiles_pragma(b, 0);
-        } else if (t == HS_CIDECL_EXPRESSION) {
-            r = cidecl_expression(b, 0);
         } else if (t == HS_CIDECLS) {
             r = cidecls(b, 0);
         } else if (t == HS_CLASS_DECLARATION) {
@@ -1047,7 +1045,7 @@ public class HaskellParser implements PsiParser, LightPsiParser {
 
     /* ********************************************************** */
     // inlinelike_pragma | specialize_pragma | instance_declaration | default_declaration |
-    //                                   newtype_declaration | data_declaration | minimal_pragma | type_declaration | type_family_declaration | cidecl_expression
+    //                                   newtype_declaration | data_declaration | minimal_pragma | type_declaration | type_family_declaration | line_expression
     static boolean cidecl(PsiBuilder b, int l) {
         if (!recursion_guard_(b, l, "cidecl")) return false;
         boolean r;
@@ -1060,18 +1058,7 @@ public class HaskellParser implements PsiParser, LightPsiParser {
         if (!r) r = minimal_pragma(b, l + 1);
         if (!r) r = type_declaration(b, l + 1);
         if (!r) r = type_family_declaration(b, l + 1);
-        if (!r) r = cidecl_expression(b, l + 1);
-        return r;
-    }
-
-    /* ********************************************************** */
-    // expression
-    public static boolean cidecl_expression(PsiBuilder b, int l) {
-        if (!recursion_guard_(b, l, "cidecl_expression")) return false;
-        boolean r;
-        Marker m = enter_section_(b, l, _NONE_, HS_CIDECL_EXPRESSION, "<cidecl expression>");
-        r = expression(b, l + 1);
-        exit_section_(b, l, m, r, false, null);
+        if (!r) r = line_expression(b, l + 1);
         return r;
     }
 

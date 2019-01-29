@@ -11,13 +11,13 @@ public interface HaskellCdecls extends HaskellCompositeElement {
     List<HaskellCdeclDataDeclaration> getCdeclDataDeclarationList();
 
     @NotNull
-    List<HaskellCideclExpression> getCideclExpressionList();
-
-    @NotNull
     List<HaskellDataDeclaration> getDataDeclarationList();
 
     @NotNull
     List<HaskellDefaultDeclaration> getDefaultDeclarationList();
+
+    @NotNull
+    List<HaskellDotDot> getDotDotList();
 
     @NotNull
     List<HaskellInlinelikePragma> getInlinelikePragmaList();
@@ -32,7 +32,19 @@ public interface HaskellCdecls extends HaskellCompositeElement {
     List<HaskellNewtypeDeclaration> getNewtypeDeclarationList();
 
     @NotNull
+    List<HaskellQName> getQNameList();
+
+    @NotNull
+    List<HaskellReservedId> getReservedIdList();
+
+    @NotNull
+    List<HaskellSccPragma> getSccPragmaList();
+
+    @NotNull
     List<HaskellSpecializePragma> getSpecializePragmaList();
+
+    @NotNull
+    List<HaskellTextLiteral> getTextLiteralList();
 
     @NotNull
     List<HaskellTypeDeclaration> getTypeDeclarationList();
