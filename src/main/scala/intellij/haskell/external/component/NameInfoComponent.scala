@@ -93,6 +93,7 @@ private[component] object NameInfoComponent {
   def findNameInfo(qualifiedNameElement: HaskellQualifiedNameElement, importQualifier: Option[String]): NameInfoResult = {
     ProgressManager.checkCanceled()
     val isReadAccessAllowed = ApplicationManager.getApplication.isReadAccessAllowed
+    val isDispatchThread = ApplicationManager.getApplication.isDispatchThread
 
     val psiFile = qualifiedNameElement.getContainingFile.getOriginalFile
     val qName1 = qualifiedNameElement.getName.replaceAll("""\s+""", "")
@@ -114,17 +115,22 @@ private[component] object NameInfoComponent {
           case _ => result
         }
       case None =>
-        if (isReadAccessAllowed && LoadComponent.isFileLoaded(psiFile)) {
-          val result = findNameInfos(key)
-          result match {
-            case Right(_) =>
-              Cache.put(key, result)
-              result
-            case Left(ReplIsBusy) | Left(ReadActionTimeout(_)) | Left(IndexNotReady) | Left(ReplNotAvailable) | Left(ModuleNotLoaded(_)) =>
-              result
-            case Left(_) =>
-              Cache.put(key, result)
-              result
+        if (isReadAccessAllowed) {
+          ProgressManager.checkCanceled()
+          if (isDispatchThread && !LoadComponent.isFileLoaded(psiFile)) {
+            Left(ModuleNotLoaded(psiFile.getName))
+          } else {
+            val result = findNameInfos(key)
+            result match {
+              case Right(_) =>
+                Cache.put(key, result)
+                result
+              case Left(ReplIsBusy) | Left(ReadActionTimeout(_)) | Left(IndexNotReady) | Left(ReplNotAvailable) | Left(ModuleNotLoaded(_)) =>
+                result
+              case Left(_) =>
+                Cache.put(key, result)
+                result
+            }
           }
         } else {
           val result = Cache.get(key)

@@ -16,8 +16,6 @@
 
 package intellij.haskell.external.component
 
-import com.intellij.openapi.editor.Document
-import com.intellij.openapi.fileEditor.FileDocumentManager
 import com.intellij.openapi.project.Project
 import com.intellij.psi.PsiFile
 import intellij.haskell.external.execution.CommandLine
@@ -41,28 +39,18 @@ object HLintComponent {
       val hlintOptions = if (HaskellSettingsState.getHlintOptions.trim.isEmpty) Array[String]() else HaskellSettingsState.getHlintOptions.split("""\s+""")
       HaskellFileUtil.getAbsolutePath(psiFile) match {
         case Some(path) =>
-          val fileUnsaved = HaskellFileUtil.findDocument(psiFile) match {
-            case None => true
-            case Some(d) =>
-              val deadline = Timeout.fromNow
+          val deadline = Timeout.fromNow
 
-              while (isFileUnsaved(d) && deadline.hasTimeLeft() && !project.isDisposed) {
-                Thread.sleep(1)
-              }
-
-              isFileUnsaved(d)
+          while (deadline.hasTimeLeft() && !project.isDisposed) {
+            Thread.sleep(1)
           }
 
-          if (fileUnsaved) {
+          val output = runHLint(project, hlintOptions.toSeq ++ Seq("--json", path), ignoreExitCode = true)
+          if (output.getExitCode > 0 && output.getStderr.nonEmpty) {
+            HaskellNotificationGroup.logErrorBalloonEvent(project, s"Error while calling $HLintName: ${output.getStderr}")
             Seq()
           } else {
-            val output = runHLint(project, hlintOptions.toSeq ++ Seq("--json", path), ignoreExitCode = true)
-            if (output.getExitCode > 0 && output.getStderr.nonEmpty) {
-              HaskellNotificationGroup.logErrorBalloonEvent(project, s"Error while calling $HLintName: ${output.getStderr}")
-              Seq()
-            } else {
-              deserializeHLintInfo(project, output.getStdout)
-            }
+            deserializeHLintInfo(project, output.getStdout)
           }
         case None => ()
           HaskellNotificationGroup.logWarningBalloonEvent(psiFile.getProject, s"Can not display HLint suggestions because can not determine path for file `${psiFile.getName}`. File exists only in memory")
@@ -72,10 +60,6 @@ object HLintComponent {
       HaskellNotificationGroup.logInfoEvent(psiFile.getProject, s"$HLintName is not (yet) available")
       Seq()
     }
-  }
-
-  def isFileUnsaved(document: Document): Boolean = {
-    FileDocumentManager.getInstance().isDocumentUnsaved(document)
   }
 
   def versionInfo(project: Project): String = {

@@ -53,7 +53,16 @@ object HaskellFileUtil {
     findDocument(psiFile).foreach(d => {
       PsiDocumentManager.getInstance(psiFile.getProject).doPostponedOperationsAndUnblockDocument(d)
       ApplicationManager.getApplication.invokeAndWait(() => {
-        HaskellFileUtil.saveFile(psiFile)
+        FileDocumentManager.getInstance.saveDocument(d)
+      })
+    })
+  }
+
+  def saveFileInDispatchThread(project: Project, virtualFile: VirtualFile): Unit = {
+    findDocument(virtualFile).foreach(d => {
+      PsiDocumentManager.getInstance(project).doPostponedOperationsAndUnblockDocument(d)
+      ApplicationManager.getApplication.invokeAndWait(() => {
+        FileDocumentManager.getInstance.saveDocument(d)
       })
     })
   }

@@ -254,10 +254,14 @@ private[component] object DefinitionLocationComponent {
             } else if (!repl.available) {
               Left(ReplNotAvailable)
             } else {
-              f(repl) match {
-                case Some(o) if o.stderrLines.isEmpty && o.stdoutLines.nonEmpty => Right(o)
-                case None => Left(ReplNotAvailable)
-                case _ => Left(NoInfoAvailable(name, psiFile.getName))
+              if (ApplicationManager.getApplication.isDispatchThread && !LoadComponent.isModuleLoaded(moduleName, psiFile)) {
+                Left(ModuleNotLoaded(moduleName.getOrElse(psiFile.getName)))
+              } else {
+                f(repl) match {
+                  case Some(o) if o.stderrLines.isEmpty && o.stdoutLines.nonEmpty => Right(o)
+                  case None => Left(ReplNotAvailable)
+                  case _ => Left(NoInfoAvailable(name, psiFile.getName))
+                }
               }
             }
           case None => Left(ReplNotAvailable)

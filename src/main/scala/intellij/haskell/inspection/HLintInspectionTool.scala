@@ -60,6 +60,7 @@ class HLintInspectionTool extends LocalInspectionTool {
     val result = if (hlintCheckFuture.isDone) {
       hlintCheckFuture.get()
     } else {
+      ProgressManager.checkCanceled()
       Seq()
     }
 
@@ -81,7 +82,6 @@ class HLintInspectionTool extends LocalInspectionTool {
         case Some(to) if se.isValid && ee.isValid =>
           problemsHolder.registerProblem(new ProblemDescriptorBase(se, ee, hi.hint, Array(createQuickfix(hi, se, ee, sl, el, to)), problemType, false, null, true, isOnTheFly))
         case None =>
-          ProgressManager.checkCanceled()
           problemsHolder.registerProblem(new ProblemDescriptorBase(se, ee, hi.hint, Array(), problemType, false, null, true, isOnTheFly))
         case _ => ()
       }
