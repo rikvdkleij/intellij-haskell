@@ -10,9 +10,9 @@ import scala.concurrent.{Await, Future, TimeoutException}
 
 object ScalaFutureUtil {
 
-  def waitForValue[T](project: Project, future: Future[T], actionDescription: String, timeoutInSeconds: FiniteDuration = 5.seconds): Option[T] = {
+  def waitForValue[T](project: Project, future: Future[T], actionDescription: String, timeout: FiniteDuration = 5.seconds): Option[T] = {
     try {
-      Option(Await.result(future, timeoutInSeconds))
+      Option(Await.result(future, timeout))
     } catch {
       case _: TimeoutException =>
         HaskellNotificationGroup.logInfoEvent(project, s"Timeout while $actionDescription")
@@ -20,9 +20,9 @@ object ScalaFutureUtil {
     }
   }
 
-  def waitWithCheckCancelled[T](project: Project, future: Future[T], actionDescription: String, timeoutInSeconds: FiniteDuration = 5.seconds): Option[T] = {
+  def waitWithCheckCancelled[T](project: Project, future: Future[T], actionDescription: String, timeout: FiniteDuration = 100.millis): Option[T] = {
     try {
-      new WaitFor(timeoutInSeconds.toMillis.toInt, 1) {
+      new WaitFor(timeout.toMillis.toInt, 1) {
         override def condition(): Boolean = {
           ProgressManager.checkCanceled()
           future.isCompleted

@@ -255,9 +255,8 @@ object HaskellComponentsManager {
   implicit val ExecContext: ExecutionContextExecutorService = ExecutionContext.fromExecutorService(ExecutorService)
 
   private def preloadLibraryIdentifiers(project: Project): Unit = {
-
     if (!project.isDisposed) {
-      ApplicationUtil.runInReadActionWithWriteActionPriority(project, BrowseModuleComponent.findLibraryModuleIdentifiers(project, HaskellProjectUtil.Prelude), "Find Prelude module identifiers")
+      BrowseModuleComponent.findLibraryModuleIdentifiers(project, HaskellProjectUtil.Prelude)
     }
 
     if (!project.isDisposed) {
@@ -273,7 +272,7 @@ object HaskellComponentsManager {
             val libraryModuleNames = componentInfos.flatMap(HaskellComponentsManager.findStackComponentGlobalInfo).flatMap(_.packageInfos)
 
             val exposedlibraryModuleNames = libraryModuleNames.flatMap(_.exposedModuleNames).distinct
-            val importDeclarations = ApplicationUtil.runReadAction(HaskellPsiUtil.findImportDeclarations(f))
+            val importDeclarations = ApplicationUtil.runInReadActionWithWriteActionPriority(project, HaskellPsiUtil.findImportDeclarations(f), "In preloadLibraryIdentifiers findImportDeclarations").toOption.getOrElse(Iterable())
             importDeclarations.flatMap(id => ApplicationUtil.runReadAction(id.getModuleName)).filter(mn => exposedlibraryModuleNames.contains(mn)).filterNot(_ == HaskellProjectUtil.Prelude)
           }
         })

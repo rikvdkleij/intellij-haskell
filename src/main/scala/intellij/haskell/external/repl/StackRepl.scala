@@ -127,24 +127,7 @@ abstract class StackRepl(project: Project, componentInfo: Option[StackComponentI
         stderrQueue.drainTo(stderrResult.asJava)
       }
 
-      def cleanupOutputPreviousCommand(): Unit = {
-        drainQueues()
-
-        if (stdoutResult.nonEmpty) {
-          // Output of previous command is there and could still being written....
-          val deadline = DefaultTimeout.fromNow
-          while (deadline.hasTimeLeft() && !stdoutResult.lastOption.exists(_.contains(EndOfOutputIndicator))) {
-            drainQueues()
-
-            // We have to wait...
-            Thread.sleep(DelayBetweenReadsInMillis)
-          }
-        }
-      }
-
       try {
-        cleanupOutputPreviousCommand()
-
         init()
 
         val ghciCommand = command match {
@@ -163,8 +146,6 @@ abstract class StackRepl(project: Project, componentInfo: Option[StackComponentI
         def hasReachedEndOfOutput =
           if (command == ExitCommand) {
             stdoutResult.lastOption.exists(_.startsWith("Leaving GHCi"))
-          } else if (ghciCommand == GhciCommand.LocalBrowse) {
-            stdoutResult.exists(_.startsWith(LocalBrowseStopReadingIndicator)) || outputContainsEndOfOutputIndicator || stderrResult.nonEmpty
           } else {
             outputContainsEndOfOutputIndicator && (ghciCommand == GhciCommand.Module || ghciCommand == GhciCommand.Set || stdoutResult.length > 1 || stderrResult.nonEmpty)
           }

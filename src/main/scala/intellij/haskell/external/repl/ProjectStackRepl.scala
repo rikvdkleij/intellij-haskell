@@ -18,14 +18,16 @@ package intellij.haskell.external.repl
 
 import java.util.concurrent.ConcurrentHashMap
 
+import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.project.Project
 import com.intellij.psi.PsiFile
 import intellij.haskell.HaskellNotificationGroup
 import intellij.haskell.external.component.HaskellComponentsManager.StackComponentInfo
 import intellij.haskell.external.repl.StackRepl.StackReplOutput
-import intellij.haskell.util.HaskellFileUtil
+import intellij.haskell.util.{HaskellFileUtil, ScalaFutureUtil}
 
 import scala.collection.JavaConverters._
+import scala.concurrent.Future
 
 case class ProjectStackRepl(project: Project, stackComponentInfo: StackComponentInfo, replTimeout: Int) extends StackRepl(project, Some(stackComponentInfo), Seq(), replTimeout: Int) {
 
@@ -65,18 +67,48 @@ case class ProjectStackRepl(project: Project, stackComponentInfo: StackComponent
     busy
   }
 
+  import scala.concurrent.ExecutionContext.Implicits.global
+
+  private def isReadAccessAllowed = ApplicationManager.getApplication.isReadAccessAllowed
+
   def findTypeInfo(moduleName: Option[String], psiFile: PsiFile, startLineNr: Int, startColumnNr: Int, endLineNr: Int, endColumnNr: Int, expression: String): Option[StackReplOutput] = {
     val filePath = getFilePath(psiFile)
-    findInfoForCommand(moduleName, psiFile, s":type-at $filePath $startLineNr $startColumnNr $endLineNr $endColumnNr $expression", setBusy = true)
+
+    def execute = {
+      findInfoForCommand(moduleName, psiFile, s":type-at $filePath $startLineNr $startColumnNr $endLineNr $endColumnNr $expression", setBusy = true)
+    }
+
+    if (isReadAccessAllowed) {
+      ScalaFutureUtil.waitWithCheckCancelled(project, Future(execute), "Wait on :type-at in ProjectStackRepl").flatten
+    } else {
+      execute
+    }
   }
 
   def findLocationInfo(moduleName: Option[String], psiFile: PsiFile, startLineNr: Int, startColumnNr: Int, endLineNr: Int, endColumnNr: Int, expression: String): Option[StackReplOutput] = {
     val filePath = getFilePath(psiFile)
-    findInfoForCommand(moduleName, psiFile, s":loc-at $filePath $startLineNr $startColumnNr $endLineNr $endColumnNr $expression", setBusy = true)
+
+    def execute = {
+      findInfoForCommand(moduleName, psiFile, s":loc-at $filePath $startLineNr $startColumnNr $endLineNr $endColumnNr $expression", setBusy = true)
+    }
+
+    if (isReadAccessAllowed) {
+      ScalaFutureUtil.waitWithCheckCancelled(project, Future(execute), "Wait on :loc-at in ProjectStackRepl").flatten
+    } else {
+      execute
+    }
   }
 
   def findInfo(psiFile: PsiFile, name: String): Option[StackReplOutput] = {
-    executeWithLoad(psiFile, s":info $name")
+    def execute = {
+      executeWithLoad(psiFile, s":info $name")
+    }
+
+    if (isReadAccessAllowed) {
+      ScalaFutureUtil.waitWithCheckCancelled(psiFile.getProject, Future(execute), "Wait on :info in ProjectStackRepl").flatten
+    } else {
+      execute
+    }
   }
 
   def isModuleLoaded(moduleName: String): Boolean = {

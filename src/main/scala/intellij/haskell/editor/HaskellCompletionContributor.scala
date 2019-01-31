@@ -246,28 +246,33 @@ class HaskellCompletionContributor extends CompletionContributor {
     def addCompletions(parameters: CompletionParameters, context: ProcessingContext, originalResultSet: CompletionResultSet): Unit = {
       ProgressManager.checkCanceled()
 
-      Option(parameters.getOriginalPosition) match {
-        case Some(position) if HaskellPsiUtil.findExpressionParent(position).isDefined & position.getNode.getElementType == HaskellTypes.HS_UNDERSCORE =>
-          val project = parameters.getPosition.getProject
-          val offset = position.getTextOffset
-          val editor = parameters.getEditor
-          HaskellAnnotator.findHighlightInfo(project, offset, editor) match {
-            case Some(highlightInfo) =>
-              val message = highlightInfo.getToolTip
-              val typedHoleLines = message.split("\n").
-                map(_.replaceAll(s"$LayoutSpaceChar{2,}", "").
-                  replaceAll(s"$LayoutSpaceChar", " "))
-              val typedHoleSuggestionsWithHeader = typedHoleLines.dropWhile(l => l != "Valid substitutions include" && l != "Valid hole fits include")
-              if (typedHoleSuggestionsWithHeader.nonEmpty) {
-                val typedHoleSuggestionLines = typedHoleSuggestionsWithHeader.tail
-                val typedHoleSuggestions = typedHoleSuggestionLines.filterNot(_.trim.startsWith("("))
-                val lookupElements = typedHoleSuggestions.flatMap(createLookupElement).toStream
-                originalResultSet.addAllElements(lookupElements.asJavaCollection)
-              }
-            case None => ()
-          }
+      val project = parameters.getOriginalPosition.getProject
 
-        case _ => ()
+      if (StackProjectManager.isInitializing(project)) {
+        HaskellEditorUtil.showHaskellSupportIsNotAvailableWhileInitializing(project)
+      } else {
+        Option(parameters.getOriginalPosition) match {
+          case Some(position) if HaskellPsiUtil.findExpressionParent(position).isDefined & position.getNode.getElementType == HaskellTypes.HS_UNDERSCORE =>
+            val offset = position.getTextOffset
+            val editor = parameters.getEditor
+            HaskellAnnotator.findHighlightInfo(project, offset, editor) match {
+              case Some(highlightInfo) =>
+                val message = highlightInfo.getToolTip
+                val typedHoleLines = message.split("\n").
+                  map(_.replaceAll(s"$LayoutSpaceChar{2,}", "").
+                    replaceAll(s"$LayoutSpaceChar", " "))
+                val typedHoleSuggestionsWithHeader = typedHoleLines.dropWhile(l => l != "Valid substitutions include" && l != "Valid hole fits include")
+                if (typedHoleSuggestionsWithHeader.nonEmpty) {
+                  val typedHoleSuggestionLines = typedHoleSuggestionsWithHeader.tail
+                  val typedHoleSuggestions = typedHoleSuggestionLines.filterNot(_.trim.startsWith("("))
+                  val lookupElements = typedHoleSuggestions.flatMap(createLookupElement).toStream
+                  originalResultSet.addAllElements(lookupElements.asJavaCollection)
+                }
+              case None => ()
+            }
+
+          case _ => ()
+        }
       }
     }
 
@@ -524,37 +529,35 @@ object FileModuleIdentifiers {
     val project = k.psiFile.getProject
     val psiFile = k.psiFile
 
-    val importDeclarations = ApplicationUtil.runReadAction(findImportDeclarations(psiFile))
+    ApplicationUtil.runInReadActionWithWriteActionPriority(project, findImportDeclarations(psiFile), "In findModuleIdentifiers") match {
+      case Right(importDeclarations) =>
+        val noImplicitPrelude = if (HaskellProjectUtil.isSourceFile(psiFile)) {
+          HaskellComponentsManager.findStackComponentInfo(psiFile).exists(info => HaskellCompletionContributor.isNoImplicitPreludeActive(info, psiFile))
+        } else {
+          false
+        }
+        val idsF1 = HaskellCompletionContributor.getModuleIdentifiersFromFullImportedModules(noImplicitPrelude, psiFile, importDeclarations)
 
-    val noImplicitPrelude = if (HaskellProjectUtil.isSourceFile(psiFile)) {
-      HaskellComponentsManager.findStackComponentInfo(psiFile).exists(info => HaskellCompletionContributor.isNoImplicitPreludeActive(info, psiFile))
-    } else {
-      false
-    }
-    val idsF1 = HaskellCompletionContributor.getModuleIdentifiersFromFullImportedModules(noImplicitPrelude, psiFile, importDeclarations)
+        val idsF2 = HaskellCompletionContributor.getModuleIdentifiersFromHidingIdsImportedModules(psiFile, importDeclarations)
 
-    val idsF2 = HaskellCompletionContributor.getModuleIdentifiersFromHidingIdsImportedModules(psiFile, importDeclarations)
+        val idsF3 = HaskellCompletionContributor.getModuleIdentifiersFromSpecIdsImportedModules(psiFile, importDeclarations)
 
-    val idsF3 = HaskellCompletionContributor.getModuleIdentifiersFromSpecIdsImportedModules(psiFile, importDeclarations)
+        val f = for {
+          f1 <- idsF1
+          f2 <- idsF2
+          f3 <- idsF3
+        } yield (f1, f2, f3)
 
-    val f = for {
-      f1 <- idsF1
-      f2 <- idsF2
-      f3 <- idsF3
-    } yield (f1, f2, f3)
-
-    new WaitFor(4800, 1) {
-      override def condition(): Boolean = {
-        f.isCompleted
-      }
-    }
-
-    try {
-      val (x, y, z) = Await.result(f, 1.milli)
-      Some(x ++ y ++ z)
-    } catch {
-      case _: TimeoutException =>
-        HaskellNotificationGroup.logInfoEvent(project, s"Timeout while find module identifiers for file ${k.psiFile.getName}")
+        try {
+          val (x, y, z) = Await.result(f, 4800.milli)
+          Some(x ++ y ++ z)
+        } catch {
+          case _: TimeoutException =>
+            HaskellNotificationGroup.logInfoEvent(project, s"Timeout while find module identifiers for file ${k.psiFile.getName}")
+            None
+        }
+      case Left(noInfo) =>
+        HaskellNotificationGroup.logInfoEvent(project, s"Timeout while find import declarations in findModuleIdentifiers for file ${psiFile.getName}: ${noInfo.message}")
         None
     }
   }

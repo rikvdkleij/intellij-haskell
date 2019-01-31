@@ -177,7 +177,19 @@ object StackProjectManager {
                   getStackProjectManager(project).foreach(_.initStackReplsManager())
                 })
 
-                progressIndicator.setText("Busy with updating module settings")
+                progressIndicator.setText("Busy with updating project and module settings")
+                val projectPath = ProjectUtil.guessProjectDir(project).getPath
+                val projectModules = HaskellProjectUtil.findProjectHaskellModules(project)
+                val packagePaths = StackProjectImportBuilder.getPackagePaths(project)
+                val packagePathsToAdd = packagePaths.filterNot { relativePath =>
+                  val moduleDirectory = HaskellModuleBuilder.getModuleRootDirectory(relativePath, projectPath)
+                  projectModules.exists(m => HaskellProjectUtil.getModuleDir(m) == moduleDirectory)
+                }
+
+                packagePathsToAdd.foreach(p => {
+                  StackProjectImportBuilder.addHaskellModule(project, p, projectPath)
+                })
+
                 StackReplsManager.getReplsManager(project).map(_.moduleCabalInfos).foreach { moduleCabalInfos =>
                   moduleCabalInfos.foreach { case (module, cabalInfo) =>
                     ModuleRootModificationUtil.updateModel(module, (modifiableRootModel: ModifiableRootModel) => {
@@ -215,7 +227,7 @@ object StackProjectManager {
                   if (project.isDisposed) {
                     Iterable()
                   } else {
-                    HaskellFileIndex.findProjectHaskellFiles(project)
+                    HaskellFileIndex.findProjectProductionHaskellFiles(project)
                   }, "Finding project files with imported module names")
 
                 val projectFilesWithImportedModuleNames = projectFiles match {

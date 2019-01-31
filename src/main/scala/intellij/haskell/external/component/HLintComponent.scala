@@ -25,13 +25,10 @@ import intellij.haskell.{GlobalInfo, HaskellNotificationGroup}
 import spray.json.JsonParser.ParsingException
 import spray.json.{DefaultJsonProtocol, _}
 
-import scala.concurrent.duration._
-
 object HLintComponent {
 
   final val HLintName = "hlint"
   private final val HLintPath = GlobalInfo.toolPath(HLintName).toString
-  private final val Timeout = 1.seconds
 
   def check(psiFile: PsiFile): Seq[HLintInfo] = {
     if (StackProjectManager.isHlintAvailable(psiFile.getProject)) {
@@ -39,12 +36,6 @@ object HLintComponent {
       val hlintOptions = if (HaskellSettingsState.getHlintOptions.trim.isEmpty) Array[String]() else HaskellSettingsState.getHlintOptions.split("""\s+""")
       HaskellFileUtil.getAbsolutePath(psiFile) match {
         case Some(path) =>
-          val deadline = Timeout.fromNow
-
-          while (deadline.hasTimeLeft() && !project.isDisposed) {
-            Thread.sleep(1)
-          }
-
           val output = runHLint(project, hlintOptions.toSeq ++ Seq("--json", path), ignoreExitCode = true)
           if (output.getExitCode > 0 && output.getStderr.nonEmpty) {
             HaskellNotificationGroup.logErrorBalloonEvent(project, s"Error while calling $HLintName: ${output.getStderr}")
