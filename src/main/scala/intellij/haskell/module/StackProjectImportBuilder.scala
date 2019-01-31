@@ -20,6 +20,7 @@ import java.io.File
 import java.util
 
 import com.intellij.ide.util.projectWizard.ModuleBuilder
+import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.module.{ModifiableModuleModel, Module, ModuleType}
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.roots.ModifiableRootModel
@@ -29,7 +30,7 @@ import com.intellij.packaging.artifacts.ModifiableArtifactModel
 import com.intellij.projectImport.ProjectImportBuilder
 import icons.HaskellIcons
 import intellij.haskell.stackyaml.StackYamlComponent
-import intellij.haskell.util.{HaskellFileUtil, HaskellProjectUtil}
+import intellij.haskell.util.{ApplicationUtil, HaskellFileUtil, HaskellProjectUtil, ScalaUtil}
 import javax.swing.Icon
 
 import scala.collection.JavaConverters._
@@ -47,32 +48,17 @@ class StackProjectImportBuilder extends ProjectImportBuilder[Unit] {
 
   override def isMarked(element: Unit): Boolean = true
 
-  private final val projectRootRelativePath = "."
-
   override def getTitle: String = "Stack project importer"
 
   override def commit(project: Project, model: ModifiableModuleModel, modulesProvider: ModulesProvider, artifactModel: ModifiableArtifactModel): java.util.List[Module] = {
-    val moduleBuilder = HaskellModuleType.getInstance.createModuleBuilder()
 
-    val packagePaths = StackYamlComponent.getPackagePaths(project).getOrElse(Seq(projectRootRelativePath))
+    val packagePaths = StackProjectImportBuilder.getPackagePaths(project)
 
     packagePaths.foreach(packageRelativePath => {
-      val moduleDirectory = HaskellModuleBuilder.getModuleRootDirectory(packageRelativePath, getFileToImport)
-      HaskellModuleBuilder.createCabalInfo(project, getFileToImport, packageRelativePath) match {
-        case Some(cabalInfo) =>
-          val packageName = cabalInfo.packageName
-          moduleBuilder.setCabalInfo(cabalInfo)
-          moduleBuilder.setName(packageName)
-          moduleBuilder.setModuleFilePath(getModuleImlFilePath(moduleDirectory, packageName))
-          moduleBuilder.commit(project)
-          moduleBuilder.addModuleConfigurationUpdater((_: Module, rootModel: ModifiableRootModel) => {
-            moduleBuilder.setupRootModel(rootModel)
-          })
-        case None => ()
-      }
+      StackProjectImportBuilder.addHaskellModule(project, packageRelativePath, getFileToImport)
     })
 
-    if (!packagePaths.contains(projectRootRelativePath)) {
+    if (!packagePaths.contains(StackProjectImportBuilder.projectRootRelativePath)) {
       val parentModuleBuilder = new ParentModuleBuilder(project)
       parentModuleBuilder.setModuleFilePath(new File(project.getBasePath, project.getName + "-parent.iml").getPath)
       parentModuleBuilder.setName("Parent module")
@@ -84,9 +70,35 @@ class StackProjectImportBuilder extends ProjectImportBuilder[Unit] {
 
     HaskellProjectUtil.getModuleManager(project).map(_.getModules).getOrElse(Array()).toList.asJava
   }
+}
 
-  private def getModuleImlFilePath(moduleDirectory: File, packageName: String): String = {
+object StackProjectImportBuilder {
+
+  private final val projectRootRelativePath = "."
+
+  def addHaskellModule(project: Project, packageRelativePath: String, projectRoot: String): Unit = {
+    val moduleBuilder = HaskellModuleType.getInstance.createModuleBuilder()
+    val moduleDirectory = HaskellModuleBuilder.getModuleRootDirectory(packageRelativePath, projectRoot)
+    ApplicationUtil.runReadAction(HaskellModuleBuilder.createCabalInfo(project, projectRoot, packageRelativePath)) match {
+      case Some(cabalInfo) =>
+        val packageName = cabalInfo.packageName
+        moduleBuilder.setCabalInfo(cabalInfo)
+        moduleBuilder.setName(packageName)
+        moduleBuilder.setModuleFilePath(getModuleImlFilePath(moduleDirectory, packageName))
+        ApplicationManager.getApplication.invokeAndWait(ScalaUtil.runnable(moduleBuilder.commit(project)))
+        moduleBuilder.addModuleConfigurationUpdater((_: Module, rootModel: ModifiableRootModel) => {
+          moduleBuilder.setupRootModel(rootModel)
+        })
+      case None => ()
+    }
+  }
+
+  def getModuleImlFilePath(moduleDirectory: File, packageName: String): String = {
     new File(moduleDirectory, packageName + ".iml").getAbsolutePath
+  }
+
+  def getPackagePaths(project: Project): Seq[String] = {
+    StackYamlComponent.getPackagePaths(project).getOrElse(Seq(projectRootRelativePath))
   }
 }
 

@@ -20,7 +20,7 @@ import com.intellij.openapi.actionSystem.ActionManager
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.components.ProjectComponent
 import com.intellij.openapi.progress.{PerformInBackgroundOption, ProgressIndicator, ProgressManager, Task}
-import com.intellij.openapi.project.Project
+import com.intellij.openapi.project.{Project, ProjectUtil}
 import com.intellij.openapi.roots.{ModifiableRootModel, ModuleRootModificationUtil}
 import com.intellij.openapi.ui.Messages
 import com.intellij.openapi.util.SystemInfo
@@ -31,7 +31,7 @@ import intellij.haskell.external.execution.StackCommandLine
 import intellij.haskell.external.execution.StackCommandLine.build
 import intellij.haskell.external.repl.StackRepl.LibType
 import intellij.haskell.external.repl.StackReplsManager
-import intellij.haskell.module.HaskellModuleBuilder
+import intellij.haskell.module.{HaskellModuleBuilder, StackProjectImportBuilder}
 import intellij.haskell.psi.HaskellPsiUtil
 import intellij.haskell.util._
 import intellij.haskell.util.index.{HaskellFileIndex, HaskellModuleNameIndex}
