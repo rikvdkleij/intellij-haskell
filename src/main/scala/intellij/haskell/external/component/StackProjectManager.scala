@@ -21,6 +21,7 @@ import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.components.ProjectComponent
 import com.intellij.openapi.progress.{PerformInBackgroundOption, ProgressIndicator, ProgressManager, Task}
 import com.intellij.openapi.project.{Project, ProjectUtil}
+import com.intellij.openapi.projectRoots.ProjectJdkTable
 import com.intellij.openapi.roots.{ModifiableRootModel, ModuleRootModificationUtil}
 import com.intellij.openapi.ui.Messages
 import com.intellij.openapi.util.SystemInfo
@@ -33,6 +34,7 @@ import intellij.haskell.external.repl.StackRepl.LibType
 import intellij.haskell.external.repl.StackReplsManager
 import intellij.haskell.module.{HaskellModuleBuilder, StackProjectImportBuilder}
 import intellij.haskell.psi.HaskellPsiUtil
+import intellij.haskell.sdk.HaskellSdkType
 import intellij.haskell.util._
 import intellij.haskell.util.index.{HaskellFileIndex, HaskellModuleNameIndex}
 import intellij.haskell.{GlobalInfo, HaskellNotificationGroup}
@@ -388,6 +390,9 @@ class StackProjectManager(project: Project) extends ProjectComponent {
   override def projectOpened(): Unit = {
     if (HaskellProjectUtil.isHaskellProject(project)) {
       disableDefaultReformatAction()
+
+      fixSdkStackVersion()
+
       initStackReplsManager()
       if (replsManager.exists(_.stackComponentInfos.isEmpty)) {
         Messages.showErrorDialog(project, s"Can not start project because no Cabal file was found or could not be read", "Can not start project")
@@ -404,5 +409,15 @@ class StackProjectManager(project: Project) extends ProjectComponent {
     // Overriding IntelliJ's default shortcut for formatting
     actionManager.unregisterAction("ReformatCode")
     actionManager.registerAction("ReformatCode", new HaskellReformatAction)
+  }
+
+  // Make sure that after Stack binary is updated the right version is displayed.
+  private def fixSdkStackVersion(): Unit = {
+    val sdks = ProjectJdkTable.getInstance.getSdksOfType(HaskellSdkType.getInstance)
+    sdks.forEach { sdk =>
+      val sdkModificator = sdk.getSdkModificator
+      sdkModificator.setVersionString(HaskellSdkType.getInstance.getVersionString(sdk))
+      sdkModificator.commitChanges()
+    }
   }
 }

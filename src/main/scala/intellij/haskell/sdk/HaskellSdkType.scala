@@ -27,9 +27,9 @@ import com.intellij.openapi.roots.OrderRootType
 import com.intellij.openapi.util.SystemInfo
 import com.intellij.openapi.vfs.VirtualFile
 import icons.HaskellIcons
+import intellij.haskell.HaskellNotificationGroup
 import intellij.haskell.external.execution.CommandLine
 import intellij.haskell.util.{HaskellFileUtil, HaskellProjectUtil}
-import intellij.haskell.HaskellNotificationGroup
 import javax.swing.Icon
 import org.jdom.Element
 
@@ -45,11 +45,17 @@ class HaskellSdkType extends SdkType("Haskell Tool Stack SDK") {
 
   override def suggestSdkName(currentSdkName: String, sdkHome: String): String = "Haskell Tool Stack"
 
-  override def createAdditionalDataConfigurable(sdkModel: SdkModel, sdkModificator: SdkModificator): AdditionalDataConfigurable = null
+  override def createAdditionalDataConfigurable(sdkModel: SdkModel, sdkModificator: SdkModificator): AdditionalDataConfigurable = {
+    null
+  }
 
   override def isValidSdkHome(path: String): Boolean = {
-    val stackPath = new File(path)
-    !stackPath.isDirectory && stackPath.getName.toLowerCase.contains("stack") && HaskellSdkType.getNumericVersion(path).isDefined
+    if (path.trim.isEmpty) {
+      false
+    } else {
+      val stackPath = new File(path)
+      !stackPath.isDirectory && stackPath.getName.toLowerCase.contains("stack") && HaskellSdkType.getNumericVersion(path).isDefined
+    }
   }
 
   override def getPresentableName: String = "Stack binary"
