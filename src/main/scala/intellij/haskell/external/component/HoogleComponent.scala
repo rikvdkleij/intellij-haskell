@@ -20,16 +20,15 @@ import java.io.File
 
 import com.intellij.execution.process.ProcessOutput
 import com.intellij.lang.documentation.DocumentationMarkup
-import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.project.Project
-import com.intellij.util.WaitFor
 import intellij.haskell.external.execution.{CommandLine, StackCommandLine}
 import intellij.haskell.psi.{HaskellPsiUtil, HaskellQualifiedNameElement}
-import intellij.haskell.util.{HaskellProjectUtil, HtmlElement, ScalaUtil}
+import intellij.haskell.util.{HaskellProjectUtil, HtmlElement, ScalaFutureUtil}
 import intellij.haskell.{GlobalInfo, HaskellNotificationGroup}
 
 import scala.collection.JavaConverters._
+import scala.concurrent.Future
 
 object HoogleComponent {
 
@@ -163,27 +162,12 @@ object HoogleComponent {
     }
   }
 
+  import scala.concurrent.ExecutionContext.Implicits.global
+
   private def runHoogle(project: Project, arguments: Seq[String]): Option[ProcessOutput] = {
     ProgressManager.checkCanceled()
 
-    val hoogleFuture = ApplicationManager.getApplication.executeOnPooledThread(ScalaUtil.callable[ProcessOutput] {
-      CommandLine.run(project, HooglePath, Seq(s"--database=${hoogleDbPath(project)}") ++ arguments, logOutput = true)
-    })
-
-    ProgressManager.checkCanceled()
-
-    new WaitFor(5000, 1) {
-      override def condition(): Boolean = {
-        ProgressManager.checkCanceled()
-        hoogleFuture.isDone
-      }
-    }
-
-    if (hoogleFuture.isDone) {
-      Some(hoogleFuture.get())
-    } else {
-      None
-    }
+    ScalaFutureUtil.waitWithCheckCancelled(project, Future(CommandLine.run(project, HooglePath, Seq(s"--database=${hoogleDbPath(project)}") ++ arguments, logOutput = true)), "runHoogle")
   }
 
   private def hoogleDbPath(project: Project) = {

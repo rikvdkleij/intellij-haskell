@@ -20,9 +20,7 @@ import com.intellij.openapi.actionSystem.{AnAction, AnActionEvent}
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.text.StringUtil
 import intellij.haskell.external.component.{HoogleComponent, StackProjectManager}
-import intellij.haskell.util.{ApplicationUtil, HaskellEditorUtil}
-
-import scala.concurrent.duration._
+import intellij.haskell.util.HaskellEditorUtil
 
 class HoogleAction extends AnAction {
 
@@ -38,12 +36,10 @@ class HoogleAction extends AnAction {
 
       val selectionModel = actionContext.selectionModel
       selectionModel.map(_.getSelectedText).orElse(Option(psiFile.findElementAt(offset)).map(_.getText)).foreach(text => {
-        ApplicationUtil.scheduleInReadActionWithWriteActionPriority(psiFile.getProject, {
-          HoogleComponent.runHoogle(psiFile.getProject, text) match {
-            case Some(results) => HaskellEditorUtil.showList(results, editor)
-            case _ => HaskellEditorUtil.showHint(editor, s"No Hoogle result for ${StringUtil.escapeXml(text)}")
-          }
-        }, "hoogling", 5.seconds)
+        HoogleComponent.runHoogle(psiFile.getProject, text) match {
+          case Some(results) => HaskellEditorUtil.showList(results, editor)
+          case _ => HaskellEditorUtil.showHint(editor, s"No Hoogle result for ${StringUtil.escapeXml(text)}")
+        }
       })
     })
   }

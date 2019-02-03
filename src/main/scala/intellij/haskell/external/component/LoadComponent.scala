@@ -76,24 +76,26 @@ private[component] object LoadComponent {
 
       projectRepl.load(psiFile, Some(fileChanged)) match {
         case Some((loadOutput, loadFailed)) =>
-          ApplicationManager.getApplication.executeOnPooledThread(ScalaUtil.runnable {
+          if (fileChanged) {
+            ApplicationManager.getApplication.executeOnPooledThread(ScalaUtil.runnable {
 
-            TypeInfoComponent.invalidate(psiFile)
-            DefinitionLocationComponent.invalidate(psiFile)
-            HaskellModuleNameIndex.invalidateNotFoundEntries(project)
+              TypeInfoComponent.invalidate(psiFile)
+              DefinitionLocationComponent.invalidate(psiFile)
+              HaskellModuleNameIndex.invalidateNotFoundEntries(project)
 
-            val moduleName = HaskellPsiUtil.findModuleName(psiFile)
-            if (!loadFailed) {
-              NameInfoComponent.invalidate(psiFile)
-              moduleName.foreach(mn => {
-                BrowseModuleComponent.invalidateExportedModuleName(project, mn)
-                BrowseModuleComponent.refreshTopLevel(project, mn, psiFile)
-                FileModuleIdentifiers.refresh(psiFile)
-              })
+              val moduleName = HaskellPsiUtil.findModuleName(psiFile)
+              if (!loadFailed) {
+                NameInfoComponent.invalidate(psiFile)
+                moduleName.foreach(mn => {
+                  BrowseModuleComponent.invalidateTopLevel(project, mn, psiFile)
+                  FileModuleIdentifiers.refresh(psiFile)
+                  BrowseModuleComponent.invalidateExportedModuleName(project, mn)
+                })
 
-            }
-            DocumentationManager.getInstance(project).updateToolwindowContext()
-          })
+              }
+              DocumentationManager.getInstance(project).updateToolwindowContext()
+            })
+          }
           Some(HaskellCompilationResultHelper.createCompilationResult(psiFile, loadOutput.stderrLines, loadFailed))
         case _ => None
       }

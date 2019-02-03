@@ -91,15 +91,19 @@ private[component] object TypeInfoComponent {
   private def findTypeInfoResult(key: Key): TypeInfoResult = {
     val psiFile = key.psiFile
     val qne = key.qualifiedNameElement
+    ProgressManager.checkCanceled()
     val findTypeInfo = for {
       vf <- HaskellFileUtil.findVirtualFile(psiFile)
       to = ApplicationUtil.runReadAction(qne.getTextOffset)
       sp <- LineColumnPosition.fromOffset(vf, to)
+      _ = ProgressManager.checkCanceled()
       t = ApplicationUtil.runReadAction(qne.getText)
       ep <- LineColumnPosition.fromOffset(vf, to + t.length)
       t = ApplicationUtil.runReadAction(qne.getText)
+      _ = ProgressManager.checkCanceled()
       mn = HaskellPsiUtil.findModuleName(psiFile)
     } yield {
+      ProgressManager.checkCanceled()
       repl: ProjectStackRepl => repl.findTypeInfo(mn, key.psiFile, sp.lineNr, sp.columnNr, ep.lineNr, ep.columnNr, t)
     }
 
@@ -177,8 +181,9 @@ private[component] object TypeInfoComponent {
     if (f.isCompleted) {
       Await.result(f, 1.milli)
     } else {
-      HaskellNotificationGroup.logInfoEvent(key.psiFile.getProject, s"Timeout while getting type info for ${key.qualifiedNameElement.getName}")
-      Left(ReadActionTimeout(s"Timeout while getting type info for ${key.qualifiedNameElement.getName}"))
+      val message = s"Timeout while getting type info for ${key.qualifiedNameElement.getName}"
+      HaskellNotificationGroup.logInfoEvent(key.psiFile.getProject, message)
+      Left(ReadActionTimeout(message))
     }
   }
 }

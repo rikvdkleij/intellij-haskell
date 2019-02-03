@@ -278,7 +278,7 @@ class HaskellCompletionContributor extends CompletionContributor {
 
     private def createLookupElement(typeSignature: String): Option[LookupElementBuilder] = {
       typeSignature.split("::", 2).toSeq match {
-        case Seq(n, t) => Some(LookupElementBuilder.create(n.trim).withTypeText(StringEscapeUtils.unescapeHtml(typeSignature)))
+        case Seq(n, _) => Some(LookupElementBuilder.create(n.trim).withTypeText(StringEscapeUtils.unescapeHtml(typeSignature)))
         case _ => None
       }
     }
@@ -549,7 +549,7 @@ object FileModuleIdentifiers {
         } yield (f1, f2, f3)
 
         try {
-          val (x, y, z) = Await.result(f, 4800.milli)
+          val (x, y, z) = Await.result(f, 5.seconds)
           Some(x ++ y ++ z)
         } catch {
           case _: TimeoutException =>
@@ -581,7 +581,7 @@ object HaskellCompletionContributor {
       (r1, r2)
     }
 
-    ScalaFutureUtil.waitWithCheckCancelled(psiFile.getProject, result, s"In useAvailableModuleIdentifiers wait for all module identifiers for ${psiFile.getName} ", 5.seconds) match {
+    ScalaFutureUtil.waitWithCheckCancelled(psiFile.getProject, result, s"In useAvailableModuleIdentifiers wait for all module identifiers for ${psiFile.getName}") match {
       case Some((result1, result2)) =>
         (result1, result2) match {
           case (Some(x), Some(y)) => doIt(x, y)

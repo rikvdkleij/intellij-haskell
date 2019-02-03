@@ -99,9 +99,6 @@ object ProjectLibraryFileWatcher {
 
             dependentRepls.foreach { repl =>
               repl.restart()
-              if (repl.available && repl.stanzaType == LibType) {
-                repl.load(repl.stackComponentInfo.exposedModuleNames)
-              }
             }
 
             // When project is opened and has build errors some REPLs could not have been started

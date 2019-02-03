@@ -20,7 +20,7 @@ object ScalaFutureUtil {
     }
   }
 
-  def waitWithCheckCancelled[T](project: Project, future: Future[T], actionDescription: String, timeout: FiniteDuration = 100.millis): Option[T] = {
+  def waitWithCheckCancelled[T](project: Project, future: Future[T], actionDescription: String, timeout: FiniteDuration = 5.seconds): Option[T] = {
     try {
       new WaitFor(timeout.toMillis.toInt, 1) {
         override def condition(): Boolean = {

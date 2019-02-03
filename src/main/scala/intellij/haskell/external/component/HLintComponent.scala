@@ -33,7 +33,7 @@ object HLintComponent {
 
   final val HLintName = "hlint"
   private final val HLintPath = GlobalInfo.toolPath(HLintName).toString
-  private final val Timeout = 1.seconds
+  private final val Timeout = 1.second
 
   def check(psiFile: PsiFile): Seq[HLintInfo] = {
     if (StackProjectManager.isHlintAvailable(psiFile.getProject)) {
@@ -45,7 +45,6 @@ object HLintComponent {
             case None => ()
             case Some(d) =>
               val deadline = Timeout.fromNow
-
               while (isFileUnsaved(d) && deadline.hasTimeLeft() && !project.isDisposed) {
                 Thread.sleep(1)
               }

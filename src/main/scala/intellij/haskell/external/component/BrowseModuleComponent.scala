@@ -106,6 +106,11 @@ private[component] object BrowseModuleComponent {
     Cache.synchronous().refresh(key)
   }
 
+  def invalidateTopLevel(project: Project, moduleName: String, psiFile: PsiFile): Unit = {
+    val key = Key(project, moduleName, Some(psiFile), exported = false)
+    Cache.synchronous().invalidate(key)
+  }
+
   def invalidateExportedModuleName(project: Project, moduleName: String): Unit = {
     val synchronousCache = Cache.synchronous
     val key = synchronousCache.asMap().keys.filter(k => k.moduleName == moduleName && k.exported) // Can be more than one for a module name if file of module can not be found

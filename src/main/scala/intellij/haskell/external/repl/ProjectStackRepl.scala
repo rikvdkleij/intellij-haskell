@@ -68,6 +68,7 @@ case class ProjectStackRepl(project: Project, stackComponentInfo: StackComponent
   }
 
   import scala.concurrent.ExecutionContext.Implicits.global
+  import scala.concurrent.duration._
 
   private def isReadAccessAllowed = ApplicationManager.getApplication.isReadAccessAllowed
 
@@ -79,7 +80,7 @@ case class ProjectStackRepl(project: Project, stackComponentInfo: StackComponent
     }
 
     if (isReadAccessAllowed) {
-      ScalaFutureUtil.waitWithCheckCancelled(project, Future(execute), "Wait on :type-at in ProjectStackRepl").flatten
+      ScalaFutureUtil.waitWithCheckCancelled(project, Future(execute), "Wait on :type-at in ProjectStackRepl", 30.seconds).flatten
     } else {
       execute
     }
@@ -93,7 +94,7 @@ case class ProjectStackRepl(project: Project, stackComponentInfo: StackComponent
     }
 
     if (isReadAccessAllowed) {
-      ScalaFutureUtil.waitWithCheckCancelled(project, Future(execute), "Wait on :loc-at in ProjectStackRepl").flatten
+      ScalaFutureUtil.waitWithCheckCancelled(project, Future(execute), "Wait on :loc-at in ProjectStackRepl", timeout = 30.seconds).flatten
     } else {
       execute
     }
@@ -105,7 +106,7 @@ case class ProjectStackRepl(project: Project, stackComponentInfo: StackComponent
     }
 
     if (isReadAccessAllowed) {
-      ScalaFutureUtil.waitWithCheckCancelled(psiFile.getProject, Future(execute), "Wait on :info in ProjectStackRepl").flatten
+      ScalaFutureUtil.waitWithCheckCancelled(psiFile.getProject, Future(execute), "Wait on :info in ProjectStackRepl", 30.seconds).flatten
     } else {
       execute
     }
