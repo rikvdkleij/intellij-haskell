@@ -4,10 +4,10 @@ lazy val commonSettings = Seq(
 )
 
 val scalaTest = "org.scalatest" %% "scalatest" % "3.0.4" % Test
-val sprayJson = "io.spray" %% "spray-json" % "1.3.4"
+val sprayJson = "io.spray" %% "spray-json" % "1.3.5"
 val snakeYaml = "org.yaml" % "snakeyaml" % "1.19"
 val scaffeine = "com.github.blemale" %% "scaffeine" % "2.5.0"
-val directories = "io.github.soc" % "directories" % "10"
+val directories = "io.github.soc" % "directories" % "11"
 
 lazy val intellijHaskell = (project in file(".")).
   enablePlugins(SbtIdeaPlugin).
