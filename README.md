@@ -61,7 +61,7 @@ When used with `hindent`, `intellij-haskell` automatically sets `--indent-size` 
 - Install this plugin using the [Jetbrains plugin repository](https://plugins.jetbrains.com/idea/plugin/8258-intellij-haskell): `Settings`/`Plugins`/`Browse repositories`/`Intellij-Haskell`. Make sure no other Haskell plugin is installed in IntelliJ;
 - Install latest version of [Stack](https://github.com/commercialhaskell/stack); use `stack upgrade` to confirm you are on the latest version.
 - Setup the project:
-  - Make sure your Stack project builds without errors. Preferably by using: `stack build --test --haddock`;
+  - Make sure your Stack project builds without errors. Preferably by using: `stack build --test --haddock --no-haddock-hyperlink-source`;
   - After your project is built successfully, import project in IntelliJ by using `File`>`New`>`Project from Existing Sources...` from the IntelliJ menu;
   - In the `New Project` wizard select `Import project from external model` and check `Haskell Stack`;
   - In next page of wizard configure `Project SDK` by configuring `Haskell Tool Stack` with selecting path to `stack` binary, e.g. `/usr/local/bin/stack`;
