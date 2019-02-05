@@ -172,6 +172,9 @@ object StackProjectManager {
                 StackReplsManager.getGlobalRepl(project).foreach(_.exit())
                 projectRepsl.foreach(_.exit())
 
+                // Wait a moment otherwise REPLs (sometime s) will not start yet
+                Thread.sleep(1000)
+
                 progressIndicator.setText("Busy with cleaning up cache")
                 HaskellComponentsManager.invalidateGlobalCaches(project)
 

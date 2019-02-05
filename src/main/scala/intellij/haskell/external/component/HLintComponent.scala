@@ -33,7 +33,7 @@ object HLintComponent {
 
   final val HLintName = "hlint"
   private final val HLintPath = GlobalInfo.toolPath(HLintName).toString
-  private final val Timeout = 1.second
+  private final val Timeout = 500.millis
 
   def check(psiFile: PsiFile): Seq[HLintInfo] = {
     if (StackProjectManager.isHlintAvailable(psiFile.getProject)) {

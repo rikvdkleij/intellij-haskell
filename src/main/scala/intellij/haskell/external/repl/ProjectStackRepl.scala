@@ -129,11 +129,13 @@ case class ProjectStackRepl(project: Project, stackComponentInfo: StackComponent
     }
   }
 
+  private final val FailedModuleLoaded = "Failed, modules loaded: "
+
   private final val OkModulesLoaded = "Ok, modules loaded: "
 
   private def setLoadedModules(o: StackReplOutput): Unit = {
     loadedDependentModules.clear()
-    val loadedModuleNames = o.stdoutLines.find(l => l.startsWith(OkModulesLoaded)).map(findLoadedModuleNames).getOrElse(Array())
+    val loadedModuleNames = o.stdoutLines.find(l => l.startsWith(OkModulesLoaded) || l.startsWith(FailedModuleLoaded)).map(findLoadedModuleNames).getOrElse(Array())
     loadedModuleNames.foreach(mn => loadedDependentModules.put(mn, DependentModuleInfo()))
     loadedModuleNames.foreach(mn => everLoadedDependentModules.put(mn, DependentModuleInfo()))
   }
@@ -173,10 +175,12 @@ case class ProjectStackRepl(project: Project, stackComponentInfo: StackComponent
   }
 
   private def findLoadedModuleNames(line: String): Array[String] = {
-    if (line == "none") {
-      Array()
-    } else {
+    if (line.startsWith(OkModulesLoaded)) {
       line.replace(OkModulesLoaded, "").init.split(",").map(_.trim)
+    } else if (line.startsWith(FailedModuleLoaded)) {
+      line.replace(FailedModuleLoaded, "").init.split(",").map(_.trim)
+    } else {
+      Array()
     }
   }
 

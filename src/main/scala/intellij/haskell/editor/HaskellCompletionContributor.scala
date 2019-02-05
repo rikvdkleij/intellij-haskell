@@ -480,6 +480,12 @@ object FileModuleIdentifiers {
     Cache.refresh(Key(psiFile))
   }
 
+  // Invalidate files which have imported this module
+  def invalidate(moduleName: String): Unit = {
+    val keys = Cache.asMap().filter { case (_, v) => v.exists(_.exists(_.exists(_.exists(_.moduleName == moduleName)))) }.keys
+    Cache.invalidateAll(keys)
+  }
+
   def invalidateAll(project: Project): Unit = {
     Cache.asMap().filter(_._1.psiFile.getProject == project).keys.foreach(Cache.invalidate)
   }
@@ -498,7 +504,7 @@ object FileModuleIdentifiers {
       case None =>
         if (ApplicationManager.getApplication.isReadAccessAllowed) {
           val f = Future(Cache.get(key))
-          ScalaFutureUtil.waitWithCheckCancelled(psiFile.getProject, f, "getModuleIdentifiers", 4900.millis).flatten match {
+          ScalaFutureUtil.waitWithCheckCancelled(psiFile.getProject, f, "getModuleIdentifiers", 5.seconds).flatten match {
             case Some(x) =>
               if (x.toSeq.contains(None)) {
                 Cache.invalidate(key)

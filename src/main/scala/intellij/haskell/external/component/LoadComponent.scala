@@ -88,8 +88,9 @@ private[component] object LoadComponent {
                 NameInfoComponent.invalidate(psiFile)
                 moduleName.foreach(mn => {
                   BrowseModuleComponent.invalidateTopLevel(project, mn, psiFile)
-                  FileModuleIdentifiers.refresh(psiFile)
                   BrowseModuleComponent.invalidateExportedModuleName(project, mn)
+                  FileModuleIdentifiers.refresh(psiFile)
+                  FileModuleIdentifiers.invalidate(mn)
                 })
 
               }
