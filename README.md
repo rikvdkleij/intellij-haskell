@@ -49,6 +49,7 @@ Alternative way to install the latest beta version is to download `intellij-hask
 - Code formatting with `hindent`, `stylish-haskell`, or both together. `hindent` can also be used to format a selected code block.
 - Code completion for project module names, language extensions and package names in Cabal file;
 - Running REPL, tests and executables via `Run Configurations`;
+- Haskell Problems View;
 
 ### Usage with `hindent`
 
@@ -59,34 +60,29 @@ When used with `hindent`, `intellij-haskell` automatically sets `--indent-size` 
 - If you don't already have IntelliJ, [download it](https://www.jetbrains.com/idea/download/) - the Community Edition is sufficient.
 - Install this plugin using the [Jetbrains plugin repository](https://plugins.jetbrains.com/idea/plugin/8258-intellij-haskell): `Settings`/`Plugins`/`Browse repositories`/`Intellij-Haskell`. Make sure no other Haskell plugin is installed in IntelliJ;
 - Install latest version of [Stack](https://github.com/commercialhaskell/stack); use `stack upgrade` to confirm you are on the latest version.
-- Install latest versions of [Hindent](https://github.com/chrisdone/hindent) and [Stylish-Haskell](https://github.com/jaspervdj/stylish-haskell). 
-    You have to install version of Hindent > 5.0, for example by: `stack install --resolver=nightly hindent stylish-haskell`
-    Set file paths to `hindent` and `stylish-haskell` in the `Settings`>`Other Settings`>`Haskell`;
 - Setup the project:
-  - Make sure your Stack project builds without errors. Preferably by using: `stack build --test --haddock --fast`;
+  - Make sure your Stack project builds without errors. Preferably by using: `stack build --test --haddock`;
   - After your project is built successfully, import project in IntelliJ by using `File`>`New`>`Project from Existing Sources...` from the IntelliJ menu;
   - In the `New Project` wizard select `Import project from external model` and check `Haskell Stack`;
   - In next page of wizard configure `Project SDK` by configuring `Haskell Tool Stack` with selecting path to `stack` binary, e.g. `/usr/local/bin/stack`;
   - Finish wizard and project will be opened;
   - Wizard will automatically configure which folders are sources, test and which to exclude;
-  - Plugin will automatically build Intero and HLint to prevent incompatibility issues
-    (If you use non LTS or Nightly resolver e.g. `ghc-7.10.2`, you may have to build them manually since there are some extra-deps should be added to `stack.yaml`).
-    Those tools are built against Stackage release defined in project's `stack.yaml`.
-    If you want to use later version of tool, you will have to build tool manually in project's folder by using `stack build`;
+  - Plugin will automatically build Intero and Haskell Tools (HLint, Hoogle, Hindent and Stylish Haskell) to prevent incompatibility issues
   - Check `Project structure`>`Project settings`>`Modules` which folders to exclude (like `.stack-work` and `dist`) and which folders are `Source` and `Test` (normally `src` and `test`);
   - Plugin will automatically download library sources. They will be added as source libraries to module(s).
-    This option gives you nice navigation features through libraries. Sources are downloaded to folder `.intellij-haskell` inside your home folder;
-  - After changes to dependencies you can download them again by using `Tools`>`Haskell`>`Download Haskell Library Sources`;
+  - After changing the Cabal file and/or `stack.yaml` use `Tools`>`Haskell`>`Update Settings and Restart REPLs` to download missing library sources and update the project settings;
   - The `Event Log` will display what's going on in the background. Useful when something fails. It's disabled by default. 
     It can be enabled by checking `Haskell Log` checkbox in the `Event Log`>`Settings` or `Settings`>`Appearance & Behavior`>`Notifications`;    
-  - In the background for each Haskell project three Stack REPLs are running. You can restart them by `Tools`>`Restart Haskell Stack REPLs`.
-  - When you make changes to `stack.yaml` or Cabal file, IntelliJ will give you notification with the option to restart REPLs;
 
 
 # Remarks
 1. `About Haskell Project` in `Help` menu shows which Haskell GHC/tools are used by plugin for project;
 2. Intero depends on `libtinfo-dev`. On Ubuntu you can install it with `sudo apt-get install libtinfo-dev`;
-
+3. Haskell tools depends on `libgmp3-dev zlib1g-dev`. On Ubuntu you can install them with `sudo apt-get install libgmp3-dev zlib1g-dev`;
+4. Cabal's internal libraries are not (yet) supported;
+5. Cabal's common stanzas are not (yet) supported;
+6. The Haskell tools are built in a IntelliJ sandbox with LTS-13. So they have no dependency with Stackage resolvers in your projects. After Stackage LTS-13 minor updates one can use `Tools`>`Update Haskell tools`;
+7. Stack REPLs are running in the background. You can restart them by `Tools`>`Update Settings and Restart REPLs`.
 
 # How to build project
 1. Clone this project;
