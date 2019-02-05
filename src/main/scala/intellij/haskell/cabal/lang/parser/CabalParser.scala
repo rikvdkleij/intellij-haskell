@@ -52,7 +52,8 @@ final class CabalPsiBuilder(builder: PsiBuilder)
   )
 
   def library(): Boolean = stanza(
-    "library", LIBRARY, LIBRARY_KEY, noStanzaArgs, () => libraryField()
+    "library", LIBRARY, LIBRARY_KEY,
+    () => stanzaNameArg(LIBRARY_NAME)(), () => libraryField()
   )
 
   def libraryField(): Boolean = (
@@ -122,7 +123,7 @@ final class CabalPsiBuilder(builder: PsiBuilder)
 
   def stanzaNameArg(el: CabalStanzaArgTokenType)(): Unit = getTokenType match {
     case _: CabalWordLikeTokenType => remapAdvance(el)
-    case _ => error(s"Expected name argument")
+    case _ => () // non internal library has no name
   }
 
   def invalidStanza(): Boolean = {

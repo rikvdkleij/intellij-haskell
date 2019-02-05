@@ -323,6 +323,7 @@ public interface CabalTypes {
 
   CabalElementType LIBRARY = new CabalElementType("LIBRARY");
   CabalStanzaKeyTokenType LIBRARY_KEY = new CabalStanzaKeyTokenType("LIBRARY_KEY");
+    CabalStanzaArgTokenType LIBRARY_NAME = new CabalStanzaArgTokenType("LIBRARY_NAME");
 
   CabalElementType EXPOSED_MODULES = new CabalElementType("EXPOSED_MODULES");
   CabalFieldKeyTokenType EXPOSED_MODULES_KEY = new CabalFieldKeyTokenType("EXPOSED_MODULES_KEY");

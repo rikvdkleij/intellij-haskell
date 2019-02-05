@@ -150,7 +150,7 @@ sealed trait CabalStanza {
 }
 
 case class LibraryCabalStanza(sectionRootElement: PsiElement, packageName: String, modulePath: String) extends CabalStanza {
-  val nameElementType: Option[IElementType] = None
+  val nameElementType: Option[IElementType] = Some(CabalTypes.LIBRARY_NAME)
 
   val targetName: String = s"$packageName:lib"
 
