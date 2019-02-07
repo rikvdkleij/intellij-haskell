@@ -83,13 +83,15 @@ private[component] object LoadComponent {
               DefinitionLocationComponent.invalidate(psiFile)
               HaskellModuleNameIndex.invalidateNotFoundEntries(project)
 
+              // Have to refresh because import declarations can be changed
+              FileModuleIdentifiers.refresh(psiFile)
+
               val moduleName = HaskellPsiUtil.findModuleName(psiFile)
               if (!loadFailed) {
                 NameInfoComponent.invalidate(psiFile)
                 moduleName.foreach(mn => {
                   BrowseModuleComponent.invalidateTopLevel(project, mn, psiFile)
                   BrowseModuleComponent.invalidateExportedModuleName(project, mn)
-                  FileModuleIdentifiers.refresh(psiFile)
                   FileModuleIdentifiers.invalidate(mn)
                 })
 
