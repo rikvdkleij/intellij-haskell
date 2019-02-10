@@ -16,6 +16,8 @@
 
 package intellij.haskell.external.component
 
+import java.io.File
+
 import com.intellij.openapi.actionSystem.ActionManager
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.components.ProjectComponent
@@ -192,7 +194,12 @@ object StackProjectManager {
                 }
 
                 packagePathsToAdd.foreach(p => {
-                  StackProjectImportBuilder.addHaskellModule(project, p, projectPath)
+                  val packagePath = new File(projectPath, p)
+                  if (packagePath.exists()) {
+                    StackProjectImportBuilder.addHaskellModule(project, p, projectPath)
+                  } else {
+                    HaskellNotificationGroup.logErrorBalloonEvent(project, s"Can not add package $p as module because it's absolute file path ${packagePath.getAbsolutePath} does not exist.")
+                  }
                 })
 
                 StackReplsManager.getReplsManager(project).map(_.moduleCabalInfos).foreach { moduleCabalInfos =>
