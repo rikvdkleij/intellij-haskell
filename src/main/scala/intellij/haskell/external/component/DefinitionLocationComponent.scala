@@ -172,7 +172,10 @@ private[component] object DefinitionLocationComponent {
                     findInfoResult match {
                       case Right(nes) =>
                         nes.headOption match {
-                          case Some(r) => Right(PackageModuleLocation(HaskellPsiUtil.findModuleName(r.getContainingFile).get, r, name, Some(qName1)))
+                          case Some(r) => HaskellPsiUtil.findModuleName(r.getContainingFile) match {
+                            case Some(mn) => Right(PackageModuleLocation(mn, r, name, Some(qName1)))
+                            case None => Right(LocalModuleLocation(r.getContainingFile, r, name, Some(qName1)))
+                          }
                           case None => Left(NoInfoAvailable(name, psiFile.getName))
                         }
                       case Left(noInfo) => Left(noInfo)
