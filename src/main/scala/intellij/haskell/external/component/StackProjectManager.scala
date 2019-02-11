@@ -174,9 +174,6 @@ object StackProjectManager {
                 StackReplsManager.getGlobalRepl(project).foreach(_.exit())
                 projectRepsl.foreach(_.exit())
 
-                // Wait a moment otherwise REPLs (sometime s) will not start yet
-                Thread.sleep(1000)
-
                 progressIndicator.setText("Busy with cleaning up cache")
                 HaskellComponentsManager.invalidateGlobalCaches(project)
 
@@ -231,7 +228,7 @@ object StackProjectManager {
                         r.load(moduleNames)
                       case None => HaskellNotificationGroup.logWarningEvent(project, s"REPL ${info.packageName} is not started")
                     }
-                    Thread.sleep(1000) // Have to wait between starting the REPLs otherwise timeouts while starting
+                    Thread.sleep(2000) // Have to wait between starting the REPLs otherwise timeouts while starting
                   }
                 })
 

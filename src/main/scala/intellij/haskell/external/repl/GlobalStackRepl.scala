@@ -54,6 +54,7 @@ case class GlobalStackRepl(project: Project, replTimeout: Int) extends StackRepl
     if (available && !starting) {
       exit(forceExit)
       loadedModuleName = None
+      Thread.sleep(1000)
       start()
     }
   }
