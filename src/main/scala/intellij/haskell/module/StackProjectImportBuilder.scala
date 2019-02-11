@@ -25,6 +25,7 @@ import com.intellij.openapi.module.{ModifiableModuleModel, Module, ModuleType}
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.roots.ModifiableRootModel
 import com.intellij.openapi.roots.ui.configuration.ModulesProvider
+import com.intellij.openapi.ui.Messages
 import com.intellij.openapi.vfs.LocalFileSystem
 import com.intellij.packaging.artifacts.ModifiableArtifactModel
 import com.intellij.projectImport.ProjectImportBuilder
@@ -79,17 +80,21 @@ object StackProjectImportBuilder {
   def addHaskellModule(project: Project, packageRelativePath: String, projectRoot: String): Unit = {
     val moduleBuilder = HaskellModuleType.getInstance.createModuleBuilder()
     val moduleDirectory = HaskellModuleBuilder.getModuleRootDirectory(packageRelativePath, projectRoot)
-    ApplicationUtil.runReadAction(HaskellModuleBuilder.createCabalInfo(project, projectRoot, packageRelativePath)) match {
-      case Some(cabalInfo) =>
-        val packageName = cabalInfo.packageName
-        moduleBuilder.setCabalInfo(cabalInfo)
-        moduleBuilder.setName(packageName)
-        moduleBuilder.setModuleFilePath(getModuleImlFilePath(moduleDirectory, packageName))
-        ApplicationManager.getApplication.invokeAndWait(ScalaUtil.runnable(moduleBuilder.commit(project)))
-        moduleBuilder.addModuleConfigurationUpdater((_: Module, rootModel: ModifiableRootModel) => {
-          moduleBuilder.setupRootModel(rootModel)
-        })
-      case None => ()
+    if (moduleDirectory.exists()) {
+      ApplicationUtil.runReadAction(HaskellModuleBuilder.createCabalInfo(project, projectRoot, packageRelativePath)) match {
+        case Some(cabalInfo) =>
+          val packageName = cabalInfo.packageName
+          moduleBuilder.setCabalInfo(cabalInfo)
+          moduleBuilder.setName(packageName)
+          moduleBuilder.setModuleFilePath(getModuleImlFilePath(moduleDirectory, packageName))
+          ApplicationManager.getApplication.invokeAndWait(ScalaUtil.runnable(moduleBuilder.commit(project)))
+          moduleBuilder.addModuleConfigurationUpdater((_: Module, rootModel: ModifiableRootModel) => {
+            moduleBuilder.setupRootModel(rootModel)
+          })
+        case None => ()
+      }
+    } else {
+      Messages.showErrorDialog(s"Can not add package $packageRelativePath as module because it's absolute file path ${moduleDirectory.getAbsolutePath} does not exist.", "Module can not be created")
     }
   }
 
