@@ -55,13 +55,13 @@
 program                     ::= onl shebang_line? onl file_header onl module_body
 
 shebang_line                ::= "#!" general_id+
-file_header                 ::= (file_header_pragma onl)*
+options_ghc_pragma          ::= OPTIONS_GHC
+file_header                 ::= ((file_header_pragma | options_ghc_pragma) onl)*
 private pragma              ::= PRAGMA_START (onl CON_ID? onl general_pragma_content? onl PRAGMA_END)+ {pin=1}
-file_header_pragma          ::= pragma NEWLINE | pragma
+file_header_pragma          ::= pragma
 
 other_pragma                ::= pragma
 
-// TODO Add all GHC options
 general_pragma_content      ::= (CON_ID | VAR_ID | CONSYM_ID | VARSYM_ID |
                                   LEFT_PAREN | RIGHT_PAREN | FLOAT | UNDERSCORE |
                                   SEMICOLON | LEFT_BRACKET | RIGHT_BRACKET | literal | LEFT_BRACE | RIGHT_BRACE |
@@ -153,7 +153,7 @@ private onls                ::= (&<<containsSpaces>> NEWLINE | DIRECTIVE NEWLINE
 private nls                 ::= (&<<containsSpaces>> NEWLINE)+                          // multiple new lines and spaces
 private oonls               ::= (&<<containsSpaces>> NEWLINE)?                         // optional one (new line and spaces)
 
-comments                    ::= COMMENT | NCOMMENT | HADDOCK | NHADDOCK | NOT_TERMINATED_COMMENT  // rule is necessary to refer to various comment types in code
+comments                    ::= COMMENT | NCOMMENT | HADDOCK | NHADDOCK | NOT_TERMINATED_COMMENT | NOT_TERMINATED_OPTIONS_GHC // rule is necessary to refer to various comment types in code
 
 modid                       ::= (conid DOT)* conid {pin=1 stubClass = "intellij.haskell.psi.stubs.HaskellModidStub"}
 

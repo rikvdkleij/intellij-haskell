@@ -139,6 +139,8 @@ public class HaskellParser implements PsiParser, LightPsiParser {
             r = newconstr_fielddecl(b, 0);
         } else if (t == HS_NEWTYPE_DECLARATION) {
             r = newtype_declaration(b, 0);
+        } else if (t == HS_OPTIONS_GHC_PRAGMA) {
+            r = options_ghc_pragma(b, 0);
         } else if (t == HS_OTHER_PRAGMA) {
             r = other_pragma(b, 0);
         } else if (t == HS_OVERLAP_PRAGMA) {
@@ -1497,7 +1499,7 @@ public class HaskellParser implements PsiParser, LightPsiParser {
     }
 
     /* ********************************************************** */
-    // COMMENT | NCOMMENT | HADDOCK | NHADDOCK | NOT_TERMINATED_COMMENT
+    // COMMENT | NCOMMENT | HADDOCK | NHADDOCK | NOT_TERMINATED_COMMENT | NOT_TERMINATED_OPTIONS_GHC
     public static boolean comments(PsiBuilder b, int l) {
         if (!recursion_guard_(b, l, "comments")) return false;
         boolean r;
@@ -1507,6 +1509,7 @@ public class HaskellParser implements PsiParser, LightPsiParser {
         if (!r) r = consumeToken(b, HS_HADDOCK);
         if (!r) r = consumeToken(b, HS_NHADDOCK);
         if (!r) r = consumeToken(b, HS_NOT_TERMINATED_COMMENT);
+        if (!r) r = consumeToken(b, HS_NOT_TERMINATED_OPTIONS_GHC);
         exit_section_(b, l, m, r, false, null);
         return r;
     }
@@ -2940,7 +2943,7 @@ public class HaskellParser implements PsiParser, LightPsiParser {
     }
 
     /* ********************************************************** */
-    // (file_header_pragma onl)*
+    // ((file_header_pragma | options_ghc_pragma) onl)*
     public static boolean file_header(PsiBuilder b, int l) {
         if (!recursion_guard_(b, l, "file_header")) return false;
         Marker m = enter_section_(b, l, _NONE_, HS_FILE_HEADER, "<file header>");
@@ -2953,38 +2956,35 @@ public class HaskellParser implements PsiParser, LightPsiParser {
         return true;
     }
 
-    // file_header_pragma onl
+    // (file_header_pragma | options_ghc_pragma) onl
     private static boolean file_header_0(PsiBuilder b, int l) {
         if (!recursion_guard_(b, l, "file_header_0")) return false;
         boolean r;
         Marker m = enter_section_(b);
-        r = file_header_pragma(b, l + 1);
+        r = file_header_0_0(b, l + 1);
         r = r && onl(b, l + 1);
         exit_section_(b, m, null, r);
         return r;
     }
 
+    // file_header_pragma | options_ghc_pragma
+    private static boolean file_header_0_0(PsiBuilder b, int l) {
+        if (!recursion_guard_(b, l, "file_header_0_0")) return false;
+        boolean r;
+        r = file_header_pragma(b, l + 1);
+        if (!r) r = options_ghc_pragma(b, l + 1);
+        return r;
+    }
+
     /* ********************************************************** */
-    // pragma NEWLINE | pragma
+    // pragma
     public static boolean file_header_pragma(PsiBuilder b, int l) {
         if (!recursion_guard_(b, l, "file_header_pragma")) return false;
         if (!nextTokenIs(b, HS_PRAGMA_START)) return false;
         boolean r;
         Marker m = enter_section_(b);
-        r = file_header_pragma_0(b, l + 1);
-        if (!r) r = pragma(b, l + 1);
-        exit_section_(b, m, HS_FILE_HEADER_PRAGMA, r);
-        return r;
-    }
-
-    // pragma NEWLINE
-    private static boolean file_header_pragma_0(PsiBuilder b, int l) {
-        if (!recursion_guard_(b, l, "file_header_pragma_0")) return false;
-        boolean r;
-        Marker m = enter_section_(b);
         r = pragma(b, l + 1);
-        r = r && consumeToken(b, HS_NEWLINE);
-        exit_section_(b, m, null, r);
+        exit_section_(b, m, HS_FILE_HEADER_PRAGMA, r);
         return r;
     }
 
@@ -4828,6 +4828,18 @@ public class HaskellParser implements PsiParser, LightPsiParser {
         Marker m = enter_section_(b, l, _AND_);
         r = containsSpaces(b, l + 1);
         exit_section_(b, l, m, r, false, null);
+        return r;
+    }
+
+    /* ********************************************************** */
+    // OPTIONS_GHC
+    public static boolean options_ghc_pragma(PsiBuilder b, int l) {
+        if (!recursion_guard_(b, l, "options_ghc_pragma")) return false;
+        if (!nextTokenIs(b, HS_OPTIONS_GHC)) return false;
+        boolean r;
+        Marker m = enter_section_(b);
+        r = consumeToken(b, HS_OPTIONS_GHC);
+        exit_section_(b, m, HS_OPTIONS_GHC_PRAGMA, r);
         return r;
     }
 

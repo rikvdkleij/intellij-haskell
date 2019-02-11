@@ -66,6 +66,7 @@ public interface HaskellTypes {
     IElementType HS_NEWCONSTR = new HaskellCompositeElementType("HS_NEWCONSTR");
     IElementType HS_NEWCONSTR_FIELDDECL = new HaskellCompositeElementType("HS_NEWCONSTR_FIELDDECL");
     IElementType HS_NEWTYPE_DECLARATION = new HaskellCompositeElementType("HS_NEWTYPE_DECLARATION");
+    IElementType HS_OPTIONS_GHC_PRAGMA = new HaskellCompositeElementType("HS_OPTIONS_GHC_PRAGMA");
     IElementType HS_OTHER_PRAGMA = new HaskellCompositeElementType("HS_OTHER_PRAGMA");
     IElementType HS_OVERLAP_PRAGMA = new HaskellCompositeElementType("HS_OVERLAP_PRAGMA");
     IElementType HS_QUALIFIER = new HaskellCompositeElementType("HS_QUALIFIER");
@@ -151,8 +152,10 @@ public interface HaskellTypes {
     IElementType HS_NEWTYPE = new HaskellTokenType("NEWTYPE");
     IElementType HS_NHADDOCK = new HaskellTokenType("NHADDOCK");
     IElementType HS_NOT_TERMINATED_COMMENT = new HaskellTokenType("NOT_TERMINATED_COMMENT");
+    IElementType HS_NOT_TERMINATED_OPTIONS_GHC = new HaskellTokenType("NOT_TERMINATED_OPTIONS_GHC");
     IElementType HS_OCTAL = new HaskellTokenType("OCTAL");
     IElementType HS_OF = new HaskellTokenType("OF");
+    IElementType HS_OPTIONS_GHC = new HaskellTokenType("OPTIONS_GHC");
     IElementType HS_PRAGMA_END = new HaskellTokenType("PRAGMA_END");
     IElementType HS_PRAGMA_START = new HaskellTokenType("PRAGMA_START");
     IElementType HS_QUASIQUOTE = new HaskellTokenType("QUASIQUOTE");
@@ -293,6 +296,8 @@ public interface HaskellTypes {
                 return new HaskellNewconstrFielddeclImpl(node);
             } else if (type == HS_NEWTYPE_DECLARATION) {
                 return new HaskellNewtypeDeclarationImpl(node);
+            } else if (type == HS_OPTIONS_GHC_PRAGMA) {
+                return new HaskellOptionsGhcPragmaImpl(node);
             } else if (type == HS_OTHER_PRAGMA) {
                 return new HaskellOtherPragmaImpl(node);
             } else if (type == HS_OVERLAP_PRAGMA) {

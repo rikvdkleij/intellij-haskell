@@ -16,10 +16,12 @@ class HaskellHighlightingAnnotator extends Annotator {
         .setTextAttributes(HaskellSyntaxHighlighter.Keyword)
       case psi: HaskellFileHeaderPragma => psi.getGeneralPragmaContentList.forEach((t: HaskellGeneralPragmaContent) =>
         holder.createInfoAnnotation(t, null).setTextAttributes(HaskellSyntaxHighlighter.PragmaContent))
+      case psi: HaskellOptionsGhcPragma =>
+        holder.createInfoAnnotation(psi, null).setTextAttributes(HaskellSyntaxHighlighter.PragmaContent)
       case psi: HaskellTypeSignature => holder.createInfoAnnotation(psi.getFirstChild, null)
-          .setTextAttributes(HaskellSyntaxHighlighter.FunctionName)
+        .setTextAttributes(HaskellSyntaxHighlighter.FunctionName)
       case psi: HaskellStringLiteralElementImpl => holder.createInfoAnnotation(psi, null)
-          .setTextAttributes(HaskellSyntaxHighlighter.String)
+        .setTextAttributes(HaskellSyntaxHighlighter.String)
       case _ =>
     }
   }

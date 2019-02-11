@@ -22,6 +22,9 @@ import static intellij.haskell.psi.HaskellTypes.*;
     private int commentStart;
     private int commentDepth;
 
+    private int optionsGhcStart;
+    private int optionsGhcDepth;
+
     private int haddockStart;
     private int haddockDepth;
 
@@ -29,7 +32,7 @@ import static intellij.haskell.psi.HaskellTypes.*;
     private int qqDepth;
 %}
 
-%xstate NCOMMENT, NHADDOCK, QQ
+%xstate NCOMMENT, NHADDOCK, QQ, OPTIONS_GHC
 
 newline             = \r|\n|\r\n
 unispace            = \x05
@@ -196,6 +199,31 @@ nhaddock_start      = {left_brace}{dash}{white_char}?{vertical_bar}
     yybegin(NCOMMENT);
     commentDepth = 0;
     commentStart = getTokenStart();
+}
+
+
+<OPTIONS_GHC> {
+    <<EOF>> {
+        int state = yystate();
+        yybegin(YYINITIAL);
+        zzStartRead = optionsGhcStart;
+        return HS_NOT_TERMINATED_OPTIONS_GHC;
+    }
+
+    {pragma_end} {
+        int state = yystate();
+        yybegin(YYINITIAL);
+        zzStartRead = optionsGhcStart;
+        return HS_OPTIONS_GHC;
+    }
+
+    .|{white_char}|{newline} {}
+}
+
+{pragma_start} {white_char}* "OPTIONS_GHC" {
+    yybegin(OPTIONS_GHC);
+    optionsGhcDepth = 0;
+    optionsGhcStart = getTokenStart();
 }
 
 
