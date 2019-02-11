@@ -65,7 +65,7 @@ object HindentReformatAction {
     val formatAction = ApplicationManager.getApplication.executeOnPooledThread(ScalaUtil.callable[Either[String, String]] {
       selectionContext match {
         case Some(sc) => writeToHindent(command, sc.text, project)
-        case None => writeToHindent(command, psiFile.getText, project)
+        case None => writeToHindent(command, ApplicationUtil.runReadAction(psiFile.getText), project)
       }
     })
 
