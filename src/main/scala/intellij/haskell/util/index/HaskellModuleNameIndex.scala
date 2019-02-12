@@ -74,7 +74,7 @@ object HaskellModuleNameIndex {
   def fillCache(project: Project, moduleNames: Iterable[String]): Unit = {
     moduleNames.foreach(mn => {
       val key = Key(project, mn)
-      find(key, 2.seconds, reschedule = true) match {
+      find(key, 5.seconds, reschedule = true) match {
         case Right(vf) => Cache.put(key, Right(vf))
         case Left(_) => ()
       }
@@ -112,7 +112,7 @@ object HaskellModuleNameIndex {
   }
 
   def invalidateNotFoundEntries(project: Project): Unit = {
-    val keys = Cache.asMap().filter { case (k, v) => k.project == project && v.isLeft }.keys
+    val keys = Cache.asMap().filter { case (k, v) => k.project == project && (v.isLeft || v.right.exists(_.isEmpty)) }.keys
     Cache.invalidateAll(keys)
   }
 
