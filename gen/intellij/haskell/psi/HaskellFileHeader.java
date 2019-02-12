@@ -10,7 +10,4 @@ public interface HaskellFileHeader extends HaskellCompositeElement {
     @NotNull
     List<HaskellFileHeaderPragma> getFileHeaderPragmaList();
 
-    @NotNull
-    List<HaskellOptionsGhcPragma> getOptionsGhcPragmaList();
-
 }

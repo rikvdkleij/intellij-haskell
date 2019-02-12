@@ -56,9 +56,9 @@ program                     ::= onl shebang_line? onl file_header onl module_bod
 
 shebang_line                ::= "#!" general_id+
 options_ghc_pragma          ::= OPTIONS_GHC
-file_header                 ::= ((file_header_pragma | options_ghc_pragma) onl)*
+file_header                 ::= (file_header_pragma onl)*
 private pragma              ::= PRAGMA_START (onl CON_ID? onl general_pragma_content? onl PRAGMA_END)+ {pin=1}
-file_header_pragma          ::= pragma
+file_header_pragma          ::= pragma NEWLINE | options_ghc_pragma NEWLINE | pragma | options_ghc_pragma
 
 other_pragma                ::= pragma
 

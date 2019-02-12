@@ -2943,7 +2943,7 @@ public class HaskellParser implements PsiParser, LightPsiParser {
     }
 
     /* ********************************************************** */
-    // ((file_header_pragma | options_ghc_pragma) onl)*
+    // (file_header_pragma onl)*
     public static boolean file_header(PsiBuilder b, int l) {
         if (!recursion_guard_(b, l, "file_header")) return false;
         Marker m = enter_section_(b, l, _NONE_, HS_FILE_HEADER, "<file header>");
@@ -2956,35 +2956,51 @@ public class HaskellParser implements PsiParser, LightPsiParser {
         return true;
     }
 
-    // (file_header_pragma | options_ghc_pragma) onl
+    // file_header_pragma onl
     private static boolean file_header_0(PsiBuilder b, int l) {
         if (!recursion_guard_(b, l, "file_header_0")) return false;
         boolean r;
         Marker m = enter_section_(b);
-        r = file_header_0_0(b, l + 1);
+        r = file_header_pragma(b, l + 1);
         r = r && onl(b, l + 1);
         exit_section_(b, m, null, r);
         return r;
     }
 
-    // file_header_pragma | options_ghc_pragma
-    private static boolean file_header_0_0(PsiBuilder b, int l) {
-        if (!recursion_guard_(b, l, "file_header_0_0")) return false;
+    /* ********************************************************** */
+    // pragma NEWLINE | options_ghc_pragma NEWLINE | pragma | options_ghc_pragma
+    public static boolean file_header_pragma(PsiBuilder b, int l) {
+        if (!recursion_guard_(b, l, "file_header_pragma")) return false;
+        if (!nextTokenIs(b, "<file header pragma>", HS_OPTIONS_GHC, HS_PRAGMA_START)) return false;
         boolean r;
-        r = file_header_pragma(b, l + 1);
+        Marker m = enter_section_(b, l, _NONE_, HS_FILE_HEADER_PRAGMA, "<file header pragma>");
+        r = file_header_pragma_0(b, l + 1);
+        if (!r) r = file_header_pragma_1(b, l + 1);
+        if (!r) r = pragma(b, l + 1);
         if (!r) r = options_ghc_pragma(b, l + 1);
+        exit_section_(b, l, m, r, false, null);
         return r;
     }
 
-    /* ********************************************************** */
-    // pragma
-    public static boolean file_header_pragma(PsiBuilder b, int l) {
-        if (!recursion_guard_(b, l, "file_header_pragma")) return false;
-        if (!nextTokenIs(b, HS_PRAGMA_START)) return false;
+    // pragma NEWLINE
+    private static boolean file_header_pragma_0(PsiBuilder b, int l) {
+        if (!recursion_guard_(b, l, "file_header_pragma_0")) return false;
         boolean r;
         Marker m = enter_section_(b);
         r = pragma(b, l + 1);
-        exit_section_(b, m, HS_FILE_HEADER_PRAGMA, r);
+        r = r && consumeToken(b, HS_NEWLINE);
+        exit_section_(b, m, null, r);
+        return r;
+    }
+
+    // options_ghc_pragma NEWLINE
+    private static boolean file_header_pragma_1(PsiBuilder b, int l) {
+        if (!recursion_guard_(b, l, "file_header_pragma_1")) return false;
+        boolean r;
+        Marker m = enter_section_(b);
+        r = options_ghc_pragma(b, l + 1);
+        r = r && consumeToken(b, HS_NEWLINE);
+        exit_section_(b, m, null, r);
         return r;
     }
 

@@ -6,7 +6,6 @@ import com.intellij.psi.PsiElementVisitor;
 import com.intellij.psi.util.PsiTreeUtil;
 import intellij.haskell.psi.HaskellFileHeader;
 import intellij.haskell.psi.HaskellFileHeaderPragma;
-import intellij.haskell.psi.HaskellOptionsGhcPragma;
 import intellij.haskell.psi.HaskellVisitor;
 import org.jetbrains.annotations.NotNull;
 
@@ -31,12 +30,6 @@ public class HaskellFileHeaderImpl extends HaskellCompositeElementImpl implement
     @NotNull
     public List<HaskellFileHeaderPragma> getFileHeaderPragmaList() {
         return PsiTreeUtil.getChildrenOfTypeAsList(this, HaskellFileHeaderPragma.class);
-    }
-
-    @Override
-    @NotNull
-    public List<HaskellOptionsGhcPragma> getOptionsGhcPragmaList() {
-        return PsiTreeUtil.getChildrenOfTypeAsList(this, HaskellOptionsGhcPragma.class);
     }
 
 }
