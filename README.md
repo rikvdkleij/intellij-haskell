@@ -76,13 +76,14 @@ When used with `hindent`, `intellij-haskell` automatically sets `--indent-size` 
 
 
 # Remarks
-1. `About Haskell Project` in `Help` menu shows which Haskell GHC/tools are used by plugin for project;
-2. Intero depends on `libtinfo-dev`. On Ubuntu you can install it with `sudo apt-get install libtinfo-dev`;
-3. Haskell tools depends on `libgmp3-dev zlib1g-dev`. On Ubuntu you can install them with `sudo apt-get install libgmp3-dev zlib1g-dev`;
-4. Cabal's internal libraries are not (yet) supported;
-5. Cabal's common stanzas are not (yet) supported;
-6. The Haskell tools are built in a IntelliJ sandbox with LTS-13. So they have no dependency with Stackage resolvers in your projects. After Stackage LTS-13 minor updates one can use `Tools`>`Update Haskell tools`;
-7. Stack REPLs are running in the background. You can restart them by `Tools`>`Update Settings and Restart REPLs`.
+1. IntelliJ's Build action is not (yet) implemented. Project is built when project is opened and when needed, e.g. library code is changed and user navigates to test code;
+2. `About Haskell Project` in `Help` menu shows which Haskell GHC/tools are used by plugin for project;
+3. Intero depends on `libtinfo-dev`. On Ubuntu you can install it with `sudo apt-get install libtinfo-dev`;
+4. Haskell tools depends on `libgmp3-dev zlib1g-dev`. On Ubuntu you can install them with `sudo apt-get install libgmp3-dev zlib1g-dev`;
+5. Cabal's internal libraries are not (yet) supported;
+6. Cabal's common stanzas are not (yet) supported;
+7. The Haskell tools are built in a IntelliJ sandbox with LTS-13. So they have no dependency with Stackage resolvers in your projects. After Stackage LTS-13 minor updates one can use `Tools`>`Update Haskell tools`;
+8. Stack REPLs are running in the background. You can restart them by `Tools`>`Update Settings and Restart REPLs`.
 
 # How to build project
 1. Clone this project;
