@@ -50,6 +50,7 @@ Alternative way to install the latest beta version is to download `intellij-hask
 - Code completion for project module names, language extensions and package names in Cabal file;
 - Running REPL, tests and executables via `Run Configurations`;
 - Haskell Problems View;
+- Smart completion on typed holes (since GHC 8.4);
 
 ### Usage with `hindent`
 
