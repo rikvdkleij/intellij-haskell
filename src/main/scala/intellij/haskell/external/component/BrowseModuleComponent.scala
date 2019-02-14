@@ -64,7 +64,7 @@ private[component] object BrowseModuleComponent {
   def loadExportedIdentifiersSync(project: Project, psiFile: PsiFile, moduleName: String): Unit = {
     import scala.concurrent.ExecutionContext.Implicits.global
     val result = findExportedIdentifiers(psiFile, moduleName)
-    ScalaFutureUtil.waitForValue(project, result, "findExportedIdentifiersSync")
+    ScalaFutureUtil.waitForValue(project, result, s"loading exported identifiers in findExportedIdentifiersSync for module $moduleName")
   }
 
   def findTopLevelIdentifiers(psiFile: PsiFile, moduleName: String)(implicit ec: ExecutionContext): Future[Option[Iterable[ModuleIdentifier]]] = {
