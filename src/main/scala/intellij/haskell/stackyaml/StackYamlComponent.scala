@@ -41,7 +41,12 @@ object StackYamlComponent {
             case s: String if isNotURL(s) => Seq(s)
             case m: util.Map[_, _] =>
               val map = m.asInstanceOf[util.Map[String, Any]].asScala.toMap
-              getSubdirs(project, map).getOrElse(Seq()) ++ getLocation(project, map).toSeq
+              val location = getLocation(project, map)
+              if (location.isDefined) {
+                getSubdirs(project, map).getOrElse(location.toSeq)
+              } else {
+                Seq()
+              }
             case _ => Seq()
           }
         case _ => Seq()

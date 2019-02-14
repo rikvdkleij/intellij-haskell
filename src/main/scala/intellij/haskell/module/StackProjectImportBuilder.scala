@@ -30,6 +30,7 @@ import com.intellij.openapi.vfs.LocalFileSystem
 import com.intellij.packaging.artifacts.ModifiableArtifactModel
 import com.intellij.projectImport.ProjectImportBuilder
 import icons.HaskellIcons
+import intellij.haskell.HaskellNotificationGroup
 import intellij.haskell.stackyaml.StackYamlComponent
 import intellij.haskell.util.{ApplicationUtil, HaskellFileUtil, HaskellProjectUtil, ScalaUtil}
 import javax.swing.Icon
@@ -91,10 +92,11 @@ object StackProjectImportBuilder {
           moduleBuilder.addModuleConfigurationUpdater((_: Module, rootModel: ModifiableRootModel) => {
             moduleBuilder.setupRootModel(rootModel)
           })
-        case None => ()
+        case None =>
+          Messages.showInfoMessage(project, s"Can not add package $packageRelativePath as module because ${moduleDirectory.getAbsolutePath} does not contain Cabal file or Cabal file can not be parsed", "Adding module failed")
       }
     } else {
-      Messages.showErrorDialog(s"Can not add package $packageRelativePath as module because it's absolute file path ${moduleDirectory.getAbsolutePath} does not exist.", "Module can not be created")
+      Messages.showInfoMessage(project, s"Can not add package $packageRelativePath as module because it's absolute file path ${moduleDirectory.getAbsolutePath} does not exist.", "Adding module failed")
     }
   }
 

@@ -195,7 +195,7 @@ object StackProjectManager {
                   if (packagePath.exists()) {
                     StackProjectImportBuilder.addHaskellModule(project, p, projectPath)
                   } else {
-                    HaskellNotificationGroup.logErrorBalloonEvent(project, s"Can not add package $p as module because it's absolute file path ${packagePath.getAbsolutePath} does not exist.")
+                    HaskellNotificationGroup.warningEvent(project, s"Can not add package $p as module because it's absolute file path ${packagePath.getAbsolutePath} does not exist.")
                   }
                 })
 
