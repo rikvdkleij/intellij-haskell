@@ -227,8 +227,6 @@ abstract class StackRepl(project: Project, componentInfo: Option[StackComponentI
             extraReplOptions ++ Seq("--test")
           } else if (stanzaType.contains(BenchmarkType)) {
             extraReplOptions ++ Seq("--bench")
-          } else if (stanzaType.isEmpty) {
-            extraReplOptions ++ Seq("--test") ++ Seq("--bench")
           } else {
             extraReplOptions
           }
