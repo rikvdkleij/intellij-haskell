@@ -126,7 +126,8 @@ consym_id           = {quote}? {colon} ({symbol} | {colon})*
 pragma_start        = {left_brace}{dash}{hash}
 pragma_end          = {hash}{dash}{right_brace}
 
-comment             = {dash}{dash}{dash}*[^\r\n\!\#\$\%\&\⋆\+\.\/\<\=\>\?\@][^\r\n]* | {dash}{dash}{white_char}* | "\\begin{code}"
+// Accept also * after -- because of TypeOperators
+comment             = {dash}{dash}{dash}*[^\r\n\!\#\$\%\&\⋆\+\.\/\<\=\>\?\@\*][^\r\n]* | {dash}{dash}{white_char}* | "\\begin{code}"
 ncomment_start      = {left_brace}{dash}
 ncomment_end        = {dash}{right_brace}
 haddock             = {dash}{dash}{white_char}[\^\|][^\r\n]* ({newline}{white_char}*{comment})*
