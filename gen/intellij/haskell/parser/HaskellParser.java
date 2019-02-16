@@ -5780,15 +5780,23 @@ public class HaskellParser implements PsiParser, LightPsiParser {
     }
 
     /* ********************************************************** */
-    // top_declaration NEWLINE
+    // top_declaration SEMICOLON? NEWLINE
     public static boolean top_declaration_line(PsiBuilder b, int l) {
         if (!recursion_guard_(b, l, "top_declaration_line")) return false;
         boolean r;
         Marker m = enter_section_(b, l, _NONE_, HS_TOP_DECLARATION_LINE, "<top declaration line>");
         r = top_declaration(b, l + 1);
+        r = r && top_declaration_line_1(b, l + 1);
         r = r && consumeToken(b, HS_NEWLINE);
         exit_section_(b, l, m, r, false, null);
         return r;
+    }
+
+    // SEMICOLON?
+    private static boolean top_declaration_line_1(PsiBuilder b, int l) {
+        if (!recursion_guard_(b, l, "top_declaration_line_1")) return false;
+        consumeToken(b, HS_SEMICOLON);
+        return true;
     }
 
     /* ********************************************************** */
