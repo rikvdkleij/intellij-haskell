@@ -79,8 +79,8 @@ public class HaskellTopDeclarationImpl extends HaskellCompositeElementImpl imple
 
     @Override
     @Nullable
-    public HaskellOtherPragma getOtherPragma() {
-        return PsiTreeUtil.getChildOfType(this, HaskellOtherPragma.class);
+    public HaskellPragma getPragma() {
+        return PsiTreeUtil.getChildOfType(this, HaskellPragma.class);
     }
 
     @Override

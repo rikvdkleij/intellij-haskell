@@ -5,8 +5,8 @@ import com.intellij.lang.ASTNode;
 import com.intellij.psi.PsiElementVisitor;
 import com.intellij.psi.util.PsiTreeUtil;
 import intellij.haskell.psi.HaskellConstr3;
+import intellij.haskell.psi.HaskellPragma;
 import intellij.haskell.psi.HaskellTtype;
-import intellij.haskell.psi.HaskellUnpackNounpackPragma;
 import intellij.haskell.psi.HaskellVisitor;
 import org.jetbrains.annotations.NotNull;
 
@@ -29,14 +29,14 @@ public class HaskellConstr3Impl extends HaskellCompositeElementImpl implements H
 
     @Override
     @NotNull
-    public List<HaskellTtype> getTtypeList() {
-        return PsiTreeUtil.getChildrenOfTypeAsList(this, HaskellTtype.class);
+    public List<HaskellPragma> getPragmaList() {
+        return PsiTreeUtil.getChildrenOfTypeAsList(this, HaskellPragma.class);
     }
 
     @Override
     @NotNull
-    public List<HaskellUnpackNounpackPragma> getUnpackNounpackPragmaList() {
-        return PsiTreeUtil.getChildrenOfTypeAsList(this, HaskellUnpackNounpackPragma.class);
+    public List<HaskellTtype> getTtypeList() {
+        return PsiTreeUtil.getChildrenOfTypeAsList(this, HaskellTtype.class);
     }
 
 }

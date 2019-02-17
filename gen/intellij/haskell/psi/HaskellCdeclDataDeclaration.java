@@ -8,11 +8,11 @@ import java.util.List;
 
 public interface HaskellCdeclDataDeclaration extends HaskellCompositeElement {
 
-    @Nullable
-    HaskellCtypePragma getCtypePragma();
-
     @NotNull
     List<HaskellKindSignature> getKindSignatureList();
+
+    @Nullable
+    HaskellPragma getPragma();
 
     @NotNull
     List<HaskellQName> getQNameList();

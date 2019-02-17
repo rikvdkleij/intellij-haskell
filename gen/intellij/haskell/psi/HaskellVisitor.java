@@ -18,10 +18,6 @@ public class HaskellVisitor extends PsiElementVisitor {
         visitCompositeElement(o);
     }
 
-    public void visitCfilesPragma(@NotNull HaskellCfilesPragma o) {
-        visitCompositeElement(o);
-    }
-
     public void visitCidecls(@NotNull HaskellCidecls o) {
         visitCompositeElement(o);
     }
@@ -74,10 +70,6 @@ public class HaskellVisitor extends PsiElementVisitor {
         visitNamedElement(o);
     }
 
-    public void visitCtypePragma(@NotNull HaskellCtypePragma o) {
-        visitCompositeElement(o);
-    }
-
     public void visitDataDeclaration(@NotNull HaskellDataDeclaration o) {
         visitDataConstructorDeclarationElement(o);
     }
@@ -116,10 +108,6 @@ public class HaskellVisitor extends PsiElementVisitor {
     }
 
     public void visitFileHeader(@NotNull HaskellFileHeader o) {
-        visitCompositeElement(o);
-    }
-
-    public void visitFileHeaderPragma(@NotNull HaskellFileHeaderPragma o) {
         visitCompositeElement(o);
     }
 
@@ -183,10 +171,6 @@ public class HaskellVisitor extends PsiElementVisitor {
         visitCompositeElement(o);
     }
 
-    public void visitInlinelikePragma(@NotNull HaskellInlinelikePragma o) {
-        visitCompositeElement(o);
-    }
-
     public void visitInst(@NotNull HaskellInst o) {
         visitCompositeElement(o);
     }
@@ -204,10 +188,6 @@ public class HaskellVisitor extends PsiElementVisitor {
     }
 
     public void visitListType(@NotNull HaskellListType o) {
-        visitCompositeElement(o);
-    }
-
-    public void visitMinimalPragma(@NotNull HaskellMinimalPragma o) {
         visitCompositeElement(o);
     }
 
@@ -235,11 +215,7 @@ public class HaskellVisitor extends PsiElementVisitor {
         visitDataConstructorDeclarationElement(o);
     }
 
-    public void visitOtherPragma(@NotNull HaskellOtherPragma o) {
-        visitCompositeElement(o);
-    }
-
-    public void visitOverlapIncoherentPragma(@NotNull HaskellOverlapIncoherentPragma o) {
+    public void visitPragma(@NotNull HaskellPragma o) {
         visitCompositeElement(o);
     }
 
@@ -287,10 +263,6 @@ public class HaskellVisitor extends PsiElementVisitor {
         visitCompositeElement(o);
     }
 
-    public void visitSccPragma(@NotNull HaskellSccPragma o) {
-        visitCompositeElement(o);
-    }
-
     public void visitScontext(@NotNull HaskellScontext o) {
         visitCompositeElement(o);
     }
@@ -304,14 +276,6 @@ public class HaskellVisitor extends PsiElementVisitor {
     }
 
     public void visitSimpletype(@NotNull HaskellSimpletype o) {
-        visitCompositeElement(o);
-    }
-
-    public void visitSourcePragma(@NotNull HaskellSourcePragma o) {
-        visitCompositeElement(o);
-    }
-
-    public void visitSpecializePragma(@NotNull HaskellSpecializePragma o) {
         visitCompositeElement(o);
     }
 
@@ -362,10 +326,6 @@ public class HaskellVisitor extends PsiElementVisitor {
 
     public void visitTypeSignature(@NotNull HaskellTypeSignature o) {
         visitDeclarationElement(o);
-    }
-
-    public void visitUnpackNounpackPragma(@NotNull HaskellUnpackNounpackPragma o) {
-        visitCompositeElement(o);
     }
 
     public void visitVar(@NotNull HaskellVar o) {

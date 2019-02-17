@@ -18,7 +18,7 @@ public interface HaskellInstanceDeclaration extends HaskellDeclarationElement {
     HaskellInst getInst();
 
     @Nullable
-    HaskellOverlapIncoherentPragma getOverlapIncoherentPragma();
+    HaskellPragma getPragma();
 
     @Nullable
     HaskellQName getQName();

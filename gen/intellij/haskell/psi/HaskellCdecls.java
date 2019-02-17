@@ -20,28 +20,19 @@ public interface HaskellCdecls extends HaskellCompositeElement {
     List<HaskellDotDot> getDotDotList();
 
     @NotNull
-    List<HaskellInlinelikePragma> getInlinelikePragmaList();
-
-    @NotNull
     List<HaskellInstanceDeclaration> getInstanceDeclarationList();
 
     @NotNull
-    List<HaskellMinimalPragma> getMinimalPragmaList();
+    List<HaskellNewtypeDeclaration> getNewtypeDeclarationList();
 
     @NotNull
-    List<HaskellNewtypeDeclaration> getNewtypeDeclarationList();
+    List<HaskellPragma> getPragmaList();
 
     @NotNull
     List<HaskellQName> getQNameList();
 
     @NotNull
     List<HaskellReservedId> getReservedIdList();
-
-    @NotNull
-    List<HaskellSccPragma> getSccPragmaList();
-
-    @NotNull
-    List<HaskellSpecializePragma> getSpecializePragmaList();
 
     @NotNull
     List<HaskellTextLiteral> getTextLiteralList();

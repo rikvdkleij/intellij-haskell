@@ -26,15 +26,15 @@ public class HaskellCdeclDataDeclarationImpl extends HaskellCompositeElementImpl
     }
 
     @Override
-    @Nullable
-    public HaskellCtypePragma getCtypePragma() {
-        return PsiTreeUtil.getChildOfType(this, HaskellCtypePragma.class);
-    }
-
-    @Override
     @NotNull
     public List<HaskellKindSignature> getKindSignatureList() {
         return PsiTreeUtil.getChildrenOfTypeAsList(this, HaskellKindSignature.class);
+    }
+
+    @Override
+    @Nullable
+    public HaskellPragma getPragma() {
+        return PsiTreeUtil.getChildOfType(this, HaskellPragma.class);
     }
 
     @Override

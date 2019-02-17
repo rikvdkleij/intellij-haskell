@@ -62,7 +62,6 @@ escape              = \\({charesc}|{ascii}|({digit}+)|(o({octit}+))|(x({hexit}+)
 
 character_literal   = (\'([^\'\\\n]|{escape})\')
 string_literal      = \"([^\"\\\n]|{escape}|{gap})*(\"|\n)
-double_quote        = "\""
 
 // ascSymbol except reservedop
 exclamation_mark    = "!"

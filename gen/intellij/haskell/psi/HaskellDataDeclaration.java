@@ -24,13 +24,13 @@ public interface HaskellDataDeclaration extends HaskellDataConstructorDeclaratio
     List<HaskellConstr3> getConstr3List();
 
     @Nullable
-    HaskellCtypePragma getCtypePragma();
-
-    @Nullable
     HaskellDataDeclarationDeriving getDataDeclarationDeriving();
 
     @NotNull
     List<HaskellKindSignature> getKindSignatureList();
+
+    @Nullable
+    HaskellPragma getPragma();
 
     @NotNull
     List<HaskellQName> getQNameList();

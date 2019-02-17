@@ -5,7 +5,7 @@ import com.intellij.lang.ASTNode;
 import com.intellij.psi.PsiElementVisitor;
 import com.intellij.psi.util.PsiTreeUtil;
 import intellij.haskell.psi.HaskellFileHeader;
-import intellij.haskell.psi.HaskellFileHeaderPragma;
+import intellij.haskell.psi.HaskellPragma;
 import intellij.haskell.psi.HaskellVisitor;
 import org.jetbrains.annotations.NotNull;
 
@@ -28,8 +28,8 @@ public class HaskellFileHeaderImpl extends HaskellCompositeElementImpl implement
 
     @Override
     @NotNull
-    public List<HaskellFileHeaderPragma> getFileHeaderPragmaList() {
-        return PsiTreeUtil.getChildrenOfTypeAsList(this, HaskellFileHeaderPragma.class);
+    public List<HaskellPragma> getPragmaList() {
+        return PsiTreeUtil.getChildrenOfTypeAsList(this, HaskellPragma.class);
     }
 
 }

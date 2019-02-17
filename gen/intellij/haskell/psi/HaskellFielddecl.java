@@ -9,6 +9,9 @@ import java.util.List;
 public interface HaskellFielddecl extends HaskellCompositeElement {
 
     @NotNull
+    List<HaskellPragma> getPragmaList();
+
+    @NotNull
     List<HaskellQName> getQNameList();
 
     @NotNull
@@ -19,8 +22,5 @@ public interface HaskellFielddecl extends HaskellCompositeElement {
 
     @Nullable
     HaskellTtype getTtype();
-
-    @NotNull
-    List<HaskellUnpackNounpackPragma> getUnpackNounpackPragmaList();
 
 }

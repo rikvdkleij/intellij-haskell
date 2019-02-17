@@ -5,20 +5,20 @@ import com.intellij.lang.ASTNode;
 import com.intellij.psi.PsiElementVisitor;
 import com.intellij.psi.util.PsiTreeUtil;
 import intellij.haskell.psi.HaskellGeneralPragmaContent;
-import intellij.haskell.psi.HaskellSccPragma;
+import intellij.haskell.psi.HaskellPragma;
 import intellij.haskell.psi.HaskellVisitor;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.List;
 
-public class HaskellSccPragmaImpl extends HaskellCompositeElementImpl implements HaskellSccPragma {
+public class HaskellPragmaImpl extends HaskellCompositeElementImpl implements HaskellPragma {
 
-    public HaskellSccPragmaImpl(ASTNode node) {
+    public HaskellPragmaImpl(ASTNode node) {
         super(node);
     }
 
     public void accept(@NotNull HaskellVisitor visitor) {
-        visitor.visitSccPragma(this);
+        visitor.visitPragma(this);
     }
 
     public void accept(@NotNull PsiElementVisitor visitor) {

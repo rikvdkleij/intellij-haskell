@@ -8,6 +8,6 @@ import java.util.List;
 public interface HaskellFileHeader extends HaskellCompositeElement {
 
     @NotNull
-    List<HaskellFileHeaderPragma> getFileHeaderPragmaList();
+    List<HaskellPragma> getPragmaList();
 
 }

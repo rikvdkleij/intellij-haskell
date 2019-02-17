@@ -11,8 +11,6 @@ import org.jetbrains.annotations.Nullable;
 import scala.Option;
 import scala.collection.Seq;
 
-import java.util.List;
-
 public class HaskellModuleDeclarationImpl extends HaskellCompositeElementImpl implements HaskellModuleDeclaration {
 
     public HaskellModuleDeclarationImpl(ASTNode node) {
@@ -36,14 +34,14 @@ public class HaskellModuleDeclarationImpl extends HaskellCompositeElementImpl im
 
     @Override
     @NotNull
-    public List<HaskellGeneralPragmaContent> getGeneralPragmaContentList() {
-        return PsiTreeUtil.getChildrenOfTypeAsList(this, HaskellGeneralPragmaContent.class);
+    public HaskellModid getModid() {
+        return notNullChild(PsiTreeUtil.getChildOfType(this, HaskellModid.class));
     }
 
     @Override
-    @NotNull
-    public HaskellModid getModid() {
-        return notNullChild(PsiTreeUtil.getChildOfType(this, HaskellModid.class));
+    @Nullable
+    public HaskellPragma getPragma() {
+        return PsiTreeUtil.getChildOfType(this, HaskellPragma.class);
     }
 
     public String getName() {

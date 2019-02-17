@@ -27,6 +27,12 @@ public class HaskellFielddeclImpl extends HaskellCompositeElementImpl implements
 
     @Override
     @NotNull
+    public List<HaskellPragma> getPragmaList() {
+        return PsiTreeUtil.getChildrenOfTypeAsList(this, HaskellPragma.class);
+    }
+
+    @Override
+    @NotNull
     public List<HaskellQName> getQNameList() {
         return PsiTreeUtil.getChildrenOfTypeAsList(this, HaskellQName.class);
     }
@@ -47,12 +53,6 @@ public class HaskellFielddeclImpl extends HaskellCompositeElementImpl implements
     @Nullable
     public HaskellTtype getTtype() {
         return PsiTreeUtil.getChildOfType(this, HaskellTtype.class);
-    }
-
-    @Override
-    @NotNull
-    public List<HaskellUnpackNounpackPragma> getUnpackNounpackPragmaList() {
-        return PsiTreeUtil.getChildrenOfTypeAsList(this, HaskellUnpackNounpackPragma.class);
     }
 
 }

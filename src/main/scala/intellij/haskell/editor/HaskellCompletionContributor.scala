@@ -618,7 +618,7 @@ object HaskellCompletionContributor {
   private case class ImportWithIds(moduleName: String, ids: Iterable[String], qualified: Boolean, as: Option[String]) extends ImportInfo
 
   def isNoImplicitPreludeActive(info: StackComponentInfo, psiFile: PsiFile): Boolean = {
-    info.isImplicitPreludeActive || ApplicationUtil.runReadAction(HaskellPsiUtil.findLanguageExtensions(psiFile)).flatMap(_.getGeneralPragmaContentList.asScala).exists(p => ApplicationUtil.runReadAction(p.getText).contains("NoImplicitPrelude"))
+    info.isImplicitPreludeActive || ApplicationUtil.runReadAction(HaskellPsiUtil.findLanguageExtensions(psiFile)).exists(p => ApplicationUtil.runReadAction(p.getText).contains("NoImplicitPrelude"))
   }
 
   private def getFullImportedModules(implicitPreludeActive: Boolean, psiFile: PsiFile, importDeclarations: Iterable[HaskellImportDeclaration]): Iterable[ImportFull] = {

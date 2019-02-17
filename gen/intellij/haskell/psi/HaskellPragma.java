@@ -5,7 +5,7 @@ import org.jetbrains.annotations.NotNull;
 
 import java.util.List;
 
-public interface HaskellFileHeaderPragma extends HaskellCompositeElement {
+public interface HaskellPragma extends HaskellCompositeElement {
 
     @NotNull
     List<HaskellGeneralPragmaContent> getGeneralPragmaContentList();

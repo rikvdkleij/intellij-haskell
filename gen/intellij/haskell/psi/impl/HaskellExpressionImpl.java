@@ -32,8 +32,8 @@ public class HaskellExpressionImpl extends HaskellExpressionElementImpl implemen
 
     @Override
     @NotNull
-    public List<HaskellInlinelikePragma> getInlinelikePragmaList() {
-        return PsiTreeUtil.getChildrenOfTypeAsList(this, HaskellInlinelikePragma.class);
+    public List<HaskellPragma> getPragmaList() {
+        return PsiTreeUtil.getChildrenOfTypeAsList(this, HaskellPragma.class);
     }
 
     @Override
@@ -46,12 +46,6 @@ public class HaskellExpressionImpl extends HaskellExpressionElementImpl implemen
     @NotNull
     public List<HaskellReservedId> getReservedIdList() {
         return PsiTreeUtil.getChildrenOfTypeAsList(this, HaskellReservedId.class);
-    }
-
-    @Override
-    @NotNull
-    public List<HaskellSccPragma> getSccPragmaList() {
-        return PsiTreeUtil.getChildrenOfTypeAsList(this, HaskellSccPragma.class);
     }
 
     @Override

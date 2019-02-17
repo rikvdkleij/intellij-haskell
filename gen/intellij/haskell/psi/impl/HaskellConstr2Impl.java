@@ -26,6 +26,12 @@ public class HaskellConstr2Impl extends HaskellCompositeElementImpl implements H
     }
 
     @Override
+    @NotNull
+    public List<HaskellPragma> getPragmaList() {
+        return PsiTreeUtil.getChildrenOfTypeAsList(this, HaskellPragma.class);
+    }
+
+    @Override
     @Nullable
     public HaskellQName getQName() {
         return PsiTreeUtil.getChildOfType(this, HaskellQName.class);
@@ -35,12 +41,6 @@ public class HaskellConstr2Impl extends HaskellCompositeElementImpl implements H
     @NotNull
     public List<HaskellTtype> getTtypeList() {
         return PsiTreeUtil.getChildrenOfTypeAsList(this, HaskellTtype.class);
-    }
-
-    @Override
-    @NotNull
-    public List<HaskellUnpackNounpackPragma> getUnpackNounpackPragmaList() {
-        return PsiTreeUtil.getChildrenOfTypeAsList(this, HaskellUnpackNounpackPragma.class);
     }
 
 }

@@ -7,18 +7,16 @@ import org.jetbrains.annotations.Nullable;
 import scala.Option;
 import scala.collection.Seq;
 
-import java.util.List;
-
 public interface HaskellModuleDeclaration extends HaskellDeclarationElement {
 
     @Nullable
     HaskellExports getExports();
 
     @NotNull
-    List<HaskellGeneralPragmaContent> getGeneralPragmaContentList();
-
-    @NotNull
     HaskellModid getModid();
+
+    @Nullable
+    HaskellPragma getPragma();
 
     String getName();
 

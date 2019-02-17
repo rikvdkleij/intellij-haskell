@@ -345,7 +345,7 @@ class LanguageExtensionIntentionAction(languageExtension: String) extends Haskel
     val languagePragmaElement = HaskellElementFactory.createLanguagePragma(project, s"{-# LANGUAGE $languageExtension #-}\n")
     Option(PsiTreeUtil.findChildOfType(file, classOf[HaskellFileHeader])) match {
       case Some(fh) =>
-        val lastPragmaElement = PsiTreeUtil.findChildrenOfType(fh, classOf[HaskellFileHeaderPragma]).asScala.lastOption.orNull
+        val lastPragmaElement = PsiTreeUtil.findChildrenOfType(fh, classOf[HaskellPragma]).asScala.lastOption.orNull
         fh.addAfter(languagePragmaElement, lastPragmaElement)
       case None =>
         Option(file.getFirstChild) match {

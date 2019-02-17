@@ -32,15 +32,15 @@ public class HaskellConstr1Impl extends HaskellCompositeElementImpl implements H
     }
 
     @Override
-    @Nullable
-    public HaskellQName getQName() {
-        return PsiTreeUtil.getChildOfType(this, HaskellQName.class);
+    @NotNull
+    public List<HaskellPragma> getPragmaList() {
+        return PsiTreeUtil.getChildrenOfTypeAsList(this, HaskellPragma.class);
     }
 
     @Override
-    @NotNull
-    public List<HaskellUnpackNounpackPragma> getUnpackNounpackPragmaList() {
-        return PsiTreeUtil.getChildrenOfTypeAsList(this, HaskellUnpackNounpackPragma.class);
+    @Nullable
+    public HaskellQName getQName() {
+        return PsiTreeUtil.getChildOfType(this, HaskellQName.class);
     }
 
 }

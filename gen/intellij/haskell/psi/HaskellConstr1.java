@@ -11,10 +11,10 @@ public interface HaskellConstr1 extends HaskellCompositeElement {
     @NotNull
     List<HaskellFielddecl> getFielddeclList();
 
+    @NotNull
+    List<HaskellPragma> getPragmaList();
+
     @Nullable
     HaskellQName getQName();
-
-    @NotNull
-    List<HaskellUnpackNounpackPragma> getUnpackNounpackPragmaList();
 
 }

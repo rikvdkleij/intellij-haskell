@@ -33,7 +33,7 @@ public interface HaskellTopDeclaration extends HaskellCompositeElement {
     HaskellNewtypeDeclaration getNewtypeDeclaration();
 
     @Nullable
-    HaskellOtherPragma getOtherPragma();
+    HaskellPragma getPragma();
 
     @Nullable
     HaskellTypeDeclaration getTypeDeclaration();

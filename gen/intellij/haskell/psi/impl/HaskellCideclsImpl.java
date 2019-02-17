@@ -44,26 +44,20 @@ public class HaskellCideclsImpl extends HaskellCompositeElementImpl implements H
 
     @Override
     @NotNull
-    public List<HaskellInlinelikePragma> getInlinelikePragmaList() {
-        return PsiTreeUtil.getChildrenOfTypeAsList(this, HaskellInlinelikePragma.class);
-    }
-
-    @Override
-    @NotNull
     public List<HaskellInstanceDeclaration> getInstanceDeclarationList() {
         return PsiTreeUtil.getChildrenOfTypeAsList(this, HaskellInstanceDeclaration.class);
     }
 
     @Override
     @NotNull
-    public List<HaskellMinimalPragma> getMinimalPragmaList() {
-        return PsiTreeUtil.getChildrenOfTypeAsList(this, HaskellMinimalPragma.class);
+    public List<HaskellNewtypeDeclaration> getNewtypeDeclarationList() {
+        return PsiTreeUtil.getChildrenOfTypeAsList(this, HaskellNewtypeDeclaration.class);
     }
 
     @Override
     @NotNull
-    public List<HaskellNewtypeDeclaration> getNewtypeDeclarationList() {
-        return PsiTreeUtil.getChildrenOfTypeAsList(this, HaskellNewtypeDeclaration.class);
+    public List<HaskellPragma> getPragmaList() {
+        return PsiTreeUtil.getChildrenOfTypeAsList(this, HaskellPragma.class);
     }
 
     @Override
@@ -76,18 +70,6 @@ public class HaskellCideclsImpl extends HaskellCompositeElementImpl implements H
     @NotNull
     public List<HaskellReservedId> getReservedIdList() {
         return PsiTreeUtil.getChildrenOfTypeAsList(this, HaskellReservedId.class);
-    }
-
-    @Override
-    @NotNull
-    public List<HaskellSccPragma> getSccPragmaList() {
-        return PsiTreeUtil.getChildrenOfTypeAsList(this, HaskellSccPragma.class);
-    }
-
-    @Override
-    @NotNull
-    public List<HaskellSpecializePragma> getSpecializePragmaList() {
-        return PsiTreeUtil.getChildrenOfTypeAsList(this, HaskellSpecializePragma.class);
     }
 
     @Override

@@ -11,16 +11,13 @@ public interface HaskellShebangLine extends HaskellCompositeElement {
     List<HaskellDotDot> getDotDotList();
 
     @NotNull
-    List<HaskellInlinelikePragma> getInlinelikePragmaList();
+    List<HaskellPragma> getPragmaList();
 
     @NotNull
     List<HaskellQName> getQNameList();
 
     @NotNull
     List<HaskellReservedId> getReservedIdList();
-
-    @NotNull
-    List<HaskellSccPragma> getSccPragmaList();
 
     @NotNull
     List<HaskellTextLiteral> getTextLiteralList();
