@@ -205,26 +205,34 @@ nhaddock_start      = {left_brace}{dash}{white_char}?{vertical_bar}
 
 <OPTIONS_GHC> {
     <<EOF>> {
-        int state = yystate();
         yybegin(YYINITIAL);
-        zzStartRead = optionsGhcStart;
         return HS_NOT_TERMINATED_OPTIONS_GHC;
     }
 
     {pragma_end} {
-        int state = yystate();
         yybegin(YYINITIAL);
-        zzStartRead = optionsGhcStart;
-        return HS_OPTIONS_GHC;
+        return HS_PRAGMA_END;
     }
 
-    .|{white_char}|{newline} {}
+    "," {
+        return HS_PRAGMA_SEP;
+    }
+
+    {character_literal}   { return HS_CHARACTER_LITERAL; }
+    {string_literal}      { return HS_STRING_LITERAL; }
+
+    ({white_char}|{newline}|{unispace}])+ {
+        return com.intellij.psi.TokenType.WHITE_SPACE;
+    }
+
+    [\-a-zA-Z0-9_=]+ {
+        return HS_ONE_PRAGMA;
+    }
 }
 
-{pragma_start} {white_char}* "OPTIONS_GHC" {
+{pragma_start} {
     yybegin(OPTIONS_GHC);
-    optionsGhcDepth = 0;
-    optionsGhcStart = getTokenStart();
+    return HS_PRAGMA_START;
 }
 
 
@@ -264,6 +272,8 @@ nhaddock_start      = {left_brace}{dash}{white_char}?{vertical_bar}
     {newline}             { return HS_NEWLINE; }
 
     {haddock}             { return HS_HADDOCK; }
+
+    // TODO: we maybe need to delete these two.
     {pragma_start}        { return HS_PRAGMA_START; }
     {pragma_end}          { return HS_PRAGMA_END; }
 
@@ -349,8 +359,6 @@ nhaddock_start      = {left_brace}{dash}{white_char}?{vertical_bar}
     {quote}               { return HS_QUOTE; }
 
     {directive}           { return HS_DIRECTIVE; }
-
-    {double_quote}        { return HS_DOUBLE_QUOTE; }
 
     {forall}              { return HS_FORALL; }
 

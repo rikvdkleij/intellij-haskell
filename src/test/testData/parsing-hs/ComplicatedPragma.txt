@@ -1,0 +1,70 @@
+Haskell file
+  HS_FILE_HEADER
+    HS_FILE_HEADER_PRAGMA
+      PsiElement(HaskellTokenType.PRAGMA_START)('{-#')
+      PsiWhiteSpace(' ')
+      HS_GENERAL_PRAGMA_CONTENT
+        PsiElement(HaskellTokenType.ONE_PRAGMA)('LANGUAGE')
+      PsiWhiteSpace(' ')
+      HS_GENERAL_PRAGMA_CONTENT
+        PsiElement(HaskellTokenType.ONE_PRAGMA)('TheWorldOverHeaven')
+      PsiElement(HaskellTokenType.PRAGMA_END)('#-}')
+    PsiElement(HaskellTokenType.NEWLINE)('\n')
+    HS_FILE_HEADER_PRAGMA
+      PsiElement(HaskellTokenType.PRAGMA_START)('{-#')
+      PsiWhiteSpace(' ')
+      HS_GENERAL_PRAGMA_CONTENT
+        PsiElement(HaskellTokenType.ONE_PRAGMA)('OPTIONS_GHC')
+      PsiWhiteSpace(' ')
+      HS_GENERAL_PRAGMA_CONTENT
+        PsiElement(HaskellTokenType.STRING_LITERAL)('"String"')
+      PsiWhiteSpace(' ')
+      PsiElement(HaskellTokenType.PRAGMA_END)('#-}')
+    PsiElement(HaskellTokenType.NEWLINE)('\n')
+    HS_FILE_HEADER_PRAGMA
+      PsiElement(HaskellTokenType.PRAGMA_START)('{-#')
+      PsiWhiteSpace(' ')
+      HS_GENERAL_PRAGMA_CONTENT
+        PsiElement(HaskellTokenType.ONE_PRAGMA)('OPTIONS_GHC')
+      PsiWhiteSpace(' ')
+      HS_GENERAL_PRAGMA_CONTENT
+        PsiElement(HaskellTokenType.STRING_LITERAL)('" \" Escape \' \n"')
+      PsiWhiteSpace(' ')
+      PsiElement(HaskellTokenType.PRAGMA_END)('#-}')
+    PsiElement(HaskellTokenType.NEWLINE)('\n')
+    HS_FILE_HEADER_PRAGMA
+      PsiElement(HaskellTokenType.PRAGMA_START)('{-#')
+      PsiWhiteSpace(' ')
+      HS_GENERAL_PRAGMA_CONTENT
+        PsiElement(HaskellTokenType.ONE_PRAGMA)('OPTIONS_GHC')
+      PsiWhiteSpace('\n    ')
+      HS_GENERAL_PRAGMA_CONTENT
+        PsiElement(HaskellTokenType.ONE_PRAGMA)('MULTI')
+      PsiWhiteSpace('\n    ')
+      HS_GENERAL_PRAGMA_CONTENT
+        PsiElement(HaskellTokenType.ONE_PRAGMA)('LINE')
+      PsiWhiteSpace('\n  ')
+      PsiElement(HaskellTokenType.PRAGMA_END)('#-}')
+    PsiElement(HaskellTokenType.NEWLINE)('\n')
+    PsiElement(HaskellTokenType.NEWLINE)('\n')
+    HS_FILE_HEADER_PRAGMA
+      PsiElement(HaskellTokenType.PRAGMA_START)('{-#')
+      PsiWhiteSpace(' ')
+      HS_GENERAL_PRAGMA_CONTENT
+        PsiElement(HaskellTokenType.ONE_PRAGMA)('LANGUAGE')
+      PsiWhiteSpace(' ')
+      HS_GENERAL_PRAGMA_CONTENT
+        PsiElement(HaskellTokenType.ONE_PRAGMA)('Comma')
+      HS_GENERAL_PRAGMA_CONTENT
+        PsiElement(HaskellTokenType.PRAGMA_SEP)(',')
+      HS_GENERAL_PRAGMA_CONTENT
+        PsiElement(HaskellTokenType.ONE_PRAGMA)('Separated')
+      HS_GENERAL_PRAGMA_CONTENT
+        PsiElement(HaskellTokenType.PRAGMA_SEP)(',')
+      HS_GENERAL_PRAGMA_CONTENT
+        PsiElement(HaskellTokenType.ONE_PRAGMA)('Pragmas')
+      PsiWhiteSpace(' ')
+      PsiElement(HaskellTokenType.PRAGMA_END)('#-}')
+  HS_MODULE_BODY
+    HS_IMPORT_DECLARATIONS
+      <empty list>
