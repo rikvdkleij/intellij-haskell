@@ -1,7 +1,6 @@
-package intellij.haskell.alex
+package intellij.haskell
 
 import com.intellij.testFramework.ParsingTestCase
-import intellij.haskell.HaskellParserDefinition
 
 class HaskellParsingTest extends ParsingTestCase("", "hs", new HaskellParserDefinition) {
   override def getTestDataPath: String = "src/test/testData/parsing-hs"
