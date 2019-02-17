@@ -114,9 +114,8 @@ class_declaration           ::= CLASS onls (scontext onls DOUBLE_RIGHT_ARROW)? o
                                     (onls VERTICAL_BAR onls ttype (onls COMMA onls ttype)*)? onls WHERE? onls cdecls? |
                                   CLASS onls scontext onls DOUBLE_RIGHT_ARROW onls (q_name+ | ttype) onls WHERE? onls cdecls?  // seen in Control.Lens.Internal.Indexed
 
-overlap_pragma              ::= pragma
-incoherent_pragma           ::= pragma
-instance_declaration        ::= INSTANCE onls (overlap_pragma | "OVERLAPPABLE_" | "OVERLAPPING_" | incoherent_pragma)? onls (var_con+ DOT)? onls (scontext onls DOUBLE_RIGHT_ARROW)? onls
+overlap_incoherent_pragma   ::= pragma
+instance_declaration        ::= INSTANCE onls ("OVERLAPPABLE_" | "OVERLAPPING_" | overlap_incoherent_pragma)? onls (var_con+ DOT)? onls (scontext onls DOUBLE_RIGHT_ARROW)? onls
                                     (type_equality | q_name onls inst (onls WHERE (onls cidecls)?)?)    // this way of using type equality in Data.Type.Equality
 
 type_equality               ::= q_name+ TILDE q_name+
@@ -147,7 +146,7 @@ private onls                ::= (&<<containsSpaces>> NEWLINE | DIRECTIVE NEWLINE
 private nls                 ::= (&<<containsSpaces>> NEWLINE)+                          // multiple new lines and spaces
 private oonls               ::= (&<<containsSpaces>> NEWLINE)?                         // optional one (new line and spaces)
 
-comments                    ::= COMMENT | NCOMMENT | HADDOCK | NHADDOCK | NOT_TERMINATED_COMMENT | NOT_TERMINATED_OPTIONS_GHC // rule is necessary to refer to various comment types in code
+comments                    ::= COMMENT | NCOMMENT | HADDOCK | NHADDOCK | NOT_TERMINATED_COMMENT // rule is necessary to refer to various comment types in code
 
 modid                       ::= (conid DOT)* conid {pin=1 stubClass = "intellij.haskell.psi.stubs.HaskellModidStub"}
 

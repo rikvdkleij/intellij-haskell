@@ -183,10 +183,6 @@ public class HaskellVisitor extends PsiElementVisitor {
         visitCompositeElement(o);
     }
 
-    public void visitIncoherentPragma(@NotNull HaskellIncoherentPragma o) {
-        visitCompositeElement(o);
-    }
-
     public void visitInlinelikePragma(@NotNull HaskellInlinelikePragma o) {
         visitCompositeElement(o);
     }
@@ -243,7 +239,7 @@ public class HaskellVisitor extends PsiElementVisitor {
         visitCompositeElement(o);
     }
 
-    public void visitOverlapPragma(@NotNull HaskellOverlapPragma o) {
+    public void visitOverlapIncoherentPragma(@NotNull HaskellOverlapIncoherentPragma o) {
         visitCompositeElement(o);
     }
 

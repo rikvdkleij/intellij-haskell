@@ -111,8 +111,6 @@ public class HaskellParser implements PsiParser, LightPsiParser {
             r = import_qualified_as(b, 0);
         } else if (t == HS_IMPORT_SPEC) {
             r = import_spec(b, 0);
-        } else if (t == HS_INCOHERENT_PRAGMA) {
-            r = incoherent_pragma(b, 0);
         } else if (t == HS_INLINELIKE_PRAGMA) {
             r = inlinelike_pragma(b, 0);
         } else if (t == HS_INST) {
@@ -141,8 +139,8 @@ public class HaskellParser implements PsiParser, LightPsiParser {
             r = newtype_declaration(b, 0);
         } else if (t == HS_OTHER_PRAGMA) {
             r = other_pragma(b, 0);
-        } else if (t == HS_OVERLAP_PRAGMA) {
-            r = overlap_pragma(b, 0);
+        } else if (t == HS_OVERLAP_INCOHERENT_PRAGMA) {
+            r = overlap_incoherent_pragma(b, 0);
         } else if (t == HS_Q_CON) {
             r = q_con(b, 0);
         } else if (t == HS_Q_CON_QUALIFIER) {
@@ -1497,7 +1495,7 @@ public class HaskellParser implements PsiParser, LightPsiParser {
     }
 
     /* ********************************************************** */
-    // COMMENT | NCOMMENT | HADDOCK | NHADDOCK | NOT_TERMINATED_COMMENT | NOT_TERMINATED_OPTIONS_GHC
+    // COMMENT | NCOMMENT | HADDOCK | NHADDOCK | NOT_TERMINATED_COMMENT
     public static boolean comments(PsiBuilder b, int l) {
         if (!recursion_guard_(b, l, "comments")) return false;
         boolean r;
@@ -1507,7 +1505,6 @@ public class HaskellParser implements PsiParser, LightPsiParser {
         if (!r) r = consumeToken(b, HS_HADDOCK);
         if (!r) r = consumeToken(b, HS_NHADDOCK);
         if (!r) r = consumeToken(b, HS_NOT_TERMINATED_COMMENT);
-        if (!r) r = consumeToken(b, HS_NOT_TERMINATED_OPTIONS_GHC);
         exit_section_(b, l, m, r, false, null);
         return r;
     }
@@ -3564,18 +3561,6 @@ public class HaskellParser implements PsiParser, LightPsiParser {
 
     /* ********************************************************** */
     // pragma
-    public static boolean incoherent_pragma(PsiBuilder b, int l) {
-        if (!recursion_guard_(b, l, "incoherent_pragma")) return false;
-        if (!nextTokenIs(b, HS_PRAGMA_START)) return false;
-        boolean r;
-        Marker m = enter_section_(b);
-        r = pragma(b, l + 1);
-        exit_section_(b, m, HS_INCOHERENT_PRAGMA, r);
-        return r;
-    }
-
-    /* ********************************************************** */
-    // pragma
     public static boolean inlinelike_pragma(PsiBuilder b, int l) {
         if (!recursion_guard_(b, l, "inlinelike_pragma")) return false;
         if (!nextTokenIs(b, HS_PRAGMA_START)) return false;
@@ -4033,7 +4018,7 @@ public class HaskellParser implements PsiParser, LightPsiParser {
     }
 
     /* ********************************************************** */
-    // INSTANCE onls (overlap_pragma | "OVERLAPPABLE_" | "OVERLAPPING_" | incoherent_pragma)? onls (var_con+ DOT)? onls (scontext onls DOUBLE_RIGHT_ARROW)? onls
+    // INSTANCE onls ("OVERLAPPABLE_" | "OVERLAPPING_" | overlap_incoherent_pragma)? onls (var_con+ DOT)? onls (scontext onls DOUBLE_RIGHT_ARROW)? onls
     //                                     (type_equality | q_name onls inst (onls WHERE (onls cidecls)?)?)
     public static boolean instance_declaration(PsiBuilder b, int l) {
         if (!recursion_guard_(b, l, "instance_declaration")) return false;
@@ -4053,22 +4038,21 @@ public class HaskellParser implements PsiParser, LightPsiParser {
         return r;
     }
 
-    // (overlap_pragma | "OVERLAPPABLE_" | "OVERLAPPING_" | incoherent_pragma)?
+    // ("OVERLAPPABLE_" | "OVERLAPPING_" | overlap_incoherent_pragma)?
     private static boolean instance_declaration_2(PsiBuilder b, int l) {
         if (!recursion_guard_(b, l, "instance_declaration_2")) return false;
         instance_declaration_2_0(b, l + 1);
         return true;
     }
 
-    // overlap_pragma | "OVERLAPPABLE_" | "OVERLAPPING_" | incoherent_pragma
+    // "OVERLAPPABLE_" | "OVERLAPPING_" | overlap_incoherent_pragma
     private static boolean instance_declaration_2_0(PsiBuilder b, int l) {
         if (!recursion_guard_(b, l, "instance_declaration_2_0")) return false;
         boolean r;
         Marker m = enter_section_(b);
-        r = overlap_pragma(b, l + 1);
-        if (!r) r = consumeToken(b, "OVERLAPPABLE_");
+        r = consumeToken(b, "OVERLAPPABLE_");
         if (!r) r = consumeToken(b, "OVERLAPPING_");
-        if (!r) r = incoherent_pragma(b, l + 1);
+        if (!r) r = overlap_incoherent_pragma(b, l + 1);
         exit_section_(b, m, null, r);
         return r;
     }
@@ -4772,13 +4756,13 @@ public class HaskellParser implements PsiParser, LightPsiParser {
 
     /* ********************************************************** */
     // pragma
-    public static boolean overlap_pragma(PsiBuilder b, int l) {
-        if (!recursion_guard_(b, l, "overlap_pragma")) return false;
+    public static boolean overlap_incoherent_pragma(PsiBuilder b, int l) {
+        if (!recursion_guard_(b, l, "overlap_incoherent_pragma")) return false;
         if (!nextTokenIs(b, HS_PRAGMA_START)) return false;
         boolean r;
         Marker m = enter_section_(b);
         r = pragma(b, l + 1);
-        exit_section_(b, m, HS_OVERLAP_PRAGMA, r);
+        exit_section_(b, m, HS_OVERLAP_INCOHERENT_PRAGMA, r);
         return r;
     }
 

@@ -36,20 +36,14 @@ public class HaskellInstanceDeclarationImpl extends HaskellCompositeElementImpl 
 
     @Override
     @Nullable
-    public HaskellIncoherentPragma getIncoherentPragma() {
-        return PsiTreeUtil.getChildOfType(this, HaskellIncoherentPragma.class);
-    }
-
-    @Override
-    @Nullable
     public HaskellInst getInst() {
         return PsiTreeUtil.getChildOfType(this, HaskellInst.class);
     }
 
     @Override
     @Nullable
-    public HaskellOverlapPragma getOverlapPragma() {
-        return PsiTreeUtil.getChildOfType(this, HaskellOverlapPragma.class);
+    public HaskellOverlapIncoherentPragma getOverlapIncoherentPragma() {
+        return PsiTreeUtil.getChildOfType(this, HaskellOverlapIncoherentPragma.class);
     }
 
     @Override
