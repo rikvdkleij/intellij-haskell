@@ -229,7 +229,7 @@ nhaddock_start      = {left_brace}{dash}{white_char}?{vertical_bar}
         return HS_ONE_PRAGMA;
     }
 
-    #|\-\} {
+    #|\-\}|\{ {
         yybegin(YYINITIAL);
         return com.intellij.psi.TokenType.BAD_CHARACTER;
     }

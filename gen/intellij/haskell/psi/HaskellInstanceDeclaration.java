@@ -15,13 +15,10 @@ public interface HaskellInstanceDeclaration extends HaskellDeclarationElement {
     HaskellCidecls getCidecls();
 
     @Nullable
-    HaskellIncoherentPragma getIncoherentPragma();
-
-    @Nullable
     HaskellInst getInst();
 
     @Nullable
-    HaskellOverlapPragma getOverlapPragma();
+    HaskellOverlapIncoherentPragma getOverlapIncoherentPragma();
 
     @Nullable
     HaskellQName getQName();
