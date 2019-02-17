@@ -206,7 +206,7 @@ nhaddock_start      = {left_brace}{dash}{white_char}?{vertical_bar}
 <OPTIONS_GHC> {
     <<EOF>> {
         yybegin(YYINITIAL);
-        return HS_NOT_TERMINATED_OPTIONS_GHC;
+        return com.intellij.psi.TokenType.BAD_CHARACTER;
     }
 
     {pragma_end} {
@@ -227,6 +227,11 @@ nhaddock_start      = {left_brace}{dash}{white_char}?{vertical_bar}
 
     [\-a-zA-Z0-9_=]+ {
         return HS_ONE_PRAGMA;
+    }
+
+    #|\-\} {
+        yybegin(YYINITIAL);
+        return com.intellij.psi.TokenType.BAD_CHARACTER;
     }
 }
 
@@ -272,10 +277,6 @@ nhaddock_start      = {left_brace}{dash}{white_char}?{vertical_bar}
     {newline}             { return HS_NEWLINE; }
 
     {haddock}             { return HS_HADDOCK; }
-
-    // TODO: we maybe need to delete these two.
-    {pragma_start}        { return HS_PRAGMA_START; }
-    {pragma_end}          { return HS_PRAGMA_END; }
 
     {comment}             { return HS_COMMENT; }
     {white_space}         { return com.intellij.psi.TokenType.WHITE_SPACE; }
