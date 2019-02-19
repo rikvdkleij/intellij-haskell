@@ -346,14 +346,14 @@ class LanguageExtensionIntentionAction(languageExtension: String) extends Haskel
     Option(PsiTreeUtil.findChildOfType(file, classOf[HaskellFileHeader])) match {
       case Some(fh) =>
         val lastPragmaElement = PsiTreeUtil.findChildrenOfType(fh, classOf[HaskellPragma]).asScala.lastOption.orNull
-        fh.addAfter(languagePragmaElement, lastPragmaElement)
-      case None =>
-        Option(file.getFirstChild) match {
-          case Some(c) =>
-            val addedPragmaElement = file.addBefore(languagePragmaElement, c)
-            file.addAfter(HaskellElementFactory.createNewLine(project), addedPragmaElement)
-          case None => file.add(languagePragmaElement)
+        if (lastPragmaElement == null) {
+          val p = fh.add(languagePragmaElement)
+          fh.addAfter(HaskellElementFactory.createNewLine(project), p)
+        } else {
+          val nl = fh.addAfter(HaskellElementFactory.createNewLine(project), lastPragmaElement)
+          fh.addAfter(languagePragmaElement, nl)
         }
+      case None => () // File header should always be there
     }
   }
 }
