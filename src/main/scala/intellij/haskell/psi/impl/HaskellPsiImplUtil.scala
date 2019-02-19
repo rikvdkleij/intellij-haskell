@@ -293,7 +293,7 @@ object HaskellPsiImplUtil {
       case de if shortened => StringUtil.shortenHaskellDeclaration(de.getText)
       case de => de.getText
     }
-    if (shortened && info.length > 50) {
+    if (shortened && info.length > 100) {
       getFirstLineDeclarationText(declarationElement) + "..."
     } else {
       info

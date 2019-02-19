@@ -232,7 +232,7 @@ class HaskellCompletionContributor extends CompletionContributor {
                 case Some(ne) => findLocalElements(element).filterNot(_ == ne)
                 case None => findLocalElements(element)
               }
-              resultSet.addAllElements(localElements.map(createLocalLookupElement).asJavaCollection)
+              resultSet.addAllElements(localElements.map(HaskellCompletionContributor.createLocalLookupElement).asJavaCollection)
             })
         }
       }
@@ -319,11 +319,6 @@ class HaskellCompletionContributor extends CompletionContributor {
   }
 
   import HaskellCompletionContributor._
-
-  private def createLocalLookupElement(namedElement: HaskellNamedElement): LookupElementBuilder = {
-    val typeSignature = HaskellComponentsManager.findTypeInfoForElement(namedElement).map(_.typeSignature)
-    LookupElementBuilder.create(namedElement.getName).withTypeText(typeSignature.map(StringUtil.unescapeXml).getOrElse("")).withIcon(HaskellIcons.HaskellSmallBlueLogo)
-  }
 
   private def findLocalElements(element: PsiElement) = {
     HaskellPsiUtil.findExpressionParent(element).toStream.flatMap(e => HaskellPsiUtil.findNamedElements(e)).filter {
@@ -571,6 +566,11 @@ object FileModuleIdentifiers {
 
 object HaskellCompletionContributor {
 
+  private def createLocalLookupElement(namedElement: HaskellNamedElement): LookupElementBuilder = {
+    val typeSignature = HaskellComponentsManager.findTypeInfoForElement(namedElement).map(_.typeSignature)
+    LookupElementBuilder.create(namedElement.getName).withTypeText(typeSignature.map(StringUtil.unescapeXml).getOrElse("")).withIcon(HaskellIcons.HaskellSmallBlueLogo)
+  }
+
   import scala.concurrent.ExecutionContext.Implicits.global
 
   // TODO Create cache for this one instead of the downstream one???
@@ -578,7 +578,7 @@ object HaskellCompletionContributor {
                                                doIt: (Iterable[ModuleIdentifier], Iterable[ModuleIdentifier]) => Iterable[A]): Iterable[A] = {
 
     val fileModuleIdentifiers = Future(FileModuleIdentifiers.getModuleIdentifiers(psiFile))
-    val moduleIdentifiers = moduleName.map(mn => HaskellComponentsManager.findTopLevelModuleIdentifiers(psiFile, mn)).getOrElse(Future.successful(None))
+    val moduleIdentifiers = Future.successful(Some(Iterable()))
 
     val result = for {
       r1 <- fileModuleIdentifiers
@@ -755,13 +755,26 @@ object HaskellCompletionContributor {
   }
 
   private def findRemainingTopLeveLookupElements(psiFile: PsiFile, moduleName: Option[String], localIdentifiers: Iterable[ModuleIdentifier]) = {
-    val allLocalNames = localIdentifiers.map(_.name)
-    ApplicationUtil.runReadAction(HaskellPsiUtil.findTopLevelDeclarations(psiFile)).filterNot(d => d.isInstanceOf[HaskellModuleDeclaration] || allLocalNames.exists(n => getDeclarationName(d).contains(n))).
-      map(d => createLocalTopLevelLookupElement(getDeclarationName(d).getOrElse("-"), ApplicationUtil.runReadAction(d.getPresentation.getPresentableText), moduleName.getOrElse("-")))
+    def createTopLevelDeclarationLookupElement(e: HaskellNamedElement, d: HaskellDeclarationElement) = {
+      createLocalTopLevelLookupElement(ApplicationUtil.runReadAction(e.getName), ApplicationUtil.runReadAction(d.getPresentation.getPresentableText), moduleName.getOrElse("-"))
+    }
+
+    ApplicationUtil.runReadAction(HaskellPsiUtil.findTopLevelDeclarations(psiFile)).filterNot(_.isInstanceOf[HaskellModuleDeclaration]).
+      flatMap(d => getIdentifiers(d).map { e =>
+        if (HaskellPsiUtil.findDataDeclarationElementParent(e).isDefined | HaskellPsiUtil.findNewTypeDeclarationElementParent(e).isDefined) {
+          d match {
+            case _: HaskellDataDeclaration => createTopLevelDeclarationLookupElement(e, d)
+            case _: HaskellNewtypeDeclaration => createTopLevelDeclarationLookupElement(e, d)
+            case _ => createLocalLookupElement(e)
+          }
+        } else {
+          createTopLevelDeclarationLookupElement(e, d)
+        }
+      })
   }
 
-  private def getDeclarationName(declarationElement: HaskellDeclarationElement) = {
-    ApplicationUtil.runReadAction(declarationElement.getIdentifierElements.headOption.map(_.getName))
+  private def getIdentifiers(declarationElement: HaskellDeclarationElement) = {
+    ApplicationUtil.runReadAction(declarationElement.getIdentifierElements)
   }
 
   private def createQualifiedModuleIdentifiers(importInfo: ImportInfo, moduleIdentifiers: Iterable[ModuleIdentifier]): Iterable[ModuleIdentifier] = {

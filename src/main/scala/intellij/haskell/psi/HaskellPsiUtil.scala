@@ -167,6 +167,20 @@ object HaskellPsiUtil {
     }
   }
 
+  def findDataDeclarationElementParent(psiElement: PsiElement): Option[HaskellDataDeclaration] = {
+    psiElement match {
+      case e: HaskellDataDeclaration => Some(e)
+      case e => Option(PsiTreeUtil.findFirstParent(e, DataDeclarationElementCondition)).map(_.asInstanceOf[HaskellDataDeclaration])
+    }
+  }
+
+  def findNewTypeDeclarationElementParent(psiElement: PsiElement): Option[HaskellNewtypeDeclaration] = {
+    psiElement match {
+      case e: HaskellNewtypeDeclaration => Some(e)
+      case e => Option(PsiTreeUtil.findFirstParent(e, NewTypeDeclarationElementCondition)).map(_.asInstanceOf[HaskellNewtypeDeclaration])
+    }
+  }
+
   def findTopLevelTypeSignatures(psiFile: PsiFile): Iterable[HaskellTypeSignature] = {
     PsiTreeUtil.findChildrenOfType(psiFile, classOf[HaskellTypeSignature]).asScala.filter(_.getParent.getNode.getElementType == HS_TOP_DECLARATION)
   }

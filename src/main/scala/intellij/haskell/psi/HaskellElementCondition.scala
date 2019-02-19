@@ -84,6 +84,24 @@ object HaskellElementCondition {
     }
   }
 
+  final val DataDeclarationElementCondition = new Condition[PsiElement]() {
+    override def value(psiElement: PsiElement): Boolean = {
+      psiElement match {
+        case _: HaskellDataDeclaration => true
+        case _ => false
+      }
+    }
+  }
+
+  final val NewTypeDeclarationElementCondition = new Condition[PsiElement]() {
+    override def value(psiElement: PsiElement): Boolean = {
+      psiElement match {
+        case _: HaskellNewtypeDeclaration => true
+        case _ => false
+      }
+    }
+  }
+
   final val HighestDeclarationElementCondition = new Condition[PsiElement]() {
     override def value(psiElement: PsiElement): Boolean = {
       psiElement match {

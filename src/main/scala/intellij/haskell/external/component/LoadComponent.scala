@@ -90,7 +90,6 @@ private[component] object LoadComponent {
               if (!loadFailed) {
                 NameInfoComponent.invalidate(psiFile)
                 moduleName.foreach(mn => {
-                  BrowseModuleComponent.invalidateTopLevel(project, mn, psiFile)
                   BrowseModuleComponent.invalidateExportedModuleName(project, mn)
                   FileModuleIdentifiers.invalidate(mn)
                 })
