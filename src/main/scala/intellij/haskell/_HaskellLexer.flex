@@ -219,16 +219,16 @@ nhaddock_start      = {left_brace}{dash}{white_char}?{vertical_bar}
 
     {character_literal}   { return HS_CHARACTER_LITERAL; }
     {string_literal}      { return HS_STRING_LITERAL; }
+    {newline}             { return HS_NEWLINE; }
+    {dash}                { return HS_DASH; }
+    {hash}                { return HS_HASH; }
+    {white_space}         { return com.intellij.psi.TokenType.WHITE_SPACE; }
 
-    ({white_char}|{newline}|{unispace}])+ {
-        return com.intellij.psi.TokenType.WHITE_SPACE;
-    }
-
-    [\-a-zA-Z0-9_=]+ {
+    [\-a-zA-Z0-9_=\(\)\:]+ {
         return HS_ONE_PRAGMA;
     }
 
-    #|\-\}|\{ {
+    {left_brace}|{right_brace} {
         yybegin(YYINITIAL);
         return com.intellij.psi.TokenType.BAD_CHARACTER;
     }

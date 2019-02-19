@@ -57,7 +57,7 @@ program                     ::= onl shebang_line? onl file_header onl module_bod
 shebang_line                ::= "#!" general_id+
 file_header                 ::= (pragma onl)*
 pragma                      ::= PRAGMA_START general_pragma_content* PRAGMA_END {pin=1}
-general_pragma_content      ::= ONE_PRAGMA | PRAGMA_SEP | CHARACTER_LITERAL | STRING_LITERAL
+general_pragma_content      ::= ONE_PRAGMA | PRAGMA_SEP | CHARACTER_LITERAL | STRING_LITERAL | NEWLINE | DASH | HASH
 
 module_body                 ::= module_declaration onl body | onl body
 module_declaration          ::= MODULE modid onl pragma? onl (exports onl)? WHERE

@@ -3001,7 +3001,7 @@ public class HaskellParser implements PsiParser, LightPsiParser {
     }
 
     /* ********************************************************** */
-    // ONE_PRAGMA | PRAGMA_SEP | CHARACTER_LITERAL | STRING_LITERAL
+    // ONE_PRAGMA | PRAGMA_SEP | CHARACTER_LITERAL | STRING_LITERAL | NEWLINE | DASH | HASH
     public static boolean general_pragma_content(PsiBuilder b, int l) {
         if (!recursion_guard_(b, l, "general_pragma_content")) return false;
         boolean r;
@@ -3010,6 +3010,9 @@ public class HaskellParser implements PsiParser, LightPsiParser {
         if (!r) r = consumeToken(b, HS_PRAGMA_SEP);
         if (!r) r = consumeToken(b, HS_CHARACTER_LITERAL);
         if (!r) r = consumeToken(b, HS_STRING_LITERAL);
+        if (!r) r = consumeToken(b, HS_NEWLINE);
+        if (!r) r = consumeToken(b, HS_DASH);
+        if (!r) r = consumeToken(b, HS_HASH);
         exit_section_(b, l, m, r, false, null);
         return r;
     }

@@ -105,6 +105,7 @@ public interface HaskellTypes {
     IElementType HS_COMMENT = new HaskellTokenType("COMMENT");
     IElementType HS_CONSYM_ID = new HaskellTokenType("CONSYM_ID");
     IElementType HS_CON_ID = new HaskellTokenType("CON_ID");
+    IElementType HS_DASH = new HaskellTokenType("DASH");
     IElementType HS_DATA = new HaskellTokenType("DATA");
     IElementType HS_DECIMAL = new HaskellTokenType("DECIMAL");
     IElementType HS_DEFAULT = new HaskellTokenType("DEFAULT");
@@ -120,6 +121,7 @@ public interface HaskellTypes {
     IElementType HS_FOREIGN_EXPORT = new HaskellTokenType("FOREIGN_EXPORT");
     IElementType HS_FOREIGN_IMPORT = new HaskellTokenType("FOREIGN_IMPORT");
     IElementType HS_HADDOCK = new HaskellTokenType("HADDOCK");
+    IElementType HS_HASH = new HaskellTokenType("HASH");
     IElementType HS_HEXADECIMAL = new HaskellTokenType("HEXADECIMAL");
     IElementType HS_IF = new HaskellTokenType("IF");
     IElementType HS_IMPORT = new HaskellTokenType("IMPORT");
