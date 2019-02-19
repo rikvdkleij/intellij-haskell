@@ -160,8 +160,12 @@ object HaskellComponentsManager {
     HaskellProjectFileInfoComponent.invalidate(psiFile)
   }
 
-  def invalidateDefinitionLocationCache(elements: Seq[HaskellQualifiedNameElement]): Unit = {
-    DefinitionLocationComponent.invalidate(elements)
+  def refreshDefinitionLocationCache(elements: Seq[HaskellQualifiedNameElement]): Unit = {
+    DefinitionLocationComponent.refresh(elements)
+  }
+
+  def invalidateDefinitionLocationCache(psiFile: PsiFile): Unit = {
+    DefinitionLocationComponent.invalidate(psiFile)
   }
 
   def findProjectModulePackageNames(project: Project): Seq[(Module, String)] = {

@@ -43,7 +43,17 @@ private[component] object DefinitionLocationComponent {
 
   type DefinitionLocationResult = Either[NoInfo, DefinitionLocation]
 
-  private final val Cache: AsyncLoadingCache[Key, DefinitionLocationResult] = Scaffeine().buildAsync((k: Key) => findDefinitionLocationResult(k))
+  private final val Cache: AsyncLoadingCache[Key, DefinitionLocationResult] = Scaffeine().buildAsync((k: Key) => {
+    if (ApplicationManager.getApplication.isReadAccessAllowed) {
+      findDefinitionLocationResult(k)
+    } else {
+      ApplicationUtil.runInReadActionWithWriteActionPriority(k.psiFile.getProject, findDefinitionLocationResult(k), "find definition location", 1.second) match {
+        case Right(x) => x
+        case Left(noInfo) => Left(noInfo)
+      }
+    }
+  }
+  )
 
   def findDefinitionLocation(psiFile: PsiFile, qualifiedNameElement: HaskellQualifiedNameElement, importQualifier: Option[String]): DefinitionLocationResult = {
     val key = Key(psiFile, qualifiedNameElement, importQualifier)
@@ -67,10 +77,10 @@ private[component] object DefinitionLocationComponent {
     }.keys.map(k => (k.psiFile, k.qualifiedNameElement)).toSeq
   }
 
-  def invalidate(elements: Seq[HaskellQualifiedNameElement]): Unit = {
+  def refresh(elements: Seq[HaskellQualifiedNameElement]): Unit = {
     val synchronousCache = Cache.synchronous()
     val keys = synchronousCache.asMap().keys.filter(k => elements.contains(k.qualifiedNameElement))
-    synchronousCache.invalidateAll(keys)
+    keys.foreach(synchronousCache.refresh)
   }
 
   private def checkValidKey(key: Key): Boolean = {
@@ -86,9 +96,7 @@ private[component] object DefinitionLocationComponent {
   }
 
   private def checkValidName(key: Key, definitionLocation: DefinitionLocation): Boolean = {
-    ApplicationUtil.runReadAction(key.qualifiedNameElement.getIdentifierElement.getName) == definitionLocation.originalName &&
-      ApplicationUtil.runReadAction(definitionLocation.namedElement.getName) == definitionLocation.originalName &&
-      definitionLocation.originalQualifiedName.exists(qn => ApplicationUtil.runReadAction(key.qualifiedNameElement.getName == qn))
+    ApplicationUtil.runReadAction(Option(key.qualifiedNameElement.getIdentifierElement.getName)).contains(ApplicationUtil.runReadAction(definitionLocation.namedElement.getName))
   }
 
   def invalidate(psiFile: PsiFile): Unit = {
@@ -118,7 +126,7 @@ private[component] object DefinitionLocationComponent {
 
     ProgressManager.checkCanceled()
 
-    val name = identifierElement.getName
+    val name = ApplicationUtil.runReadAction(identifierElement.getName)
     if (name.headOption.exists(_.isUpper)) {
       createDefinitionLocationResult(project, psiFile, key, name, withoutLastColumn = true)
     } else {

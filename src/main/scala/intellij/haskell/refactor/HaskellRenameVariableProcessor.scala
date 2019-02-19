@@ -19,21 +19,26 @@ package intellij.haskell.refactor
 import java.util
 
 import com.intellij.psi.{PsiElement, PsiFile}
-import com.intellij.refactoring.listeners.RefactoringElementListener
 import com.intellij.refactoring.rename.RenamePsiElementProcessor
 import intellij.haskell.HaskellNotificationGroup
 import intellij.haskell.external.component.HaskellComponentsManager
-import intellij.haskell.util.{HaskellFileUtil, HaskellProjectUtil, ScalaUtil}
+import intellij.haskell.psi.HaskellPsiUtil
+import intellij.haskell.util.HaskellProjectUtil
 
 class HaskellRenameVariableProcessor extends RenamePsiElementProcessor {
 
   // Target element is element of the definition
   // Invalidate cache is necessary because during (inline) renaming the id of psi element is changed
   override def prepareRenaming(targetElement: PsiElement, newName: String, allRenames: util.Map[PsiElement, String]): Unit = {
-    val targetFile = targetElement.getContainingFile.getOriginalFile
-    val usageElements = HaskellComponentsManager.findReferencesInCache(targetFile).filterNot(_._1 == targetFile).map(_._2)
-    if (usageElements.nonEmpty) {
-      HaskellComponentsManager.invalidateDefinitionLocationCache(usageElements)
+    val oldName = HaskellPsiUtil.findNamedElement(targetElement).map(_.getName)
+    oldName match {
+      case Some(n) =>
+        val targetFile = targetElement.getContainingFile.getOriginalFile
+        val usageElements = HaskellComponentsManager.findReferencesInCache(targetFile).filterNot(_._1 == targetFile).filter(_._2.getIdentifierElement.getName == n).map(_._2)
+        if (usageElements.nonEmpty) {
+          HaskellComponentsManager.refreshDefinitionLocationCache(usageElements)
+        }
+      case None => ()
     }
   }
 
@@ -54,13 +59,6 @@ class HaskellRenameVariableProcessor extends RenamePsiElementProcessor {
               }
           })
       }
-    }
-  }
-
-  override def getPostRenameCallback(element: PsiElement, newName: String, elementListener: RefactoringElementListener): Runnable = {
-    ScalaUtil.runnable {
-      val project = element.getProject
-      HaskellFileUtil.saveAllFiles(project)
     }
   }
 }
