@@ -149,7 +149,9 @@ object StackProjectManager {
           HaskellNotificationGroup.logInfoEvent(project, "Initializing Haskell project")
         }
 
-        installHaskellTools(project, update = false)
+        if (getStackProjectManager(project).exists(_.installingHaskellTools == false)) {
+          installHaskellTools(project, update = false)
+        }
 
         ProgressManager.getInstance().run(new Task.Backgroundable(project, "Building project, starting REPL(s) and preloading cache", false, PerformInBackgroundOption.ALWAYS_BACKGROUND) {
 
