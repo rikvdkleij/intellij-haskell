@@ -33,7 +33,7 @@
             toShortenFQNames="false">
     <variable name="EXPR" expression="" defaultValue="" alwaysStopAt="true" />
     <context>
-      <option name="HASKELL_GLOB_DEF" value="true" />
+        <option name="HASKELL_FILE" value="true"/>
     </context>
   </template>
   <template name="deriving"
@@ -42,7 +42,7 @@
             toReformat="true" toShortenFQNames="true">
     <variable name="EXPR" expression="" defaultValue="" alwaysStopAt="true" />
     <context>
-      <option name="HASKELL_GLOB_DEF" value="true" />
+        <option name="HASKELL_FILE" value="true"/>
     </context>
   </template>
   <template name="class"
@@ -52,7 +52,7 @@
             toShortenFQNames="true">
     <variable name="EXPR" expression="" defaultValue="" alwaysStopAt="true" />
     <context>
-      <option name="HASKELL_GLOB_DEF" value="true" />
+        <option name="HASKELL_FILE" value="true"/>
     </context>
   </template>
   <template name="data"
@@ -62,7 +62,7 @@
             toShortenFQNames="true">
     <variable name="NAME" expression="" defaultValue="" alwaysStopAt="true" />
     <context>
-      <option name="HASKELL_GLOB_DEF" value="true" />
+        <option name="HASKELL_FILE" value="true"/>
     </context>
   </template>
   <template name="datag"
@@ -72,7 +72,7 @@
             toShortenFQNames="true">
     <variable name="NAME" expression="" defaultValue="" alwaysStopAt="true" />
     <context>
-      <option name="HASKELL_GLOB_DEF" value="true" />
+        <option name="HASKELL_FILE" value="true"/>
     </context>
   </template>
 </templateSet>
