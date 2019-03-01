@@ -224,7 +224,7 @@ nhaddock_start      = {left_brace}{dash}{white_char}?{vertical_bar}
     {hash}                { return HS_HASH; }
     {white_space}         { return com.intellij.psi.TokenType.WHITE_SPACE; }
 
-    [\-a-zA-Z0-9_=\(\):<>*/|'!?\.+\^&%$#@\[\];,~\\]+ {
+    [\-a-zA-Z0-9_=\(\):<>*/|'!?\.+\^&%$#@\[\];,~\\`]+ {
         return HS_ONE_PRAGMA;
     }
 
