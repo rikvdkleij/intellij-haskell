@@ -1,5 +1,7 @@
 package intellij.haskell.testIntegration
 
+import java.util.Properties
+
 import com.intellij.codeInsight.CodeInsightBundle
 import com.intellij.codeInsight.intention.PsiElementBaseIntentionAction
 import com.intellij.ide.fileTemplates.FileTemplateManager
@@ -35,10 +37,12 @@ class CreateHaskellTestAction extends PsiElementBaseIntentionAction {
         val testTemplate = FileTemplateManager.getInstance(project).getInternalTemplate("Haskell Test Module")
 
         val createTestFileAction = new CreateHaskellFileAction()
+        val additionalProps = new Properties()
+        additionalProps.setProperty("SUT_NAME", moduleName)
 
         // If the user left the dialog by any other mean than "OK" then abort everything
         if (!createTestDialog.showAndGet) return
-        val testFileCreation: Runnable = () => createTestFileAction.createFileFromTemplate(createTestDialog.getModuleName, testTemplate, testRootDirectory)
+        val testFileCreation: Runnable = () => createTestFileAction.createFileFromTemplate(createTestDialog.getModuleName, testTemplate, testRootDirectory, additionalProps)
         try {
           WriteCommandAction.runWriteCommandAction(project, testFileCreation)
         } catch {

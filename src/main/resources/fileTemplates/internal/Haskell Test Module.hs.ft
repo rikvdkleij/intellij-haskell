@@ -1,2 +1,3 @@
 module ${NAME} where
 
+import qualified ${SUT_NAME} as SUT
