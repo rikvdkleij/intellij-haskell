@@ -17,6 +17,7 @@
 package intellij.haskell.action
 
 import java.text.ParseException
+import java.util.Properties
 
 import com.intellij.ide.actions.CreateFileFromTemplateDialog.Builder
 import com.intellij.ide.actions.{CreateFileAction, CreateFileFromTemplateAction}
@@ -66,6 +67,10 @@ class CreateHaskellFileAction extends CreateFileFromTemplateAction(CreateHaskell
   }
 
   override def createFileFromTemplate(fileName: String, template: FileTemplate, fileDir: PsiDirectory): PsiFile = {
+    createFileFromTemplate(fileName, template, fileDir, new Properties())
+  }
+
+  def createFileFromTemplate(fileName: String, template: FileTemplate, fileDir: PsiDirectory, additionalProps: Properties): PsiFile = {
     val path = HaskellFileUtil.getAbsolutePath(fileDir.getVirtualFile)
     val pathItems = ProjectRootManager.getInstance(fileDir.getProject)
       .getContentSourceRoots
@@ -88,9 +93,9 @@ class CreateHaskellFileAction extends CreateFileFromTemplateAction(CreateHaskell
         targetDir = Option(targetDir.findSubdirectory(dirName)).getOrElse(targetDir.createSubdirectory(dirName))
       })
 
-      createFileFromTemplate(pathItems.map(_ ++ prefixes), moduleName, template, targetDir)
+      createFileFromTemplate(pathItems.map(_ ++ prefixes), moduleName, template, targetDir, additionalProps)
     } else {
-      createFileFromTemplate(pathItems, fileName, template, fileDir)
+      createFileFromTemplate(pathItems, fileName, template, fileDir, additionalProps)
     }
 
     createFileResult match {
@@ -101,7 +106,7 @@ class CreateHaskellFileAction extends CreateFileFromTemplateAction(CreateHaskell
     }
   }
 
-  private def createFileFromTemplate(pathItems: Option[List[String]], fileName: String, template: FileTemplate, fileDir: PsiDirectory): Option[(PsiFile, String)] = {
+  private def createFileFromTemplate(pathItems: Option[List[String]], fileName: String, template: FileTemplate, fileDir: PsiDirectory, additionalProps: Properties): Option[(PsiFile, String)] = {
     pathItems match {
       case None => None
       case Some(items) =>
@@ -120,6 +125,7 @@ class CreateHaskellFileAction extends CreateFileFromTemplateAction(CreateHaskell
         // Patch props with custom property.
         val props = FileTemplateManager.getInstance(project).getDefaultProperties()
         props.setProperty("NAME", nameWithmodulePrefix)
+        props.putAll(additionalProps)
 
         val element = FileTemplateUtil.createFromTemplate(template, name, props, dir)
         val psiFile = element.getContainingFile.getOriginalFile
