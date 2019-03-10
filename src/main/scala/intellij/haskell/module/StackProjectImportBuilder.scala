@@ -30,7 +30,6 @@ import com.intellij.openapi.vfs.LocalFileSystem
 import com.intellij.packaging.artifacts.ModifiableArtifactModel
 import com.intellij.projectImport.ProjectImportBuilder
 import icons.HaskellIcons
-import intellij.haskell.HaskellNotificationGroup
 import intellij.haskell.stackyaml.StackYamlComponent
 import intellij.haskell.util.{ApplicationUtil, HaskellFileUtil, HaskellProjectUtil, ScalaUtil}
 import javax.swing.Icon
@@ -112,7 +111,7 @@ object StackProjectImportBuilder {
 class ParentModuleBuilder(val project: Project) extends ModuleBuilder {
   override def isOpenProjectSettingsAfter = true
 
-  override def canCreateModule = true
+  override def canCreateModule = false
 
   override def setupRootModel(modifiableRootModel: ModifiableRootModel): Unit = {
     modifiableRootModel.addContentEntry(HaskellFileUtil.getUrlByPath(project.getBasePath))
