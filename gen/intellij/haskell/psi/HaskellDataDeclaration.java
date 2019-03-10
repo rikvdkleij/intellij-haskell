@@ -15,13 +15,7 @@ public interface HaskellDataDeclaration extends HaskellDataConstructorDeclaratio
     HaskellCcontext getCcontext();
 
     @NotNull
-    List<HaskellConstr1> getConstr1List();
-
-    @NotNull
-    List<HaskellConstr2> getConstr2List();
-
-    @NotNull
-    List<HaskellConstr3> getConstr3List();
+    List<HaskellConstr> getConstrList();
 
     @Nullable
     HaskellDataDeclarationDeriving getDataDeclarationDeriving();

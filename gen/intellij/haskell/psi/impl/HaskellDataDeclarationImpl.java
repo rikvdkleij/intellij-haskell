@@ -36,20 +36,8 @@ public class HaskellDataDeclarationImpl extends HaskellCompositeElementImpl impl
 
     @Override
     @NotNull
-    public List<HaskellConstr1> getConstr1List() {
-        return PsiTreeUtil.getChildrenOfTypeAsList(this, HaskellConstr1.class);
-    }
-
-    @Override
-    @NotNull
-    public List<HaskellConstr2> getConstr2List() {
-        return PsiTreeUtil.getChildrenOfTypeAsList(this, HaskellConstr2.class);
-    }
-
-    @Override
-    @NotNull
-    public List<HaskellConstr3> getConstr3List() {
-        return PsiTreeUtil.getChildrenOfTypeAsList(this, HaskellConstr3.class);
+    public List<HaskellConstr> getConstrList() {
+        return PsiTreeUtil.getChildrenOfTypeAsList(this, HaskellConstr.class);
     }
 
     @Override

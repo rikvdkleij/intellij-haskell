@@ -275,13 +275,13 @@ object HaskellPsiImplUtil {
   def getItemPresentableText(element: PsiElement, shortened: Boolean = true): String = {
     HaskellPsiUtil.findNamedElement(element) match {
       case Some(namedElement) =>
-        HaskellPsiUtil.findHighestDeclarationElementParent(element) match {
-          case Some(de) if de.getIdentifierElements.exists(_ == namedElement) => HaskellPsiUtil.findDeclarationElementParent(namedElement).map(de => getDeclarationInfo(de, shortened)).
-            orElse(HaskellPsiUtil.findExpressionParent(namedElement).map(e => StringUtil.removeCommentsAndWhiteSpaces(e.getText))).
+        HaskellPsiUtil.findHighestDeclarationElement(element) match {
+          case Some(de) if de.getIdentifierElements.exists(_ == namedElement) => HaskellPsiUtil.findDeclarationElement(namedElement).map(de => getDeclarationInfo(de, shortened)).
+            orElse(HaskellPsiUtil.findExpression(namedElement).map(e => StringUtil.removeCommentsAndWhiteSpaces(e.getText))).
             getOrElse(s"${namedElement.getName} `in` ${getDeclarationInfo(de, shortened)}")
           case Some(de) => s"${namedElement.getName} `in` ${getDeclarationInfo(de, shortened)}"
-          case _ if shortened && HaskellPsiUtil.findExpressionParent(namedElement).isDefined => getContainingLineText(namedElement).getOrElse(namedElement.getName).trim
-          case _ => HaskellPsiUtil.findExpressionParent(namedElement).map(_.getText).getOrElse(namedElement.getName)
+          case _ if shortened && HaskellPsiUtil.findExpression(namedElement).isDefined => getContainingLineText(namedElement).getOrElse(namedElement.getName).trim
+          case _ => HaskellPsiUtil.findExpression(namedElement).map(_.getText).getOrElse(namedElement.getName)
         }
       case _ => element.getText
     }
@@ -308,7 +308,7 @@ object HaskellPsiImplUtil {
     val psiFile = namedElement.getContainingFile.getOriginalFile
     for {
       doc <- HaskellFileUtil.findDocument(psiFile)
-      element <- HaskellPsiUtil.findQualifiedNameParent(namedElement)
+      element <- HaskellPsiUtil.findQualifiedName(namedElement)
       start = findNewline(element, e => e.getPrevSibling).getTextOffset
       end = findNewline(element, e => e.getNextSibling).getTextOffset
     } yield StringUtil.removeCommentsAndWhiteSpaces(doc.getCharsSequence.subSequence(start, end).toString.trim)
@@ -332,12 +332,13 @@ object HaskellPsiImplUtil {
   }
 
   def getIdentifierElements(dataDeclaration: HaskellDataDeclaration): Seq[HaskellNamedElement] = {
+    val constrs = dataDeclaration.getConstrList.asScala
     dataDeclaration.getSimpletype.getIdentifierElements ++
       dataDeclaration.getTypeSignatureList.asScala.flatMap(_.getIdentifierElements) ++
-      dataDeclaration.getConstr1List.asScala.flatMap(c => Option(c.getQName).map(_.getIdentifierElement).toSeq ++
+      constrs.flatMap(constr => Option(constr.getConstr1)).flatMap(c => Option(c.getQName).map(_.getIdentifierElement) ++
         c.getFielddeclList.asScala.flatMap(_.getQNames.getQNameList.asScala.headOption.map(_.getIdentifierElement))) ++
-      dataDeclaration.getConstr3List.asScala.flatMap(_.getTtypeList.asScala.headOption.flatMap(_.getQNameList.asScala.headOption.map(_.getIdentifierElement))) ++
-      dataDeclaration.getConstr2List.asScala.flatMap(c => Option(c.getQName).map(_.getIdentifierElement).orElse(c.getTtypeList.asScala.headOption.flatMap(_.getQNameList.asScala.headOption.map(_.getIdentifierElement))))
+      constrs.flatMap(constr => Option(constr.getConstr3)).flatMap(_.getTtypeList.asScala.headOption.flatMap(_.getQNameList.asScala.headOption.map(_.getIdentifierElement))) ++
+      constrs.flatMap(constr => Option(constr.getConstr2)).flatMap(c => Option(c.getQName).map(_.getIdentifierElement).orElse(c.getTtypeList.asScala.headOption.flatMap(_.getQNameList.asScala.headOption.map(_.getIdentifierElement))))
   }
 
   def getIdentifierElements(typeDeclaration: HaskellTypeDeclaration): Seq[HaskellNamedElement] = {

@@ -8,7 +8,7 @@ import org.jetbrains.annotations.NotNull;
 
 import java.util.List;
 
-public interface HaskellQConQualifier2 extends HaskellQualifierElement {
+public interface HaskellQConQualifier2 extends HaskellQualifierElement, HaskellNamedElement {
 
     @NotNull
     List<HaskellConid> getConidList();

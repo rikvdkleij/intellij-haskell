@@ -20,6 +20,7 @@ public interface HaskellTypes {
     IElementType HS_CON = new HaskellCompositeElementType("HS_CON");
     IElementType HS_CONID = HaskellElementTypeFactory.factory("HS_CONID");
     IElementType HS_CONOP = new HaskellCompositeElementType("HS_CONOP");
+    IElementType HS_CONSTR = new HaskellCompositeElementType("HS_CONSTR");
     IElementType HS_CONSTR_1 = new HaskellCompositeElementType("HS_CONSTR_1");
     IElementType HS_CONSTR_2 = new HaskellCompositeElementType("HS_CONSTR_2");
     IElementType HS_CONSTR_3 = new HaskellCompositeElementType("HS_CONSTR_3");
@@ -193,6 +194,8 @@ public interface HaskellTypes {
                 return new HaskellConidImpl(node);
             } else if (type == HS_CONOP) {
                 return new HaskellConopImpl(node);
+            } else if (type == HS_CONSTR) {
+                return new HaskellConstrImpl(node);
             } else if (type == HS_CONSTR_1) {
                 return new HaskellConstr1Impl(node);
             } else if (type == HS_CONSTR_2) {

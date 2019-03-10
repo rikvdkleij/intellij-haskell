@@ -47,6 +47,8 @@ public class HaskellParser implements PsiParser, LightPsiParser {
             r = conid(b, 0);
         } else if (t == HS_CONOP) {
             r = conop(b, 0);
+        } else if (t == HS_CONSTR) {
+            r = constr(b, 0);
         } else if (t == HS_CONSTR_1) {
             r = constr1(b, 0);
         } else if (t == HS_CONSTR_2) {
@@ -1547,13 +1549,15 @@ public class HaskellParser implements PsiParser, LightPsiParser {
 
     /* ********************************************************** */
     // type_signature | constr1 | constr2 | constr3
-    static boolean constr(PsiBuilder b, int l) {
+    public static boolean constr(PsiBuilder b, int l) {
         if (!recursion_guard_(b, l, "constr")) return false;
         boolean r;
+        Marker m = enter_section_(b, l, _NONE_, HS_CONSTR, "<constr>");
         r = type_signature(b, l + 1);
         if (!r) r = constr1(b, l + 1);
         if (!r) r = constr2(b, l + 1);
         if (!r) r = constr3(b, l + 1);
+        exit_section_(b, l, m, r, false, null);
         return r;
     }
 

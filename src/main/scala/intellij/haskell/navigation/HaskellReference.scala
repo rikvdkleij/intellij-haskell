@@ -30,6 +30,59 @@ import intellij.haskell.util.index.HaskellModuleNameIndex
 
 class HaskellReference(element: HaskellNamedElement, textRange: TextRange) extends PsiPolyVariantReferenceBase[HaskellNamedElement](element, textRange) {
 
+  private def findModule(project: Project, modId: HaskellModid) = {
+    ProgressManager.checkCanceled()
+
+    HaskellModuleNameIndex.findFilesByModuleName(project, modId.getName) match {
+      case Right(files) => files.headOption.map(HaskellFileResolveResult)
+      case Left(noInfo) => Some(NoResolveResult(noInfo))
+    }
+  }
+
+  private def findQualifierDeclaration(project: Project, psiFile: PsiFile, qualifier: HaskellQualifier) = {
+    ProgressManager.checkCanceled()
+
+    val importDeclarations = HaskellPsiUtil.findImportDeclarations(psiFile)
+    findQualifier(importDeclarations, qualifier) match {
+      case Some(ne) => Some(HaskellNamedElementResolveResult(ne))
+      case None => None
+        ProgressManager.checkCanceled()
+
+        findHaskellFile(importDeclarations, qualifier, project) match {
+          case Right(r) => r.map(HaskellFileResolveResult)
+          case Left(noInfo) => Some(NoResolveResult(noInfo))
+        }
+    }
+  }
+
+  private def findImportedIdentifierDeclaration(project: Project, psiFile: PsiFile, namedElement: HaskellNamedElement) = {
+    ProgressManager.checkCanceled()
+
+    HaskellPsiUtil.findImportDeclaration(namedElement) match {
+      case Some(d) =>
+        val importQualifier = Option(d.getImportQualifiedAs).map(_.getQualifier.getName).orElse(d.getModuleName)
+        ProgressManager.checkCanceled()
+
+        resolveReference(namedElement, psiFile, project, importQualifier) match {
+          case Right(r) => Some(HaskellNamedElementResolveResult(r))
+          case Left(_) => None
+        }
+      case None => None
+    }
+  }
+
+  private def isPartOfModId(namedElement: HaskellNamedElement): Boolean = {
+    Option(namedElement.getParent).map(_.getNode.getElementType).contains(HaskellTypes.HS_MODID)
+  }
+
+  private def isPartOfQualifier(namedElement: HaskellNamedElement): Boolean = {
+    Option(namedElement.getParent).map(_.getNode.getElementType).contains(HaskellTypes.HS_QUALIFIER)
+  }
+
+  private def isPartOfQualifiedAs(namedElement: HaskellNamedElement): Boolean = {
+    Option(namedElement.getParent).map(_.getNode.getElementType).contains(HaskellTypes.HS_IMPORT_QUALIFIED_AS)
+  }
+
   override def multiResolve(incompleteCode: Boolean): Array[ResolveResult] = {
     val project = element.getProject
     if (StackProjectManager.isInitializing(project)) {
@@ -41,69 +94,48 @@ class HaskellReference(element: HaskellNamedElement, textRange: TextRange) exten
     } else {
       ProgressManager.checkCanceled()
       val psiFile = element.getContainingFile.getOriginalFile
-
       val result = element match {
-        case mi: HaskellModid => HaskellModuleNameIndex.findFileByModuleName(project, mi.getName) match {
-          case Right(files) => files.headOption.map(HaskellFileResolveResult)
-          case Left(noInfo) => Some(NoResolveResult(noInfo))
-        }
-
-        case qe: HaskellQualifierElement =>
-          val importDeclarations = HaskellPsiUtil.findImportDeclarations(psiFile)
-          findQualifier(importDeclarations, qe) match {
-            case Some(q) => HaskellPsiUtil.findNamedElement(q).map(HaskellNamedElementResolveResult)
-            case None => findHaskellFile(importDeclarations, qe, project) match {
-              case Right(r) => r.map(HaskellFileResolveResult)
-              case Left(noInfo) => Some(NoResolveResult(noInfo))
-            }
-          }
+        case q: HaskellQualifier if isPartOfQualifiedAs(q) => Some(HaskellNamedElementResolveResult(q))
+        case q: HaskellQualifier => findQualifierDeclaration(project, psiFile, q)
+        case mid: HaskellModid => findModule(project, mid)
+        case ne: HaskellNamedElement if isPartOfQualifier(ne) | isPartOfQualifiedAs(ne) | isPartOfModId(ne) => None
         case ne: HaskellNamedElement =>
-          HaskellPsiUtil.findImportDeclarationParent(ne) match {
-            case Some(id) =>
-              val importQualifier = Option(id.getImportQualifiedAs).map(_.getQualifier.getName).orElse(id.getModuleName)
-              resolveReference(ne, psiFile, project, importQualifier) match {
+          ProgressManager.checkCanceled()
+
+          findImportedIdentifierDeclaration(project, psiFile, ne).orElse {
+
+            HaskellPsiUtil.findTypeSignatureDeclaration(ne) match {
+              case None => resolveReference(ne, psiFile, project = project, None) match {
                 case Right(r) => Some(HaskellNamedElementResolveResult(r))
                 case Left(noInfo) => Some(NoResolveResult(noInfo))
               }
-            case None =>
-              if (HaskellPsiUtil.findQualifierParent(ne).isDefined || HaskellPsiUtil.findModIdElement(element).isDefined) {
-                // Because they are already handled by HaskellQualifierElement and HaskellModId case
-                None
-              } else {
-                ProgressManager.checkCanceled()
-                HaskellPsiUtil.findTypeSignatureDeclarationParent(ne) match {
-                  case None => resolveReference(ne, psiFile, project = project, None) match {
-                    case Right(r) => Some(HaskellNamedElementResolveResult(r))
-                    case Left(noInfo) => Some(NoResolveResult(noInfo))
+              case Some(ts) =>
+
+                def find(e: PsiElement): Option[HaskellNamedElement] = {
+                  Option(PsiTreeUtil.findSiblingForward(e, HaskellTypes.HS_TOP_DECLARATION_LINE, null)) match {
+                    case Some(d) if Option(d.getFirstChild).flatMap(c => Option(c.getFirstChild)).exists(_.isInstanceOf[HaskellExpression]) => HaskellPsiUtil.findNamedElements(d).headOption.find(_.getName == ne.getName)
+                    case _ => None
                   }
-                  case Some(ts) =>
+                }
 
-                    def find(e: PsiElement): Option[HaskellNamedElement] = {
-                      Option(PsiTreeUtil.findSiblingForward(e, HaskellTypes.HS_TOP_DECLARATION_LINE, null)) match {
-                        case Some(d) if Option(d.getFirstChild).flatMap(c => Option(c.getFirstChild)).exists(_.isInstanceOf[HaskellExpression]) => HaskellPsiUtil.findNamedElements(d).headOption.find(_.getName == ne.getName)
-                        case _ => None
-                      }
-                    }
+                ProgressManager.checkCanceled()
 
-                    ProgressManager.checkCanceled()
-
-                    // Work around Intero bug.
-                    Option(ts.getParent).flatMap(p => Option(p.getParent)) match {
-                      case Some(p) =>
-                        find(p) match {
-                          case Some(ee) => Some(HaskellNamedElementResolveResult(ee))
-                          case None => resolveReference(ne, psiFile, project, None) match {
-                            case Right(r) => Some(HaskellNamedElementResolveResult(r))
-                            case Left(noInfo) => Some(NoResolveResult(noInfo))
-                          }
-                        }
+                // Work around Intero bug.
+                Option(ts.getParent).flatMap(p => Option(p.getParent)) match {
+                  case Some(p) =>
+                    find(p) match {
+                      case Some(ee) => Some(HaskellNamedElementResolveResult(ee))
                       case None => resolveReference(ne, psiFile, project, None) match {
                         case Right(r) => Some(HaskellNamedElementResolveResult(r))
                         case Left(noInfo) => Some(NoResolveResult(noInfo))
                       }
                     }
+                  case None => resolveReference(ne, psiFile, project, None) match {
+                    case Right(r) => Some(HaskellNamedElementResolveResult(r))
+                    case Left(noInfo) => Some(NoResolveResult(noInfo))
+                  }
                 }
-              }
+            }
           }
         case _ => None
       }
@@ -123,7 +155,7 @@ class HaskellReference(element: HaskellNamedElement, textRange: TextRange) exten
       NoInfoAvailable(ApplicationUtil.runReadAction(namedElement.getName), psiFile.getName)
     }
 
-    HaskellPsiUtil.findQualifiedNameParent(namedElement) match {
+    HaskellPsiUtil.findQualifiedName(namedElement) match {
       case Some(qualifiedNameElement) =>
         ProgressManager.checkCanceled()
         resolveReferenceByDefinitionLocation(qualifiedNameElement, psiFile, importQualifier)
@@ -142,15 +174,14 @@ class HaskellReference(element: HaskellNamedElement, textRange: TextRange) exten
   }
 
   private def findQualifier(importDeclarations: Iterable[HaskellImportDeclaration], qualifierElement: HaskellQualifierElement): Option[HaskellNamedElement] = {
-    importDeclarations.flatMap(id => Option(id.getImportQualifiedAs)).flatMap(iqa => Option(iqa.getQualifier)).find(_.getName == qualifierElement.getName).
-      orElse(importDeclarations.filter(id => Option(id.getImportQualified).isDefined && Option(id.getImportQualifiedAs).isEmpty).find(mi => Option(mi.getModid).map(_.getName).contains(qualifierElement.getName)).map(_.getModid))
+    importDeclarations.flatMap(id => Option(id.getImportQualifiedAs)).flatMap(iqa => Option(iqa.getQualifier)).find(_.getName == qualifierElement.getName)
   }
 
-  private def findHaskellFile(importDeclarations: Iterable[HaskellImportDeclaration], qualifierElement: HaskellQualifierElement, project: Project): Either[NoInfo, Option[PsiFile]] = {
+  private def findHaskellFile(importDeclarations: Iterable[HaskellImportDeclaration], qualifierElement: HaskellNamedElement, project: Project): Either[NoInfo, Option[PsiFile]] = {
     val result = for {
       id <- importDeclarations.find(id => id.getModuleName.contains(qualifierElement.getName))
       mn <- id.getModuleName
-    } yield HaskellModuleNameIndex.findFileByModuleName(project, mn)
+    } yield HaskellModuleNameIndex.findFilesByModuleName(project, mn)
 
     result match {
       case Some(Right(files)) => Right(files.headOption)
@@ -163,34 +194,55 @@ class HaskellReference(element: HaskellNamedElement, textRange: TextRange) exten
 object HaskellReference {
 
   def resolveInstanceReferences(project: Project, namedElement: HaskellNamedElement, nameInfos: Iterable[NameInfoComponentResult.NameInfo]): Seq[HaskellNamedElement] = {
-    val result = nameInfos.map(ni => findIdentifiersByNameInfo(ni, namedElement, project)).toSeq.distinct
-    if (result.contains(Left(ReadActionTimeout))) {
+    val identifiers = nameInfos.map(ni => findIdentifiersByNameInfo(ni, namedElement, project)).toSeq.distinct
+    if (identifiers.contains(Left(ReadActionTimeout))) {
       HaskellEditorUtil.showStatusBarBalloonMessage(project, "Navigating to instance declarations is not available at this moment")
       Seq()
     } else {
-      result.flatMap(_.toOption).flatten
+      identifiers.flatMap(_.toOption).flatten
     }
   }
 
   def findIdentifiersByLibraryNameInfo(project: Project, libraryNameInfo: LibraryNameInfo, name: String): Either[NoInfo, Seq[HaskellNamedElement]] = {
-    findIdentifiersByModuleAndName(project, libraryNameInfo.moduleName, name)
+    findIdentifiersByModuleAndName(project, Seq(libraryNameInfo.moduleName), name)
   }
 
-  def findIdentifiersByModuleAndName(project: Project, moduleName: String, name: String): Either[NoInfo, Seq[HaskellNamedElement]] = {
+  def findIdentifiersByModuleAndName(project: Project, moduleNames: Seq[String], name: String): Either[NoInfo, Seq[HaskellNamedElement]] = {
     ProgressManager.checkCanceled()
 
-    // For know we just take the first module which contains element with same name
-    for {
-      moduleNameFiles <- HaskellModuleNameIndex.findFileByModuleName(project, moduleName)
-      () = ProgressManager.checkCanceled()
-      ne <- Right(moduleNameFiles.flatMap(findIdentifierInFileByName(_, name)))
-    } yield ne
+    moduleNames.map(mn => HaskellModuleNameIndex.findFilesByModuleName(project, mn)).find(_.isLeft) match {
+      case Some(Left(noInfo)) => Left(noInfo)
+      case _ =>
+        ProgressManager.checkCanceled()
+
+        val identifiers = moduleNames.map(mn => HaskellModuleNameIndex.findFilesByModuleName(project, mn)).flatMap(_.toSeq.flatMap(_.flatMap(f => findIdentifierInFileByName(f, name))))
+        if (identifiers.isEmpty) {
+          val importedModuleNames = moduleNames.map(mn => HaskellModuleNameIndex.findFilesByModuleName(project, mn)).flatMap(_.toSeq.flatMap(_.flatMap(pf => HaskellPsiUtil.findImportDeclarations(pf).flatMap(_.getModuleName))))
+          if (importedModuleNames.isEmpty) {
+            Right(Seq())
+          } else {
+            findIdentifiersByModuleAndName(project, importedModuleNames, name)
+          }
+        } else {
+          Right(identifiers)
+        }
+    }
   }
 
   def findIdentifierInFileByName(psifile: PsiFile, name: String): Option[HaskellNamedElement] = {
     import scala.collection.JavaConverters._
 
-    def findInDeclarations = {
+    ProgressManager.checkCanceled()
+
+    val topLevelExpressions = HaskellPsiUtil.findTopLevelExpressions(psifile)
+
+    ProgressManager.checkCanceled()
+
+    val expressionIdentifiers = topLevelExpressions.flatMap(_.getQNameList.asScala.headOption.map(_.getIdentifierElement)).find(_.getName == name)
+
+    ProgressManager.checkCanceled()
+
+    if (expressionIdentifiers.isEmpty) {
       val declarationElements = HaskellPsiUtil.findHaskellDeclarationElements(psifile)
 
       ProgressManager.checkCanceled()
@@ -200,30 +252,8 @@ object HaskellReference {
       ProgressManager.checkCanceled()
 
       declarationIdentifiers.toSeq.sortWith(sortByClassDeclarationFirst).headOption
-    }
-
-    ProgressManager.checkCanceled()
-
-    if (HaskellProjectUtil.isLibraryFile(psifile)) {
-      findInDeclarations
-    } else if (HaskellProjectUtil.isSourceFile(psifile)) {
-      ProgressManager.checkCanceled()
-
-      val topLevelExpressions = HaskellPsiUtil.findTopLevelExpressions(psifile)
-
-      ProgressManager.checkCanceled()
-
-      val expressionIdentifiers = topLevelExpressions.flatMap(_.getQNameList.asScala.headOption.map(_.getIdentifierElement)).find(_.getName == name)
-
-      ProgressManager.checkCanceled()
-
-      if (expressionIdentifiers.isEmpty) {
-        findInDeclarations
-      } else {
-        expressionIdentifiers
-      }
     } else {
-      None
+      expressionIdentifiers
     }
   }
 
@@ -240,12 +270,12 @@ object HaskellReference {
         orElse {
           ProgressManager.checkCanceled()
           None
-        }.orElse(HaskellPsiUtil.findHighestDeclarationElementParent(element).flatMap(_.getIdentifierElements.find(_.getName == name)).
+        }.orElse(HaskellPsiUtil.findHighestDeclarationElement(element).flatMap(_.getIdentifierElements.find(_.getName == name)).
         orElse {
           ProgressManager.checkCanceled()
           None
-        }.orElse(HaskellPsiUtil.findQualifiedNameParent(element).map(_.getIdentifierElement)).find(_.getName == name)).orElse {
-        HaskellPsiUtil.findTypeParent(element).flatMap(_.getQNameList.asScala.map(_.getIdentifierElement).find(_.getName == name))
+        }.orElse(HaskellPsiUtil.findQualifiedName(element).map(_.getIdentifierElement)).find(_.getName == name)).orElse {
+        HaskellPsiUtil.findTtype(element).flatMap(_.getQNameList.asScala.map(_.getIdentifierElement).find(_.getName == name))
       }
     } yield namedElement
 
@@ -255,7 +285,7 @@ object HaskellReference {
   }
 
   private def sortByClassDeclarationFirst(namedElement1: HaskellNamedElement, namedElement2: HaskellNamedElement): Boolean = {
-    (HaskellPsiUtil.findDeclarationElementParent(namedElement1), HaskellPsiUtil.findDeclarationElementParent(namedElement2)) match {
+    (HaskellPsiUtil.findDeclarationElement(namedElement1), HaskellPsiUtil.findDeclarationElement(namedElement2)) match {
       case (Some(_: HaskellClassDeclaration), _) => true
       case (_, _) => false
     }
@@ -270,7 +300,7 @@ object HaskellReference {
         val (virtualFile, psiFile) = HaskellProjectUtil.findFile(pni.filePath, project)
         ProgressManager.checkCanceled()
         (virtualFile, psiFile) match {
-          case (Some(vf), Right(Some(pf))) => findIdentifierByLocation(project, vf, pf, pni.lineNr, pni.columnNr, name).map(r => Right(Seq(r))).getOrElse(Left(NoInfoAvailable(name, "-")))
+          case (Some(vf), Right(pf)) => findIdentifierByLocation(project, vf, pf, pni.lineNr, pni.columnNr, name).map(r => Right(Seq(r))).getOrElse(Left(NoInfoAvailable(name, "-")))
           case (_, Right(_)) => Left(NoInfoAvailable(name, "-"))
           case (_, Left(noInfo)) => Left(noInfo)
         }

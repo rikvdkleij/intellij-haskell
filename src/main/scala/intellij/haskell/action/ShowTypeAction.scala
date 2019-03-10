@@ -21,8 +21,7 @@ import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.project.Project
 import com.intellij.psi.{PsiElement, PsiFile}
 import intellij.haskell.HaskellNotificationGroup
-import intellij.haskell.editor.HaskellCompletionContributor
-import intellij.haskell.external.component.{HaskellComponentsManager, StackProjectManager}
+import intellij.haskell.external.component.{FileModuleIdentifiers, HaskellComponentsManager, StackProjectManager}
 import intellij.haskell.psi._
 import intellij.haskell.util.{HaskellEditorUtil, StringUtil}
 
@@ -93,23 +92,16 @@ object ShowTypeAction {
   }
 
   private def findTypeSignatureFromScope(psiFile: PsiFile, psiElement: PsiElement) = {
-    if (HaskellPsiUtil.findExpressionParent(psiElement).isDefined) {
-      HaskellPsiUtil.findQualifiedNameParent(psiElement).flatMap(qualifiedNameElement => {
+    if (HaskellPsiUtil.findExpression(psiElement).isDefined) {
+      HaskellPsiUtil.findQualifiedName(psiElement).flatMap(qualifiedNameElement => {
         val definedInFile = HaskellComponentsManager.findDefinitionLocation(psiFile, qualifiedNameElement, None).toOption.map(_.namedElement.getContainingFile)
         if (definedInFile.contains(psiFile)) {
           // To prevent stale type info while compilation errors
           None
         } else {
           val name = qualifiedNameElement.getName
-          val result = for {
-            moduleName <- HaskellPsiUtil.findModuleName(psiFile)
-            stackInfo <- HaskellComponentsManager.findStackComponentInfo(psiFile)
-            globalInfo <- HaskellComponentsManager.findStackComponentGlobalInfo(stackInfo)
-            declaration <- HaskellCompletionContributor.getAvailableModuleIdentifiers(globalInfo, stackInfo, psiFile, Some(moduleName)).find(_.name == name).map(_.declaration)
-          } yield {
-            declaration
-          }
-          result.orElse(HaskellPsiUtil.findHaskellDeclarationElements(psiFile).find(_.getIdentifierElements.exists(_.getName == name)).map(_.getText.replaceAll("""\s+""", " ")))
+          val declaration = FileModuleIdentifiers.findAvailableModuleIdentifiers(psiFile).find(_.name == name).map(_.declaration)
+          declaration.orElse(HaskellPsiUtil.findHaskellDeclarationElements(psiFile).find(_.getIdentifierElements.exists(_.getName == name)).map(_.getText.replaceAll("""\s+""", " ")))
         }
       })
     } else {

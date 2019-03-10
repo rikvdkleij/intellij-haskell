@@ -41,7 +41,7 @@ private[component] object NameInfoComponent {
   private case class Key(psiFile: PsiFile, name: String)
 
   def findNameInfo(psiElement: PsiElement): NameInfoResult = {
-    HaskellPsiUtil.findQualifiedNameParent(psiElement) match {
+    HaskellPsiUtil.findQualifiedName(psiElement) match {
       case Some(p) => findNameInfo(p, None)
       case None => Left(NoInfoAvailable(ApplicationUtil.runReadAction(psiElement.getText), ApplicationUtil.runReadAction(psiElement.getContainingFile.getName)))
     }
@@ -109,7 +109,7 @@ private[component] object NameInfoComponent {
       case Some(result) =>
         result match {
           case Right(_) => result
-          case Left(ReplIsBusy) | Left(ReadActionTimeout(_)) | Left(IndexNotReady) | Left(ModuleNotLoaded(_)) | Left(ReplNotAvailable) =>
+          case Left(ReplIsBusy) | Left(ReadActionTimeout(_)) | Left(IndexNotReady) | Left(ModuleNotAvailable(_)) | Left(ReplNotAvailable) =>
             Cache.invalidate(key)
             result
           case _ => result
@@ -117,20 +117,16 @@ private[component] object NameInfoComponent {
       case None =>
         if (isReadAccessAllowed) {
           ProgressManager.checkCanceled()
-          if (isDispatchThread && !LoadComponent.isFileLoaded(psiFile)) {
-            Left(ModuleNotLoaded(psiFile.getName))
-          } else {
-            val result = findNameInfos(key)
-            result match {
-              case Right(_) =>
-                Cache.put(key, result)
-                result
-              case Left(ReplIsBusy) | Left(ReadActionTimeout(_)) | Left(IndexNotReady) | Left(ReplNotAvailable) | Left(ModuleNotLoaded(_)) =>
-                result
-              case Left(_) =>
-                Cache.put(key, result)
-                result
-            }
+          val result = findNameInfos(key)
+          result match {
+            case Right(_) =>
+              Cache.put(key, result)
+              result
+            case Left(ReplIsBusy) | Left(ReadActionTimeout(_)) | Left(IndexNotReady) | Left(ReplNotAvailable) | Left(ModuleNotAvailable(_)) =>
+              result
+            case Left(_) =>
+              Cache.put(key, result)
+              result
           }
         } else {
           val result = Cache.get(key)
@@ -139,7 +135,7 @@ private[component] object NameInfoComponent {
             case Left(NoInfoAvailable(_, _)) =>
               Cache.put(key, result)
               result
-            case Left(ReplNotAvailable) | Left(ReplIsBusy) | Left(IndexNotReady) | Left(ModuleNotLoaded(_)) | Left(ReadActionTimeout(_)) =>
+            case Left(ReplNotAvailable) | Left(ReplIsBusy) | Left(IndexNotReady) | Left(ModuleNotAvailable(_)) | Left(ReadActionTimeout(_)) =>
               result
           }
         }

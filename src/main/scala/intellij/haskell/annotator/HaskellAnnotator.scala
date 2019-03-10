@@ -63,7 +63,7 @@ class HaskellAnnotator extends ExternalAnnotator[(PsiFile, Option[PsiElement]), 
         case (_, Some(_)) if !psiFile.isValid => null
         case (_, Some(_)) =>
           val currentElement = Option(psiFile.findElementAt(editor.getCaretModel.getOffset)).
-            find(e => HaskellPsiUtil.findExpressionParent(e).isDefined).
+            find(e => HaskellPsiUtil.findExpression(e).isDefined).
             flatMap(e => Option(PsiTreeUtil.prevVisibleLeaf(e))).filter(_.isValid)
           (psiFile, currentElement)
       }
@@ -381,7 +381,7 @@ class DeprecatedUseAction(name: String, suggestion: String) extends HaskellBaseI
 private object IntentionHelper {
   def replace(project: Project, editor: Editor, file: PsiFile, newName: String): Unit = {
     val offset = editor.getCaretModel.getOffset
-    Option(file.findElementAt(offset)).flatMap(HaskellPsiUtil.findQualifiedNameParent) match {
+    Option(file.findElementAt(offset)).flatMap(HaskellPsiUtil.findQualifiedName) match {
       case Some(e) =>
         if (e.getText.startsWith("`") && e.getText.endsWith("`")) {
           e.replace(HaskellElementFactory.createQualifiedNameElement(project, s"`$newName`"))
@@ -494,8 +494,8 @@ class ImportAloneInstancesAction(importDecl: String) extends HaskellBaseIntentio
     Option(file.findElementAt(offset)) match {
       case Some(e) =>
         for {
-          importDeclarations <- HaskellPsiUtil.findImportDeclarationsParent(e)
-          importDeclaration <- HaskellPsiUtil.findImportDeclarationParent(e)
+          importDeclarations <- HaskellPsiUtil.findImportDeclarations(e)
+          importDeclaration <- HaskellPsiUtil.findImportDeclaration(e)
           importDeclElement <- HaskellElementFactory.createImportDeclaration(project, importDecl)
         } yield importDeclarations.getNode.replaceChild(importDeclaration.getNode, importDeclElement.getNode)
       case None => ()

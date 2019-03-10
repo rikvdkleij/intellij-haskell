@@ -34,7 +34,7 @@ import com.intellij.psi.impl.PsiManagerEx
 import com.intellij.psi.{PsiDocumentManager, PsiFile, PsiManager}
 import intellij.haskell.HaskellFileType
 import intellij.haskell.action.SelectionContext
-import intellij.haskell.external.component.NoInfo
+import intellij.haskell.external.component.{NoInfo, NoInfoAvailable}
 
 object HaskellFileUtil {
 
@@ -150,15 +150,16 @@ object HaskellFileUtil {
     }
   }
 
-  def convertToHaskellFileInReadAction(project: Project, virtualFile: VirtualFile): Either[NoInfo, Option[PsiFile]] = {
+  def convertToHaskellFileInReadAction(project: Project, virtualFile: VirtualFile): Either[NoInfo, PsiFile] = {
     val psiManager = PsiManager.getInstance(project)
 
     val actionMessage = s"Converting ${virtualFile.getName} to psi file"
     ApplicationUtil.runReadAction(findCachedPsiFile(psiManager, virtualFile)) match {
-      case pf@Some(_) => Right(pf)
+      case Some(pf) => Right(pf)
       case None => ApplicationUtil.runInReadActionWithWriteActionPriority(project, findPsiFile(psiManager, virtualFile), readActionDescription = actionMessage) match {
-        case r@Right(_) => r
-        case l@Left(_) => l
+        case Right(Some(pf)) => Right(pf)
+        case Right(None) => Left(NoInfoAvailable(virtualFile.getName, "-"))
+        case Left(noInfo) => Left(noInfo)
       }
     }
   }

@@ -234,12 +234,12 @@ abstract class StackRepl(project: Project, componentInfo: Option[StackComponentI
           val replGhciOptionsFilePath = createGhciOptionsFile.getAbsolutePath
           val command = (Seq(stackPath, "repl") ++
             componentInfo.map(_.target).toSeq ++
-            Seq("--with-ghc", "intero", "--no-load", "--no-build", "--ghci-options", s"-ghci-script=$replGhciOptionsFilePath", "--silent", "--ghc-options", "-v1") ++ extraOptions).mkString(" ")
+            Seq("--with-ghc", "intero", "--no-build", "--ghci-options", s"-ghci-script=$replGhciOptionsFilePath", "--silent", "--ghc-options", "-v1") ++ extraOptions).mkString(" ")
 
           logInfo(s"Stack REPL will be started with command: $command")
 
           val processBuilder = Option(EnvironmentUtil.getEnvironmentMap) match {
-            case None => Process(command, new File(project.getBasePath))
+            case None => Process(command, new File(componentInfo.map(_.modulePath).getOrElse(project.getBasePath)))
             case Some(envMap) => Process(command, new File(project.getBasePath), envMap.asScala.toArray: _*)
           }
 
@@ -271,7 +271,6 @@ abstract class StackRepl(project: Project, componentInfo: Option[StackComponentI
             if (stanzaType.isDefined) {
               execute(":set -fdefer-type-errors", forceExecute = true)
               execute(":set -fno-max-valid-substitutions", forceExecute = true) // TODO Check for min GHC version
-              execute(":set -fobject-code", forceExecute = true)
               if (HaskellProjectUtil.setNoDiagnosticsShowCaretFlag(project)) {
                 execute(s":set ${StackCommandLine.NoDiagnosticsShowCaretFlag}", forceExecute = true)
               }

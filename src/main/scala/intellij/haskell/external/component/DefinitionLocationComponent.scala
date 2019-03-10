@@ -23,7 +23,6 @@ import com.intellij.openapi.project.Project
 import com.intellij.psi.PsiFile
 import com.intellij.util.WaitFor
 import intellij.haskell.HaskellNotificationGroup
-import intellij.haskell.editor.FileModuleIdentifiers
 import intellij.haskell.external.repl.StackRepl.StackReplOutput
 import intellij.haskell.external.repl.{ProjectStackRepl, StackReplsManager}
 import intellij.haskell.navigation.HaskellReference
@@ -52,8 +51,7 @@ private[component] object DefinitionLocationComponent {
         case Left(noInfo) => Left(noInfo)
       }
     }
-  }
-  )
+  })
 
   def findDefinitionLocation(psiFile: PsiFile, qualifiedNameElement: HaskellQualifiedNameElement, importQualifier: Option[String]): DefinitionLocationResult = {
     val key = Key(psiFile, qualifiedNameElement, importQualifier)
@@ -64,23 +62,10 @@ private[component] object DefinitionLocationComponent {
     Cache.synchronous().asMap().find { case (k, _) => k.psiFile == psiFile && k.qualifiedNameElement == qualifiedNameElement }.flatMap(_._2.toOption)
   }
 
-  def findReferencesInCache(targetFile: PsiFile): Seq[(PsiFile, HaskellQualifiedNameElement)] = {
+  def invalidateOtherFiles(currentFile: PsiFile, name: String): Unit = {
     val synchronousCache = Cache.synchronous()
-    synchronousCache.asMap().filter { case (k, v) => v.toOption.exists(l => {
-      if (!l.namedElement.isValid) {
-        synchronousCache.invalidate(k)
-        false
-      } else {
-        l.namedElement.getContainingFile.getOriginalFile == targetFile
-      }
-    })
-    }.keys.map(k => (k.psiFile, k.qualifiedNameElement)).toSeq
-  }
-
-  def refresh(elements: Seq[HaskellQualifiedNameElement]): Unit = {
-    val synchronousCache = Cache.synchronous()
-    val keys = synchronousCache.asMap().keys.filter(k => elements.contains(k.qualifiedNameElement))
-    keys.foreach(synchronousCache.refresh)
+    val keys = synchronousCache.asMap().filter { case (k, v) => k.qualifiedNameElement.getIdentifierElement.getName == name && k.psiFile != currentFile }.keys
+    keys.foreach(synchronousCache.invalidate)
   }
 
   private def checkValidKey(key: Key): Boolean = {
@@ -128,105 +113,77 @@ private[component] object DefinitionLocationComponent {
 
     val name = ApplicationUtil.runReadAction(identifierElement.getName)
     if (name.headOption.exists(_.isUpper)) {
-      createDefinitionLocationResult(project, psiFile, key, name, withoutLastColumn = true)
+      createDefinitionLocationResult(project, key, name, withoutLastColumn = true)
     } else {
-      createDefinitionLocationResult(project, psiFile, key, name, withoutLastColumn = false)
+      createDefinitionLocationResult(project, key, name, withoutLastColumn = false)
     }
   }
 
-  private def createDefinitionLocationResult(project: Project, psiFile: PsiFile, key: Key, name: String, withoutLastColumn: Boolean): DefinitionLocationResult = {
+  private def findLocationByImportedIdentifiers(project: Project, key: Key, name: String): Option[Either[NoInfoAvailable, PackageModuleLocation]] = {
+    val psiFile = key.psiFile
+    val qName1 = key.qualifiedNameElement.getName
+    val mids = FileModuleIdentifiers.findAvailableModuleIdentifiers(psiFile)
     ProgressManager.checkCanceled()
-    val sourceFile = HaskellProjectUtil.isSourceFile(psiFile)
-    ProgressManager.checkCanceled()
-    val moduleName = HaskellPsiUtil.findModuleName(psiFile)
-    ProgressManager.checkCanceled()
-    if (sourceFile) {
-      // Again workaround intero bug
-      if (key.importQualifier.isDefined || key.qualifiedNameElement.getQualifierName.isDefined) {
-        val qName1 = key.qualifiedNameElement.getName
-        val result = FileModuleIdentifiers.getModuleIdentifiers(psiFile) match {
-          case None => Some(Left(ReadActionTimeout("")))
-          case Some(mids) =>
-            ProgressManager.checkCanceled()
-            val qName = key.importQualifier match {
-              case None => qName1
-              case Some(q) => q + "." + qName1
-            }
-            for {
-              mid <- mids.find(_.name == qName)
-            } yield {
-              val findResult = HaskellReference.findIdentifiersByModuleAndName(project, mid.moduleName, name)
-              findResult match {
-                case Right(nes) if nes.nonEmpty => nes.headOption.map(ne => Right(PackageModuleLocation(mid.moduleName, ne, name, Some(qName)))).getOrElse(Left(NoInfoAvailable(name, psiFile.getName)))
-                case _ => Left(NoInfoAvailable(name, psiFile.getName))
-              }
-            }
-        }
+    val qName2 = StringUtil.removeOuterParens(qName1)
+    val qName = key.importQualifier match {
+      case None => qName2
+      case Some(q) => q + "." + qName2
+    }
+    for {
+      mid <- mids.find(_.name == qName)
+    } yield {
+      HaskellReference.findIdentifiersByModuleAndName(project, Seq(mid.moduleName), name) match {
+        case Right(nes) if nes.nonEmpty => nes.headOption.map(ne => Right(PackageModuleLocation(mid.moduleName, ne, name, Some(qName)))).getOrElse(Left(NoInfoAvailable(name, psiFile.getName)))
+        case _ => Left(NoInfoAvailable(name, psiFile.getName))
+      }
+    }
+  }
 
-        ProgressManager.checkCanceled()
+  private def createDefinitionLocationResult(project: Project, key: Key, name: String, withoutLastColumn: Boolean): DefinitionLocationResult = {
+    val psiFile = key.psiFile
+    ProgressManager.checkCanceled()
+    val libraryFile = HaskellProjectUtil.isLibraryFile(psiFile)
+    ProgressManager.checkCanceled()
+    // Again workaround intero bug
+    if (libraryFile || key.importQualifier.isDefined || key.qualifiedNameElement.getQualifierName.isDefined) {
+      val locations = findLocationByImportedIdentifiers(project, key, name)
 
-        val result2 = result match {
-          case Some(r@Right(_)) => r
-          case None => Left(NoInfoAvailable(name, psiFile.getName)) // identifier not imported
-          case Some(Left(_)) =>
-            ProgressManager.checkCanceled()
-            HaskellComponentsManager.findNameInfo(key.qualifiedNameElement, key.importQualifier) match {
-              case Right(infos) =>
+      ProgressManager.checkCanceled()
+
+      locations match {
+        case Some(ls) => ls
+        case None => if (libraryFile) {
+          ProgressManager.checkCanceled()
+          HaskellComponentsManager.findNameInfo(key.qualifiedNameElement) match {
+            case Right(infos) => infos.headOption match {
+              case Some(info) =>
                 ProgressManager.checkCanceled()
-                infos.headOption match {
-                  case Some(nameInfo) =>
-                    val findInfoResult = HaskellReference.findIdentifiersByNameInfo(nameInfo, key.qualifiedNameElement.getIdentifierElement, project)
-                    ProgressManager.checkCanceled()
-                    findInfoResult match {
-                      case Right(nes) =>
-                        nes.headOption match {
-                          case Some(r) => HaskellPsiUtil.findModuleName(r.getContainingFile) match {
-                            case Some(mn) => Right(PackageModuleLocation(mn, r, name, Some(qName1)))
-                            case None => Right(LocalModuleLocation(r.getContainingFile, r, name, Some(qName1)))
-                          }
-                          case None => Left(NoInfoAvailable(name, psiFile.getName))
-                        }
-                      case Left(noInfo) => Left(noInfo)
+                HaskellReference.findIdentifiersByNameInfo(info, key.qualifiedNameElement.getIdentifierElement, project) match {
+                  case Right(ne) =>
+                    if (ne.isEmpty) {
+                      // TODO Use findIdentifierInFileByName in HaskellReference
+                      HaskellPsiUtil.findHaskellDeclarationElements(psiFile).toSeq.flatMap(_.getIdentifierElements).
+                        find(_.getName == name).
+                        map(e => Right(PackageModuleLocation("-", e, name))).getOrElse(Left(NoInfoAvailable(name, psiFile.getName)))
+                      Left(NoInfoAvailable("", ""))
+                    } else {
+                      ne.headOption.map(ne => Right(PackageModuleLocation("-", ne, name))).getOrElse(Left(NoInfoAvailable(name, psiFile.getName)))
                     }
-                  case None => Left(NoInfoAvailable(name, psiFile.getName))
+                  case Left(noInfo) => Left(noInfo)
                 }
-              case Left(noInfo) => Left(noInfo)
+              case None => Left(NoInfoAvailable(name, psiFile.getName))
             }
+            case Left(noInfo) => Left(noInfo)
+          }
+        } else {
+          findLocationByImportedIdentifiers(project, key, name).getOrElse(Left(NoInfoAvailable(psiFile.getName, name)))
         }
-
-        result2 match {
-          case Right(location) => Right(location)
-          case l =>
-            HaskellNotificationGroup.logInfoEvent(project, "In createDefinitionLocationResult no result for " + name)
-            l
-        }
-      } else {
-        ProgressManager.checkCanceled()
-        findLocationResultWithRepl(project, psiFile, moduleName, key, name, withoutLastColumn)
       }
     } else {
       ProgressManager.checkCanceled()
-      HaskellComponentsManager.findNameInfo(key.qualifiedNameElement) match {
-        case Right(infos) => infos.headOption match {
-          case Some(info) =>
-            ProgressManager.checkCanceled()
-            val ne = HaskellReference.findIdentifiersByNameInfo(info, key.qualifiedNameElement.getIdentifierElement, project)
-            ne match {
-              case Right(nee) =>
-                if (nee.isEmpty) {
-                  HaskellPsiUtil.findHaskellDeclarationElements(psiFile).toSeq.flatMap(_.getIdentifierElements).
-                    find(e => e.getName == name).
-                    map(e => Right(PackageModuleLocation("-", e, name))).getOrElse(Left(NoInfoAvailable(name, psiFile.getName)))
-                  Left(NoInfoAvailable("", ""))
-                } else {
-                  nee.headOption.map(e => Right(PackageModuleLocation("-", e, name))).getOrElse(Left(NoInfoAvailable(name, psiFile.getName)))
-                }
-              case Left(noInfo) => Left(noInfo)
-            }
-          case None => Left(NoInfoAvailable(name, psiFile.getName))
-        }
-        case Left(noInfo) => Left(noInfo)
-      }
+      val moduleName = HaskellPsiUtil.findModuleName(psiFile)
+      ProgressManager.checkCanceled()
+      findLocationResultWithRepl(project, psiFile, moduleName, key, name, withoutLastColumn)
     }
   }
 
@@ -266,7 +223,7 @@ private[component] object DefinitionLocationComponent {
               Left(ReplNotAvailable)
             } else {
               if (ApplicationManager.getApplication.isDispatchThread && !LoadComponent.isModuleLoaded(moduleName, psiFile)) {
-                Left(ModuleNotLoaded(moduleName.getOrElse(psiFile.getName)))
+                Left(ModuleNotAvailable(moduleName.getOrElse(psiFile.getName)))
               } else {
                 f(repl) match {
                   case Some(o) if o.stderrLines.isEmpty && o.stdoutLines.nonEmpty => Right(o)
@@ -295,7 +252,7 @@ private[component] object DefinitionLocationComponent {
           case (_, _) => Left(NoInfoAvailable(name, psiFile.getName))
         }
       case PackageModulePattern(_, mn) =>
-        findFileByModuleName(project, mn) match {
+        findFilesByModuleName(project, mn) match {
           case Right(files) =>
             files.headOption.flatMap(HaskellReference.findIdentifierInFileByName(_, name)) match {
               case Some(e) => Right(PackageModuleLocation(mn, e, name))
@@ -303,10 +260,9 @@ private[component] object DefinitionLocationComponent {
             }
           case Left(noInfo) => Left(noInfo)
         }
-      case _ => Left(NoInfoAvailable(name, key.psiFile.getName))
+      case _ => findLocationByImportedIdentifiers(project, key, name).getOrElse(Left(NoInfoAvailable(name, key.psiFile.getName)))
     }
   }
-
 
   private[component] def find(key: Key): DefinitionLocationResult = {
     val isDispatchThread = ApplicationManager.getApplication.isDispatchThread
@@ -329,7 +285,7 @@ private[component] object DefinitionLocationComponent {
       } else {
         if (isDispatchThread) {
           HaskellNotificationGroup.logInfoEvent(psiFile.getProject, s"No info in DefinitionLocationComponent.find for ${qualifiedNameElement.getName} in ${psiFile.getName} because timeout in dispatch thread")
-          Left(ModuleNotLoaded(psiFile.getName))
+          Left(ModuleNotAvailable(psiFile.getName))
         }
         else {
           HaskellNotificationGroup.logInfoEvent(psiFile.getProject, s"Timeout in DefinitionLocationComponent.find for ${qualifiedNameElement.getName} in ${psiFile.getName}")
@@ -345,7 +301,7 @@ private[component] object DefinitionLocationComponent {
         val result = wait(v)
         result match {
           case Right(_) => result
-          case Left(ReplIsBusy) | Left(ReadActionTimeout(_)) | Left(IndexNotReady) | Left(ModuleNotLoaded(_)) | Left(ReplNotAvailable) =>
+          case Left(ReplIsBusy) | Left(ReadActionTimeout(_)) | Left(IndexNotReady) | Left(ModuleNotAvailable(_)) | Left(ReplNotAvailable) =>
             Cache.synchronous().invalidate(key)
             result
           case _ => result
@@ -357,7 +313,7 @@ private[component] object DefinitionLocationComponent {
             case Right(_) =>
               Cache.synchronous.put(key, result)
               result
-            case Left(ReplIsBusy) | Left(ReadActionTimeout(_)) | Left(IndexNotReady) | Left(ReplNotAvailable) | Left(ModuleNotLoaded(_)) =>
+            case Left(ReplIsBusy) | Left(ReadActionTimeout(_)) | Left(IndexNotReady) | Left(ReplNotAvailable) | Left(ModuleNotAvailable(_)) =>
               result
             case Left(_) =>
               Cache.synchronous.put(key, result)

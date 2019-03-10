@@ -54,7 +54,21 @@ object HaskellPsiUtil {
   def findModIdElement(psiElement: PsiElement): Option[HaskellModid] = {
     psiElement match {
       case e: HaskellModid => Some(e)
-      case e => Option(PsiTreeUtil.findFirstParent(e, ModIdElementCondition)).map(_.asInstanceOf[HaskellModid])
+      case e => Option(TreeUtil.findParent(e.getNode, HaskellTypes.HS_MODID)).map(_.getPsi.asInstanceOf[HaskellModid])
+    }
+  }
+
+  def findDataConstr(psiElement: PsiElement): Option[HaskellConstr] = {
+    psiElement match {
+      case e: HaskellConstr => Some(e)
+      case e => Option(TreeUtil.findParent(e.getNode, HaskellTypes.HS_CONSTR)).map(_.getPsi.asInstanceOf[HaskellConstr])
+    }
+  }
+
+  def findDataFieldDecl(psiElement: PsiElement): Option[HaskellFielddecl] = {
+    psiElement match {
+      case e: HaskellFielddecl => Some(e)
+      case e => Option(TreeUtil.findParent(e.getNode, HaskellTypes.HS_FIELDDECL)).map(_.getPsi.asInstanceOf[HaskellFielddecl])
     }
   }
 
@@ -72,7 +86,7 @@ object HaskellPsiUtil {
   }
 
   def findTopLevelDeclarations(psiFile: PsiFile): Iterable[HaskellDeclarationElement] = {
-    findHaskellDeclarationElements(psiFile).filterNot(e => e.getNode.getElementType == HS_IMPORT_DECLARATION)
+    findHaskellDeclarationElements(psiFile).filterNot(e => Seq(HS_IMPORT_DECLARATION, HS_MODULE_DECLARATION).contains(e.getNode.getElementType))
   }
 
   def findModuleDeclaration(psiFile: PsiFile): Option[HaskellModuleDeclaration] = {
@@ -111,102 +125,63 @@ object HaskellPsiUtil {
     }
   }
 
-  def findQualifierParent(psiElement: PsiElement): Option[HaskellQualifier] = {
-    psiElement match {
-      case e: HaskellQualifier => Some(e)
-      case e => Option(TreeUtil.findParent(e.getNode, HaskellTypes.HS_QUALIFIER)).map(_.getPsi.asInstanceOf[HaskellQualifier])
-    }
-  }
-
-  def findQualifiedNameParent(psiElement: PsiElement): Option[HaskellQualifiedNameElement] = {
+  def findQualifiedName(psiElement: PsiElement): Option[HaskellQualifiedNameElement] = {
     psiElement match {
       case e: HaskellQualifiedNameElement => Some(e)
       case e => Option(PsiTreeUtil.findFirstParent(e, QualifiedNameElementCondition)).map(_.asInstanceOf[HaskellQualifiedNameElement])
     }
   }
 
-  def findTypeParent(psiElement: PsiElement): Option[HaskellTtype] = {
+  def findTtype(psiElement: PsiElement): Option[HaskellTtype] = {
     psiElement match {
       case e: HaskellTtype => Some(e)
-      case e => Option(PsiTreeUtil.findFirstParent(e, TtypeElementCondition)).map(_.asInstanceOf[HaskellTtype])
+      case e => Option(TreeUtil.findParent(e.getNode, HaskellTypes.HS_TTYPE)).map(_.getPsi.asInstanceOf[HaskellTtype])
     }
   }
 
-  def findImportDeclarationsParent(psiElement: PsiElement): Option[HaskellImportDeclarations] = {
+  def findImportDeclarations(psiElement: PsiElement): Option[HaskellImportDeclarations] = {
     psiElement match {
       case e: HaskellImportDeclarations => Some(e)
-      case e => Option(PsiTreeUtil.findFirstParent(e, ImportDeclarationsCondition)).map(_.asInstanceOf[HaskellImportDeclarations])
+      case e => Option(TreeUtil.findParent(e.getNode, HaskellTypes.HS_IMPORT_DECLARATIONS)).map(_.getPsi.asInstanceOf[HaskellImportDeclarations])
     }
   }
 
-  def findImportDeclarationParent(psiElement: PsiElement): Option[HaskellImportDeclaration] = {
+  def findImportDeclaration(psiElement: PsiElement): Option[HaskellImportDeclaration] = {
     psiElement match {
       case e: HaskellImportDeclaration => Some(e)
-      case e => Option(PsiTreeUtil.findFirstParent(e, ImportDeclarationCondition)).map(_.asInstanceOf[HaskellImportDeclaration])
+      case e => Option(TreeUtil.findParent(e.getNode, HaskellTypes.HS_IMPORT_DECLARATION)).map(_.getPsi.asInstanceOf[HaskellImportDeclaration])
     }
   }
 
-  def findImportHidingDeclarationParent(psiElement: PsiElement): Option[HaskellImportHidingSpec] = {
-    psiElement match {
-      case e: HaskellImportHidingSpec => Some(e)
-      case e => Option(PsiTreeUtil.findFirstParent(e, ImportHidingSpecCondition)).map(_.asInstanceOf[HaskellImportHidingSpec])
-    }
-  }
-
-  def findHighestDeclarationElementParent(psiElement: PsiElement): Option[HaskellDeclarationElement] = {
+  def findHighestDeclarationElement(psiElement: PsiElement): Option[HaskellDeclarationElement] = {
     psiElement match {
       case e: HaskellDeclarationElement => Some(e)
       case e => Option(PsiTreeUtil.findFirstParent(e, HighestDeclarationElementCondition)).map(_.asInstanceOf[HaskellDeclarationElement])
     }
   }
 
-  def findDeclarationElementParent(psiElement: PsiElement): Option[HaskellDeclarationElement] = {
+  def findDeclarationElement(psiElement: PsiElement): Option[HaskellDeclarationElement] = {
     psiElement match {
       case e: HaskellDeclarationElement => Some(e)
       case e => Option(PsiTreeUtil.findFirstParent(e, DeclarationElementCondition)).map(_.asInstanceOf[HaskellDeclarationElement])
     }
   }
 
-  def findDataDeclarationElementParent(psiElement: PsiElement): Option[HaskellDataDeclaration] = {
-    psiElement match {
-      case e: HaskellDataDeclaration => Some(e)
-      case e => Option(PsiTreeUtil.findFirstParent(e, DataDeclarationElementCondition)).map(_.asInstanceOf[HaskellDataDeclaration])
-    }
-  }
-
-  def findNewTypeDeclarationElementParent(psiElement: PsiElement): Option[HaskellNewtypeDeclaration] = {
-    psiElement match {
-      case e: HaskellNewtypeDeclaration => Some(e)
-      case e => Option(PsiTreeUtil.findFirstParent(e, NewTypeDeclarationElementCondition)).map(_.asInstanceOf[HaskellNewtypeDeclaration])
-    }
-  }
-
-  def findTopLevelTypeSignatures(psiFile: PsiFile): Iterable[HaskellTypeSignature] = {
-    PsiTreeUtil.findChildrenOfType(psiFile, classOf[HaskellTypeSignature]).asScala.filter(_.getParent.getNode.getElementType == HS_TOP_DECLARATION)
-  }
-
   def findTopLevelExpressions(psiFile: PsiFile): Iterable[HaskellExpression] = {
     PsiTreeUtil.findChildrenOfType(psiFile, classOf[HaskellExpression]).asScala
   }
 
-  def findModuleDeclarationParent(psiElement: PsiElement): Option[HaskellModuleDeclaration] = {
-    psiElement match {
-      case e: HaskellModuleDeclaration => Some(e)
-      case e => Option(PsiTreeUtil.findFirstParent(e, ModuleDeclarationCondition)).map(_.asInstanceOf[HaskellModuleDeclaration])
-    }
-  }
-
-  def findTypeSignatureDeclarationParent(psiElement: PsiElement): Option[HaskellTypeSignature] = {
+  def findTypeSignatureDeclaration(psiElement: PsiElement): Option[HaskellTypeSignature] = {
     psiElement match {
       case e: HaskellTypeSignature => Some(e)
-      case e => Option(PsiTreeUtil.findFirstParent(e, TypeSignatureCondition)).map(_.asInstanceOf[HaskellTypeSignature])
+      case e => Option(TreeUtil.findParent(e.getNode, HaskellTypes.HS_TYPE_SIGNATURE)).map(_.getPsi.asInstanceOf[HaskellTypeSignature])
     }
   }
 
-  def findExpressionParent(psiElement: PsiElement): Option[HaskellExpression] = {
+  def findExpression(psiElement: PsiElement): Option[HaskellExpression] = {
     psiElement match {
       case e: HaskellExpression => Some(e)
-      case e => Option(PsiTreeUtil.findFirstParent(e, ExpressionCondition)).map(_.asInstanceOf[HaskellExpression])
+      case e => Option(TreeUtil.findParent(e.getNode, HaskellTypes.HS_EXPRESSION)).map(_.getPsi.asInstanceOf[HaskellExpression])
     }
   }
 

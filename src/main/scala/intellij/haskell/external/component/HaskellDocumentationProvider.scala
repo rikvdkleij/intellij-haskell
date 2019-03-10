@@ -73,10 +73,10 @@ class HaskellDocumentationProvider extends AbstractDocumentationProvider {
             if (definedInSameFile) {
               getQuickNavigateInfo(e, oe)
             } else {
-              HaskellPsiUtil.findQualifiedNameParent(oe) match {
+              HaskellPsiUtil.findQualifiedName(oe) match {
                 case Some(qone) =>
                   val presentationText = HaskellPsiUtil.findNamedElement(e).flatMap { ne =>
-                    if (HaskellPsiUtil.findExpressionParent(ne).isDefined || HaskellPsiUtil.findTypeSignatureDeclarationParent(ne).isDefined) {
+                    if (HaskellPsiUtil.findExpression(ne).isDefined || HaskellPsiUtil.findTypeSignatureDeclaration(ne).isDefined) {
                       None
                     } else {
                       Some(DoubleNbsp + "<code>" +

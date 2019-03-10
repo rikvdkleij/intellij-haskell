@@ -47,6 +47,7 @@
   methods("q_con_qualifier1|q_con_qualifier2|q_con_qualifier3|q_con_qualifier4|qualifier")=[getName setName getNameIdentifier getReference getPresentation]
   implements("q_con_qualifier1|q_con_qualifier2|q_con_qualifier3|q_con_qualifier4|qualifier")="intellij.haskell.psi.HaskellQualifierElement"
   mixin("q_con_qualifier1|q_con_qualifier2|q_con_qualifier3|q_con_qualifier4|qualifier")="intellij.haskell.psi.impl.HaskellQualifierElementImpl"
+  implements("q_con_qualifier1|q_con_qualifier2|q_con_qualifier3|q_con_qualifier4|qualifier")="intellij.haskell.psi.HaskellNamedElement"
 
   implements("text_literal")=["intellij.haskell.psi.HaskellStringLiteralElement" "com.intellij.psi.PsiLanguageInjectionHost"]
   mixin("text_literal")="intellij.haskell.psi.impl.HaskellStringLiteralElementImpl"
@@ -170,7 +171,7 @@ q_names                     ::= q_name (COMMA q_name)*
 gtycon                      ::= QUOTE? q_name | LEFT_PAREN RIGHT_ARROW RIGHT_PAREN | LEFT_PAREN RIGHT_PAREN | QUOTE? LEFT_BRACKET RIGHT_BRACKET | LEFT_PAREN COMMA (COMMA)* RIGHT_PAREN
 
 private constrs             ::= constr (onls VERTICAL_BAR onls constr)*
-private constr              ::= (type_signature | constr1 | constr2 | constr3)
+constr                      ::= (type_signature | constr1 | constr2 | constr3)
 constr1                     ::= pragma? (onls q_name)? (onls pragma)? onls LEFT_BRACE onl fielddecl? ((onl COMMA)? onl fielddecl)* onl RIGHT_BRACE
 constr2                     ::= pragma? onls (ttype | q_name | LEFT_PAREN q_name* RIGHT_PAREN | LEFT_BRACKET q_name* RIGHT_BRACKET) (onls pragma onls)? ((onls pragma)? onls ttype (onls pragma)?)*  // Base.hs: data () = () and GHC.Types.hs: data [] a = [] | a : [a]
 constr3                     ::= (onls pragma? onls ttype)+

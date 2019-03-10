@@ -38,5 +38,5 @@ class StackProjectImportProvider(builder: StackProjectImportBuilder) extends Pro
     }
   }
 
-  override def getFileSample: String = "which contains stack.yaml"
+  override def getFileSample: String = "<b>Haskell</b> project file (stack.yaml)"
 }

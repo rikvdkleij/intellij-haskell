@@ -18,12 +18,9 @@ package intellij.haskell.external.component
 
 import com.intellij.codeInsight.documentation.DocumentationManager
 import com.intellij.openapi.application.ApplicationManager
-import com.intellij.openapi.project.Project
 import com.intellij.psi.{PsiElement, PsiFile}
-import intellij.haskell.editor.FileModuleIdentifiers
-import intellij.haskell.external.component.HaskellComponentsManager.StackComponentInfo
 import intellij.haskell.external.execution.{CompilationResult, HaskellCompilationResultHelper}
-import intellij.haskell.external.repl.ProjectStackRepl.{Failed, Loaded}
+import intellij.haskell.external.repl.ProjectStackRepl.Loaded
 import intellij.haskell.external.repl._
 import intellij.haskell.psi.HaskellPsiUtil
 import intellij.haskell.util.ScalaUtil
@@ -31,14 +28,9 @@ import intellij.haskell.util.index.HaskellModuleNameIndex
 
 private[component] object LoadComponent {
 
-  def isFileLoaded(psiFile: PsiFile): Boolean = {
+  private def isFileLoaded(psiFile: PsiFile): Boolean = {
     val projectRepl = StackReplsManager.getProjectRepl(psiFile)
     projectRepl.map(_.isFileLoaded(psiFile)).contains(Loaded)
-  }
-
-  def isFileLoadedFailed(psiFile: PsiFile): Boolean = {
-    val projectRepl = StackReplsManager.getProjectRepl(psiFile)
-    projectRepl.map(_.isFileLoaded(psiFile)).contains(Failed)
   }
 
   def isModuleLoaded(moduleName: Option[String], psiFile: PsiFile): Boolean = {
@@ -50,12 +42,7 @@ private[component] object LoadComponent {
     }.contains(true)
   }
 
-  def isBusy(project: Project, stackComponentInfo: StackComponentInfo): Boolean = {
-    val projectRepl = StackReplsManager.getRunningProjectRepl(project, stackComponentInfo)
-    projectRepl.exists(_.isBusy)
-  }
-
-  def isBusy(psiFile: PsiFile): Boolean = {
+  def isReplBusy(psiFile: PsiFile): Boolean = {
     val projectRepl = StackReplsManager.getRunningProjectRepl(psiFile)
     projectRepl.exists(_.isBusy)
   }
@@ -76,28 +63,26 @@ private[component] object LoadComponent {
 
       projectRepl.load(psiFile, Some(fileChanged)) match {
         case Some((loadOutput, loadFailed)) =>
-          if (fileChanged) {
-            ApplicationManager.getApplication.executeOnPooledThread(ScalaUtil.runnable {
+          ApplicationManager.getApplication.executeOnPooledThread(ScalaUtil.runnable {
 
-              TypeInfoComponent.invalidate(psiFile)
-              DefinitionLocationComponent.invalidate(psiFile)
-              HaskellModuleNameIndex.invalidateNotFoundEntries(project)
+            TypeInfoComponent.invalidate(psiFile)
+            DefinitionLocationComponent.invalidate(psiFile)
+            HaskellModuleNameIndex.invalidateNotFoundEntries(project)
 
-              // Have to refresh because import declarations can be changed
-              FileModuleIdentifiers.refresh(psiFile)
+            // Have to refresh because import declarations can be changed
+            FileModuleIdentifiers.refresh(psiFile)
 
-              val moduleName = HaskellPsiUtil.findModuleName(psiFile)
-              if (!loadFailed) {
-                NameInfoComponent.invalidate(psiFile)
-                moduleName.foreach(mn => {
-                  BrowseModuleComponent.invalidateExportedModuleName(project, mn)
-                  FileModuleIdentifiers.invalidate(mn)
-                })
+            val moduleName = HaskellPsiUtil.findModuleName(psiFile)
+            if (!loadFailed) {
+              NameInfoComponent.invalidate(psiFile)
+              moduleName.foreach(mn => {
+                BrowseModuleComponent.invalidateModuleName(project, mn)
+                FileModuleIdentifiers.invalidate(mn)
+              })
 
-              }
-              DocumentationManager.getInstance(project).updateToolwindowContext()
-            })
-          }
+            }
+            DocumentationManager.getInstance(project).updateToolwindowContext()
+          })
           Some(HaskellCompilationResultHelper.createCompilationResult(psiFile, loadOutput.stderrLines, loadFailed))
         case _ => None
       }

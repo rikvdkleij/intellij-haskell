@@ -29,37 +29,41 @@ import intellij.haskell.external.repl.StackReplsManager
 import intellij.haskell.runconfig.console.HaskellConsoleView
 import intellij.haskell.util.{HaskellFileUtil, HaskellProjectUtil, ScalaUtil}
 
-private[component] object HaskellProjectFileInfoComponent {
+private[component] object HaskellModuleInfoComponent {
 
   private case class Key(project: Project, filePath: String)
 
-  private final val Cache: LoadingCache[Key, Option[InternalHaskellProjectFileInfo]] = Scaffeine().build((k: Key) => createFileInfo(k))
+  private final val Cache: LoadingCache[Key, Option[InternalHaskellModuleInfo]] = Scaffeine().build((k: Key) => createFileInfo(k))
 
-  def findHaskellProjectFileInfo(project: Project, filePath: String): Option[HaskellProjectFileInfo] = {
+  def findHaskellProjectFileInfo(project: Project, filePath: String): Option[StackComponentInfo] = {
     val key = Key(project, filePath)
-    Cache.get(key) match {
-      case Some(internalInfo) =>
-        internalInfo.message match {
-          case Some(m) => HaskellNotificationGroup.warningEvent(project, m)
-          case None => None
+    Cache.getIfPresent(key) match {
+      case Some(info) => info.flatMap(_.stackComponentInfo)
+      case None =>
+        Cache.get(key) match {
+          case Some(internalInfo) =>
+            internalInfo.message match {
+              case Some(m) => HaskellNotificationGroup.warningEvent(project, m)
+              case None => None
+            }
+            internalInfo.stackComponentInfo match {
+              case Some(info) => Some(info)
+              case _ => None
+            }
+          case _ =>
+            Cache.invalidate(key)
+            None
         }
-        internalInfo.stackComponentInfo match {
-          case Some(info) => Some(HaskellProjectFileInfo(info))
-          case _ => None
-        }
-      case _ =>
-        Cache.invalidate(key)
-        None
     }
   }
 
-  def findHaskellProjectFileInfo(psiFile: PsiFile): Option[HaskellProjectFileInfo] = {
+  def findHaskellProjectFileInfo(psiFile: PsiFile): Option[StackComponentInfo] = {
     val project = psiFile.getProject
 
     HaskellConsoleView.findConsoleInfo(psiFile) match {
       case Some(consoleInfo) =>
         val stackComponentInfos = StackReplsManager.getReplsManager(project).map(_.stackComponentInfos)
-        stackComponentInfos.flatMap(_.find(_.target == consoleInfo.stackTarget)).map(HaskellProjectFileInfo)
+        stackComponentInfos.flatMap(_.find(_.target == consoleInfo.stackTarget))
       case None =>
         val filePath = HaskellFileUtil.getAbsolutePath(psiFile)
         filePath.flatMap(k => findHaskellProjectFileInfo(project, k))
@@ -75,13 +79,13 @@ private[component] object HaskellProjectFileInfoComponent {
     HaskellFileUtil.getAbsolutePath(psiFile).foreach(fp => Cache.invalidate(Key(psiFile.getProject, fp)))
   }
 
-  private def createFileInfo(key: Key): Option[InternalHaskellProjectFileInfo] = {
+  private def createFileInfo(key: Key): Option[InternalHaskellModuleInfo] = {
     val project = key.project
     val filePath = key.filePath
 
     StackReplsManager.getReplsManager(project).map(_.stackComponentInfos).map(stackComponentInfos => {
       val info = getStackComponentInfo(project, filePath, stackComponentInfos)
-      InternalHaskellProjectFileInfo(info._1, info._2)
+      InternalHaskellModuleInfo(info._1, info._2)
     })
   }
 
@@ -95,12 +99,15 @@ private[component] object HaskellProjectFileInfoComponent {
         val (stackComponentInfo, message) = if (sourceDirsByInfo.size > 1) {
           val sourceDirByInfo = sourceDirsByInfo.map({ case (info, sds) => (info, sds.maxBy(sd => Paths.get(sd).getNameCount)) })
           val mostSpecificSourceDirByInfo = ScalaUtil.maxsBy(sourceDirByInfo)({ case (_, sd) => Paths.get(sd).getNameCount })
+
+          val libStackInfo = mostSpecificSourceDirByInfo.find(_._1.stanzaType == LibType)
+
           val message = if (mostSpecificSourceDirByInfo.size > 1) {
-            Some(s"Ambiguous Stack target for file `$filePath`. It can belong to the source dir of more than one Stack target/Cabal stanza. The first one of `${mostSpecificSourceDirByInfo.map(_._1.target)}` is chosen.")
+            Some(s"Ambiguous Stack target for file `$filePath`. It can belong to the source dir of more than one Stack target/Cabal stanza: `${mostSpecificSourceDirByInfo.map(_._1.target)}`  |  `${libStackInfo.map(_._1.target).getOrElse(mostSpecificSourceDirByInfo.map(_._1.target).headOption.getOrElse("-"))}` is chosen.")
           } else {
             None
           }
-          (mostSpecificSourceDirByInfo.headOption.map(_._1), message)
+          (libStackInfo.map(_._1).orElse(mostSpecificSourceDirByInfo.headOption.map(_._1)), message)
         } else {
           (sourceDirsByInfo.headOption.map(_._1), None)
         }
@@ -117,7 +124,5 @@ private[component] object HaskellProjectFileInfoComponent {
   }
 }
 
-case class InternalHaskellProjectFileInfo(stackComponentInfo: Option[StackComponentInfo], message: Option[String])
-
-case class HaskellProjectFileInfo(stackComponentInfo: StackComponentInfo)
+case class InternalHaskellModuleInfo(stackComponentInfo: Option[StackComponentInfo], message: Option[String])
 

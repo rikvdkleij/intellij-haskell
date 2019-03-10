@@ -61,7 +61,7 @@ class HLintQuickfix(startElement: PsiElement, endElement: PsiElement, startLineN
         }
       }
 
-      HaskellPsiUtil.findExpressionParent(commonParent).foreach(e => {
+      HaskellPsiUtil.findExpression(commonParent).foreach(e => {
         val manager = PsiDocumentManager.getInstance(project)
         val document = manager.getDocument(psiFile)
         manager.doPostponedOperationsAndUnblockDocument(document)

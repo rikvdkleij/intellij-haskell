@@ -22,7 +22,7 @@ import com.intellij.openapi.actionSystem.ActionManager
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.components.ProjectComponent
 import com.intellij.openapi.progress.{PerformInBackgroundOption, ProgressIndicator, ProgressManager, Task}
-import com.intellij.openapi.project.{Project, ProjectUtil}
+import com.intellij.openapi.project.Project
 import com.intellij.openapi.projectRoots.ProjectJdkTable
 import com.intellij.openapi.roots.{ModifiableRootModel, ModuleRootModificationUtil}
 import com.intellij.openapi.ui.Messages
@@ -184,7 +184,7 @@ object StackProjectManager {
                 })
 
                 progressIndicator.setText("Busy with updating project and module settings")
-                val projectPath = ProjectUtil.guessProjectDir(project).getPath
+                val projectPath = project.getBasePath
                 val projectModules = HaskellProjectUtil.findProjectHaskellModules(project)
                 val packagePaths = StackProjectImportBuilder.getPackagePaths(project)
                 val packagePathsToAdd = packagePaths.filterNot { relativePath =>
@@ -221,17 +221,11 @@ object StackProjectManager {
               val replsLoad = ApplicationManager.getApplication.executeOnPooledThread(ScalaUtil.runnable {
                 StackReplsManager.getReplsManager(project).foreach(_.stackComponentInfos.filter(_.stanzaType == LibType).foreach { info =>
                   progressIndicator.setText("Busy with starting project REPL " + info.packageName)
-                  val repl = StackReplsManager.getProjectRepl(project, info)
-                  if (repl.exists(_.available)) {
-                    repl match {
-                      case Some(r) =>
-                        val moduleNames = info.exposedModuleNames
-                        HaskellNotificationGroup.logInfoEvent(project, s"Loading project modules in REPL ${info.packageName} " + moduleNames.mkString(", "))
-                        r.load(moduleNames)
-                      case None => HaskellNotificationGroup.logWarningEvent(project, s"REPL ${info.packageName} is not started")
-                    }
-                    Thread.sleep(2000) // Have to wait between starting the REPLs otherwise timeouts while starting
+                  StackReplsManager.getProjectRepl(project, info) match {
+                    case Some(r) if r.available => HaskellNotificationGroup.logInfoEvent(project, s"REPL ${info.packageName} is started")
+                    case _ => HaskellNotificationGroup.logWarningEvent(project, s"REPL ${info.packageName} is not started")
                   }
+                  Thread.sleep(1000) // Have to wait between starting the REPLs otherwise timeouts while starting
                 })
 
                 val projectFiles = ApplicationUtil.scheduleInReadActionWithWriteActionPriority(project,
@@ -251,9 +245,9 @@ object StackProjectManager {
                 projectFilesWithImportedModuleNames match {
                   case Some(fm) =>
                     fm.foreach { case (f, moduleNames) =>
-                      moduleNames.foreach(mn => HaskellModuleNameIndex.findFileByModuleName(project, mn))
+                      moduleNames.foreach(mn => HaskellModuleNameIndex.findFilesByModuleName(project, mn))
                       HaskellNotificationGroup.logInfoEvent(project, "Loading module identifiers " + moduleNames.mkString(", "))
-                      moduleNames.foreach(m => BrowseModuleComponent.loadExportedIdentifiersSync(project, f, m))
+                      moduleNames.foreach(m => BrowseModuleComponent.findModuleIdentifiersSync(project, m))
                     }
                   case None => HaskellNotificationGroup.logInfoEvent(project, "Could not loaded module identifiers because of timeout ")
                 }

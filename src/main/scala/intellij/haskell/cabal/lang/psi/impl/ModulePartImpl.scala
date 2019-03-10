@@ -78,7 +78,7 @@ trait ModulePartImpl extends CabalNamedElementImpl {
       case Some(m) => GlobalSearchScope.moduleScope(m)
       case None => GlobalSearchScopesCore.projectProductionScope(getProject)
     }
-    val haskellFile = HaskellModuleNameIndex.findFileByModuleName(getProject, moduleName).toOption.flatMap(_.headOption)
+    val haskellFile = HaskellModuleNameIndex.findFilesByModuleName(getProject, moduleName).toOption.flatMap(_.headOption)
     haskellFile.flatMap(f => HaskellPsiUtil.findModuleDeclaration(f).find(_.getModuleName.contains(moduleName)).flatMap(_.getIdentifierElements.headOption))
   }
 }

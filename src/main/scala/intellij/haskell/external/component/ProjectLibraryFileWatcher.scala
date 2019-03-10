@@ -51,6 +51,16 @@ object ProjectLibraryFileWatcher {
 
   private val buildStatus: concurrent.Map[Project, BuildStatus] = new ConcurrentHashMap[Project, BuildStatus]().asScala
 
+  def addBuild(project: Project, libComponentInfos: Set[StackComponentInfo]): Option[BuildStatus] = {
+    synchronized {
+      ProjectLibraryFileWatcher.buildStatus.get(project) match {
+        case Some(Building(_)) => ProjectLibraryFileWatcher.buildStatus.put(project, Build(libComponentInfos))
+        case Some(Build(componentInfos)) => ProjectLibraryFileWatcher.buildStatus.put(project, Build(componentInfos.++(libComponentInfos)))
+        case None => ProjectLibraryFileWatcher.buildStatus.put(project, Build(libComponentInfos))
+      }
+    }
+  }
+
   def checkLibraryBuild(project: Project, currentInfo: StackComponentInfo): Unit = synchronized {
     if (!StackProjectManager.isInitializing(project) && !StackProjectManager.isHaddockBuilding(project) && !project.isDisposed) {
       ProjectLibraryFileWatcher.buildStatus.get(project) match {
@@ -110,10 +120,11 @@ object ProjectLibraryFileWatcher {
               }
             })
 
+            HaskellComponentsManager.invalidateBrowseInfo(project, libComponentInfos.flatMap(_.exposedModuleNames).toSeq)
+
             dependentFiles.foreach { vf =>
-              HaskellFileUtil.convertToHaskellFileInReadAction(project, vf).toOption.flatten match {
+              HaskellFileUtil.convertToHaskellFileInReadAction(project, vf).toOption match {
                 case Some(psiFile) =>
-                  HaskellComponentsManager.refreshCacheForModules(project, libComponentInfos.flatMap(_.exposedModuleNames).toSeq)
                   HaskellAnnotator.restartDaemonCodeAnalyzerForFile(psiFile)
                 case None => HaskellNotificationGroup.logInfoEvent(project, s"Could not invalidate cache and restart daemon analyzer for file ${vf.getName}")
               }

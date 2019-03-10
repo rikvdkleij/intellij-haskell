@@ -50,7 +50,7 @@ private[component] object TypeInfoComponent {
     val isDispatchThread = ApplicationManager.getApplication.isDispatchThread
 
     (for {
-      qne <- HaskellPsiUtil.findQualifiedNameParent(element)
+      qne <- HaskellPsiUtil.findQualifiedName(element)
       pf <- getFile
     } yield {
       Key(pf, qne)
@@ -73,7 +73,7 @@ private[component] object TypeInfoComponent {
         }
       }.getOrElse(Left(NoInfoAvailable(selectionModel.getSelectedText, psiFile.getName)))
     } else {
-      Left(ModuleNotLoaded(moduleName.getOrElse(psiFile.getName)))
+      Left(ModuleNotAvailable(moduleName.getOrElse(psiFile.getName)))
     }
   }
 
@@ -133,14 +133,14 @@ private[component] object TypeInfoComponent {
         case Right(_) => result
         case Left(NoInfoAvailable(_, _)) =>
           result
-        case Left(ReplNotAvailable) | Left(ReplIsBusy) | Left(IndexNotReady) | Left(ModuleNotLoaded(_)) | Left(ReadActionTimeout(_)) =>
+        case Left(ReplNotAvailable) | Left(ReplIsBusy) | Left(IndexNotReady) | Left(ModuleNotAvailable(_)) | Left(ReadActionTimeout(_)) =>
           synchronousCache.invalidate(key)
           result
       }
       case None =>
         val moduleName = HaskellPsiUtil.findModuleName(key.psiFile)
         if (isDispatchThread && !LoadComponent.isModuleLoaded(moduleName, key.psiFile)) {
-          Left(ModuleNotLoaded(moduleName.getOrElse(key.psiFile.getName)))
+          Left(ModuleNotAvailable(moduleName.getOrElse(key.psiFile.getName)))
         } else if (isDispatchThread) {
           val result = findTypeInfoResult(key)
           result match {
@@ -149,7 +149,7 @@ private[component] object TypeInfoComponent {
               result
             case Left(NoInfoAvailable(_, _)) =>
               result
-            case Left(ReplNotAvailable) | Left(ReplIsBusy) | Left(IndexNotReady) | Left(ModuleNotLoaded(_)) | Left(ReadActionTimeout(_)) =>
+            case Left(ReplNotAvailable) | Left(ReplIsBusy) | Left(IndexNotReady) | Left(ModuleNotAvailable(_)) | Left(ReadActionTimeout(_)) =>
               synchronousCache.invalidate(key)
               result
           }
@@ -160,7 +160,7 @@ private[component] object TypeInfoComponent {
               result
             case Left(NoInfoAvailable(_, _)) =>
               result
-            case Left(ReplNotAvailable) | Left(ReplIsBusy) | Left(IndexNotReady) | Left(ModuleNotLoaded(_)) | Left(ReadActionTimeout(_)) =>
+            case Left(ReplNotAvailable) | Left(ReplIsBusy) | Left(IndexNotReady) | Left(ModuleNotAvailable(_)) | Left(ReadActionTimeout(_)) =>
               synchronousCache.invalidate(key)
               result
           }

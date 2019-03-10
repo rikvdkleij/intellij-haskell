@@ -54,6 +54,10 @@ public class HaskellVisitor extends PsiElementVisitor {
         visitCNameElement(o);
     }
 
+    public void visitConstr(@NotNull HaskellConstr o) {
+        visitCompositeElement(o);
+    }
+
     public void visitConstr1(@NotNull HaskellConstr1 o) {
         visitCompositeElement(o);
     }
@@ -229,18 +233,22 @@ public class HaskellVisitor extends PsiElementVisitor {
 
     public void visitQConQualifier1(@NotNull HaskellQConQualifier1 o) {
         visitQualifierElement(o);
+        // visitNamedElement(o);
     }
 
     public void visitQConQualifier2(@NotNull HaskellQConQualifier2 o) {
         visitQualifierElement(o);
+        // visitNamedElement(o);
     }
 
     public void visitQConQualifier3(@NotNull HaskellQConQualifier3 o) {
         visitQualifierElement(o);
+        // visitNamedElement(o);
     }
 
     public void visitQConQualifier4(@NotNull HaskellQConQualifier4 o) {
         visitQualifierElement(o);
+        // visitNamedElement(o);
     }
 
     public void visitQName(@NotNull HaskellQName o) {
@@ -257,6 +265,7 @@ public class HaskellVisitor extends PsiElementVisitor {
 
     public void visitQualifier(@NotNull HaskellQualifier o) {
         visitQualifierElement(o);
+        // visitNamedElement(o);
     }
 
     public void visitReservedId(@NotNull HaskellReservedId o) {

@@ -6,7 +6,7 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiReference;
 import org.jetbrains.annotations.NotNull;
 
-public interface HaskellQConQualifier1 extends HaskellQualifierElement {
+public interface HaskellQConQualifier1 extends HaskellQualifierElement, HaskellNamedElement {
 
     @NotNull
     HaskellConid getConid();

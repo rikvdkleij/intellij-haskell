@@ -39,7 +39,7 @@ class GotoByDeclarationContributor extends GotoClassContributor {
 
   override def getItemsByName(name: String, pattern: String, project: Project, includeNonProjectItems: Boolean): Array[NavigationItem] = {
     val namedElements = GotoHelper.getNamedElements(name, pattern, project, includeNonProjectItems)
-    val declarationElements = namedElements.map(ne => (ne, HaskellPsiUtil.findHighestDeclarationElementParent(ne)))
+    val declarationElements = namedElements.map(ne => (ne, HaskellPsiUtil.findHighestDeclarationElement(ne)))
     declarationElements.sortWith(sortByClassDeclarationFirst).flatMap(_._2).toArray
   }
 

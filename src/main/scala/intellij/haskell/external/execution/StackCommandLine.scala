@@ -16,6 +16,8 @@
 
 package intellij.haskell.external.execution
 
+import java.util.concurrent.LinkedBlockingDeque
+
 import com.intellij.compiler.impl._
 import com.intellij.compiler.progress.CompilerTask
 import com.intellij.execution.ExecutionException
@@ -31,7 +33,7 @@ import intellij.haskell.settings.HaskellSettingsState
 import intellij.haskell.stackyaml.StackYamlComponent
 import intellij.haskell.util.{HaskellFileUtil, HaskellProjectUtil}
 
-import scala.collection.mutable.ListBuffer
+import scala.collection.JavaConverters._
 import scala.concurrent.SyncVar
 
 object StackCommandLine {
@@ -154,10 +156,11 @@ object StackCommandLine {
 
   private class MessageViewProcessAdapter(val compileContext: CompileContext, val progressIndicator: ProgressIndicator) extends ProcessAdapter() {
 
-    private final val WhileBuildingText = "--  While building custom"
+    private final val WhileBuildingText = "--  While building "
     private final var whileBuildingTextIsPassed = false
 
-    private val previousMessageLines = ListBuffer[String]()
+    private val previousMessageLines = new LinkedBlockingDeque[String]
+    @volatile
     private var globalError = false
 
     override def onTextAvailable(event: ProcessEvent, outputType: Key[_]) {
@@ -175,7 +178,7 @@ object StackCommandLine {
     }
 
     def addLastMessage(): Unit = {
-      if (previousMessageLines.nonEmpty) {
+      if (!previousMessageLines.isEmpty) {
         addMessage()
       }
     }
@@ -188,11 +191,11 @@ object StackCommandLine {
           }
 
           // End of sentence which was over multiple lines
-          if (previousMessageLines.nonEmpty && !text.startsWith("  ")) {
+          if (!previousMessageLines.isEmpty && !text.startsWith("  ")) {
             addMessage()
           }
 
-          previousMessageLines.append(text)
+          previousMessageLines.add(text)
         } else if (text.startsWith("Warning:")) {
           compileContext.addMessage(CompilerMessageCategory.WARNING, text, null, -1, -1)
         } else if (text.startsWith("Error:")) {
@@ -203,8 +206,9 @@ object StackCommandLine {
       }
     }
 
+
     private def addMessage(): Unit = {
-      val errorMessageLine = previousMessageLines.mkString(" ")
+      val errorMessageLine = previousMessageLines.iterator().asScala.mkString(" ")
       val compilationProblem = HaskellCompilationResultHelper.parseErrorLine(errorMessageLine.replaceAll("\n", " "))
       compilationProblem match {
         case Some(p@CompilationProblem(filePath, lineNr, columnNr, message)) if p.isWarning =>

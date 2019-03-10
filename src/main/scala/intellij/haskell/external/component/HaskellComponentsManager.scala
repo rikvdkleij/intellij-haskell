@@ -27,7 +27,6 @@ import com.intellij.psi.{PsiElement, PsiFile}
 import com.intellij.util.WaitFor
 import intellij.haskell.HaskellNotificationGroup
 import intellij.haskell.cabal.CabalInfo
-import intellij.haskell.editor.FileModuleIdentifiers
 import intellij.haskell.external.component.DefinitionLocationComponent.DefinitionLocationResult
 import intellij.haskell.external.component.NameInfoComponentResult.NameInfoResult
 import intellij.haskell.external.component.TypeInfoComponentResult.TypeInfoResult
@@ -42,7 +41,7 @@ import scala.concurrent._
 
 object HaskellComponentsManager {
 
-  case class StackComponentInfo(module: Module, packageName: String, target: String, stanzaType: StanzaType, sourceDirs: Seq[String], mainIs: Option[String], isImplicitPreludeActive: Boolean, buildDepends: Seq[String], exposedModuleNames: Seq[String] = Seq.empty)
+  case class StackComponentInfo(module: Module, modulePath: String, packageName: String, target: String, stanzaType: StanzaType, sourceDirs: Seq[String], mainIs: Option[String], isImplicitPreludeActive: Boolean, buildDepends: Seq[String], exposedModuleNames: Seq[String] = Seq.empty)
 
   def findModuleIdentifiersInCache(project: Project)(implicit ec: ExecutionContext): Iterable[ModuleIdentifier] = {
     val f = ApplicationManager.getApplication.executeOnPooledThread(ScalaUtil.callable {
@@ -73,27 +72,15 @@ object HaskellComponentsManager {
   }
 
   def isReplBusy(psiFile: PsiFile): Boolean = {
-    LoadComponent.isBusy(psiFile)
+    LoadComponent.isReplBusy(psiFile)
   }
 
-  def findLibraryModuleIdentifiers(project: Project, moduleName: String)(implicit ec: ExecutionContext): Future[Option[Iterable[ModuleIdentifier]]] = {
-    BrowseModuleComponent.findLibraryModuleIdentifiers(project, moduleName)
-  }
-
-  def findExportedModuleIdentifiers(psiFile: PsiFile, moduleName: String)(implicit ec: ExecutionContext): Future[Option[Iterable[ModuleIdentifier]]] = {
-    BrowseModuleComponent.findExportedIdentifiers(psiFile, moduleName)
-  }
-
-  def findTopLevelModuleIdentifiers(psiFile: PsiFile, moduleName: String)(implicit ec: ExecutionContext): Future[Option[Iterable[ModuleIdentifier]]] = {
-    BrowseModuleComponent.findTopLevelIdentifiers(psiFile, moduleName)
+  def findModuleIdentifiers(project: Project, moduleName: String)(implicit ec: ExecutionContext): Future[Option[Iterable[ModuleIdentifier]]] = {
+    BrowseModuleComponent.findModuleIdentifiers(project, moduleName)
   }
 
   def findDefinitionLocation(psiFile: PsiFile, qualifiedNameElement: HaskellQualifiedNameElement, importQualifier: Option[String]): DefinitionLocationResult = {
     DefinitionLocationComponent.findDefinitionLocation(psiFile, qualifiedNameElement, importQualifier)
-  }
-
-  def findNameInfo(qualifiedNameElement: HaskellQualifiedNameElement, importQualifier: Option[String] = None): NameInfoResult = {
-    NameInfoComponent.findNameInfo(qualifiedNameElement, importQualifier)
   }
 
   def findNameInfo(psiElement: PsiElement): NameInfoResult = {
@@ -117,11 +104,11 @@ object HaskellComponentsManager {
   }
 
   def findStackComponentInfo(psiFile: PsiFile): Option[StackComponentInfo] = {
-    HaskellProjectFileInfoComponent.findHaskellProjectFileInfo(psiFile).map(_.stackComponentInfo)
+    HaskellModuleInfoComponent.findHaskellProjectFileInfo(psiFile)
   }
 
   def findStackComponentInfo(project: Project, filePath: String): Option[StackComponentInfo] = {
-    HaskellProjectFileInfoComponent.findHaskellProjectFileInfo(project, filePath).map(_.stackComponentInfo)
+    HaskellModuleInfoComponent.findHaskellProjectFileInfo(project, filePath)
   }
 
   def getGlobalProjectInfo(project: Project): Option[GlobalProjectInfo] = {
@@ -156,15 +143,11 @@ object HaskellComponentsManager {
     LoadComponent.load(psiFile, fileChanged, psiElement)
   }
 
-  def invalidateHaskellFileInfoCache(psiFile: PsiFile): Unit = {
-    HaskellProjectFileInfoComponent.invalidate(psiFile)
+  def invalidateFileInfos(psiFile: PsiFile): Unit = {
+    HaskellModuleInfoComponent.invalidate(psiFile)
   }
 
-  def refreshDefinitionLocationCache(elements: Seq[HaskellQualifiedNameElement]): Unit = {
-    DefinitionLocationComponent.refresh(elements)
-  }
-
-  def invalidateDefinitionLocationCache(psiFile: PsiFile): Unit = {
+  def invalidateLocations(psiFile: PsiFile): Unit = {
     DefinitionLocationComponent.invalidate(psiFile)
   }
 
@@ -172,16 +155,16 @@ object HaskellComponentsManager {
     findStackComponentInfos(project).map(info => (info.module, info.packageName)).distinct
   }
 
-  def findReferencesInCache(targetFile: PsiFile): Seq[(PsiFile, HaskellQualifiedNameElement)] = {
-    DefinitionLocationComponent.findReferencesInCache(targetFile)
+  def invalidateOtherFilesLocations(currentFile: PsiFile, name: String): Unit = {
+    DefinitionLocationComponent.invalidateOtherFiles(currentFile, name)
   }
 
   def findLibraryPackageInfos(project: Project): Seq[PackageInfo] = {
     LibraryPackageInfoComponent.libraryPackageInfos(project).toSeq
   }
 
-  def refreshCacheForModules(project: Project, moduleNames: Seq[String]): Unit = {
-    BrowseModuleComponent.refreshExportedModuleNames(project, moduleNames)
+  def invalidateBrowseInfo(project: Project, moduleNames: Seq[String]): Unit = {
+    BrowseModuleComponent.invalidateModuleNames(project, moduleNames)
   }
 
   def findStackComponentInfos(project: Project): Seq[StackComponentInfo] = {
@@ -192,7 +175,7 @@ object HaskellComponentsManager {
     HaskellNotificationGroup.logInfoEvent(project, "Start to invalidate cache")
     GlobalProjectInfoComponent.invalidate(project)
     LibraryPackageInfoComponent.invalidate(project)
-    HaskellProjectFileInfoComponent.invalidate(project)
+    HaskellModuleInfoComponent.invalidate(project)
     BrowseModuleComponent.invalidate(project)
     NameInfoComponent.invalidateAll(project)
     DefinitionLocationComponent.invalidateAll(project)
@@ -260,7 +243,7 @@ object HaskellComponentsManager {
 
   private def preloadLibraryIdentifiers(project: Project): Unit = {
     if (!project.isDisposed) {
-      BrowseModuleComponent.findLibraryModuleIdentifiers(project, HaskellProjectUtil.Prelude)
+      BrowseModuleComponent.findModuleIdentifiers(project, HaskellProjectUtil.Prelude)
     }
 
     if (!project.isDisposed) {
@@ -282,33 +265,32 @@ object HaskellComponentsManager {
         })
 
       if (!project.isDisposed) {
-        importedLibraryModuleNames.toSeq.distinct.foreach(mn => {
-          if (!project.isDisposed) {
-            if (StackReplsManager.getGlobalRepl(project).exists(_.available)) {
-              BrowseModuleComponent.findLibraryModuleIdentifiersSync(project, mn)
+        if (StackReplsManager.getGlobalRepl(project).exists(_.available)) {
+          importedLibraryModuleNames.toSeq.distinct.foreach(mn => {
+            if (!project.isDisposed) {
+              BrowseModuleComponent.findModuleIdentifiersSync(project, mn)
             }
-          }
-        })
+          })
+        }
       }
     }
   }
 
   private def preloadAllLibraryIdentifiers(project: Project): Unit = {
-
     if (!project.isDisposed) {
       val componentInfos = findStackComponentInfos(project)
       val packageInfos = componentInfos.flatMap(info => findStackComponentGlobalInfo(info).map(_.packageInfos).getOrElse(Seq())).distinct
 
       if (!project.isDisposed) {
-        packageInfos.flatMap(_.exposedModuleNames).distinct.foreach(mn => {
-          if (!project.isDisposed) {
-            if (StackReplsManager.getGlobalRepl(project).exists(_.available)) {
-              BrowseModuleComponent.findLibraryModuleIdentifiersSync(project, mn)
+        if (StackReplsManager.getGlobalRepl(project).exists(_.available)) {
+          packageInfos.flatMap(_.exposedModuleNames).distinct.foreach(mn => {
+            if (!project.isDisposed) {
+              BrowseModuleComponent.findModuleIdentifiersSync(project, mn)
               // We have to wait for other requests which have more priority because those are on dispatch thread
               Thread.sleep(100)
             }
-          }
-        })
+          })
+        }
       }
     }
   }

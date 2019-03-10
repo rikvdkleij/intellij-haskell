@@ -22,8 +22,8 @@ package object component {
     override def message: String = "No info because index is not ready"
   }
 
-  case class ModuleNotLoaded(fileName: String) extends NoInfo {
-    override def message: String = s"No info because module of file $fileName is not loaded"
+  case class ModuleNotAvailable(name: String) extends NoInfo {
+    override def message: String = s"No info because $name is not loaded or found"
   }
 
   case class ReadActionTimeout(readActionDescription: String) extends NoInfo {

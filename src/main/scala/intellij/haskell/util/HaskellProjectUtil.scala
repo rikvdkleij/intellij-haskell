@@ -26,7 +26,7 @@ import com.intellij.openapi.vfs.{LocalFileSystem, VirtualFile}
 import com.intellij.psi.search.GlobalSearchScope
 import com.intellij.psi.{PsiElement, PsiFile}
 import intellij.haskell.HaskellNotificationGroup
-import intellij.haskell.external.component.{HaskellComponentsManager, NoInfo}
+import intellij.haskell.external.component.{HaskellComponentsManager, NoInfo, NoInfoAvailable}
 import intellij.haskell.module.HaskellModuleType
 import intellij.haskell.sdk.HaskellSdkType
 
@@ -48,11 +48,11 @@ object HaskellProjectUtil {
     findProjectHaskellModules(project).nonEmpty
   }
 
-  def findFile(filePath: String, project: Project): (Option[VirtualFile], Either[NoInfo, Option[PsiFile]]) = {
+  def findFile(filePath: String, project: Project): (Option[VirtualFile], Either[NoInfo, PsiFile]) = {
     val virtualFile = Option(LocalFileSystem.getInstance().findFileByPath(HaskellFileUtil.makeFilePathAbsolute(filePath, project)))
     val psiFile = virtualFile.map(f => HaskellFileUtil.convertToHaskellFileInReadAction(project, f)) match {
       case Some(r) => r
-      case None => Right(None)
+      case None => Left(NoInfoAvailable(filePath, "-"))
     }
     (virtualFile, psiFile)
   }

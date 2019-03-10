@@ -82,7 +82,7 @@ private[component] object AvailableModuleNamesComponent {
   private def findModuleNamesInModule(project: Project, currentModule: Module, modules: Seq[Module], includeTests: Boolean): Iterable[String] = {
     for {
       vf <- findHaskellFiles(project, currentModule, modules, includeTests)
-      hf <- HaskellFileUtil.convertToHaskellFileInReadAction(project, vf).toOption.flatten
+      hf <- HaskellFileUtil.convertToHaskellFileInReadAction(project, vf).toSeq
       mn <- HaskellPsiUtil.findModuleName(hf)
     } yield mn
   }

@@ -43,7 +43,7 @@ class ShowTypeStickyAction extends AnAction {
   private def untilNameElementBackwards(element: Option[PsiElement]): Option[HaskellQualifiedNameElement] = {
     element match {
       case Some(e) =>
-        HaskellPsiUtil.findQualifiedNameParent(e) match {
+        HaskellPsiUtil.findQualifiedName(e) match {
           case None => untilNameElementBackwards(Option(e.getPrevSibling))
           case qualifiedName => qualifiedName
         }

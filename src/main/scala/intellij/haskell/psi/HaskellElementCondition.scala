@@ -21,42 +21,6 @@ import com.intellij.psi.PsiElement
 
 object HaskellElementCondition {
 
-  final val ImportDeclarationsCondition = new Condition[PsiElement]() {
-    override def value(psiElement: PsiElement): Boolean = {
-      psiElement match {
-        case _: HaskellImportDeclarations => true
-        case _ => false
-      }
-    }
-  }
-
-  final val ImportDeclarationCondition = new Condition[PsiElement]() {
-    override def value(psiElement: PsiElement): Boolean = {
-      psiElement match {
-        case _: HaskellImportDeclaration => true
-        case _ => false
-      }
-    }
-  }
-
-  final val ImportHidingSpecCondition = new Condition[PsiElement]() {
-    override def value(psiElement: PsiElement): Boolean = {
-      psiElement match {
-        case _: HaskellImportHidingSpec => true
-        case _ => false
-      }
-    }
-  }
-
-  final val ImportSpecCondition = new Condition[PsiElement]() {
-    override def value(psiElement: PsiElement): Boolean = {
-      psiElement match {
-        case _: HaskellImportSpec => true
-        case _ => false
-      }
-    }
-  }
-
   final val QualifiedNameElementCondition = new Condition[PsiElement]() {
     override def value(psiElement: PsiElement): Boolean = {
       psiElement match {
@@ -66,37 +30,10 @@ object HaskellElementCondition {
     }
   }
 
-  final val TtypeElementCondition = new Condition[PsiElement]() {
-    override def value(psiElement: PsiElement): Boolean = {
-      psiElement match {
-        case _: HaskellTtype => true
-        case _ => false
-      }
-    }
-  }
-
   final val DeclarationElementCondition = new Condition[PsiElement]() {
     override def value(psiElement: PsiElement): Boolean = {
       psiElement match {
         case _: HaskellDeclarationElement => true
-        case _ => false
-      }
-    }
-  }
-
-  final val DataDeclarationElementCondition = new Condition[PsiElement]() {
-    override def value(psiElement: PsiElement): Boolean = {
-      psiElement match {
-        case _: HaskellDataDeclaration => true
-        case _ => false
-      }
-    }
-  }
-
-  final val NewTypeDeclarationElementCondition = new Condition[PsiElement]() {
-    override def value(psiElement: PsiElement): Boolean = {
-      psiElement match {
-        case _: HaskellNewtypeDeclaration => true
         case _ => false
       }
     }
@@ -112,55 +49,10 @@ object HaskellElementCondition {
     }
   }
 
-  final val ModuleDeclarationCondition = new Condition[PsiElement]() {
-    override def value(psiElement: PsiElement): Boolean = {
-      psiElement match {
-        case _: HaskellModuleDeclaration => true
-        case _ => false
-      }
-    }
-  }
-
-  final val TypeSignatureCondition = new Condition[PsiElement]() {
-    override def value(psiElement: PsiElement): Boolean = {
-      psiElement match {
-        case _: HaskellTypeSignature => true
-        case _ => false
-      }
-    }
-  }
-
-  final val ExpressionCondition = new Condition[PsiElement]() {
-    override def value(psiElement: PsiElement): Boolean = {
-      psiElement match {
-        case _: HaskellExpression => true
-        case _ => false
-      }
-    }
-  }
-
   final val NamedElementCondition = new Condition[PsiElement]() {
     override def value(psiElement: PsiElement): Boolean = {
       psiElement match {
         case _: HaskellNamedElement => true
-        case _ => false
-      }
-    }
-  }
-
-  final val ModIdElementCondition = new Condition[PsiElement]() {
-    override def value(psiElement: PsiElement): Boolean = {
-      psiElement match {
-        case _: HaskellModid => true
-        case _ => false
-      }
-    }
-  }
-
-  final val FileHeaderCondition = new Condition[PsiElement]() {
-    override def value(psiElement: PsiElement): Boolean = {
-      psiElement match {
-        case _: HaskellFileHeader => true
         case _ => false
       }
     }

@@ -18,12 +18,16 @@ package intellij.haskell.refactor
 
 import java.util
 
+import com.intellij.openapi.fileEditor.FileEditorManager
+import com.intellij.openapi.project.Project
 import com.intellij.psi.{PsiElement, PsiFile}
+import com.intellij.refactoring.listeners.RefactoringElementListener
 import com.intellij.refactoring.rename.RenamePsiElementProcessor
 import intellij.haskell.HaskellNotificationGroup
-import intellij.haskell.external.component.HaskellComponentsManager
+import intellij.haskell.external.component.{HaskellComponentsManager, ProjectLibraryFileWatcher}
+import intellij.haskell.external.repl.StackRepl.LibType
 import intellij.haskell.psi.HaskellPsiUtil
-import intellij.haskell.util.HaskellProjectUtil
+import intellij.haskell.util.{HaskellFileUtil, HaskellProjectUtil, ScalaUtil}
 
 class HaskellRenameVariableProcessor extends RenamePsiElementProcessor {
 
@@ -33,11 +37,14 @@ class HaskellRenameVariableProcessor extends RenamePsiElementProcessor {
     val oldName = HaskellPsiUtil.findNamedElement(targetElement).map(_.getName)
     oldName match {
       case Some(n) =>
-        val targetFile = targetElement.getContainingFile.getOriginalFile
-        val usageElements = HaskellComponentsManager.findReferencesInCache(targetFile).filterNot(_._1 == targetFile).filter(_._2.getIdentifierElement.getName == n).map(_._2)
-        if (usageElements.nonEmpty) {
-          HaskellComponentsManager.refreshDefinitionLocationCache(usageElements)
-        }
+        val project = targetElement.getProject
+        for {
+          f <- getCurrentFile(project)
+          _ = HaskellComponentsManager.invalidateOtherFilesLocations(f, n)
+          tf <- Option(targetElement.getContainingFile).map(_.getOriginalFile)
+          tInfo <- if (tf != f) HaskellComponentsManager.findStackComponentInfo(tf) else None
+          _ = if (tInfo.stanzaType == LibType) ProjectLibraryFileWatcher.addBuild(project, Set(tInfo)) else ()
+        } yield ()
       case None => ()
     }
   }
@@ -60,5 +67,22 @@ class HaskellRenameVariableProcessor extends RenamePsiElementProcessor {
           })
       }
     }
+  }
+
+  override def getPostRenameCallback(element: PsiElement, newName: String, elementListener: RefactoringElementListener): Runnable = {
+    ScalaUtil.runnable {
+      val project = element.getProject
+
+      HaskellFileUtil.saveAllFiles(project)
+
+      getCurrentFile(project).foreach { f =>
+        val componentInfo = HaskellComponentsManager.findStackComponentInfo(f)
+        componentInfo.foreach(ci => ProjectLibraryFileWatcher.checkLibraryBuild(project, ci))
+      }
+    }
+  }
+
+  private def getCurrentFile(project: Project) = {
+    FileEditorManager.getInstance(project).getSelectedFiles.headOption.flatMap(f => HaskellFileUtil.convertToHaskellFileDispatchThread(project, f))
   }
 }
