@@ -268,29 +268,35 @@ object StackProjectManager {
               })
 
               val preloadLibraryFilesCacheFuture = ApplicationManager.getApplication.executeOnPooledThread(ScalaUtil.runnable {
-                progressIndicator.setText("Busy with downloading library sources")
-                HaskellModuleBuilder.addLibrarySources(project, update = restart)
+                if (!project.isDisposed) {
+                  progressIndicator.setText("Busy with downloading library sources")
+                  HaskellModuleBuilder.addLibrarySources(project, update = restart)
 
-                HaskellComponentsManager.preloadLibraryFilesCache(project)
+                  HaskellComponentsManager.preloadLibraryFilesCache(project)
+                }
               })
 
               progressIndicator.setText("Busy with preloading library identifiers")
               val preloadLibraryIdentifiersCacheFuture = ApplicationManager.getApplication.executeOnPooledThread(ScalaUtil.runnable {
-                HaskellComponentsManager.preloadLibraryIdentifiersCaches(project)
+                if (!project.isDisposed) {
+                  HaskellComponentsManager.preloadLibraryIdentifiersCaches(project)
+                }
               })
 
               progressIndicator.setText("Busy with preloading all library identifiers")
               ApplicationManager.getApplication.executeOnPooledThread(ScalaUtil.runnable {
-                getStackProjectManager(project).foreach(_.preloadingAllLibraryIdentifiers = true)
-                try {
-                  HaskellComponentsManager.preloadAllLibraryIdentifiersCaches(project)
+                if (!project.isDisposed) {
+                  getStackProjectManager(project).foreach(_.preloadingAllLibraryIdentifiers = true)
+                  try {
+                    HaskellComponentsManager.preloadAllLibraryIdentifiersCaches(project)
 
-                  if (!project.isDisposed) {
-                    HaskellNotificationGroup.logInfoEvent(project, "Restarting global REPL to release memory")
-                    StackReplsManager.getGlobalRepl(project).foreach(_.restart())
+                    if (!project.isDisposed) {
+                      HaskellNotificationGroup.logInfoEvent(project, "Restarting global REPL to release memory")
+                      StackReplsManager.getGlobalRepl(project).foreach(_.restart())
+                    }
+                  } finally {
+                    getStackProjectManager(project).foreach(_.preloadingAllLibraryIdentifiers = false)
                   }
-                } finally {
-                  getStackProjectManager(project).foreach(_.preloadingAllLibraryIdentifiers = false)
                 }
               })
 
