@@ -189,7 +189,7 @@ object HaskellModuleBuilder {
 
   private def getDependencies(project: Project, module: Module, packageName: String, libraryDependencies: Seq[HaskellLibraryDependency]): Seq[HaskellDependency] = {
     val cabalInfo = HaskellComponentsManager.findCabalInfos(project).find(_.packageName == packageName)
-    val libPackages = cabalInfo.flatMap(_.library.map(_.buildDepends)).getOrElse(Array())
+    val libPackages = cabalInfo.flatMap(_.library.map(_.buildDepends)).getOrElse(Seq())
     val exePackages = cabalInfo.map(_.executables.flatMap(_.buildDepends)).getOrElse(Seq())
     val testPackages = cabalInfo.map(_.testSuites.flatMap(_.buildDepends)).getOrElse(Seq())
     val benchPackages = cabalInfo.map(_.benchmarks.flatMap(_.buildDepends)).getOrElse(Seq())

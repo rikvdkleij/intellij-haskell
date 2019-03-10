@@ -210,6 +210,10 @@ object HaskellPsiUtil {
     Option(PsiTreeUtil.getChildOfType(psiElement, cls))
   }
 
+  def getChildrenOfType[T <: PsiElement](psiElement: PsiElement, cls: Class[T]): Iterable[T] = {
+    PsiTreeUtil.findChildrenOfAnyType(psiElement, cls).asScala
+  }
+
   def getChildNodes(psiElement: PsiElement, elementTypes: IElementType*): Array[ASTNode] = {
     psiElement.getNode.getChildren(TokenSet.create(elementTypes: _*))
   }
