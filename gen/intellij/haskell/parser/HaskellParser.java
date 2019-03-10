@@ -2978,7 +2978,7 @@ public class HaskellParser implements PsiParser, LightPsiParser {
     // QUASIQUOTE | q_name | symbol_reserved_op | reserved_id | LEFT_PAREN | RIGHT_PAREN | FLOAT |
     //                                   SEMICOLON | LEFT_BRACKET | RIGHT_BRACKET | literal | LEFT_BRACE | RIGHT_BRACE |
     //                                   COMMA | QUOTE | BACKQUOTE | fixity |
-    //                                   pragma | DIRECTIVE
+    //                                   pragma | DIRECTIVE | DOUBLE_QUOTES
     static boolean general_id(PsiBuilder b, int l) {
         if (!recursion_guard_(b, l, "general_id")) return false;
         boolean r;
@@ -3001,6 +3001,7 @@ public class HaskellParser implements PsiParser, LightPsiParser {
         if (!r) r = fixity(b, l + 1);
         if (!r) r = pragma(b, l + 1);
         if (!r) r = consumeToken(b, HS_DIRECTIVE);
+        if (!r) r = consumeToken(b, HS_DOUBLE_QUOTES);
         return r;
     }
 

@@ -114,6 +114,7 @@ public interface HaskellTypes {
     IElementType HS_DIRECTIVE = new HaskellTokenType("DIRECTIVE");
     IElementType HS_DO = new HaskellTokenType("DO");
     IElementType HS_DOT = new HaskellTokenType("DOT");
+    IElementType HS_DOUBLE_QUOTES = new HaskellTokenType("DOUBLE_QUOTES");
     IElementType HS_DOUBLE_RIGHT_ARROW = new HaskellTokenType("DOUBLE_RIGHT_ARROW");
     IElementType HS_ELSE = new HaskellTokenType("ELSE");
     IElementType HS_EQUAL = new HaskellTokenType("EQUAL");

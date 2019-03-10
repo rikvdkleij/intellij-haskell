@@ -104,6 +104,7 @@ left_brace          = "{"
 right_brace         = "}"
 
 quote               = "'"
+double_quotes       = "\""
 
 forall              = "∀"
 
@@ -361,5 +362,7 @@ nhaddock_start      = {left_brace}{dash}{white_char}?{vertical_bar}
     {directive}           { return HS_DIRECTIVE; }
 
     {forall}              { return HS_FORALL; }
+
+    {double_quotes}       {return HS_DOUBLE_QUOTES; }
 
     [^]                   { return com.intellij.psi.TokenType.BAD_CHARACTER; }
