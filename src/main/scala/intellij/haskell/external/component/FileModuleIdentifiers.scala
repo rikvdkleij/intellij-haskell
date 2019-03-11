@@ -122,7 +122,7 @@ object FileModuleIdentifiers {
     ApplicationUtil.runInReadActionWithWriteActionPriority(project, findImportDeclarations(psiFile), "In findModuleIdentifiers") match {
       case Right(importDeclarations) =>
         val noImplicitPrelude = if (HaskellProjectUtil.isSourceFile(psiFile)) {
-          HaskellComponentsManager.findStackComponentInfo(psiFile).exists(info => FileModuleIdentifiers.isNoImplicitPreludeActive(info, psiFile))
+          HaskellComponentsManager.findStackComponentInfo(psiFile).exists(info => isNoImplicitPreludeActive(info, psiFile))
         } else {
           false
         }
