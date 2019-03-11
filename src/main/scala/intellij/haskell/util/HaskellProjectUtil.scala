@@ -20,8 +20,7 @@ import java.io.File
 
 import com.intellij.openapi.module.{Module, ModuleManager, ModuleUtilCore}
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.roots.{ModuleRootManager, ProjectRootManager, TestSourcesFilter}
-import com.intellij.openapi.util.io.FileUtil
+import com.intellij.openapi.roots._
 import com.intellij.openapi.vfs.{LocalFileSystem, VirtualFile}
 import com.intellij.psi.search.GlobalSearchScope
 import com.intellij.psi.{PsiElement, PsiFile}
@@ -91,10 +90,12 @@ object HaskellProjectUtil {
     if (isConfigFile(project, virtualFile)) {
       HaskellNotificationGroup.logInfoEvent(project, s"`${virtualFile.getName}` is ignored")
       Other
-    } else if (isModuleFile(project, virtualFile)) {
+    } else if (isInSourceContent(project, virtualFile)) {
       SourceFile
-    } else {
+    } else if (isInLibrary(project, virtualFile)) {
       LibraryFile
+    } else {
+      Other
     }
   }
 
@@ -110,10 +111,6 @@ object HaskellProjectUtil {
     getHaskellProjectFileType(psiFile).contains(LibraryFile)
   }
 
-  private def isModuleFile(project: Project, virtualFile: VirtualFile): Boolean = {
-    findProjectHaskellModules(project).exists(m => FileUtil.isAncestor(getModuleDir(m), new File(virtualFile.getPath), true))
-  }
-
   private final val ConfigHaskellFiles = Seq("setup.hs", "hlint.hs")
 
   private def isConfigFile(project: Project, virtualFile: VirtualFile): Boolean = {
@@ -125,12 +122,12 @@ object HaskellProjectUtil {
     Option(virtualFile.getParent)
   }
 
-  def isProjectTestFile(psiFile: PsiFile): Option[Boolean] = {
-    Option(psiFile.getOriginalFile.getVirtualFile).map(vf => isProjectTestFile(vf, psiFile.getProject))
+  private def isInLibrary(project: Project, virtualFile: VirtualFile): Boolean = {
+    ApplicationUtil.runReadAction(ProjectFileIndex.SERVICE.getInstance(project).isInLibrary(virtualFile))
   }
 
-  def isProjectTestFile(virtualFile: VirtualFile, project: Project): Boolean = {
-    TestSourcesFilter.isTestSources(virtualFile, project)
+  private def isInSourceContent(project: Project, virtualFile: VirtualFile): Boolean = {
+    ApplicationUtil.runReadAction(ProjectFileIndex.SERVICE.getInstance(project).isInSourceContent(virtualFile))
   }
 
   def getModuleDir(module: Module): File = {
