@@ -232,7 +232,7 @@ object StackProjectManager {
                   if (project.isDisposed) {
                     Iterable()
                   } else {
-                    HaskellFileIndex.findProjectProductionHaskellFiles(project)
+                    HaskellFileIndex.findProjectHaskellFiles(project)
                   }, "Finding project files with imported module names")
 
                 val projectFilesWithImportedModuleNames = projectFiles match {
