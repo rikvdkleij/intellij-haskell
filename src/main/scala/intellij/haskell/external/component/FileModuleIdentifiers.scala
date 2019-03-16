@@ -76,40 +76,15 @@ object FileModuleIdentifiers {
 
   private def getModuleIdentifiers(psiFile: PsiFile): Option[Iterable[ModuleIdentifier]] = {
     val key = Key(psiFile)
-    Cache.getIfPresent(key) match {
-      case Some(Some(mids)) =>
+    Cache.get(key) match {
+      case Some(mids) =>
         if (mids.toSeq.contains(None)) {
           Cache.invalidate(key)
         }
         Some(mids.flatten.flatten)
-      case Some(None) =>
+      case None =>
         Cache.invalidate(key)
         None
-      case None =>
-        if (ApplicationManager.getApplication.isReadAccessAllowed) {
-          val f = Future(Cache.get(key))
-          ScalaFutureUtil.waitWithCheckCancelled(psiFile.getProject, f, "getModuleIdentifiers", 10.seconds).flatten match {
-            case Some(mids) =>
-              if (mids.toSeq.contains(None)) {
-                Cache.invalidate(key)
-              }
-              Some(mids.flatten.flatten)
-            case None =>
-              Cache.invalidate(key)
-              None
-          }
-        } else {
-          Cache.get(key) match {
-            case Some(mids) =>
-              if (mids.toSeq.contains(None)) {
-                Cache.invalidate(key)
-              }
-              Some(mids.flatten.flatten)
-            case None =>
-              Cache.invalidate(key)
-              None
-          }
-        }
     }
   }
 
@@ -124,6 +99,7 @@ object FileModuleIdentifiers {
         val noImplicitPrelude = if (HaskellProjectUtil.isSourceFile(psiFile)) {
           HaskellComponentsManager.findStackComponentInfo(psiFile).exists(info => isNoImplicitPreludeActive(info, psiFile))
         } else {
+          // TODO: This can give unexpected behavior when finding references in library files
           false
         }
         val idsF1 = getModuleIdentifiersFromFullImportedModules(noImplicitPrelude, psiFile, importDeclarations)

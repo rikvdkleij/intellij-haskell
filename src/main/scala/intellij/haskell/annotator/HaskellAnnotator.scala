@@ -93,7 +93,7 @@ class HaskellAnnotator extends ExternalAnnotator[(PsiFile, Option[PsiElement]), 
     }
 
     val otherFileMessages = loadResult.otherFileProblems.flatMap { problem =>
-      HaskellProjectUtil.findVirtualFile(problem.filePath, project).map { file =>
+      HaskellFileUtil.findVirtualFile(project, problem.filePath).map { file =>
         createCompilerMessage(file, project, problem)
       }
     }
@@ -192,7 +192,7 @@ object HaskellAnnotator {
             val plainMessage = problem.plainMessage.replaceAll(" •", "")
             plainMessage match {
               // Because of setting `-fdefer-type-errors` the following problems are displayed as error
-              case PerhapsYouMeantSingleMultiplePattern(notInScopeMessage, suggestionsList, perhapsLine, addName, addModule) =>
+              case PerhapsYouMeantSingleMultiplePattern(notInScopeMessage, suggestionsList, _, addName, addModule) =>
                 createErrorAnnotationWithMultiplePerhapsIntentions(problem, tr, notInScopeMessage, suggestionsList, Some((addModule, addName)))
               case PerhapsYouMeantSingleMultiplePattern3(notInScopeMessage, suggestionsList, addName, addModule) =>
                 createErrorAnnotationWithMultiplePerhapsIntentions(problem, tr, notInScopeMessage, suggestionsList, Some((addModule, addName)))

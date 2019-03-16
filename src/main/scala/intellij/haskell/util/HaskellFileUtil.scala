@@ -74,6 +74,32 @@ object HaskellFileUtil {
     })
   }
 
+  def isDocumentUnsaved(document: Document): Boolean = {
+    FileDocumentManager.getInstance().isDocumentUnsaved(document)
+  }
+
+  def findFileInRead(project: Project, filePath: String): (Option[VirtualFile], Either[NoInfo, PsiFile]) = {
+    val virtualFile = Option(LocalFileSystem.getInstance().findFileByPath(HaskellFileUtil.makeFilePathAbsolute(filePath, project)))
+    val psiFile = virtualFile.map(f => HaskellFileUtil.convertToHaskellFileInReadAction(project, f)) match {
+      case Some(r) => r
+      case None => Left(NoInfoAvailable(filePath, "-"))
+    }
+    (virtualFile, psiFile)
+  }
+
+  def findFile(project: Project, filePath: String): (Option[VirtualFile], Option[PsiFile]) = {
+    val virtualFile = Option(LocalFileSystem.getInstance().findFileByPath(HaskellFileUtil.makeFilePathAbsolute(filePath, project)))
+    val psiFile = virtualFile.map(f => HaskellFileUtil.convertToHaskellFileDispatchThread(project, f)) match {
+      case Some(r) => r
+      case None => None
+    }
+    (virtualFile, psiFile)
+  }
+
+  def findVirtualFile(project: Project, filePath: String): Option[VirtualFile] = {
+    Option(LocalFileSystem.getInstance().findFileByPath(HaskellFileUtil.makeFilePathAbsolute(filePath, project)))
+  }
+
   def findVirtualFile(psiFile: PsiFile): Option[VirtualFile] = {
     Option(psiFile.getOriginalFile.getVirtualFile)
   }

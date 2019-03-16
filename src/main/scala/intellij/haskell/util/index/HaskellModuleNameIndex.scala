@@ -86,11 +86,13 @@ object HaskellModuleNameIndex {
     findFilesByModuleName2(project, moduleName).map(_.map(_._1))
   }
 
+  type isProjectFile = Boolean
+
   // IntelliJ tends to send a lot of the same requests from HaskellReference to find a module name.
   // This makes the UI unresponsive if the module can not be found while user is still typing the module name.
   // So it seems to be not the right solution to do the searching in UI thread because cache can not set before new request comes in.
   // So using Cache is solution because Cache.get blocks next request for same key while busy.
-  def findFilesByModuleName2(project: Project, moduleName: String): Either[NoInfo, Seq[(PsiFile, Boolean)]] = {
+  def findFilesByModuleName2(project: Project, moduleName: String): Either[NoInfo, Seq[(PsiFile, isProjectFile)]] = {
     val key = Key(project, moduleName)
     Cache.getIfPresent(key) match {
       case Some(r@Right(_)) => r

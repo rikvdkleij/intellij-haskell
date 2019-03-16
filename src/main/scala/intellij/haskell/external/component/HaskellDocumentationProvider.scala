@@ -35,8 +35,8 @@ class HaskellDocumentationProvider extends AbstractDocumentationProvider {
           val psiFile = e.getContainingFile.getOriginalFile
           val moduleName = HaskellPsiUtil.findModuleName(psiFile)
           val originalPsiFile = e.getContainingFile.getOriginalFile
-          val sourceFile = HaskellProjectUtil.isSourceFile(originalPsiFile)
-          val typeSignature = if (sourceFile) {
+          val isSourceFile = HaskellProjectUtil.isSourceFile(originalPsiFile)
+          val typeSignature = if (isSourceFile) {
             val typeInfo = TypeInfoComponent.findTypeInfoForElement(oe).toOption.map(_.typeSignature)
             typeInfo.map(StringUtil.escapeString)
           } else {
@@ -45,7 +45,7 @@ class HaskellDocumentationProvider extends AbstractDocumentationProvider {
 
           (moduleName, typeSignature) match {
             case (Some(mn), Some(ts)) => s"""$DoubleNbsp $ts $DoubleNbsp -- $mn """
-            case (Some(mn), None) => s"""$DoubleNbsp $mn $DoubleNbsp -- No type info available""" + (if (sourceFile) " (at this moment)" else "")
+            case (Some(mn), None) => s"""$DoubleNbsp $mn $DoubleNbsp -- No type info available""" + (if (isSourceFile) " (at this moment)" else "")
             case (None, Some(ts)) => s"""$DoubleNbsp $ts $DoubleNbsp -- No module info available (at this moment)"""
             case (None, None) => s"${DoubleNbsp}No info available (at this moment)"
           }

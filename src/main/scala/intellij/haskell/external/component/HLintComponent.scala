@@ -16,8 +16,6 @@
 
 package intellij.haskell.external.component
 
-import com.intellij.openapi.editor.Document
-import com.intellij.openapi.fileEditor.FileDocumentManager
 import com.intellij.openapi.project.Project
 import com.intellij.psi.PsiFile
 import intellij.haskell.external.execution.CommandLine
@@ -41,15 +39,6 @@ object HLintComponent {
       val hlintOptions = if (HaskellSettingsState.getHlintOptions.trim.isEmpty) Array[String]() else HaskellSettingsState.getHlintOptions.split("""\s+""")
       HaskellFileUtil.getAbsolutePath(psiFile) match {
         case Some(path) =>
-          HaskellFileUtil.findDocument(psiFile) match {
-            case None => ()
-            case Some(d) =>
-              val deadline = Timeout.fromNow
-              while (isFileUnsaved(d) && deadline.hasTimeLeft() && !project.isDisposed) {
-                Thread.sleep(1)
-              }
-          }
-
           val output = runHLint(project, hlintOptions.toSeq ++ Seq("--json", path), ignoreExitCode = true)
           if (output.getExitCode > 0 && output.getStderr.nonEmpty) {
             HaskellNotificationGroup.logErrorBalloonEvent(project, s"Error while calling $HLintName: ${output.getStderr}")
@@ -65,10 +54,6 @@ object HLintComponent {
       HaskellNotificationGroup.logInfoEvent(psiFile.getProject, s"$HLintName is not (yet) available")
       Seq()
     }
-  }
-
-  def isFileUnsaved(document: Document): Boolean = {
-    FileDocumentManager.getInstance().isDocumentUnsaved(document)
   }
 
   def versionInfo(project: Project): String = {

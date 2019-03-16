@@ -28,11 +28,6 @@ import intellij.haskell.util.index.HaskellModuleNameIndex
 
 private[component] object LoadComponent {
 
-  private def isFileLoaded(psiFile: PsiFile): Boolean = {
-    val projectRepl = StackReplsManager.getProjectRepl(psiFile)
-    projectRepl.map(_.isFileLoaded(psiFile)).contains(Loaded)
-  }
-
   def isModuleLoaded(moduleName: Option[String], psiFile: PsiFile): Boolean = {
     isFileLoaded(psiFile) || {
       for {
@@ -40,11 +35,6 @@ private[component] object LoadComponent {
         repl <- StackReplsManager.getProjectRepl(psiFile)
       } yield repl.isModuleLoaded(mn)
     }.contains(true)
-  }
-
-  def isReplBusy(psiFile: PsiFile): Boolean = {
-    val projectRepl = StackReplsManager.getRunningProjectRepl(psiFile)
-    projectRepl.exists(_.isBusy)
   }
 
   def load(psiFile: PsiFile, fileChanged: Boolean, currentElement: Option[PsiElement]): Option[CompilationResult] = {
@@ -87,5 +77,10 @@ private[component] object LoadComponent {
         case _ => None
       }
     })
+  }
+
+  private def isFileLoaded(psiFile: PsiFile): Boolean = {
+    val projectRepl = StackReplsManager.getProjectRepl(psiFile)
+    projectRepl.map(_.isFileLoaded(psiFile)).contains(Loaded)
   }
 }

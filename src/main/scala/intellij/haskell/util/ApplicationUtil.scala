@@ -1,3 +1,19 @@
+/*
+ * Copyright 2014-2018 Rik van der Kleij
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
 package intellij.haskell.util
 
 import java.util.concurrent.atomic.AtomicReference
@@ -16,7 +32,7 @@ object ApplicationUtil {
 
   def timeout: Int = {
     if (ApplicationManager.getApplication.isDispatchThread) {
-      10
+      50
     } else {
       60000
     }
@@ -34,7 +50,7 @@ object ApplicationUtil {
     }
   }
 
-  private final val RunInReadActionTimeout = 20.millis
+  private final val RunInReadActionTimeout = 50.millis
 
   def runInReadActionWithWriteActionPriority[A](project: Project, f: => A, readActionDescription: => String, timeout: FiniteDuration = RunInReadActionTimeout): Either[NoInfo, A] = {
     val r = new AtomicReference[A]

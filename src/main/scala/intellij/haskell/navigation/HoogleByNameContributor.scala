@@ -23,7 +23,7 @@ import intellij.haskell.external.component.NameInfoComponentResult.{LibraryNameI
 import intellij.haskell.external.component._
 import intellij.haskell.psi.{HaskellDeclarationElement, HaskellPsiUtil}
 import intellij.haskell.util.index.HaskellModuleNameIndex
-import intellij.haskell.util.{HaskellProjectUtil, StringUtil}
+import intellij.haskell.util.{HaskellFileUtil, StringUtil}
 import javax.swing.Icon
 
 class HoogleByNameContributor extends ChooseByNameContributor {
@@ -71,7 +71,7 @@ class HoogleByNameContributor extends ChooseByNameContributor {
             case Some(lni: LibraryNameInfo) => HaskellReference.findIdentifiersByLibraryNameInfo(project, lni, name).toOption.getOrElse(Seq()).
               flatMap(HaskellPsiUtil.findDeclarationElement).map(d => createLibraryNavigationItem(d, moduleName))
             case Some(pni: ProjectNameInfo) =>
-              HaskellProjectUtil.findFile(pni.filePath, project) match {
+              HaskellFileUtil.findFileInRead(project, pni.filePath) match {
                 case (Some(virtualFile), Right(psiFile)) => HaskellReference.findIdentifierByLocation(project, virtualFile, psiFile, pni.lineNr, pni.columnNr, name).flatMap(HaskellPsiUtil.findDeclarationElement).toSeq
                 case (_, _) => Seq()
               }

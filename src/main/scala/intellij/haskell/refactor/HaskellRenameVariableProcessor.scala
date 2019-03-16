@@ -23,7 +23,6 @@ import com.intellij.openapi.project.Project
 import com.intellij.psi.{PsiElement, PsiFile}
 import com.intellij.refactoring.listeners.RefactoringElementListener
 import com.intellij.refactoring.rename.RenamePsiElementProcessor
-import intellij.haskell.HaskellNotificationGroup
 import intellij.haskell.external.component.{HaskellComponentsManager, ProjectLibraryFileWatcher}
 import intellij.haskell.external.repl.StackRepl.LibType
 import intellij.haskell.psi.HaskellPsiUtil
@@ -50,22 +49,17 @@ class HaskellRenameVariableProcessor extends RenamePsiElementProcessor {
   }
 
   override def canProcessElement(psiElement: PsiElement): Boolean = {
-    if (HaskellComponentsManager.isReplBusy(psiElement.getProject)) {
-      HaskellNotificationGroup.logInfoEvent(psiElement.getProject, "Renaming is not available while REPL is busy")
-      false
-    } else {
-      val project = psiElement.getProject
-      Option(psiElement.getContainingFile).exists { psiFile =>
-        HaskellProjectUtil.isHaskellProject(project) &&
-          (psiElement match {
-            case pf: PsiFile => HaskellProjectUtil.isSourceFile(pf)
-            case _ =>
-              Option(psiElement.getReference).map(_.getElement) match {
-                case Some(e: PsiElement) => HaskellProjectUtil.isSourceFile(psiFile)
-                case _ => false
-              }
-          })
-      }
+    val project = psiElement.getProject
+    Option(psiElement.getContainingFile).exists { psiFile =>
+      HaskellProjectUtil.isHaskellProject(project) &&
+        (psiElement match {
+          case pf: PsiFile => HaskellProjectUtil.isSourceFile(pf)
+          case _ =>
+            Option(psiElement.getReference).map(_.getElement) match {
+              case Some(e: PsiElement) => HaskellProjectUtil.isSourceFile(psiFile)
+              case _ => false
+            }
+        })
     }
   }
 

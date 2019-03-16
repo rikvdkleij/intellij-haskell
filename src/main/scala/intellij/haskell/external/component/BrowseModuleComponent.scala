@@ -46,7 +46,7 @@ private[component] object BrowseModuleComponent {
       case Right(ids) => Some(ids)
       case Left(NoInfoAvailable(_, _)) =>
         None
-      case Left(ReplNotAvailable) | Left(ReplIsBusy) | Left(IndexNotReady) | Left(ModuleNotAvailable(_)) | Left(ReadActionTimeout(_)) =>
+      case Left(ReplNotAvailable) | Left(IndexNotReady) | Left(ModuleNotAvailable(_)) | Left(ReadActionTimeout(_)) =>
         Cache.synchronous().invalidate(key)
         None
     })
@@ -68,13 +68,13 @@ private[component] object BrowseModuleComponent {
 
   def invalidateModuleName(project: Project, moduleName: String): Unit = {
     val synchronousCache = Cache.synchronous
-    val key = synchronousCache.asMap().keys.filter(k => k.moduleName == moduleName) // Can be more than one for a module name if file of module can not be found
+    val key = synchronousCache.asMap().keys.find(k => k.project == project && k.moduleName == moduleName)
     key.foreach(synchronousCache.invalidate)
   }
 
   def invalidateModuleNames(project: Project, moduleNames: Seq[String]): Unit = {
     val synchronousCache = Cache.synchronous
-    val keys = synchronousCache.asMap().keys.filter(k => moduleNames.contains(k.moduleName))
+    val keys = synchronousCache.asMap().keys.filter(k => k.project == project && moduleNames.contains(k.moduleName))
     keys.foreach(synchronousCache.invalidate)
   }
 
@@ -104,9 +104,11 @@ private[component] object BrowseModuleComponent {
                 findInRepl(project, projectRepl, moduleName, Some(moduleFile))
             }
           } else {
-            findLibModuleIdentifiers(project, moduleName)
+            findLibraryModuleIdentifiers(project, moduleName)
           }
-        case None => Left(ModuleNotAvailable(moduleName))
+        case None =>
+          // E.g. module name is Prelude which does not refer to file
+          findLibraryModuleIdentifiers(project, moduleName)
       }
       case Left(noInfo) => Left(noInfo)
     }
@@ -126,35 +128,27 @@ private[component] object BrowseModuleComponent {
   private def findInRepl(project: Project, projectRepl: Option[ProjectStackRepl], moduleName: String, psiFile: Option[PsiFile]): Either[NoInfo, Seq[ModuleIdentifier]] = {
     projectRepl match {
       case Some(repl) =>
-        if (repl.isBusy) {
-          Left(ReplIsBusy)
-        } else if (!repl.available) {
+        if (!repl.available) {
           Left(ReplNotAvailable)
         } else {
-          if (psiFile.isEmpty || repl.isBrowseModuleLoaded(moduleName)) {
-            repl.getModuleIdentifiers(moduleName, psiFile) match {
-              case Some(output) if output.stderrLines.isEmpty && output.stdoutLines.nonEmpty => Right(output.stdoutLines.flatMap(l => findModuleIdentifiers(project, l, moduleName)))
-              case _ => Left(ReplNotAvailable)
-            }
-          } else {
-            Left(ModuleNotAvailable(moduleName))
+          repl.getModuleIdentifiers(moduleName, psiFile) match {
+            case Some(output) if output.stderrLines.isEmpty && output.stdoutLines.nonEmpty => Right(output.stdoutLines.flatMap(l => findModuleIdentifiers(project, l, moduleName)))
+            case _ => Left(ModuleNotAvailable(moduleName))
           }
         }
       case None => Left(ReplNotAvailable)
     }
   }
 
-  private def findLibModuleIdentifiers(project: Project, moduleName: String): Either[NoInfo, Seq[ModuleIdentifier]] = {
+  private def findLibraryModuleIdentifiers(project: Project, moduleName: String): Either[NoInfo, Seq[ModuleIdentifier]] = {
     StackReplsManager.getGlobalRepl(project) match {
       case Some(repl) =>
-        if (repl.isBusy) {
-          Left(ReplIsBusy)
-        } else if (!repl.available) {
+        if (!repl.available) {
           Left(ReplNotAvailable)
         } else {
           repl.getModuleIdentifiers(moduleName) match {
             case Some(o) if o.stderrLines.isEmpty && o.stdoutLines.nonEmpty => Right(o.stdoutLines.flatMap(l => findModuleIdentifiers(project, l, moduleName).toSeq))
-            case _ => Left(ReplNotAvailable)
+            case _ => Left(ModuleNotAvailable(moduleName))
           }
         }
       case None => Left(ReplNotAvailable)

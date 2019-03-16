@@ -10,10 +10,6 @@ package object component {
     def message: String = "No info because REPL is not (yet) available"
   }
 
-  case object ReplIsBusy extends NoInfo {
-    def message: String = "No info because REPL is busy at this moment"
-  }
-
   case class NoInfoAvailable(name: String, locationName: String) extends NoInfo {
     override def message: String = s"No info available for $name in $locationName"
   }

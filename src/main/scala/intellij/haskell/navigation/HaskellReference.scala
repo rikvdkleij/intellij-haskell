@@ -297,7 +297,7 @@ object HaskellReference {
     val name = namedElement.getName
     nameInfo match {
       case pni: ProjectNameInfo =>
-        val (virtualFile, psiFile) = HaskellProjectUtil.findFile(pni.filePath, project)
+        val (virtualFile, psiFile) = HaskellFileUtil.findFileInRead(project, pni.filePath)
         ProgressManager.checkCanceled()
         (virtualFile, psiFile) match {
           case (Some(vf), Right(pf)) => findIdentifierByLocation(project, vf, pf, pni.lineNr, pni.columnNr, name).map(r => Right(Seq(r))).getOrElse(Left(NoInfoAvailable(name, "-")))

@@ -20,10 +20,8 @@ import java.io.File
 
 import com.intellij.ide.util.projectWizard._
 import com.intellij.openapi.Disposable
-import com.intellij.openapi.application.{ApplicationManager, ModalityState, WriteAction}
+import com.intellij.openapi.application.{ApplicationManager, WriteAction}
 import com.intellij.openapi.module.{ModifiableModuleModel, Module, ModuleType}
-import com.intellij.openapi.progress.impl.CoreProgressManager
-import com.intellij.openapi.progress.{EmptyProgressIndicator, ProgressIndicator, Task}
 import com.intellij.openapi.project.{Project, ProjectManager}
 import com.intellij.openapi.projectRoots.SdkTypeId
 import com.intellij.openapi.roots._
@@ -265,7 +263,7 @@ object HaskellModuleBuilder {
   }
 
   def addLibrarySources(project: Project, update: Boolean): Unit = {
-    val projectLibDirectory = getProjectLibDirectory(project)
+    val projectLibDirectory = HaskellProjectUtil.getProjectLibrarySourcesDirectory(project)
     if (update || getProjectLibraryTable(project).getLibraries.isEmpty || !projectLibDirectory.exists()) {
       HaskellSdkType.getStackBinaryPath(project).foreach(stackPath => {
 
@@ -294,10 +292,6 @@ object HaskellModuleBuilder {
         }
       })
     }
-  }
-
-  private def getProjectLibDirectory(project: Project): File = {
-    new File(GlobalInfo.getLibrarySourcesPath, project.getName)
   }
 
   private def downloadHaskellPackageSources(project: Project, projectLibDirectory: File, stackPath: String, libraryDependencies: Seq[HaskellLibraryDependency]): Unit = {
@@ -377,16 +371,8 @@ object HaskellModuleBuilder {
     getProjectLibraryTable(project).getLibraries.find(_.getName == library.getName).foreach(library => {
       val model = getProjectLibraryTable(project).getModifiableModel
       model.removeLibrary(library)
-      runSynchronously(createTask(project, ScalaUtil.runnable(WriteAction.run(() => model.commit()))))
+      ApplicationManager.getApplication.invokeAndWait(ScalaUtil.runnable(WriteAction.run(() => model.commit())))
     })
-  }
-
-  private def createTask(project: Project, action: => Unit) = {
-    new Task.Modal(project, "Creating/updating module", true) {
-      override def run(indicator: ProgressIndicator): Unit = {
-        action
-      }
-    }
   }
 
   private def createProjectLibrary(project: Project, libraryDependency: HaskellLibraryDependency, projectLibDirectory: File): Library = {
@@ -398,8 +384,8 @@ object HaskellModuleBuilder {
     libraryModel.addRoot(sourceRootUrl, OrderRootType.CLASSES)
     libraryModel.addRoot(sourceRootUrl, OrderRootType.SOURCES)
 
-    runSynchronously(createTask(project, WriteAction.run(() => libraryModel.commit())))
-    runSynchronously(createTask(project, WriteAction.run(() => projectLibraryTableModel.commit())))
+    ApplicationManager.getApplication.invokeAndWait(ScalaUtil.runnable(WriteAction.run(() => libraryModel.commit())))
+    ApplicationManager.getApplication.invokeAndWait(ScalaUtil.runnable(WriteAction.run(() => projectLibraryTableModel.commit())))
     library
   }
 
@@ -407,15 +393,6 @@ object HaskellModuleBuilder {
     ModuleRootModificationUtil.updateModel(module, (modifiableRootModel: ModifiableRootModel) => {
       modifiableRootModel.addLibraryEntry(library)
     })
-  }
-
-  private val progressManager = new CoreProgressManager
-
-  private def runSynchronously(task: Task): Unit = {
-    if (ApplicationManager.getApplication.isDispatchThread) {
-      progressManager.runProcessWithProgressSynchronously(task, null)
-    }
-    else ApplicationManager.getApplication.invokeAndWait(() => progressManager.runProcessWithProgressInCurrentThread(task, new EmptyProgressIndicator, ModalityState.defaultModalityState()))
   }
 
   trait HaskellDependency {

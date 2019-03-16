@@ -38,7 +38,7 @@ class HLintInspectionTool extends LocalInspectionTool {
     HaskellNotificationGroup.logInfoEvent(psiFile.getProject, s"HLint inspection is started for file ${psiFile.getName}")
     ProgressManager.checkCanceled()
 
-    if (!HaskellProjectUtil.isSourceFile(psiFile)) {
+    if (!HaskellProjectUtil.isSourceFile(psiFile) || HaskellFileUtil.findDocument(psiFile).exists(HaskellFileUtil.isDocumentUnsaved)) {
       return null
     }
 

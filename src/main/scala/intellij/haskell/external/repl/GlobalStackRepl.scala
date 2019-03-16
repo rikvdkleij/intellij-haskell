@@ -23,20 +23,12 @@ case class GlobalStackRepl(project: Project, replTimeout: Int) extends StackRepl
 
   private[this] var loadedModuleName: Option[String] = None
 
-  @volatile
-  var isBusy = false
-
   def clearLoadedModules(): Unit = {
     loadedModuleName = None
   }
 
   def getModuleIdentifiers(moduleName: String): Option[StackReplOutput] = synchronized {
-    try {
-      isBusy = true
-      execute(s":browse! $moduleName")
-    } finally {
-      isBusy = false
-    }
+    execute(s":browse! $moduleName")
   }
 
   def findInfo(moduleName: String, name: String): Option[StackReplOutput] = synchronized {

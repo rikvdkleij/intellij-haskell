@@ -21,13 +21,17 @@ import java.io.File
 import com.intellij.openapi.module.{Module, ModuleManager, ModuleUtilCore}
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.roots._
-import com.intellij.openapi.vfs.{LocalFileSystem, VirtualFile}
+import com.intellij.openapi.util.io.FileUtil
+import com.intellij.openapi.vfs.{VfsUtilCore, VirtualFile}
 import com.intellij.psi.search.GlobalSearchScope
 import com.intellij.psi.{PsiElement, PsiFile}
-import intellij.haskell.HaskellNotificationGroup
-import intellij.haskell.external.component.{HaskellComponentsManager, NoInfo, NoInfoAvailable}
+import intellij.haskell.GlobalInfo
+import intellij.haskell.external.component.HaskellComponentsManager
 import intellij.haskell.module.HaskellModuleType
 import intellij.haskell.sdk.HaskellSdkType
+import org.jetbrains.jps.model.java.JavaModuleSourceRootTypes
+
+import scala.collection.JavaConverters._
 
 object HaskellProjectUtil {
 
@@ -47,87 +51,30 @@ object HaskellProjectUtil {
     findProjectHaskellModules(project).nonEmpty
   }
 
-  def findFile(filePath: String, project: Project): (Option[VirtualFile], Either[NoInfo, PsiFile]) = {
-    val virtualFile = Option(LocalFileSystem.getInstance().findFileByPath(HaskellFileUtil.makeFilePathAbsolute(filePath, project)))
-    val psiFile = virtualFile.map(f => HaskellFileUtil.convertToHaskellFileInReadAction(project, f)) match {
-      case Some(r) => r
-      case None => Left(NoInfoAvailable(filePath, "-"))
-    }
-    (virtualFile, psiFile)
-  }
-
-  def findFile2(filePath: String, project: Project): (Option[VirtualFile], Option[PsiFile]) = {
-    val virtualFile = Option(LocalFileSystem.getInstance().findFileByPath(HaskellFileUtil.makeFilePathAbsolute(filePath, project)))
-    val psiFile = virtualFile.map(f => HaskellFileUtil.convertToHaskellFileDispatchThread(project, f)) match {
-      case Some(r) => r
-      case None => None
-    }
-    (virtualFile, psiFile)
-  }
-
-  def findVirtualFile(filePath: String, project: Project): Option[VirtualFile] = {
-    Option(LocalFileSystem.getInstance().findFileByPath(HaskellFileUtil.makeFilePathAbsolute(filePath, project)))
-  }
-
-  trait HaskellProjectFileType
-
-  case object SourceFile extends HaskellProjectFileType
-
-  case object LibraryFile extends HaskellProjectFileType
-
-  case object Other extends HaskellProjectFileType
-
-  def getHaskellProjectFileType(psiFile: PsiFile): Option[HaskellProjectFileType] = {
-    HaskellFileUtil.findVirtualFile(psiFile) match {
-      case None => None
-      case Some(vf) =>
-        val project = psiFile.getProject
-        Some(getHaskellProjectFileType(project, vf))
-    }
-  }
-
-  def getHaskellProjectFileType(project: Project, virtualFile: VirtualFile): HaskellProjectFileType = {
-    if (isConfigFile(project, virtualFile)) {
-      HaskellNotificationGroup.logInfoEvent(project, s"`${virtualFile.getName}` is ignored")
-      Other
-    } else if (isInSourceContent(project, virtualFile)) {
-      SourceFile
-    } else if (isInLibrary(project, virtualFile)) {
-      LibraryFile
-    } else {
-      Other
-    }
-  }
-
   def isSourceFile(project: Project, virtualFile: VirtualFile): Boolean = {
-    getHaskellProjectFileType(project, virtualFile) == SourceFile
+    if (project.isDisposed) {
+      // Well, it does not matter what is returned because is closing or closed
+      false
+    } else {
+      val rootManager = ProjectRootManager.getInstance(project)
+      val sourceRoots = rootManager.getModuleSourceRoots(JavaModuleSourceRootTypes.SOURCES).asScala.toSet.asJava
+      VfsUtilCore.isUnder(virtualFile, sourceRoots)
+    }
   }
 
   def isSourceFile(psiFile: PsiFile): Boolean = {
-    getHaskellProjectFileType(psiFile).contains(SourceFile)
+    val project = psiFile.getProject
+    // Only source files can be only in memory
+    HaskellFileUtil.findVirtualFile(psiFile).forall(vf => isSourceFile(project, vf))
   }
 
   def isLibraryFile(psiFile: PsiFile): Boolean = {
-    getHaskellProjectFileType(psiFile).contains(LibraryFile)
+    val projectLibDirectory = getProjectLibrarySourcesDirectory(psiFile.getProject)
+    HaskellFileUtil.findVirtualFile(psiFile).exists(vf => FileUtil.isAncestor(projectLibDirectory.getAbsolutePath, vf.getPath, true))
   }
 
-  private final val ConfigHaskellFiles = Seq("setup.hs", "hlint.hs")
-
-  private def isConfigFile(project: Project, virtualFile: VirtualFile): Boolean = {
-    ConfigHaskellFiles.contains(virtualFile.getName.toLowerCase) &&
-      HaskellProjectUtil.findModuleForVirtualFile(project, virtualFile).exists(m => findContainingDirectory(virtualFile).exists(vf => HaskellFileUtil.getAbsolutePath(vf) == HaskellProjectUtil.getModuleDir(m).getPath))
-  }
-
-  private def findContainingDirectory(virtualFile: VirtualFile): Option[VirtualFile] = {
-    Option(virtualFile.getParent)
-  }
-
-  private def isInLibrary(project: Project, virtualFile: VirtualFile): Boolean = {
-    ApplicationUtil.runReadAction(ProjectFileIndex.SERVICE.getInstance(project).isInLibrary(virtualFile))
-  }
-
-  private def isInSourceContent(project: Project, virtualFile: VirtualFile): Boolean = {
-    ApplicationUtil.runReadAction(ProjectFileIndex.SERVICE.getInstance(project).isInSourceContent(virtualFile))
+  def getProjectLibrarySourcesDirectory(project: Project): File = {
+    new File(GlobalInfo.getLibrarySourcesPath, project.getName)
   }
 
   def getModuleDir(module: Module): File = {

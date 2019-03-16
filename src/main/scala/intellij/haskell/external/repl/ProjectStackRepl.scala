@@ -61,14 +61,7 @@ case class ProjectStackRepl(project: Project, stackComponentInfo: StackComponent
   private[this] val everLoadedDependentModules = new ConcurrentHashMap[ModuleName, DependentModuleInfo]().asScala
 
   @volatile
-  private var busy = false
-
-  @volatile
   private var objectCodeEnabled = true
-
-  def isBusy: Boolean = {
-    busy
-  }
 
   import scala.concurrent.ExecutionContext.Implicits.global
   import scala.concurrent.duration._
@@ -153,19 +146,19 @@ case class ProjectStackRepl(project: Project, stackComponentInfo: StackComponent
     }
 
     val output = if (reload) {
-      executeWithSettingBusy(s":reload")
+      execute(s":reload")
     } else {
       // In case module has to be compiled to byte-code: :set -fbyte-code AND load flag *
       val byteCodeFlag = if (forceBytecodeLoad) "*" else ""
       if (forceBytecodeLoad) {
         objectCodeEnabled = false
-        executeWithSettingBusy(s":set -fbyte-code")
+        execute(s":set -fbyte-code")
       } else if (!objectCodeEnabled) {
         objectCodeEnabled = true
-        executeWithSettingBusy(s":set -fobject-code")
+        execute(s":set -fobject-code")
       }
       val filePath = getFilePath(psiFile)
-      executeWithSettingBusy(s":load $byteCodeFlag$filePath")
+      execute(s":load $byteCodeFlag$filePath")
     }
 
     output match {
@@ -194,7 +187,7 @@ case class ProjectStackRepl(project: Project, stackComponentInfo: StackComponent
 
   def getModuleIdentifiers(moduleName: String, psiFile: Option[PsiFile]): Option[StackReplOutput] = synchronized {
     if (psiFile.isEmpty || isBrowseModuleLoaded(moduleName) || psiFile.exists(pf => load(pf, None).exists(_._2 == false))) {
-      executeWithSettingBusy(s":browse! $moduleName")
+      execute(s":browse! $moduleName")
     } else {
       HaskellNotificationGroup.logInfoEvent(project, s"Could not get module identifiers for module $moduleName because file ${psiFile.map(_.getName).getOrElse("-")} is not loaded")
       None
@@ -210,7 +203,7 @@ case class ProjectStackRepl(project: Project, stackComponentInfo: StackComponent
 
   private def executeModuleLoadedCommand(moduleName: Option[String], psiFile: PsiFile, command: String): Option[StackReplOutput] = synchronized {
     if (moduleName.exists(isModuleLoaded)) {
-      executeWithSettingBusy(command)
+      execute(command)
     } else {
       executeWithLoad(psiFile, command, mustBeByteCode = false)
     }
@@ -218,24 +211,15 @@ case class ProjectStackRepl(project: Project, stackComponentInfo: StackComponent
 
   private def executeWithLoad(psiFile: PsiFile, command: String, moduleName: Option[String] = None, mustBeByteCode: Boolean): Option[StackReplOutput] = synchronized {
     loadedFile match {
-      case Some(info) if info.psiFile == psiFile & !info.loadFailed & (if (mustBeByteCode) !objectCodeEnabled else true) => executeWithSettingBusy(command)
+      case Some(info) if info.psiFile == psiFile & !info.loadFailed & (if (mustBeByteCode) !objectCodeEnabled else true) => execute(command)
       case Some(info) if info.psiFile == psiFile & info.loadFailed => Some(StackReplOutput())
       case _ =>
         load(psiFile, fileChanged = None, mustBeByteCode)
         loadedFile match {
           case None => None
-          case Some(info) if info.psiFile == psiFile && !info.loadFailed => executeWithSettingBusy(command)
+          case Some(info) if info.psiFile == psiFile && !info.loadFailed => execute(command)
           case _ => Some(StackReplOutput())
         }
-    }
-  }
-
-  private def executeWithSettingBusy(command: String) = {
-    busy = true
-    try {
-      execute(command)
-    } finally {
-      busy = false
     }
   }
 
