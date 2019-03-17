@@ -125,8 +125,8 @@ private[component] object DefinitionLocationComponent {
     if (libraryFile || key.importQualifier.isDefined || key.qualifiedNameElement.getQualifierName.isDefined) {
 
       findLocationByImportedIdentifiers(project, key, name) match {
-        case Some(r) => r
-        case None => if (libraryFile) {
+        case r@Right(_) => r
+        case Left(_) => if (libraryFile) {
           ProgressManager.checkCanceled()
 
           HaskellComponentsManager.findNameInfo(key.qualifiedNameElement) match {
@@ -135,7 +135,7 @@ private[component] object DefinitionLocationComponent {
                 ProgressManager.checkCanceled()
 
                 HaskellReference.findIdentifiersByNameInfo(info, key.qualifiedNameElement.getIdentifierElement, project) match {
-                  case Right(nes) if nes.nonEmpty => nes.headOption.map(ne => Right(PackageModuleLocation(findModuleName(ne), ne, name))).getOrElse(Left(NoInfoAvailable(name, psiFile.getName)))
+                  case Right((mn, ne)) => Right(PackageModuleLocation(findModuleName(ne), ne, name))
                   case Left(noInfo) =>
                     HaskellReference.findIdentifierInFileByName(psiFile, name).
                       map(ne => Right(PackageModuleLocation(findModuleName(ne), ne, name))).getOrElse(Left(noInfo))
@@ -158,7 +158,7 @@ private[component] object DefinitionLocationComponent {
       val withoutLastColumn = name.headOption.exists(_.isUpper)
       findLocationByRepl(project, psiFile, moduleName, key, name, withoutLastColumn) match {
         case r@Right(_) => r
-        case Left(_) => findLocationByImportedIdentifiers(project, key, name).getOrElse(Left(NoInfoAvailable(name, key.psiFile.getName)))
+        case Left(_) => findLocationByImportedIdentifiers(project, key, name)
       }
     }
   }
@@ -167,11 +167,10 @@ private[component] object DefinitionLocationComponent {
     Option(namedElement.getContainingFile).flatMap(HaskellPsiUtil.findModuleName).getOrElse("-")
   }
 
-  private def findLocationByImportedIdentifiers(project: Project, key: Key, name: String): Option[DefinitionLocationResult] = {
-    val psiFile = key.psiFile
-    val mids = FileModuleIdentifiers.findAvailableModuleIdentifiers(psiFile)
-
+  private def findLocationByImportedIdentifiers(project: Project, key: Key, name: String): Either[NoInfo, PackageModuleLocation] = {
     ProgressManager.checkCanceled()
+
+    val psiFile = key.psiFile
 
     val qNameName = key.qualifiedNameElement.getName
     val qName = key.importQualifier match {
@@ -179,13 +178,13 @@ private[component] object DefinitionLocationComponent {
       case Some(q) => q + "." + qNameName
     }
 
-    for {
-      mid <- mids.find(_.name == qName)
-    } yield {
-      HaskellReference.findIdentifiersByModuleAndName(project, Seq(mid.moduleName), name) match {
-        case Right(nes) if nes.nonEmpty => nes.headOption.map(ne => Right(PackageModuleLocation(mid.moduleName, ne, name, Some(qName)))).getOrElse(Left(NoInfoAvailable(name, psiFile.getName)))
-        case _ => Left(NoInfoAvailable(name, psiFile.getName))
-      }
+    val moduleNames = FileModuleIdentifiers.findAvailableModuleIdentifiers(psiFile).filter(_.name == qName).map(_.moduleName).toSeq
+
+    ProgressManager.checkCanceled()
+
+    HaskellReference.findIdentifiersByModulesAndName(project, moduleNames, name) match {
+      case Right((mn, ne)) => Right(PackageModuleLocation(mn, ne, name))
+      case Left(noInfo) => Left(noInfo)
     }
   }
 
@@ -268,11 +267,9 @@ sealed trait DefinitionLocation {
   def namedElement: HaskellNamedElement
 
   def originalName: String
-
-  def originalQualifiedName: Option[String]
 }
 
-case class PackageModuleLocation(moduleName: String, namedElement: HaskellNamedElement, originalName: String, originalQualifiedName: Option[String] = None) extends DefinitionLocation
+case class PackageModuleLocation(moduleName: String, namedElement: HaskellNamedElement, originalName: String) extends DefinitionLocation
 
-case class LocalModuleLocation(psiFile: PsiFile, namedElement: HaskellNamedElement, originalName: String, originalQualifiedName: Option[String] = None) extends DefinitionLocation
+case class LocalModuleLocation(psiFile: PsiFile, namedElement: HaskellNamedElement, originalName: String) extends DefinitionLocation
 

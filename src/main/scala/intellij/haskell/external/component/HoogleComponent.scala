@@ -68,8 +68,8 @@ object HoogleComponent {
             None
           case Right(info) =>
             val moduleName = info match {
-              case PackageModuleLocation(mn, _, _, _) => Some(mn)
-              case LocalModuleLocation(pf, _, _, _) => HaskellPsiUtil.findModuleName(pf)
+              case PackageModuleLocation(mn, _, _) => Some(mn)
+              case LocalModuleLocation(pf, _, _) => HaskellPsiUtil.findModuleName(pf)
             }
             moduleName match {
               case None =>

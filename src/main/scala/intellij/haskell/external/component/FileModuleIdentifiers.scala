@@ -128,8 +128,8 @@ object FileModuleIdentifiers {
     }
   }
 
-  private def getModuleIdentifiersFromFullImportedModules(impliciPrelueActive: Boolean, psiFile: PsiFile, importDeclarations: Iterable[HaskellImportDeclaration]): Future[Iterable[Option[Iterable[ModuleIdentifier]]]] = {
-    val importInfos = getFullImportedModules(impliciPrelueActive, psiFile, importDeclarations)
+  private def getModuleIdentifiersFromFullImportedModules(noImplicitPrelude: Boolean, psiFile: PsiFile, importDeclarations: Iterable[HaskellImportDeclaration]): Future[Iterable[Option[Iterable[ModuleIdentifier]]]] = {
+    val importInfos = getFullImportedModules(noImplicitPrelude, psiFile, importDeclarations)
 
     Future.sequence(importInfos.map(importInfo => {
       val allModuleIdentifiers = HaskellComponentsManager.findModuleIdentifiers(psiFile.getProject, importInfo.moduleName)
@@ -173,14 +173,14 @@ object FileModuleIdentifiers {
     info.isImplicitPreludeActive || ApplicationUtil.runReadAction(HaskellPsiUtil.findLanguageExtensions(psiFile)).exists(p => ApplicationUtil.runReadAction(p.getText).contains("NoImplicitPrelude"))
   }
 
-  private def getFullImportedModules(implicitPreludeActive: Boolean, psiFile: PsiFile, importDeclarations: Iterable[HaskellImportDeclaration]): Iterable[ImportFull] = {
+  private def getFullImportedModules(noImplicitPrelude: Boolean, psiFile: PsiFile, importDeclarations: Iterable[HaskellImportDeclaration]): Iterable[ImportFull] = {
     val moduleNames = for {
       id <- importDeclarations
       if Option(id.getImportSpec).isEmpty
       mn <- ApplicationUtil.runReadAction(id.getModuleName)
     } yield ImportFull(mn, Option(id.getImportQualified).isDefined, Option(id.getImportQualifiedAs).map(qa => ApplicationUtil.runReadAction(qa.getQualifier.getName)))
 
-    if (moduleNames.map(_.moduleName).toSeq.contains(HaskellProjectUtil.Prelude) || implicitPreludeActive) {
+    if (moduleNames.map(_.moduleName).toSeq.contains(HaskellProjectUtil.Prelude) || noImplicitPrelude) {
       moduleNames
     } else {
       Iterable(ImportFull(HaskellProjectUtil.Prelude, qualified = false, None)) ++ moduleNames

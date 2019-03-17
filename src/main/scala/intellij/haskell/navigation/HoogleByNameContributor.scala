@@ -68,8 +68,8 @@ class HoogleByNameContributor extends ChooseByNameContributor {
           val result = HaskellComponentsManager.findNameInfoByModuleName(project, moduleName, name)
           ProgressManager.checkCanceled()
           val navigationItemByNameInfo = result.toOption.flatMap(_.headOption) match {
-            case Some(lni: LibraryNameInfo) => HaskellReference.findIdentifiersByLibraryNameInfo(project, lni, name).toOption.getOrElse(Seq()).
-              flatMap(HaskellPsiUtil.findDeclarationElement).map(d => createLibraryNavigationItem(d, moduleName))
+            case Some(lni: LibraryNameInfo) => HaskellReference.findIdentifiersByLibraryNameInfo(project, lni, name).toOption.
+              flatMap(x => HaskellPsiUtil.findDeclarationElement(x._2)).map(d => createLibraryNavigationItem(d, moduleName)).toSeq
             case Some(pni: ProjectNameInfo) =>
               HaskellFileUtil.findFileInRead(project, pni.filePath) match {
                 case (Some(virtualFile), Right(psiFile)) => HaskellReference.findIdentifierByLocation(project, virtualFile, psiFile, pni.lineNr, pni.columnNr, name).flatMap(HaskellPsiUtil.findDeclarationElement).toSeq
@@ -81,11 +81,11 @@ class HoogleByNameContributor extends ChooseByNameContributor {
           if (navigationItemByNameInfo.nonEmpty) {
             navigationItemByNameInfo
           } else {
-            val identifiers = HaskellReference.findIdentifiersByModuleAndName(project, Seq(moduleName), name).toOption
+            val identifiers = HaskellReference.findIdentifiersByModuleAndName(project, moduleName, name).toOption.map(_._2).toSeq
             if (identifiers.isEmpty) {
               NotFoundResult(moduleName, declaration)
             } else {
-              identifiers.getOrElse(Seq()).map(e => HaskellPsiUtil.findDeclarationElement(e).getOrElse(e))
+              identifiers.flatMap(e => HaskellPsiUtil.findDeclarationElement(e))
             }
           }
         })

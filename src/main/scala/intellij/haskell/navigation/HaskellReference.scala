@@ -167,8 +167,8 @@ class HaskellReference(element: HaskellNamedElement, textRange: TextRange) exten
     ProgressManager.checkCanceled()
 
     HaskellComponentsManager.findDefinitionLocation(psiFile, qualifiedNameElement, importQualifier) match {
-      case Right(PackageModuleLocation(_, ne, _, _)) => Right(ne)
-      case Right(LocalModuleLocation(_, ne, _, _)) => Right(ne)
+      case Right(PackageModuleLocation(_, ne, _)) => Right(ne)
+      case Right(LocalModuleLocation(_, ne, _)) => Right(ne)
       case Left(noInfo) => Left(noInfo)
     }
   }
@@ -178,12 +178,10 @@ class HaskellReference(element: HaskellNamedElement, textRange: TextRange) exten
   }
 
   private def findHaskellFile(importDeclarations: Iterable[HaskellImportDeclaration], qualifierElement: HaskellNamedElement, project: Project): Either[NoInfo, Option[PsiFile]] = {
-    val result = for {
-      id <- importDeclarations.find(id => id.getModuleName.contains(qualifierElement.getName))
+    (for {
+      id <- importDeclarations.find(_.getModuleName.contains(qualifierElement.getName))
       mn <- id.getModuleName
-    } yield HaskellModuleNameIndex.findFilesByModuleName(project, mn)
-
-    result match {
+    } yield HaskellModuleNameIndex.findFilesByModuleName(project, mn)) match {
       case Some(Right(files)) => Right(files.headOption)
       case Some(Left(noInfo)) => Left(noInfo)
       case None => Right(None)
@@ -199,34 +197,48 @@ object HaskellReference {
       HaskellEditorUtil.showStatusBarBalloonMessage(project, "Navigating to instance declarations is not available at this moment")
       Seq()
     } else {
-      identifiers.flatMap(_.toOption).flatten
+      identifiers.flatMap(_.toOption.map(_._2))
     }
   }
 
-  def findIdentifiersByLibraryNameInfo(project: Project, libraryNameInfo: LibraryNameInfo, name: String): Either[NoInfo, Seq[HaskellNamedElement]] = {
-    findIdentifiersByModuleAndName(project, Seq(libraryNameInfo.moduleName), name)
+  def findIdentifiersByLibraryNameInfo(project: Project, libraryNameInfo: LibraryNameInfo, name: String): Either[NoInfo, (String, HaskellNamedElement)] = {
+    findIdentifiersByModuleAndName(project, libraryNameInfo.moduleName, name)
   }
 
-  def findIdentifiersByModuleAndName(project: Project, moduleNames: Seq[String], name: String): Either[NoInfo, Seq[HaskellNamedElement]] = {
+  def findIdentifiersByModuleAndName(project: Project, moduleName: String, name: String): Either[NoInfo, (String, HaskellNamedElement)] = {
     ProgressManager.checkCanceled()
 
-    moduleNames.map(mn => HaskellModuleNameIndex.findFilesByModuleName(project, mn)).find(_.isLeft) match {
-      case Some(Left(noInfo)) => Left(noInfo)
-      case _ =>
+    findIdentifiersByModulesAndName(project, Seq(moduleName), name)
+  }
+
+  def findIdentifiersByModulesAndName(project: Project, moduleNames: Seq[String], name: String): Either[NoInfo, (String, HaskellNamedElement)] = {
+    ProgressManager.checkCanceled()
+
+    findIdentifiersByModuleAndName2(project, moduleNames, name).headOption.map {
+      case (mn, nes) => nes.headOption.map(ne => Right((mn, ne))).getOrElse(Left(NoInfoAvailable(name, moduleNames.mkString(" | "))))
+    }.getOrElse(Left(ModuleNotAvailable(moduleNames.mkString(" | "))))
+  }
+
+  private def findIdentifiersByModuleAndName2(project: Project, moduleNames: Seq[String], name: String): Seq[(String, Seq[HaskellNamedElement])] = {
+    ProgressManager.checkCanceled()
+
+    moduleNames.distinct.flatMap(mn => HaskellModuleNameIndex.findFilesByModuleName(project, mn) match {
+      case Left(_) => Seq()
+      case Right(files) =>
         ProgressManager.checkCanceled()
 
-        val identifiers = moduleNames.map(mn => HaskellModuleNameIndex.findFilesByModuleName(project, mn)).flatMap(_.toSeq.flatMap(_.flatMap(f => findIdentifierInFileByName(f, name))))
+        val identifiers = files.flatMap(f => findIdentifierInFileByName(f, name))
         if (identifiers.isEmpty) {
-          val importedModuleNames = moduleNames.map(mn => HaskellModuleNameIndex.findFilesByModuleName(project, mn)).flatMap(_.toSeq.flatMap(_.flatMap(pf => HaskellPsiUtil.findImportDeclarations(pf).flatMap(_.getModuleName))))
+          val importedModuleNames = files.flatMap(f => FileModuleIdentifiers.findAvailableModuleIdentifiers(f).filter(_.name == name).map(_.moduleName))
           if (importedModuleNames.isEmpty) {
-            Right(Seq())
+            Seq()
           } else {
-            findIdentifiersByModuleAndName(project, importedModuleNames, name)
+            findIdentifiersByModuleAndName2(project, importedModuleNames, name)
           }
         } else {
-          Right(identifiers)
+          Seq((mn, identifiers))
         }
-    }
+    })
   }
 
   def findIdentifierInFileByName(psifile: PsiFile, name: String): Option[HaskellNamedElement] = {
@@ -291,7 +303,7 @@ object HaskellReference {
     }
   }
 
-  def findIdentifiersByNameInfo(nameInfo: NameInfo, namedElement: HaskellNamedElement, project: Project): Either[NoInfo, Seq[HaskellNamedElement]] = {
+  def findIdentifiersByNameInfo(nameInfo: NameInfo, namedElement: HaskellNamedElement, project: Project): Either[NoInfo, (Option[String], HaskellNamedElement)] = {
     ProgressManager.checkCanceled()
 
     val name = namedElement.getName
@@ -300,11 +312,11 @@ object HaskellReference {
         val (virtualFile, psiFile) = HaskellFileUtil.findFileInRead(project, pni.filePath)
         ProgressManager.checkCanceled()
         (virtualFile, psiFile) match {
-          case (Some(vf), Right(pf)) => findIdentifierByLocation(project, vf, pf, pni.lineNr, pni.columnNr, name).map(r => Right(Seq(r))).getOrElse(Left(NoInfoAvailable(name, "-")))
+          case (Some(vf), Right(pf)) => findIdentifierByLocation(project, vf, pf, pni.lineNr, pni.columnNr, name).map(r => Right(HaskellPsiUtil.findModuleName(pf), r)).getOrElse(Left(NoInfoAvailable(name, "-")))
           case (_, Right(_)) => Left(NoInfoAvailable(name, "-"))
           case (_, Left(noInfo)) => Left(noInfo)
         }
-      case lni: LibraryNameInfo => findIdentifiersByLibraryNameInfo(project, lni, name)
+      case lni: LibraryNameInfo => findIdentifiersByLibraryNameInfo(project, lni, name).map({ case (mn, nes) => (Some(mn), nes) })
       case _ => Left(NoInfoAvailable(name, "-"))
     }
   }
