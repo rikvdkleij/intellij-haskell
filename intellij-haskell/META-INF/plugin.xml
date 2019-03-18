@@ -1,7 +1,7 @@
 <idea-plugin>
     <id>intellij.haskell</id>
     <name>IntelliJ-Haskell</name>
-    <version>1.0.0-beta44</version>
+    <version>1.0.0-beta45</version>
     <vendor email="rikvdkleij@gmail.com">Rik van der Kleij</vendor>
 
     <description><![CDATA[
@@ -13,6 +13,14 @@
     ]]></description>
 
     <change-notes><![CDATA[
+        <p>1.0.0-beta45</p>
+        <ul>
+            <li>Various (performances) improvements and fixes</li>
+            <li>Fixes for live templates and generating test files. See #396 and #391 (@Sir4ur0n)</li>
+            <li>Improved parser for pragma's (@ice1000)</li>
+            <li>Enabled `-fobject-code` in REPLs as suggested by @chrisdone. See #386</li>
+            <li>Changed default REPL timeout to 30 seconds</li>
+        </ul>
         <p>1.0.0-beta44</p>
         <b>IMPORTANT: Stack version should be > 1.7.0 and please reimport your Haskell Stack project after updating the plugin.</b>
         <ul>
