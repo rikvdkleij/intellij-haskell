@@ -69,31 +69,26 @@ class HaskellDocumentationProvider extends AbstractDocumentationProvider {
           if (e.isInstanceOf[PsiFile]) {
             getQuickNavigateInfo(e, oe)
           } else {
-            val definedInSameFile = Option(e.getContainingFile).map(_.getOriginalFile) == Option(oe.getContainingFile).map(_.getOriginalFile)
-            if (definedInSameFile) {
-              getQuickNavigateInfo(e, oe)
-            } else {
-              HaskellPsiUtil.findQualifiedName(oe) match {
-                case Some(qone) =>
-                  val presentationText = HaskellPsiUtil.findNamedElement(e).flatMap { ne =>
-                    if (HaskellPsiUtil.findExpression(ne).isDefined || HaskellPsiUtil.findTypeSignatureDeclaration(ne).isDefined) {
-                      None
-                    } else {
-                      Some(DoubleNbsp + "<code>" +
-                        HaskellPsiImplUtil.getItemPresentableText(ne, shortened = false).
-                          replace(" ", HtmlElement.Nbsp).
-                          replace("<", HtmlElement.Lt).
-                          replace(">", HtmlElement.Gt).
-                          replace("\n", HtmlElement.Break) +
-                        "</code>")
-                    }
+            HaskellPsiUtil.findQualifiedName(oe) match {
+              case Some(qone) =>
+                val presentationText = HaskellPsiUtil.findNamedElement(e).flatMap { ne =>
+                  if (HaskellPsiUtil.findExpression(ne).isDefined || HaskellPsiUtil.findTypeSignatureDeclaration(ne).isDefined) {
+                    None
+                  } else {
+                    Some(DoubleNbsp + "<code>" +
+                      HaskellPsiImplUtil.getItemPresentableText(ne, shortened = false).
+                        replace(" ", HtmlElement.Nbsp).
+                        replace("<", HtmlElement.Lt).
+                        replace(">", HtmlElement.Gt).
+                        replace("\n", HtmlElement.Break) +
+                      "</code>")
                   }
+                }
 
-                  ProgressManager.checkCanceled()
-                  val documentationText = HoogleComponent.findDocumentation(project, qone).getOrElse("No documentation found")
-                  (documentationText + Separator + getQuickNavigateInfo(e, oe) + presentationText.map(t => Separator + t).getOrElse("")) + Separator
-                case _ => getQuickNavigateInfo(e, oe)
-              }
+                ProgressManager.checkCanceled()
+                val documentationText = HoogleComponent.findDocumentation(project, qone).getOrElse("No documentation found")
+                (documentationText + Separator + getQuickNavigateInfo(e, oe) + presentationText.map(t => Separator + t).getOrElse("")) + Separator
+              case _ => getQuickNavigateInfo(e, oe)
             }
           }
         case _ => null

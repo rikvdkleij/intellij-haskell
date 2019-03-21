@@ -95,17 +95,19 @@ object HoogleComponent {
     def mkString(lines: Seq[String]) = {
       lines.mkString("\n").
         replace("<", HtmlElement.Lt).
-        replace(">", HtmlElement.Gt)
+        replace(">", HtmlElement.Gt).
+        replace(" ", HtmlElement.Nbsp).
+        replace("\n", HtmlElement.Break)
     }
 
     ProgressManager.checkCanceled()
 
-    runHoogle(project, Seq(name, "-i", s"+$moduleName")).
+    runHoogle(project, Seq("-i", name, s"+$moduleName", "+Prelude")).
       flatMap(processOutput =>
         if (processOutput.getStdoutLines.isEmpty || processOutput.getStdout.contains("No results found")) {
           None
         } else {
-          val output = processOutput.getStdoutLines
+          val output = processOutput.getStdoutLines(false)
           val (definition, content) = output.asScala.splitAt(2)
           Some(
             DocumentationMarkup.DEFINITION_START +
