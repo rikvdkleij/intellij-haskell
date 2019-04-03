@@ -44,15 +44,15 @@ small               = [a-z_] | [\u03B1-\u03C9] | 𝑖 | 𝕧
 large               = [A-Z] | [\u0391-\u03A9] | ℝ | ℂ | ℕ | ℤ | ℚ
 
 digit               = [0-9] | [\u2070-\u2079] | [\u2080-\u2089]
-decimal             = [-+]?{digit}+
+decimal             = [-+]?(_*{digit}+)+
 
 hexit               = [0-9A-Fa-f]
-hexadecimal         = 0[xX]{hexit}+
+hexadecimal         = 0[xX](_*{hexit}+)+
 
 octit               = [0-7]
-octal               = 0[oO]{octit}+
+octal               = 0[oO](_*{octit}+)+
 
-float               = [-+]?([0-9]+(\.[0-9]+)?|\ \.[0-9]+)([eE][-+]?[0-9]+)?
+float               = [-+]?((_*[0-9]+)+(\.(_*[0-9]+)+)?|\ \.(_*[0-9]+)+)([eE][-+]?[0-9]+)?
 
 gap                 = \\({white_char}|{newline})*\\
 cntrl               = {large} | [@\[\\\]\^_]
