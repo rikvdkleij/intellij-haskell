@@ -21,6 +21,7 @@ import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.psi.tree.IElementType
 import com.intellij.psi.{PsiElement, PsiFile, TokenType}
+import com.intellij.util.WaitFor
 import intellij.haskell.HaskellNotificationGroup
 import intellij.haskell.external.component.{HLintComponent, HLintInfo}
 import intellij.haskell.psi.HaskellTypes._
@@ -36,53 +37,64 @@ class HLintInspectionTool extends LocalInspectionTool {
 
   override def checkFile(psiFile: PsiFile, manager: InspectionManager, isOnTheFly: Boolean): Array[ProblemDescriptor] = {
     HaskellNotificationGroup.logInfoEvent(psiFile.getProject, s"HLint inspection is started for file ${psiFile.getName}")
-    ProgressManager.checkCanceled()
-
-    if (!HaskellProjectUtil.isSourceFile(psiFile) || HaskellFileUtil.findDocument(psiFile).exists(HaskellFileUtil.isDocumentUnsaved)) {
-      return null
-    }
 
     ProgressManager.checkCanceled()
 
-    val result = ScalaFutureUtil.waitWithCheckCancelled(psiFile.getProject, Future(HLintComponent.check(psiFile)), "Running HLint", timeout = 2.seconds) match {
-      case Some(r) => r
-      case None => Seq()
-    }
+    HaskellFileUtil.findDocument(psiFile) match {
+      case Some(document) if HaskellProjectUtil.isSourceFile(psiFile) =>
 
-    val problemsHolder = new ProblemsHolder(manager, psiFile, isOnTheFly)
+        ProgressManager.checkCanceled()
 
-    ProgressManager.checkCanceled()
+        new WaitFor(100, 1) {
+          override def condition(): Boolean = {
+            ProgressManager.checkCanceled()
+            !HaskellFileUtil.isDocumentUnsaved(document)
+          }
+        }
 
-    for {
-      hi <- result
-      problemType = findProblemHighlightType(hi)
-      if problemType != ProblemHighlightType.GENERIC_ERROR
-      () = ProgressManager.checkCanceled()
-      vf <- HaskellFileUtil.findVirtualFile(psiFile)
-      () = ProgressManager.checkCanceled()
-      se <- findStartHaskellElement(vf, psiFile, hi)
-      () = ProgressManager.checkCanceled()
-      ee <- findEndHaskellElement(vf, psiFile, hi)
-      sl <- fromOffset(vf, se)
-      () = ProgressManager.checkCanceled()
-      el <- fromOffset(vf, ee)
-    } yield {
-      ProgressManager.checkCanceled()
-      hi.to match {
-        case Some(to) if se.isValid && ee.isValid =>
-          problemsHolder.registerProblem(new ProblemDescriptorBase(se, ee, hi.hint, Array(createQuickfix(hi, se, ee, sl, el, to)), problemType, false, null, true, isOnTheFly))
-        case None =>
-          problemsHolder.registerProblem(new ProblemDescriptorBase(se, ee, hi.hint, Array(), problemType, false, null, true, isOnTheFly))
-        case _ => ()
-      }
-    }
+        ProgressManager.checkCanceled()
 
-    HaskellNotificationGroup.logInfoEvent(psiFile.getProject, s"HLint inspection is finished for file ${psiFile.getName}")
+        val result = ScalaFutureUtil.waitWithCheckCancelled(psiFile.getProject, Future(HLintComponent.check(psiFile)), "Running HLint", timeout = 2.seconds) match {
+          case Some(r) => r
+          case None => Seq()
+        }
 
-    if (result.isEmpty) {
-      null
-    } else {
-      problemsHolder.getResultsArray
+        val problemsHolder = new ProblemsHolder(manager, psiFile, isOnTheFly)
+
+        ProgressManager.checkCanceled()
+
+        for {
+          hi <- result
+          problemType = findProblemHighlightType(hi)
+          if problemType != ProblemHighlightType.GENERIC_ERROR
+          () = ProgressManager.checkCanceled()
+          vf <- HaskellFileUtil.findVirtualFile(psiFile)
+          () = ProgressManager.checkCanceled()
+          se <- findStartHaskellElement(vf, psiFile, hi)
+          () = ProgressManager.checkCanceled()
+          ee <- findEndHaskellElement(vf, psiFile, hi)
+          sl <- fromOffset(vf, se)
+          () = ProgressManager.checkCanceled()
+          el <- fromOffset(vf, ee)
+        } yield {
+          ProgressManager.checkCanceled()
+          hi.to match {
+            case Some(to) if se.isValid && ee.isValid =>
+              problemsHolder.registerProblem(new ProblemDescriptorBase(se, ee, hi.hint, Array(createQuickfix(hi, se, ee, sl, el, to)), problemType, false, null, true, isOnTheFly))
+            case None =>
+              problemsHolder.registerProblem(new ProblemDescriptorBase(se, ee, hi.hint, Array(), problemType, false, null, true, isOnTheFly))
+            case _ => ()
+          }
+        }
+
+        HaskellNotificationGroup.logInfoEvent(psiFile.getProject, s"HLint inspection is finished for file ${psiFile.getName}")
+
+        if (result.isEmpty) {
+          null
+        } else {
+          problemsHolder.getResultsArray
+        }
+      case _ => null
     }
   }
 
