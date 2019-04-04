@@ -3,8 +3,6 @@ target/
 .idea/
 idea/
 *~
-JFlex*.jar
 out/
 project/project/
-jflex-1.7.0-SNAPSHOT.jar
-jflex-1.7.0.jar
+jflex-*.jar
