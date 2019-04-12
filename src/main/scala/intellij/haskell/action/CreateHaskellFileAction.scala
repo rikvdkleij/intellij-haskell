@@ -34,13 +34,13 @@ import intellij.haskell.util.HaskellFileUtil
 import intellij.haskell.util.index.HaskellModuleNameIndex
 
 object CreateHaskellFileAction {
-  private final val NEW_HASKELL_FILE = "New Haskell File"
+  private final val HaskellModule = "Haskell Module"
 }
 
-class CreateHaskellFileAction extends CreateFileFromTemplateAction(CreateHaskellFileAction.NEW_HASKELL_FILE, "", HaskellIcons.HaskellFileLogo) with DumbAware {
+class CreateHaskellFileAction extends CreateFileFromTemplateAction(CreateHaskellFileAction.HaskellModule, "", HaskellIcons.HaskellFileLogo) with DumbAware {
 
   override def buildDialog(project: Project, directory: PsiDirectory, builder: Builder): Unit = {
-    builder.setTitle(CreateHaskellFileAction.NEW_HASKELL_FILE).addKind("Empty module", HaskellIcons.HaskellFileLogo, "Haskell Module").setValidator(new InputValidatorEx {
+    builder.setTitle(CreateHaskellFileAction.HaskellModule).addKind("Empty module", HaskellIcons.HaskellFileLogo, "Haskell Module").setValidator(new InputValidatorEx {
 
       def checkInput(inputString: String): Boolean = {
         true
@@ -154,7 +154,7 @@ class CreateHaskellFileAction extends CreateFileFromTemplateAction(CreateHaskell
   }
 
   protected def getActionName(directory: PsiDirectory, newName: String, templateName: String): String = {
-    CreateHaskellFileAction.NEW_HASKELL_FILE
+    CreateHaskellFileAction.HaskellModule
   }
 
 }
