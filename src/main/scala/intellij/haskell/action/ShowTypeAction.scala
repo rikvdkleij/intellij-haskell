@@ -19,9 +19,10 @@ package intellij.haskell.action
 import com.intellij.openapi.actionSystem.{AnAction, AnActionEvent}
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.project.Project
-import com.intellij.psi.{PsiElement, PsiFile}
+import com.intellij.psi.{PsiElement, PsiFile, TokenType}
 import intellij.haskell.HaskellNotificationGroup
 import intellij.haskell.external.component.{FileModuleIdentifiers, HaskellComponentsManager, StackProjectManager}
+import intellij.haskell.psi.HaskellTypes.HS_NEWLINE
 import intellij.haskell.psi._
 import intellij.haskell.util.{HaskellEditorUtil, StringUtil}
 
@@ -43,7 +44,7 @@ class ShowTypeAction extends AnAction {
             case _ => HaskellEditorUtil.showHint(editor, "Could not determine type for selection")
           }
           case _ => ()
-            Option(psiFile.findElementAt(editor.getCaretModel.getOffset)).foreach { psiElement =>
+            Option(psiFile.findElementAt(editor.getCaretModel.getOffset)).filterNot(e => e.getNode.getElementType == HS_NEWLINE || e.getNode.getElementType == TokenType.WHITE_SPACE).orElse(Option(psiFile.findElementAt(editor.getCaretModel.getOffset - 1))).foreach { psiElement =>
               ShowTypeAction.showTypeAsHint(actionContext.project, editor, psiElement, psiFile)
             }
         }
