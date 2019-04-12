@@ -72,7 +72,7 @@ object StackCommandLine {
     } else {
       Seq("--system-ghc")
     }
-    val arguments = systemGhcOption ++ Seq("-j1", "--stack-root", toolsStackRootPath.getPath, "--resolver", StackageLtsVersion, "--compiler", "ghc-8.6.4", "--local-bin-path", toolsBinPath.getPath, "install", toolName)
+    val arguments = systemGhcOption ++ Seq("-j1", "--stack-root", toolsStackRootPath.getPath, "--resolver", StackageLtsVersion, "--local-bin-path", toolsBinPath.getPath, "install", toolName)
     val processOutput = run(project, arguments, -1, logOutput = true, notifyBalloonError = true, workDir = Some(VfsUtil.getUserHomeDir.getPath), enableExtraArguments = false)
     processOutput.exists(o => o.getExitCode == 0 && !o.isTimeout)
   }
