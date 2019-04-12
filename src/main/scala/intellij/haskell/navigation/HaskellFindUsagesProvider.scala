@@ -23,9 +23,10 @@ import com.intellij.psi.tree.IElementType
 import com.intellij.util.Processor
 import intellij.haskell.psi.HaskellTypes._
 import intellij.haskell.psi._
-import intellij.haskell.{HaskellFile, HaskellLexer}
+import intellij.haskell.{HaskellFile, HaskellLexer, HaskellParserDefinition}
 
 import scala.annotation.tailrec
+import scala.collection.mutable.ListBuffer
 
 class HaskellFindUsagesProvider extends FindUsagesProvider {
 
@@ -33,22 +34,42 @@ class HaskellFindUsagesProvider extends FindUsagesProvider {
     (fileText: CharSequence, processor: Processor[WordOccurrence]) => {
       val lexer = new HaskellLexer
       lexer.start(fileText)
-      processTokens(lexer, fileText, processor, null)
+      processTokens(lexer, fileText, processor, ListBuffer.empty)
     }
   }
 
   @tailrec
-  private def processTokens(lexer: HaskellLexer, fileText: CharSequence, processor: Processor[WordOccurrence], prevIdTokenType: IElementType) {
+  private def processTokens(lexer: HaskellLexer, fileText: CharSequence, processor: Processor[WordOccurrence], prevDots: ListBuffer[IElementType]) {
     val tokenType = lexer.getTokenType
     if (tokenType != null) {
-      if (tokenType == HS_VAR_ID || tokenType == HS_CON_ID || tokenType == HS_VARSYM_ID || tokenType == HS_CONSYM_ID) {
-        val wo: WordOccurrence = new WordOccurrence(fileText, lexer.getTokenStart, lexer.getTokenEnd, WordOccurrence.Kind.CODE)
-        processor.process(wo)
-        lexer.advance()
-        processTokens(lexer, fileText, processor, tokenType)
+      if (HaskellParserDefinition.Ids.contains(tokenType) || tokenType == HS_DOT) {
+        if (tokenType == HS_DOT) {
+          prevDots.+=(tokenType)
+          lexer.advance()
+          processTokens(lexer, fileText, processor, prevDots)
+        } else {
+          val text = fileText.subSequence(lexer.getTokenStart - prevDots.length, lexer.getTokenEnd).toString
+
+          // A workaround to get Find usages working for identifiers which contain single quotes
+          val text1 = if (text.contains("'")) {
+            text.replaceAll("'", "")
+          } else {
+            text
+          }
+
+          val wo = new WordOccurrence(text1, 0, text1.length, WordOccurrence.Kind.CODE)
+          processor.process(wo)
+          lexer.advance()
+          processTokens(lexer, fileText, processor, ListBuffer.empty)
+        }
       } else {
+        if (prevDots.nonEmpty) {
+          val wo = new WordOccurrence("." * prevDots.length, 0, prevDots.length, WordOccurrence.Kind.CODE)
+          processor.process(wo)
+        }
+
         lexer.advance()
-        processTokens(lexer, fileText, processor, null)
+        processTokens(lexer, fileText, processor, ListBuffer.empty)
       }
     }
   }
