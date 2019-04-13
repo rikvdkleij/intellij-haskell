@@ -38,7 +38,7 @@ class HoogleAction extends AnAction {
       selectionModel.map(_.getSelectedText).orElse(Option(psiFile.findElementAt(offset)).map(_.getText)).foreach(text => {
         HoogleComponent.runHoogle(psiFile.getProject, text) match {
           case Some(results) => HaskellEditorUtil.showList(results, editor)
-          case _ => HaskellEditorUtil.showHint(editor, s"No Hoogle result for ${StringUtil.escapeXml(text)}")
+          case _ => HaskellEditorUtil.showHint(editor, s"No Hoogle result for ${StringUtil.escapeXmlEntities(text)}")
         }
       })
     })

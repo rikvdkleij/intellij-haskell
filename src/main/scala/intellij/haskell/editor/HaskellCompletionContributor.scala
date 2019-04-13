@@ -475,7 +475,7 @@ class HaskellCompletionContributor extends CompletionContributor {
 
   def createLocalLookupElement(namedElement: HaskellNamedElement): LookupElementBuilder = {
     val typeSignature = HaskellComponentsManager.findTypeInfoForElement(namedElement).map(_.typeSignature)
-    LookupElementBuilder.create(namedElement.getName).withTypeText(typeSignature.map(StringUtil.unescapeXml).getOrElse("")).withIcon(HaskellIcons.HaskellSmallBlueLogo)
+    LookupElementBuilder.create(namedElement.getName).withTypeText(typeSignature.map(StringUtil.unescapeXmlEntities).getOrElse("")).withIcon(HaskellIcons.HaskellSmallBlueLogo)
   }
 
   private def createLocalTopLevelLookupElement(name: String, declaration: String, module: String): LookupElementBuilder = {

@@ -53,7 +53,7 @@ class GotoInstanceDeclarationAction extends AnAction {
           }, "Goto instance declaration")
           popup.showInBestPositionFor(editor)
         } else {
-          HaskellEditorUtil.showHint(editor, s"No instance declarations found for ${StringUtil.escapeXml(namedElement.getText)}")
+          HaskellEditorUtil.showHint(editor, s"No instance declarations found for ${StringUtil.escapeXmlEntities(namedElement.getText)}")
         }
       })
     })
