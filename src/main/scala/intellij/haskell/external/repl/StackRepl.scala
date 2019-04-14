@@ -81,7 +81,7 @@ abstract class StackRepl(project: Project, componentInfo: Option[StackComponentI
 
   private final val ExitCommand = ":q"
 
-  private final val CanNotSatisfyErrorMessageIndicator = "cannot satisfy"
+  private final val CanNotSatisfyErrorMessageIndicator = "<command line>: cannot satisfy -package"
 
   private final val LocalBrowseStopReadingIndicator = "-- imported via"
 
@@ -258,7 +258,7 @@ abstract class StackRepl(project: Project, componentInfo: Option[StackComponentI
           }
 
           def hasDependencyError = {
-            stderrQueue.toArray.mkString(" ").contains(CanNotSatisfyErrorMessageIndicator)
+            stderrQueue.asScala.exists(_.startsWith(CanNotSatisfyErrorMessageIndicator))
           }
 
           val deadline = DefaultTimeout.fromNow
@@ -279,7 +279,7 @@ abstract class StackRepl(project: Project, componentInfo: Option[StackComponentI
             available = true
           } else if (hasDependencyError) {
             val target = componentInfo.map(_.target).getOrElse("-")
-            val error = stderrQueue.asScala.headOption.map(_.replace("<command line>:", "").trim).getOrElse("a dependency failed to build")
+            val error = stderrQueue.asScala.find(_.startsWith(CanNotSatisfyErrorMessageIndicator)).map(_.replace("<command line>:", "").trim).getOrElse("a dependency failed to build")
             val message = s"Stack REPL could not be started for target `$target` because $error"
             logInfo(message)
             HaskellNotificationGroup.logWarningBalloonEvent(project, message)
