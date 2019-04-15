@@ -136,9 +136,9 @@ case class ProjectStackRepl(project: Project, stackComponentInfo: StackComponent
     loadedModuleNames.foreach(mn => everLoadedDependentModules.put(mn, DependentModuleInfo()))
   }
 
-  def load(psiFile: PsiFile, fileChanged: Option[Boolean], mustBeByteCode: Boolean = false): Option[(StackReplOutput, Boolean)] = synchronized {
+  def load(psiFile: PsiFile, mustBeByteCode: Boolean = false): Option[(StackReplOutput, Boolean)] = synchronized {
     val forceBytecodeLoad = if (mustBeByteCode) objectCodeEnabled else false
-    val reload = if (fileChanged.contains(true) && !forceBytecodeLoad) {
+    val reload = if (!forceBytecodeLoad) {
       val loaded = isFileLoaded(psiFile)
       loaded == Loaded || loaded == Failed
     } else {
@@ -186,7 +186,7 @@ case class ProjectStackRepl(project: Project, stackComponentInfo: StackComponent
   }
 
   def getModuleIdentifiers(moduleName: String, psiFile: Option[PsiFile]): Option[StackReplOutput] = synchronized {
-    if (psiFile.isEmpty || isBrowseModuleLoaded(moduleName) || psiFile.exists(pf => load(pf, None).exists(_._2 == false))) {
+    if (psiFile.isEmpty || isBrowseModuleLoaded(moduleName) || psiFile.exists(pf => load(pf).exists(_._2 == false))) {
       execute(s":browse! $moduleName")
     } else {
       HaskellNotificationGroup.logInfoEvent(project, s"Could not get module identifiers for module $moduleName because file ${psiFile.map(_.getName).getOrElse("-")} is not loaded")
@@ -214,7 +214,7 @@ case class ProjectStackRepl(project: Project, stackComponentInfo: StackComponent
       case Some(info) if info.psiFile == psiFile & !info.loadFailed & (if (mustBeByteCode) !objectCodeEnabled else true) => execute(command)
       case Some(info) if info.psiFile == psiFile & info.loadFailed => Some(StackReplOutput())
       case _ =>
-        load(psiFile, fileChanged = None, mustBeByteCode)
+        load(psiFile, mustBeByteCode)
         loadedFile match {
           case None => None
           case Some(info) if info.psiFile == psiFile && !info.loadFailed => execute(command)

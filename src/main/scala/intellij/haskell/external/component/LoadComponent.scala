@@ -18,7 +18,7 @@ package intellij.haskell.external.component
 
 import com.intellij.codeInsight.documentation.DocumentationManager
 import com.intellij.openapi.application.ApplicationManager
-import com.intellij.psi.{PsiElement, PsiFile}
+import com.intellij.psi.PsiFile
 import intellij.haskell.external.execution.{CompilationResult, HaskellCompilationResultHelper}
 import intellij.haskell.external.repl.ProjectStackRepl.Loaded
 import intellij.haskell.external.repl._
@@ -37,7 +37,7 @@ private[component] object LoadComponent {
     }.contains(true)
   }
 
-  def load(psiFile: PsiFile, fileChanged: Boolean, currentElement: Option[PsiElement]): Option[CompilationResult] = {
+  def load(psiFile: PsiFile): Option[CompilationResult] = {
     val project = psiFile.getProject
 
     StackReplsManager.getProjectRepl(psiFile).flatMap(projectRepl => {
@@ -51,7 +51,7 @@ private[component] object LoadComponent {
 
       ProjectLibraryFileWatcher.checkLibraryBuild(project, projectRepl.stackComponentInfo)
 
-      projectRepl.load(psiFile, Some(fileChanged)) match {
+      projectRepl.load(psiFile) match {
         case Some((loadOutput, loadFailed)) =>
           ApplicationManager.getApplication.executeOnPooledThread(ScalaUtil.runnable {
 

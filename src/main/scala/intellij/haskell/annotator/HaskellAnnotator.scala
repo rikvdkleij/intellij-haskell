@@ -30,9 +30,9 @@ import com.intellij.openapi.fileEditor.FileDocumentManager
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.TextRange
 import com.intellij.openapi.vfs.VirtualFile
+import com.intellij.psi.PsiFile
 import com.intellij.psi.impl.source.tree.TreeUtil
 import com.intellij.psi.util.PsiTreeUtil
-import com.intellij.psi.{PsiElement, PsiFile}
 import intellij.haskell.editor.{HaskellImportOptimizer, HaskellProblemsView}
 import intellij.haskell.external.component.{StackProjectManager, _}
 import intellij.haskell.external.execution._
@@ -45,9 +45,9 @@ import scala.annotation.tailrec
 import scala.collection.Iterable
 import scala.collection.JavaConverters._
 
-class HaskellAnnotator extends ExternalAnnotator[(PsiFile, Option[PsiElement]), CompilationResult] {
+class HaskellAnnotator extends ExternalAnnotator[PsiFile, CompilationResult] {
 
-  override def collectInformation(psiFile: PsiFile, editor: Editor, hasErrors: Boolean): (PsiFile, Option[PsiElement]) = {
+  override def collectInformation(psiFile: PsiFile, editor: Editor, hasErrors: Boolean): PsiFile = {
     if (HaskellConsoleView.isConsoleFile(psiFile) || !HaskellProjectUtil.isSourceFile(psiFile)) {
       null
     } else if (StackProjectManager.isInitializing(psiFile.getProject)) {
@@ -61,24 +61,27 @@ class HaskellAnnotator extends ExternalAnnotator[(PsiFile, Option[PsiElement]), 
         case (_, None) => null // can be in case if file is in memory only (just created file)
         case (_, Some(f)) if f.getFileType != HaskellFileType.Instance => null
         case (_, Some(_)) if !psiFile.isValid => null
-        case (_, Some(_)) =>
-          val currentElement = Option(psiFile.findElementAt(editor.getCaretModel.getOffset)).
-            find(e => HaskellPsiUtil.findExpression(e).isDefined).
-            flatMap(e => Option(PsiTreeUtil.prevVisibleLeaf(e))).filter(_.isValid)
-          (psiFile, currentElement)
+        case (_, Some(_)) => psiFile
       }
     }
   }
 
-  override def doAnnotate(psiFileElement: (PsiFile, Option[PsiElement])): CompilationResult = {
-    val psiFile = psiFileElement._1
+  // Workaround in case annotator is triggered but file is not changed.
+  // In this case the result of REPL load is always empty.
+  private var prevResult: Option[(PsiFile, CompilationResult)] = None
+
+  override def doAnnotate(psiFile: PsiFile): CompilationResult = {
     HaskellFileUtil.findVirtualFile(psiFile) match {
       case Some(virtualFile) =>
         val fileChanged = FileDocumentManager.getInstance().isFileModified(virtualFile)
-        if (fileChanged) {
-          HaskellFileUtil.saveFileInDispatchThread(psiFile.getProject, virtualFile)
+        prevResult match {
+          case Some((pf, r)) if !fileChanged && psiFile == pf => r
+          case _ =>
+            HaskellFileUtil.saveFileInDispatchThread(psiFile.getProject, virtualFile)
+            val result = HaskellComponentsManager.loadHaskellFile(psiFile).orNull
+            prevResult = Some((psiFile, result))
+            result
         }
-        HaskellComponentsManager.loadHaskellFile(psiFile, fileChanged, psiFileElement._2).orNull
       case None => CompilationResult(Iterable(), Iterable(), failed = false)
     }
   }

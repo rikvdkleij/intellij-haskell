@@ -131,8 +131,8 @@ object HaskellComponentsManager {
     StackReplsManager.getReplsManager(project).map(_.moduleCabalInfos.map { case (_, ci) => ci }).getOrElse(Iterable())
   }
 
-  def loadHaskellFile(psiFile: PsiFile, fileChanged: Boolean, psiElement: Option[PsiElement]): Option[CompilationResult] = {
-    LoadComponent.load(psiFile, fileChanged, psiElement)
+  def loadHaskellFile(psiFile: PsiFile): Option[CompilationResult] = {
+    LoadComponent.load(psiFile)
   }
 
   def invalidateFileInfos(psiFile: PsiFile): Unit = {
