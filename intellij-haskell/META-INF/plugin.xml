@@ -1,7 +1,7 @@
 <idea-plugin>
     <id>intellij.haskell</id>
     <name>IntelliJ-Haskell</name>
-    <version>1.0.0-beta45</version>
+    <version>1.0.0-beta46</version>
     <vendor email="rikvdkleij@gmail.com">Rik van der Kleij</vendor>
 
     <description><![CDATA[
@@ -13,6 +13,11 @@
     ]]></description>
 
     <change-notes><![CDATA[
+        <p>1.0.0-beta46</p>
+        <ul>
+            <li>Various improvements and fixes</li>
+            <li>Plugin icon (@ice1000)</li>
+        </ul>
         <p>1.0.0-beta45</p>
         <ul>
             <li>Various (performances) improvements and fixes</li>
