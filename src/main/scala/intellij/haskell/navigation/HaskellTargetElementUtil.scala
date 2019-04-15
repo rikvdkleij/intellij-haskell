@@ -23,7 +23,7 @@ class HaskellTargetElementUtil extends TargetElementUtil {
             case NoResolveResult(noInfo) =>
               noInfo match {
                 case NoInfoAvailable(_, _) => ()
-                case ni => HaskellEditorUtil.showStatusBarBalloonMessage(reference.getElement.getProject, s"Navigation is not available at this moment: ${ni.message}")
+                case ni => HaskellEditorUtil.showStatusBarMessage(reference.getElement.getProject, s"Navigation is not available at this moment: ${ni.message}")
               }
             case _ =>
               val element = r.getElement

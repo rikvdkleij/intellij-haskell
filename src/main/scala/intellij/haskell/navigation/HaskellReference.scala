@@ -194,7 +194,7 @@ object HaskellReference {
   def resolveInstanceReferences(project: Project, namedElement: HaskellNamedElement, nameInfos: Iterable[NameInfoComponentResult.NameInfo]): Seq[HaskellNamedElement] = {
     val identifiers = nameInfos.map(ni => findIdentifiersByNameInfo(ni, namedElement, project)).toSeq.distinct
     if (identifiers.contains(Left(ReadActionTimeout))) {
-      HaskellEditorUtil.showStatusBarBalloonMessage(project, "Navigating to instance declarations is not available at this moment")
+      HaskellEditorUtil.showStatusBarMessage(project, "Navigating to instance declarations is not available at this moment")
       Seq()
     } else {
       identifiers.flatMap(_.toOption.map(_._2))

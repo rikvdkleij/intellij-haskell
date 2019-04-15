@@ -157,6 +157,7 @@ object HaskellEditorUtil {
           f <- Option(wm.getIdeFrame(project))
           statusBar <- Option(f.getStatusBar.asInstanceOf[StatusBarEx])
         } yield {
+          statusBar.isProcessWindowOpen
           statusBar.notifyProgressByBalloon(MessageType.WARNING, message, null.asInstanceOf[Icon], null.asInstanceOf[HyperlinkListener])
         }
       }
@@ -171,6 +172,6 @@ object HaskellEditorUtil {
   }
 
   def showHaskellSupportIsNotAvailableWhileInitializing(project: Project): Unit = {
-    HaskellEditorUtil.showStatusBarBalloonMessage(project, HaskellSupportIsNotAvailableWhileInitializingText)
+    HaskellEditorUtil.showStatusBarMessage(project, HaskellSupportIsNotAvailableWhileInitializingText)
   }
 }
