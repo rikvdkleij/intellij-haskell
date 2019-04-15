@@ -45,7 +45,7 @@ class HLintInspectionTool extends LocalInspectionTool {
 
         ProgressManager.checkCanceled()
 
-        new WaitFor(100, 1) {
+        new WaitFor(500, 1) {
           override def condition(): Boolean = {
             ProgressManager.checkCanceled()
             !HaskellFileUtil.isDocumentUnsaved(document)
