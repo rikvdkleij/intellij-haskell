@@ -1,0 +1,35 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg width="40" height="40" version="1.1" viewBox="0 0 128 128" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink">
+<defs>
+<linearGradient id="b" x1="83.87" x2="20.45" y1="-780.92" y2="-692.42" gradientTransform="matrix(1 0 0 -1 8e-6 -648.86)" gradientUnits="userSpaceOnUse">
+<stop stop-color="#453a62" offset=".20781"/>
+<stop stop-color="#62538c" offset=".53771"/>
+<stop stop-color="#8f4e8b" offset=".84175"/>
+</linearGradient>
+<linearGradient id="d" x1="83.87" x2="20.45" y1="-780.92" y2="-692.42" gradientTransform="matrix(1 0 0 -1 8e-6 -648.86)" gradientUnits="userSpaceOnUse">
+<stop stop-color="#453a62" offset=".09"/>
+<stop stop-color="#62538c" offset=".48"/>
+<stop stop-color="#8f4e8b" offset=".9"/>
+</linearGradient>
+<linearGradient id="e" x1=".45658" x2="126.74" y1="126.47" y2="48.655" gradientUnits="userSpaceOnUse" xlink:href="#b"/>
+<linearGradient id="a" x1="6.0619" x2="117.51" y1="116.58" y2="51.293" gradientUnits="userSpaceOnUse" xlink:href="#d"/>
+<linearGradient id="c" x1="118.23" x2="3.4819" y1="55.764" y2="120.39" gradientUnits="userSpaceOnUse" xlink:href="#b"/>
+</defs>
+<title>icon_intellij_haskell</title>
+<g transform="matrix(1 0 0 -1 -.1846 128.04)">
+<polygon points="60.4 57 108.2 100.6 108.2 100.6 128 48.2 68.2 34.6" fill="url(#a)"/>
+<polygon points="53.8 83.2 128 102.6 128 102.6 97.8 128 37.6 112.4" fill="url(#a)"/>
+<polygon points="64.8 56.8 17.6 63.6 17.6 63.6 2.4 19.8 70.2 0" fill="url(#a)"/>
+<polygon points="0 128 127.6 102.6 111.6 74 111.6 74 92.6 41.6 93 41.4 70.2 0 0 75.8" fill="url(#c)"/>
+</g>
+<g transform="translate(1.6962 -3.1704)">
+<rect x="21.33" y="21.33" width="85.33" height="85.33"/>
+<rect x="29.87" y="92.59" width="32" height="5.12" fill="#fff"/>
+</g>
+<g fill="#fff" fill-rule="evenodd" stroke="#000">
+<path d="m32.28 25.149 10.914-0.0238 13.848 24.729-14.508 25.389-10.255-0.0945 14.541-25.294-14.541-24.706" stroke-width="1px"/>
+<path d="m48.14 25.455 10.221-0.32972 28.027 49.789h-9.562l-8.9026-15.827-9.2323 15.827h-10.551l14.508-24.729z" stroke-width="1px"/>
+<path d="m70.565 40.297h22.415l0.32486 8.5648-19.167-0.3426z" stroke-width="1.0118px"/>
+<path d="m76.196 52.839h16.776v8.2112l-12.582-0.32844z" stroke-width="1.0275px"/>
+</g>
+</svg>
