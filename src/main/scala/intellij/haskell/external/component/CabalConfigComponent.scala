@@ -73,17 +73,15 @@ object CabalConfigComponent {
   private def parseDefaultCabalConfigFile(): Seq[String] = {
     val url = getClass.getResource("/cabal/cabal.config")
     val source = Source.fromURL(url)
-    val lines =
-      try {
-        source.getLines.toSeq
-      } finally {
-        source.close()
-      }
-    parseCabalConfig(lines)
+    try {
+      source.getLines.flatMap(parseCabalConfigLine).toList
+    } finally {
+      source.close()
+    }
   }
 
   private def parseCabalConfigFile(project: Project, cabalConfigFile: File): Iterable[String] = {
-    parseCabalConfig(readCabalConfigFile(project, cabalConfigFile))
+    readCabalConfigFile(project, cabalConfigFile)
   }
 
   private def readCabalConfigFile(project: Project, cabalConfigFile: File): Seq[String] = {
