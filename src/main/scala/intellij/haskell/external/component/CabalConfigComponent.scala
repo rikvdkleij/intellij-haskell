@@ -63,14 +63,14 @@ object CabalConfigComponent {
     }
   }
 
-  private def parseCabalConfig(lines: Seq[String]): Seq[String] = {
-    lines.filter(!_.startsWith("--")).map {
-      case PackageNamePattern(packageName) => packageName
-      case _ => ""
-    }.filterNot(_.isEmpty)
+  private def parseCabalConfigLine(line: String): Option[String] = {
+    line match {
+      case PackageNamePattern(packageName) => Some(packageName)
+      case _ => None
+    }
   }
 
-  private def parseDefaultCabalConfigFile(): Iterable[String] = {
+  private def parseDefaultCabalConfigFile(): Seq[String] = {
     val url = getClass.getResource("/cabal/cabal.config")
     val source = Source.fromURL(url)
     val lines =
@@ -89,7 +89,7 @@ object CabalConfigComponent {
   private def readCabalConfigFile(project: Project, cabalConfigFile: File): Seq[String] = {
     val bufferedSource = Source.fromFile(cabalConfigFile)
     try {
-      bufferedSource.getLines().toSeq
+      bufferedSource.getLines.flatMap(parseCabalConfigLine).toList
     } catch {
       case _: Exception => Seq()
     } finally {
