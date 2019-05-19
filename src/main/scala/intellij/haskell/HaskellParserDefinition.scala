@@ -22,9 +22,11 @@ import com.intellij.lexer.Lexer
 import com.intellij.openapi.project.Project
 import com.intellij.psi._
 import com.intellij.psi.tree.{IFileElementType, TokenSet}
+import intellij.haskell.HaskellParserDefinition.{Comments, StringLiterals, WhiteSpaces}
 import intellij.haskell.parser.HaskellParser
 import intellij.haskell.psi.HaskellTypes._
 import intellij.haskell.psi.stubs.types.HaskellFileElementType
+import intellij.haskell.psi.{HaskellLayoutLexer, HaskellTypes, LetIn}
 import org.jetbrains.annotations.NotNull
 
 //noinspection TypeAnnotation
@@ -51,7 +53,16 @@ class HaskellParserDefinition extends ParserDefinition {
 
   @NotNull
   def createLexer(project: Project): Lexer = {
-    new HaskellLexerAdapter
+    new HaskellLayoutLexer(
+      new HaskellLexerAdapter,
+      HaskellTypes.HS_NEWLINE,
+      HaskellTypes.HS_LEFT_BRACE,
+      HaskellTypes.HS_SEMICOLON,
+      HaskellTypes.HS_RIGHT_BRACE,
+      TokenSet.orSet(Comments, WhiteSpaces, TokenSet.create(HS_LEFT_BRACE, HS_SEMICOLON, HS_RIGHT_BRACE)),
+      TokenSet.create(HS_WHERE, HS_LET),
+      LetIn(HS_LET, HS_IN)
+    )
   }
 
   def createParser(project: Project): PsiParser = {
@@ -64,17 +75,17 @@ class HaskellParserDefinition extends ParserDefinition {
 
   @NotNull
   override def getWhitespaceTokens: TokenSet = {
-    HaskellParserDefinition.WhiteSpaces
+    WhiteSpaces
   }
 
   @NotNull
   def getCommentTokens: TokenSet = {
-    HaskellParserDefinition.Comments
+    Comments
   }
 
   @NotNull
   def getStringLiteralElements: TokenSet = {
-    HaskellParserDefinition.StringLiterals
+    StringLiterals
   }
 
   @NotNull
