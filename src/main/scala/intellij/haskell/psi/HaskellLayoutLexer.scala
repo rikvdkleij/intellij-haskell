@@ -116,28 +116,18 @@ class HaskellLayoutLexer(private val lexer: Lexer,
     */
   private case object Normal extends State
 
-  /**
-    * The real initial state. We don't work on layout until we've encountered the first one.
-    */
-  private case object NotYetStarted extends State
-
-
   private def doLayout() {
     slurpTokens()
 
     // initial state
     var i = 0
-    var state: State = NotYetStarted
+    var state: State = Normal
     val indentStack = new IndentStack()
     indentStack.push(-1) // top-level is an implicit section
 
     for (token <- tokens) {
 
       state match {
-        case NotYetStarted =>
-          if (token.elementType.exists(layoutCreatingTokens.contains)) {
-            state = WaitingForLayout
-          }
         case WaitingForLayout =>
           if (token.isCode && token.column > indentStack.peek()) {
             tokens.insert(i, virtualToken(layoutStart, tokens(if (i <= 0) 0 else i - 1)))
