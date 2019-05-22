@@ -54,6 +54,7 @@ public interface HaskellTypes {
     IElementType HS_INSTANCE_DECLARATION = new HaskellCompositeElementType("HS_INSTANCE_DECLARATION");
     IElementType HS_INSTVAR = new HaskellCompositeElementType("HS_INSTVAR");
     IElementType HS_KIND_SIGNATURE = new HaskellCompositeElementType("HS_KIND_SIGNATURE");
+    IElementType HS_LET_ABSTRACTION = new HaskellCompositeElementType("HS_LET_ABSTRACTION");
     IElementType HS_LIST_TYPE = new HaskellCompositeElementType("HS_LIST_TYPE");
     IElementType HS_MODID = HaskellElementTypeFactory.factory("HS_MODID");
     IElementType HS_MODULE_BODY = new HaskellCompositeElementType("HS_MODULE_BODY");
@@ -94,6 +95,7 @@ public interface HaskellTypes {
     IElementType HS_VAROP = new HaskellCompositeElementType("HS_VAROP");
     IElementType HS_VARSYM = HaskellElementTypeFactory.factory("HS_VARSYM");
     IElementType HS_VAR_CON = new HaskellCompositeElementType("HS_VAR_CON");
+    IElementType HS_WHERE_CLAUSE = new HaskellCompositeElementType("HS_WHERE_CLAUSE");
 
     IElementType HS_AT = new HaskellTokenType("AT");
     IElementType HS_BACKQUOTE = new HaskellTokenType("BACKQUOTE");
@@ -263,6 +265,8 @@ public interface HaskellTypes {
                 return new HaskellInstvarImpl(node);
             } else if (type == HS_KIND_SIGNATURE) {
                 return new HaskellKindSignatureImpl(node);
+            } else if (type == HS_LET_ABSTRACTION) {
+                return new HaskellLetAbstractionImpl(node);
             } else if (type == HS_LIST_TYPE) {
                 return new HaskellListTypeImpl(node);
             } else if (type == HS_MODID) {
@@ -343,6 +347,8 @@ public interface HaskellTypes {
                 return new HaskellVarsymImpl(node);
             } else if (type == HS_VAR_CON) {
                 return new HaskellVarConImpl(node);
+            } else if (type == HS_WHERE_CLAUSE) {
+                return new HaskellWhereClauseImpl(node);
             }
             throw new AssertionError("Unknown element type: " + type);
         }

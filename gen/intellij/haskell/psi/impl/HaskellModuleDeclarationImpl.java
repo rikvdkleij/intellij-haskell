@@ -44,18 +44,28 @@ public class HaskellModuleDeclarationImpl extends HaskellCompositeElementImpl im
         return PsiTreeUtil.getChildOfType(this, HaskellPragma.class);
     }
 
+    @Override
+    @NotNull
+    public HaskellWhereClause getWhereClause() {
+        return notNullChild(PsiTreeUtil.getChildOfType(this, HaskellWhereClause.class));
+    }
+
+    @Override
     public String getName() {
         return HaskellPsiImplUtil.getName(this);
     }
 
+    @Override
     public ItemPresentation getPresentation() {
         return HaskellPsiImplUtil.getPresentation(this);
     }
 
+    @Override
     public Seq<HaskellNamedElement> getIdentifierElements() {
         return HaskellPsiImplUtil.getIdentifierElements(this);
     }
 
+    @Override
     public Option<String> getModuleName() {
         return HaskellPsiImplUtil.getModuleName(this);
     }

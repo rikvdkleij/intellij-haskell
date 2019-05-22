@@ -36,14 +36,17 @@ public class HaskellQNameImpl extends HaskellCompositeElementImpl implements Has
         return PsiTreeUtil.getChildOfType(this, HaskellVarCon.class);
     }
 
+    @Override
     public String getName() {
         return HaskellPsiImplUtil.getName(this);
     }
 
+    @Override
     public HaskellNamedElement getIdentifierElement() {
         return HaskellPsiImplUtil.getIdentifierElement(this);
     }
 
+    @Override
     public Option<String> getQualifierName() {
         return HaskellPsiImplUtil.getQualifierName(this);
     }

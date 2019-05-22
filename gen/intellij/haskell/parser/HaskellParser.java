@@ -7,6 +7,7 @@ import com.intellij.lang.PsiBuilder;
 import com.intellij.lang.PsiBuilder.Marker;
 import com.intellij.lang.PsiParser;
 import com.intellij.psi.tree.IElementType;
+import com.intellij.psi.tree.IFileElementType;
 
 import static intellij.haskell.psi.HaskellParserUtil.*;
 import static intellij.haskell.psi.HaskellTypes.*;
@@ -23,180 +24,10 @@ public class HaskellParser implements PsiParser, LightPsiParser {
         boolean r;
         b = adapt_builder_(t, b, this, null);
         Marker m = enter_section_(b, 0, _COLLAPSE_, null);
-        if (t == HS_CCONTEXT) {
-            r = ccontext(b, 0);
-        } else if (t == HS_CDECL_DATA_DECLARATION) {
-            r = cdecl_data_declaration(b, 0);
-        } else if (t == HS_CDECLS) {
-            r = cdecls(b, 0);
-        } else if (t == HS_CIDECLS) {
-            r = cidecls(b, 0);
-        } else if (t == HS_CLASS_DECLARATION) {
-            r = class_declaration(b, 0);
-        } else if (t == HS_CLAZZ) {
-            r = clazz(b, 0);
-        } else if (t == HS_CNAME) {
-            r = cname(b, 0);
-        } else if (t == HS_CNAME_DOT_DOT) {
-            r = cname_dot_dot(b, 0);
-        } else if (t == HS_COMMENTS) {
-            r = comments(b, 0);
-        } else if (t == HS_CON) {
-            r = con(b, 0);
-        } else if (t == HS_CONID) {
-            r = conid(b, 0);
-        } else if (t == HS_CONOP) {
-            r = conop(b, 0);
-        } else if (t == HS_CONSTR) {
-            r = constr(b, 0);
-        } else if (t == HS_CONSTR_1) {
-            r = constr1(b, 0);
-        } else if (t == HS_CONSTR_2) {
-            r = constr2(b, 0);
-        } else if (t == HS_CONSTR_3) {
-            r = constr3(b, 0);
-        } else if (t == HS_CONSYM) {
-            r = consym(b, 0);
-        } else if (t == HS_DATA_DECLARATION) {
-            r = data_declaration(b, 0);
-        } else if (t == HS_DATA_DECLARATION_DERIVING) {
-            r = data_declaration_deriving(b, 0);
-        } else if (t == HS_DEFAULT_DECLARATION) {
-            r = default_declaration(b, 0);
-        } else if (t == HS_DERIVING_DECLARATION) {
-            r = deriving_declaration(b, 0);
-        } else if (t == HS_DOT_DOT) {
-            r = dot_dot(b, 0);
-        } else if (t == HS_EXPORT) {
-            r = export(b, 0);
-        } else if (t == HS_EXPORTS) {
-            r = exports(b, 0);
-        } else if (t == HS_EXPRESSION) {
-            r = expression(b, 0);
-        } else if (t == HS_FIELDDECL) {
-            r = fielddecl(b, 0);
-        } else if (t == HS_FILE_HEADER) {
-            r = file_header(b, 0);
-        } else if (t == HS_FIXITY_DECLARATION) {
-            r = fixity_declaration(b, 0);
-        } else if (t == HS_FOREIGN_DECLARATION) {
-            r = foreign_declaration(b, 0);
-        } else if (t == HS_GENERAL_PRAGMA_CONTENT) {
-            r = general_pragma_content(b, 0);
-        } else if (t == HS_GTYCON) {
-            r = gtycon(b, 0);
-        } else if (t == HS_IMPORT_DECLARATION) {
-            r = import_declaration(b, 0);
-        } else if (t == HS_IMPORT_DECLARATIONS) {
-            r = import_declarations(b, 0);
-        } else if (t == HS_IMPORT_EMPTY_SPEC) {
-            r = import_empty_spec(b, 0);
-        } else if (t == HS_IMPORT_HIDING) {
-            r = import_hiding(b, 0);
-        } else if (t == HS_IMPORT_HIDING_SPEC) {
-            r = import_hiding_spec(b, 0);
-        } else if (t == HS_IMPORT_ID) {
-            r = import_id(b, 0);
-        } else if (t == HS_IMPORT_IDS_SPEC) {
-            r = import_ids_spec(b, 0);
-        } else if (t == HS_IMPORT_PACKAGE_NAME) {
-            r = import_package_name(b, 0);
-        } else if (t == HS_IMPORT_QUALIFIED) {
-            r = import_qualified(b, 0);
-        } else if (t == HS_IMPORT_QUALIFIED_AS) {
-            r = import_qualified_as(b, 0);
-        } else if (t == HS_IMPORT_SPEC) {
-            r = import_spec(b, 0);
-        } else if (t == HS_INST) {
-            r = inst(b, 0);
-        } else if (t == HS_INSTANCE_DECLARATION) {
-            r = instance_declaration(b, 0);
-        } else if (t == HS_INSTVAR) {
-            r = instvar(b, 0);
-        } else if (t == HS_KIND_SIGNATURE) {
-            r = kind_signature(b, 0);
-        } else if (t == HS_LIST_TYPE) {
-            r = list_type(b, 0);
-        } else if (t == HS_MODID) {
-            r = modid(b, 0);
-        } else if (t == HS_MODULE_BODY) {
-            r = module_body(b, 0);
-        } else if (t == HS_MODULE_DECLARATION) {
-            r = module_declaration(b, 0);
-        } else if (t == HS_NEWCONSTR) {
-            r = newconstr(b, 0);
-        } else if (t == HS_NEWCONSTR_FIELDDECL) {
-            r = newconstr_fielddecl(b, 0);
-        } else if (t == HS_NEWTYPE_DECLARATION) {
-            r = newtype_declaration(b, 0);
-        } else if (t == HS_PRAGMA) {
-            r = pragma(b, 0);
-        } else if (t == HS_Q_CON) {
-            r = q_con(b, 0);
-        } else if (t == HS_Q_CON_QUALIFIER) {
-            r = q_con_qualifier(b, 0);
-        } else if (t == HS_Q_CON_QUALIFIER_1) {
-            r = q_con_qualifier1(b, 0);
-        } else if (t == HS_Q_CON_QUALIFIER_2) {
-            r = q_con_qualifier2(b, 0);
-        } else if (t == HS_Q_CON_QUALIFIER_3) {
-            r = q_con_qualifier3(b, 0);
-        } else if (t == HS_Q_CON_QUALIFIER_4) {
-            r = q_con_qualifier4(b, 0);
-        } else if (t == HS_Q_NAME) {
-            r = q_name(b, 0);
-        } else if (t == HS_Q_NAMES) {
-            r = q_names(b, 0);
-        } else if (t == HS_Q_VAR_CON) {
-            r = q_var_con(b, 0);
-        } else if (t == HS_QUALIFIER) {
-            r = qualifier(b, 0);
-        } else if (t == HS_RESERVED_ID) {
-            r = reserved_id(b, 0);
-        } else if (t == HS_SCONTEXT) {
-            r = scontext(b, 0);
-        } else if (t == HS_SHEBANG_LINE) {
-            r = shebang_line(b, 0);
-        } else if (t == HS_SIMPLECLASS) {
-            r = simpleclass(b, 0);
-        } else if (t == HS_SIMPLETYPE) {
-            r = simpletype(b, 0);
-        } else if (t == HS_TEXT_LITERAL) {
-            r = text_literal(b, 0);
-        } else if (t == HS_TOP_DECLARATION) {
-            r = top_declaration(b, 0);
-        } else if (t == HS_TOP_DECLARATION_LINE) {
-            r = top_declaration_line(b, 0);
-        } else if (t == HS_TTYPE) {
-            r = ttype(b, 0);
-        } else if (t == HS_TTYPE_1) {
-            r = ttype1(b, 0);
-        } else if (t == HS_TTYPE_2) {
-            r = ttype2(b, 0);
-        } else if (t == HS_TYPE_DECLARATION) {
-            r = type_declaration(b, 0);
-        } else if (t == HS_TYPE_EQUALITY) {
-            r = type_equality(b, 0);
-        } else if (t == HS_TYPE_FAMILY_DECLARATION) {
-            r = type_family_declaration(b, 0);
-        } else if (t == HS_TYPE_FAMILY_TYPE) {
-            r = type_family_type(b, 0);
-        } else if (t == HS_TYPE_INSTANCE_DECLARATION) {
-            r = type_instance_declaration(b, 0);
-        } else if (t == HS_TYPE_SIGNATURE) {
-            r = type_signature(b, 0);
-        } else if (t == HS_VAR) {
-            r = var(b, 0);
-        } else if (t == HS_VAR_CON) {
-            r = var_con(b, 0);
-        } else if (t == HS_VARID) {
-            r = varid(b, 0);
-        } else if (t == HS_VAROP) {
-            r = varop(b, 0);
-        } else if (t == HS_VARSYM) {
-            r = varsym(b, 0);
-        } else {
+        if (t instanceof IFileElementType) {
             r = parse_root_(t, b, 0);
+        } else {
+            r = false;
         }
         exit_section_(b, 0, m, t, r, true, TRUE_CONDITION);
     }
@@ -4209,18 +4040,73 @@ public class HaskellParser implements PsiParser, LightPsiParser {
     }
 
     /* ********************************************************** */
-    // general_id+
+    // LET LEFT_BRACE let_definitions* RIGHT_BRACE? IN expression
+    public static boolean let_abstraction(PsiBuilder b, int l) {
+        if (!recursion_guard_(b, l, "let_abstraction")) return false;
+        if (!nextTokenIs(b, HS_LET)) return false;
+        boolean r;
+        Marker m = enter_section_(b);
+        r = consumeTokens(b, 0, HS_LET, HS_LEFT_BRACE);
+        r = r && let_abstraction_2(b, l + 1);
+        r = r && let_abstraction_3(b, l + 1);
+        r = r && consumeToken(b, HS_IN);
+        r = r && expression(b, l + 1);
+        exit_section_(b, m, HS_LET_ABSTRACTION, r);
+        return r;
+    }
+
+    // let_definitions*
+    private static boolean let_abstraction_2(PsiBuilder b, int l) {
+        if (!recursion_guard_(b, l, "let_abstraction_2")) return false;
+        while (true) {
+            int c = current_position_(b);
+            if (!let_definitions(b, l + 1)) break;
+            if (!empty_element_parsed_guard_(b, "let_abstraction_2", c)) break;
+        }
+        return true;
+    }
+
+    // RIGHT_BRACE?
+    private static boolean let_abstraction_3(PsiBuilder b, int l) {
+        if (!recursion_guard_(b, l, "let_abstraction_3")) return false;
+        consumeToken(b, HS_RIGHT_BRACE);
+        return true;
+    }
+
+    /* ********************************************************** */
+    // expression SEMICOLON
+    static boolean let_definitions(PsiBuilder b, int l) {
+        if (!recursion_guard_(b, l, "let_definitions")) return false;
+        boolean r;
+        Marker m = enter_section_(b);
+        r = expression(b, l + 1);
+        r = r && consumeToken(b, HS_SEMICOLON);
+        exit_section_(b, m, null, r);
+        return r;
+    }
+
+    /* ********************************************************** */
+    // (general_id | let_abstraction)+
     static boolean line_expression(PsiBuilder b, int l) {
         if (!recursion_guard_(b, l, "line_expression")) return false;
         boolean r;
         Marker m = enter_section_(b);
-        r = general_id(b, l + 1);
+        r = line_expression_0(b, l + 1);
         while (r) {
             int c = current_position_(b);
-            if (!general_id(b, l + 1)) break;
+            if (!line_expression_0(b, l + 1)) break;
             if (!empty_element_parsed_guard_(b, "line_expression", c)) break;
         }
         exit_section_(b, m, null, r);
+        return r;
+    }
+
+    // general_id | let_abstraction
+    private static boolean line_expression_0(PsiBuilder b, int l) {
+        if (!recursion_guard_(b, l, "line_expression_0")) return false;
+        boolean r;
+        r = general_id(b, l + 1);
+        if (!r) r = let_abstraction(b, l + 1);
         return r;
     }
 
@@ -4332,7 +4218,7 @@ public class HaskellParser implements PsiParser, LightPsiParser {
     }
 
     /* ********************************************************** */
-    // MODULE modid onl pragma? onl (exports onl)? WHERE
+    // MODULE modid onl pragma? onl (exports onl)? where_clause
     public static boolean module_declaration(PsiBuilder b, int l) {
         if (!recursion_guard_(b, l, "module_declaration")) return false;
         if (!nextTokenIs(b, HS_MODULE)) return false;
@@ -4344,7 +4230,7 @@ public class HaskellParser implements PsiParser, LightPsiParser {
         r = r && module_declaration_3(b, l + 1);
         r = r && onl(b, l + 1);
         r = r && module_declaration_5(b, l + 1);
-        r = r && consumeToken(b, HS_WHERE);
+        r = r && where_clause(b, l + 1);
         exit_section_(b, m, HS_MODULE_DECLARATION, r);
         return r;
     }
@@ -5076,7 +4962,7 @@ public class HaskellParser implements PsiParser, LightPsiParser {
     }
 
     /* ********************************************************** */
-    // CASE | CLASS | DATA | DEFAULT | DERIVING | DO | ELSE | IF | IMPORT | IN | INSTANCE | LET | MODULE | NEWTYPE | OF | THEN | TYPE | WHERE | UNDERSCORE
+    // CASE | CLASS | DATA | DEFAULT | DERIVING | DO | ELSE | IF | IMPORT | INSTANCE | MODULE | NEWTYPE | OF | THEN | TYPE | WHERE | UNDERSCORE
     public static boolean reserved_id(PsiBuilder b, int l) {
         if (!recursion_guard_(b, l, "reserved_id")) return false;
         boolean r;
@@ -5090,9 +4976,7 @@ public class HaskellParser implements PsiParser, LightPsiParser {
         if (!r) r = consumeToken(b, HS_ELSE);
         if (!r) r = consumeToken(b, HS_IF);
         if (!r) r = consumeToken(b, HS_IMPORT);
-        if (!r) r = consumeToken(b, HS_IN);
         if (!r) r = consumeToken(b, HS_INSTANCE);
-        if (!r) r = consumeToken(b, HS_LET);
         if (!r) r = consumeToken(b, HS_MODULE);
         if (!r) r = consumeToken(b, HS_NEWTYPE);
         if (!r) r = consumeToken(b, HS_OF);
@@ -5496,14 +5380,14 @@ public class HaskellParser implements PsiParser, LightPsiParser {
     }
 
     /* ********************************************************** */
-    // top_declaration SEMICOLON? NEWLINE
+    // top_declaration SEMICOLON? NEWLINE?
     public static boolean top_declaration_line(PsiBuilder b, int l) {
         if (!recursion_guard_(b, l, "top_declaration_line")) return false;
         boolean r;
         Marker m = enter_section_(b, l, _NONE_, HS_TOP_DECLARATION_LINE, "<top declaration line>");
         r = top_declaration(b, l + 1);
         r = r && top_declaration_line_1(b, l + 1);
-        r = r && consumeToken(b, HS_NEWLINE);
+        r = r && top_declaration_line_2(b, l + 1);
         exit_section_(b, l, m, r, false, null);
         return r;
     }
@@ -5515,8 +5399,15 @@ public class HaskellParser implements PsiParser, LightPsiParser {
         return true;
     }
 
+    // NEWLINE?
+    private static boolean top_declaration_line_2(PsiBuilder b, int l) {
+        if (!recursion_guard_(b, l, "top_declaration_line_2")) return false;
+        consumeToken(b, HS_NEWLINE);
+        return true;
+    }
+
     /* ********************************************************** */
-    // (top_declaration_line (NEWLINE | DIRECTIVE)*)* top_declaration?
+    // (top_declaration_line (SEMICOLON | DIRECTIVE)*)* top_declaration?
     static boolean top_declarations(PsiBuilder b, int l) {
         if (!recursion_guard_(b, l, "top_declarations")) return false;
         boolean r;
@@ -5527,7 +5418,7 @@ public class HaskellParser implements PsiParser, LightPsiParser {
         return r;
     }
 
-    // (top_declaration_line (NEWLINE | DIRECTIVE)*)*
+    // (top_declaration_line (SEMICOLON | DIRECTIVE)*)*
     private static boolean top_declarations_0(PsiBuilder b, int l) {
         if (!recursion_guard_(b, l, "top_declarations_0")) return false;
         while (true) {
@@ -5538,7 +5429,7 @@ public class HaskellParser implements PsiParser, LightPsiParser {
         return true;
     }
 
-    // top_declaration_line (NEWLINE | DIRECTIVE)*
+    // top_declaration_line (SEMICOLON | DIRECTIVE)*
     private static boolean top_declarations_0_0(PsiBuilder b, int l) {
         if (!recursion_guard_(b, l, "top_declarations_0_0")) return false;
         boolean r;
@@ -5549,7 +5440,7 @@ public class HaskellParser implements PsiParser, LightPsiParser {
         return r;
     }
 
-    // (NEWLINE | DIRECTIVE)*
+    // (SEMICOLON | DIRECTIVE)*
     private static boolean top_declarations_0_0_1(PsiBuilder b, int l) {
         if (!recursion_guard_(b, l, "top_declarations_0_0_1")) return false;
         while (true) {
@@ -5560,11 +5451,11 @@ public class HaskellParser implements PsiParser, LightPsiParser {
         return true;
     }
 
-    // NEWLINE | DIRECTIVE
+    // SEMICOLON | DIRECTIVE
     private static boolean top_declarations_0_0_1_0(PsiBuilder b, int l) {
         if (!recursion_guard_(b, l, "top_declarations_0_0_1_0")) return false;
         boolean r;
-        r = consumeToken(b, HS_NEWLINE);
+        r = consumeToken(b, HS_SEMICOLON);
         if (!r) r = consumeToken(b, HS_DIRECTIVE);
         return r;
     }
@@ -6637,6 +6528,28 @@ public class HaskellParser implements PsiParser, LightPsiParser {
         }
         exit_section_(b, m, null, r);
         return r;
+    }
+
+    /* ********************************************************** */
+    // WHERE LEFT_BRACE top_declarations RIGHT_BRACE?
+    public static boolean where_clause(PsiBuilder b, int l) {
+        if (!recursion_guard_(b, l, "where_clause")) return false;
+        if (!nextTokenIs(b, HS_WHERE)) return false;
+        boolean r, p;
+        Marker m = enter_section_(b, l, _NONE_, HS_WHERE_CLAUSE, null);
+        r = consumeTokens(b, 1, HS_WHERE, HS_LEFT_BRACE);
+        p = r; // pin = 1
+        r = r && report_error_(b, top_declarations(b, l + 1));
+        r = p && where_clause_3(b, l + 1) && r;
+        exit_section_(b, l, m, r, p, null);
+        return r || p;
+    }
+
+    // RIGHT_BRACE?
+    private static boolean where_clause_3(PsiBuilder b, int l) {
+        if (!recursion_guard_(b, l, "where_clause_3")) return false;
+        consumeToken(b, HS_RIGHT_BRACE);
+        return true;
     }
 
 }
