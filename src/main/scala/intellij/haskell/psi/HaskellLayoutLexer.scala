@@ -79,6 +79,7 @@ class HaskellLayoutLexer(private val lexer: Lexer,
     var currentColumn = 0
 
     @tailrec
+    @inline
     def doIt(line: Line): Unit = {
       val token = Token(Option(lexer.getTokenType), lexer.getTokenStart, lexer.getTokenEnd, currentColumn, line)
       tokens += token
@@ -90,13 +91,16 @@ class HaskellLayoutLexer(private val lexer: Lexer,
       currentColumn += token.end - token.start
 
       if (!token.isEOF) {
-        if (token.elementType.contains(endOfLine)) {
+        val nextLine = if (token.elementType.contains(endOfLine)) {
           currentColumn = 0
+          Line()
+        } else {
+          line
         }
 
         lexer.advance()
 
-        doIt(Line())
+        doIt(nextLine)
       }
     }
 

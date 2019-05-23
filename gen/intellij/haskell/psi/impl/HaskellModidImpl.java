@@ -67,4 +67,9 @@ public class HaskellModidImpl extends HaskellNamedStubBasedPsiElementBase<Haskel
         return HaskellPsiImplUtil.getPresentation(this);
     }
 
+    @Override
+    public String toString() {
+        return HaskellPsiImplUtil.toString(this);
+    }
+
 }
