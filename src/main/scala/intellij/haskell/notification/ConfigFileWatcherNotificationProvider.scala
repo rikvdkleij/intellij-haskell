@@ -4,10 +4,7 @@ import java.util
 import java.util.concurrent.ConcurrentHashMap
 
 import com.intellij.openapi.fileEditor.FileEditor
-import com.intellij.openapi.progress.ProgressIndicator
-import com.intellij.openapi.progress.util.ReadTask.Continuation
-import com.intellij.openapi.progress.util.{ProgressIndicatorUtils, ReadTask}
-import com.intellij.openapi.project.{DumbService, Project}
+import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Key
 import com.intellij.openapi.vfs.newvfs.BulkFileListener
 import com.intellij.openapi.vfs.newvfs.events.{VFileContentChangeEvent, VFileEvent}
@@ -63,30 +60,10 @@ private class ConfigFileWatcher(project: Project, notifications: EditorNotificat
 
   override def after(events: util.List[_ <: VFileEvent]): Unit = {
     if (!StackProjectManager.isInitializing(project)) {
-      val readTask = new ReadTask {
-
-        override def runBackgroundProcess(indicator: ProgressIndicator): Continuation = {
-          DumbService.getInstance(project).runReadActionInSmartMode(() => {
-            performInReadAction(indicator)
-          })
-        }
-
-        override def computeInReadAction(indicator: ProgressIndicator): Unit = {
-          if (!project.isDisposed) {
-            indicator.checkCanceled()
-            if (events.asScala.exists(e => e.isInstanceOf[VFileContentChangeEvent] && !e.isFromRefresh && watchFiles.exists(_.getAbsolutePath == HaskellFileUtil.getAbsolutePath(e.getFile)))) {
-              ConfigFileWatcherNotificationProvider.showNotificationsByProject.put(project, true)
-              notifications.updateAllNotifications()
-            }
-          }
-        }
-
-        override def onCanceled(indicator: ProgressIndicator): Unit = {
-          ProgressIndicatorUtils.scheduleWithWriteActionPriority(this)
-        }
+      if (events.asScala.exists(e => e.isInstanceOf[VFileContentChangeEvent] && !e.isFromRefresh && watchFiles.exists(_.getAbsolutePath == HaskellFileUtil.getAbsolutePath(e.getFile)))) {
+        ConfigFileWatcherNotificationProvider.showNotificationsByProject.put(project, true)
+        notifications.updateAllNotifications()
       }
-
-      ProgressIndicatorUtils.scheduleWithWriteActionPriority(readTask)
     }
   }
 }
