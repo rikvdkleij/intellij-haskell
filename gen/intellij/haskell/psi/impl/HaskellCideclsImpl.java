@@ -50,6 +50,12 @@ public class HaskellCideclsImpl extends HaskellCompositeElementImpl implements H
 
     @Override
     @NotNull
+    public List<HaskellLetAbstraction> getLetAbstractionList() {
+        return PsiTreeUtil.getChildrenOfTypeAsList(this, HaskellLetAbstraction.class);
+    }
+
+    @Override
+    @NotNull
     public List<HaskellNewtypeDeclaration> getNewtypeDeclarationList() {
         return PsiTreeUtil.getChildrenOfTypeAsList(this, HaskellNewtypeDeclaration.class);
     }

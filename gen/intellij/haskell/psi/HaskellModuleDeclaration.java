@@ -18,6 +18,9 @@ public interface HaskellModuleDeclaration extends HaskellDeclarationElement {
     @Nullable
     HaskellPragma getPragma();
 
+    @NotNull
+    HaskellWhereClause getWhereClause();
+
     String getName();
 
     ItemPresentation getPresentation();

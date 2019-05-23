@@ -191,6 +191,10 @@ public class HaskellVisitor extends PsiElementVisitor {
         visitCompositeElement(o);
     }
 
+    public void visitLetAbstraction(@NotNull HaskellLetAbstraction o) {
+        visitCompositeElement(o);
+    }
+
     public void visitListType(@NotNull HaskellListType o) {
         visitCompositeElement(o);
     }
@@ -355,6 +359,10 @@ public class HaskellVisitor extends PsiElementVisitor {
 
     public void visitVarsym(@NotNull HaskellVarsym o) {
         visitNamedElement(o);
+    }
+
+    public void visitWhereClause(@NotNull HaskellWhereClause o) {
+        visitCompositeElement(o);
     }
 
     public void visitCNameElement(@NotNull HaskellCNameElement o) {

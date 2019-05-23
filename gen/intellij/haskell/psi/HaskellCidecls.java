@@ -20,6 +20,9 @@ public interface HaskellCidecls extends HaskellCompositeElement {
     List<HaskellInstanceDeclaration> getInstanceDeclarationList();
 
     @NotNull
+    List<HaskellLetAbstraction> getLetAbstractionList();
+
+    @NotNull
     List<HaskellNewtypeDeclaration> getNewtypeDeclarationList();
 
     @NotNull

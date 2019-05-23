@@ -11,6 +11,9 @@ public interface HaskellExpression extends HaskellExpressionElement {
     List<HaskellDotDot> getDotDotList();
 
     @NotNull
+    List<HaskellLetAbstraction> getLetAbstractionList();
+
+    @NotNull
     List<HaskellPragma> getPragmaList();
 
     @NotNull

@@ -36,17 +36,18 @@ class HaskellLayoutLexer(private val lexer: Lexer,
     override def toString = s"${elementType.toString} ($start, $end)"
 
     val isEOF: Boolean = elementType.isEmpty
-    val isCode: Boolean = elementType.exists(et => !nonCodeTokens.contains(et)) && !isEOF
+    def isCode: Boolean = elementType.exists(et => !nonCodeTokens.contains(et)) && !isEOF
 
-    val isNextLayoutLine: Boolean = isCode && line.columnWhereCodeStarts.contains(column)
+    def isNextLayoutLine: Boolean = isCode && line.columnWhereCodeStarts.contains(column)
   }
 
-  private val tokens = new ArrayBuffer[Token](40)
+  private val tokens = new ArrayBuffer[Token](100)
   private var currentTokenIndex = 0
 
   private def currentToken = tokens.lift(currentTokenIndex)
 
   def start(buffer: CharSequence, startOffset: Int, endOffset: Int, initialState: Int) {
+    if (tokens.nonEmpty) return
     require(startOffset == 0, "does not support incremental lexing: startOffset must be 0")
     require(initialState == 0, "does not support incremental lexing: initialState must be 0")
 
@@ -79,24 +80,28 @@ class HaskellLayoutLexer(private val lexer: Lexer,
     var currentColumn = 0
 
     @tailrec
+    @inline
     def doIt(line: Line): Unit = {
       val token = Token(Option(lexer.getTokenType), lexer.getTokenStart, lexer.getTokenEnd, currentColumn, line)
+      tokens += token
+
+      if (line.columnWhereCodeStarts.isEmpty && token.isCode) {
+        line.columnWhereCodeStarts = Some(currentColumn)
+      }
+
+      currentColumn += token.end - token.start
+
       if (!token.isEOF) {
-        tokens += token
-
-        if (line.columnWhereCodeStarts.isEmpty && token.isCode) {
-          line.columnWhereCodeStarts = Some(currentColumn)
-        }
-
-        if (token.elementType.contains(endOfLine)) {
+        val nextLine = if (token.elementType.contains(endOfLine)) {
           currentColumn = 0
+          Line()
         } else {
-          currentColumn += token.end - token.start
+          line
         }
 
         lexer.advance()
 
-        doIt(Line())
+        doIt(nextLine)
       }
     }
 
@@ -116,7 +121,6 @@ class HaskellLayoutLexer(private val lexer: Lexer,
     */
   private case object Normal extends State
 
-
   private def doLayout() {
     slurpTokens()
 
@@ -126,12 +130,13 @@ class HaskellLayoutLexer(private val lexer: Lexer,
     val indentStack = new IndentStack()
     indentStack.push(-1) // top-level is an implicit section
 
-    for (token <- tokens) {
+    while (i < tokens.size) {
+      val token = tokens(i)
 
       state match {
         case WaitingForLayout =>
           if (token.isCode && token.column > indentStack.peek()) {
-            tokens.insert(i, virtualToken(layoutStart, tokens(if (i <= 0) 0 else i - 1)))
+            tokens.insert(i, virtualToken(layoutStart, tokens(i)))
             i += 1
             indentStack.push(token.column)
             if (!token.elementType.exists(layoutCreatingTokens.contains)) {
@@ -201,7 +206,8 @@ class HaskellLayoutLexer(private val lexer: Lexer,
     def doIt(iA: Int, mutI: Int): Int = {
       if (!indentStack.empty()) {
         if (token.column == indentStack.peek()) {
-          tokens.insert(iA, virtualToken(layoutSeparator, precedingToken))
+          tokens.insert(
+            iA, virtualToken(layoutSeparator, precedingToken))
           mutI + 1
         } else if (token.column < indentStack.peek()) {
           tokens.insert(iA, virtualToken(layoutEnd, precedingToken))
