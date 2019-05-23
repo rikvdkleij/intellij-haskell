@@ -4044,15 +4044,16 @@ public class HaskellParser implements PsiParser, LightPsiParser {
     public static boolean let_abstraction(PsiBuilder b, int l) {
         if (!recursion_guard_(b, l, "let_abstraction")) return false;
         if (!nextTokenIs(b, HS_LET)) return false;
-        boolean r;
-        Marker m = enter_section_(b);
-        r = consumeTokens(b, 0, HS_LET, HS_LEFT_BRACE);
-        r = r && let_abstraction_2(b, l + 1);
-        r = r && let_abstraction_3(b, l + 1);
-        r = r && consumeToken(b, HS_IN);
-        r = r && expression(b, l + 1);
-        exit_section_(b, m, HS_LET_ABSTRACTION, r);
-        return r;
+        boolean r, p;
+        Marker m = enter_section_(b, l, _NONE_, HS_LET_ABSTRACTION, null);
+        r = consumeTokens(b, 1, HS_LET, HS_LEFT_BRACE);
+        p = r; // pin = 1
+        r = r && report_error_(b, let_abstraction_2(b, l + 1));
+        r = p && report_error_(b, let_abstraction_3(b, l + 1)) && r;
+        r = p && report_error_(b, consumeToken(b, HS_IN)) && r;
+        r = p && expression(b, l + 1) && r;
+        exit_section_(b, l, m, r, p, null);
+        return r || p;
     }
 
     // let_definitions*
@@ -4074,15 +4075,22 @@ public class HaskellParser implements PsiParser, LightPsiParser {
     }
 
     /* ********************************************************** */
-    // expression SEMICOLON
+    // expression SEMICOLON?
     static boolean let_definitions(PsiBuilder b, int l) {
         if (!recursion_guard_(b, l, "let_definitions")) return false;
         boolean r;
         Marker m = enter_section_(b);
         r = expression(b, l + 1);
-        r = r && consumeToken(b, HS_SEMICOLON);
+        r = r && let_definitions_1(b, l + 1);
         exit_section_(b, m, null, r);
         return r;
+    }
+
+    // SEMICOLON?
+    private static boolean let_definitions_1(PsiBuilder b, int l) {
+        if (!recursion_guard_(b, l, "let_definitions_1")) return false;
+        consumeToken(b, HS_SEMICOLON);
+        return true;
     }
 
     /* ********************************************************** */
@@ -4183,37 +4191,14 @@ public class HaskellParser implements PsiParser, LightPsiParser {
     }
 
     /* ********************************************************** */
-    // module_declaration onl body | onl body
+    // module_declaration
     public static boolean module_body(PsiBuilder b, int l) {
         if (!recursion_guard_(b, l, "module_body")) return false;
-        boolean r;
-        Marker m = enter_section_(b, l, _NONE_, HS_MODULE_BODY, "<module body>");
-        r = module_body_0(b, l + 1);
-        if (!r) r = module_body_1(b, l + 1);
-        exit_section_(b, l, m, r, false, null);
-        return r;
-    }
-
-    // module_declaration onl body
-    private static boolean module_body_0(PsiBuilder b, int l) {
-        if (!recursion_guard_(b, l, "module_body_0")) return false;
+        if (!nextTokenIs(b, HS_MODULE)) return false;
         boolean r;
         Marker m = enter_section_(b);
         r = module_declaration(b, l + 1);
-        r = r && onl(b, l + 1);
-        r = r && body(b, l + 1);
-        exit_section_(b, m, null, r);
-        return r;
-    }
-
-    // onl body
-    private static boolean module_body_1(PsiBuilder b, int l) {
-        if (!recursion_guard_(b, l, "module_body_1")) return false;
-        boolean r;
-        Marker m = enter_section_(b);
-        r = onl(b, l + 1);
-        r = r && body(b, l + 1);
-        exit_section_(b, m, null, r);
+        exit_section_(b, m, HS_MODULE_BODY, r);
         return r;
     }
 
@@ -6531,7 +6516,7 @@ public class HaskellParser implements PsiParser, LightPsiParser {
     }
 
     /* ********************************************************** */
-    // WHERE LEFT_BRACE top_declarations RIGHT_BRACE?
+    // WHERE LEFT_BRACE body RIGHT_BRACE?
     public static boolean where_clause(PsiBuilder b, int l) {
         if (!recursion_guard_(b, l, "where_clause")) return false;
         if (!nextTokenIs(b, HS_WHERE)) return false;
@@ -6539,7 +6524,7 @@ public class HaskellParser implements PsiParser, LightPsiParser {
         Marker m = enter_section_(b, l, _NONE_, HS_WHERE_CLAUSE, null);
         r = consumeTokens(b, 1, HS_WHERE, HS_LEFT_BRACE);
         p = r; // pin = 1
-        r = r && report_error_(b, top_declarations(b, l + 1));
+        r = r && report_error_(b, body(b, l + 1));
         r = p && where_clause_3(b, l + 1) && r;
         exit_section_(b, l, m, r, p, null);
         return r || p;

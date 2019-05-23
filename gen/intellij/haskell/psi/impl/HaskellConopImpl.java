@@ -38,9 +38,9 @@ public class HaskellConopImpl extends HaskellCNameElementImpl implements Haskell
     return PsiTreeUtil.getChildOfType(this, HaskellConsym.class);
   }
 
-    @Override
-    public String getName() {
-        return HaskellPsiImplUtil.getName(this);
-    }
+  @Override
+  public String getName() {
+    return HaskellPsiImplUtil.getName(this);
+  }
 
 }

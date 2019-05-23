@@ -4,11 +4,10 @@ package intellij.haskell.psi.impl;
 import com.intellij.lang.ASTNode;
 import com.intellij.psi.PsiElementVisitor;
 import com.intellij.psi.util.PsiTreeUtil;
-import intellij.haskell.psi.*;
+import intellij.haskell.psi.HaskellModuleBody;
+import intellij.haskell.psi.HaskellModuleDeclaration;
+import intellij.haskell.psi.HaskellVisitor;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
-
-import java.util.List;
 
 public class HaskellModuleBodyImpl extends HaskellCompositeElementImpl implements HaskellModuleBody {
 
@@ -27,26 +26,8 @@ public class HaskellModuleBodyImpl extends HaskellCompositeElementImpl implement
 
     @Override
     @NotNull
-    public HaskellImportDeclarations getImportDeclarations() {
-        return notNullChild(PsiTreeUtil.getChildOfType(this, HaskellImportDeclarations.class));
-    }
-
-    @Override
-    @Nullable
     public HaskellModuleDeclaration getModuleDeclaration() {
-        return PsiTreeUtil.getChildOfType(this, HaskellModuleDeclaration.class);
-    }
-
-    @Override
-    @Nullable
-    public HaskellTopDeclaration getTopDeclaration() {
-        return PsiTreeUtil.getChildOfType(this, HaskellTopDeclaration.class);
-    }
-
-    @Override
-    @NotNull
-    public List<HaskellTopDeclarationLine> getTopDeclarationLineList() {
-        return PsiTreeUtil.getChildrenOfTypeAsList(this, HaskellTopDeclarationLine.class);
+        return notNullChild(PsiTreeUtil.getChildOfType(this, HaskellModuleDeclaration.class));
     }
 
 }

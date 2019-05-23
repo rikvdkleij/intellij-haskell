@@ -6,10 +6,14 @@ class HaskellParsingTest extends ParsingTestCase("", "hs", new HaskellParserDefi
   override def getTestDataPath: String = "src/test/testData/parsing-hs"
 
   def testPragma(): Unit = {
-    doTest(true)
+    doTest(true, true)
   }
 
   def testComplicatedPragma(): Unit = {
-    doTest(true)
+    doTest(true, true)
+  }
+
+  def testSimpleLayout(): Unit = {
+    doTest(true, true)
   }
 }

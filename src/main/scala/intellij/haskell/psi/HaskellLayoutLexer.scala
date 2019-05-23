@@ -47,6 +47,7 @@ class HaskellLayoutLexer(private val lexer: Lexer,
   private def currentToken = tokens.lift(currentTokenIndex)
 
   def start(buffer: CharSequence, startOffset: Int, endOffset: Int, initialState: Int) {
+    if (tokens.nonEmpty) return
     require(startOffset == 0, "does not support incremental lexing: startOffset must be 0")
     require(initialState == 0, "does not support incremental lexing: initialState must be 0")
 
@@ -129,12 +130,13 @@ class HaskellLayoutLexer(private val lexer: Lexer,
     val indentStack = new IndentStack()
     indentStack.push(-1) // top-level is an implicit section
 
-    for (token <- tokens) {
+    while (i < tokens.size) {
+      val token = tokens(i)
 
       state match {
         case WaitingForLayout =>
           if (token.isCode && token.column > indentStack.peek()) {
-            tokens.insert(i, virtualToken(layoutStart, tokens(if (i <= 0) 0 else i - 1)))
+            tokens.insert(i, virtualToken(layoutStart, tokens(i)))
             i += 1
             indentStack.push(token.column)
             if (!token.elementType.exists(layoutCreatingTokens.contains)) {
