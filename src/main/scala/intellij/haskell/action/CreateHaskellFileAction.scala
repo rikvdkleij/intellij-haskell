@@ -125,7 +125,7 @@ class CreateHaskellFileAction extends CreateFileFromTemplateAction(CreateHaskell
         // Patch props with custom property.
         val props = FileTemplateManager.getInstance(project).getDefaultProperties()
         props.setProperty("NAME", nameWithmodulePrefix)
-        props.putAll(additionalProps)
+        additionalProps.forEach((k, v) => props.put(k, v)) // putAll does not work because of scalac bug
 
         val element = FileTemplateUtil.createFromTemplate(template, name, props, dir)
         val psiFile = element.getContainingFile.getOriginalFile
