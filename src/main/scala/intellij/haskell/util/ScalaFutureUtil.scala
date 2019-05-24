@@ -25,7 +25,7 @@ object ScalaFutureUtil {
       new WaitFor(timeout.toMillis.toInt, 1) {
         override def condition(): Boolean = {
           ProgressManager.checkCanceled()
-          future.isCompleted
+          future.isCompleted || project.isDisposed
         }
       }
       Option(Await.result(future, 1.milli))
