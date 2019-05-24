@@ -180,9 +180,9 @@ object HaskellFileUtil {
     val psiManager = PsiManager.getInstance(project)
 
     val actionMessage = s"Converting ${virtualFile.getName} to psi file"
-    ApplicationUtil.runReadAction(findCachedPsiFile(psiManager, virtualFile)) match {
-      case Some(pf) => Right(pf)
-      case None => ApplicationUtil.runInReadActionWithWriteActionPriority(project, findPsiFile(psiManager, virtualFile), readActionDescription = actionMessage) match {
+    ApplicationUtil.runInReadActionWithWriteActionPriority(project, findCachedPsiFile(psiManager, virtualFile), readActionDescription = actionMessage) match {
+      case Right(Some(pf)) => Right(pf)
+      case _ => ApplicationUtil.runInReadActionWithWriteActionPriority(project, findPsiFile(psiManager, virtualFile), readActionDescription = actionMessage) match {
         case Right(Some(pf)) => Right(pf)
         case Right(None) => Left(NoInfoAvailable(virtualFile.getName, "-"))
         case Left(noInfo) => Left(noInfo)
