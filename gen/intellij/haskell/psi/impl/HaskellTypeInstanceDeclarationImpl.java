@@ -24,7 +24,7 @@ public class HaskellTypeInstanceDeclarationImpl extends HaskellCompositeElementI
   }
 
   public void accept(@NotNull PsiElementVisitor visitor) {
-    if (visitor instanceof HaskellVisitor) accept((HaskellVisitor)visitor);
+    if (visitor instanceof HaskellVisitor) accept((HaskellVisitor) visitor);
     else super.accept(visitor);
   }
 

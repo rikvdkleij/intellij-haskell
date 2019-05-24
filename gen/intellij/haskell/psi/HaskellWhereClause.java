@@ -12,7 +12,7 @@ public interface HaskellWhereClause extends HaskellCompositeElement {
     HaskellImportDeclarations getImportDeclarations();
 
     @Nullable
-  HaskellTopDeclaration getTopDeclaration();
+    HaskellTopDeclaration getTopDeclaration();
 
   @NotNull
   List<HaskellTopDeclarationLine> getTopDeclarationLineList();

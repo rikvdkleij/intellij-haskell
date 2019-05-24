@@ -36,7 +36,7 @@ class HaskellLayoutLexer(private val lexer: Lexer,
     override def toString = s"${elementType.toString} ($start, $end)"
 
     val isEOF: Boolean = elementType.isEmpty
-    def isCode: Boolean = elementType.exists(et => !nonCodeTokens.contains(et)) && !isEOF
+    val isCode: Boolean = elementType.exists(et => !nonCodeTokens.contains(et)) && !isEOF
 
     def isNextLayoutLine: Boolean = isCode && line.columnWhereCodeStarts.contains(column)
   }
@@ -47,7 +47,6 @@ class HaskellLayoutLexer(private val lexer: Lexer,
   private def currentToken = tokens.lift(currentTokenIndex)
 
   def start(buffer: CharSequence, startOffset: Int, endOffset: Int, initialState: Int) {
-    if (tokens.nonEmpty) return
     require(startOffset == 0, "does not support incremental lexing: startOffset must be 0")
     require(initialState == 0, "does not support incremental lexing: initialState must be 0")
 

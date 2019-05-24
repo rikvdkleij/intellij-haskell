@@ -36,7 +36,13 @@ public class HaskellCideclsImpl extends HaskellCompositeElementImpl implements H
         return PsiTreeUtil.getChildrenOfTypeAsList(this, HaskellDefaultDeclaration.class);
     }
 
-    @Override
+  @Override
+  @NotNull
+  public List<HaskellDoNotation> getDoNotationList() {
+    return PsiTreeUtil.getChildrenOfTypeAsList(this, HaskellDoNotation.class);
+  }
+
+  @Override
     @NotNull
     public List<HaskellDotDot> getDotDotList() {
         return PsiTreeUtil.getChildrenOfTypeAsList(this, HaskellDotDot.class);

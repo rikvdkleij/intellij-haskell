@@ -24,7 +24,13 @@ public class HaskellExpressionImpl extends HaskellExpressionElementImpl implemen
         else super.accept(visitor);
     }
 
-    @Override
+  @Override
+  @NotNull
+  public List<HaskellDoNotation> getDoNotationList() {
+    return PsiTreeUtil.getChildrenOfTypeAsList(this, HaskellDoNotation.class);
+  }
+
+  @Override
     @NotNull
     public List<HaskellDotDot> getDotDotList() {
         return PsiTreeUtil.getChildrenOfTypeAsList(this, HaskellDotDot.class);

@@ -16,7 +16,10 @@ public interface HaskellCdecls extends HaskellCompositeElement {
     @NotNull
     List<HaskellDefaultDeclaration> getDefaultDeclarationList();
 
-    @NotNull
+  @NotNull
+  List<HaskellDoNotation> getDoNotationList();
+
+  @NotNull
     List<HaskellDotDot> getDotDotList();
 
     @NotNull

@@ -91,7 +91,11 @@ public class HaskellVisitor extends PsiElementVisitor {
         visitDeclarationElement(o);
     }
 
-    public void visitDotDot(@NotNull HaskellDotDot o) {
+  public void visitDoNotation(@NotNull HaskellDoNotation o) {
+    visitCompositeElement(o);
+  }
+
+  public void visitDotDot(@NotNull HaskellDotDot o) {
         visitCompositeElement(o);
     }
 
@@ -194,6 +198,10 @@ public class HaskellVisitor extends PsiElementVisitor {
     public void visitLetAbstraction(@NotNull HaskellLetAbstraction o) {
         visitCompositeElement(o);
     }
+
+  public void visitLetLayout(@NotNull HaskellLetLayout o) {
+    visitCompositeElement(o);
+  }
 
     public void visitListType(@NotNull HaskellListType o) {
         visitCompositeElement(o);

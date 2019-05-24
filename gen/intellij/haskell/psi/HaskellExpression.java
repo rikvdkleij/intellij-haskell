@@ -7,7 +7,10 @@ import java.util.List;
 
 public interface HaskellExpression extends HaskellExpressionElement {
 
-    @NotNull
+  @NotNull
+  List<HaskellDoNotation> getDoNotationList();
+
+  @NotNull
     List<HaskellDotDot> getDotDotList();
 
     @NotNull

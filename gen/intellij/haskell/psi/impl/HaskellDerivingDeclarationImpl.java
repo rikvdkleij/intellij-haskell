@@ -22,7 +22,7 @@ public class HaskellDerivingDeclarationImpl extends HaskellCompositeElementImpl 
   }
 
   public void accept(@NotNull PsiElementVisitor visitor) {
-    if (visitor instanceof HaskellVisitor) accept((HaskellVisitor)visitor);
+    if (visitor instanceof HaskellVisitor) accept((HaskellVisitor) visitor);
     else super.accept(visitor);
   }
 

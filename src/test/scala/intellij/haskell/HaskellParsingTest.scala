@@ -16,4 +16,8 @@ class HaskellParsingTest extends ParsingTestCase("", "hs", new HaskellParserDefi
   def testSimpleLayout(): Unit = {
     doTest(true, true)
   }
+
+  def testDoLayout(): Unit = {
+    doTest(true, true)
+  }
 }

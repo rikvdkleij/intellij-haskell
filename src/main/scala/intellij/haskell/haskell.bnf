@@ -249,17 +249,20 @@ private cidecl              ::= pragma | instance_declaration | default_declarat
                                   newtype_declaration | data_declaration | type_declaration | type_family_declaration | line_expression
 
 expression                  ::= line_expression (nls line_expression)*
-private line_expression     ::= (general_id | let_abstraction)+
+private line_expression     ::= (general_id | let_abstraction | do_notation)+
 
 private general_id          ::= QUASIQUOTE | q_name | symbol_reserved_op | reserved_id | LEFT_PAREN | RIGHT_PAREN | FLOAT |
                                   SEMICOLON | LEFT_BRACKET | RIGHT_BRACKET | literal | LEFT_BRACE | RIGHT_BRACE |
                                   COMMA | QUOTE | BACKQUOTE | fixity |
                                   pragma | DIRECTIVE | DOUBLE_QUOTES
-let_abstraction             ::= LET LEFT_BRACE let_definitions* RIGHT_BRACE? IN expression {pin=1}
+let_abstraction             ::= let_layout IN expression {pin=1}
+let_layout                  ::= LET LEFT_BRACE let_definition* RIGHT_BRACE? {pin=1}
+do_notation                 ::= DO LEFT_BRACE do_clause* RIGHT_BRACE? {pin=1}
 
-private let_definitions     ::= expression SEMICOLON?
+private let_definition      ::= expression SEMICOLON?
+private do_clause           ::= (let_layout | expression) SEMICOLON?
 
 dot_dot                     ::= DOT DOT
 private symbol_reserved_op  ::= dot_dot | COLON_COLON | EQUAL | BACKSLASH | VERTICAL_BAR | LEFT_ARROW | RIGHT_ARROW | AT | TILDE | DOUBLE_RIGHT_ARROW
 
-reserved_id                 ::= CASE | CLASS | DATA | DEFAULT | DERIVING | DO | ELSE | IF | IMPORT | INSTANCE | MODULE | NEWTYPE | OF | THEN | TYPE | WHERE | UNDERSCORE
+reserved_id                 ::= CASE | CLASS | DATA | DEFAULT | DERIVING | ELSE | IF | IMPORT | INSTANCE | MODULE | NEWTYPE | OF | THEN | TYPE | WHERE | UNDERSCORE
