@@ -1,15 +1,13 @@
 // This is a generated file. Not intended for manual editing.
 package intellij.haskell.psi.impl;
 
-import java.util.List;
-import org.jetbrains.annotations.*;
 import com.intellij.lang.ASTNode;
-import com.intellij.psi.PsiElement;
+import com.intellij.navigation.ItemPresentation;
 import com.intellij.psi.PsiElementVisitor;
 import com.intellij.psi.util.PsiTreeUtil;
-import static intellij.haskell.psi.HaskellTypes.*;
 import intellij.haskell.psi.*;
-import com.intellij.navigation.ItemPresentation;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 import scala.Option;
 import scala.collection.Seq;
 
@@ -46,20 +44,24 @@ public class HaskellDerivingDeclarationImpl extends HaskellCompositeElementImpl 
     return PsiTreeUtil.getChildOfType(this, HaskellScontext.class);
   }
 
-  public String getName() {
-    return HaskellPsiImplUtil.getName(this);
-  }
+    @Override
+    public String getName() {
+        return HaskellPsiImplUtil.getName(this);
+    }
 
-  public ItemPresentation getPresentation() {
-    return HaskellPsiImplUtil.getPresentation(this);
-  }
+    @Override
+    public ItemPresentation getPresentation() {
+        return HaskellPsiImplUtil.getPresentation(this);
+    }
 
-  public Seq<HaskellNamedElement> getIdentifierElements() {
-    return HaskellPsiImplUtil.getIdentifierElements(this);
-  }
+    @Override
+    public Seq<HaskellNamedElement> getIdentifierElements() {
+        return HaskellPsiImplUtil.getIdentifierElements(this);
+    }
 
-  public Option<String> getModuleName() {
-    return HaskellPsiImplUtil.getModuleName(this);
-  }
+    @Override
+    public Option<String> getModuleName() {
+        return HaskellPsiImplUtil.getModuleName(this);
+    }
 
 }

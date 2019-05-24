@@ -192,7 +192,7 @@ ttype2                      ::= ("forall" | FORALL)? onl ttype (onl DOUBLE_RIGHT
 
 ttype                       ::= "!"? (btype (oonls RIGHT_ARROW oonls ttype)* | list_type q_name* | LEFT_PAREN RIGHT_ARROW RIGHT_PAREN)
 
-private btype               ::= (atype | TILDE)+     // generalization because left recursive is not supported
+private btype               ::= (atype | TILDE | UNDERSCORE)+     // generalization because left recursive is not supported and UNDERSCORE because of partial type signatures
 
 simpletype                  ::= ttype | (q_name | LEFT_PAREN RIGHT_PAREN)+ |
                                   q_name* oonls LEFT_PAREN q_name RIGHT_PAREN oonls q_name* |

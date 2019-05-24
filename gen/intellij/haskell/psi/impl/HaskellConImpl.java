@@ -1,14 +1,15 @@
 // This is a generated file. Not intended for manual editing.
 package intellij.haskell.psi.impl;
 
-import java.util.List;
-import org.jetbrains.annotations.*;
 import com.intellij.lang.ASTNode;
-import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiElementVisitor;
 import com.intellij.psi.util.PsiTreeUtil;
-import static intellij.haskell.psi.HaskellTypes.*;
-import intellij.haskell.psi.*;
+import intellij.haskell.psi.HaskellCon;
+import intellij.haskell.psi.HaskellConid;
+import intellij.haskell.psi.HaskellConsym;
+import intellij.haskell.psi.HaskellVisitor;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 public class HaskellConImpl extends HaskellCNameElementImpl implements HaskellCon {
 
@@ -37,8 +38,9 @@ public class HaskellConImpl extends HaskellCNameElementImpl implements HaskellCo
     return PsiTreeUtil.getChildOfType(this, HaskellConsym.class);
   }
 
-  public String getName() {
-    return HaskellPsiImplUtil.getName(this);
-  }
+    @Override
+    public String getName() {
+        return HaskellPsiImplUtil.getName(this);
+    }
 
 }

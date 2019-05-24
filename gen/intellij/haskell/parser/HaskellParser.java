@@ -7,6 +7,7 @@ import com.intellij.lang.PsiBuilder;
 import com.intellij.lang.PsiBuilder.Marker;
 import com.intellij.lang.PsiParser;
 import com.intellij.psi.tree.IElementType;
+import com.intellij.psi.tree.IFileElementType;
 
 import static intellij.haskell.psi.HaskellParserUtil.*;
 import static intellij.haskell.psi.HaskellTypes.*;
@@ -23,180 +24,10 @@ public class HaskellParser implements PsiParser, LightPsiParser {
         boolean r;
         b = adapt_builder_(t, b, this, null);
         Marker m = enter_section_(b, 0, _COLLAPSE_, null);
-        if (t == HS_CCONTEXT) {
-            r = ccontext(b, 0);
-        } else if (t == HS_CDECL_DATA_DECLARATION) {
-            r = cdecl_data_declaration(b, 0);
-        } else if (t == HS_CDECLS) {
-            r = cdecls(b, 0);
-        } else if (t == HS_CIDECLS) {
-            r = cidecls(b, 0);
-        } else if (t == HS_CLASS_DECLARATION) {
-            r = class_declaration(b, 0);
-        } else if (t == HS_CLAZZ) {
-            r = clazz(b, 0);
-        } else if (t == HS_CNAME) {
-            r = cname(b, 0);
-        } else if (t == HS_CNAME_DOT_DOT) {
-            r = cname_dot_dot(b, 0);
-        } else if (t == HS_COMMENTS) {
-            r = comments(b, 0);
-        } else if (t == HS_CON) {
-            r = con(b, 0);
-        } else if (t == HS_CONID) {
-            r = conid(b, 0);
-        } else if (t == HS_CONOP) {
-            r = conop(b, 0);
-        } else if (t == HS_CONSTR) {
-            r = constr(b, 0);
-        } else if (t == HS_CONSTR_1) {
-            r = constr1(b, 0);
-        } else if (t == HS_CONSTR_2) {
-            r = constr2(b, 0);
-        } else if (t == HS_CONSTR_3) {
-            r = constr3(b, 0);
-        } else if (t == HS_CONSYM) {
-            r = consym(b, 0);
-        } else if (t == HS_DATA_DECLARATION) {
-            r = data_declaration(b, 0);
-        } else if (t == HS_DATA_DECLARATION_DERIVING) {
-            r = data_declaration_deriving(b, 0);
-        } else if (t == HS_DEFAULT_DECLARATION) {
-            r = default_declaration(b, 0);
-        } else if (t == HS_DERIVING_DECLARATION) {
-            r = deriving_declaration(b, 0);
-        } else if (t == HS_DOT_DOT) {
-            r = dot_dot(b, 0);
-        } else if (t == HS_EXPORT) {
-            r = export(b, 0);
-        } else if (t == HS_EXPORTS) {
-            r = exports(b, 0);
-        } else if (t == HS_EXPRESSION) {
-            r = expression(b, 0);
-        } else if (t == HS_FIELDDECL) {
-            r = fielddecl(b, 0);
-        } else if (t == HS_FILE_HEADER) {
-            r = file_header(b, 0);
-        } else if (t == HS_FIXITY_DECLARATION) {
-            r = fixity_declaration(b, 0);
-        } else if (t == HS_FOREIGN_DECLARATION) {
-            r = foreign_declaration(b, 0);
-        } else if (t == HS_GENERAL_PRAGMA_CONTENT) {
-            r = general_pragma_content(b, 0);
-        } else if (t == HS_GTYCON) {
-            r = gtycon(b, 0);
-        } else if (t == HS_IMPORT_DECLARATION) {
-            r = import_declaration(b, 0);
-        } else if (t == HS_IMPORT_DECLARATIONS) {
-            r = import_declarations(b, 0);
-        } else if (t == HS_IMPORT_EMPTY_SPEC) {
-            r = import_empty_spec(b, 0);
-        } else if (t == HS_IMPORT_HIDING) {
-            r = import_hiding(b, 0);
-        } else if (t == HS_IMPORT_HIDING_SPEC) {
-            r = import_hiding_spec(b, 0);
-        } else if (t == HS_IMPORT_ID) {
-            r = import_id(b, 0);
-        } else if (t == HS_IMPORT_IDS_SPEC) {
-            r = import_ids_spec(b, 0);
-        } else if (t == HS_IMPORT_PACKAGE_NAME) {
-            r = import_package_name(b, 0);
-        } else if (t == HS_IMPORT_QUALIFIED) {
-            r = import_qualified(b, 0);
-        } else if (t == HS_IMPORT_QUALIFIED_AS) {
-            r = import_qualified_as(b, 0);
-        } else if (t == HS_IMPORT_SPEC) {
-            r = import_spec(b, 0);
-        } else if (t == HS_INST) {
-            r = inst(b, 0);
-        } else if (t == HS_INSTANCE_DECLARATION) {
-            r = instance_declaration(b, 0);
-        } else if (t == HS_INSTVAR) {
-            r = instvar(b, 0);
-        } else if (t == HS_KIND_SIGNATURE) {
-            r = kind_signature(b, 0);
-        } else if (t == HS_LIST_TYPE) {
-            r = list_type(b, 0);
-        } else if (t == HS_MODID) {
-            r = modid(b, 0);
-        } else if (t == HS_MODULE_BODY) {
-            r = module_body(b, 0);
-        } else if (t == HS_MODULE_DECLARATION) {
-            r = module_declaration(b, 0);
-        } else if (t == HS_NEWCONSTR) {
-            r = newconstr(b, 0);
-        } else if (t == HS_NEWCONSTR_FIELDDECL) {
-            r = newconstr_fielddecl(b, 0);
-        } else if (t == HS_NEWTYPE_DECLARATION) {
-            r = newtype_declaration(b, 0);
-        } else if (t == HS_PRAGMA) {
-            r = pragma(b, 0);
-        } else if (t == HS_Q_CON) {
-            r = q_con(b, 0);
-        } else if (t == HS_Q_CON_QUALIFIER) {
-            r = q_con_qualifier(b, 0);
-        } else if (t == HS_Q_CON_QUALIFIER_1) {
-            r = q_con_qualifier1(b, 0);
-        } else if (t == HS_Q_CON_QUALIFIER_2) {
-            r = q_con_qualifier2(b, 0);
-        } else if (t == HS_Q_CON_QUALIFIER_3) {
-            r = q_con_qualifier3(b, 0);
-        } else if (t == HS_Q_CON_QUALIFIER_4) {
-            r = q_con_qualifier4(b, 0);
-        } else if (t == HS_Q_NAME) {
-            r = q_name(b, 0);
-        } else if (t == HS_Q_NAMES) {
-            r = q_names(b, 0);
-        } else if (t == HS_Q_VAR_CON) {
-            r = q_var_con(b, 0);
-        } else if (t == HS_QUALIFIER) {
-            r = qualifier(b, 0);
-        } else if (t == HS_RESERVED_ID) {
-            r = reserved_id(b, 0);
-        } else if (t == HS_SCONTEXT) {
-            r = scontext(b, 0);
-        } else if (t == HS_SHEBANG_LINE) {
-            r = shebang_line(b, 0);
-        } else if (t == HS_SIMPLECLASS) {
-            r = simpleclass(b, 0);
-        } else if (t == HS_SIMPLETYPE) {
-            r = simpletype(b, 0);
-        } else if (t == HS_TEXT_LITERAL) {
-            r = text_literal(b, 0);
-        } else if (t == HS_TOP_DECLARATION) {
-            r = top_declaration(b, 0);
-        } else if (t == HS_TOP_DECLARATION_LINE) {
-            r = top_declaration_line(b, 0);
-        } else if (t == HS_TTYPE) {
-            r = ttype(b, 0);
-        } else if (t == HS_TTYPE_1) {
-            r = ttype1(b, 0);
-        } else if (t == HS_TTYPE_2) {
-            r = ttype2(b, 0);
-        } else if (t == HS_TYPE_DECLARATION) {
-            r = type_declaration(b, 0);
-        } else if (t == HS_TYPE_EQUALITY) {
-            r = type_equality(b, 0);
-        } else if (t == HS_TYPE_FAMILY_DECLARATION) {
-            r = type_family_declaration(b, 0);
-        } else if (t == HS_TYPE_FAMILY_TYPE) {
-            r = type_family_type(b, 0);
-        } else if (t == HS_TYPE_INSTANCE_DECLARATION) {
-            r = type_instance_declaration(b, 0);
-        } else if (t == HS_TYPE_SIGNATURE) {
-            r = type_signature(b, 0);
-        } else if (t == HS_VAR) {
-            r = var(b, 0);
-        } else if (t == HS_VAR_CON) {
-            r = var_con(b, 0);
-        } else if (t == HS_VARID) {
-            r = varid(b, 0);
-        } else if (t == HS_VAROP) {
-            r = varop(b, 0);
-        } else if (t == HS_VARSYM) {
-            r = varsym(b, 0);
-        } else {
+        if (t instanceof IFileElementType) {
             r = parse_root_(t, b, 0);
+        } else {
+            r = false;
         }
         exit_section_(b, 0, m, t, r, true, TRUE_CONDITION);
     }
@@ -771,7 +602,7 @@ public class HaskellParser implements PsiParser, LightPsiParser {
     }
 
     /* ********************************************************** */
-    // (atype | TILDE)+
+    // (atype | TILDE | UNDERSCORE)+
     static boolean btype(PsiBuilder b, int l) {
         if (!recursion_guard_(b, l, "btype")) return false;
         boolean r;
@@ -786,12 +617,13 @@ public class HaskellParser implements PsiParser, LightPsiParser {
         return r;
     }
 
-    // atype | TILDE
+    // atype | TILDE | UNDERSCORE
     private static boolean btype_0(PsiBuilder b, int l) {
         if (!recursion_guard_(b, l, "btype_0")) return false;
         boolean r;
         r = atype(b, l + 1);
         if (!r) r = consumeToken(b, HS_TILDE);
+        if (!r) r = consumeToken(b, HS_UNDERSCORE);
         return r;
     }
 

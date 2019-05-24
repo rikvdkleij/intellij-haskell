@@ -44,6 +44,7 @@ public class HaskellSimpletypeImpl extends HaskellCompositeElementImpl implement
         return PsiTreeUtil.getChildrenOfTypeAsList(this, HaskellTypeSignature.class);
     }
 
+    @Override
     public Seq<HaskellNamedElement> getIdentifierElements() {
         return HaskellPsiImplUtil.getIdentifierElements(this);
     }

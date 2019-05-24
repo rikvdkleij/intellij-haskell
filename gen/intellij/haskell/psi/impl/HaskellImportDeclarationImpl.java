@@ -60,6 +60,7 @@ public class HaskellImportDeclarationImpl extends HaskellCompositeElementImpl im
         return PsiTreeUtil.getChildOfType(this, HaskellPragma.class);
     }
 
+    @Override
     public Option<String> getModuleName() {
         return HaskellPsiImplUtil.getModuleName(this);
     }
