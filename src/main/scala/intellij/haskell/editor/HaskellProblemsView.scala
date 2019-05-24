@@ -54,9 +54,9 @@ class HaskellProblemsView(project: Project, toolWindowManager: ToolWindowManager
     })
   }
 
-  // See previous clearOldMessages
   def clearOldMessages(scope: CompileScope, currentSessionId: UUID): Unit = {
-    throw new RuntimeException("Not implemented because no session id is available and need current file to clear only old messages of that file.")
+    // This method can be called. Do not know the reason. See issue #419.
+    // For now do nothing because do not know why this method is called.
   }
 
   override def addMessage(messageCategoryIndex: Int, text: Array[String], groupName: String, navigatable: Navigatable, exportTextPrefix: String, rendererTextPrefix: String, sessionId: UUID): Unit = {
@@ -119,7 +119,7 @@ class HaskellProblemsView(project: Project, toolWindowManager: ToolWindowManager
     }
   }
 
-  private def updateIcon() = {
+  private def updateIcon(): Unit = {
     UIUtil.invokeLaterIfNeeded(() => {
       if (!myProject.isDisposed) {
         val toolWindow = ToolWindowManager.getInstance(myProject).getToolWindow(ProblemsToolWindowId)
