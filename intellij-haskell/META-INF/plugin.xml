@@ -503,8 +503,8 @@
                     text="Reload GHCi with last command" description="Re-execute last command after reloading modules"/>
         </group>
 
-        <group id="HaskellToolsMenu" text="Haskell" description="Haskell Tools" icon="HaskellIcons.HaskellLogo"
-               keep-content="true" popup="true">
+        <group id="HaskellMenu" text="Haskell" description="Haskell Tools" icon="HaskellIcons.HaskellLogo"
+               keep-content="true">
             <action id="Haskell.RestartStackRepl" class="intellij.haskell.action.RestartStackReplsAction"
                     text="Update Settings and restart REPLs"
                     description="Update Module Settings and restart REPLs">
@@ -520,8 +520,8 @@
                     description="Update Haskell Tools with latest version of LTS-12">
             </action>
 
-            <separator></separator>
-            <add-to-group group-id="ToolsMenu" anchor="first"/>
+            <add-to-group group-id="MainMenu" anchor="before" relative-to-action="HelpMenu"/>
+            <separator/>
             <reference id="HaskellGhciMenu"/>
         </group>
 
