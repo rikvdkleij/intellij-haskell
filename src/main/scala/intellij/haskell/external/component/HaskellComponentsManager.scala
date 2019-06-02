@@ -131,8 +131,8 @@ object HaskellComponentsManager {
     StackReplsManager.getReplsManager(project).map(_.moduleCabalInfos.map { case (_, ci) => ci }).getOrElse(Iterable())
   }
 
-  def loadHaskellFile(psiFile: PsiFile): Option[CompilationResult] = {
-    LoadComponent.load(psiFile)
+  def loadHaskellFile(psiFile: PsiFile, fileChanged: Boolean): Option[CompilationResult] = {
+    LoadComponent.load(psiFile, fileChanged)
   }
 
   def invalidateFileInfos(psiFile: PsiFile): Unit = {
@@ -147,8 +147,8 @@ object HaskellComponentsManager {
     findStackComponentInfos(project).map(info => (info.module, info.packageName)).distinct
   }
 
-  def invalidateOtherFilesLocations(currentFile: PsiFile, name: String): Unit = {
-    DefinitionLocationComponent.invalidateOtherFiles(currentFile, name)
+  def invalidateDefinitionLocations(psiFile: PsiFile): Unit = {
+    DefinitionLocationComponent.invalidate(psiFile)
   }
 
   def findLibraryPackageInfos(project: Project): Seq[PackageInfo] = {

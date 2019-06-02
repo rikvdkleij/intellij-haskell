@@ -70,12 +70,6 @@ private[component] object DefinitionLocationComponent {
     Cache.asMap().find { case (k, _) => k.psiFile == psiFile && k.qualifiedNameElement == qualifiedNameElement }.flatMap(_._2.toOption)
   }
 
-  def invalidateOtherFiles(currentFile: PsiFile, name: String): Unit = {
-    val synchronousCache = Cache
-    val keys = synchronousCache.asMap().filter { case (k, v) => k.qualifiedNameElement.getIdentifierElement.getName == name && k.psiFile != currentFile }.keys
-    keys.foreach(synchronousCache.invalidate)
-  }
-
   def invalidateAll(project: Project): Unit = {
     val synchronousCache = Cache
     synchronousCache.asMap().filter(_._1.psiFile.getProject == project).keys.foreach(synchronousCache.invalidate)
@@ -109,7 +103,9 @@ private[component] object DefinitionLocationComponent {
   }
 
   private def checkValidName(key: Key, definitionLocation: DefinitionLocation): Boolean = {
-    ApplicationUtil.runReadAction(Option(key.qualifiedNameElement.getIdentifierElement.getName)).contains(ApplicationUtil.runReadAction(definitionLocation.namedElement.getName))
+    val keyName = ApplicationUtil.runReadAction(Option(key.qualifiedNameElement.getIdentifierElement.getName))
+    keyName == ApplicationUtil.runReadAction(Option(definitionLocation.namedElement.getName)) &&
+      keyName.contains(definitionLocation.originalName)
   }
 
   private def findDefinitionLocationResult(key: Key): DefinitionLocationResult = {

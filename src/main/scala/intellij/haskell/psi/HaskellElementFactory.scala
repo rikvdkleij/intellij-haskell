@@ -18,60 +18,55 @@ package intellij.haskell.psi
 
 import java.util
 
-import com.intellij.application.options.CodeStyle
 import com.intellij.openapi.project.Project
-import com.intellij.psi.impl.PsiFileFactoryImpl
 import com.intellij.psi.impl.source.tree.LeafPsiElement
-import com.intellij.psi.tree.IElementType
 import com.intellij.psi.util.PsiTreeUtil
-import com.intellij.psi.{PsiElement, PsiFileFactory, PsiManager, PsiWhiteSpace}
+import com.intellij.psi.{PsiElement, PsiFileFactory, PsiWhiteSpace}
 import intellij.haskell.psi.HaskellTypes._
-import intellij.haskell.{HaskellFile, HaskellFileType, HaskellLanguage}
+import intellij.haskell.{HaskellFile, HaskellLanguage}
 
 import scala.collection.JavaConverters._
 
 object HaskellElementFactory {
 
   def createUnderscore(project: Project): Option[PsiElement] = {
-    createElementFromText(project, "_", HS_RESERVED_ID)
+    createElement(project, "_", classOf[HaskellReservedId])
   }
 
   def createVarid(project: Project, name: String): Option[HaskellVarid] = {
-    createElementFromText(project, name, HS_VARID).map(_.asInstanceOf[HaskellVarid]).filter(_.getChildren.length == 0)
+    createElement(project, name, classOf[HaskellVarid])
   }
 
   def createConid(project: Project, name: String): Option[HaskellConid] = {
-    createElementFromText(project, name, HS_CONID).map(_.asInstanceOf[HaskellConid]).filter(_.getChildren.length == 0)
+    createElement(project, name, classOf[HaskellConid])
   }
 
   def createVarsym(project: Project, name: String): Option[HaskellVarsym] = {
-    createElementFromText(project, name, HS_VARSYM).map(_.asInstanceOf[HaskellVarsym])
+    createElement(project, name, classOf[HaskellVarsym])
   }
 
   def createConsym(project: Project, name: String): Option[HaskellConsym] = {
-    createElementFromText(project, name, HS_CONSYM).map(_.asInstanceOf[HaskellConsym]).filter(_.getChildren.length == 0)
+    createElement(project, name, classOf[HaskellConsym])
   }
 
   def createImportId(project: Project, identifier: String): Option[HaskellImportId] = {
-    createElementFromText(project, surroundWithParensIfSymbol(project, identifier), HS_IMPORT_ID).map(_.asInstanceOf[HaskellImportId])
+    createElement(project, surroundWithParensIfSymbol(project, identifier), classOf[HaskellImportId])
   }
 
-  def createQualifiedNameElement(project: Project, name: String): HaskellQualifiedNameElement = {
-    val haskellFile = createFileFromText(project, name)
-    PsiTreeUtil.findChildOfType(haskellFile, classOf[HaskellQualifiedNameElement])
+  def createQualifiedNameElement(project: Project, name: String): Option[HaskellQualifiedNameElement] = {
+    createElement(project, name, classOf[HaskellQualifiedNameElement])
   }
 
   def createBody(project: Project, body: String): Option[HaskellModuleBody] = {
-    createElementFromText(project, body, HS_MODULE_BODY).map(_.asInstanceOf[HaskellModuleBody])
+    createElement(project, body, classOf[HaskellModuleBody])
   }
 
   def createTopDeclarationLine(project: Project, declaration: String): Option[HaskellTopDeclarationLine] = {
-    createElementFromText(project, declaration, HS_TOP_DECLARATION_LINE).map(_.asInstanceOf[HaskellTopDeclarationLine])
+    createElement(project, declaration, classOf[HaskellTopDeclarationLine])
   }
 
-  def createLanguagePragma(project: Project, languagePragma: String): HaskellPragma = {
-    val haskellFile = createFileFromText(project, languagePragma)
-    PsiTreeUtil.findChildOfType(haskellFile, classOf[HaskellPragma])
+  def createLanguagePragma(project: Project, languagePragma: String): Option[HaskellPragma] = {
+    createElement(project, languagePragma, classOf[HaskellPragma])
   }
 
   def createLeafPsiElements(project: Project, code: String): util.Collection[LeafPsiElement] = {
@@ -87,9 +82,8 @@ object HaskellElementFactory {
     createLeafPsiElements(project, "add = (1 + 2)").asScala.find(_.getNode.getElementType == HS_RIGHT_PAREN)
   }
 
-  def createWhiteSpace(project: Project, space: String = " "): PsiWhiteSpace = {
-    val haskellFile = createFileFromText(project, space)
-    PsiTreeUtil.findChildOfType(haskellFile, classOf[PsiWhiteSpace])
+  def createWhiteSpace(project: Project, space: String = " "): Option[PsiWhiteSpace] = {
+    createElement(project, space, classOf[PsiWhiteSpace])
   }
 
   def createComma(project: Project): PsiElement = {
@@ -97,34 +91,28 @@ object HaskellElementFactory {
     haskellFile.getLastChild
   }
 
-  def createTab(project: Project): PsiWhiteSpace = {
-    val tabSize = CodeStyle.getSettings(project).getTabSize(HaskellFileType.Instance)
-    createWhiteSpace(project, " " * tabSize)
-  }
-
   def createNewLine(project: Project): PsiElement = {
     createFileFromText(project, "\n").getFirstChild
   }
 
   def createQualifier(project: Project, qualifier: String): Option[HaskellQualifier] = {
-    createElementFromText(project, qualifier, HS_QUALIFIER).map(_.asInstanceOf[HaskellQualifier])
+    createElement(project, "test = " + qualifier + ".bla", classOf[HaskellQualifier])
   }
 
   def createQConQualifier(project: Project, qConQualifier: String): Option[HaskellQConQualifier] = {
-    createElementFromText(project, qConQualifier, HS_Q_CON_QUALIFIER).map(_.asInstanceOf[HaskellQConQualifier])
+    createElement(project, qConQualifier, classOf[HaskellQConQualifier])
   }
 
   def createModid(project: Project, moduleName: String): Option[HaskellModid] = {
-    val haskellModuleDeclaration = createElementFromText(project, s"module $moduleName where", HS_MODULE_DECLARATION)
-    haskellModuleDeclaration.map(_.asInstanceOf[HaskellModuleDeclaration]).map(_.getModid)
+    val haskellModuleDeclaration = createElement(project, s"module $moduleName where", classOf[HaskellModuleDeclaration])
+    haskellModuleDeclaration.map(_.getModid)
   }
 
   def createImportDeclaration(project: Project, moduleName: String, identifier: String): Option[HaskellImportDeclaration] = {
-    val haskellImportDeclaration = createElementFromText(project, s"import $moduleName (${surroundWithParensIfSymbol(project, identifier)})", HS_IMPORT_DECLARATION)
-    haskellImportDeclaration.map(_.asInstanceOf[HaskellImportDeclaration])
+    createElement(project, s"import $moduleName (${surroundWithParensIfSymbol(project, identifier)})", classOf[HaskellImportDeclaration])
   }
 
-  private def surroundWithParensIfSymbol(project: Project, identifier: String) = {
+  private def surroundWithParensIfSymbol(project: Project, identifier: String): String = {
     if (createVarid(project, identifier).isDefined || createConid(project, identifier).isDefined) {
       identifier
     } else {
@@ -133,15 +121,15 @@ object HaskellElementFactory {
   }
 
   def createImportDeclaration(project: Project, importDecl: String): Option[HaskellImportDeclaration] = {
-    val haskellImportDeclaration = createElementFromText(project, s"$importDecl \n", HS_IMPORT_DECLARATION)
-    haskellImportDeclaration.map(_.asInstanceOf[HaskellImportDeclaration])
+    createElement(project, s"$importDecl \n", classOf[HaskellImportDeclaration])
+  }
+
+  private def createElement[C <: PsiElement](project: Project, newName: String, namedElementClass: Class[C]): Option[C] = {
+    val file = createFileFromText(project, newName)
+    Option(PsiTreeUtil.findChildOfType(file, namedElementClass))
   }
 
   private def createFileFromText(project: Project, text: String): HaskellFile = {
     PsiFileFactory.getInstance(project).createFileFromText("a.hs", HaskellLanguage.Instance, text).asInstanceOf[HaskellFile]
-  }
-
-  def createElementFromText(project: Project, text: String, elementType: IElementType): Option[PsiElement] = {
-    Option(new PsiFileFactoryImpl(PsiManager.getInstance(project)).createElementFromText(text, HaskellLanguage.Instance, elementType, null)).filter(_.isValid)
   }
 }

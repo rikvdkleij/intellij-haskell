@@ -34,6 +34,7 @@ import intellij.haskell.external.repl.StackRepl.LibType
 import intellij.haskell.external.repl.StackReplsManager
 import intellij.haskell.util.{ApplicationUtil, HaskellFileUtil, HaskellProjectUtil}
 
+import scala.annotation.tailrec
 import scala.collection.JavaConverters._
 import scala.collection.concurrent
 
@@ -77,6 +78,7 @@ object ProjectLibraryFileWatcher {
 
       ProgressManager.getInstance().run(new Task.Backgroundable(project, "Building project", false, PerformInBackgroundOption.ALWAYS_BACKGROUND) {
 
+        @tailrec
         def run(progressIndicator: ProgressIndicator) {
           val buildMessage = s"Building project"
           HaskellNotificationGroup.logInfoEvent(project, buildMessage)

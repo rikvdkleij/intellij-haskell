@@ -25,7 +25,6 @@ import com.intellij.refactoring.listeners.RefactoringElementListener
 import com.intellij.refactoring.rename.RenamePsiElementProcessor
 import intellij.haskell.external.component.{HaskellComponentsManager, ProjectLibraryFileWatcher}
 import intellij.haskell.external.repl.StackRepl.LibType
-import intellij.haskell.psi.HaskellPsiUtil
 import intellij.haskell.util.{HaskellFileUtil, HaskellProjectUtil, ScalaUtil}
 
 class HaskellRenameVariableProcessor extends RenamePsiElementProcessor {
@@ -33,19 +32,15 @@ class HaskellRenameVariableProcessor extends RenamePsiElementProcessor {
   // Target element is element of the definition
   // Invalidate cache is necessary because during (inline) renaming the id of psi element is changed
   override def prepareRenaming(targetElement: PsiElement, newName: String, allRenames: util.Map[PsiElement, String]): Unit = {
-    val oldName = HaskellPsiUtil.findNamedElement(targetElement).map(_.getName)
-    oldName match {
-      case Some(n) =>
-        val project = targetElement.getProject
-        for {
-          f <- getCurrentFile(project)
-          _ = HaskellComponentsManager.invalidateOtherFilesLocations(f, n)
-          tf <- Option(targetElement.getContainingFile).map(_.getOriginalFile)
-          tInfo <- if (tf != f) HaskellComponentsManager.findStackComponentInfo(tf) else None
-          _ = if (tInfo.stanzaType == LibType) ProjectLibraryFileWatcher.addBuild(project, Set(tInfo)) else ()
-        } yield ()
-      case None => ()
-    }
+    val project = targetElement.getProject
+    for {
+      cf <- getCurrentFile(project)
+      () = HaskellComponentsManager.invalidateDefinitionLocations(cf)
+      tf <- Option(targetElement.getContainingFile).map(_.getOriginalFile)
+      targetInfo <- HaskellComponentsManager.findStackComponentInfo(tf)
+      currentInfo <- HaskellComponentsManager.findStackComponentInfo(cf)
+    } yield if (targetInfo != currentInfo && targetInfo.stanzaType == LibType)
+      ProjectLibraryFileWatcher.addBuild(project, Set(targetInfo)) else ()
   }
 
   override def canProcessElement(psiElement: PsiElement): Boolean = {
@@ -63,16 +58,10 @@ class HaskellRenameVariableProcessor extends RenamePsiElementProcessor {
     }
   }
 
-  override def getPostRenameCallback(element: PsiElement, newName: String, elementListener: RefactoringElementListener): Runnable = {
+  override def getPostRenameCallback(targetElement: PsiElement, newName: String, elementListener: RefactoringElementListener): Runnable = {
     ScalaUtil.runnable {
-      val project = element.getProject
-
+      val project = targetElement.getProject
       HaskellFileUtil.saveAllFiles(project)
-
-      getCurrentFile(project).foreach { f =>
-        val componentInfo = HaskellComponentsManager.findStackComponentInfo(f)
-        componentInfo.foreach(ci => ProjectLibraryFileWatcher.checkLibraryBuild(project, ci))
-      }
     }
   }
 

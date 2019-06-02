@@ -66,22 +66,12 @@ class HaskellAnnotator extends ExternalAnnotator[PsiFile, CompilationResult] {
     }
   }
 
-  // Workaround in case annotator is triggered but file is not changed.
-  // In this case the result of REPL load is always empty.
-  private var prevResult: Option[(PsiFile, CompilationResult)] = None
-
   override def doAnnotate(psiFile: PsiFile): CompilationResult = {
     HaskellFileUtil.findVirtualFile(psiFile) match {
       case Some(virtualFile) =>
         val fileChanged = FileDocumentManager.getInstance().isFileModified(virtualFile)
-        prevResult match {
-          case Some((pf, r)) if !fileChanged && psiFile == pf => r
-          case _ =>
-            HaskellFileUtil.saveFileInDispatchThread(psiFile.getProject, virtualFile)
-            val result = HaskellComponentsManager.loadHaskellFile(psiFile).orNull
-            prevResult = Some((psiFile, result))
-            result
-        }
+        HaskellFileUtil.saveFileInDispatchThread(psiFile.getProject, virtualFile)
+        HaskellComponentsManager.loadHaskellFile(psiFile, fileChanged).orNull
       case None => CompilationResult(Iterable(), Iterable(), failed = false)
     }
   }
@@ -345,18 +335,21 @@ class LanguageExtensionIntentionAction(languageExtension: String) extends Haskel
   override def getFamilyName: String = "Add language extension"
 
   override def invoke(project: Project, editor: Editor, file: PsiFile): Unit = {
-    val languagePragmaElement = HaskellElementFactory.createLanguagePragma(project, s"{-# LANGUAGE $languageExtension #-}\n")
-    Option(PsiTreeUtil.findChildOfType(file, classOf[HaskellFileHeader])) match {
-      case Some(fh) =>
-        val lastPragmaElement = PsiTreeUtil.findChildrenOfType(fh, classOf[HaskellPragma]).asScala.lastOption.orNull
-        if (lastPragmaElement == null) {
-          val p = fh.add(languagePragmaElement)
-          fh.addAfter(HaskellElementFactory.createNewLine(project), p)
-        } else {
-          val nl = fh.addAfter(HaskellElementFactory.createNewLine(project), lastPragmaElement)
-          fh.addAfter(languagePragmaElement, nl)
+    HaskellElementFactory.createLanguagePragma(project, s"{-# LANGUAGE $languageExtension #-}\n") match {
+      case Some(languagePragmaElement) =>
+        Option(PsiTreeUtil.findChildOfType(file, classOf[HaskellFileHeader])) match {
+          case Some(fh) =>
+            PsiTreeUtil.findChildrenOfType(fh, classOf[HaskellPragma]).asScala.lastOption match {
+              case Some(lastPragmaElement) =>
+                val nl = fh.addAfter(HaskellElementFactory.createNewLine(project), lastPragmaElement)
+                fh.addAfter(languagePragmaElement, nl)
+              case None =>
+                val p = fh.add(languagePragmaElement)
+                fh.addAfter(HaskellElementFactory.createNewLine(project), p)
+            }
+          case None => () // File header should always be there
         }
-      case None => () // File header should always be there
+      case None => ()
     }
   }
 }
@@ -387,11 +380,11 @@ private object IntentionHelper {
     Option(file.findElementAt(offset)).flatMap(HaskellPsiUtil.findQualifiedName) match {
       case Some(e) =>
         if (e.getText.startsWith("`") && e.getText.endsWith("`")) {
-          e.replace(HaskellElementFactory.createQualifiedNameElement(project, s"`$newName`"))
+          HaskellElementFactory.createQualifiedNameElement(project, s"`$newName`").foreach(e.replace)
         } else if (StringUtil.isWithinParens(e.getText)) {
-          e.replace(HaskellElementFactory.createQualifiedNameElement(project, s"($newName)"))
+          HaskellElementFactory.createQualifiedNameElement(project, s"($newName)").foreach(e.replace)
         } else {
-          e.replace(HaskellElementFactory.createQualifiedNameElement(project, newName))
+          HaskellElementFactory.createQualifiedNameElement(project, newName).foreach(e.replace)
         }
       case None => ()
     }
@@ -441,7 +434,7 @@ class NotInScopeIntentionAction(identifier: String, moduleName: String, psiFile:
                     val commaElement = importIdsSpec.addAfter(HaskellElementFactory.createComma(project), importId)
                     HaskellElementFactory.createImportId(project, identifier).foreach { ii =>
                       val iiElement = importIdsSpec.addAfter(ii, commaElement)
-                      importIdsSpec.addBefore(HaskellElementFactory.createWhiteSpace(project), iiElement)
+                      HaskellElementFactory.createWhiteSpace(project).foreach(importIdsSpec.addBefore(_, iiElement))
                     }
                   })
                 case None => createImportDeclaration(importDeclarationElement, ids, project)

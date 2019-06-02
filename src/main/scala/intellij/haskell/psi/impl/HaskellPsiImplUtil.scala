@@ -101,7 +101,7 @@ object HaskellPsiImplUtil {
   def setName(modid: HaskellModid, newName: String): PsiElement = {
     if (newName.endsWith("." + HaskellFileType.Instance.getDefaultExtension)) {
       val newModid = HaskellElementFactory.createModid(modid.getProject, HaskellRenameFileProcessor.createNewModuleName(modid.getName, newName))
-      newModid.foreach(mi => modid.getNode.getTreeParent.replaceChild(modid.getNode, mi.getNode))
+      newModid.foreach(modid.replace)
       modid
     } else {
       modid
@@ -118,7 +118,7 @@ object HaskellPsiImplUtil {
 
   def setName(varid: HaskellVarid, newName: String): PsiElement = {
     val newVarid = HaskellElementFactory.createVarid(varid.getProject, newName)
-    newVarid.foreach(vid => varid.getNode.getTreeParent.replaceChild(varid.getNode, vid.getNode))
+    newVarid.foreach(varid.replace)
     varid
   }
 
@@ -131,16 +131,9 @@ object HaskellPsiImplUtil {
   }
 
   def setName(varsym: HaskellVarsym, newName: String): PsiElement = {
-    if (varsym.getNode.getChildren(null).length == 1) {
-      val newVarsym = HaskellElementFactory.createVarsym(varsym.getProject, newName)
-      newVarsym.foreach(vs => varsym.getNode.getTreeParent.replaceChild(varsym.getNode, vs.getNode))
-      varsym
-    } else {
-      HaskellElementFactory.createVarsym(varsym.getProject, newName).foreach { newVarsym =>
-        varsym.getNode.replaceAllChildrenToChildrenOf(newVarsym.getNode)
-      }
-      varsym
-    }
+    val newVarsym = HaskellElementFactory.createVarsym(varsym.getProject, newName)
+    newVarsym.foreach(varsym.replace)
+    varsym
   }
 
   def getName(conid: HaskellConid): String = {
@@ -153,7 +146,7 @@ object HaskellPsiImplUtil {
 
   def setName(conid: HaskellConid, newName: String): PsiElement = {
     val newConid = HaskellElementFactory.createConid(conid.getProject, newName)
-    newConid.foreach(ci => conid.getNode.getTreeParent.replaceChild(conid.getNode, ci.getNode))
+    newConid.foreach(conid.replace)
     conid
   }
 
@@ -167,7 +160,7 @@ object HaskellPsiImplUtil {
 
   def setName(consym: HaskellConsym, newName: String): PsiElement = {
     val newConsym = HaskellElementFactory.createConsym(consym.getProject, newName)
-    newConsym.foreach(cs => consym.getNode.getTreeParent.replaceChild(consym.getNode, cs.getNode))
+    newConsym.foreach(consym.replace)
     consym
   }
 
@@ -181,7 +174,7 @@ object HaskellPsiImplUtil {
 
   def setName(qualifier: HaskellQualifier, newName: String): PsiElement = {
     val newQualifier = HaskellElementFactory.createQualifier(qualifier.getProject, removeFileExtension(newName))
-    newQualifier.foreach(q => qualifier.getNode.getTreeParent.replaceChild(qualifier.getNode, q.getNode))
+    newQualifier.foreach(qualifier.replace)
     qualifier
   }
 
@@ -195,7 +188,7 @@ object HaskellPsiImplUtil {
 
   def setName(qualifier: HaskellQualifierElement, newName: String): PsiElement = {
     val newQualifier = HaskellElementFactory.createQConQualifier(qualifier.getProject, newName)
-    newQualifier.foreach(q => qualifier.getNode.getTreeParent.replaceChild(qualifier.getNode, q.getNode))
+    newQualifier.foreach(qualifier.replace)
     qualifier
   }
 
