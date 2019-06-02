@@ -6,6 +6,7 @@ import com.intellij.lang.PsiBuilder.Marker;
 import static intellij.haskell.alex.lang.psi.AlexTypes.*;
 import static com.intellij.lang.parser.GeneratedParserUtilBase.*;
 import com.intellij.psi.tree.IElementType;
+import com.intellij.psi.tree.IFileElementType;
 import com.intellij.lang.ASTNode;
 import com.intellij.psi.tree.TokenSet;
 import com.intellij.lang.PsiParser;
@@ -23,59 +24,11 @@ public class AlexParser implements PsiParser, LightPsiParser {
     boolean result;
     builder = adapt_builder_(type, builder, this, null);
     Marker marker = enter_section_(builder, 0, _COLLAPSE_, null);
-    if (type == ALEX_DECLARATION) {
-      result = declaration(builder, 0);
-    }
-    else if (type == ALEX_DECLARATIONS_SECTION) {
-      result = declarations_section(builder, 0);
-    }
-    else if (type == ALEX_IDENTIFIER) {
-      result = identifier(builder, 0);
-    }
-    else if (type == ALEX_REGEX) {
-      result = regex(builder, 0);
-    }
-    else if (type == ALEX_REGEX_PART) {
-      result = regex_part(builder, 0);
-    }
-    else if (type == ALEX_RULE_DECLARATION) {
-      result = rule_declaration(builder, 0);
-    }
-    else if (type == ALEX_RULE_DESCRIPTION) {
-      result = rule_description(builder, 0);
-    }
-    else if (type == ALEX_RULE_ID) {
-      result = rule_id(builder, 0);
-    }
-    else if (type == ALEX_STATEFUL_TOKENS_RULE) {
-      result = stateful_tokens_rule(builder, 0);
-    }
-    else if (type == ALEX_STATELESS_TOKENS_RULE) {
-      result = stateless_tokens_rule(builder, 0);
-    }
-    else if (type == ALEX_TOKEN_SET_DECLARATION) {
-      result = token_set_declaration(builder, 0);
-    }
-    else if (type == ALEX_TOKEN_SET_ID) {
-      result = token_set_id(builder, 0);
-    }
-    else if (type == ALEX_TOKENS_RULE) {
-      result = tokens_rule(builder, 0);
-    }
-    else if (type == ALEX_TOKENS_SECTION) {
-      result = tokens_section(builder, 0);
-    }
-    else if (type == ALEX_TOP_MODULE_SECTION) {
-      result = top_module_section(builder, 0);
-    }
-    else if (type == ALEX_USER_CODE_SECTION) {
-      result = user_code_section(builder, 0);
-    }
-    else if (type == ALEX_WRAPPER_TYPE) {
-      result = wrapper_type(builder, 0);
+    if (type instanceof IFileElementType) {
+      result = parse_root_(type, builder, 0);
     }
     else {
-      result = parse_root_(type, builder, 0);
+      result = false;
     }
     exit_section_(builder, 0, marker, type, result, true, TRUE_CONDITION);
   }
