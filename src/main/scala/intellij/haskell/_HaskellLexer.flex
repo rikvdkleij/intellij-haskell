@@ -40,19 +40,20 @@ white_char          = [\ \t\f\x0B\ \x0D ] | {unispace}    // second "space" is 
 directive           = "#"{white_char}*("if"|"ifdef"|"ifndef"|"define"|"elif"|"else"|"error"|"endif"|"include"|"undef")  ("\\" (\r|\n|\r\n) | [^\r\n])*
 white_space         = {white_char}+
 
-small               = [a-z_] | [\u03B1-\u03C9] | 𝑖 | 𝕧
+underscore          = "_"
+small               = [a-z] | {underscore} | [\u03B1-\u03C9] | 𝑖 | 𝕧
 large               = [A-Z] | [\u0391-\u03A9] | ℝ | ℂ | ℕ | ℤ | ℚ
 
 digit               = [0-9] | [\u2070-\u2079] | [\u2080-\u2089]
-decimal             = [-+]?(_*{digit}+)+
+decimal             = [-+]?({underscore}*{digit}+)+
 
 hexit               = [0-9A-Fa-f]
-hexadecimal         = 0[xX](_*{hexit}+)+
+hexadecimal         = 0[xX]({underscore}*{hexit}+)+
 
 octit               = [0-7]
-octal               = 0[oO](_*{octit}+)+
+octal               = 0[oO]({underscore}*{octit}+)+
 
-float               = [-+]?((_*[0-9]+)+(\.(_*[0-9]+)+)?|\ \.(_*[0-9]+)+)([eE][-+]?[0-9]+)?
+float               = [-+]?(({underscore}*[0-9]+)+(\.({underscore}*[0-9]+)+)?|\ \.({underscore}*[0-9]+)+)([eE][-+]?[0-9]+)?
 
 gap                 = \\({white_char}|{newline})*\\
 cntrl               = {large} | [@\[\\\]\^_]
