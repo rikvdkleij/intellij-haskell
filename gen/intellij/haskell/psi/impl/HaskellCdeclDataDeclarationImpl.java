@@ -1,58 +1,58 @@
 // This is a generated file. Not intended for manual editing.
 package intellij.haskell.psi.impl;
 
+import java.util.List;
+import org.jetbrains.annotations.*;
 import com.intellij.lang.ASTNode;
+import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiElementVisitor;
 import com.intellij.psi.util.PsiTreeUtil;
+import static intellij.haskell.psi.HaskellTypes.*;
 import intellij.haskell.psi.*;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
-
-import java.util.List;
 
 public class HaskellCdeclDataDeclarationImpl extends HaskellCompositeElementImpl implements HaskellCdeclDataDeclaration {
 
-    public HaskellCdeclDataDeclarationImpl(ASTNode node) {
-        super(node);
-    }
+  public HaskellCdeclDataDeclarationImpl(ASTNode node) {
+    super(node);
+  }
 
-    public void accept(@NotNull HaskellVisitor visitor) {
-        visitor.visitCdeclDataDeclaration(this);
-    }
+  public void accept(@NotNull HaskellVisitor visitor) {
+    visitor.visitCdeclDataDeclaration(this);
+  }
 
-    public void accept(@NotNull PsiElementVisitor visitor) {
-        if (visitor instanceof HaskellVisitor) accept((HaskellVisitor) visitor);
-        else super.accept(visitor);
-    }
+  public void accept(@NotNull PsiElementVisitor visitor) {
+    if (visitor instanceof HaskellVisitor) accept((HaskellVisitor)visitor);
+    else super.accept(visitor);
+  }
 
-    @Override
-    @NotNull
-    public List<HaskellKindSignature> getKindSignatureList() {
-        return PsiTreeUtil.getChildrenOfTypeAsList(this, HaskellKindSignature.class);
-    }
+  @Override
+  @NotNull
+  public List<HaskellKindSignature> getKindSignatureList() {
+    return PsiTreeUtil.getChildrenOfTypeAsList(this, HaskellKindSignature.class);
+  }
 
-    @Override
-    @Nullable
-    public HaskellPragma getPragma() {
-        return PsiTreeUtil.getChildOfType(this, HaskellPragma.class);
-    }
+  @Override
+  @Nullable
+  public HaskellPragma getPragma() {
+    return PsiTreeUtil.getChildOfType(this, HaskellPragma.class);
+  }
 
-    @Override
-    @NotNull
-    public List<HaskellQName> getQNameList() {
-        return PsiTreeUtil.getChildrenOfTypeAsList(this, HaskellQName.class);
-    }
+  @Override
+  @NotNull
+  public List<HaskellQName> getQNameList() {
+    return PsiTreeUtil.getChildrenOfTypeAsList(this, HaskellQName.class);
+  }
 
-    @Override
-    @NotNull
-    public HaskellSimpletype getSimpletype() {
-        return notNullChild(PsiTreeUtil.getChildOfType(this, HaskellSimpletype.class));
-    }
+  @Override
+  @NotNull
+  public HaskellSimpletype getSimpletype() {
+    return notNullChild(PsiTreeUtil.getChildOfType(this, HaskellSimpletype.class));
+  }
 
-    @Override
-    @Nullable
-    public HaskellTtype getTtype() {
-        return PsiTreeUtil.getChildOfType(this, HaskellTtype.class);
-    }
+  @Override
+  @Nullable
+  public HaskellTtype getTtype() {
+    return PsiTreeUtil.getChildOfType(this, HaskellTtype.class);
+  }
 
 }
