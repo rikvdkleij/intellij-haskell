@@ -113,4 +113,5 @@ When used with `hindent`, `intellij-haskell` automatically sets `--indent-size` 
 # Development remarks
 1. After making changes to `_HaskellLexer.flex`, run `Run Flex Generator`. This will generate `_HaskellLexer.java`;
 1. After making changes to `haskell.bnf`, run `Generate Parser Code`. This will generate parser Java files in `gen` directory;
+1. Never touch the generated code. They should be committed as-is.
 1. Add `sources.zip` inside `idea`>[`idea build #`] to `Project structure`>`Project settings`>`Modules`>`Dependencies`>`unmanaged-jars` to see IntelliJ sources;
