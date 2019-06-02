@@ -51,7 +51,7 @@ private[component] object LoadComponent {
 
       ProjectLibraryFileWatcher.checkLibraryBuild(project, projectRepl.stackComponentInfo)
 
-      projectRepl.load(psiFile, fileChanged) match {
+      projectRepl.load(psiFile, fileChanged, mustBeByteCode = false) match {
         case Some((loadOutput, loadFailed)) =>
           ApplicationManager.getApplication.executeOnPooledThread(ScalaUtil.runnable {
 

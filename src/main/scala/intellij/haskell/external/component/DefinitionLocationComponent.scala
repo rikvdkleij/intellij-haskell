@@ -122,7 +122,7 @@ private[component] object DefinitionLocationComponent {
 
       findLocationByImportedIdentifiers(project, key, name) match {
         case r@Right(_) => r
-        case Left(_) => if (libraryFile) {
+        case Left(_) =>
           ProgressManager.checkCanceled()
 
           HaskellComponentsManager.findNameInfo(key.qualifiedNameElement) match {
@@ -140,9 +140,6 @@ private[component] object DefinitionLocationComponent {
             }
             case Left(noInfo) => Left(noInfo)
           }
-        } else {
-          Left(NoInfoAvailable(psiFile.getName, name))
-        }
       }
     } else {
       ProgressManager.checkCanceled()
@@ -178,9 +175,13 @@ private[component] object DefinitionLocationComponent {
 
     ProgressManager.checkCanceled()
 
-    HaskellReference.findIdentifiersByModulesAndName(project, moduleNames, name) match {
-      case Right((mn, ne)) => Right(PackageModuleLocation(mn, ne, name))
-      case Left(noInfo) => Left(noInfo)
+    if (moduleNames.contains(HaskellProjectUtil.Prelude)) {
+      Left(ModuleNotAvailable("Prelude"))
+    } else {
+      HaskellReference.findIdentifiersByModulesAndName(project, moduleNames, name) match {
+        case Right((mn, ne)) => Right(PackageModuleLocation(mn, ne, name))
+        case Left(noInfo) => Left(noInfo)
+      }
     }
   }
 
