@@ -21,6 +21,7 @@ import com.intellij.lang.ImportOptimizer
 import com.intellij.lang.annotation.HighlightSeverity
 import com.intellij.openapi.command.WriteCommandAction
 import com.intellij.psi.PsiFile
+import com.intellij.psi.TokenType.WHITE_SPACE
 import com.intellij.psi.util.PsiTreeUtil
 import intellij.haskell.HaskellFile
 import intellij.haskell.psi.HaskellPsiUtil
@@ -49,7 +50,7 @@ object HaskellImportOptimizer {
 
     warnings.foreach(_.getDescription match {
       case HaskellImportOptimizer.WarningRedundantImport(mn) => removeRedundantImport(psiFile, mn)
-      case HaskellImportOptimizer.WarningRedundant2Import(mn, idNames) => removeRedundantImportIds(psiFile, mn, idNames.split(',').map(_.trim))
+      case HaskellImportOptimizer.WarningRedundant2Import(idNames, mn) => removeRedundantImportIds(psiFile, mn, idNames.split(',').map(_.trim))
       case _ => ()
     })
     true
@@ -73,7 +74,9 @@ object HaskellImportOptimizer {
       val idsToRemove = importDeclaration.getImportSpec.getImportIdsSpec.getImportIdList.asScala.filter(iid => idNames.exists(idn => idn == iid.getCname.getName || prefix.exists(p => idn == p + "." + iid.getCname.getName)))
       idsToRemove.foreach { iid =>
         val commaToRemove = Option(PsiTreeUtil.findSiblingBackward(iid, HS_COMMA, true, null)).orElse(Option(PsiTreeUtil.findSiblingForward(iid, HS_COMMA, true, null)))
+        val whiteSpaceRemove = Option(PsiTreeUtil.findSiblingBackward(iid, WHITE_SPACE, true, null)).orElse(Option(PsiTreeUtil.findSiblingForward(iid, WHITE_SPACE, true, null)))
         WriteCommandAction.runWriteCommandAction(psiFile.getProject, ScalaUtil.computable {
+          whiteSpaceRemove.foreach(_.delete())
           commaToRemove.foreach(_.delete())
           iid.delete()
         })
