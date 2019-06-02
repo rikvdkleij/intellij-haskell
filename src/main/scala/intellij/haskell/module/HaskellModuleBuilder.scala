@@ -1,5 +1,5 @@
 /*
- * Copyright 2014-2018 Rik van der Kleij
+ * Copyright 2014-2019 Rik van der Kleij
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -106,7 +106,7 @@ class HaskellModuleBuilder extends TemplateModuleBuilder(null, HaskellModuleType
     val project = module.getProject
 
     if (isNewProjectWithoutExistingSources) {
-      val processOutput = StackCommandLine.run(project, Seq("new", project.getName, "--bare", "new-template", "-p", "author-email:Author email here", "-p", "author-name:Author name here", "-p", "category:App category here", "-p", "copyright:2018 Author name here", "-p", "github-username:Github username here"), timeoutInMillis = 60.seconds.toMillis, enableExtraArguments = false)
+      val processOutput = StackCommandLine.run(project, Seq("new", project.getName, "--bare", "new-template", "-p", "author-email:Author email here", "-p", "author-name:Author name here", "-p", "category:App category here", "-p", "copyright:2019 Author name here", "-p", "github-username:Github username here"), timeoutInMillis = 60.seconds.toMillis, enableExtraArguments = false)
       processOutput match {
         case None =>
           throw new RuntimeException("Could not create new Stack project because could not execute Stack command for creating new project on file system")
