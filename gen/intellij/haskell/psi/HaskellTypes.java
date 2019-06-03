@@ -42,7 +42,6 @@ public interface HaskellTypes {
   IElementType HS_GTYCON = new HaskellCompositeElementType("HS_GTYCON");
   IElementType HS_IMPORT_DECLARATION = new HaskellCompositeElementType("HS_IMPORT_DECLARATION");
   IElementType HS_IMPORT_DECLARATIONS = new HaskellCompositeElementType("HS_IMPORT_DECLARATIONS");
-  IElementType HS_IMPORT_EMPTY_SPEC = new HaskellCompositeElementType("HS_IMPORT_EMPTY_SPEC");
   IElementType HS_IMPORT_HIDING = new HaskellCompositeElementType("HS_IMPORT_HIDING");
   IElementType HS_IMPORT_HIDING_SPEC = new HaskellCompositeElementType("HS_IMPORT_HIDING_SPEC");
   IElementType HS_IMPORT_ID = new HaskellCompositeElementType("HS_IMPORT_ID");
@@ -271,9 +270,6 @@ public interface HaskellTypes {
       }
       else if (type == HS_IMPORT_DECLARATIONS) {
         return new HaskellImportDeclarationsImpl(node);
-      }
-      else if (type == HS_IMPORT_EMPTY_SPEC) {
-        return new HaskellImportEmptySpecImpl(node);
       }
       else if (type == HS_IMPORT_HIDING) {
         return new HaskellImportHidingImpl(node);

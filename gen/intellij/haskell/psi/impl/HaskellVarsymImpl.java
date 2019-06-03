@@ -58,4 +58,9 @@ public class HaskellVarsymImpl extends HaskellNamedStubBasedPsiElementBase<Haske
     return HaskellPsiImplUtil.getPresentation(this);
   }
 
+  @Override
+  public String toString() {
+    return HaskellPsiImplUtil.toString(this);
+  }
+
 }

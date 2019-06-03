@@ -20,7 +20,7 @@
   elementTypePrefix="HS_"
 
   methods("varid|varsym|conid|consym|modid")=[getName setName getNameIdentifier getReference getPresentation]
-  methods("varid|conid|modid")=[toString]
+  methods("varid|conid|modid|varsym")=[toString]
   extends("varid|varsym|conid|consym|modid")="intellij.haskell.psi.impl.HaskellNamedStubBasedPsiElementBase<?>"
   implements("varid|varsym|conid|consym|modid")="intellij.haskell.psi.HaskellNamedElement"
   elementTypeFactory("varid|varsym|conid|consym|modid")="intellij.haskell.psi.impl.HaskellElementTypeFactory.factory"
@@ -72,13 +72,11 @@ private top_declarations    ::= (top_declaration semi)+
 import_declaration          ::= IMPORT (onls pragma)? (onls import_qualified)? (onls import_package_name)? onls modid onls import_qualified_as? onls import_spec?    {methods=[getModuleName] pin=1}
 import_qualified            ::= "qualified"
 import_qualified_as         ::= "as" qualifier
-import_spec                 ::= import_ids_spec |
-                                  import_hiding_spec |
-                                  import_empty_spec
+import_spec                 ::= import_ids_spec | import_hiding_spec
 
-import_ids_spec             ::= LEFT_PAREN onls import_id (onls COMMA? onls import_id)* onls (COMMA)? onls RIGHT_PAREN
-import_hiding_spec          ::= import_hiding onls LEFT_PAREN onls (import_id onls (onls COMMA onls import_id)* onls (COMMA)?)? onls RIGHT_PAREN
-import_empty_spec           ::= LEFT_PAREN RIGHT_PAREN
+import_ids_spec             ::= LEFT_PAREN onls imported_ids? RIGHT_PAREN
+private imported_ids        ::= import_id (onls COMMA? onls import_id)* onls COMMA? onls
+import_hiding_spec          ::= import_hiding onls LEFT_PAREN onls (import_id onls (onls COMMA onls import_id)* onls COMMA?)? onls RIGHT_PAREN
 import_hiding               ::= "hiding"
 import_id                   ::= TYPE? (cname LEFT_PAREN onls (cname_dot_dot onls (COMMA onls cname_dot_dot onls)* onls)? RIGHT_PAREN | cname)
 import_package_name         ::= text_literal

@@ -140,10 +140,6 @@ public class HaskellVisitor extends PsiElementVisitor {
     visitCompositeElement(o);
   }
 
-  public void visitImportEmptySpec(@NotNull HaskellImportEmptySpec o) {
-    visitCompositeElement(o);
-  }
-
   public void visitImportHiding(@NotNull HaskellImportHiding o) {
     visitCompositeElement(o);
   }

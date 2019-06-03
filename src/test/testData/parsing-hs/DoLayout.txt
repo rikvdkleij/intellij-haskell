@@ -58,7 +58,7 @@ Haskell file
             PsiWhiteSpace(' ')
             HS_Q_NAME
               HS_VAR_CON
-                intellij.haskell.psi.impl.HaskellVarsymImpl@4f167f00
+                HaskellVarsym(HS_VARSYM)
                   PsiElement(HaskellTokenType.VARSYM_ID)('$')
             PsiWhiteSpace(' ')
             HS_Q_NAME
@@ -68,7 +68,7 @@ Haskell file
             PsiWhiteSpace(' ')
             HS_Q_NAME
               HS_VAR_CON
-                intellij.haskell.psi.impl.HaskellVarsymImpl@1a41584d
+                HaskellVarsym(HS_VARSYM)
                   PsiElement(HaskellTokenType.VARSYM_ID)('+')
             PsiWhiteSpace(' ')
             HS_Q_NAME

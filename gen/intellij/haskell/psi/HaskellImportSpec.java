@@ -8,9 +8,6 @@ import com.intellij.psi.PsiElement;
 public interface HaskellImportSpec extends HaskellCompositeElement {
 
   @Nullable
-  HaskellImportEmptySpec getImportEmptySpec();
-
-  @Nullable
   HaskellImportHidingSpec getImportHidingSpec();
 
   @Nullable

@@ -41,6 +41,10 @@ object HaskellPsiImplUtil {
     s"HaskellVarid(${varid.getElementType})"
   }
 
+  def toString(varid: HaskellVarsym): String = {
+    s"HaskellVarsym(${varid.getElementType})"
+  }
+
   def toString(varid: HaskellConid): String = {
     s"HaskellVarid(${varid.getElementType})"
   }
