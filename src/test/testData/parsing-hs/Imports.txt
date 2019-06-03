@@ -1,0 +1,73 @@
+Haskell file
+  HS_MODULE_BODY
+    HS_IMPORT_DECLARATIONS
+      HS_IMPORT_DECLARATION
+        PsiElement(HaskellTokenType.IMPORT)('import')
+        PsiWhiteSpace(' ')
+        HaskellVarid(HS_MODID)
+          HaskellVarid(HS_CONID)
+            PsiElement(HaskellTokenType.CON_ID)('A')
+          PsiElement(HaskellTokenType.DOT)('.')
+          HaskellVarid(HS_CONID)
+            PsiElement(HaskellTokenType.CON_ID)('B')
+      PsiWhiteSpace('\n')
+      HS_IMPORT_DECLARATION
+        PsiElement(HaskellTokenType.IMPORT)('import')
+        PsiWhiteSpace(' ')
+        HaskellVarid(HS_MODID)
+          HaskellVarid(HS_CONID)
+            PsiElement(HaskellTokenType.CON_ID)('A')
+          PsiElement(HaskellTokenType.DOT)('.')
+          HaskellVarid(HS_CONID)
+            PsiElement(HaskellTokenType.CON_ID)('B')
+        PsiWhiteSpace(' ')
+        HS_IMPORT_QUALIFIED_AS
+          PsiElement(HaskellTokenType.VAR_ID)('as')
+          PsiWhiteSpace(' ')
+          HS_QUALIFIER
+            HaskellVarid(HS_CONID)
+              PsiElement(HaskellTokenType.CON_ID)('C')
+      PsiWhiteSpace('\n')
+      HS_IMPORT_DECLARATION
+        PsiElement(HaskellTokenType.IMPORT)('import')
+        PsiWhiteSpace(' ')
+        HaskellVarid(HS_MODID)
+          HaskellVarid(HS_CONID)
+            PsiElement(HaskellTokenType.CON_ID)('A')
+          PsiElement(HaskellTokenType.DOT)('.')
+          HaskellVarid(HS_CONID)
+            PsiElement(HaskellTokenType.CON_ID)('B')
+        PsiWhiteSpace(' ')
+        HS_IMPORT_SPEC
+          HS_IMPORT_IDS_SPEC
+            PsiElement(HaskellTokenType.LEFT_PAREN)('(')
+            HS_IMPORT_ID
+              HS_CNAME
+                HS_VAR
+                  PsiElement(HaskellTokenType.LEFT_PAREN)('(')
+                  HaskellVarsym(HS_VARSYM)
+                    PsiElement(HaskellTokenType.VARSYM_ID)('$')
+                  PsiElement(HaskellTokenType.RIGHT_PAREN)(')')
+            PsiElement(HaskellTokenType.COMMA)(',')
+            PsiWhiteSpace(' ')
+            HS_IMPORT_ID
+              HS_CNAME
+                HS_VAR
+                  HaskellVarid(HS_VARID)
+                    PsiElement(HaskellTokenType.VAR_ID)('b')
+            PsiElement(HaskellTokenType.RIGHT_PAREN)(')')
+      PsiWhiteSpace('\n')
+      HS_IMPORT_DECLARATION
+        PsiElement(HaskellTokenType.IMPORT)('import')
+        PsiWhiteSpace(' ')
+        HaskellVarid(HS_MODID)
+          HaskellVarid(HS_CONID)
+            PsiElement(HaskellTokenType.CON_ID)('A')
+          PsiElement(HaskellTokenType.DOT)('.')
+          HaskellVarid(HS_CONID)
+            PsiElement(HaskellTokenType.CON_ID)('B')
+        PsiWhiteSpace(' ')
+        HS_IMPORT_SPEC
+          HS_IMPORT_IDS_SPEC
+            PsiElement(HaskellTokenType.LEFT_PAREN)('(')
+            PsiElement(HaskellTokenType.RIGHT_PAREN)(')')
