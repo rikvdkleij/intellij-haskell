@@ -250,7 +250,7 @@ private cdecl               ::= type_signature | cdecl_data_declaration | cidecl
 private cidecl              ::= pragma | instance_declaration | default_declaration |
                                   newtype_declaration | data_declaration | type_declaration | type_family_declaration | implementation_declaration
 
-expression                  ::= let_abstraction | do_notation_expression | if_expression | application_expression | atom
+expression                  ::= let_abstraction | do_notation_expression | if_expression | application_expression | case_of_expression | atom
 paren_expression            ::= LEFT_PAREN expression RIGHT_PAREN
 bracket_expression          ::= LEFT_BRACKET expression RIGHT_BRACKET
 application_expression      ::= expression atom+
@@ -263,11 +263,14 @@ private general_id          ::= QUASIQUOTE | q_name | symbol_reserved_op | reser
 let_abstraction             ::= LET LEFT_BRACE let_definition* cdecl? RIGHT_BRACE? semi IN expression {pin=1 extends=expression}
 do_notation_expression      ::= DO LEFT_BRACE do_definition* expression? RIGHT_BRACE? {pin=1}
 if_expression               ::= IF expression THEN expression ELSE expression {pin=1}
+case_of_expression          ::= CASE expression OF LEFT_BRACE case_definition* case_clause? RIGHT_BRACE? {pin=1}
 
 private let_definition      ::= cdecl SEMICOLON
 private do_definition       ::= expression SEMICOLON
+private case_definition     ::= case_clause SEMICOLON
+case_clause                 ::= expression RIGHT_ARROW expression {pin=2}
 
 dot_dot                     ::= DOT DOT
-private symbol_reserved_op  ::= dot_dot | COLON_COLON | BACKSLASH | VERTICAL_BAR | LEFT_ARROW | RIGHT_ARROW | AT | TILDE | DOUBLE_RIGHT_ARROW
+private symbol_reserved_op  ::= dot_dot | COLON_COLON | BACKSLASH | VERTICAL_BAR | LEFT_ARROW | AT | TILDE | DOUBLE_RIGHT_ARROW
 
-reserved_id                 ::= CASE | CLASS | DATA | DEFAULT | DERIVING | IMPORT | INSTANCE | MODULE | NEWTYPE | OF | TYPE | UNDERSCORE
+reserved_id                 ::= CASE | DEFAULT | DERIVING | IMPORT | INSTANCE | NEWTYPE | TYPE | UNDERSCORE

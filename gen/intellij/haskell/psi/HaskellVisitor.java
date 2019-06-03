@@ -19,6 +19,14 @@ public class HaskellVisitor extends PsiElementVisitor {
     visitExpression(o);
   }
 
+  public void visitCaseClause(@NotNull HaskellCaseClause o) {
+    visitCompositeElement(o);
+  }
+
+  public void visitCaseOfExpression(@NotNull HaskellCaseOfExpression o) {
+    visitExpression(o);
+  }
+
   public void visitCcontext(@NotNull HaskellCcontext o) {
     visitCompositeElement(o);
   }

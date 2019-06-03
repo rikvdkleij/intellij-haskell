@@ -12,6 +12,8 @@ public interface HaskellTypes {
   IElementType HS_APPLICATION_EXPRESSION = new HaskellCompositeElementType("HS_APPLICATION_EXPRESSION");
   IElementType HS_ATOM_EXPRESSION = new HaskellCompositeElementType("HS_ATOM_EXPRESSION");
   IElementType HS_BRACKET_EXPRESSION = new HaskellCompositeElementType("HS_BRACKET_EXPRESSION");
+  IElementType HS_CASE_CLAUSE = new HaskellCompositeElementType("HS_CASE_CLAUSE");
+  IElementType HS_CASE_OF_EXPRESSION = new HaskellCompositeElementType("HS_CASE_OF_EXPRESSION");
   IElementType HS_CCONTEXT = new HaskellCompositeElementType("HS_CCONTEXT");
   IElementType HS_CDECLS = new HaskellCompositeElementType("HS_CDECLS");
   IElementType HS_CDECL_DATA_DECLARATION = new HaskellCompositeElementType("HS_CDECL_DATA_DECLARATION");
@@ -187,6 +189,12 @@ public interface HaskellTypes {
       }
       else if (type == HS_BRACKET_EXPRESSION) {
         return new HaskellBracketExpressionImpl(node);
+      }
+      else if (type == HS_CASE_CLAUSE) {
+        return new HaskellCaseClauseImpl(node);
+      }
+      else if (type == HS_CASE_OF_EXPRESSION) {
+        return new HaskellCaseOfExpressionImpl(node);
       }
       else if (type == HS_CCONTEXT) {
         return new HaskellCcontextImpl(node);

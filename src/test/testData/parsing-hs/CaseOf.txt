@@ -1,0 +1,72 @@
+Haskell file
+  HS_MODULE_BODY
+    HS_IMPLEMENTATION_DECLARATION
+      HS_APPLICATION_EXPRESSION
+        HS_ATOM_EXPRESSION
+          HS_Q_NAME
+            HS_VAR_CON
+              HaskellVarid(HS_VARID)
+                PsiElement(HaskellTokenType.VAR_ID)('ifExpr')
+        PsiWhiteSpace(' ')
+        HS_ATOM_EXPRESSION
+          HS_Q_NAME
+            HS_VAR_CON
+              HaskellVarid(HS_VARID)
+                PsiElement(HaskellTokenType.VAR_ID)('a')
+        PsiWhiteSpace(' ')
+        HS_ATOM_EXPRESSION
+          HS_Q_NAME
+            HS_VAR_CON
+              HaskellVarid(HS_VARID)
+                PsiElement(HaskellTokenType.VAR_ID)('b')
+        PsiWhiteSpace(' ')
+        HS_ATOM_EXPRESSION
+          HS_Q_NAME
+            HS_VAR_CON
+              HaskellVarid(HS_VARID)
+                PsiElement(HaskellTokenType.VAR_ID)('c')
+      PsiWhiteSpace(' ')
+      PsiElement(HaskellTokenType.EQUAL)('=')
+      PsiWhiteSpace(' ')
+      HS_CASE_OF_EXPRESSION
+        PsiElement(HaskellTokenType.CASE)('case')
+        PsiWhiteSpace(' ')
+        HS_ATOM_EXPRESSION
+          HS_Q_NAME
+            HS_VAR_CON
+              HaskellVarid(HS_VARID)
+                PsiElement(HaskellTokenType.VAR_ID)('a')
+        PsiWhiteSpace(' ')
+        PsiElement(HaskellTokenType.OF)('of')
+        PsiWhiteSpace('\n')
+        PsiWhiteSpace('  ')
+        HS_CASE_CLAUSE
+          HS_ATOM_EXPRESSION
+            HS_Q_NAME
+              HS_VAR_CON
+                HaskellVarid(HS_CONID)
+                  PsiElement(HaskellTokenType.CON_ID)('True')
+          PsiWhiteSpace(' ')
+          PsiElement(HaskellTokenType.RIGHT_ARROW)('->')
+          PsiWhiteSpace(' ')
+          HS_ATOM_EXPRESSION
+            HS_Q_NAME
+              HS_VAR_CON
+                HaskellVarid(HS_VARID)
+                  PsiElement(HaskellTokenType.VAR_ID)('b')
+        PsiWhiteSpace('\n')
+        PsiWhiteSpace('  ')
+        HS_CASE_CLAUSE
+          HS_ATOM_EXPRESSION
+            HS_Q_NAME
+              HS_VAR_CON
+                HaskellVarid(HS_CONID)
+                  PsiElement(HaskellTokenType.CON_ID)('False')
+          PsiWhiteSpace(' ')
+          PsiElement(HaskellTokenType.RIGHT_ARROW)('->')
+          PsiWhiteSpace(' ')
+          HS_ATOM_EXPRESSION
+            HS_Q_NAME
+              HS_VAR_CON
+                HaskellVarid(HS_VARID)
+                  PsiElement(HaskellTokenType.VAR_ID)('c')

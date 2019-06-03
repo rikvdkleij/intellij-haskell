@@ -60,7 +60,7 @@ class HaskellParserDefinition extends ParserDefinition {
       HaskellTypes.HS_SEMICOLON,
       HaskellTypes.HS_RIGHT_BRACE,
       TokenSet.orSet(Comments, WhiteSpaces, TokenSet.create(HS_LEFT_BRACE, HS_SEMICOLON, HS_RIGHT_BRACE)),
-      TokenSet.create(HS_WHERE, HS_LET, HS_DO),
+      TokenSet.create(HS_WHERE, HS_LET, HS_DO, HS_OF),
       LetIn(HS_LET, HS_IN)
     )
   }
