@@ -61,8 +61,8 @@ object HaskellElementFactory {
     createElement(project, body, classOf[HaskellModuleBody])
   }
 
-  def createTopDeclarationLine(project: Project, declaration: String): Option[HaskellTopDeclarationLine] = {
-    createElement(project, declaration, classOf[HaskellTopDeclarationLine])
+  def createTopDeclaration(project: Project, declaration: String): Option[HaskellTopDeclaration] = {
+    createElement(project, declaration, classOf[HaskellTopDeclaration])
   }
 
   def createLanguagePragma(project: Project, languagePragma: String): Option[HaskellPragma] = {

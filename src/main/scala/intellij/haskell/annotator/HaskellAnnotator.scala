@@ -321,9 +321,12 @@ class TypeSignatureIntentionAction(typeSignature: String) extends HaskellBaseInt
           topDeclaration <- Option(TreeUtil.findParent(e.getNode, HaskellTypes.HS_TOP_DECLARATION))
           psi <- Option(topDeclaration.getPsi)
           moduleBody <- Option(psi.getParent)
-          typeSignatureElement <- HaskellElementFactory.createTopDeclarationLine(project, typeSignature)
+          typeSignatureElement <- HaskellElementFactory.createTopDeclaration(project, typeSignature)
           typeSignature = moduleBody.addBefore(typeSignatureElement, psi)
-        } yield moduleBody.addAfter(HaskellElementFactory.createNewLine(project), typeSignature)
+        } yield {
+          moduleBody.addAfter(HaskellElementFactory.createNewLine(project), typeSignature)
+          //          moduleBody.addAfter(de)
+        }
       case None => ()
     }
   }
