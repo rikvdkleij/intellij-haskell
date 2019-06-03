@@ -38,7 +38,7 @@ public class HaskellParser implements PsiParser, LightPsiParser {
   }
 
   /* ********************************************************** */
-  // (("forall" | FORALL) ((onl q_name+ onl LEFT_PAREN onl (type_signature | ttype) onl (COMMA onl (type_signature | ttype))* onl RIGHT_PAREN)+ | (onl q_name)+) (onl DOUBLE_RIGHT_ARROW onl ttype)? |
+  // (forall_sym ((onl q_name+ onl LEFT_PAREN onl (type_signature | ttype) onl (COMMA onl (type_signature | ttype))* onl RIGHT_PAREN)+ | (onl q_name)+) (onl DOUBLE_RIGHT_ARROW onl ttype)? |
   //                                   (q_name | UNDERSCORE)* LEFT_PAREN ttype1 RIGHT_PAREN |
   //                                   (q_name | UNDERSCORE)* LEFT_BRACE ttype1 RIGHT_BRACE |
   //                                   (q_name | UNDERSCORE)* LEFT_PAREN ttype2 RIGHT_PAREN |
@@ -55,7 +55,7 @@ public class HaskellParser implements PsiParser, LightPsiParser {
     return r;
   }
 
-  // ("forall" | FORALL) ((onl q_name+ onl LEFT_PAREN onl (type_signature | ttype) onl (COMMA onl (type_signature | ttype))* onl RIGHT_PAREN)+ | (onl q_name)+) (onl DOUBLE_RIGHT_ARROW onl ttype)? |
+  // forall_sym ((onl q_name+ onl LEFT_PAREN onl (type_signature | ttype) onl (COMMA onl (type_signature | ttype))* onl RIGHT_PAREN)+ | (onl q_name)+) (onl DOUBLE_RIGHT_ARROW onl ttype)? |
   //                                   (q_name | UNDERSCORE)* LEFT_PAREN ttype1 RIGHT_PAREN |
   //                                   (q_name | UNDERSCORE)* LEFT_BRACE ttype1 RIGHT_BRACE |
   //                                   (q_name | UNDERSCORE)* LEFT_PAREN ttype2 RIGHT_PAREN |
@@ -83,25 +83,14 @@ public class HaskellParser implements PsiParser, LightPsiParser {
     return r;
   }
 
-  // ("forall" | FORALL) ((onl q_name+ onl LEFT_PAREN onl (type_signature | ttype) onl (COMMA onl (type_signature | ttype))* onl RIGHT_PAREN)+ | (onl q_name)+) (onl DOUBLE_RIGHT_ARROW onl ttype)?
+  // forall_sym ((onl q_name+ onl LEFT_PAREN onl (type_signature | ttype) onl (COMMA onl (type_signature | ttype))* onl RIGHT_PAREN)+ | (onl q_name)+) (onl DOUBLE_RIGHT_ARROW onl ttype)?
   private static boolean atype_0_0(PsiBuilder b, int l) {
     if (!recursion_guard_(b, l, "atype_0_0")) return false;
     boolean r;
     Marker m = enter_section_(b);
-    r = atype_0_0_0(b, l + 1);
+    r = forall_sym(b, l + 1);
     r = r && atype_0_0_1(b, l + 1);
     r = r && atype_0_0_2(b, l + 1);
-    exit_section_(b, m, null, r);
-    return r;
-  }
-
-  // "forall" | FORALL
-  private static boolean atype_0_0_0(PsiBuilder b, int l) {
-    if (!recursion_guard_(b, l, "atype_0_0_0")) return false;
-    boolean r;
-    Marker m = enter_section_(b);
-    r = consumeToken(b, "forall");
-    if (!r) r = consumeToken(b, HS_FORALL);
     exit_section_(b, m, null, r);
     return r;
   }
@@ -570,36 +559,23 @@ public class HaskellParser implements PsiParser, LightPsiParser {
   }
 
   /* ********************************************************** */
-  // import_declarations top_declarations  (NEWLINE | DIRECTIVE)*
+  // import_declarations? top_declarations onl
   static boolean body(PsiBuilder b, int l) {
     if (!recursion_guard_(b, l, "body")) return false;
     boolean r;
     Marker m = enter_section_(b);
-    r = import_declarations(b, l + 1);
+    r = body_0(b, l + 1);
     r = r && top_declarations(b, l + 1);
-    r = r && body_2(b, l + 1);
+    r = r && onl(b, l + 1);
     exit_section_(b, m, null, r);
     return r;
   }
 
-  // (NEWLINE | DIRECTIVE)*
-  private static boolean body_2(PsiBuilder b, int l) {
-    if (!recursion_guard_(b, l, "body_2")) return false;
-    while (true) {
-      int c = current_position_(b);
-      if (!body_2_0(b, l + 1)) break;
-      if (!empty_element_parsed_guard_(b, "body_2", c)) break;
-    }
+  // import_declarations?
+  private static boolean body_0(PsiBuilder b, int l) {
+    if (!recursion_guard_(b, l, "body_0")) return false;
+    import_declarations(b, l + 1);
     return true;
-  }
-
-  // NEWLINE | DIRECTIVE
-  private static boolean body_2_0(PsiBuilder b, int l) {
-    if (!recursion_guard_(b, l, "body_2_0")) return false;
-    boolean r;
-    r = consumeToken(b, HS_NEWLINE);
-    if (!r) r = consumeToken(b, HS_DIRECTIVE);
-    return r;
   }
 
   /* ********************************************************** */
@@ -2787,6 +2763,18 @@ public class HaskellParser implements PsiParser, LightPsiParser {
   }
 
   /* ********************************************************** */
+  // "forall" | FORALL
+  static boolean forall_sym(PsiBuilder b, int l) {
+    if (!recursion_guard_(b, l, "forall_sym")) return false;
+    boolean r;
+    Marker m = enter_section_(b);
+    r = consumeToken(b, "forall");
+    if (!r) r = consumeToken(b, HS_FORALL);
+    exit_section_(b, m, null, r);
+    return r;
+  }
+
+  /* ********************************************************** */
   // (FOREIGN_IMPORT | FOREIGN_EXPORT) onls expression
   public static boolean foreign_declaration(PsiBuilder b, int l) {
     if (!recursion_guard_(b, l, "foreign_declaration")) return false;
@@ -3022,17 +3010,19 @@ public class HaskellParser implements PsiParser, LightPsiParser {
   }
 
   /* ********************************************************** */
-  // ((import_declaration | pragma | DIRECTIVE) onl)*
+  // ((import_declaration | pragma | DIRECTIVE) onl)+
   public static boolean import_declarations(PsiBuilder b, int l) {
     if (!recursion_guard_(b, l, "import_declarations")) return false;
+    boolean r;
     Marker m = enter_section_(b, l, _NONE_, HS_IMPORT_DECLARATIONS, "<import declarations>");
-    while (true) {
+    r = import_declarations_0(b, l + 1);
+    while (r) {
       int c = current_position_(b);
       if (!import_declarations_0(b, l + 1)) break;
       if (!empty_element_parsed_guard_(b, "import_declarations", c)) break;
     }
-    exit_section_(b, l, m, true, false, null);
-    return true;
+    exit_section_(b, l, m, r, false, null);
+    return r;
   }
 
   // (import_declaration | pragma | DIRECTIVE) onl
@@ -5652,7 +5642,7 @@ public class HaskellParser implements PsiParser, LightPsiParser {
   }
 
   /* ********************************************************** */
-  // ("forall" | FORALL)? onl ttype (onl DOUBLE_RIGHT_ARROW onl ttype)? onl
+  // forall_sym? onl ttype (onl DOUBLE_RIGHT_ARROW onl ttype)? onl
   public static boolean ttype2(PsiBuilder b, int l) {
     if (!recursion_guard_(b, l, "ttype2")) return false;
     boolean r;
@@ -5666,22 +5656,11 @@ public class HaskellParser implements PsiParser, LightPsiParser {
     return r;
   }
 
-  // ("forall" | FORALL)?
+  // forall_sym?
   private static boolean ttype2_0(PsiBuilder b, int l) {
     if (!recursion_guard_(b, l, "ttype2_0")) return false;
-    ttype2_0_0(b, l + 1);
+    forall_sym(b, l + 1);
     return true;
-  }
-
-  // "forall" | FORALL
-  private static boolean ttype2_0_0(PsiBuilder b, int l) {
-    if (!recursion_guard_(b, l, "ttype2_0_0")) return false;
-    boolean r;
-    Marker m = enter_section_(b);
-    r = consumeToken(b, "forall");
-    if (!r) r = consumeToken(b, HS_FORALL);
-    exit_section_(b, m, null, r);
-    return r;
   }
 
   // (onl DOUBLE_RIGHT_ARROW onl ttype)?

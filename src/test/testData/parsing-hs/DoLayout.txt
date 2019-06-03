@@ -12,8 +12,6 @@ Haskell file
         PsiWhiteSpace('\n')
         PsiWhiteSpace('\n')
         PsiWhiteSpace(' ')
-        HS_IMPORT_DECLARATIONS
-          <empty list>
         HS_TOP_DECLARATION_LINE
           HS_TOP_DECLARATION
             HS_EXPRESSION
