@@ -71,7 +71,7 @@ When used with `hindent`, `intellij-haskell` automatically sets `--indent-size` 
   - Plugin will automatically build Intero and Haskell Tools (HLint, Hoogle, Hindent and Stylish Haskell) to prevent incompatibility issues
   - Check `Project structure`>`Project settings`>`Modules` which folders to exclude (like `.stack-work` and `dist`) and which folders are `Source` and `Test` (normally `src` and `test`);
   - Plugin will automatically download library sources. They will be added as source libraries to module(s).
-  - After changing the Cabal file and/or `stack.yaml` use `Tools`>`Haskell`>`Update Settings and Restart REPLs` to download missing library sources and update the project settings;
+  - After changing the Cabal file and/or `stack.yaml` use `Haskell`>`Haskell`>`Update Settings and Restart REPLs` to download missing library sources and update the project settings;
   - The `Event Log` will display what's going on in the background. Useful when something fails. It's disabled by default. 
     It can be enabled by checking `Haskell Log` checkbox in the `Event Log`>`Settings` or `Settings`>`Appearance & Behavior`>`Notifications`;    
 
@@ -83,7 +83,7 @@ When used with `hindent`, `intellij-haskell` automatically sets `--indent-size` 
 4. Haskell tools depends on `libgmp3-dev zlib1g-dev`. On Ubuntu you can install them with `sudo apt-get install libgmp3-dev zlib1g-dev`;
 5. Cabal's internal libraries are not (yet) supported;
 6. Cabal's common stanzas are not (yet) supported;
-7. The Haskell tools are built in a IntelliJ sandbox with LTS-13. So they have no dependency with Stackage resolvers in your projects. After Stackage LTS-13 minor updates one can use `Tools`>`Update Haskell tools`;
-8. Stack REPLs are running in the background. You can restart them by `Tools`>`Update Settings and Restart REPLs`.
+7. The Haskell tools are built in a IntelliJ sandbox with LTS-13. So they have no dependency with Stackage resolvers in your projects. After Stackage LTS-13 minor updates one can use `Haskell`>`Update Haskell tools`;
+8. Stack REPLs are running in the background. You can restart them by `Haskell`>`Update Settings and Restart REPLs`.
 
 If you want to contribute to this project, read [the contributing guideline](CONTRIBUTING.md).

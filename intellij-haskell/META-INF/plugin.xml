@@ -1,7 +1,7 @@
 <idea-plugin>
     <id>intellij.haskell</id>
     <name>IntelliJ-Haskell</name>
-    <version>1.0.0-beta46</version>
+    <version>1.0.0-beta47</version>
     <vendor email="rikvdkleij@gmail.com">Rik van der Kleij</vendor>
 
     <description><![CDATA[
@@ -13,6 +13,11 @@
     ]]></description>
 
     <change-notes><![CDATA[
+        <p>1.0.0-beta47</p>
+        <ul>
+            <li>Various improvements and fixes</li>
+            <li>Moved Haskell tools and GHCi actions to new Haskell main menu</li>
+        </ul>
         <p>1.0.0-beta46</p>
         <ul>
             <li>Various improvements and fixes</li>
