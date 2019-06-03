@@ -10,7 +10,7 @@ import com.intellij.psi.util.PsiTreeUtil;
 import static intellij.haskell.psi.HaskellTypes.*;
 import intellij.haskell.psi.*;
 
-public class HaskellLetAbstractionImpl extends HaskellCompositeElementImpl implements HaskellLetAbstraction {
+public class HaskellLetAbstractionImpl extends HaskellExpressionImpl implements HaskellLetAbstraction {
 
   public HaskellLetAbstractionImpl(ASTNode node) {
     super(node);
@@ -26,9 +26,27 @@ public class HaskellLetAbstractionImpl extends HaskellCompositeElementImpl imple
   }
 
   @Override
+  @Nullable
+  public HaskellExpression getExpression() {
+    return PsiTreeUtil.getChildOfType(this, HaskellExpression.class);
+  }
+
+  @Override
   @NotNull
-  public List<HaskellExpression> getExpressionList() {
-    return PsiTreeUtil.getChildrenOfTypeAsList(this, HaskellExpression.class);
+  public List<HaskellPragma> getPragmaList() {
+    return PsiTreeUtil.getChildrenOfTypeAsList(this, HaskellPragma.class);
+  }
+
+  @Override
+  @NotNull
+  public List<HaskellTopDeclaration> getTopDeclarationList() {
+    return PsiTreeUtil.getChildrenOfTypeAsList(this, HaskellTopDeclaration.class);
+  }
+
+  @Override
+  @NotNull
+  public List<HaskellTypeSignature> getTypeSignatureList() {
+    return PsiTreeUtil.getChildrenOfTypeAsList(this, HaskellTypeSignature.class);
   }
 
 }

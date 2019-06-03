@@ -8,7 +8,7 @@ import com.intellij.navigation.ItemPresentation;
 import scala.Option;
 import scala.collection.Seq;
 
-public interface HaskellDataDeclaration extends HaskellDataConstructorDeclarationElement {
+public interface HaskellDataDeclaration extends HaskellTopDeclaration, HaskellDataConstructorDeclarationElement {
 
   @Nullable
   HaskellCcontext getCcontext();
@@ -21,9 +21,6 @@ public interface HaskellDataDeclaration extends HaskellDataConstructorDeclaratio
 
   @NotNull
   List<HaskellKindSignature> getKindSignatureList();
-
-  @Nullable
-  HaskellPragma getPragma();
 
   @NotNull
   List<HaskellQName> getQNameList();

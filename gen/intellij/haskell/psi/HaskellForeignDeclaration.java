@@ -8,7 +8,7 @@ import com.intellij.navigation.ItemPresentation;
 import scala.Option;
 import scala.collection.Seq;
 
-public interface HaskellForeignDeclaration extends HaskellDeclarationElement {
+public interface HaskellForeignDeclaration extends HaskellTopDeclaration, HaskellDeclarationElement {
 
   @NotNull
   HaskellExpression getExpression();

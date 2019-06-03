@@ -5,7 +5,7 @@ import java.util.List;
 import org.jetbrains.annotations.*;
 import com.intellij.psi.PsiElement;
 
-public interface HaskellFixityDeclaration extends HaskellCompositeElement {
+public interface HaskellFixityDeclaration extends HaskellTopDeclaration {
 
   @NotNull
   HaskellQNames getQNames();

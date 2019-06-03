@@ -12,66 +12,80 @@ Haskell file
         PsiWhiteSpace('\n')
         PsiWhiteSpace('\n')
         PsiWhiteSpace(' ')
-        HS_TOP_DECLARATION
-          HS_EXPRESSION
+        HS_IMPLEMENTATION_DECLARATION
+          HS_ATOM_EXPRESSION
             HS_Q_NAME
               HS_VAR_CON
                 HaskellVarid(HS_VARID)
                   PsiElement(HaskellTokenType.VAR_ID)('doNotation')
-            PsiWhiteSpace(' ')
-            PsiElement(HaskellTokenType.EQUAL)('=')
-            PsiWhiteSpace(' ')
-            HS_RESERVED_ID
-              PsiElement(HaskellTokenType.DO)('do')
+          PsiWhiteSpace(' ')
+          PsiElement(HaskellTokenType.EQUAL)('=')
+          PsiWhiteSpace(' ')
+          HS_DO_NOTATION_EXPRESSION
+            PsiElement(HaskellTokenType.DO)('do')
             PsiWhiteSpace('\n')
             PsiWhiteSpace('   ')
-            HS_Q_NAME
-              HS_VAR_CON
-                HaskellVarid(HS_VARID)
-                  PsiElement(HaskellTokenType.VAR_ID)('e')
-            PsiWhiteSpace(' ')
-            PsiElement(HaskellTokenType.LEFT_ARROW)('<-')
-            PsiWhiteSpace(' ')
-            HS_Q_NAME
-              HS_VAR_CON
-                HaskellVarid(HS_VARID)
-                  PsiElement(HaskellTokenType.VAR_ID)('f')
+            HS_APPLICATION_EXPRESSION
+              HS_ATOM_EXPRESSION
+                HS_Q_NAME
+                  HS_VAR_CON
+                    HaskellVarid(HS_VARID)
+                      PsiElement(HaskellTokenType.VAR_ID)('e')
+              PsiWhiteSpace(' ')
+              HS_ATOM_EXPRESSION
+                PsiElement(HaskellTokenType.LEFT_ARROW)('<-')
+              PsiWhiteSpace(' ')
+              HS_ATOM_EXPRESSION
+                HS_Q_NAME
+                  HS_VAR_CON
+                    HaskellVarid(HS_VARID)
+                      PsiElement(HaskellTokenType.VAR_ID)('f')
             PsiWhiteSpace('\n')
             PsiWhiteSpace('   ')
-            HS_Q_NAME
-              HS_VAR_CON
-                HaskellVarid(HS_VARID)
-                  PsiElement(HaskellTokenType.VAR_ID)('a')
-            PsiWhiteSpace(' ')
-            PsiElement(HaskellTokenType.LEFT_ARROW)('<-')
-            PsiWhiteSpace(' ')
-            HS_Q_NAME
-              HS_VAR_CON
-                HaskellVarid(HS_VARID)
-                  PsiElement(HaskellTokenType.VAR_ID)('g')
+            HS_APPLICATION_EXPRESSION
+              HS_ATOM_EXPRESSION
+                HS_Q_NAME
+                  HS_VAR_CON
+                    HaskellVarid(HS_VARID)
+                      PsiElement(HaskellTokenType.VAR_ID)('a')
+              PsiWhiteSpace(' ')
+              HS_ATOM_EXPRESSION
+                PsiElement(HaskellTokenType.LEFT_ARROW)('<-')
+              PsiWhiteSpace(' ')
+              HS_ATOM_EXPRESSION
+                HS_Q_NAME
+                  HS_VAR_CON
+                    HaskellVarid(HS_VARID)
+                      PsiElement(HaskellTokenType.VAR_ID)('g')
             PsiWhiteSpace('\n')
             PsiWhiteSpace('   ')
-            HS_Q_NAME
-              HS_VAR_CON
-                HaskellVarid(HS_VARID)
-                  PsiElement(HaskellTokenType.VAR_ID)('return')
-            PsiWhiteSpace(' ')
-            HS_Q_NAME
-              HS_VAR_CON
-                HaskellVarsym(HS_VARSYM)
-                  PsiElement(HaskellTokenType.VARSYM_ID)('$')
-            PsiWhiteSpace(' ')
-            HS_Q_NAME
-              HS_VAR_CON
-                HaskellVarid(HS_VARID)
-                  PsiElement(HaskellTokenType.VAR_ID)('e')
-            PsiWhiteSpace(' ')
-            HS_Q_NAME
-              HS_VAR_CON
-                HaskellVarsym(HS_VARSYM)
-                  PsiElement(HaskellTokenType.VARSYM_ID)('+')
-            PsiWhiteSpace(' ')
-            HS_Q_NAME
-              HS_VAR_CON
-                HaskellVarid(HS_VARID)
-                  PsiElement(HaskellTokenType.VAR_ID)('a')
+            HS_APPLICATION_EXPRESSION
+              HS_ATOM_EXPRESSION
+                HS_Q_NAME
+                  HS_VAR_CON
+                    HaskellVarid(HS_VARID)
+                      PsiElement(HaskellTokenType.VAR_ID)('return')
+              PsiWhiteSpace(' ')
+              HS_ATOM_EXPRESSION
+                HS_Q_NAME
+                  HS_VAR_CON
+                    HaskellVarsym(HS_VARSYM)
+                      PsiElement(HaskellTokenType.VARSYM_ID)('$')
+              PsiWhiteSpace(' ')
+              HS_ATOM_EXPRESSION
+                HS_Q_NAME
+                  HS_VAR_CON
+                    HaskellVarid(HS_VARID)
+                      PsiElement(HaskellTokenType.VAR_ID)('e')
+              PsiWhiteSpace(' ')
+              HS_ATOM_EXPRESSION
+                HS_Q_NAME
+                  HS_VAR_CON
+                    HaskellVarsym(HS_VARSYM)
+                      PsiElement(HaskellTokenType.VARSYM_ID)('+')
+              PsiWhiteSpace(' ')
+              HS_ATOM_EXPRESSION
+                HS_Q_NAME
+                  HS_VAR_CON
+                    HaskellVarid(HS_VARID)
+                      PsiElement(HaskellTokenType.VAR_ID)('a')

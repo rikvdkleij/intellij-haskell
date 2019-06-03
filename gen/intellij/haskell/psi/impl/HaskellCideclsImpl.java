@@ -27,74 +27,14 @@ public class HaskellCideclsImpl extends HaskellCompositeElementImpl implements H
 
   @Override
   @NotNull
-  public List<HaskellDataDeclaration> getDataDeclarationList() {
-    return PsiTreeUtil.getChildrenOfTypeAsList(this, HaskellDataDeclaration.class);
-  }
-
-  @Override
-  @NotNull
-  public List<HaskellDefaultDeclaration> getDefaultDeclarationList() {
-    return PsiTreeUtil.getChildrenOfTypeAsList(this, HaskellDefaultDeclaration.class);
-  }
-
-  @Override
-  @NotNull
-  public List<HaskellDotDot> getDotDotList() {
-    return PsiTreeUtil.getChildrenOfTypeAsList(this, HaskellDotDot.class);
-  }
-
-  @Override
-  @NotNull
-  public List<HaskellInstanceDeclaration> getInstanceDeclarationList() {
-    return PsiTreeUtil.getChildrenOfTypeAsList(this, HaskellInstanceDeclaration.class);
-  }
-
-  @Override
-  @NotNull
-  public List<HaskellLetAbstraction> getLetAbstractionList() {
-    return PsiTreeUtil.getChildrenOfTypeAsList(this, HaskellLetAbstraction.class);
-  }
-
-  @Override
-  @NotNull
-  public List<HaskellNewtypeDeclaration> getNewtypeDeclarationList() {
-    return PsiTreeUtil.getChildrenOfTypeAsList(this, HaskellNewtypeDeclaration.class);
-  }
-
-  @Override
-  @NotNull
   public List<HaskellPragma> getPragmaList() {
     return PsiTreeUtil.getChildrenOfTypeAsList(this, HaskellPragma.class);
   }
 
   @Override
   @NotNull
-  public List<HaskellQName> getQNameList() {
-    return PsiTreeUtil.getChildrenOfTypeAsList(this, HaskellQName.class);
-  }
-
-  @Override
-  @NotNull
-  public List<HaskellReservedId> getReservedIdList() {
-    return PsiTreeUtil.getChildrenOfTypeAsList(this, HaskellReservedId.class);
-  }
-
-  @Override
-  @NotNull
-  public List<HaskellTextLiteral> getTextLiteralList() {
-    return PsiTreeUtil.getChildrenOfTypeAsList(this, HaskellTextLiteral.class);
-  }
-
-  @Override
-  @NotNull
-  public List<HaskellTypeDeclaration> getTypeDeclarationList() {
-    return PsiTreeUtil.getChildrenOfTypeAsList(this, HaskellTypeDeclaration.class);
-  }
-
-  @Override
-  @NotNull
-  public List<HaskellTypeFamilyDeclaration> getTypeFamilyDeclarationList() {
-    return PsiTreeUtil.getChildrenOfTypeAsList(this, HaskellTypeFamilyDeclaration.class);
+  public List<HaskellTopDeclaration> getTopDeclarationList() {
+    return PsiTreeUtil.getChildrenOfTypeAsList(this, HaskellTopDeclaration.class);
   }
 
 }

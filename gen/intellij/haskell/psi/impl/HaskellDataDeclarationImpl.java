@@ -13,7 +13,7 @@ import com.intellij.navigation.ItemPresentation;
 import scala.Option;
 import scala.collection.Seq;
 
-public class HaskellDataDeclarationImpl extends HaskellCompositeElementImpl implements HaskellDataDeclaration {
+public class HaskellDataDeclarationImpl extends HaskellTopDeclarationImpl implements HaskellDataDeclaration {
 
   public HaskellDataDeclarationImpl(ASTNode node) {
     super(node);
@@ -50,12 +50,6 @@ public class HaskellDataDeclarationImpl extends HaskellCompositeElementImpl impl
   @NotNull
   public List<HaskellKindSignature> getKindSignatureList() {
     return PsiTreeUtil.getChildrenOfTypeAsList(this, HaskellKindSignature.class);
-  }
-
-  @Override
-  @Nullable
-  public HaskellPragma getPragma() {
-    return PsiTreeUtil.getChildOfType(this, HaskellPragma.class);
   }
 
   @Override

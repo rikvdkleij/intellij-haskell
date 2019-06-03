@@ -10,19 +10,25 @@ import com.intellij.psi.util.PsiTreeUtil;
 import static intellij.haskell.psi.HaskellTypes.*;
 import intellij.haskell.psi.*;
 
-public class HaskellTopDeclarationImpl extends HaskellCompositeElementImpl implements HaskellTopDeclaration {
+public class HaskellAtomExpressionImpl extends HaskellExpressionImpl implements HaskellAtomExpression {
 
-  public HaskellTopDeclarationImpl(ASTNode node) {
+  public HaskellAtomExpressionImpl(ASTNode node) {
     super(node);
   }
 
   public void accept(@NotNull HaskellVisitor visitor) {
-    visitor.visitTopDeclaration(this);
+    visitor.visitAtomExpression(this);
   }
 
   public void accept(@NotNull PsiElementVisitor visitor) {
     if (visitor instanceof HaskellVisitor) accept((HaskellVisitor)visitor);
     else super.accept(visitor);
+  }
+
+  @Override
+  @Nullable
+  public HaskellDotDot getDotDot() {
+    return PsiTreeUtil.getChildOfType(this, HaskellDotDot.class);
   }
 
   @Override
@@ -33,8 +39,20 @@ public class HaskellTopDeclarationImpl extends HaskellCompositeElementImpl imple
 
   @Override
   @Nullable
-  public HaskellTypeSignature getTypeSignature() {
-    return PsiTreeUtil.getChildOfType(this, HaskellTypeSignature.class);
+  public HaskellQName getQName() {
+    return PsiTreeUtil.getChildOfType(this, HaskellQName.class);
+  }
+
+  @Override
+  @Nullable
+  public HaskellReservedId getReservedId() {
+    return PsiTreeUtil.getChildOfType(this, HaskellReservedId.class);
+  }
+
+  @Override
+  @Nullable
+  public HaskellTextLiteral getTextLiteral() {
+    return PsiTreeUtil.getChildOfType(this, HaskellTextLiteral.class);
   }
 
 }

@@ -5,12 +5,21 @@ import java.util.List;
 import org.jetbrains.annotations.*;
 import com.intellij.psi.PsiElement;
 
-public interface HaskellTopDeclaration extends HaskellCompositeElement {
+public interface HaskellAtomExpression extends HaskellExpression {
+
+  @Nullable
+  HaskellDotDot getDotDot();
 
   @Nullable
   HaskellPragma getPragma();
 
   @Nullable
-  HaskellTypeSignature getTypeSignature();
+  HaskellQName getQName();
+
+  @Nullable
+  HaskellReservedId getReservedId();
+
+  @Nullable
+  HaskellTextLiteral getTextLiteral();
 
 }

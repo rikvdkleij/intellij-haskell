@@ -253,7 +253,8 @@ object HaskellReference {
 
     ProgressManager.checkCanceled()
 
-    val expressionIdentifiers = topLevelExpressions.flatMap(_.getQNameList.asScala.headOption.map(_.getIdentifierElement)).find(_.getName == name)
+    // FIXME check if this modification is correct
+    val expressionIdentifiers = topLevelExpressions.flatMap(_.getChildren.toList.find(_.isInstanceOf[HaskellQName]).map(_.asInstanceOf[HaskellQName]).map(_.getIdentifierElement)).find(_.getName == name)
 
     ProgressManager.checkCanceled()
 

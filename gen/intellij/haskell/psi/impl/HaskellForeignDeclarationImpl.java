@@ -13,7 +13,7 @@ import com.intellij.navigation.ItemPresentation;
 import scala.Option;
 import scala.collection.Seq;
 
-public class HaskellForeignDeclarationImpl extends HaskellCompositeElementImpl implements HaskellForeignDeclaration {
+public class HaskellForeignDeclarationImpl extends HaskellTopDeclarationImpl implements HaskellForeignDeclaration {
 
   public HaskellForeignDeclarationImpl(ASTNode node) {
     super(node);

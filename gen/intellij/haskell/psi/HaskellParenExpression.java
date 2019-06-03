@@ -5,6 +5,9 @@ import java.util.List;
 import org.jetbrains.annotations.*;
 import com.intellij.psi.PsiElement;
 
-public interface HaskellExpression extends HaskellExpressionElement {
+public interface HaskellParenExpression extends HaskellExpression {
+
+  @Nullable
+  HaskellExpression getExpression();
 
 }

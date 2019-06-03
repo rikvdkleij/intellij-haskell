@@ -6,7 +6,7 @@ import org.jetbrains.annotations.*;
 import com.intellij.psi.PsiElement;
 import scala.Option;
 
-public interface HaskellImportDeclaration extends HaskellCompositeElement {
+public interface HaskellImportDeclaration extends HaskellTopDeclaration {
 
   @Nullable
   HaskellImportPackageName getImportPackageName();
@@ -22,9 +22,6 @@ public interface HaskellImportDeclaration extends HaskellCompositeElement {
 
   @Nullable
   HaskellModid getModid();
-
-  @Nullable
-  HaskellPragma getPragma();
 
   Option<String> getModuleName();
 

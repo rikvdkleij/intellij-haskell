@@ -10,7 +10,7 @@ import com.intellij.psi.util.PsiTreeUtil;
 import static intellij.haskell.psi.HaskellTypes.*;
 import intellij.haskell.psi.*;
 
-public class HaskellCdeclDataDeclarationImpl extends HaskellCompositeElementImpl implements HaskellCdeclDataDeclaration {
+public class HaskellCdeclDataDeclarationImpl extends HaskellTopDeclarationImpl implements HaskellCdeclDataDeclaration {
 
   public HaskellCdeclDataDeclarationImpl(ASTNode node) {
     super(node);
@@ -29,12 +29,6 @@ public class HaskellCdeclDataDeclarationImpl extends HaskellCompositeElementImpl
   @NotNull
   public List<HaskellKindSignature> getKindSignatureList() {
     return PsiTreeUtil.getChildrenOfTypeAsList(this, HaskellKindSignature.class);
-  }
-
-  @Override
-  @Nullable
-  public HaskellPragma getPragma() {
-    return PsiTreeUtil.getChildOfType(this, HaskellPragma.class);
   }
 
   @Override

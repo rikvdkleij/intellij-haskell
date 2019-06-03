@@ -11,7 +11,7 @@ import static intellij.haskell.psi.HaskellTypes.*;
 import intellij.haskell.psi.*;
 import scala.Option;
 
-public class HaskellImportDeclarationImpl extends HaskellCompositeElementImpl implements HaskellImportDeclaration {
+public class HaskellImportDeclarationImpl extends HaskellTopDeclarationImpl implements HaskellImportDeclaration {
 
   public HaskellImportDeclarationImpl(ASTNode node) {
     super(node);
@@ -54,12 +54,6 @@ public class HaskellImportDeclarationImpl extends HaskellCompositeElementImpl im
   @Nullable
   public HaskellModid getModid() {
     return PsiTreeUtil.getChildOfType(this, HaskellModid.class);
-  }
-
-  @Override
-  @Nullable
-  public HaskellPragma getPragma() {
-    return PsiTreeUtil.getChildOfType(this, HaskellPragma.class);
   }
 
   @Override

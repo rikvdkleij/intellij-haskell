@@ -10,14 +10,14 @@ import com.intellij.psi.util.PsiTreeUtil;
 import static intellij.haskell.psi.HaskellTypes.*;
 import intellij.haskell.psi.*;
 
-public class HaskellCdeclsImpl extends HaskellCompositeElementImpl implements HaskellCdecls {
+public class HaskellBracketExpressionImpl extends HaskellExpressionImpl implements HaskellBracketExpression {
 
-  public HaskellCdeclsImpl(ASTNode node) {
+  public HaskellBracketExpressionImpl(ASTNode node) {
     super(node);
   }
 
   public void accept(@NotNull HaskellVisitor visitor) {
-    visitor.visitCdecls(this);
+    visitor.visitBracketExpression(this);
   }
 
   public void accept(@NotNull PsiElementVisitor visitor) {
@@ -26,21 +26,9 @@ public class HaskellCdeclsImpl extends HaskellCompositeElementImpl implements Ha
   }
 
   @Override
-  @NotNull
-  public List<HaskellPragma> getPragmaList() {
-    return PsiTreeUtil.getChildrenOfTypeAsList(this, HaskellPragma.class);
-  }
-
-  @Override
-  @NotNull
-  public List<HaskellTopDeclaration> getTopDeclarationList() {
-    return PsiTreeUtil.getChildrenOfTypeAsList(this, HaskellTopDeclaration.class);
-  }
-
-  @Override
-  @NotNull
-  public List<HaskellTypeSignature> getTypeSignatureList() {
-    return PsiTreeUtil.getChildrenOfTypeAsList(this, HaskellTypeSignature.class);
+  @Nullable
+  public HaskellExpression getExpression() {
+    return PsiTreeUtil.getChildOfType(this, HaskellExpression.class);
   }
 
 }

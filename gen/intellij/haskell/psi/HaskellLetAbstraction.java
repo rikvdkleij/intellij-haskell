@@ -5,9 +5,18 @@ import java.util.List;
 import org.jetbrains.annotations.*;
 import com.intellij.psi.PsiElement;
 
-public interface HaskellLetAbstraction extends HaskellCompositeElement {
+public interface HaskellLetAbstraction extends HaskellExpression {
+
+  @Nullable
+  HaskellExpression getExpression();
 
   @NotNull
-  List<HaskellExpression> getExpressionList();
+  List<HaskellPragma> getPragmaList();
+
+  @NotNull
+  List<HaskellTopDeclaration> getTopDeclarationList();
+
+  @NotNull
+  List<HaskellTypeSignature> getTypeSignatureList();
 
 }

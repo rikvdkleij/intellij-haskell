@@ -13,7 +13,7 @@ import com.intellij.navigation.ItemPresentation;
 import scala.Option;
 import scala.collection.Seq;
 
-public class HaskellNewtypeDeclarationImpl extends HaskellCompositeElementImpl implements HaskellNewtypeDeclaration {
+public class HaskellNewtypeDeclarationImpl extends HaskellTopDeclarationImpl implements HaskellNewtypeDeclaration {
 
   public HaskellNewtypeDeclarationImpl(ASTNode node) {
     super(node);
@@ -38,12 +38,6 @@ public class HaskellNewtypeDeclarationImpl extends HaskellCompositeElementImpl i
   @NotNull
   public HaskellNewconstr getNewconstr() {
     return notNullChild(PsiTreeUtil.getChildOfType(this, HaskellNewconstr.class));
-  }
-
-  @Override
-  @Nullable
-  public HaskellPragma getPragma() {
-    return PsiTreeUtil.getChildOfType(this, HaskellPragma.class);
   }
 
   @Override

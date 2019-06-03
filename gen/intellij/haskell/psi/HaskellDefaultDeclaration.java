@@ -8,13 +8,10 @@ import com.intellij.navigation.ItemPresentation;
 import scala.Option;
 import scala.collection.Seq;
 
-public interface HaskellDefaultDeclaration extends HaskellDeclarationElement {
+public interface HaskellDefaultDeclaration extends HaskellTopDeclaration, HaskellDeclarationElement {
 
   @NotNull
   List<HaskellTtype> getTtypeList();
-
-  @Nullable
-  HaskellTypeSignature getTypeSignature();
 
   String getName();
 

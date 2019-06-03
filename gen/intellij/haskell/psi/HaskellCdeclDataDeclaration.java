@@ -5,13 +5,10 @@ import java.util.List;
 import org.jetbrains.annotations.*;
 import com.intellij.psi.PsiElement;
 
-public interface HaskellCdeclDataDeclaration extends HaskellCompositeElement {
+public interface HaskellCdeclDataDeclaration extends HaskellTopDeclaration {
 
   @NotNull
   List<HaskellKindSignature> getKindSignatureList();
-
-  @Nullable
-  HaskellPragma getPragma();
 
   @NotNull
   List<HaskellQName> getQNameList();

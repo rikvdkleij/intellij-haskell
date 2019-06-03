@@ -8,16 +8,13 @@ import com.intellij.navigation.ItemPresentation;
 import scala.Option;
 import scala.collection.Seq;
 
-public interface HaskellInstanceDeclaration extends HaskellDeclarationElement {
+public interface HaskellInstanceDeclaration extends HaskellTopDeclaration, HaskellDeclarationElement {
 
   @Nullable
   HaskellCidecls getCidecls();
 
   @Nullable
   HaskellInst getInst();
-
-  @Nullable
-  HaskellPragma getPragma();
 
   @Nullable
   HaskellQName getQName();

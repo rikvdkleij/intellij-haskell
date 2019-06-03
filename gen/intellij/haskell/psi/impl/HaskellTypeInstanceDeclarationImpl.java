@@ -13,7 +13,7 @@ import com.intellij.navigation.ItemPresentation;
 import scala.Option;
 import scala.collection.Seq;
 
-public class HaskellTypeInstanceDeclarationImpl extends HaskellCompositeElementImpl implements HaskellTypeInstanceDeclaration {
+public class HaskellTypeInstanceDeclarationImpl extends HaskellTopDeclarationImpl implements HaskellTypeInstanceDeclaration {
 
   public HaskellTypeInstanceDeclarationImpl(ASTNode node) {
     super(node);

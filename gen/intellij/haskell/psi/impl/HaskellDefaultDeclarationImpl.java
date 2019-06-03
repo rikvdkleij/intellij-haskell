@@ -13,7 +13,7 @@ import com.intellij.navigation.ItemPresentation;
 import scala.Option;
 import scala.collection.Seq;
 
-public class HaskellDefaultDeclarationImpl extends HaskellCompositeElementImpl implements HaskellDefaultDeclaration {
+public class HaskellDefaultDeclarationImpl extends HaskellTopDeclarationImpl implements HaskellDefaultDeclaration {
 
   public HaskellDefaultDeclarationImpl(ASTNode node) {
     super(node);
@@ -32,12 +32,6 @@ public class HaskellDefaultDeclarationImpl extends HaskellCompositeElementImpl i
   @NotNull
   public List<HaskellTtype> getTtypeList() {
     return PsiTreeUtil.getChildrenOfTypeAsList(this, HaskellTtype.class);
-  }
-
-  @Override
-  @Nullable
-  public HaskellTypeSignature getTypeSignature() {
-    return PsiTreeUtil.getChildOfType(this, HaskellTypeSignature.class);
   }
 
   @Override

@@ -8,7 +8,7 @@ import com.intellij.navigation.ItemPresentation;
 import scala.Option;
 import scala.collection.Seq;
 
-public interface HaskellTypeFamilyDeclaration extends HaskellDeclarationElement {
+public interface HaskellTypeFamilyDeclaration extends HaskellTopDeclaration, HaskellDeclarationElement {
 
   @Nullable
   HaskellExpression getExpression();

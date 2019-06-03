@@ -29,6 +29,7 @@
   methods("default_declaration|foreign_declaration|module_declaration")=[getName getPresentation getIdentifierElements getModuleName]
   implements("type_signature|type_declaration|class_declaration|instance_declaration|type_family_declaration|deriving_declaration|type_instance_declaration|default_declaration")="intellij.haskell.psi.HaskellDeclarationElement"
   implements("default_declaration|foreign_declaration|module_declaration")="intellij.haskell.psi.HaskellDeclarationElement"
+  extends(".*_declaration")=top_declaration
 
   methods("data_declaration|newtype_declaration")=[getName getPresentation getIdentifierElements getModuleName getDataTypeConstructor]
   implements("data_declaration|newtype_declaration")="intellij.haskell.psi.HaskellDataConstructorDeclarationElement"
@@ -40,6 +41,7 @@
 
   implements("expression")="intellij.haskell.psi.HaskellExpressionElement"
   mixin("expression")="intellij.haskell.psi.impl.HaskellExpressionElementImpl"
+  extends(".*_expression")=expression
 
   methods("var|con|varop|conop")=[getName]
   implements("var|con|varop|conop")="intellij.haskell.psi.HaskellCNameElement"
@@ -83,7 +85,8 @@ import_package_name         ::= text_literal
 
 top_declaration             ::= type_declaration | data_declaration | newtype_declaration | class_declaration | instance_declaration | default_declaration |
                                   foreign_declaration | type_family_declaration | deriving_declaration | type_instance_declaration | type_signature |
-                                  pragma | fixity_declaration | expression | DIRECTIVE
+                                  pragma | fixity_declaration | DIRECTIVE | implementation_declaration
+implementation_declaration  ::= expression EQUAL expression {pin=2}
 
 type_declaration            ::= TYPE onls simpletype onls COLON_COLON onls ttype |
                                   TYPE onls simpletype onls (EQUAL | WHERE) onls (ttype | type_signature) (DOUBLE_RIGHT_ARROW ttype)? |
@@ -118,7 +121,7 @@ type_instance_declaration   ::= TYPE_INSTANCE onls expression
 type_signature              ::= q_names onls COLON_COLON (onls ccontext onls DOUBLE_RIGHT_ARROW)* onls ttype !EQUAL |
                                   q_names onls LEFT_PAREN onls q_names onls COMMA onls ccontext onls DOUBLE_RIGHT_ARROW onls ttype onls RIGHT_PAREN   // seen in  Test.Hspec.Expectations: with_loc(shouldBe, (Show a, Eq a) => a -> a -> Expectation)
 
-fixity_declaration          ::= fixity (DECIMAL)? q_names
+fixity_declaration          ::= fixity DECIMAL? q_names
 
 foreign_declaration         ::= (FOREIGN_IMPORT | FOREIGN_EXPORT) onls expression
 
@@ -245,20 +248,26 @@ cdecl_data_declaration      ::= DATA (onls pragma)? onls (LEFT_PAREN onls kind_s
 private cdecl               ::= type_signature | cdecl_data_declaration | cidecl
 
 private cidecl              ::= pragma | instance_declaration | default_declaration |
-                                  newtype_declaration | data_declaration | type_declaration | type_family_declaration | line_expression
+                                  newtype_declaration | data_declaration | type_declaration | type_family_declaration | implementation_declaration
 
-expression                  ::= line_expression (nls line_expression)*
-private line_expression     ::= (general_id | let_abstraction)+
+expression                  ::= let_abstraction | do_notation_expression | if_expression | application_expression | atom
+paren_expression            ::= LEFT_PAREN expression RIGHT_PAREN
+bracket_expression          ::= LEFT_BRACKET expression RIGHT_BRACKET
+application_expression      ::= expression atom+
+private atom                ::= atom_expression | bracket_expression | paren_expression
+atom_expression             ::= general_id
 
-private general_id          ::= QUASIQUOTE | q_name | symbol_reserved_op | reserved_id | LEFT_PAREN | RIGHT_PAREN | FLOAT |
-                                  SEMICOLON | LEFT_BRACKET | RIGHT_BRACKET | literal | LEFT_BRACE | RIGHT_BRACE |
-                                  COMMA | QUOTE | BACKQUOTE | fixity |
+private general_id          ::= QUASIQUOTE | q_name | symbol_reserved_op | reserved_id | FLOAT |
+                                  literal | COMMA | QUOTE | BACKQUOTE |
                                   pragma | DIRECTIVE | DOUBLE_QUOTES
-let_abstraction             ::= LET LEFT_BRACE let_definitions* RIGHT_BRACE? IN expression {pin=1}
+let_abstraction             ::= LET LEFT_BRACE let_definition* cdecl? RIGHT_BRACE? semi IN expression {pin=1 extends=expression}
+do_notation_expression      ::= DO LEFT_BRACE do_definition* expression? RIGHT_BRACE? {pin=1}
+if_expression               ::= IF expression THEN expression ELSE expression {pin=1}
 
-private let_definitions     ::= expression semi
+private let_definition      ::= cdecl SEMICOLON
+private do_definition       ::= expression SEMICOLON
 
 dot_dot                     ::= DOT DOT
-private symbol_reserved_op  ::= dot_dot | COLON_COLON | EQUAL | BACKSLASH | VERTICAL_BAR | LEFT_ARROW | RIGHT_ARROW | AT | TILDE | DOUBLE_RIGHT_ARROW
+private symbol_reserved_op  ::= dot_dot | COLON_COLON | BACKSLASH | VERTICAL_BAR | LEFT_ARROW | RIGHT_ARROW | AT | TILDE | DOUBLE_RIGHT_ARROW
 
-reserved_id                 ::= CASE | CLASS | DATA | DEFAULT | DERIVING | DO | ELSE | IF | IMPORT | INSTANCE | MODULE | NEWTYPE | OF | THEN | TYPE | WHERE | UNDERSCORE
+reserved_id                 ::= CASE | CLASS | DATA | DEFAULT | DERIVING | IMPORT | INSTANCE | MODULE | NEWTYPE | OF | TYPE | UNDERSCORE

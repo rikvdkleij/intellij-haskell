@@ -8,16 +8,13 @@ import com.intellij.navigation.ItemPresentation;
 import scala.Option;
 import scala.collection.Seq;
 
-public interface HaskellNewtypeDeclaration extends HaskellDataConstructorDeclarationElement {
+public interface HaskellNewtypeDeclaration extends HaskellTopDeclaration, HaskellDataConstructorDeclarationElement {
 
   @Nullable
   HaskellCcontext getCcontext();
 
   @NotNull
   HaskellNewconstr getNewconstr();
-
-  @Nullable
-  HaskellPragma getPragma();
 
   @NotNull
   HaskellSimpletype getSimpletype();

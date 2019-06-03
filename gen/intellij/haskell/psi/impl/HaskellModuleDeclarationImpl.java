@@ -13,7 +13,7 @@ import com.intellij.navigation.ItemPresentation;
 import scala.Option;
 import scala.collection.Seq;
 
-public class HaskellModuleDeclarationImpl extends HaskellCompositeElementImpl implements HaskellModuleDeclaration {
+public class HaskellModuleDeclarationImpl extends HaskellTopDeclarationImpl implements HaskellModuleDeclaration {
 
   public HaskellModuleDeclarationImpl(ASTNode node) {
     super(node);
@@ -38,12 +38,6 @@ public class HaskellModuleDeclarationImpl extends HaskellCompositeElementImpl im
   @NotNull
   public HaskellModid getModid() {
     return notNullChild(PsiTreeUtil.getChildOfType(this, HaskellModid.class));
-  }
-
-  @Override
-  @Nullable
-  public HaskellPragma getPragma() {
-    return PsiTreeUtil.getChildOfType(this, HaskellPragma.class);
   }
 
   @Override

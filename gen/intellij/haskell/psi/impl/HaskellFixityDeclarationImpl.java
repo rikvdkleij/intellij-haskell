@@ -10,7 +10,7 @@ import com.intellij.psi.util.PsiTreeUtil;
 import static intellij.haskell.psi.HaskellTypes.*;
 import intellij.haskell.psi.*;
 
-public class HaskellFixityDeclarationImpl extends HaskellCompositeElementImpl implements HaskellFixityDeclaration {
+public class HaskellFixityDeclarationImpl extends HaskellTopDeclarationImpl implements HaskellFixityDeclaration {
 
   public HaskellFixityDeclarationImpl(ASTNode node) {
     super(node);

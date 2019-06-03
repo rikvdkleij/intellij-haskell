@@ -8,7 +8,7 @@ import com.intellij.navigation.ItemPresentation;
 import scala.Option;
 import scala.collection.Seq;
 
-public interface HaskellDerivingDeclaration extends HaskellDeclarationElement {
+public interface HaskellDerivingDeclaration extends HaskellTopDeclaration, HaskellDeclarationElement {
 
   @NotNull
   HaskellInst getInst();

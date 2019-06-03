@@ -442,7 +442,8 @@ class HaskellCompletionContributor extends CompletionContributor {
       createLocalTopLevelLookupElement(ApplicationUtil.runReadAction(e.getName), ApplicationUtil.runReadAction(d.getPresentation.getPresentableText), moduleName.getOrElse("-"))
     }
 
-    val expressionLookupElements = HaskellPsiUtil.findTopLevelExpressions(psiFile).flatMap(_.getQNameList.asScala.headOption.map(_.getIdentifierElement)).filterNot(e => currentElement.contains(e)).map(createLocalLookupElement)
+    // FIXME check if this modification is correct
+    val expressionLookupElements = HaskellPsiUtil.findTopLevelExpressions(psiFile).flatMap(_.getChildren.toList.find(_.isInstanceOf[HaskellQName]).map(_.asInstanceOf[HaskellQName]).map(_.getIdentifierElement)).filterNot(e => currentElement.contains(e)).map(createLocalLookupElement)
 
     ApplicationUtil.runReadAction(HaskellPsiUtil.findTopLevelDeclarations(psiFile)).
       flatMap(d => getIdentifiers(d).map { e =>

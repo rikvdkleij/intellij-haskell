@@ -10,7 +10,7 @@ import com.intellij.psi.util.PsiTreeUtil;
 import static intellij.haskell.psi.HaskellTypes.*;
 import intellij.haskell.psi.*;
 
-public class HaskellExpressionImpl extends HaskellExpressionElementImpl implements HaskellExpression {
+public abstract class HaskellExpressionImpl extends HaskellExpressionElementImpl implements HaskellExpression {
 
   public HaskellExpressionImpl(ASTNode node) {
     super(node);
@@ -23,42 +23,6 @@ public class HaskellExpressionImpl extends HaskellExpressionElementImpl implemen
   public void accept(@NotNull PsiElementVisitor visitor) {
     if (visitor instanceof HaskellVisitor) accept((HaskellVisitor)visitor);
     else super.accept(visitor);
-  }
-
-  @Override
-  @NotNull
-  public List<HaskellDotDot> getDotDotList() {
-    return PsiTreeUtil.getChildrenOfTypeAsList(this, HaskellDotDot.class);
-  }
-
-  @Override
-  @NotNull
-  public List<HaskellLetAbstraction> getLetAbstractionList() {
-    return PsiTreeUtil.getChildrenOfTypeAsList(this, HaskellLetAbstraction.class);
-  }
-
-  @Override
-  @NotNull
-  public List<HaskellPragma> getPragmaList() {
-    return PsiTreeUtil.getChildrenOfTypeAsList(this, HaskellPragma.class);
-  }
-
-  @Override
-  @NotNull
-  public List<HaskellQName> getQNameList() {
-    return PsiTreeUtil.getChildrenOfTypeAsList(this, HaskellQName.class);
-  }
-
-  @Override
-  @NotNull
-  public List<HaskellReservedId> getReservedIdList() {
-    return PsiTreeUtil.getChildrenOfTypeAsList(this, HaskellReservedId.class);
-  }
-
-  @Override
-  @NotNull
-  public List<HaskellTextLiteral> getTextLiteralList() {
-    return PsiTreeUtil.getChildrenOfTypeAsList(this, HaskellTextLiteral.class);
   }
 
 }

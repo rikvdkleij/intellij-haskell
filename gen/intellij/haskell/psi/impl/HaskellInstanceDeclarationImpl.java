@@ -13,7 +13,7 @@ import com.intellij.navigation.ItemPresentation;
 import scala.Option;
 import scala.collection.Seq;
 
-public class HaskellInstanceDeclarationImpl extends HaskellCompositeElementImpl implements HaskellInstanceDeclaration {
+public class HaskellInstanceDeclarationImpl extends HaskellTopDeclarationImpl implements HaskellInstanceDeclaration {
 
   public HaskellInstanceDeclarationImpl(ASTNode node) {
     super(node);
@@ -38,12 +38,6 @@ public class HaskellInstanceDeclarationImpl extends HaskellCompositeElementImpl 
   @Nullable
   public HaskellInst getInst() {
     return PsiTreeUtil.getChildOfType(this, HaskellInst.class);
-  }
-
-  @Override
-  @Nullable
-  public HaskellPragma getPragma() {
-    return PsiTreeUtil.getChildOfType(this, HaskellPragma.class);
   }
 
   @Override

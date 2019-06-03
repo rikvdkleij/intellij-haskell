@@ -8,7 +8,7 @@ import com.intellij.navigation.ItemPresentation;
 import scala.Option;
 import scala.collection.Seq;
 
-public interface HaskellClassDeclaration extends HaskellDeclarationElement {
+public interface HaskellClassDeclaration extends HaskellTopDeclaration, HaskellDeclarationElement {
 
   @Nullable
   HaskellCdecls getCdecls();

@@ -13,7 +13,7 @@ import com.intellij.navigation.ItemPresentation;
 import scala.Option;
 import scala.collection.Seq;
 
-public class HaskellDerivingDeclarationImpl extends HaskellCompositeElementImpl implements HaskellDerivingDeclaration {
+public class HaskellDerivingDeclarationImpl extends HaskellTopDeclarationImpl implements HaskellDerivingDeclaration {
 
   public HaskellDerivingDeclarationImpl(ASTNode node) {
     super(node);

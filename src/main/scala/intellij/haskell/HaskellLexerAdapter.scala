@@ -54,7 +54,7 @@ class HaskellLayoutLexer(private val lexer: Lexer,
                            column: Int,
                            line: Line
                           ) {
-    override def toString = s"${elementType.toString} ($start, $end)"
+    override def toString = s"${elementType.toString} (${getBufferSequence.subSequence(start, end)}) ($start, $end)"
 
     val isEOF: Boolean = elementType.isEmpty
     val isCode: Boolean = elementType.exists(et => !nonCodeTokens.contains(et)) && !isEOF

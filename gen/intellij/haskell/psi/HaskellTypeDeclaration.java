@@ -8,7 +8,7 @@ import com.intellij.navigation.ItemPresentation;
 import scala.Option;
 import scala.collection.Seq;
 
-public interface HaskellTypeDeclaration extends HaskellDeclarationElement {
+public interface HaskellTypeDeclaration extends HaskellTopDeclaration, HaskellDeclarationElement {
 
   @Nullable
   HaskellExpression getExpression();
@@ -21,9 +21,6 @@ public interface HaskellTypeDeclaration extends HaskellDeclarationElement {
 
   @Nullable
   HaskellTtype getTtype();
-
-  @Nullable
-  HaskellTypeSignature getTypeSignature();
 
   String getName();
 

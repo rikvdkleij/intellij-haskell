@@ -9,6 +9,9 @@ import intellij.haskell.psi.impl.*;
 
 public interface HaskellTypes {
 
+  IElementType HS_APPLICATION_EXPRESSION = new HaskellCompositeElementType("HS_APPLICATION_EXPRESSION");
+  IElementType HS_ATOM_EXPRESSION = new HaskellCompositeElementType("HS_ATOM_EXPRESSION");
+  IElementType HS_BRACKET_EXPRESSION = new HaskellCompositeElementType("HS_BRACKET_EXPRESSION");
   IElementType HS_CCONTEXT = new HaskellCompositeElementType("HS_CCONTEXT");
   IElementType HS_CDECLS = new HaskellCompositeElementType("HS_CDECLS");
   IElementType HS_CDECL_DATA_DECLARATION = new HaskellCompositeElementType("HS_CDECL_DATA_DECLARATION");
@@ -31,6 +34,7 @@ public interface HaskellTypes {
   IElementType HS_DEFAULT_DECLARATION = new HaskellCompositeElementType("HS_DEFAULT_DECLARATION");
   IElementType HS_DERIVING_DECLARATION = new HaskellCompositeElementType("HS_DERIVING_DECLARATION");
   IElementType HS_DOT_DOT = new HaskellCompositeElementType("HS_DOT_DOT");
+  IElementType HS_DO_NOTATION_EXPRESSION = new HaskellCompositeElementType("HS_DO_NOTATION_EXPRESSION");
   IElementType HS_EXPORT = new HaskellCompositeElementType("HS_EXPORT");
   IElementType HS_EXPORTS = new HaskellCompositeElementType("HS_EXPORTS");
   IElementType HS_EXPRESSION = new HaskellCompositeElementType("HS_EXPRESSION");
@@ -40,6 +44,8 @@ public interface HaskellTypes {
   IElementType HS_FOREIGN_DECLARATION = new HaskellCompositeElementType("HS_FOREIGN_DECLARATION");
   IElementType HS_GENERAL_PRAGMA_CONTENT = new HaskellCompositeElementType("HS_GENERAL_PRAGMA_CONTENT");
   IElementType HS_GTYCON = new HaskellCompositeElementType("HS_GTYCON");
+  IElementType HS_IF_EXPRESSION = new HaskellCompositeElementType("HS_IF_EXPRESSION");
+  IElementType HS_IMPLEMENTATION_DECLARATION = new HaskellCompositeElementType("HS_IMPLEMENTATION_DECLARATION");
   IElementType HS_IMPORT_DECLARATION = new HaskellCompositeElementType("HS_IMPORT_DECLARATION");
   IElementType HS_IMPORT_DECLARATIONS = new HaskellCompositeElementType("HS_IMPORT_DECLARATIONS");
   IElementType HS_IMPORT_HIDING = new HaskellCompositeElementType("HS_IMPORT_HIDING");
@@ -62,6 +68,7 @@ public interface HaskellTypes {
   IElementType HS_NEWCONSTR = new HaskellCompositeElementType("HS_NEWCONSTR");
   IElementType HS_NEWCONSTR_FIELDDECL = new HaskellCompositeElementType("HS_NEWCONSTR_FIELDDECL");
   IElementType HS_NEWTYPE_DECLARATION = new HaskellCompositeElementType("HS_NEWTYPE_DECLARATION");
+  IElementType HS_PAREN_EXPRESSION = new HaskellCompositeElementType("HS_PAREN_EXPRESSION");
   IElementType HS_PRAGMA = new HaskellCompositeElementType("HS_PRAGMA");
   IElementType HS_QUALIFIER = new HaskellCompositeElementType("HS_QUALIFIER");
   IElementType HS_Q_CON = new HaskellCompositeElementType("HS_Q_CON");
@@ -172,7 +179,16 @@ public interface HaskellTypes {
   class Factory {
     public static PsiElement createElement(ASTNode node) {
       IElementType type = node.getElementType();
-      if (type == HS_CCONTEXT) {
+      if (type == HS_APPLICATION_EXPRESSION) {
+        return new HaskellApplicationExpressionImpl(node);
+      }
+      else if (type == HS_ATOM_EXPRESSION) {
+        return new HaskellAtomExpressionImpl(node);
+      }
+      else if (type == HS_BRACKET_EXPRESSION) {
+        return new HaskellBracketExpressionImpl(node);
+      }
+      else if (type == HS_CCONTEXT) {
         return new HaskellCcontextImpl(node);
       }
       else if (type == HS_CDECLS) {
@@ -238,14 +254,14 @@ public interface HaskellTypes {
       else if (type == HS_DOT_DOT) {
         return new HaskellDotDotImpl(node);
       }
+      else if (type == HS_DO_NOTATION_EXPRESSION) {
+        return new HaskellDoNotationExpressionImpl(node);
+      }
       else if (type == HS_EXPORT) {
         return new HaskellExportImpl(node);
       }
       else if (type == HS_EXPORTS) {
         return new HaskellExportsImpl(node);
-      }
-      else if (type == HS_EXPRESSION) {
-        return new HaskellExpressionImpl(node);
       }
       else if (type == HS_FIELDDECL) {
         return new HaskellFielddeclImpl(node);
@@ -264,6 +280,12 @@ public interface HaskellTypes {
       }
       else if (type == HS_GTYCON) {
         return new HaskellGtyconImpl(node);
+      }
+      else if (type == HS_IF_EXPRESSION) {
+        return new HaskellIfExpressionImpl(node);
+      }
+      else if (type == HS_IMPLEMENTATION_DECLARATION) {
+        return new HaskellImplementationDeclarationImpl(node);
       }
       else if (type == HS_IMPORT_DECLARATION) {
         return new HaskellImportDeclarationImpl(node);
@@ -330,6 +352,9 @@ public interface HaskellTypes {
       }
       else if (type == HS_NEWTYPE_DECLARATION) {
         return new HaskellNewtypeDeclarationImpl(node);
+      }
+      else if (type == HS_PAREN_EXPRESSION) {
+        return new HaskellParenExpressionImpl(node);
       }
       else if (type == HS_PRAGMA) {
         return new HaskellPragmaImpl(node);

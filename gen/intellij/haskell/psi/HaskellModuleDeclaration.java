@@ -8,16 +8,13 @@ import com.intellij.navigation.ItemPresentation;
 import scala.Option;
 import scala.collection.Seq;
 
-public interface HaskellModuleDeclaration extends HaskellDeclarationElement {
+public interface HaskellModuleDeclaration extends HaskellTopDeclaration, HaskellDeclarationElement {
 
   @Nullable
   HaskellExports getExports();
 
   @NotNull
   HaskellModid getModid();
-
-  @Nullable
-  HaskellPragma getPragma();
 
   @NotNull
   HaskellWhereClause getWhereClause();
