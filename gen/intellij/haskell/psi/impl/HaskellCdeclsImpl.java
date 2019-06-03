@@ -57,6 +57,12 @@ public class HaskellCdeclsImpl extends HaskellCompositeElementImpl implements Ha
 
   @Override
   @NotNull
+  public List<HaskellLetAbstraction> getLetAbstractionList() {
+    return PsiTreeUtil.getChildrenOfTypeAsList(this, HaskellLetAbstraction.class);
+  }
+
+  @Override
+  @NotNull
   public List<HaskellNewtypeDeclaration> getNewtypeDeclarationList() {
     return PsiTreeUtil.getChildrenOfTypeAsList(this, HaskellNewtypeDeclaration.class);
   }

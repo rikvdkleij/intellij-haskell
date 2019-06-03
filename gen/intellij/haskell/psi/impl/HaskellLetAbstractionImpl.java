@@ -10,14 +10,14 @@ import com.intellij.psi.util.PsiTreeUtil;
 import static intellij.haskell.psi.HaskellTypes.*;
 import intellij.haskell.psi.*;
 
-public class HaskellModuleBodyImpl extends HaskellCompositeElementImpl implements HaskellModuleBody {
+public class HaskellLetAbstractionImpl extends HaskellCompositeElementImpl implements HaskellLetAbstraction {
 
-  public HaskellModuleBodyImpl(ASTNode node) {
+  public HaskellLetAbstractionImpl(ASTNode node) {
     super(node);
   }
 
   public void accept(@NotNull HaskellVisitor visitor) {
-    visitor.visitModuleBody(this);
+    visitor.visitLetAbstraction(this);
   }
 
   public void accept(@NotNull PsiElementVisitor visitor) {
@@ -27,8 +27,8 @@ public class HaskellModuleBodyImpl extends HaskellCompositeElementImpl implement
 
   @Override
   @NotNull
-  public HaskellModuleDeclaration getModuleDeclaration() {
-    return notNullChild(PsiTreeUtil.getChildOfType(this, HaskellModuleDeclaration.class));
+  public List<HaskellExpression> getExpressionList() {
+    return PsiTreeUtil.getChildrenOfTypeAsList(this, HaskellExpression.class);
   }
 
 }

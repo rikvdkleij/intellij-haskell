@@ -5,9 +5,9 @@ import java.util.List;
 import org.jetbrains.annotations.*;
 import com.intellij.psi.PsiElement;
 
-public interface HaskellModuleBody extends HaskellCompositeElement {
+public interface HaskellLetAbstraction extends HaskellCompositeElement {
 
   @NotNull
-  HaskellModuleDeclaration getModuleDeclaration();
+  List<HaskellExpression> getExpressionList();
 
 }

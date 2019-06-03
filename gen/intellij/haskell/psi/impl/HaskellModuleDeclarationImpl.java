@@ -47,6 +47,12 @@ public class HaskellModuleDeclarationImpl extends HaskellCompositeElementImpl im
   }
 
   @Override
+  @NotNull
+  public HaskellWhereClause getWhereClause() {
+    return notNullChild(PsiTreeUtil.getChildOfType(this, HaskellWhereClause.class));
+  }
+
+  @Override
   public String getName() {
     return HaskellPsiImplUtil.getName(this);
   }

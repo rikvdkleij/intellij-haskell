@@ -33,6 +33,12 @@ public class HaskellExpressionImpl extends HaskellExpressionElementImpl implemen
 
   @Override
   @NotNull
+  public List<HaskellLetAbstraction> getLetAbstractionList() {
+    return PsiTreeUtil.getChildrenOfTypeAsList(this, HaskellLetAbstraction.class);
+  }
+
+  @Override
+  @NotNull
   public List<HaskellPragma> getPragmaList() {
     return PsiTreeUtil.getChildrenOfTypeAsList(this, HaskellPragma.class);
   }

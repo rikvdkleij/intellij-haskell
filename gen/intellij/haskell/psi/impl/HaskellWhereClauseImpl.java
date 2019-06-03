@@ -10,14 +10,14 @@ import com.intellij.psi.util.PsiTreeUtil;
 import static intellij.haskell.psi.HaskellTypes.*;
 import intellij.haskell.psi.*;
 
-public class HaskellModuleBodyImpl extends HaskellCompositeElementImpl implements HaskellModuleBody {
+public class HaskellWhereClauseImpl extends HaskellCompositeElementImpl implements HaskellWhereClause {
 
-  public HaskellModuleBodyImpl(ASTNode node) {
+  public HaskellWhereClauseImpl(ASTNode node) {
     super(node);
   }
 
   public void accept(@NotNull HaskellVisitor visitor) {
-    visitor.visitModuleBody(this);
+    visitor.visitWhereClause(this);
   }
 
   public void accept(@NotNull PsiElementVisitor visitor) {
@@ -26,9 +26,21 @@ public class HaskellModuleBodyImpl extends HaskellCompositeElementImpl implement
   }
 
   @Override
+  @Nullable
+  public HaskellImportDeclarations getImportDeclarations() {
+    return PsiTreeUtil.getChildOfType(this, HaskellImportDeclarations.class);
+  }
+
+  @Override
+  @Nullable
+  public HaskellTopDeclaration getTopDeclaration() {
+    return PsiTreeUtil.getChildOfType(this, HaskellTopDeclaration.class);
+  }
+
+  @Override
   @NotNull
-  public HaskellModuleDeclaration getModuleDeclaration() {
-    return notNullChild(PsiTreeUtil.getChildOfType(this, HaskellModuleDeclaration.class));
+  public List<HaskellTopDeclarationLine> getTopDeclarationLineList() {
+    return PsiTreeUtil.getChildrenOfTypeAsList(this, HaskellTopDeclarationLine.class);
   }
 
 }

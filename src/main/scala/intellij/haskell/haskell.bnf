@@ -20,6 +20,7 @@
   elementTypePrefix="HS_"
 
   methods("varid|varsym|conid|consym|modid")=[getName setName getNameIdentifier getReference getPresentation]
+  methods("varid|conid|modid")=[toString]
   extends("varid|varsym|conid|consym|modid")="intellij.haskell.psi.impl.HaskellNamedStubBasedPsiElementBase<?>"
   implements("varid|varsym|conid|consym|modid")="intellij.haskell.psi.HaskellNamedElement"
   elementTypeFactory("varid|varsym|conid|consym|modid")="intellij.haskell.psi.impl.HaskellElementTypeFactory.factory"
@@ -53,19 +54,20 @@
   mixin("text_literal")="intellij.haskell.psi.impl.HaskellStringLiteralElementImpl"
 }
 
-program                     ::= onl shebang_line? onl file_header onl module_body
+program                     ::= onl shebang_line? onl file_header? onl module_body?
 
 shebang_line                ::= "#!" general_id+
-file_header                 ::= (pragma onl)*
+file_header                 ::= (pragma onl)+
 pragma                      ::= PRAGMA_START general_pragma_content* PRAGMA_END {pin=1}
 general_pragma_content      ::= ONE_PRAGMA | PRAGMA_SEP | CHARACTER_LITERAL | STRING_LITERAL | NEWLINE | DASH | HASH
 
-module_body                 ::= module_declaration onl body | onl body
-module_declaration          ::= MODULE modid onl pragma? onl (exports onl)? WHERE
+module_body                 ::= module_declaration
+module_declaration          ::= MODULE modid onl pragma? onl (exports onl)? where_clause
+where_clause                ::= WHERE LEFT_BRACE body RIGHT_BRACE? {pin=1}
 
 private body                ::= import_declarations top_declarations  (NEWLINE | DIRECTIVE)*
 import_declarations         ::= ((import_declaration | pragma | DIRECTIVE) onl)*
-private top_declarations    ::= (top_declaration_line (NEWLINE | DIRECTIVE)*)* top_declaration?
+private top_declarations    ::= (top_declaration_line (SEMICOLON | DIRECTIVE)*)* top_declaration?
 
 import_declaration          ::= IMPORT (onls pragma)? (onls import_qualified)? (onls import_package_name)? onls modid onls import_qualified_as? onls import_spec?    {methods=[getModuleName] pin=1}
 import_qualified            ::= "qualified"
@@ -81,7 +83,7 @@ import_hiding               ::= "hiding"
 import_id                   ::= TYPE? (cname LEFT_PAREN onls (cname_dot_dot onls (COMMA onls cname_dot_dot onls)* onls)? RIGHT_PAREN | cname)
 import_package_name         ::= text_literal
 
-top_declaration_line        ::= top_declaration SEMICOLON? NEWLINE
+top_declaration_line        ::= top_declaration SEMICOLON? NEWLINE?
 top_declaration             ::= type_declaration | data_declaration | newtype_declaration | class_declaration | instance_declaration | default_declaration |
                                   foreign_declaration | type_family_declaration | deriving_declaration | type_instance_declaration | type_signature |
                                   pragma | fixity_declaration | expression | DIRECTIVE
@@ -192,7 +194,7 @@ ttype2                      ::= ("forall" | FORALL)? onl ttype (onl DOUBLE_RIGHT
 
 ttype                       ::= "!"? (btype (oonls RIGHT_ARROW oonls ttype)* | list_type q_name* | LEFT_PAREN RIGHT_ARROW RIGHT_PAREN)
 
-private btype               ::= (atype | TILDE | UNDERSCORE)+     // generalization because left recursive is not supported and UNDERSCORE because of partial type signatures
+private btype               ::= (atype | TILDE)+     // generalization because left recursive is not supported
 
 simpletype                  ::= ttype | (q_name | LEFT_PAREN RIGHT_PAREN)+ |
                                   q_name* oonls LEFT_PAREN q_name RIGHT_PAREN oonls q_name* |
@@ -247,14 +249,17 @@ private cidecl              ::= pragma | instance_declaration | default_declarat
                                   newtype_declaration | data_declaration | type_declaration | type_family_declaration | line_expression
 
 expression                  ::= line_expression (nls line_expression)*
-private line_expression     ::= general_id+
+private line_expression     ::= (general_id | let_abstraction)+
 
 private general_id          ::= QUASIQUOTE | q_name | symbol_reserved_op | reserved_id | LEFT_PAREN | RIGHT_PAREN | FLOAT |
                                   SEMICOLON | LEFT_BRACKET | RIGHT_BRACKET | literal | LEFT_BRACE | RIGHT_BRACE |
                                   COMMA | QUOTE | BACKQUOTE | fixity |
                                   pragma | DIRECTIVE | DOUBLE_QUOTES
+let_abstraction             ::= LET LEFT_BRACE let_definitions* RIGHT_BRACE? IN expression {pin=1}
+
+private let_definitions     ::= expression SEMICOLON?
 
 dot_dot                     ::= DOT DOT
 private symbol_reserved_op  ::= dot_dot | COLON_COLON | EQUAL | BACKSLASH | VERTICAL_BAR | LEFT_ARROW | RIGHT_ARROW | AT | TILDE | DOUBLE_RIGHT_ARROW
 
-reserved_id                 ::= CASE | CLASS | DATA | DEFAULT | DERIVING | DO | ELSE | IF | IMPORT | IN | INSTANCE | LET | MODULE | NEWTYPE | OF | THEN | TYPE | WHERE | UNDERSCORE
+reserved_id                 ::= CASE | CLASS | DATA | DEFAULT | DERIVING | DO | ELSE | IF | IMPORT | INSTANCE | MODULE | NEWTYPE | OF | THEN | TYPE | WHERE | UNDERSCORE
