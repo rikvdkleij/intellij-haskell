@@ -60,3 +60,5 @@ Haskell file
         PsiElement(HaskellTokenType.ONE_PRAGMA)('Comma,Separated,Pragmas')
       PsiWhiteSpace(' ')
       PsiElement(HaskellTokenType.PRAGMA_END)('#-}')
+  HS_MODULE_BODY
+    <empty list>

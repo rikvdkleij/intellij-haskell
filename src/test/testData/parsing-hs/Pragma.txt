@@ -29,3 +29,5 @@ Haskell file
         PsiElement(HaskellTokenType.ONE_PRAGMA)('--omG')
       PsiWhiteSpace(' ')
       PsiElement(HaskellTokenType.PRAGMA_END)('#-}')
+  HS_MODULE_BODY
+    <empty list>

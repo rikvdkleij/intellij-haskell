@@ -559,13 +559,13 @@ public class HaskellParser implements PsiParser, LightPsiParser {
   }
 
   /* ********************************************************** */
-  // import_declarations? top_declarations onl
+  // import_declarations? top_declarations? onl
   static boolean body(PsiBuilder b, int l) {
     if (!recursion_guard_(b, l, "body")) return false;
     boolean r;
     Marker m = enter_section_(b);
     r = body_0(b, l + 1);
-    r = r && top_declarations(b, l + 1);
+    r = r && body_1(b, l + 1);
     r = r && onl(b, l + 1);
     exit_section_(b, m, null, r);
     return r;
@@ -575,6 +575,13 @@ public class HaskellParser implements PsiParser, LightPsiParser {
   private static boolean body_0(PsiBuilder b, int l) {
     if (!recursion_guard_(b, l, "body_0")) return false;
     import_declarations(b, l + 1);
+    return true;
+  }
+
+  // top_declarations?
+  private static boolean body_1(PsiBuilder b, int l) {
+    if (!recursion_guard_(b, l, "body_1")) return false;
+    top_declarations(b, l + 1);
     return true;
   }
 
@@ -4069,22 +4076,15 @@ public class HaskellParser implements PsiParser, LightPsiParser {
   }
 
   /* ********************************************************** */
-  // expression SEMICOLON?
+  // expression semi
   static boolean let_definitions(PsiBuilder b, int l) {
     if (!recursion_guard_(b, l, "let_definitions")) return false;
     boolean r;
     Marker m = enter_section_(b);
     r = expression(b, l + 1);
-    r = r && let_definitions_1(b, l + 1);
+    r = r && semi(b, l + 1);
     exit_section_(b, m, null, r);
     return r;
-  }
-
-  // SEMICOLON?
-  private static boolean let_definitions_1(PsiBuilder b, int l) {
-    if (!recursion_guard_(b, l, "let_definitions_1")) return false;
-    consumeToken(b, HS_SEMICOLON);
-    return true;
   }
 
   /* ********************************************************** */
@@ -4185,14 +4185,14 @@ public class HaskellParser implements PsiParser, LightPsiParser {
   }
 
   /* ********************************************************** */
-  // module_declaration
+  // module_declaration | body
   public static boolean module_body(PsiBuilder b, int l) {
     if (!recursion_guard_(b, l, "module_body")) return false;
-    if (!nextTokenIs(b, HS_MODULE)) return false;
     boolean r;
-    Marker m = enter_section_(b);
+    Marker m = enter_section_(b, l, _NONE_, HS_MODULE_BODY, "<module body>");
     r = module_declaration(b, l + 1);
-    exit_section_(b, m, HS_MODULE_BODY, r);
+    if (!r) r = body(b, l + 1);
+    exit_section_(b, l, m, r, false, null);
     return r;
   }
 
@@ -5035,6 +5035,48 @@ public class HaskellParser implements PsiParser, LightPsiParser {
   }
 
   /* ********************************************************** */
+  // DIRECTIVE* SEMICOLON? DIRECTIVE*
+  static boolean semi(PsiBuilder b, int l) {
+    if (!recursion_guard_(b, l, "semi")) return false;
+    boolean r;
+    Marker m = enter_section_(b);
+    r = semi_0(b, l + 1);
+    r = r && semi_1(b, l + 1);
+    r = r && semi_2(b, l + 1);
+    exit_section_(b, m, null, r);
+    return r;
+  }
+
+  // DIRECTIVE*
+  private static boolean semi_0(PsiBuilder b, int l) {
+    if (!recursion_guard_(b, l, "semi_0")) return false;
+    while (true) {
+      int c = current_position_(b);
+      if (!consumeToken(b, HS_DIRECTIVE)) break;
+      if (!empty_element_parsed_guard_(b, "semi_0", c)) break;
+    }
+    return true;
+  }
+
+  // SEMICOLON?
+  private static boolean semi_1(PsiBuilder b, int l) {
+    if (!recursion_guard_(b, l, "semi_1")) return false;
+    consumeToken(b, HS_SEMICOLON);
+    return true;
+  }
+
+  // DIRECTIVE*
+  private static boolean semi_2(PsiBuilder b, int l) {
+    if (!recursion_guard_(b, l, "semi_2")) return false;
+    while (true) {
+      int c = current_position_(b);
+      if (!consumeToken(b, HS_DIRECTIVE)) break;
+      if (!empty_element_parsed_guard_(b, "semi_2", c)) break;
+    }
+    return true;
+  }
+
+  /* ********************************************************** */
   // "#!" general_id+
   public static boolean shebang_line(PsiBuilder b, int l) {
     if (!recursion_guard_(b, l, "shebang_line")) return false;
@@ -5373,91 +5415,30 @@ public class HaskellParser implements PsiParser, LightPsiParser {
   }
 
   /* ********************************************************** */
-  // top_declaration SEMICOLON? NEWLINE?
-  public static boolean top_declaration_line(PsiBuilder b, int l) {
-    if (!recursion_guard_(b, l, "top_declaration_line")) return false;
-    boolean r;
-    Marker m = enter_section_(b, l, _NONE_, HS_TOP_DECLARATION_LINE, "<top declaration line>");
-    r = top_declaration(b, l + 1);
-    r = r && top_declaration_line_1(b, l + 1);
-    r = r && top_declaration_line_2(b, l + 1);
-    exit_section_(b, l, m, r, false, null);
-    return r;
-  }
-
-  // SEMICOLON?
-  private static boolean top_declaration_line_1(PsiBuilder b, int l) {
-    if (!recursion_guard_(b, l, "top_declaration_line_1")) return false;
-    consumeToken(b, HS_SEMICOLON);
-    return true;
-  }
-
-  // NEWLINE?
-  private static boolean top_declaration_line_2(PsiBuilder b, int l) {
-    if (!recursion_guard_(b, l, "top_declaration_line_2")) return false;
-    consumeToken(b, HS_NEWLINE);
-    return true;
-  }
-
-  /* ********************************************************** */
-  // (top_declaration_line (SEMICOLON | DIRECTIVE)*)* top_declaration?
+  // (top_declaration semi)+
   static boolean top_declarations(PsiBuilder b, int l) {
     if (!recursion_guard_(b, l, "top_declarations")) return false;
     boolean r;
     Marker m = enter_section_(b);
     r = top_declarations_0(b, l + 1);
-    r = r && top_declarations_1(b, l + 1);
+    while (r) {
+      int c = current_position_(b);
+      if (!top_declarations_0(b, l + 1)) break;
+      if (!empty_element_parsed_guard_(b, "top_declarations", c)) break;
+    }
     exit_section_(b, m, null, r);
     return r;
   }
 
-  // (top_declaration_line (SEMICOLON | DIRECTIVE)*)*
+  // top_declaration semi
   private static boolean top_declarations_0(PsiBuilder b, int l) {
     if (!recursion_guard_(b, l, "top_declarations_0")) return false;
-    while (true) {
-      int c = current_position_(b);
-      if (!top_declarations_0_0(b, l + 1)) break;
-      if (!empty_element_parsed_guard_(b, "top_declarations_0", c)) break;
-    }
-    return true;
-  }
-
-  // top_declaration_line (SEMICOLON | DIRECTIVE)*
-  private static boolean top_declarations_0_0(PsiBuilder b, int l) {
-    if (!recursion_guard_(b, l, "top_declarations_0_0")) return false;
     boolean r;
     Marker m = enter_section_(b);
-    r = top_declaration_line(b, l + 1);
-    r = r && top_declarations_0_0_1(b, l + 1);
+    r = top_declaration(b, l + 1);
+    r = r && semi(b, l + 1);
     exit_section_(b, m, null, r);
     return r;
-  }
-
-  // (SEMICOLON | DIRECTIVE)*
-  private static boolean top_declarations_0_0_1(PsiBuilder b, int l) {
-    if (!recursion_guard_(b, l, "top_declarations_0_0_1")) return false;
-    while (true) {
-      int c = current_position_(b);
-      if (!top_declarations_0_0_1_0(b, l + 1)) break;
-      if (!empty_element_parsed_guard_(b, "top_declarations_0_0_1", c)) break;
-    }
-    return true;
-  }
-
-  // SEMICOLON | DIRECTIVE
-  private static boolean top_declarations_0_0_1_0(PsiBuilder b, int l) {
-    if (!recursion_guard_(b, l, "top_declarations_0_0_1_0")) return false;
-    boolean r;
-    r = consumeToken(b, HS_SEMICOLON);
-    if (!r) r = consumeToken(b, HS_DIRECTIVE);
-    return r;
-  }
-
-  // top_declaration?
-  private static boolean top_declarations_1(PsiBuilder b, int l) {
-    if (!recursion_guard_(b, l, "top_declarations_1")) return false;
-    top_declaration(b, l + 1);
-    return true;
   }
 
   /* ********************************************************** */

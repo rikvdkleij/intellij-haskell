@@ -26,9 +26,21 @@ public class HaskellModuleBodyImpl extends HaskellCompositeElementImpl implement
   }
 
   @Override
-  @NotNull
+  @Nullable
+  public HaskellImportDeclarations getImportDeclarations() {
+    return PsiTreeUtil.getChildOfType(this, HaskellImportDeclarations.class);
+  }
+
+  @Override
+  @Nullable
   public HaskellModuleDeclaration getModuleDeclaration() {
-    return notNullChild(PsiTreeUtil.getChildOfType(this, HaskellModuleDeclaration.class));
+    return PsiTreeUtil.getChildOfType(this, HaskellModuleDeclaration.class);
+  }
+
+  @Override
+  @NotNull
+  public List<HaskellTopDeclaration> getTopDeclarationList() {
+    return PsiTreeUtil.getChildrenOfTypeAsList(this, HaskellTopDeclaration.class);
   }
 
 }

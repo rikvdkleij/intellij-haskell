@@ -7,7 +7,13 @@ import com.intellij.psi.PsiElement;
 
 public interface HaskellModuleBody extends HaskellCompositeElement {
 
-  @NotNull
+  @Nullable
+  HaskellImportDeclarations getImportDeclarations();
+
+  @Nullable
   HaskellModuleDeclaration getModuleDeclaration();
+
+  @NotNull
+  List<HaskellTopDeclaration> getTopDeclarationList();
 
 }

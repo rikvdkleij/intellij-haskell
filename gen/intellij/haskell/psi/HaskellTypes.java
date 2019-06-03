@@ -81,7 +81,6 @@ public interface HaskellTypes {
   IElementType HS_SIMPLETYPE = new HaskellCompositeElementType("HS_SIMPLETYPE");
   IElementType HS_TEXT_LITERAL = new HaskellCompositeElementType("HS_TEXT_LITERAL");
   IElementType HS_TOP_DECLARATION = new HaskellCompositeElementType("HS_TOP_DECLARATION");
-  IElementType HS_TOP_DECLARATION_LINE = new HaskellCompositeElementType("HS_TOP_DECLARATION_LINE");
   IElementType HS_TTYPE = new HaskellCompositeElementType("HS_TTYPE");
   IElementType HS_TTYPE_1 = new HaskellCompositeElementType("HS_TTYPE_1");
   IElementType HS_TTYPE_2 = new HaskellCompositeElementType("HS_TTYPE_2");
@@ -389,9 +388,6 @@ public interface HaskellTypes {
       }
       else if (type == HS_TOP_DECLARATION) {
         return new HaskellTopDeclarationImpl(node);
-      }
-      else if (type == HS_TOP_DECLARATION_LINE) {
-        return new HaskellTopDeclarationLineImpl(node);
       }
       else if (type == HS_TTYPE) {
         return new HaskellTtypeImpl(node);

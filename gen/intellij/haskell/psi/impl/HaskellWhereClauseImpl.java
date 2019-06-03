@@ -32,15 +32,9 @@ public class HaskellWhereClauseImpl extends HaskellCompositeElementImpl implemen
   }
 
   @Override
-  @Nullable
-  public HaskellTopDeclaration getTopDeclaration() {
-    return PsiTreeUtil.getChildOfType(this, HaskellTopDeclaration.class);
-  }
-
-  @Override
   @NotNull
-  public List<HaskellTopDeclarationLine> getTopDeclarationLineList() {
-    return PsiTreeUtil.getChildrenOfTypeAsList(this, HaskellTopDeclarationLine.class);
+  public List<HaskellTopDeclaration> getTopDeclarationList() {
+    return PsiTreeUtil.getChildrenOfTypeAsList(this, HaskellTopDeclaration.class);
   }
 
 }

@@ -112,7 +112,10 @@ class HaskellReference(element: HaskellNamedElement, textRange: TextRange) exten
               case Some(ts) =>
 
                 def find(e: PsiElement): Option[HaskellNamedElement] = {
-                  Option(PsiTreeUtil.findSiblingForward(e, HaskellTypes.HS_TOP_DECLARATION_LINE, null)) match {
+                  // FIXME
+                  //  this now finds `top declaration` instead of `top declaration line`.
+                  //  don't forget to modify all the usages.
+                  Option(PsiTreeUtil.findSiblingForward(e, HaskellTypes.HS_TOP_DECLARATION, null)) match {
                     case Some(d) if Option(d.getFirstChild).flatMap(c => Option(c.getFirstChild)).exists(_.isInstanceOf[HaskellExpression]) => HaskellPsiUtil.findNamedElements(d).headOption.find(_.getName == ne.getName)
                     case _ => None
                   }

@@ -61,8 +61,11 @@ object HaskellElementFactory {
     createElement(project, body, classOf[HaskellModuleBody])
   }
 
-  def createTopDeclarationLine(project: Project, declaration: String): Option[HaskellTopDeclarationLine] = {
-    createElement(project, declaration, classOf[HaskellTopDeclarationLine])
+  // FIXME might need to insert one more end-of-line
+  //  this now returns `top declaration` instead of `top declaration line`.
+  //  don't forget to modify all the usages.
+  def createTopDeclarationLine(project: Project, declaration: String): Option[HaskellTopDeclaration] = {
+    createElement(project, declaration, classOf[HaskellTopDeclaration])
   }
 
   def createLanguagePragma(project: Project, languagePragma: String): Option[HaskellPragma] = {

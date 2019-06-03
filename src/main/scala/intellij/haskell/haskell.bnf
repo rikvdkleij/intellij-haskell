@@ -61,13 +61,13 @@ file_header                 ::= (pragma onl)+
 pragma                      ::= PRAGMA_START general_pragma_content* PRAGMA_END {pin=1}
 general_pragma_content      ::= ONE_PRAGMA | PRAGMA_SEP | CHARACTER_LITERAL | STRING_LITERAL | NEWLINE | DASH | HASH
 
-module_body                 ::= module_declaration
+module_body                 ::= module_declaration | body
 module_declaration          ::= MODULE modid onl pragma? onl (exports onl)? where_clause
 where_clause                ::= WHERE LEFT_BRACE body RIGHT_BRACE? {pin=1}
 
-private body                ::= import_declarations? top_declarations onl
+private body                ::= import_declarations? top_declarations? onl
 import_declarations         ::= ((import_declaration | pragma | DIRECTIVE) onl)+
-private top_declarations    ::= (top_declaration_line (SEMICOLON | DIRECTIVE)*)* top_declaration?
+private top_declarations    ::= (top_declaration semi)+
 
 import_declaration          ::= IMPORT (onls pragma)? (onls import_qualified)? (onls import_package_name)? onls modid onls import_qualified_as? onls import_spec?    {methods=[getModuleName] pin=1}
 import_qualified            ::= "qualified"
@@ -83,7 +83,6 @@ import_hiding               ::= "hiding"
 import_id                   ::= TYPE? (cname LEFT_PAREN onls (cname_dot_dot onls (COMMA onls cname_dot_dot onls)* onls)? RIGHT_PAREN | cname)
 import_package_name         ::= text_literal
 
-top_declaration_line        ::= top_declaration SEMICOLON? NEWLINE?
 top_declaration             ::= type_declaration | data_declaration | newtype_declaration | class_declaration | instance_declaration | default_declaration |
                                   foreign_declaration | type_family_declaration | deriving_declaration | type_instance_declaration | type_signature |
                                   pragma | fixity_declaration | expression | DIRECTIVE
@@ -136,6 +135,7 @@ private literal             ::= DECIMAL | HEXADECIMAL | OCTAL | FLOAT | CHARACTE
 private keyword             ::= DATA | CLASS | INSTANCE | NEWTYPE | DERIVING | DEFAULT | TYPE_FAMILY | TYPE | TYPE_INSTANCE | IMPORT | MODULE
 
 private onl                 ::= (DIRECTIVE? NEWLINE)*
+private semi                ::= DIRECTIVE* SEMICOLON? DIRECTIVE*
 private onls                ::= (&<<containsSpaces>> NEWLINE | DIRECTIVE NEWLINE !keyword)*       // optional multiple (new line and spaces)
 private nls                 ::= (&<<containsSpaces>> NEWLINE)+                          // multiple new lines and spaces
 private oonls               ::= (&<<containsSpaces>> NEWLINE)?                         // optional one (new line and spaces)
@@ -258,7 +258,7 @@ private general_id          ::= QUASIQUOTE | q_name | symbol_reserved_op | reser
                                   pragma | DIRECTIVE | DOUBLE_QUOTES
 let_abstraction             ::= LET LEFT_BRACE let_definitions* RIGHT_BRACE? IN expression {pin=1}
 
-private let_definitions     ::= expression SEMICOLON?
+private let_definitions     ::= expression semi
 
 dot_dot                     ::= DOT DOT
 private symbol_reserved_op  ::= dot_dot | COLON_COLON | EQUAL | BACKSLASH | VERTICAL_BAR | LEFT_ARROW | RIGHT_ARROW | AT | TILDE | DOUBLE_RIGHT_ARROW
