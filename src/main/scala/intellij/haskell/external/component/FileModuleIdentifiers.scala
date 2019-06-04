@@ -19,7 +19,7 @@ package intellij.haskell.external.component
 import java.util
 import java.util.concurrent.TimeoutException
 
-import com.github.blemale.scaffeine.{LoadingCache, Scaffeine}
+import com.github.blemale.scaffeine.{AsyncLoadingCache, Scaffeine}
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.project.Project
 import com.intellij.psi.PsiFile
@@ -39,52 +39,51 @@ object FileModuleIdentifiers {
 
   private type Result = Option[ModuleIdentifiers]
 
-  private final val Cache: LoadingCache[Key, Result] = Scaffeine().build((k: Key) => findModuleIdentifiers(k))
+  private final val Cache: AsyncLoadingCache[Key, Result] = Scaffeine().buildAsync((k: Key) => findModuleIdentifiers(k))
 
   import scala.concurrent.ExecutionContext.Implicits.global
 
   def invalidate(psiFile: PsiFile): Unit = {
-    Cache.invalidate(Key(psiFile))
+    Cache.synchronous.invalidate(Key(psiFile))
   }
 
   def refresh(psiFile: PsiFile): Unit = {
-    Cache.refresh(Key(psiFile))
+    Cache.synchronous.refresh(Key(psiFile))
   }
 
   // Invalidate files which have imported this module
   def invalidate(moduleName: String): Unit = {
-    val keys = Cache.asMap().filter { case (_, v) => v.exists(_.exists(_.exists(_.exists(_.moduleName == moduleName)))) }.keys
-    Cache.invalidateAll(keys)
+    val syncCache = Cache.synchronous
+    val keys = syncCache.asMap().filter { case (_, v) => v.exists(_.exists(_.exists(_.exists(_.moduleName == moduleName)))) }.keys
+    syncCache.invalidateAll(keys)
   }
 
   def invalidateAll(project: Project): Unit = {
-    Cache.asMap().filter(_._1.psiFile.getProject == project).keys.foreach(Cache.invalidate)
+    val syncCache = Cache.synchronous
+    syncCache.asMap().filter(_._1.psiFile.getProject == project).keys.foreach(syncCache.invalidate)
   }
 
   def findAvailableModuleIdentifiers(psiFile: PsiFile): Iterable[ModuleIdentifier] = {
+    val message = s"find available module identifiers for ${psiFile.getName}"
     if (ApplicationManager.getApplication.isReadAccessAllowed) {
-      val moduleIdentifiers = Future(getModuleIdentifiers(psiFile))
-
-      ScalaFutureUtil.waitWithCheckCancelled(psiFile.getProject, moduleIdentifiers, s"in findAvailableModuleIdentifiers to get all module identifiers for ${psiFile.getName}") match {
-        case Some(mids) => mids.getOrElse(Iterable())
-        case _ => Iterable()
-      }
+      val moduleIdentifiers = getModuleIdentifiers(psiFile)
+      ScalaFutureUtil.waitWithCheckCancelled(psiFile.getProject, moduleIdentifiers, message).getOrElse(Iterable())
     } else {
-      getModuleIdentifiers(psiFile).getOrElse(Iterable())
+      ScalaFutureUtil.waitForValue(psiFile.getProject, getModuleIdentifiers(psiFile), message).getOrElse(Iterable())
     }
   }
 
-  private def getModuleIdentifiers(psiFile: PsiFile): Option[Iterable[ModuleIdentifier]] = {
+  private def getModuleIdentifiers(psiFile: PsiFile): Future[Iterable[ModuleIdentifier]] = {
     val key = Key(psiFile)
-    Cache.get(key) match {
+    Cache.get(key) map {
       case Some(mids) =>
         if (mids.toSeq.contains(None)) {
-          Cache.invalidate(key)
+          Cache.synchronous.invalidate(key)
         }
-        Some(mids.flatten.flatten)
+        mids.flatten.flatten
       case None =>
-        Cache.invalidate(key)
-        None
+        Cache.synchronous.invalidate(key)
+        Iterable()
     }
   }
 

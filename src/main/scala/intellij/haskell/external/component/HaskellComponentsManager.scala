@@ -16,15 +16,12 @@
 
 package intellij.haskell.external.component
 
-import java.util.concurrent.{Executors, TimeUnit}
+import java.util.concurrent.Executors
 
-import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.editor.SelectionModel
 import com.intellij.openapi.module.Module
-import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.project.Project
 import com.intellij.psi.{PsiElement, PsiFile}
-import com.intellij.util.WaitFor
 import intellij.haskell.HaskellNotificationGroup
 import intellij.haskell.cabal.CabalInfo
 import intellij.haskell.external.component.DefinitionLocationComponent.DefinitionLocationResult
@@ -35,7 +32,7 @@ import intellij.haskell.external.repl.StackRepl.StanzaType
 import intellij.haskell.external.repl.StackReplsManager
 import intellij.haskell.psi.{HaskellPsiUtil, HaskellQualifiedNameElement}
 import intellij.haskell.util.index.{HaskellFileIndex, HaskellModuleNameIndex}
-import intellij.haskell.util.{ApplicationUtil, GhcVersion, HaskellProjectUtil, ScalaUtil}
+import intellij.haskell.util.{ApplicationUtil, GhcVersion, HaskellProjectUtil, ScalaFutureUtil}
 
 import scala.concurrent._
 
@@ -44,21 +41,10 @@ object HaskellComponentsManager {
   case class StackComponentInfo(module: Module, modulePath: String, packageName: String, target: String, stanzaType: StanzaType, sourceDirs: Seq[String], mainIs: Option[String], isImplicitPreludeActive: Boolean, buildDepends: Seq[String], exposedModuleNames: Seq[String] = Seq.empty)
 
   def findModuleIdentifiersInCache(project: Project)(implicit ec: ExecutionContext): Iterable[ModuleIdentifier] = {
-    val f = ApplicationManager.getApplication.executeOnPooledThread(ScalaUtil.callable {
-      BrowseModuleComponent.findModuleIdentifiersInCache(project)
-    })
-
-    new WaitFor(1000, 1) {
-      override def condition(): Boolean = {
-        ProgressManager.checkCanceled()
-        f.isDone
-      }
-    }
-
-    if (f.isDone) {
-      f.get(1, TimeUnit.MILLISECONDS)
-    } else {
-      Iterable()
+    val f = Future(BrowseModuleComponent.findModuleIdentifiersInCache(project))
+    ScalaFutureUtil.waitWithCheckCancelled(project, f, "find module identifiers in cache") match {
+      case Some(ids) => ids
+      case None => Iterable()
     }
   }
 
