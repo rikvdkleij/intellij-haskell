@@ -50,7 +50,7 @@ object HaskellElementFactory {
   }
 
   def createImportId(project: Project, identifier: String): Option[HaskellImportId] = {
-    createElement(project, surroundWithParensIfSymbol(project, identifier), classOf[HaskellImportId])
+    createElement(project, s"import Foo(${surroundWithParensIfSymbol(project, identifier)})", classOf[HaskellImportId])
   }
 
   def createQualifiedNameElement(project: Project, name: String): Option[HaskellQualifiedNameElement] = {
