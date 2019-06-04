@@ -28,7 +28,12 @@ object ScalaFutureUtil {
           future.isCompleted || project.isDisposed
         }
       }
-      Option(Await.result(future, 1.milli))
+
+      if (project.isDisposed) {
+        None
+      } else {
+        Option(Await.result(future, 1.milli))
+      }
     } catch {
       case _: TimeoutException =>
         HaskellNotificationGroup.logInfoEvent(project, s"Timeout in waitWithCheckCancelled while $actionDescription")
