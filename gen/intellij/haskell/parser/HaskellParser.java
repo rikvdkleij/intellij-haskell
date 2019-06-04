@@ -1,16 +1,16 @@
 // This is a generated file. Not intended for manual editing.
 package intellij.haskell.parser;
 
+import com.intellij.lang.ASTNode;
+import com.intellij.lang.LightPsiParser;
 import com.intellij.lang.PsiBuilder;
 import com.intellij.lang.PsiBuilder.Marker;
-import static intellij.haskell.psi.HaskellTypes.*;
-import static intellij.haskell.psi.HaskellParserUtil.*;
+import com.intellij.lang.PsiParser;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.tree.IFileElementType;
-import com.intellij.lang.ASTNode;
-import com.intellij.psi.tree.TokenSet;
-import com.intellij.lang.PsiParser;
-import com.intellij.lang.LightPsiParser;
+
+import static intellij.haskell.psi.HaskellParserUtil.*;
+import static intellij.haskell.psi.HaskellTypes.*;
 
 @SuppressWarnings({"SimplifiableIfStatement", "UnusedAssignment"})
 public class HaskellParser implements PsiParser, LightPsiParser {
@@ -3147,7 +3147,7 @@ public class HaskellParser implements PsiParser, LightPsiParser {
   }
 
   /* ********************************************************** */
-  // TYPE? (cname LEFT_PAREN onls (cname_dot_dot onls (COMMA onls cname_dot_dot onls)* onls)? RIGHT_PAREN | cname)
+  // TYPE? (cname onls LEFT_PAREN onls (cname_dot_dot onls (COMMA onls cname_dot_dot onls)* onls)? RIGHT_PAREN | cname)
   public static boolean import_id(PsiBuilder b, int l) {
     if (!recursion_guard_(b, l, "import_id")) return false;
     boolean r;
@@ -3165,7 +3165,7 @@ public class HaskellParser implements PsiParser, LightPsiParser {
     return true;
   }
 
-  // cname LEFT_PAREN onls (cname_dot_dot onls (COMMA onls cname_dot_dot onls)* onls)? RIGHT_PAREN | cname
+    // cname onls LEFT_PAREN onls (cname_dot_dot onls (COMMA onls cname_dot_dot onls)* onls)? RIGHT_PAREN | cname
   private static boolean import_id_1(PsiBuilder b, int l) {
     if (!recursion_guard_(b, l, "import_id_1")) return false;
     boolean r;
@@ -3176,54 +3176,55 @@ public class HaskellParser implements PsiParser, LightPsiParser {
     return r;
   }
 
-  // cname LEFT_PAREN onls (cname_dot_dot onls (COMMA onls cname_dot_dot onls)* onls)? RIGHT_PAREN
+    // cname onls LEFT_PAREN onls (cname_dot_dot onls (COMMA onls cname_dot_dot onls)* onls)? RIGHT_PAREN
   private static boolean import_id_1_0(PsiBuilder b, int l) {
     if (!recursion_guard_(b, l, "import_id_1_0")) return false;
     boolean r;
     Marker m = enter_section_(b);
     r = cname(b, l + 1);
+      r = r && onls(b, l + 1);
     r = r && consumeToken(b, HS_LEFT_PAREN);
     r = r && onls(b, l + 1);
-    r = r && import_id_1_0_3(b, l + 1);
+      r = r && import_id_1_0_4(b, l + 1);
     r = r && consumeToken(b, HS_RIGHT_PAREN);
     exit_section_(b, m, null, r);
     return r;
   }
 
   // (cname_dot_dot onls (COMMA onls cname_dot_dot onls)* onls)?
-  private static boolean import_id_1_0_3(PsiBuilder b, int l) {
-    if (!recursion_guard_(b, l, "import_id_1_0_3")) return false;
-    import_id_1_0_3_0(b, l + 1);
+  private static boolean import_id_1_0_4(PsiBuilder b, int l) {
+      if (!recursion_guard_(b, l, "import_id_1_0_4")) return false;
+      import_id_1_0_4_0(b, l + 1);
     return true;
   }
 
   // cname_dot_dot onls (COMMA onls cname_dot_dot onls)* onls
-  private static boolean import_id_1_0_3_0(PsiBuilder b, int l) {
-    if (!recursion_guard_(b, l, "import_id_1_0_3_0")) return false;
+  private static boolean import_id_1_0_4_0(PsiBuilder b, int l) {
+      if (!recursion_guard_(b, l, "import_id_1_0_4_0")) return false;
     boolean r;
     Marker m = enter_section_(b);
     r = cname_dot_dot(b, l + 1);
     r = r && onls(b, l + 1);
-    r = r && import_id_1_0_3_0_2(b, l + 1);
+      r = r && import_id_1_0_4_0_2(b, l + 1);
     r = r && onls(b, l + 1);
     exit_section_(b, m, null, r);
     return r;
   }
 
   // (COMMA onls cname_dot_dot onls)*
-  private static boolean import_id_1_0_3_0_2(PsiBuilder b, int l) {
-    if (!recursion_guard_(b, l, "import_id_1_0_3_0_2")) return false;
+  private static boolean import_id_1_0_4_0_2(PsiBuilder b, int l) {
+      if (!recursion_guard_(b, l, "import_id_1_0_4_0_2")) return false;
     while (true) {
       int c = current_position_(b);
-      if (!import_id_1_0_3_0_2_0(b, l + 1)) break;
-      if (!empty_element_parsed_guard_(b, "import_id_1_0_3_0_2", c)) break;
+        if (!import_id_1_0_4_0_2_0(b, l + 1)) break;
+        if (!empty_element_parsed_guard_(b, "import_id_1_0_4_0_2", c)) break;
     }
     return true;
   }
 
   // COMMA onls cname_dot_dot onls
-  private static boolean import_id_1_0_3_0_2_0(PsiBuilder b, int l) {
-    if (!recursion_guard_(b, l, "import_id_1_0_3_0_2_0")) return false;
+  private static boolean import_id_1_0_4_0_2_0(PsiBuilder b, int l) {
+      if (!recursion_guard_(b, l, "import_id_1_0_4_0_2_0")) return false;
     boolean r;
     Marker m = enter_section_(b);
     r = consumeToken(b, HS_COMMA);
