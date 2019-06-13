@@ -18,7 +18,7 @@ You can install this plugin using the [Jetbrains plugin repository](https://plug
   `Settings`/`Plugins`/`Browse repositories`/`Intellij-Haskell`
 
 # Installing latest beta of the plugin
-To try out the latest beta version one can install the plugin by adding `https://plugins.jetbrains.com/plugins/alpha/8258` as Custom plugin repository in `Settings`/`Plugins`/`Browse repositories`/`Manage repositories`.
+To try out the latest beta version one can install the plugin by adding `https://plugins.jetbrains.com/plugins/alpha` as Custom plugin repository in `Settings`/`Plugins`/`Browse repositories`/`Manage repositories`.
  
 Alternative way to install the latest beta version is to download `intellij-haskell.zip` from [releases](https://github.com/rikvdkleij/intellij-haskell/releases) and apply `Install plugin from disk` in `Settings`/`Plugins`.
 
