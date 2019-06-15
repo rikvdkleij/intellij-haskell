@@ -167,7 +167,7 @@ class HaskellReference(element: HaskellNamedElement, textRange: TextRange) exten
     ProgressManager.checkCanceled()
 
     HaskellComponentsManager.findDefinitionLocation(psiFile, qualifiedNameElement, importQualifier) match {
-      case Right(PackageModuleLocation(_, ne, _)) => Right(ne)
+      case Right(PackageModuleLocation(_, ne, _, _)) => Right(ne)
       case Right(LocalModuleLocation(_, ne, _)) => Right(ne)
       case Left(noInfo) => Left(noInfo)
     }
@@ -303,7 +303,7 @@ object HaskellReference {
     }
   }
 
-  def findIdentifiersByNameInfo(nameInfo: NameInfo, namedElement: HaskellNamedElement, project: Project): Either[NoInfo, (Option[String], HaskellNamedElement)] = {
+  def findIdentifiersByNameInfo(nameInfo: NameInfo, namedElement: HaskellNamedElement, project: Project): Either[NoInfo, (Option[String], HaskellNamedElement, Option[String])] = {
     ProgressManager.checkCanceled()
 
     val name = namedElement.getName
@@ -312,11 +312,11 @@ object HaskellReference {
         val (virtualFile, psiFile) = HaskellFileUtil.findFileInRead(project, pni.filePath)
         ProgressManager.checkCanceled()
         (virtualFile, psiFile) match {
-          case (Some(vf), Right(pf)) => findIdentifierByLocation(project, vf, pf, pni.lineNr, pni.columnNr, name).map(r => Right(HaskellPsiUtil.findModuleName(pf), r)).getOrElse(Left(NoInfoAvailable(name, "-")))
+          case (Some(vf), Right(pf)) => findIdentifierByLocation(project, vf, pf, pni.lineNr, pni.columnNr, name).map(r => Right(HaskellPsiUtil.findModuleName(pf), r, None)).getOrElse(Left(NoInfoAvailable(name, "-")))
           case (_, Right(_)) => Left(NoInfoAvailable(name, "-"))
           case (_, Left(noInfo)) => Left(noInfo)
         }
-      case lni: LibraryNameInfo => findIdentifiersByLibraryNameInfo(project, lni, name).map({ case (mn, nes) => (Some(mn), nes) })
+      case lni: LibraryNameInfo => findIdentifiersByLibraryNameInfo(project, lni, name).map({ case (mn, nes) => (Some(mn), nes, lni.packageName) })
       case _ => Left(NoInfoAvailable(name, "-"))
     }
   }

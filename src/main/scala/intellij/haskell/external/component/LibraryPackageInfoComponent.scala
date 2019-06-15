@@ -93,7 +93,7 @@ private[component] object LibraryPackageInfoComponent {
 
   private final val PackageNameVersionPattern = """([\w\-]+)-([\d\.]+)(?:\-.*)?""".r
 
-  private def toPackageNameversion(depends: String): Option[PackageNameVersion] = {
+  def toPackageNameversion(depends: String): Option[PackageNameVersion] = {
     depends match {
       case PackageNameVersionPattern(name, version) => Some(PackageNameVersion(name, version))
       case _ => None

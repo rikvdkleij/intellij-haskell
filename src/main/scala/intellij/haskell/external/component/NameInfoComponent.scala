@@ -142,14 +142,12 @@ private[component] object NameInfoComponent {
   private def createNameInfo(outputLine: String, project: Project): Option[NameInfo] = {
     val result = outputLine match {
       case ProjectInfoPattern(declaration, filePath, lineNr, colNr) => Some(ProjectNameInfo(declaration, filePath, lineNr.toInt, colNr.toInt))
-      case LibraryModuleInfoPattern(declaration, libraryName, moduleName) =>
-        if (libraryName == "ghc-prim" || libraryName == "integer-gmp") {
-          Some(BuiltInNameInfo(declaration, libraryName, "GHC.Base"))
+      case LibraryModuleInfoPattern(declaration, packageId, moduleName) =>
+        LibraryPackageInfoComponent.toPackageNameversion(packageId) match {
+          case Some(packageNameVersion) => Some(LibraryNameInfo(declaration, Some(packageNameVersion.name), moduleName))
+          case None => Some(LibraryNameInfo(declaration, None, moduleName))
         }
-        else {
-          Some(LibraryNameInfo(declaration, moduleName))
-        }
-      case ModuleInfoPattern(declaration, moduleName) => Some(LibraryNameInfo(declaration, moduleName))
+      case ModuleInfoPattern(declaration, moduleName) => Some(LibraryNameInfo(declaration, None, moduleName))
       case InfixInfoPattern(declaration) => Some(InfixInfo(declaration))
       case _ => None
     }
@@ -206,9 +204,7 @@ object NameInfoComponentResult {
 
   case class ProjectNameInfo(declaration: String, filePath: String, lineNr: Int, columnNr: Int) extends NameInfo
 
-  case class LibraryNameInfo(declaration: String, moduleName: String) extends NameInfo
-
-  case class BuiltInNameInfo(declaration: String, libraryName: String, moduleName: String) extends NameInfo
+  case class LibraryNameInfo(declaration: String, packageName: Option[String], moduleName: String) extends NameInfo
 
   case class InfixInfo(declaration: String) extends NameInfo
 

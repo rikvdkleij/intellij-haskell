@@ -24,7 +24,7 @@ import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.project.Project
 import intellij.haskell.external.execution.{CommandLine, StackCommandLine}
 import intellij.haskell.psi.{HaskellPsiUtil, HaskellQualifiedNameElement}
-import intellij.haskell.util.{HaskellProjectUtil, HtmlElement, ScalaFutureUtil}
+import intellij.haskell.util.{HtmlElement, ScalaFutureUtil}
 import intellij.haskell.{GlobalInfo, HaskellNotificationGroup}
 
 import scala.collection.JavaConverters._
@@ -61,37 +61,24 @@ object HoogleComponent {
 
       val name = qualifiedNameElement.getIdentifierElement.getName
       val psiFile = qualifiedNameElement.getContainingFile.getOriginalFile
-      if (HaskellProjectUtil.isSourceFile(psiFile)) {
-        DefinitionLocationComponent.findDefinitionLocation(psiFile, qualifiedNameElement, None) match {
-          case Left(noInfo) =>
-            HaskellNotificationGroup.logWarningEvent(project, s"No documentation because no location info could be found for identifier `$name` because ${noInfo.message}")
-            None
-          case Right(info) =>
-            val moduleName = info match {
-              case PackageModuleLocation(mn, _, _) => Some(mn)
-              case LocalModuleLocation(pf, _, _) => HaskellPsiUtil.findModuleName(pf)
-            }
-            moduleName match {
-              case None =>
-                HaskellNotificationGroup.logWarningEvent(project, s"No documentation because could not find module for identifier `$name`")
-                None
-              case Some(mn) =>
-                ProgressManager.checkCanceled()
-                HoogleComponent.createDocumentation(project, name, mn)
-            }
-        }
-      } else if (HaskellProjectUtil.isLibraryFile(psiFile)) {
-        val moduleName = HaskellPsiUtil.findModuleName(psiFile)
-        moduleName.flatMap(mn => createDocumentation(project, name, mn))
-      } else {
-        None
+      DefinitionLocationComponent.findDefinitionLocation(psiFile, qualifiedNameElement, None) match {
+        case Left(noInfo) =>
+          HaskellNotificationGroup.logWarningEvent(project, s"No documentation because no location info could be found for identifier `$name` because ${noInfo.message}")
+          None
+        case Right(info) =>
+          val locationName = info match {
+            case PackageModuleLocation(_, _, _, pn) => pn
+            case LocalModuleLocation(pf, _, _) => HaskellPsiUtil.findModuleName(pf)
+          }
+          ProgressManager.checkCanceled()
+          HoogleComponent.createDocumentation(project, name, locationName)
       }
     } else {
       Some("No documentation because Hoogle (database) is not available")
     }
   }
 
-  private def createDocumentation(project: Project, name: String, moduleName: String): Option[String] = {
+  private def createDocumentation(project: Project, name: String, locationName: Option[String]): Option[String] = {
     def mkString(lines: Seq[String]) = {
       lines.mkString("\n").
         replace("<", HtmlElement.Lt).
@@ -102,7 +89,7 @@ object HoogleComponent {
 
     ProgressManager.checkCanceled()
 
-    runHoogle(project, Seq("-i", name, s"+$moduleName", "+Prelude")).
+    runHoogle(project, Seq("-i", name) ++ locationName.map("+" + _).toSeq).
       flatMap(processOutput =>
         if (processOutput.getStdoutLines.isEmpty || processOutput.getStdout.contains("No results found")) {
           None
