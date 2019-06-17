@@ -89,7 +89,7 @@ object HoogleComponent {
 
     ProgressManager.checkCanceled()
 
-    runHoogle(project, Seq("-i", name) ++ locationName.map("+" + _).toSeq).
+    runHoogle(project, Seq("-i", "is:exact", name) ++ locationName.map("+" + _).toSeq).
       flatMap(processOutput =>
         if (processOutput.getStdoutLines.isEmpty || processOutput.getStdout.contains("No results found")) {
           None
