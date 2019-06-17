@@ -94,18 +94,26 @@ private[component] object DefinitionLocationComponent {
     try {
       ApplicationUtil.runReadAction(key.qualifiedNameElement.isValid) && ApplicationUtil.runReadAction(key.qualifiedNameElement.getIdentifierElement.isValid)
     } catch {
-      case _: IllegalStateException => false
+      case _: Exception => false
     }
   }
 
   private def checkValidLocation(definitionLocation: DefinitionLocation): Boolean = {
-    ApplicationUtil.runReadAction(definitionLocation.namedElement.isValid)
+    try {
+      ApplicationUtil.runReadAction(definitionLocation.namedElement.isValid)
+    } catch {
+      case _: Exception => false
+    }
   }
 
   private def checkValidName(key: Key, definitionLocation: DefinitionLocation): Boolean = {
-    val keyName = ApplicationUtil.runReadAction(Option(key.qualifiedNameElement.getIdentifierElement.getName))
-    keyName == ApplicationUtil.runReadAction(Option(definitionLocation.namedElement.getName)) &&
-      keyName.contains(definitionLocation.originalName)
+    try {
+      val keyName = ApplicationUtil.runReadAction(Option(key.qualifiedNameElement.getIdentifierElement.getName))
+      keyName == ApplicationUtil.runReadAction(Option(definitionLocation.namedElement.getName)) &&
+        keyName.contains(definitionLocation.originalName)
+    } catch {
+      case _: Exception => false
+    }
   }
 
   private def findDefinitionLocationResult(key: Key): DefinitionLocationResult = {
