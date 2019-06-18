@@ -79,7 +79,7 @@ class HaskellModuleBuilder extends TemplateModuleBuilder(null, HaskellModuleType
       packageRelativePath.flatMap(pp => HaskellModuleBuilder.createCabalInfo(rootModel.getProject, project.getBasePath, pp)) match {
         case Some(ci) => cabalInfo = ci
         case None =>
-          Messages.showErrorDialog(s"Could not create Haskell module because could not retrieve or parse Cabal file for package path `$packageRelativePath`", "No Cabal file info")
+          Messages.showErrorDialog(s"Couldn't create Haskell module due to failure retrieving or parsing Cabal file for package path `$packageRelativePath`", "No Cabal file info")
       }
     }
 
@@ -110,10 +110,10 @@ class HaskellModuleBuilder extends TemplateModuleBuilder(null, HaskellModuleType
       val processOutput = StackCommandLine.run(project, Seq("new", project.getName, "--bare", "new-template", "-p", "author-email:Author email here", "-p", "author-name:Author name here", "-p", "category:App category here", "-p", "copyright:2019 Author name here", "-p", "github-username:Github username here"), timeoutInMillis = 60.seconds.toMillis, enableExtraArguments = false)
       processOutput match {
         case None =>
-          throw new RuntimeException("Could not create new Stack project because could not execute Stack command for creating new project on file system")
+          throw new RuntimeException("Couldn't create new Stack project due to failure executing Stack command for creating new project on file system")
         case Some(output) =>
           if (output.getExitCode != 0) {
-            throw new RuntimeException(s"Could not create new Stack project: ${output.getStdout} ${output.getStderr}")
+            throw new RuntimeException(s"Couldn't create new Stack project: ${output.getStdout} ${output.getStderr}")
           }
       }
     }
@@ -150,7 +150,7 @@ class HaskellModuleWizardStep(wizardContext: WizardContext, haskellModuleBuilder
 
   override def validate(): Boolean = {
     if (getJdk == null) {
-      Messages.showErrorDialog("You can not create Haskell project without Stack configured as SDK", "No Haskell Tool Stack specified")
+      Messages.showErrorDialog("You can't create a Haskell project without Stack configured as SDK", "No Haskell Tool Stack specified")
       false
     } else {
       true
@@ -223,7 +223,7 @@ object HaskellModuleBuilder {
     HaskellProjectUtil.findCabalFile(moduleDirectory) match {
       case Some(f) => Option(f)
       case None =>
-        Messages.showErrorDialog(s"Could not create Haskell module because Cabal file can not be found in `$moduleDirectory`", "Haskell module can not be created")
+        Messages.showErrorDialog(s"Couldn't create Haskell module because Cabal file can't be found in `$moduleDirectory`", "Haskell module can't be created")
         None
     }
   }
@@ -232,7 +232,7 @@ object HaskellModuleBuilder {
     CabalInfo.create(project, cabalFile) match {
       case Some(f) => Option(f)
       case None =>
-        Messages.showErrorDialog(project, s"Could not create Haskell module because Cabal file `$cabalFile` can not be parsed", "Haskell module can not be created")
+        Messages.showErrorDialog(project, s"Couldn't create Haskell module because Cabal file `$cabalFile` can't be parsed", "Haskell module can't be created")
         None
     }
   }

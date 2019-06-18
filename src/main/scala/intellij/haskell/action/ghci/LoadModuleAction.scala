@@ -19,7 +19,7 @@ class LoadModuleAction extends AnAction {
     } yield {
       HaskellFileUtil.getAbsolutePath(actionContext.psiFile) match {
         case Some(filePath) => consoleView.executeCommand(s":load $filePath", addToHistory = false)
-        case None => HaskellNotificationGroup.logWarningBalloonEvent(actionContext.project, s"Can not load file in REPL because could not determine path for file `${actionContext.psiFile.getName}`. File exists only in memory")
+        case None => HaskellNotificationGroup.logWarningBalloonEvent(actionContext.project, s"Can't load file in REPL because `${actionContext.psiFile.getName}` only exists in memory")
       }
     }
   }

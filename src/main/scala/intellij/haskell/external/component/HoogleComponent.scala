@@ -63,7 +63,7 @@ object HoogleComponent {
       val psiFile = qualifiedNameElement.getContainingFile.getOriginalFile
       DefinitionLocationComponent.findDefinitionLocation(psiFile, qualifiedNameElement, None) match {
         case Left(noInfo) =>
-          HaskellNotificationGroup.logWarningEvent(project, s"No documentation because no location info could be found for identifier `$name` because ${noInfo.message}")
+          HaskellNotificationGroup.logWarningEvent(project, s"No documentation available as no location info could be found for identifier `$name` due to: ${noInfo.message}")
           None
         case Right(info) =>
           val locationName = info match {
@@ -74,7 +74,7 @@ object HoogleComponent {
           HoogleComponent.createDocumentation(project, name, locationName)
       }
     } else {
-      Some("No documentation because Hoogle (database) is not available")
+      Some("No documentation available as Hoogle (database) isn't available")
     }
   }
 
@@ -112,7 +112,7 @@ object HoogleComponent {
 
   private def isHoogleFeatureAvailable(project: Project): Boolean = {
     if (!StackProjectManager.isHoogleAvailable(project)) {
-      HaskellNotificationGroup.logInfoEvent(project, s"$HoogleName is not (yet) available")
+      HaskellNotificationGroup.logInfoEvent(project, s"$HoogleName isn't (yet) available")
       false
     } else {
       doesHoogleDatabaseExist(project)
@@ -130,7 +130,7 @@ object HoogleComponent {
     if (buildHaddockOutput.contains(true)) {
       GlobalProjectInfoComponent.findGlobalProjectInfo(project).map(_.localDocRoot) match {
         case Some(localDocRoot) => StackCommandLine.executeInMessageView(project, HooglePath, Seq("generate", s"--local=$localDocRoot", s"--database=${hoogleDbPath(project)}"))
-        case None => HaskellNotificationGroup.logErrorBalloonEvent(project, "Can not generate Hoogle db because path to local doc root is unknown")
+        case None => HaskellNotificationGroup.logErrorBalloonEvent(project, "Couldn't generate Hoogle DB because path to local doc root is unknown")
       }
     }
   }
@@ -140,7 +140,7 @@ object HoogleComponent {
   }
 
   def showHoogleDatabaseDoesNotExistNotification(project: Project): Unit = {
-    HaskellNotificationGroup.logInfoBalloonEvent(project, "Hoogle database does not exist. Hoogle features can be optionally enabled by menu option `Haskell`/`(Re)Build Hoogle database`")
+    HaskellNotificationGroup.logInfoBalloonEvent(project, "Hoogle database doesn't exist. Hoogle features can be enabled by menu option `Haskell`/`(Re)Build Hoogle database`")
   }
 
   def versionInfo(project: Project): String = {

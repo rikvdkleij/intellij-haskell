@@ -193,7 +193,7 @@ case class ProjectStackRepl(project: Project, stackComponentInfo: StackComponent
     if (psiFile.isEmpty || isBrowseModuleLoaded(moduleName) || psiFile.exists(pf => load(pf, fileChanged = false, mustBeByteCode = false).exists(_._2 == false))) {
       execute(s":browse! $moduleName")
     } else {
-      HaskellNotificationGroup.logInfoEvent(project, s"Could not get module identifiers for module $moduleName because file ${psiFile.map(_.getName).getOrElse("-")} is not loaded")
+      HaskellNotificationGroup.logInfoEvent(project, s"Couldn't get module identifiers for module $moduleName because file ${psiFile.map(_.getName).getOrElse("-")} isn't loaded")
       None
     }
   }
@@ -239,7 +239,7 @@ case class ProjectStackRepl(project: Project, stackComponentInfo: StackComponent
         } else {
           filePath
         }
-      case None => throw new IllegalStateException(s"Can not load file `${psiFile.getName}` in REPL because it exists only in memory")
+      case None => throw new IllegalStateException(s"Can't load file `${psiFile.getName}` in REPL because it only exists in memory")
     }
   }
 }
