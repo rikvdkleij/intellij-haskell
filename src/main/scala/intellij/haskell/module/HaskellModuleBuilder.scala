@@ -42,6 +42,7 @@ import intellij.haskell.util.{HaskellFileUtil, HaskellProjectUtil, ScalaUtil}
 import intellij.haskell.{GlobalInfo, HaskellNotificationGroup}
 import javax.swing.Icon
 
+import scala.annotation.tailrec
 import scala.collection.JavaConverters._
 import scala.collection.mutable.ListBuffer
 import scala.concurrent.duration._
@@ -236,30 +237,32 @@ object HaskellModuleBuilder {
     }
   }
 
-  private def getDependsPackageInfos(allPackageInfos: Seq[PackageInfo], modulePackageInfos: Seq[PackageInfo]): Seq[PackageInfo] = {
-    val packageInfoByName = allPackageInfos.map(pi => (pi.packageName, pi)).toMap
+  private def getDependsOnPackageInfos(libraryPackageInfos: Seq[PackageInfo], modulePackageInfos: Seq[PackageInfo]): Seq[PackageInfo] = {
+    val libraryPackageInfoByName = libraryPackageInfos.map(pi => (pi.packageName, pi)).toMap
 
-    def go(packageInfos: Seq[PackageInfo], dependsPackageInfos: ListBuffer[PackageInfo]): Seq[PackageInfo] = {
-      val depends = packageInfos.flatMap { pi =>
-        dependsPackageInfos += pi
-        pi.dependsPackageNames.map(_.name).flatMap(packageInfoByName.get)
+    @tailrec
+    def go(packageInfos: Seq[PackageInfo], dependsOnPackageInfos: ListBuffer[PackageInfo]): Seq[PackageInfo] = {
+      val dependsOn = packageInfos.flatMap { pi =>
+        dependsOnPackageInfos += pi
+        pi.dependsOnPackageIds.map(_.name).flatMap(libraryPackageInfoByName.get).filterNot(dependsOnPackageInfos.contains)
       }
-      if (depends.isEmpty) {
-        dependsPackageInfos
+
+      if (dependsOn.isEmpty) {
+        dependsOnPackageInfos
       } else {
-        go(depends.distinct, dependsPackageInfos)
+        go(dependsOn.distinct, dependsOnPackageInfos)
       }
     }
 
-    val dependsPackageNames = ListBuffer[PackageInfo]()
+    val dependsOnPackageInfos = ListBuffer[PackageInfo]()
 
-    go(modulePackageInfos, dependsPackageNames).filterNot(_.packageName == "rts")
+    go(modulePackageInfos, dependsOnPackageInfos).filterNot(_.packageName == "rts")
   }
 
   private def getModuleLibraryDependencies(moduleDependencies: Seq[HaskellDependency], libraryPackageInfos: Seq[PackageInfo]): Seq[HaskellLibraryDependency] = {
-    val modulePackageInfos = moduleDependencies.filter(_.isInstanceOf[HaskellLibraryDependency]).flatMap(d => libraryPackageInfos.find(_.packageName == d.name))
-    val dependsPackageInfos = getDependsPackageInfos(libraryPackageInfos, modulePackageInfos)
-    dependsPackageInfos.map(pi => HaskellLibraryDependency(pi.packageName, pi.version))
+    val moduleLibraryPackageInfos = moduleDependencies.filter(_.isInstanceOf[HaskellLibraryDependency]).flatMap(d => libraryPackageInfos.find(_.packageName == d.name))
+    val dependsOnPackageInfos = getDependsOnPackageInfos(libraryPackageInfos, moduleLibraryPackageInfos)
+    dependsOnPackageInfos.map(pi => HaskellLibraryDependency(pi.packageName, pi.version))
   }
 
   def addLibrarySources(project: Project, update: Boolean): Unit = {

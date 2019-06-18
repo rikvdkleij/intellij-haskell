@@ -93,9 +93,9 @@ private[component] object LibraryPackageInfoComponent {
 
   private final val PackageNameVersionPattern = """([\w\-]+)-([\d\.]+)(?:\-.*)?""".r
 
-  def toPackageNameversion(depends: String): Option[PackageNameVersion] = {
+  def toPackageNameversion(depends: String): Option[PackageId] = {
     depends match {
-      case PackageNameVersionPattern(name, version) => Some(PackageNameVersion(name, version))
+      case PackageNameVersionPattern(name, version) => Some(PackageId(name, version))
       case _ => None
     }
   }
@@ -124,6 +124,6 @@ private[component] object LibraryPackageInfoComponent {
 }
 
 
-case class PackageInfo(packageName: String, version: String, id: String, exposedModuleNames: Seq[String], hiddenModuleNames: Seq[String], dependsPackageNames: Seq[PackageNameVersion])
+case class PackageInfo(packageName: String, version: String, id: String, exposedModuleNames: Seq[String], hiddenModuleNames: Seq[String], dependsOnPackageIds: Seq[PackageId])
 
-case class PackageNameVersion(name: String, version: String)
+case class PackageId(name: String, version: String)
