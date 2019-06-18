@@ -7,7 +7,7 @@ package object component {
   }
 
   case object ReplNotAvailable extends NoInfo {
-    def message: String = "No info because REPL is not (yet) available"
+    def message: String = "No info because REPL isn't (yet) available"
   }
 
   case class NoInfoAvailable(name: String, locationName: String) extends NoInfo {
@@ -15,15 +15,15 @@ package object component {
   }
 
   case object IndexNotReady extends NoInfo {
-    override def message: String = "No info because index is not ready"
+    override def message: String = "No info because index isn't ready"
   }
 
   case class ModuleNotAvailable(name: String) extends NoInfo {
-    override def message: String = s"No info because $name is not loaded or found"
+    override def message: String = s"No info because $name isn't loaded or found"
   }
 
   case class ReadActionTimeout(readActionDescription: String) extends NoInfo {
-    def message = s"No info because read action timeout while $readActionDescription"
+    def message = s"No info because read action timed out while $readActionDescription"
   }
 
 }

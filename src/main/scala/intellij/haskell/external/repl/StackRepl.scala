@@ -95,10 +95,10 @@ abstract class StackRepl(project: Project, componentInfo: Option[StackComponentI
   protected def execute(command: String, forceExecute: Boolean = false): Option[StackReplOutput] = {
 
     if ((!available || starting) && !forceExecute) {
-      HaskellEditorUtil.showStatusBarMessage(project, s"[$getComponentName] Haskell support is not available when Stack REPL is not (yet) running")
+      HaskellEditorUtil.showStatusBarMessage(project, s"[$getComponentName] Haskell support is only available when Stack REPL is running")
       None
     } else if (!outputStreamSyncVar.isSet) {
-      logError("Can not write to Stack REPL. Check if your Stack project environment is working okay")
+      logError("Can't write to Stack REPL. Check if your Stack project environment is working okay")
       None
     } else {
 
@@ -216,7 +216,7 @@ abstract class StackRepl(project: Project, componentInfo: Option[StackComponentI
     }
 
     if (available || starting) {
-      logInfo("Stack REPL can not be started because it's already starting or running")
+      logInfo("Stack REPL can't be started because it's already starting / running")
     } else {
       starting = true
       clearLoadedModules()
@@ -281,19 +281,19 @@ abstract class StackRepl(project: Project, componentInfo: Option[StackComponentI
           } else if (hasDependencyError) {
             val target = componentInfo.map(_.target).getOrElse("-")
             val error = stderrQueue.asScala.find(_.startsWith(CanNotSatisfyErrorMessageIndicator)).map(_.replace("<command line>:", "").trim).getOrElse("a dependency failed to build")
-            val message = s"Stack REPL could not be started for target `$target` because $error"
+            val message = s"Stack REPL couldn't be started for target `$target` due to: $error"
             logInfo(message)
             HaskellNotificationGroup.logWarningBalloonEvent(project, message)
             closeResources()
           } else {
-            logError(s"Stack REPL could not be started within $DefaultTimeout")
+            logError(s"Stack REPL couldn't be started within $DefaultTimeout")
             writeOutputToLog()
             closeResources()
           }
         }
         catch {
           case e: Exception =>
-            logError("Could not start Stack REPL. Make sure you have set right path to Stack in Settings")
+            logError("Couldn't start Stack REPL. Make sure you've set the right path to Stack in Settings")
             logError(s"Error message while trying to start Stack REPL: ${e.getMessage}")
             writeOutputToLog()
             exit(forceExit = true)
@@ -307,7 +307,7 @@ abstract class StackRepl(project: Project, componentInfo: Option[StackComponentI
 
   def exit(forceExit: Boolean = false): Unit = synchronized {
     if (!available && !forceExit) {
-      logInfo("Stack REPL can not be stopped because it's already stopped")
+      logInfo("Stack REPL couldn't be stopped because it's already stopped")
     } else {
       try {
         available = false
