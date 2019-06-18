@@ -234,7 +234,7 @@ abstract class StackRepl(project: Project, componentInfo: Option[StackComponentI
           val replGhciOptionsFilePath = createGhciOptionsFile.getAbsolutePath
           val command = (Seq(stackPath, "repl") ++
             componentInfo.map(_.target).toSeq ++
-            Seq("--with-ghc", "intero", "--no-build", "--ghci-options", s"-ghci-script=$replGhciOptionsFilePath", "--silent", "--ghc-options", "-v1") ++ extraOptions).mkString(" ")
+            Seq("--no-build", "--ghci-options", s"-ghci-script=$replGhciOptionsFilePath", "--silent", "--ghc-options", "-v1") ++ extraOptions).mkString(" ")
 
           logInfo(s"Stack REPL will be started with command: $command")
 
@@ -269,6 +269,7 @@ abstract class StackRepl(project: Project, componentInfo: Option[StackComponentI
 
           if (isStarted && !hasDependencyError) {
             if (stanzaType.isDefined) {
+              execute(":set +c", forceExecute = true)
               execute(":set -fdefer-type-errors", forceExecute = true)
               execute(":set -fno-max-valid-substitutions", forceExecute = true) // TODO Check for min GHC version
               if (HaskellProjectUtil.setNoDiagnosticsShowCaretFlag(project)) {

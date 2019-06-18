@@ -101,10 +101,6 @@ object HaskellComponentsManager {
     GlobalProjectInfoComponent.findGlobalProjectInfo(project).map(_.ghcVersion)
   }
 
-  def getInteroPath(project: Project): Option[String] = {
-    GlobalProjectInfoComponent.findGlobalProjectInfo(project).map(_.interoPath)
-  }
-
   def getAvailableStackagePackages(project: Project): Iterable[String] = {
     GlobalProjectInfoComponent.findGlobalProjectInfo(project).map(_.availableStackagePackageNames).getOrElse(Iterable())
   }

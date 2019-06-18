@@ -49,6 +49,10 @@ object StackCommandLine {
     }
   }
 
+  def stackVersion(project: Project): Option[String] = {
+    StackCommandLine.run(project, Seq("--numeric-version"), enableExtraArguments = false).flatMap(_.getStdoutLines.asScala.headOption)
+  }
+
   def run(project: Project, arguments: Seq[String], timeoutInMillis: Long = CommandLine.DefaultTimeout.toMillis,
           ignoreExitCode: Boolean = false, logOutput: Boolean = false, workDir: Option[String] = None, notifyBalloonError: Boolean = false, enableExtraArguments: Boolean = true): Option[ProcessOutput] = {
     HaskellSdkType.getStackBinaryPath(project).map(stackPath => {
@@ -83,19 +87,8 @@ object StackCommandLine {
     run(project, arguments, -1, logOutput = true, notifyBalloonError = true, enableExtraArguments = false)
   }
 
-  def build(project: Project, buildTargets: Seq[String]): Option[ProcessOutput] = {
-    val arguments = Seq("build") ++ buildTargets
-    val processOutput = run(project, arguments, -1, notifyBalloonError = true)
-    if (processOutput.isEmpty || processOutput.exists(_.getExitCode != 0)) {
-      HaskellNotificationGroup.logErrorEvent(project, s"Building `${buildTargets.mkString(", ")}` has failed")
-    } else {
-      HaskellNotificationGroup.logInfoEvent(project, s"Building `${buildTargets.mkString(", ")}` is finished successfully")
-    }
-    processOutput
-  }
-
   def buildProjectDependenciesInMessageView(project: Project): Option[Boolean] = {
-    executeStackCommandInMessageView(project, Seq("build", "--test", "--bench", "--no-run-tests", "--no-run-benchmarks", "--only-dependencies", "--fast"))
+    buildInMessageView(project, Seq("--test", "--bench", "--no-run-tests", "--no-run-benchmarks", "--only-dependencies"))
   }
 
   private def ghcOptions(project: Project) = {
@@ -106,7 +99,7 @@ object StackCommandLine {
     }
   }
 
-  def buildProjectInMessageView(project: Project, arguments: Seq[String]): Option[Boolean] = {
+  def buildInMessageView(project: Project, arguments: Seq[String]): Option[Boolean] = {
     executeStackCommandInMessageView(project, Seq("build", "--fast") ++ arguments ++ ghcOptions(project))
   }
 

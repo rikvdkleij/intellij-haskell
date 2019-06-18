@@ -125,15 +125,19 @@ case class ProjectStackRepl(project: Project, stackComponentInfo: StackComponent
     }
   }
 
-  private final val FailedModulesLoaded = "Failed, modules loaded: "
+  private final val FailedModulesLoaded = "Failed, "
 
-  private final val OkModulesLoaded = "Ok, modules loaded: "
+  private final val OkModulesLoaded = "Ok, "
 
-  private def setLoadedModules(output: StackReplOutput): Unit = {
+  private def setLoadedModules(): Unit = {
     loadedDependentModules.clear()
-    val loadedModuleNames = output.stdoutLines.find(l => l.startsWith(OkModulesLoaded) || l.startsWith(FailedModulesLoaded)).map(findLoadedModuleNames).getOrElse(Array())
-    loadedModuleNames.foreach(mn => loadedDependentModules.put(mn, DependentModuleInfo()))
-    loadedModuleNames.foreach(mn => everLoadedDependentModules.put(mn, DependentModuleInfo()))
+    execute(":show modules") match {
+      case Some(output) =>
+        val loadedModuleNames = output.stdoutLines.map(l => l.takeWhile(_ != ' '))
+        loadedModuleNames.foreach(mn => loadedDependentModules.put(mn, DependentModuleInfo()))
+        loadedModuleNames.foreach(mn => everLoadedDependentModules.put(mn, DependentModuleInfo()))
+      case None => ()
+    }
   }
 
   def load(psiFile: PsiFile, fileChanged: Boolean, mustBeByteCode: Boolean): Option[(StackReplOutput, Boolean)] = synchronized {
@@ -164,7 +168,7 @@ case class ProjectStackRepl(project: Project, stackComponentInfo: StackComponent
     output match {
       case Some(o) =>
         val loadFailed = isLoadFailed(o)
-        setLoadedModules(o)
+        setLoadedModules()
 
         loadedFile = Some(ModuleInfo(psiFile, loadFailed))
         Some(o, loadFailed)

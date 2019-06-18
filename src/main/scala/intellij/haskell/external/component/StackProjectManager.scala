@@ -31,7 +31,6 @@ import com.intellij.openapi.vfs.VirtualFileManager
 import intellij.haskell.action.{HaskellReformatAction, HindentReformatAction, StylishHaskellReformatAction}
 import intellij.haskell.annotator.HaskellAnnotator
 import intellij.haskell.external.execution.StackCommandLine
-import intellij.haskell.external.execution.StackCommandLine.build
 import intellij.haskell.external.repl.StackRepl.LibType
 import intellij.haskell.external.repl.StackReplsManager
 import intellij.haskell.module.{HaskellModuleBuilder, StackProjectImportBuilder}
@@ -79,6 +78,10 @@ object StackProjectManager {
 
   def isPreloadingAllLibraryIdentifiers(project: Project): Boolean = {
     getStackProjectManager(project).exists(_.preloadingAllLibraryIdentifiers)
+  }
+
+  def stackVersion(project: Project): Option[String] = {
+    getStackProjectManager(project).flatMap(_.stackVersion)
   }
 
   def start(project: Project): Unit = {
@@ -165,7 +168,7 @@ object StackProjectManager {
               if (dependenciesBuildResult.contains(true)) {
                 progressIndicator.setText("Busy with building project")
                 val projectLibTargets = HaskellComponentsManager.findStackComponentInfos(project).filter(_.stanzaType == LibType).map(_.target)
-                StackCommandLine.buildProjectInMessageView(project, projectLibTargets)
+                StackCommandLine.buildInMessageView(project, projectLibTargets)
               } else {
                 HaskellNotificationGroup.logErrorBalloonEvent(project, "Project will not be built because building it's dependencies failed")
               }
@@ -213,11 +216,6 @@ object StackProjectManager {
                 }
               }
 
-              if (!project.isDisposed) {
-                progressIndicator.setText(s"Busy with building Intero")
-                build(project, Seq("intero"))
-              }
-
               val replsLoad = ApplicationManager.getApplication.executeOnPooledThread(ScalaUtil.runnable {
                 StackReplsManager.getReplsManager(project).foreach(_.stackComponentInfos.filter(_.stanzaType == LibType).foreach { info =>
                   progressIndicator.setText("Busy with starting project REPL " + info.packageName)
@@ -244,7 +242,7 @@ object StackProjectManager {
 
                 projectFilesWithImportedModuleNames match {
                   case Some(fm) =>
-                    fm.foreach { case (f, moduleNames) =>
+                    fm.foreach { case (_, moduleNames) =>
                       moduleNames.foreach(mn => HaskellModuleNameIndex.findFilesByModuleName(project, mn))
                       HaskellNotificationGroup.logInfoEvent(project, "Loading module identifiers " + moduleNames.mkString(", "))
                       moduleNames.foreach(m => BrowseModuleComponent.findModuleIdentifiersSync(project, m))
@@ -377,6 +375,8 @@ class StackProjectManager(project: Project) extends ProjectComponent {
   private var replsManager: Option[StackReplsManager] = None
 
   private val projectLibraryFileWatcher = new ProjectLibraryFileWatcher(project)
+
+  private lazy val stackVersion = StackCommandLine.stackVersion(project)
 
   def getStackReplsManager: Option[StackReplsManager] = {
     replsManager

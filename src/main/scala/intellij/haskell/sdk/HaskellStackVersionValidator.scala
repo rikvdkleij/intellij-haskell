@@ -10,11 +10,16 @@ object HaskellStackVersionValidator {
     validate(maybeVersion, MinimumVersion)
   }
 
-  private[sdk] def validate(maybeVersion: Option[String], minimumVersion: String): Unit = {
-    maybeVersion.map(version => version.trim) match {
-      case Some(version) if VersionComparatorUtil.compare(version, minimumVersion) >= 0 => ()
-      case _ => throw new Exception(s"Stack version should be > $minimumVersion")
+  private[sdk] def validate(version: Option[String], minimumVersion: String): Unit = {
+    if (!isValid(version, minimumVersion)) {
+      throw new Exception(s"Stack version should be > $minimumVersion")
     }
   }
 
+  private[sdk] def isValid(version: Option[String], minimumVersion: String): Boolean = {
+    version.map(_.trim) match {
+      case Some(v) if VersionComparatorUtil.compare(v, minimumVersion) >= 0 => true
+      case _ => false
+    }
+  }
 }
