@@ -53,6 +53,8 @@ abstract class StackRepl(project: Project, componentInfo: Option[StackComponentI
 
     case object Module extends Command
 
+    case object ShowModules extends Command
+
     case object OtherCommand extends Command
 
   }
@@ -92,6 +94,8 @@ abstract class StackRepl(project: Project, componentInfo: Option[StackComponentI
   private val stdoutResult = new ArrayBuffer[String]
   private val stderrResult = new ArrayBuffer[String]
 
+
+  // TODO: command should be a GhciCommand instead of a String
   protected def execute(command: String, forceExecute: Boolean = false): Option[StackReplOutput] = {
 
     if ((!available || starting) && !forceExecute) {
@@ -136,6 +140,7 @@ abstract class StackRepl(project: Project, componentInfo: Option[StackComponentI
           case c if c.startsWith(":load") | c.startsWith(":reload") => GhciCommand.Load
           case c if c.startsWith(":module") => GhciCommand.Module
           case c if c.startsWith(":set") => GhciCommand.Set
+          case c if c == ":show modules" => GhciCommand.ShowModules
           case _ => GhciCommand.OtherCommand
         }
 
@@ -147,7 +152,7 @@ abstract class StackRepl(project: Project, componentInfo: Option[StackComponentI
           if (command == ExitCommand) {
             stdoutResult.lastOption.exists(_.startsWith("Leaving GHCi"))
           } else {
-            outputContainsEndOfOutputIndicator && (ghciCommand == GhciCommand.Module || ghciCommand == GhciCommand.Set || stdoutResult.length > 1 || stderrResult.nonEmpty)
+            outputContainsEndOfOutputIndicator && (ghciCommand == GhciCommand.ShowModules || ghciCommand == GhciCommand.Module || ghciCommand == GhciCommand.Set || stdoutResult.length > 1 || stderrResult.nonEmpty)
           }
 
         def writeToOutputStream(command: String): Unit = {
