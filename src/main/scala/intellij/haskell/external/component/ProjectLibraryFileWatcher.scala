@@ -86,7 +86,7 @@ object ProjectLibraryFileWatcher {
 
           // Forced `-Wwarn` otherwise build will fail in case of warnings and that will cause that REPLs of dependent targets will not start anymore
           val projectLibTargets = HaskellComponentsManager.findStackComponentInfos(project).filter(_.stanzaType == LibType).map(_.target)
-          val output = StackCommandLine.buildInMessageView(project, projectLibTargets ++ Seq("--ghc-options", "-Wwarn"))
+          val output = StackCommandLine.buildInBackground(project, projectLibTargets ++ Seq("--ghc-options", "-Wwarn"))
           if (output.contains(true) && !project.isDisposed) {
             val projectRepls = StackReplsManager.getRunningProjectRepls(project)
             val openFiles = FileEditorManager.getInstance(project).getOpenFiles.filter(HaskellFileUtil.isHaskellFile)

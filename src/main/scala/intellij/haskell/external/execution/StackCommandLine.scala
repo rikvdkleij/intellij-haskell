@@ -99,6 +99,10 @@ object StackCommandLine {
     }
   }
 
+  def buildInBackground(project: Project, arguments: Seq[String]): Option[Boolean] = {
+    run(project, Seq("build", "--fast") ++ arguments).map(_.getExitCode == 0)
+  }
+
   def buildInMessageView(project: Project, arguments: Seq[String]): Option[Boolean] = {
     executeStackCommandInMessageView(project, Seq("build", "--fast") ++ arguments ++ ghcOptions(project))
   }
