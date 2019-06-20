@@ -1,7 +1,7 @@
 <idea-plugin>
     <id>intellij.haskell</id>
     <name>IntelliJ-Haskell</name>
-    <version>1.0.0-beta49</version>
+    <version>1.0.0-beta50</version>
     <vendor email="rikvdkleij@gmail.com">Rik van der Kleij</vendor>
 
     <description><![CDATA[
@@ -13,6 +13,11 @@
     ]]></description>
 
     <change-notes><![CDATA[
+        <p>1.0.0-beta50</p>
+        <ul>
+            <li>Prevent waiting for result when there is no REPL output in case of ":show modules" command. Fix issue #442.</li>
+            <li>Fix/improve English in various user/log messages (@declension)</li>
+        </ul>
         <p>1.0.0-beta49</p>
         <ul>
             <li>Removed intero. Only depending on vanilla GHCi</li>
