@@ -120,7 +120,8 @@ class HaskellReference(element: HaskellNamedElement, textRange: TextRange) exten
 
                 ProgressManager.checkCanceled()
 
-                // Work around Intero bug.
+                // For not exported identifiers the definition location for the type signature has to be resolved "manually".
+                // Making no exception and doing this manually resolving for all type signatures.
                 Option(ts.getParent).flatMap(p => Option(p.getParent)) match {
                   case Some(p) =>
                     find(p) match {

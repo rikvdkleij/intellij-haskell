@@ -125,7 +125,8 @@ private[component] object DefinitionLocationComponent {
 
     ProgressManager.checkCanceled()
 
-    // Again workaround intero bug
+    // GHCi :loc-at does not always give right answer for qualified identifiers. It depends on the order of import declarations...
+    // So in case of qualified identifiers :info is used to find definition location.
     if (libraryFile || key.importQualifier.isDefined || key.qualifiedNameElement.getQualifierName.isDefined) {
 
       findLocationByImportedIdentifiers(project, key, name) match {

@@ -6,7 +6,7 @@
 
     <description><![CDATA[
         Haskell language support.
-        This plugin depends mainly on Stack and Intero.
+        This plugin depends mainly on Stack.
         It can create new Stack projects and import existing Stack projects.
 
         Please <a href="https://github.com/rikvdkleij/intellij-haskell/blob/master/README.md">README</a>
