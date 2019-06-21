@@ -44,7 +44,7 @@ private[component] object BrowseModuleComponent {
   private def matchResult(key: Key, result: Future[BrowseModuleInternalResult])(implicit ec: ExecutionContext): Future[Option[Iterable[ModuleIdentifier]]] = {
     concurrent.blocking(result.map {
       case Right(ids) => Some(ids)
-      case Left(NoInfoAvailable(_, _)) =>
+      case Left(NoInfoAvailable(_, _)) | Left(NoMatchingExport) =>
         None
       case Left(ReplNotAvailable) | Left(IndexNotReady) | Left(ModuleNotAvailable(_)) | Left(ReadActionTimeout(_)) =>
         Cache.synchronous().invalidate(key)

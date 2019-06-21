@@ -219,6 +219,7 @@ private[component] object DefinitionLocationComponent {
             } else {
               f(repl) match {
                 case Some(o) if o.stderrLines.isEmpty && o.stdoutLines.nonEmpty => Right(o.stdoutLines)
+                case Some(o) if o.stderrLines.mkString.contains("No matching export in any local modules.") => Left(NoMatchingExport)
                 case Some(o) if o.stdoutLines.isEmpty && o.stderrLines.nonEmpty => Right(o.stderrLines) // For some unknown reason REPL write sometimes correct output to stderr
                 case None => Left(ReplNotAvailable)
                 case _ => Left(NoInfoAvailable(name, psiFile.getName))
@@ -232,6 +233,10 @@ private[component] object DefinitionLocationComponent {
       case Right(o) => o.headOption.map(l => createLocationByReplResult(project, psiFile, l, key, name)) match {
         case Some(r) => r
         case None => Left(NoInfoAvailable(name, key.psiFile.getName))
+      }
+      case Left(NoMatchingExport) => HaskellReference.findIdentifierInFileByName(psiFile, name) match {
+        case Some(ne) => Right(LocalModuleLocation(psiFile, ne, name))
+        case None => Left(NoInfoAvailable(name, psiFile.getName))
       }
       case Left(noInfo) => Left(noInfo)
     }

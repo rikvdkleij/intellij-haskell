@@ -26,4 +26,8 @@ package object component {
     def message = s"No info because read action timed out while $readActionDescription"
   }
 
+  // GHCi output: No matching export in any local modules.
+  case object NoMatchingExport extends NoInfo {
+    def message: String = "No matching export in any local modules"
+  }
 }
