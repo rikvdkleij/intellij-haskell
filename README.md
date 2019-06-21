@@ -10,7 +10,9 @@ Then I decided to use grammar and lexer definitions only for tokenizing and pars
 Further Haskell language support is provided with the help of external tools.
 
 This plugin depends mainly on Stack. It can create new Stack projects and import existing Stack projects.
- 
+
+GHC 8.2 and later is supported.
+
 Any feedback is welcomed!!
 
 # Installing the plugin
