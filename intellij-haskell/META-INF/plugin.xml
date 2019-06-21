@@ -1,7 +1,7 @@
 <idea-plugin>
     <id>intellij.haskell</id>
     <name>IntelliJ-Haskell</name>
-    <version>1.0.0-beta50</version>
+    <version>1.0.0-beta51</version>
     <vendor email="rikvdkleij@gmail.com">Rik van der Kleij</vendor>
 
     <description><![CDATA[
@@ -13,10 +13,13 @@
     ]]></description>
 
     <change-notes><![CDATA[
-        <p>1.0.0-beta50</p>
+        <p>1.0.0-beta51</p>
         <ul>
+            <li>Build library code always completely in the background. Use Haskell Problems View for project messages overview. Fix issue #443.</li>
             <li>Prevent waiting for result when there is no REPL output in case of ":show modules" command. Fix issue #442.</li>
             <li>Fix/improve English in various user/log messages (@declension)</li>
+            <li>Improvements in finding usages.</li>
+            <li>Build in Messages window with "no-interleaved-output"</li>
         </ul>
         <p>1.0.0-beta49</p>
         <ul>
