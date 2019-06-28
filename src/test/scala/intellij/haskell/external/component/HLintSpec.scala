@@ -25,8 +25,8 @@ class HLintSpec extends FunSpec with Matchers with GivenWhenThen {
       Given("output of HLint")
       val output =
         """
-      [{"module":"SayHello","decl":"sayHello","severity":"Error","hint":"Redundant if","file":"src/Effe.hs","startLine":17,"startColumn":11,"endLine":17,"endColumn":44,"from":"if True then getLine else getLine","to":"getLine","note":["\"increases laziness\""]}
-      ,{"module":"SayHello","decl":"x","severity":"Error","hint":"Redundant if","file":"src/Effe.hs","startLine":34,"startColumn":5,"endLine":34,"endColumn":33,"from":"if True then True else False","to":"True","note":[]}]
+      [{"module":["SayHello"],"decl":["sayHello"],"severity":"Error","hint":"Redundant if","file":"src/Effe.hs","startLine":17,"startColumn":11,"endLine":17,"endColumn":44,"from":"if True then getLine else getLine","to":"getLine","note":["\"increases laziness\""]}
+      ,{"module":["SayHello"],"decl":["x"],"severity":"Error","hint":"Redundant if","file":"src/Effe.hs","startLine":34,"startColumn":5,"endLine":34,"endColumn":33,"from":"if True then True else False","to":"True","note":[]}]
       """
 
       When("converted to list of hlint infos")
