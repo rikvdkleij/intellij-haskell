@@ -23,7 +23,7 @@ import com.intellij.openapi.project.Project
 import intellij.haskell.external.execution.{CommandLine, StackCommandLine}
 import intellij.haskell.util.{GhcVersion, ScalaUtil}
 
-import scala.collection.JavaConverters._
+import scala.jdk.CollectionConverters._
 
 private[component] object GlobalProjectInfoComponent {
 
@@ -47,7 +47,7 @@ private[component] object GlobalProjectInfoComponent {
       ghcPath,
       Seq("--supported-languages"),
       notifyBalloonError = true
-    ).getStdoutLines.asScala
+    ).getStdoutLines.asScala.toSeq
   }
 
   def getAvailableStackagesPackages(project: Project): Iterable[String] = {

@@ -9,10 +9,10 @@ class HaskellStackVersionValidatorSpec extends FlatSpec {
   final val Major = 3
   final val Minor = 4
   final val Patch = 5
-  final val MinimumVersion = Major + "." + Minor + "." + Patch
+  final val MinimumVersion = s"$Major.$Minor.$Patch"
 
   def buildVersion(major: Int, minor: Int, patch: Int): Option[String] = {
-    Some(major + "." + minor + "." + patch + "\n")
+    Some(s"$major.$minor.$patch\n")
   }
 
   "A higher major version" should "pass" in {

@@ -63,13 +63,13 @@ class HaskellConsoleView(val project: Project, val configuration: HaskellConsole
     })
   }
 
-  override def dispose() {
+  override def dispose(): Unit = {
     super.dispose()
     outputStreamWriter.close()
     HaskellConsoleViewMap.delConsole(this)
   }
 
-  def append(text: String) {
+  def append(text: String): Unit = {
     WriteCommandAction.runWriteCommandAction(getProject, new Runnable {
       override def run(): Unit = {
         val document = getCurrentEditor.getDocument

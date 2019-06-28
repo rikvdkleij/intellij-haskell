@@ -16,16 +16,17 @@
 
 package intellij.haskell.external.component
 
-import java.util.concurrent.Executors
-
 import com.github.blemale.scaffeine.{LoadingCache, Scaffeine}
 import com.intellij.openapi.project.Project
 import intellij.haskell.external.component.HaskellComponentsManager.StackComponentInfo
 import intellij.haskell.util.HaskellProjectUtil
 
-import scala.concurrent.{Await, ExecutionContext, ExecutionContextExecutorService, Future}
+import scala.concurrent.duration._
+import scala.concurrent.{Await, Future, blocking}
 
 private[component] object StackComponentGlobalInfoComponent {
+
+  import scala.concurrent.ExecutionContext.Implicits.global
 
   private case class Key(stackComponentInfo: StackComponentInfo)
 
@@ -49,28 +50,25 @@ private[component] object StackComponentGlobalInfoComponent {
     findAvailableLibraryModuleNames(project, stackComponentInfo)
   }
 
-  private val ExecutorService = Executors.newCachedThreadPool()
-  implicit val ExecContext: ExecutionContextExecutorService = ExecutionContext.fromExecutorService(ExecutorService)
-
-  import scala.concurrent.duration._
-
   private def findAvailableLibraryModuleNames(project: Project, componentInfo: StackComponentInfo): Result = {
     val projectPackageNames = HaskellProjectUtil.findProjectPackageNames(project)
     val buildDependsLibraryPackages = componentInfo.buildDepends.filterNot(projectPackageNames.contains)
 
     val libraryModuleNamesFutures = buildDependsLibraryPackages.grouped(5).map { packageNames =>
       Future {
-        packageNames.flatMap { packageName =>
-          if (project.isDisposed) {
-            None
-          } else {
-            LibraryPackageInfoComponent.findLibraryPackageInfo(project, packageName)
+        blocking {
+          packageNames.flatMap { packageName =>
+            if (project.isDisposed) {
+              None
+            } else {
+              LibraryPackageInfoComponent.findLibraryPackageInfo(project, packageName)
+            }
           }
         }
       }
     }
 
-    val libraryModuleNames = Await.result(Future.sequence(libraryModuleNamesFutures), 60.second).flatten.toIterable
+    val libraryModuleNames = Await.result(Future.sequence(libraryModuleNamesFutures), 60.second).flatten.toSeq
 
     Some(StackComponentGlobalInfo(componentInfo, libraryModuleNames))
   }
@@ -81,4 +79,4 @@ private[component] object StackComponentGlobalInfoComponent {
   }
 }
 
-case class StackComponentGlobalInfo(stackComponentInfo: StackComponentInfo, packageInfos: Iterable[PackageInfo])
+case class StackComponentGlobalInfo(stackComponentInfo: StackComponentInfo, packageInfos: Seq[PackageInfo])

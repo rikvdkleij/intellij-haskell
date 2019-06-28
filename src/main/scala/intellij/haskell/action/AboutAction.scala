@@ -27,7 +27,7 @@ import scala.collection.mutable.ArrayBuffer
 
 class AboutAction extends AnAction {
 
-  override def update(actionEvent: AnActionEvent) {
+  override def update(actionEvent: AnActionEvent): Unit = {
     HaskellEditorUtil.enableExternalAction(actionEvent, !StackProjectManager.isInitializing(_))
   }
 
@@ -39,11 +39,11 @@ class AboutAction extends AnAction {
     }
   }
 
-  def actionPerformed(actionEvent: AnActionEvent) {
+  def actionPerformed(actionEvent: AnActionEvent): Unit = {
     val messages = new ArrayBuffer[String]
     val project = actionEvent.getProject
     messages.+=(s"${boldToolName("Stack")} version: " + StackCommandLine.run(project, Seq("--numeric-version"), enableExtraArguments = false).map(_.getStdout).getOrElse("-"))
-    messages.+=(s"${boldToolName("GHC")}: " + HaskellComponentsManager.getGhcVersion(project).map(_.prettyString).getOrElse("-"))
+    messages.+=(s"${boldToolName("GHC")}: " + HaskellComponentsManager.getGhcVersion(project).map(_.prettyString).getOrElse("-") + "\n")
     messages.+=(s"${boldToolName("HLint")}: " + HLintComponent.versionInfo(project))
     messages.+=(s"${boldToolName("Hoogle")}: " + HoogleComponent.versionInfo(project))
     messages.+=(s"${boldToolName("Hindent")}: " + HindentReformatAction.versionInfo(project))

@@ -30,79 +30,79 @@ object HaskellNotificationGroup {
   private val WarningGroup = new NotificationGroup("Haskell Warning", NotificationDisplayType.NONE, true)
   private val BalloonGroup = new NotificationGroup("Haskell Balloon", NotificationDisplayType.BALLOON, true)
 
-  def logErrorEvent(project: Option[Project], message: String) {
+  def logErrorEvent(project: Option[Project], message: String): Unit = {
     logEvent(project, message, ERROR, LogOnlyGroup.createNotification)
   }
 
-  def logErrorEvent(project: Project, message: String) {
+  def logErrorEvent(project: Project, message: String): Unit = {
     logEvent(Option(project), message, ERROR, LogOnlyGroup.createNotification)
   }
 
-  def logErrorEvent(message: String) {
+  def logErrorEvent(message: String): Unit = {
     logEvent(None, message, ERROR, LogOnlyGroup.createNotification)
   }
 
-  def logWarningEvent(project: Project, message: String) {
+  def logWarningEvent(project: Project, message: String): Unit = {
     logEvent(Option(project), message, WARNING, LogOnlyGroup.createNotification)
   }
 
-  def warningEvent(project: Project, message: String) {
+  def warningEvent(project: Project, message: String): Unit = {
     logEvent(Option(project), message, WARNING, WarningGroup.createNotification)
   }
 
-  def logWarningEvent(message: String) {
+  def logWarningEvent(message: String): Unit = {
     logEvent(None, message, WARNING, LogOnlyGroup.createNotification)
   }
 
-  def logInfoEvent(project: Option[Project], message: String) {
+  def logInfoEvent(project: Option[Project], message: String): Unit = {
     logEvent(project, message, INFO, LogOnlyGroup.createNotification)
   }
 
-  def logInfoEvent(project: Project, message: String) {
+  def logInfoEvent(project: Project, message: String): Unit = {
     logEvent(Option(project), message, INFO, LogOnlyGroup.createNotification)
   }
 
-  def logInfoEvent(message: String) {
+  def logInfoEvent(message: String): Unit = {
     logEvent(None, message, INFO, LogOnlyGroup.createNotification)
   }
 
-  def logErrorBalloonEvent(project: Option[Project], message: String) {
+  def logErrorBalloonEvent(project: Option[Project], message: String): Unit = {
     balloonEvent(project, message, ERROR)
   }
 
-  def logErrorBalloonEvent(project: Project, message: String) {
+  def logErrorBalloonEvent(project: Project, message: String): Unit = {
     balloonEvent(Option(project), message, ERROR)
   }
 
-  def logErrorBalloonEvent(project: Project, message: String, listener: NotificationListener) {
+  def logErrorBalloonEvent(project: Project, message: String, listener: NotificationListener): Unit = {
     BalloonGroup.createNotification("", message, ERROR.toNotificationType, listener).notify(project)
   }
 
-  def logErrorBalloonEvent(message: String) {
+  def logErrorBalloonEvent(message: String): Unit = {
     balloonEvent(None, message, ERROR)
   }
 
-  def logWarningBalloonEvent(project: Option[Project], message: String) {
+  def logWarningBalloonEvent(project: Option[Project], message: String): Unit = {
     balloonEvent(project, message, WARNING)
   }
 
-  def logWarningBalloonEvent(project: Project, message: String) {
+  def logWarningBalloonEvent(project: Project, message: String): Unit = {
     balloonEvent(Option(project), message, WARNING)
   }
 
-  def logWarningBalloonEvent(message: String) {
+  def logWarningBalloonEvent(message: String): Unit = {
     balloonEvent(None, message, WARNING)
   }
 
-  def logInfoBalloonEvent(project: Project, message: String) {
+  def logInfoBalloonEvent(project: Project, message: String): Unit = {
     balloonEvent(Option(project), message, INFO)
   }
 
-  def logInfoBalloonEvent(message: String) {
+  def logInfoBalloonEvent(message: String): Unit = {
     balloonEvent(None, message, INFO)
   }
 
-  def logInfoBalloonEvent(project: Project, message: String, listener: NotificationListener) {
+  def logInfoBalloonEvent(project: Project, message: String, listener: NotificationListener): Unit = {
     BalloonGroup.createNotification("", message, INFO.toNotificationType, listener).notify(project)
   }
 
@@ -117,15 +117,15 @@ object HaskellNotificationGroup {
     }
   }
 
-  private def logEvent(project: Option[Project], message: String, messageType: MessageType, notification: (String, MessageType) => Notification) = {
+  private def logEvent(project: Option[Project], message: String, messageType: MessageType, notification: (String, MessageType) => Notification): Unit = {
     log(project, message, messageType, notification)
   }
 
-  private def balloonEvent(project: Option[Project], message: String, messageType: MessageType) = {
+  private def balloonEvent(project: Option[Project], message: String, messageType: MessageType): Unit = {
     log(project, message, messageType, BalloonGroup.createNotification)
   }
 
-  private def log(project: Option[Project], message: String, messageType: MessageType, notification: (String, MessageType) => Notification) = {
+  private def log(project: Option[Project], message: String, messageType: MessageType, notification: (String, MessageType) => Notification): Unit = {
     project match {
       case Some(p) if !p.isDisposed && p.isOpen => notification(message, messageType).notify(p)
       case None => notification(message, messageType).notify(null)

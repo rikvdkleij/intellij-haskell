@@ -43,9 +43,9 @@ import intellij.haskell.{GlobalInfo, HaskellNotificationGroup}
 import javax.swing.Icon
 
 import scala.annotation.tailrec
-import scala.collection.JavaConverters._
 import scala.collection.mutable.ListBuffer
 import scala.concurrent.duration._
+import scala.jdk.CollectionConverters._
 
 class HaskellModuleBuilder extends TemplateModuleBuilder(null, HaskellModuleType.getInstance, List().asJava) {
 
@@ -143,7 +143,7 @@ class HaskellModuleBuilder extends TemplateModuleBuilder(null, HaskellModuleType
 
 class HaskellModuleWizardStep(wizardContext: WizardContext, haskellModuleBuilder: HaskellModuleBuilder) extends ProjectJdkForModuleStep(wizardContext, HaskellSdkType.getInstance) {
 
-  override def updateDataModel() {
+  override def updateDataModel(): Unit = {
     super.updateDataModel()
     haskellModuleBuilder.setModuleJdk(getJdk)
   }
@@ -248,7 +248,7 @@ object HaskellModuleBuilder {
       }
 
       if (dependsOn.isEmpty) {
-        dependsOnPackageInfos
+        dependsOnPackageInfos.toSeq
       } else {
         go(dependsOn.distinct, dependsOnPackageInfos)
       }

@@ -25,7 +25,7 @@ import com.intellij.psi.{PsiElement, PsiFileFactory, PsiWhiteSpace}
 import intellij.haskell.psi.HaskellTypes._
 import intellij.haskell.{HaskellFile, HaskellLanguage}
 
-import scala.collection.JavaConverters._
+import scala.jdk.CollectionConverters._
 
 object HaskellElementFactory {
 

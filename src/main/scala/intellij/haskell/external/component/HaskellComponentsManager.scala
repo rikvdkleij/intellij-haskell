@@ -16,8 +16,6 @@
 
 package intellij.haskell.external.component
 
-import java.util.concurrent.Executors
-
 import com.intellij.openapi.editor.SelectionModel
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.project.Project
@@ -40,8 +38,14 @@ object HaskellComponentsManager {
 
   case class StackComponentInfo(module: Module, modulePath: String, packageName: String, target: String, stanzaType: StanzaType, sourceDirs: Seq[String], mainIs: Option[String], isImplicitPreludeActive: Boolean, buildDepends: Seq[String], exposedModuleNames: Seq[String] = Seq.empty)
 
-  def findModuleIdentifiersInCache(project: Project)(implicit ec: ExecutionContext): Iterable[ModuleIdentifier] = {
-    val f = Future(BrowseModuleComponent.findModuleIdentifiersInCache(project))
+  def findModuleIdentifiersInCache(project: Project): Iterable[ModuleIdentifier] = {
+    import scala.concurrent.ExecutionContext.Implicits.global
+
+    val f = Future {
+      blocking {
+        BrowseModuleComponent.findModuleIdentifiersInCache(project)
+      }
+    }
     ScalaFutureUtil.waitWithCheckCancelled(project, f, "find module identifiers in cache") match {
       case Some(ids) => ids
       case None => Iterable()
@@ -212,10 +216,10 @@ object HaskellComponentsManager {
     }
   }
 
-  private val ExecutorService = Executors.newCachedThreadPool()
-  implicit val ExecContext: ExecutionContextExecutorService = ExecutionContext.fromExecutorService(ExecutorService)
 
   private def preloadLibraryIdentifiers(project: Project): Unit = {
+    import scala.concurrent.ExecutionContext.Implicits.global
+
     if (!project.isDisposed) {
       BrowseModuleComponent.findModuleIdentifiers(project, HaskellProjectUtil.Prelude)
     }

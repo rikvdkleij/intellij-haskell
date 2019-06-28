@@ -7,8 +7,8 @@ import com.intellij.psi.{PsiElement, PsiReference}
 import intellij.haskell.external.component.NoInfoAvailable
 import intellij.haskell.util.HaskellEditorUtil
 
-import scala.collection.JavaConverters._
 import scala.collection.mutable.ListBuffer
+import scala.jdk.CollectionConverters._
 
 class HaskellTargetElementUtil extends TargetElementUtil {
 

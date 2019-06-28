@@ -9,7 +9,7 @@ import com.intellij.openapi.project.Project
 import intellij.haskell.external.component.HaskellComponentsManager
 import intellij.haskell.runconfig.HaskellStackConfigurationBase
 
-import scala.collection.JavaConverters._
+import scala.jdk.CollectionConverters._
 
 class HaskellConsoleConfiguration(name: String, project: Project, configurationFactory: ConfigurationFactory)
   extends HaskellStackConfigurationBase(name, project, configurationFactory) {

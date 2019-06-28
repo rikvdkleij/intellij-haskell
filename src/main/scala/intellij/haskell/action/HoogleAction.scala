@@ -24,11 +24,11 @@ import intellij.haskell.util.HaskellEditorUtil
 
 class HoogleAction extends AnAction {
 
-  override def update(actionEvent: AnActionEvent) {
+  override def update(actionEvent: AnActionEvent): Unit = {
     HaskellEditorUtil.enableExternalAction(actionEvent, (project: Project) => StackProjectManager.isHoogleAvailable(project) && HoogleComponent.doesHoogleDatabaseExist(project))
   }
 
-  def actionPerformed(actionEvent: AnActionEvent) {
+  def actionPerformed(actionEvent: AnActionEvent): Unit = {
     ActionUtil.findActionContext(actionEvent).foreach(actionContext => {
       val editor = actionContext.editor
       val psiFile = actionContext.psiFile

@@ -23,11 +23,11 @@ import intellij.haskell.util.HaskellEditorUtil
 
 class ShowNameInfoAction extends AnAction {
 
-  override def update(actionEvent: AnActionEvent) {
+  override def update(actionEvent: AnActionEvent): Unit = {
     HaskellEditorUtil.enableAction(onlyForSourceFile = false, actionEvent)
   }
 
-  def actionPerformed(actionEvent: AnActionEvent) {
+  def actionPerformed(actionEvent: AnActionEvent): Unit = {
     if (!StackProjectManager.isInitializing(actionEvent.getProject)) {
       ActionUtil.findActionContext(actionEvent).foreach(actionContext => {
         val editor = actionContext.editor

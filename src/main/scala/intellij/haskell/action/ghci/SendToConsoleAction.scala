@@ -7,11 +7,11 @@ import intellij.haskell.runconfig.console.HaskellConsoleViewMap
 
 class SendToConsoleAction extends AnAction {
 
-  override def update(actionEvent: AnActionEvent) {
+  override def update(actionEvent: AnActionEvent): Unit = {
     actionEvent.getPresentation.setEnabled(HaskellConsoleViewMap.getConsole(actionEvent.getProject).isDefined)
   }
 
-  def actionPerformed(actionEvent: AnActionEvent) {
+  def actionPerformed(actionEvent: AnActionEvent): Unit = {
     ActionUtil.findActionContext(actionEvent).foreach(actionContext => {
       val editor = actionContext.editor
       val psiFile = actionContext.psiFile

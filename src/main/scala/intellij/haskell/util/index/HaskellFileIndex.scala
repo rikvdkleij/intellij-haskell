@@ -7,7 +7,7 @@ import com.intellij.psi.search.{FileTypeIndex, GlobalSearchScope, GlobalSearchSc
 import intellij.haskell.HaskellFileType
 import intellij.haskell.util.HaskellFileUtil
 
-import scala.collection.JavaConverters._
+import scala.jdk.CollectionConverters._
 
 object HaskellFileIndex {
 

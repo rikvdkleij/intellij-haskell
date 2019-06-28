@@ -26,8 +26,9 @@ import intellij.haskell.external.component.HaskellComponentsManager.StackCompone
 import intellij.haskell.external.repl.StackRepl.StackReplOutput
 import intellij.haskell.util.{HaskellFileUtil, ScalaFutureUtil}
 
-import scala.collection.JavaConverters._
-import scala.concurrent.Future
+import scala.concurrent.duration._
+import scala.concurrent.{Future, blocking}
+import scala.jdk.CollectionConverters._
 
 case class ProjectStackRepl(project: Project, stackComponentInfo: StackComponentInfo, replTimeout: Int) extends StackRepl(project, Some(stackComponentInfo), Seq("--ghc-options", "-fobject-code"), replTimeout: Int) {
 
@@ -64,7 +65,6 @@ case class ProjectStackRepl(project: Project, stackComponentInfo: StackComponent
   private var objectCodeEnabled = true
 
   import scala.concurrent.ExecutionContext.Implicits.global
-  import scala.concurrent.duration._
 
   private def isReadAccessAllowed = ApplicationManager.getApplication.isReadAccessAllowed
 
@@ -72,7 +72,9 @@ case class ProjectStackRepl(project: Project, stackComponentInfo: StackComponent
     val filePath = getFilePath(psiFile)
 
     def execute = {
-      executeModuleLoadedCommand(moduleName, psiFile, s":type-at $filePath $startLineNr $startColumnNr $endLineNr $endColumnNr $expression")
+      blocking {
+        executeModuleLoadedCommand(moduleName, psiFile, s":type-at $filePath $startLineNr $startColumnNr $endLineNr $endColumnNr $expression")
+      }
     }
 
     if (isReadAccessAllowed) {
@@ -86,7 +88,9 @@ case class ProjectStackRepl(project: Project, stackComponentInfo: StackComponent
     val filePath = getFilePath(psiFile)
 
     def execute = {
-      executeModuleLoadedCommand(moduleName, psiFile, s":loc-at $filePath $startLineNr $startColumnNr $endLineNr $endColumnNr $expression")
+      blocking {
+        executeModuleLoadedCommand(moduleName, psiFile, s":loc-at $filePath $startLineNr $startColumnNr $endLineNr $endColumnNr $expression")
+      }
     }
 
     if (isReadAccessAllowed) {
@@ -98,7 +102,9 @@ case class ProjectStackRepl(project: Project, stackComponentInfo: StackComponent
 
   def findInfo(psiFile: PsiFile, name: String): Option[StackReplOutput] = {
     def execute = {
-      executeWithLoad(psiFile, s":info $name", mustBeByteCode = true)
+      blocking {
+        executeWithLoad(psiFile, s":info $name", mustBeByteCode = true)
+      }
     }
 
     if (isReadAccessAllowed) {

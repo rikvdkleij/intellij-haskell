@@ -95,7 +95,7 @@ private[external] object StackReplsManager {
 
 private[external] class StackReplsManager(val project: Project) {
 
-  import scala.collection.JavaConverters._
+  import scala.jdk.CollectionConverters._
 
   private val globalRepl: GlobalStackRepl = GlobalStackRepl(project, HaskellSettingsState.getReplTimeout)
 

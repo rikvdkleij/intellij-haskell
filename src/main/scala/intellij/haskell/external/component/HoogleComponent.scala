@@ -27,8 +27,9 @@ import intellij.haskell.psi.{HaskellPsiUtil, HaskellQualifiedNameElement}
 import intellij.haskell.util.{HtmlElement, ScalaFutureUtil}
 import intellij.haskell.{GlobalInfo, HaskellNotificationGroup}
 
-import scala.collection.JavaConverters._
-import scala.concurrent.Future
+import scala.collection.mutable
+import scala.concurrent.{Future, blocking}
+import scala.jdk.CollectionConverters._
 
 object HoogleComponent {
 
@@ -45,9 +46,9 @@ object HoogleComponent {
           if (o.getStdoutLines.isEmpty || o.getStdout.contains("No results found"))
             Seq()
           else if (o.getStdoutLines.asScala.last.startsWith("-- ")) {
-            o.getStdoutLines.asScala.init
+            o.getStdoutLines.asScala.init.toSeq
           } else {
-            o.getStdoutLines.asScala
+            o.getStdoutLines.asScala.toSeq
           }
         )
     } else {
@@ -79,7 +80,7 @@ object HoogleComponent {
   }
 
   private def createDocumentation(project: Project, name: String, locationName: Option[String]): Option[String] = {
-    def mkString(lines: Seq[String]) = {
+    def mkString(lines: mutable.Seq[String]) = {
       lines.mkString("\n").
         replace("<", HtmlElement.Lt).
         replace(">", HtmlElement.Gt).
@@ -156,7 +157,12 @@ object HoogleComponent {
   private def runHoogle(project: Project, arguments: Seq[String]): Option[ProcessOutput] = {
     ProgressManager.checkCanceled()
 
-    ScalaFutureUtil.waitWithCheckCancelled(project, Future(CommandLine.run(project, HooglePath, Seq(s"--database=${hoogleDbPath(project)}") ++ arguments, logOutput = true)), "runHoogle")
+    ScalaFutureUtil.waitWithCheckCancelled(project,
+      Future {
+        blocking {
+          CommandLine.run(project, HooglePath, Seq(s"--database=${hoogleDbPath(project)}") ++ arguments, logOutput = true)
+        }
+      }, "runHoogle")
   }
 
   private def hoogleDbPath(project: Project) = {

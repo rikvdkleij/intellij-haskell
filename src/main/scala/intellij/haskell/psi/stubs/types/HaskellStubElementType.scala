@@ -22,7 +22,7 @@ import intellij.haskell.psi.HaskellCompositeElement
 
 abstract class HaskellStubElementType[S <: StubElement[T], T <: HaskellCompositeElement](debugName: String) extends IStubElementType[S, T](debugName, HaskellLanguage.Instance) {
 
-  def indexStub(stub: S, sink: IndexSink)
+  def indexStub(stub: S, sink: IndexSink): Unit
 
   def getExternalId: String = {
     "haskell." + super.toString

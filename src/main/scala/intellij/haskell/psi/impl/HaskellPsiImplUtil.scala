@@ -29,7 +29,7 @@ import intellij.haskell.util.{HaskellFileUtil, StringUtil}
 import javax.swing._
 
 import scala.annotation.tailrec
-import scala.collection.JavaConverters._
+import scala.jdk.CollectionConverters._
 
 object HaskellPsiImplUtil {
 
@@ -321,7 +321,7 @@ object HaskellPsiImplUtil {
   }
 
   def getIdentifierElements(typeSignature: HaskellTypeSignature): Seq[HaskellNamedElement] = {
-    typeSignature.getQNamesList.asScala.flatMap(_.getQNameList.asScala).map(_.getIdentifierElement)
+    typeSignature.getQNamesList.asScala.flatMap(_.getQNameList.asScala).map(_.getIdentifierElement).toSeq
   }
 
   def getIdentifierElements(dataDeclaration: HaskellDataDeclaration): Seq[HaskellNamedElement] = {
@@ -360,7 +360,7 @@ object HaskellPsiImplUtil {
   }
 
   def getIdentifierElements(typeFamilyDeclaration: HaskellTypeFamilyDeclaration): Seq[HaskellNamedElement] = {
-    typeFamilyDeclaration.getTypeFamilyType.getQNameList.asScala.map(_.getIdentifierElement) ++
+    typeFamilyDeclaration.getTypeFamilyType.getQNameList.asScala.map(_.getIdentifierElement).toSeq ++
       typeFamilyDeclaration.getTypeFamilyType.getQNamesList.asScala.flatMap(_.getQNameList.asScala.map(_.getIdentifierElement))
   }
 
@@ -373,12 +373,14 @@ object HaskellPsiImplUtil {
   }
 
   def getIdentifierElements(simpleType: HaskellSimpletype): Seq[HaskellNamedElement] = {
-    simpleType.getQNameList.asScala.map(_.getIdentifierElement) ++ {
-      Option(simpleType.getTtype) match {
-        case Some(t) => t.getQNameList.asScala.headOption.map(_.getIdentifierElement).toSeq
-        case None => simpleType.getQNameList.asScala.headOption.map(_.getIdentifierElement).toSeq
+    {
+      simpleType.getQNameList.asScala.map(_.getIdentifierElement) ++ {
+        Option(simpleType.getTtype) match {
+          case Some(t) => t.getQNameList.asScala.headOption.map(_.getIdentifierElement)
+          case None => simpleType.getQNameList.asScala.headOption.map(_.getIdentifierElement)
+        }
       }
-    }
+    }.toSeq
   }
 
   def getIdentifierElements(defaultDeclaration: HaskellDefaultDeclaration): Seq[HaskellNamedElement] = {

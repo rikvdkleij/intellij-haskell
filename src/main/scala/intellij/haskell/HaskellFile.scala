@@ -67,7 +67,7 @@ class HaskellFileType extends LanguageFileType(HaskellLanguage.Instance) {
 }
 
 class HaskellLanguageFileTypeFactory extends FileTypeFactory {
-  def createFileTypes(consumer: FileTypeConsumer) {
+  def createFileTypes(consumer: FileTypeConsumer): Unit = {
     consumer.consume(AlexFileType.INSTANCE, AlexFileType.INSTANCE.getDefaultExtension)
     consumer.consume(CabalFileType.INSTANCE, CabalFileType.INSTANCE.getDefaultExtension)
     consumer.consume(CabalFileType.INSTANCE, new ExactFileNameMatcher("cabal.config"))

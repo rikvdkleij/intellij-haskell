@@ -24,7 +24,7 @@ import intellij.haskell.external.repl._
 import intellij.haskell.util.index.HaskellModuleNameIndex
 import intellij.haskell.util.{HaskellFileUtil, StringUtil}
 
-import scala.concurrent.{ExecutionContext, Future}
+import scala.concurrent.{ExecutionContext, Future, blocking}
 
 private[component] object BrowseModuleComponent {
 
@@ -42,7 +42,7 @@ private[component] object BrowseModuleComponent {
   })
 
   private def matchResult(key: Key, result: Future[BrowseModuleInternalResult])(implicit ec: ExecutionContext): Future[Option[Iterable[ModuleIdentifier]]] = {
-    concurrent.blocking(result.map {
+    blocking(result.map {
       case Right(ids) => Some(ids)
       case Left(NoInfoAvailable(_, _)) | Left(NoMatchingExport) =>
         None

@@ -71,7 +71,7 @@ class HaskellOptimizeImportsBeforeCheckinHandler(project: Project, checkinProjec
   }
 
   override def runCheckinHandlers(finishAction: Runnable): Unit = {
-    import scala.collection.JavaConverters._
+    import scala.jdk.CollectionConverters._
     val virtualFiles = checkinProjectPanel.getVirtualFiles
 
     val performCheckoutAction: Runnable = () => {
@@ -90,7 +90,7 @@ class HaskellOptimizeImportsBeforeCheckinHandler(project: Project, checkinProjec
   }
 
 
-  private def disableWhenDumb(project: Project, checkBox: JCheckBox, tooltip: String) = {
+  private def disableWhenDumb(project: Project, checkBox: JCheckBox, tooltip: String): Unit = {
     val dumb = DumbService.isDumb(project)
     checkBox.setEnabled(!dumb)
     checkBox.setToolTipText(if (dumb) tooltip else "")

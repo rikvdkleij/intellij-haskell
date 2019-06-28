@@ -28,9 +28,9 @@ import intellij.haskell.psi.HaskellPsiUtil
 import intellij.haskell.util.{ApplicationUtil, HaskellFileUtil}
 import intellij.haskell.{HaskellFileType, HaskellNotificationGroup}
 
-import scala.collection.JavaConverters._
 import scala.concurrent.Await
 import scala.concurrent.duration._
+import scala.jdk.CollectionConverters._
 
 private[component] object AvailableModuleNamesComponent {
 

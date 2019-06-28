@@ -24,7 +24,7 @@ abstract class AlexIdMixin(node: ASTNode) extends AlexElementImpl(node)
   override def multiResolve(b: Boolean): Array[ResolveResult] = {
     val declarations = getAlexDeclarationsSection
     if (declarations == null) return Array()
-    val variants = mutable.MutableList[ResolveResult]()
+    val variants = mutable.ArrayBuffer[ResolveResult]()
     declarations.getDeclarationList.forEach { decl =>
       val tokenSet = decl.getTokenSetDeclaration
       if (tokenSet != null && (tokenSet.getTokenSetId.getText equals getText))
@@ -47,7 +47,7 @@ abstract class AlexIdMixin(node: ASTNode) extends AlexElementImpl(node)
   override def getVariants: Array[AnyRef] = {
     val declarations = getAlexDeclarationsSection
     if (declarations == null) return Array()
-    val variants = mutable.MutableList[AnyRef]()
+    val variants = mutable.ArrayBuffer[AnyRef]()
     declarations.getDeclarationList.forEach { decl =>
       val tokenSet = decl.getTokenSetDeclaration
       if (tokenSet != null) variants += tokenSet.getTokenSetId.getText

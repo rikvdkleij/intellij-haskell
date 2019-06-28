@@ -158,7 +158,7 @@ object StackProjectManager {
 
         ProgressManager.getInstance().run(new Task.Backgroundable(project, "Building project, starting REPL(s) and preloading cache", false, PerformInBackgroundOption.ALWAYS_BACKGROUND) {
 
-          def run(progressIndicator: ProgressIndicator) {
+          def run(progressIndicator: ProgressIndicator): Unit = {
             HaskellNotificationGroup.logInfoEvent(project, "Initializing Haskell project")
 
             try {

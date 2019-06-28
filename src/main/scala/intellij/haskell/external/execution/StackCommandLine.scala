@@ -16,7 +16,7 @@
 
 package intellij.haskell.external.execution
 
-import java.util.concurrent.LinkedBlockingDeque
+import java.util.concurrent.{LinkedBlockingDeque, TimeUnit}
 
 import com.intellij.compiler.impl._
 import com.intellij.compiler.progress.CompilerTask
@@ -33,8 +33,7 @@ import intellij.haskell.settings.HaskellSettingsState
 import intellij.haskell.stackyaml.StackYamlComponent
 import intellij.haskell.util.{HaskellFileUtil, HaskellProjectUtil}
 
-import scala.collection.JavaConverters._
-import scala.concurrent.SyncVar
+import scala.jdk.CollectionConverters._
 
 object StackCommandLine {
 
@@ -140,13 +139,13 @@ object StackCommandLine {
 
       val compileContext = new CompileContextImpl(project, compilerTask, new ProjectCompileScope(project), false, false)
 
-      val compileResult = new SyncVar[Boolean]
+      val compileResult = new LinkedBlockingDeque[Boolean](1)
 
       compilerTask.start(() => {
         compileResult.put(compileTask.execute(compileContext))
       }, null)
 
-      compileResult.get(1800000).getOrElse(false) // Wait max half an hour
+      compileResult.poll(30, TimeUnit.MINUTES) // Wait max half an hour
     })
   }
 
@@ -160,7 +159,7 @@ object StackCommandLine {
     @volatile
     private var globalError = false
 
-    override def onTextAvailable(event: ProcessEvent, outputType: Key[_]) {
+    override def onTextAvailable(event: ProcessEvent, outputType: Key[_]): Unit = {
       // Workaround to remove the indentation after `-- While building` so the error/warning lines can be properly  parsed.
       val text = if (whileBuildingTextIsPassed) {
         event.getText.drop(4)
@@ -180,7 +179,7 @@ object StackCommandLine {
       }
     }
 
-    private def addToMessageView(text: String, outputType: Key[_]) {
+    private def addToMessageView(text: String, outputType: Key[_]): Unit = {
       if (text.trim.nonEmpty) {
         if (outputType == ProcessOutputTypes.STDERR) {
           if (text.startsWith("Error:") && text.trim.endsWith(":") || text.startsWith("Unable to parse") || text.startsWith("Error parsing")) {

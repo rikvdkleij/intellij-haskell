@@ -23,7 +23,7 @@ import com.intellij.util.ProcessingContext
 import intellij.haskell.navigation.HaskellReference
 
 class HaskellReferenceContributor extends PsiReferenceContributor {
-  def registerReferenceProviders(registrar: PsiReferenceRegistrar) {
+  def registerReferenceProviders(registrar: PsiReferenceRegistrar): Unit = {
     registrar.registerReferenceProvider(PlatformPatterns.psiElement(classOf[HaskellNamedElement]), (element: PsiElement, context: ProcessingContext) => {
       element match {
         case ne: HaskellNamedElement => Array(new HaskellReference(ne, TextRange.from(0, element.getTextLength)))

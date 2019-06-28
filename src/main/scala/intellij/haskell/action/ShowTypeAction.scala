@@ -28,11 +28,11 @@ import intellij.haskell.util.{HaskellEditorUtil, StringUtil}
 
 class ShowTypeAction extends AnAction {
 
-  override def update(actionEvent: AnActionEvent) {
+  override def update(actionEvent: AnActionEvent): Unit = {
     HaskellEditorUtil.enableAction(onlyForSourceFile = true, actionEvent)
   }
 
-  def actionPerformed(actionEvent: AnActionEvent) {
+  def actionPerformed(actionEvent: AnActionEvent): Unit = {
     if (!StackProjectManager.isInitializing(actionEvent.getProject)) {
       ActionUtil.findActionContext(actionEvent).foreach(actionContext => {
         val editor = actionContext.editor

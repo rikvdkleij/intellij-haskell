@@ -46,7 +46,7 @@ object CabalConfigComponent {
   }
 
   private def getCabalConfigFilePath(project: Project): String = {
-    GlobalInfo.getIntelliJProjectDirectory(project) + File.separator + "cabal.config"
+    GlobalInfo.getIntelliJProjectDirectory(project).getAbsolutePath + File.separator + "cabal.config"
   }
 
   private def getCabalConfigFile(project: Project): File = {

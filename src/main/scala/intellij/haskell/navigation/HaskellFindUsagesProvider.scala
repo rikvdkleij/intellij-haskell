@@ -39,7 +39,7 @@ class HaskellFindUsagesProvider extends FindUsagesProvider {
   }
 
   @tailrec
-  private def processTokens(lexer: HaskellLexer, fileText: CharSequence, processor: Processor[WordOccurrence], prevDots: ListBuffer[IElementType]) {
+  private def processTokens(lexer: HaskellLexer, fileText: CharSequence, processor: Processor[WordOccurrence], prevDots: ListBuffer[IElementType]): Unit = {
     val tokenType = lexer.getTokenType
     if (tokenType != null) {
       if (HaskellParserDefinition.Ids.contains(tokenType) || tokenType == HS_DOT) {

@@ -6,16 +6,17 @@ import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.project.Project
 import com.intellij.psi.PsiFile
 
-import scala.collection.JavaConverters._
+import scala.collection.concurrent
+import scala.jdk.CollectionConverters._
 
 object HaskellConsoleViewMap {
   private val consoleViews = new ConcurrentHashMap[Editor, HaskellConsoleView]().asScala
 
-  def addConsole(console: HaskellConsoleView) {
+  def addConsole(console: HaskellConsoleView): Unit = {
     consoleViews.put(console.getConsoleEditor, console)
   }
 
-  def delConsole(console: HaskellConsoleView) {
+  def delConsole(console: HaskellConsoleView): Unit = {
     consoleViews.remove(console.getConsoleEditor)
   }
 
@@ -28,5 +29,5 @@ object HaskellConsoleViewMap {
   }
 
   // File is project file and not file which represents console
-  val projectFileByConfigName = new ConcurrentHashMap[String, PsiFile]().asScala
+  val projectFileByConfigName: concurrent.Map[String, PsiFile] = new ConcurrentHashMap[String, PsiFile]().asScala
 }

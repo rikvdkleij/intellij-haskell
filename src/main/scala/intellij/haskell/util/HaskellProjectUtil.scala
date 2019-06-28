@@ -31,7 +31,7 @@ import intellij.haskell.module.HaskellModuleType
 import intellij.haskell.sdk.HaskellSdkType
 import org.jetbrains.jps.model.java.JavaModuleSourceRootTypes
 
-import scala.collection.JavaConverters._
+import scala.jdk.CollectionConverters._
 
 object HaskellProjectUtil {
 

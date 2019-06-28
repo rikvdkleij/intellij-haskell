@@ -8,7 +8,7 @@ import com.intellij.util.xmlb.XmlSerializer
 import intellij.haskell.sdk.HaskellSdkType
 import org.jdom.Element
 
-import scala.collection.JavaConverters._
+import scala.jdk.CollectionConverters._
 
 abstract class HaskellStackConfigurationBase(name: String, project: Project, configurationFactory: ConfigurationFactory)
   extends ModuleBasedConfiguration[RunConfigurationModule, HaskellStackConfigurationBase](name, new RunConfigurationModule(project), configurationFactory) {
@@ -20,17 +20,17 @@ abstract class HaskellStackConfigurationBase(name: String, project: Project, con
 
   override def getValidModules: java.util.Collection[Module] = ModuleManager.getInstance(getProject).getModules.toList.asJava
 
-  override def writeExternal(element: Element) {
+  override def writeExternal(element: Element): Unit = {
     super.writeExternal(element)
     XmlSerializer.serializeInto(this, element)
   }
 
-  override def readExternal(element: Element) {
+  override def readExternal(element: Element): Unit = {
     super.readExternal(element)
     XmlSerializer.deserializeInto(this, element)
   }
 
-  override def checkConfiguration() {
+  override def checkConfiguration(): Unit = {
     val selectedModule = getConfigurationModule.getModule
     if (selectedModule == null)
       throw new RuntimeConfigurationException("Haskell module is not selected")
@@ -40,7 +40,7 @@ abstract class HaskellStackConfigurationBase(name: String, project: Project, con
       throw new RuntimeConfigurationException("Haskell Stack SDK is configured for the project")
   }
 
-  def setWorkingDirPath(workingDirPath: String) {
+  def setWorkingDirPath(workingDirPath: String): Unit = {
     this.workingDirPath = workingDirPath
   }
 
@@ -52,7 +52,7 @@ abstract class HaskellStackConfigurationBase(name: String, project: Project, con
     }
   }
 
-  def setStackArgs(stackArgs: String) {
+  def setStackArgs(stackArgs: String): Unit = {
     this.stackArgs = stackArgs
   }
 

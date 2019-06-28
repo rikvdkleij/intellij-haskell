@@ -192,6 +192,8 @@ class HaskellReference(element: HaskellNamedElement, textRange: TextRange) exten
 
 object HaskellReference {
 
+  import scala.jdk.CollectionConverters._
+
   def resolveInstanceReferences(project: Project, namedElement: HaskellNamedElement, nameInfos: Iterable[NameInfoComponentResult.NameInfo]): Seq[HaskellNamedElement] = {
     val identifiers = nameInfos.map(ni => findIdentifiersByNameInfo(ni, namedElement, project)).toSeq.distinct
     if (identifiers.contains(Left(ReadActionTimeout))) {
@@ -243,7 +245,6 @@ object HaskellReference {
   }
 
   def findIdentifierInFileByName(psifile: PsiFile, name: String): Option[HaskellNamedElement] = {
-    import scala.collection.JavaConverters._
 
     ProgressManager.checkCanceled()
 
@@ -269,8 +270,6 @@ object HaskellReference {
       expressionIdentifiers
     }
   }
-
-  import scala.collection.JavaConverters._
 
   def findIdentifierByLocation(project: Project, virtualFile: VirtualFile, psiFile: PsiFile, lineNr: Integer, columnNr: Integer, name: String): Option[HaskellNamedElement] = {
     ProgressManager.checkCanceled()

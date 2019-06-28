@@ -62,7 +62,7 @@ trait ModulePartImpl extends CabalNamedElementImpl {
       if (revPos == -1) throw new AssertionError(s"$getText not in parent (${getParent.getText})")
       // Iterate up the directory tree 'revPos' times.
 
-      Stream.iterate(
+      LazyList.iterate(
         lp.getContainingFile.getContainingDirectory, revPos
       )(_.getParent).lastOption.filter(
         // Ensure that the found directory name matches our element.

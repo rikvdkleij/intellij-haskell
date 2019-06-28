@@ -28,7 +28,7 @@ class HaskellReformatAction extends ReformatCodeAction {
   private val presentation: Presentation = getTemplatePresentation
   presentation.setText("Reformat Code")
 
-  override def update(actionEvent: AnActionEvent) {
+  override def update(actionEvent: AnActionEvent): Unit = {
     ActionUtil.findActionContext(actionEvent).foreach(actionContext => {
       val psiFile = actionContext.psiFile
       if (HaskellFileUtil.isHaskellFile(psiFile)) {

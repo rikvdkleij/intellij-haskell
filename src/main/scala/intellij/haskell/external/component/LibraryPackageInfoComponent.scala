@@ -24,10 +24,9 @@ import intellij.haskell.external.execution.CommandLine
 import intellij.haskell.util.ScalaUtil
 import intellij.haskell.util.StringUtil.removePackageQualifier
 
+import scala.jdk.CollectionConverters._
 
 private[component] object LibraryPackageInfoComponent {
-
-  import scala.collection.JavaConverters._
 
   private case class Key(project: Project, packageName: String)
 
@@ -37,7 +36,7 @@ private[component] object LibraryPackageInfoComponent {
 
   private def splitLines(s: String, excludeEmptyLines: Boolean) = {
     val converted = StringUtil.convertLineSeparators(s)
-    StringUtil.split(converted, "\n", true, excludeEmptyLines).asScala
+    StringUtil.split(converted, "\n", true, excludeEmptyLines).asScala.toSeq
   }
 
   import scala.concurrent.duration._

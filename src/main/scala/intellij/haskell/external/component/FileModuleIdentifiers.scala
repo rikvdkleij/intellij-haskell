@@ -29,9 +29,9 @@ import intellij.haskell.psi.HaskellPsiUtil.findImportDeclarations
 import intellij.haskell.psi.{HaskellImportDeclaration, HaskellImportId, HaskellPsiUtil}
 import intellij.haskell.util.{ApplicationUtil, HaskellProjectUtil, ScalaFutureUtil}
 
-import scala.collection.JavaConverters._
 import scala.concurrent.duration._
-import scala.concurrent.{Await, Future}
+import scala.concurrent.{Await, Future, blocking}
+import scala.jdk.CollectionConverters._
 
 object FileModuleIdentifiers {
 
@@ -75,15 +75,17 @@ object FileModuleIdentifiers {
 
   private def getModuleIdentifiers(psiFile: PsiFile): Future[Iterable[ModuleIdentifier]] = {
     val key = Key(psiFile)
-    Cache.get(key) map {
-      case Some(mids) =>
-        if (mids.toSeq.contains(None)) {
+    blocking {
+      Cache.get(key).map {
+        case Some(mids) =>
+          if (mids.toSeq.contains(None)) {
+            Cache.synchronous.invalidate(key)
+          }
+          mids.flatten.flatten
+        case None =>
           Cache.synchronous.invalidate(key)
-        }
-        mids.flatten.flatten
-      case None =>
-        Cache.synchronous.invalidate(key)
-        Iterable()
+          Iterable()
+      }
     }
   }
 
@@ -130,28 +132,34 @@ object FileModuleIdentifiers {
   private def getModuleIdentifiersFromFullImportedModules(noImplicitPrelude: Boolean, psiFile: PsiFile, importDeclarations: Iterable[HaskellImportDeclaration]): Future[Iterable[Option[Iterable[ModuleIdentifier]]]] = {
     val importInfos = getFullImportedModules(noImplicitPrelude, psiFile, importDeclarations)
 
-    Future.sequence(importInfos.map(importInfo => {
-      val allModuleIdentifiers = HaskellComponentsManager.findModuleIdentifiers(psiFile.getProject, importInfo.moduleName)
-      allModuleIdentifiers.map(mi => mi.map(i => createQualifiedModuleIdentifiers(importInfo, i)))
-    }))
+    blocking {
+      Future.sequence(importInfos.map(importInfo => {
+        val allModuleIdentifiers = BrowseModuleComponent.findModuleIdentifiers(psiFile.getProject, importInfo.moduleName)
+        allModuleIdentifiers.map(mi => mi.map(i => createQualifiedModuleIdentifiers(importInfo, i)))
+      }))
+    }
   }
 
   private def getModuleIdentifiersFromHidingIdsImportedModules(psiFile: PsiFile, importDeclarations: Iterable[HaskellImportDeclaration]): Future[Iterable[Option[Iterable[ModuleIdentifier]]]] = {
     val importInfos = getImportedModulesWithHidingIdsSpec(psiFile, importDeclarations)
 
-    Future.sequence(importInfos.map(importInfo => {
-      val allModuleIdentifiers = HaskellComponentsManager.findModuleIdentifiers(psiFile.getProject, importInfo.moduleName)
-      allModuleIdentifiers.map(ids => ids.map(is => createQualifiedModuleIdentifiers(importInfo, is.filterNot(mi => importInfo.ids.exists(_ == mi.name)))))
-    }))
+    blocking {
+      Future.sequence(importInfos.map(importInfo => {
+        val allModuleIdentifiers = BrowseModuleComponent.findModuleIdentifiers(psiFile.getProject, importInfo.moduleName)
+        allModuleIdentifiers.map(ids => ids.map(is => createQualifiedModuleIdentifiers(importInfo, is.filterNot(mi => importInfo.ids.exists(_ == mi.name)))))
+      }))
+    }
   }
 
   private def getModuleIdentifiersFromSpecIdsImportedModules(psiFile: PsiFile, importDeclarations: Iterable[HaskellImportDeclaration]): Future[Iterable[Option[Iterable[ModuleIdentifier]]]] = {
     val importInfos = getImportedModulesWithSpecIds(psiFile, importDeclarations)
 
-    Future.sequence(importInfos.map(importInfo => {
-      val allModuleIdentifiers = HaskellComponentsManager.findModuleIdentifiers(psiFile.getProject, importInfo.moduleName)
-      allModuleIdentifiers.map(ids => ids.map(is => createQualifiedModuleIdentifiers(importInfo, is.filter(mi => importInfo.ids.exists(id => if (mi.isOperator) s"(${mi.name})" == id else id == mi.name)))))
-    }))
+    blocking {
+      Future.sequence(importInfos.map(importInfo => {
+        val allModuleIdentifiers = BrowseModuleComponent.findModuleIdentifiers(psiFile.getProject, importInfo.moduleName)
+        allModuleIdentifiers.map(ids => ids.map(is => createQualifiedModuleIdentifiers(importInfo, is.filter(mi => importInfo.ids.exists(id => if (mi.isOperator) s"(${mi.name})" == id else id == mi.name)))))
+      }))
+    }
   }
 
   private sealed trait ImportInfo {

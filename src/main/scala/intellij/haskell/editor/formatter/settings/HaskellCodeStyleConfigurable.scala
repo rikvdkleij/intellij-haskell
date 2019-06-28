@@ -32,7 +32,7 @@ class HaskellCodeStyleConfigurable(@NotNull settings: CodeStyleSettings, cloneSe
   }
 
   class HaskellCodeStyleMainPanel(currentSettings: CodeStyleSettings, settings: CodeStyleSettings) extends TabbedLanguageCodeStylePanel(HaskellLanguage.Instance, currentSettings, settings) {
-    protected override def initTabs(settings: CodeStyleSettings) {
+    protected override def initTabs(settings: CodeStyleSettings): Unit = {
       addIndentOptionsTab(settings)
     }
   }
