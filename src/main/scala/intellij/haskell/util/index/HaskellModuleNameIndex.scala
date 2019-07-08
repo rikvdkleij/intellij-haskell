@@ -30,8 +30,8 @@ import intellij.haskell.external.component._
 import intellij.haskell.psi.HaskellPsiUtil
 import intellij.haskell.util.{ApplicationUtil, HaskellFileUtil, HaskellProjectUtil}
 
-import scala.collection.JavaConverters._
 import scala.concurrent.duration.{FiniteDuration, _}
+import scala.jdk.CollectionConverters._
 
 /**
   * Notice that Haskell modules in libraries can be found which are not exposed
@@ -108,7 +108,7 @@ object HaskellModuleNameIndex {
   }
 
   def invalidateNotFoundEntries(project: Project): Unit = {
-    val keys = Cache.asMap().filter { case (k, v) => k.project == project && (v.isLeft || v.right.exists(_.isEmpty)) }.keys
+    val keys = Cache.asMap().filter { case (k, v) => k.project == project && (v.isLeft || v.exists(_.isEmpty)) }.keys
     Cache.invalidateAll(keys)
   }
 

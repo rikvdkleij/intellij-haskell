@@ -1,12 +1,12 @@
 lazy val commonSettings = Seq(
-  version := "1.0.0-beta46",
-  scalaVersion := "2.12.8"
+  version := "1.0.0-beta51",
+  scalaVersion := "2.13.0"
 )
 
-val scalaTest = "org.scalatest" %% "scalatest" % "3.0.4" % Test
+val scalaTest = "org.scalatest" %% "scalatest" % "3.0.8" % Test
 val sprayJson = "io.spray" %% "spray-json" % "1.3.5"
-val snakeYaml = "org.yaml" % "snakeyaml" % "1.19"
-val scaffeine = "com.github.blemale" %% "scaffeine" % "2.6.0"
+val snakeYaml = "org.yaml" % "snakeyaml" % "1.23"
+val scaffeine = "com.github.blemale" %% "scaffeine" % "3.0.0"
 val directories = "io.github.soc" % "directories" % "11"
 
 lazy val intellijHaskell = (project in file(".")).
@@ -25,4 +25,4 @@ lazy val intellijHaskell = (project in file(".")).
   )
 
 
-ideaBuild in ThisBuild := "191.6183.87"
+ideaBuild in ThisBuild := "191.7479.19"

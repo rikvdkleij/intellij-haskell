@@ -26,8 +26,8 @@ import intellij.haskell.HaskellFile
 import intellij.haskell.psi.HaskellPsiUtil
 import intellij.haskell.psi.HaskellTypes._
 
-import scala.collection.JavaConverters._
 import scala.collection.mutable.ListBuffer
+import scala.jdk.CollectionConverters._
 
 class HaskellExtendWordSelectioner extends ExtendWordSelectionHandler {
 

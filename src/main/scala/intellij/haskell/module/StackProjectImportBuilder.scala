@@ -34,7 +34,7 @@ import intellij.haskell.stackyaml.StackYamlComponent
 import intellij.haskell.util.{ApplicationUtil, HaskellFileUtil, HaskellProjectUtil, ScalaUtil}
 import javax.swing.Icon
 
-import scala.collection.JavaConverters._
+import scala.jdk.CollectionConverters._
 
 class StackProjectImportBuilder extends ProjectImportBuilder[Unit] {
   override def getName: String = "Haskell Stack"

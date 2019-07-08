@@ -13,8 +13,8 @@ import com.intellij.ui.{EditorNotificationPanel, EditorNotifications}
 import intellij.haskell.external.component.StackProjectManager
 import intellij.haskell.util.{HaskellFileUtil, HaskellProjectUtil}
 
-import scala.collection.JavaConverters._
 import scala.collection.concurrent
+import scala.jdk.CollectionConverters._
 
 object ConfigFileWatcherNotificationProvider {
   private val ConfigFileWatcherKey: Key[EditorNotificationPanel] = Key.create("Haskell config file watcher")
@@ -51,8 +51,6 @@ class ConfigFileWatcherNotificationProvider(project: Project, notifications: Edi
 }
 
 private class ConfigFileWatcher(project: Project, notifications: EditorNotifications) extends BulkFileListener {
-
-  import scala.collection.JavaConverters._
 
   private val watchFiles = HaskellProjectUtil.findStackFile(project).toIterable ++ HaskellProjectUtil.findCabalFiles(project) ++ HaskellProjectUtil.findPackageFiles(project)
 

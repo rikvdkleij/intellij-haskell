@@ -8,7 +8,7 @@ import com.intellij.psi.util.PsiTreeUtil
 import com.intellij.testIntegration.TestFinder
 import intellij.haskell.HaskellFile
 
-import scala.collection.JavaConverters
+import scala.jdk.CollectionConverters._
 
 /**
   * Triggered when the user uses the "Navigation / Test"  action (= jump to test shortcut)
@@ -27,8 +27,8 @@ class HaskellTestFinder extends TestFinder {
     */
   override def findTestsForClass(psiElement: PsiElement): util.Collection[PsiElement] = {
     val testFileName = psiElement.getContainingFile.getName.replace(".hs", "Spec.hs")
-    val testFiles = FilenameIndex.getFilesByName(psiElement.getProject, testFileName, GlobalSearchScope.projectScope(psiElement.getProject))
-    JavaConverters.asJavaCollection(testFiles)
+    val testFiles: Seq[PsiElement] = FilenameIndex.getFilesByName(psiElement.getProject, testFileName, GlobalSearchScope.projectScope(psiElement.getProject)).toIndexedSeq
+    testFiles.asJavaCollection
   }
 
   /**
@@ -36,8 +36,8 @@ class HaskellTestFinder extends TestFinder {
     */
   override def findClassesForTest(psiElement: PsiElement): util.Collection[PsiElement] = {
     val sourceFileName = psiElement.getContainingFile.getName.replace("Spec.hs", ".hs")
-    val sourceFiles = FilenameIndex.getFilesByName(psiElement.getProject, sourceFileName, GlobalSearchScope.projectScope(psiElement.getProject))
-    JavaConverters.asJavaCollection(sourceFiles)
+    val sourceFiles: Seq[PsiElement] = FilenameIndex.getFilesByName(psiElement.getProject, sourceFileName, GlobalSearchScope.projectScope(psiElement.getProject)).toIndexedSeq
+    sourceFiles.asJavaCollection
   }
 
   override def isTest(psiElement: PsiElement): Boolean = {

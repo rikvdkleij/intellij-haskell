@@ -11,11 +11,11 @@ import scala.annotation.tailrec
 
 class ShowTypeStickyAction extends AnAction {
 
-  override def update(actionEvent: AnActionEvent) {
+  override def update(actionEvent: AnActionEvent): Unit = {
     HaskellEditorUtil.enableAction(onlyForSourceFile = true, actionEvent)
   }
 
-  def actionPerformed(actionEvent: AnActionEvent) {
+  def actionPerformed(actionEvent: AnActionEvent): Unit = {
     ActionUtil.findActionContext(actionEvent).foreach(actionContext => {
       val editor = actionContext.editor
       val psiFile = actionContext.psiFile

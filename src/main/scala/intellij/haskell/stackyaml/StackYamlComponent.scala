@@ -7,7 +7,7 @@ import com.intellij.openapi.project.Project
 import intellij.haskell.HaskellNotificationGroup
 import org.yaml.snakeyaml.Yaml
 
-import scala.collection.JavaConverters._
+import scala.jdk.CollectionConverters._
 
 object StackYamlComponent {
 
@@ -37,7 +37,7 @@ object StackYamlComponent {
     } yield {
       packages match {
         case p: util.ArrayList[_] =>
-          p.asScala.flatMap {
+          p.asScala.toSeq.flatMap {
             case s: String if isNotURL(s) => Seq(s)
             case m: util.Map[_, _] =>
               val map = m.asInstanceOf[util.Map[String, Any]].asScala.toMap
@@ -78,7 +78,7 @@ object StackYamlComponent {
 
   private def getSubdirs(project: Project, items: Map[String, Any]): Option[Seq[String]] = {
     items.get("subdirs") match {
-      case Some(sd: util.ArrayList[_]) => Some(sd.asInstanceOf[util.ArrayList[String]].asScala)
+      case Some(sd: util.ArrayList[_]) => Some(sd.asInstanceOf[util.ArrayList[String]].asScala.toSeq)
       case _ => None
     }
   }

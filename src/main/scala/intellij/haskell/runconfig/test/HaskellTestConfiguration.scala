@@ -9,7 +9,7 @@ import com.intellij.openapi.project.Project
 import intellij.haskell.external.component.HaskellComponentsManager
 import intellij.haskell.runconfig.{HaskellStackConfigurationBase, HaskellStackStateBase}
 
-import scala.collection.JavaConverters._
+import scala.jdk.CollectionConverters._
 
 class HaskellTestConfiguration(name: String, project: Project, configurationFactory: ConfigurationFactory)
   extends HaskellStackConfigurationBase(name, project, configurationFactory) {
@@ -21,7 +21,7 @@ class HaskellTestConfiguration(name: String, project: Project, configurationFact
     HaskellComponentsManager.findCabalInfos(project).flatMap(_.testSuites.map(_.targetName)).asJava
   }
 
-  def setTestSuiteTargetName(targetName: String) {
+  def setTestSuiteTargetName(targetName: String): Unit = {
     testSuiteTargetName = targetName
   }
 
@@ -33,7 +33,7 @@ class HaskellTestConfiguration(name: String, project: Project, configurationFact
     }
   }
 
-  def setTestArguments(testPattern: String) {
+  def setTestArguments(testPattern: String): Unit = {
     this.testArguments = testPattern
   }
 

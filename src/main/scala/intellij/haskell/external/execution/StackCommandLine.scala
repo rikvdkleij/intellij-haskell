@@ -16,7 +16,7 @@
 
 package intellij.haskell.external.execution
 
-import java.util.concurrent.LinkedBlockingDeque
+import java.util.concurrent.{LinkedBlockingDeque, TimeUnit}
 
 import com.intellij.compiler.impl._
 import com.intellij.compiler.progress.CompilerTask
@@ -33,8 +33,7 @@ import intellij.haskell.settings.HaskellSettingsState
 import intellij.haskell.stackyaml.StackYamlComponent
 import intellij.haskell.util.{HaskellFileUtil, HaskellProjectUtil}
 
-import scala.collection.JavaConverters._
-import scala.concurrent.SyncVar
+import scala.jdk.CollectionConverters._
 
 object StackCommandLine {
 
@@ -47,6 +46,10 @@ object StackCommandLine {
     } else {
       Seq()
     }
+  }
+
+  def stackVersion(project: Project): Option[String] = {
+    StackCommandLine.run(project, Seq("--numeric-version"), enableExtraArguments = false).flatMap(_.getStdoutLines.asScala.headOption)
   }
 
   def run(project: Project, arguments: Seq[String], timeoutInMillis: Long = CommandLine.DefaultTimeout.toMillis,
@@ -83,19 +86,8 @@ object StackCommandLine {
     run(project, arguments, -1, logOutput = true, notifyBalloonError = true, enableExtraArguments = false)
   }
 
-  def build(project: Project, buildTargets: Seq[String]): Option[ProcessOutput] = {
-    val arguments = Seq("build") ++ buildTargets
-    val processOutput = run(project, arguments, -1, notifyBalloonError = true)
-    if (processOutput.isEmpty || processOutput.exists(_.getExitCode != 0)) {
-      HaskellNotificationGroup.logErrorEvent(project, s"Building `${buildTargets.mkString(", ")}` has failed")
-    } else {
-      HaskellNotificationGroup.logInfoEvent(project, s"Building `${buildTargets.mkString(", ")}` is finished successfully")
-    }
-    processOutput
-  }
-
   def buildProjectDependenciesInMessageView(project: Project): Option[Boolean] = {
-    executeStackCommandInMessageView(project, Seq("build", "--test", "--bench", "--no-run-tests", "--no-run-benchmarks", "--only-dependencies", "--fast"))
+    buildInMessageView(project, Seq("--test", "--bench", "--no-run-tests", "--no-run-benchmarks", "--only-dependencies"))
   }
 
   private def ghcOptions(project: Project) = {
@@ -106,8 +98,12 @@ object StackCommandLine {
     }
   }
 
-  def buildProjectInMessageView(project: Project, arguments: Seq[String]): Option[Boolean] = {
-    executeStackCommandInMessageView(project, Seq("build", "--fast") ++ arguments ++ ghcOptions(project))
+  def buildInBackground(project: Project, arguments: Seq[String]): Option[Boolean] = {
+    run(project, Seq("build", "--fast") ++ arguments).map(_.getExitCode == 0)
+  }
+
+  def buildInMessageView(project: Project, arguments: Seq[String]): Option[Boolean] = {
+    executeStackCommandInMessageView(project, Seq("build", "--fast", "--no-interleaved-output") ++ arguments ++ ghcOptions(project))
   }
 
   def executeStackCommandInMessageView(project: Project, arguments: Seq[String]): Option[Boolean] = {
@@ -143,13 +139,13 @@ object StackCommandLine {
 
       val compileContext = new CompileContextImpl(project, compilerTask, new ProjectCompileScope(project), false, false)
 
-      val compileResult = new SyncVar[Boolean]
+      val compileResult = new LinkedBlockingDeque[Boolean](1)
 
       compilerTask.start(() => {
         compileResult.put(compileTask.execute(compileContext))
       }, null)
 
-      compileResult.get(1800000).getOrElse(false) // Wait max half an hour
+      compileResult.poll(30, TimeUnit.MINUTES) // Wait max half an hour
     })
   }
 
@@ -163,7 +159,7 @@ object StackCommandLine {
     @volatile
     private var globalError = false
 
-    override def onTextAvailable(event: ProcessEvent, outputType: Key[_]) {
+    override def onTextAvailable(event: ProcessEvent, outputType: Key[_]): Unit = {
       // Workaround to remove the indentation after `-- While building` so the error/warning lines can be properly  parsed.
       val text = if (whileBuildingTextIsPassed) {
         event.getText.drop(4)
@@ -183,7 +179,7 @@ object StackCommandLine {
       }
     }
 
-    private def addToMessageView(text: String, outputType: Key[_]) {
+    private def addToMessageView(text: String, outputType: Key[_]): Unit = {
       if (text.trim.nonEmpty) {
         if (outputType == ProcessOutputTypes.STDERR) {
           if (text.startsWith("Error:") && text.trim.endsWith(":") || text.startsWith("Unable to parse") || text.startsWith("Error parsing")) {

@@ -123,7 +123,8 @@ class HaskellReference(element: HaskellNamedElement, textRange: TextRange) exten
 
                 ProgressManager.checkCanceled()
 
-                // Work around Intero bug.
+                // For not exported identifiers the definition location for the type signature has to be resolved "manually".
+                // Making no exception and doing this manually resolving for all type signatures.
                 Option(ts.getParent).flatMap(p => Option(p.getParent)) match {
                   case Some(p) =>
                     find(p) match {
@@ -170,7 +171,7 @@ class HaskellReference(element: HaskellNamedElement, textRange: TextRange) exten
     ProgressManager.checkCanceled()
 
     HaskellComponentsManager.findDefinitionLocation(psiFile, qualifiedNameElement, importQualifier) match {
-      case Right(PackageModuleLocation(_, ne, _)) => Right(ne)
+      case Right(PackageModuleLocation(_, ne, _, _)) => Right(ne)
       case Right(LocalModuleLocation(_, ne, _)) => Right(ne)
       case Left(noInfo) => Left(noInfo)
     }
@@ -193,6 +194,8 @@ class HaskellReference(element: HaskellNamedElement, textRange: TextRange) exten
 }
 
 object HaskellReference {
+
+  import scala.jdk.CollectionConverters._
 
   def resolveInstanceReferences(project: Project, namedElement: HaskellNamedElement, nameInfos: Iterable[NameInfoComponentResult.NameInfo]): Seq[HaskellNamedElement] = {
     val identifiers = nameInfos.map(ni => findIdentifiersByNameInfo(ni, namedElement, project)).toSeq.distinct
@@ -245,7 +248,6 @@ object HaskellReference {
   }
 
   def findIdentifierInFileByName(psifile: PsiFile, name: String): Option[HaskellNamedElement] = {
-    import scala.collection.JavaConverters._
 
     ProgressManager.checkCanceled()
 
@@ -272,8 +274,6 @@ object HaskellReference {
       expressionIdentifiers
     }
   }
-
-  import scala.collection.JavaConverters._
 
   def findIdentifierByLocation(project: Project, virtualFile: VirtualFile, psiFile: PsiFile, lineNr: Integer, columnNr: Integer, name: String): Option[HaskellNamedElement] = {
     ProgressManager.checkCanceled()
@@ -307,7 +307,7 @@ object HaskellReference {
     }
   }
 
-  def findIdentifiersByNameInfo(nameInfo: NameInfo, namedElement: HaskellNamedElement, project: Project): Either[NoInfo, (Option[String], HaskellNamedElement)] = {
+  def findIdentifiersByNameInfo(nameInfo: NameInfo, namedElement: HaskellNamedElement, project: Project): Either[NoInfo, (Option[String], HaskellNamedElement, Option[String])] = {
     ProgressManager.checkCanceled()
 
     val name = namedElement.getName
@@ -316,11 +316,11 @@ object HaskellReference {
         val (virtualFile, psiFile) = HaskellFileUtil.findFileInRead(project, pni.filePath)
         ProgressManager.checkCanceled()
         (virtualFile, psiFile) match {
-          case (Some(vf), Right(pf)) => findIdentifierByLocation(project, vf, pf, pni.lineNr, pni.columnNr, name).map(r => Right(HaskellPsiUtil.findModuleName(pf), r)).getOrElse(Left(NoInfoAvailable(name, "-")))
+          case (Some(vf), Right(pf)) => findIdentifierByLocation(project, vf, pf, pni.lineNr, pni.columnNr, name).map(r => Right(HaskellPsiUtil.findModuleName(pf), r, None)).getOrElse(Left(NoInfoAvailable(name, "-")))
           case (_, Right(_)) => Left(NoInfoAvailable(name, "-"))
           case (_, Left(noInfo)) => Left(noInfo)
         }
-      case lni: LibraryNameInfo => findIdentifiersByLibraryNameInfo(project, lni, name).map({ case (mn, nes) => (Some(mn), nes) })
+      case lni: LibraryNameInfo => findIdentifiersByLibraryNameInfo(project, lni, name).map({ case (mn, nes) => (Some(mn), nes, lni.packageName) })
       case _ => Left(NoInfoAvailable(name, "-"))
     }
   }

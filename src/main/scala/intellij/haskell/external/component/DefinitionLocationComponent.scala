@@ -94,18 +94,26 @@ private[component] object DefinitionLocationComponent {
     try {
       ApplicationUtil.runReadAction(key.qualifiedNameElement.isValid) && ApplicationUtil.runReadAction(key.qualifiedNameElement.getIdentifierElement.isValid)
     } catch {
-      case _: IllegalStateException => false
+      case _: Exception => false
     }
   }
 
   private def checkValidLocation(definitionLocation: DefinitionLocation): Boolean = {
-    ApplicationUtil.runReadAction(definitionLocation.namedElement.isValid)
+    try {
+      ApplicationUtil.runReadAction(definitionLocation.namedElement.isValid)
+    } catch {
+      case _: Exception => false
+    }
   }
 
   private def checkValidName(key: Key, definitionLocation: DefinitionLocation): Boolean = {
-    val keyName = ApplicationUtil.runReadAction(Option(key.qualifiedNameElement.getIdentifierElement.getName))
-    keyName == ApplicationUtil.runReadAction(Option(definitionLocation.namedElement.getName)) &&
-      keyName.contains(definitionLocation.originalName)
+    try {
+      val keyName = ApplicationUtil.runReadAction(Option(key.qualifiedNameElement.getIdentifierElement.getName))
+      keyName == ApplicationUtil.runReadAction(Option(definitionLocation.namedElement.getName)) &&
+        keyName.contains(definitionLocation.originalName)
+    } catch {
+      case _: Exception => false
+    }
   }
 
   private def findDefinitionLocationResult(key: Key): DefinitionLocationResult = {
@@ -117,7 +125,8 @@ private[component] object DefinitionLocationComponent {
 
     ProgressManager.checkCanceled()
 
-    // Again workaround intero bug
+    // GHCi :loc-at does not always give right answer for qualified identifiers. It depends on the order of import declarations...
+    // So in case of qualified identifiers :info is used to find definition location.
     if (libraryFile || key.importQualifier.isDefined || key.qualifiedNameElement.getQualifierName.isDefined) {
 
       findLocationByImportedIdentifiers(project, key, name) match {
@@ -131,10 +140,10 @@ private[component] object DefinitionLocationComponent {
                 ProgressManager.checkCanceled()
 
                 HaskellReference.findIdentifiersByNameInfo(info, key.qualifiedNameElement.getIdentifierElement, project) match {
-                  case Right((mn, ne)) => Right(PackageModuleLocation(findModuleName(ne), ne, name))
+                  case Right((mn, ne, pn)) => Right(PackageModuleLocation(findModuleName(ne), ne, name, pn))
                   case Left(noInfo) =>
                     HaskellReference.findIdentifierInFileByName(psiFile, name).
-                      map(ne => Right(PackageModuleLocation(findModuleName(ne), ne, name))).getOrElse(Left(noInfo))
+                      map(ne => Right(PackageModuleLocation(findModuleName(ne), ne, name, None))).getOrElse(Left(noInfo))
                 }
               case None => Left(NoInfoAvailable(name, psiFile.getName))
             }
@@ -179,7 +188,7 @@ private[component] object DefinitionLocationComponent {
       Left(ModuleNotAvailable("Prelude"))
     } else {
       HaskellReference.findIdentifiersByModulesAndName(project, moduleNames, name) match {
-        case Right((mn, ne)) => Right(PackageModuleLocation(mn, ne, name))
+        case Right((mn, ne)) => Right(PackageModuleLocation(mn, ne, name, None))
         case Left(noInfo) => Left(noInfo)
       }
     }
@@ -209,7 +218,9 @@ private[component] object DefinitionLocationComponent {
               Left(ReplNotAvailable)
             } else {
               f(repl) match {
-                case Some(o) if o.stderrLines.isEmpty && o.stdoutLines.nonEmpty => Right(o)
+                case Some(o) if o.stderrLines.isEmpty && o.stdoutLines.nonEmpty => Right(o.stdoutLines)
+                case Some(o) if o.stderrLines.mkString.contains("No matching export in any local modules.") => Left(NoMatchingExport)
+                case Some(o) if o.stdoutLines.isEmpty && o.stderrLines.nonEmpty => Right(o.stderrLines) // For some unknown reason REPL write sometimes correct output to stderr
                 case None => Left(ReplNotAvailable)
                 case _ => Left(NoInfoAvailable(name, psiFile.getName))
               }
@@ -219,9 +230,13 @@ private[component] object DefinitionLocationComponent {
     }
 
     locationInfo match {
-      case Right(o) => o.stdoutLines.headOption.map(l => createLocationByReplResult(project, psiFile, l, key, name)) match {
+      case Right(o) => o.headOption.map(l => createLocationByReplResult(project, psiFile, l, key, name)) match {
         case Some(r) => r
         case None => Left(NoInfoAvailable(name, key.psiFile.getName))
+      }
+      case Left(NoMatchingExport) => HaskellReference.findIdentifierInFileByName(psiFile, name) match {
+        case Some(ne) => Right(LocalModuleLocation(psiFile, ne, name))
+        case None => Left(NoInfoAvailable(name, psiFile.getName))
       }
       case Left(noInfo) => Left(noInfo)
     }
@@ -243,13 +258,13 @@ private[component] object DefinitionLocationComponent {
             }
           case (_, _) => Left(NoInfoAvailable(name, psiFile.getName))
         }
-      case PackageModulePattern(_, mn) =>
+      case PackageModulePattern(pn, mn) =>
         findFilesByModuleName(project, mn) match {
           case Right(files) =>
             ProgressManager.checkCanceled()
 
             files.headOption.flatMap(HaskellReference.findIdentifierInFileByName(_, name)) match {
-              case Some(e) => Right(PackageModuleLocation(mn, e, name))
+              case Some(e) => Right(PackageModuleLocation(mn, e, name, Some(pn)))
               case None => Left(NoInfoAvailable(name, key.psiFile.getName))
             }
           case Left(noInfo) => Left(noInfo)
@@ -266,7 +281,7 @@ sealed trait DefinitionLocation {
   def originalName: String
 }
 
-case class PackageModuleLocation(moduleName: String, namedElement: HaskellNamedElement, originalName: String) extends DefinitionLocation
+case class PackageModuleLocation(moduleName: String, namedElement: HaskellNamedElement, originalName: String, packageName: Option[String]) extends DefinitionLocation
 
 case class LocalModuleLocation(psiFile: PsiFile, namedElement: HaskellNamedElement, originalName: String) extends DefinitionLocation
 

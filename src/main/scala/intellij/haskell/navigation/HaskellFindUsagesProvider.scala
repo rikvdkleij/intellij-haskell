@@ -39,7 +39,7 @@ class HaskellFindUsagesProvider extends FindUsagesProvider {
   }
 
   @tailrec
-  private def processTokens(lexer: HaskellLexer, fileText: CharSequence, processor: Processor[WordOccurrence], prevDots: ListBuffer[IElementType]) {
+  private def processTokens(lexer: HaskellLexer, fileText: CharSequence, processor: Processor[WordOccurrence], prevDots: ListBuffer[IElementType]): Unit = {
     val tokenType = lexer.getTokenType
     if (tokenType != null) {
       if (HaskellParserDefinition.Ids.contains(tokenType) || tokenType == HS_DOT) {
@@ -48,7 +48,11 @@ class HaskellFindUsagesProvider extends FindUsagesProvider {
           lexer.advance()
           processTokens(lexer, fileText, processor, prevDots)
         } else {
-          val text = fileText.subSequence(lexer.getTokenStart - prevDots.length, lexer.getTokenEnd).toString
+          val text = if (tokenType == HS_VARSYM_ID || tokenType == HS_CONSYM_ID) {
+            fileText.subSequence(lexer.getTokenStart - prevDots.length, lexer.getTokenEnd).toString
+          } else {
+            fileText.subSequence(lexer.getTokenStart, lexer.getTokenEnd).toString
+          }
 
           // A workaround to get Find usages working for identifiers which contain single quotes
           val text1 = if (text.contains("'")) {

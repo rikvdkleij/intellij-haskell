@@ -24,10 +24,9 @@ import intellij.haskell.external.execution.CommandLine
 import intellij.haskell.util.ScalaUtil
 import intellij.haskell.util.StringUtil.removePackageQualifier
 
+import scala.jdk.CollectionConverters._
 
 private[component] object LibraryPackageInfoComponent {
-
-  import scala.collection.JavaConverters._
 
   private case class Key(project: Project, packageName: String)
 
@@ -37,7 +36,7 @@ private[component] object LibraryPackageInfoComponent {
 
   private def splitLines(s: String, excludeEmptyLines: Boolean) = {
     val converted = StringUtil.convertLineSeparators(s)
-    StringUtil.split(converted, "\n", true, excludeEmptyLines).asScala
+    StringUtil.split(converted, "\n", true, excludeEmptyLines).asScala.toSeq
   }
 
   import scala.concurrent.duration._
@@ -93,9 +92,9 @@ private[component] object LibraryPackageInfoComponent {
 
   private final val PackageNameVersionPattern = """([\w\-]+)-([\d\.]+)(?:\-.*)?""".r
 
-  private def toPackageNameversion(depends: String): Option[PackageNameVersion] = {
+  def toPackageNameversion(depends: String): Option[PackageId] = {
     depends match {
-      case PackageNameVersionPattern(name, version) => Some(PackageNameVersion(name, version))
+      case PackageNameVersionPattern(name, version) => Some(PackageId(name, version))
       case _ => None
     }
   }
@@ -124,6 +123,6 @@ private[component] object LibraryPackageInfoComponent {
 }
 
 
-case class PackageInfo(packageName: String, version: String, id: String, exposedModuleNames: Seq[String], hiddenModuleNames: Seq[String], dependsPackageNames: Seq[PackageNameVersion])
+case class PackageInfo(packageName: String, version: String, id: String, exposedModuleNames: Seq[String], hiddenModuleNames: Seq[String], dependsOnPackageIds: Seq[PackageId])
 
-case class PackageNameVersion(name: String, version: String)
+case class PackageId(name: String, version: String)

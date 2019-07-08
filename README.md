@@ -9,8 +9,10 @@ the recursion.
 Then I decided to use grammar and lexer definitions only for tokenizing and parsing Haskell code, and not for syntax checking the code. This is needed for syntax highlighting, all kinds of navigation and so on.
 Further Haskell language support is provided with the help of external tools.
 
-This plugin depends mainly on Stack and Intero. It can create new Stack projects and import existing Stack projects.
- 
+This plugin depends mainly on Stack. It can create new Stack projects and import existing Stack projects.
+
+GHC 8.2 and later is supported.
+
 Any feedback is welcomed!!
 
 # Installing the plugin
@@ -18,7 +20,7 @@ You can install this plugin using the [Jetbrains plugin repository](https://plug
   `Settings`/`Plugins`/`Browse repositories`/`Intellij-Haskell`
 
 # Installing latest beta of the plugin
-To try out the latest beta version one can install the plugin by adding `https://plugins.jetbrains.com/plugins/alpha/8258` as Custom plugin repository in `Settings`/`Plugins`/`Browse repositories`/`Manage repositories`.
+To try out the latest beta version one can install the plugin by adding `https://plugins.jetbrains.com/plugins/alpha` as Custom plugin repository in `Settings`/`Plugins`/`Browse repositories`/`Manage repositories`.
  
 Alternative way to install the latest beta version is to download `intellij-haskell.zip` from [releases](https://github.com/rikvdkleij/intellij-haskell/releases) and apply `Install plugin from disk` in `Settings`/`Plugins`.
 
@@ -26,6 +28,7 @@ Alternative way to install the latest beta version is to download `intellij-hask
 # Features
 - Syntax highlighting;
 - Error/warning highlighting;
+- Haskell Problems View. This tool window displays GHC messages for the currently edited files;
 - Find usages of identifiers;
 - Resolve references to identifiers;
 - Code completion;
@@ -49,7 +52,6 @@ Alternative way to install the latest beta version is to download `intellij-hask
 - Code formatting with `hindent`, `stylish-haskell`, or both together. `hindent` can also be used to format a selected code block.
 - Code completion for project module names, language extensions and package names in Cabal file;
 - Running REPL, tests and executables via `Run Configurations`;
-- Haskell Problems View;
 - Smart completion on typed holes (since GHC 8.4);
 
 ### Usage with `hindent`
@@ -68,10 +70,10 @@ When used with `hindent`, `intellij-haskell` automatically sets `--indent-size` 
   - In next page of wizard configure `Project SDK` by configuring `Haskell Tool Stack` with selecting path to `stack` binary, e.g. `/usr/local/bin/stack`;
   - Finish wizard and project will be opened;
   - Wizard will automatically configure which folders are sources, test and which to exclude;
-  - Plugin will automatically build Intero and Haskell Tools (HLint, Hoogle, Hindent and Stylish Haskell) to prevent incompatibility issues
+  - Plugin will automatically build Haskell Tools (HLint, Hoogle, Hindent and Stylish Haskell) to prevent incompatibility issues
   - Check `Project structure`>`Project settings`>`Modules` which folders to exclude (like `.stack-work` and `dist`) and which folders are `Source` and `Test` (normally `src` and `test`);
   - Plugin will automatically download library sources. They will be added as source libraries to module(s).
-  - After changing the Cabal file and/or `stack.yaml` use `Tools`>`Haskell`>`Update Settings and Restart REPLs` to download missing library sources and update the project settings;
+  - After changing the Cabal file and/or `stack.yaml` use `Haskell`>`Haskell`>`Update Settings and Restart REPLs` to download missing library sources and update the project settings;
   - The `Event Log` will display what's going on in the background. Useful when something fails. It's disabled by default. 
     It can be enabled by checking `Haskell Log` checkbox in the `Event Log`>`Settings` or `Settings`>`Appearance & Behavior`>`Notifications`;    
 
@@ -79,11 +81,11 @@ When used with `hindent`, `intellij-haskell` automatically sets `--indent-size` 
 # Remarks
 1. IntelliJ's Build action is not (yet) implemented. Project is built when project is opened and when needed, e.g. library code is changed and user navigates to test code;
 2. `About Haskell Project` in `Help` menu shows which Haskell GHC/tools are used by plugin for project;
-3. Intero depends on `libtinfo-dev`. On Ubuntu you can install it with `sudo apt-get install libtinfo-dev`;
+3. GHC depends on `libtinfo-dev`. On Ubuntu you can install it with `sudo apt-get install libtinfo-dev`;
 4. Haskell tools depends on `libgmp3-dev zlib1g-dev`. On Ubuntu you can install them with `sudo apt-get install libgmp3-dev zlib1g-dev`;
 5. Cabal's internal libraries are not (yet) supported;
 6. Cabal's common stanzas are not (yet) supported;
-7. The Haskell tools are built in a IntelliJ sandbox with LTS-13. So they have no dependency with Stackage resolvers in your projects. After Stackage LTS-13 minor updates one can use `Tools`>`Update Haskell tools`;
-8. Stack REPLs are running in the background. You can restart them by `Tools`>`Update Settings and Restart REPLs`.
+7. The Haskell tools are built in a IntelliJ sandbox with LTS-13. So they have no dependency with Stackage resolvers in your projects. After Stackage LTS-13 minor updates one can use `Haskell`>`Update Haskell tools`;
+8. Stack REPLs are running in the background. You can restart them by `Haskell`>`Update Settings and Restart REPLs`.
 
 If you want to contribute to this project, read [the contributing guideline](CONTRIBUTING.md).

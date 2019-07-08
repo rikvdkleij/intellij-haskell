@@ -119,7 +119,7 @@ private[component] object TypeInfoComponent {
     Cache.getIfPresent(key) match {
       case Some(result) => result match {
         case Right(_) => result
-        case Left(NoInfoAvailable(_, _)) =>
+        case Left(NoInfoAvailable(_, _)) | Left(NoMatchingExport) =>
           result
         case Left(ReplNotAvailable) | Left(IndexNotReady) | Left(ModuleNotAvailable(_)) | Left(ReadActionTimeout(_)) =>
           Cache.invalidate(key)
@@ -130,7 +130,7 @@ private[component] object TypeInfoComponent {
         result match {
           case Right(_) =>
             result
-          case Left(NoInfoAvailable(_, _)) =>
+          case Left(NoInfoAvailable(_, _)) | Left(NoMatchingExport) =>
             result
           case Left(ReplNotAvailable) | Left(IndexNotReady) | Left(ModuleNotAvailable(_)) | Left(ReadActionTimeout(_)) =>
             Cache.invalidate(key)

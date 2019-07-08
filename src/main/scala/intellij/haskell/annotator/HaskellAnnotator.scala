@@ -43,7 +43,7 @@ import intellij.haskell.{HaskellFile, HaskellFileType, HaskellNotificationGroup}
 
 import scala.annotation.tailrec
 import scala.collection.Iterable
-import scala.collection.JavaConverters._
+import scala.jdk.CollectionConverters._
 
 class HaskellAnnotator extends ExternalAnnotator[PsiFile, CompilationResult] {
 
@@ -174,7 +174,7 @@ object HaskellAnnotator {
     def createErrorAnnotationWithMultiplePerhapsIntentions(problem: CompilationProblem, tr: TextRange, notInScopeMessage: String, suggestionsList: String, add: Option[(String, String)]) = {
       val notInScopeName = extractName(notInScopeMessage)
       val annotations = suggestionsList.split(",").flatMap(s => extractPerhapsYouMeantAction(s))
-      ErrorAnnotationWithIntentionActions(tr, problem.plainMessage, problem.htmlMessage, annotations.toStream ++ createNotInScopeIntentionActions(psiFile, notInScopeName) ++ add.map(a => new NotInScopeIntentionAction(a._2, a._1, psiFile)))
+      ErrorAnnotationWithIntentionActions(tr, problem.plainMessage, problem.htmlMessage, annotations.to(Iterable) ++ createNotInScopeIntentionActions(psiFile, notInScopeName) ++ add.map(a => new NotInScopeIntentionAction(a._2, a._1, psiFile)))
     }
 
     problems.flatMap {
@@ -196,7 +196,7 @@ object HaskellAnnotator {
               case PerhapsYouMeantSinglePattern(notInScopeMessage, suggestion) =>
                 val notInScopeName = extractName(notInScopeMessage)
                 val annotation = extractPerhapsYouMeantAction(suggestion)
-                ErrorAnnotationWithIntentionActions(tr, problem.plainMessage, problem.htmlMessage, annotation.toStream ++ createNotInScopeIntentionActions(psiFile, notInScopeName))
+                ErrorAnnotationWithIntentionActions(tr, problem.plainMessage, problem.htmlMessage, annotation.to(Iterable) ++ createNotInScopeIntentionActions(psiFile, notInScopeName))
               case NotInScopePattern(name) =>
                 ErrorAnnotationWithIntentionActions(tr, problem.plainMessage, problem.htmlMessage, createNotInScopeIntentionActions(psiFile, name))
               case NotInScopePattern2(name) =>
@@ -245,8 +245,6 @@ object HaskellAnnotator {
   }
 
   private def createNotInScopeIntentionActions(psiFile: PsiFile, name: String): Iterable[NotInScopeIntentionAction] = {
-    import scala.concurrent.ExecutionContext.Implicits.global
-
     val nameWithoutParens = StringUtil.removeOuterParens(name)
     val moduleIdentifiers = HaskellComponentsManager.findModuleIdentifiersInCache(psiFile.getProject).filter(_.name == nameWithoutParens)
     moduleIdentifiers.map(mi => new NotInScopeIntentionAction(mi.name, mi.moduleName, psiFile))
@@ -257,7 +255,7 @@ object HaskellAnnotator {
   }
 
   private def importAloneInstancesAction(problem: CompilationProblem, tr: TextRange, importDecl: String, useImport: String): WarningAnnotationWithIntentionActions = {
-    WarningAnnotationWithIntentionActions(tr, problem.plainMessage, problem.htmlMessage, Stream(new ImportAloneInstancesAction(importDecl), new OptimizeImportIntentionAction(importDecl, None)))
+    WarningAnnotationWithIntentionActions(tr, problem.plainMessage, problem.htmlMessage, Iterable(new ImportAloneInstancesAction(importDecl), new OptimizeImportIntentionAction(importDecl, None)))
   }
 
   private def getProblemTextRange(psiFile: PsiFile, problem: CompilationProblem): Option[TextRange] = {
@@ -321,9 +319,12 @@ class TypeSignatureIntentionAction(typeSignature: String) extends HaskellBaseInt
           topDeclaration <- Option(TreeUtil.findParent(e.getNode, HaskellTypes.HS_TOP_DECLARATION))
           psi <- Option(topDeclaration.getPsi)
           moduleBody <- Option(psi.getParent)
-          typeSignatureElement <- HaskellElementFactory.createTopDeclarationLine(project, typeSignature)
+          typeSignatureElement <- HaskellElementFactory.createTopDeclaration(project, typeSignature)
           typeSignature = moduleBody.addBefore(typeSignatureElement, psi)
-        } yield moduleBody.addAfter(HaskellElementFactory.createNewLine(project), typeSignature)
+        } yield {
+          moduleBody.addAfter(HaskellElementFactory.createNewLine(project), typeSignature)
+          //          moduleBody.addAfter(de)
+        }
       case None => ()
     }
   }
@@ -475,7 +476,7 @@ class OptimizeImportIntentionAction(moduleName: String, mids: Option[String]) ex
   override def invoke(project: Project, editor: Editor, psiFile: PsiFile): Unit = {
     mids match {
       case None => HaskellImportOptimizer.removeRedundantImport(psiFile, moduleName)
-      case Some(ids) => HaskellImportOptimizer.removeRedundantImportIds(psiFile, moduleName, ids.split(',').map(_.trim))
+      case Some(ids) => HaskellImportOptimizer.removeRedundantImportIds(psiFile, moduleName, ids.split(',').toSeq.map(_.trim))
     }
   }
 }

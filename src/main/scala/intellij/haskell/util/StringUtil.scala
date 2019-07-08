@@ -79,7 +79,7 @@ object StringUtil {
           }
           else {
             lb += new StringBuilder(2, s)
-          }).map(_.toString)
+          }).map(_.toString).toSeq
       } catch {
         case _: NoSuchElementException =>
           HaskellNotificationGroup.logErrorBalloonEvent(project, s"Could not join indented lines. Probably first line started with spaces. Unexpected input was: ${lines.mkString(", ")}")

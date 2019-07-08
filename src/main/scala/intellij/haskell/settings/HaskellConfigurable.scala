@@ -67,7 +67,7 @@ class HaskellConfigurable extends Configurable {
       }
     }
 
-    def addLabeledControl(row: Int, label: String, component: JComponent) {
+    def addLabeledControl(row: Int, label: String, component: JComponent): Unit = {
       settingsPanel.add(new JLabel(label), base.setConstraints(
         anchor = GridBagConstraints.LINE_START,
         gridx = 0,
@@ -102,7 +102,7 @@ class HaskellConfigurable extends Configurable {
     settingsPanel
   }
 
-  override def apply() {
+  override def apply(): Unit = {
     val validREPLTimeout = validateREPLTimeout()
 
     val state = HaskellSettingsPersistentStateComponent.getInstance().getState
@@ -124,12 +124,11 @@ class HaskellConfigurable extends Configurable {
     timeout
   }
 
-  override def disposeUIResources() {
-  }
+  override def disposeUIResources(): Unit = {}
 
   override def getHelpTopic: String = ""
 
-  override def reset() {
+  override def reset(): Unit = {
     val state = HaskellSettingsPersistentStateComponent.getInstance().getState
     hlintOptionsField.setText(state.hlintOptions)
     replTimeoutField.setText(state.replTimeout.toString)

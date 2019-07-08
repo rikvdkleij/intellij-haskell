@@ -9,7 +9,7 @@ import com.intellij.openapi.project.Project
 import intellij.haskell.external.component.HaskellComponentsManager
 import intellij.haskell.runconfig.{HaskellStackConfigurationBase, HaskellStackStateBase}
 
-import scala.collection.JavaConverters._
+import scala.jdk.CollectionConverters._
 
 class HaskellRunConfiguration(name: String, project: Project, configurationFactory: ConfigurationFactory)
   extends HaskellStackConfigurationBase(name, project, configurationFactory) {
@@ -21,7 +21,7 @@ class HaskellRunConfiguration(name: String, project: Project, configurationFacto
     HaskellComponentsManager.findCabalInfos(project).flatMap(_.executables.flatMap(_.name)).asJava
   }
 
-  def setExecutable(executableName: String) {
+  def setExecutable(executableName: String): Unit = {
     this.executableName = executableName
   }
 
@@ -33,7 +33,7 @@ class HaskellRunConfiguration(name: String, project: Project, configurationFacto
     }
   }
 
-  def setProgramArgs(programArgs: String) {
+  def setProgramArgs(programArgs: String): Unit = {
     this.programArgs = programArgs
   }
 

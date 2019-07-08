@@ -14,13 +14,13 @@ import intellij.haskell.external.component.HaskellComponentsManager
 import intellij.haskell.external.component.HaskellComponentsManager.{getAvailableStackagePackages, getSupportedLanguageExtension}
 import intellij.haskell.util.HaskellProjectUtil
 
-import scala.collection.JavaConverters._
+import scala.jdk.CollectionConverters._
 
 final class CabalCompletionContributor extends CompletionContributor {
 
   private val provider: CompletionProvider[CompletionParameters] = new CompletionProvider[CompletionParameters] {
 
-    def addCompletions(parameters: CompletionParameters, context: ProcessingContext, result: CompletionResultSet) {
+    def addCompletions(parameters: CompletionParameters, context: ProcessingContext, result: CompletionResultSet): Unit = {
       val project = parameters.getEditor.getProject
       val position = parameters.getPosition
 

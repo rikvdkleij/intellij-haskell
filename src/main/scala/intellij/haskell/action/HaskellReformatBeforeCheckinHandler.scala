@@ -71,7 +71,7 @@ class HaskellReformatBeforeCheckinHandler(project: Project, checkinProjectPanel:
   }
 
   override def runCheckinHandlers(finishAction: Runnable): Unit = {
-    import scala.collection.JavaConverters._
+    import scala.jdk.CollectionConverters._
     val virtualFiles = checkinProjectPanel.getVirtualFiles
 
     val performCheckoutAction: Runnable = () => {

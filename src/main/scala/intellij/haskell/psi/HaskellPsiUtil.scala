@@ -29,7 +29,7 @@ import intellij.haskell.psi.HaskellTypes._
 import intellij.haskell.util.ApplicationUtil
 
 import scala.annotation.tailrec
-import scala.collection.JavaConverters._
+import scala.jdk.CollectionConverters._
 
 object HaskellPsiUtil {
 
@@ -227,7 +227,7 @@ object HaskellPsiUtil {
 
   /** Analogous to PsiTreeUtil.findFirstParent */
   def collectFirstParent[A](psiElement: PsiElement)(f: PartialFunction[PsiElement, A]): Option[A] = {
-    Stream.iterate(psiElement.getParent)(_.getParent).takeWhile(_ != null).collectFirst(f)
+    LazyList.iterate(psiElement.getParent)(_.getParent).takeWhile(_ != null).collectFirst(f)
   }
 
 }

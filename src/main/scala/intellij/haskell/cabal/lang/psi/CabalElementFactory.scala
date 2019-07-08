@@ -1,7 +1,6 @@
 package intellij.haskell.cabal.lang.psi
 
 import com.intellij.lang.ASTNode
-
 import intellij.haskell.cabal.lang.psi.CabalTypes._
 
 object CabalElementFactory {
@@ -113,6 +112,7 @@ object CabalElementFactory {
     case THEN_BODY => new ThenBody(node)
     case ELSE_BODY => new ElseBody(node)
     case LOGICAL_NEG => new LogicalNeg(node)
+    case BOOL_LIT => new BoolValue(node)
 
     case other => throw new AssertionError("Unexpected element type: " + other)
   }

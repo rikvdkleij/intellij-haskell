@@ -20,14 +20,14 @@ import com.intellij.openapi.actionSystem.{AnAction, AnActionEvent}
 import com.intellij.openapi.ui.Messages
 import com.intellij.openapi.util.SystemInfo
 import intellij.haskell.external.component.{HLintComponent, HaskellComponentsManager, HoogleComponent, StackProjectManager}
-import intellij.haskell.external.execution.{CommandLine, StackCommandLine}
+import intellij.haskell.external.execution.StackCommandLine
 import intellij.haskell.util.HaskellEditorUtil
 
 import scala.collection.mutable.ArrayBuffer
 
 class AboutAction extends AnAction {
 
-  override def update(actionEvent: AnActionEvent) {
+  override def update(actionEvent: AnActionEvent): Unit = {
     HaskellEditorUtil.enableExternalAction(actionEvent, !StackProjectManager.isInitializing(_))
   }
 
@@ -39,12 +39,11 @@ class AboutAction extends AnAction {
     }
   }
 
-  def actionPerformed(actionEvent: AnActionEvent) {
+  def actionPerformed(actionEvent: AnActionEvent): Unit = {
     val messages = new ArrayBuffer[String]
     val project = actionEvent.getProject
     messages.+=(s"${boldToolName("Stack")} version: " + StackCommandLine.run(project, Seq("--numeric-version"), enableExtraArguments = false).map(_.getStdout).getOrElse("-"))
-    messages.+=(s"${boldToolName("GHC")}: " + HaskellComponentsManager.getGhcVersion(project).map(_.prettyString).getOrElse("-"))
-    messages.+=(s"${boldToolName("Intero")}: " + HaskellComponentsManager.getInteroPath(project).map(p => CommandLine.run(project, p, Seq("--version")).getStdout).getOrElse("-"))
+    messages.+=(s"${boldToolName("GHC")}: " + HaskellComponentsManager.getGhcVersion(project).map(_.prettyString).getOrElse("-") + "\n")
     messages.+=(s"${boldToolName("HLint")}: " + HLintComponent.versionInfo(project))
     messages.+=(s"${boldToolName("Hoogle")}: " + HoogleComponent.versionInfo(project))
     messages.+=(s"${boldToolName("Hindent")}: " + HindentReformatAction.versionInfo(project))

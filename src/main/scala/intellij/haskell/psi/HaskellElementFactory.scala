@@ -25,7 +25,7 @@ import com.intellij.psi.{PsiElement, PsiFileFactory, PsiWhiteSpace}
 import intellij.haskell.psi.HaskellTypes._
 import intellij.haskell.{HaskellFile, HaskellLanguage}
 
-import scala.collection.JavaConverters._
+import scala.jdk.CollectionConverters._
 
 object HaskellElementFactory {
 
@@ -50,7 +50,7 @@ object HaskellElementFactory {
   }
 
   def createImportId(project: Project, identifier: String): Option[HaskellImportId] = {
-    createElement(project, surroundWithParensIfSymbol(project, identifier), classOf[HaskellImportId])
+    createElement(project, s"import Foo(${surroundWithParensIfSymbol(project, identifier)})", classOf[HaskellImportId])
   }
 
   def createQualifiedNameElement(project: Project, name: String): Option[HaskellQualifiedNameElement] = {
@@ -61,10 +61,7 @@ object HaskellElementFactory {
     createElement(project, body, classOf[HaskellModuleBody])
   }
 
-  // FIXME might need to insert one more end-of-line
-  //  this now returns `top declaration` instead of `top declaration line`.
-  //  don't forget to modify all the usages.
-  def createTopDeclarationLine(project: Project, declaration: String): Option[HaskellTopDeclaration] = {
+  def createTopDeclaration(project: Project, declaration: String): Option[HaskellTopDeclaration] = {
     createElement(project, declaration, classOf[HaskellTopDeclaration])
   }
 

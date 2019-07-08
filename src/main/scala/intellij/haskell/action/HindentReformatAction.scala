@@ -30,14 +30,14 @@ import intellij.haskell.util._
 import intellij.haskell.{GlobalInfo, HaskellLanguage, HaskellNotificationGroup}
 
 import scala.annotation.tailrec
-import scala.collection.JavaConverters._
 import scala.collection.mutable.ListBuffer
+import scala.jdk.CollectionConverters._
 
 sealed case class SelectionContext(start: Int, end: Int, text: String)
 
 class HindentReformatAction extends AnAction {
 
-  override def update(actionEvent: AnActionEvent) {
+  override def update(actionEvent: AnActionEvent): Unit = {
     HaskellEditorUtil.enableExternalAction(actionEvent, (project: Project) => StackProjectManager.isHindentAvailable(project))
   }
 

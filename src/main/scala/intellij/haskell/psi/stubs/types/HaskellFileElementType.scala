@@ -19,7 +19,7 @@ package intellij.haskell.psi.stubs.types
 import com.intellij.psi.stubs._
 import com.intellij.psi.tree.IStubFileElementType
 import com.intellij.psi.{PsiElement, PsiFile, StubBuilder}
-import intellij.haskell.psi.stubs.HaskellFileStub
+import intellij.haskell.psi.stubs.Bla.HaskellFileStub
 import intellij.haskell.{HaskellFile, HaskellLanguage}
 
 class HaskellFileElementType(language: HaskellLanguage) extends IStubFileElementType[HaskellFileStub](language) {
@@ -38,7 +38,7 @@ class HaskellFileElementType(language: HaskellLanguage) extends IStubFileElement
 
   override def getStubVersion: Int = Version
 
-  override def serialize(stub: HaskellFileStub, dataStream: StubOutputStream) {
+  override def serialize(stub: HaskellFileStub, dataStream: StubOutputStream): Unit = {
   }
 
   override def deserialize(dataStream: StubInputStream, parentStub: StubElement[_ <: PsiElement]): HaskellFileStub = {

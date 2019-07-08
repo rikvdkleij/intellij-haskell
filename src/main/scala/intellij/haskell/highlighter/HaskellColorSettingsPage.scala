@@ -16,15 +16,15 @@
 
 package intellij.haskell.highlighter
 
-import javax.swing._
 import com.intellij.openapi.editor.colors.TextAttributesKey
 import com.intellij.openapi.fileTypes.SyntaxHighlighter
 import com.intellij.openapi.options.colors.{AttributesDescriptor, ColorDescriptor, ColorSettingsPage}
 import icons.HaskellIcons
 import intellij.haskell.highlighter.HaskellSyntaxHighlighter._
+import javax.swing._
 import org.jetbrains.annotations.NotNull
 
-import scala.collection.JavaConverters._
+import scala.jdk.CollectionConverters._
 
 object HaskellColorSettingsPage {
   private final val Attrs = Array[AttributesDescriptor](

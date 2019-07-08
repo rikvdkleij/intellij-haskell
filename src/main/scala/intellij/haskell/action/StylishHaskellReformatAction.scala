@@ -28,7 +28,7 @@ import intellij.haskell.{GlobalInfo, HaskellNotificationGroup}
 
 class StylishHaskellReformatAction extends AnAction {
 
-  override def update(actionEvent: AnActionEvent) {
+  override def update(actionEvent: AnActionEvent): Unit = {
     HaskellEditorUtil.enableExternalAction(actionEvent, (project: Project) => StackProjectManager.isStylishHaskellAvailable(project))
   }
 

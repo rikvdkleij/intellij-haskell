@@ -54,7 +54,7 @@ class HaskellSdkType extends SdkType("Haskell Tool Stack SDK") {
       false
     } else {
       val stackPath = new File(path)
-      !stackPath.isDirectory && stackPath.getName.toLowerCase.contains("stack") && HaskellSdkType.getNumericVersion(path).isDefined
+      !stackPath.isDirectory && stackPath.getName.toLowerCase.contains("stack") && getNumericVersion(path).isDefined
     }
   }
 
@@ -72,7 +72,7 @@ class HaskellSdkType extends SdkType("Haskell Tool Stack SDK") {
 
   override def getVersionString(sdkHome: String): String = {
     if (isValidSdkHome(sdkHome)) {
-      HaskellSdkType.getNumericVersion(sdkHome).getOrElse("-")
+      getNumericVersion(sdkHome).getOrElse("-")
     } else {
       "-"
     }
@@ -81,7 +81,7 @@ class HaskellSdkType extends SdkType("Haskell Tool Stack SDK") {
   override def getHomeChooserDescriptor: FileChooserDescriptor = {
     val descriptor: FileChooserDescriptor = new FileChooserDescriptor(true, false, false, false, false, false) {
 
-      override def validateSelectedFiles(files: Array[VirtualFile]) {
+      override def validateSelectedFiles(files: Array[VirtualFile]): Unit = {
         if (files.length != 0) {
           val selectedPath = HaskellFileUtil.getAbsolutePath(files(0))
           var pathValid = isValidSdkHome(selectedPath)
@@ -92,23 +92,15 @@ class HaskellSdkType extends SdkType("Haskell Tool Stack SDK") {
               throw new Exception(message)
             }
           }
-          HaskellStackVersionValidator.validate(HaskellSdkType.getNumericVersion(selectedPath))
+          HaskellStackVersionValidator.validate(getNumericVersion(selectedPath))
         }
       }
     }
     descriptor.setTitle("Select path to " + getPresentableName)
     descriptor
   }
-}
 
-object HaskellSdkType {
-  def getInstance: HaskellSdkType = SdkType.findInstance(classOf[HaskellSdkType])
-
-  def findOrCreateSdk(): Sdk = {
-    SdkConfigurationUtil.findOrCreateSdk(null, getInstance)
-  }
-
-  def getNumericVersion(stackPath: String): Option[String] = {
+  private def getNumericVersion(stackPath: String): Option[String] = {
     val workDir = new File(stackPath).getParent
     val output = CommandLine.run0(
       workDir,
@@ -122,6 +114,14 @@ object HaskellSdkType {
     } else {
       None
     }
+  }
+}
+
+object HaskellSdkType {
+  def getInstance: HaskellSdkType = SdkType.findInstance(classOf[HaskellSdkType])
+
+  def findOrCreateSdk(): Sdk = {
+    SdkConfigurationUtil.findOrCreateSdk(null, getInstance)
   }
 
   private def getProjectStackPath(project: Project): Option[String] = {

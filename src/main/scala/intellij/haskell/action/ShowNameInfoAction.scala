@@ -23,11 +23,11 @@ import intellij.haskell.util.HaskellEditorUtil
 
 class ShowNameInfoAction extends AnAction {
 
-  override def update(actionEvent: AnActionEvent) {
+  override def update(actionEvent: AnActionEvent): Unit = {
     HaskellEditorUtil.enableAction(onlyForSourceFile = false, actionEvent)
   }
 
-  def actionPerformed(actionEvent: AnActionEvent) {
+  def actionPerformed(actionEvent: AnActionEvent): Unit = {
     if (!StackProjectManager.isInitializing(actionEvent.getProject)) {
       ActionUtil.findActionContext(actionEvent).foreach(actionContext => {
         val editor = actionContext.editor
@@ -49,8 +49,7 @@ class ShowNameInfoAction extends AnAction {
   private def createInfoText(nameInfo: NameInfo): String = {
     nameInfo match {
       case pi: ProjectNameInfo => s"${pi.declaration}   -- ${pi.filePath}"
-      case li: LibraryNameInfo => s"${li.shortenedDeclaration}   -- ${li.moduleName}"
-      case bi: BuiltInNameInfo => s"${bi.shortenedDeclaration}   -- ${bi.moduleName}  BUILT-IN"
+      case li: LibraryNameInfo => s"${li.shortenedDeclaration}   -- ${li.moduleName}    ${li.packageName.getOrElse("")}"
       case ii: InfixInfo => ii.declaration
     }
   }

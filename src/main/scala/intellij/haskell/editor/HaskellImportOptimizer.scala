@@ -28,7 +28,7 @@ import intellij.haskell.psi.HaskellPsiUtil
 import intellij.haskell.psi.HaskellTypes._
 import intellij.haskell.util.{HaskellFileUtil, HaskellProjectUtil, ScalaUtil}
 
-import scala.collection.JavaConverters._
+import scala.jdk.CollectionConverters._
 import scala.util.matching.Regex
 
 class HaskellImportOptimizer extends ImportOptimizer {
@@ -50,7 +50,7 @@ object HaskellImportOptimizer {
 
     warnings.foreach(_.getDescription match {
       case HaskellImportOptimizer.WarningRedundantImport(mn) => removeRedundantImport(psiFile, mn)
-      case HaskellImportOptimizer.WarningRedundant2Import(idNames, mn) => removeRedundantImportIds(psiFile, mn, idNames.split(',').map(_.trim))
+      case HaskellImportOptimizer.WarningRedundant2Import(idNames, mn) => removeRedundantImportIds(psiFile, mn, idNames.split(',').toSeq.map(_.trim))
       case _ => ()
     })
     true

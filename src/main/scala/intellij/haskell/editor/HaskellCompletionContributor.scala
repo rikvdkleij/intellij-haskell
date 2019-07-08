@@ -37,42 +37,42 @@ import intellij.haskell.util._
 import intellij.haskell.{HaskellFile, HaskellNotificationGroup, HaskellParserDefinition}
 import org.apache.commons.lang.StringEscapeUtils
 
-import scala.collection.JavaConverters._
 import scala.concurrent._
 import scala.concurrent.duration._
+import scala.jdk.CollectionConverters._
 
 class HaskellCompletionContributor extends CompletionContributor {
 
-  private final val HaskellWhere = Stream("where")
-  private final val HaskellLet = Stream("let")
-  private final val haskellDeclKeywords = Stream("family", "data", "type", "module", "class", "instance", "newtype", "deriving", "in")
-  private final val HaskellDefault = Stream("default")
-  private final val HaskellImportKeywords = Stream("import", "qualified", "as", "hiding")
-  private final val HaskellForeignKeywords = Stream("foreign", "export", "ccall", "safe", "unsafe", "interruptible", "capi", "prim")
-  private final val HaskellKeyword = Stream("do", "case", "of")
-  private final val HaskellStatic = Stream("static")
-  private final val HaskellConditional = Stream("if", "then", "else")
-  private final val HaskellInfix = Stream("infix", "infixl", "infixr")
-  private final val HaskellBottom = Stream("undefined")
-  private final val HaskellTodo = Stream("TODO", "FIXME")
-  private final val HaskellTypeRoles = Stream("phantom", "representational", "nominal")
-  private final val HaskellForall = Stream("forall")
-  private final val HaskellRecursiveDo = Stream("mdo", "rec")
-  private final val HaskellArrowSyntax = Stream("proc")
+  private final val HaskellWhere = LazyList("where")
+  private final val HaskellLet = LazyList("let")
+  private final val haskellDeclKeywords = LazyList("family", "data", "type", "module", "class", "instance", "newtype", "deriving", "in")
+  private final val HaskellDefault = LazyList("default")
+  private final val HaskellImportKeywords = LazyList("import", "qualified", "as", "hiding")
+  private final val HaskellForeignKeywords = LazyList("foreign", "export", "ccall", "safe", "unsafe", "interruptible", "capi", "prim")
+  private final val HaskellKeyword = LazyList("do", "case", "of")
+  private final val HaskellStatic = LazyList("static")
+  private final val HaskellConditional = LazyList("if", "then", "else")
+  private final val HaskellInfix = LazyList("infix", "infixl", "infixr")
+  private final val HaskellBottom = LazyList("undefined")
+  private final val HaskellTodo = LazyList("TODO", "FIXME")
+  private final val HaskellTypeRoles = LazyList("phantom", "representational", "nominal")
+  private final val HaskellForall = LazyList("forall")
+  private final val HaskellRecursiveDo = LazyList("mdo", "rec")
+  private final val HaskellArrowSyntax = LazyList("proc")
 
   private final val Keywords = HaskellWhere ++ HaskellLet ++ haskellDeclKeywords ++ HaskellDefault ++ HaskellImportKeywords ++
     HaskellForeignKeywords ++ HaskellKeyword ++ HaskellStatic ++ HaskellConditional ++ HaskellInfix ++ HaskellBottom ++
     HaskellTodo ++ HaskellTypeRoles ++ HaskellForall ++ HaskellRecursiveDo ++ HaskellArrowSyntax
 
-  private final val SpecialReservedIds = Stream("safe", "unsafe")
-  private final val PragmaIds = Stream("{-#", "#-}")
+  private final val SpecialReservedIds = LazyList("safe", "unsafe")
+  private final val PragmaIds = LazyList("{-#", "#-}")
   private final val Ann = "ANN"
-  private final val FileHeaderPragmaIds = Stream("LANGUAGE", "OPTIONS_HADDOCK", "INCLUDE", "OPTIONS", "OPTIONS_GHC", Ann)
-  private final val ModulePragmaIds = Stream(Ann, "DEPRECATED", "WARING", "INLINE", "INLINE_FUSED", "INLINE_INNER", "NOINLINE", "NOTINLINE", "INLINABEL", "LINE", "RULES",
+  private final val FileHeaderPragmaIds = LazyList("LANGUAGE", "OPTIONS_HADDOCK", "INCLUDE", "OPTIONS", "OPTIONS_GHC", Ann)
+  private final val ModulePragmaIds = LazyList(Ann, "DEPRECATED", "WARING", "INLINE", "INLINE_FUSED", "INLINE_INNER", "NOINLINE", "NOTINLINE", "INLINABEL", "LINE", "RULES",
     "SPECIALIZE", "SPECIALISE", "MINIMAL", "SOURCE", "UNPACK", "NOUNPACK", "OVERLAPPING", "OVERLAPPABLE", "OVERLAPS", "CONSTANT_FOLDED", "SCC", "INCOHERENT", "CFILES")
-  private final val InsideImportKeywords = Stream("as", "hiding", "qualified")
-  private final val CommentIds = Stream("{-", "-}", "--")
-  private final val HaddockIds = Stream("{-|", "-- |", "-- ^")
+  private final val InsideImportKeywords = LazyList("as", "hiding", "qualified")
+  private final val CommentIds = LazyList("{-", "-}", "--")
+  private final val HaddockIds = LazyList("{-|", "-- |", "-- ^")
 
   private def findQualifiedNamedElementToComplete(element: PsiElement): Option[HaskellQualifiedNameElement] = {
     val elementType = Option(element.getNode.getElementType)
@@ -95,7 +95,7 @@ class HaskellCompletionContributor extends CompletionContributor {
 
 
   private val provider: CompletionProvider[CompletionParameters] = new CompletionProvider[CompletionParameters] {
-    def addCompletions(parameters: CompletionParameters, context: ProcessingContext, originalResultSet: CompletionResultSet) {
+    def addCompletions(parameters: CompletionParameters, context: ProcessingContext, originalResultSet: CompletionResultSet): Unit = {
 
       ProgressManager.checkCanceled()
 
@@ -217,7 +217,7 @@ class HaskellCompletionContributor extends CompletionContributor {
 
             ProgressManager.checkCanceled()
 
-            val localLookupElements = currentElement.map(ce => findLocalElements(ce).filterNot(_ == ce).map(createLocalLookupElement)).getOrElse(Stream())
+            val localLookupElements = currentElement.map(ce => findLocalElements(ce).filterNot(_ == ce).map(createLocalLookupElement)).getOrElse(LazyList())
             resultSet.addAllElements(localLookupElements.asJavaCollection)
         }
       }
@@ -250,7 +250,7 @@ class HaskellCompletionContributor extends CompletionContributor {
                 if (typedHoleSuggestionsWithHeader.nonEmpty) {
                   val typedHoleSuggestionLines = typedHoleSuggestionsWithHeader.tail
                   val typedHoleSuggestions = typedHoleSuggestionLines.filterNot(_.trim.startsWith("("))
-                  val lookupElements = typedHoleSuggestions.flatMap(createLookupElement).toStream
+                  val lookupElements = typedHoleSuggestions.flatMap(createLookupElement _).to(LazyList)
                   originalResultSet.addAllElements(lookupElements.asJavaCollection)
                 }
               case None => ()
@@ -304,7 +304,7 @@ class HaskellCompletionContributor extends CompletionContributor {
   }
 
   private def findLocalElements(element: PsiElement) = {
-    HaskellPsiUtil.findExpression(element).toStream.flatMap(e => HaskellPsiUtil.findNamedElements(e)).filter {
+    HaskellPsiUtil.findExpression(element).to(LazyList).flatMap(e => HaskellPsiUtil.findNamedElements(e)).filter {
       case _: HaskellVarid => true
       case _: HaskellVarsym => true
       case _: HaskellConsym => true
@@ -367,7 +367,9 @@ class HaskellCompletionContributor extends CompletionContributor {
 
     HaskellPsiUtil.findImportDeclaration(element).flatMap(_.getModuleName) match {
       case Some(moduleName) =>
-        val ids = HaskellComponentsManager.findModuleIdentifiers(psiFile.getProject, moduleName).map(_.map(i => i.map(x => createLookupElement(x, addParens = true))).getOrElse(Iterable()))
+        val ids = blocking {
+          HaskellComponentsManager.findModuleIdentifiers(psiFile.getProject, moduleName).map(_.map(i => i.map(x => createLookupElement(x, addParens = true))).getOrElse(Iterable()))
+        }
 
         new WaitFor(ApplicationUtil.timeout, 1) {
           override def condition(): Boolean = {

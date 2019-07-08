@@ -24,11 +24,12 @@ import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.project.Project
 import intellij.haskell.external.execution.{CommandLine, StackCommandLine}
 import intellij.haskell.psi.{HaskellPsiUtil, HaskellQualifiedNameElement}
-import intellij.haskell.util.{HaskellProjectUtil, HtmlElement, ScalaFutureUtil}
+import intellij.haskell.util.{HtmlElement, ScalaFutureUtil}
 import intellij.haskell.{GlobalInfo, HaskellNotificationGroup}
 
-import scala.collection.JavaConverters._
-import scala.concurrent.Future
+import scala.collection.mutable
+import scala.concurrent.{Future, blocking}
+import scala.jdk.CollectionConverters._
 
 object HoogleComponent {
 
@@ -45,9 +46,9 @@ object HoogleComponent {
           if (o.getStdoutLines.isEmpty || o.getStdout.contains("No results found"))
             Seq()
           else if (o.getStdoutLines.asScala.last.startsWith("-- ")) {
-            o.getStdoutLines.asScala.init
+            o.getStdoutLines.asScala.init.toSeq
           } else {
-            o.getStdoutLines.asScala
+            o.getStdoutLines.asScala.toSeq
           }
         )
     } else {
@@ -61,38 +62,25 @@ object HoogleComponent {
 
       val name = qualifiedNameElement.getIdentifierElement.getName
       val psiFile = qualifiedNameElement.getContainingFile.getOriginalFile
-      if (HaskellProjectUtil.isSourceFile(psiFile)) {
-        DefinitionLocationComponent.findDefinitionLocation(psiFile, qualifiedNameElement, None) match {
-          case Left(noInfo) =>
-            HaskellNotificationGroup.logWarningEvent(project, s"No documentation because no location info could be found for identifier `$name` because ${noInfo.message}")
-            None
-          case Right(info) =>
-            val moduleName = info match {
-              case PackageModuleLocation(mn, _, _) => Some(mn)
-              case LocalModuleLocation(pf, _, _) => HaskellPsiUtil.findModuleName(pf)
-            }
-            moduleName match {
-              case None =>
-                HaskellNotificationGroup.logWarningEvent(project, s"No documentation because could not find module for identifier `$name`")
-                None
-              case Some(mn) =>
-                ProgressManager.checkCanceled()
-                HoogleComponent.createDocumentation(project, name, mn)
-            }
-        }
-      } else if (HaskellProjectUtil.isLibraryFile(psiFile)) {
-        val moduleName = HaskellPsiUtil.findModuleName(psiFile)
-        moduleName.flatMap(mn => createDocumentation(project, name, mn))
-      } else {
-        None
+      DefinitionLocationComponent.findDefinitionLocation(psiFile, qualifiedNameElement, None) match {
+        case Left(noInfo) =>
+          HaskellNotificationGroup.logWarningEvent(project, s"No documentation available as no location info could be found for identifier `$name` due to: ${noInfo.message}")
+          None
+        case Right(info) =>
+          val locationName = info match {
+            case PackageModuleLocation(_, _, _, pn) => pn
+            case LocalModuleLocation(pf, _, _) => HaskellPsiUtil.findModuleName(pf)
+          }
+          ProgressManager.checkCanceled()
+          HoogleComponent.createDocumentation(project, name, locationName)
       }
     } else {
-      Some("No documentation because Hoogle (database) is not available")
+      Some("No documentation available as Hoogle (database) isn't available")
     }
   }
 
-  private def createDocumentation(project: Project, name: String, moduleName: String): Option[String] = {
-    def mkString(lines: Seq[String]) = {
+  private def createDocumentation(project: Project, name: String, locationName: Option[String]): Option[String] = {
+    def mkString(lines: mutable.Seq[String]) = {
       lines.mkString("\n").
         replace("<", HtmlElement.Lt).
         replace(">", HtmlElement.Gt).
@@ -102,7 +90,7 @@ object HoogleComponent {
 
     ProgressManager.checkCanceled()
 
-    runHoogle(project, Seq("-i", name, s"+$moduleName", "+Prelude")).
+    runHoogle(project, Seq("-i", "is:exact", name) ++ locationName.map("+" + _).toSeq).
       flatMap(processOutput =>
         if (processOutput.getStdoutLines.isEmpty || processOutput.getStdout.contains("No results found")) {
           None
@@ -125,7 +113,7 @@ object HoogleComponent {
 
   private def isHoogleFeatureAvailable(project: Project): Boolean = {
     if (!StackProjectManager.isHoogleAvailable(project)) {
-      HaskellNotificationGroup.logInfoEvent(project, s"$HoogleName is not (yet) available")
+      HaskellNotificationGroup.logInfoEvent(project, s"$HoogleName isn't (yet) available")
       false
     } else {
       doesHoogleDatabaseExist(project)
@@ -143,7 +131,7 @@ object HoogleComponent {
     if (buildHaddockOutput.contains(true)) {
       GlobalProjectInfoComponent.findGlobalProjectInfo(project).map(_.localDocRoot) match {
         case Some(localDocRoot) => StackCommandLine.executeInMessageView(project, HooglePath, Seq("generate", s"--local=$localDocRoot", s"--database=${hoogleDbPath(project)}"))
-        case None => HaskellNotificationGroup.logErrorBalloonEvent(project, "Can not generate Hoogle db because path to local doc root is unknown")
+        case None => HaskellNotificationGroup.logErrorBalloonEvent(project, "Couldn't generate Hoogle DB because path to local doc root is unknown")
       }
     }
   }
@@ -153,7 +141,7 @@ object HoogleComponent {
   }
 
   def showHoogleDatabaseDoesNotExistNotification(project: Project): Unit = {
-    HaskellNotificationGroup.logInfoBalloonEvent(project, "Hoogle database does not exist. Hoogle features can be optionally enabled by menu option `Tools`/`Haskell`/`(Re)Build Hoogle database`")
+    HaskellNotificationGroup.logInfoBalloonEvent(project, "Hoogle database doesn't exist. Hoogle features can be enabled by menu option `Haskell`/`(Re)Build Hoogle database`")
   }
 
   def versionInfo(project: Project): String = {
@@ -169,7 +157,12 @@ object HoogleComponent {
   private def runHoogle(project: Project, arguments: Seq[String]): Option[ProcessOutput] = {
     ProgressManager.checkCanceled()
 
-    ScalaFutureUtil.waitWithCheckCancelled(project, Future(CommandLine.run(project, HooglePath, Seq(s"--database=${hoogleDbPath(project)}") ++ arguments, logOutput = true)), "runHoogle")
+    ScalaFutureUtil.waitWithCheckCancelled(project,
+      Future {
+        blocking {
+          CommandLine.run(project, HooglePath, Seq(s"--database=${hoogleDbPath(project)}") ++ arguments, logOutput = true)
+        }
+      }, "runHoogle")
   }
 
   private def hoogleDbPath(project: Project) = {

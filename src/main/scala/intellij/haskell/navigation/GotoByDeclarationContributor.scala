@@ -28,8 +28,8 @@ import intellij.haskell.psi.stubs.index.HaskellAllNameIndex
 import intellij.haskell.psi.{HaskellClassDeclaration, HaskellDeclarationElement, HaskellNamedElement, HaskellPsiUtil}
 import intellij.haskell.util.HaskellProjectUtil
 
-import scala.collection.JavaConverters._
 import scala.collection.mutable.ListBuffer
+import scala.jdk.CollectionConverters._
 
 class GotoByDeclarationContributor extends GotoClassContributor {
 
@@ -105,6 +105,6 @@ private object GotoHelper {
 
     StubIndex.getInstance().processAllKeys(HaskellAllNameIndex.Key, processor, searchScope, null)
 
-    result.flatMap(name => StubIndex.getElements(HaskellAllNameIndex.Key, name, project, searchScope, classOf[HaskellNamedElement]).asScala)
+    result.flatMap(name => StubIndex.getElements(HaskellAllNameIndex.Key, name, project, searchScope, classOf[HaskellNamedElement]).asScala).toSeq
   }
 }

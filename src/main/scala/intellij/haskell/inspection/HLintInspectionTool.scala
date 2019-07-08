@@ -28,12 +28,12 @@ import intellij.haskell.psi.HaskellTypes._
 import intellij.haskell.util._
 
 import scala.annotation.tailrec
-import scala.concurrent.Future
+import scala.concurrent.duration._
+import scala.concurrent.{Future, blocking}
 
 class HLintInspectionTool extends LocalInspectionTool {
 
   import scala.concurrent.ExecutionContext.Implicits.global
-  import scala.concurrent.duration._
 
   override def checkFile(psiFile: PsiFile, manager: InspectionManager, isOnTheFly: Boolean): Array[ProblemDescriptor] = {
     HaskellNotificationGroup.logInfoEvent(psiFile.getProject, s"HLint inspection is started for file ${psiFile.getName}")
@@ -54,7 +54,12 @@ class HLintInspectionTool extends LocalInspectionTool {
 
         ProgressManager.checkCanceled()
 
-        val result = ScalaFutureUtil.waitWithCheckCancelled(psiFile.getProject, Future(HLintComponent.check(psiFile)), "Running HLint", timeout = 2.seconds) match {
+        val result = ScalaFutureUtil.waitWithCheckCancelled(psiFile.getProject,
+          Future {
+            blocking {
+              HLintComponent.check(psiFile)
+            }
+          }, "Running HLint", timeout = 2.seconds) match {
           case Some(r) => r
           case None => Seq()
         }

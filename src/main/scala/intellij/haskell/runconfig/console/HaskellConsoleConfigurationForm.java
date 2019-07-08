@@ -1,6 +1,5 @@
 package intellij.haskell.runconfig.console;
 
-import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.options.SettingsEditor;
 import com.intellij.openapi.project.Project;
 import org.jetbrains.annotations.NotNull;
@@ -28,7 +27,7 @@ public class HaskellConsoleConfigurationForm extends SettingsEditor<HaskellConso
     }
 
     @Override
-    protected void applyEditorTo(@NotNull HaskellConsoleConfiguration config) throws ConfigurationException {
+    protected void applyEditorTo(@NotNull HaskellConsoleConfiguration config) {
         config.setStackTarget((String) targetcomboBox.getSelectedItem());
     }
 

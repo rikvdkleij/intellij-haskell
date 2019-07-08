@@ -35,8 +35,8 @@ import intellij.haskell.external.repl.StackReplsManager
 import intellij.haskell.util.{ApplicationUtil, HaskellFileUtil, HaskellProjectUtil}
 
 import scala.annotation.tailrec
-import scala.collection.JavaConverters._
 import scala.collection.concurrent
+import scala.jdk.CollectionConverters._
 
 object ProjectLibraryFileWatcher {
 
@@ -79,14 +79,14 @@ object ProjectLibraryFileWatcher {
       ProgressManager.getInstance().run(new Task.Backgroundable(project, "Building project", false, PerformInBackgroundOption.ALWAYS_BACKGROUND) {
 
         @tailrec
-        def run(progressIndicator: ProgressIndicator) {
+        def run(progressIndicator: ProgressIndicator): Unit = {
           val buildMessage = s"Building project"
           HaskellNotificationGroup.logInfoEvent(project, buildMessage)
           progressIndicator.setText(buildMessage)
 
           // Forced `-Wwarn` otherwise build will fail in case of warnings and that will cause that REPLs of dependent targets will not start anymore
           val projectLibTargets = HaskellComponentsManager.findStackComponentInfos(project).filter(_.stanzaType == LibType).map(_.target)
-          val output = StackCommandLine.buildProjectInMessageView(project, projectLibTargets ++ Seq("--ghc-options", "-Wwarn"))
+          val output = StackCommandLine.buildInBackground(project, projectLibTargets ++ Seq("--ghc-options", "-Wwarn"))
           if (output.contains(true) && !project.isDisposed) {
             val projectRepls = StackReplsManager.getRunningProjectRepls(project)
             val openFiles = FileEditorManager.getInstance(project).getOpenFiles.filter(HaskellFileUtil.isHaskellFile)

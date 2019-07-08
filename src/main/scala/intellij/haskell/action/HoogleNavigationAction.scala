@@ -46,11 +46,11 @@ class HoogleNavigationAction extends GotoActionBase {
 
   private val contributors = Array[ChooseByNameContributor](new HoogleByNameContributor)
 
-  override def update(actionEvent: AnActionEvent) {
+  override def update(actionEvent: AnActionEvent): Unit = {
     HaskellEditorUtil.enableExternalAction(actionEvent, (project: Project) => !StackProjectManager.isInitializing(project) && StackProjectManager.isHoogleAvailable(project) && HoogleComponent.doesHoogleDatabaseExist(project))
   }
 
-  def gotoActionPerformed(actionEvent: AnActionEvent) {
+  def gotoActionPerformed(actionEvent: AnActionEvent): Unit = {
     ActionUtil.findActionContext(actionEvent).foreach(context => {
 
       val project = context.project
@@ -63,7 +63,7 @@ class HoogleNavigationAction extends GotoActionBase {
           new ChooseByNameLanguageFilter(popup, model, GotoClassSymbolConfiguration.getInstance(project), project)
         }
 
-        def elementChosen(popup: ChooseByNamePopup, element: Any) {
+        def elementChosen(popup: ChooseByNamePopup, element: Any): Unit = {
           EditSourceUtil.navigate(element.asInstanceOf[NavigationItem], true, popup.isOpenInCurrentWindowRequested)
         }
       }, "Hoogle for words or type signature", true)

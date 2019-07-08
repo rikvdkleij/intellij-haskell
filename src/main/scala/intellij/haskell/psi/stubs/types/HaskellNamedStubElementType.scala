@@ -23,14 +23,14 @@ import intellij.haskell.psi.stubs.index.HaskellAllNameIndex
 
 abstract class HaskellNamedStubElementType[S <: NamedStubBase[T], T <: HaskellNamedElement](debugName: String) extends HaskellStubElementType[S, T](debugName) {
 
-  def indexStub(stub: S, sink: IndexSink) {
+  def indexStub(stub: S, sink: IndexSink): Unit = {
     val name: String = stub.getName
     if (name != null) {
       sink.occurrence(HaskellAllNameIndex.Key, name)
     }
   }
 
-  def serialize(stub: S, dataStream: StubOutputStream) {
+  def serialize(stub: S, dataStream: StubOutputStream): Unit = {
     dataStream.writeName(stub.getName)
   }
 

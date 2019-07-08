@@ -82,7 +82,7 @@ class CabalInfo(cabalFile: CabalFile, modulePath: String) {
   }
 
   lazy val cabalStanzas: Iterable[CabalStanza] = {
-    library.toArray ++
+    library.toSeq ++
       cabalFile.getChildren.collect {
         case c: Executable => ExecutableCabalStanza(c, packageName, modulePath)
         case c: TestSuite => TestSuiteCabalStanza(c, packageName, modulePath)
@@ -91,7 +91,7 @@ class CabalInfo(cabalFile: CabalFile, modulePath: String) {
   }
 
   lazy val sourceRoots: Iterable[String] = {
-    library.map(_.sourceDirs).getOrElse(Array()) ++ executables.flatMap(_.sourceDirs)
+    library.map(_.sourceDirs).getOrElse(Iterable()) ++ executables.flatMap(_.sourceDirs)
   }
 
   lazy val testSourceRoots: Iterable[String] = {
@@ -112,10 +112,10 @@ sealed trait CabalStanza {
 
   val nameElementType: Option[IElementType]
 
-  def sourceDirs: Array[String]
+  def sourceDirs: Seq[String]
 
-  protected def findSourceDirs: Array[String] = {
-    HaskellPsiUtil.getChildOfType(sectionRootElement, classOf[SourceDirsImpl]).map(_.getValue).getOrElse(Array()).map(p => HaskellFileUtil.makeFilePathAbsolute(p, modulePath))
+  protected def findSourceDirs: Seq[String] = {
+    HaskellPsiUtil.getChildOfType(sectionRootElement, classOf[SourceDirsImpl]).map(_.getValue).getOrElse(Array()).map(p => HaskellFileUtil.makeFilePathAbsolute(p, modulePath)).toSeq
   }
 
   lazy val buildDepends: Seq[String] = {
@@ -130,10 +130,10 @@ sealed trait CabalStanza {
     findLanguageExtensions.contains("NoImplicitPrelude")
   }
 
-  protected def findSourceDirsOrElseModuleDir: Array[String] = {
+  protected def findSourceDirsOrElseModuleDir: Seq[String] = {
     val sourceDirs = findSourceDirs
     if (sourceDirs.isEmpty) {
-      Array(modulePath)
+      Seq(modulePath)
     } else {
       sourceDirs
     }
@@ -154,12 +154,12 @@ case class LibraryCabalStanza(sectionRootElement: PsiElement, packageName: Strin
 
   val targetName: String = s"$packageName:lib"
 
-  lazy val sourceDirs: Array[String] = findSourceDirsOrElseModuleDir
+  lazy val sourceDirs: Seq[String] = findSourceDirsOrElseModuleDir
 
-  lazy val exposedModuleNames: Array[String] = findExposedModuleNames
+  lazy val exposedModuleNames: Seq[String] = findExposedModuleNames
 
-  private def findExposedModuleNames: Array[String] = {
-    HaskellPsiUtil.getChildOfType(sectionRootElement, classOf[ExposedModules]).map(_.getModuleNames).getOrElse(Array())
+  private def findExposedModuleNames: Seq[String] = {
+    HaskellPsiUtil.getChildOfType(sectionRootElement, classOf[ExposedModules]).map(_.getModuleNames.toSeq).getOrElse(Seq())
   }
 }
 
@@ -170,7 +170,7 @@ case class ExecutableCabalStanza(sectionRootElement: PsiElement, packageName: St
 
   lazy val mainIs: Option[String] = findMainIs
 
-  lazy val sourceDirs: Array[String] = findSourceDirsOrElseModuleDir
+  lazy val sourceDirs: Seq[String] = findSourceDirsOrElseModuleDir
 }
 
 case class TestSuiteCabalStanza(sectionRootElement: PsiElement, packageName: String, modulePath: String) extends CabalStanza {
@@ -180,7 +180,7 @@ case class TestSuiteCabalStanza(sectionRootElement: PsiElement, packageName: Str
 
   lazy val mainIs: Option[String] = findMainIs
 
-  lazy val sourceDirs: Array[String] = findSourceDirs
+  lazy val sourceDirs: Seq[String] = findSourceDirs
 }
 
 case class BenchmarkCabalStanza(sectionRootElement: PsiElement, packageName: String, modulePath: String) extends CabalStanza {
@@ -190,5 +190,5 @@ case class BenchmarkCabalStanza(sectionRootElement: PsiElement, packageName: Str
 
   lazy val mainIs: Option[String] = findMainIs
 
-  lazy val sourceDirs: Array[String] = findSourceDirs
+  lazy val sourceDirs: Seq[String] = findSourceDirs
 }

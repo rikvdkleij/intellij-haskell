@@ -80,7 +80,7 @@ import_ids_spec             ::= LEFT_PAREN onls imported_ids? RIGHT_PAREN
 private imported_ids        ::= import_id (onls COMMA? onls import_id)* onls COMMA? onls
 import_hiding_spec          ::= import_hiding onls LEFT_PAREN onls (import_id onls (onls COMMA onls import_id)* onls COMMA?)? onls RIGHT_PAREN
 import_hiding               ::= "hiding"
-import_id                   ::= TYPE? (cname LEFT_PAREN onls (cname_dot_dot onls (COMMA onls cname_dot_dot onls)* onls)? RIGHT_PAREN | cname)
+import_id                   ::= TYPE? (cname onls LEFT_PAREN onls (cname_dot_dot onls (COMMA onls cname_dot_dot onls)* onls)? RIGHT_PAREN | cname)
 import_package_name         ::= text_literal
 
 top_declaration             ::= type_declaration | data_declaration | newtype_declaration | class_declaration | instance_declaration | default_declaration |

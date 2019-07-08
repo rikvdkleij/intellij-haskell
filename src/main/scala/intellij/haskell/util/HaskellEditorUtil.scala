@@ -37,7 +37,7 @@ import intellij.haskell.HaskellFile
 import javax.swing.Icon
 import javax.swing.event.HyperlinkListener
 
-import scala.collection.JavaConverters._
+import scala.jdk.CollectionConverters._
 
 object HaskellEditorUtil {
 
@@ -55,12 +55,12 @@ object HaskellEditorUtil {
   def enableAction(onlyForSourceFile: Boolean, actionEvent: AnActionEvent): Unit = {
     val presentation = actionEvent.getPresentation
 
-    def enable() {
+    def enable(): Unit = {
       presentation.setEnabled(true)
       presentation.setVisible(true)
     }
 
-    def disable() {
+    def disable(): Unit = {
       presentation.setEnabled(false)
       presentation.setVisible(false)
     }
@@ -91,7 +91,7 @@ object HaskellEditorUtil {
     val hintManager = HintManagerImpl.getInstanceImpl
 
     label.addMouseMotionListener(new MouseMotionAdapter {
-      override def mouseMoved(e: MouseEvent) {
+      override def mouseMoved(e: MouseEvent): Unit = {
         hintManager.hideAllHints()
       }
     })

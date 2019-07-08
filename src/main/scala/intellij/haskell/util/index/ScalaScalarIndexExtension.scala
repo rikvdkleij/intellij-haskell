@@ -30,7 +30,7 @@ object ScalaScalarIndexExtension {
   final val VoidDataExternalizer: DataExternalizer[Unit] = new ScalaScalarIndexExtension.UnitDataExternalizer
 
   private class UnitDataExternalizer extends DataExternalizer[Unit] {
-    def save(out: DataOutput, value: Unit) {
+    def save(out: DataOutput, value: Unit): Unit = {
     }
 
     def read(in: DataInput): Unit = {

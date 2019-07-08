@@ -25,7 +25,7 @@ import intellij.haskell.util.HaskellEditorUtil
 
 class BuildHoogleDbAction extends AnAction {
 
-  override def update(actionEvent: AnActionEvent) {
+  override def update(actionEvent: AnActionEvent): Unit = {
     HaskellEditorUtil.enableExternalAction(actionEvent, (project: Project) =>
       !StackProjectManager.isInitializing(project) &&
         StackProjectManager.isHoogleAvailable(project) &&
@@ -33,12 +33,12 @@ class BuildHoogleDbAction extends AnAction {
         !StackProjectManager.isHaddockBuilding(project))
   }
 
-  def actionPerformed(actionEvent: AnActionEvent) {
+  def actionPerformed(actionEvent: AnActionEvent): Unit = {
     val message = "Building or rebuilding Hoogle database"
     Option(actionEvent.getProject).foreach(project => {
       ProgressManager.getInstance().run(new Task.Backgroundable(project, message, false) {
 
-        def run(progressIndicator: ProgressIndicator) {
+        def run(progressIndicator: ProgressIndicator): Unit = {
           HaskellNotificationGroup.logInfoEvent(project, message)
           HoogleComponent.rebuildHoogle(project)
         }

@@ -42,9 +42,10 @@ import intellij.haskell.util.{HaskellFileUtil, HaskellProjectUtil, ScalaUtil}
 import intellij.haskell.{GlobalInfo, HaskellNotificationGroup}
 import javax.swing.Icon
 
-import scala.collection.JavaConverters._
+import scala.annotation.tailrec
 import scala.collection.mutable.ListBuffer
 import scala.concurrent.duration._
+import scala.jdk.CollectionConverters._
 
 class HaskellModuleBuilder extends TemplateModuleBuilder(null, HaskellModuleType.getInstance, List().asJava) {
 
@@ -78,7 +79,7 @@ class HaskellModuleBuilder extends TemplateModuleBuilder(null, HaskellModuleType
       packageRelativePath.flatMap(pp => HaskellModuleBuilder.createCabalInfo(rootModel.getProject, project.getBasePath, pp)) match {
         case Some(ci) => cabalInfo = ci
         case None =>
-          Messages.showErrorDialog(s"Could not create Haskell module because could not retrieve or parse Cabal file for package path `$packageRelativePath`", "No Cabal file info")
+          Messages.showErrorDialog(s"Couldn't create Haskell module due to failure retrieving or parsing Cabal file for package path `$packageRelativePath`", "No Cabal file info")
       }
     }
 
@@ -109,10 +110,10 @@ class HaskellModuleBuilder extends TemplateModuleBuilder(null, HaskellModuleType
       val processOutput = StackCommandLine.run(project, Seq("new", project.getName, "--bare", "new-template", "-p", "author-email:Author email here", "-p", "author-name:Author name here", "-p", "category:App category here", "-p", "copyright:2019 Author name here", "-p", "github-username:Github username here"), timeoutInMillis = 60.seconds.toMillis, enableExtraArguments = false)
       processOutput match {
         case None =>
-          throw new RuntimeException("Could not create new Stack project because could not execute Stack command for creating new project on file system")
+          throw new RuntimeException("Couldn't create new Stack project due to failure executing Stack command for creating new project on file system")
         case Some(output) =>
           if (output.getExitCode != 0) {
-            throw new RuntimeException(s"Could not create new Stack project: ${output.getStdout} ${output.getStderr}")
+            throw new RuntimeException(s"Couldn't create new Stack project: ${output.getStdout} ${output.getStderr}")
           }
       }
     }
@@ -142,14 +143,14 @@ class HaskellModuleBuilder extends TemplateModuleBuilder(null, HaskellModuleType
 
 class HaskellModuleWizardStep(wizardContext: WizardContext, haskellModuleBuilder: HaskellModuleBuilder) extends ProjectJdkForModuleStep(wizardContext, HaskellSdkType.getInstance) {
 
-  override def updateDataModel() {
+  override def updateDataModel(): Unit = {
     super.updateDataModel()
     haskellModuleBuilder.setModuleJdk(getJdk)
   }
 
   override def validate(): Boolean = {
     if (getJdk == null) {
-      Messages.showErrorDialog("You can not create Haskell project without Stack configured as SDK", "No Haskell Tool Stack specified")
+      Messages.showErrorDialog("You can't create a Haskell project without Stack configured as SDK", "No Haskell Tool Stack specified")
       false
     } else {
       true
@@ -222,7 +223,7 @@ object HaskellModuleBuilder {
     HaskellProjectUtil.findCabalFile(moduleDirectory) match {
       case Some(f) => Option(f)
       case None =>
-        Messages.showErrorDialog(s"Could not create Haskell module because Cabal file can not be found in `$moduleDirectory`", "Haskell module can not be created")
+        Messages.showErrorDialog(s"Couldn't create Haskell module because Cabal file can't be found in `$moduleDirectory`", "Haskell module can't be created")
         None
     }
   }
@@ -231,35 +232,37 @@ object HaskellModuleBuilder {
     CabalInfo.create(project, cabalFile) match {
       case Some(f) => Option(f)
       case None =>
-        Messages.showErrorDialog(project, s"Could not create Haskell module because Cabal file `$cabalFile` can not be parsed", "Haskell module can not be created")
+        Messages.showErrorDialog(project, s"Couldn't create Haskell module because Cabal file `$cabalFile` can't be parsed", "Haskell module can't be created")
         None
     }
   }
 
-  private def getDependsPackageInfos(allPackageInfos: Seq[PackageInfo], modulePackageInfos: Seq[PackageInfo]): Seq[PackageInfo] = {
-    val packageInfoByName = allPackageInfos.map(pi => (pi.packageName, pi)).toMap
+  private def getDependsOnPackageInfos(libraryPackageInfos: Seq[PackageInfo], modulePackageInfos: Seq[PackageInfo]): Seq[PackageInfo] = {
+    val libraryPackageInfoByName = libraryPackageInfos.map(pi => (pi.packageName, pi)).toMap
 
-    def go(packageInfos: Seq[PackageInfo], dependsPackageInfos: ListBuffer[PackageInfo]): Seq[PackageInfo] = {
-      val depends = packageInfos.flatMap { pi =>
-        dependsPackageInfos += pi
-        pi.dependsPackageNames.map(_.name).flatMap(packageInfoByName.get)
+    @tailrec
+    def go(packageInfos: Seq[PackageInfo], dependsOnPackageInfos: ListBuffer[PackageInfo]): Seq[PackageInfo] = {
+      val dependsOn = packageInfos.flatMap { pi =>
+        dependsOnPackageInfos += pi
+        pi.dependsOnPackageIds.map(_.name).flatMap(libraryPackageInfoByName.get).filterNot(dependsOnPackageInfos.contains)
       }
-      if (depends.isEmpty) {
-        dependsPackageInfos
+
+      if (dependsOn.isEmpty) {
+        dependsOnPackageInfos.toSeq
       } else {
-        go(depends.distinct, dependsPackageInfos)
+        go(dependsOn.distinct, dependsOnPackageInfos)
       }
     }
 
-    val dependsPackageNames = ListBuffer[PackageInfo]()
+    val dependsOnPackageInfos = ListBuffer[PackageInfo]()
 
-    go(modulePackageInfos, dependsPackageNames).filterNot(_.packageName == "rts")
+    go(modulePackageInfos, dependsOnPackageInfos).filterNot(_.packageName == "rts")
   }
 
   private def getModuleLibraryDependencies(moduleDependencies: Seq[HaskellDependency], libraryPackageInfos: Seq[PackageInfo]): Seq[HaskellLibraryDependency] = {
-    val modulePackageInfos = moduleDependencies.filter(_.isInstanceOf[HaskellLibraryDependency]).flatMap(d => libraryPackageInfos.find(_.packageName == d.name))
-    val dependsPackageInfos = getDependsPackageInfos(libraryPackageInfos, modulePackageInfos)
-    dependsPackageInfos.map(pi => HaskellLibraryDependency(pi.packageName, pi.version))
+    val moduleLibraryPackageInfos = moduleDependencies.filter(_.isInstanceOf[HaskellLibraryDependency]).flatMap(d => libraryPackageInfos.find(_.packageName == d.name))
+    val dependsOnPackageInfos = getDependsOnPackageInfos(libraryPackageInfos, moduleLibraryPackageInfos)
+    dependsOnPackageInfos.map(pi => HaskellLibraryDependency(pi.packageName, pi.version))
   }
 
   def addLibrarySources(project: Project, update: Boolean): Unit = {

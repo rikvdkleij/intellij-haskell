@@ -6,7 +6,7 @@ import com.intellij.execution.process.{KillableColoredProcessHandler, ProcessHan
 import com.intellij.execution.runners.ExecutionEnvironment
 import intellij.haskell.sdk.HaskellSdkType
 
-import scala.collection.JavaConverters._
+import scala.jdk.CollectionConverters._
 
 class HaskellStackStateBase(val configuration: HaskellStackConfigurationBase, val environment: ExecutionEnvironment, val parameters: List[String]) extends CommandLineState(environment) {
 

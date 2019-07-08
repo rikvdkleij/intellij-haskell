@@ -26,8 +26,9 @@ import intellij.haskell.external.component.HaskellComponentsManager.StackCompone
 import intellij.haskell.external.repl.StackRepl.StackReplOutput
 import intellij.haskell.util.{HaskellFileUtil, ScalaFutureUtil}
 
-import scala.collection.JavaConverters._
-import scala.concurrent.Future
+import scala.concurrent.duration._
+import scala.concurrent.{Future, blocking}
+import scala.jdk.CollectionConverters._
 
 case class ProjectStackRepl(project: Project, stackComponentInfo: StackComponentInfo, replTimeout: Int) extends StackRepl(project, Some(stackComponentInfo), Seq("--ghc-options", "-fobject-code"), replTimeout: Int) {
 
@@ -64,7 +65,6 @@ case class ProjectStackRepl(project: Project, stackComponentInfo: StackComponent
   private var objectCodeEnabled = true
 
   import scala.concurrent.ExecutionContext.Implicits.global
-  import scala.concurrent.duration._
 
   private def isReadAccessAllowed = ApplicationManager.getApplication.isReadAccessAllowed
 
@@ -72,7 +72,9 @@ case class ProjectStackRepl(project: Project, stackComponentInfo: StackComponent
     val filePath = getFilePath(psiFile)
 
     def execute = {
-      executeModuleLoadedCommand(moduleName, psiFile, s":type-at $filePath $startLineNr $startColumnNr $endLineNr $endColumnNr $expression")
+      blocking {
+        executeModuleLoadedCommand(moduleName, psiFile, s":type-at $filePath $startLineNr $startColumnNr $endLineNr $endColumnNr $expression")
+      }
     }
 
     if (isReadAccessAllowed) {
@@ -86,7 +88,9 @@ case class ProjectStackRepl(project: Project, stackComponentInfo: StackComponent
     val filePath = getFilePath(psiFile)
 
     def execute = {
-      executeModuleLoadedCommand(moduleName, psiFile, s":loc-at $filePath $startLineNr $startColumnNr $endLineNr $endColumnNr $expression")
+      blocking {
+        executeModuleLoadedCommand(moduleName, psiFile, s":loc-at $filePath $startLineNr $startColumnNr $endLineNr $endColumnNr $expression")
+      }
     }
 
     if (isReadAccessAllowed) {
@@ -98,7 +102,9 @@ case class ProjectStackRepl(project: Project, stackComponentInfo: StackComponent
 
   def findInfo(psiFile: PsiFile, name: String): Option[StackReplOutput] = {
     def execute = {
-      executeWithLoad(psiFile, s":info $name", mustBeByteCode = true)
+      blocking {
+        executeWithLoad(psiFile, s":info $name", mustBeByteCode = true)
+      }
     }
 
     if (isReadAccessAllowed) {
@@ -125,15 +131,19 @@ case class ProjectStackRepl(project: Project, stackComponentInfo: StackComponent
     }
   }
 
-  private final val FailedModulesLoaded = "Failed, modules loaded: "
+  private final val FailedModulesLoaded = "Failed, "
 
-  private final val OkModulesLoaded = "Ok, modules loaded: "
+  private final val OkModulesLoaded = "Ok, "
 
-  private def setLoadedModules(output: StackReplOutput): Unit = {
+  private def setLoadedModules(): Unit = {
     loadedDependentModules.clear()
-    val loadedModuleNames = output.stdoutLines.find(l => l.startsWith(OkModulesLoaded) || l.startsWith(FailedModulesLoaded)).map(findLoadedModuleNames).getOrElse(Array())
-    loadedModuleNames.foreach(mn => loadedDependentModules.put(mn, DependentModuleInfo()))
-    loadedModuleNames.foreach(mn => everLoadedDependentModules.put(mn, DependentModuleInfo()))
+    execute(":show modules") match {
+      case Some(output) =>
+        val loadedModuleNames = output.stdoutLines.map(l => l.takeWhile(_ != ' '))
+        loadedModuleNames.foreach(mn => loadedDependentModules.put(mn, DependentModuleInfo()))
+        loadedModuleNames.foreach(mn => everLoadedDependentModules.put(mn, DependentModuleInfo()))
+      case None => ()
+    }
   }
 
   def load(psiFile: PsiFile, fileChanged: Boolean, mustBeByteCode: Boolean): Option[(StackReplOutput, Boolean)] = synchronized {
@@ -164,7 +174,7 @@ case class ProjectStackRepl(project: Project, stackComponentInfo: StackComponent
     output match {
       case Some(o) =>
         val loadFailed = isLoadFailed(o)
-        setLoadedModules(o)
+        setLoadedModules()
 
         loadedFile = Some(ModuleInfo(psiFile, loadFailed))
         Some(o, loadFailed)
@@ -189,7 +199,7 @@ case class ProjectStackRepl(project: Project, stackComponentInfo: StackComponent
     if (psiFile.isEmpty || isBrowseModuleLoaded(moduleName) || psiFile.exists(pf => load(pf, fileChanged = false, mustBeByteCode = false).exists(_._2 == false))) {
       execute(s":browse! $moduleName")
     } else {
-      HaskellNotificationGroup.logInfoEvent(project, s"Could not get module identifiers for module $moduleName because file ${psiFile.map(_.getName).getOrElse("-")} is not loaded")
+      HaskellNotificationGroup.logInfoEvent(project, s"Couldn't get module identifiers for module $moduleName because file ${psiFile.map(_.getName).getOrElse("-")} isn't loaded")
       None
     }
   }
@@ -235,7 +245,7 @@ case class ProjectStackRepl(project: Project, stackComponentInfo: StackComponent
         } else {
           filePath
         }
-      case None => throw new IllegalStateException(s"Can not load file `${psiFile.getName}` in REPL because it exists only in memory")
+      case None => throw new IllegalStateException(s"Can't load file `${psiFile.getName}` in REPL because it only exists in memory")
     }
   }
 }

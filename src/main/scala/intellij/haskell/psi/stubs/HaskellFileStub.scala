@@ -19,4 +19,6 @@ package intellij.haskell.psi.stubs
 import com.intellij.psi.stubs.PsiFileStubImpl
 import intellij.haskell.HaskellFile
 
-class HaskellFileStub(file: HaskellFile) extends PsiFileStubImpl[HaskellFile](file)
+object Bla {
+  type HaskellFileStub = PsiFileStubImpl[HaskellFile]
+}

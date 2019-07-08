@@ -18,6 +18,7 @@ import com.intellij.pom.Navigatable
 import com.intellij.ui.content.ContentFactory
 import com.intellij.util.concurrency.SequentialTaskExecutor
 import com.intellij.util.ui.UIUtil
+import intellij.haskell.util.HaskellProjectUtil
 
 class HaskellProblemsView(project: Project, toolWindowManager: ToolWindowManager) extends ProblemsView(project) {
 
@@ -33,18 +34,20 @@ class HaskellProblemsView(project: Project, toolWindowManager: ToolWindowManager
     Disposer.dispose(problemsPanel)
   })
 
-  UIUtil.invokeLaterIfNeeded(() => {
-    if (!project.isDisposed) {
-      val toolWindow = toolWindowManager.registerToolWindow(ProblemsToolWindowId, false, ToolWindowAnchor.LEFT, project, true)
-      val content = ContentFactory.SERVICE.getInstance.createContent(problemsPanel, "", false)
-      content.setHelpId("reference.problems.tool.window")
-      toolWindow.getContentManager.addContent(content)
-      Disposer.register(project, () => {
-        toolWindow.getContentManager.removeAllContents(true)
-      })
-      updateIcon()
-    }
-  })
+  if (HaskellProjectUtil.isHaskellProject(project)) {
+    UIUtil.invokeLaterIfNeeded(() => {
+      if (!project.isDisposed) {
+        val toolWindow = toolWindowManager.registerToolWindow(ProblemsToolWindowId, false, ToolWindowAnchor.LEFT, project, true)
+        val content = ContentFactory.SERVICE.getInstance.createContent(problemsPanel, "", false)
+        content.setHelpId("reference.problems.tool.window")
+        toolWindow.getContentManager.addContent(content)
+        Disposer.register(project, () => {
+          toolWindow.getContentManager.removeAllContents(true)
+        })
+        updateIcon()
+      }
+    })
+  }
 
   def clearOldMessages(currentFile: VirtualFile): Unit = {
     viewUpdater.execute(() => {

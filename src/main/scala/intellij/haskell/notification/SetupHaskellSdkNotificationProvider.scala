@@ -19,7 +19,7 @@ object SetupHaskellSdkNotificationProvider {
 class SetupHaskellSdkNotificationProvider(project: Project, notifications: EditorNotifications) extends EditorNotifications.Provider[EditorNotificationPanel] {
   project.getMessageBus.connect(project).subscribe(ProjectTopics.PROJECT_ROOTS, new ModuleRootListener() {
 
-    override def rootsChanged(event: ModuleRootEvent) {
+    override def rootsChanged(event: ModuleRootEvent): Unit = {
       notifications.updateAllNotifications()
     }
   })

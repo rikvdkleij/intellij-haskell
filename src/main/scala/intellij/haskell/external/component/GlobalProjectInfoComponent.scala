@@ -23,7 +23,7 @@ import com.intellij.openapi.project.Project
 import intellij.haskell.external.execution.{CommandLine, StackCommandLine}
 import intellij.haskell.util.{GhcVersion, ScalaUtil}
 
-import scala.collection.JavaConverters._
+import scala.jdk.CollectionConverters._
 
 private[component] object GlobalProjectInfoComponent {
 
@@ -47,7 +47,7 @@ private[component] object GlobalProjectInfoComponent {
       ghcPath,
       Seq("--supported-languages"),
       notifyBalloonError = true
-    ).getStdoutLines.asScala
+    ).getStdoutLines.asScala.toSeq
   }
 
   def getAvailableStackagesPackages(project: Project): Iterable[String] = {
@@ -68,12 +68,11 @@ private[component] object GlobalProjectInfoComponent {
       packageDbPaths <- findPackageDbPaths(pathInfoMap)
       ghcPath = new File(binPaths.compilerBinPath, "ghc").getPath
       ghcPkgPath = new File(binPaths.compilerBinPath, "ghc-pkg").getPath
-      interoPath = new File(binPaths.localBinPath, "intero").getPath
       extensions = getSupportedLanguageExtensions(project, ghcPath)
       stackagePackageNames = getAvailableStackagesPackages(project)
       ghcVersion = findGhcVersion(project, ghcPath)
       localDocRoot <- pathInfoMap.get("local-doc-root")
-    } yield GlobalProjectInfo(ghcVersion, ghcPath, ghcPkgPath, interoPath, localDocRoot, packageDbPaths, binPaths, extensions, stackagePackageNames)
+    } yield GlobalProjectInfo(ghcVersion, ghcPath, ghcPkgPath, localDocRoot, packageDbPaths, binPaths, extensions, stackagePackageNames)
   }
 
   private def findPathLines(project: Project) = {
@@ -102,7 +101,7 @@ private[component] object GlobalProjectInfoComponent {
 }
 
 
-case class GlobalProjectInfo(ghcVersion: GhcVersion, ghcPath: String, ghcPkgPath: String, interoPath: String, localDocRoot: String, packageDbPaths: PackageDbPaths, projectBinPaths: ProjectBinPaths, supportedLanguageExtensions: Iterable[String], availableStackagePackageNames: Iterable[String])
+case class GlobalProjectInfo(ghcVersion: GhcVersion, ghcPath: String, ghcPkgPath: String, localDocRoot: String, packageDbPaths: PackageDbPaths, projectBinPaths: ProjectBinPaths, supportedLanguageExtensions: Iterable[String], availableStackagePackageNames: Iterable[String])
 
 case class PackageDbPaths(globalPackageDbPath: String, snapshotPackageDbPath: String, localPackageDbPath: String)
 

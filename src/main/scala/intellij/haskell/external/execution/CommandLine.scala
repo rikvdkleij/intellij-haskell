@@ -25,8 +25,8 @@ import intellij.haskell.HaskellNotificationGroup
 import org.jetbrains.jps.incremental.messages.BuildMessage
 import org.jetbrains.jps.incremental.messages.BuildMessage.Kind
 
-import scala.collection.JavaConverters._
 import scala.concurrent.duration._
+import scala.jdk.CollectionConverters._
 
 object CommandLine {
   val DefaultTimeout: FiniteDuration = 30.seconds
@@ -98,7 +98,7 @@ object CommandLine {
     }
   }
 
-  private def createLogMessage(cmd: GeneralCommandLine, processOutput: ProcessOutput) = {
+  private def createLogMessage(cmd: GeneralCommandLine, processOutput: ProcessOutput): String = {
     s"${cmd.getCommandLineString}:  ${processOutput.getStdoutLines.asScala.mkString("\n")} \n ${processOutput.getStderrLines.asScala.mkString("\n")}"
   }
 }
@@ -107,12 +107,12 @@ private class HaskellBuildMessage(message: String, kind: Kind) extends BuildMess
 
 private class CapturingProcessToLog(val project: Option[Project], val cmd: GeneralCommandLine, val output: ProcessOutput) extends CapturingProcessAdapter(output) {
 
-  override def onTextAvailable(event: ProcessEvent, outputType: Key[_]) {
+  override def onTextAvailable(event: ProcessEvent, outputType: Key[_]): Unit = {
     super.onTextAvailable(event, outputType)
     addToLog(event.getText, outputType)
   }
 
-  private def addToLog(text: String, outputType: Key[_]) {
+  private def addToLog(text: String, outputType: Key[_]): Unit = {
     val trimmedText = text.trim
     if (trimmedText.nonEmpty) {
       HaskellNotificationGroup.logInfoEvent(project, s"${cmd.getCommandLineString}:  $trimmedText")
