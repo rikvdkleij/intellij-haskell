@@ -56,7 +56,7 @@ Alternative way to install the latest beta version is to download `intellij-hask
 
 ### Usage with `hindent`
 
-When used with `hindent`, `intellij-haskell` automatically sets `--indent-size` as a command-line option in `hindent` from the `Indent` option in your project code style settings. It also automatically sets the `--line-length` command-line option from your `Right margin (columns)` code style setting. This means that any `.hindent.yaml` files used for configuration will have these options overridden and may not fully work.
+When used with `hindent`, `intellij-haskell` automatically sets `--indent-size` as a command-line option in `hindent` from the `Indent` option in your project code style settings. It also automatically sets the `--line-length` command-line option from your `Hard wrap at` code style setting. This means that any `.hindent.yaml` files used for configuration will have these options overridden and may not fully work.
 
 
 # Getting started

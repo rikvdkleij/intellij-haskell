@@ -16,8 +16,10 @@
 
 package intellij.haskell.editor.formatter.settings
 
+import com.intellij.lang.Language
 import com.intellij.openapi.options.Configurable
 import com.intellij.psi.codeStyle.{CodeStyleSettings, CodeStyleSettingsProvider, CustomCodeStyleSettings}
+import intellij.haskell.HaskellLanguage
 import org.jetbrains.annotations.NotNull
 
 class HaskellCodeStyleSettingsProvider extends CodeStyleSettingsProvider {
@@ -33,5 +35,9 @@ class HaskellCodeStyleSettingsProvider extends CodeStyleSettingsProvider {
   @NotNull
   override def createCustomSettings(settings: CodeStyleSettings): CustomCodeStyleSettings = {
     new HaskellCodeStyleSettings(settings)
+  }
+
+  override def getLanguage: Language = {
+    HaskellLanguage.Instance
   }
 }

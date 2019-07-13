@@ -21,10 +21,10 @@ import com.intellij.psi.codeStyle.CodeStyleSettings
 import intellij.haskell.HaskellLanguage
 import org.jetbrains.annotations.NotNull
 
-class HaskellCodeStyleConfigurable(@NotNull settings: CodeStyleSettings, cloneSettings: CodeStyleSettings) extends CodeStyleAbstractConfigurable(settings, cloneSettings, "Haskell") {
+class HaskellCodeStyleConfigurable(@NotNull settings: CodeStyleSettings, originalSettings: CodeStyleSettings) extends CodeStyleAbstractConfigurable(settings, originalSettings, "Haskell") {
 
   protected def createPanel(settings: CodeStyleSettings): CodeStyleAbstractPanel = {
-    new HaskellCodeStyleMainPanel(getCurrentSettings, settings)
+    new HaskellCodeStyleMainPanel(settings, originalSettings)
   }
 
   override def getHelpTopic: String = {

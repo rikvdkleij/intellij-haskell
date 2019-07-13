@@ -30,20 +30,23 @@ class HaskellLanguageCodeStyleSettingsProvider extends LanguageCodeStyleSettings
     HaskellLanguage.Instance
   }
 
-  override def getDefaultCommonSettings: CommonCodeStyleSettings = {
-    val defaultSettings = new CommonCodeStyleSettings(getLanguage)
-    defaultSettings.KEEP_BLANK_LINES_IN_CODE = 1
-
-    val indentOptions = defaultSettings.initIndentOptions
+  override def customizeDefaults(commonSettings: CommonCodeStyleSettings, indentOptions: CommonCodeStyleSettings.IndentOptions): Unit = {
     indentOptions.INDENT_SIZE = 2
     indentOptions.CONTINUATION_INDENT_SIZE = 4
     indentOptions.TAB_SIZE = 2
-    defaultSettings
+    indentOptions.USE_TAB_CHARACTER = false
   }
 
   override def getIndentOptionsEditor: SmartIndentOptionsEditor = {
-    new SmartIndentOptionsEditor
+    new SmartIndentOptionsEditor(this)
   }
 
-  override def getCodeSample(settingsType: SettingsType): String = ""
+  override def getCodeSample(settingsType: SettingsType): String =
+    """-- Reformatting is done externally by Hindent
+      |-- Only the indent size and the number of columns
+      |-- of `Hard wrap at` in Code Style settings are used by Hindent
+      |sum = x + y
+      |  where
+      |    x = 1
+      |    y = 2 """.stripMargin
 }
