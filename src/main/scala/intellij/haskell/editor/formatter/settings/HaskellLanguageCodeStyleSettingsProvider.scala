@@ -42,11 +42,8 @@ class HaskellLanguageCodeStyleSettingsProvider extends LanguageCodeStyleSettings
   }
 
   override def getCodeSample(settingsType: SettingsType): String =
-    """-- Reformatting is done externally by Hindent
+    """-- Reformatting is done externally by Hindent.
       |-- Only the indent size and the number of columns
-      |-- of `Hard wrap at` in Code Style settings are used by Hindent
-      |sum = x + y
-      |  where
-      |    x = 1
-      |    y = 2 """.stripMargin
+      |-- of `Hard wrap at` in Code Style settings are used by Hindent.
+    """.stripMargin
 }
