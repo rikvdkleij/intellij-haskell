@@ -29,7 +29,6 @@ import com.intellij.openapi.util.Key
 import com.intellij.openapi.vfs.{CharsetToolkit, VfsUtil}
 import intellij.haskell.HaskellNotificationGroup
 import intellij.haskell.sdk.HaskellSdkType
-import intellij.haskell.settings.HaskellSettingsState
 import intellij.haskell.stackyaml.StackYamlComponent
 import intellij.haskell.util.{HaskellFileUtil, HaskellProjectUtil}
 
@@ -38,15 +37,6 @@ import scala.jdk.CollectionConverters._
 object StackCommandLine {
 
   final val NoDiagnosticsShowCaretFlag = "-fno-diagnostics-show-caret"
-
-  private def extraStackArguments: Seq[String] = {
-    val extraStackArgumentsString = HaskellSettingsState.getExtraStackArguments
-    if (extraStackArgumentsString.nonEmpty) {
-      extraStackArgumentsString.split("""\s+""").toSeq
-    } else {
-      Seq()
-    }
-  }
 
   def stackVersion(project: Project): Option[String] = {
     StackCommandLine.run(project, Seq("--numeric-version"), enableExtraArguments = false).flatMap(_.getStdoutLines.asScala.headOption)
@@ -59,7 +49,7 @@ object StackCommandLine {
         project,
         workDir.getOrElse(project.getBasePath),
         stackPath,
-        arguments ++ (if (enableExtraArguments) extraStackArguments else Seq()),
+        arguments,
         timeoutInMillis.toInt,
         ignoreExitCode = ignoreExitCode,
         logOutput = logOutput,
@@ -113,7 +103,7 @@ object StackCommandLine {
   }
 
   def executeInMessageView(project: Project, commandPath: String, arguments: Seq[String]): Option[Boolean] = {
-    val cmd = CommandLine.createCommandLine(project.getBasePath, commandPath, arguments ++ extraStackArguments)
+    val cmd = CommandLine.createCommandLine(project.getBasePath, commandPath, arguments)
     (try {
       Option(cmd.createProcess())
     } catch {
