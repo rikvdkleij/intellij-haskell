@@ -21,6 +21,7 @@ import com.intellij.execution.configurations.GeneralCommandLine.ParentEnvironmen
 import com.intellij.execution.process._
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Key
+import com.intellij.openapi.vfs.VfsUtil
 import intellij.haskell.HaskellNotificationGroup
 import org.jetbrains.jps.incremental.messages.BuildMessage
 import org.jetbrains.jps.incremental.messages.BuildMessage.Kind
@@ -36,20 +37,25 @@ object CommandLine {
 
   def run(project: Project, commandPath: String, arguments: Seq[String], timeoutInMillis: Long = DefaultTimeout.toMillis,
           notifyBalloonError: Boolean = DefaultNotifyBalloonError, ignoreExitCode: Boolean = DefaultIgnoreExitCode, logOutput: Boolean = DefaultLogOutput): ProcessOutput = {
-    run2(Some(project), project.getBasePath, commandPath, arguments, timeoutInMillis, notifyBalloonError, ignoreExitCode, logOutput)
+    run3(Some(project), project.getBasePath, commandPath, arguments, timeoutInMillis, notifyBalloonError, ignoreExitCode, logOutput)
   }
 
   def run0(workDir: String, commandPath: String, arguments: Seq[String], timeoutInMillis: Long = DefaultTimeout.toMillis,
            notifyBalloonError: Boolean = DefaultNotifyBalloonError, ignoreExitCode: Boolean = DefaultIgnoreExitCode, logOutput: Boolean = DefaultLogOutput): ProcessOutput = {
-    run2(None, workDir, commandPath, arguments, timeoutInMillis, notifyBalloonError, ignoreExitCode, logOutput)
+    run3(None, workDir, commandPath, arguments, timeoutInMillis, notifyBalloonError, ignoreExitCode, logOutput)
   }
 
   def run1(project: Project, workDir: String, commandPath: String, arguments: Seq[String], timeoutInMillis: Long = DefaultTimeout.toMillis,
            notifyBalloonError: Boolean = DefaultNotifyBalloonError, ignoreExitCode: Boolean = DefaultIgnoreExitCode, logOutput: Boolean = DefaultLogOutput): ProcessOutput = {
-    run2(Some(project), workDir, commandPath, arguments, timeoutInMillis, notifyBalloonError, ignoreExitCode, logOutput)
+    run3(Some(project), workDir, commandPath, arguments, timeoutInMillis, notifyBalloonError, ignoreExitCode, logOutput)
   }
 
-  private def run2(project: Option[Project], workDir: String, commandPath: String, arguments: Seq[String], timeoutInMillis: Long = DefaultTimeout.toMillis,
+  def run2(commandPath: String, arguments: Seq[String], timeoutInMillis: Long = DefaultTimeout.toMillis,
+           notifyBalloonError: Boolean = DefaultNotifyBalloonError, ignoreExitCode: Boolean = DefaultIgnoreExitCode, logOutput: Boolean = DefaultLogOutput): ProcessOutput = {
+    run3(None, VfsUtil.getUserHomeDir.getPath, commandPath, arguments, timeoutInMillis, notifyBalloonError, ignoreExitCode, logOutput)
+  }
+
+  private def run3(project: Option[Project], workDir: String, commandPath: String, arguments: Seq[String], timeoutInMillis: Long = DefaultTimeout.toMillis,
                    notifyBalloonError: Boolean = DefaultNotifyBalloonError, ignoreExitCode: Boolean = DefaultIgnoreExitCode, logOutput: Boolean = DefaultLogOutput): ProcessOutput = {
 
     val commandLine = createCommandLine(workDir, commandPath, arguments)

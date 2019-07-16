@@ -101,9 +101,7 @@ class HaskellSdkType extends SdkType("Haskell Tool Stack SDK") {
   }
 
   private def getNumericVersion(stackPath: String): Option[String] = {
-    val workDir = new File(stackPath).getParent
-    val output = CommandLine.run0(
-      workDir,
+    val output = CommandLine.run2(
       stackPath,
       Seq("--numeric-version"),
       notifyBalloonError = true
