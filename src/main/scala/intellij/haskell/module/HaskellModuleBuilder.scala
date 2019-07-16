@@ -37,6 +37,7 @@ import intellij.haskell.cabal.CabalInfo
 import intellij.haskell.external.component.{HaskellComponentsManager, PackageInfo}
 import intellij.haskell.external.execution.{CommandLine, StackCommandLine}
 import intellij.haskell.sdk.HaskellSdkType
+import intellij.haskell.settings.HaskellSettingsState
 import intellij.haskell.stackyaml.StackYamlComponent
 import intellij.haskell.util.{HaskellFileUtil, HaskellProjectUtil, ScalaUtil}
 import intellij.haskell.{GlobalInfo, HaskellNotificationGroup}
@@ -105,15 +106,16 @@ class HaskellModuleBuilder extends TemplateModuleBuilder(null, HaskellModuleType
     val moduleType = getModuleType
     val module = moduleModel.newModule(getModuleFilePath, moduleType.getId)
     val project = module.getProject
+    val newProjectTemplateName = HaskellSettingsState.getNewProjectTemplateName
 
     if (isNewProjectWithoutExistingSources) {
-      val processOutput = StackCommandLine.run(project, Seq("new", project.getName, "--bare", "new-template", "-p", "author-email:Author email here", "-p", "author-name:Author name here", "-p", "category:App category here", "-p", "copyright:2019 Author name here", "-p", "github-username:Github username here"), timeoutInMillis = 60.seconds.toMillis, enableExtraArguments = false)
+      val processOutput = StackCommandLine.run(project, Seq("new", project.getName, "--bare", newProjectTemplateName, "-p", "author-email:Author email here", "-p", "author-name:Author name here", "-p", "category:App category here", "-p", "copyright:2019 Author name here", "-p", "github-username:Github username here"), timeoutInMillis = 60.seconds.toMillis, enableExtraArguments = false)
       processOutput match {
         case None =>
-          throw new RuntimeException("Couldn't create new Stack project due to failure executing Stack command for creating new project on file system")
+          HaskellNotificationGroup.logErrorBalloonEvent("Couldn't create new Stack project due to failure executing Stack command for creating new project on file system")
         case Some(output) =>
           if (output.getExitCode != 0) {
-            throw new RuntimeException(s"Couldn't create new Stack project: ${output.getStdout} ${output.getStderr}")
+            HaskellNotificationGroup.logErrorBalloonEvent(s"Couldn't create new Stack project: ${output.getStdout} ${output.getStderr}")
           }
       }
     }

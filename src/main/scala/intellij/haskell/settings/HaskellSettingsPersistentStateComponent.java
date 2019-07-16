@@ -52,5 +52,6 @@ public class HaskellSettingsPersistentStateComponent implements PersistentStateC
         public String hlintOptions = "";
         public Boolean reformatCodeBeforeCommit = false;
         public Boolean optimizeImportsBeforeCommit = false;
+        public String newProjectTemplateName = "new-template";
     }
 }

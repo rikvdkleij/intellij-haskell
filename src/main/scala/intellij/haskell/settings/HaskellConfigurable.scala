@@ -28,6 +28,7 @@ class HaskellConfigurable extends Configurable {
   private val hlintOptionsField = new JTextField
   private val replTimeoutField = new JTextField
   private val replTimeoutLabel = new JLabel("Changed timeout will take effect after restarting project")
+  private val newProjectTemplateNameField = new JTextField
 
   override def getDisplayName: String = {
     "Haskell"
@@ -48,6 +49,7 @@ class HaskellConfigurable extends Configurable {
 
     hlintOptionsField.getDocument.addDocumentListener(listener)
     replTimeoutField.getDocument.addDocumentListener(listener)
+    newProjectTemplateNameField.getDocument.addDocumentListener(listener)
 
     class SettingsGridBagConstraints extends GridBagConstraints {
 
@@ -89,6 +91,7 @@ class HaskellConfigurable extends Configurable {
     addLabeledControl(1, HlintOptions, hlintOptionsField)
     addLabeledControl(2, ReplTimeout, replTimeoutField)
     addLabeledControl(3, "", replTimeoutLabel)
+    addLabeledControl(4, NewProjectTemplateName, newProjectTemplateNameField)
 
     settingsPanel.add(new JPanel(), baseGridBagConstraints.setConstraints(
       gridx = 0,
@@ -104,6 +107,7 @@ class HaskellConfigurable extends Configurable {
     val state = HaskellSettingsPersistentStateComponent.getInstance().getState
     state.replTimeout = validREPLTimeout
     state.hlintOptions = hlintOptionsField.getText
+    state.newProjectTemplateName = newProjectTemplateNameField.getText
   }
 
   private def validateREPLTimeout(): Integer = {
@@ -127,10 +131,12 @@ class HaskellConfigurable extends Configurable {
     val state = HaskellSettingsPersistentStateComponent.getInstance().getState
     hlintOptionsField.setText(state.hlintOptions)
     replTimeoutField.setText(state.replTimeout.toString)
+    newProjectTemplateNameField.setText(state.newProjectTemplateName)
   }
 }
 
 object HaskellConfigurable {
   final val ReplTimeout = "Background REPL timeout in seconds"
   final val HlintOptions = "Hlint options"
+  final val NewProjectTemplateName = "Template name for new project"
 }

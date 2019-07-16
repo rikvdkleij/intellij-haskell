@@ -27,6 +27,10 @@ object HaskellSettingsState {
     state.hlintOptions
   }
 
+  def getNewProjectTemplateName: String = {
+    state.newProjectTemplateName
+  }
+
   def isReformatCodeBeforeCommit: Boolean = {
     state.reformatCodeBeforeCommit
   }
