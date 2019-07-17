@@ -16,7 +16,7 @@ object GlobalInfo {
 
   private final val IntelliJHaskellDirectories = ProjectDirectories.from("com.github", "rikvdkleij", "intellij-haskell")
 
-  def getIntelliJHaskellDirectory: File = {
+  lazy val getIntelliJHaskellDirectory: File = {
     val directory = new File(IntelliJHaskellDirectories.cacheDir)
     if (directory.exists()) {
       HaskellFileUtil.removeGroupWritePermission(directory)
@@ -26,15 +26,15 @@ object GlobalInfo {
     directory
   }
 
-  def getLibrarySourcesPath: File = {
+  lazy val getLibrarySourcesPath: File = {
     new File(getIntelliJHaskellDirectory, GlobalInfo.LibrarySourcedDirName)
   }
 
-  def toolsStackRootPath: File = {
+  lazy val toolsStackRootPath: File = {
     new File(getIntelliJHaskellDirectory, StackageLtsVersion)
   }
 
-  def toolsBinPath: File = {
+  lazy val toolsBinPath: File = {
     new File(toolsStackRootPath, ToolsBinDirName)
   }
 
@@ -44,8 +44,10 @@ object GlobalInfo {
 
   def getIntelliJProjectDirectory(project: Project): File = {
     val intelliJProjectDirectory = new File(GlobalInfo.getIntelliJHaskellDirectory, project.getName)
-    if (!intelliJProjectDirectory.exists()) {
-      FileUtil.createDirectory(intelliJProjectDirectory)
+    synchronized {
+      if (!intelliJProjectDirectory.exists()) {
+        FileUtil.createDirectory(intelliJProjectDirectory)
+      }
     }
     intelliJProjectDirectory
   }

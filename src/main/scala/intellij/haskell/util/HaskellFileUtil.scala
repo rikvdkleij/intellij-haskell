@@ -261,7 +261,7 @@ object HaskellFileUtil {
   def createDirectoryIfNotExists(directory: File, onlyWriteableByOwner: Boolean): Unit = {
     if (!directory.exists()) {
       val result = FileUtil.createDirectory(directory)
-      if (!result) {
+      if (!result && !directory.exists()) {
         throw new RuntimeException(s"Could not create directory `${directory.getAbsolutePath}`")
       }
       if (onlyWriteableByOwner) {
