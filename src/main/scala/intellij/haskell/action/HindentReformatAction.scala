@@ -26,6 +26,7 @@ import com.intellij.openapi.project.Project
 import com.intellij.psi.PsiFile
 import intellij.haskell.external.component.StackProjectManager
 import intellij.haskell.external.execution.CommandLine
+import intellij.haskell.settings.HaskellSettingsState
 import intellij.haskell.util._
 import intellij.haskell.{GlobalInfo, HaskellLanguage, HaskellNotificationGroup}
 
@@ -52,7 +53,7 @@ class HindentReformatAction extends AnAction {
 
 object HindentReformatAction {
   final val HindentName = "hindent"
-  private final val HindentPath = GlobalInfo.toolPath(HindentName).toString
+  private final val HindentPath = HaskellSettingsState.hindentPath.getOrElse(GlobalInfo.toolPath(HindentName).toString)
 
   def format(psiFile: PsiFile, selectionContext: Option[SelectionContext] = None): Boolean = {
     val lineLength = CodeStyle.getSettings(psiFile.getProject).getRightMargin(HaskellLanguage.Instance)

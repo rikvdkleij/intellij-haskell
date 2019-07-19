@@ -30,7 +30,7 @@ import scala.concurrent.duration._
 object HLintComponent {
 
   final val HLintName = "hlint"
-  private final val HLintPath = GlobalInfo.toolPath(HLintName).toString
+  private final val HLintPath = HaskellSettingsState.hlintPath.getOrElse(GlobalInfo.toolPath(HLintName).toString)
   private final val Timeout = 500.millis
 
   def check(psiFile: PsiFile): Seq[HLintInfo] = {

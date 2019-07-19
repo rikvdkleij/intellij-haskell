@@ -23,6 +23,7 @@ import com.intellij.openapi.project.Project
 import com.intellij.psi.PsiFile
 import intellij.haskell.external.component.StackProjectManager
 import intellij.haskell.external.execution.CommandLine
+import intellij.haskell.settings.HaskellSettingsState
 import intellij.haskell.util.{FutureUtil, HaskellEditorUtil, HaskellFileUtil, ScalaUtil}
 import intellij.haskell.{GlobalInfo, HaskellNotificationGroup}
 
@@ -41,7 +42,7 @@ class StylishHaskellReformatAction extends AnAction {
 
 object StylishHaskellReformatAction {
   final val StylishHaskellName = "stylish-haskell"
-  private final val StylishHaskellPath = GlobalInfo.toolPath(StylishHaskellName).toString
+  private final val StylishHaskellPath = HaskellSettingsState.stylishHaskellPath.getOrElse(GlobalInfo.toolPath(StylishHaskellName).toString)
 
   def versionInfo(project: Project): String = {
     if (StackProjectManager.isStylishHaskellAvailable(project)) {

@@ -50,4 +50,20 @@ object HaskellSettingsState {
   def setOptimizeImportsBeforeCommit(optimize: Boolean): Unit = {
     state.optimizeImportsBeforeCommit = optimize
   }
+
+  def hindentPath: Option[String]= {
+    Option.when(state.hindentPath.nonEmpty)(state.hindentPath)
+  }
+
+  def hlintPath: Option[String]= {
+    Option.when(state.hlintPath.nonEmpty)(state.hlintPath)
+  }
+
+  def hooglePath: Option[String]= {
+    Option.when(state.hooglePath.nonEmpty)(state.hooglePath)
+  }
+
+  def stylishHaskellPath: Option[String]= {
+    Option.when(state.stylishHaskellPath.nonEmpty)(state.stylishHaskellPath)
+  }
 }

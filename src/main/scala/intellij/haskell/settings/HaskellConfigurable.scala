@@ -30,6 +30,10 @@ class HaskellConfigurable extends Configurable {
   private val replTimeoutField = new JTextField
   private val replTimeoutLabel = new JLabel("Changed timeout will take effect after restarting project")
   private val newProjectTemplateNameField = new JTextField
+  private val hindentPathField = new JTextField
+  private val hlintPathField = new JTextField
+  private val hooglePathField = new JTextField
+  private val stylishHaskellPathField = new JTextField
 
   override def getDisplayName: String = {
     "Haskell"
@@ -51,6 +55,10 @@ class HaskellConfigurable extends Configurable {
     hlintOptionsField.getDocument.addDocumentListener(listener)
     replTimeoutField.getDocument.addDocumentListener(listener)
     newProjectTemplateNameField.getDocument.addDocumentListener(listener)
+    hindentPathField.getDocument.addDocumentListener(listener)
+    hlintPathField.getDocument.addDocumentListener(listener)
+    hooglePathField.getDocument.addDocumentListener(listener)
+    stylishHaskellPathField.getDocument.addDocumentListener(listener)
 
     class SettingsGridBagConstraints extends GridBagConstraints {
 
@@ -94,6 +102,10 @@ class HaskellConfigurable extends Configurable {
     addLabeledControl(3, "", replTimeoutLabel)
     addLabeledControl(4, NewProjectTemplateName, newProjectTemplateNameField)
     addLabeledControl(5, BuildToolsUsingSystemGhc, useSystemGhcToggle)
+    addLabeledControl(6, HindentPath, hindentPathField)
+    addLabeledControl(7, HlintPath, hlintPathField)
+    addLabeledControl(8, HooglePath, hooglePathField)
+    addLabeledControl(9, StylishHaskellPath, stylishHaskellPathField)
 
     settingsPanel.add(new JPanel(), baseGridBagConstraints.setConstraints(
       gridx = 0,
@@ -111,6 +123,10 @@ class HaskellConfigurable extends Configurable {
     state.hlintOptions = hlintOptionsField.getText
     state.useSystemGhc = useSystemGhcToggle.isSelected
     state.newProjectTemplateName = newProjectTemplateNameField.getText
+    state.hindentPath = hindentPathField.getText
+    state.hlintPath = hlintPathField.getText
+    state.hooglePath = hooglePathField.getText
+    state.stylishHaskellPath = stylishHaskellPathField.getText
   }
 
   private def validateREPLTimeout(): Integer = {
@@ -136,6 +152,10 @@ class HaskellConfigurable extends Configurable {
     useSystemGhcToggle.setSelected(state.useSystemGhc)
     replTimeoutField.setText(state.replTimeout.toString)
     newProjectTemplateNameField.setText(state.newProjectTemplateName)
+    hindentPathField.setText(state.hindentPath)
+    hlintPathField.setText(state.hlintPath)
+    hooglePathField.setText(state.hooglePath)
+    stylishHaskellPathField.setText(state.stylishHaskellPath)
   }
 }
 
@@ -144,4 +164,8 @@ object HaskellConfigurable {
   final val HlintOptions = "Hlint options"
   final val NewProjectTemplateName = "Template name for new project"
   final val BuildToolsUsingSystemGhc = "Build tools using system GHC"
+  final val HindentPath = "Hindent path"
+  final val HlintPath = "Hlint path"
+  final val HooglePath = "Hoogle path"
+  final val StylishHaskellPath = "Stylish Haskell path"
 }
