@@ -27,6 +27,10 @@ object HaskellSettingsState {
     state.hlintOptions
   }
 
+  def useSystemGhc(): Boolean = {
+    state.useSystemGhc
+  }
+
   def getNewProjectTemplateName: String = {
     state.newProjectTemplateName
   }

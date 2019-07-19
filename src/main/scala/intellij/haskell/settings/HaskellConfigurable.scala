@@ -26,6 +26,7 @@ import javax.swing.event.DocumentEvent
 class HaskellConfigurable extends Configurable {
   private var isModifiedByUser = false
   private val hlintOptionsField = new JTextField
+  private val useSystemGhcToggle = new JCheckBox
   private val replTimeoutField = new JTextField
   private val replTimeoutLabel = new JLabel("Changed timeout will take effect after restarting project")
   private val newProjectTemplateNameField = new JTextField
@@ -92,6 +93,7 @@ class HaskellConfigurable extends Configurable {
     addLabeledControl(2, ReplTimeout, replTimeoutField)
     addLabeledControl(3, "", replTimeoutLabel)
     addLabeledControl(4, NewProjectTemplateName, newProjectTemplateNameField)
+    addLabeledControl(5, BuildToolsUsingSystemGhc, useSystemGhcToggle)
 
     settingsPanel.add(new JPanel(), baseGridBagConstraints.setConstraints(
       gridx = 0,
@@ -107,6 +109,7 @@ class HaskellConfigurable extends Configurable {
     val state = HaskellSettingsPersistentStateComponent.getInstance().getState
     state.replTimeout = validREPLTimeout
     state.hlintOptions = hlintOptionsField.getText
+    state.useSystemGhc = useSystemGhcToggle.isSelected
     state.newProjectTemplateName = newProjectTemplateNameField.getText
   }
 
@@ -130,6 +133,7 @@ class HaskellConfigurable extends Configurable {
   override def reset(): Unit = {
     val state = HaskellSettingsPersistentStateComponent.getInstance().getState
     hlintOptionsField.setText(state.hlintOptions)
+    useSystemGhcToggle.setSelected(state.useSystemGhc)
     replTimeoutField.setText(state.replTimeout.toString)
     newProjectTemplateNameField.setText(state.newProjectTemplateName)
   }
@@ -139,4 +143,5 @@ object HaskellConfigurable {
   final val ReplTimeout = "Background REPL timeout in seconds"
   final val HlintOptions = "Hlint options"
   final val NewProjectTemplateName = "Template name for new project"
+  final val BuildToolsUsingSystemGhc = "Build tools using system GHC"
 }
