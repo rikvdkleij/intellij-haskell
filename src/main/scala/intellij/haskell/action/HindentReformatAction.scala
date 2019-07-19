@@ -28,7 +28,7 @@ import intellij.haskell.external.component.StackProjectManager
 import intellij.haskell.external.execution.CommandLine
 import intellij.haskell.settings.HaskellSettingsState
 import intellij.haskell.util._
-import intellij.haskell.{GlobalInfo, HaskellLanguage, HaskellNotificationGroup}
+import intellij.haskell.{GlobalInfo, HTool, HaskellLanguage, HaskellNotificationGroup}
 
 import scala.annotation.tailrec
 import scala.collection.mutable.ListBuffer
@@ -52,8 +52,7 @@ class HindentReformatAction extends AnAction {
 }
 
 object HindentReformatAction {
-  final val HindentName = "hindent"
-  private final val HindentPath = HaskellSettingsState.hindentPath.getOrElse(GlobalInfo.toolPath(HindentName).toString)
+  private final val HindentPath = HaskellSettingsState.hindentPath.getOrElse(GlobalInfo.toolPath(HTool.Hindent).toString)
 
   def format(psiFile: PsiFile, selectionContext: Option[SelectionContext] = None): Boolean = {
     val lineLength = CodeStyle.getSettings(psiFile.getProject).getRightMargin(HaskellLanguage.Instance)
@@ -70,11 +69,11 @@ object HindentReformatAction {
       }
     })
 
-    FutureUtil.waitForValue(project, formatAction, s"reformatting by `$HindentName`") match {
+    FutureUtil.waitForValue(project, formatAction, s"reformatting by `${HTool.Hindent.name}`") match {
       case None => false
       case Some(r) => r match {
         case Left(e) =>
-          HaskellNotificationGroup.logInfoEvent(project, s"Error while reformatting by `$HindentName`. Error: $e")
+          HaskellNotificationGroup.logInfoEvent(project, s"Error while reformatting by `${HTool.Hindent.name}`. Error: $e")
           false
         case Right(sourceCode) =>
           selectionContext match {
@@ -154,4 +153,3 @@ object HindentReformatAction {
     }
   }
 }
-

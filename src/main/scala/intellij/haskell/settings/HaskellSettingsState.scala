@@ -16,6 +16,8 @@
 
 package intellij.haskell.settings
 
+import intellij.haskell.HTool
+
 object HaskellSettingsState {
   private def state = HaskellSettingsPersistentStateComponent.getInstance().getState
 
@@ -65,5 +67,12 @@ object HaskellSettingsState {
 
   def stylishHaskellPath: Option[String]= {
     Option.when(state.stylishHaskellPath.nonEmpty)(state.stylishHaskellPath)
+  }
+
+  def useCustomTool(tool: HTool): Boolean = tool match {
+    case HTool.Hindent => hindentPath.isDefined
+    case HTool.Hlint => hlintPath.isDefined
+    case HTool.Hoogle => hooglePath.isDefined
+    case HTool.StylishHaskell => stylishHaskellPath.isDefined
   }
 }

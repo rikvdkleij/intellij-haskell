@@ -3,6 +3,7 @@ package intellij.haskell
 import java.io.File
 
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.util.SystemInfo
 import com.intellij.openapi.util.io.FileUtil
 import intellij.haskell.util.HaskellFileUtil
 import io.github.soc.directories.ProjectDirectories
@@ -38,8 +39,9 @@ object GlobalInfo {
     new File(toolsStackRootPath, ToolsBinDirName)
   }
 
-  def toolPath(toolName: String): File = {
-    new File(toolsBinPath, toolName)
+  def toolPath(tool: HTool): File = {
+    val name = if (SystemInfo.isWindows) tool.name + ".exe" else tool.name
+    new File(toolsBinPath, name)
   }
 
   def getIntelliJProjectDirectory(project: Project): File = {

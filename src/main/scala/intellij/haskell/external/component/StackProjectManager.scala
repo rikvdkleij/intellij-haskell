@@ -36,9 +36,10 @@ import intellij.haskell.external.repl.StackReplsManager
 import intellij.haskell.module.{HaskellModuleBuilder, StackProjectImportBuilder}
 import intellij.haskell.psi.HaskellPsiUtil
 import intellij.haskell.sdk.HaskellSdkType
+import intellij.haskell.settings.HaskellSettingsState
 import intellij.haskell.util._
 import intellij.haskell.util.index.{HaskellFileIndex, HaskellModuleNameIndex}
-import intellij.haskell.{GlobalInfo, HaskellNotificationGroup}
+import intellij.haskell.{GlobalInfo, HTool, HaskellNotificationGroup}
 
 object StackProjectManager {
 
@@ -109,13 +110,14 @@ object StackProjectManager {
 
     ProgressManager.getInstance().run(new Task.Backgroundable(project, title, false, PerformInBackgroundOption.ALWAYS_BACKGROUND) {
 
-      private def isToolAvailable(progressIndicator: ProgressIndicator, toolName: String) = {
-        val toolNameExe = if (SystemInfo.isWindows) toolName + ".exe" else toolName
-        if (!GlobalInfo.toolPath(toolNameExe).exists() || update) {
-          progressIndicator.setText(s"Busy with installing $toolName in ${GlobalInfo.toolsBinPath}")
-          StackCommandLine.installTool(project, toolName)
-        } else {
-          true
+      private def isToolAvailable(progressIndicator: ProgressIndicator, tool: HTool) = {
+        HaskellSettingsState.useCustomTool(tool) || {
+          if (!GlobalInfo.toolPath(tool).exists() || update) {
+            progressIndicator.setText(s"Busy with installing ${tool.name} in ${GlobalInfo.toolsBinPath}")
+            StackCommandLine.installTool(project, tool.name)
+          } else {
+            true
+          }
         }
       }
 
@@ -126,13 +128,13 @@ object StackProjectManager {
             StackCommandLine.updateStackIndex(project)
           }
 
-          getStackProjectManager(project).foreach(_.hlintAvailable = isToolAvailable(progressIndicator, HLintComponent.HLintName))
+          getStackProjectManager(project).foreach(_.hlintAvailable = isToolAvailable(progressIndicator, HTool.Hlint))
 
-          getStackProjectManager(project).foreach(_.hoogleAvailable = isToolAvailable(progressIndicator, HoogleComponent.HoogleName))
+          getStackProjectManager(project).foreach(_.hoogleAvailable = isToolAvailable(progressIndicator, HTool.Hoogle))
 
-          getStackProjectManager(project).foreach(_.stylishHaskellAvailable = isToolAvailable(progressIndicator, StylishHaskellReformatAction.StylishHaskellName))
+          getStackProjectManager(project).foreach(_.stylishHaskellAvailable = isToolAvailable(progressIndicator, HTool.StylishHaskell))
 
-          getStackProjectManager(project).foreach(_.hindentAvailable = isToolAvailable(progressIndicator, HindentReformatAction.HindentName))
+          getStackProjectManager(project).foreach(_.hindentAvailable = isToolAvailable(progressIndicator, HTool.Hindent))
         } finally {
           getStackProjectManager(project).foreach(_.installingHaskellTools = false)
         }
