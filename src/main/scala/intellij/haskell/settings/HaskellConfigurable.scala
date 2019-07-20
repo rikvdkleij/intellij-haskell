@@ -101,7 +101,7 @@ class HaskellConfigurable extends Configurable {
       ))
     }
 
-    val labelledControls = List(
+    val labeledControls = List(
       (HlintOptions, hlintOptionsField),
       (ReplTimeout, replTimeoutField),
       ("", replTimeoutLabel),
@@ -114,13 +114,13 @@ class HaskellConfigurable extends Configurable {
       (StylishHaskellPath, stylishHaskellPathField)
     )
 
-    labelledControls.zipWithIndex.foreach {
+    labeledControls.zipWithIndex.foreach {
       case ((label, control), row) => addLabeledControl(row, label, control)
     }
 
     settingsPanel.add(new JPanel(), baseGridBagConstraints.setConstraints(
       gridx = 0,
-      gridy = labelledControls.length,
+      gridy = labeledControls.length,
       weighty = 10.0
     ))
     settingsPanel
