@@ -25,7 +25,6 @@ import javax.swing.event.{ChangeListener, DocumentEvent}
 
 class HaskellConfigurable extends Configurable {
   private var isModifiedByUser = false
-  private var changedPath = false
   private val hlintOptionsField = new JTextField
   private val useSystemGhcToggle = new JCheckBox
   private val replTimeoutField = new JTextField
