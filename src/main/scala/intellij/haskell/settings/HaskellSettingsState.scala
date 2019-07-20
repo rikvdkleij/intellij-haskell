@@ -29,7 +29,7 @@ object HaskellSettingsState {
     state.hlintOptions
   }
 
-  def useSystemGhc(): Boolean = {
+  def useSystemGhc: Boolean = {
     state.useSystemGhc
   }
 

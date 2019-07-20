@@ -21,10 +21,11 @@ import java.awt.{GridBagConstraints, GridBagLayout, Insets}
 import com.intellij.openapi.options.{Configurable, ConfigurationException}
 import com.intellij.ui.DocumentAdapter
 import javax.swing._
-import javax.swing.event.DocumentEvent
+import javax.swing.event.{ChangeListener, DocumentEvent}
 
 class HaskellConfigurable extends Configurable {
   private var isModifiedByUser = false
+  private var changedPath = false
   private val hlintOptionsField = new JTextField
   private val useSystemGhcToggle = new JCheckBox
   private val replTimeoutField = new JTextField
@@ -48,17 +49,21 @@ class HaskellConfigurable extends Configurable {
     val settingsPanel = new JPanel(new GridBagLayout())
 
     settingsPanel.getInsets()
-    val listener: DocumentAdapter = (_: DocumentEvent) => {
+    val docListener: DocumentAdapter = (_: DocumentEvent) => {
+      isModifiedByUser = true
+    }
+    val checkboxListener: ChangeListener = _ => {
       isModifiedByUser = true
     }
 
-    hlintOptionsField.getDocument.addDocumentListener(listener)
-    replTimeoutField.getDocument.addDocumentListener(listener)
-    newProjectTemplateNameField.getDocument.addDocumentListener(listener)
-    hindentPathField.getDocument.addDocumentListener(listener)
-    hlintPathField.getDocument.addDocumentListener(listener)
-    hooglePathField.getDocument.addDocumentListener(listener)
-    stylishHaskellPathField.getDocument.addDocumentListener(listener)
+    hlintOptionsField.getDocument.addDocumentListener(docListener)
+    replTimeoutField.getDocument.addDocumentListener(docListener)
+    newProjectTemplateNameField.getDocument.addDocumentListener(docListener)
+    hindentPathField.getDocument.addDocumentListener(docListener)
+    hlintPathField.getDocument.addDocumentListener(docListener)
+    hooglePathField.getDocument.addDocumentListener(docListener)
+    stylishHaskellPathField.getDocument.addDocumentListener(docListener)
+    useSystemGhcToggle.addChangeListener(checkboxListener)
 
     class SettingsGridBagConstraints extends GridBagConstraints {
 
@@ -97,19 +102,26 @@ class HaskellConfigurable extends Configurable {
       ))
     }
 
-    addLabeledControl(1, HlintOptions, hlintOptionsField)
-    addLabeledControl(2, ReplTimeout, replTimeoutField)
-    addLabeledControl(3, "", replTimeoutLabel)
-    addLabeledControl(4, NewProjectTemplateName, newProjectTemplateNameField)
-    addLabeledControl(5, BuildToolsUsingSystemGhc, useSystemGhcToggle)
-    addLabeledControl(6, HindentPath, hindentPathField)
-    addLabeledControl(7, HlintPath, hlintPathField)
-    addLabeledControl(8, HooglePath, hooglePathField)
-    addLabeledControl(9, StylishHaskellPath, stylishHaskellPathField)
+    val labelledControls = List(
+      (HlintOptions, hlintOptionsField),
+      (ReplTimeout, replTimeoutField),
+      ("", replTimeoutLabel),
+      (NewProjectTemplateName, newProjectTemplateNameField),
+      (BuildToolsUsingSystemGhc, useSystemGhcToggle),
+      ("Custom Tool Paths",  new JLabel("<html>"+ PathWarning +"</html>")),
+      (HindentPath, hindentPathField),
+      (HlintPath, hlintPathField),
+      (HooglePath, hooglePathField),
+      (StylishHaskellPath, stylishHaskellPathField)
+    )
+
+    labelledControls.zipWithIndex.foreach {
+      case ((label, control), row) => addLabeledControl(row, label, control)
+    }
 
     settingsPanel.add(new JPanel(), baseGridBagConstraints.setConstraints(
       gridx = 0,
-      gridy = 7,
+      gridy = labelledControls.length,
       weighty = 10.0
     ))
     settingsPanel
@@ -168,4 +180,12 @@ object HaskellConfigurable {
   final val HlintPath = "Hlint path"
   final val HooglePath = "Hoogle path"
   final val StylishHaskellPath = "Stylish Haskell path"
+  final val PathWarning =
+    """WARNING! Specifying a path for a Haskell tool will override the default
+      |behavior of building that tool from the Stackage LTS. This plugin was
+      |tested only with the Haskell tools from the Stackage LTS. Providing a
+      |path with your own Haskell tool (and thus overriding automatic rebuild
+      |or download of that tool) could cause some features of this plugin to
+      |break, because the API that your tool provide may differ from what the
+      |plugin expects.""".stripMargin.replace('\n', ' ')
 }
