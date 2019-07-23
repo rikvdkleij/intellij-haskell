@@ -18,6 +18,7 @@
 
 
 # How to run/debug plugin inside IntelliJ
+1. Create Project SDK in `Project structure`>`Project settings`>`Project` by using the `New` button and selecting `Intellij Platform Plugin SDK` and setting the path to the IntelliJ folder;
 1. Set Plugin SDK settings right inside `Project structure`>`Platform settings`>`SDKs`. For example to, set  SDK home path to `idea/142.5239.7` inside project root folder;
 1. Set `Module-SDK` right for `intellij-haskell` plugin module inside `Project structure`>`Project structure`>`Project settings`>`Modules`; 
 1. To run plugin inside IntelliJ, first run configuration has to be created. Navigate to `Run`>`Edit configurations` and create `plugin` configuration for `intellij-haskell`;
