@@ -27,7 +27,7 @@ import intellij.haskell.cabal.lang.psi
 import intellij.haskell.cabal.lang.psi._
 import intellij.haskell.cabal.lang.psi.impl.{ExtensionsImpl, MainIsImpl, SourceDirsImpl}
 import intellij.haskell.psi.HaskellPsiUtil
-import intellij.haskell.util.HaskellFileUtil
+import intellij.haskell.util.{ApplicationUtil, HaskellFileUtil}
 
 import scala.io.Source
 
@@ -53,41 +53,53 @@ object CabalInfo {
 
 class CabalInfo(cabalFile: CabalFile, modulePath: String) {
 
-  val packageName: String = (for {
-    pkgName <- HaskellPsiUtil.getChildOfType(cabalFile, classOf[PkgName])
-    ff <- HaskellPsiUtil.getChildOfType(pkgName, classOf[Freeform])
-  } yield ff.getText).getOrElse(throw new IllegalStateException(s"Can not find package name in Cabal file ${cabalFile.getName}"))
+  lazy val packageName: String = ApplicationUtil.runReadAction {
+    for {
+      pkgName <- HaskellPsiUtil.getChildOfType(cabalFile, classOf[PkgName])
+      ff <- HaskellPsiUtil.getChildOfType(pkgName, classOf[Freeform])
+    } yield ff.getText
+  }.getOrElse(throw new IllegalStateException(s"Can not find package name in Cabal file ${cabalFile.getName}"))
 
-  val packageVersion: String = (for {
-    pkgVersion <- HaskellPsiUtil.getChildOfType(cabalFile, classOf[PkgVersion])
-    ff <- HaskellPsiUtil.getChildOfType(pkgVersion, classOf[Freeform])
-  } yield ff.getText).getOrElse(throw new IllegalStateException(s"Can not find package version in Cabal file ${cabalFile.getName}"))
+  lazy val packageVersion: String = ApplicationUtil.runReadAction {
+    for {
+      pkgVersion <- HaskellPsiUtil.getChildOfType(cabalFile, classOf[PkgVersion])
+      ff <- HaskellPsiUtil.getChildOfType(pkgVersion, classOf[Freeform])
+    } yield ff.getText
+  }.getOrElse(throw new IllegalStateException(s"Can not find package version in Cabal file ${cabalFile.getName}"))
 
-  lazy val library: Option[LibraryCabalStanza] = {
+  lazy val library: Option[LibraryCabalStanza] = ApplicationUtil.runReadAction {
     cabalFile.getChildren.collectFirst {
       case c: Library => LibraryCabalStanza(c, packageName, modulePath)
     }
   }
 
   lazy val executables: Iterable[ExecutableCabalStanza] = {
-    HaskellPsiUtil.streamChildren(cabalFile, classOf[Executable]).map(c => ExecutableCabalStanza(c, packageName, modulePath))
+    ApplicationUtil.runReadAction {
+      HaskellPsiUtil.streamChildren(cabalFile, classOf[Executable]).map(c => ExecutableCabalStanza(c, packageName, modulePath))
+    }
   }
 
   lazy val testSuites: Iterable[TestSuiteCabalStanza] = {
-    HaskellPsiUtil.streamChildren(cabalFile, classOf[TestSuite]).map(c => TestSuiteCabalStanza(c, packageName, modulePath))
+    ApplicationUtil.runReadAction {
+      HaskellPsiUtil.streamChildren(cabalFile, classOf[TestSuite]).map(c => TestSuiteCabalStanza(c, packageName, modulePath))
+    }
   }
 
   lazy val benchmarks: Iterable[BenchmarkCabalStanza] = {
-    HaskellPsiUtil.streamChildren(cabalFile, classOf[Benchmark]).map(c => BenchmarkCabalStanza(c, packageName, modulePath))
+    ApplicationUtil.runReadAction {
+      HaskellPsiUtil.streamChildren(cabalFile, classOf[Benchmark]).map(c => BenchmarkCabalStanza(c, packageName, modulePath))
+    }
   }
 
   lazy val cabalStanzas: Iterable[CabalStanza] = {
-    library.toSeq ++
-      cabalFile.getChildren.collect {
-        case c: Executable => ExecutableCabalStanza(c, packageName, modulePath)
-        case c: TestSuite => TestSuiteCabalStanza(c, packageName, modulePath)
-        case c: Benchmark => BenchmarkCabalStanza(c, packageName, modulePath)
-      }
+    ApplicationUtil.runReadAction {
+      library.toSeq ++
+        cabalFile.getChildren.collect {
+          case c: Executable => ExecutableCabalStanza(c, packageName, modulePath)
+          case c: TestSuite => TestSuiteCabalStanza(c, packageName, modulePath)
+          case c: Benchmark => BenchmarkCabalStanza(c, packageName, modulePath)
+        }
+    }
   }
 
   lazy val sourceRoots: Iterable[String] = {
@@ -98,7 +110,7 @@ class CabalInfo(cabalFile: CabalFile, modulePath: String) {
     (testSuites ++ benchmarks).flatMap(_.sourceDirs)
   }
 
-  lazy val ghcOptions: Set[String] = {
+  lazy val ghcOptions: Set[String] = ApplicationUtil.runReadAction {
     HaskellPsiUtil.streamChildren(cabalFile, classOf[psi.impl.GhcOptionsImpl]).flatMap(_.getValue).toSet
   }
 }
@@ -114,19 +126,19 @@ sealed trait CabalStanza {
 
   def sourceDirs: Seq[String]
 
-  protected def findSourceDirs: Seq[String] = {
+  protected def findSourceDirs: Seq[String] = ApplicationUtil.runReadAction {
     HaskellPsiUtil.getChildOfType(sectionRootElement, classOf[SourceDirsImpl]).map(_.getValue).getOrElse(Array()).map(p => HaskellFileUtil.makeFilePathAbsolute(p, modulePath)).toSeq
   }
 
-  lazy val buildDepends: Seq[String] = {
+  lazy val buildDepends: Seq[String] = ApplicationUtil.runReadAction {
     HaskellPsiUtil.getChildrenOfType(sectionRootElement, classOf[BuildDepends]).flatMap(_.getPackageNames).toSeq
   }
 
-  private def findLanguageExtensions: Set[String] = {
+  lazy val findLanguageExtensions: Set[String] = ApplicationUtil.runReadAction {
     HaskellPsiUtil.getChildOfType(sectionRootElement, classOf[ExtensionsImpl]).map(_.getValue.toSet).getOrElse(Set())
   }
 
-  def isNoImplicitPreludeActive: Boolean = {
+  lazy val isNoImplicitPreludeActive: Boolean = {
     findLanguageExtensions.contains("NoImplicitPrelude")
   }
 
@@ -140,7 +152,7 @@ sealed trait CabalStanza {
   }
 
   // Workaround: Noticed that when hpack file is converted to cabal file, the globally defined paths are added to every target/stanza.
-  protected def findMainIs: Option[String] = {
+  protected def findMainIs: Option[String] = ApplicationUtil.runReadAction {
     HaskellPsiUtil.getChildOfType(sectionRootElement, classOf[MainIsImpl]).flatMap(_.getValue).
       flatMap(p => sourceDirs.find(sd => new File(sd, p).exists()).map(sd => HaskellFileUtil.makeFilePathAbsolute(p, sd)))
   }
@@ -158,7 +170,7 @@ case class LibraryCabalStanza(sectionRootElement: PsiElement, packageName: Strin
 
   lazy val exposedModuleNames: Seq[String] = findExposedModuleNames
 
-  private def findExposedModuleNames: Seq[String] = {
+  private def findExposedModuleNames: Seq[String] = ApplicationUtil.runReadAction {
     HaskellPsiUtil.getChildOfType(sectionRootElement, classOf[ExposedModules]).map(_.getModuleNames.toSeq).getOrElse(Seq())
   }
 }
