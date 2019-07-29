@@ -53,20 +53,24 @@ object HaskellSettingsState {
     state.optimizeImportsBeforeCommit = optimize
   }
 
+  def customTools: Boolean = {
+    state.customTools
+  }
+
   def hindentPath: Option[String]= {
-    Option.when(state.hindentPath.nonEmpty)(state.hindentPath)
+    Option.when(customTools && state.hindentPath.nonEmpty)(state.hindentPath)
   }
 
   def hlintPath: Option[String]= {
-    Option.when(state.hlintPath.nonEmpty)(state.hlintPath)
+    Option.when(customTools && state.hlintPath.nonEmpty)(state.hlintPath)
   }
 
   def hooglePath: Option[String]= {
-    Option.when(state.hooglePath.nonEmpty)(state.hooglePath)
+    Option.when(customTools && state.hooglePath.nonEmpty)(state.hooglePath)
   }
 
   def stylishHaskellPath: Option[String]= {
-    Option.when(state.stylishHaskellPath.nonEmpty)(state.stylishHaskellPath)
+    Option.when(customTools && state.stylishHaskellPath.nonEmpty)(state.stylishHaskellPath)
   }
 
   def useCustomTool(tool: HTool): Boolean = tool match {

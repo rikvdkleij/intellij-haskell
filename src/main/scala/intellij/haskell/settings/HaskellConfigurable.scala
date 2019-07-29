@@ -28,12 +28,13 @@ class HaskellConfigurable extends Configurable {
   private val hlintOptionsField = new JTextField
   private val useSystemGhcToggle = new JCheckBox
   private val replTimeoutField = new JTextField
-  private val replTimeoutLabel = new JLabel("Changed timeout will take effect after restarting project")
+  private val afterRestartLabel = new JLabel("Changes will take effect after restarting project")
   private val newProjectTemplateNameField = new JTextField
   private val hindentPathField = new JTextField
   private val hlintPathField = new JTextField
   private val hooglePathField = new JTextField
   private val stylishHaskellPathField = new JTextField
+  private val useCustomToolsToggle = new JCheckBox
 
   override def getDisplayName: String = {
     "Haskell"
@@ -45,13 +46,20 @@ class HaskellConfigurable extends Configurable {
 
   override def createComponent: JComponent = {
 
+    def toggleToolPathsVisibility(): Unit = {
+      val visible = useCustomToolsToggle.isSelected
+      hindentPathField.setVisible(visible)
+      hlintPathField.setVisible(visible)
+      hooglePathField.setVisible(visible)
+      stylishHaskellPathField.setVisible(visible)
+    }
+
+    toggleToolPathsVisibility()
+
     val settingsPanel = new JPanel(new GridBagLayout())
 
     settingsPanel.getInsets()
     val docListener: DocumentAdapter = (_: DocumentEvent) => {
-      isModifiedByUser = true
-    }
-    val checkboxListener: ChangeListener = _ => {
       isModifiedByUser = true
     }
 
@@ -62,7 +70,13 @@ class HaskellConfigurable extends Configurable {
     hlintPathField.getDocument.addDocumentListener(docListener)
     hooglePathField.getDocument.addDocumentListener(docListener)
     stylishHaskellPathField.getDocument.addDocumentListener(docListener)
-    useSystemGhcToggle.addChangeListener(checkboxListener)
+    useSystemGhcToggle.addChangeListener { _ =>
+      isModifiedByUser = true
+    }
+    useCustomToolsToggle.addChangeListener { _ =>
+      isModifiedByUser = true
+      toggleToolPathsVisibility()
+    }
 
     class SettingsGridBagConstraints extends GridBagConstraints {
 
@@ -80,8 +94,8 @@ class HaskellConfigurable extends Configurable {
 
     val baseGridBagConstraints = new SettingsGridBagConstraints
 
-    def addLabeledControl(row: Int, label: String, component: JComponent): Unit = {
-      settingsPanel.add(new JLabel(label), baseGridBagConstraints.setConstraints(
+    def addLabeledControl(row: Int, label: JLabel, component: JComponent): Unit = {
+      settingsPanel.add(label, baseGridBagConstraints.setConstraints(
         anchor = GridBagConstraints.LINE_START,
         gridx = 0,
         gridy = row
@@ -102,16 +116,23 @@ class HaskellConfigurable extends Configurable {
     }
 
     val labeledControls = List(
-      (HlintOptions, hlintOptionsField),
-      (ReplTimeout, replTimeoutField),
-      ("", replTimeoutLabel),
-      (NewProjectTemplateName, newProjectTemplateNameField),
-      (BuildToolsUsingSystemGhc, useSystemGhcToggle),
-      ("Custom Tool Paths",  new JLabel("<html>"+ PathWarning +"</html>")),
-      (HindentPath, hindentPathField),
-      (HlintPath, hlintPathField),
-      (HooglePath, hooglePathField),
-      (StylishHaskellPath, stylishHaskellPathField)
+      (new JLabel(HlintOptions), hlintOptionsField),
+      (new JLabel(ReplTimeout), replTimeoutField),
+      (new JLabel(""), afterRestartLabel),
+      (new JLabel(NewProjectTemplateName), newProjectTemplateNameField),
+      (new JLabel(BuildToolsUsingSystemGhc), useSystemGhcToggle),
+      (new JLabel(UseCustomTool), useCustomToolsToggle),
+      (new JLabel(""), afterRestartLabel),
+      (new JLabel(""),  {
+        val x = new JTextArea(PathWarning)
+        x.setLineWrap(true)
+        x.setWrapStyleWord(true)
+        x
+      }),
+      (new JLabel(HindentPath), hindentPathField),
+      (new JLabel(HlintPath), hlintPathField),
+      (new JLabel(HooglePath), hooglePathField),
+      (new JLabel(StylishHaskellPath), stylishHaskellPathField)
     )
 
     labeledControls.zipWithIndex.foreach {
@@ -138,6 +159,7 @@ class HaskellConfigurable extends Configurable {
     state.hlintPath = hlintPathField.getText
     state.hooglePath = hooglePathField.getText
     state.stylishHaskellPath = stylishHaskellPathField.getText
+    state.customPaths = useCustomToolsToggle.isSelected
   }
 
   private def validateREPLTimeout(): Integer = {
@@ -167,6 +189,7 @@ class HaskellConfigurable extends Configurable {
     hlintPathField.setText(state.hlintPath)
     hooglePathField.setText(state.hooglePath)
     stylishHaskellPathField.setText(state.stylishHaskellPath)
+    useCustomToolsToggle.setSelected(state.customTools)
   }
 }
 
@@ -179,6 +202,7 @@ object HaskellConfigurable {
   final val HlintPath = "Hlint path"
   final val HooglePath = "Hoogle path"
   final val StylishHaskellPath = "Stylish Haskell path"
+  final val UseCustomTool = "Use custom Haskell tools"
   final val PathWarning =
     """WARNING! Specifying a path for a Haskell tool will override the default
       |behavior of building that tool from the Stackage LTS. This plugin was
