@@ -159,7 +159,7 @@ class HaskellConfigurable extends Configurable {
     state.hlintPath = hlintPathField.getText
     state.hooglePath = hooglePathField.getText
     state.stylishHaskellPath = stylishHaskellPathField.getText
-    state.customPaths = useCustomToolsToggle.isSelected
+    state.customTools = useCustomToolsToggle.isSelected
   }
 
   private def validateREPLTimeout(): Integer = {
