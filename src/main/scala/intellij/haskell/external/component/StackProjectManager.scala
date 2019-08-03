@@ -89,7 +89,7 @@ object StackProjectManager {
   }
 
   def restart(project: Project): Unit = {
-    HaskellFileUtil.saveAllFiles(project)
+    HaskellFileUtil.saveFiles(project)
 
     init(project, restart = true)
   }

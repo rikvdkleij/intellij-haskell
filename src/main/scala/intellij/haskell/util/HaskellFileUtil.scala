@@ -38,7 +38,7 @@ import intellij.haskell.external.component.{NoInfo, NoInfoAvailable}
 
 object HaskellFileUtil {
 
-  def saveAllFiles(project: Project): Unit = {
+  def saveFiles(project: Project): Unit = {
     val openFiles = FileEditorManager.getInstance(project).getOpenFiles.filter(HaskellFileUtil.isHaskellFile)
     val documentManager = PsiDocumentManager.getInstance(project)
     openFiles.flatMap(f => findDocument(f)).foreach(documentManager.doPostponedOperationsAndUnblockDocument)
@@ -58,11 +58,11 @@ object HaskellFileUtil {
     })
   }
 
-  def saveFileInDispatchThread(project: Project, virtualFile: VirtualFile): Unit = {
+  def saveFileAsIsInDispatchThread(project: Project, virtualFile: VirtualFile): Unit = {
     findDocument(virtualFile).foreach(d => {
       PsiDocumentManager.getInstance(project).doPostponedOperationsAndUnblockDocument(d)
       ApplicationManager.getApplication.invokeAndWait(() => {
-        FileDocumentManager.getInstance.saveDocument(d)
+        FileDocumentManager.getInstance.saveDocumentAsIs(d)
       })
     })
   }

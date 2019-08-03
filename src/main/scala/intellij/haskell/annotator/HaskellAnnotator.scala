@@ -69,9 +69,9 @@ class HaskellAnnotator extends ExternalAnnotator[PsiFile, CompilationResult] {
   override def doAnnotate(psiFile: PsiFile): CompilationResult = {
     HaskellFileUtil.findVirtualFile(psiFile) match {
       case Some(virtualFile) =>
-        val fileChanged = FileDocumentManager.getInstance().isFileModified(virtualFile)
-        HaskellFileUtil.saveFileInDispatchThread(psiFile.getProject, virtualFile)
-        HaskellComponentsManager.loadHaskellFile(psiFile, fileChanged).orNull
+        val fileModified = FileDocumentManager.getInstance().isFileModified(virtualFile)
+        HaskellFileUtil.saveFileAsIsInDispatchThread(psiFile.getProject, virtualFile)
+        HaskellComponentsManager.loadHaskellFile(psiFile, fileModified).orNull
       case None => CompilationResult(Iterable(), Iterable(), failed = false)
     }
   }

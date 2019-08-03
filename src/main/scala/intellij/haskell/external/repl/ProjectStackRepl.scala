@@ -146,9 +146,9 @@ case class ProjectStackRepl(project: Project, stackComponentInfo: StackComponent
     }
   }
 
-  def load(psiFile: PsiFile, fileChanged: Boolean, mustBeByteCode: Boolean): Option[(StackReplOutput, Boolean)] = synchronized {
+  def load(psiFile: PsiFile, fileModified: Boolean, mustBeByteCode: Boolean): Option[(StackReplOutput, Boolean)] = synchronized {
     val forceBytecodeLoad = if (mustBeByteCode) objectCodeEnabled else false
-    val reload = if (forceBytecodeLoad || !fileChanged) {
+    val reload = if (forceBytecodeLoad || !fileModified) {
       false
     } else {
       val loaded = isFileLoaded(psiFile)
@@ -196,7 +196,7 @@ case class ProjectStackRepl(project: Project, stackComponentInfo: StackComponent
   }
 
   def getModuleIdentifiers(moduleName: String, psiFile: Option[PsiFile]): Option[StackReplOutput] = synchronized {
-    if (psiFile.isEmpty || isBrowseModuleLoaded(moduleName) || psiFile.exists(pf => load(pf, fileChanged = false, mustBeByteCode = false).exists(_._2 == false))) {
+    if (psiFile.isEmpty || isBrowseModuleLoaded(moduleName) || psiFile.exists(pf => load(pf, fileModified = false, mustBeByteCode = false).exists(_._2 == false))) {
       execute(s":browse! $moduleName")
     } else {
       HaskellNotificationGroup.logInfoEvent(project, s"Couldn't get module identifiers for module $moduleName because file ${psiFile.map(_.getName).getOrElse("-")} isn't loaded")
@@ -224,7 +224,7 @@ case class ProjectStackRepl(project: Project, stackComponentInfo: StackComponent
       case Some(info) if info.psiFile == psiFile & !info.loadFailed & (if (mustBeByteCode) !objectCodeEnabled else true) => execute(command)
       case Some(info) if info.psiFile == psiFile & info.loadFailed => Some(StackReplOutput())
       case _ =>
-        load(psiFile, fileChanged = false, mustBeByteCode)
+        load(psiFile, fileModified = false, mustBeByteCode)
         loadedFile match {
           case None => None
           case Some(info) if info.psiFile == psiFile && !info.loadFailed => execute(command)

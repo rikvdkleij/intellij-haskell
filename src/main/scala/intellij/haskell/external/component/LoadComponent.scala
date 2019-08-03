@@ -37,7 +37,7 @@ private[component] object LoadComponent {
     }.contains(true)
   }
 
-  def load(psiFile: PsiFile, fileChanged: Boolean): Option[CompilationResult] = {
+  def load(psiFile: PsiFile, fileModified: Boolean): Option[CompilationResult] = {
     val project = psiFile.getProject
 
     StackReplsManager.getProjectRepl(psiFile).flatMap(projectRepl => {
@@ -51,7 +51,7 @@ private[component] object LoadComponent {
 
       ProjectLibraryFileWatcher.checkLibraryBuild(project, projectRepl.stackComponentInfo)
 
-      projectRepl.load(psiFile, fileChanged, mustBeByteCode = false) match {
+      projectRepl.load(psiFile, fileModified, mustBeByteCode = false) match {
         case Some((loadOutput, loadFailed)) =>
           ApplicationManager.getApplication.executeOnPooledThread(ScalaUtil.runnable {
 
