@@ -28,7 +28,6 @@ import intellij.haskell.sdk.HaskellSdkType
 import intellij.haskell.util.{HaskellEditorUtil, HaskellFileUtil, HaskellProjectUtil, StringUtil}
 import intellij.haskell.{GlobalInfo, HaskellNotificationGroup}
 
-import scala.collection.mutable
 import scala.collection.mutable.ArrayBuffer
 import scala.concurrent.duration._
 import scala.io._
@@ -44,8 +43,6 @@ abstract class StackRepl(project: Project, componentInfo: Option[StackComponentI
     trait Command
 
     case object Load extends Command
-
-    case object LocalBrowse extends Command
 
     case object Browse extends Command
 
@@ -84,8 +81,6 @@ abstract class StackRepl(project: Project, componentInfo: Option[StackComponentI
   private final val ExitCommand = ":q"
 
   private final val CanNotSatisfyErrorMessageIndicator = "<command line>: cannot satisfy -package"
-
-  private final val LocalBrowseStopReadingIndicator = "-- imported via"
 
   protected def clearLoadedModules(): Unit
 
@@ -135,7 +130,6 @@ abstract class StackRepl(project: Project, componentInfo: Option[StackComponentI
             init()
 
             val ghciCommand = command match {
-              case c if c.startsWith(":browse! *") => GhciCommand.LocalBrowse
               case c if c.startsWith(":browse!") => GhciCommand.Browse
               case c if c.startsWith(":load") | c.startsWith(":reload") => GhciCommand.Load
               case c if c.startsWith(":module") => GhciCommand.Module
@@ -160,7 +154,7 @@ abstract class StackRepl(project: Project, componentInfo: Option[StackComponentI
             output.write(LineSeparator)
             output.flush()
 
-            val timeout = if (ghciCommand == GhciCommand.Load || ghciCommand == GhciCommand.Browse || ghciCommand == GhciCommand.LocalBrowse) LoadTimeout else DefaultTimeout
+            val timeout = if (ghciCommand == GhciCommand.Load || ghciCommand == GhciCommand.Browse) LoadTimeout else DefaultTimeout
 
             val deadline = timeout.fromNow
             while (deadline.hasTimeLeft && !hasReachedEndOfOutput) {
@@ -174,13 +168,7 @@ abstract class StackRepl(project: Project, componentInfo: Option[StackComponentI
               logInfo(s"Command $command took + ${(timeout - deadline.timeLeft).toMillis} ms")
               logOutput(errorAsInfo = true)
 
-              val result = if (ghciCommand == GhciCommand.LocalBrowse) {
-                stdoutResult.takeWhile(l => !l.startsWith(LocalBrowseStopReadingIndicator))
-              } else {
-                stdoutResult
-              }
-
-              Some(StackReplOutput(convertOutputToOneMessagePerLine(project, removePrompt(result)), convertOutputToOneMessagePerLine(project, stderrResult)))
+              Some(StackReplOutput(convertOutputToOneMessagePerLine(project, removePrompt(stdoutResult.toSeq)), convertOutputToOneMessagePerLine(project, stderrResult.toSeq)))
             } else {
               drainQueues()
               logError(s"No result from Stack REPL within $timeout. Command was: $command")
@@ -379,7 +367,7 @@ abstract class StackRepl(project: Project, componentInfo: Option[StackComponentI
     HaskellNotificationGroup.logInfoEvent(project, s"[$getComponentName] $message")
   }
 
-  private def removePrompt(output: mutable.Seq[String]): mutable.Seq[String] = {
+  private def removePrompt(output: Seq[String]): Seq[String] = {
     if (output.lastOption.exists(_.trim == EndOfOutputIndicator)) {
       output.init
     } else {
@@ -387,8 +375,9 @@ abstract class StackRepl(project: Project, componentInfo: Option[StackComponentI
     }
   }
 
-  private def convertOutputToOneMessagePerLine(project: Project, output: mutable.Seq[String]) = {
-    StringUtil.joinIndentedLines(project, output.filterNot(_.isEmpty).toSeq)
+  // Loading file in GHCi with `set +c` produces duplicate error/warning messages
+  private def convertOutputToOneMessagePerLine(project: Project, output: Seq[String]): Seq[String] = {
+    StringUtil.joinIndentedLines(project, output.filterNot(_.isEmpty)).distinct
   }
 }
 
