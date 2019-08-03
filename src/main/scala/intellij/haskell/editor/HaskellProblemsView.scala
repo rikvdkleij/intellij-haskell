@@ -28,7 +28,7 @@ class HaskellProblemsView(project: Project, toolWindowManager: ToolWindowManager
 
   private val viewUpdater = SequentialTaskExecutor.createSequentialApplicationPoolExecutor("ProblemsView Pool")
 
-  private val problemsPanel = new ProblemsViewPanel(project)
+  private lazy val problemsPanel = new ProblemsViewPanel(project)
 
   Disposer.register(project, () => {
     Disposer.dispose(problemsPanel)
