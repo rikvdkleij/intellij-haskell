@@ -23,8 +23,9 @@ import com.intellij.openapi.project.Project
 import com.intellij.psi.PsiFile
 import intellij.haskell.external.component.StackProjectManager
 import intellij.haskell.external.execution.CommandLine
+import intellij.haskell.settings.HaskellSettingsState
 import intellij.haskell.util.{FutureUtil, HaskellEditorUtil, HaskellFileUtil, ScalaUtil}
-import intellij.haskell.{GlobalInfo, HaskellNotificationGroup}
+import intellij.haskell.{GlobalInfo, HTool, HaskellNotificationGroup}
 
 class StylishHaskellReformatAction extends AnAction {
 
@@ -40,8 +41,7 @@ class StylishHaskellReformatAction extends AnAction {
 }
 
 object StylishHaskellReformatAction {
-  final val StylishHaskellName = "stylish-haskell"
-  private final val StylishHaskellPath = GlobalInfo.toolPath(StylishHaskellName).toString
+  private final val StylishHaskellPath = HaskellSettingsState.stylishHaskellPath.getOrElse(GlobalInfo.toolPath(HTool.StylishHaskell).toString)
 
   def versionInfo(project: Project): String = {
     if (StackProjectManager.isStylishHaskellAvailable(project)) {
@@ -61,13 +61,13 @@ object StylishHaskellReformatAction {
           CommandLine.run(project, StylishHaskellPath, Seq(path))
         })
 
-        FutureUtil.waitForValue(project, processOutputFuture, s"reformatting by $StylishHaskellName") match {
+        FutureUtil.waitForValue(project, processOutputFuture, s"reformatting by ${HTool.StylishHaskell.name}") match {
           case None => ()
           case Some(processOutput) =>
             if (processOutput.getStderrLines.isEmpty) {
               HaskellFileUtil.saveFileWithNewContent(psiFile, processOutput.getStdout)
             } else {
-              HaskellNotificationGroup.logInfoEvent(project, s"Error while reformatting by `$StylishHaskellName`. Error: ${processOutput.getStderr}")
+              HaskellNotificationGroup.logInfoEvent(project, s"Error while reformatting by `${HTool.StylishHaskell.name}`. Error: ${processOutput.getStderr}")
             }
         }
       case None => HaskellNotificationGroup.logWarningBalloonEvent(psiFile.getProject, s"Can not reformat file because could not determine path for file `${psiFile.getName}`. File exists only in memory")

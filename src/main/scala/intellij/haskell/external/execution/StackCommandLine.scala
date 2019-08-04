@@ -29,6 +29,7 @@ import com.intellij.openapi.util.Key
 import com.intellij.openapi.vfs.{CharsetToolkit, VfsUtil}
 import intellij.haskell.HaskellNotificationGroup
 import intellij.haskell.sdk.HaskellSdkType
+import intellij.haskell.settings.HaskellSettingsState
 import intellij.haskell.stackyaml.StackYamlComponent
 import intellij.haskell.util.{HaskellFileUtil, HaskellProjectUtil}
 
@@ -60,7 +61,7 @@ object StackCommandLine {
 
   def installTool(project: Project, toolName: String): Boolean = {
     import intellij.haskell.GlobalInfo._
-    val systemGhcOption = if (StackYamlComponent.isNixEnabled(project)) {
+    val systemGhcOption = if (StackYamlComponent.isNixEnabled(project) || !HaskellSettingsState.useSystemGhc) {
       Seq()
     } else {
       Seq("--system-ghc")
