@@ -142,7 +142,7 @@ private[component] object DefinitionLocationComponent {
                 HaskellReference.findIdentifiersByNameInfo(info, key.qualifiedNameElement.getIdentifierElement, project) match {
                   case Right((mn, ne, pn)) => Right(PackageModuleLocation(findModuleName(ne), ne, name, pn))
                   case Left(noInfo) =>
-                    HaskellReference.findIdentifierInFileByName(psiFile, name).
+                    HaskellReference.findIdentifierInFileByName(psiFile, name, prioIdInExpression = true).
                       map(ne => Right(PackageModuleLocation(findModuleName(ne), ne, name, None))).getOrElse(Left(noInfo))
                 }
               case None => Left(NoInfoAvailable(name, psiFile.getName))
@@ -234,7 +234,7 @@ private[component] object DefinitionLocationComponent {
         case Some(r) => r
         case None => Left(NoInfoAvailable(name, key.psiFile.getName))
       }
-      case Left(NoMatchingExport) => HaskellReference.findIdentifierInFileByName(psiFile, name) match {
+      case Left(NoMatchingExport) => HaskellReference.findIdentifierInFileByName(psiFile, name, prioIdInExpression = true) match {
         case Some(ne) => Right(LocalModuleLocation(psiFile, ne, name))
         case None => Left(NoInfoAvailable(name, psiFile.getName))
       }
@@ -263,7 +263,7 @@ private[component] object DefinitionLocationComponent {
           case Right(files) =>
             ProgressManager.checkCanceled()
 
-            files.headOption.flatMap(HaskellReference.findIdentifierInFileByName(_, name)) match {
+            files.headOption.flatMap(HaskellReference.findIdentifierInFileByName(_, name, prioIdInExpression = true)) match {
               case Some(e) => Right(PackageModuleLocation(mn, e, name, Some(pn)))
               case None => Left(NoInfoAvailable(name, key.psiFile.getName))
             }

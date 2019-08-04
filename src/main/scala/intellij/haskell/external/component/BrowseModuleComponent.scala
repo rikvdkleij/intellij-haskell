@@ -171,4 +171,5 @@ private[component] object BrowseModuleComponent {
   }
 }
 
+// value of name is without (operator) parens
 case class ModuleIdentifier(name: String, moduleName: String, declaration: String, isOperator: Boolean)

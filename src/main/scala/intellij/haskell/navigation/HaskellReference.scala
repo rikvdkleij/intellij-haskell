@@ -205,24 +205,18 @@ object HaskellReference {
   }
 
   def findIdentifiersByLibraryNameInfo(project: Project, libraryNameInfo: LibraryNameInfo, name: String): Either[NoInfo, (String, HaskellNamedElement)] = {
-    findIdentifiersByModuleAndName(project, libraryNameInfo.moduleName, name)
+    findIdentifiersByModulesAndName(project, Seq(libraryNameInfo.moduleName), name)
   }
 
-  def findIdentifiersByModuleAndName(project: Project, moduleName: String, name: String): Either[NoInfo, (String, HaskellNamedElement)] = {
+  def findIdentifiersByModulesAndName(project: Project, moduleNames: Seq[String], name: String, prioIdInExpression: Boolean = true): Either[NoInfo, (String, HaskellNamedElement)] = {
     ProgressManager.checkCanceled()
 
-    findIdentifiersByModulesAndName(project, Seq(moduleName), name)
-  }
-
-  def findIdentifiersByModulesAndName(project: Project, moduleNames: Seq[String], name: String): Either[NoInfo, (String, HaskellNamedElement)] = {
-    ProgressManager.checkCanceled()
-
-    findIdentifiersByModuleAndName2(project, moduleNames, name).headOption.map {
+    findIdentifiersByModuleAndName2(project, moduleNames, name, prioIdInExpression).headOption.map {
       case (mn, nes) => nes.headOption.map(ne => Right((mn, ne))).getOrElse(Left(NoInfoAvailable(name, moduleNames.mkString(" | "))))
     }.getOrElse(Left(ModuleNotAvailable(moduleNames.mkString(" | "))))
   }
 
-  private def findIdentifiersByModuleAndName2(project: Project, moduleNames: Seq[String], name: String): Seq[(String, Seq[HaskellNamedElement])] = {
+  private def findIdentifiersByModuleAndName2(project: Project, moduleNames: Seq[String], name: String, prioIdInExpression: Boolean): Seq[(String, Seq[HaskellNamedElement])] = {
     ProgressManager.checkCanceled()
 
     moduleNames.distinct.flatMap(mn => HaskellModuleNameIndex.findFilesByModuleName(project, mn) match {
@@ -230,13 +224,13 @@ object HaskellReference {
       case Right(files) =>
         ProgressManager.checkCanceled()
 
-        val identifiers = files.flatMap(f => findIdentifierInFileByName(f, name))
+        val identifiers = files.flatMap(f => findIdentifierInFileByName(f, name, prioIdInExpression))
         if (identifiers.isEmpty) {
-          val importedModuleNames = files.flatMap(f => FileModuleIdentifiers.findAvailableModuleIdentifiers(f).filter(_.name == name).map(_.moduleName))
+          val importedModuleNames = files.flatMap(f => FileModuleIdentifiers.findAvailableModuleIdentifiers(f).filter(mid => mid.name == name || mid.name == "_" + name).map(_.moduleName))
           if (importedModuleNames.isEmpty) {
             Seq()
           } else {
-            findIdentifiersByModuleAndName2(project, importedModuleNames, name)
+            findIdentifiersByModuleAndName2(project, importedModuleNames, name, prioIdInExpression)
           }
         } else {
           Seq((mn, identifiers))
@@ -244,20 +238,22 @@ object HaskellReference {
     })
   }
 
-  def findIdentifierInFileByName(psifile: PsiFile, name: String): Option[HaskellNamedElement] = {
+  def findIdentifierInFileByName(psiFile: PsiFile, name: String, prioIdInExpression: Boolean): Option[HaskellNamedElement] = {
 
-    ProgressManager.checkCanceled()
+    def findIdInExpressions = {
+      ProgressManager.checkCanceled()
 
-    val topLevelExpressions = HaskellPsiUtil.findTopLevelExpressions(psifile)
+      val topLevelExpressions = HaskellPsiUtil.findTopLevelExpressions(psiFile)
 
-    ProgressManager.checkCanceled()
+      ProgressManager.checkCanceled()
 
-    val expressionIdentifiers = topLevelExpressions.flatMap(_.getQNameList.asScala.headOption.map(_.getIdentifierElement)).find(_.getName == name)
+      topLevelExpressions.flatMap(_.getQNameList.asScala.headOption.map(_.getIdentifierElement)).find(_.getName == name)
+    }
 
-    ProgressManager.checkCanceled()
+    def findIdInDeclarations = {
+      ProgressManager.checkCanceled()
 
-    if (expressionIdentifiers.isEmpty) {
-      val declarationElements = HaskellPsiUtil.findHaskellDeclarationElements(psifile)
+      val declarationElements = HaskellPsiUtil.findHaskellDeclarationElements(psiFile)
 
       ProgressManager.checkCanceled()
 
@@ -266,8 +262,22 @@ object HaskellReference {
       ProgressManager.checkCanceled()
 
       declarationIdentifiers.toSeq.sortWith(sortByClassDeclarationFirst).headOption
+    }
+
+    if (prioIdInExpression) {
+      val expressionIdentifiers = findIdInExpressions
+      if (expressionIdentifiers.isEmpty) {
+        findIdInDeclarations
+      } else {
+        expressionIdentifiers
+      }
     } else {
-      expressionIdentifiers
+      val declarationIdentifiers = findIdInDeclarations
+      if (declarationIdentifiers.isEmpty) {
+        findIdInExpressions
+      } else {
+        declarationIdentifiers
+      }
     }
   }
 

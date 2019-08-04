@@ -47,7 +47,7 @@ object DeclarationLineUtil {
         None
       }
     }
-    name.map(n => NameAndShortDeclaration(n, declaration))
+    name.map(n => NameAndShortDeclaration(StringUtil.removeOuterParens(n), declaration))
   }
 
 }
