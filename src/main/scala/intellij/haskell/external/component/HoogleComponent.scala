@@ -24,8 +24,9 @@ import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.project.Project
 import intellij.haskell.external.execution.{CommandLine, StackCommandLine}
 import intellij.haskell.psi.{HaskellPsiUtil, HaskellQualifiedNameElement}
+import intellij.haskell.settings.HaskellSettingsState
 import intellij.haskell.util.{HtmlElement, ScalaFutureUtil}
-import intellij.haskell.{GlobalInfo, HaskellNotificationGroup}
+import intellij.haskell.{GlobalInfo, HTool, HaskellNotificationGroup}
 
 import scala.collection.mutable
 import scala.concurrent.{Future, blocking}
@@ -33,8 +34,7 @@ import scala.jdk.CollectionConverters._
 
 object HoogleComponent {
 
-  final val HoogleName = "hoogle"
-  private final val HooglePath = GlobalInfo.toolPath(HoogleName).toString
+  private final val HooglePath = HaskellSettingsState.hooglePath.getOrElse(GlobalInfo.toolPath(HTool.Hoogle).toString)
   private final val HoogleDbName = "hoogle"
 
   def runHoogle(project: Project, pattern: String, count: Int = 100): Option[Seq[String]] = {
@@ -113,7 +113,7 @@ object HoogleComponent {
 
   private def isHoogleFeatureAvailable(project: Project): Boolean = {
     if (!StackProjectManager.isHoogleAvailable(project)) {
-      HaskellNotificationGroup.logInfoEvent(project, s"$HoogleName isn't (yet) available")
+      HaskellNotificationGroup.logInfoEvent(project, s"${HTool.Hoogle.name} isn't (yet) available")
       false
     } else {
       doesHoogleDatabaseExist(project)

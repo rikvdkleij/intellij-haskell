@@ -16,6 +16,8 @@
 
 package intellij.haskell.settings
 
+import intellij.haskell.HTool
+
 object HaskellSettingsState {
   private def state = HaskellSettingsPersistentStateComponent.getInstance().getState
 
@@ -25,6 +27,10 @@ object HaskellSettingsState {
 
   def getHlintOptions: String = {
     state.hlintOptions
+  }
+
+  def useSystemGhc: Boolean = {
+    state.useSystemGhc
   }
 
   def getNewProjectTemplateName: String = {
@@ -45,5 +51,32 @@ object HaskellSettingsState {
 
   def setOptimizeImportsBeforeCommit(optimize: Boolean): Unit = {
     state.optimizeImportsBeforeCommit = optimize
+  }
+
+  def customTools: Boolean = {
+    state.customTools
+  }
+
+  def hindentPath: Option[String]= {
+    Option.when(customTools && state.hindentPath.nonEmpty)(state.hindentPath)
+  }
+
+  def hlintPath: Option[String]= {
+    Option.when(customTools && state.hlintPath.nonEmpty)(state.hlintPath)
+  }
+
+  def hooglePath: Option[String]= {
+    Option.when(customTools && state.hooglePath.nonEmpty)(state.hooglePath)
+  }
+
+  def stylishHaskellPath: Option[String]= {
+    Option.when(customTools && state.stylishHaskellPath.nonEmpty)(state.stylishHaskellPath)
+  }
+
+  def useCustomTool(tool: HTool): Boolean = tool match {
+    case HTool.Hindent => hindentPath.isDefined
+    case HTool.Hlint => hlintPath.isDefined
+    case HTool.Hoogle => hooglePath.isDefined
+    case HTool.StylishHaskell => stylishHaskellPath.isDefined
   }
 }

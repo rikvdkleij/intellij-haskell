@@ -21,7 +21,7 @@ import com.intellij.psi.PsiFile
 import intellij.haskell.external.execution.CommandLine
 import intellij.haskell.settings.HaskellSettingsState
 import intellij.haskell.util.HaskellFileUtil
-import intellij.haskell.{GlobalInfo, HaskellNotificationGroup}
+import intellij.haskell.{GlobalInfo, HTool, HaskellNotificationGroup}
 import spray.json.JsonParser.ParsingException
 import spray.json.{DefaultJsonProtocol, _}
 
@@ -29,8 +29,7 @@ import scala.concurrent.duration._
 
 object HLintComponent {
 
-  final val HLintName = "hlint"
-  private final val HLintPath = GlobalInfo.toolPath(HLintName).toString
+  private final val HLintPath = HaskellSettingsState.hlintPath.getOrElse(GlobalInfo.toolPath(HTool.Hlint).toString)
   private final val Timeout = 500.millis
 
   def check(psiFile: PsiFile): Seq[HLintInfo] = {
@@ -41,7 +40,7 @@ object HLintComponent {
         case Some(path) =>
           val output = runHLint(project, hlintOptions.toSeq ++ Seq("--json", path), ignoreExitCode = true)
           if (output.getExitCode > 0 && output.getStderr.nonEmpty) {
-            HaskellNotificationGroup.logErrorBalloonEvent(project, s"Error while calling $HLintName: ${output.getStderr}")
+            HaskellNotificationGroup.logErrorBalloonEvent(project, s"Error while calling ${HTool.Hlint.name}: ${output.getStderr}")
             Seq()
           } else {
             deserializeHLintInfo(project, output.getStdout)
@@ -51,7 +50,7 @@ object HLintComponent {
           Seq()
       }
     } else {
-      HaskellNotificationGroup.logInfoEvent(psiFile.getProject, s"$HLintName is not (yet) available")
+      HaskellNotificationGroup.logInfoEvent(psiFile.getProject, s"${HTool.Hlint.name} is not (yet) available")
       Seq()
     }
   }
