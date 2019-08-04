@@ -1,7 +1,7 @@
 <idea-plugin>
     <id>intellij.haskell</id>
     <name>IntelliJ-Haskell</name>
-    <version>1.0.0-beta51</version>
+    <version>1.0.0-beta52</version>
     <vendor email="rikvdkleij@gmail.com">Rik van der Kleij</vendor>
 
     <description><![CDATA[
@@ -13,6 +13,17 @@
     ]]></description>
 
     <change-notes><![CDATA[
+        <p>1.0.0-beta52</p>
+        <ul>
+            <li>Various improvements and fixes</li>
+            <li>Improve Cabal parser (#294 and #456)</li>
+            <li>Fix Haskell code style settings (#449)</li>
+            <li>Improved managing global plugin directories (#444)</li>
+            <li>Save file without removing trailing spaces (#459)</li>
+            <li>Improved navigation by Hoogle</li>
+            <li>Prevent duplicate GHC messages in Haskell Problems View (#460)</li>
+        </ul>
+
         <p>1.0.0-beta51</p>
         <ul>
             <li>Build library code always completely in the background. Use Haskell Problems View for project messages overview. Fix issue #443.</li>

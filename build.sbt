@@ -1,5 +1,5 @@
 lazy val commonSettings = Seq(
-  version := "1.0.0-beta51",
+  version := "1.0.0-beta52",
   scalaVersion := "2.13.0"
 )
 
@@ -24,5 +24,4 @@ lazy val intellijHaskell = (project in file(".")).
     unmanagedSourceDirectories in Compile += baseDirectory.value / "gen"
   )
 
-
-ideaBuild in ThisBuild := "191.7479.19"
+ideaBuild in ThisBuild := "192.5728.98"
