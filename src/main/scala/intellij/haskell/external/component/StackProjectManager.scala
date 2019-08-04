@@ -26,9 +26,8 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.projectRoots.ProjectJdkTable
 import com.intellij.openapi.roots.{ModifiableRootModel, ModuleRootModificationUtil}
 import com.intellij.openapi.ui.Messages
-import com.intellij.openapi.util.SystemInfo
 import com.intellij.openapi.vfs.VirtualFileManager
-import intellij.haskell.action.{HaskellReformatAction, HindentReformatAction, StylishHaskellReformatAction}
+import intellij.haskell.action.HaskellReformatAction
 import intellij.haskell.annotator.HaskellAnnotator
 import intellij.haskell.external.execution.StackCommandLine
 import intellij.haskell.external.repl.StackRepl.LibType
@@ -111,7 +110,7 @@ object StackProjectManager {
     ProgressManager.getInstance().run(new Task.Backgroundable(project, title, false, PerformInBackgroundOption.ALWAYS_BACKGROUND) {
 
       private def isToolAvailable(progressIndicator: ProgressIndicator, tool: HTool) = {
-        HaskellSettingsState.useCustomTool(tool) || {
+        HaskellSettingsState.useCustomTools || {
           if (!GlobalInfo.toolPath(tool).exists() || update) {
             progressIndicator.setText(s"Busy with installing ${tool.name} in ${GlobalInfo.toolsBinPath}")
             StackCommandLine.installTool(project, tool.name)

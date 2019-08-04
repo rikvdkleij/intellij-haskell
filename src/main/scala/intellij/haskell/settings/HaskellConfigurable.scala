@@ -21,7 +21,7 @@ import java.awt.{GridBagConstraints, GridBagLayout, Insets}
 import com.intellij.openapi.options.{Configurable, ConfigurationException}
 import com.intellij.ui.DocumentAdapter
 import javax.swing._
-import javax.swing.event.{ChangeListener, DocumentEvent}
+import javax.swing.event.DocumentEvent
 
 class HaskellConfigurable extends Configurable {
   private var isModifiedByUser = false
@@ -123,7 +123,7 @@ class HaskellConfigurable extends Configurable {
       (new JLabel(BuildToolsUsingSystemGhc), useSystemGhcToggle),
       (new JLabel(UseCustomTool), useCustomToolsToggle),
       (new JLabel(""), afterRestartLabel),
-      (new JLabel(""),  {
+      (new JLabel(""), {
         val x = new JTextArea(PathWarning)
         x.setLineWrap(true)
         x.setWrapStyleWord(true)
@@ -151,6 +151,9 @@ class HaskellConfigurable extends Configurable {
     val validREPLTimeout = validateREPLTimeout()
 
     val state = HaskellSettingsPersistentStateComponent.getInstance().getState
+
+    validateCustomTools()
+
     state.replTimeout = validREPLTimeout
     state.hlintOptions = hlintOptionsField.getText
     state.useSystemGhc = useSystemGhcToggle.isSelected
@@ -174,6 +177,18 @@ class HaskellConfigurable extends Configurable {
     }
     timeout
   }
+
+  private def validateCustomTools(): Unit = {
+    if (useCustomToolsToggle.isSelected) {
+      if (hindentPathField.getText.trim.isEmpty ||
+        hlintPathField.getText.trim.isEmpty ||
+        hooglePathField.getText.trim.isEmpty ||
+        stylishHaskellPathField.getText.trim.isEmpty) {
+        throw new ConfigurationException(s"All Haskell tools paths have to be set")
+      }
+    }
+  }
+
 
   override def disposeUIResources(): Unit = {}
 
