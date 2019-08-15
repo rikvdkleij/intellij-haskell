@@ -20,7 +20,6 @@ import java.io._
 import java.util.concurrent.LinkedBlockingQueue
 
 import com.intellij.openapi.project.Project
-import com.intellij.util.EnvironmentUtil
 import intellij.haskell.external.component.HaskellComponentsManager.StackComponentInfo
 import intellij.haskell.external.execution.StackCommandLine
 import intellij.haskell.external.repl.StackRepl.{BenchmarkType, StackReplOutput, TestSuiteType}
@@ -233,10 +232,7 @@ abstract class StackRepl(project: Project, componentInfo: Option[StackComponentI
 
           logInfo(s"Stack REPL will be started with command: $command")
 
-          val processBuilder = Option(EnvironmentUtil.getEnvironmentMap) match {
-            case None => Process(command, new File(componentInfo.map(_.modulePath).getOrElse(project.getBasePath)))
-            case Some(envMap) => Process(command, new File(project.getBasePath), envMap.asScala.toIndexedSeq: _*)
-          }
+          val processBuilder = Process(command, new File(project.getBasePath))
 
           stdoutQueue.clear()
           stderrQueue.clear()
