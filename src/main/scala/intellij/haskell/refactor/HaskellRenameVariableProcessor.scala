@@ -23,7 +23,7 @@ import com.intellij.openapi.project.Project
 import com.intellij.psi.{PsiElement, PsiFile}
 import com.intellij.refactoring.listeners.RefactoringElementListener
 import com.intellij.refactoring.rename.RenamePsiElementProcessor
-import intellij.haskell.external.component.{HaskellComponentsManager, ProjectLibraryFileWatcher}
+import intellij.haskell.external.component.{HaskellComponentsManager, ProjectLibraryBuilder}
 import intellij.haskell.external.repl.StackRepl.LibType
 import intellij.haskell.util.{HaskellFileUtil, HaskellProjectUtil, ScalaUtil}
 
@@ -40,7 +40,7 @@ class HaskellRenameVariableProcessor extends RenamePsiElementProcessor {
       targetInfo <- HaskellComponentsManager.findStackComponentInfo(tf)
       currentInfo <- HaskellComponentsManager.findStackComponentInfo(cf)
     } yield if (targetInfo != currentInfo && targetInfo.stanzaType == LibType)
-      ProjectLibraryFileWatcher.addBuild(project, Set(targetInfo)) else ()
+      ProjectLibraryBuilder.addBuild(project, Set(targetInfo)) else ()
   }
 
   override def canProcessElement(psiElement: PsiElement): Boolean = {

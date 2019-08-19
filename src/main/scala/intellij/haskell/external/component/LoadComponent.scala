@@ -49,7 +49,7 @@ private[component] object LoadComponent {
         }
       }
 
-      ProjectLibraryFileWatcher.checkLibraryBuild(project, projectRepl.stackComponentInfo)
+      ProjectLibraryBuilder.checkLibraryBuild(project, projectRepl.stackComponentInfo)
 
       projectRepl.load(psiFile, fileModified, mustBeByteCode = false) match {
         case Some((loadOutput, loadFailed)) =>
