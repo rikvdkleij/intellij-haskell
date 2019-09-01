@@ -52,7 +52,7 @@ class HindentReformatAction extends AnAction {
 }
 
 object HindentReformatAction {
-  private final val HindentPath = HaskellSettingsState.hindentPath.getOrElse(GlobalInfo.toolPath(HTool.Hindent).toString)
+  private def hindentPath = HaskellSettingsState.hindentPath.getOrElse(GlobalInfo.defaultHindentPath.toString)
 
   def format(psiFile: PsiFile, selectionContext: Option[SelectionContext] = None): Boolean = {
     val lineLength = CodeStyle.getSettings(psiFile.getProject).getRightMargin(HaskellLanguage.Instance)
@@ -60,7 +60,7 @@ object HindentReformatAction {
     val project = psiFile.getProject
     HaskellFileUtil.saveFile(psiFile)
 
-    val command = Seq(HindentPath, "--line-length", lineLength.toString, "--indent-size", indentOptions.INDENT_SIZE.toString)
+    val command = Seq(hindentPath, "--line-length", lineLength.toString, "--indent-size", indentOptions.INDENT_SIZE.toString)
 
     val formatAction = ApplicationManager.getApplication.executeOnPooledThread(ScalaUtil.callable[Either[String, String]] {
       selectionContext match {
@@ -91,7 +91,7 @@ object HindentReformatAction {
 
   def versionInfo(project: Project): String = {
     if (StackProjectManager.isHindentAvailable(project)) {
-      CommandLine.run(project, HindentPath, Seq("--version")).getStdout
+      CommandLine.run(project, hindentPath, Seq("--version")).getStdout
     } else {
       "-"
     }

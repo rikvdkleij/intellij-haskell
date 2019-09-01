@@ -44,6 +44,22 @@ object GlobalInfo {
     new File(toolsBinPath, name)
   }
 
+  lazy val defaultHlintPath: File = {
+    toolPath(HTool.Hlint)
+  }
+
+  lazy val defaultHooglePath: File = {
+    toolPath(HTool.Hoogle)
+  }
+
+  lazy val defaultStylishHaskellPath: File = {
+    toolPath(HTool.StylishHaskell)
+  }
+
+  lazy val defaultHindentPath: File = {
+    toolPath(HTool.Hindent)
+  }
+
   def getIntelliJProjectDirectory(project: Project): File = {
     val intelliJProjectDirectory = new File(GlobalInfo.getIntelliJHaskellDirectory, project.getName)
     synchronized {

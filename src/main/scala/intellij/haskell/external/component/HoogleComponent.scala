@@ -34,14 +34,14 @@ import scala.jdk.CollectionConverters._
 
 object HoogleComponent {
 
-  private final val HooglePath = HaskellSettingsState.hooglePath.getOrElse(GlobalInfo.toolPath(HTool.Hoogle).toString)
+  private def hooglePath = HaskellSettingsState.hooglePath.getOrElse(GlobalInfo.defaultHooglePath.toString)
   private final val HoogleDbName = "hoogle"
 
   def runHoogle(project: Project, pattern: String, count: Int = 100): Option[Seq[String]] = {
     if (isHoogleFeatureAvailable(project)) {
       ProgressManager.checkCanceled()
 
-      runHoogle(project, Seq( s""""$pattern"""", s"--count=$count")).
+      runHoogle(project, Seq(s""""$pattern"""", s"--count=$count")).
         map(o =>
           if (o.getStdoutLines.isEmpty || o.getStdout.contains("No results found"))
             Seq()
@@ -130,7 +130,7 @@ object HoogleComponent {
 
     if (buildHaddockOutput.contains(true)) {
       GlobalProjectInfoComponent.findGlobalProjectInfo(project).map(_.localDocRoot) match {
-        case Some(localDocRoot) => StackCommandLine.executeInMessageView(project, HooglePath, Seq("generate", s"--local=$localDocRoot", s"--database=${hoogleDbPath(project)}"))
+        case Some(localDocRoot) => StackCommandLine.executeInMessageView(project, hooglePath, Seq("generate", s"--local=$localDocRoot", s"--database=${hoogleDbPath(project)}"))
         case None => HaskellNotificationGroup.logErrorBalloonEvent(project, "Couldn't generate Hoogle DB because path to local doc root is unknown")
       }
     }
@@ -146,7 +146,7 @@ object HoogleComponent {
 
   def versionInfo(project: Project): String = {
     if (StackProjectManager.isHoogleAvailable(project)) {
-      CommandLine.run(project, HooglePath, Seq("--version")).getStdout
+      CommandLine.run(project, hooglePath, Seq("--version")).getStdout
     } else {
       "-"
     }
@@ -160,7 +160,7 @@ object HoogleComponent {
     ScalaFutureUtil.waitWithCheckCancelled(project,
       Future {
         blocking {
-          CommandLine.run(project, HooglePath, Seq(s"--database=${hoogleDbPath(project)}") ++ arguments, logOutput = true)
+          CommandLine.run(project, hooglePath, Seq(s"--database=${hoogleDbPath(project)}") ++ arguments, logOutput = true)
         }
       }, "runHoogle")
   }

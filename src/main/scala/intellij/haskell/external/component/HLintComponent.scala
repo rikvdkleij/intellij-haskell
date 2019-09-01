@@ -25,12 +25,9 @@ import intellij.haskell.{GlobalInfo, HTool, HaskellNotificationGroup}
 import spray.json.JsonParser.ParsingException
 import spray.json.{DefaultJsonProtocol, _}
 
-import scala.concurrent.duration._
-
 object HLintComponent {
 
-  private final val HLintPath = HaskellSettingsState.hlintPath.getOrElse(GlobalInfo.toolPath(HTool.Hlint).toString)
-  private final val Timeout = 500.millis
+  private def hLintPath = HaskellSettingsState.hlintPath.getOrElse(GlobalInfo.defaultHlintPath.toString)
 
   def check(psiFile: PsiFile): Seq[HLintInfo] = {
     if (StackProjectManager.isHlintAvailable(psiFile.getProject)) {
@@ -64,7 +61,7 @@ object HLintComponent {
   }
 
   private def runHLint(project: Project, arguments: Seq[String], ignoreExitCode: Boolean) = {
-    CommandLine.run(project, HLintPath, arguments, logOutput = true, ignoreExitCode = ignoreExitCode)
+    CommandLine.run(project, hLintPath, arguments, logOutput = true, ignoreExitCode = ignoreExitCode)
   }
 
   private object HlintJsonProtocol extends DefaultJsonProtocol {
