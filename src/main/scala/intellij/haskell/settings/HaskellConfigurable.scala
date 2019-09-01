@@ -29,7 +29,7 @@ class HaskellConfigurable extends Configurable {
   private val hlintOptionsField = new JTextField
   private val useSystemGhcToggle = new JCheckBox
   private val replTimeoutField = new JTextField
-  private val afterRestartLabel = new JLabel("Changes will take effect after restarting project")
+  private val afterRestartLabel = new JLabel("*) Changes will take effect after restarting project")
   private val newProjectTemplateNameField = new JTextField
   private val hindentPathField = new JTextField
   private val hlintPathField = new JTextField
@@ -227,15 +227,15 @@ class HaskellConfigurable extends Configurable {
 }
 
 object HaskellConfigurable {
-  final val ReplTimout = "Background REPL timeout in seconds"
+  final val ReplTimout = "Background REPL timeout in seconds *"
   final val HlintOptions = "Hlint options"
   final val NewProjectTemplateName = "Template name for new project"
-  final val BuildToolsUsingSystemGhc = "Build tools using system GHC"
+  final val BuildToolsUsingSystemGhc = "Build tools using system GHC *"
   final val HindentPath = "Hindent path"
   final val HlintPath = "Hlint path"
   final val HooglePath = "Hoogle path"
   final val StylishHaskellPath = "Stylish Haskell path"
-  final val UseCustomTool = "Use custom Haskell tools"
+  final val UseCustomTool = "Use custom Haskell tools *"
   final val CustomToolPathWarning =
     """WARNING! Specifying a path for a Haskell tool will override the default
       |behavior of building that tool from the Stackage LTS. This plugin was
