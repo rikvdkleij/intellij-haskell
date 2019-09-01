@@ -59,5 +59,6 @@ public class HaskellSettingsPersistentStateComponent implements PersistentStateC
         public String hooglePath = "";
         public String stylishHaskellPath = "";
         public Boolean customTools = false;
+        public String extraStackArguments = "";
     }
 }

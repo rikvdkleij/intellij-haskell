@@ -35,6 +35,7 @@ class HaskellConfigurable extends Configurable {
   private val hooglePathField = new JTextField
   private val stylishHaskellPathField = new JTextField
   private val useCustomToolsToggle = new JCheckBox
+  private val extraStackArgumentsField = new JTextField
 
   override def getDisplayName: String = {
     "Haskell"
@@ -77,6 +78,7 @@ class HaskellConfigurable extends Configurable {
       isModifiedByUser = true
       toggleToolPathsVisibility()
     }
+    extraStackArgumentsField.getDocument.addDocumentListener(docListener)
 
     class SettingsGridBagConstraints extends GridBagConstraints {
 
@@ -117,22 +119,17 @@ class HaskellConfigurable extends Configurable {
 
     val labeledControls = List(
       (new JLabel(HlintOptions), hlintOptionsField),
-      (new JLabel(ReplTimeout), replTimeoutField),
+      (new JLabel(ReplTimout), replTimeoutField),
+      (new JLabel(ExtraStackArguments), extraStackArgumentsField),
       (new JLabel(""), afterRestartLabel),
       (new JLabel(NewProjectTemplateName), newProjectTemplateNameField),
       (new JLabel(BuildToolsUsingSystemGhc), useSystemGhcToggle),
       (new JLabel(UseCustomTool), useCustomToolsToggle),
-      (new JLabel(""), afterRestartLabel),
-      (new JLabel(""), {
-        val x = new JTextArea(PathWarning)
-        x.setLineWrap(true)
-        x.setWrapStyleWord(true)
-        x
-      }),
       (new JLabel(HindentPath), hindentPathField),
       (new JLabel(HlintPath), hlintPathField),
       (new JLabel(HooglePath), hooglePathField),
-      (new JLabel(StylishHaskellPath), stylishHaskellPathField)
+      (new JLabel(StylishHaskellPath), stylishHaskellPathField),
+      (new JLabel(""), afterRestartLabel)
     )
 
     labeledControls.zipWithIndex.foreach {
@@ -144,6 +141,13 @@ class HaskellConfigurable extends Configurable {
       gridy = labeledControls.length,
       weighty = 10.0
     ))
+
+    val customToolPathWarning = new JTextArea(CustomToolPathWarning)
+    customToolPathWarning.setLineWrap(true)
+    customToolPathWarning.setWrapStyleWord(true)
+    settingsPanel.add(customToolPathWarning, new GridBagConstraints(0, labeledControls.length, 3, 1, 0, 0,
+      GridBagConstraints.NORTH, GridBagConstraints.HORIZONTAL, new Insets(10, 0, 2, 3), 0, 0))
+
     settingsPanel
   }
 
@@ -163,6 +167,7 @@ class HaskellConfigurable extends Configurable {
     state.hooglePath = hooglePathField.getText
     state.stylishHaskellPath = stylishHaskellPathField.getText
     state.customTools = useCustomToolsToggle.isSelected
+    state.extraStackArguments = extraStackArgumentsField.getText
   }
 
   private def validateREPLTimeout(): Integer = {
@@ -205,11 +210,12 @@ class HaskellConfigurable extends Configurable {
     hooglePathField.setText(state.hooglePath)
     stylishHaskellPathField.setText(state.stylishHaskellPath)
     useCustomToolsToggle.setSelected(state.customTools)
+    extraStackArgumentsField.setText(state.extraStackArguments)
   }
 }
 
 object HaskellConfigurable {
-  final val ReplTimeout = "Background REPL timeout in seconds"
+  final val ReplTimout = "Background REPL timeout in seconds"
   final val HlintOptions = "Hlint options"
   final val NewProjectTemplateName = "Template name for new project"
   final val BuildToolsUsingSystemGhc = "Build tools using system GHC"
@@ -218,7 +224,7 @@ object HaskellConfigurable {
   final val HooglePath = "Hoogle path"
   final val StylishHaskellPath = "Stylish Haskell path"
   final val UseCustomTool = "Use custom Haskell tools"
-  final val PathWarning =
+  final val CustomToolPathWarning =
     """WARNING! Specifying a path for a Haskell tool will override the default
       |behavior of building that tool from the Stackage LTS. This plugin was
       |tested only with the Haskell tools from the Stackage LTS. Providing a
@@ -226,4 +232,5 @@ object HaskellConfigurable {
       |or download of that tool) could cause some features of this plugin to
       |break, because the API that your tool provide may differ from what the
       |plugin expects.""".stripMargin.replace('\n', ' ')
+  final val ExtraStackArguments = "Extra stack arguments"
 }

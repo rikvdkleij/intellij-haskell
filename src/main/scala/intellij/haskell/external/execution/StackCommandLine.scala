@@ -50,7 +50,7 @@ object StackCommandLine {
         project,
         workDir.getOrElse(project.getBasePath),
         stackPath,
-        arguments,
+        arguments ++ (if (enableExtraArguments) HaskellSettingsState.getExtraStackArguments else Seq()),
         timeoutInMillis.toInt,
         ignoreExitCode = ignoreExitCode,
         logOutput = logOutput,
@@ -104,7 +104,7 @@ object StackCommandLine {
   }
 
   def executeInMessageView(project: Project, commandPath: String, arguments: Seq[String]): Option[Boolean] = {
-    val cmd = CommandLine.createCommandLine(project.getBasePath, commandPath, arguments)
+    val cmd = CommandLine.createCommandLine(project.getBasePath, commandPath, arguments ++ HaskellSettingsState.getExtraStackArguments)
     (try {
       Option(cmd.createProcess())
     } catch {
