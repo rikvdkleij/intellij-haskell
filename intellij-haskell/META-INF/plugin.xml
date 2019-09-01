@@ -1,7 +1,7 @@
 <idea-plugin>
     <id>intellij.haskell</id>
     <name>IntelliJ-Haskell</name>
-    <version>1.0.0-beta54</version>
+    <version>1.0.0-beta55</version>
     <vendor email="rikvdkleij@gmail.com">Rik van der Kleij</vendor>
 
     <description><![CDATA[
@@ -13,11 +13,14 @@
     ]]></description>
 
     <change-notes><![CDATA[
+        <p>1.0.0-beta55</p>
+        <ul>
+            <li>Add setting to add extra Stack arguments (#468)</li>
+        </ul>
         <p>1.0.0-beta54</p>
         <ul>
             <li>Fix issue with environment of REPL process (#461)</li>
         </ul>
-
         <p>1.0.0-beta53</p>
         <ul>
             <li>Make `system-ghc` and tool paths configurable (#454 by @friedbrice)</li>
