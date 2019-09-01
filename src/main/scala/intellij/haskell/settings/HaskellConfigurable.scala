@@ -19,6 +19,7 @@ package intellij.haskell.settings
 import java.awt.{GridBagConstraints, GridBagLayout, Insets}
 
 import com.intellij.openapi.options.{Configurable, ConfigurationException}
+import com.intellij.openapi.util.io.FileUtil
 import com.intellij.ui.DocumentAdapter
 import javax.swing._
 import javax.swing.event.DocumentEvent
@@ -183,6 +184,12 @@ class HaskellConfigurable extends Configurable {
     timeout
   }
 
+  private def checkFileExists(path: String): Unit = {
+    if (!FileUtil.exists(path)) {
+      throw new ConfigurationException(s"$path does not exists")
+    }
+  }
+
   private def validateCustomTools(): Unit = {
     if (useCustomToolsToggle.isSelected) {
       if (hindentPathField.getText.trim.isEmpty ||
@@ -191,6 +198,11 @@ class HaskellConfigurable extends Configurable {
         stylishHaskellPathField.getText.trim.isEmpty) {
         throw new ConfigurationException(s"All Haskell tools paths have to be set")
       }
+
+      checkFileExists(hindentPathField.getText)
+      checkFileExists(hlintPathField.getText)
+      checkFileExists(hooglePathField.getText)
+      checkFileExists(stylishHaskellPathField.getText)
     }
   }
 
