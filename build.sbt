@@ -9,6 +9,8 @@ val snakeYaml = "org.yaml" % "snakeyaml" % "1.25"
 val scaffeine = "com.github.blemale" %% "scaffeine" % "3.1.0"
 val directories = "io.github.soc" % "directories" % "11"
 
+ideaPluginName in ThisBuild := "IntelliJ-Haskell"
+
 lazy val intellijHaskell = (project in file(".")).
   enablePlugins(SbtIdeaPlugin).
   settings(commonSettings: _*).
