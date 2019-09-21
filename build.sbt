@@ -27,3 +27,5 @@ lazy val intellijHaskell = (project in file(".")).
   )
 
 ideaBuild in ThisBuild := "192.6603.28"
+
+ideaInternalPlugins += "java"
