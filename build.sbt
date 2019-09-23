@@ -1,6 +1,6 @@
 lazy val commonSettings = Seq(
   version := "1.0.0-beta55",
-  scalaVersion := "2.13.0"
+  scalaVersion := "2.13.1"
 )
 
 val scalaTest = "org.scalatest" %% "scalatest" % "3.0.8" % Test
