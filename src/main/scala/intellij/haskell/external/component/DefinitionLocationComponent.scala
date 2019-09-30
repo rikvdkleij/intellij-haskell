@@ -76,18 +76,17 @@ private[component] object DefinitionLocationComponent {
   }
 
   def invalidate(psiFile: PsiFile): Unit = {
-    val synchronousCache = Cache
-    val keys = synchronousCache.asMap().flatMap { case (k, v) =>
+    val keys = Cache.asMap().flatMap { case (k, v) =>
       if (checkValidKey(k)) {
         v.toOption match {
-          case Some(definitionLocation) if checkValidLocation(definitionLocation) & checkValidName(k, definitionLocation) => None
+          case Some(definitionLocation) if checkValidLocation(definitionLocation) && checkValidName(k, definitionLocation) => None
           case _ => Some(k)
         }
       } else {
         Some(k)
       }
     }
-    synchronousCache.invalidateAll(keys)
+    Cache.invalidateAll(keys)
   }
 
   private def checkValidKey(key: Key): Boolean = {
@@ -126,7 +125,7 @@ private[component] object DefinitionLocationComponent {
     ProgressManager.checkCanceled()
 
     // GHCi :loc-at does not always give right answer for qualified identifiers. It depends on the order of import declarations...
-    // So in case of qualified identifiers :info is used to find definition location.
+    // So in case of qualified identifiers :info is used to find definition location as second solution.
     if (libraryFile || key.importQualifier.isDefined || key.qualifiedNameElement.getQualifierName.isDefined) {
 
       findLocationByImportedIdentifiers(project, key, name) match {
