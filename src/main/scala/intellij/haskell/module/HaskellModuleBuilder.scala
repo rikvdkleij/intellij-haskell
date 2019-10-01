@@ -25,8 +25,7 @@ import com.intellij.openapi.module.{ModifiableModuleModel, Module, ModuleType}
 import com.intellij.openapi.project.{Project, ProjectManager}
 import com.intellij.openapi.projectRoots.SdkTypeId
 import com.intellij.openapi.roots._
-import com.intellij.openapi.roots.impl.libraries.ProjectLibraryTable
-import com.intellij.openapi.roots.libraries.{Library, LibraryUtil}
+import com.intellij.openapi.roots.libraries.{Library, LibraryTablesRegistrar, LibraryUtil}
 import com.intellij.openapi.roots.ui.configuration.ModulesProvider
 import com.intellij.openapi.ui.Messages
 import com.intellij.openapi.util.io.FileUtil
@@ -39,7 +38,7 @@ import intellij.haskell.external.execution.{CommandLine, StackCommandLine}
 import intellij.haskell.sdk.HaskellSdkType
 import intellij.haskell.settings.HaskellSettingsState
 import intellij.haskell.stackyaml.StackYamlComponent
-import intellij.haskell.util.{HaskellFileUtil, HaskellProjectUtil, ScalaUtil}
+import intellij.haskell.util.{FutureUtil, HaskellFileUtil, HaskellProjectUtil, ScalaUtil}
 import intellij.haskell.{GlobalInfo, HaskellNotificationGroup}
 import javax.swing.Icon
 
@@ -80,7 +79,7 @@ class HaskellModuleBuilder extends TemplateModuleBuilder(null, HaskellModuleType
       packageRelativePath.flatMap(pp => HaskellModuleBuilder.createCabalInfo(rootModel.getProject, project.getBasePath, pp)) match {
         case Some(ci) => cabalInfo = ci
         case None =>
-          Messages.showErrorDialog(s"Couldn't create Haskell module due to failure retrieving or parsing Cabal file for package path `$packageRelativePath`", "No Cabal file info")
+          Messages.showErrorDialog(s"Couldn't create Haskell module due to failure retrieving or parsing Cabal file for package path `${project.getBasePath}`", "No Cabal file info")
       }
     }
 
@@ -109,14 +108,20 @@ class HaskellModuleBuilder extends TemplateModuleBuilder(null, HaskellModuleType
     val newProjectTemplateName = HaskellSettingsState.getNewProjectTemplateName
 
     if (isNewProjectWithoutExistingSources) {
-      val processOutput = StackCommandLine.run(project, Seq("new", project.getName, "--bare", newProjectTemplateName, "-p", "author-email:Author email here", "-p", "author-name:Author name here", "-p", "category:App category here", "-p", "copyright:2019 Author name here", "-p", "github-username:Github username here"), timeoutInMillis = 60.seconds.toMillis, enableExtraArguments = false)
-      processOutput match {
-        case None =>
-          HaskellNotificationGroup.logErrorBalloonEvent("Couldn't create new Stack project due to failure executing Stack command for creating new project on file system")
-        case Some(output) =>
-          if (output.getExitCode != 0) {
-            HaskellNotificationGroup.logErrorBalloonEvent(s"Couldn't create new Stack project: ${output.getStdout} ${output.getStderr}")
-          }
+      val createModuleAction = ApplicationManager.getApplication.executeOnPooledThread(ScalaUtil.runnable {
+        val processOutput = StackCommandLine.run(project, Seq("new", project.getName, "--bare", newProjectTemplateName, "-p", "author-email:Author email here", "-p", "author-name:Author name here", "-p", "category:App category here", "-p", "copyright:2019 Author name here", "-p", "github-username:Github username here"), timeoutInMillis = 60.seconds.toMillis, enableExtraArguments = false)
+        processOutput match {
+          case None =>
+            Messages.showErrorDialog("Unknown error while creating new Stack project by using Stack command for creating new project on file system", "Create Haskell module")
+          case Some(output) =>
+            if (output.getExitCode != 0) {
+              Messages.showErrorDialog(s"Error while creating new Stack project: ${output.getStdout} ${output.getStderr}", "Create Haskell module")
+            }
+        }
+      })
+      FutureUtil.waitForValue(project, createModuleAction, "Creating Haskell module", 120) match {
+        case None => Messages.showErrorDialog(s"Timeout while creating new Stack project", "Create Haskell module")
+        case Some(_) => ()
       }
     }
     setupModule(module)
@@ -179,7 +184,7 @@ object HaskellModuleBuilder {
   def createCabalInfo(project: Project, modulePath: String, packageRelativePath: String): Option[CabalInfo] = {
     val moduleDirectory = getModuleRootDirectory(packageRelativePath, modulePath)
     for {
-      cabalFile <- getCabalFile(moduleDirectory)
+      cabalFile <- getCabalFile(project, moduleDirectory)
       cabalInfo <- getCabalInfo(project, cabalFile)
     } yield cabalInfo
   }
@@ -221,7 +226,7 @@ object HaskellModuleBuilder {
     }
   }
 
-  private def getCabalFile(moduleDirectory: File): Option[File] = {
+  private def getCabalFile(project: Project, moduleDirectory: File): Option[File] = {
     HaskellProjectUtil.findCabalFile(moduleDirectory) match {
       case Some(f) => Option(f)
       case None =>
@@ -310,7 +315,7 @@ object HaskellModuleBuilder {
   }
 
   private def getProjectLibraryTable(project: Project) = {
-    ProjectLibraryTable.getInstance(project)
+    LibraryTablesRegistrar.getInstance.getLibraryTable(project)
   }
 
   private def setupProjectLibraries(project: Project, libraryDependencies: Seq[HaskellLibraryDependency], projectLibDirectory: File): Unit = {
