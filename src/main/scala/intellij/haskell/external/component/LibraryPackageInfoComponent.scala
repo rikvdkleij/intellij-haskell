@@ -63,7 +63,7 @@ private[component] object LibraryPackageInfoComponent {
         case d@Some(packageInfo) => if (!projectPackageNames.contains(packageInfo.packageName) && packageInfo.packageName != "rts") Cache.put(Key(project, packageInfo.packageName), d)
         case None => HaskellNotificationGroup.logInfoBalloonEvent(project, s"Could not retrieve all package information via `ghc-pkg dump`")
       }
-      case None => HaskellNotificationGroup.logErrorBalloonEvent(project, "Executing `ghc-pkg dunp` failed")
+      case None => HaskellNotificationGroup.logErrorBalloonEvent(project, "Executing `ghc-pkg dump` failed")
     }
   }
 
@@ -73,11 +73,6 @@ private[component] object LibraryPackageInfoComponent {
       case result@Some(_) => result
       case _ => None
     }
-  }
-
-  def findOtherModuleNames(project: Project, moduleName: String): Seq[String] = {
-    val info = Cache.asMap().find(_._2.exists(pi => pi.exposedModuleNames.contains(moduleName) || pi.hiddenModuleNames.contains(moduleName))).map(_._2)
-    info.flatMap(i => i.map(r => r.hiddenModuleNames ++ r.exposedModuleNames)).getOrElse(Seq())
   }
 
   def libraryPackageInfos(project: Project): Iterable[PackageInfo] = {
