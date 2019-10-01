@@ -36,7 +36,8 @@ import scala.concurrent._
 
 object HaskellComponentsManager {
 
-  case class StackComponentInfo(module: Module, modulePath: String, packageName: String, target: String, stanzaType: StanzaType, sourceDirs: Seq[String], mainIs: Option[String], isImplicitPreludeActive: Boolean, buildDepends: Seq[String], exposedModuleNames: Seq[String] = Seq.empty)
+  case class StackComponentInfo(module: Module, modulePath: String, packageName: String, target: String, stanzaType: StanzaType, sourceDirs: Seq[String],
+                                mainIs: Option[String], isImplicitPreludeActive: Boolean, buildDepends: Seq[String], exposedModuleNames: Seq[String] = Seq.empty)
 
   def findModuleIdentifiersInCache(project: Project): Iterable[ModuleIdentifier] = {
     import scala.concurrent.ExecutionContext.Implicits.global
@@ -209,13 +210,10 @@ object HaskellComponentsManager {
 
   private def preloadLibraryFiles(project: Project): Unit = {
     if (!project.isDisposed) {
-      if (!project.isDisposed) {
-        val libraryPackageInfos = LibraryPackageInfoComponent.libraryPackageInfos(project)
-        HaskellModuleNameIndex.fillCache(project, libraryPackageInfos.flatMap(libraryModuleNames => libraryModuleNames.exposedModuleNames ++ libraryModuleNames.hiddenModuleNames))
-      }
+      val libraryPackageInfos = LibraryPackageInfoComponent.libraryPackageInfos(project)
+      HaskellModuleNameIndex.fillCache(project, libraryPackageInfos.flatMap(libraryModuleNames => libraryModuleNames.exposedModuleNames ++ libraryModuleNames.hiddenModuleNames))
     }
   }
-
 
   private def preloadLibraryIdentifiers(project: Project): Unit = {
     import scala.concurrent.ExecutionContext.Implicits.global
@@ -236,9 +234,9 @@ object HaskellComponentsManager {
           } else {
             val libraryModuleNames = componentInfos.flatMap(HaskellComponentsManager.findStackComponentGlobalInfo).flatMap(_.packageInfos)
 
-            val exposedlibraryModuleNames = libraryModuleNames.flatMap(_.exposedModuleNames).distinct
+            val exposedLibraryModuleNames = libraryModuleNames.flatMap(_.exposedModuleNames).distinct
             val importDeclarations = ApplicationUtil.runInReadActionWithWriteActionPriority(project, HaskellPsiUtil.findImportDeclarations(f), "In preloadLibraryIdentifiers findImportDeclarations").toOption.getOrElse(Iterable())
-            importDeclarations.flatMap(id => ApplicationUtil.runReadAction(id.getModuleName)).filter(mn => exposedlibraryModuleNames.contains(mn)).filterNot(_ == HaskellProjectUtil.Prelude)
+            importDeclarations.flatMap(id => ApplicationUtil.runReadAction(id.getModuleName)).filter(mn => exposedLibraryModuleNames.contains(mn)).filterNot(_ == HaskellProjectUtil.Prelude)
           }
         })
 
