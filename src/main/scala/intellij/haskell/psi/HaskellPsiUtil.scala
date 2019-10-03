@@ -58,6 +58,13 @@ object HaskellPsiUtil {
     }
   }
 
+  def findQualifierElement(psiElement: PsiElement): Option[HaskellQualifier] = {
+    psiElement match {
+      case e: HaskellQualifier => Some(e)
+      case e => Option(TreeUtil.findParent(e.getNode, HaskellTypes.HS_QUALIFIER)).map(_.getPsi.asInstanceOf[HaskellQualifier])
+    }
+  }
+
   def findDataConstr(psiElement: PsiElement): Option[HaskellConstr] = {
     psiElement match {
       case e: HaskellConstr => Some(e)

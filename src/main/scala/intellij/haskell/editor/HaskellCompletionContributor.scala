@@ -45,7 +45,7 @@ class HaskellCompletionContributor extends CompletionContributor {
 
   private final val HaskellWhere = LazyList("where")
   private final val HaskellLet = LazyList("let")
-  private final val haskellDeclKeywords = LazyList("family", "data", "type", "module", "class", "instance", "newtype", "deriving", "in")
+  private final val haskellDeclarationKeywords = LazyList("family", "data", "type", "module", "class", "instance", "newtype", "deriving", "in")
   private final val HaskellDefault = LazyList("default")
   private final val HaskellImportKeywords = LazyList("import", "qualified", "as", "hiding")
   private final val HaskellForeignKeywords = LazyList("foreign", "export", "ccall", "safe", "unsafe", "interruptible", "capi", "prim")
@@ -60,7 +60,7 @@ class HaskellCompletionContributor extends CompletionContributor {
   private final val HaskellRecursiveDo = LazyList("mdo", "rec")
   private final val HaskellArrowSyntax = LazyList("proc")
 
-  private final val Keywords = HaskellWhere ++ HaskellLet ++ haskellDeclKeywords ++ HaskellDefault ++ HaskellImportKeywords ++
+  private final val Keywords = HaskellWhere ++ HaskellLet ++ haskellDeclarationKeywords ++ HaskellDefault ++ HaskellImportKeywords ++
     HaskellForeignKeywords ++ HaskellKeyword ++ HaskellStatic ++ HaskellConditional ++ HaskellInfix ++ HaskellBottom ++
     HaskellTodo ++ HaskellTypeRoles ++ HaskellForall ++ HaskellRecursiveDo ++ HaskellArrowSyntax
 
@@ -127,7 +127,7 @@ class HaskellCompletionContributor extends CompletionContributor {
         val prefixText = (
           for {
             e <- positionElement
-            mie <- HaskellPsiUtil.findModIdElement(e)
+            mie <- HaskellPsiUtil.findModIdElement(e).orElse(HaskellPsiUtil.findQualifierElement(e))
             start = mie.getTextRange.getStartOffset
             end = parameters.getOffset
           } yield psiFile.getText.substring(start, end)
@@ -231,8 +231,7 @@ class HaskellCompletionContributor extends CompletionContributor {
     def addCompletions(parameters: CompletionParameters, context: ProcessingContext, originalResultSet: CompletionResultSet): Unit = {
       ProgressManager.checkCanceled()
 
-      val project = parameters.getOriginalPosition.getProject
-
+      val project = parameters.getOriginalFile.getProject
       if (StackProjectManager.isInitializing(project)) {
         HaskellEditorUtil.showHaskellSupportIsNotAvailableWhileInitializing(project)
       } else {
