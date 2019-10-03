@@ -71,7 +71,7 @@ object HaskellImportOptimizer {
   def removeRedundantImportIds(psiFile: PsiFile, moduleName: String, idNames: Seq[String]): Unit = {
     HaskellPsiUtil.findImportDeclarations(psiFile).find(_.getModuleName.contains(moduleName)).foreach { importDeclaration =>
       val prefix = Option(importDeclaration.getImportQualifiedAs).map(_.getQualifier.getName).orElse(importDeclaration.getModuleName)
-      val idsToRemove = importDeclaration.getImportSpec.getImportIdsSpec.getImportIdList.asScala.filter(iid => idNames.exists(idn => idn == iid.getCname.getName || prefix.exists(p => idn == p + "." + iid.getCname.getName)))
+      val idsToRemove = importDeclaration.getImportSpec.getImportIdsSpec.getImportIdList.asScala.flatMap(_.getQNameList.asScala).filter(qn => idNames.exists(idn => idn == qn.getName || prefix.exists(p => idn == p + "." + qn.getName)))
       idsToRemove.foreach { iid =>
         val commaToRemove = Option(PsiTreeUtil.findSiblingBackward(iid, HS_COMMA, true, null)).orElse(Option(PsiTreeUtil.findSiblingForward(iid, HS_COMMA, true, null)))
         val whiteSpaceRemove = Option(PsiTreeUtil.findSiblingBackward(iid, WHITE_SPACE, true, null)).orElse(Option(PsiTreeUtil.findSiblingForward(iid, WHITE_SPACE, true, null)))

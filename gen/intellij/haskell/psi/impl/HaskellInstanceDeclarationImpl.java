@@ -24,7 +24,7 @@ public class HaskellInstanceDeclarationImpl extends HaskellCompositeElementImpl 
   }
 
   public void accept(@NotNull PsiElementVisitor visitor) {
-    if (visitor instanceof HaskellVisitor) accept((HaskellVisitor)visitor);
+    if (visitor instanceof HaskellVisitor) accept((HaskellVisitor) visitor);
     else super.accept(visitor);
   }
 
@@ -66,8 +66,8 @@ public class HaskellInstanceDeclarationImpl extends HaskellCompositeElementImpl 
 
   @Override
   @NotNull
-  public List<HaskellVarCon> getVarConList() {
-    return PsiTreeUtil.getChildrenOfTypeAsList(this, HaskellVarCon.class);
+  public List<HaskellVarid> getVaridList() {
+    return PsiTreeUtil.getChildrenOfTypeAsList(this, HaskellVarid.class);
   }
 
   @Override

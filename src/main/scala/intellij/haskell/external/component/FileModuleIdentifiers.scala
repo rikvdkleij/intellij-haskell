@@ -232,6 +232,6 @@ object FileModuleIdentifiers {
   }
 
   private def findImportIds(importIdList: util.List[HaskellImportId]): Iterable[String] = {
-    importIdList.asScala.flatMap(importId => Iterable(ApplicationUtil.runReadAction(importId.getCname.getName)) ++ importId.getCnameDotDotList.asScala.flatMap(cndd => Option(cndd.getCname).map(cn => ApplicationUtil.runReadAction(cn.getName))))
+    importIdList.asScala.flatMap(_.getQNameList.asScala).map(qn => ApplicationUtil.runReadAction(qn.getName))
   }
 }

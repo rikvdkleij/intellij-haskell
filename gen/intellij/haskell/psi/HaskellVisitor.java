@@ -1,13 +1,16 @@
 // This is a generated file. Not intended for manual editing.
 package intellij.haskell.psi;
 
-import org.jetbrains.annotations.*;
 import com.intellij.psi.PsiElementVisitor;
-import com.intellij.psi.PsiLanguageInjectionHost;
+import org.jetbrains.annotations.NotNull;
 
 public class HaskellVisitor extends PsiElementVisitor {
 
   public void visitCcontext(@NotNull HaskellCcontext o) {
+    visitCompositeElement(o);
+  }
+
+  public void visitCdecl(@NotNull HaskellCdecl o) {
     visitCompositeElement(o);
   }
 
@@ -16,6 +19,10 @@ public class HaskellVisitor extends PsiElementVisitor {
   }
 
   public void visitCdecls(@NotNull HaskellCdecls o) {
+    visitCompositeElement(o);
+  }
+
+  public void visitCidecl(@NotNull HaskellCidecl o) {
     visitCompositeElement(o);
   }
 
@@ -31,28 +38,12 @@ public class HaskellVisitor extends PsiElementVisitor {
     visitCompositeElement(o);
   }
 
-  public void visitCname(@NotNull HaskellCname o) {
-    visitQualifiedNameElement(o);
-  }
-
-  public void visitCnameDotDot(@NotNull HaskellCnameDotDot o) {
-    visitCompositeElement(o);
-  }
-
   public void visitComments(@NotNull HaskellComments o) {
     visitCompositeElement(o);
   }
 
-  public void visitCon(@NotNull HaskellCon o) {
-    visitCNameElement(o);
-  }
-
   public void visitConid(@NotNull HaskellConid o) {
     visitNamedElement(o);
-  }
-
-  public void visitConop(@NotNull HaskellConop o) {
-    visitCNameElement(o);
   }
 
   public void visitConstr(@NotNull HaskellConstr o) {
@@ -338,10 +329,6 @@ public class HaskellVisitor extends PsiElementVisitor {
     visitDeclarationElement(o);
   }
 
-  public void visitVar(@NotNull HaskellVar o) {
-    visitCNameElement(o);
-  }
-
   public void visitVarCon(@NotNull HaskellVarCon o) {
     visitCompositeElement(o);
   }
@@ -350,16 +337,8 @@ public class HaskellVisitor extends PsiElementVisitor {
     visitNamedElement(o);
   }
 
-  public void visitVarop(@NotNull HaskellVarop o) {
-    visitCNameElement(o);
-  }
-
   public void visitVarsym(@NotNull HaskellVarsym o) {
     visitNamedElement(o);
-  }
-
-  public void visitCNameElement(@NotNull HaskellCNameElement o) {
-    visitCompositeElement(o);
   }
 
   public void visitDataConstructorDeclarationElement(@NotNull HaskellDataConstructorDeclarationElement o) {

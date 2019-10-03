@@ -30,7 +30,7 @@ public interface HaskellInstanceDeclaration extends HaskellDeclarationElement {
   HaskellTypeEquality getTypeEquality();
 
   @NotNull
-  List<HaskellVarCon> getVarConList();
+  List<HaskellVarid> getVaridList();
 
   String getName();
 

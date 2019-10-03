@@ -39,7 +39,7 @@ class HaskellReference(element: HaskellNamedElement, textRange: TextRange) exten
     }
   }
 
-  private def findQualifierDeclaration(project: Project, psiFile: PsiFile, qualifier: HaskellQualifier) = {
+  private def findQualifierDeclaration(project: Project, psiFile: PsiFile, qualifier: HaskellQualifierElement) = {
     ProgressManager.checkCanceled()
 
     val importDeclarations = HaskellPsiUtil.findImportDeclarations(psiFile)
@@ -95,8 +95,8 @@ class HaskellReference(element: HaskellNamedElement, textRange: TextRange) exten
       ProgressManager.checkCanceled()
       val psiFile = element.getContainingFile.getOriginalFile
       val result = element match {
-        case q: HaskellQualifier if isPartOfQualifiedAs(q) => Some(HaskellNamedElementResolveResult(q))
-        case q: HaskellQualifier => findQualifierDeclaration(project, psiFile, q)
+        case q: HaskellQualifierElement if isPartOfQualifiedAs(q) => Some(HaskellNamedElementResolveResult(q))
+        case q: HaskellQualifierElement => findQualifierDeclaration(project, psiFile, q)
         case mid: HaskellModid => findModule(project, mid)
         case ne: HaskellNamedElement if isPartOfQualifier(ne) | isPartOfQualifiedAs(ne) | isPartOfModId(ne) => None
         case ne: HaskellNamedElement =>

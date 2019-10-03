@@ -7,7 +7,6 @@ import com.intellij.lang.PsiBuilder;
 import com.intellij.lang.PsiBuilder.Marker;
 import com.intellij.lang.PsiParser;
 import com.intellij.psi.tree.IElementType;
-import com.intellij.psi.tree.IFileElementType;
 
 import static intellij.haskell.psi.HaskellParserUtil.*;
 import static intellij.haskell.psi.HaskellTypes.*;
@@ -24,16 +23,15 @@ public class HaskellParser implements PsiParser, LightPsiParser {
     boolean r;
     b = adapt_builder_(t, b, this, null);
     Marker m = enter_section_(b, 0, _COLLAPSE_, null);
-    if (t instanceof IFileElementType) {
-      r = parse_root_(t, b, 0);
-    }
-    else {
-      r = false;
-    }
+    r = parse_root_(t, b);
     exit_section_(b, 0, m, t, r, true, TRUE_CONDITION);
   }
 
-  protected boolean parse_root_(IElementType t, PsiBuilder b, int l) {
+  protected boolean parse_root_(IElementType t, PsiBuilder b) {
+    return parse_root_(t, b, 0);
+  }
+
+  static boolean parse_root_(IElementType t, PsiBuilder b, int l) {
     return program(b, l + 1);
   }
 
@@ -681,12 +679,14 @@ public class HaskellParser implements PsiParser, LightPsiParser {
 
   /* ********************************************************** */
   // type_signature | cdecl_data_declaration | cidecl
-  static boolean cdecl(PsiBuilder b, int l) {
+  public static boolean cdecl(PsiBuilder b, int l) {
     if (!recursion_guard_(b, l, "cdecl")) return false;
     boolean r;
+    Marker m = enter_section_(b, l, _NONE_, HS_CDECL, "<cdecl>");
     r = type_signature(b, l + 1);
     if (!r) r = cdecl_data_declaration(b, l + 1);
     if (!r) r = cidecl(b, l + 1);
+    exit_section_(b, l, m, r, false, null);
     return r;
   }
 
@@ -846,9 +846,10 @@ public class HaskellParser implements PsiParser, LightPsiParser {
   /* ********************************************************** */
   // pragma | instance_declaration | default_declaration |
   //                                   newtype_declaration | data_declaration | type_declaration | type_family_declaration | line_expression
-  static boolean cidecl(PsiBuilder b, int l) {
+  public static boolean cidecl(PsiBuilder b, int l) {
     if (!recursion_guard_(b, l, "cidecl")) return false;
     boolean r;
+    Marker m = enter_section_(b, l, _NONE_, HS_CIDECL, "<cidecl>");
     r = pragma(b, l + 1);
     if (!r) r = instance_declaration(b, l + 1);
     if (!r) r = default_declaration(b, l + 1);
@@ -857,6 +858,7 @@ public class HaskellParser implements PsiParser, LightPsiParser {
     if (!r) r = type_declaration(b, l + 1);
     if (!r) r = type_family_declaration(b, l + 1);
     if (!r) r = line_expression(b, l + 1);
+    exit_section_(b, l, m, r, false, null);
     return r;
   }
 
@@ -1269,32 +1271,6 @@ public class HaskellParser implements PsiParser, LightPsiParser {
   }
 
   /* ********************************************************** */
-  // var | con | conop | varop
-  public static boolean cname(PsiBuilder b, int l) {
-    if (!recursion_guard_(b, l, "cname")) return false;
-    boolean r;
-    Marker m = enter_section_(b, l, _NONE_, HS_CNAME, "<cname>");
-    r = var(b, l + 1);
-    if (!r) r = con(b, l + 1);
-    if (!r) r = conop(b, l + 1);
-    if (!r) r = varop(b, l + 1);
-    exit_section_(b, l, m, r, false, null);
-    return r;
-  }
-
-  /* ********************************************************** */
-  // dot_dot | cname
-  public static boolean cname_dot_dot(PsiBuilder b, int l) {
-    if (!recursion_guard_(b, l, "cname_dot_dot")) return false;
-    boolean r;
-    Marker m = enter_section_(b, l, _NONE_, HS_CNAME_DOT_DOT, "<cname dot dot>");
-    r = dot_dot(b, l + 1);
-    if (!r) r = cname(b, l + 1);
-    exit_section_(b, l, m, r, false, null);
-    return r;
-  }
-
-  /* ********************************************************** */
   // COMMENT | NCOMMENT | HADDOCK | NHADDOCK | NOT_TERMINATED_COMMENT
   public static boolean comments(PsiBuilder b, int l) {
     if (!recursion_guard_(b, l, "comments")) return false;
@@ -1306,31 +1282,6 @@ public class HaskellParser implements PsiParser, LightPsiParser {
     if (!r) r = consumeToken(b, HS_NHADDOCK);
     if (!r) r = consumeToken(b, HS_NOT_TERMINATED_COMMENT);
     exit_section_(b, l, m, r, false, null);
-    return r;
-  }
-
-  /* ********************************************************** */
-  // conid | LEFT_PAREN consym RIGHT_PAREN
-  public static boolean con(PsiBuilder b, int l) {
-    if (!recursion_guard_(b, l, "con")) return false;
-    if (!nextTokenIs(b, "<con>", HS_CON_ID, HS_LEFT_PAREN)) return false;
-    boolean r;
-    Marker m = enter_section_(b, l, _NONE_, HS_CON, "<con>");
-    r = conid(b, l + 1);
-    if (!r) r = con_1(b, l + 1);
-    exit_section_(b, l, m, r, false, null);
-    return r;
-  }
-
-  // LEFT_PAREN consym RIGHT_PAREN
-  private static boolean con_1(PsiBuilder b, int l) {
-    if (!recursion_guard_(b, l, "con_1")) return false;
-    boolean r;
-    Marker m = enter_section_(b);
-    r = consumeToken(b, HS_LEFT_PAREN);
-    r = r && consym(b, l + 1);
-    r = r && consumeToken(b, HS_RIGHT_PAREN);
-    exit_section_(b, m, null, r);
     return r;
   }
 
@@ -1352,31 +1303,6 @@ public class HaskellParser implements PsiParser, LightPsiParser {
     if (!recursion_guard_(b, l, "conid_1")) return false;
     consumeToken(b, "#");
     return true;
-  }
-
-  /* ********************************************************** */
-  // consym | BACKQUOTE conid BACKQUOTE
-  public static boolean conop(PsiBuilder b, int l) {
-    if (!recursion_guard_(b, l, "conop")) return false;
-    if (!nextTokenIs(b, "<conop>", HS_BACKQUOTE, HS_CONSYM_ID)) return false;
-    boolean r;
-    Marker m = enter_section_(b, l, _NONE_, HS_CONOP, "<conop>");
-    r = consym(b, l + 1);
-    if (!r) r = conop_1(b, l + 1);
-    exit_section_(b, l, m, r, false, null);
-    return r;
-  }
-
-  // BACKQUOTE conid BACKQUOTE
-  private static boolean conop_1(PsiBuilder b, int l) {
-    if (!recursion_guard_(b, l, "conop_1")) return false;
-    boolean r;
-    Marker m = enter_section_(b);
-    r = consumeToken(b, HS_BACKQUOTE);
-    r = r && conid(b, l + 1);
-    r = r && consumeToken(b, HS_BACKQUOTE);
-    exit_section_(b, m, null, r);
-    return r;
   }
 
   /* ********************************************************** */
@@ -2311,126 +2237,22 @@ public class HaskellParser implements PsiParser, LightPsiParser {
   }
 
   /* ********************************************************** */
-  // export3 | export2 | export4 | export5
+  // export1 | export2 | export3
   public static boolean export(PsiBuilder b, int l) {
     if (!recursion_guard_(b, l, "export")) return false;
     boolean r;
     Marker m = enter_section_(b, l, _NONE_, HS_EXPORT, "<export>");
-    r = export3(b, l + 1);
+    r = export1(b, l + 1);
     if (!r) r = export2(b, l + 1);
-    if (!r) r = export4(b, l + 1);
-    if (!r) r = export5(b, l + 1);
+    if (!r) r = export3(b, l + 1);
     exit_section_(b, l, m, r, false, null);
     return r;
   }
 
   /* ********************************************************** */
-  // TYPE? onl cname+
-  static boolean export2(PsiBuilder b, int l) {
-    if (!recursion_guard_(b, l, "export2")) return false;
-    boolean r;
-    Marker m = enter_section_(b);
-    r = export2_0(b, l + 1);
-    r = r && onl(b, l + 1);
-    r = r && export2_2(b, l + 1);
-    exit_section_(b, m, null, r);
-    return r;
-  }
-
-  // TYPE?
-  private static boolean export2_0(PsiBuilder b, int l) {
-    if (!recursion_guard_(b, l, "export2_0")) return false;
-    consumeToken(b, HS_TYPE);
-    return true;
-  }
-
-  // cname+
-  private static boolean export2_2(PsiBuilder b, int l) {
-    if (!recursion_guard_(b, l, "export2_2")) return false;
-    boolean r;
-    Marker m = enter_section_(b);
-    r = cname(b, l + 1);
-    while (r) {
-      int c = current_position_(b);
-      if (!cname(b, l + 1)) break;
-      if (!empty_element_parsed_guard_(b, "export2_2", c)) break;
-    }
-    exit_section_(b, m, null, r);
-    return r;
-  }
-
-  /* ********************************************************** */
-  // (q_con | cname) onl LEFT_PAREN (onl cname_dot_dot (onl COMMA onl cname_dot_dot)*)? onl RIGHT_PAREN
-  static boolean export3(PsiBuilder b, int l) {
-    if (!recursion_guard_(b, l, "export3")) return false;
-    boolean r;
-    Marker m = enter_section_(b);
-    r = export3_0(b, l + 1);
-    r = r && onl(b, l + 1);
-    r = r && consumeToken(b, HS_LEFT_PAREN);
-    r = r && export3_3(b, l + 1);
-    r = r && onl(b, l + 1);
-    r = r && consumeToken(b, HS_RIGHT_PAREN);
-    exit_section_(b, m, null, r);
-    return r;
-  }
-
-  // q_con | cname
-  private static boolean export3_0(PsiBuilder b, int l) {
-    if (!recursion_guard_(b, l, "export3_0")) return false;
-    boolean r;
-    r = q_con(b, l + 1);
-    if (!r) r = cname(b, l + 1);
-    return r;
-  }
-
-  // (onl cname_dot_dot (onl COMMA onl cname_dot_dot)*)?
-  private static boolean export3_3(PsiBuilder b, int l) {
-    if (!recursion_guard_(b, l, "export3_3")) return false;
-    export3_3_0(b, l + 1);
-    return true;
-  }
-
-  // onl cname_dot_dot (onl COMMA onl cname_dot_dot)*
-  private static boolean export3_3_0(PsiBuilder b, int l) {
-    if (!recursion_guard_(b, l, "export3_3_0")) return false;
-    boolean r;
-    Marker m = enter_section_(b);
-    r = onl(b, l + 1);
-    r = r && cname_dot_dot(b, l + 1);
-    r = r && export3_3_0_2(b, l + 1);
-    exit_section_(b, m, null, r);
-    return r;
-  }
-
-  // (onl COMMA onl cname_dot_dot)*
-  private static boolean export3_3_0_2(PsiBuilder b, int l) {
-    if (!recursion_guard_(b, l, "export3_3_0_2")) return false;
-    while (true) {
-      int c = current_position_(b);
-      if (!export3_3_0_2_0(b, l + 1)) break;
-      if (!empty_element_parsed_guard_(b, "export3_3_0_2", c)) break;
-    }
-    return true;
-  }
-
-  // onl COMMA onl cname_dot_dot
-  private static boolean export3_3_0_2_0(PsiBuilder b, int l) {
-    if (!recursion_guard_(b, l, "export3_3_0_2_0")) return false;
-    boolean r;
-    Marker m = enter_section_(b);
-    r = onl(b, l + 1);
-    r = r && consumeToken(b, HS_COMMA);
-    r = r && onl(b, l + 1);
-    r = r && cname_dot_dot(b, l + 1);
-    exit_section_(b, m, null, r);
-    return r;
-  }
-
-  /* ********************************************************** */
   // MODULE modid
-  static boolean export4(PsiBuilder b, int l) {
-    if (!recursion_guard_(b, l, "export4")) return false;
+  static boolean export1(PsiBuilder b, int l) {
+    if (!recursion_guard_(b, l, "export1")) return false;
     if (!nextTokenIs(b, HS_MODULE)) return false;
     boolean r;
     Marker m = enter_section_(b);
@@ -2441,40 +2263,117 @@ public class HaskellParser implements PsiParser, LightPsiParser {
   }
 
   /* ********************************************************** */
-  // conid DOT cname | LEFT_PAREN con DOT cname RIGHT_PAREN
-  static boolean export5(PsiBuilder b, int l) {
-    if (!recursion_guard_(b, l, "export5")) return false;
-    if (!nextTokenIs(b, "", HS_CON_ID, HS_LEFT_PAREN)) return false;
+  // q_name (onl LEFT_PAREN (onl q_name (onl COMMA onl q_name)*)? onl RIGHT_PAREN | onl LEFT_PAREN onl dot_dot onl RIGHT_PAREN)?
+  static boolean export2(PsiBuilder b, int l) {
+    if (!recursion_guard_(b, l, "export2")) return false;
     boolean r;
     Marker m = enter_section_(b);
-    r = export5_0(b, l + 1);
-    if (!r) r = export5_1(b, l + 1);
+    r = q_name(b, l + 1);
+    r = r && export2_1(b, l + 1);
     exit_section_(b, m, null, r);
     return r;
   }
 
-  // conid DOT cname
-  private static boolean export5_0(PsiBuilder b, int l) {
-    if (!recursion_guard_(b, l, "export5_0")) return false;
+  // (onl LEFT_PAREN (onl q_name (onl COMMA onl q_name)*)? onl RIGHT_PAREN | onl LEFT_PAREN onl dot_dot onl RIGHT_PAREN)?
+  private static boolean export2_1(PsiBuilder b, int l) {
+    if (!recursion_guard_(b, l, "export2_1")) return false;
+    export2_1_0(b, l + 1);
+    return true;
+  }
+
+  // onl LEFT_PAREN (onl q_name (onl COMMA onl q_name)*)? onl RIGHT_PAREN | onl LEFT_PAREN onl dot_dot onl RIGHT_PAREN
+  private static boolean export2_1_0(PsiBuilder b, int l) {
+    if (!recursion_guard_(b, l, "export2_1_0")) return false;
     boolean r;
     Marker m = enter_section_(b);
-    r = conid(b, l + 1);
-    r = r && consumeToken(b, HS_DOT);
-    r = r && cname(b, l + 1);
+    r = export2_1_0_0(b, l + 1);
+    if (!r) r = export2_1_0_1(b, l + 1);
     exit_section_(b, m, null, r);
     return r;
   }
 
-  // LEFT_PAREN con DOT cname RIGHT_PAREN
-  private static boolean export5_1(PsiBuilder b, int l) {
-    if (!recursion_guard_(b, l, "export5_1")) return false;
+  // onl LEFT_PAREN (onl q_name (onl COMMA onl q_name)*)? onl RIGHT_PAREN
+  private static boolean export2_1_0_0(PsiBuilder b, int l) {
+    if (!recursion_guard_(b, l, "export2_1_0_0")) return false;
     boolean r;
     Marker m = enter_section_(b);
-    r = consumeToken(b, HS_LEFT_PAREN);
-    r = r && con(b, l + 1);
-    r = r && consumeToken(b, HS_DOT);
-    r = r && cname(b, l + 1);
+    r = onl(b, l + 1);
+    r = r && consumeToken(b, HS_LEFT_PAREN);
+    r = r && export2_1_0_0_2(b, l + 1);
+    r = r && onl(b, l + 1);
     r = r && consumeToken(b, HS_RIGHT_PAREN);
+    exit_section_(b, m, null, r);
+    return r;
+  }
+
+  // (onl q_name (onl COMMA onl q_name)*)?
+  private static boolean export2_1_0_0_2(PsiBuilder b, int l) {
+    if (!recursion_guard_(b, l, "export2_1_0_0_2")) return false;
+    export2_1_0_0_2_0(b, l + 1);
+    return true;
+  }
+
+  // onl q_name (onl COMMA onl q_name)*
+  private static boolean export2_1_0_0_2_0(PsiBuilder b, int l) {
+    if (!recursion_guard_(b, l, "export2_1_0_0_2_0")) return false;
+    boolean r;
+    Marker m = enter_section_(b);
+    r = onl(b, l + 1);
+    r = r && q_name(b, l + 1);
+    r = r && export2_1_0_0_2_0_2(b, l + 1);
+    exit_section_(b, m, null, r);
+    return r;
+  }
+
+  // (onl COMMA onl q_name)*
+  private static boolean export2_1_0_0_2_0_2(PsiBuilder b, int l) {
+    if (!recursion_guard_(b, l, "export2_1_0_0_2_0_2")) return false;
+    while (true) {
+      int c = current_position_(b);
+      if (!export2_1_0_0_2_0_2_0(b, l + 1)) break;
+      if (!empty_element_parsed_guard_(b, "export2_1_0_0_2_0_2", c)) break;
+    }
+    return true;
+  }
+
+  // onl COMMA onl q_name
+  private static boolean export2_1_0_0_2_0_2_0(PsiBuilder b, int l) {
+    if (!recursion_guard_(b, l, "export2_1_0_0_2_0_2_0")) return false;
+    boolean r;
+    Marker m = enter_section_(b);
+    r = onl(b, l + 1);
+    r = r && consumeToken(b, HS_COMMA);
+    r = r && onl(b, l + 1);
+    r = r && q_name(b, l + 1);
+    exit_section_(b, m, null, r);
+    return r;
+  }
+
+  // onl LEFT_PAREN onl dot_dot onl RIGHT_PAREN
+  private static boolean export2_1_0_1(PsiBuilder b, int l) {
+    if (!recursion_guard_(b, l, "export2_1_0_1")) return false;
+    boolean r;
+    Marker m = enter_section_(b);
+    r = onl(b, l + 1);
+    r = r && consumeToken(b, HS_LEFT_PAREN);
+    r = r && onl(b, l + 1);
+    r = r && dot_dot(b, l + 1);
+    r = r && onl(b, l + 1);
+    r = r && consumeToken(b, HS_RIGHT_PAREN);
+    exit_section_(b, m, null, r);
+    return r;
+  }
+
+  /* ********************************************************** */
+  // TYPE onl conid
+  static boolean export3(PsiBuilder b, int l) {
+    if (!recursion_guard_(b, l, "export3")) return false;
+    if (!nextTokenIs(b, HS_TYPE)) return false;
+    boolean r;
+    Marker m = enter_section_(b);
+    r = consumeToken(b, HS_TYPE);
+    r = r && onl(b, l + 1);
+    r = r && conid(b, l + 1);
     exit_section_(b, m, null, r);
     return r;
   }
@@ -3146,7 +3045,7 @@ public class HaskellParser implements PsiParser, LightPsiParser {
   }
 
   /* ********************************************************** */
-  // TYPE? (cname onls LEFT_PAREN onls (cname_dot_dot onls (COMMA onls cname_dot_dot onls)* onls)? RIGHT_PAREN | cname)
+  // TYPE? (q_name onls LEFT_PAREN onls (q_name onls (COMMA onls q_name onls)* onls)? RIGHT_PAREN | q_name LEFT_PAREN onls dot_dot onls RIGHT_PAREN | q_name)
   public static boolean import_id(PsiBuilder b, int l) {
     if (!recursion_guard_(b, l, "import_id")) return false;
     boolean r;
@@ -3164,23 +3063,24 @@ public class HaskellParser implements PsiParser, LightPsiParser {
     return true;
   }
 
-  // cname onls LEFT_PAREN onls (cname_dot_dot onls (COMMA onls cname_dot_dot onls)* onls)? RIGHT_PAREN | cname
+  // q_name onls LEFT_PAREN onls (q_name onls (COMMA onls q_name onls)* onls)? RIGHT_PAREN | q_name LEFT_PAREN onls dot_dot onls RIGHT_PAREN | q_name
   private static boolean import_id_1(PsiBuilder b, int l) {
     if (!recursion_guard_(b, l, "import_id_1")) return false;
     boolean r;
     Marker m = enter_section_(b);
     r = import_id_1_0(b, l + 1);
-    if (!r) r = cname(b, l + 1);
+    if (!r) r = import_id_1_1(b, l + 1);
+    if (!r) r = q_name(b, l + 1);
     exit_section_(b, m, null, r);
     return r;
   }
 
-  // cname onls LEFT_PAREN onls (cname_dot_dot onls (COMMA onls cname_dot_dot onls)* onls)? RIGHT_PAREN
+  // q_name onls LEFT_PAREN onls (q_name onls (COMMA onls q_name onls)* onls)? RIGHT_PAREN
   private static boolean import_id_1_0(PsiBuilder b, int l) {
     if (!recursion_guard_(b, l, "import_id_1_0")) return false;
     boolean r;
     Marker m = enter_section_(b);
-    r = cname(b, l + 1);
+    r = q_name(b, l + 1);
     r = r && onls(b, l + 1);
     r = r && consumeToken(b, HS_LEFT_PAREN);
     r = r && onls(b, l + 1);
@@ -3190,19 +3090,19 @@ public class HaskellParser implements PsiParser, LightPsiParser {
     return r;
   }
 
-  // (cname_dot_dot onls (COMMA onls cname_dot_dot onls)* onls)?
+  // (q_name onls (COMMA onls q_name onls)* onls)?
   private static boolean import_id_1_0_4(PsiBuilder b, int l) {
     if (!recursion_guard_(b, l, "import_id_1_0_4")) return false;
     import_id_1_0_4_0(b, l + 1);
     return true;
   }
 
-  // cname_dot_dot onls (COMMA onls cname_dot_dot onls)* onls
+  // q_name onls (COMMA onls q_name onls)* onls
   private static boolean import_id_1_0_4_0(PsiBuilder b, int l) {
     if (!recursion_guard_(b, l, "import_id_1_0_4_0")) return false;
     boolean r;
     Marker m = enter_section_(b);
-    r = cname_dot_dot(b, l + 1);
+    r = q_name(b, l + 1);
     r = r && onls(b, l + 1);
     r = r && import_id_1_0_4_0_2(b, l + 1);
     r = r && onls(b, l + 1);
@@ -3210,7 +3110,7 @@ public class HaskellParser implements PsiParser, LightPsiParser {
     return r;
   }
 
-  // (COMMA onls cname_dot_dot onls)*
+  // (COMMA onls q_name onls)*
   private static boolean import_id_1_0_4_0_2(PsiBuilder b, int l) {
     if (!recursion_guard_(b, l, "import_id_1_0_4_0_2")) return false;
     while (true) {
@@ -3221,15 +3121,30 @@ public class HaskellParser implements PsiParser, LightPsiParser {
     return true;
   }
 
-  // COMMA onls cname_dot_dot onls
+  // COMMA onls q_name onls
   private static boolean import_id_1_0_4_0_2_0(PsiBuilder b, int l) {
     if (!recursion_guard_(b, l, "import_id_1_0_4_0_2_0")) return false;
     boolean r;
     Marker m = enter_section_(b);
     r = consumeToken(b, HS_COMMA);
     r = r && onls(b, l + 1);
-    r = r && cname_dot_dot(b, l + 1);
+    r = r && q_name(b, l + 1);
     r = r && onls(b, l + 1);
+    exit_section_(b, m, null, r);
+    return r;
+  }
+
+  // q_name LEFT_PAREN onls dot_dot onls RIGHT_PAREN
+  private static boolean import_id_1_1(PsiBuilder b, int l) {
+    if (!recursion_guard_(b, l, "import_id_1_1")) return false;
+    boolean r;
+    Marker m = enter_section_(b);
+    r = q_name(b, l + 1);
+    r = r && consumeToken(b, HS_LEFT_PAREN);
+    r = r && onls(b, l + 1);
+    r = r && dot_dot(b, l + 1);
+    r = r && onls(b, l + 1);
+    r = r && consumeToken(b, HS_RIGHT_PAREN);
     exit_section_(b, m, null, r);
     return r;
   }
@@ -3343,7 +3258,7 @@ public class HaskellParser implements PsiParser, LightPsiParser {
 
   /* ********************************************************** */
   // gtycon+ instvar* (LEFT_PAREN onls gtycon (instvar)* onls RIGHT_PAREN)* instvar* |
-  //                                   (LEFT_PAREN onls instvar (onls COMMA onls instvar)+ onls RIGHT_PAREN)+ instvar* |
+  //                                   (LEFT_PAREN onls instvar (onls COMMA onls instvar)* onls RIGHT_PAREN)+ instvar* |
   //                                   QUOTE? (LEFT_BRACKET onls instvar onls RIGHT_BRACKET)+ instvar* |
   //                                   (LEFT_PAREN onls instvar+ onls RIGHT_PAREN)+ instvar* |
   //                                   ((LEFT_PAREN onls instvar+ (onls RIGHT_ARROW onls instvar+)+ onls RIGHT_PAREN)+ instvar*)+
@@ -3457,7 +3372,7 @@ public class HaskellParser implements PsiParser, LightPsiParser {
     return true;
   }
 
-  // (LEFT_PAREN onls instvar (onls COMMA onls instvar)+ onls RIGHT_PAREN)+ instvar*
+  // (LEFT_PAREN onls instvar (onls COMMA onls instvar)* onls RIGHT_PAREN)+ instvar*
   private static boolean inst_1(PsiBuilder b, int l) {
     if (!recursion_guard_(b, l, "inst_1")) return false;
     boolean r;
@@ -3468,7 +3383,7 @@ public class HaskellParser implements PsiParser, LightPsiParser {
     return r;
   }
 
-  // (LEFT_PAREN onls instvar (onls COMMA onls instvar)+ onls RIGHT_PAREN)+
+  // (LEFT_PAREN onls instvar (onls COMMA onls instvar)* onls RIGHT_PAREN)+
   private static boolean inst_1_0(PsiBuilder b, int l) {
     if (!recursion_guard_(b, l, "inst_1_0")) return false;
     boolean r;
@@ -3483,7 +3398,7 @@ public class HaskellParser implements PsiParser, LightPsiParser {
     return r;
   }
 
-  // LEFT_PAREN onls instvar (onls COMMA onls instvar)+ onls RIGHT_PAREN
+  // LEFT_PAREN onls instvar (onls COMMA onls instvar)* onls RIGHT_PAREN
   private static boolean inst_1_0_0(PsiBuilder b, int l) {
     if (!recursion_guard_(b, l, "inst_1_0_0")) return false;
     boolean r;
@@ -3498,19 +3413,15 @@ public class HaskellParser implements PsiParser, LightPsiParser {
     return r;
   }
 
-  // (onls COMMA onls instvar)+
+  // (onls COMMA onls instvar)*
   private static boolean inst_1_0_0_3(PsiBuilder b, int l) {
     if (!recursion_guard_(b, l, "inst_1_0_0_3")) return false;
-    boolean r;
-    Marker m = enter_section_(b);
-    r = inst_1_0_0_3_0(b, l + 1);
-    while (r) {
+    while (true) {
       int c = current_position_(b);
       if (!inst_1_0_0_3_0(b, l + 1)) break;
       if (!empty_element_parsed_guard_(b, "inst_1_0_0_3", c)) break;
     }
-    exit_section_(b, m, null, r);
-    return r;
+    return true;
   }
 
   // onls COMMA onls instvar
@@ -3788,7 +3699,7 @@ public class HaskellParser implements PsiParser, LightPsiParser {
   }
 
   /* ********************************************************** */
-  // INSTANCE onls ("OVERLAPPABLE_" | "OVERLAPPING_" | pragma)? onls (var_con+ DOT)? onls (scontext onls DOUBLE_RIGHT_ARROW)? onls
+  // INSTANCE onls ("OVERLAPPABLE_" | "OVERLAPPING_" | pragma)? onls (varid+ DOT)? onls (scontext onls DOUBLE_RIGHT_ARROW)? onls
   //                                     (type_equality | q_name onls inst (onls WHERE (onls cidecls)?)?)
   public static boolean instance_declaration(PsiBuilder b, int l) {
     if (!recursion_guard_(b, l, "instance_declaration")) return false;
@@ -3827,14 +3738,14 @@ public class HaskellParser implements PsiParser, LightPsiParser {
     return r;
   }
 
-  // (var_con+ DOT)?
+  // (varid+ DOT)?
   private static boolean instance_declaration_4(PsiBuilder b, int l) {
     if (!recursion_guard_(b, l, "instance_declaration_4")) return false;
     instance_declaration_4_0(b, l + 1);
     return true;
   }
 
-  // var_con+ DOT
+  // varid+ DOT
   private static boolean instance_declaration_4_0(PsiBuilder b, int l) {
     if (!recursion_guard_(b, l, "instance_declaration_4_0")) return false;
     boolean r;
@@ -3845,15 +3756,15 @@ public class HaskellParser implements PsiParser, LightPsiParser {
     return r;
   }
 
-  // var_con+
+  // varid+
   private static boolean instance_declaration_4_0_0(PsiBuilder b, int l) {
     if (!recursion_guard_(b, l, "instance_declaration_4_0_0")) return false;
     boolean r;
     Marker m = enter_section_(b);
-    r = var_con(b, l + 1);
+    r = varid(b, l + 1);
     while (r) {
       int c = current_position_(b);
-      if (!var_con(b, l + 1)) break;
+      if (!varid(b, l + 1)) break;
       if (!empty_element_parsed_guard_(b, "instance_declaration_4_0_0", c)) break;
     }
     exit_section_(b, m, null, r);
@@ -6161,31 +6072,6 @@ public class HaskellParser implements PsiParser, LightPsiParser {
   }
 
   /* ********************************************************** */
-  // varid | LEFT_PAREN varsym RIGHT_PAREN
-  public static boolean var(PsiBuilder b, int l) {
-    if (!recursion_guard_(b, l, "var")) return false;
-    if (!nextTokenIs(b, "<var>", HS_LEFT_PAREN, HS_VAR_ID)) return false;
-    boolean r;
-    Marker m = enter_section_(b, l, _NONE_, HS_VAR, "<var>");
-    r = varid(b, l + 1);
-    if (!r) r = var_1(b, l + 1);
-    exit_section_(b, l, m, r, false, null);
-    return r;
-  }
-
-  // LEFT_PAREN varsym RIGHT_PAREN
-  private static boolean var_1(PsiBuilder b, int l) {
-    if (!recursion_guard_(b, l, "var_1")) return false;
-    boolean r;
-    Marker m = enter_section_(b);
-    r = consumeToken(b, HS_LEFT_PAREN);
-    r = r && varsym(b, l + 1);
-    r = r && consumeToken(b, HS_RIGHT_PAREN);
-    exit_section_(b, m, null, r);
-    return r;
-  }
-
-  /* ********************************************************** */
   // varid | consym | varsym | conid
   public static boolean var_con(PsiBuilder b, int l) {
     if (!recursion_guard_(b, l, "var_con")) return false;
@@ -6217,30 +6103,6 @@ public class HaskellParser implements PsiParser, LightPsiParser {
     if (!recursion_guard_(b, l, "varid_1")) return false;
     consumeToken(b, "#");
     return true;
-  }
-
-  /* ********************************************************** */
-  // varsym | BACKQUOTE varid BACKQUOTE
-  public static boolean varop(PsiBuilder b, int l) {
-    if (!recursion_guard_(b, l, "varop")) return false;
-    boolean r;
-    Marker m = enter_section_(b, l, _NONE_, HS_VAROP, "<varop>");
-    r = varsym(b, l + 1);
-    if (!r) r = varop_1(b, l + 1);
-    exit_section_(b, l, m, r, false, null);
-    return r;
-  }
-
-  // BACKQUOTE varid BACKQUOTE
-  private static boolean varop_1(PsiBuilder b, int l) {
-    if (!recursion_guard_(b, l, "varop_1")) return false;
-    boolean r;
-    Marker m = enter_section_(b);
-    r = consumeToken(b, HS_BACKQUOTE);
-    r = r && varid(b, l + 1);
-    r = r && consumeToken(b, HS_BACKQUOTE);
-    exit_section_(b, m, null, r);
-    return r;
   }
 
   /* ********************************************************** */

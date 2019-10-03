@@ -34,15 +34,11 @@
 
   methods("var_con|q_var_con")=[getName getIdentifierElement]
 
-  methods("q_name|cname")=[getName getIdentifierElement getQualifierName]
-  implements("q_name|cname")="intellij.haskell.psi.HaskellQualifiedNameElement"
+  methods("q_name")=[getName getIdentifierElement getQualifierName]
+  implements("q_name")="intellij.haskell.psi.HaskellQualifiedNameElement"
 
   implements("expression")="intellij.haskell.psi.HaskellExpressionElement"
   mixin("expression")="intellij.haskell.psi.impl.HaskellExpressionElementImpl"
-
-  methods("var|con|varop|conop")=[getName]
-  implements("var|con|varop|conop")="intellij.haskell.psi.HaskellCNameElement"
-  mixin("var|con|varop|conop")="intellij.haskell.psi.impl.HaskellCNameElementImpl"
 
   methods("q_con_qualifier1|q_con_qualifier2|q_con_qualifier3|q_con_qualifier4|qualifier")=[getName setName getNameIdentifier getReference getPresentation]
   implements("q_con_qualifier1|q_con_qualifier2|q_con_qualifier3|q_con_qualifier4|qualifier")="intellij.haskell.psi.HaskellQualifierElement"
@@ -78,7 +74,7 @@ import_ids_spec             ::= LEFT_PAREN onls import_id (onls COMMA? onls impo
 import_hiding_spec          ::= import_hiding onls LEFT_PAREN onls (import_id onls (onls COMMA onls import_id)* onls (COMMA)?)? onls RIGHT_PAREN
 import_empty_spec           ::= LEFT_PAREN RIGHT_PAREN
 import_hiding               ::= "hiding"
-import_id                   ::= TYPE? (cname onls LEFT_PAREN onls (cname_dot_dot onls (COMMA onls cname_dot_dot onls)* onls)? RIGHT_PAREN | cname)
+import_id                   ::= TYPE? (q_name onls LEFT_PAREN onls (q_name onls (COMMA onls q_name onls)* onls)? RIGHT_PAREN | q_name LEFT_PAREN onls dot_dot onls RIGHT_PAREN | q_name)
 import_package_name         ::= text_literal
 
 top_declaration_line        ::= top_declaration SEMICOLON? NEWLINE
@@ -107,7 +103,7 @@ class_declaration           ::= CLASS onls (scontext onls DOUBLE_RIGHT_ARROW)? o
                                     (onls VERTICAL_BAR onls ttype (onls COMMA onls ttype)*)? onls WHERE? onls cdecls? |
                                   CLASS onls scontext onls DOUBLE_RIGHT_ARROW onls (q_name+ | ttype) onls WHERE? onls cdecls?  // seen in Control.Lens.Internal.Indexed
 
-instance_declaration        ::= INSTANCE onls ("OVERLAPPABLE_" | "OVERLAPPING_" | pragma)? onls (var_con+ DOT)? onls (scontext onls DOUBLE_RIGHT_ARROW)? onls
+instance_declaration        ::= INSTANCE onls ("OVERLAPPABLE_" | "OVERLAPPING_" | pragma)? onls (varid+ DOT)? onls (scontext onls DOUBLE_RIGHT_ARROW)? onls
                                     (type_equality | q_name onls inst (onls WHERE (onls cidecls)?)?)    // this way of using type equality in Data.Type.Equality
 
 type_equality               ::= q_name+ TILDE q_name+
@@ -146,12 +142,6 @@ varid                       ::= VAR_ID "#"? {stubClass = "intellij.haskell.psi.s
 conid                       ::= CON_ID "#"? {stubClass = "intellij.haskell.psi.stubs.HaskellConidStub"}
 varsym                      ::= VARSYM_ID | DOT+ VARSYM_ID | DOT+ EQUAL | DOT+ BACKSLASH | DOT+ TILDE | DOT+ AT | DOT+ CONSYM_ID | DOT+ VERTICAL_BAR | DOT DOT DOT+ | DOT     {stubClass = "intellij.haskell.psi.stubs.HaskellVarsymStub"}
 consym                      ::= CONSYM_ID   {stubClass = "intellij.haskell.psi.stubs.HaskellConsymStub"}
-
-cname                       ::= var | con | conop | varop
-var                         ::= varid | LEFT_PAREN varsym RIGHT_PAREN
-con                         ::= conid | LEFT_PAREN consym RIGHT_PAREN
-varop                       ::= varsym | BACKQUOTE varid BACKQUOTE
-conop                       ::= consym | BACKQUOTE conid BACKQUOTE
 
 var_con                     ::= varid | consym | varsym | conid
 q_var_con                   ::= &<<noSpaceAfterQualifier>> qualifier DOT (varid | consym | varsym) | q_con
@@ -216,7 +206,7 @@ scontext                    ::= simpleclass | simpleclass onls LEFT_PAREN onls s
 simpleclass                 ::= ttype | q_name+ LEFT_PAREN q_name+ RIGHT_PAREN q_name* | q_name+
 
 inst                        ::= gtycon+ instvar* (LEFT_PAREN onls gtycon (instvar)* onls RIGHT_PAREN)* instvar* |
-                                  (LEFT_PAREN onls instvar (onls COMMA onls instvar)+ onls RIGHT_PAREN)+ instvar* |
+                                  (LEFT_PAREN onls instvar (onls COMMA onls instvar)* onls RIGHT_PAREN)+ instvar* |
                                   QUOTE? (LEFT_BRACKET onls instvar onls RIGHT_BRACKET)+ instvar* |
                                   (LEFT_PAREN onls instvar+ onls RIGHT_PAREN)+ instvar* |
                                   ((LEFT_PAREN onls instvar+ (onls RIGHT_ARROW onls instvar+)+ onls RIGHT_PAREN)+ instvar*)+
@@ -226,12 +216,10 @@ instvar                     ::= ttype | q_name | LEFT_BRACKET q_name+ RIGHT_BRAC
 private fixity              ::= INFIXL | INFIXR | INFIX
 
 exports                     ::= LEFT_PAREN onl export ((onl COMMA)? onl export)* (onl COMMA)? onl RIGHT_PAREN | LEFT_PAREN RIGHT_PAREN
-export                      ::= export3 | export2 | export4 | export5
-private export3             ::= (q_con | cname) onl LEFT_PAREN (onl cname_dot_dot (onl COMMA onl cname_dot_dot)*)? onl RIGHT_PAREN
-private export2             ::= TYPE? onl cname+
-private export4             ::= MODULE modid
-private export5             ::= conid DOT cname | LEFT_PAREN con DOT cname RIGHT_PAREN
-cname_dot_dot               ::= dot_dot | cname
+export                      ::= export1 | export2 | export3
+private export1             ::= MODULE modid
+private export2             ::= q_name (onl LEFT_PAREN (onl q_name (onl COMMA onl q_name)*)? onl RIGHT_PAREN | onl LEFT_PAREN onl dot_dot onl RIGHT_PAREN)?
+private export3             ::= TYPE onl conid
 
 newconstr                   ::= newconstr_fielddecl | q_name atype
 newconstr_fielddecl         ::= q_name onls LEFT_BRACE? onls type_signature onls RIGHT_BRACE?
@@ -241,9 +229,9 @@ cidecls                     ::= cidecl (nls cidecl)*
 
 // copy of data_declaration but without all onls
 cdecl_data_declaration      ::= DATA (onls pragma)? onls (LEFT_PAREN onls kind_signature onls RIGHT_PAREN)* onls simpletype (onls LEFT_PAREN onls kind_signature onls RIGHT_PAREN)* (onls COLON_COLON ttype)? q_name*
-private cdecl               ::= type_signature | cdecl_data_declaration | cidecl
+cdecl                       ::= type_signature | cdecl_data_declaration | cidecl
 
-private cidecl              ::= pragma | instance_declaration | default_declaration |
+cidecl                      ::= pragma | instance_declaration | default_declaration |
                                   newtype_declaration | data_declaration | type_declaration | type_family_declaration | line_expression
 
 expression                  ::= line_expression (nls line_expression)*

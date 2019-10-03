@@ -70,26 +70,6 @@ object HaskellPsiImplUtil {
         orElse(Option(qvc.getQCon).flatMap(qc => Option(qc.getQConQualifier1).orElse(Option(qc.getQConQualifier2)).orElse(Option(qc.getQConQualifier3)).map(_.getText))))
   }
 
-  def getName(cname: HaskellCname): String = {
-    cname.getText
-  }
-
-  def getIdentifierElement(cname: HaskellCname): HaskellNamedElement = {
-    Option(cname.getVar).flatMap(v => Option(v.getVarsym)).
-      orElse(Option(cname.getVar).flatMap(v => Option(v.getVarid))).
-      orElse(Option(cname.getVarop).flatMap(v => Option(v.getVarid))).
-      orElse(Option(cname.getVarop).flatMap(v => Option(v.getVarsym))).
-      orElse(Option(cname.getCon).flatMap(v => Option(v.getConid))).
-      orElse(Option(cname.getCon).flatMap(v => Option(v.getConsym))).
-      orElse(Option(cname.getConop).flatMap(v => Option(v.getConid))).
-      orElse(Option(cname.getConop).flatMap(v => Option(v.getConsym))).
-      getOrElse(throw new IllegalStateException(s"Identifier for $cname should exist"))
-  }
-
-  def getQualifierName(cname: HaskellCname): Option[String] = {
-    None
-  }
-
   def getName(modid: HaskellModid): String = {
     modid.getText
   }
@@ -194,22 +174,6 @@ object HaskellPsiImplUtil {
 
   def getReference(element: PsiElement): PsiReference = {
     ArrayUtil.getFirstElement(ReferenceProvidersRegistry.getReferencesFromProviders(element))
-  }
-
-  def getName(`var`: HaskellVar): String = {
-    Option(`var`.getVarid).getOrElse(`var`.getVarsym).getName
-  }
-
-  def getName(con: HaskellCon): String = {
-    Option(con.getConid).getOrElse(con.getConsym).getName
-  }
-
-  def getName(varop: HaskellVarop): String = {
-    Option(varop.getVarid).getOrElse(varop.getVarsym).getName
-  }
-
-  def getName(conop: HaskellConop): String = {
-    Option(conop.getConid).getOrElse(conop.getConsym).getName
   }
 
   private abstract class HaskellItemPresentation(haskellElement: PsiElement) extends ItemPresentation {
@@ -339,17 +303,19 @@ object HaskellPsiImplUtil {
   }
 
   def getIdentifierElements(newtypeDeclaration: HaskellNewtypeDeclaration): Seq[HaskellNamedElement] = {
+    val fielddecl = Option(newtypeDeclaration.getNewconstr.getNewconstrFielddecl)
     newtypeDeclaration.getSimpletype.getIdentifierElements ++
-      Option(newtypeDeclaration.getNewconstr.getNewconstrFielddecl).flatMap(_.getTypeSignature.getQNamesList.asScala.headOption).map(_.getQNameList.asScala.headOption.map(_.getIdentifierElement).toSeq).getOrElse(Seq()) ++
-      Option(newtypeDeclaration.getNewconstr.getNewconstrFielddecl).map(_.getQName.getIdentifierElement).toSeq ++
+      fielddecl.flatMap(_.getTypeSignature.getQNamesList.asScala.headOption).map(_.getQNameList.asScala.headOption.map(_.getIdentifierElement).toSeq).getOrElse(Seq()) ++
+      fielddecl.map(_.getQName.getIdentifierElement).toSeq ++
       newtypeDeclaration.getNewconstr.getQNameList.asScala.headOption.map(_.getIdentifierElement).toSeq
   }
 
   def getIdentifierElements(classDeclaration: HaskellClassDeclaration): Seq[HaskellNamedElement] = {
+    val cdecls = Option(classDeclaration.getCdecls).map(_.getCdeclList.asScala).getOrElse(Seq())
     classDeclaration.getQNameList.asScala.headOption.map(_.getIdentifierElement).toSeq ++
-      Option(classDeclaration.getCdecls).map(_.getTypeSignatureList.asScala.flatMap(_.getIdentifierElements)).getOrElse(Seq()) ++
-      Option(classDeclaration.getCdecls).map(_.getTypeDeclarationList.asScala.flatMap(_.getIdentifierElements)).getOrElse(Seq()) ++
-      Option(classDeclaration.getCdecls).map(_.getCdeclDataDeclarationList.asScala.flatMap(_.getSimpletype.getIdentifierElements)).getOrElse(Seq())
+      cdecls.flatMap(cd => Option(cd.getTypeSignature).map(_.getIdentifierElements).getOrElse(Seq())) ++
+      cdecls.flatMap(cd => Option(cd.getCdeclDataDeclaration).toSeq.flatMap(_.getQNameList.asScala.map(_.getIdentifierElement))) ++
+      cdecls.flatMap(cd => Option(cd.getCidecl).toSeq.flatMap(_.getQNameList.asScala.map(_.getIdentifierElement)))
   }
 
   def getIdentifierElements(instanceDeclaration: HaskellInstanceDeclaration): Seq[HaskellNamedElement] = {
@@ -360,8 +326,9 @@ object HaskellPsiImplUtil {
   }
 
   def getIdentifierElements(typeFamilyDeclaration: HaskellTypeFamilyDeclaration): Seq[HaskellNamedElement] = {
-    typeFamilyDeclaration.getTypeFamilyType.getQNameList.asScala.map(_.getIdentifierElement).toSeq ++
-      typeFamilyDeclaration.getTypeFamilyType.getQNamesList.asScala.flatMap(_.getQNameList.asScala.map(_.getIdentifierElement))
+    val familyType = typeFamilyDeclaration.getTypeFamilyType
+    familyType.getQNameList.asScala.map(_.getIdentifierElement).toSeq ++
+      familyType.getQNamesList.asScala.flatMap(_.getQNameList.asScala.map(_.getIdentifierElement))
   }
 
   def getIdentifierElements(derivingDeclaration: HaskellDerivingDeclaration): Seq[HaskellNamedElement] = {
@@ -373,14 +340,12 @@ object HaskellPsiImplUtil {
   }
 
   def getIdentifierElements(simpleType: HaskellSimpletype): Seq[HaskellNamedElement] = {
-    {
-      simpleType.getQNameList.asScala.map(_.getIdentifierElement) ++ {
-        Option(simpleType.getTtype) match {
-          case Some(t) => t.getQNameList.asScala.headOption.map(_.getIdentifierElement)
-          case None => simpleType.getQNameList.asScala.headOption.map(_.getIdentifierElement)
-        }
+    simpleType.getQNameList.asScala.map(_.getIdentifierElement).toSeq ++ {
+      Option(simpleType.getTtype) match {
+        case Some(t) => t.getQNameList.asScala.headOption.map(_.getIdentifierElement)
+        case None => simpleType.getQNameList.asScala.headOption.map(_.getIdentifierElement)
       }
-    }.toSeq
+    }
   }
 
   def getIdentifierElements(defaultDeclaration: HaskellDefaultDeclaration): Seq[HaskellNamedElement] = {
