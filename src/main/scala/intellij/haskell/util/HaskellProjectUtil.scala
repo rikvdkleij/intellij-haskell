@@ -110,17 +110,12 @@ object HaskellProjectUtil {
     directory.listFiles.find(_.getName == "package.yaml")
   }
 
-  def getProjectAndLibrariesModulesSearchScope(project: Project): GlobalSearchScope = {
-    val projectModules = findProjectHaskellModules(project).map(m => GlobalSearchScope.moduleWithDependenciesAndLibrariesScope(m, true))
-    if (projectModules.isEmpty) {
-      GlobalSearchScope.EMPTY_SCOPE
-    } else {
-      projectModules.reduce(_.uniteWith(_))
-    }
+  def getProjectSearchScope(project: Project): GlobalSearchScope = {
+    GlobalSearchScope.allScope(project)
   }
 
   def getSearchScope(project: Project, includeNonProjectItems: Boolean): GlobalSearchScope = {
-    if (includeNonProjectItems) getProjectAndLibrariesModulesSearchScope(project) else GlobalSearchScope.projectScope(project)
+    if (includeNonProjectItems) getProjectSearchScope(project) else GlobalSearchScope.projectScope(project)
   }
 
   import ScalaUtil._

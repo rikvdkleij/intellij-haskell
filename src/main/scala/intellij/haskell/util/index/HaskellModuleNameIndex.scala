@@ -76,8 +76,8 @@ object HaskellModuleNameIndex {
     moduleNames.foreach(mn => {
       val key = Key(project, mn)
       find(key, 5.seconds, reschedule = true) match {
-        case Right(vf) => Cache.put(key, Right(vf))
-        case Left(_) => ()
+        case Right(vf) if vf.nonEmpty => Cache.put(key, Right(vf))
+        case _ => ()
       }
     })
   }
@@ -128,7 +128,7 @@ object HaskellModuleNameIndex {
       val files = ApplicationUtil.scheduleInReadActionWithWriteActionPriority(
         project, {
           try {
-            Some(FileBasedIndex.getInstance.getContainingFiles(HaskellModuleNameIndex, moduleName, HaskellProjectUtil.getProjectAndLibrariesModulesSearchScope(project)).asScala.toSeq)
+            Some(FileBasedIndex.getInstance.getContainingFiles(HaskellModuleNameIndex, moduleName, HaskellProjectUtil.getProjectSearchScope(project)).asScala.toSeq)
           } catch {
             case _: IndexNotReadyException => None
           }
