@@ -226,7 +226,7 @@ object HaskellReference {
 
         val identifiers = files.flatMap(f => findIdentifierInFileByName(f, name, prioIdInExpression))
         if (identifiers.isEmpty) {
-          val importedModuleNames = files.flatMap(f => FileModuleIdentifiers.findAvailableModuleIdentifiers(f).filter(mid => mid.name == name || mid.name == "_" + name).map(_.moduleName))
+          val importedModuleNames = files.flatMap(f => FileModuleIdentifiers.findAvailableModuleIdentifiers(f).filter(mid => mid.name == name || mid.name == "_" + name || mid.name == mid.moduleName + "." + name).map(_.moduleName))
           if (importedModuleNames.isEmpty) {
             Seq()
           } else {

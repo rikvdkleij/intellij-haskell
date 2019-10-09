@@ -18,20 +18,23 @@ package intellij.haskell.external.component
 
 import intellij.haskell.util.StringUtil
 
-object DeclarationLineUtil {
+object DeclarationUtil {
 
-  def findName(declarationLine: String): Option[NameAndShortDeclaration] = {
-    val declaration = StringUtil.shortenHaskellDeclaration(declarationLine)
+  def getDeclarationInfo(declarationLine: String, containsQualifiedIds: Boolean): Option[DeclarationInfo] = {
+    val declaration = StringUtil.removeCommentsAndWhiteSpaces(declarationLine)
     val allTokens = declaration.split("""\s+""")
-    val name = if (allTokens.isEmpty || allTokens(0) == "--") {
+    (if (allTokens.isEmpty || allTokens(0) == "--") {
       None
     } else if (Seq("class", "instance").contains(allTokens(0))) {
       declaration.split("""where|=\s""").headOption.flatMap { d =>
-        val tokens = d.trim.split("""=>""")
-        if (tokens.size == 1) {
-          Option(allTokens(1))
-        } else {
+        val tokens = d.trim.split("=>")
+        val size = tokens.size
+        if (size == 1) {
+          Option(tokens(0))
+        } else if (size > 1) {
           Option(tokens.last.trim.split("""\s+""")(0))
+        } else {
+          None
         }
       }
     } else if (allTokens(0) == "type" && allTokens(1) == "role") {
@@ -39,17 +42,29 @@ object DeclarationLineUtil {
     } else if (Seq("data", "type", "newtype").contains(allTokens(0).trim)) {
       Option(allTokens(1))
     } else {
-      val tokens = declaration.split("""::""")
+      val tokens = declaration.split("::")
       if (tokens.size > 1) {
         val name = tokens(0).trim
         Option(name)
       } else {
         None
       }
-    }
-    name.map(n => NameAndShortDeclaration(StringUtil.removeOuterParens(n), declaration))
+    }).map(name => {
+      val operator = StringUtil.isWithinParens(name)
+      val id = if (operator) {
+        StringUtil.removeOuterParens(name)
+      } else {
+        name
+      }
+      if (containsQualifiedIds) {
+        DeclarationInfo(StringUtil.removePackageModuleQualifier(id), Some(id), StringUtil.removePackageModuleQualifier(declaration), operator)
+      } else {
+        DeclarationInfo(id, None, declaration, operator)
+      }
+    })
   }
+
+  case class DeclarationInfo(id: String, qualifiedId: Option[String], declarationLine: String, operator: Boolean)
 
 }
 
-case class NameAndShortDeclaration(name: String, declaration: String)

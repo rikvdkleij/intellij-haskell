@@ -26,8 +26,8 @@ import javax.swing.Icon
 
 class HoogleByNameContributor extends ChooseByNameContributor {
 
-  private final val DeclarationPattern = """([\w\.\-]+) (.*)""".r
-  private final val ModulePattern = """module ([\w\.\-]+)""".r
+  private final val DeclarationPattern = """([\w.\-]+) (.*)""".r
+  private final val ModulePattern = """module ([\w.\-]+)""".r
   private final val PackagePattern = """package (.*)""".r
 
   override def getNames(project: Project, includeNonProjectItems: Boolean): Array[String] = {
@@ -51,22 +51,22 @@ class HoogleByNameContributor extends ChooseByNameContributor {
           case Right(files) => files
           case _ => Seq()
         }
-      case PackagePattern(packageName) =>
+      case PackagePattern(_) =>
         ProgressManager.checkCanceled()
         Seq()
       case DeclarationPattern(moduleName, declaration) =>
         ProgressManager.checkCanceled()
-        DeclarationLineUtil.findName(declaration) match {
-          case Some(nameAndShortDeclaration) =>
-            val identifiers = HaskellReference.findIdentifiersByModulesAndName(project, Seq(moduleName), nameAndShortDeclaration.name, prioIdInExpression = false).toOption.map(_._2).toSeq
+        DeclarationUtil.getDeclarationInfo(declaration, containsQualifiedIds = false) match {
+          case Some(declarationInfo) =>
+            val identifiers = HaskellReference.findIdentifiersByModulesAndName(project, Seq(moduleName), declarationInfo.id, prioIdInExpression = false).toOption.map(_._2).toSeq
             if (identifiers.isEmpty) {
-              Seq()
+              Seq(NotFoundNavigationItem(declaration, moduleName))
             } else {
               identifiers.map(e => HaskellPsiUtil.findDeclarationElement(e).getOrElse(e)).map(d => createLibraryNavigationItem(d, moduleName))
             }
           case None => Seq()
         }
-      case d =>
+      case _ =>
         ProgressManager.checkCanceled()
         Seq()
     }
@@ -109,4 +109,23 @@ class HoogleByNameContributor extends ChooseByNameContributor {
       override def canNavigateToSource: Boolean = namedElement.canNavigateToSource
     }
   }
+
+  case class NotFoundNavigationItem(declaration: String, moduleName: String) extends NavigationItem {
+    override def getName: String = declaration
+
+    override def getPresentation: ItemPresentation = new ItemPresentation {
+      override def getIcon(unused: Boolean): Icon = null
+
+      override def getLocationString: String = moduleName
+
+      override def getPresentableText: String = getName
+    }
+
+    override def canNavigateToSource: Boolean = false
+
+    override def canNavigate: Boolean = false
+
+    override def navigate(requestFocus: Boolean): Unit = ()
+  }
+
 }

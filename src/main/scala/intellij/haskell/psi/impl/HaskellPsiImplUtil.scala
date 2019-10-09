@@ -22,13 +22,11 @@ import com.intellij.psi.{PsiElement, PsiReference}
 import com.intellij.util.ArrayUtil
 import icons.HaskellIcons
 import intellij.haskell.HaskellFileType
-import intellij.haskell.psi.HaskellTypes._
 import intellij.haskell.psi._
 import intellij.haskell.refactor.HaskellRenameFileProcessor
-import intellij.haskell.util.{HaskellFileUtil, StringUtil}
+import intellij.haskell.util.StringUtil
 import javax.swing._
 
-import scala.annotation.tailrec
 import scala.jdk.CollectionConverters._
 
 object HaskellPsiImplUtil {
@@ -224,12 +222,12 @@ object HaskellPsiImplUtil {
 
     new HaskellItemPresentation(declarationElement) {
       def getPresentableText: String = {
-        getDeclarationInfo(declarationElement, shortened = true)
+        getDeclarationText(declarationElement)
       }
     }
   }
 
-  def getItemPresentableText(element: PsiElement, shortened: Boolean = true): String = {
+  def getItemPresentableText(element: PsiElement): String = {
     HaskellPsiUtil.findNamedElement(element) match {
       case Some(namedElement) =>
         HaskellPsiUtil.findHighestDeclarationElement(element) match {
@@ -244,39 +242,10 @@ object HaskellPsiImplUtil {
     }
   }
 
-  private def getDeclarationInfo(declarationElement: HaskellDeclarationElement, shortened: Boolean): String = {
-    val info = declarationElement match {
+  private def getDeclarationText(declarationElement: HaskellDeclarationElement): String = {
+    declarationElement match {
       case md: HaskellModuleDeclaration => s"module  ${md.getModid.getName}"
-      case de if shortened => StringUtil.shortenHaskellDeclaration(de.getText)
-      case de => de.getText
-    }
-    if (shortened && info.length > 100) {
-      getFirstLineDeclarationText(declarationElement) + "..."
-    } else {
-      info
-    }
-  }
-
-  private def getFirstLineDeclarationText(declarationElement: HaskellDeclarationElement) = {
-    StringUtil.removeCommentsAndWhiteSpaces(declarationElement.getNode.getChildren(null).takeWhile(n => n.getElementType != HS_WHERE && n.getElementType != HS_EQUAL).map(_.getText).mkString(" "))
-  }
-
-  private def getContainingLineText(namedElement: PsiElement) = {
-    val psiFile = namedElement.getContainingFile.getOriginalFile
-    for {
-      doc <- HaskellFileUtil.findDocument(psiFile)
-      element <- HaskellPsiUtil.findQualifiedName(namedElement)
-      start = findNewline(element, e => e.getPrevSibling).getTextOffset
-      end = findNewline(element, e => e.getNextSibling).getTextOffset
-    } yield StringUtil.removeCommentsAndWhiteSpaces(doc.getCharsSequence.subSequence(start, end).toString.trim)
-  }
-
-  @tailrec
-  def findNewline(psiElement: PsiElement, getSibling: PsiElement => PsiElement): PsiElement = {
-    Option(getSibling(psiElement)) match {
-      case None => psiElement
-      case Some(e) if e.getNode.getElementType == HS_NEWLINE => e
-      case Some(e) => findNewline(e, getSibling)
+      case de => StringUtil.sanitizeDeclaration(de.getText)
     }
   }
 

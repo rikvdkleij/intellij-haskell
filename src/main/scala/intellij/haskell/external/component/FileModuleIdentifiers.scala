@@ -157,7 +157,7 @@ object FileModuleIdentifiers {
     blocking {
       Future.sequence(importInfos.map(importInfo => {
         val allModuleIdentifiers = BrowseModuleComponent.findModuleIdentifiers(psiFile.getProject, importInfo.moduleName)
-        allModuleIdentifiers.map(ids => ids.map(is => createQualifiedModuleIdentifiers(importInfo, is.filter(mi => importInfo.ids.exists(id => if (mi.isOperator) s"(${mi.name})" == id else id == mi.name)))))
+        allModuleIdentifiers.map(ids => ids.map(is => createQualifiedModuleIdentifiers(importInfo, is.filter(mi => importInfo.ids.exists(_ == mi.name)))))
       }))
     }
   }

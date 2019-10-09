@@ -197,7 +197,7 @@ object NameInfoComponentResult {
 
     def declaration: String
 
-    def shortenedDeclaration: String = StringUtil.shortenHaskellDeclaration(declaration)
+    def shortenedDeclaration: String = StringUtil.sanitizeDeclaration(declaration)
 
     def escapedDeclaration: String = escapeString(declaration).replaceAll("""\s+""", " ")
   }

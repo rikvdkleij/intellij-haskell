@@ -24,23 +24,27 @@ import scala.collection.mutable.ListBuffer
 
 object StringUtil {
 
-  private final val PackageQualifierPattern = """([a-zA-Z\-]+\-[\.0-9]+\:)?([A-Z][\w\\\-]*\.)+"""
-  private final val PackageQualifierPattern2 = """^([a-zA-Z\-]+\-[\.0-9]+\:)?"""
+  private final val PackageModuleQualifierPattern = """([a-zA-Z\-]+\-[\.0-9]+\:)?([A-Z][\w\\\-]*\.)+"""
+  private final val PackageQualifierPattern = """^([a-zA-Z\-]+\-[\.0-9]+\:)?"""
 
   def escapeString(s: String): String = {
     XmlStringUtil.escapeString(s, false, false)
   }
 
-  def removePackageQualifier(s: String): String = {
-    s.replaceAll(PackageQualifierPattern2, "")
+  def removePackageModuleQualifier(s: String): String = {
+    s.replaceAll(PackageModuleQualifierPattern, "")
   }
 
-  def shortenHaskellDeclaration(declaration: String): String = {
-    removeCommentsAndWhiteSpaces(declaration.replaceAll(PackageQualifierPattern, ""))
+  def removePackageQualifier(s: String): String = {
+    s.replaceAll(PackageQualifierPattern, "")
+  }
+
+  def sanitizeDeclaration(declaration: String): String = {
+    removeCommentsAndWhiteSpaces(declaration.replaceAll(PackageModuleQualifierPattern, ""))
   }
 
   def removeCommentsAndWhiteSpaces(code: String): String = {
-    code.replaceAll("""\{\-[^\}]+\-\}""", " ").replaceAll("""\-\-.*""", " ").replaceAll("""\s+""", " ")
+    code.replaceAll("""\{-[^\}]+-\}""", " ").replaceAll("""--.*""", " ").replaceAll("""\s+""", " ")
   }
 
   def removeOuterParens(name: String): String = {

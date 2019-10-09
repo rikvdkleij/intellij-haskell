@@ -27,8 +27,8 @@ import intellij.haskell.util._
 import intellij.haskell.util.index.HaskellModuleNameIndex._
 
 private[component] object DefinitionLocationComponent {
-  private final val LocAtPattern = """(.+)\:\(([\d]+),([\d]+)\)-\(([\d]+),([\d]+)\)""".r
-  private final val PackageModulePattern = """([\w\-\d\.]+)(?:\-.*)?\:([\w\.\-]+)""".r
+  private final val LocAtPattern = """(.+):\(([\d]+),([\d]+)\)-\(([\d]+),([\d]+)\)""".r
+  private final val PackageModulePattern = """([\w\-\d.]+)(?:-.*)?:([\w.\-]+)""".r
 
   // importQualifier is only set for identifiers in import declarations
   private case class Key(psiFile: PsiFile, qualifiedNameElement: HaskellQualifiedNameElement, importQualifier: Option[String])
@@ -76,16 +76,16 @@ private[component] object DefinitionLocationComponent {
   }
 
   def invalidate(psiFile: PsiFile): Unit = {
-    val keys = Cache.asMap().flatMap { case (k, v) =>
+    val keys = Cache.asMap().filter { case (k, v) =>
       if (checkValidKey(k)) {
         v.toOption match {
-          case Some(definitionLocation) if checkValidLocation(definitionLocation) && checkValidName(k, definitionLocation) => None
-          case _ => Some(k)
+          case Some(definitionLocation) if checkValidLocation(definitionLocation) && checkValidName(k, definitionLocation) => false
+          case _ => true
         }
       } else {
-        Some(k)
+        true
       }
-    }
+    }.keys
     Cache.invalidateAll(keys)
   }
 
@@ -139,7 +139,7 @@ private[component] object DefinitionLocationComponent {
                 ProgressManager.checkCanceled()
 
                 HaskellReference.findIdentifiersByNameInfo(info, key.qualifiedNameElement.getIdentifierElement, project) match {
-                  case Right((mn, ne, pn)) => Right(PackageModuleLocation(findModuleName(ne), ne, name, pn))
+                  case Right((mn, ne, pn)) => Right(PackageModuleLocation(mn.getOrElse("-"), ne, name, pn))
                   case Left(noInfo) =>
                     HaskellReference.findIdentifierInFileByName(psiFile, name, prioIdInExpression = true).
                       map(ne => Right(PackageModuleLocation(findModuleName(ne), ne, name, None))).getOrElse(Left(noInfo))
@@ -179,17 +179,15 @@ private[component] object DefinitionLocationComponent {
       case Some(q) => q + "." + qNameName
     }
 
-    val moduleNames = FileModuleIdentifiers.findAvailableModuleIdentifiers(psiFile).filter(_.name == qName).map(_.moduleName).toSeq
+    val moduleIdentifiers = FileModuleIdentifiers.findAvailableModuleIdentifiers(psiFile).filter(_.name == qName)
 
     ProgressManager.checkCanceled()
 
-    if (moduleNames.contains(HaskellProjectUtil.Prelude)) {
-      Left(ModuleNotAvailable("Prelude"))
-    } else {
-      HaskellReference.findIdentifiersByModulesAndName(project, moduleNames, name) match {
-        case Right((mn, ne)) => Right(PackageModuleLocation(mn, ne, name, None))
-        case Left(noInfo) => Left(noInfo)
-      }
+    val moduleNames = moduleIdentifiers.map(mi => if (mi.moduleName == HaskellProjectUtil.Prelude) mi.preludeBaseModuleName.getOrElse(HaskellProjectUtil.Prelude) else mi.moduleName).toSeq
+
+    HaskellReference.findIdentifiersByModulesAndName(project, moduleNames.filterNot(_ == HaskellProjectUtil.Prelude), name) match {
+      case Right((mn, ne)) => Right(PackageModuleLocation(mn, ne, name, None))
+      case Left(noInfo) => Left(noInfo)
     }
   }
 

@@ -21,8 +21,9 @@ import com.intellij.openapi.fileEditor.FileEditorManager
 import com.intellij.openapi.project.Project
 import com.intellij.psi.PsiFile
 import intellij.haskell.external.repl._
+import intellij.haskell.psi.HaskellPsiUtil
 import intellij.haskell.util.index.HaskellModuleNameIndex
-import intellij.haskell.util.{HaskellFileUtil, StringUtil}
+import intellij.haskell.util.{ApplicationUtil, HaskellFileUtil, HaskellProjectUtil, StringUtil}
 
 import scala.concurrent.{ExecutionContext, Future, blocking}
 
@@ -30,7 +31,6 @@ private[component] object BrowseModuleComponent {
 
   private case class Key(project: Project, moduleName: String)
 
-  type BrowseModuleResult = Iterable[ModuleIdentifier]
   private type BrowseModuleInternalResult = Either[NoInfo, Iterable[ModuleIdentifier]]
 
   private final val Cache: AsyncLoadingCache[Key, BrowseModuleInternalResult] = Scaffeine().buildAsync((k: Key) => {
@@ -41,7 +41,9 @@ private[component] object BrowseModuleComponent {
     }
   })
 
-  private def matchResult(key: Key, result: Future[BrowseModuleInternalResult])(implicit ec: ExecutionContext): Future[Option[Iterable[ModuleIdentifier]]] = {
+  def findModuleIdentifiers(project: Project, moduleName: String)(implicit ec: ExecutionContext): Future[Option[Iterable[ModuleIdentifier]]] = {
+    val key = Key(project, moduleName)
+    val result = Cache.get(key)
     blocking(result.map {
       case Right(ids) => Some(ids)
       case Left(NoInfoAvailable(_, _)) | Left(NoMatchingExport) =>
@@ -50,11 +52,6 @@ private[component] object BrowseModuleComponent {
         Cache.synchronous().invalidate(key)
         None
     })
-  }
-
-  def findModuleIdentifiers(project: Project, moduleName: String)(implicit ec: ExecutionContext): Future[Option[Iterable[ModuleIdentifier]]] = {
-    val key = Key(project, moduleName)
-    matchResult(key, Cache.get(key))
   }
 
   def findModuleIdentifiersSync(project: Project, moduleName: String): BrowseModuleInternalResult = {
@@ -104,11 +101,11 @@ private[component] object BrowseModuleComponent {
                 findInRepl(project, projectRepl, moduleName, Some(moduleFile))
             }
           } else {
-            findLibraryModuleIdentifiers(project, moduleName)
+            findLibraryModuleIdentifiers(project, Some(moduleFile), moduleName)
           }
         case None =>
           // E.g. module name is Prelude which does not refer to file
-          findLibraryModuleIdentifiers(project, moduleName)
+          findLibraryModuleIdentifiers(project, None, moduleName)
       }
       case Left(noInfo) => Left(noInfo)
     }
@@ -128,48 +125,60 @@ private[component] object BrowseModuleComponent {
   private def findInRepl(project: Project, projectRepl: Option[ProjectStackRepl], moduleName: String, psiFile: Option[PsiFile]): Either[NoInfo, Seq[ModuleIdentifier]] = {
     projectRepl match {
       case Some(repl) =>
-        if (!repl.available) {
-          Left(ReplNotAvailable)
-        } else {
+        if (repl.available) {
           repl.getModuleIdentifiers(moduleName, psiFile) match {
-            case Some(output) if output.stderrLines.isEmpty && output.stdoutLines.nonEmpty => Right(output.stdoutLines.flatMap(l => findModuleIdentifiers(project, l, moduleName)))
+            case Some(output) if output.stderrLines.isEmpty && output.stdoutLines.nonEmpty => Right(output.stdoutLines.flatMap(l => createProjectModuleIdentifier(project, l, moduleName)))
             case _ => Left(ModuleNotAvailable(moduleName))
           }
+        } else {
+          Left(ReplNotAvailable)
         }
       case None => Left(ReplNotAvailable)
     }
   }
 
-  private def findLibraryModuleIdentifiers(project: Project, moduleName: String): Either[NoInfo, Seq[ModuleIdentifier]] = {
+  private def findLibraryModuleIdentifiers(project: Project, moduleFile: Option[PsiFile], moduleName: String): Either[NoInfo, Seq[ModuleIdentifier]] = {
     StackReplsManager.getGlobalRepl(project) match {
       case Some(repl) =>
-        if (!repl.available) {
-          Left(ReplNotAvailable)
-        } else {
-          repl.getModuleIdentifiers(moduleName) match {
-            case Some(o) if o.stderrLines.isEmpty && o.stdoutLines.nonEmpty => Right(o.stdoutLines.flatMap(l => findModuleIdentifiers(project, l, moduleName).toSeq))
+        if (repl.available) {
+          (repl.getModuleIdentifiers(moduleName), moduleFile) match {
+            case (Some(o), _) if o.stderrLines.isEmpty && o.stdoutLines.nonEmpty => Right(o.stdoutLines.flatMap(l => createLibraryModuleIdentifier(project, l, moduleName)))
+            case (_, Some(f)) => Right(ApplicationUtil.runReadAction(HaskellPsiUtil.findTopLevelDeclarations(f)).map(d => ApplicationUtil.runReadAction(d.getName)).flatMap(d => createLibraryModuleIdentifier(project, d, moduleName)).toSeq)
             case _ => Left(ModuleNotAvailable(moduleName))
           }
+        } else {
+          Left(ReplNotAvailable)
         }
       case None => Left(ReplNotAvailable)
     }
   }
 
   // This kind of declarations are returned in case DuplicateRecordFields are enabled
-  private final val Module$SelPattern =
-    """([\w\.\-]+)\.\$sel:([^:]+)(?::[^:]+)?::(.*)""".r
+  private final val Module$SelPattern = """([\w.\-]+)\.\$sel:([^:]+)(?::[^:]+)?::(.*)""".r
 
-  private def findModuleIdentifiers(project: Project, declarationLine: String, moduleName: String): Option[ModuleIdentifier] = {
-    declarationLine match {
-      case Module$SelPattern(mn, name, fieldType) => Some(createModuleIdentifier(name, mn, s"$name :: $fieldType"))
-      case _ => DeclarationLineUtil.findName(declarationLine) map (nd => createModuleIdentifier(nd.name, moduleName, nd.declaration))
-    }
+  private def createLibraryModuleIdentifier(project: Project, declarationLine: String, moduleName: String): Option[ModuleIdentifier] = {
+    DeclarationUtil.getDeclarationInfo(declarationLine, containsQualifiedIds = true).map(declarationInfo => {
+      val id = declarationInfo.id
+      if (moduleName == HaskellProjectUtil.Prelude) {
+        val baseModuleName = declarationInfo.qualifiedId.map(_.split('.').init.mkString("."))
+        ModuleIdentifier(id, moduleName, declarationInfo.declarationLine, declarationInfo.operator, baseModuleName)
+      } else {
+        ModuleIdentifier(id, moduleName, declarationInfo.declarationLine, declarationInfo.operator)
+      }
+    })
   }
 
-  private def createModuleIdentifier(name: String, moduleName: String, declaration: String) = {
-    ModuleIdentifier(StringUtil.removeOuterParens(name), moduleName, declaration, isOperator = StringUtil.isWithinParens(name))
+  private def createProjectModuleIdentifier(project: Project, declarationLine: String, moduleName: String): Option[ModuleIdentifier] = {
+    declarationLine match {
+      case Module$SelPattern(mn, id, fieldType) => Some(ModuleIdentifier(id, mn, s"$id :: $fieldType", StringUtil.isWithinParens(id)))
+      case _ => DeclarationUtil.getDeclarationInfo(declarationLine, containsQualifiedIds = false).
+        map(declarationInfo => ModuleIdentifier(declarationInfo.id, moduleName, declarationInfo.declarationLine, declarationInfo.operator))
+    }
   }
 }
 
-// value of name is without (operator) parens
-case class ModuleIdentifier(name: String, moduleName: String, declaration: String, isOperator: Boolean)
+/**
+  * @param name                  is without (operator) parentheses.
+  * @param preludeBaseModuleName is module name of the Prelude identifier where it's defined in base package.
+  */
+case class ModuleIdentifier(name: String, moduleName: String, declaration: String, operator: Boolean, preludeBaseModuleName: Option[String] = None)
