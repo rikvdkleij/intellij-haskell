@@ -231,11 +231,7 @@ object HaskellPsiImplUtil {
     HaskellPsiUtil.findNamedElement(element) match {
       case Some(namedElement) =>
         HaskellPsiUtil.findHighestDeclarationElement(element) match {
-          case Some(de) if de.getIdentifierElements.exists(_ == namedElement) => HaskellPsiUtil.findDeclarationElement(namedElement).map(de => getDeclarationInfo(de, shortened)).
-            orElse(HaskellPsiUtil.findExpression(namedElement).map(e => StringUtil.removeCommentsAndWhiteSpaces(e.getText))).
-            getOrElse(s"${namedElement.getName} `in` ${getDeclarationInfo(de, shortened)}")
-          case Some(de) => s"${namedElement.getName} `in` ${getDeclarationInfo(de, shortened)}"
-          case _ if shortened && HaskellPsiUtil.findExpression(namedElement).isDefined => getContainingLineText(namedElement).getOrElse(namedElement.getName).trim
+          case Some(de) => getDeclarationText(de)
           case _ => HaskellPsiUtil.findExpression(namedElement).map(_.getText).getOrElse(namedElement.getName)
         }
       case _ => element.getText

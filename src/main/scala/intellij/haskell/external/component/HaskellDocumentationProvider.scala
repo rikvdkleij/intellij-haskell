@@ -37,8 +37,7 @@ class HaskellDocumentationProvider extends AbstractDocumentationProvider {
           val originalPsiFile = e.getContainingFile.getOriginalFile
           val isSourceFile = HaskellProjectUtil.isSourceFile(originalPsiFile)
           val typeSignature = if (isSourceFile) {
-            val typeInfo = TypeInfoComponent.findTypeInfoForElement(oe).toOption.map(_.typeSignature)
-            typeInfo.map(StringUtil.escapeString)
+            TypeInfoComponent.findTypeInfoForElement(oe).toOption.map(_.typeSignature).map(StringUtil.escapeString)
           } else {
             None
           }
@@ -72,17 +71,13 @@ class HaskellDocumentationProvider extends AbstractDocumentationProvider {
             HaskellPsiUtil.findQualifiedName(oe) match {
               case Some(qone) =>
                 val presentationText = HaskellPsiUtil.findNamedElement(e).flatMap { ne =>
-                  if (HaskellPsiUtil.findExpression(ne).isDefined || HaskellPsiUtil.findTypeSignatureDeclaration(ne).isDefined) {
-                    None
-                  } else {
-                    Some(DoubleNbsp + "<code>" +
-                      HaskellPsiImplUtil.getItemPresentableText(ne, shortened = false).
-                        replace(" ", HtmlElement.Nbsp).
-                        replace("<", HtmlElement.Lt).
-                        replace(">", HtmlElement.Gt).
-                        replace("\n", HtmlElement.Break) +
-                      "</code>")
-                  }
+                  Some(DoubleNbsp + "<code>" +
+                    HaskellPsiImplUtil.getItemPresentableText(ne).
+                      replace(" ", HtmlElement.Nbsp).
+                      replace("<", HtmlElement.Lt).
+                      replace(">", HtmlElement.Gt).
+                      replace("\n", HtmlElement.Break) +
+                    "</code>")
                 }
 
                 ProgressManager.checkCanceled()
