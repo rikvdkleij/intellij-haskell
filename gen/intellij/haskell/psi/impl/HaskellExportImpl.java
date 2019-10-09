@@ -27,12 +27,6 @@ public class HaskellExportImpl extends HaskellCompositeElementImpl implements Ha
 
   @Override
   @Nullable
-  public HaskellConid getConid() {
-    return PsiTreeUtil.getChildOfType(this, HaskellConid.class);
-  }
-
-  @Override
-  @Nullable
   public HaskellDotDot getDotDot() {
     return PsiTreeUtil.getChildOfType(this, HaskellDotDot.class);
   }

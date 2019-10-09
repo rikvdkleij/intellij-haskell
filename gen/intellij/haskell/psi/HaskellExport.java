@@ -9,9 +9,6 @@ import java.util.List;
 public interface HaskellExport extends HaskellCompositeElement {
 
   @Nullable
-  HaskellConid getConid();
-
-  @Nullable
   HaskellDotDot getDotDot();
 
   @Nullable
