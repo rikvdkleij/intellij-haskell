@@ -321,7 +321,10 @@ object HaskellModuleBuilder {
   private def setupProjectLibraries(project: Project, libraryDependencies: Seq[HaskellLibraryDependency], projectLibDirectory: File): Unit = {
     getProjectLibraryTable(project).getLibraries.foreach(library => {
       libraryDependencies.find(_.nameVersion == library.getName) match {
-        case Some(_) => ()
+        case Some(_) =>
+          if (library.getFiles(OrderRootType.SOURCES).isEmpty) {
+            removeProjectLibrary(project, library)
+          }
         case None => removeProjectLibrary(project, library)
       }
     })
