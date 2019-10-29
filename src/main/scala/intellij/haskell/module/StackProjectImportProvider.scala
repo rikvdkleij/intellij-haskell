@@ -24,7 +24,7 @@ import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.projectImport.ProjectImportProvider
 import intellij.haskell.util.HaskellFileUtil
 
-class StackProjectImportProvider(builder: StackProjectImportBuilder) extends ProjectImportProvider(builder) {
+class StackProjectImportProvider extends ProjectImportProvider(new StackProjectImportBuilder) {
 
   override def createSteps(context: WizardContext): Array[ModuleWizardStep] =
     Array(new HaskellModuleWizardStep(context, HaskellModuleType.getInstance.createModuleBuilder()))
