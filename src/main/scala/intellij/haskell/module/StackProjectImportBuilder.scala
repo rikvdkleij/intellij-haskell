@@ -36,18 +36,18 @@ import javax.swing.Icon
 
 import scala.jdk.CollectionConverters._
 
-class StackProjectImportBuilder extends ProjectImportBuilder[Unit] {
+class StackProjectImportBuilder extends ProjectImportBuilder[AnyRef] {
   override def getName: String = "Haskell Stack"
 
-  override def getList: util.List[Unit] = new util.ArrayList[Unit]()
+  override def getList: util.List[AnyRef] = new util.ArrayList[AnyRef]()
 
   override def getIcon: Icon = HaskellIcons.HaskellLogo
 
   override def setOpenProjectSettingsAfter(on: Boolean): Unit = {}
 
-  override def setList(list: util.List[Unit]): Unit = ()
+  override def setList(list: util.List[AnyRef]): Unit = ()
 
-  override def isMarked(element: Unit): Boolean = true
+  override def isMarked(element: AnyRef): Boolean = true
 
   override def getTitle: String = "Stack project importer"
 
