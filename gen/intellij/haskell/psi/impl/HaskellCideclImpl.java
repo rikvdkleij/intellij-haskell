@@ -69,6 +69,12 @@ public class HaskellCideclImpl extends HaskellCompositeElementImpl implements Ha
 
   @Override
   @NotNull
+  public List<HaskellQuasiQuote> getQuasiQuoteList() {
+    return PsiTreeUtil.getChildrenOfTypeAsList(this, HaskellQuasiQuote.class);
+  }
+
+  @Override
+  @NotNull
   public List<HaskellReservedId> getReservedIdList() {
     return PsiTreeUtil.getChildrenOfTypeAsList(this, HaskellReservedId.class);
   }

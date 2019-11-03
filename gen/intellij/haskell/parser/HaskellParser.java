@@ -2706,14 +2706,14 @@ public class HaskellParser implements PsiParser, LightPsiParser {
   }
 
   /* ********************************************************** */
-  // QUASIQUOTE | q_name | symbol_reserved_op | reserved_id | LEFT_PAREN | RIGHT_PAREN | FLOAT |
+  // quasi_quote | q_name | symbol_reserved_op | reserved_id | LEFT_PAREN | RIGHT_PAREN | FLOAT |
   //                                   SEMICOLON | LEFT_BRACKET | RIGHT_BRACKET | literal | LEFT_BRACE | RIGHT_BRACE |
   //                                   COMMA | QUOTE | BACKQUOTE | fixity |
   //                                   pragma | DIRECTIVE | DOUBLE_QUOTES
   static boolean general_id(PsiBuilder b, int l) {
     if (!recursion_guard_(b, l, "general_id")) return false;
     boolean r;
-    r = consumeToken(b, HS_QUASIQUOTE);
+    r = quasi_quote(b, l + 1);
     if (!r) r = q_name(b, l + 1);
     if (!r) r = symbol_reserved_op(b, l + 1);
     if (!r) r = reserved_id(b, l + 1);
@@ -4816,6 +4816,18 @@ public class HaskellParser implements PsiParser, LightPsiParser {
     r = consumeToken(b, HS_DOT);
     r = r && conid(b, l + 1);
     exit_section_(b, m, null, r);
+    return r;
+  }
+
+  /* ********************************************************** */
+  // QUASIQUOTE
+  public static boolean quasi_quote(PsiBuilder b, int l) {
+    if (!recursion_guard_(b, l, "quasi_quote")) return false;
+    if (!nextTokenIs(b, HS_QUASIQUOTE)) return false;
+    boolean r;
+    Marker m = enter_section_(b);
+    r = consumeToken(b, HS_QUASIQUOTE);
+    exit_section_(b, m, HS_QUASI_QUOTE, r);
     return r;
   }
 

@@ -307,6 +307,8 @@
                                  implementationClass="intellij.haskell.alex.lang.psi.impl.AlexElementManipulator"/>
         <lang.elementManipulator forClass="intellij.haskell.psi.impl.HaskellStringLiteralElementImpl"
                                  implementationClass="intellij.haskell.psi.impl.HaskellStringLiteralManipulator"/>
+        <lang.elementManipulator forClass="intellij.haskell.psi.impl.HaskellQuasiQuoteElementImpl"
+                                 implementationClass="intellij.haskell.psi.impl.HaskellQuasiQuoteManipulator"/>
         <lang.namesValidator language="Haskell" implementationClass="intellij.haskell.refactor.HaskellNamesValidator"/>
         <languageInjector implementation="intellij.haskell.alex.lang.psi.AlexHaskellInjector"/>
 
