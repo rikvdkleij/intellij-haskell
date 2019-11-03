@@ -85,6 +85,8 @@ abstract class StackRepl(project: Project, componentInfo: Option[StackComponentI
 
   def getComponentName: String = componentInfo.map(_.target).map(t => "project-stack-repl-" + t).getOrElse("global-stack-repl")
 
+  def isGlobalRepl: Boolean = componentInfo.isEmpty
+
   private val stdoutResult = new ArrayBuffer[String]
   private val stderrResult = new ArrayBuffer[String]
 
@@ -315,7 +317,12 @@ abstract class StackRepl(project: Project, componentInfo: Option[StackComponentI
   }
 
   private def createGhciOptionsFile: File = {
-    val ghciOptionsFile = new File(GlobalInfo.getIntelliJHaskellDirectory, "repl.ghci")
+    val ghciOptionsFile = if (isGlobalRepl) {
+      new File(GlobalInfo.getIntelliJHaskellDirectory, "global-repl.ghci")
+    } else {
+      new File(GlobalInfo.getIntelliJHaskellDirectory, "repl.ghci")
+    }
+
     if (!ghciOptionsFile.exists()) {
       ghciOptionsFile.createNewFile()
       ghciOptionsFile.setWritable(true, true)
@@ -324,6 +331,12 @@ abstract class StackRepl(project: Project, componentInfo: Option[StackComponentI
       val writer = new BufferedWriter(new FileWriter(ghciOptionsFile))
       try {
         writer.write(s""":set prompt "$EndOfOutputIndicator\\n"""")
+        if (isGlobalRepl) {
+          writer.write("\n")
+          writer.write(s""":set -XNoImplicitPrelude""")
+          writer.write("\n")
+          writer.write(":l") // Force Prelude is not loaded because for :browse qualified identifiers are needed
+        }
       } finally {
         writer.close()
       }
