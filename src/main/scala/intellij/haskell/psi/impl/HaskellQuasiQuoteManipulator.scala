@@ -1,9 +1,9 @@
 package intellij.haskell.psi.impl
 
 import com.intellij.openapi.util.TextRange
-import com.intellij.psi.{AbstractElementManipulator, PsiFileFactory}
+import com.intellij.psi.AbstractElementManipulator
 import com.intellij.util.IncorrectOperationException
-import intellij.haskell.HaskellLanguage
+import intellij.haskell.psi.HaskellElementFactory
 import org.jetbrains.annotations.Nullable
 
 /**
@@ -17,12 +17,8 @@ class HaskellQuasiQuoteManipulator extends AbstractElementManipulator[HaskellQua
                                    newContent: String): HaskellQuasiQuoteElementImpl = {
     val oldText = psi.getText
     val newText = oldText.substring(0, range.getStartOffset) + newContent + oldText.substring(range.getEndOffset)
-    val newElement = PsiFileFactory
-      .getInstance(psi.getProject)
-      .createFileFromText("a.hs", HaskellLanguage.Instance, newText, false, false)
-      .getLastChild
-      .getLastChild
-    psi.replace(newElement).asInstanceOf[HaskellQuasiQuoteElementImpl]
+    val newElement = HaskellElementFactory.createQuasiQuote(psi.getProject, newText)
+    newElement.map(psi.replace(_).asInstanceOf[HaskellQuasiQuoteElementImpl]).orNull
   }
 
   override def getRangeInElement(element: HaskellQuasiQuoteElementImpl): TextRange = {

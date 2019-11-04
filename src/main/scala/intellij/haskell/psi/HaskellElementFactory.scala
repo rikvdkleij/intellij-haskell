@@ -124,6 +124,10 @@ object HaskellElementFactory {
     createElement(project, s"$importDecl \n", classOf[HaskellImportDeclaration])
   }
 
+  def createQuasiQuote(project: Project, quasiQuoteText: String): Option[HaskellQuasiQuote] = {
+    createElement(project, quasiQuoteText, classOf[HaskellQuasiQuote])
+  }
+
   private def createElement[C <: PsiElement](project: Project, newName: String, namedElementClass: Class[C]): Option[C] = {
     val file = createFileFromText(project, newName)
     Option(PsiTreeUtil.findChildOfType(file, namedElementClass))
