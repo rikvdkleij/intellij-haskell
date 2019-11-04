@@ -30,6 +30,9 @@ public interface HaskellCidecl extends HaskellCompositeElement {
   List<HaskellQName> getQNameList();
 
   @NotNull
+  List<HaskellQuasiQuote> getQuasiQuoteList();
+
+  @NotNull
   List<HaskellReservedId> getReservedIdList();
 
   @NotNull

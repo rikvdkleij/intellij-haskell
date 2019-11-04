@@ -47,6 +47,9 @@
 
   implements("text_literal")=["intellij.haskell.psi.HaskellStringLiteralElement" "com.intellij.psi.PsiLanguageInjectionHost"]
   mixin("text_literal")="intellij.haskell.psi.impl.HaskellStringLiteralElementImpl"
+
+  implements("quasi_quote")=["intellij.haskell.psi.HaskellQuasiQuoteElement" "com.intellij.psi.PsiLanguageInjectionHost"]
+  mixin("quasi_quote")="intellij.haskell.psi.impl.HaskellQuasiQuoteElementImpl"
 }
 
 program                     ::= onl shebang_line? onl file_header onl module_body
@@ -124,6 +127,7 @@ type_family_declaration     ::= TYPE_FAMILY onls type_family_type (onls (WHERE |
 deriving_declaration        ::= DERIVING INSTANCE (scontext onls DOUBLE_RIGHT_ARROW)? onls q_name onls inst
 
 text_literal                ::= STRING_LITERAL
+quasi_quote                 ::= QUASIQUOTE
 
 private literal             ::= DECIMAL | HEXADECIMAL | OCTAL | FLOAT | CHARACTER_LITERAL | text_literal
 
@@ -237,7 +241,7 @@ cidecl                      ::= pragma | instance_declaration | default_declarat
 expression                  ::= line_expression (nls line_expression)*
 private line_expression     ::= general_id+
 
-private general_id          ::= QUASIQUOTE | q_name | symbol_reserved_op | reserved_id | LEFT_PAREN | RIGHT_PAREN | FLOAT |
+private general_id          ::= quasi_quote | q_name | symbol_reserved_op | reserved_id | LEFT_PAREN | RIGHT_PAREN | FLOAT |
                                   SEMICOLON | LEFT_BRACKET | RIGHT_BRACKET | literal | LEFT_BRACE | RIGHT_BRACE |
                                   COMMA | QUOTE | BACKQUOTE | fixity |
                                   pragma | DIRECTIVE | DOUBLE_QUOTES

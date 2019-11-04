@@ -61,6 +61,7 @@ public interface HaskellTypes {
   IElementType HS_NEWTYPE_DECLARATION = new HaskellCompositeElementType("HS_NEWTYPE_DECLARATION");
   IElementType HS_PRAGMA = new HaskellCompositeElementType("HS_PRAGMA");
   IElementType HS_QUALIFIER = new HaskellCompositeElementType("HS_QUALIFIER");
+  IElementType HS_QUASI_QUOTE = new HaskellCompositeElementType("HS_QUASI_QUOTE");
   IElementType HS_Q_CON = new HaskellCompositeElementType("HS_Q_CON");
   IElementType HS_Q_CON_QUALIFIER = new HaskellCompositeElementType("HS_Q_CON_QUALIFIER");
   IElementType HS_Q_CON_QUALIFIER_1 = new HaskellCompositeElementType("HS_Q_CON_QUALIFIER_1");
@@ -273,6 +274,8 @@ public interface HaskellTypes {
         return new HaskellPragmaImpl(node);
       } else if (type == HS_QUALIFIER) {
         return new HaskellQualifierImpl(node);
+      } else if (type == HS_QUASI_QUOTE) {
+        return new HaskellQuasiQuoteImpl(node);
       } else if (type == HS_Q_CON) {
         return new HaskellQConImpl(node);
       } else if (type == HS_Q_CON_QUALIFIER) {

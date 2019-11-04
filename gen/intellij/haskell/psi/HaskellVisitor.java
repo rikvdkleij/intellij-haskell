@@ -260,6 +260,11 @@ public class HaskellVisitor extends PsiElementVisitor {
     // visitNamedElement(o);
   }
 
+  public void visitQuasiQuote(@NotNull HaskellQuasiQuote o) {
+    visitQuasiQuoteElement(o);
+    // visitPsiLanguageInjectionHost(o);
+  }
+
   public void visitReservedId(@NotNull HaskellReservedId o) {
     visitCompositeElement(o);
   }
@@ -362,6 +367,10 @@ public class HaskellVisitor extends PsiElementVisitor {
   }
 
   public void visitQualifierElement(@NotNull HaskellQualifierElement o) {
+    visitCompositeElement(o);
+  }
+
+  public void visitQuasiQuoteElement(@NotNull HaskellQuasiQuoteElement o) {
     visitCompositeElement(o);
   }
 
