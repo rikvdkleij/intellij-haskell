@@ -1,7 +1,7 @@
 <idea-plugin>
     <id>intellij.haskell</id>
     <name>IntelliJ-Haskell</name>
-    <version>1.0.0-beta55</version>
+    <version>1.0.0-beta56</version>
     <vendor email="rikvdkleij@gmail.com">Rik van der Kleij</vendor>
 
     <description><![CDATA[
@@ -13,6 +13,13 @@
     ]]></description>
 
     <change-notes><![CDATA[
+        <p>1.0.0-beta56</p>
+        <ul>
+            <li>Various improvements and fixes</li>
+            <li>Support to cancel the process which builds the Haskell tools</li>
+            <li>Support QuasiQuote injection (@ice1000)</li>
+            <li>Update Haskell tools to LTS-14</li>
+        </ul>
         <p>1.0.0-beta55</p>
         <ul>
             <li>Add setting to add extra Stack arguments (#468)</li>
