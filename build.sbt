@@ -26,6 +26,6 @@ lazy val intellijHaskell = (project in file(".")).
     unmanagedSourceDirectories in Compile += baseDirectory.value / "gen"
   )
 
-ideaBuild in ThisBuild := "192.6603.28"
+ideaBuild in ThisBuild := "193.5662.53"
 
 ideaInternalPlugins += "java"
