@@ -59,7 +59,19 @@ object StackCommandLine {
     })
   }
 
-  def installTool(project: Project, toolName: String): Boolean = {
+  def runWithProgressIndicator(project: Project, workDir: Option[String], arguments: Seq[String], progressIndicator: Option[ProgressIndicator]): Option[CapturingProcessHandler] = {
+    HaskellSdkType.getStackBinaryPath(project).map(stackPath => {
+      CommandLine.runWithProgressIndicator(
+        project,
+        workDir,
+        stackPath,
+        arguments,
+        progressIndicator
+      )
+    })
+  }
+
+  def installTool(project: Project, progressIndicator: ProgressIndicator, toolName: String): Boolean = {
     import intellij.haskell.GlobalInfo._
     val systemGhcOption = if (StackYamlComponent.isNixEnabled(project) || !HaskellSettingsState.useSystemGhc) {
       Seq()
@@ -67,8 +79,21 @@ object StackCommandLine {
       Seq("--system-ghc")
     }
     val arguments = systemGhcOption ++ Seq("-j1", "--stack-root", toolsStackRootPath.getPath, "--resolver", StackageLtsVersion, "--local-bin-path", toolsBinPath.getPath, "install", toolName)
-    val processOutput = run(project, arguments, -1, logOutput = true, notifyBalloonError = true, workDir = Some(VfsUtil.getUserHomeDir.getPath), enableExtraArguments = false)
-    processOutput.exists(o => o.getExitCode == 0 && !o.isTimeout)
+
+    val result = runWithProgressIndicator(project, workDir = Some(VfsUtil.getUserHomeDir.getPath), arguments, Some(progressIndicator)).exists(handler => {
+      val output = handler.runProcessWithProgressIndicator(progressIndicator)
+
+      if (output.isCancelled) {
+        handler.destroyProcess()
+      }
+
+      if (output.getExitCode != 0) {
+        HaskellNotificationGroup.logErrorBalloonEvent(project, output.getStderr)
+      }
+      output.getExitCode == 0 && !output.isCancelled && !output.isTimeout
+    })
+
+    result
   }
 
   def updateStackIndex(project: Project): Option[ProcessOutput] = {

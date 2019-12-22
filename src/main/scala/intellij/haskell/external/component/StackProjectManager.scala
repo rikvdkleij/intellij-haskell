@@ -107,13 +107,13 @@ object StackProjectManager {
 
     val title = (if (update) "Updating" else "Installing") + " Haskell tools"
 
-    ProgressManager.getInstance().run(new Task.Backgroundable(project, title, false, PerformInBackgroundOption.ALWAYS_BACKGROUND) {
+    ProgressManager.getInstance().run(new Task.Backgroundable(project, title, true, PerformInBackgroundOption.ALWAYS_BACKGROUND) {
 
       private def isToolAvailable(progressIndicator: ProgressIndicator, tool: HTool) = {
         HaskellSettingsState.useCustomTools || {
           if (!GlobalInfo.toolPath(tool).exists() || update) {
             progressIndicator.setText(s"Busy with installing ${tool.name} in ${GlobalInfo.toolsBinPath}")
-            StackCommandLine.installTool(project, tool.name)
+            StackCommandLine.installTool(project, progressIndicator, tool.name)
           } else {
             true
           }

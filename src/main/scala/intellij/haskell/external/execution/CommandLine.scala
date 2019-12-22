@@ -19,9 +19,11 @@ package intellij.haskell.external.execution
 import com.intellij.execution.configurations.GeneralCommandLine
 import com.intellij.execution.configurations.GeneralCommandLine.ParentEnvironmentType
 import com.intellij.execution.process._
+import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Key
 import com.intellij.openapi.vfs.VfsUtil
+import com.intellij.util.io.BaseOutputReader
 import intellij.haskell.HaskellNotificationGroup
 import org.jetbrains.jps.incremental.messages.BuildMessage
 import org.jetbrains.jps.incremental.messages.BuildMessage.Kind
@@ -48,6 +50,23 @@ object CommandLine {
   def run2(commandPath: String, arguments: Seq[String], timeoutInMillis: Long = DefaultTimeout.toMillis,
            notifyBalloonError: Boolean = DefaultNotifyBalloonError, ignoreExitCode: Boolean = DefaultIgnoreExitCode, logOutput: Boolean = DefaultLogOutput): ProcessOutput = {
     run3(None, VfsUtil.getUserHomeDir.getPath, commandPath, arguments, timeoutInMillis, notifyBalloonError, ignoreExitCode, logOutput)
+  }
+
+  def runWithProgressIndicator(project: Project, workDir: Option[String], commandPath: String, arguments: Seq[String], progressIndicator: Option[ProgressIndicator]): CapturingProcessHandler = {
+    val commandLine = createCommandLine(workDir.getOrElse(project.getBasePath), commandPath, arguments)
+
+    new CapturingProcessHandler(commandLine) {
+      override protected def createProcessAdapter(processOutput: ProcessOutput): CapturingProcessAdapter = {
+        progressIndicator match {
+          case Some(pi) => new CapturingProcessToProgressIndicator(project, pi)
+          case None => super.createProcessAdapter(processOutput)
+        }
+      }
+
+      override def readerOptions(): BaseOutputReader.Options = {
+        BaseOutputReader.Options.NON_BLOCKING
+      }
+    }
   }
 
   private def run3(project: Option[Project], workDir: String, commandPath: String, arguments: Seq[String], timeoutInMillis: Long = DefaultTimeout.toMillis,
@@ -118,6 +137,13 @@ private class CapturingProcessToLog(val project: Option[Project], val cmd: Gener
     if (trimmedText.nonEmpty) {
       HaskellNotificationGroup.logInfoEvent(project, s"${cmd.getCommandLineString}:  $trimmedText")
     }
+  }
+}
+
+private class CapturingProcessToProgressIndicator(project: Project, progressIndicator: ProgressIndicator) extends CapturingProcessAdapter() {
+
+  override def onTextAvailable(event: ProcessEvent, outputType: Key[_]): Unit = {
+    progressIndicator.setText2(event.getText)
   }
 }
 
