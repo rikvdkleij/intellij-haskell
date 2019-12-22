@@ -37,10 +37,10 @@ public class HaskellParser implements PsiParser, LightPsiParser {
 
   /* ********************************************************** */
   // (("forall" | FORALL) ((onl q_name+ onl LEFT_PAREN onl (type_signature | ttype) onl (COMMA onl (type_signature | ttype))* onl RIGHT_PAREN)+ | (onl q_name)+) (onl DOUBLE_RIGHT_ARROW onl ttype)? |
-  //                                   (q_name | UNDERSCORE)* LEFT_PAREN ttype1 RIGHT_PAREN |
-  //                                   (q_name | UNDERSCORE)* LEFT_BRACE ttype1 RIGHT_BRACE |
-  //                                   (q_name | UNDERSCORE)* LEFT_PAREN ttype2 RIGHT_PAREN |
-  //                                   (q_name | UNDERSCORE)* LEFT_BRACE ttype2 RIGHT_BRACE |
+  //                                   (q_name | UNDERSCORE)* QUOTE? LEFT_PAREN ttype1 RIGHT_PAREN |
+  //                                   (q_name | UNDERSCORE)* QUOTE? LEFT_BRACE ttype1 RIGHT_BRACE |
+  //                                   (q_name | UNDERSCORE)* QUOTE? LEFT_PAREN ttype2 RIGHT_PAREN |
+  //                                   (q_name | UNDERSCORE)* QUOTE? LEFT_BRACE ttype2 RIGHT_BRACE |
   //                                   QUOTE? LEFT_BRACKET oonls ttype (oonls COMMA oonls ttype)* oonls RIGHT_BRACKET |
   //                                   QUOTE? (q_name (oonls COLON_COLON oonls ttype)?)+ | QUOTE? LEFT_PAREN RIGHT_PAREN | QUOTE? LEFT_BRACKET RIGHT_BRACKET | LEFT_PAREN COMMA+ RIGHT_PAREN  | literal | LEFT_PAREN RIGHT_ARROW RIGHT_PAREN) !COLON_COLON
   static boolean atype(PsiBuilder b, int l) {
@@ -54,10 +54,10 @@ public class HaskellParser implements PsiParser, LightPsiParser {
   }
 
   // ("forall" | FORALL) ((onl q_name+ onl LEFT_PAREN onl (type_signature | ttype) onl (COMMA onl (type_signature | ttype))* onl RIGHT_PAREN)+ | (onl q_name)+) (onl DOUBLE_RIGHT_ARROW onl ttype)? |
-  //                                   (q_name | UNDERSCORE)* LEFT_PAREN ttype1 RIGHT_PAREN |
-  //                                   (q_name | UNDERSCORE)* LEFT_BRACE ttype1 RIGHT_BRACE |
-  //                                   (q_name | UNDERSCORE)* LEFT_PAREN ttype2 RIGHT_PAREN |
-  //                                   (q_name | UNDERSCORE)* LEFT_BRACE ttype2 RIGHT_BRACE |
+  //                                   (q_name | UNDERSCORE)* QUOTE? LEFT_PAREN ttype1 RIGHT_PAREN |
+  //                                   (q_name | UNDERSCORE)* QUOTE? LEFT_BRACE ttype1 RIGHT_BRACE |
+  //                                   (q_name | UNDERSCORE)* QUOTE? LEFT_PAREN ttype2 RIGHT_PAREN |
+  //                                   (q_name | UNDERSCORE)* QUOTE? LEFT_BRACE ttype2 RIGHT_BRACE |
   //                                   QUOTE? LEFT_BRACKET oonls ttype (oonls COMMA oonls ttype)* oonls RIGHT_BRACKET |
   //                                   QUOTE? (q_name (oonls COLON_COLON oonls ttype)?)+ | QUOTE? LEFT_PAREN RIGHT_PAREN | QUOTE? LEFT_BRACKET RIGHT_BRACKET | LEFT_PAREN COMMA+ RIGHT_PAREN  | literal | LEFT_PAREN RIGHT_ARROW RIGHT_PAREN
   private static boolean atype_0(PsiBuilder b, int l) {
@@ -250,12 +250,13 @@ public class HaskellParser implements PsiParser, LightPsiParser {
     return r;
   }
 
-  // (q_name | UNDERSCORE)* LEFT_PAREN ttype1 RIGHT_PAREN
+  // (q_name | UNDERSCORE)* QUOTE? LEFT_PAREN ttype1 RIGHT_PAREN
   private static boolean atype_0_1(PsiBuilder b, int l) {
     if (!recursion_guard_(b, l, "atype_0_1")) return false;
     boolean r;
     Marker m = enter_section_(b);
     r = atype_0_1_0(b, l + 1);
+    r = r && atype_0_1_1(b, l + 1);
     r = r && consumeToken(b, HS_LEFT_PAREN);
     r = r && ttype1(b, l + 1);
     r = r && consumeToken(b, HS_RIGHT_PAREN);
@@ -283,12 +284,20 @@ public class HaskellParser implements PsiParser, LightPsiParser {
     return r;
   }
 
-  // (q_name | UNDERSCORE)* LEFT_BRACE ttype1 RIGHT_BRACE
+  // QUOTE?
+  private static boolean atype_0_1_1(PsiBuilder b, int l) {
+    if (!recursion_guard_(b, l, "atype_0_1_1")) return false;
+    consumeToken(b, HS_QUOTE);
+    return true;
+  }
+
+  // (q_name | UNDERSCORE)* QUOTE? LEFT_BRACE ttype1 RIGHT_BRACE
   private static boolean atype_0_2(PsiBuilder b, int l) {
     if (!recursion_guard_(b, l, "atype_0_2")) return false;
     boolean r;
     Marker m = enter_section_(b);
     r = atype_0_2_0(b, l + 1);
+    r = r && atype_0_2_1(b, l + 1);
     r = r && consumeToken(b, HS_LEFT_BRACE);
     r = r && ttype1(b, l + 1);
     r = r && consumeToken(b, HS_RIGHT_BRACE);
@@ -316,12 +325,20 @@ public class HaskellParser implements PsiParser, LightPsiParser {
     return r;
   }
 
-  // (q_name | UNDERSCORE)* LEFT_PAREN ttype2 RIGHT_PAREN
+  // QUOTE?
+  private static boolean atype_0_2_1(PsiBuilder b, int l) {
+    if (!recursion_guard_(b, l, "atype_0_2_1")) return false;
+    consumeToken(b, HS_QUOTE);
+    return true;
+  }
+
+  // (q_name | UNDERSCORE)* QUOTE? LEFT_PAREN ttype2 RIGHT_PAREN
   private static boolean atype_0_3(PsiBuilder b, int l) {
     if (!recursion_guard_(b, l, "atype_0_3")) return false;
     boolean r;
     Marker m = enter_section_(b);
     r = atype_0_3_0(b, l + 1);
+    r = r && atype_0_3_1(b, l + 1);
     r = r && consumeToken(b, HS_LEFT_PAREN);
     r = r && ttype2(b, l + 1);
     r = r && consumeToken(b, HS_RIGHT_PAREN);
@@ -349,12 +366,20 @@ public class HaskellParser implements PsiParser, LightPsiParser {
     return r;
   }
 
-  // (q_name | UNDERSCORE)* LEFT_BRACE ttype2 RIGHT_BRACE
+  // QUOTE?
+  private static boolean atype_0_3_1(PsiBuilder b, int l) {
+    if (!recursion_guard_(b, l, "atype_0_3_1")) return false;
+    consumeToken(b, HS_QUOTE);
+    return true;
+  }
+
+  // (q_name | UNDERSCORE)* QUOTE? LEFT_BRACE ttype2 RIGHT_BRACE
   private static boolean atype_0_4(PsiBuilder b, int l) {
     if (!recursion_guard_(b, l, "atype_0_4")) return false;
     boolean r;
     Marker m = enter_section_(b);
     r = atype_0_4_0(b, l + 1);
+    r = r && atype_0_4_1(b, l + 1);
     r = r && consumeToken(b, HS_LEFT_BRACE);
     r = r && ttype2(b, l + 1);
     r = r && consumeToken(b, HS_RIGHT_BRACE);
@@ -380,6 +405,13 @@ public class HaskellParser implements PsiParser, LightPsiParser {
     r = q_name(b, l + 1);
     if (!r) r = consumeToken(b, HS_UNDERSCORE);
     return r;
+  }
+
+  // QUOTE?
+  private static boolean atype_0_4_1(PsiBuilder b, int l) {
+    if (!recursion_guard_(b, l, "atype_0_4_1")) return false;
+    consumeToken(b, HS_QUOTE);
+    return true;
   }
 
   // QUOTE? LEFT_BRACKET oonls ttype (oonls COMMA oonls ttype)* oonls RIGHT_BRACKET
