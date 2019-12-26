@@ -79,7 +79,7 @@ class HaskellModuleBuilder extends TemplateModuleBuilder(null, HaskellModuleType
       packageRelativePath.flatMap(pp => HaskellModuleBuilder.createCabalInfo(rootModel.getProject, project.getBasePath, pp)) match {
         case Some(ci) => cabalInfo = ci
         case None =>
-          Messages.showErrorDialog(s"Couldn't create Haskell module due to failure retrieving or parsing Cabal file for package path `${project.getBasePath}`", "No Cabal file info")
+          HaskellNotificationGroup.logErrorBalloonEvent(project, s"Couldn't create Haskell module due to failure retrieving or parsing Cabal file for package path `${project.getBasePath}`")
       }
     }
 
