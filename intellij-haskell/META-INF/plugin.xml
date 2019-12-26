@@ -1,7 +1,7 @@
 <idea-plugin>
     <id>intellij.haskell</id>
     <name>IntelliJ-Haskell</name>
-    <version>1.0.0-beta56</version>
+    <version>1.0.0-beta57</version>
     <vendor email="rikvdkleij@gmail.com">Rik van der Kleij</vendor>
 
     <description><![CDATA[
@@ -13,7 +13,7 @@
     ]]></description>
 
     <change-notes><![CDATA[
-        <p>1.0.0-beta56</p>
+        <p>1.0.0-beta57</p>
         <ul>
             <li>Various improvements and fixes</li>
             <li>Support to cancel the process which builds the Haskell tools</li>
