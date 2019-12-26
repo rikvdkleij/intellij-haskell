@@ -60,9 +60,11 @@ object HaskellFileUtil {
 
   def saveFileAsIsInDispatchThread(project: Project, virtualFile: VirtualFile): Unit = {
     findDocument(virtualFile).foreach(d => {
-      PsiDocumentManager.getInstance(project).doPostponedOperationsAndUnblockDocument(d)
+      val documentManager = PsiDocumentManager.getInstance(project)
+      val fileDocumentManager = FileDocumentManager.getInstance
+      ApplicationUtil.runReadAction(documentManager.doPostponedOperationsAndUnblockDocument(d))
       ApplicationManager.getApplication.invokeAndWait(() => {
-        FileDocumentManager.getInstance.saveDocumentAsIs(d)
+        fileDocumentManager.saveDocumentAsIs(d)
       })
     })
   }
