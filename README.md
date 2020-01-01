@@ -67,7 +67,7 @@ When used with `hindent`, `intellij-haskell` automatically sets `--indent-size` 
   - Make sure your Stack project builds without errors. Preferably by using: `stack build --test --haddock --no-haddock-hyperlink-source`;
   - After your project is built successfully, import an existing project by:
     - Inside IntelliJ use `File`>`New`>`Project from Existing Sources...` from the IntelliJ menu;
-    - In the "Welcome to IntelliJ IDEA" dialog" use `Import Project`; 
+    - In the `Welcome to IntelliJ IDEA` dialog use `Import Project`; 
   - In the `New Project` wizard select `Import project from external model` and check `Haskell Stack`;
   - In next page of wizard configure `Project SDK` by configuring `Haskell Tool Stack` with selecting path to `stack` binary, e.g. `/usr/local/bin/stack`;
   - Finish wizard and project will be opened;
