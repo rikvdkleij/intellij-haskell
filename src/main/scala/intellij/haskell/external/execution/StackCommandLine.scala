@@ -88,7 +88,12 @@ object StackCommandLine {
       }
 
       if (output.getExitCode != 0) {
-        HaskellNotificationGroup.logErrorBalloonEvent(project, output.getStderr)
+        if (output.getStderr.nonEmpty) {
+          HaskellNotificationGroup.logErrorBalloonEvent(project, output.getStderr)
+        }
+        if (output.getStdout.nonEmpty) {
+          HaskellNotificationGroup.logErrorBalloonEvent(project, output.getStdout)
+        }
       }
       output.getExitCode == 0 && !output.isCancelled && !output.isTimeout
     })
