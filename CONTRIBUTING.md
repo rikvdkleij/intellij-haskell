@@ -2,7 +2,7 @@
 # How to build project
 1. Clone this project;
 1. Go to root of project;
-1. Run task `sbt updateIdea` from the shell;
+1. Run task `sbt updateIntellij` from the shell;
 1. Install/enable the following plugins in IntelliJ: Plugin Devkit, Grammar-Kit and PsiViewer;
 1. Import this project as an sbt project in IntelliJ;
 1. Be sure `JVM SDK` inside `Languages & Frameworks`>`Scala Compiler Server` is set to `1.8`, since the Scala compiler version (2.13.0) which this plugin is currently using is not compatible with Java 7 or lower, Java 9 is not yet supported;
