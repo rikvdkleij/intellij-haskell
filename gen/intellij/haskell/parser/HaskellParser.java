@@ -632,7 +632,7 @@ public class HaskellParser implements PsiParser, LightPsiParser {
   }
 
   /* ********************************************************** */
-  // (atype | TILDE | UNDERSCORE)+
+  // (atype | TILDE | UNDERSCORE | VERTICAL_BAR)+
   static boolean btype(PsiBuilder b, int l) {
     if (!recursion_guard_(b, l, "btype")) return false;
     boolean r;
@@ -647,13 +647,14 @@ public class HaskellParser implements PsiParser, LightPsiParser {
     return r;
   }
 
-  // atype | TILDE | UNDERSCORE
+  // atype | TILDE | UNDERSCORE | VERTICAL_BAR
   private static boolean btype_0(PsiBuilder b, int l) {
     if (!recursion_guard_(b, l, "btype_0")) return false;
     boolean r;
     r = atype(b, l + 1);
     if (!r) r = consumeToken(b, HS_TILDE);
     if (!r) r = consumeToken(b, HS_UNDERSCORE);
+    if (!r) r = consumeToken(b, HS_VERTICAL_BAR);
     return r;
   }
 
