@@ -15,7 +15,13 @@ object GlobalInfo {
   final val StackageLtsVersion = "lts-14"
   private final val ToolsBinDirName = "bin"
 
-  private final val IntelliJHaskellDirectories = ProjectDirectories.from("com.github", "rikvdkleij", "intellij-haskell")
+  private final lazy val IntelliJHaskellDirectories = {
+    // Workaround https://github.com/rikvdkleij/intellij-haskell/issues/503
+    if (SystemInfo.isWindows) {
+      System.setProperty("jdk.lang.Process.allowAmbiguousCommands", "true")
+    }
+    ProjectDirectories.from("com.github", "rikvdkleij", "intellij-haskell")
+  }
 
   lazy val getIntelliJHaskellDirectory: File = {
     val directory = new File(IntelliJHaskellDirectories.cacheDir)
