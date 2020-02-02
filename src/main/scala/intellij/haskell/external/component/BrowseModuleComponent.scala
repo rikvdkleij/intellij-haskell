@@ -171,7 +171,7 @@ private[component] object BrowseModuleComponent {
   private def createProjectModuleIdentifier(project: Project, declarationLine: String, moduleName: String): Option[ModuleIdentifier] = {
     declarationLine match {
       case Module$SelPattern(mn, id, fieldType) => Some(ModuleIdentifier(id, mn, s"$id :: $fieldType", StringUtil.isWithinParens(id)))
-      case _ => DeclarationUtil.getDeclarationInfo(declarationLine, containsQualifiedIds = false).
+      case _ => DeclarationUtil.getDeclarationInfo(declarationLine, containsQualifiedIds = true).
         map(declarationInfo => ModuleIdentifier(declarationInfo.id, moduleName, declarationInfo.declarationLine, declarationInfo.operator))
     }
   }
