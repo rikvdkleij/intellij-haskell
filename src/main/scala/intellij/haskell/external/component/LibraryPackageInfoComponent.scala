@@ -81,7 +81,7 @@ private[component] object LibraryPackageInfoComponent {
 
   private def findPackageInfo(key: Key): Result = {
     // Because preloadLibraryModuleNames should already have done all the work, something is wrong if this method is called
-    HaskellNotificationGroup.logErrorBalloonEvent(key.project, s"Package ${key.packageName} is not in library module names cache")
+    HaskellNotificationGroup.logWarningEvent(key.project, s"Package ${key.packageName} is not in library module names cache")
     None
   }
 
