@@ -632,7 +632,7 @@ public class HaskellParser implements PsiParser, LightPsiParser {
   }
 
   /* ********************************************************** */
-  // (atype | TILDE | UNDERSCORE | VERTICAL_BAR)+
+  // (atype | TILDE | UNDERSCORE)+
   static boolean btype(PsiBuilder b, int l) {
     if (!recursion_guard_(b, l, "btype")) return false;
     boolean r;
@@ -647,14 +647,13 @@ public class HaskellParser implements PsiParser, LightPsiParser {
     return r;
   }
 
-  // atype | TILDE | UNDERSCORE | VERTICAL_BAR
+  // atype | TILDE | UNDERSCORE
   private static boolean btype_0(PsiBuilder b, int l) {
     if (!recursion_guard_(b, l, "btype_0")) return false;
     boolean r;
     r = atype(b, l + 1);
     if (!r) r = consumeToken(b, HS_TILDE);
     if (!r) r = consumeToken(b, HS_UNDERSCORE);
-    if (!r) r = consumeToken(b, HS_VERTICAL_BAR);
     return r;
   }
 
@@ -5601,6 +5600,7 @@ public class HaskellParser implements PsiParser, LightPsiParser {
 
   /* ********************************************************** */
   // TYPE onls simpletype onls COLON_COLON onls ttype |
+  //                                   TYPE onls simpletype onls EQUAL onls ttype onls VERTICAL_BAR q_name RIGHT_ARROW q_name |
   //                                   TYPE onls simpletype onls (EQUAL | WHERE) onls (ttype | type_signature) (DOUBLE_RIGHT_ARROW ttype)? |
   //                                   TYPE onls simpletype onls EQUAL onls expression |
   //                                   TYPE onls simpletype onls (LEFT_PAREN onls kind_signature onls RIGHT_PAREN)* onls (EQUAL onls ttype | COLON_COLON ttype) |
@@ -5615,6 +5615,7 @@ public class HaskellParser implements PsiParser, LightPsiParser {
     if (!r) r = type_declaration_2(b, l + 1);
     if (!r) r = type_declaration_3(b, l + 1);
     if (!r) r = type_declaration_4(b, l + 1);
+    if (!r) r = type_declaration_5(b, l + 1);
     exit_section_(b, m, HS_TYPE_DECLARATION, r);
     return r;
   }
@@ -5635,7 +5636,7 @@ public class HaskellParser implements PsiParser, LightPsiParser {
     return r;
   }
 
-  // TYPE onls simpletype onls (EQUAL | WHERE) onls (ttype | type_signature) (DOUBLE_RIGHT_ARROW ttype)?
+  // TYPE onls simpletype onls EQUAL onls ttype onls VERTICAL_BAR q_name RIGHT_ARROW q_name
   private static boolean type_declaration_1(PsiBuilder b, int l) {
     if (!recursion_guard_(b, l, "type_declaration_1")) return false;
     boolean r;
@@ -5644,17 +5645,38 @@ public class HaskellParser implements PsiParser, LightPsiParser {
     r = r && onls(b, l + 1);
     r = r && simpletype(b, l + 1);
     r = r && onls(b, l + 1);
-    r = r && type_declaration_1_4(b, l + 1);
+    r = r && consumeToken(b, HS_EQUAL);
     r = r && onls(b, l + 1);
-    r = r && type_declaration_1_6(b, l + 1);
-    r = r && type_declaration_1_7(b, l + 1);
+    r = r && ttype(b, l + 1);
+    r = r && onls(b, l + 1);
+    r = r && consumeToken(b, HS_VERTICAL_BAR);
+    r = r && q_name(b, l + 1);
+    r = r && consumeToken(b, HS_RIGHT_ARROW);
+    r = r && q_name(b, l + 1);
+    exit_section_(b, m, null, r);
+    return r;
+  }
+
+  // TYPE onls simpletype onls (EQUAL | WHERE) onls (ttype | type_signature) (DOUBLE_RIGHT_ARROW ttype)?
+  private static boolean type_declaration_2(PsiBuilder b, int l) {
+    if (!recursion_guard_(b, l, "type_declaration_2")) return false;
+    boolean r;
+    Marker m = enter_section_(b);
+    r = consumeToken(b, HS_TYPE);
+    r = r && onls(b, l + 1);
+    r = r && simpletype(b, l + 1);
+    r = r && onls(b, l + 1);
+    r = r && type_declaration_2_4(b, l + 1);
+    r = r && onls(b, l + 1);
+    r = r && type_declaration_2_6(b, l + 1);
+    r = r && type_declaration_2_7(b, l + 1);
     exit_section_(b, m, null, r);
     return r;
   }
 
   // EQUAL | WHERE
-  private static boolean type_declaration_1_4(PsiBuilder b, int l) {
-    if (!recursion_guard_(b, l, "type_declaration_1_4")) return false;
+  private static boolean type_declaration_2_4(PsiBuilder b, int l) {
+    if (!recursion_guard_(b, l, "type_declaration_2_4")) return false;
     boolean r;
     r = consumeToken(b, HS_EQUAL);
     if (!r) r = consumeToken(b, HS_WHERE);
@@ -5662,8 +5684,8 @@ public class HaskellParser implements PsiParser, LightPsiParser {
   }
 
   // ttype | type_signature
-  private static boolean type_declaration_1_6(PsiBuilder b, int l) {
-    if (!recursion_guard_(b, l, "type_declaration_1_6")) return false;
+  private static boolean type_declaration_2_6(PsiBuilder b, int l) {
+    if (!recursion_guard_(b, l, "type_declaration_2_6")) return false;
     boolean r;
     r = ttype(b, l + 1);
     if (!r) r = type_signature(b, l + 1);
@@ -5671,15 +5693,15 @@ public class HaskellParser implements PsiParser, LightPsiParser {
   }
 
   // (DOUBLE_RIGHT_ARROW ttype)?
-  private static boolean type_declaration_1_7(PsiBuilder b, int l) {
-    if (!recursion_guard_(b, l, "type_declaration_1_7")) return false;
-    type_declaration_1_7_0(b, l + 1);
+  private static boolean type_declaration_2_7(PsiBuilder b, int l) {
+    if (!recursion_guard_(b, l, "type_declaration_2_7")) return false;
+    type_declaration_2_7_0(b, l + 1);
     return true;
   }
 
   // DOUBLE_RIGHT_ARROW ttype
-  private static boolean type_declaration_1_7_0(PsiBuilder b, int l) {
-    if (!recursion_guard_(b, l, "type_declaration_1_7_0")) return false;
+  private static boolean type_declaration_2_7_0(PsiBuilder b, int l) {
+    if (!recursion_guard_(b, l, "type_declaration_2_7_0")) return false;
     boolean r;
     Marker m = enter_section_(b);
     r = consumeToken(b, HS_DOUBLE_RIGHT_ARROW);
@@ -5689,8 +5711,8 @@ public class HaskellParser implements PsiParser, LightPsiParser {
   }
 
   // TYPE onls simpletype onls EQUAL onls expression
-  private static boolean type_declaration_2(PsiBuilder b, int l) {
-    if (!recursion_guard_(b, l, "type_declaration_2")) return false;
+  private static boolean type_declaration_3(PsiBuilder b, int l) {
+    if (!recursion_guard_(b, l, "type_declaration_3")) return false;
     boolean r;
     Marker m = enter_section_(b);
     r = consumeToken(b, HS_TYPE);
@@ -5705,35 +5727,35 @@ public class HaskellParser implements PsiParser, LightPsiParser {
   }
 
   // TYPE onls simpletype onls (LEFT_PAREN onls kind_signature onls RIGHT_PAREN)* onls (EQUAL onls ttype | COLON_COLON ttype)
-  private static boolean type_declaration_3(PsiBuilder b, int l) {
-    if (!recursion_guard_(b, l, "type_declaration_3")) return false;
+  private static boolean type_declaration_4(PsiBuilder b, int l) {
+    if (!recursion_guard_(b, l, "type_declaration_4")) return false;
     boolean r;
     Marker m = enter_section_(b);
     r = consumeToken(b, HS_TYPE);
     r = r && onls(b, l + 1);
     r = r && simpletype(b, l + 1);
     r = r && onls(b, l + 1);
-    r = r && type_declaration_3_4(b, l + 1);
+    r = r && type_declaration_4_4(b, l + 1);
     r = r && onls(b, l + 1);
-    r = r && type_declaration_3_6(b, l + 1);
+    r = r && type_declaration_4_6(b, l + 1);
     exit_section_(b, m, null, r);
     return r;
   }
 
   // (LEFT_PAREN onls kind_signature onls RIGHT_PAREN)*
-  private static boolean type_declaration_3_4(PsiBuilder b, int l) {
-    if (!recursion_guard_(b, l, "type_declaration_3_4")) return false;
+  private static boolean type_declaration_4_4(PsiBuilder b, int l) {
+    if (!recursion_guard_(b, l, "type_declaration_4_4")) return false;
     while (true) {
       int c = current_position_(b);
-      if (!type_declaration_3_4_0(b, l + 1)) break;
-      if (!empty_element_parsed_guard_(b, "type_declaration_3_4", c)) break;
+      if (!type_declaration_4_4_0(b, l + 1)) break;
+      if (!empty_element_parsed_guard_(b, "type_declaration_4_4", c)) break;
     }
     return true;
   }
 
   // LEFT_PAREN onls kind_signature onls RIGHT_PAREN
-  private static boolean type_declaration_3_4_0(PsiBuilder b, int l) {
-    if (!recursion_guard_(b, l, "type_declaration_3_4_0")) return false;
+  private static boolean type_declaration_4_4_0(PsiBuilder b, int l) {
+    if (!recursion_guard_(b, l, "type_declaration_4_4_0")) return false;
     boolean r;
     Marker m = enter_section_(b);
     r = consumeToken(b, HS_LEFT_PAREN);
@@ -5746,19 +5768,19 @@ public class HaskellParser implements PsiParser, LightPsiParser {
   }
 
   // EQUAL onls ttype | COLON_COLON ttype
-  private static boolean type_declaration_3_6(PsiBuilder b, int l) {
-    if (!recursion_guard_(b, l, "type_declaration_3_6")) return false;
+  private static boolean type_declaration_4_6(PsiBuilder b, int l) {
+    if (!recursion_guard_(b, l, "type_declaration_4_6")) return false;
     boolean r;
     Marker m = enter_section_(b);
-    r = type_declaration_3_6_0(b, l + 1);
-    if (!r) r = type_declaration_3_6_1(b, l + 1);
+    r = type_declaration_4_6_0(b, l + 1);
+    if (!r) r = type_declaration_4_6_1(b, l + 1);
     exit_section_(b, m, null, r);
     return r;
   }
 
   // EQUAL onls ttype
-  private static boolean type_declaration_3_6_0(PsiBuilder b, int l) {
-    if (!recursion_guard_(b, l, "type_declaration_3_6_0")) return false;
+  private static boolean type_declaration_4_6_0(PsiBuilder b, int l) {
+    if (!recursion_guard_(b, l, "type_declaration_4_6_0")) return false;
     boolean r;
     Marker m = enter_section_(b);
     r = consumeToken(b, HS_EQUAL);
@@ -5769,8 +5791,8 @@ public class HaskellParser implements PsiParser, LightPsiParser {
   }
 
   // COLON_COLON ttype
-  private static boolean type_declaration_3_6_1(PsiBuilder b, int l) {
-    if (!recursion_guard_(b, l, "type_declaration_3_6_1")) return false;
+  private static boolean type_declaration_4_6_1(PsiBuilder b, int l) {
+    if (!recursion_guard_(b, l, "type_declaration_4_6_1")) return false;
     boolean r;
     Marker m = enter_section_(b);
     r = consumeToken(b, HS_COLON_COLON);
@@ -5780,8 +5802,8 @@ public class HaskellParser implements PsiParser, LightPsiParser {
   }
 
   // TYPE onls simpletype
-  private static boolean type_declaration_4(PsiBuilder b, int l) {
-    if (!recursion_guard_(b, l, "type_declaration_4")) return false;
+  private static boolean type_declaration_5(PsiBuilder b, int l) {
+    if (!recursion_guard_(b, l, "type_declaration_5")) return false;
     boolean r;
     Marker m = enter_section_(b);
     r = consumeToken(b, HS_TYPE);

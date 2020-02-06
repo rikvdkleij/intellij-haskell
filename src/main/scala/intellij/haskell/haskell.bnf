@@ -86,6 +86,7 @@ top_declaration             ::= type_declaration | data_declaration | newtype_de
                                   pragma | fixity_declaration | expression | DIRECTIVE
 
 type_declaration            ::= TYPE onls simpletype onls COLON_COLON onls ttype |
+                                  TYPE onls simpletype onls EQUAL onls ttype onls VERTICAL_BAR q_name RIGHT_ARROW q_name |
                                   TYPE onls simpletype onls (EQUAL | WHERE) onls (ttype | type_signature) (DOUBLE_RIGHT_ARROW ttype)? |
                                   TYPE onls simpletype onls EQUAL onls expression |
                                   TYPE onls simpletype onls (LEFT_PAREN onls kind_signature onls RIGHT_PAREN)* onls (EQUAL onls ttype | COLON_COLON ttype) |
@@ -186,7 +187,7 @@ ttype2                      ::= ("forall" | FORALL)? onl ttype (onl DOUBLE_RIGHT
 
 ttype                       ::= "!"? (btype (oonls RIGHT_ARROW oonls ttype)* | list_type q_name* | LEFT_PAREN RIGHT_ARROW RIGHT_PAREN)
 
-private btype               ::= (atype | TILDE | UNDERSCORE | VERTICAL_BAR)+     // generalization because left recursive is not supported and UNDERSCORE because of partial type signatures
+private btype               ::= (atype | TILDE | UNDERSCORE)+     // generalization because left recursive is not supported and UNDERSCORE because of partial type signatures
 
 simpletype                  ::= ttype | (q_name | LEFT_PAREN RIGHT_PAREN)+ |
                                   q_name* oonls LEFT_PAREN q_name RIGHT_PAREN oonls q_name* |

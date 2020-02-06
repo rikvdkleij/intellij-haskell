@@ -42,6 +42,12 @@ public class HaskellTypeDeclarationImpl extends HaskellCompositeElementImpl impl
 
   @Override
   @NotNull
+  public List<HaskellQName> getQNameList() {
+    return PsiTreeUtil.getChildrenOfTypeAsList(this, HaskellQName.class);
+  }
+
+  @Override
+  @NotNull
   public HaskellSimpletype getSimpletype() {
     return notNullChild(PsiTreeUtil.getChildOfType(this, HaskellSimpletype.class));
   }
