@@ -77,7 +77,7 @@ import_ids_spec             ::= LEFT_PAREN onls import_id (onls COMMA? onls impo
 import_hiding_spec          ::= import_hiding onls LEFT_PAREN onls (import_id onls (onls COMMA onls import_id)* onls (COMMA)?)? onls RIGHT_PAREN
 import_empty_spec           ::= LEFT_PAREN RIGHT_PAREN
 import_hiding               ::= "hiding"
-import_id                   ::= TYPE? (q_name onls LEFT_PAREN onls (q_name onls (COMMA onls q_name onls)* onls)? RIGHT_PAREN | q_name LEFT_PAREN onls dot_dot onls RIGHT_PAREN | q_name)
+import_id                   ::= TYPE? (q_name LEFT_PAREN onls dot_dot onls RIGHT_PAREN | q_name onls LEFT_PAREN onls (q_name onls (COMMA onls q_name onls)* onls)? RIGHT_PAREN | q_name)
 import_package_name         ::= text_literal
 
 top_declaration_line        ::= top_declaration SEMICOLON? NEWLINE
@@ -223,7 +223,7 @@ private fixity              ::= INFIXL | INFIXR | INFIX
 exports                     ::= LEFT_PAREN onl export ((onl COMMA)? onl export)* (onl COMMA)? onl RIGHT_PAREN | LEFT_PAREN RIGHT_PAREN
 export                      ::= export1 | export2 | export3
 private export1             ::= MODULE modid
-private export2             ::= q_name (onl LEFT_PAREN (onl q_name (onl COMMA onl q_name)*)? onl RIGHT_PAREN | onl LEFT_PAREN onl dot_dot onl RIGHT_PAREN)?
+private export2             ::= q_name (onl LEFT_PAREN (onl (dot_dot | q_name) (onl COMMA onl q_name)*)? onl RIGHT_PAREN)?
 private export3             ::= TYPE onl q_name
 
 newconstr                   ::= newconstr_fielddecl | q_name atype
