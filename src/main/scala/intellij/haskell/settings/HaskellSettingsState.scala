@@ -55,10 +55,6 @@ object HaskellSettingsState {
     state.customTools
   }
 
-  def hindentPath: Option[String] = {
-    Option.when(customTools && state.hindentPath.nonEmpty)(state.hindentPath)
-  }
-
   def hlintPath: Option[String] = {
     Option.when(customTools && state.hlintPath.nonEmpty)(state.hlintPath)
   }
@@ -67,8 +63,8 @@ object HaskellSettingsState {
     Option.when(customTools && state.hooglePath.nonEmpty)(state.hooglePath)
   }
 
-  def stylishHaskellPath: Option[String] = {
-    Option.when(customTools && state.stylishHaskellPath.nonEmpty)(state.stylishHaskellPath)
+  def ormoluPath: Option[String] = {
+    Option.when(customTools && state.ormoluPath.nonEmpty)(state.ormoluPath)
   }
 
   def useCustomTools: Boolean = {

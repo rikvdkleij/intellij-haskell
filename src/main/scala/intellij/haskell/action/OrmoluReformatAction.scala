@@ -21,55 +21,57 @@ import com.intellij.openapi.actionSystem.{AnAction, AnActionEvent}
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.project.Project
 import com.intellij.psi.PsiFile
-import intellij.haskell.external.component.StackProjectManager
 import intellij.haskell.external.execution.CommandLine
-import intellij.haskell.util.{FutureUtil, HaskellEditorUtil, HaskellFileUtil, ScalaUtil}
-import intellij.haskell.{GlobalInfo, HTool, HaskellNotificationGroup}
+import intellij.haskell.settings.HaskellSettingsState
+import intellij.haskell.util._
+import intellij.haskell.{HTool, HaskellNotificationGroup}
 
-class StylishHaskellReformatAction extends AnAction {
+sealed case class SelectionContext(start: Int, end: Int, text: String)
+
+class OrmoluReformatAction extends AnAction {
 
   override def update(actionEvent: AnActionEvent): Unit = {
-    HaskellEditorUtil.enableExternalAction(actionEvent, (project: Project) => StackProjectManager.isStylishHaskellAvailable(project))
+    HaskellEditorUtil.enableExternalAction(actionEvent, (project: Project) => HaskellReformatAction.reformatByOrmolu)
   }
 
   override def actionPerformed(actionEvent: AnActionEvent): Unit = {
-    ActionUtil.findActionContext(actionEvent).foreach(actionContext => {
-      StylishHaskellReformatAction.format(actionContext.psiFile)
-    })
+    ActionUtil.findActionContext(actionEvent).foreach { actionContext =>
+      val psiFile = actionContext.psiFile
+      HaskellSettingsState.ormoluPath match {
+        case Some(p) => OrmoluReformatAction.format(psiFile, p)
+        case None => ()
+      }
+    }
   }
 }
 
-object StylishHaskellReformatAction {
-  private def stylishHaskellPath = GlobalInfo.defaultStylishHaskellPath.toString
+object OrmoluReformatAction {
 
-  def versionInfo(project: Project): String = {
-    if (StackProjectManager.isStylishHaskellAvailable(project)) {
-      CommandLine.run(project, stylishHaskellPath, Seq("--version")).getStdout
-    } else {
-      "-"
-    }
-  }
-
-  private[action] def format(psiFile: PsiFile): Unit = {
+  def format(psiFile: PsiFile, ormoluPath: String): Unit = {
     val project = psiFile.getProject
     HaskellFileUtil.saveFile(psiFile)
 
     HaskellFileUtil.getAbsolutePath(psiFile) match {
       case Some(path) =>
         val processOutputFuture = ApplicationManager.getApplication.executeOnPooledThread(ScalaUtil.callable[ProcessOutput] {
-          CommandLine.run(project, stylishHaskellPath, Seq(path))
+          CommandLine.run(project, ormoluPath, Seq(path))
         })
 
-        FutureUtil.waitForValue(project, processOutputFuture, s"reformatting by ${HTool.StylishHaskell.name}") match {
+        FutureUtil.waitForValue(project, processOutputFuture, s"reformatting by ${HTool.Ormolu.name}") match {
           case None => ()
           case Some(processOutput) =>
             if (processOutput.getStderrLines.isEmpty) {
               HaskellFileUtil.saveFileWithNewContent(psiFile, processOutput.getStdout)
             } else {
-              HaskellNotificationGroup.logInfoEvent(project, s"Error while reformatting by `${HTool.StylishHaskell.name}`. Error: ${processOutput.getStderr}")
+              HaskellNotificationGroup.logInfoEvent(project, s"Error while reformatting by `${HTool.Ormolu.name}`. Error: ${processOutput.getStderr}")
             }
         }
       case None => HaskellNotificationGroup.logWarningBalloonEvent(psiFile.getProject, s"Can not reformat file because could not determine path for file `${psiFile.getName}`. File exists only in memory")
     }
+  }
+
+
+  def versionInfo(project: Project): String = {
+    HaskellSettingsState.ormoluPath.map(p => CommandLine.run(project, p, Seq("--version")).getStdout).getOrElse("-")
   }
 }

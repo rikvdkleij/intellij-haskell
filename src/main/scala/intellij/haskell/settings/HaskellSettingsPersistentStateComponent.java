@@ -54,10 +54,9 @@ public class HaskellSettingsPersistentStateComponent implements PersistentStateC
         public Boolean reformatCodeBeforeCommit = false;
         public Boolean optimizeImportsBeforeCommit = false;
         public String newProjectTemplateName = "new-template";
-        public String hindentPath = "";
         public String hlintPath = "";
         public String hooglePath = "";
-        public String stylishHaskellPath = "";
+        public String ormoluPath = "";
         public Boolean customTools = false;
         public String extraStackArguments = "";
     }

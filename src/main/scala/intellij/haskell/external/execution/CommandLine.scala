@@ -75,7 +75,7 @@ object CommandLine {
     val commandLine = createCommandLine(workDir, commandPath, arguments)
 
     if (!logOutput) {
-      HaskellNotificationGroup.logInfoEvent(project, s"Executing: `${commandLine.getCommandLineString}`")
+      HaskellNotificationGroup.logInfoEvent(project, s"Executing: ${commandLine.getCommandLineString} ")
     }
 
     val processHandler = createProcessHandler(project, commandLine, logOutput)

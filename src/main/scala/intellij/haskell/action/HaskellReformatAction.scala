@@ -21,6 +21,7 @@ import com.intellij.openapi.actionSystem.{AnActionEvent, Presentation}
 import com.intellij.openapi.project.Project
 import com.intellij.psi.PsiFile
 import intellij.haskell.external.component.StackProjectManager
+import intellij.haskell.settings.HaskellSettingsState
 import intellij.haskell.util.{HaskellEditorUtil, HaskellFileUtil}
 
 class HaskellReformatAction extends ReformatCodeAction {
@@ -32,7 +33,7 @@ class HaskellReformatAction extends ReformatCodeAction {
     ActionUtil.findActionContext(actionEvent).foreach(actionContext => {
       val psiFile = actionContext.psiFile
       if (HaskellFileUtil.isHaskellFile(psiFile)) {
-        HaskellEditorUtil.enableExternalAction(actionEvent, (project: Project) => StackProjectManager.isStylishHaskellAvailable(project) && StackProjectManager.isHindentAvailable(project))
+        HaskellEditorUtil.enableExternalAction(actionEvent, (project: Project) => (StackProjectManager.isStylishHaskellAvailable(project) && StackProjectManager.isHindentAvailable(project)) || HaskellReformatAction.reformatByOrmolu)
       } else {
         super.update(actionEvent)
       }
@@ -45,10 +46,10 @@ class HaskellReformatAction extends ReformatCodeAction {
       if (HaskellFileUtil.isHaskellFile(psiFile)) {
         val selectionModel = actionContext.selectionModel
         selectionModel match {
-          case Some(_) =>
+          case Some(_) if StackProjectManager.isHindentAvailable(actionEvent.getProject) =>
             HindentReformatAction.format(psiFile, selectionModel.map(m =>
               HindentReformatAction.translateSelectionModelToSelectionContext(m)))
-          case None => HaskellReformatAction.reformatFile(psiFile)
+          case _ => HaskellReformatAction.reformatFile(psiFile)
         }
       } else {
         super.actionPerformed(actionEvent)
@@ -59,9 +60,17 @@ class HaskellReformatAction extends ReformatCodeAction {
 
 object HaskellReformatAction {
 
+  def reformatByOrmolu: Boolean = {
+    HaskellSettingsState.ormoluPath.isDefined
+  }
+
   def reformatFile(psiFile: PsiFile): Boolean = {
-    HindentReformatAction.format(psiFile)
-    StylishHaskellReformatAction.format(psiFile)
+    HaskellSettingsState.ormoluPath match {
+      case Some(p) => OrmoluReformatAction.format(psiFile, p)
+      case None =>
+        HindentReformatAction.format(psiFile)
+        StylishHaskellReformatAction.format(psiFile)
+    }
     true
   }
 }

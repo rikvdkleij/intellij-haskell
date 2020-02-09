@@ -34,6 +34,7 @@ class HaskellConfigurable extends Configurable {
   private val hindentPathField = new JTextField
   private val hlintPathField = new JTextField
   private val hooglePathField = new JTextField
+  private val ormoluPathField = new JTextField
   private val stylishHaskellPathField = new JTextField
   private val useCustomToolsToggle = new JCheckBox
   private val extraStackArgumentsField = new JTextField
@@ -54,6 +55,7 @@ class HaskellConfigurable extends Configurable {
       hlintPathField.setVisible(visible)
       hooglePathField.setVisible(visible)
       stylishHaskellPathField.setVisible(visible)
+      ormoluPathField.setVisible(visible)
     }
 
     toggleToolPathsVisibility()
@@ -68,10 +70,9 @@ class HaskellConfigurable extends Configurable {
     hlintOptionsField.getDocument.addDocumentListener(docListener)
     replTimeoutField.getDocument.addDocumentListener(docListener)
     newProjectTemplateNameField.getDocument.addDocumentListener(docListener)
-    hindentPathField.getDocument.addDocumentListener(docListener)
     hlintPathField.getDocument.addDocumentListener(docListener)
     hooglePathField.getDocument.addDocumentListener(docListener)
-    stylishHaskellPathField.getDocument.addDocumentListener(docListener)
+    ormoluPathField.getDocument.addDocumentListener(docListener)
     useSystemGhcToggle.addChangeListener { _ =>
       isModifiedByUser = true
     }
@@ -126,10 +127,9 @@ class HaskellConfigurable extends Configurable {
       (new JLabel(NewProjectTemplateName), newProjectTemplateNameField),
       (new JLabel(BuildToolsUsingSystemGhc), useSystemGhcToggle),
       (new JLabel(UseCustomTool), useCustomToolsToggle),
-      (new JLabel(HindentPath), hindentPathField),
       (new JLabel(HlintPath), hlintPathField),
       (new JLabel(HooglePath), hooglePathField),
-      (new JLabel(StylishHaskellPath), stylishHaskellPathField),
+      (new JLabel(OrmoluPath), ormoluPathField),
       (new JLabel(""), afterRestartLabel)
     )
 
@@ -163,10 +163,9 @@ class HaskellConfigurable extends Configurable {
     state.hlintOptions = hlintOptionsField.getText
     state.useSystemGhc = useSystemGhcToggle.isSelected
     state.newProjectTemplateName = newProjectTemplateNameField.getText
-    state.hindentPath = hindentPathField.getText
     state.hlintPath = hlintPathField.getText
     state.hooglePath = hooglePathField.getText
-    state.stylishHaskellPath = stylishHaskellPathField.getText
+    state.ormoluPath = ormoluPathField.getText
     state.customTools = useCustomToolsToggle.isSelected
     state.extraStackArguments = extraStackArgumentsField.getText
   }
@@ -192,17 +191,16 @@ class HaskellConfigurable extends Configurable {
 
   private def validateCustomTools(): Unit = {
     if (useCustomToolsToggle.isSelected) {
-      if (hindentPathField.getText.trim.isEmpty ||
-        hlintPathField.getText.trim.isEmpty ||
-        hooglePathField.getText.trim.isEmpty ||
-        stylishHaskellPathField.getText.trim.isEmpty) {
+      if (
+        ormoluPathField.getText.trim.isEmpty ||
+          hlintPathField.getText.trim.isEmpty ||
+          hooglePathField.getText.trim.isEmpty) {
         throw new ConfigurationException(s"All Haskell tools paths have to be set")
       }
 
-      checkFileExists(hindentPathField.getText)
       checkFileExists(hlintPathField.getText)
       checkFileExists(hooglePathField.getText)
-      checkFileExists(stylishHaskellPathField.getText)
+      checkFileExists(ormoluPathField.getText)
     }
   }
 
@@ -217,10 +215,9 @@ class HaskellConfigurable extends Configurable {
     useSystemGhcToggle.setSelected(state.useSystemGhc)
     replTimeoutField.setText(state.replTimeout.toString)
     newProjectTemplateNameField.setText(state.newProjectTemplateName)
-    hindentPathField.setText(state.hindentPath)
     hlintPathField.setText(state.hlintPath)
     hooglePathField.setText(state.hooglePath)
-    stylishHaskellPathField.setText(state.stylishHaskellPath)
+    ormoluPathField.setText(state.ormoluPath)
     useCustomToolsToggle.setSelected(state.customTools)
     extraStackArgumentsField.setText(state.extraStackArguments)
   }
@@ -235,6 +232,7 @@ object HaskellConfigurable {
   final val HlintPath = "Hlint path"
   final val HooglePath = "Hoogle path"
   final val StylishHaskellPath = "Stylish Haskell path"
+  final val OrmoluPath = "Ormolu path"
   final val UseCustomTool = "Use custom Haskell tools *"
   final val CustomToolPathWarning =
     """WARNING! Specifying a path for a Haskell tool will override the default

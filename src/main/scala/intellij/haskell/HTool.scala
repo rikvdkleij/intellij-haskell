@@ -21,4 +21,10 @@ object HTool {
   case object StylishHaskell extends HTool {
     def name: String = "stylish-haskell"
   }
+
+  case object Ormolu extends HTool {
+    def name: String = "ormolu"
+
+  }
+
 }
