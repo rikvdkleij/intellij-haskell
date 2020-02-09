@@ -18,17 +18,14 @@ package intellij.haskell.external.component
 
 import com.github.blemale.scaffeine.{AsyncLoadingCache, Scaffeine}
 import com.intellij.openapi.module.Module
-import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.project.{IndexNotReadyException, Project}
 import com.intellij.psi.search.{FileTypeIndex, GlobalSearchScope}
-import com.intellij.util.WaitFor
 import intellij.haskell.external.component.HaskellComponentsManager.StackComponentInfo
 import intellij.haskell.external.repl.StackRepl.{BenchmarkType, TestSuiteType}
 import intellij.haskell.psi.HaskellPsiUtil
-import intellij.haskell.util.{ApplicationUtil, HaskellFileUtil}
+import intellij.haskell.util.{ApplicationUtil, HaskellFileUtil, ScalaFutureUtil}
 import intellij.haskell.{HaskellFileType, HaskellNotificationGroup}
 
-import scala.concurrent.Await
 import scala.concurrent.duration._
 import scala.jdk.CollectionConverters._
 
@@ -38,7 +35,7 @@ private[component] object AvailableModuleNamesComponent {
 
   private case class Key(stackComponentInfo: StackComponentInfo)
 
-  private final val Cache: AsyncLoadingCache[Key, Iterable[String]] = Scaffeine().expireAfterWrite(10.seconds).buildAsync((k: Key) => findAvailableProjectModuleNamesWithIndex(k.stackComponentInfo))
+  private final val Cache: AsyncLoadingCache[Key, Iterable[String]] = Scaffeine().refreshAfterWrite(10.seconds).buildAsync((k: Key) => findAvailableProjectModuleNamesWithIndex(k.stackComponentInfo))
 
   def findAvailableModuleNamesWithIndex(stackComponentInfo: StackComponentInfo): Iterable[String] = {
     // A module can be a project module AND library module
@@ -51,21 +48,11 @@ private[component] object AvailableModuleNamesComponent {
 
   def findAvailableProjectModuleNames(stackComponentInfo: StackComponentInfo): Iterable[String] = {
     val key = Key(stackComponentInfo)
-
-    val f = Cache.get(key)
-    new WaitFor(ApplicationUtil.timeout, 1) {
-      override def condition(): Boolean = {
-        ProgressManager.checkCanceled()
-        f.isCompleted
-      }
-    }
-
-    if (f.isCompleted) {
-      Await.result(f, 1.milli)
-    } else {
-      HaskellNotificationGroup.logInfoEvent(stackComponentInfo.module.getProject, "Timeout in findAvailableProjectModuleNames " + stackComponentInfo)
-      Cache.synchronous().invalidate(key)
-      Iterable()
+    ScalaFutureUtil.waitForValue(stackComponentInfo.module.getProject, Cache.get(key), s"getting project module names for ${key.stackComponentInfo.packageName}", 1.second) match {
+      case Some(files) => files
+      case _ =>
+        Cache.synchronous().invalidate(key)
+        Iterable()
     }
   }
 
@@ -98,7 +85,7 @@ private[component] object AvailableModuleNamesComponent {
           HaskellNotificationGroup.logInfoEvent(project, s"Index not ready while findHaskellFiles for module ${currentModule.getName} ")
           Iterable()
       }
-    }, s"find Haskell files for module ${currentModule.getName}", 5.seconds).toOption.toIterable.flatten
+    }, s"find Haskell files for module ${currentModule.getName}").toOption.toIterable.flatten
   }
 
 

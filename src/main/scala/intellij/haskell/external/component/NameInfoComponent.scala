@@ -16,7 +16,7 @@
 
 package intellij.haskell.external.component
 
-import com.github.blemale.scaffeine.{LoadingCache, Scaffeine}
+import com.github.blemale.scaffeine.{AsyncLoadingCache, Scaffeine}
 import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.project.Project
 import com.intellij.psi.{PsiElement, PsiFile}
@@ -24,7 +24,7 @@ import intellij.haskell.external.repl.StackRepl.StackReplOutput
 import intellij.haskell.external.repl.StackReplsManager
 import intellij.haskell.psi._
 import intellij.haskell.util.StringUtil.escapeString
-import intellij.haskell.util.{HaskellProjectUtil, StringUtil}
+import intellij.haskell.util.{HaskellProjectUtil, ScalaFutureUtil, StringUtil}
 
 private[component] object NameInfoComponent {
 
@@ -35,7 +35,7 @@ private[component] object NameInfoComponent {
   private final val ModuleInfoPattern = """(.+)-- Defined in [`‘]([\w\.\-]+)['’]""".r
   private final val InfixInfoPattern = """(infix.+)""".r
 
-  private final val Cache: LoadingCache[Key, NameInfoResult] = Scaffeine().build((k: Key) => findNameInfoResult(k))
+  private final val Cache: AsyncLoadingCache[Key, NameInfoResult] = Scaffeine().buildAsync((k: Key) => findNameInfoResult(k))
 
   private case class Key(psiFile: PsiFile, name: String)
 
@@ -47,12 +47,11 @@ private[component] object NameInfoComponent {
   }
 
   def invalidate(psiFile: PsiFile): Unit = {
-    Cache.asMap().filter(_._1.psiFile == psiFile).keys.foreach(Cache.invalidate)
+    Cache.synchronous.asMap().filter(_._1.psiFile == psiFile).keys.foreach(Cache.synchronous.invalidate)
   }
 
   def invalidateAll(project: Project): Unit = {
-    Cache.asMap().map(_._1.psiFile).filter(_.getProject == project).foreach(invalidate)
-    NameInfoByModuleComponent.invalidateAll(project)
+    Cache.synchronous.asMap().map(_._1.psiFile).filter(_.getProject == project).foreach(invalidate)
   }
 
   private def findNameInfo(qualifiedNameElement: HaskellQualifiedNameElement, importQualifier: Option[String]): NameInfoResult = {
@@ -68,46 +67,32 @@ private[component] object NameInfoComponent {
 
     ProgressManager.checkCanceled()
 
-    Cache.getIfPresent(key) match {
+    ScalaFutureUtil.waitForValue(qualifiedNameElement.getProject, Cache.get(key), s"Getting name info for $name") match {
       case Some(result) =>
         result match {
           case Right(_) => result
           case Left(ReadActionTimeout(_)) | Left(IndexNotReady) | Left(ModuleNotAvailable(_)) | Left(ReplNotAvailable) =>
-            Cache.invalidate(key)
+            Cache.synchronous.invalidate(key)
             result
           case _ => result
         }
       case None =>
-        ProgressManager.checkCanceled()
-        val result = findNameInfoResult(key)
-        result match {
-          case Right(_) =>
-            Cache.put(key, result)
-            result
-          case Left(ReadActionTimeout(_)) | Left(IndexNotReady) | Left(ReplNotAvailable) | Left(ModuleNotAvailable(_)) =>
-            result
-          case Left(_) =>
-            Cache.put(key, result)
-            result
-        }
+        Cache.synchronous.invalidate(key)
+        Left(ReadActionTimeout("Getting name info"))
     }
   }
 
   private def findNameInfoResult(key: Key): NameInfoResult = {
-    ProgressManager.checkCanceled()
-
     val psiFile = key.psiFile
     val project = psiFile.getProject
     val name = key.name
     val isSourceFile = HaskellProjectUtil.isSourceFile(psiFile)
-    ProgressManager.checkCanceled()
     if (isSourceFile) {
       StackReplsManager.getProjectRepl(psiFile) match {
         case Some(repl) =>
           if (!repl.available) {
             Left(ReplNotAvailable)
           } else {
-            ProgressManager.checkCanceled()
             repl.findInfo(psiFile, name) match {
               case Some(output) if output.stdoutLines.nonEmpty & output.stderrLines.isEmpty => Right(createNameInfos(project, output))
               case None => Left(ReplNotAvailable)
@@ -120,7 +105,6 @@ private[component] object NameInfoComponent {
       HaskellPsiUtil.findModuleName(psiFile) match {
         case None => Left(NoInfoAvailable(key.name, psiFile.getName))
         case Some(mn) =>
-          ProgressManager.checkCanceled()
           StackReplsManager.getGlobalRepl(project) match {
             case Some(repl) =>
               repl.findInfo(mn, name) match {
@@ -153,41 +137,6 @@ private[component] object NameInfoComponent {
     }
     result
   }
-
-  object NameInfoByModuleComponent {
-
-    private case class Key(project: Project, moduleName: String, name: String)
-
-    private final val Cache: LoadingCache[Key, NameInfoResult] = Scaffeine().build((k: Key) => loadByModuleAndName(k))
-
-    private def loadByModuleAndName(key: Key): NameInfoResult = {
-      findNameInfos(key)
-    }
-
-    private def findNameInfos(key: Key): Either[NoInfo, Iterable[NameInfo]] = {
-      val output = StackReplsManager.getGlobalRepl(key.project).flatMap(_.findInfo(key.moduleName, key.name))
-      output match {
-        case Some(o) => Right(createNameInfos(key.project, o))
-        case None => Left(ReplNotAvailable)
-      }
-    }
-
-    def findNameInfoByModuleName(project: Project, moduleName: String, name: String): NameInfoResult = {
-      val key = Key(project, moduleName, name)
-      val result = Cache.get(key)
-      result match {
-        case Right(_) => result
-        case Left(_) =>
-          Cache.invalidate(key)
-          result
-      }
-    }
-
-    private[component] def invalidateAll(project: Project): Unit = {
-      Cache.asMap().filter(_._1.project == project).keys.foreach(Cache.invalidate)
-    }
-  }
-
 }
 
 object NameInfoComponentResult {

@@ -17,15 +17,14 @@
 package intellij.haskell.editor
 
 import com.intellij.codeInsight.completion._
-import com.intellij.codeInsight.lookup.LookupElementBuilder
-import com.intellij.openapi.application.ApplicationManager
+import com.intellij.codeInsight.lookup.{LookupElement, LookupElementBuilder, LookupElementPresentation}
 import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.patterns.PlatformPatterns
 import com.intellij.psi.impl.source.tree.TreeUtil
 import com.intellij.psi.{PsiElement, PsiFile, TokenType}
-import com.intellij.util.{ProcessingContext, WaitFor}
+import com.intellij.util.ProcessingContext
 import icons.HaskellIcons
 import intellij.haskell.annotator.HaskellAnnotator
 import intellij.haskell.external.component.HaskellComponentsManager.StackComponentInfo
@@ -34,11 +33,9 @@ import intellij.haskell.psi.HaskellTypes._
 import intellij.haskell.psi._
 import intellij.haskell.runconfig.console.{HaskellConsoleView, HaskellConsoleViewMap}
 import intellij.haskell.util._
-import intellij.haskell.{HaskellFile, HaskellNotificationGroup, HaskellParserDefinition}
+import intellij.haskell.{HaskellFile, HaskellParserDefinition}
 import org.apache.commons.lang.StringEscapeUtils
 
-import scala.concurrent._
-import scala.concurrent.duration._
 import scala.jdk.CollectionConverters._
 
 class HaskellCompletionContributor extends CompletionContributor {
@@ -218,6 +215,7 @@ class HaskellCompletionContributor extends CompletionContributor {
             ProgressManager.checkCanceled()
 
             val localLookupElements = currentElement.map(ce => findLocalElements(ce).filterNot(_ == ce).map(createLocalLookupElement)).getOrElse(LazyList())
+            ProgressManager.checkCanceled()
             resultSet.addAllElements(localLookupElements.asJavaCollection)
         }
       }
@@ -249,7 +247,7 @@ class HaskellCompletionContributor extends CompletionContributor {
                 if (typedHoleSuggestionsWithHeader.nonEmpty) {
                   val typedHoleSuggestionLines = typedHoleSuggestionsWithHeader.tail
                   val typedHoleSuggestions = typedHoleSuggestionLines.filterNot(_.trim.startsWith("("))
-                  val lookupElements = typedHoleSuggestions.flatMap(createLookupElement _).to(LazyList)
+                  val lookupElements = typedHoleSuggestions.flatMap(createLookupElement).to(LazyList)
                   originalResultSet.addAllElements(lookupElements.asJavaCollection)
                 }
               case None => ()
@@ -339,26 +337,10 @@ class HaskellCompletionContributor extends CompletionContributor {
   }
 
   private def getGlobalInfo(psiFile: PsiFile): Option[(StackComponentInfo, StackComponentGlobalInfo)] = {
-    val infos = ApplicationManager.getApplication.executeOnPooledThread(ScalaUtil.callable {
-      for {
-        info <- HaskellComponentsManager.findStackComponentInfo(psiFile)
-        globalInfo <- HaskellComponentsManager.findStackComponentGlobalInfo(info)
-      } yield (info, globalInfo)
-    })
-
-    new WaitFor(ApplicationUtil.timeout, 1) {
-      override def condition(): Boolean = {
-        ProgressManager.checkCanceled()
-        infos.isDone
-      }
-    }
-
-    if (infos.isDone) {
-      infos.get()
-    } else {
-      HaskellNotificationGroup.logInfoEvent(psiFile.getProject, "Timeout in getGlobalInfo for " + psiFile.getName)
-      None
-    }
+    for {
+      info <- HaskellComponentsManager.findStackComponentInfo(psiFile)
+      globalInfo <- HaskellComponentsManager.findStackComponentGlobalInfo(info)
+    } yield (info, globalInfo)
   }
 
   private def findAvailableIdsForImportModuleSpec(stackComponentGlobalInfo: StackComponentGlobalInfo, psiFile: PsiFile, element: PsiElement) = {
@@ -366,24 +348,15 @@ class HaskellCompletionContributor extends CompletionContributor {
 
     HaskellPsiUtil.findImportDeclaration(element).flatMap(_.getModuleName) match {
       case Some(moduleName) =>
-        val ids = blocking {
-          HaskellComponentsManager.findModuleIdentifiers(psiFile.getProject, moduleName).map(_.map(i => i.map(x => createLookupElement(x, addParens = true))).getOrElse(Iterable()))
-        }
-
-        new WaitFor(ApplicationUtil.timeout, 1) {
-          override def condition(): Boolean = {
+        ScalaFutureUtil.waitForValue(psiFile.getProject,
+          HaskellComponentsManager.findModuleIdentifiers(psiFile.getProject, moduleName)
+          , "Getting module identifiers").flatten match {
+          case Some(ids) => ids.map(x => {
             ProgressManager.checkCanceled()
-            ids.isCompleted
-          }
+            createLookupElement(x, addParens = true)
+          })
+          case None => Iterable()
         }
-
-        if (ids.isCompleted) {
-          Await.result(ids, 1.milli)
-        } else {
-          HaskellNotificationGroup.logInfoEvent(psiFile.getProject, "Timeout in findAvailableIdsForImportModuleSpec for " + psiFile.getName)
-          Iterable()
-        }
-
       case None => Iterable()
     }
   }
@@ -392,7 +365,7 @@ class HaskellCompletionContributor extends CompletionContributor {
     LookupElementBuilder.create(moduleName).withTailText(" module", true)
   }
 
-  private def getInsideImportClausesLookupElements = {
+  private lazy val getInsideImportClausesLookupElements = {
     InsideImportKeywords.map(c => LookupElementBuilder.create(c).withTailText(" clause", true))
   }
 
@@ -400,23 +373,23 @@ class HaskellCompletionContributor extends CompletionContributor {
     HaskellComponentsManager.getSupportedLanguageExtension(project).map(n => LookupElementBuilder.create(n).withIcon(HaskellIcons.HaskellSmallBlueLogo).withTailText(" language extension", true))
   }
 
-  private def getPragmaStartEndIdsLookupElements = {
+  private lazy val getPragmaStartEndIdsLookupElements = {
     PragmaIds.map(p => LookupElementBuilder.create(p).withIcon(HaskellIcons.HaskellSmallBlueLogo).withTailText(" pragma", true))
   }
 
-  private def getFileHeaderPragmaIdsLookupElements = {
+  private lazy val getFileHeaderPragmaIdsLookupElements = {
     FileHeaderPragmaIds.map(p => LookupElementBuilder.create(p).withIcon(HaskellIcons.HaskellSmallBlueLogo).withTailText(" pragma", true))
   }
 
-  private def getModulePragmaIdsLookupElements = {
+  private lazy val getModulePragmaIdsLookupElements = {
     ModulePragmaIds.map(p => LookupElementBuilder.create(p).withIcon(HaskellIcons.HaskellSmallBlueLogo).withTailText(" pragma", true))
   }
 
-  private def getCommentIdsLookupElements = {
+  private lazy val getCommentIdsLookupElements = {
     CommentIds.map(p => LookupElementBuilder.create(p).withIcon(HaskellIcons.HaskellSmallBlueLogo).withTailText(" comment", true))
   }
 
-  private def getHaddockIdsLookupElements = {
+  private lazy val getHaddockIdsLookupElements = {
     HaddockIds.map(p => LookupElementBuilder.create(p).withIcon(HaskellIcons.HaskellSmallBlueLogo).withTailText(" haddock", true))
   }
 
@@ -426,7 +399,7 @@ class HaskellCompletionContributor extends CompletionContributor {
     FileModuleIdentifiers.findAvailableModuleIdentifiers(psiFile).map(createLookupElement(_)) ++ findTopLeveLookupElements(psiFile, moduleName, currentElement)
   }
 
-  private def getKeywordLookupElements = {
+  private lazy val getKeywordLookupElements = {
     Keywords.map(createKeywordLookupElement)
   }
 
@@ -434,7 +407,7 @@ class HaskellCompletionContributor extends CompletionContributor {
     LookupElementBuilder.create(keyword).withIcon(HaskellIcons.HaskellSmallBlueLogo).withTailText(" keyword", true)
   }
 
-  private def getSpecialReservedIdLookupElements = {
+  private lazy val getSpecialReservedIdLookupElements = {
     SpecialReservedIds.map(sr => LookupElementBuilder.create(sr).withIcon(HaskellIcons.HaskellSmallBlueLogo).withTailText(" special keyword", true))
   }
 
@@ -475,8 +448,15 @@ class HaskellCompletionContributor extends CompletionContributor {
   }
 
   def createLocalLookupElement(namedElement: HaskellNamedElement): LookupElementBuilder = {
-    val typeSignature = HaskellComponentsManager.findTypeInfoForElement(namedElement).map(_.typeSignature)
-    LookupElementBuilder.create(namedElement.getName).withTypeText(typeSignature.map(StringUtil.unescapeXmlEntities).getOrElse("")).withIcon(HaskellIcons.HaskellSmallBlueLogo)
+    ProgressManager.checkCanceled()
+
+    def typeSignature = HaskellComponentsManager.findTypeInfoForElement(namedElement).map(_.typeSignature).map(StringUtil.unescapeXmlEntities).getOrElse("")
+
+    LookupElementBuilder.create(namedElement.getName).withIcon(HaskellIcons.HaskellSmallBlueLogo).withRenderer((element: LookupElement, presentation: LookupElementPresentation) => {
+      presentation.setTypeText(typeSignature)
+      presentation.setItemText(namedElement.getName)
+      presentation.setIcon(HaskellIcons.HaskellSmallBlueLogo)
+    })
   }
 
   private def createLocalTopLevelLookupElement(name: String, declaration: String, module: String): LookupElementBuilder = {

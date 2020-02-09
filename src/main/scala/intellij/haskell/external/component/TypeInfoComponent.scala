@@ -23,7 +23,9 @@ import com.intellij.openapi.project.Project
 import com.intellij.psi.{PsiElement, PsiFile}
 import intellij.haskell.external.repl.{ProjectStackRepl, StackReplsManager}
 import intellij.haskell.psi._
-import intellij.haskell.util.{HaskellFileUtil, LineColumnPosition}
+import intellij.haskell.util.{ApplicationUtil, HaskellFileUtil, LineColumnPosition}
+
+import scala.concurrent.TimeoutException
 
 private[component] object TypeInfoComponent {
 
@@ -64,14 +66,18 @@ private[component] object TypeInfoComponent {
             case None => Left(ReplNotAvailable)
           }
         }
-      }.getOrElse(Left(NoInfoAvailable(selectionModel.getSelectedText, psiFile.getName)))
+        }.getOrElse(Left(NoInfoAvailable(selectionModel.getSelectedText, psiFile.getName)))
     } else {
       Left(ModuleNotAvailable(moduleName.getOrElse(psiFile.getName)))
     }
   }
 
+  def invalidateElements(psiFile: PsiFile, namedElements: Seq[HaskellQualifiedNameElement]): Unit = {
+    namedElements.foreach(qne => Cache.invalidate(Key(psiFile, qne)))
+  }
+
   def invalidate(psiFile: PsiFile): Unit = {
-    val keys = Cache.asMap().filter(_._1.psiFile == psiFile).keys
+    val keys = Cache.asMap().filter(_._1.psiFile == psiFile).keys.filterNot(_.qualifiedNameElement.isValid)
     Cache.invalidateAll(keys)
   }
 
@@ -93,6 +99,7 @@ private[component] object TypeInfoComponent {
       t = qne.getText
       _ = ProgressManager.checkCanceled()
       mn = HaskellPsiUtil.findModuleName(psiFile)
+      if key.qualifiedNameElement.isValid
     } yield {
       ProgressManager.checkCanceled()
       repl: ProjectStackRepl => repl.findTypeInfo(mn, key.psiFile, sp.lineNr, sp.columnNr, ep.lineNr, ep.columnNr, t)
@@ -116,26 +123,18 @@ private[component] object TypeInfoComponent {
   }
 
   private def findTypeInfo(key: Key): TypeInfoResult = {
-    Cache.getIfPresent(key) match {
-      case Some(result) => result match {
+    try {
+      val result = ApplicationUtil.runReadAction(Cache.get(key))
+      result match {
         case Right(_) => result
-        case Left(NoInfoAvailable(_, _)) | Left(NoMatchingExport) =>
-          result
-        case Left(ReplNotAvailable) | Left(IndexNotReady) | Left(ModuleNotAvailable(_)) | Left(ReadActionTimeout(_)) =>
+        case Left(ReadActionTimeout(_)) | Left(IndexNotReady) | Left(ModuleNotAvailable(_)) | Left(ReplNotAvailable) =>
           Cache.invalidate(key)
           result
+        case _ => result
+
       }
-      case None =>
-        val result = Cache.get(key)
-        result match {
-          case Right(_) =>
-            result
-          case Left(NoInfoAvailable(_, _)) | Left(NoMatchingExport) =>
-            result
-          case Left(ReplNotAvailable) | Left(IndexNotReady) | Left(ModuleNotAvailable(_)) | Left(ReadActionTimeout(_)) =>
-            Cache.invalidate(key)
-            result
-        }
+    } catch {
+      case e: TimeoutException => Left(ReadActionTimeout(e.getMessage))
     }
   }
 }

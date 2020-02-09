@@ -18,7 +18,7 @@ package intellij.haskell.external.component
 
 import java.nio.file.Paths
 
-import com.github.blemale.scaffeine.{LoadingCache, Scaffeine}
+import com.github.blemale.scaffeine.{AsyncLoadingCache, Scaffeine}
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.psi.PsiFile
@@ -27,33 +27,29 @@ import intellij.haskell.external.component.HaskellComponentsManager.StackCompone
 import intellij.haskell.external.repl.StackRepl.LibType
 import intellij.haskell.external.repl.StackReplsManager
 import intellij.haskell.runconfig.console.HaskellConsoleView
-import intellij.haskell.util.{HaskellFileUtil, HaskellProjectUtil, ScalaUtil}
+import intellij.haskell.util.{HaskellFileUtil, HaskellProjectUtil, ScalaFutureUtil, ScalaUtil}
 
 private[component] object HaskellModuleInfoComponent {
 
   private case class Key(project: Project, filePath: String)
 
-  private final val Cache: LoadingCache[Key, Option[InternalHaskellModuleInfo]] = Scaffeine().build((k: Key) => createFileInfo(k))
+  private final val Cache: AsyncLoadingCache[Key, Option[InternalHaskellModuleInfo]] = Scaffeine().buildAsync((k: Key) => createFileInfo(k))
 
   def findHaskellProjectFileInfo(project: Project, filePath: String): Option[StackComponentInfo] = {
     val key = Key(project, filePath)
-    Cache.getIfPresent(key) match {
-      case Some(info) => info.flatMap(_.stackComponentInfo)
-      case None =>
-        Cache.get(key) match {
-          case Some(internalInfo) =>
-            internalInfo.message match {
-              case Some(m) => HaskellNotificationGroup.warningEvent(project, m)
-              case None => None
-            }
-            internalInfo.stackComponentInfo match {
-              case Some(info) => Some(info)
-              case _ => None
-            }
-          case _ =>
-            Cache.invalidate(key)
-            None
+    ScalaFutureUtil.waitForValue(project, Cache.get(key), "Getting project file info").flatten match {
+      case Some(internalInfo) =>
+        internalInfo.message match {
+          case Some(m) => HaskellNotificationGroup.warningEvent(project, m)
+          case None => None
         }
+        internalInfo.stackComponentInfo match {
+          case Some(info) => Some(info)
+          case _ => None
+        }
+      case _ =>
+        Cache.synchronous.invalidate(key)
+        None
     }
   }
 
@@ -71,12 +67,12 @@ private[component] object HaskellModuleInfoComponent {
   }
 
   def invalidate(project: Project): Unit = {
-    val keys = Cache.asMap().keys.filter(_.project == project)
-    keys.foreach(Cache.invalidate)
+    val keys = Cache.synchronous.asMap().keys.filter(_.project == project)
+    keys.foreach(Cache.synchronous.invalidate)
   }
 
   def invalidate(psiFile: PsiFile): Unit = {
-    HaskellFileUtil.getAbsolutePath(psiFile).foreach(fp => Cache.invalidate(Key(psiFile.getProject, fp)))
+    HaskellFileUtil.getAbsolutePath(psiFile).foreach(fp => Cache.synchronous.invalidate(Key(psiFile.getProject, fp)))
   }
 
   private def createFileInfo(key: Key): Option[InternalHaskellModuleInfo] = {

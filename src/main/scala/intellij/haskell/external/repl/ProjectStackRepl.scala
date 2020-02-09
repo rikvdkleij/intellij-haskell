@@ -18,7 +18,6 @@ package intellij.haskell.external.repl
 
 import java.util.concurrent.ConcurrentHashMap
 
-import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.project.Project
 import com.intellij.psi.PsiFile
 import intellij.haskell.HaskellNotificationGroup
@@ -26,7 +25,6 @@ import intellij.haskell.external.component.HaskellComponentsManager.StackCompone
 import intellij.haskell.external.repl.StackRepl.StackReplOutput
 import intellij.haskell.util.{HaskellFileUtil, ScalaFutureUtil}
 
-import scala.concurrent.duration._
 import scala.concurrent.{Future, blocking}
 import scala.jdk.CollectionConverters._
 
@@ -66,8 +64,6 @@ case class ProjectStackRepl(project: Project, stackComponentInfo: StackComponent
 
   import scala.concurrent.ExecutionContext.Implicits.global
 
-  private def isReadAccessAllowed = ApplicationManager.getApplication.isReadAccessAllowed
-
   def findTypeInfo(moduleName: Option[String], psiFile: PsiFile, startLineNr: Int, startColumnNr: Int, endLineNr: Int, endColumnNr: Int, expression: String): Option[StackReplOutput] = {
     val filePath = getFilePath(psiFile)
 
@@ -77,11 +73,7 @@ case class ProjectStackRepl(project: Project, stackComponentInfo: StackComponent
       }
     }
 
-    if (isReadAccessAllowed) {
-      ScalaFutureUtil.waitWithCheckCancelled(project, Future(execute), "Wait on :type-at in ProjectStackRepl", 30.seconds).flatten
-    } else {
-      execute
-    }
+    ScalaFutureUtil.waitForValue(project, Future(execute), ":type-at in ProjectStackRepl").flatten
   }
 
   def findLocationInfo(moduleName: Option[String], psiFile: PsiFile, startLineNr: Int, startColumnNr: Int, endLineNr: Int, endColumnNr: Int, expression: String): Option[StackReplOutput] = {
@@ -93,11 +85,7 @@ case class ProjectStackRepl(project: Project, stackComponentInfo: StackComponent
       }
     }
 
-    if (isReadAccessAllowed) {
-      ScalaFutureUtil.waitWithCheckCancelled(project, Future(execute), "Wait on :loc-at in ProjectStackRepl", timeout = 30.seconds).flatten
-    } else {
-      execute
-    }
+    ScalaFutureUtil.waitForValue(project, Future(execute), ":loc-at in ProjectStackRepl").flatten
   }
 
   def findInfo(psiFile: PsiFile, name: String): Option[StackReplOutput] = {
@@ -107,11 +95,7 @@ case class ProjectStackRepl(project: Project, stackComponentInfo: StackComponent
       }
     }
 
-    if (isReadAccessAllowed) {
-      ScalaFutureUtil.waitWithCheckCancelled(psiFile.getProject, Future(execute), "Wait on :info in ProjectStackRepl", 30.seconds).flatten
-    } else {
-      execute
-    }
+    ScalaFutureUtil.waitForValue(psiFile.getProject, Future(execute), ":info in ProjectStackRepl").flatten
   }
 
   def isModuleLoaded(moduleName: String): Boolean = {
@@ -195,13 +179,20 @@ case class ProjectStackRepl(project: Project, stackComponentInfo: StackComponent
     }
   }
 
-  def getModuleIdentifiers(moduleName: String, psiFile: Option[PsiFile]): Option[StackReplOutput] = synchronized {
-    if (psiFile.isEmpty || isBrowseModuleLoaded(moduleName) || psiFile.exists(pf => load(pf, fileModified = false, mustBeByteCode = false).exists(_._2 == false))) {
-      execute(s":browse! $moduleName")
-    } else {
-      HaskellNotificationGroup.logInfoEvent(project, s"Couldn't get module identifiers for module $moduleName because file ${psiFile.map(_.getName).getOrElse("-")} isn't loaded")
-      None
-    }
+  def getModuleIdentifiers(project: Project, moduleName: String, psiFile: Option[PsiFile]): Option[StackReplOutput] = {
+    ScalaFutureUtil.waitForValue(project,
+      Future {
+        blocking {
+          synchronized {
+            if (psiFile.isEmpty || isBrowseModuleLoaded(moduleName) || psiFile.exists(pf => load(pf, fileModified = false, mustBeByteCode = false).exists(_._2 == false))) {
+              execute(s":browse! $moduleName")
+            } else {
+              HaskellNotificationGroup.logInfoEvent(project, s"Couldn't get module identifiers for module $moduleName because file ${psiFile.map(_.getName).getOrElse("-")} isn't loaded")
+              None
+            }
+          }
+        }
+      }, "getModuleIdentifiers in ProjectStackRepl").flatten
   }
 
   override def restart(forceExit: Boolean): Unit = synchronized {

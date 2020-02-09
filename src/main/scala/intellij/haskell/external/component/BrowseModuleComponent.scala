@@ -25,7 +25,7 @@ import intellij.haskell.psi.HaskellPsiUtil
 import intellij.haskell.util.index.HaskellModuleNameIndex
 import intellij.haskell.util.{ApplicationUtil, HaskellFileUtil, HaskellProjectUtil, StringUtil}
 
-import scala.concurrent.{ExecutionContext, Future, blocking}
+import scala.concurrent.{ExecutionContext, Future}
 
 private[component] object BrowseModuleComponent {
 
@@ -44,14 +44,14 @@ private[component] object BrowseModuleComponent {
   def findModuleIdentifiers(project: Project, moduleName: String)(implicit ec: ExecutionContext): Future[Option[Iterable[ModuleIdentifier]]] = {
     val key = Key(project, moduleName)
     val result = Cache.get(key)
-    blocking(result.map {
+    result.map {
       case Right(ids) => Some(ids)
       case Left(NoInfoAvailable(_, _)) | Left(NoMatchingExport) =>
         None
       case Left(ReplNotAvailable) | Left(IndexNotReady) | Left(ModuleNotAvailable(_)) | Left(ReadActionTimeout(_)) =>
         Cache.synchronous().invalidate(key)
         None
-    })
+    }
   }
 
   def findModuleIdentifiersSync(project: Project, moduleName: String): BrowseModuleInternalResult = {
@@ -126,8 +126,9 @@ private[component] object BrowseModuleComponent {
     projectRepl match {
       case Some(repl) =>
         if (repl.available) {
-          repl.getModuleIdentifiers(moduleName, psiFile) match {
+          repl.getModuleIdentifiers(project, moduleName, psiFile) match {
             case Some(output) if output.stderrLines.isEmpty && output.stdoutLines.nonEmpty => Right(output.stdoutLines.flatMap(l => createProjectModuleIdentifier(project, l, moduleName)))
+            case None => Left(ReplNotAvailable)
             case _ => Left(ModuleNotAvailable(moduleName))
           }
         } else {
@@ -144,6 +145,7 @@ private[component] object BrowseModuleComponent {
           (repl.getModuleIdentifiers(moduleName), moduleFile) match {
             case (Some(o), _) if o.stderrLines.isEmpty && o.stdoutLines.nonEmpty => Right(o.stdoutLines.flatMap(l => createLibraryModuleIdentifier(project, l, moduleName)))
             case (_, Some(f)) => Right(ApplicationUtil.runReadAction(HaskellPsiUtil.findTopLevelDeclarations(f)).map(d => ApplicationUtil.runReadAction(d.getName)).flatMap(d => createLibraryModuleIdentifier(project, d, moduleName)).toSeq)
+            case (None, _) => Left(ReplNotAvailable)
             case _ => Left(ModuleNotAvailable(moduleName))
           }
         } else {

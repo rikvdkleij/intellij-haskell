@@ -216,7 +216,10 @@ object HaskellReference {
     }.getOrElse(Left(ModuleNotAvailable(moduleNames.mkString(" | "))))
   }
 
+  import scala.concurrent.ExecutionContext.Implicits.global
+
   private def findIdentifiersByModuleAndName2(project: Project, moduleNames: Seq[String], name: String, prioIdInExpression: Boolean): Seq[(String, Seq[HaskellNamedElement])] = {
+
     ProgressManager.checkCanceled()
 
     moduleNames.distinct.flatMap(mn => HaskellModuleNameIndex.findFilesByModuleName(project, mn) match {
@@ -226,11 +229,24 @@ object HaskellReference {
 
         val identifiers = files.flatMap(f => findIdentifierInFileByName(f, name, prioIdInExpression))
         if (identifiers.isEmpty) {
-          val importedModuleNames = files.flatMap(f => FileModuleIdentifiers.findAvailableModuleIdentifiers(f).filter(mid => mid.name == name || mid.name == "_" + name || mid.name == mid.moduleName + "." + name).map(_.moduleName))
+          val importedModuleNames = files.flatMap { f => {
+            if (HaskellProjectUtil.isSourceFile(f)) {
+              FileModuleIdentifiers.findAvailableModuleIdentifiers(f)
+            } else {
+              HaskellPsiUtil.findModuleName(f).flatMap(mn => ScalaFutureUtil.waitForValue(project,
+                HaskellComponentsManager.findModuleIdentifiers(project, mn), "find module identifiers in HaskellReference")).flatten.getOrElse(Iterable())
+            }
+          }
+          }.filter(mid => mid.name == name || mid.name == "_" + name || mid.name == mid.moduleName + "." + name).map(_.moduleName)
           if (importedModuleNames.isEmpty) {
             Seq()
           } else {
-            findIdentifiersByModuleAndName2(project, importedModuleNames, name, prioIdInExpression)
+            if (moduleNames == Seq(mn)) {
+              val moduleNames = files.flatMap(HaskellPsiUtil.findImportDeclarations).flatMap(_.getModuleName)
+              findIdentifiersByModuleAndName2(project, moduleNames, name, prioIdInExpression)
+            } else {
+              findIdentifiersByModuleAndName2(project, importedModuleNames, name, prioIdInExpression)
+            }
           }
         } else {
           Seq((mn, identifiers))

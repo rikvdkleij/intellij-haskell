@@ -20,7 +20,6 @@ import java.util
 import java.util.concurrent.TimeoutException
 
 import com.github.blemale.scaffeine.{AsyncLoadingCache, Scaffeine}
-import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.project.Project
 import com.intellij.psi.PsiFile
 import intellij.haskell.HaskellNotificationGroup
@@ -30,7 +29,7 @@ import intellij.haskell.psi.{HaskellImportDeclaration, HaskellImportId, HaskellP
 import intellij.haskell.util.{ApplicationUtil, HaskellProjectUtil, ScalaFutureUtil}
 
 import scala.concurrent.duration._
-import scala.concurrent.{Await, Future, blocking}
+import scala.concurrent.{Await, Future}
 import scala.jdk.CollectionConverters._
 
 object FileModuleIdentifiers {
@@ -64,28 +63,22 @@ object FileModuleIdentifiers {
   }
 
   def findAvailableModuleIdentifiers(psiFile: PsiFile): Iterable[ModuleIdentifier] = {
-    val message = s"find available module identifiers for ${psiFile.getName}"
-    if (ApplicationManager.getApplication.isReadAccessAllowed) {
-      val moduleIdentifiers = getModuleIdentifiers(psiFile)
-      ScalaFutureUtil.waitWithCheckCancelled(psiFile.getProject, moduleIdentifiers, message).getOrElse(Iterable())
-    } else {
-      ScalaFutureUtil.waitForValue(psiFile.getProject, getModuleIdentifiers(psiFile), message).getOrElse(Iterable())
-    }
+    val message = s"find available module identifiers for ${psiFile.getVirtualFile.getPath}"
+    val moduleIdentifiers = getModuleIdentifiers(psiFile)
+    ScalaFutureUtil.waitForValue(psiFile.getProject, moduleIdentifiers, message).getOrElse(Iterable())
   }
 
   private def getModuleIdentifiers(psiFile: PsiFile): Future[Iterable[ModuleIdentifier]] = {
     val key = Key(psiFile)
-    blocking {
-      Cache.get(key).map {
-        case Some(mids) =>
-          if (mids.toSeq.contains(None)) {
-            Cache.synchronous.invalidate(key)
-          }
-          mids.flatten.flatten
-        case None =>
+    Cache.get(key).map {
+      case Some(mids) =>
+        if (mids.toSeq.contains(None)) {
           Cache.synchronous.invalidate(key)
-          Iterable()
-      }
+        }
+        mids.flatten.flatten
+      case None =>
+        Cache.synchronous.invalidate(key)
+        Iterable()
     }
   }
 
@@ -95,36 +88,31 @@ object FileModuleIdentifiers {
     val project = k.psiFile.getProject
     val psiFile = k.psiFile
 
-    ApplicationUtil.runInReadActionWithWriteActionPriority(project, findImportDeclarations(psiFile), "In findModuleIdentifiers") match {
-      case Right(importDeclarations) =>
-        val noImplicitPrelude = if (HaskellProjectUtil.isSourceFile(psiFile)) {
-          HaskellComponentsManager.findStackComponentInfo(psiFile).exists(info => isNoImplicitPreludeActive(info, psiFile))
-        } else {
-          // TODO: This can give unexpected behavior when finding references in library files
-          false
-        }
-        val idsF1 = getModuleIdentifiersFromFullImportedModules(noImplicitPrelude, psiFile, importDeclarations)
+    val importDeclarations = ApplicationUtil.runReadAction(findImportDeclarations(psiFile))
+    val noImplicitPrelude = if (HaskellProjectUtil.isSourceFile(psiFile)) {
+      HaskellComponentsManager.findStackComponentInfo(psiFile).exists(info => isNoImplicitPreludeActive(info, psiFile))
+    } else {
+      // TODO: This can give unexpected behavior when finding references in library files
+      false
+    }
+    val idsF1 = getModuleIdentifiersFromFullImportedModules(noImplicitPrelude, psiFile, importDeclarations)
 
-        val idsF2 = getModuleIdentifiersFromHidingIdsImportedModules(psiFile, importDeclarations)
+    val idsF2 = getModuleIdentifiersFromHidingIdsImportedModules(psiFile, importDeclarations)
 
-        val idsF3 = getModuleIdentifiersFromSpecIdsImportedModules(psiFile, importDeclarations)
+    val idsF3 = getModuleIdentifiersFromSpecIdsImportedModules(psiFile, importDeclarations)
 
-        val f = for {
-          f1 <- idsF1
-          f2 <- idsF2
-          f3 <- idsF3
-        } yield (f1, f2, f3)
+    val f = for {
+      f1 <- idsF1
+      f2 <- idsF2
+      f3 <- idsF3
+    } yield (f1, f2, f3)
 
-        try {
-          val (x, y, z) = Await.result(f, 10.seconds)
-          Some(x ++ y ++ z)
-        } catch {
-          case _: TimeoutException =>
-            HaskellNotificationGroup.logInfoEvent(project, s"Timeout while find module identifiers for file ${k.psiFile.getName}")
-            None
-        }
-      case Left(noInfo) =>
-        HaskellNotificationGroup.logInfoEvent(project, s"Timeout while find import declarations in findModuleIdentifiers for file ${psiFile.getName}: ${noInfo.message}")
+    try {
+      val (x, y, z) = Await.result(f, 10.seconds)
+      Some(x ++ y ++ z)
+    } catch {
+      case _: TimeoutException =>
+        HaskellNotificationGroup.logInfoEvent(project, s"Timeout while find module identifiers for file ${k.psiFile.getVirtualFile.getPath}")
         None
     }
   }
@@ -132,34 +120,28 @@ object FileModuleIdentifiers {
   private def getModuleIdentifiersFromFullImportedModules(noImplicitPrelude: Boolean, psiFile: PsiFile, importDeclarations: Iterable[HaskellImportDeclaration]): Future[Iterable[Option[Iterable[ModuleIdentifier]]]] = {
     val importInfos = getFullImportedModules(noImplicitPrelude, psiFile, importDeclarations)
 
-    blocking {
-      Future.sequence(importInfos.map(importInfo => {
-        val allModuleIdentifiers = BrowseModuleComponent.findModuleIdentifiers(psiFile.getProject, importInfo.moduleName)
-        allModuleIdentifiers.map(mi => mi.map(i => createQualifiedModuleIdentifiers(importInfo, i)))
-      }))
-    }
+    Future.sequence(importInfos.map(importInfo => {
+      val allModuleIdentifiers = BrowseModuleComponent.findModuleIdentifiers(psiFile.getProject, importInfo.moduleName)
+      allModuleIdentifiers.map(mi => mi.map(i => createQualifiedModuleIdentifiers(importInfo, i)))
+    }))
   }
 
   private def getModuleIdentifiersFromHidingIdsImportedModules(psiFile: PsiFile, importDeclarations: Iterable[HaskellImportDeclaration]): Future[Iterable[Option[Iterable[ModuleIdentifier]]]] = {
     val importInfos = getImportedModulesWithHidingIdsSpec(psiFile, importDeclarations)
 
-    blocking {
-      Future.sequence(importInfos.map(importInfo => {
-        val allModuleIdentifiers = BrowseModuleComponent.findModuleIdentifiers(psiFile.getProject, importInfo.moduleName)
-        allModuleIdentifiers.map(ids => ids.map(is => createQualifiedModuleIdentifiers(importInfo, is.filterNot(mi => importInfo.ids.exists(_ == mi.name)))))
-      }))
-    }
+    Future.sequence(importInfos.map(importInfo => {
+      val allModuleIdentifiers = BrowseModuleComponent.findModuleIdentifiers(psiFile.getProject, importInfo.moduleName)
+      allModuleIdentifiers.map(ids => ids.map(is => createQualifiedModuleIdentifiers(importInfo, is.filterNot(mi => importInfo.ids.exists(_ == mi.name)))))
+    }))
   }
 
   private def getModuleIdentifiersFromSpecIdsImportedModules(psiFile: PsiFile, importDeclarations: Iterable[HaskellImportDeclaration]): Future[Iterable[Option[Iterable[ModuleIdentifier]]]] = {
     val importInfos = getImportedModulesWithSpecIds(psiFile, importDeclarations)
 
-    blocking {
-      Future.sequence(importInfos.map(importInfo => {
-        val allModuleIdentifiers = BrowseModuleComponent.findModuleIdentifiers(psiFile.getProject, importInfo.moduleName)
-        allModuleIdentifiers.map(ids => ids.map(is => createQualifiedModuleIdentifiers(importInfo, is.filter(mi => importInfo.ids.exists(_ == mi.name)))))
-      }))
-    }
+    Future.sequence(importInfos.map(importInfo => {
+      val allModuleIdentifiers = BrowseModuleComponent.findModuleIdentifiers(psiFile.getProject, importInfo.moduleName)
+      allModuleIdentifiers.map(ids => ids.map(is => createQualifiedModuleIdentifiers(importInfo, is.filter(mi => importInfo.ids.exists(_ == mi.name)))))
+    }))
   }
 
   private sealed trait ImportInfo {

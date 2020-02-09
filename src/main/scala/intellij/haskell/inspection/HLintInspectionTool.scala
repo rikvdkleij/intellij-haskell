@@ -17,11 +17,13 @@
 package intellij.haskell.inspection
 
 import com.intellij.codeInspection._
+import com.intellij.openapi.application.ReadAction
 import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.psi.tree.IElementType
 import com.intellij.psi.{PsiElement, PsiFile, TokenType}
 import com.intellij.util.WaitFor
+import com.intellij.util.concurrency.AppExecutorUtil
 import intellij.haskell.HaskellNotificationGroup
 import intellij.haskell.external.component.{HLintComponent, HLintInfo}
 import intellij.haskell.psi.HaskellTypes._
@@ -45,21 +47,24 @@ class HLintInspectionTool extends LocalInspectionTool {
 
         ProgressManager.checkCanceled()
 
-        new WaitFor(500, 1) {
-          override def condition(): Boolean = {
-            ProgressManager.checkCanceled()
-            !HaskellFileUtil.isDocumentUnsaved(document)
+        ReadAction.nonBlocking {
+          ScalaUtil.callable {
+            new WaitFor(500, 1) {
+              override def condition(): Boolean = {
+                !HaskellFileUtil.isDocumentUnsaved(document)
+              }
+            }
           }
-        }
+        }.expireWith(psiFile.getProject).cancelWith(ProgressManager.getInstance().getProgressIndicator).submit(AppExecutorUtil.getAppExecutorService).get
 
         ProgressManager.checkCanceled()
 
-        val result = ScalaFutureUtil.waitWithCheckCancelled(psiFile.getProject,
+        val result = ScalaFutureUtil.waitForValue(psiFile.getProject,
           Future {
             blocking {
               HLintComponent.check(psiFile)
             }
-          }, "Running HLint", timeout = 2.seconds) match {
+          }, "Running HLint", 5.second) match {
           case Some(r) => r
           case None => Seq()
         }

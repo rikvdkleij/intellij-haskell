@@ -47,7 +47,7 @@ object HaskellComponentsManager {
         BrowseModuleComponent.findModuleIdentifiersInCache(project)
       }
     }
-    ScalaFutureUtil.waitWithCheckCancelled(project, f, "find module identifiers in cache") match {
+    ScalaFutureUtil.waitForValue(project, f, "find module identifiers in cache") match {
       case Some(ids) => ids
       case None => Iterable()
     }
@@ -68,10 +68,6 @@ object HaskellComponentsManager {
 
   def findNameInfo(psiElement: PsiElement): NameInfoResult = {
     NameInfoComponent.findNameInfo(psiElement)
-  }
-
-  def findNameInfoByModuleName(project: Project, moduleName: String, name: String): NameInfoResult = {
-    NameInfoComponent.NameInfoByModuleComponent.findNameInfoByModuleName(project, moduleName, name)
   }
 
   def findAvailableModuleNamesWithIndex(stackComponentInfo: StackComponentInfo): Iterable[String] = {

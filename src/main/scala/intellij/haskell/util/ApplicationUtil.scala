@@ -16,27 +16,21 @@
 
 package intellij.haskell.util
 
+import java.util.concurrent.TimeUnit
 import java.util.concurrent.atomic.AtomicReference
 
-import com.intellij.openapi.application.ApplicationManager
+import com.intellij.openapi.application.{ApplicationManager, ReadAction}
 import com.intellij.openapi.progress.util.ReadTask.Continuation
 import com.intellij.openapi.progress.util.{ProgressIndicatorUtils, ReadTask}
 import com.intellij.openapi.progress.{ProgressIndicator, ProgressManager}
 import com.intellij.openapi.project.{DumbService, Project}
+import com.intellij.util.concurrency.AppExecutorUtil
 import intellij.haskell.HaskellNotificationGroup
 import intellij.haskell.external.component.{NoInfo, ReadActionTimeout}
 
 import scala.concurrent.duration._
 
 object ApplicationUtil {
-
-  def timeout: Int = {
-    if (ApplicationManager.getApplication.isDispatchThread) {
-      50
-    } else {
-      60000
-    }
-  }
 
   private def isReadAccessAllowed = {
     ApplicationManager.getApplication.isReadAccessAllowed
@@ -46,13 +40,14 @@ object ApplicationUtil {
     if (isReadAccessAllowed) {
       f
     } else {
-      ApplicationManager.getApplication.runReadAction(ScalaUtil.computable(f))
+      val progressIndicator = Option(ProgressManager.getInstance().getProgressIndicator)
+      val readAction = ReadAction.nonBlocking(ScalaUtil.callable(f))
+      progressIndicator.foreach(readAction.cancelWith)
+      readAction.submit(AppExecutorUtil.getAppExecutorService).get(2, TimeUnit.SECONDS)
     }
   }
 
-  private final val RunInReadActionTimeout = 50.millis
-
-  def runInReadActionWithWriteActionPriority[A](project: Project, f: => A, readActionDescription: => String, timeout: FiniteDuration = RunInReadActionTimeout): Either[NoInfo, A] = {
+  def runInReadActionWithWriteActionPriority[A](project: Project, f: => A, readActionDescription: => String): Either[NoInfo, A] = {
     val r = new AtomicReference[A]
 
     if (isReadAccessAllowed) {
@@ -67,15 +62,15 @@ object ApplicationUtil {
         }
       }
 
-      val deadline = timeout.fromNow
+      val deadline = 100.millis.fromNow
 
       while (!run() && deadline.hasTimeLeft && !project.isDisposed) {
-        Thread.sleep(1)
+        Thread.sleep(2)
       }
 
       val result = r.get()
       if (result == null) {
-        HaskellNotificationGroup.logInfoEvent(project, s"Timeout ($timeout) in runInReadActionWithWriteActionPriority while $readActionDescription")
+        HaskellNotificationGroup.logInfoEvent(project, s"Timeout in runInReadActionWithWriteActionPriority while $readActionDescription")
         Left(ReadActionTimeout(readActionDescription))
       } else {
         Right(result)
@@ -83,9 +78,7 @@ object ApplicationUtil {
     }
   }
 
-  private final val ScheduleInReadActionTimeout = 60.seconds
-
-  def scheduleInReadActionWithWriteActionPriority[A](project: Project, f: => A, scheduleInReadActionDescription: => String, timeout: FiniteDuration = ScheduleInReadActionTimeout, reschedule: Boolean = true): Either[NoInfo, A] = {
+  def scheduleInReadActionWithWriteActionPriority[A](project: Project, f: => A, scheduleInReadActionDescription: => String, timeout: FiniteDuration = 60.seconds, reschedule: Boolean = true): Either[NoInfo, A] = {
     val r = new AtomicReference[A]
     var cancelled = false
 
@@ -127,7 +120,7 @@ object ApplicationUtil {
 
     val result = r.get()
     if (result == null) {
-      HaskellNotificationGroup.logInfoEvent(project, s"Timeout ($timeout) in scheduleInReadActionWithWriteActionPriority while $scheduleInReadActionDescription and reschedule $reschedule")
+      HaskellNotificationGroup.logInfoEvent(project, s"Timeout in scheduleInReadActionWithWriteActionPriority while $scheduleInReadActionDescription and reschedule $reschedule")
       Left(ReadActionTimeout(scheduleInReadActionDescription))
     } else {
       Right(result)

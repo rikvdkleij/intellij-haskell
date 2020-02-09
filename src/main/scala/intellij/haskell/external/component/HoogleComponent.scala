@@ -35,6 +35,7 @@ import scala.jdk.CollectionConverters._
 object HoogleComponent {
 
   private def hooglePath = HaskellSettingsState.hooglePath.getOrElse(GlobalInfo.defaultHooglePath.toString)
+
   private final val HoogleDbName = "hoogle"
 
   def runHoogle(project: Project, pattern: String, count: Int = 100): Option[Seq[String]] = {
@@ -157,7 +158,7 @@ object HoogleComponent {
   private def runHoogle(project: Project, arguments: Seq[String]): Option[ProcessOutput] = {
     ProgressManager.checkCanceled()
 
-    ScalaFutureUtil.waitWithCheckCancelled(project,
+    ScalaFutureUtil.waitForValue(project,
       Future {
         blocking {
           CommandLine.run(project, hooglePath, Seq(s"--database=${hoogleDbPath(project)}") ++ arguments, logOutput = true)

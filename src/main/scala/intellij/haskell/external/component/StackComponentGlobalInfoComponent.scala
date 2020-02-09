@@ -16,10 +16,10 @@
 
 package intellij.haskell.external.component
 
-import com.github.blemale.scaffeine.{LoadingCache, Scaffeine}
+import com.github.blemale.scaffeine.{AsyncLoadingCache, Scaffeine}
 import com.intellij.openapi.project.Project
 import intellij.haskell.external.component.HaskellComponentsManager.StackComponentInfo
-import intellij.haskell.util.HaskellProjectUtil
+import intellij.haskell.util.{HaskellProjectUtil, ScalaFutureUtil}
 
 import scala.concurrent.duration._
 import scala.concurrent.{Await, Future, blocking}
@@ -32,14 +32,14 @@ private[component] object StackComponentGlobalInfoComponent {
 
   private type Result = Option[StackComponentGlobalInfo]
 
-  private final val Cache: LoadingCache[Key, Result] = Scaffeine().build((k: Key) => createStackInfo(k))
+  private final val Cache: AsyncLoadingCache[Key, Result] = Scaffeine().buildAsync((k: Key) => createStackInfo(k))
 
   def findStackComponentGlobalInfo(stackComponentInfo: StackComponentInfo): Option[StackComponentGlobalInfo] = {
     val key = Key(stackComponentInfo)
-    Cache.get(key) match {
+    ScalaFutureUtil.waitForValue(stackComponentInfo.module.getProject, Cache.get(key), "Getting global info").flatten match {
       case result@Some(_) => result
       case _ =>
-        Cache.invalidate(key)
+        Cache.synchronous.invalidate(key)
         None
     }
   }
@@ -74,8 +74,8 @@ private[component] object StackComponentGlobalInfoComponent {
   }
 
   def invalidate(project: Project): Unit = {
-    val keys = Cache.asMap().keys.filter(_.stackComponentInfo.module.getProject == project)
-    keys.foreach(Cache.invalidate)
+    val keys = Cache.synchronous.asMap().keys.filter(_.stackComponentInfo.module.getProject == project)
+    keys.foreach(Cache.synchronous.invalidate)
   }
 }
 

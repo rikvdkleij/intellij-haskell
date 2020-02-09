@@ -26,6 +26,8 @@ import intellij.haskell.psi._
 import intellij.haskell.util._
 import intellij.haskell.util.index.HaskellModuleNameIndex._
 
+import scala.concurrent.TimeoutException
+
 private[component] object DefinitionLocationComponent {
   private final val LocAtPattern = """(.+):\(([\d]+),([\d]+)\)-\(([\d]+),([\d]+)\)""".r
   private final val PackageModulePattern = """([\w\-\d.]+)(?:-.*)?:([\w.\-]+)""".r
@@ -40,29 +42,17 @@ private[component] object DefinitionLocationComponent {
   def findDefinitionLocation(psiFile: PsiFile, qualifiedNameElement: HaskellQualifiedNameElement, importQualifier: Option[String]): DefinitionLocationResult = {
     val key = Key(psiFile, qualifiedNameElement, importQualifier)
 
-    Cache.getIfPresent(key) match {
-      case Some(v) =>
-        val result = v
-        result match {
-          case Right(_) => result
-          case Left(ReadActionTimeout(_)) | Left(IndexNotReady) | Left(ModuleNotAvailable(_)) | Left(ReplNotAvailable) =>
-            Cache.invalidate(key)
-            result
-          case _ => result
-        }
-      case None =>
-        // Not using Cache.get otherwise the threads which have read access are waiting and on the other hand, each background thread of the Cache needs a read action.
-        val result = findDefinitionLocationResult(key)
-        result match {
-          case Right(_) =>
-            Cache.put(key, result)
-            result
-          case Left(ReadActionTimeout(_)) | Left(IndexNotReady) | Left(ReplNotAvailable) | Left(ModuleNotAvailable(_)) =>
-            result
-          case Left(_) =>
-            Cache.put(key, result)
-            result
-        }
+    try {
+      val result = ApplicationUtil.runReadAction(Cache.get(key))
+      result match {
+        case Right(_) => result
+        case Left(ReadActionTimeout(_)) | Left(IndexNotReady) | Left(ModuleNotAvailable(_)) | Left(ReplNotAvailable) =>
+          Cache.invalidate(key)
+          result
+        case _ => result
+      }
+    } catch {
+      case e: TimeoutException => Left(ReadActionTimeout(e.getMessage))
     }
   }
 
@@ -168,6 +158,8 @@ private[component] object DefinitionLocationComponent {
     Option(namedElement.getContainingFile).flatMap(HaskellPsiUtil.findModuleName).getOrElse("-")
   }
 
+  import scala.concurrent.ExecutionContext.Implicits.global
+
   private def findLocationByImportedIdentifiers(project: Project, key: Key, name: String): Either[NoInfo, PackageModuleLocation] = {
     ProgressManager.checkCanceled()
 
@@ -179,7 +171,15 @@ private[component] object DefinitionLocationComponent {
       case Some(q) => q + "." + qNameName
     }
 
-    val moduleIdentifiers = FileModuleIdentifiers.findAvailableModuleIdentifiers(psiFile).filter(_.name == qName)
+    val moduleIdentifiers = {
+      if (HaskellProjectUtil.isSourceFile(psiFile)) {
+        FileModuleIdentifiers.findAvailableModuleIdentifiers(psiFile)
+      } else {
+        HaskellPsiUtil.findModuleName(psiFile).flatMap(mn => ScalaFutureUtil.waitForValue(project,
+          HaskellComponentsManager.findModuleIdentifiers(project, mn)
+          , "find module identifiers in DefinitionLocationComponent")).flatten.getOrElse(Iterable())
+        }.filter(_.name == qName)
+    }
 
     ProgressManager.checkCanceled()
 
@@ -200,6 +200,7 @@ private[component] object DefinitionLocationComponent {
       sp <- LineColumnPosition.fromOffset(vf, qualifiedNameElement.getTextRange.getStartOffset)
       ep <- LineColumnPosition.fromOffset(vf, qualifiedNameElement.getTextRange.getEndOffset)
       endColumnNr = if (withoutLastColumn) ep.columnNr - 1 else ep.columnNr
+      if key.qualifiedNameElement.isValid
     } yield {
       repl: ProjectStackRepl => repl.findLocationInfo(moduleName, psiFile, sp.lineNr, sp.columnNr, ep.lineNr, endColumnNr, name)
     }

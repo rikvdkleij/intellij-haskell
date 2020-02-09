@@ -52,7 +52,7 @@ object HaskellModuleNameIndex {
 
   type Result = Either[NoInfo, Seq[(PsiFile, Boolean)]]
 
-  private final val Cache: LoadingCache[Key, Result] = Scaffeine().build((k: Key) => find(k, 2.second, reschedule = false))
+  private final val Cache: LoadingCache[Key, Result] = Scaffeine().build((k: Key) => find(k, 5.second, reschedule = false))
 
   private def find(key: Key, timeout: FiniteDuration, reschedule: Boolean): Either[NoInfo, Seq[(PsiFile, Boolean)]] = {
     val project = key.project
@@ -68,7 +68,8 @@ object HaskellModuleNameIndex {
             Right(psiFiles.flatMap { case (pf, isPf) => pf.toSeq.map((_, isPf)) })
           }
         }
-      case Left(noInfo) => Left(noInfo)
+      case Left(noInfo) =>
+        Left(noInfo)
     }
   }
 
@@ -94,16 +95,14 @@ object HaskellModuleNameIndex {
   // So using Cache is solution because Cache.get blocks next request for same key while busy.
   def findFilesByModuleName2(project: Project, moduleName: String): Either[NoInfo, Seq[(PsiFile, isProjectFile)]] = {
     val key = Key(project, moduleName)
-    Cache.getIfPresent(key) match {
-      case Some(r@Right(_)) => r
-      case _ =>
-        Cache.get(key) match {
-          case r@Right(_) => r
-          case Left(noInfo) =>
-            // No invalidate here to prevent UI becomes unresponsive after many calls for same module name which module does not exists
-            // In LoadComponent the "not found" entries will be invalidated eventually
-            Left(noInfo)
-        }
+    val result = Cache.get(key)
+    result match {
+      case Right(_) => result
+      case Left(_) =>
+        // No invalidate here to prevent UI becomes unresponsive after many calls for same module name which module does not exists
+        // In LoadComponent the "not found" entries will be invalidated eventually
+        result
+      case _ => result
     }
   }
 

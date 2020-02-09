@@ -158,7 +158,7 @@ abstract class StackRepl(project: Project, componentInfo: Option[StackComponentI
             val timeout = if (ghciCommand == GhciCommand.Load || ghciCommand == GhciCommand.Browse) LoadTimeout else DefaultTimeout
 
             val deadline = timeout.fromNow
-            while (deadline.hasTimeLeft && !hasReachedEndOfOutput) {
+            while (deadline.hasTimeLeft && !hasReachedEndOfOutput && !project.isDisposed) {
               drainQueues()
 
               // We have to wait...
@@ -255,7 +255,7 @@ abstract class StackRepl(project: Project, componentInfo: Option[StackComponentI
           }
 
           val deadline = DefaultTimeout.fromNow
-          while (process.isAlive() && deadline.hasTimeLeft && !isStarted && !hasDependencyError) {
+          while (process.isAlive() && deadline.hasTimeLeft && !isStarted && !hasDependencyError && !project.isDisposed) {
             // We have to wait till REPL is started
             Thread.sleep(DelayBetweenReadsInMillis)
           }

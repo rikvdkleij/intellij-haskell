@@ -27,6 +27,7 @@ import com.intellij.openapi.projectRoots.ProjectJdkTable
 import com.intellij.openapi.roots.{ModifiableRootModel, ModuleRootModificationUtil}
 import com.intellij.openapi.ui.Messages
 import com.intellij.openapi.vfs.VirtualFileManager
+import com.intellij.psi.{PsiManager, PsiTreeChangeAdapter, PsiTreeChangeEvent}
 import intellij.haskell.action.HaskellReformatAction
 import intellij.haskell.annotator.HaskellAnnotator
 import intellij.haskell.external.execution.StackCommandLine
@@ -243,7 +244,9 @@ object StackProjectManager {
 
                 projectFilesWithImportedModuleNames match {
                   case Some(fm) =>
-                    fm.foreach { case (_, moduleNames) =>
+                    fm.foreach { case (pf, moduleNames) =>
+                      HaskellPsiUtil.findModuleName(pf).foreach(BrowseModuleComponent.findModuleIdentifiersSync(project, _))
+
                       moduleNames.foreach(mn => HaskellModuleNameIndex.findFilesByModuleName(project, mn))
                       HaskellNotificationGroup.logInfoEvent(project, "Loading module identifiers " + moduleNames.mkString(", "))
                       moduleNames.foreach(m => BrowseModuleComponent.findModuleIdentifiersSync(project, m))
@@ -303,6 +306,25 @@ object StackProjectManager {
                 getStackProjectManager(project).map(_.projectLibraryFileWatcher).foreach { watcher =>
                   ApplicationManager.getApplication.getMessageBus.connect(project).subscribe(VirtualFileManager.VFS_CHANGES, watcher)
                 }
+              }
+
+              if (!project.isDisposed) {
+                PsiManager.getInstance(project).addPsiTreeChangeListener(new PsiTreeChangeAdapter {
+
+                  private def invalidateTypeInfo(event: PsiTreeChangeEvent): Unit = {
+                    val element = Option(event.getOldChild).orElse(Option(event.getNewChild)).flatMap(e => HaskellPsiUtil.findExpression(e)).orElse(Option(event.getParent))
+                    val elements = element.map(e => HaskellPsiUtil.findQualifiedNamedElements(e)).getOrElse(Seq()).toSeq
+                    TypeInfoComponent.invalidateElements(event.getFile, elements)
+                  }
+
+                  override def childReplaced(event: PsiTreeChangeEvent): Unit = {
+                    invalidateTypeInfo(event)
+                  }
+
+                  override def childrenChanged(event: PsiTreeChangeEvent): Unit = {
+                    invalidateTypeInfo(event)
+                  }
+                })
               }
 
               progressIndicator.setText("Busy preloading caches")
