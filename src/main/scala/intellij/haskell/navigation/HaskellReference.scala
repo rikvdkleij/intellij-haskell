@@ -76,7 +76,7 @@ class HaskellReference(element: HaskellNamedElement, textRange: TextRange) exten
   }
 
   private def isPartOfQualifier(namedElement: HaskellNamedElement): Boolean = {
-    Option(namedElement.getParent).map(_.getNode.getElementType).contains(HaskellTypes.HS_QUALIFIER)
+    Option(namedElement.getParent).map(_.getNode.getElementType).exists(elementType => elementType == HaskellTypes.HS_QUALIFIER || elementType == HaskellTypes.HS_Q_CON_QUALIFIER_1)
   }
 
   private def isPartOfQualifiedAs(namedElement: HaskellNamedElement): Boolean = {
