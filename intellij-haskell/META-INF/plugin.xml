@@ -285,7 +285,7 @@
     </change-notes>
 
     <!-- please see http://confluence.jetbrains.com/display/IDEADEV/Build+Number+Ranges for description -->
-    <idea-version since-build="142.0"/>
+    <idea-version since-build="193.6015.39"/>
 
     <extensions defaultExtensionNs="com.intellij">
         <!-- File-type Factory -->
