@@ -313,7 +313,7 @@ object StackProjectManager {
 
                   private def invalidateTypeInfo(event: PsiTreeChangeEvent): Unit = {
                     val element = Option(event.getOldChild).orElse(Option(event.getNewChild)).flatMap(e => HaskellPsiUtil.findExpression(e)).orElse(Option(event.getParent))
-                    val elements = element.map(e => HaskellPsiUtil.findQualifiedNamedElements(e)).getOrElse(Seq()).toSeq
+                    val elements = element.filter(_.isValid).map(HaskellPsiUtil.findQualifiedNamedElements).getOrElse(Seq()).toSeq
                     TypeInfoComponent.invalidateElements(event.getFile, elements)
                   }
 
