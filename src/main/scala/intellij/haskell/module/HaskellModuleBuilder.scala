@@ -120,7 +120,7 @@ class HaskellModuleBuilder extends TemplateModuleBuilder(null, HaskellModuleType
         }
       })
       FutureUtil.waitForValue(project, createModuleAction, "Creating Haskell module", 120) match {
-        case None => Messages.showErrorDialog(s"Timeout while creating new Stack project", "Create Haskell module")
+        case None => HaskellNotificationGroup.logErrorBalloonEvent(project, s"Timeout while creating new Stack project by using: `stack new`")
         case Some(_) => ()
       }
     }
