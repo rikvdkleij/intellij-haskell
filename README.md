@@ -69,7 +69,7 @@ When used with `hindent`, `intellij-haskell` automatically sets `--indent-size` 
     - Inside IntelliJ use `File`>`New`>`Project from Existing Sources...` from the IntelliJ menu;
     - In the `Welcome to IntelliJ IDEA` dialog use `Import Project`; 
   - In the `New Project` wizard select `Import project from external model` and check `Haskell Stack`;
-  - In next page of wizard configure `Project SDK` by configuring `Haskell Tool Stack` with selecting path to `stack` binary, e.g. `/usr/local/bin/stack`;
+  - In next page of wizard configure `Project SDK` by configuring `Haskell Tool Stack` with selecting path to `stack` binary, e.g. `/usr/local/bin/stack` (you can use `which stack` on Linux or macOS or `where stack` on windows to find the path);
   - Finish wizard and project will be opened;
   - Wizard will automatically configure which folders are sources, test and which to exclude;
   - Plugin will automatically build Haskell Tools (HLint, Hoogle, Hindent and Stylish Haskell) to prevent incompatibility issues
