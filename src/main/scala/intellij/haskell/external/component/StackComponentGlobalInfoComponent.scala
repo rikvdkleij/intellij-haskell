@@ -52,7 +52,7 @@ private[component] object StackComponentGlobalInfoComponent {
 
   private def findAvailableLibraryModuleNames(project: Project, componentInfo: StackComponentInfo): Result = {
     val projectPackageNames = HaskellProjectUtil.findProjectPackageNames(project)
-    val buildDependsLibraryPackages = componentInfo.buildDepends.filterNot(projectPackageNames.contains)
+    val buildDependsLibraryPackages = componentInfo.buildDepends.filterNot(projectPackageNames.contains) ++ Seq("ghc-prim")
 
     val libraryModuleNamesFutures = buildDependsLibraryPackages.grouped(5).map { packageNames =>
       Future {

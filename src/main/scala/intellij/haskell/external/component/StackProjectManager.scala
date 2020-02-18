@@ -179,6 +179,7 @@ object StackProjectManager {
                 val projectRepsl = StackReplsManager.getRunningProjectRepls(project)
                 progressIndicator.setText("Busy stopping Stack REPLs")
                 StackReplsManager.getGlobalRepl(project).foreach(_.exit())
+                StackReplsManager.getGlobalRepl2(project).foreach(_.exit())
                 projectRepsl.foreach(_.exit())
 
                 progressIndicator.setText("Busy cleaning cache")
@@ -249,7 +250,7 @@ object StackProjectManager {
 
                       moduleNames.foreach(mn => HaskellModuleNameIndex.findFilesByModuleName(project, mn))
                       HaskellNotificationGroup.logInfoEvent(project, "Loading module identifiers " + moduleNames.mkString(", "))
-                      moduleNames.foreach(m => BrowseModuleComponent.findModuleIdentifiersSync(project, m))
+                      moduleNames.foreach(mn => BrowseModuleComponent.findModuleIdentifiersSync(project, mn))
                     }
                   case None => HaskellNotificationGroup.logInfoEvent(project, "Couldn't load module identifiers due to timeout")
                 }
@@ -257,6 +258,9 @@ object StackProjectManager {
 
               progressIndicator.setText("Busy starting global Stack REPL")
               StackReplsManager.getGlobalRepl(project)
+
+              progressIndicator.setText("Busy starting global Stack REPL2")
+              StackReplsManager.getGlobalRepl2(project)
 
               progressIndicator.setText("Busy preloading global project info")
               GlobalProjectInfoComponent.findGlobalProjectInfo(project)
@@ -412,6 +416,7 @@ class StackProjectManager(project: Project) extends ProjectComponent {
   override def projectClosed(): Unit = {
     if (HaskellProjectUtil.isHaskellProject(project)) {
       replsManager.foreach(_.getGlobalRepl.exit())
+      replsManager.foreach(_.getGlobalRepl2.exit())
       replsManager.foreach(_.getRunningProjectRepls.foreach(_.exit()))
       HaskellComponentsManager.invalidateGlobalCaches(project)
     }

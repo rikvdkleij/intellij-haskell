@@ -228,9 +228,9 @@ object HaskellComponentsManager {
           if (project.isDisposed) {
             Iterable()
           } else {
-            val libraryModuleNames = componentInfos.flatMap(HaskellComponentsManager.findStackComponentGlobalInfo).flatMap(_.packageInfos)
+            val packageInfos = componentInfos.flatMap(HaskellComponentsManager.findStackComponentGlobalInfo).flatMap(_.packageInfos)
 
-            val exposedLibraryModuleNames = libraryModuleNames.flatMap(_.exposedModuleNames).distinct
+            val exposedLibraryModuleNames = packageInfos.flatMap(_.exposedModuleNames).distinct
             val importDeclarations = ApplicationUtil.runInReadActionWithWriteActionPriority(project, HaskellPsiUtil.findImportDeclarations(f), "In preloadLibraryIdentifiers findImportDeclarations").toOption.getOrElse(Iterable())
             importDeclarations.flatMap(id => ApplicationUtil.runReadAction(id.getModuleName)).filter(mn => exposedLibraryModuleNames.contains(mn)).filterNot(_ == HaskellProjectUtil.Prelude)
           }

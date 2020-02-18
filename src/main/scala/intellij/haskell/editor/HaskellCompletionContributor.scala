@@ -343,14 +343,14 @@ class HaskellCompletionContributor extends CompletionContributor {
     } yield (info, globalInfo)
   }
 
-  private def findAvailableIdsForImportModuleSpec(stackComponentGlobalInfo: StackComponentGlobalInfo, psiFile: PsiFile, element: PsiElement) = {
+  private def findAvailableIdsForImportModuleSpec(stackComponentGlobalInfo: StackComponentGlobalInfo, psiFile: PsiFile, element: PsiElement): Iterable[LookupElementBuilder] = {
     import scala.concurrent.ExecutionContext.Implicits.global
 
     HaskellPsiUtil.findImportDeclaration(element).flatMap(_.getModuleName) match {
       case Some(moduleName) =>
         ScalaFutureUtil.waitForValue(psiFile.getProject,
           HaskellComponentsManager.findModuleIdentifiers(psiFile.getProject, moduleName)
-          , "Getting module identifiers").flatten match {
+          , s"finding module identifiers for $moduleName").flatten match {
           case Some(ids) => ids.map(x => {
             ProgressManager.checkCanceled()
             createLookupElement(x, addParens = true)

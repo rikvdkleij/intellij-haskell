@@ -16,13 +16,13 @@
 
 package intellij.haskell.external.component
 
-import com.github.blemale.scaffeine.{LoadingCache, Scaffeine}
+import com.github.blemale.scaffeine.{Cache, LoadingCache, Scaffeine}
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.text.StringUtil
 import intellij.haskell.HaskellNotificationGroup
 import intellij.haskell.external.execution.CommandLine
-import intellij.haskell.util.ScalaUtil
 import intellij.haskell.util.StringUtil.removePackageQualifier
+import intellij.haskell.util.{HaskellProjectUtil, ScalaUtil}
 
 import scala.jdk.CollectionConverters._
 
@@ -31,6 +31,10 @@ private[component] object LibraryPackageInfoComponent {
   private case class Key(project: Project, packageName: String)
 
   private type Result = Option[PackageInfo]
+
+  type Exposed = Boolean
+  private final val AllCache: Cache[String, Exposed] = Scaffeine().build()
+  AllCache.put(HaskellProjectUtil.Prelude, true)
 
   private final val Cache: LoadingCache[Key, Result] = Scaffeine().build((k: Key) => findPackageInfo(k))
 
@@ -54,7 +58,10 @@ private[component] object LibraryPackageInfoComponent {
       val packageOutputs = processOutput.getStdout.split("(?m)^---\n")
       packageOutputs.map(o => {
         val outputLines = splitLines(o, excludeEmptyLines = true)
-        findPackageInfo(outputLines)
+        val packageInfo = findPackageInfo(outputLines)
+        packageInfo.foreach(_.exposedModuleNames.foreach(AllCache.put(_, true)))
+        packageInfo.foreach(_.hiddenModuleNames.foreach(AllCache.put(_, false)))
+        packageInfo
       })
     }
 
@@ -65,6 +72,10 @@ private[component] object LibraryPackageInfoComponent {
       }
       case None => HaskellNotificationGroup.logErrorBalloonEvent(project, "Executing `ghc-pkg dump` failed")
     }
+  }
+
+  def findLibraryModuleName(moduleName: String): Option[Boolean] = {
+    AllCache.getIfPresent(moduleName)
   }
 
   def findLibraryPackageInfo(project: Project, packageName: String): Result = {

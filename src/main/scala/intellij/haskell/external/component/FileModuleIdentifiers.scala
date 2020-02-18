@@ -63,7 +63,7 @@ object FileModuleIdentifiers {
   }
 
   def findAvailableModuleIdentifiers(psiFile: PsiFile): Iterable[ModuleIdentifier] = {
-    val message = s"find available module identifiers for ${psiFile.getVirtualFile.getPath}"
+    val message = s"finding available module identifiers for ${psiFile.getVirtualFile.getPath}"
     val moduleIdentifiers = getModuleIdentifiers(psiFile)
     ScalaFutureUtil.waitForValue(psiFile.getProject, moduleIdentifiers, message).getOrElse(Iterable())
   }

@@ -14,7 +14,7 @@ object ScalaFutureUtil {
   def waitForValue[T](project: Project, future: Future[T], actionDescription: String, timeout: FiniteDuration = 200.millis): Option[T] = {
     if (ApplicationManager.getApplication.isReadAccessAllowed) {
       try {
-        new WaitFor(timeout.toMillis.toInt, 10) {
+        new WaitFor(timeout.toMillis.toInt, 1) {
           override def condition(): Boolean = {
             ProgressManager.checkCanceled()
             future.isCompleted || project.isDisposed

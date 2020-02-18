@@ -43,7 +43,7 @@ private[component] object DefinitionLocationComponent {
     val key = Key(psiFile, qualifiedNameElement, importQualifier)
 
     try {
-      val result = ApplicationUtil.runReadAction(Cache.get(key))
+      val result = Cache.get(key)
       result match {
         case Right(_) => result
         case Left(ReadActionTimeout(_)) | Left(IndexNotReady) | Left(ModuleNotAvailable(_)) | Left(ReplNotAvailable) =>
@@ -177,7 +177,7 @@ private[component] object DefinitionLocationComponent {
       } else {
         HaskellPsiUtil.findModuleName(psiFile).flatMap(mn => ScalaFutureUtil.waitForValue(project,
           HaskellComponentsManager.findModuleIdentifiers(project, mn)
-          , "find module identifiers in DefinitionLocationComponent")).flatten.getOrElse(Iterable())
+          , s"finding library module identifiers in DefinitionLocationComponent for module $mn")).flatten.getOrElse(Iterable())
         }.filter(_.name == qName)
     }
 
