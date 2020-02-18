@@ -63,12 +63,6 @@ private[component] object BrowseModuleComponent {
     Cache.synchronous().asMap().filter(_._1.project == project).values.flatMap(_.toSeq).flatten
   }
 
-  def invalidateModuleName(project: Project, moduleName: String): Unit = {
-    val synchronousCache = Cache.synchronous
-    val key = synchronousCache.asMap().keys.find(k => k.project == project && k.moduleName == moduleName)
-    key.foreach(synchronousCache.invalidate)
-  }
-
   def invalidateModuleNames(project: Project, moduleNames: Seq[String]): Unit = {
     val synchronousCache = Cache.synchronous
     val keys = synchronousCache.asMap().keys.filter(k => k.project == project && moduleNames.contains(k.moduleName))
@@ -85,29 +79,41 @@ private[component] object BrowseModuleComponent {
     val project = key.project
     val moduleName = key.moduleName
 
-    HaskellModuleNameIndex.findFilesByModuleName2(project, moduleName) match {
-      case Right(files) => files.headOption match {
-        case Some((moduleFile, isProjectFile)) =>
-          if (isProjectFile) {
-            getCurrentFile(project) match {
-              case Some(cf) => findInRepl(project, StackReplsManager.getProjectRepl(cf), moduleName, None) match {
-                case r@Right(_) => r
-                case Left(_) =>
+    if (AvailableModuleNamesComponent.isProjectModule(project, moduleName)) {
+      HaskellModuleNameIndex.findFilesByModuleName2(project, moduleName) match {
+        case Right(files) => files.headOption match {
+          case Some((moduleFile, isProjectFile)) =>
+            if (isProjectFile) {
+              getCurrentFile(project) match {
+                case Some(cf) => findInRepl(project, StackReplsManager.getProjectRepl(cf), moduleName, None) match {
+                  case r@Right(_) => r
+                  case Left(_) =>
+                    val projectRepl = StackReplsManager.getProjectRepl(moduleFile)
+                    findInRepl(project, projectRepl, moduleName, Some(moduleFile))
+                }
+                case None =>
                   val projectRepl = StackReplsManager.getProjectRepl(moduleFile)
                   findInRepl(project, projectRepl, moduleName, Some(moduleFile))
               }
-              case None =>
-                val projectRepl = StackReplsManager.getProjectRepl(moduleFile)
-                findInRepl(project, projectRepl, moduleName, Some(moduleFile))
+            } else {
+              Left(NoInfoAvailable(moduleName, "-"))
             }
-          } else {
-            findLibraryModuleIdentifiers(project, Some(moduleFile), moduleName)
-          }
-        case None =>
-          // E.g. module name is Prelude which does not refer to file
-          findLibraryModuleIdentifiers(project, None, moduleName)
+          case None =>
+            Left(NoInfoAvailable(moduleName, "-"))
+        }
+        case Left(noInfo) => Left(noInfo)
       }
-      case Left(noInfo) => Left(noInfo)
+    } else {
+      LibraryPackageInfoComponent.findLibraryModuleName(moduleName) match {
+        case Some(true) => findLibraryModuleIdentifiers(project, moduleName)
+        case _ =>
+          HaskellModuleNameIndex.findFilesByModuleName2(project, moduleName) match {
+            case Right(files) =>
+              val moduleFile = files.find(_._2 == false).map(_._1).toRight(NoInfoAvailable(moduleName, "-"))
+              moduleFile.flatMap(file => Right(ApplicationUtil.runReadAction(HaskellPsiUtil.findTopLevelDeclarations(file)).map(d => ApplicationUtil.runReadAction(d.getName)).flatMap(d => createLibraryModuleIdentifier(project, d, moduleName)).toSeq))
+            case Left(noInfo) => Left(noInfo)
+          }
+      }
     }
   }
 
@@ -138,14 +144,13 @@ private[component] object BrowseModuleComponent {
     }
   }
 
-  private def findLibraryModuleIdentifiers(project: Project, moduleFile: Option[PsiFile], moduleName: String): Either[NoInfo, Seq[ModuleIdentifier]] = {
+  private def findLibraryModuleIdentifiers(project: Project, moduleName: String): Either[NoInfo, Seq[ModuleIdentifier]] = {
     StackReplsManager.getGlobalRepl(project) match {
       case Some(repl) =>
         if (repl.available) {
-          (repl.getModuleIdentifiers(moduleName), moduleFile) match {
-            case (Some(o), _) if o.stderrLines.isEmpty && o.stdoutLines.nonEmpty => Right(o.stdoutLines.flatMap(l => createLibraryModuleIdentifier(project, l, moduleName)))
-            case (_, Some(f)) => Right(ApplicationUtil.runReadAction(HaskellPsiUtil.findTopLevelDeclarations(f)).map(d => ApplicationUtil.runReadAction(d.getName)).flatMap(d => createLibraryModuleIdentifier(project, d, moduleName)).toSeq)
-            case (None, _) => Left(ReplNotAvailable)
+          repl.getModuleIdentifiers(moduleName) match {
+            case Some(o) if o.stderrLines.isEmpty && o.stdoutLines.nonEmpty => Right(o.stdoutLines.flatMap(l => createLibraryModuleIdentifier(project, l, moduleName)))
+            case None => Left(ReplNotAvailable)
             case _ => Left(ModuleNotAvailable(moduleName))
           }
         } else {

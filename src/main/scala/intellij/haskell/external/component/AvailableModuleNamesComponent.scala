@@ -29,47 +29,54 @@ import intellij.haskell.{HaskellFileType, HaskellNotificationGroup}
 import scala.concurrent.duration._
 import scala.jdk.CollectionConverters._
 
-private[component] object AvailableModuleNamesComponent {
+ object AvailableModuleNamesComponent {
 
-  private final val TestStanzaTypes = Seq(TestSuiteType, BenchmarkType)
+   private final val TestStanzaTypes = Seq(TestSuiteType, BenchmarkType)
 
-  private case class Key(stackComponentInfo: StackComponentInfo)
+   private case class Key(project: Project, target: String)
 
-  private final val Cache: AsyncLoadingCache[Key, Iterable[String]] = Scaffeine().refreshAfterWrite(10.seconds).buildAsync((k: Key) => findAvailableProjectModuleNamesWithIndex(k.stackComponentInfo))
+   private final val Cache: AsyncLoadingCache[Key, Iterable[String]] = Scaffeine().refreshAfterWrite(10.seconds).buildAsync((k: Key) => findAvailableProjectModuleNamesWithIndex(k))
 
-  def findAvailableModuleNamesWithIndex(stackComponentInfo: StackComponentInfo): Iterable[String] = {
-    // A module can be a project module AND library module
-    findAvailableLibraryModuleNames(stackComponentInfo) ++ findAvailableProjectModuleNames(stackComponentInfo)
+   def findAvailableModuleNamesWithIndex(stackComponentInfo: StackComponentInfo): Iterable[String] = {
+     // A module can be a project module AND library module
+     findAvailableLibraryModuleNames(stackComponentInfo) ++ findAvailableProjectModuleNames(stackComponentInfo)
   }
 
   def findAvailableModuleLibraryModuleNamesWithIndex(module: Module): Iterable[String] = {
     findModuleNamesInModule(module.getProject, module, Seq.empty, includeTests = false)
   }
 
-  def findAvailableProjectModuleNames(stackComponentInfo: StackComponentInfo): Iterable[String] = {
-    val key = Key(stackComponentInfo)
-    ScalaFutureUtil.waitForValue(stackComponentInfo.module.getProject, Cache.get(key), s"getting project module names for ${key.stackComponentInfo.packageName}", 1.second) match {
-      case Some(files) => files
-      case _ =>
-        Cache.synchronous().invalidate(key)
-        Iterable()
-    }
-  }
+   def findAvailableProjectModuleNames(stackComponentInfo: StackComponentInfo): Iterable[String] = {
+     val key = Key(stackComponentInfo.module.getProject, stackComponentInfo.target)
+     ScalaFutureUtil.waitForValue(stackComponentInfo.module.getProject, Cache.get(key), s"getting project module names for target ${key.target}", 1.second) match {
+       case Some(files) => files
+       case _ =>
+         Cache.synchronous().invalidate(key)
+         Iterable()
+     }
+   }
 
-  private def findAvailableProjectModuleNamesWithIndex(stackComponentInfo: StackComponentInfo): Iterable[String] = {
-    val projectModulePackageNames = HaskellComponentsManager.findProjectModulePackageNames(stackComponentInfo.module.getProject)
-    val libraryProjectModules = projectModulePackageNames.filter { case (_, n) => stackComponentInfo.buildDepends.contains(n) }.map(_._1)
-    findModuleNamesInModule(stackComponentInfo.module.getProject, stackComponentInfo.module, libraryProjectModules, TestStanzaTypes.contains(stackComponentInfo.stanzaType))
-  }
+   def isProjectModule(project: Project, moduleName: String): Boolean = {
+     Cache.synchronous.asMap().exists { case (k, v) => k.project == project && v.exists(_ == moduleName) }
+   }
 
-  private def findAvailableLibraryModuleNames(stackComponentInfo: StackComponentInfo): Iterable[String] = {
-    HaskellComponentsManager.findStackComponentGlobalInfo(stackComponentInfo).map(_.packageInfos.flatMap(_.exposedModuleNames)).getOrElse(Iterable())
-  }
+   private def findAvailableProjectModuleNamesWithIndex(key: Key): Iterable[String] = {
+     val project = key.project
+     val projectModulePackageNames = HaskellComponentsManager.findProjectModulePackageNames(project)
+     HaskellComponentsManager.findStackComponentInfos(project).find(info => info.module.getProject == project && info.target == key.target).map { stackComponentInfo =>
+       val libraryProjectModules = projectModulePackageNames.filter { case (_, n) => stackComponentInfo.buildDepends.contains(n) }.map(_._1)
+       findModuleNamesInModule(stackComponentInfo.module.getProject, stackComponentInfo.module, libraryProjectModules, TestStanzaTypes.contains(stackComponentInfo.stanzaType))
+     }.getOrElse(Iterable())
+   }
 
-  private def findModuleNamesInModule(project: Project, currentModule: Module, modules: Seq[Module], includeTests: Boolean): Iterable[String] = {
-    for {
-      vf <- findHaskellFiles(project, currentModule, modules, includeTests)
-      hf <- HaskellFileUtil.convertToHaskellFileInReadAction(project, vf).toSeq
+   private def findAvailableLibraryModuleNames(stackComponentInfo: StackComponentInfo): Iterable[String] = {
+     HaskellComponentsManager.findStackComponentGlobalInfo(stackComponentInfo).map(_.packageInfos.flatMap(_.exposedModuleNames)).getOrElse(Iterable())
+   }
+
+   private def findModuleNamesInModule(project: Project, currentModule: Module, modules: Seq[Module], includeTests: Boolean): Iterable[String] = {
+     for {
+       vf <- findHaskellFiles(project, currentModule, modules, includeTests)
+       hf <- HaskellFileUtil.convertToHaskellFileInReadAction(project, vf).toSeq
       mn <- HaskellPsiUtil.findModuleName(hf)
     } yield mn
   }

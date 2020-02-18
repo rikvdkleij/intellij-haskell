@@ -234,7 +234,7 @@ object HaskellReference {
               FileModuleIdentifiers.findAvailableModuleIdentifiers(f)
             } else {
               HaskellPsiUtil.findModuleName(f).flatMap(mn => ScalaFutureUtil.waitForValue(project,
-                HaskellComponentsManager.findModuleIdentifiers(project, mn), "find module identifiers in HaskellReference")).flatten.getOrElse(Iterable())
+                HaskellComponentsManager.findModuleIdentifiers(project, mn), s"finding library module identifiers in HaskellReference for $mn")).flatten.getOrElse(Iterable())
             }
           }
           }.filter(mid => mid.name == name || mid.name == "_" + name || mid.name == mid.moduleName + "." + name).map(_.moduleName)

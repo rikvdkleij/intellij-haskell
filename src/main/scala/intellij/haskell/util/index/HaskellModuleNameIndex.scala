@@ -132,7 +132,7 @@ object HaskellModuleNameIndex {
             case _: IndexNotReadyException => None
           }
         },
-        s"Find file for module $moduleName by index",
+        s"finding file for module $moduleName by index",
         timeout, reschedule = reschedule
       )
 

@@ -110,10 +110,12 @@ object ApplicationUtil {
 
     if (reschedule) {
       while (r.get == null && deadline.hasTimeLeft && !project.isDisposed) {
+        ProgressManager.checkCanceled()
         Thread.sleep(1)
       }
     } else {
       while (r.get == null && !cancelled && deadline.hasTimeLeft && !project.isDisposed) {
+        ProgressManager.checkCanceled()
         Thread.sleep(1)
       }
     }

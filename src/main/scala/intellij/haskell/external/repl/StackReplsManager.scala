@@ -61,6 +61,12 @@ private[external] object StackReplsManager {
     repl
   }
 
+  def getGlobalRepl2(project: Project): Option[GlobalStackRepl] = {
+    val repl = getReplsManager(project).map(_.getGlobalRepl2)
+    repl.foreach(r => if (!r.available && !r.starting) r.start())
+    repl
+  }
+
   private def createCabalInfos(project: Project): Iterable[(Module, CabalInfo)] = {
     val modules = HaskellProjectUtil.findProjectHaskellModules(project)
     val moduleDirs = modules.map(HaskellProjectUtil.getModuleDir)
@@ -98,6 +104,7 @@ private[external] class StackReplsManager(val project: Project) {
   import scala.jdk.CollectionConverters._
 
   private val globalRepl: GlobalStackRepl = GlobalStackRepl(project, HaskellSettingsState.getReplTimeout)
+  private val globalRepl2: GlobalStackRepl = GlobalStackRepl(project, HaskellSettingsState.getReplTimeout)
 
   private val projectRepls = new ConcurrentHashMap[StackComponentInfo, ProjectStackRepl]().asScala
 
@@ -114,6 +121,8 @@ private[external] class StackReplsManager(val project: Project) {
   }
 
   def getGlobalRepl: GlobalStackRepl = globalRepl
+
+  def getGlobalRepl2: GlobalStackRepl = globalRepl2
 
   private def findProjectRepl(psiFile: PsiFile): Option[ProjectStackRepl] = {
     if (HaskellProjectUtil.isSourceFile(psiFile)) {
