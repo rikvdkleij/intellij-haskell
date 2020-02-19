@@ -24,11 +24,13 @@ import com.intellij.psi.impl.source.tree.TreeUtil
 import com.intellij.psi.tree.{IElementType, TokenSet}
 import com.intellij.psi.util.PsiTreeUtil
 import com.intellij.psi.{PsiElement, PsiFile, TokenType}
+import intellij.haskell.HaskellNotificationGroup
 import intellij.haskell.psi.HaskellElementCondition._
 import intellij.haskell.psi.HaskellTypes._
 import intellij.haskell.util.ApplicationUtil
 
 import scala.annotation.tailrec
+import scala.concurrent.TimeoutException
 import scala.jdk.CollectionConverters._
 
 object HaskellPsiUtil {
@@ -105,7 +107,13 @@ object HaskellPsiUtil {
   }
 
   private final val ModuleNameCache: LoadingCache[PsiFile, Option[String]] = Scaffeine().build((psiFile: PsiFile) => {
-    ApplicationUtil.runReadAction(findModuleNameInPsiTree(psiFile))
+    try {
+      ApplicationUtil.runReadAction(findModuleNameInPsiTree(psiFile))
+    } catch {
+      case _: TimeoutException =>
+        HaskellNotificationGroup.logInfoEvent(psiFile.getProject, s"Timeout while finding module name for ${psiFile.getName}")
+        None
+    }
   })
 
   def findModuleName(psiFile: PsiFile): Option[String] = {
