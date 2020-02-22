@@ -10,6 +10,13 @@
         It can create new Stack projects and import existing Stack projects.
 
         Please <a href="https://github.com/rikvdkleij/intellij-haskell/blob/master/README.md">README</a>
+
+        <br>
+        <p>
+            <a href="https://www.paypal.com/cgi-bin/webscr?cmd=_donations&business=H6QKQKFRKJBF2&item_name=IntelliJ-Haskell&currency_code=EUR">
+                <img src="https://www.paypalobjects.com/en_US/i/btn/btn_donateCC_LG.gif">
+            </a>
+        </p>
     ]]></description>
 
     <change-notes><![CDATA[
@@ -447,9 +454,9 @@
 
         <!-- Configuration -->
         <applicationConfigurable
-            groupId="language"
-            id="Haskell.Configurable"
-            instance="intellij.haskell.settings.HaskellConfigurable"/>
+                groupId="language"
+                id="Haskell.Configurable"
+                instance="intellij.haskell.settings.HaskellConfigurable"/>
         <applicationService serviceImplementation="intellij.haskell.settings.HaskellSettingsPersistentStateComponent"/>
         <framework.type implementation="intellij.haskell.framework.HaskellFrameworkType"/>
         <lang.importOptimizer language="Haskell" implementationClass="intellij.haskell.editor.HaskellImportOptimizer"/>
