@@ -26,8 +26,6 @@ import intellij.haskell.settings.HaskellSettingsState
 import intellij.haskell.util._
 import intellij.haskell.{HTool, HaskellNotificationGroup}
 
-sealed case class SelectionContext(start: Int, end: Int, text: String)
-
 class OrmoluReformatAction extends AnAction {
 
   override def update(actionEvent: AnActionEvent): Unit = {
