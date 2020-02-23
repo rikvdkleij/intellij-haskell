@@ -28,7 +28,7 @@ object ScalaFutureUtil {
         }
       } catch {
         case _: TimeoutException =>
-          HaskellNotificationGroup.logInfoEvent(project, s"Timeout in read waitForValue while $actionDescription")
+          HaskellNotificationGroup.logInfoEvent(project, s"Timeout in waitForValue during read action while $actionDescription")
           None
       }
     } else {

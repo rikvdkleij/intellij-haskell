@@ -27,7 +27,7 @@ import com.intellij.openapi.projectRoots.ProjectJdkTable
 import com.intellij.openapi.roots.{ModifiableRootModel, ModuleRootModificationUtil}
 import com.intellij.openapi.ui.Messages
 import com.intellij.openapi.vfs.VirtualFileManager
-import com.intellij.psi.{PsiManager, PsiTreeChangeAdapter, PsiTreeChangeEvent}
+import com.intellij.psi.{PsiTreeChangeAdapter, PsiTreeChangeEvent}
 import intellij.haskell.action.HaskellReformatAction
 import intellij.haskell.annotator.HaskellAnnotator
 import intellij.haskell.external.execution.StackCommandLine
@@ -312,24 +312,22 @@ object StackProjectManager {
                 }
               }
 
-              if (!project.isDisposed) {
-                PsiManager.getInstance(project).addPsiTreeChangeListener(new PsiTreeChangeAdapter {
+              HaskellPsiUtil.getPsiManager(project).foreach(_.addPsiTreeChangeListener(new PsiTreeChangeAdapter {
 
-                  private def invalidateTypeInfo(event: PsiTreeChangeEvent): Unit = {
-                    val element = Option(event.getOldChild).orElse(Option(event.getNewChild)).flatMap(e => HaskellPsiUtil.findExpression(e)).orElse(Option(event.getParent))
-                    val elements = element.filter(_.isValid).map(HaskellPsiUtil.findQualifiedNamedElements).getOrElse(Seq()).toSeq
-                    TypeInfoComponent.invalidateElements(event.getFile, elements)
-                  }
+                private def invalidateTypeInfo(event: PsiTreeChangeEvent): Unit = {
+                  val element = Option(event.getOldChild).orElse(Option(event.getNewChild)).flatMap(e => HaskellPsiUtil.findExpression(e)).orElse(Option(event.getParent))
+                  val elements = element.filter(_.isValid).map(HaskellPsiUtil.findQualifiedNamedElements).getOrElse(Seq()).toSeq
+                  TypeInfoComponent.invalidateElements(event.getFile, elements)
+                }
 
-                  override def childReplaced(event: PsiTreeChangeEvent): Unit = {
-                    invalidateTypeInfo(event)
-                  }
+                override def childReplaced(event: PsiTreeChangeEvent): Unit = {
+                  invalidateTypeInfo(event)
+                }
 
-                  override def childrenChanged(event: PsiTreeChangeEvent): Unit = {
-                    invalidateTypeInfo(event)
-                  }
-                })
-              }
+                override def childrenChanged(event: PsiTreeChangeEvent): Unit = {
+                  invalidateTypeInfo(event)
+                }
+              }))
 
               progressIndicator.setText("Busy preloading caches")
               if (!preloadLibraryFilesCacheFuture.isDone || !preloadStackComponentInfoCache.isDone || !preloadLibraryIdentifiersCacheFuture.isDone || !replsLoad.isDone) {

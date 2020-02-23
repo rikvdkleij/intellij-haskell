@@ -35,6 +35,7 @@ import com.intellij.psi.{PsiDocumentManager, PsiFile, PsiManager}
 import intellij.haskell.HaskellFileType
 import intellij.haskell.action.SelectionContext
 import intellij.haskell.external.component.{NoInfo, NoInfoAvailable}
+import intellij.haskell.psi.HaskellPsiUtil
 
 object HaskellFileUtil {
 
@@ -147,15 +148,11 @@ object HaskellFileUtil {
   }
 
   def convertToHaskellFiles(project: Project, virtualFiles: Iterable[VirtualFile]): Iterable[PsiFile] = {
-    if (project.isDisposed) {
-      Iterable()
-    } else {
-      val psiManager = PsiManager.getInstance(project)
+    HaskellPsiUtil.getPsiManager(project).map(psiManager =>
       virtualFiles.flatMap(vf => findCachedPsiFile(psiManager, vf) match {
         case Some(pf) => Some(pf)
         case _ => None
-      })
-    }
+      })).getOrElse(Iterable())
   }
 
   private def findCachedPsiFile(psiManager: PsiManager, virtualFile: VirtualFile): Option[PsiFile] = {
@@ -170,26 +167,25 @@ object HaskellFileUtil {
   }
 
   def convertToHaskellFileDispatchThread(project: Project, virtualFile: VirtualFile): Option[PsiFile] = {
-    val psiManager = PsiManager.getInstance(project)
-
-    findCachedPsiFile(psiManager, virtualFile) match {
-      case pf@Some(_) => pf
-      case None => findPsiFile(psiManager, virtualFile)
-    }
+    HaskellPsiUtil.getPsiManager(project).flatMap(psiManager =>
+      findCachedPsiFile(psiManager, virtualFile) match {
+        case pf@Some(_) => pf
+        case None => findPsiFile(psiManager, virtualFile)
+      })
   }
 
   def convertToHaskellFileInReadAction(project: Project, virtualFile: VirtualFile): Either[NoInfo, PsiFile] = {
-    val psiManager = PsiManager.getInstance(project)
-
-    val actionMessage = s"Converting ${virtualFile.getName} to psi file"
-    ApplicationUtil.runInReadActionWithWriteActionPriority(project, findCachedPsiFile(psiManager, virtualFile), readActionDescription = actionMessage) match {
-      case Right(Some(pf)) => Right(pf)
-      case _ => ApplicationUtil.runInReadActionWithWriteActionPriority(project, findPsiFile(psiManager, virtualFile), readActionDescription = actionMessage) match {
+    HaskellPsiUtil.getPsiManager(project).map(psiManager => {
+      val actionMessage = s"Converting ${virtualFile.getName} to psi file"
+      ApplicationUtil.runInReadActionWithWriteActionPriority(project, findCachedPsiFile(psiManager, virtualFile), readActionDescription = actionMessage) match {
         case Right(Some(pf)) => Right(pf)
-        case Right(None) => Left(NoInfoAvailable(virtualFile.getName, "-"))
-        case Left(noInfo) => Left(noInfo)
+        case _ => ApplicationUtil.runInReadActionWithWriteActionPriority(project, findPsiFile(psiManager, virtualFile), readActionDescription = actionMessage) match {
+          case Right(Some(pf)) => Right(pf)
+          case Right(None) => Left(NoInfoAvailable(virtualFile.getName, "-"))
+          case Left(noInfo) => Left(noInfo)
+        }
       }
-    }
+    }).getOrElse(Left(NoInfoAvailable(virtualFile.getName, "-")))
   }
 
   def saveFileWithNewContent(psiFile: PsiFile, sourceCode: String): Unit = {

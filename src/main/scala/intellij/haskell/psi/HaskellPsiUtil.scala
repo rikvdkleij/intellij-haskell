@@ -23,7 +23,7 @@ import com.intellij.openapi.project.Project
 import com.intellij.psi.impl.source.tree.TreeUtil
 import com.intellij.psi.tree.{IElementType, TokenSet}
 import com.intellij.psi.util.PsiTreeUtil
-import com.intellij.psi.{PsiElement, PsiFile, TokenType}
+import com.intellij.psi.{PsiElement, PsiFile, PsiManager, TokenType}
 import intellij.haskell.HaskellNotificationGroup
 import intellij.haskell.psi.HaskellElementCondition._
 import intellij.haskell.psi.HaskellTypes._
@@ -34,6 +34,14 @@ import scala.concurrent.TimeoutException
 import scala.jdk.CollectionConverters._
 
 object HaskellPsiUtil {
+
+  def getPsiManager(project: Project): Option[PsiManager] = {
+    if (project.isDisposed) {
+      None
+    } else {
+      Some(PsiManager.getInstance(project))
+    }
+  }
 
   def findImportDeclarations(psiFile: PsiFile): Iterable[HaskellImportDeclaration] = {
     PsiTreeUtil.findChildrenOfType(psiFile.getOriginalFile, classOf[HaskellImportDeclaration]).asScala
