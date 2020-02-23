@@ -22,7 +22,7 @@ import java.util.concurrent.atomic.AtomicReference
 import com.intellij.openapi.application.{ApplicationManager, ReadAction}
 import com.intellij.openapi.progress.util.ReadTask.Continuation
 import com.intellij.openapi.progress.util.{ProgressIndicatorUtils, ReadTask}
-import com.intellij.openapi.progress.{ProgressIndicator, ProgressManager}
+import com.intellij.openapi.progress.{ProgressIndicator, ProgressIndicatorProvider, ProgressManager}
 import com.intellij.openapi.project.{DumbService, Project}
 import com.intellij.util.concurrency.AppExecutorUtil
 import intellij.haskell.HaskellNotificationGroup
@@ -40,7 +40,7 @@ object ApplicationUtil {
     if (isReadAccessAllowed) {
       f
     } else {
-      val progressIndicator = Option(ProgressManager.getInstance().getProgressIndicator)
+      val progressIndicator = Option(ProgressIndicatorProvider.getGlobalProgressIndicator)
       val readAction = ReadAction.nonBlocking(ScalaUtil.callable(f))
       progressIndicator.foreach(readAction.cancelWith)
       readAction.submit(AppExecutorUtil.getAppExecutorService).get(2, TimeUnit.SECONDS)
