@@ -222,7 +222,8 @@ object HaskellReference {
 
     ProgressManager.checkCanceled()
 
-    moduleNames.distinct.flatMap(mn => HaskellModuleNameIndex.findFilesByModuleName(project, mn) match {
+    val distinctModuleNames = moduleNames.distinct
+    distinctModuleNames.flatMap(mn => HaskellModuleNameIndex.findFilesByModuleName(project, mn) match {
       case Left(_) => Seq()
       case Right(files) =>
         ProgressManager.checkCanceled()
@@ -238,10 +239,13 @@ object HaskellReference {
             }
           }
           }.filter(mid => mid.name == name || mid.name == "_" + name || mid.name == mid.moduleName + "." + name).map(_.moduleName)
+
           if (importedModuleNames.isEmpty) {
             Seq()
           } else {
-            if (moduleNames == Seq(mn)) {
+            ProgressManager.checkCanceled()
+
+            if (distinctModuleNames == Seq(mn)) {
               val moduleNames = files.flatMap(HaskellPsiUtil.findImportDeclarations).flatMap(_.getModuleName)
               findIdentifiersByModuleAndName2(project, moduleNames, name, prioIdInExpression)
             } else {
