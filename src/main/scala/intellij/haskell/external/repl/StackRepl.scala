@@ -317,11 +317,8 @@ abstract class StackRepl(project: Project, componentInfo: Option[StackComponentI
   }
 
   private def createGhciOptionsFile: File = {
-    val ghciOptionsFile = if (isGlobalRepl) {
-      new File(GlobalInfo.getIntelliJHaskellDirectory, "global-repl.ghci")
-    } else {
-      new File(GlobalInfo.getIntelliJHaskellDirectory, "repl.ghci")
-    }
+    // global-repl.ghci was used so can still be in cache directory
+    val ghciOptionsFile = new File(GlobalInfo.getIntelliJHaskellDirectory, "repl.ghci")
 
     if (!ghciOptionsFile.exists()) {
       ghciOptionsFile.createNewFile()

@@ -82,7 +82,7 @@ import scala.jdk.CollectionConverters._
   }
 
   private def findHaskellFiles(project: Project, currentModule: Module, projectModules: Seq[Module], includeTests: Boolean) = {
-    ApplicationUtil.scheduleInReadActionWithWriteActionPriority(project, {
+    ApplicationUtil.runReadActionWithFileAccess(project, {
       try {
         val projectModulesScope = projectModules.foldLeft(GlobalSearchScope.EMPTY_SCOPE)({ case (x, y) => x.uniteWith(y.getModuleScope(false)) })
         val searchScope = currentModule.getModuleScope(includeTests).uniteWith(projectModulesScope)

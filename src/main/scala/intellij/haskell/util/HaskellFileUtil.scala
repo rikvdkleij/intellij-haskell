@@ -63,7 +63,7 @@ object HaskellFileUtil {
     findDocument(virtualFile).foreach(d => {
       val documentManager = PsiDocumentManager.getInstance(project)
       val fileDocumentManager = FileDocumentManager.getInstance
-      ApplicationUtil.runReadAction(documentManager.doPostponedOperationsAndUnblockDocument(d))
+      ApplicationUtil.runReadAction(documentManager.doPostponedOperationsAndUnblockDocument(d), Some(project))
       ApplicationManager.getApplication.invokeAndWait(() => {
         fileDocumentManager.saveDocumentAsIs(d)
       })
@@ -177,9 +177,9 @@ object HaskellFileUtil {
   def convertToHaskellFileInReadAction(project: Project, virtualFile: VirtualFile): Either[NoInfo, PsiFile] = {
     HaskellPsiUtil.getPsiManager(project).map(psiManager => {
       val actionMessage = s"Converting ${virtualFile.getName} to psi file"
-      ApplicationUtil.runInReadActionWithWriteActionPriority(project, findCachedPsiFile(psiManager, virtualFile), readActionDescription = actionMessage) match {
+      ApplicationUtil.runReadActionWithFileAccess(project, findCachedPsiFile(psiManager, virtualFile), actionDescription = actionMessage) match {
         case Right(Some(pf)) => Right(pf)
-        case _ => ApplicationUtil.runInReadActionWithWriteActionPriority(project, findPsiFile(psiManager, virtualFile), readActionDescription = actionMessage) match {
+        case _ => ApplicationUtil.runReadActionWithFileAccess(project, findPsiFile(psiManager, virtualFile), actionDescription = actionMessage) match {
           case Right(Some(pf)) => Right(pf)
           case Right(None) => Left(NoInfoAvailable(virtualFile.getName, "-"))
           case Left(noInfo) => Left(noInfo)

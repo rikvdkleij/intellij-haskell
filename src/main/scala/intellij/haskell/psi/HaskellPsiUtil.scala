@@ -116,7 +116,7 @@ object HaskellPsiUtil {
 
   private final val ModuleNameCache: LoadingCache[PsiFile, Option[String]] = Scaffeine().build((psiFile: PsiFile) => {
     try {
-      ApplicationUtil.runReadAction(findModuleNameInPsiTree(psiFile))
+      ApplicationUtil.runReadAction(findModuleNameInPsiTree(psiFile), Some(psiFile.getProject))
     } catch {
       case _: TimeoutException =>
         HaskellNotificationGroup.logInfoEvent(psiFile.getProject, s"Timeout while finding module name for ${psiFile.getName}")

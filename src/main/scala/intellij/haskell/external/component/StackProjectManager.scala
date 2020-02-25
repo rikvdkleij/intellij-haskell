@@ -229,7 +229,7 @@ object StackProjectManager {
                   Thread.sleep(1000) // Have to wait between starting the REPLs otherwise timeouts while starting
                 })
 
-                val projectFiles = ApplicationUtil.scheduleInReadActionWithWriteActionPriority(project,
+                val projectFiles = ApplicationUtil.runReadActionWithFileAccess(project,
                   if (project.isDisposed) {
                     Iterable()
                   } else {
@@ -237,7 +237,7 @@ object StackProjectManager {
                   }, "Finding project files with imported module names")
 
                 val projectFilesWithImportedModuleNames = projectFiles match {
-                  case Right(files) => Some(files.map(pf => (pf, ApplicationUtil.runReadAction(HaskellPsiUtil.findImportDeclarations(pf)).flatMap(id => ApplicationUtil.runReadAction(id.getModuleName)))))
+                  case Right(files) => Some(files.map(pf => (pf, ApplicationUtil.runReadAction(HaskellPsiUtil.findImportDeclarations(pf), Some(project)).flatMap(id => ApplicationUtil.runReadAction(id.getModuleName, Some(project))))))
                   case Left(_) =>
                     HaskellNotificationGroup.logInfoEvent(project, "Couldn't retrieve project files")
                     None

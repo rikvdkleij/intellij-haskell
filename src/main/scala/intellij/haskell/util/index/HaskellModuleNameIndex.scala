@@ -30,7 +30,6 @@ import intellij.haskell.external.component._
 import intellij.haskell.psi.HaskellPsiUtil
 import intellij.haskell.util.{ApplicationUtil, HaskellFileUtil, HaskellProjectUtil}
 
-import scala.concurrent.duration.{FiniteDuration, _}
 import scala.jdk.CollectionConverters._
 
 /**
@@ -52,11 +51,11 @@ object HaskellModuleNameIndex {
 
   type Result = Either[NoInfo, Seq[(PsiFile, Boolean)]]
 
-  private final val Cache: LoadingCache[Key, Result] = Scaffeine().build((k: Key) => find(k, 5.second, reschedule = false))
+  private final val Cache: LoadingCache[Key, Result] = Scaffeine().build((k: Key) => find(k))
 
-  private def find(key: Key, timeout: FiniteDuration, reschedule: Boolean): Either[NoInfo, Seq[(PsiFile, Boolean)]] = {
+  private def find(key: Key): Either[NoInfo, Seq[(PsiFile, Boolean)]] = {
     val project = key.project
-    findFiles(project, key.moduleName, timeout, reschedule) match {
+    findFiles(project, key.moduleName) match {
       case Right(virtualFiles) =>
         if (ApplicationManager.getApplication.isReadAccessAllowed) {
           Right(virtualFiles.flatMap { case (vf, isPf) => HaskellFileUtil.convertToHaskellFileDispatchThread(project, vf).map((_, isPf)).toSeq })
@@ -76,7 +75,7 @@ object HaskellModuleNameIndex {
   def fillCache(project: Project, moduleNames: Iterable[String]): Unit = {
     moduleNames.foreach(mn => {
       val key = Key(project, mn)
-      find(key, 5.seconds, reschedule = true) match {
+      find(key) match {
         case Right(vf) if vf.nonEmpty => Cache.put(key, Right(vf))
         case _ => ()
       }
@@ -120,11 +119,11 @@ object HaskellModuleNameIndex {
     Cache.invalidate(Key(project, moduleName))
   }
 
-  private def findFiles(project: Project, moduleName: String, timeout: FiniteDuration, reschedule: Boolean): Either[NoInfo, Seq[(VirtualFile, Boolean)]] = {
+  private def findFiles(project: Project, moduleName: String): Either[NoInfo, Seq[(VirtualFile, Boolean)]] = {
     if (moduleName == HaskellProjectUtil.Prelude) {
       Right(Seq())
     } else {
-      val files = ApplicationUtil.scheduleInReadActionWithWriteActionPriority(
+      val files = ApplicationUtil.runReadActionWithFileAccess(
         project, {
           try {
             Some(FileBasedIndex.getInstance.getContainingFiles(HaskellModuleNameIndex, moduleName, HaskellProjectUtil.getProjectSearchScope(project)).asScala.toSeq)
@@ -132,8 +131,7 @@ object HaskellModuleNameIndex {
             case _: IndexNotReadyException => None
           }
         },
-        s"finding file for module $moduleName by index",
-        timeout, reschedule = reschedule
+        s"finding file for module $moduleName by index"
       )
 
       files match {

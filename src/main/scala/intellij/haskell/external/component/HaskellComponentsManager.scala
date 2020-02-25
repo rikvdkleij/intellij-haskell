@@ -219,7 +219,7 @@ object HaskellComponentsManager {
     }
 
     if (!project.isDisposed) {
-      val projectHaskellFiles = ApplicationUtil.scheduleInReadActionWithWriteActionPriority(project, HaskellFileIndex.findProjectHaskellFiles(project), "Find Haskell project files").toOption.getOrElse(Iterable())
+      val projectHaskellFiles = ApplicationUtil.runReadActionWithFileAccess(project, HaskellFileIndex.findProjectHaskellFiles(project), "Find Haskell project files").toOption.getOrElse(Iterable())
 
       val componentInfos = projectHaskellFiles.flatMap(f => HaskellComponentsManager.findStackComponentInfo(f)).toSeq.distinct
 
@@ -231,8 +231,8 @@ object HaskellComponentsManager {
             val packageInfos = componentInfos.flatMap(HaskellComponentsManager.findStackComponentGlobalInfo).flatMap(_.packageInfos)
 
             val exposedLibraryModuleNames = packageInfos.flatMap(_.exposedModuleNames).distinct
-            val importDeclarations = ApplicationUtil.runInReadActionWithWriteActionPriority(project, HaskellPsiUtil.findImportDeclarations(f), "In preloadLibraryIdentifiers findImportDeclarations").toOption.getOrElse(Iterable())
-            importDeclarations.flatMap(id => ApplicationUtil.runReadAction(id.getModuleName)).filter(mn => exposedLibraryModuleNames.contains(mn)).filterNot(_ == HaskellProjectUtil.Prelude)
+            val importDeclarations = ApplicationUtil.runReadActionWithFileAccess(project, HaskellPsiUtil.findImportDeclarations(f), "In preloadLibraryIdentifiers findImportDeclarations").toOption.getOrElse(Iterable())
+            importDeclarations.flatMap(id => ApplicationUtil.runReadAction(id.getModuleName, Some(project))).filter(mn => exposedLibraryModuleNames.contains(mn)).filterNot(_ == HaskellProjectUtil.Prelude)
           }
         })
 

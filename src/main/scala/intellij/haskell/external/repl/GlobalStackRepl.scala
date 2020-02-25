@@ -33,13 +33,30 @@ case class GlobalStackRepl(project: Project, replTimeout: Int) extends StackRepl
   }
 
   def getModuleIdentifiers(moduleName: String): Option[StackReplOutput] = {
-    ScalaFutureUtil.waitForValue(project, Future {
-      blocking {
-        synchronized {
-          execute(s":browse! $moduleName")
+    val isPrelude = moduleName == HaskellProjectUtil.Prelude
+    if (isPrelude) {
+      ScalaFutureUtil.waitForValue(project, Future {
+        blocking {
+          synchronized {
+            // To get qualified identifiers for Prelude
+            execute(s""":set -XNoImplicitPrelude""")
+            execute(s""":unadd Prelude""")
+            val result = execute(s":browse! $moduleName")
+            execute(s""":set -XImplicitPrelude""")
+            execute(s""":add Prelude""")
+            result
+          }
         }
-      }
-    }, ":browse in GlobalStackRepl").flatten
+      }, ":browse in GlobalStackRepl").flatten
+    } else {
+      ScalaFutureUtil.waitForValue(project, Future {
+        blocking {
+          synchronized {
+            execute(s":browse! $moduleName")
+          }
+        }
+      }, ":browse in GlobalStackRepl").flatten
+    }
   }
 
   def findInfo(moduleName: String, name: String): Option[StackReplOutput] = {

@@ -37,7 +37,7 @@ private[component] object HaskellModuleInfoComponent {
 
   def findHaskellProjectFileInfo(project: Project, filePath: String): Option[StackComponentInfo] = {
     val key = Key(project, filePath)
-    ScalaFutureUtil.waitForValue(project, Cache.get(key), "Getting project file info").flatten match {
+    ScalaFutureUtil.waitForValue(project, Cache.get(key), s"getting project file info for $filePath").flatten match {
       case Some(internalInfo) =>
         internalInfo.message match {
           case Some(m) => HaskellNotificationGroup.warningEvent(project, m)

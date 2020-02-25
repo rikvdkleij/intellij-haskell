@@ -81,7 +81,7 @@ object StackProjectImportBuilder {
     val moduleBuilder = HaskellModuleType.getInstance.createModuleBuilder()
     val moduleDirectory = HaskellModuleBuilder.getModuleRootDirectory(packageRelativePath, projectRoot)
     if (moduleDirectory.exists()) {
-      ApplicationUtil.runReadAction(HaskellModuleBuilder.createCabalInfo(project, projectRoot, packageRelativePath)) match {
+      ApplicationUtil.runReadAction(HaskellModuleBuilder.createCabalInfo(project, projectRoot, packageRelativePath), Some(project)) match {
         case Some(cabalInfo) =>
           val packageName = cabalInfo.packageName
           moduleBuilder.setCabalInfo(cabalInfo)

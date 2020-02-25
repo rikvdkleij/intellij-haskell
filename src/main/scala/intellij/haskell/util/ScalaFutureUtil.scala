@@ -11,7 +11,7 @@ import scala.concurrent.{Await, Future, TimeoutException}
 
 object ScalaFutureUtil {
 
-  def waitForValue[T](project: Project, future: Future[T], actionDescription: String, timeout: FiniteDuration = 200.millis): Option[T] = {
+  def waitForValue[T](project: Project, future: Future[T], actionDescription: String, timeout: FiniteDuration = 5.seconds): Option[T] = {
     if (ApplicationManager.getApplication.isReadAccessAllowed) {
       try {
         new WaitFor(timeout.toMillis.toInt, 1) {

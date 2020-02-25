@@ -21,9 +21,8 @@ import com.intellij.openapi.fileEditor.FileEditorManager
 import com.intellij.openapi.project.Project
 import com.intellij.psi.PsiFile
 import intellij.haskell.external.repl._
-import intellij.haskell.psi.HaskellPsiUtil
 import intellij.haskell.util.index.HaskellModuleNameIndex
-import intellij.haskell.util.{ApplicationUtil, HaskellFileUtil, HaskellProjectUtil, StringUtil}
+import intellij.haskell.util.{HaskellFileUtil, HaskellProjectUtil, StringUtil}
 
 import scala.concurrent.{ExecutionContext, Future}
 
@@ -106,13 +105,7 @@ private[component] object BrowseModuleComponent {
     } else {
       LibraryPackageInfoComponent.findLibraryModuleName(moduleName) match {
         case Some(true) => findLibraryModuleIdentifiers(project, moduleName)
-        case _ =>
-          HaskellModuleNameIndex.findFilesByModuleName2(project, moduleName) match {
-            case Right(files) =>
-              val moduleFile = files.find(_._2 == false).map(_._1).toRight(NoInfoAvailable(moduleName, "-"))
-              moduleFile.flatMap(file => Right(ApplicationUtil.runReadAction(HaskellPsiUtil.findTopLevelDeclarations(file)).map(d => ApplicationUtil.runReadAction(d.getName)).flatMap(d => createLibraryModuleIdentifier(project, d, moduleName)).toSeq))
-            case Left(noInfo) => Left(noInfo)
-          }
+        case _ => Left(NoInfoAvailable(moduleName, "-"))
       }
     }
   }
@@ -163,7 +156,7 @@ private[component] object BrowseModuleComponent {
   // This kind of declarations are returned in case DuplicateRecordFields are enabled
   private final val Module$SelPattern = """([\w.\-]+)\.\$sel:([^:]+)(?::[^:]+)?::(.*)""".r
 
-  private def createLibraryModuleIdentifier(project: Project, declarationLine: String, moduleName: String): Option[ModuleIdentifier] = {
+  def createLibraryModuleIdentifier(project: Project, declarationLine: String, moduleName: String): Option[ModuleIdentifier] = {
     DeclarationUtil.getDeclarationInfo(declarationLine, containsQualifiedIds = true).map(declarationInfo => {
       val id = declarationInfo.id
       if (moduleName == HaskellProjectUtil.Prelude) {

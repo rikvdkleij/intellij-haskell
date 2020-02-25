@@ -88,7 +88,7 @@ object FileModuleIdentifiers {
     val project = k.psiFile.getProject
     val psiFile = k.psiFile
 
-    val importDeclarations = ApplicationUtil.runReadAction(findImportDeclarations(psiFile))
+    val importDeclarations = ApplicationUtil.runReadAction(findImportDeclarations(psiFile), Some(project))
     val noImplicitPrelude = if (HaskellProjectUtil.isSourceFile(psiFile)) {
       HaskellComponentsManager.findStackComponentInfo(psiFile).exists(info => isNoImplicitPreludeActive(info, psiFile))
     } else {
@@ -159,7 +159,7 @@ object FileModuleIdentifiers {
   private case class ImportWithIds(moduleName: String, ids: Iterable[String], qualified: Boolean, as: Option[String]) extends ImportInfo
 
   private def isNoImplicitPreludeActive(info: StackComponentInfo, psiFile: PsiFile): Boolean = {
-    info.isImplicitPreludeActive || ApplicationUtil.runReadAction(HaskellPsiUtil.findLanguageExtensions(psiFile)).exists(p => ApplicationUtil.runReadAction(p.getText).contains("NoImplicitPrelude"))
+    info.isImplicitPreludeActive || ApplicationUtil.runReadAction(HaskellPsiUtil.findLanguageExtensions(psiFile), Some(psiFile.getProject)).exists(p => ApplicationUtil.runReadAction(p.getText).contains("NoImplicitPrelude"))
   }
 
   private def getFullImportedModules(noImplicitPrelude: Boolean, psiFile: PsiFile, importDeclarations: Iterable[HaskellImportDeclaration]): Iterable[ImportFull] = {

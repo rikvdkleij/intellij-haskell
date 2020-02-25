@@ -102,7 +102,7 @@ object ProjectLibraryBuilder {
 
           val isDependentResult = libComponentInfos.map(libInfo => {
             val module = libInfo.module
-            val dependentModules = ApplicationUtil.runReadAction(ModuleUtilCore.getAllDependentModules(module))
+            val dependentModules = ApplicationUtil.runReadAction(ModuleUtilCore.getAllDependentModules(module), Some(project))
 
             val dependentFiles = openInfoFiles.filter { case (info, _) => isDependent(libInfo, dependentModules, info) }.map(_._2)
             val dependentRepls = projectRepls.filter(r => isDependent(libInfo, dependentModules, r.stackComponentInfo))

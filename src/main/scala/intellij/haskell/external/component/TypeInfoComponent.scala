@@ -124,7 +124,7 @@ private[component] object TypeInfoComponent {
 
   private def findTypeInfo(key: Key): TypeInfoResult = {
     try {
-      val result = ApplicationUtil.runReadAction(Cache.get(key))
+      val result = ApplicationUtil.runReadAction(Cache.get(key), Some(key.psiFile.getProject))
       result match {
         case Right(_) => result
         case Left(ReadActionTimeout(_)) | Left(IndexNotReady) | Left(ModuleNotAvailable(_)) | Left(ReplNotAvailable) =>

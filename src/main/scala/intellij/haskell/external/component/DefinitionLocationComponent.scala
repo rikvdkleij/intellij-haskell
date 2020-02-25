@@ -175,10 +175,17 @@ private[component] object DefinitionLocationComponent {
       if (HaskellProjectUtil.isSourceFile(psiFile)) {
         FileModuleIdentifiers.findAvailableModuleIdentifiers(psiFile)
       } else {
-        HaskellPsiUtil.findModuleName(psiFile).flatMap(mn => ScalaFutureUtil.waitForValue(project,
-          HaskellComponentsManager.findModuleIdentifiers(project, mn)
-          , s"finding library module identifiers in DefinitionLocationComponent for module $mn")).flatten.getOrElse(Iterable())
-        }.filter(_.name == qName)
+        HaskellPsiUtil.findModuleName(psiFile).map(moduleName =>
+          LibraryPackageInfoComponent.findLibraryModuleName(moduleName) match {
+            case Some(true) =>
+              ScalaFutureUtil.waitForValue(project,
+                HaskellComponentsManager.findModuleIdentifiers(project, moduleName)
+                , s"finding library module identifiers in DefinitionLocationComponent for module $moduleName").flatten.getOrElse(Iterable())
+            case _ =>
+              HaskellPsiUtil.findTopLevelDeclarations(psiFile).
+                map(d => d.getName).flatMap(d => BrowseModuleComponent.createLibraryModuleIdentifier(project, d, moduleName).toSeq)
+          })
+      }.getOrElse(Iterable()).filter(_.name == qName)
     }
 
     ProgressManager.checkCanceled()
