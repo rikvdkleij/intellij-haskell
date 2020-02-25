@@ -16,6 +16,7 @@
 
 package intellij.haskell.external.execution
 
+import com.intellij.application.options.PathMacrosImpl
 import com.intellij.execution.configurations.GeneralCommandLine
 import com.intellij.execution.configurations.GeneralCommandLine.ParentEnvironmentType
 import com.intellij.execution.process._
@@ -105,6 +106,7 @@ object CommandLine {
     commandLine.setExePath(commandPath)
     commandLine.addParameters(arguments.asJava)
     commandLine.withParentEnvironmentType(ParentEnvironmentType.CONSOLE)
+    commandLine.withEnvironment(PathMacrosImpl.getInstanceEx.getUserMacros)
     commandLine
   }
 
