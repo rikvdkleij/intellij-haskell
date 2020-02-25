@@ -328,12 +328,6 @@ abstract class StackRepl(project: Project, componentInfo: Option[StackComponentI
       val writer = new BufferedWriter(new FileWriter(ghciOptionsFile))
       try {
         writer.write(s""":set prompt "$EndOfOutputIndicator\\n"""")
-        if (isGlobalRepl) {
-          writer.write("\n")
-          writer.write(s""":set -XNoImplicitPrelude""")
-          writer.write("\n")
-          writer.write(":l") // Force Prelude is not loaded because for :browse qualified identifiers are needed
-        }
       } finally {
         writer.close()
       }

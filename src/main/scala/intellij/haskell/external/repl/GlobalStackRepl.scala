@@ -18,7 +18,7 @@ package intellij.haskell.external.repl
 
 import com.intellij.openapi.project.Project
 import intellij.haskell.external.repl.StackRepl.StackReplOutput
-import intellij.haskell.util.ScalaFutureUtil
+import intellij.haskell.util.{HaskellProjectUtil, ScalaFutureUtil}
 
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent._
