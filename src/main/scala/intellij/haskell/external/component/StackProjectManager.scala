@@ -34,7 +34,7 @@ import intellij.haskell.external.execution.StackCommandLine
 import intellij.haskell.external.repl.StackRepl.LibType
 import intellij.haskell.external.repl.StackReplsManager
 import intellij.haskell.module.{HaskellModuleBuilder, StackProjectImportBuilder}
-import intellij.haskell.psi.HaskellPsiUtil
+import intellij.haskell.psi.{HaskellPsiUtil, HaskellTypes}
 import intellij.haskell.sdk.HaskellSdkType
 import intellij.haskell.settings.HaskellSettingsState
 import intellij.haskell.util._
@@ -315,7 +315,8 @@ object StackProjectManager {
               HaskellPsiUtil.getPsiManager(project).foreach(_.addPsiTreeChangeListener(new PsiTreeChangeAdapter {
 
                 private def invalidateTypeInfo(event: PsiTreeChangeEvent): Unit = {
-                  val element = Option(event.getOldChild).orElse(Option(event.getNewChild)).flatMap(e => HaskellPsiUtil.findExpression(e)).orElse(Option(event.getParent))
+                  val element = Option(event.getOldChild).orElse(Option(event.getNewChild)).flatMap(e => HaskellPsiUtil.findExpression(e)).
+                    orElse(Option(event.getParent).filter(_.getNode.getElementType == HaskellTypes.HS_TOP_DECLARATION))
                   val elements = element.filter(_.isValid).map(HaskellPsiUtil.findQualifiedNamedElements).getOrElse(Seq()).toSeq
                   TypeInfoComponent.invalidateElements(event.getFile, elements)
                 }
