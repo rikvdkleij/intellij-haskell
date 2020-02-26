@@ -20,7 +20,7 @@
     ]]></description>
 
     <change-notes><![CDATA[
-        <p>1.0.0-beta63/p>
+        <p>1.0.0-beta63</p>
         <ul>
             <li>Fix IDE freeze issue</li>
         </ul>
