@@ -234,7 +234,7 @@ abstract class StackRepl(project: Project, componentInfo: Option[StackComponentI
 
           logInfo(s"Stack REPL will be started with command: $command")
 
-          val processBuilder = Process(command, new File(project.getBasePath))
+          val processBuilder = Process(command, new File(project.getBasePath), GlobalInfo.pathVariables.asScala.toSeq: _*)
 
           stdoutQueue.clear()
           stderrQueue.clear()

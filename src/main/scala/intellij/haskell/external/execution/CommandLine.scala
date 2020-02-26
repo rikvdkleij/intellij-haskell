@@ -16,7 +16,6 @@
 
 package intellij.haskell.external.execution
 
-import com.intellij.application.options.PathMacrosImpl
 import com.intellij.execution.configurations.GeneralCommandLine
 import com.intellij.execution.configurations.GeneralCommandLine.ParentEnvironmentType
 import com.intellij.execution.process._
@@ -25,7 +24,7 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Key
 import com.intellij.openapi.vfs.VfsUtil
 import com.intellij.util.io.BaseOutputReader
-import intellij.haskell.HaskellNotificationGroup
+import intellij.haskell.{GlobalInfo, HaskellNotificationGroup}
 import org.jetbrains.jps.incremental.messages.BuildMessage
 import org.jetbrains.jps.incremental.messages.BuildMessage.Kind
 
@@ -106,7 +105,7 @@ object CommandLine {
     commandLine.setExePath(commandPath)
     commandLine.addParameters(arguments.asJava)
     commandLine.withParentEnvironmentType(ParentEnvironmentType.CONSOLE)
-    commandLine.withEnvironment(PathMacrosImpl.getInstanceEx.getUserMacros)
+    commandLine.withEnvironment(GlobalInfo.pathVariables)
     commandLine
   }
 

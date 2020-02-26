@@ -2,6 +2,7 @@ package intellij.haskell
 
 import java.io.File
 
+import com.intellij.application.options.PathMacrosImpl
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.SystemInfo
 import com.intellij.openapi.util.io.FileUtil
@@ -74,5 +75,9 @@ object GlobalInfo {
       }
     }
     intelliJProjectDirectory
+  }
+
+  def pathVariables: java.util.Map[String, String] = {
+    PathMacrosImpl.getInstanceEx.getUserMacros
   }
 }
