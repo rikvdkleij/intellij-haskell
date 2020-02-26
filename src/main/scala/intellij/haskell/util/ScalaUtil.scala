@@ -31,25 +31,20 @@ object ScalaUtil {
     final def optionNot[A](a: => A): Option[A] = if (b) None else Option(a)
   }
 
-  def runnable(f: => Unit): Runnable {
-    def run(): Unit} = new Runnable {
-    override def run(): Unit = f
+  def runnable(f: => Unit): Runnable = {
+    () => f
   }
 
-  def computable[A](f: => A): Computable[A] {
-    def compute(): A} = new Computable[A] {
-    override def compute(): A = f
+  def computable[A](f: => A): Computable[A] = {
+    () => f
   }
 
-  def callable[A](f: => A): Callable[A] {
-    def call(): A} = new Callable[A] {
-    override def call(): A = f
+  def callable[A](f: => A): Callable[A] = {
+    () => f
   }
 
-  def condition[A](f: A => Boolean): Condition[A] {
-    def value(t: A): Boolean
-  } = new Condition[A] {
-    override def value(t: A): Boolean = f(t)
+  def condition[A](f: A => Boolean): Condition[A] = {
+    t: A => f(t)
   }
 
   def maxsBy[A, B](xs: Iterable[A])(f: A => B)(implicit cmp: Ordering[B]): Iterable[A] = {

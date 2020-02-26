@@ -29,7 +29,7 @@ import intellij.haskell.{HTool, HaskellNotificationGroup}
 class OrmoluReformatAction extends AnAction {
 
   override def update(actionEvent: AnActionEvent): Unit = {
-    HaskellEditorUtil.enableExternalAction(actionEvent, (project: Project) => HaskellReformatAction.reformatByOrmolu)
+    HaskellEditorUtil.enableExternalAction(actionEvent, (_: Project) => HaskellReformatAction.reformatByOrmolu)
   }
 
   override def actionPerformed(actionEvent: AnActionEvent): Unit = {

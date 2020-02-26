@@ -452,7 +452,7 @@ class HaskellCompletionContributor extends CompletionContributor {
 
     def typeSignature = HaskellComponentsManager.findTypeInfoForElement(namedElement).map(_.typeSignature).map(StringUtil.unescapeXmlEntities).getOrElse("")
 
-    LookupElementBuilder.create(namedElement.getName).withIcon(HaskellIcons.HaskellSmallBlueLogo).withRenderer((element: LookupElement, presentation: LookupElementPresentation) => {
+    LookupElementBuilder.create(namedElement.getName).withIcon(HaskellIcons.HaskellSmallBlueLogo).withRenderer((_: LookupElement, presentation: LookupElementPresentation) => {
       presentation.setTypeText(typeSignature)
       presentation.setItemText(namedElement.getName)
       presentation.setIcon(HaskellIcons.HaskellSmallBlueLogo)

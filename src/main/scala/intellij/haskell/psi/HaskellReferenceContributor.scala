@@ -24,7 +24,7 @@ import intellij.haskell.navigation.HaskellReference
 
 class HaskellReferenceContributor extends PsiReferenceContributor {
   def registerReferenceProviders(registrar: PsiReferenceRegistrar): Unit = {
-    registrar.registerReferenceProvider(PlatformPatterns.psiElement(classOf[HaskellNamedElement]), (element: PsiElement, context: ProcessingContext) => {
+    registrar.registerReferenceProvider(PlatformPatterns.psiElement(classOf[HaskellNamedElement]), (element: PsiElement, _: ProcessingContext) => {
       element match {
         case ne: HaskellNamedElement => Array(new HaskellReference(ne, TextRange.from(0, element.getTextLength)))
         case _ => PsiReference.EMPTY_ARRAY

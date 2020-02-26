@@ -34,14 +34,13 @@ object ScalaScalarIndexExtension {
     }
 
     def read(in: DataInput): Unit = {
-      ()
     }
   }
 
 }
 
 abstract class ScalaScalarIndexExtension[K] extends FileBasedIndexExtension[K, Unit] {
-  final def getValueExternalizer: DataExternalizer[Unit] = {
+  override def getValueExternalizer: DataExternalizer[Unit] = {
     ScalaScalarIndexExtension.VoidDataExternalizer
   }
 }

@@ -169,16 +169,6 @@ case class ProjectStackRepl(project: Project, stackComponentInfo: StackComponent
     }
   }
 
-  private def findLoadedModuleNames(line: String): Array[String] = {
-    if (line.startsWith(OkModulesLoaded)) {
-      line.replace(OkModulesLoaded, "").init.split(",").map(_.trim)
-    } else if (line.startsWith(FailedModulesLoaded)) {
-      line.replace(FailedModulesLoaded, "").init.split(",").map(_.trim)
-    } else {
-      Array()
-    }
-  }
-
   def getModuleIdentifiers(project: Project, moduleName: String, psiFile: Option[PsiFile]): Option[StackReplOutput] = {
     ScalaFutureUtil.waitForValue(project,
       Future {

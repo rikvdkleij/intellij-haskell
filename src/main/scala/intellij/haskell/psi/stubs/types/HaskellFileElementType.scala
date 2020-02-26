@@ -19,7 +19,7 @@ package intellij.haskell.psi.stubs.types
 import com.intellij.psi.stubs._
 import com.intellij.psi.tree.IStubFileElementType
 import com.intellij.psi.{PsiElement, PsiFile, StubBuilder}
-import intellij.haskell.psi.stubs.Bla.HaskellFileStub
+import intellij.haskell.psi.stubs.types.HaskellFileElementType.HaskellFileStub
 import intellij.haskell.{HaskellFile, HaskellLanguage}
 
 class HaskellFileElementType(language: HaskellLanguage) extends IStubFileElementType[HaskellFileStub](language) {
@@ -51,5 +51,6 @@ class HaskellFileElementType(language: HaskellLanguage) extends IStubFileElement
 }
 
 object HaskellFileElementType {
+  type HaskellFileStub = PsiFileStubImpl[HaskellFile]
   val Instance = new HaskellFileElementType(HaskellLanguage.Instance)
 }
