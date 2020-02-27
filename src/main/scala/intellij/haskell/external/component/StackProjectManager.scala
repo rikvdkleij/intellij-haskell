@@ -316,9 +316,9 @@ object StackProjectManager {
 
                 private def invalidateTypeInfo(event: PsiTreeChangeEvent): Unit = {
                   val element = Option(event.getOldChild).orElse(Option(event.getNewChild)).flatMap(e => HaskellPsiUtil.findExpression(e)).
-                    orElse(Option(event.getParent).filter(_.getNode.getElementType == HaskellTypes.HS_TOP_DECLARATION))
+                    orElse(Option(event.getParent).filter(e => Option(e.getNode).exists(_.getElementType == HaskellTypes.HS_TOP_DECLARATION)))
                   val elements = element.filter(_.isValid).map(HaskellPsiUtil.findQualifiedNamedElements).getOrElse(Seq()).toSeq
-                  TypeInfoComponent.invalidateElements(event.getFile, elements)
+                  Option(event.getFile).foreach(TypeInfoComponent.invalidateElements(_, elements))
                 }
 
                 override def childReplaced(event: PsiTreeChangeEvent): Unit = {
