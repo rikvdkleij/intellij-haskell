@@ -15,6 +15,26 @@ GHC 8.2 and later is supported.
 
 Any feedback is welcomed!!
 
+# GitHub Sponsors
+![King Lounge](logo/king.png)  
+### King lounge
+* @nexmean
+
+___
+![Duke Lounge](logo/duke.png) 
+### Duke lounge
+*
+
+___
+
+### Loyal supporter
+*
+___
+
+# One-time sponsors
+* @develop7
+* @liff
+
 # Installing the plugin
 You can install this plugin using the [Jetbrains plugin repository](https://plugins.jetbrains.com/idea/plugin/8258-intellij-haskell):
   `Settings`/`Plugins`/`Browse repositories`/`Intellij-Haskell`
