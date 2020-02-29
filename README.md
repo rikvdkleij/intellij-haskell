@@ -1,7 +1,6 @@
 # ![logo](logo/icon_intellij_haskell_32.png) IntelliJ plugin for Haskell
 
-# [![Join the chat at https://gitter.im/intellij-haskell/Lobby](https://badges.gitter.im/intellij-haskell/Lobby.svg)](https://gitter.im/intellij-haskell/Lobby?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge&utm_content=badge) [![paypal](https://www.paypalobjects.com/en_US/i/btn/btn_donateCC_LG.gif)](https://www.paypal.com/cgi-bin/webscr?cmd=_donations&business=H6QKQKFRKJBF2&item_name=IntelliJ-Haskell&currency_code=EUR)
-
+# [![Join the chat at https://gitter.im/intellij-haskell/Lobby](https://badges.gitter.im/intellij-haskell/Lobby.svg)](https://gitter.im/intellij-haskell/Lobby?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge&utm_content=badge) [![paypal](https://www.paypalobjects.com/en_US/i/btn/btn_donateCC_LG.gif)](https://www.paypal.com/cgi-bin/webscr?cmd=_donations&business=H6QKQKFRKJBF2&item_name=IntelliJ-Haskell&currency_code=EUR) [![Codeship Status for rikvdkleij/intellij-haskell](https://app.codeship.com/projects/171b1960-3d31-0138-a733-12543791c0bd/status?branch=master)](https://app.codeship.com/projects/387346)
 
 When I was learning Haskell, I missed the nice features of IntelliJ IDEA. My first approach
 was to use default way of creating an IntelliJ plugin by defining a grammar and a lexer according to
