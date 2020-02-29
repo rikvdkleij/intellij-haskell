@@ -18,7 +18,7 @@ Any feedback is welcomed!!
 # GitHub Sponsors
 ![King Lounge](logo/king.png)  
 ### King lounge
-* @nexmean
+* @Nexmean
 
 ___
 ![Duke Lounge](logo/duke.png) 
