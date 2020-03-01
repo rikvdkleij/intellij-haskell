@@ -23,7 +23,7 @@ import com.intellij.openapi.progress.ProgressIndicatorProvider
 import com.intellij.openapi.project.Project
 import com.intellij.util.concurrency.AppExecutorUtil
 import intellij.haskell.HaskellNotificationGroup
-import intellij.haskell.external.component.{NoInfo, ReadActionTimeout}
+import intellij.haskell.external.component.{IndexNotReady, NoInfo, ReadActionTimeout}
 
 import scala.concurrent.TimeoutException
 
@@ -54,7 +54,10 @@ object ApplicationUtil {
       progressIndicator.foreach(readAction.cancelWith)
       readAction.expireWith(project)
       try {
-        Right(readAction.submit(AppExecutorUtil.getAppExecutorService).get(5, TimeUnit.SECONDS))
+        Option(readAction.submit(AppExecutorUtil.getAppExecutorService).get(5, TimeUnit.SECONDS)) match {
+          case Some(x) => Right(x)
+          case None => Left(IndexNotReady)
+        }
       } catch {
         case _: TimeoutException =>
           HaskellNotificationGroup.logInfoEvent(project, s"Timeout in readActionWithFileAccess while $actionDescription")
