@@ -1318,23 +1318,15 @@ public class HaskellParser implements PsiParser, LightPsiParser {
   }
 
   /* ********************************************************** */
-  // CON_ID "#"?
+  // CON_ID
   public static boolean conid(PsiBuilder b, int l) {
     if (!recursion_guard_(b, l, "conid")) return false;
     if (!nextTokenIs(b, HS_CON_ID)) return false;
     boolean r;
     Marker m = enter_section_(b);
     r = consumeToken(b, HS_CON_ID);
-    r = r && conid_1(b, l + 1);
     exit_section_(b, m, HS_CONID, r);
     return r;
-  }
-
-  // "#"?
-  private static boolean conid_1(PsiBuilder b, int l) {
-    if (!recursion_guard_(b, l, "conid_1")) return false;
-    consumeToken(b, "#");
-    return true;
   }
 
   /* ********************************************************** */
@@ -6136,23 +6128,15 @@ public class HaskellParser implements PsiParser, LightPsiParser {
   }
 
   /* ********************************************************** */
-  // VAR_ID "#"?
+  // VAR_ID
   public static boolean varid(PsiBuilder b, int l) {
     if (!recursion_guard_(b, l, "varid")) return false;
     if (!nextTokenIs(b, HS_VAR_ID)) return false;
     boolean r;
     Marker m = enter_section_(b);
     r = consumeToken(b, HS_VAR_ID);
-    r = r && varid_1(b, l + 1);
     exit_section_(b, m, HS_VARID, r);
     return r;
-  }
-
-  // "#"?
-  private static boolean varid_1(PsiBuilder b, int l) {
-    if (!recursion_guard_(b, l, "varid_1")) return false;
-    consumeToken(b, "#");
-    return true;
   }
 
   /* ********************************************************** */

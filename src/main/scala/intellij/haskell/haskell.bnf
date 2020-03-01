@@ -143,8 +143,8 @@ comments                    ::= COMMENT | NCOMMENT | HADDOCK | NHADDOCK | NOT_TE
 
 modid                       ::= (conid DOT)* conid {pin=1 stubClass = "intellij.haskell.psi.stubs.HaskellModidStub"}
 
-varid                       ::= VAR_ID "#"? {stubClass = "intellij.haskell.psi.stubs.HaskellVaridStub"}
-conid                       ::= CON_ID "#"? {stubClass = "intellij.haskell.psi.stubs.HaskellConidStub"}
+varid                       ::= VAR_ID  {stubClass = "intellij.haskell.psi.stubs.HaskellVaridStub"}
+conid                       ::= CON_ID  {stubClass = "intellij.haskell.psi.stubs.HaskellConidStub"}
 varsym                      ::= VARSYM_ID | DOT+ VARSYM_ID | DOT+ EQUAL | DOT+ BACKSLASH | DOT+ TILDE | DOT+ AT | DOT+ CONSYM_ID | DOT+ VERTICAL_BAR | DOT DOT DOT+ | DOT     {stubClass = "intellij.haskell.psi.stubs.HaskellVarsymStub"}
 consym                      ::= CONSYM_ID   {stubClass = "intellij.haskell.psi.stubs.HaskellConsymStub"}
 

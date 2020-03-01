@@ -116,11 +116,12 @@ symbol_no_dot       = {equal} | {at} | {backslash} | {vertical_bar} | {tilde} | 
 
 symbol              = {symbol_no_dot} | {dot}
 
-var_id              = {question_mark}? {small} ({small} | {large} | {digit} | {quote})*
+base_var_id         = {small} ({small} | {large} | {digit} | {quote})*
+var_id              = {question_mark} {base_var_id} | {hash} {base_var_id} | {base_var_id} {hash}
 varsym_id           = (({symbol_no_dot} | {colon} | {colon_colon} | {left_arrow} | {right_arrow} | {double_right_arrow}) ({symbol} | {colon})+) |
                         {symbol_no_dot} ({symbol} | {colon})*
 
-con_id              = {large} ({small} | {large} | {digit} | {quote})*
+con_id              = {large} ({small} | {large} | {digit} | {quote})* {hash}?
 consym_id           = {quote}? {colon} ({symbol} | {colon})*
 
 
