@@ -31,7 +31,7 @@ ___
 *
 ___
 
-# One-time sponsors
+# Sponsors
 * @develop7
 * @liff
 
