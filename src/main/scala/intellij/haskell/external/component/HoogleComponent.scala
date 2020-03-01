@@ -142,7 +142,7 @@ object HoogleComponent {
   }
 
   def showHoogleDatabaseDoesNotExistNotification(project: Project): Unit = {
-    HaskellNotificationGroup.logInfoBalloonEvent(project, "Hoogle database doesn't exist. Hoogle features can be enabled by menu option `Haskell`/`(Re)Build Hoogle database`")
+    HaskellNotificationGroup.logInfoBalloonEvent(project, "Hoogle features can be enabled by menu option `Haskell`/`(Re)Build Hoogle database`")
   }
 
   def versionInfo(project: Project): String = {
