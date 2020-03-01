@@ -117,7 +117,7 @@ symbol_no_dot       = {equal} | {at} | {backslash} | {vertical_bar} | {tilde} | 
 symbol              = {symbol_no_dot} | {dot}
 
 base_var_id         = {small} ({small} | {large} | {digit} | {quote})*
-var_id              = {question_mark} {base_var_id} | {hash} {base_var_id} | {base_var_id} {hash}
+var_id              = {question_mark}? {base_var_id} | {hash} {base_var_id} | {base_var_id} {hash}
 varsym_id           = (({symbol_no_dot} | {colon} | {colon_colon} | {left_arrow} | {right_arrow} | {double_right_arrow}) ({symbol} | {colon})+) |
                         {symbol_no_dot} ({symbol} | {colon})*
 
