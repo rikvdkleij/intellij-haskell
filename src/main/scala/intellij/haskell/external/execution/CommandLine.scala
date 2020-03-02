@@ -18,6 +18,7 @@ package intellij.haskell.external.execution
 
 import com.intellij.execution.configurations.GeneralCommandLine
 import com.intellij.execution.configurations.GeneralCommandLine.ParentEnvironmentType
+import com.intellij.execution.process
 import com.intellij.execution.process._
 import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.project.Project
@@ -80,7 +81,8 @@ object CommandLine {
 
     val processHandler = createProcessHandler(project, commandLine, logOutput)
 
-    val processOutput = processHandler.runProcess(timeoutInMillis.toInt, true)
+    val processOutput = processHandler.map(_.runProcess(timeoutInMillis.toInt, true)).getOrElse(new process.ProcessOutput(-1))
+
     if (processOutput.isTimeout) {
       val message = s"Timeout while executing `${commandLine.getCommandLineString}`"
       if (notifyBalloonError) {
@@ -109,13 +111,20 @@ object CommandLine {
     commandLine
   }
 
-  private def createProcessHandler(project: Option[Project], cmd: GeneralCommandLine, logOutput: Boolean): CapturingProcessHandler = {
-    if (logOutput) {
-      new CapturingProcessHandler(cmd) {
-        override protected def createProcessAdapter(processOutput: ProcessOutput): CapturingProcessAdapter = new CapturingProcessToLog(project, cmd, processOutput)
+  private def createProcessHandler(project: Option[Project], cmd: GeneralCommandLine, logOutput: Boolean): Option[CapturingProcessHandler] = {
+    try {
+      if (logOutput) {
+        Some(
+          new CapturingProcessHandler(cmd) {
+            override protected def createProcessAdapter(processOutput: ProcessOutput): CapturingProcessAdapter = new CapturingProcessToLog(project, cmd, processOutput)
+          })
+      } else {
+        Some(new CapturingProcessHandler(cmd))
       }
-    } else {
-      new CapturingProcessHandler(cmd)
+    } catch {
+      case e: ProcessNotCreatedException =>
+        HaskellNotificationGroup.logErrorBalloonEvent(project, e.getMessage)
+        None
     }
   }
 

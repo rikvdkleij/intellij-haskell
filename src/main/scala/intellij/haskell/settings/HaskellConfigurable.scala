@@ -184,7 +184,7 @@ class HaskellConfigurable extends Configurable {
   }
 
   private def checkFileExists(path: String): Unit = {
-    if (!FileUtil.exists(path)) {
+    if (FileUtil.isAbsolute(path) && !FileUtil.exists(path)) {
       throw new ConfigurationException(s"$path does not exists")
     }
   }
