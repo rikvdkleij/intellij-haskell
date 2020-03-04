@@ -34,9 +34,10 @@ class EnterInHaddockHandler extends EnterHandlerDelegateAdapter {
     val document = editor.getDocument
     PsiDocumentManager.getInstance(file.getProject).commitDocument(document)
 
-    val result = Option(caretOffset.get()).map(_.intValue()).flatMap(caret => Option(file.findElementAt(caret)).map(elementAtCaret => {
-      if (elementAtCaret.getNode.getElementType == HaskellTypes.HS_NHADDOCK && !elementAtCaret.getText.trim.endsWith("-}")) {
-        document.insertString(caret, "-}")
+    val result = Option(caretOffset.get()).flatMap(offset => Option(file.findElementAt(offset)).map(element => {
+      if (element.getNode.getElementType == HaskellTypes.HS_HADDOCK) {
+        document.insertString(offset, "-- ")
+        caretAdvance.set(3)
         Result.Default
       } else {
         Result.Continue

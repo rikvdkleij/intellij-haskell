@@ -132,7 +132,7 @@ pragma_end          = {hash}{dash}{right_brace}
 comment             = {dash}{dash}{dash}*[^\r\n\!\#\$\%\&\⋆\+\.\/\<\=\>\?\@\*][^\r\n]* | {dash}{dash}{white_char}* | "\\begin{code}"
 ncomment_start      = {left_brace}{dash}
 ncomment_end        = {dash}{right_brace}
-haddock             = {dash}{dash}{white_char}[\^\|][^\r\n]* ({newline}{white_char}*{comment})*
+haddock             = {dash}{dash}{white_char}[\^\|][^\r\n]*{newline} ({white_char}*{comment}{newline})*
 nhaddock_start      = {left_brace}{dash}{white_char}?{vertical_bar}
 
 %%
