@@ -71,7 +71,9 @@ private[component] object LoadComponent {
               })
 
             }
-            DocumentationManager.getInstance(project).updateToolwindowContext()
+            if (!project.isDisposed) {
+              DocumentationManager.getInstance(project).updateToolwindowContext()
+            }
           })
           Some(HaskellCompilationResultHelper.createCompilationResult(psiFile, loadOutput.stderrLines, loadFailed))
         case _ => None
