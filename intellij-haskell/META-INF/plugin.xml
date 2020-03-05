@@ -1,7 +1,7 @@
 <idea-plugin>
     <id>intellij.haskell</id>
     <name>IntelliJ-Haskell</name>
-    <version>1.0.0-beta63</version>
+    <version>1.0.0-beta64</version>
     <vendor email="rikvdkleij@gmail.com">Rik van der Kleij</vendor>
 
     <description><![CDATA[
@@ -20,6 +20,11 @@
     ]]></description>
 
     <change-notes><![CDATA[
+        <p>1.0.0-beta64</p>
+        <ul>
+            <li>Various improvements and fixes</li>
+            <li>Workaround for base-4.13.0.0 not on Hackage</li>
+        </ul>
         <p>1.0.0-beta63</p>
         <ul>
             <li>Fix IDE freeze issue</li>
