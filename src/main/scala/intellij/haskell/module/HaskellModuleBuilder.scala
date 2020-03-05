@@ -31,6 +31,7 @@ import com.intellij.openapi.ui.Messages
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.vfs.LocalFileSystem
 import com.intellij.platform.templates.TemplateModuleBuilder
+import com.intellij.platform.templates.github.ZipUtil
 import icons.HaskellIcons
 import intellij.haskell.cabal.CabalInfo
 import intellij.haskell.external.component.{HaskellComponentsManager, PackageInfo}
@@ -293,7 +294,7 @@ object HaskellModuleBuilder {
 
         val projectLibraryDependencies = dependenciesByModule.flatMap(_._3).distinct
 
-        downloadHaskellPackageSources(project, projectLibDirectory, stackPath, projectLibraryDependencies)
+        retrieveHaskellPackageSources(project, projectLibDirectory, stackPath, projectLibraryDependencies)
 
         setupProjectLibraries(project, projectLibraryDependencies, projectLibDirectory)
 
@@ -304,10 +305,24 @@ object HaskellModuleBuilder {
     }
   }
 
-  private def downloadHaskellPackageSources(project: Project, projectLibDirectory: File, stackPath: String, libraryDependencies: Seq[HaskellLibraryDependency]): Unit = {
+  private final val Base_4_13_0_0_ZipName = "base-41300" // Exception while unzipping when name contains dots
+  private final val Base_4_13_0_0 = "base-4.13.0.0"
+
+  private def retrieveHaskellPackageSources(project: Project, projectLibDirectory: File, stackPath: String, libraryDependencies: Seq[HaskellLibraryDependency]): Unit = {
     libraryDependencies.filterNot(libraryDependency => getPackageDirectory(projectLibDirectory, libraryDependency).exists()).foreach(libraryDependency => {
-      CommandLine.run1(project, projectLibDirectory.getAbsolutePath, stackPath, Seq("--no-nix", "unpack", libraryDependency.nameVersion), 10000)
+      if (libraryDependency.nameVersion == Base_4_13_0_0) {
+        val baseZip = new File(projectLibDirectory, Base_4_13_0_0_ZipName)
+        HaskellFileUtil.copyStreamToFile(getClass.getResourceAsStream(s"/lib/${Base_4_13_0_0_ZipName}.zip"), baseZip)
+        ZipUtil.unzip(null, projectLibDirectory, baseZip, null, null, false)
+        baseZip.delete()
+      } else {
+        downloadHaskellPackageSource(project, projectLibDirectory, stackPath, libraryDependency)
+      }
     })
+  }
+
+  private def downloadHaskellPackageSource(project: Project, projectLibDirectory: File, stackPath: String, libraryDependency: HaskellLibraryDependency): Unit = {
+    CommandLine.run1(project, projectLibDirectory.getAbsolutePath, stackPath, Seq("--no-nix", "unpack", libraryDependency.nameVersion), 10000)
   }
 
   private def getPackageDirectory(projectLibDirectory: File, libraryDependency: HaskellLibraryDependency) = {
