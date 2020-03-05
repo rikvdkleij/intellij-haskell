@@ -26,11 +26,11 @@ object DeclarationUtil {
     (if (allTokens.isEmpty || allTokens(0) == "--") {
       None
     } else if (Seq("class", "instance").contains(allTokens(0))) {
-      declaration.split("""where|=\s""").headOption.flatMap { d =>
+      declaration.split("""where|=\s|\s\.\.\.""").headOption.flatMap { d =>
         val tokens = d.trim.split("=>")
         val size = tokens.size
         if (size == 1) {
-          Option(tokens(0))
+          Option(tokens(0).split("""\s+""")(1))
         } else if (size > 1) {
           Option(tokens.last.trim.split("""\s+""")(0))
         } else {
