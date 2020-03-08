@@ -20,7 +20,7 @@ import java.io.{File, FileOutputStream, InputStream}
 import java.nio.file.attribute.PosixFilePermission
 import java.nio.file.{Files, Paths}
 
-import com.intellij.openapi.application.ApplicationManager
+import com.intellij.openapi.application.{ApplicationManager, WriteAction}
 import com.intellij.openapi.command.CommandProcessor
 import com.intellij.openapi.editor.Document
 import com.intellij.openapi.fileEditor.{FileDocumentManager, FileEditorManager}
@@ -50,30 +50,23 @@ object HaskellFileUtil {
     )
   }
 
-  def saveFileInDispatchThread(psiFile: PsiFile): Unit = {
-    findDocument(psiFile).foreach(d => {
-      PsiDocumentManager.getInstance(psiFile.getProject).doPostponedOperationsAndUnblockDocument(d)
-      ApplicationManager.getApplication.invokeAndWait(() => {
-        FileDocumentManager.getInstance.saveDocument(d)
-      })
-    })
-  }
-
   def saveFileAsIsInDispatchThread(project: Project, virtualFile: VirtualFile): Unit = {
     findDocument(virtualFile).foreach(d => {
       val documentManager = PsiDocumentManager.getInstance(project)
       val fileDocumentManager = FileDocumentManager.getInstance
       ApplicationUtil.runReadAction(documentManager.doPostponedOperationsAndUnblockDocument(d), Some(project))
-      ApplicationManager.getApplication.invokeAndWait(() => {
+      ApplicationManager.getApplication.invokeAndWait(() => WriteAction.run(() => {
         fileDocumentManager.saveDocumentAsIs(d)
-      })
+      }))
     })
   }
 
   def saveFile(psiFile: PsiFile): Unit = {
     findDocument(psiFile).foreach(d => {
       PsiDocumentManager.getInstance(psiFile.getProject).doPostponedOperationsAndUnblockDocument(d)
-      FileDocumentManager.getInstance.saveDocument(d)
+      WriteAction.run(() =>
+        FileDocumentManager.getInstance.saveDocumentAsIs(d)
+      )
     })
   }
 
