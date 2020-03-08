@@ -279,8 +279,7 @@ object HaskellPsiImplUtil {
     val cdecls = Option(classDeclaration.getCdecls).map(_.getCdeclList.asScala).getOrElse(Seq())
     classDeclaration.getQNameList.asScala.headOption.map(_.getIdentifierElement).toSeq ++
       cdecls.flatMap(cd => Option(cd.getTypeSignature).map(_.getIdentifierElements).getOrElse(Seq())) ++
-      cdecls.flatMap(cd => Option(cd.getCdeclDataDeclaration).toSeq.flatMap(_.getQNameList.asScala.map(_.getIdentifierElement))) ++
-      cdecls.flatMap(cd => Option(cd.getCidecl).toSeq.flatMap(_.getQNameList.asScala.map(_.getIdentifierElement)))
+      cdecls.flatMap(cd => Option(cd.getCdeclDataDeclaration).toSeq.flatMap(_.getQNameList.asScala.map(_.getIdentifierElement)))
   }
 
   def getIdentifierElements(instanceDeclaration: HaskellInstanceDeclaration): Seq[HaskellNamedElement] = {
