@@ -66,13 +66,13 @@ private[component] object TypeInfoComponent {
             case None => Left(ReplNotAvailable)
           }
         }
-        }.getOrElse(Left(NoInfoAvailable(selectionModel.getSelectedText, psiFile.getName)))
+      }.getOrElse(Left(NoInfoAvailable(selectionModel.getSelectedText, psiFile.getName)))
     } else {
       Left(ModuleNotAvailable(moduleName.getOrElse(psiFile.getName)))
     }
   }
 
-  def invalidateElements(psiFile: PsiFile, namedElements: Seq[HaskellQualifiedNameElement]): Unit = {
+  def invalidateElements(psiFile: PsiFile, namedElements: Iterable[HaskellQualifiedNameElement]): Unit = {
     namedElements.foreach(qne => Cache.invalidate(Key(psiFile, qne)))
   }
 
