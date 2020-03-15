@@ -38,6 +38,7 @@ newline             = \r|\n|\r\n
 unispace            = \x05
 white_char          = [\ \t\f\x0B\ \x0D ] | {unispace}    // second "space" is probably ^M, I could not find other solution then justing pasting it in to prevent bad character.
 directive           = "#"{white_char}*("if"|"ifdef"|"ifndef"|"define"|"elif"|"else"|"error"|"endif"|"include"|"undef")  ("\\" (\r|\n|\r\n) | [^\r\n])*
+include_directive   = "#"{white_char}*"include"{white_char}*\"({small}|{large}|{digit}|{dot})+\"
 white_space         = {white_char}+
 
 underscore          = "_"
@@ -110,15 +111,14 @@ double_quotes       = "\""
 forall              = "∀"
 
 symbol_no_dot       = {equal} | {at} | {backslash} | {vertical_bar} | {tilde} | {exclamation_mark} | {hash} | {dollar} | {percentage} | {ampersand} | {star} |
-                        {plus} | {slash} | {lt} | {gt} | {question_mark} | {caret} | {dash} | ⊜ | ≣ | ≤ | ≥ | · | & | ¦ | ¿ | — | ⊕ | ∅ | ¬ | ∧ | ∨ | ≡ | ≢ | ≠ |
-                        ≮| ≯ | − |÷ |⋅ |∘ | ⧺ | ∈ |∉ |‼ | ⊥ | ∣ | ∤ | 𝜀
+                        {plus} | {slash} | {lt} | {gt} | {question_mark} | {caret} | {dash} | [\u2201-\u22FF]
 
 
 symbol              = {symbol_no_dot} | {dot}
 
 base_var_id         = {small} ({small} | {large} | {digit} | {quote})*
 var_id              = {question_mark}? {base_var_id} | {hash} {base_var_id} | {base_var_id} {hash}
-varsym_id           = (({symbol_no_dot} | {colon} | {colon_colon} | {left_arrow} | {right_arrow} | {double_right_arrow}) ({symbol} | {colon})+) |
+varsym_id           = (({symbol_no_dot} | {left_arrow} | {right_arrow} | {double_right_arrow}) ({symbol} | {colon})+) |
                         {symbol_no_dot} ({symbol} | {colon})*
 
 con_id              = {large} ({small} | {large} | {digit} | {quote})* {hash}?
@@ -227,7 +227,7 @@ nhaddock_start      = {left_brace}{dash}{white_char}?{vertical_bar}
     {hash}                { return HS_HASH; }
     {white_space}         { return com.intellij.psi.TokenType.WHITE_SPACE; }
 
-    [\-a-zA-Z0-9_=\(\):<>*/|'!?\.+\^&%$#@\[\];,~\\`]+ {
+    ([\-a-zA-Z0-9_=\(\):<>*/|'!?\.+\^&%$#@\[\];,~\\`\"]|[\u2200-\u22FF]) + {
         return HS_ONE_PRAGMA;
     }
 
@@ -361,6 +361,7 @@ nhaddock_start      = {left_brace}{dash}{white_char}?{vertical_bar}
 
     {quote}               { return HS_QUOTE; }
 
+    {include_directive}   { return HS_INCLUDE_DIRECTIVE; }
     {directive}           { return HS_DIRECTIVE; }
 
     {forall}              { return HS_FORALL; }

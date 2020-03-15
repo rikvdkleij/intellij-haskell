@@ -125,6 +125,7 @@ public interface HaskellTypes {
   IElementType HS_IF = new HaskellTokenType("IF");
   IElementType HS_IMPORT = new HaskellTokenType("IMPORT");
   IElementType HS_IN = new HaskellTokenType("IN");
+  IElementType HS_INCLUDE_DIRECTIVE = new HaskellTokenType("INCLUDE_DIRECTIVE");
   IElementType HS_INFIX = new HaskellTokenType("INFIX");
   IElementType HS_INFIXL = new HaskellTokenType("INFIXL");
   IElementType HS_INFIXR = new HaskellTokenType("INFIXR");

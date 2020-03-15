@@ -260,7 +260,8 @@ object HaskellPsiImplUtil {
       constrs.flatMap(constr => Option(constr.getConstr1)).flatMap(c => Option(c.getQName).map(_.getIdentifierElement) ++
         c.getFielddeclList.asScala.flatMap(_.getQNames.getQNameList.asScala.headOption.map(_.getIdentifierElement))) ++
       constrs.flatMap(constr => Option(constr.getConstr3)).flatMap(_.getTtypeList.asScala.headOption.flatMap(_.getQNameList.asScala.headOption.map(_.getIdentifierElement))) ++
-      constrs.flatMap(constr => Option(constr.getConstr2)).flatMap(c => Option(c.getQName).map(_.getIdentifierElement).orElse(c.getTtypeList.asScala.headOption.flatMap(_.getQNameList.asScala.headOption.map(_.getIdentifierElement))))
+      constrs.flatMap(constr => Option(constr.getConstr2)).flatMap(c => c.getQNameList.asScala.map(_.getIdentifierElement).find(e => e.isInstanceOf[HaskellConsym] || e.isInstanceOf[HaskellConid]).toSeq ++
+        c.getTtypeList.asScala.headOption.flatMap(_.getQNameList.asScala.headOption.map(_.getIdentifierElement)))
   }
 
   def getIdentifierElements(typeDeclaration: HaskellTypeDeclaration): Seq[HaskellNamedElement] = {

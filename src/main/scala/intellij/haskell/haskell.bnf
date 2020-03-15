@@ -52,19 +52,19 @@
   mixin("quasi_quote")="intellij.haskell.psi.impl.HaskellQuasiQuoteElementImpl"
 }
 
-program                     ::= onl shebang_line? onl file_header onl module_body
+program                     ::= onl shebang_line? onl file_header onl module_body?
 
 shebang_line                ::= "#!" general_id+
-file_header                 ::= (pragma onl)*
+file_header                 ::= ((pragma | INCLUDE_DIRECTIVE | DIRECTIVE) onl)*
 pragma                      ::= PRAGMA_START general_pragma_content* PRAGMA_END {pin=1}
 general_pragma_content      ::= ONE_PRAGMA | PRAGMA_SEP | CHARACTER_LITERAL | STRING_LITERAL | NEWLINE | DASH | HASH
 
 module_body                 ::= module_declaration onl body | onl body
 module_declaration          ::= MODULE modid onl pragma? onl (exports onl)? WHERE
 
-private body                ::= import_declarations top_declarations  (NEWLINE | DIRECTIVE)*
-import_declarations         ::= ((import_declaration | pragma | DIRECTIVE) onl)*
-private top_declarations    ::= (top_declaration_line (NEWLINE | DIRECTIVE)*)* top_declaration?
+private body                ::= import_declarations top_declarations  (NEWLINE | DIRECTIVE | INCLUDE_DIRECTIVE)*
+import_declarations         ::= ((import_declaration | pragma | INCLUDE_DIRECTIVE | DIRECTIVE) onl)*
+private top_declarations    ::= (top_declaration_line (NEWLINE | INCLUDE_DIRECTIVE | DIRECTIVE)*)* top_declaration?
 
 import_declaration          ::= IMPORT (onls pragma)? (onls import_qualified)? (onls import_package_name)? onls modid onls import_qualified_as? onls import_spec?    {methods=[getModuleName] pin=1}
 import_qualified            ::= "qualified"
@@ -168,7 +168,7 @@ gtycon                      ::= QUOTE? q_name | LEFT_PAREN RIGHT_ARROW RIGHT_PAR
 private constrs             ::= constr (onls VERTICAL_BAR onls constr)*
 constr                      ::= (type_signature | constr1 | constr2 | constr3)
 constr1                     ::= pragma? (onls q_name)? (onls pragma)? onls LEFT_BRACE onl fielddecl? ((onl COMMA)? onl fielddecl)* onl RIGHT_BRACE
-constr2                     ::= pragma? onls (ttype | q_name | LEFT_PAREN q_name* RIGHT_PAREN | LEFT_BRACKET q_name* RIGHT_BRACKET) (onls pragma onls)? ((onls pragma)? onls ttype (onls pragma)?)*  // Base.hs: data () = () and GHC.Types.hs: data [] a = [] | a : [a]
+constr2                     ::= pragma? onls (q_name+ | LEFT_PAREN q_name* RIGHT_PAREN | LEFT_BRACKET q_name* RIGHT_BRACKET) (onls pragma onls)? ((onls pragma)? onls ttype (onls pragma)?)*  // Base.hs: data () = () and GHC.Types.hs: data [] a = [] | a : [a]
 constr3                     ::= (onls pragma? onls ttype)+
 
 fielddecl                   ::= q_names (onl COLON_COLON pragma? (onls ("forall" | FORALL) (onls q_name)+)? (onls scontext onls DOUBLE_RIGHT_ARROW)? pragma? onls ttype)?
