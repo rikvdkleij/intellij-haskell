@@ -41,9 +41,9 @@ public class HaskellInstanceDeclarationImpl extends HaskellCompositeElementImpl 
   }
 
   @Override
-  @Nullable
-  public HaskellPragma getPragma() {
-    return PsiTreeUtil.getChildOfType(this, HaskellPragma.class);
+  @NotNull
+  public List<HaskellPragma> getPragmaList() {
+    return PsiTreeUtil.getChildrenOfTypeAsList(this, HaskellPragma.class);
   }
 
   @Override

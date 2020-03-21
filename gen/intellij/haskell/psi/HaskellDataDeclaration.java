@@ -23,8 +23,8 @@ public interface HaskellDataDeclaration extends HaskellDataConstructorDeclaratio
   @NotNull
   List<HaskellKindSignature> getKindSignatureList();
 
-  @Nullable
-  HaskellPragma getPragma();
+  @NotNull
+  List<HaskellPragma> getPragmaList();
 
   @NotNull
   List<HaskellQName> getQNameList();

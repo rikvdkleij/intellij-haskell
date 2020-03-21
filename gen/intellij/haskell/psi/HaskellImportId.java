@@ -12,6 +12,9 @@ public interface HaskellImportId extends HaskellCompositeElement {
   HaskellDotDot getDotDot();
 
   @NotNull
+  List<HaskellPragma> getPragmaList();
+
+  @NotNull
   List<HaskellQName> getQNameList();
 
 }

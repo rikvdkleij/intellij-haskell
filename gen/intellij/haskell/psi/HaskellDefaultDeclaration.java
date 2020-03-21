@@ -12,6 +12,9 @@ import java.util.List;
 public interface HaskellDefaultDeclaration extends HaskellDeclarationElement {
 
   @NotNull
+  List<HaskellPragma> getPragmaList();
+
+  @NotNull
   List<HaskellTtype> getTtypeList();
 
   @Nullable

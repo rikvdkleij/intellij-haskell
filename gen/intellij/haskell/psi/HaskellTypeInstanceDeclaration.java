@@ -6,10 +6,15 @@ import org.jetbrains.annotations.NotNull;
 import scala.Option;
 import scala.collection.immutable.Seq;
 
+import java.util.List;
+
 public interface HaskellTypeInstanceDeclaration extends HaskellDeclarationElement {
 
   @NotNull
   HaskellExpression getExpression();
+
+  @NotNull
+  List<HaskellPragma> getPragmaList();
 
   String getName();
 

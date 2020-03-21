@@ -11,6 +11,8 @@ import org.jetbrains.annotations.Nullable;
 import scala.Option;
 import scala.collection.immutable.Seq;
 
+import java.util.List;
+
 public class HaskellNewtypeDeclarationImpl extends HaskellCompositeElementImpl implements HaskellNewtypeDeclaration {
 
   public HaskellNewtypeDeclarationImpl(ASTNode node) {
@@ -39,9 +41,9 @@ public class HaskellNewtypeDeclarationImpl extends HaskellCompositeElementImpl i
   }
 
   @Override
-  @Nullable
-  public HaskellPragma getPragma() {
-    return PsiTreeUtil.getChildOfType(this, HaskellPragma.class);
+  @NotNull
+  public List<HaskellPragma> getPragmaList() {
+    return PsiTreeUtil.getChildrenOfTypeAsList(this, HaskellPragma.class);
   }
 
   @Override

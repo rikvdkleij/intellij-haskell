@@ -4,10 +4,7 @@ package intellij.haskell.psi.impl;
 import com.intellij.lang.ASTNode;
 import com.intellij.psi.PsiElementVisitor;
 import com.intellij.psi.util.PsiTreeUtil;
-import intellij.haskell.psi.HaskellDotDot;
-import intellij.haskell.psi.HaskellImportId;
-import intellij.haskell.psi.HaskellQName;
-import intellij.haskell.psi.HaskellVisitor;
+import intellij.haskell.psi.*;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -32,6 +29,12 @@ public class HaskellImportIdImpl extends HaskellCompositeElementImpl implements 
   @Nullable
   public HaskellDotDot getDotDot() {
     return PsiTreeUtil.getChildOfType(this, HaskellDotDot.class);
+  }
+
+  @Override
+  @NotNull
+  public List<HaskellPragma> getPragmaList() {
+    return PsiTreeUtil.getChildrenOfTypeAsList(this, HaskellPragma.class);
   }
 
   @Override

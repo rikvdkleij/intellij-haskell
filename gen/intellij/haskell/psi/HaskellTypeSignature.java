@@ -14,6 +14,9 @@ public interface HaskellTypeSignature extends HaskellDeclarationElement {
   List<HaskellCcontext> getCcontextList();
 
   @NotNull
+  List<HaskellPragma> getPragmaList();
+
+  @NotNull
   List<HaskellQNames> getQNamesList();
 
   @NotNull

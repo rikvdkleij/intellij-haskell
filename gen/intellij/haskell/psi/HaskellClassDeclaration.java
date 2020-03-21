@@ -15,6 +15,9 @@ public interface HaskellClassDeclaration extends HaskellDeclarationElement {
   HaskellCdecls getCdecls();
 
   @NotNull
+  List<HaskellPragma> getPragmaList();
+
+  @NotNull
   List<HaskellQName> getQNameList();
 
   @Nullable

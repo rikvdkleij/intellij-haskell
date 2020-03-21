@@ -17,8 +17,8 @@ public interface HaskellInstanceDeclaration extends HaskellDeclarationElement {
   @Nullable
   HaskellInst getInst();
 
-  @Nullable
-  HaskellPragma getPragma();
+  @NotNull
+  List<HaskellPragma> getPragmaList();
 
   @Nullable
   HaskellQName getQName();

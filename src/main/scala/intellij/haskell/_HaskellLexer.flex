@@ -37,7 +37,7 @@ import static intellij.haskell.psi.HaskellTypes.*;
 newline             = \r|\n|\r\n
 unispace            = \x05
 white_char          = [\ \t\f\x0B\ \x0D ] | {unispace}    // second "space" is probably ^M, I could not find other solution then justing pasting it in to prevent bad character.
-directive           = "#"{white_char}*("if"|"ifdef"|"ifndef"|"define"|"elif"|"else"|"error"|"endif"|"include"|"undef")  ("\\" (\r|\n|\r\n) | [^\r\n])*
+directive           = "#"{white_char}*("if"|"ifdef"|"ifndef"|"define"|"elif"|"else"|"error"|"endif"|"include"|"undef")("\\" (\r|\n|\r\n) | [^\r\n])* {newline}
 include_directive   = "#"{white_char}*"include"{white_char}*\"({small}|{large}|{digit}|{dot})+\"
 white_space         = {white_char}+
 
@@ -227,14 +227,10 @@ nhaddock_start      = {left_brace}{dash}{white_char}?{vertical_bar}
     {hash}                { return HS_HASH; }
     {white_space}         { return com.intellij.psi.TokenType.WHITE_SPACE; }
 
-    ([\-a-zA-Z0-9_=\(\):<>*/|'!?\.+\^&%$#@\[\];,~\\`\"]|[\u2200-\u22FF]) + {
+    ([\-a-zA-Z0-9_=\(\):<>*/\|\'\!\?\.+\^&%$#@\[\];,~\\`\"\{\}]|[\u2200-\u22FF]) + {
         return HS_ONE_PRAGMA;
     }
 
-    {left_brace}|{right_brace} {
-        yybegin(YYINITIAL);
-        return com.intellij.psi.TokenType.BAD_CHARACTER;
-    }
 }
 
 {pragma_start} {

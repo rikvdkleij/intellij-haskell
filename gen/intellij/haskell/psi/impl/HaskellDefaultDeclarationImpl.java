@@ -30,6 +30,12 @@ public class HaskellDefaultDeclarationImpl extends HaskellCompositeElementImpl i
 
   @Override
   @NotNull
+  public List<HaskellPragma> getPragmaList() {
+    return PsiTreeUtil.getChildrenOfTypeAsList(this, HaskellPragma.class);
+  }
+
+  @Override
+  @NotNull
   public List<HaskellTtype> getTtypeList() {
     return PsiTreeUtil.getChildrenOfTypeAsList(this, HaskellTtype.class);
   }

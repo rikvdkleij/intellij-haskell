@@ -7,10 +7,15 @@ import org.jetbrains.annotations.Nullable;
 import scala.Option;
 import scala.collection.immutable.Seq;
 
+import java.util.List;
+
 public interface HaskellDerivingDeclaration extends HaskellDeclarationElement {
 
   @NotNull
   HaskellInst getInst();
+
+  @NotNull
+  List<HaskellPragma> getPragmaList();
 
   @NotNull
   HaskellQName getQName();

@@ -7,10 +7,15 @@ import org.jetbrains.annotations.Nullable;
 import scala.Option;
 import scala.collection.immutable.Seq;
 
+import java.util.List;
+
 public interface HaskellTypeFamilyDeclaration extends HaskellDeclarationElement {
 
   @Nullable
   HaskellExpression getExpression();
+
+  @NotNull
+  List<HaskellPragma> getPragmaList();
 
   @NotNull
   HaskellTypeFamilyType getTypeFamilyType();

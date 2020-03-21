@@ -5,13 +5,12 @@ import com.intellij.lang.ASTNode;
 import com.intellij.navigation.ItemPresentation;
 import com.intellij.psi.PsiElementVisitor;
 import com.intellij.psi.util.PsiTreeUtil;
-import intellij.haskell.psi.HaskellExpression;
-import intellij.haskell.psi.HaskellForeignDeclaration;
-import intellij.haskell.psi.HaskellNamedElement;
-import intellij.haskell.psi.HaskellVisitor;
+import intellij.haskell.psi.*;
 import org.jetbrains.annotations.NotNull;
 import scala.Option;
 import scala.collection.immutable.Seq;
+
+import java.util.List;
 
 public class HaskellForeignDeclarationImpl extends HaskellCompositeElementImpl implements HaskellForeignDeclaration {
 
@@ -32,6 +31,12 @@ public class HaskellForeignDeclarationImpl extends HaskellCompositeElementImpl i
   @NotNull
   public HaskellExpression getExpression() {
     return notNullChild(PsiTreeUtil.getChildOfType(this, HaskellExpression.class));
+  }
+
+  @Override
+  @NotNull
+  public List<HaskellPragma> getPragmaList() {
+    return PsiTreeUtil.getChildrenOfTypeAsList(this, HaskellPragma.class);
   }
 
   @Override

@@ -18,6 +18,9 @@ public interface HaskellTypeDeclaration extends HaskellDeclarationElement {
   List<HaskellKindSignature> getKindSignatureList();
 
   @NotNull
+  List<HaskellPragma> getPragmaList();
+
+  @NotNull
   List<HaskellQName> getQNameList();
 
   @NotNull

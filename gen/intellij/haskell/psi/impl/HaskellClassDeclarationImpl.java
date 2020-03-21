@@ -36,6 +36,12 @@ public class HaskellClassDeclarationImpl extends HaskellCompositeElementImpl imp
 
   @Override
   @NotNull
+  public List<HaskellPragma> getPragmaList() {
+    return PsiTreeUtil.getChildrenOfTypeAsList(this, HaskellPragma.class);
+  }
+
+  @Override
+  @NotNull
   public List<HaskellQName> getQNameList() {
     return PsiTreeUtil.getChildrenOfTypeAsList(this, HaskellQName.class);
   }

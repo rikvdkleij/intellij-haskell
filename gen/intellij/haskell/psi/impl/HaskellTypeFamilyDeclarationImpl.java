@@ -11,6 +11,8 @@ import org.jetbrains.annotations.Nullable;
 import scala.Option;
 import scala.collection.immutable.Seq;
 
+import java.util.List;
+
 public class HaskellTypeFamilyDeclarationImpl extends HaskellCompositeElementImpl implements HaskellTypeFamilyDeclaration {
 
   public HaskellTypeFamilyDeclarationImpl(ASTNode node) {
@@ -30,6 +32,12 @@ public class HaskellTypeFamilyDeclarationImpl extends HaskellCompositeElementImp
   @Nullable
   public HaskellExpression getExpression() {
     return PsiTreeUtil.getChildOfType(this, HaskellExpression.class);
+  }
+
+  @Override
+  @NotNull
+  public List<HaskellPragma> getPragmaList() {
+    return PsiTreeUtil.getChildrenOfTypeAsList(this, HaskellPragma.class);
   }
 
   @Override

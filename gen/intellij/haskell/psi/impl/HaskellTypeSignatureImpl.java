@@ -35,6 +35,12 @@ public class HaskellTypeSignatureImpl extends HaskellCompositeElementImpl implem
 
   @Override
   @NotNull
+  public List<HaskellPragma> getPragmaList() {
+    return PsiTreeUtil.getChildrenOfTypeAsList(this, HaskellPragma.class);
+  }
+
+  @Override
+  @NotNull
   public List<HaskellQNames> getQNamesList() {
     return PsiTreeUtil.getChildrenOfTypeAsList(this, HaskellQNames.class);
   }
