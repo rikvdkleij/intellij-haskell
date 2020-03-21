@@ -39,39 +39,37 @@ import intellij.haskell.psi.HaskellPsiUtil
 
 object HaskellFileUtil {
 
+  private final val FileDocManager = FileDocumentManager.getInstance
+
   def saveFiles(project: Project): Unit = {
     val openFiles = FileEditorManager.getInstance(project).getOpenFiles.filter(HaskellFileUtil.isHaskellFile)
     val documentManager = PsiDocumentManager.getInstance(project)
     openFiles.flatMap(f => findDocument(f)).foreach(documentManager.doPostponedOperationsAndUnblockDocument)
     documentManager.performWhenAllCommitted(
       () => {
-        FileDocumentManager.getInstance.saveAllDocuments()
+        FileDocManager.saveAllDocuments()
       }
     )
   }
 
   def saveFileAsIsInDispatchThread(project: Project, virtualFile: VirtualFile): Unit = {
     findDocument(virtualFile).foreach(d => {
-      val documentManager = PsiDocumentManager.getInstance(project)
-      val fileDocumentManager = FileDocumentManager.getInstance
-      ApplicationUtil.runReadAction(documentManager.doPostponedOperationsAndUnblockDocument(d), Some(project))
-      ApplicationManager.getApplication.invokeAndWait(() => WriteAction.run(() => {
-        fileDocumentManager.saveDocumentAsIs(d)
-      }))
+      WriteAction.runAndWait(() =>
+        FileDocManager.saveDocumentAsIs(d)
+      )
     })
   }
 
   def saveFile(psiFile: PsiFile): Unit = {
     findDocument(psiFile).foreach(d => {
-      PsiDocumentManager.getInstance(psiFile.getProject).doPostponedOperationsAndUnblockDocument(d)
       WriteAction.run(() =>
-        FileDocumentManager.getInstance.saveDocumentAsIs(d)
+        FileDocManager.saveDocumentAsIs(d)
       )
     })
   }
 
   def isDocumentUnsaved(document: Document): Boolean = {
-    FileDocumentManager.getInstance().isDocumentUnsaved(document)
+    FileDocManager.isDocumentUnsaved(document)
   }
 
   def findFileInRead(project: Project, filePath: String): (Option[VirtualFile], Either[NoInfo, PsiFile]) = {
@@ -108,8 +106,7 @@ object HaskellFileUtil {
   def findDocument(psiFile: PsiFile): Option[Document] = {
     for {
       vf <- findVirtualFile(psiFile)
-      fileDocumentManager = FileDocumentManager.getInstance()
-      d <- Option(fileDocumentManager.getCachedDocument(vf))
+      d <- Option(FileDocManager.getCachedDocument(vf))
     } yield d
   }
 
