@@ -13,7 +13,7 @@ object GlobalInfo {
 
   final val LibrarySourcedDirName = "lib"
   final val StackWorkDirName = ".stack-work"
-  final val StackageLtsVersion = "lts-14"
+  final val StackageLtsVersion = "lts-15"
   private final val ToolsBinDirName = "bin"
 
   private final lazy val IntelliJHaskellDirectories = {
