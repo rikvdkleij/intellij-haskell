@@ -41,7 +41,7 @@ object ApplicationUtil {
       val readAction = ReadAction.nonBlocking(ScalaUtil.callable(f))
       progressIndicator.foreach(readAction.cancelWith)
       project.foreach(readAction.expireWith)
-      readAction.submit(AppExecutorUtil.getAppExecutorService).get(2, TimeUnit.SECONDS)
+      readAction.submit(AppExecutorUtil.getAppExecutorService).get(5, TimeUnit.SECONDS)
     }
   }
 

@@ -148,6 +148,13 @@ object HaskellPsiUtil {
     }
   }
 
+  def findTopDeclarationParent(psiElement: PsiElement): Option[HaskellTopDeclaration] = {
+    psiElement match {
+      case e: HaskellTopDeclaration => Some(e)
+      case e => Option(TreeUtil.findParent(e.getNode, HaskellTypes.HS_TOP_DECLARATION)).map(_.getPsi.asInstanceOf[HaskellTopDeclaration])
+    }
+  }
+
   def findQualifiedName(psiElement: PsiElement): Option[HaskellQualifiedNameElement] = {
     psiElement match {
       case e: HaskellQualifiedNameElement => Some(e)

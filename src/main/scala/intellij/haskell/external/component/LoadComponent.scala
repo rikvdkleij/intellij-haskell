@@ -55,16 +55,11 @@ private[component] object LoadComponent {
         case Some((loadOutput, loadFailed)) =>
           ApplicationManager.getApplication.executeOnPooledThread(ScalaUtil.runnable {
 
-            TypeInfoComponent.invalidate(psiFile)
             DefinitionLocationComponent.invalidate(psiFile)
             HaskellModuleNameIndex.invalidateNotFoundEntries(project)
 
-            // Have to refresh because import declarations can be changed
-            FileModuleIdentifiers.refresh(psiFile)
-
             val moduleName = HaskellPsiUtil.findModuleName(psiFile)
             if (!loadFailed) {
-              NameInfoComponent.invalidate(psiFile)
               moduleName.foreach(mn => {
                 BrowseModuleComponent.invalidateModuleNames(project, Seq(mn))
                 FileModuleIdentifiers.invalidate(mn)

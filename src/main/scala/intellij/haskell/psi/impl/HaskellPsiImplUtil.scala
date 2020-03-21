@@ -307,10 +307,10 @@ object HaskellPsiImplUtil {
   def getIdentifierElements(simpleType: HaskellSimpletype): Seq[HaskellNamedElement] = {
     simpleType.getQNameList.asScala.map(_.getIdentifierElement).toSeq ++ {
       Option(simpleType.getTtype) match {
-        case Some(t) => t.getQNameList.asScala.headOption.map(_.getIdentifierElement)
-        case None => simpleType.getQNameList.asScala.headOption.map(_.getIdentifierElement)
+        case Some(t) => t.getQNameList.asScala.map(_.getIdentifierElement)
+        case None => simpleType.getQNameList.asScala.map(_.getIdentifierElement)
       }
-    }
+    }.filter(e => e.isInstanceOf[HaskellConid] || e.isInstanceOf[HaskellConsym])
   }
 
   def getIdentifierElements(defaultDeclaration: HaskellDefaultDeclaration): Seq[HaskellNamedElement] = {

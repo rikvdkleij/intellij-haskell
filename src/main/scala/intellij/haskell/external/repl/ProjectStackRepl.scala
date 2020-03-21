@@ -115,10 +115,6 @@ case class ProjectStackRepl(project: Project, stackComponentInfo: StackComponent
     }
   }
 
-  private final val FailedModulesLoaded = "Failed, "
-
-  private final val OkModulesLoaded = "Ok, "
-
   private def setLoadedModules(): Unit = {
     loadedDependentModules.clear()
     execute(":show modules") match {
@@ -143,16 +139,16 @@ case class ProjectStackRepl(project: Project, stackComponentInfo: StackComponent
       execute(s":reload")
     } else {
       // In case module has to be compiled to byte-code: :set -fbyte-code AND load flag *
-      val byteCodeFlag = if (forceBytecodeLoad) "*" else ""
       if (forceBytecodeLoad) {
         objectCodeEnabled = false
         execute(s":set -fbyte-code")
-      } else if (!objectCodeEnabled) {
+      } else if (!objectCodeEnabled && !mustBeByteCode) {
         objectCodeEnabled = true
         execute(s":set -fobject-code")
       }
+      val loadDependentModulesFlag = if (objectCodeEnabled) "" else "*"
       val filePath = getFilePath(psiFile)
-      execute(s":load $byteCodeFlag$filePath")
+      execute(s":load $loadDependentModulesFlag$filePath")
     }
 
     output match {
@@ -203,13 +199,12 @@ case class ProjectStackRepl(project: Project, stackComponentInfo: StackComponent
   private def executeWithLoad(psiFile: PsiFile, command: String, moduleName: Option[String] = None, mustBeByteCode: Boolean): Option[StackReplOutput] = synchronized {
     loadedFile match {
       case Some(info) if info.psiFile == psiFile & !info.loadFailed & (if (mustBeByteCode) !objectCodeEnabled else true) => execute(command)
-      case Some(info) if info.psiFile == psiFile & info.loadFailed => Some(StackReplOutput())
       case _ =>
         load(psiFile, fileModified = false, mustBeByteCode)
         loadedFile match {
           case None => None
-          case Some(info) if info.psiFile == psiFile && !info.loadFailed => execute(command)
-          case _ => Some(StackReplOutput())
+          case Some(info) if info.psiFile == psiFile => execute(command)
+          case _ => None
         }
     }
   }

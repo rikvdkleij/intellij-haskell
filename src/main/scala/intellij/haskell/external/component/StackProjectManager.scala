@@ -34,7 +34,8 @@ import intellij.haskell.external.execution.StackCommandLine
 import intellij.haskell.external.repl.StackRepl.LibType
 import intellij.haskell.external.repl.StackReplsManager
 import intellij.haskell.module.{HaskellModuleBuilder, StackProjectImportBuilder}
-import intellij.haskell.psi.{HaskellPsiUtil, HaskellTypes}
+import intellij.haskell.psi.HaskellPsiUtil
+import intellij.haskell.psi.stubs.types.HaskellFileElementType
 import intellij.haskell.sdk.HaskellSdkType
 import intellij.haskell.settings.HaskellSettingsState
 import intellij.haskell.util._
@@ -161,8 +162,6 @@ object StackProjectManager {
         ProgressManager.getInstance().run(new Task.Backgroundable(project, "Building project, starting REPL(s) and preloading cache", false, PerformInBackgroundOption.ALWAYS_BACKGROUND) {
 
           def run(progressIndicator: ProgressIndicator): Unit = {
-            HaskellNotificationGroup.logInfoEvent(project, "Initializing Haskell project")
-
             try {
               progressIndicator.setText("Busy building project's dependencies")
               val dependenciesBuildResult = StackCommandLine.buildProjectDependenciesInMessageView(project)
@@ -314,19 +313,33 @@ object StackProjectManager {
 
               HaskellPsiUtil.getPsiManager(project).foreach(_.addPsiTreeChangeListener(new PsiTreeChangeAdapter {
 
-                private def invalidateTypeInfo(event: PsiTreeChangeEvent): Unit = {
-                  val element = Option(event.getOldChild).orElse(Option(event.getNewChild)).flatMap(e => HaskellPsiUtil.findExpression(e)).
-                    orElse(Option(event.getParent).filter(e => Option(e.getNode).exists(_.getElementType == HaskellTypes.HS_TOP_DECLARATION)))
-                  val elements = element.filter(_.isValid).map(HaskellPsiUtil.findQualifiedNamedElements).getOrElse(Seq()).toSeq
-                  Option(event.getFile).foreach(TypeInfoComponent.invalidateElements(_, elements))
+                private def invalidateInfo(event: PsiTreeChangeEvent): Unit = {
+                  if (Option(event.getParent).flatMap(p => Option(p.getNode)).exists(_.getElementType != HaskellFileElementType.Instance) || Option(event.getNewChild).isDefined) {
+                    Option(event.getFile).foreach(f => {
+                      if (Option(event.getNewChild).orElse(Option(event.getParent)).flatMap(HaskellPsiUtil.findImportDeclarations).isDefined) {
+                        // Have to refresh because import declarations can be changed
+                        FileModuleIdentifiers.refresh(f)
+                      } else {
+                        val element = Option(event.getNewChild).flatMap(HaskellPsiUtil.findTopDeclarationParent).
+                          orElse(Option(event.getParent).flatMap(HaskellPsiUtil.findTopDeclarationParent))
+                        val elements = element.map(HaskellPsiUtil.findQualifiedNamedElements).getOrElse(Seq())
+                        TypeInfoComponent.invalidateElements(f, elements)
+                        NameInfoComponent.invalidateElements(f, elements)
+                      }
+                    })
+                  }
                 }
 
                 override def childReplaced(event: PsiTreeChangeEvent): Unit = {
-                  invalidateTypeInfo(event)
+                  invalidateInfo(event)
                 }
 
                 override def childrenChanged(event: PsiTreeChangeEvent): Unit = {
-                  invalidateTypeInfo(event)
+                  invalidateInfo(event)
+                }
+
+                override def childRemoved(event: PsiTreeChangeEvent): Unit = {
+                  invalidateInfo(event)
                 }
               }))
 

@@ -93,7 +93,7 @@ class HaskellReference(element: HaskellNamedElement, textRange: TextRange) exten
       Array()
     } else {
       ProgressManager.checkCanceled()
-      val psiFile = element.getContainingFile.getOriginalFile
+      lazy val psiFile = element.getContainingFile.getOriginalFile
       val result = element match {
         case q: HaskellQualifierElement if isPartOfQualifiedAs(q) => Some(HaskellNamedElementResolveResult(q))
         case q: HaskellQualifierElement => findQualifierDeclaration(project, psiFile, q)
@@ -126,10 +126,15 @@ class HaskellReference(element: HaskellNamedElement, textRange: TextRange) exten
                   case Some(p) =>
                     find(p) match {
                       case Some(ee) => Some(HaskellNamedElementResolveResult(ee))
-                      case None => resolveReference(ne, psiFile, project, None) match {
-                        case Right(r) => Some(HaskellNamedElementResolveResult(r))
-                        case Left(noInfo) => Some(NoResolveResult(noInfo))
-                      }
+                      case None =>
+                        //                        ne match {
+                        //                          case _: HaskellConid | _: HaskellConsym =>
+                        resolveReference(ne, psiFile, project, None) match {
+                          case Right(r) => Some(HaskellNamedElementResolveResult(r))
+                          case Left(noInfo) => Some(NoResolveResult(noInfo))
+                        }
+                      //                          case _ => Some(HaskellNamedElementResolveResult(ne))
+                      //                        }
                     }
                   case None => resolveReference(ne, psiFile, project, None) match {
                     case Right(r) => Some(HaskellNamedElementResolveResult(r))
@@ -211,49 +216,44 @@ object HaskellReference {
   def findIdentifiersByModulesAndName(project: Project, moduleNames: Seq[String], name: String, prioIdInExpression: Boolean = true): Either[NoInfo, (String, HaskellNamedElement)] = {
     ProgressManager.checkCanceled()
 
-    findIdentifiersByModuleAndName2(project, moduleNames, name, prioIdInExpression).headOption.map {
-      case (mn, nes) => nes.headOption.map(ne => Right((mn, ne))).getOrElse(Left(NoInfoAvailable(name, moduleNames.mkString(" | "))))
-    }.getOrElse(Left(ModuleNotAvailable(moduleNames.mkString(" | "))))
+    findIdentifiersByModuleAndName2(project, moduleNames, name, prioIdInExpression).flatMap { case (mn, nes) => nes.map((mn, _)) }.sortWith(sortByD).
+      headOption.map { case (mn, ne) => Right((mn, ne)) }.getOrElse(Left(NoInfoAvailable(name, moduleNames.mkString(" | "))))
   }
 
   import scala.concurrent.ExecutionContext.Implicits.global
 
-  private def findIdentifiersByModuleAndName2(project: Project, moduleNames: Seq[String], name: String, prioIdInExpression: Boolean): Seq[(String, Seq[HaskellNamedElement])] = {
+  private def findIdentifiersByModuleAndName2(project: Project, moduleNames: Seq[String], name: String, prioIdInExpression: Boolean, ids: Seq[(String, Seq[HaskellNamedElement])] = Seq()): Seq[(String, Seq[HaskellNamedElement])] = {
 
     ProgressManager.checkCanceled()
 
     val distinctModuleNames = moduleNames.distinct
     distinctModuleNames.flatMap(mn => HaskellModuleNameIndex.findFilesByModuleName(project, mn) match {
-      case Left(_) => Seq()
+      case Left(_) => ids
       case Right(files) =>
         ProgressManager.checkCanceled()
 
         val identifiers = files.flatMap(f => findIdentifierInFileByName(f, name, prioIdInExpression))
-        if (identifiers.isEmpty) {
-          val importedModuleNames = files.flatMap { f => {
-            if (HaskellProjectUtil.isSourceFile(f)) {
-              FileModuleIdentifiers.findAvailableModuleIdentifiers(f)
-            } else {
-              HaskellPsiUtil.findModuleName(f).flatMap(mn => ScalaFutureUtil.waitForValue(project,
-                HaskellComponentsManager.findModuleIdentifiers(project, mn), s"finding library module identifiers in HaskellReference for $mn")).flatten.getOrElse(Iterable())
-            }
-          }
-          }.filter(mid => mid.name == name || mid.name == "_" + name || mid.name == mid.moduleName + "." + name).map(_.moduleName)
-
-          if (importedModuleNames.isEmpty) {
-            Seq()
+        val importedModuleNames = files.flatMap { f => {
+          if (HaskellProjectUtil.isSourceFile(f)) {
+            FileModuleIdentifiers.findAvailableModuleIdentifiers(f)
           } else {
-            ProgressManager.checkCanceled()
-
-            if (distinctModuleNames == Seq(mn)) {
-              val moduleNames = files.flatMap(HaskellPsiUtil.findImportDeclarations).flatMap(_.getModuleName)
-              findIdentifiersByModuleAndName2(project, moduleNames, name, prioIdInExpression)
-            } else {
-              findIdentifiersByModuleAndName2(project, importedModuleNames, name, prioIdInExpression)
-            }
+            HaskellPsiUtil.findModuleName(f).flatMap(mn => ScalaFutureUtil.waitForValue(project,
+              HaskellComponentsManager.findModuleIdentifiers(project, mn), s"finding library module identifiers in HaskellReference for $mn")).flatten.getOrElse(Iterable())
           }
+        }
+        }.filter(mid => mid.name == name || mid.name == "_" + name || mid.name == mid.moduleName + "." + name).map(_.moduleName)
+
+        if (importedModuleNames.isEmpty) {
+          ids ++ Seq((mn, identifiers))
         } else {
-          Seq((mn, identifiers))
+          ProgressManager.checkCanceled()
+
+          if (distinctModuleNames == Seq(mn)) {
+            val moduleNames = files.flatMap(HaskellPsiUtil.findImportDeclarations).flatMap(_.getModuleName)
+            findIdentifiersByModuleAndName2(project, moduleNames, name, prioIdInExpression, ids ++ Seq((mn, identifiers)))
+          } else {
+            findIdentifiersByModuleAndName2(project, importedModuleNames, name, prioIdInExpression, ids ++ Seq((mn, identifiers)))
+          }
         }
     })
   }
@@ -281,7 +281,7 @@ object HaskellReference {
 
       ProgressManager.checkCanceled()
 
-      declarationIdentifiers.toSeq.sortWith(sortByClassDeclarationFirst).headOption
+      declarationIdentifiers.toSeq.sortWith(sortByDefiningDeclarationFirst).headOption
     }
 
     if (prioIdInExpression) {
@@ -326,9 +326,16 @@ object HaskellReference {
     namedElement
   }
 
-  private def sortByClassDeclarationFirst(namedElement1: HaskellNamedElement, namedElement2: HaskellNamedElement): Boolean = {
+  private def sortByD(t1: (String, HaskellNamedElement), t2: (String, HaskellNamedElement)): Boolean = {
+    (t1, t2) match {
+      case ((mn1, ne1), (mn2, ne2)) => sortByDefiningDeclarationFirst(ne1, ne2)
+    }
+  }
+
+  private def sortByDefiningDeclarationFirst(namedElement1: HaskellNamedElement, namedElement2: HaskellNamedElement): Boolean = {
     (HaskellPsiUtil.findDeclarationElement(namedElement1), HaskellPsiUtil.findDeclarationElement(namedElement2)) match {
       case (Some(_: HaskellClassDeclaration), _) => true
+      case (Some(_: HaskellDataDeclaration), _) => true
       case (_, _) => false
     }
   }

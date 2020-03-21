@@ -41,13 +41,22 @@ private[component] object NameInfoComponent {
 
   def findNameInfo(psiElement: PsiElement): NameInfoResult = {
     HaskellPsiUtil.findQualifiedName(psiElement) match {
-      case Some(p) => findNameInfo(p, None)
+      case Some(qualifiedNameElement) => findNameInfo(qualifiedNameElement, None)
       case None => Left(NoInfoAvailable(psiElement.getText, psiElement.getContainingFile.getOriginalFile.getName))
     }
   }
 
   def invalidate(psiFile: PsiFile): Unit = {
     Cache.asMap().filter(_._1.psiFile == psiFile).keys.foreach(Cache.invalidate)
+  }
+
+  def invalidateElements(psiFile: PsiFile, qualifiedNamedElements: Iterable[HaskellQualifiedNameElement]): Unit = {
+    val values = qualifiedNamedElements.map(qne => {
+      val key = Key(psiFile, qne.getName)
+      (key, Cache.get(key))
+    })
+    val keys = values.filter(_._2.exists(c => c.exists(x => x.isInstanceOf[ProjectNameInfo]))).map(_._1)
+    Cache.invalidateAll(keys)
   }
 
   def invalidateAll(project: Project): Unit = {
@@ -58,10 +67,9 @@ private[component] object NameInfoComponent {
     ProgressManager.checkCanceled()
 
     val psiFile = qualifiedNameElement.getContainingFile.getOriginalFile
-    val name = qualifiedNameElement.getName.replaceAll("""\s+""", "")
     val qName = importQualifier match {
-      case None => name
-      case Some(q) => q + "." + name
+      case None => qualifiedNameElement.getName
+      case Some(q) => q + "." + qualifiedNameElement.getIdentifierElement.getName
     }
     val key = Key(psiFile, qName)
 
