@@ -21,7 +21,7 @@ import java.util.concurrent.ConcurrentHashMap
 import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer
 import com.intellij.codeInsight.daemon.impl._
 import com.intellij.codeInsight.intention.impl.BaseIntentionAction
-import com.intellij.compiler.{CompilerMessageImpl, ProblemsView}
+import com.intellij.compiler.CompilerMessageImpl
 import com.intellij.lang.annotation.{AnnotationHolder, ExternalAnnotator, HighlightSeverity}
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.compiler.CompilerMessageCategory
@@ -77,8 +77,8 @@ class HaskellAnnotator extends ExternalAnnotator[PsiFile, CompilationResult] {
   }
 
   override def apply(psiFile: PsiFile, loadResult: CompilationResult, holder: AnnotationHolder): Unit = {
-    val haskellProblemsView = ProblemsView.SERVICE.getInstance(psiFile.getProject).asInstanceOf[HaskellProblemsView]
     val project = psiFile.getProject
+    val haskellProblemsView = HaskellProblemsView.getInstance(project)
 
     val currentFile = HaskellFileUtil.findVirtualFile(psiFile)
     val currentFileMessages = currentFile.map { cf =>
@@ -206,8 +206,8 @@ object HaskellAnnotator {
                 ErrorAnnotation(tr, problem.plainMessage, problem.htmlMessage)
               //
               case NoTypeSignaturePattern(typeSignature) => WarningAnnotationWithIntentionActions(tr, problem.plainMessage, problem.htmlMessage, Iterable(new TypeSignatureIntentionAction(typeSignature)))
-              case HaskellImportOptimizer.WarningRedundantImport(moduleName) => WarningAnnotationWithIntentionActions(tr, problem.plainMessage, problem.htmlMessage, Iterable(new OptimizeImportIntentionAction(moduleName, None)))
-              case HaskellImportOptimizer.WarningRedundant2Import(idNames, moduleName) => WarningAnnotationWithIntentionActions(tr, problem.plainMessage, problem.htmlMessage, Iterable(new OptimizeImportIntentionAction(moduleName, Some(idNames))))
+              case HaskellImportOptimizer.WarningRedundantImport(moduleName) => WarningAnnotationWithIntentionActions(tr, problem.plainMessage, problem.htmlMessage, Iterable(new OptimizeImportIntentionAction(moduleName, None, problem.lineNr)))
+              case HaskellImportOptimizer.WarningRedundant2Import(idNames, moduleName) => WarningAnnotationWithIntentionActions(tr, problem.plainMessage, problem.htmlMessage, Iterable(new OptimizeImportIntentionAction(moduleName, Some(idNames), problem.lineNr)))
               case DefinedButNotUsedPattern(n) => WarningAnnotationWithIntentionActions(tr, problem.plainMessage, problem.htmlMessage, Iterable(new DefinedButNotUsedRemoveIntentionAction(n), new DefinedButNotUsedUnderscoreIntentionAction(n)))
               case DeprecatedPattern(name, suggestion) => WarningAnnotationWithIntentionActions(tr, problem.plainMessage, problem.htmlMessage, Iterable(new DeprecatedUseAction(name, StringUtil.removeOuterQuotes(suggestion))))
               case _ =>
@@ -255,7 +255,7 @@ object HaskellAnnotator {
   }
 
   private def importAloneInstancesAction(problem: CompilationProblem, tr: TextRange, importDecl: String, useImport: String): WarningAnnotationWithIntentionActions = {
-    WarningAnnotationWithIntentionActions(tr, problem.plainMessage, problem.htmlMessage, Iterable(new ImportAloneInstancesAction(importDecl), new OptimizeImportIntentionAction(importDecl, None)))
+    WarningAnnotationWithIntentionActions(tr, problem.plainMessage, problem.htmlMessage, Iterable(new ImportAloneInstancesAction(importDecl), new OptimizeImportIntentionAction(importDecl, None, problem.lineNr)))
   }
 
   private def getProblemTextRange(psiFile: PsiFile, problem: CompilationProblem): Option[TextRange] = {
@@ -468,15 +468,15 @@ class NotInScopeIntentionAction(identifier: String, moduleName: String, psiFile:
   }
 }
 
-class OptimizeImportIntentionAction(moduleName: String, mids: Option[String]) extends HaskellBaseIntentionAction {
+class OptimizeImportIntentionAction(moduleName: String, mids: Option[String], lineNr: Integer) extends HaskellBaseIntentionAction {
   setText(s"Remove redundant import for `$moduleName`" + mids.getOrElse(""))
 
   override def getFamilyName: String = "Optimize imports"
 
   override def invoke(project: Project, editor: Editor, psiFile: PsiFile): Unit = {
     mids match {
-      case None => HaskellImportOptimizer.removeRedundantImport(psiFile, moduleName)
-      case Some(ids) => HaskellImportOptimizer.removeRedundantImportIds(psiFile, moduleName, ids.split(',').toSeq.map(_.trim))
+      case None => HaskellImportOptimizer.removeRedundantImport(psiFile, moduleName, Some(lineNr))
+      case Some(ids) => HaskellImportOptimizer.removeRedundantImportIds(psiFile, moduleName, ids.split(',').toSeq.map(_.trim), Some(lineNr))
     }
   }
 }
