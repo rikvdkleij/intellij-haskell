@@ -123,15 +123,22 @@ object HaskellModuleNameIndex {
     if (moduleName == HaskellProjectUtil.Prelude) {
       Right(Seq())
     } else {
+      val adaptedModuleName = if (moduleName == "System.FilePath") {
+        // Workaround for "include" construction in module System.FilePath
+        "System.FilePath.MODULE_NAME"
+      } else {
+        moduleName
+      }
+
       val files = ApplicationUtil.runReadActionWithFileAccess(
         project, {
           try {
-            Some(FileBasedIndex.getInstance.getContainingFiles(HaskellModuleNameIndex, moduleName, HaskellProjectUtil.getProjectSearchScope(project)).asScala.toSeq)
+            Some(FileBasedIndex.getInstance.getContainingFiles(HaskellModuleNameIndex, adaptedModuleName, HaskellProjectUtil.getProjectSearchScope(project)).asScala.toSeq)
           } catch {
             case _: IndexNotReadyException => None
           }
         },
-        s"finding file for module $moduleName by index"
+        s"finding file for module $adaptedModuleName by index"
       )
 
       files match {
