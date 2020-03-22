@@ -24,52 +24,55 @@ import com.intellij.psi.PsiFile
 import intellij.haskell.external.component.StackProjectManager
 import intellij.haskell.external.execution.CommandLine
 import intellij.haskell.util.{FutureUtil, HaskellEditorUtil, HaskellFileUtil, ScalaUtil}
-import intellij.haskell.{GlobalInfo, HTool, HaskellNotificationGroup}
+import intellij.haskell.{HTool, HaskellNotificationGroup}
 
 class StylishHaskellReformatAction extends AnAction {
 
   override def update(actionEvent: AnActionEvent): Unit = {
-    HaskellEditorUtil.enableExternalAction(actionEvent, (project: Project) => StackProjectManager.isStylishHaskellAvailable(project))
+    HaskellEditorUtil.enableExternalAction(actionEvent, (project: Project) => StackProjectManager.isStylishHaskellAvailable(project).isDefined)
   }
 
   override def actionPerformed(actionEvent: AnActionEvent): Unit = {
     ActionUtil.findActionContext(actionEvent).foreach(actionContext => {
-      StylishHaskellReformatAction.format(actionContext.psiFile)
+      StylishHaskellReformatAction.reformat(actionContext.psiFile)
     })
   }
 }
 
 object StylishHaskellReformatAction {
-  private def stylishHaskellPath = GlobalInfo.defaultStylishHaskellPath.toString
 
   def versionInfo(project: Project): String = {
-    if (StackProjectManager.isStylishHaskellAvailable(project)) {
-      CommandLine.run(project, stylishHaskellPath, Seq("--version")).getStdout
-    } else {
-      "-"
+    StackProjectManager.isStylishHaskellAvailable(project) match {
+      case Some(stylishHaskellPath) => CommandLine.run(project, stylishHaskellPath, Seq("--version")).getStdout
+      case None => "-"
     }
   }
 
-  private[action] def format(psiFile: PsiFile): Unit = {
+  private[action] def reformat(psiFile: PsiFile): Unit = {
     val project = psiFile.getProject
-    HaskellFileUtil.saveFile(psiFile)
+    StackProjectManager.isStylishHaskellAvailable(project) match {
+      case Some(stylishHaskellPath) =>
 
-    HaskellFileUtil.getAbsolutePath(psiFile) match {
-      case Some(path) =>
-        val processOutputFuture = ApplicationManager.getApplication.executeOnPooledThread(ScalaUtil.callable[ProcessOutput] {
-          CommandLine.run(project, stylishHaskellPath, Seq(path))
-        })
+        HaskellFileUtil.saveFile(psiFile)
 
-        FutureUtil.waitForValue(project, processOutputFuture, s"reformatting by ${HTool.StylishHaskell.name}") match {
-          case None => ()
-          case Some(processOutput) =>
-            if (processOutput.getStderrLines.isEmpty) {
-              HaskellFileUtil.saveFileWithNewContent(psiFile, processOutput.getStdout)
-            } else {
-              HaskellNotificationGroup.logInfoEvent(project, s"Error while reformatting by `${HTool.StylishHaskell.name}`. Error: ${processOutput.getStderr}")
+        HaskellFileUtil.getAbsolutePath(psiFile) match {
+          case Some(path) =>
+            val processOutputFuture = ApplicationManager.getApplication.executeOnPooledThread(ScalaUtil.callable[ProcessOutput] {
+              CommandLine.run(project, stylishHaskellPath, Seq(path))
+            })
+
+            FutureUtil.waitForValue(project, processOutputFuture, s"reformatting by ${HTool.StylishHaskell.name}") match {
+              case None => ()
+              case Some(processOutput) =>
+                if (processOutput.getStderrLines.isEmpty) {
+                  HaskellFileUtil.saveFileWithNewContent(psiFile, processOutput.getStdout)
+                } else {
+                  HaskellNotificationGroup.logInfoEvent(project, s"Error while reformatting by `${HTool.StylishHaskell.name}`. Error: ${processOutput.getStderr}")
+                }
             }
+          case None => HaskellNotificationGroup.logWarningBalloonEvent(psiFile.getProject, s"Can not reformat file because could not determine path for file `${psiFile.getName}`. File exists only in memory")
         }
-      case None => HaskellNotificationGroup.logWarningBalloonEvent(psiFile.getProject, s"Can not reformat file because could not determine path for file `${psiFile.getName}`. File exists only in memory")
+      case None => ()
     }
   }
 }

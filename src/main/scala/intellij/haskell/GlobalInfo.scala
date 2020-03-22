@@ -63,8 +63,8 @@ object GlobalInfo {
     toolPath(HTool.StylishHaskell)
   }
 
-  lazy val defaultHindentPath: File = {
-    toolPath(HTool.Hindent)
+  lazy val defaultOrmoluPath: File = {
+    toolPath(HTool.Ormolu)
   }
 
   def getIntelliJProjectDirectory(project: Project): File = {

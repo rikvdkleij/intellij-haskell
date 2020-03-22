@@ -174,7 +174,7 @@ object HaskellAnnotator {
     def createErrorAnnotationWithMultiplePerhapsIntentions(problem: CompilationProblem, tr: TextRange, notInScopeMessage: String, suggestionsList: String, add: Option[(String, String)]) = {
       val notInScopeName = extractName(notInScopeMessage)
       val annotations = suggestionsList.split(",").flatMap(s => extractPerhapsYouMeantAction(s))
-      ErrorAnnotationWithIntentionActions(tr, problem.plainMessage, problem.htmlMessage, annotations.to(Iterable) ++ createNotInScopeIntentionActions(psiFile, notInScopeName) ++ add.map(a => new NotInScopeIntentionAction(a._2, a._1, psiFile)))
+      ErrorAnnotationWithIntentionActions(tr, problem.plainMessage, problem.htmlMessage, annotations.to(Iterable).toList ++ createNotInScopeIntentionActions(psiFile, notInScopeName) ++ add.map(a => new NotInScopeIntentionAction(a._2, a._1, psiFile)))
     }
 
     problems.flatMap {
@@ -196,20 +196,20 @@ object HaskellAnnotator {
               case PerhapsYouMeantSinglePattern(notInScopeMessage, suggestion) =>
                 val notInScopeName = extractName(notInScopeMessage)
                 val annotation = extractPerhapsYouMeantAction(suggestion)
-                ErrorAnnotationWithIntentionActions(tr, problem.plainMessage, problem.htmlMessage, annotation.to(Iterable) ++ createNotInScopeIntentionActions(psiFile, notInScopeName))
+                ErrorAnnotationWithIntentionActions(tr, problem.plainMessage, problem.htmlMessage, annotation.to(Iterable).toList ++ createNotInScopeIntentionActions(psiFile, notInScopeName))
               case NotInScopePattern(name) =>
-                ErrorAnnotationWithIntentionActions(tr, problem.plainMessage, problem.htmlMessage, createNotInScopeIntentionActions(psiFile, name))
+                ErrorAnnotationWithIntentionActions(tr, problem.plainMessage, problem.htmlMessage, createNotInScopeIntentionActions(psiFile, name).toList)
               case NotInScopePattern2(name) =>
-                ErrorAnnotationWithIntentionActions(tr, problem.plainMessage, problem.htmlMessage, createNotInScopeIntentionActions(psiFile, name.split("::").headOption.getOrElse(name).trim))
+                ErrorAnnotationWithIntentionActions(tr, problem.plainMessage, problem.htmlMessage, createNotInScopeIntentionActions(psiFile, name.split("::").headOption.getOrElse(name).trim).toList)
               case UseAloneInstancesImportPattern(importDecl, useImport) => importAloneInstancesAction(problem, tr, importDecl, useImport)
               case HolePattern(_) =>
                 ErrorAnnotation(tr, problem.plainMessage, problem.htmlMessage)
               //
-              case NoTypeSignaturePattern(typeSignature) => WarningAnnotationWithIntentionActions(tr, problem.plainMessage, problem.htmlMessage, Iterable(new TypeSignatureIntentionAction(typeSignature)))
-              case HaskellImportOptimizer.WarningRedundantImport(moduleName) => WarningAnnotationWithIntentionActions(tr, problem.plainMessage, problem.htmlMessage, Iterable(new OptimizeImportIntentionAction(moduleName, None, problem.lineNr)))
-              case HaskellImportOptimizer.WarningRedundant2Import(idNames, moduleName) => WarningAnnotationWithIntentionActions(tr, problem.plainMessage, problem.htmlMessage, Iterable(new OptimizeImportIntentionAction(moduleName, Some(idNames), problem.lineNr)))
-              case DefinedButNotUsedPattern(n) => WarningAnnotationWithIntentionActions(tr, problem.plainMessage, problem.htmlMessage, Iterable(new DefinedButNotUsedRemoveIntentionAction(n), new DefinedButNotUsedUnderscoreIntentionAction(n)))
-              case DeprecatedPattern(name, suggestion) => WarningAnnotationWithIntentionActions(tr, problem.plainMessage, problem.htmlMessage, Iterable(new DeprecatedUseAction(name, StringUtil.removeOuterQuotes(suggestion))))
+              case NoTypeSignaturePattern(typeSignature) => WarningAnnotationWithIntentionActions(tr, problem.plainMessage, problem.htmlMessage, List(new TypeSignatureIntentionAction(typeSignature)))
+              case HaskellImportOptimizer.WarningRedundantImport(moduleName) => WarningAnnotationWithIntentionActions(tr, problem.plainMessage, problem.htmlMessage, List(new OptimizeImportIntentionAction(moduleName, None, problem.lineNr)))
+              case HaskellImportOptimizer.WarningRedundant2Import(idNames, moduleName) => WarningAnnotationWithIntentionActions(tr, problem.plainMessage, problem.htmlMessage, List(new OptimizeImportIntentionAction(moduleName, Some(idNames), problem.lineNr)))
+              case DefinedButNotUsedPattern(n) => WarningAnnotationWithIntentionActions(tr, problem.plainMessage, problem.htmlMessage, List(new DefinedButNotUsedRemoveIntentionAction(n), new DefinedButNotUsedUnderscoreIntentionAction(n)))
+              case DeprecatedPattern(name, suggestion) => WarningAnnotationWithIntentionActions(tr, problem.plainMessage, problem.htmlMessage, List(new DeprecatedUseAction(name, StringUtil.removeOuterQuotes(suggestion))))
               case _ =>
                 findSuggestedLanguageExtension(project, plainMessage) match {
                   case les if les.nonEmpty => createLanguageExtensionIntentionsAction(problem, tr, les)
@@ -251,11 +251,11 @@ object HaskellAnnotator {
   }
 
   private def createLanguageExtensionIntentionsAction(problem: CompilationProblem, tr: TextRange, languageExtensions: Iterable[String]): ErrorAnnotationWithIntentionActions = {
-    ErrorAnnotationWithIntentionActions(tr, problem.plainMessage, problem.htmlMessage, languageExtensions.map(le => new LanguageExtensionIntentionAction(le)))
+    ErrorAnnotationWithIntentionActions(tr, problem.plainMessage, problem.htmlMessage, languageExtensions.map(le => new LanguageExtensionIntentionAction(le)).toList)
   }
 
   private def importAloneInstancesAction(problem: CompilationProblem, tr: TextRange, importDecl: String, useImport: String): WarningAnnotationWithIntentionActions = {
-    WarningAnnotationWithIntentionActions(tr, problem.plainMessage, problem.htmlMessage, Iterable(new ImportAloneInstancesAction(importDecl), new OptimizeImportIntentionAction(importDecl, None, problem.lineNr)))
+    WarningAnnotationWithIntentionActions(tr, problem.plainMessage, problem.htmlMessage, List(new ImportAloneInstancesAction(importDecl), new OptimizeImportIntentionAction(importDecl, None, problem.lineNr)))
   }
 
   private def getProblemTextRange(psiFile: PsiFile, problem: CompilationProblem): Option[TextRange] = {
@@ -294,11 +294,11 @@ private sealed trait Annotation {
 
 private case class ErrorAnnotation(textRange: TextRange, message: String, htmlMessage: String) extends Annotation
 
-private case class ErrorAnnotationWithIntentionActions(textRange: TextRange, message: String, htmlMessage: String, baseIntentionActions: Iterable[HaskellBaseIntentionAction]) extends Annotation
+private case class ErrorAnnotationWithIntentionActions(textRange: TextRange, message: String, htmlMessage: String, baseIntentionActions: List[HaskellBaseIntentionAction]) extends Annotation
 
 private case class WarningAnnotation(textRange: TextRange, message: String, htmlMessage: String) extends Annotation
 
-private case class WarningAnnotationWithIntentionActions(textRange: TextRange, message: String, htmlMessage: String, baseIntentionActions: Iterable[HaskellBaseIntentionAction]) extends Annotation
+private case class WarningAnnotationWithIntentionActions(textRange: TextRange, message: String, htmlMessage: String, baseIntentionActions: List[HaskellBaseIntentionAction]) extends Annotation
 
 sealed abstract class HaskellBaseIntentionAction extends BaseIntentionAction {
   override def isAvailable(project: Project, editor: Editor, file: PsiFile): Boolean = {

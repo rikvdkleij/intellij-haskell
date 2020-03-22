@@ -46,7 +46,7 @@ class AboutAction extends AnAction {
     messages.+=(s"${boldToolName("GHC")}: " + HaskellComponentsManager.getGhcVersion(project).map(_.prettyString).getOrElse("-") + "\n")
     messages.+=(s"${boldToolName("HLint")}: " + HLintComponent.versionInfo(project))
     messages.+=(s"${boldToolName("Hoogle")}: " + HoogleComponent.versionInfo(project))
-    messages.+=(s"${boldToolName("Hindent")}: " + HindentReformatAction.versionInfo(project))
+    messages.+=(s"${boldToolName("Ormolu")}: " + OrmoluReformatAction.versionInfo(project))
     messages.+=(s"${boldToolName("Stylish-haskell")}: " + StylishHaskellReformatAction.versionInfo(project))
     Messages.showInfoMessage(project, messages.mkString("\n"), "About Haskell Project")
   }

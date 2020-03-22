@@ -28,6 +28,7 @@ import com.intellij.openapi.roots.{ModifiableRootModel, ModuleRootModificationUt
 import com.intellij.openapi.ui.Messages
 import com.intellij.openapi.vfs.VirtualFileManager
 import com.intellij.psi.{PsiTreeChangeAdapter, PsiTreeChangeEvent}
+import intellij.haskell.HTool.{Hlint, Hoogle, Ormolu, StylishHaskell}
 import intellij.haskell.action.HaskellReformatAction
 import intellij.haskell.annotator.HaskellAnnotator
 import intellij.haskell.editor.HaskellProblemsView
@@ -51,20 +52,20 @@ object StackProjectManager {
     getStackProjectManager(project).exists(_.initializing)
   }
 
-  def isHoogleAvailable(project: Project): Boolean = {
-    getStackProjectManager(project).exists(_.hoogleAvailable)
+  def isHoogleAvailable(project: Project): Option[String] = {
+    getStackProjectManager(project).flatMap(_.hoogleAvailable)
   }
 
-  def isHlintAvailable(project: Project): Boolean = {
-    getStackProjectManager(project).exists(_.hlintAvailable)
+  def isHlintAvailable(project: Project): Option[String] = {
+    getStackProjectManager(project).flatMap(_.hlintAvailable)
   }
 
-  def isStylishHaskellAvailable(project: Project): Boolean = {
-    getStackProjectManager(project).exists(_.stylishHaskellAvailable)
+  def isStylishHaskellAvailable(project: Project): Option[String] = {
+    getStackProjectManager(project).flatMap(_.stylishHaskellAvailable)
   }
 
-  def isHindentAvailable(project: Project): Boolean = {
-    getStackProjectManager(project).exists(_.hindentAvailable)
+  def isOrmoluAvailable(project: Project): Option[String] = {
+    getStackProjectManager(project).flatMap(_.ormoluAvailable)
   }
 
   def isInstallingHaskellTools(project: Project): Boolean = {
@@ -113,12 +114,24 @@ object StackProjectManager {
     ProgressManager.getInstance().run(new Task.Backgroundable(project, title, true, PerformInBackgroundOption.ALWAYS_BACKGROUND) {
 
       private def isToolAvailable(progressIndicator: ProgressIndicator, tool: HTool) = {
-        HaskellSettingsState.useCustomTools || {
+        if (HaskellSettingsState.useCustomTools) {
+          tool match {
+            case Hlint => HaskellSettingsState.hlintPath
+            case Hoogle => HaskellSettingsState.hooglePath
+            case Ormolu => HaskellSettingsState.ormoluPath
+            case StylishHaskell => None
+          }
+        } else {
           if (!GlobalInfo.toolPath(tool).exists() || update) {
             progressIndicator.setText(s"Busy with installing ${tool.name} in ${GlobalInfo.toolsBinPath}")
             StackCommandLine.installTool(project, progressIndicator, tool.name)
+            if (GlobalInfo.toolPath(tool).exists()) {
+              Some(GlobalInfo.toolPath(tool).getAbsolutePath)
+            } else {
+              None
+            }
           } else {
-            true
+            Some(GlobalInfo.toolPath(tool).getAbsolutePath)
           }
         }
       }
@@ -136,7 +149,7 @@ object StackProjectManager {
 
           getStackProjectManager(project).foreach(_.stylishHaskellAvailable = isToolAvailable(progressIndicator, HTool.StylishHaskell))
 
-          getStackProjectManager(project).foreach(_.hindentAvailable = isToolAvailable(progressIndicator, HTool.Hindent))
+          getStackProjectManager(project).foreach(_.ormoluAvailable = isToolAvailable(progressIndicator, HTool.Ormolu))
         } finally {
           getStackProjectManager(project).foreach(_.installingHaskellTools = false)
         }
@@ -157,6 +170,10 @@ object StackProjectManager {
         }
 
         if (getStackProjectManager(project).exists(_.installingHaskellTools == false)) {
+          getStackProjectManager(project).foreach(_.hlintAvailable = None)
+          getStackProjectManager(project).foreach(_.hoogleAvailable = None)
+          getStackProjectManager(project).foreach(_.ormoluAvailable = None)
+          getStackProjectManager(project).foreach(_.stylishHaskellAvailable = None)
           installHaskellTools(project, update = false)
         }
 
@@ -393,16 +410,16 @@ class StackProjectManager(project: Project) extends ProjectComponent {
   private var initializing = false
 
   @volatile
-  private var hoogleAvailable = false
+  private var hoogleAvailable: Option[String] = None
 
   @volatile
-  private var hlintAvailable = false
+  private var hlintAvailable: Option[String] = None
 
   @volatile
-  private var stylishHaskellAvailable = false
+  private var stylishHaskellAvailable: Option[String] = None
 
   @volatile
-  private var hindentAvailable = false
+  private var ormoluAvailable: Option[String] = None
 
   @volatile
   private var installingHaskellTools = false

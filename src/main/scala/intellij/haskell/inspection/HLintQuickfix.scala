@@ -20,11 +20,9 @@ import com.intellij.codeInspection.LocalQuickFixOnPsiElement
 import com.intellij.openapi.command.CommandProcessor
 import com.intellij.openapi.project.Project
 import com.intellij.psi.util.PsiTreeUtil
-import com.intellij.psi.{PsiDocumentManager, PsiElement, PsiFile}
-import intellij.haskell.action.{HindentReformatAction, SelectionContext}
+import com.intellij.psi.{PsiElement, PsiFile}
 import intellij.haskell.annotator.HaskellAnnotator
-import intellij.haskell.external.component.StackProjectManager
-import intellij.haskell.psi.{HaskellElementFactory, HaskellPsiUtil, HaskellTypes}
+import intellij.haskell.psi.{HaskellElementFactory, HaskellTypes}
 import intellij.haskell.util.HaskellFileUtil
 
 import scala.annotation.tailrec
@@ -61,21 +59,6 @@ class HLintQuickfix(startElement: PsiElement, endElement: PsiElement, startLineN
           })
         }
       }
-
-      HaskellPsiUtil.findExpression(commonParent).foreach(e => {
-        val manager = PsiDocumentManager.getInstance(project)
-        val document = manager.getDocument(psiFile)
-        manager.doPostponedOperationsAndUnblockDocument(document)
-
-        val context = SelectionContext(
-          e.getTextRange.getStartOffset,
-          e.getTextRange.getEndOffset,
-          e.getText
-        )
-        if (StackProjectManager.isHindentAvailable(project)) {
-          HindentReformatAction.format(psiFile, Some(context))
-        }
-      })
 
       HaskellFileUtil.saveFile(psiFile)
       HaskellAnnotator.restartDaemonCodeAnalyzerForFile(psiFile)

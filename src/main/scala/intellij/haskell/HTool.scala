@@ -10,10 +10,6 @@ object HTool {
     def name: String = "hlint"
   }
 
-  case object Hindent extends HTool {
-    def name: String = "hindent"
-  }
-
   case object Hoogle extends HTool {
     def name: String = "hoogle"
   }

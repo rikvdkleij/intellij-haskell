@@ -614,15 +614,15 @@
                popup="true">
 
             <action id="Haskell.ReformatCode"
-                    class="intellij.haskell.action.HindentReformatAction"
-                    text="Reformat code by Hindent"
-                    description="Reformat code by Hindent">
+                    class="intellij.haskell.action.OrmoluReformatAction"
+                    text="Reformat Code by Ormolu"
+                    description="Reformat code by Ormolu">
                 <keyboard-shortcut first-keystroke="ctrl alt SEMICOLON" keymap="$default"/>
             </action>
 
             <action id="Haskell.StylishHaskellFormat"
                     class="intellij.haskell.action.StylishHaskellReformatAction"
-                    text="Reformat code by Stylish-Haskell"
+                    text="Reformat Code by Stylish-Haskell"
                     description="Reformat current file by Stylish-Haskell">
                 <keyboard-shortcut first-keystroke="ctrl alt u" keymap="$default"/>
             </action>

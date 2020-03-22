@@ -21,55 +21,62 @@ import com.intellij.openapi.actionSystem.{AnAction, AnActionEvent}
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.project.Project
 import com.intellij.psi.PsiFile
+import intellij.haskell.external.component.StackProjectManager
 import intellij.haskell.external.execution.CommandLine
-import intellij.haskell.settings.HaskellSettingsState
 import intellij.haskell.util._
 import intellij.haskell.{HTool, HaskellNotificationGroup}
 
 class OrmoluReformatAction extends AnAction {
 
   override def update(actionEvent: AnActionEvent): Unit = {
-    HaskellEditorUtil.enableExternalAction(actionEvent, (_: Project) => HaskellReformatAction.reformatByOrmolu)
+    HaskellEditorUtil.enableExternalAction(actionEvent, (project: Project) => StackProjectManager.isOrmoluAvailable(project).isDefined)
   }
 
   override def actionPerformed(actionEvent: AnActionEvent): Unit = {
     ActionUtil.findActionContext(actionEvent).foreach { actionContext =>
       val psiFile = actionContext.psiFile
-      HaskellSettingsState.ormoluPath match {
-        case Some(p) => OrmoluReformatAction.format(psiFile, p)
-        case None => ()
-      }
+      OrmoluReformatAction.reformat(psiFile)
     }
   }
 }
 
 object OrmoluReformatAction {
 
-  def format(psiFile: PsiFile, ormoluPath: String): Unit = {
+  def reformat(psiFile: PsiFile): Boolean = {
     val project = psiFile.getProject
-    HaskellFileUtil.saveFile(psiFile)
+    StackProjectManager.isOrmoluAvailable(project) match {
+      case Some(ormoluPath) =>
+        HaskellFileUtil.saveFile(psiFile)
 
-    HaskellFileUtil.getAbsolutePath(psiFile) match {
-      case Some(path) =>
-        val processOutputFuture = ApplicationManager.getApplication.executeOnPooledThread(ScalaUtil.callable[ProcessOutput] {
-          CommandLine.run(project, ormoluPath, Seq(path))
-        })
+        HaskellFileUtil.getAbsolutePath(psiFile) match {
+          case Some(path) =>
+            val processOutputFuture = ApplicationManager.getApplication.executeOnPooledThread(ScalaUtil.callable[ProcessOutput] {
+              CommandLine.run(project, ormoluPath, Seq(path))
+            })
 
-        FutureUtil.waitForValue(project, processOutputFuture, s"reformatting by ${HTool.Ormolu.name}") match {
-          case None => ()
-          case Some(processOutput) =>
-            if (processOutput.getStderrLines.isEmpty) {
-              HaskellFileUtil.saveFileWithNewContent(psiFile, processOutput.getStdout)
-            } else {
-              HaskellNotificationGroup.logInfoEvent(project, s"Error while reformatting by `${HTool.Ormolu.name}`. Error: ${processOutput.getStderr}")
+            FutureUtil.waitForValue(project, processOutputFuture, s"reformatting by ${HTool.Ormolu.name}") match {
+              case None => false
+              case Some(processOutput) =>
+                if (processOutput.getStderrLines.isEmpty) {
+                  HaskellFileUtil.saveFileWithNewContent(psiFile, processOutput.getStdout)
+                  true
+                } else {
+                  HaskellNotificationGroup.logInfoEvent(project, s"Error while reformatting by `${HTool.Ormolu.name}`. Error: ${processOutput.getStderr}")
+                  false
+                }
             }
+          case None =>
+            HaskellNotificationGroup.logWarningBalloonEvent(psiFile.getProject, s"Can not reformat file because could not determine path for file `${psiFile.getName}`. File exists only in memory")
+            false
         }
-      case None => HaskellNotificationGroup.logWarningBalloonEvent(psiFile.getProject, s"Can not reformat file because could not determine path for file `${psiFile.getName}`. File exists only in memory")
+      case None => false
     }
   }
 
-
   def versionInfo(project: Project): String = {
-    HaskellSettingsState.ormoluPath.map(p => CommandLine.run(project, p, Seq("--version")).getStdout).getOrElse("-")
+    StackProjectManager.isOrmoluAvailable(project) match {
+      case Some(ormoluPath) => CommandLine.run(project, ormoluPath, Seq("--version")).getStdout
+      case None => "-"
+    }
   }
 }

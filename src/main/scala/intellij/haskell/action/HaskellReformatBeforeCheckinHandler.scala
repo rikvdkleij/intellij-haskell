@@ -80,7 +80,7 @@ class HaskellReformatBeforeCheckinHandler(project: Project, checkinProjectPanel:
     }
 
     if (HaskellSettingsState.isReformatCodeBeforeCommit && !DumbService.isDumb(project)) {
-      val reformatResult = virtualFiles.asScala.forall(vf => HaskellFileUtil.convertToHaskellFileDispatchThread(project, vf).exists(HaskellReformatAction.reformatFile))
+      val reformatResult = virtualFiles.asScala.forall(vf => HaskellFileUtil.convertToHaskellFileDispatchThread(project, vf).exists(OrmoluReformatAction.reformat))
       if (reformatResult) {
         performCheckoutAction.run()
       }
@@ -90,7 +90,7 @@ class HaskellReformatBeforeCheckinHandler(project: Project, checkinProjectPanel:
   }
 
 
-  private def disableWhenDumb(project: Project, checkBox: JCheckBox, tooltip: String) = {
+  private def disableWhenDumb(project: Project, checkBox: JCheckBox, tooltip: String): Unit = {
     val dumb = DumbService.isDumb(project)
     checkBox.setEnabled(!dumb)
     checkBox.setToolTipText(if (dumb) tooltip else "")

@@ -33,7 +33,6 @@ import com.intellij.openapi.vfs.{LocalFileSystem, VirtualFile, VirtualFileManage
 import com.intellij.psi.impl.PsiManagerEx
 import com.intellij.psi.{PsiDocumentManager, PsiFile, PsiManager}
 import intellij.haskell.HaskellFileType
-import intellij.haskell.action.SelectionContext
 import intellij.haskell.external.component.{NoInfo, NoInfoAvailable}
 import intellij.haskell.psi.HaskellPsiUtil
 
@@ -184,17 +183,6 @@ object HaskellFileUtil {
         override def run(): Unit = {
           val document = findDocument(psiFile)
           document.foreach(_.setText(sourceCode))
-        }
-      })
-    }, null, null)
-  }
-
-  def saveFileWithPartlyNewContent(psiFile: PsiFile, sourceCode: String, selectionContext: SelectionContext): Unit = {
-    CommandProcessor.getInstance().executeCommand(psiFile.getProject, () => {
-      ApplicationManager.getApplication.runWriteAction(new Runnable {
-        override def run(): Unit = {
-          val document = findDocument(psiFile)
-          document.foreach(_.replaceString(selectionContext.start, selectionContext.end, sourceCode))
         }
       })
     }, null, null)

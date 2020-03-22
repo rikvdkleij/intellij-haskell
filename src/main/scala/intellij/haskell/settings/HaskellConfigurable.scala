@@ -31,7 +31,6 @@ class HaskellConfigurable extends Configurable {
   private val replTimeoutField = new JTextField
   private val afterRestartLabel = new JLabel("*) Changes will take effect after restarting project")
   private val newProjectTemplateNameField = new JTextField
-  private val hindentPathField = new JTextField
   private val hlintPathField = new JTextField
   private val hooglePathField = new JTextField
   private val ormoluPathField = new JTextField
@@ -51,7 +50,6 @@ class HaskellConfigurable extends Configurable {
 
     def toggleToolPathsVisibility(): Unit = {
       val visible = useCustomToolsToggle.isSelected
-      hindentPathField.setVisible(visible)
       hlintPathField.setVisible(visible)
       hooglePathField.setVisible(visible)
       stylishHaskellPathField.setVisible(visible)
@@ -228,7 +226,6 @@ object HaskellConfigurable {
   final val HlintOptions = "Hlint options"
   final val NewProjectTemplateName = "Template name for new project"
   final val BuildToolsUsingSystemGhc = "Build tools using system GHC *"
-  final val HindentPath = "Hindent path"
   final val HlintPath = "Hlint path"
   final val HooglePath = "Hoogle path"
   final val StylishHaskellPath = "Stylish Haskell path"

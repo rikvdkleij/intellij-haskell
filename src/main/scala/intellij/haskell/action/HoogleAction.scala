@@ -25,7 +25,7 @@ import intellij.haskell.util.HaskellEditorUtil
 class HoogleAction extends AnAction {
 
   override def update(actionEvent: AnActionEvent): Unit = {
-    HaskellEditorUtil.enableExternalAction(actionEvent, (project: Project) => StackProjectManager.isHoogleAvailable(project) && HoogleComponent.doesHoogleDatabaseExist(project))
+    HaskellEditorUtil.enableExternalAction(actionEvent, (project: Project) => StackProjectManager.isHoogleAvailable(project).isDefined && HoogleComponent.doesHoogleDatabaseExist(project))
   }
 
   def actionPerformed(actionEvent: AnActionEvent): Unit = {

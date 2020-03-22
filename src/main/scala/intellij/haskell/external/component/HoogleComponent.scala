@@ -24,7 +24,6 @@ import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.project.Project
 import intellij.haskell.external.execution.{CommandLine, StackCommandLine}
 import intellij.haskell.psi.{HaskellPsiUtil, HaskellQualifiedNameElement}
-import intellij.haskell.settings.HaskellSettingsState
 import intellij.haskell.util.{HtmlElement, ScalaFutureUtil}
 import intellij.haskell.{GlobalInfo, HTool, HaskellNotificationGroup}
 
@@ -33,8 +32,6 @@ import scala.concurrent.{Future, blocking}
 import scala.jdk.CollectionConverters._
 
 object HoogleComponent {
-
-  private def hooglePath = HaskellSettingsState.hooglePath.getOrElse(GlobalInfo.defaultHooglePath.toString)
 
   private final val HoogleDbName = "hoogle"
 
@@ -113,7 +110,7 @@ object HoogleComponent {
   }
 
   private def isHoogleFeatureAvailable(project: Project): Boolean = {
-    if (!StackProjectManager.isHoogleAvailable(project)) {
+    if (StackProjectManager.isHoogleAvailable(project).isEmpty) {
       HaskellNotificationGroup.logInfoEvent(project, s"${HTool.Hoogle.name} isn't (yet) available")
       false
     } else {
@@ -122,18 +119,24 @@ object HoogleComponent {
   }
 
   def rebuildHoogle(project: Project): Unit = {
-    val buildHaddockOutput = try {
-      StackProjectManager.setHaddockBuilding(project, state = true)
-      StackCommandLine.executeStackCommandInMessageView(project, Seq("haddock", "--no-haddock-hyperlink-source"))
-    } finally {
-      StackProjectManager.setHaddockBuilding(project, state = false)
-    }
+    StackProjectManager.isHoogleAvailable(project) match {
+      case Some(hooglePath) =>
+        val buildHaddockOutput = try {
+          StackProjectManager.setHaddockBuilding(project, state = true)
+          StackCommandLine.executeStackCommandInMessageView(project, Seq("haddock", "--no-haddock-hyperlink-source"))
+        } finally {
+          StackProjectManager.setHaddockBuilding(project, state = false)
+        }
 
-    if (buildHaddockOutput.contains(true)) {
-      GlobalProjectInfoComponent.findGlobalProjectInfo(project).map(_.localDocRoot) match {
-        case Some(localDocRoot) => StackCommandLine.executeInMessageView(project, hooglePath, Seq("generate", s"--local=$localDocRoot", s"--database=${hoogleDbPath(project)}"))
-        case None => HaskellNotificationGroup.logErrorBalloonEvent(project, "Couldn't generate Hoogle DB because path to local doc root is unknown")
-      }
+        if (buildHaddockOutput.contains(true)) {
+          GlobalProjectInfoComponent.findGlobalProjectInfo(project).map(_.localDocRoot) match {
+            case Some(localDocRoot) => StackCommandLine.executeInMessageView(project, hooglePath, Seq("generate", s"--local=$localDocRoot", s"--database=${
+              hoogleDbPath(project)
+            }"))
+            case None => HaskellNotificationGroup.logErrorBalloonEvent(project, "Couldn't generate Hoogle DB because path to local doc root is unknown")
+          }
+        }
+      case None => ()
     }
   }
 
@@ -146,10 +149,9 @@ object HoogleComponent {
   }
 
   def versionInfo(project: Project): String = {
-    if (StackProjectManager.isHoogleAvailable(project)) {
-      CommandLine.run(project, hooglePath, Seq("--version")).getStdout
-    } else {
-      "-"
+    StackProjectManager.isHoogleAvailable(project) match {
+      case Some(hooglePath) => CommandLine.run(project, hooglePath, Seq("--version")).getStdout
+      case None => "-"
     }
   }
 
@@ -158,12 +160,17 @@ object HoogleComponent {
   private def runHoogle(project: Project, arguments: Seq[String]): Option[ProcessOutput] = {
     ProgressManager.checkCanceled()
 
-    ScalaFutureUtil.waitForValue(project,
-      Future {
-        blocking {
-          CommandLine.run(project, hooglePath, Seq(s"--database=${hoogleDbPath(project)}") ++ arguments, logOutput = true)
-        }
-      }, "runHoogle")
+    StackProjectManager.isHoogleAvailable(project) match {
+      case Some(hooglePath) =>
+
+        ScalaFutureUtil.waitForValue(project,
+          Future {
+            blocking {
+              CommandLine.run(project, hooglePath, Seq(s"--database=${hoogleDbPath(project)}") ++ arguments, logOutput = true)
+            }
+          }, "runHoogle")
+      case None => None
+    }
   }
 
   private def hoogleDbPath(project: Project) = {

@@ -28,7 +28,7 @@ class BuildHoogleDbAction extends AnAction {
   override def update(actionEvent: AnActionEvent): Unit = {
     HaskellEditorUtil.enableExternalAction(actionEvent, (project: Project) =>
       !StackProjectManager.isInitializing(project) &&
-        StackProjectManager.isHoogleAvailable(project) &&
+        StackProjectManager.isHoogleAvailable(project).isDefined &&
         !ProjectLibraryBuilder.isBuilding(project) &&
         !StackProjectManager.isHaddockBuilding(project))
   }
