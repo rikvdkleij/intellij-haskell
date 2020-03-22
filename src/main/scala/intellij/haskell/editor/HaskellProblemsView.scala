@@ -88,6 +88,12 @@ class HaskellProblemsView(project: Project, toolWindowManager: ToolWindowManager
     addMessage(categoryIndex, messageText, groupName, navigatable, message.getExportTextPrefix, message.getRenderTextPrefix, null)
   }
 
+  def clear(): Unit = {
+    val view = problemsPanel.getErrorViewStructure
+    view.clear()
+    problemsPanel.reload()
+  }
+
   override def setProgress(text: String, fraction: Float): Unit = {
     problemsPanel.setProgress(text, fraction)
   }
@@ -132,5 +138,11 @@ class HaskellProblemsView(project: Project, toolWindowManager: ToolWindowManager
         }
       }
     })
+  }
+}
+
+object HaskellProblemsView {
+  def getInstance(project: Project): HaskellProblemsView = {
+    ProblemsView.SERVICE.getInstance(project).asInstanceOf[HaskellProblemsView]
   }
 }

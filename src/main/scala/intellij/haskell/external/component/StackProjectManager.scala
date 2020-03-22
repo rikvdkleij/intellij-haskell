@@ -30,6 +30,7 @@ import com.intellij.openapi.vfs.VirtualFileManager
 import com.intellij.psi.{PsiTreeChangeAdapter, PsiTreeChangeEvent}
 import intellij.haskell.action.HaskellReformatAction
 import intellij.haskell.annotator.HaskellAnnotator
+import intellij.haskell.editor.HaskellProblemsView
 import intellij.haskell.external.execution.StackCommandLine
 import intellij.haskell.external.repl.StackRepl.LibType
 import intellij.haskell.external.repl.StackReplsManager
@@ -187,6 +188,8 @@ object StackProjectManager {
                 ApplicationManager.getApplication.runReadAction(ScalaUtil.runnable {
                   getStackProjectManager(project).foreach(_.initStackReplsManager())
                 })
+
+                HaskellProblemsView.getInstance(project).clear()
 
                 progressIndicator.setText("Busy updating project and module settings")
                 val projectPath = project.getBasePath
