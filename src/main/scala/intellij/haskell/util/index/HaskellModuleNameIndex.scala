@@ -19,7 +19,6 @@ package intellij.haskell.util.index
 import java.util.Collections
 
 import com.github.blemale.scaffeine.{LoadingCache, Scaffeine}
-import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.project.{IndexNotReadyException, Project}
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.psi.PsiFile
@@ -57,7 +56,7 @@ object HaskellModuleNameIndex {
     val project = key.project
     findFiles(project, key.moduleName) match {
       case Right(virtualFiles) =>
-        if (ApplicationManager.getApplication.isReadAccessAllowed) {
+        if (ApplicationUtil.isBlockingReadAccessAllowed) {
           Right(virtualFiles.flatMap { case (vf, isPf) => HaskellFileUtil.convertToHaskellFileDispatchThread(project, vf).map((_, isPf)).toSeq })
         } else {
           val psiFiles = virtualFiles.map { case (vf, isPf) => (HaskellFileUtil.convertToHaskellFileInReadAction(project, vf), isPf) }

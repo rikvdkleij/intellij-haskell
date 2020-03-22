@@ -29,12 +29,12 @@ import scala.concurrent.TimeoutException
 
 object ApplicationUtil {
 
-  private def isReadAccessAllowed = {
+  def isBlockingReadAccessAllowed: Boolean = {
     ApplicationManager.getApplication.isReadAccessAllowed
   }
 
   def runReadAction[T](f: => T, project: Option[Project] = None): T = {
-    if (isReadAccessAllowed) {
+    if (isBlockingReadAccessAllowed) {
       f
     } else {
       val progressIndicator = Option(ProgressIndicatorProvider.getGlobalProgressIndicator)
@@ -46,7 +46,7 @@ object ApplicationUtil {
   }
 
   def runReadActionWithFileAccess[A](project: Project, f: => A, actionDescription: => String): Either[NoInfo, A] = {
-    if (isReadAccessAllowed) {
+    if (isBlockingReadAccessAllowed) {
       Right(f)
     } else {
       val progressIndicator = Option(ProgressIndicatorProvider.getGlobalProgressIndicator)
