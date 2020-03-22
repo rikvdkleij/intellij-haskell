@@ -19,6 +19,7 @@ package intellij.haskell.psi
 import com.github.blemale.scaffeine.{LoadingCache, Scaffeine}
 import com.intellij.lang.ASTNode
 import com.intellij.openapi.editor.Editor
+import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.project.Project
 import com.intellij.psi.impl.source.tree.TreeUtil
 import com.intellij.psi.tree.{IElementType, TokenSet}
@@ -98,8 +99,10 @@ object HaskellPsiUtil {
   }
 
   def findHaskellDeclarationElements(psiElement: PsiElement): Iterable[HaskellDeclarationElement] = {
-    PsiTreeUtil.findChildrenOfType(psiElement, classOf[HaskellDeclarationElement]).asScala.
-      filter(e => e.getParent.getNode.getElementType == HS_TOP_DECLARATION || e.getNode.getElementType == HS_MODULE_DECLARATION)
+    ProgressManager.checkCanceled()
+    val declarations = ApplicationUtil.runReadAction(PsiTreeUtil.findChildrenOfType(psiElement, classOf[HaskellDeclarationElement]).asScala, Some(psiElement.getProject))
+    ProgressManager.checkCanceled()
+    declarations.filter(e => e.getParent.getNode.getElementType == HS_TOP_DECLARATION || e.getNode.getElementType == HS_MODULE_DECLARATION)
   }
 
   def findTopLevelDeclarations(psiFile: PsiFile): Iterable[HaskellDeclarationElement] = {
