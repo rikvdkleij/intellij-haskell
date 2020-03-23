@@ -15,19 +15,13 @@ import static intellij.haskell.psi.HaskellTypes.*;
  */
 public class _HaskellLexer implements FlexLexer {
 
-    /**
-     * This character denotes the end of file
-     */
+    /** This character denotes the end of file */
     public static final int YYEOF = -1;
 
-    /**
-     * initial size of the lookahead buffer
-     */
+    /** initial size of the lookahead buffer */
     private static final int ZZ_BUFFERSIZE = 16384;
 
-    /**
-     * lexical states
-     */
+    /** lexical states */
     public static final int YYINITIAL = 0;
     public static final int NCOMMENT = 2;
     public static final int NHADDOCK = 4;
@@ -37,7 +31,7 @@ public class _HaskellLexer implements FlexLexer {
     /**
      * ZZ_LEXSTATE[l] is the state in the DFA for the lexical state l
      * ZZ_LEXSTATE[l+1] is the state in the DFA for the lexical state l
-     * at the beginning of a line
+     *                  at the beginning of a line
      * l is of the form l = 2*k, k a non negative integer
      */
     private static final int ZZ_LEXSTATE[] = {
@@ -47,7 +41,7 @@ public class _HaskellLexer implements FlexLexer {
     /**
      * Translates characters to character classes
      * Chosen bits are [10, 7, 4]
-     * Total runtime size is 3040 bytes
+     * Total runtime size is 3072 bytes
      */
     public static int ZZ_CMAP(int ch) {
         return ZZ_CMAP_A[(ZZ_CMAP_Y[(ZZ_CMAP_Z[ch >> 11] << 7) | ((ch >> 4) & 0x7f)] << 4) | (ch & 0xf)];
@@ -59,11 +53,11 @@ public class _HaskellLexer implements FlexLexer {
 
     /* The ZZ_CMAP_Y table has 512 entries */
     static final char ZZ_CMAP_Y[] = zzUnpackCMap(
-            "\1\0\1\1\1\2\1\3\1\4\1\5\1\6\1\7\1\10\1\1\1\11\56\1\1\12\1\13\1\14\1\15\305" +
-                    "\1\1\16\4\1\2\17\7\1\1\20\1\21\1\22\6\1\1\23\3\1\1\24\2\1\1\25\1\26\1\27\1" +
-                    "\30\10\27\1\31\3\27\60\1\1\32\144\1\1\33\20\1\1\34\51\1");
+            "\1\0\1\1\1\2\1\3\1\4\1\5\1\6\1\7\1\10\1\1\1\11\1\12\55\1\1\13\1\14\1\15\1" +
+                    "\16\305\1\1\17\4\1\2\20\7\1\1\21\1\22\1\23\6\1\1\24\3\1\1\25\2\1\1\26\1\27" +
+                    "\1\30\1\31\10\30\1\32\3\30\60\1\1\33\144\1\1\34\20\1\1\35\51\1");
 
-    /* The ZZ_CMAP_A table has 464 entries */
+    /* The ZZ_CMAP_A table has 480 entries */
     static final char ZZ_CMAP_A[] = zzUnpackCMap(
             "\5\0\1\3\3\0\1\3\1\2\2\3\1\1\22\0\1\42\1\74\1\21\1\4\2\74\1\45\1\73\1\114" +
                     "\1\115\1\74\1\76\1\116\1\31\1\41\1\74\1\34\4\67\3\37\2\27\1\107\1\117\1\100" +
@@ -71,10 +65,10 @@ public class _HaskellLexer implements FlexLexer {
                     "\1\61\1\52\1\71\1\50\1\40\1\66\1\56\1\65\1\53\1\55\1\51\1\64\1\25\1\36\1\70" +
                     "\1\25\1\120\1\20\1\44\1\47\1\22\1\121\1\32\1\126\1\16\1\7\1\10\1\6\1\127\1" +
                     "\136\1\5\2\23\1\12\1\134\1\11\1\15\1\133\1\23\1\14\1\13\1\131\1\17\1\46\1" +
-                    "\135\1\35\1\132\1\23\1\122\1\105\1\123\1\106\6\0\1\130\12\0\1\3\20\0\31\26" +
-                    "\7\0\31\24\16\0\2\130\6\0\12\30\10\0\1\26\22\0\1\26\4\0\1\26\2\0\1\26\6\0" +
-                    "\1\26\13\0\1\111\1\0\1\112\17\0\1\113\15\0\1\124\27\125\1\77\36\125\1\110" +
-                    "\16\125\1\74\11\125\5\0\1\75\20\0\1\24\20\0\1\24\10\0");
+                    "\135\1\35\1\132\1\23\1\122\1\105\1\123\1\106\6\0\1\130\12\0\1\3\24\0\1\24" +
+                    "\13\0\31\26\7\0\31\24\16\0\2\130\6\0\12\30\10\0\1\26\22\0\1\26\4\0\1\26\2" +
+                    "\0\1\26\6\0\1\26\13\0\1\111\1\0\1\112\17\0\1\113\15\0\1\124\27\125\1\77\36" +
+                    "\125\1\110\16\125\1\74\11\125\5\0\1\75\20\0\1\24\20\0\1\24\10\0");
 
     /**
      * Translates DFA states to action switch labels.
@@ -869,46 +863,30 @@ public class _HaskellLexer implements FlexLexer {
         return j;
     }
 
-    /**
-     * the input device
-     */
+    /** the input device */
     private java.io.Reader zzReader;
 
-    /**
-     * the current state of the DFA
-     */
+    /** the current state of the DFA */
     private int zzState;
 
-    /**
-     * the current lexical state
-     */
+    /** the current lexical state */
     private int zzLexicalState = YYINITIAL;
 
-    /**
-     * this buffer contains the current text to be matched and is
-     * the source of the yytext() string
-     */
+    /** this buffer contains the current text to be matched and is
+     the source of the yytext() string */
     private CharSequence zzBuffer = "";
 
-    /**
-     * the textposition at the last accepting state
-     */
+    /** the textposition at the last accepting state */
     private int zzMarkedPos;
 
-    /**
-     * the current text position in the buffer
-     */
+    /** the current text position in the buffer */
     private int zzCurrentPos;
 
-    /**
-     * startRead marks the beginning of the yytext() string in the buffer
-     */
+    /** startRead marks the beginning of the yytext() string in the buffer */
     private int zzStartRead;
 
-    /**
-     * endRead marks the last character in the buffer, that has been read
-     * from input
-     */
+    /** endRead marks the last character in the buffer, that has been read
+     from input */
     private int zzEndRead;
 
     /**
@@ -916,14 +894,10 @@ public class _HaskellLexer implements FlexLexer {
      */
     private boolean zzAtBOL = true;
 
-    /**
-     * zzAtEOF == true <=> the scanner is at the EOF
-     */
+    /** zzAtEOF == true <=> the scanner is at the EOF */
     private boolean zzAtEOF;
 
-    /**
-     * denotes if the user-EOF-code has already been executed
-     */
+    /** denotes if the user-EOF-code has already been executed */
     private boolean zzEOFDone;
 
     /* user code: */
@@ -947,7 +921,7 @@ public class _HaskellLexer implements FlexLexer {
     /**
      * Creates a new scanner
      *
-     * @param in the java.io.Reader to read input from.
+     * @param   in  the java.io.Reader to read input from.
      */
     public _HaskellLexer(java.io.Reader in) {
         this.zzReader = in;
@@ -957,7 +931,7 @@ public class _HaskellLexer implements FlexLexer {
     /**
      * Unpacks the compressed character translation table.
      *
-     * @param packed the packed character translation table
+     * @param packed   the packed character translation table
      * @return the unpacked character translation table
      */
     private static char[] zzUnpackCMap(String packed) {
@@ -996,8 +970,9 @@ public class _HaskellLexer implements FlexLexer {
     /**
      * Refills the input buffer.
      *
-     * @return {@code false}, iff there was new input.
-     * @throws java.io.IOException if any I/O-Error occurs
+     * @return      {@code false}, iff there was new input.
+     *
+     * @exception java.io.IOException  if any I/O-Error occurs
      */
     private boolean zzRefill() throws java.io.IOException {
         return true;
@@ -1033,11 +1008,12 @@ public class _HaskellLexer implements FlexLexer {
     /**
      * Returns the character at position {@code pos} from the
      * matched text.
-     * <p>
+     *
      * It is equivalent to yytext().charAt(pos), but faster
      *
      * @param pos the position of the character to fetch.
      *            A value from 0 to yylength()-1.
+     *
      * @return the character at position pos
      */
     public final char yycharat(int pos) {
@@ -1055,17 +1031,17 @@ public class _HaskellLexer implements FlexLexer {
 
     /**
      * Reports an error that occurred while scanning.
-     * <p>
+     *
      * In a wellformed scanner (no or only correct usage of
      * yypushback(int) and a match-all fallback rule) this method
      * will only be called with things that "Can't Possibly Happen".
      * If this method is called, something is seriously wrong
      * (e.g. a JFlex bug producing a faulty scanner etc.).
-     * <p>
+     *
      * Usual syntax/scanner level error handling should be done
      * in error fallback rules.
      *
-     * @param errorCode the code of the errormessage to display
+     * @param   errorCode  the code of the errormessage to display
      */
     private void zzScanError(int errorCode) {
         String message;
@@ -1081,11 +1057,11 @@ public class _HaskellLexer implements FlexLexer {
 
     /**
      * Pushes the specified amount of characters back into the input stream.
-     * <p>
+     *
      * They will be read again by then next call of the scanning method
      *
-     * @param number the number of characters to be read again.
-     *               This number must not be greater than yylength()!
+     * @param number  the number of characters to be read again.
+     *                This number must not be greater than yylength()!
      */
     public void yypushback(int number) {
         if (number > yylength())
@@ -1100,7 +1076,7 @@ public class _HaskellLexer implements FlexLexer {
      * the end of input is encountered or an I/O-Error occurs.
      *
      * @return the next token
-     * @throws java.io.IOException if any I/O-Error occurs
+     * @exception java.io.IOException  if any I/O-Error occurs
      */
     public IElementType advance() throws java.io.IOException {
         int zzInput;

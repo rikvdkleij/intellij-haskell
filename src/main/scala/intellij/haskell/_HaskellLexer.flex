@@ -42,7 +42,7 @@ include_directive   = "#"{white_char}*"include"{white_char}*\"({small}|{large}|{
 white_space         = {white_char}+
 
 underscore          = "_"
-small               = [a-z] | {underscore} | [\u03B1-\u03C9] | 𝑖 | 𝕧
+small               = [a-z] | {underscore} | [\u03B1-\u03C9] | 𝑖 | 𝕧 | µ
 large               = [A-Z] | [\u0391-\u03A9] | ℝ | ℂ | ℕ | ℤ | ℚ
 
 digit               = [0-9] | [\u2070-\u2079] | [\u2080-\u2089]
