@@ -222,13 +222,13 @@ object HaskellReference {
 
   import scala.concurrent.ExecutionContext.Implicits.global
 
-  private def findIdentifiersByModuleAndName2(project: Project, moduleNames: Seq[String], name: String, prioIdInExpression: Boolean, ids: Seq[(String, Seq[HaskellNamedElement])] = Seq()): Seq[(String, Seq[HaskellNamedElement])] = {
+  private def findIdentifiersByModuleAndName2(project: Project, moduleNames: Seq[String], name: String, prioIdInExpression: Boolean, result: Seq[(String, Seq[HaskellNamedElement])] = Seq()): Seq[(String, Seq[HaskellNamedElement])] = {
 
     ProgressManager.checkCanceled()
 
     val distinctModuleNames = moduleNames.distinct
     distinctModuleNames.flatMap(mn => HaskellModuleNameIndex.findFilesByModuleName(project, mn) match {
-      case Left(_) => ids
+      case Left(_) => result
       case Right(files) =>
         ProgressManager.checkCanceled()
 
@@ -243,17 +243,11 @@ object HaskellReference {
         }
         }.filter(mid => mid.name == name || mid.name == "_" + name || mid.name == mid.moduleName + "." + name).map(_.moduleName)
 
-        if (importedModuleNames.isEmpty) {
-          ids ++ Seq((mn, identifiers))
+        if (importedModuleNames.isEmpty || distinctModuleNames == Seq(mn)) {
+          result ++ Seq((mn, identifiers))
         } else {
           ProgressManager.checkCanceled()
-
-          if (distinctModuleNames == Seq(mn)) {
-            val moduleNames = files.flatMap(HaskellPsiUtil.findImportDeclarations).flatMap(_.getModuleName)
-            findIdentifiersByModuleAndName2(project, moduleNames, name, prioIdInExpression, ids ++ Seq((mn, identifiers)))
-          } else {
-            findIdentifiersByModuleAndName2(project, importedModuleNames, name, prioIdInExpression, ids ++ Seq((mn, identifiers)))
-          }
+          findIdentifiersByModuleAndName2(project, importedModuleNames, name, prioIdInExpression, result ++ Seq((mn, identifiers)))
         }
     })
   }
