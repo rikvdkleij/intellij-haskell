@@ -19,6 +19,7 @@ Any feedback is welcomed!!
 ![King Lounge](logo/king.png)  
 ### King lounge
 * @Nexmean
+* @kor85
 
 ___
 ![Duke Lounge](logo/duke.png) 
