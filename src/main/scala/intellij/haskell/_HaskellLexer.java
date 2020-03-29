@@ -15,13 +15,19 @@ import static intellij.haskell.psi.HaskellTypes.*;
  */
 public class _HaskellLexer implements FlexLexer {
 
-    /** This character denotes the end of file */
+    /**
+     * This character denotes the end of file
+     */
     public static final int YYEOF = -1;
 
-    /** initial size of the lookahead buffer */
+    /**
+     * initial size of the lookahead buffer
+     */
     private static final int ZZ_BUFFERSIZE = 16384;
 
-    /** lexical states */
+    /**
+     * lexical states
+     */
     public static final int YYINITIAL = 0;
     public static final int NCOMMENT = 2;
     public static final int NHADDOCK = 4;
@@ -31,7 +37,7 @@ public class _HaskellLexer implements FlexLexer {
     /**
      * ZZ_LEXSTATE[l] is the state in the DFA for the lexical state l
      * ZZ_LEXSTATE[l+1] is the state in the DFA for the lexical state l
-     *                  at the beginning of a line
+     * at the beginning of a line
      * l is of the form l = 2*k, k a non negative integer
      */
     private static final int ZZ_LEXSTATE[] = {
@@ -863,30 +869,46 @@ public class _HaskellLexer implements FlexLexer {
         return j;
     }
 
-    /** the input device */
+    /**
+     * the input device
+     */
     private java.io.Reader zzReader;
 
-    /** the current state of the DFA */
+    /**
+     * the current state of the DFA
+     */
     private int zzState;
 
-    /** the current lexical state */
+    /**
+     * the current lexical state
+     */
     private int zzLexicalState = YYINITIAL;
 
-    /** this buffer contains the current text to be matched and is
-     the source of the yytext() string */
+    /**
+     * this buffer contains the current text to be matched and is
+     * the source of the yytext() string
+     */
     private CharSequence zzBuffer = "";
 
-    /** the textposition at the last accepting state */
+    /**
+     * the textposition at the last accepting state
+     */
     private int zzMarkedPos;
 
-    /** the current text position in the buffer */
+    /**
+     * the current text position in the buffer
+     */
     private int zzCurrentPos;
 
-    /** startRead marks the beginning of the yytext() string in the buffer */
+    /**
+     * startRead marks the beginning of the yytext() string in the buffer
+     */
     private int zzStartRead;
 
-    /** endRead marks the last character in the buffer, that has been read
-     from input */
+    /**
+     * endRead marks the last character in the buffer, that has been read
+     * from input
+     */
     private int zzEndRead;
 
     /**
@@ -894,10 +916,14 @@ public class _HaskellLexer implements FlexLexer {
      */
     private boolean zzAtBOL = true;
 
-    /** zzAtEOF == true <=> the scanner is at the EOF */
+    /**
+     * zzAtEOF == true <=> the scanner is at the EOF
+     */
     private boolean zzAtEOF;
 
-    /** denotes if the user-EOF-code has already been executed */
+    /**
+     * denotes if the user-EOF-code has already been executed
+     */
     private boolean zzEOFDone;
 
     /* user code: */
@@ -921,7 +947,7 @@ public class _HaskellLexer implements FlexLexer {
     /**
      * Creates a new scanner
      *
-     * @param   in  the java.io.Reader to read input from.
+     * @param in the java.io.Reader to read input from.
      */
     public _HaskellLexer(java.io.Reader in) {
         this.zzReader = in;
@@ -931,7 +957,7 @@ public class _HaskellLexer implements FlexLexer {
     /**
      * Unpacks the compressed character translation table.
      *
-     * @param packed   the packed character translation table
+     * @param packed the packed character translation table
      * @return the unpacked character translation table
      */
     private static char[] zzUnpackCMap(String packed) {
@@ -970,9 +996,8 @@ public class _HaskellLexer implements FlexLexer {
     /**
      * Refills the input buffer.
      *
-     * @return      {@code false}, iff there was new input.
-     *
-     * @exception java.io.IOException  if any I/O-Error occurs
+     * @return {@code false}, iff there was new input.
+     * @throws java.io.IOException if any I/O-Error occurs
      */
     private boolean zzRefill() throws java.io.IOException {
         return true;
@@ -1008,12 +1033,11 @@ public class _HaskellLexer implements FlexLexer {
     /**
      * Returns the character at position {@code pos} from the
      * matched text.
-     *
+     * <p>
      * It is equivalent to yytext().charAt(pos), but faster
      *
      * @param pos the position of the character to fetch.
      *            A value from 0 to yylength()-1.
-     *
      * @return the character at position pos
      */
     public final char yycharat(int pos) {
@@ -1031,17 +1055,17 @@ public class _HaskellLexer implements FlexLexer {
 
     /**
      * Reports an error that occurred while scanning.
-     *
+     * <p>
      * In a wellformed scanner (no or only correct usage of
      * yypushback(int) and a match-all fallback rule) this method
      * will only be called with things that "Can't Possibly Happen".
      * If this method is called, something is seriously wrong
      * (e.g. a JFlex bug producing a faulty scanner etc.).
-     *
+     * <p>
      * Usual syntax/scanner level error handling should be done
      * in error fallback rules.
      *
-     * @param   errorCode  the code of the errormessage to display
+     * @param errorCode the code of the errormessage to display
      */
     private void zzScanError(int errorCode) {
         String message;
@@ -1057,11 +1081,11 @@ public class _HaskellLexer implements FlexLexer {
 
     /**
      * Pushes the specified amount of characters back into the input stream.
-     *
+     * <p>
      * They will be read again by then next call of the scanning method
      *
-     * @param number  the number of characters to be read again.
-     *                This number must not be greater than yylength()!
+     * @param number the number of characters to be read again.
+     *               This number must not be greater than yylength()!
      */
     public void yypushback(int number) {
         if (number > yylength())
@@ -1076,7 +1100,7 @@ public class _HaskellLexer implements FlexLexer {
      * the end of input is encountered or an I/O-Error occurs.
      *
      * @return the next token
-     * @exception java.io.IOException  if any I/O-Error occurs
+     * @throws java.io.IOException if any I/O-Error occurs
      */
     public IElementType advance() throws java.io.IOException {
         int zzInput;
@@ -1157,7 +1181,6 @@ public class _HaskellLexer implements FlexLexer {
                 zzAtEOF = true;
                 switch (zzLexicalState) {
                     case NCOMMENT: {
-                        int state = yystate();
                         yybegin(YYINITIAL);
                         zzStartRead = commentStart;
                         return HS_NOT_TERMINATED_COMMENT;
@@ -1165,7 +1188,6 @@ public class _HaskellLexer implements FlexLexer {
                     case 432:
                         break;
                     case NHADDOCK: {
-                        int state = yystate();
                         yybegin(YYINITIAL);
                         zzStartRead = haddockStart;
                         return HS_NOT_TERMINATED_COMMENT;
@@ -1173,10 +1195,9 @@ public class _HaskellLexer implements FlexLexer {
                     case 433:
                         break;
                     case QQ: {
-                        int state = yystate();
                         yybegin(YYINITIAL);
                         zzStartRead = qqStart;
-                        return HS_QUASIQUOTE;
+                        return HS_NOT_TERMINATED_QQ_EXPRESSION;
                     }  // fall though
                     case 434:
                         break;
@@ -1462,7 +1483,6 @@ public class _HaskellLexer implements FlexLexer {
                         if (commentDepth > 0) {
                             commentDepth--;
                         } else {
-                            int state = yystate();
                             yybegin(YYINITIAL);
                             zzStartRead = commentStart;
                             return HS_NCOMMENT;
@@ -1481,7 +1501,6 @@ public class _HaskellLexer implements FlexLexer {
                         if (haddockDepth > 0) {
                             haddockDepth--;
                         } else {
-                            int state = yystate();
                             yybegin(YYINITIAL);
                             zzStartRead = haddockStart;
                             return HS_NHADDOCK;
@@ -1500,7 +1519,6 @@ public class _HaskellLexer implements FlexLexer {
                         if (qqDepth > 0) {
                             qqDepth--;
                         } else {
-                            int state = yystate();
                             yybegin(YYINITIAL);
                             zzStartRead = qqStart;
                             return HS_QUASIQUOTE;

@@ -143,7 +143,6 @@ nhaddock_start      = {left_brace}{dash}{white_char}?{vertical_bar}
     }
 
     <<EOF>> {
-        int state = yystate();
         yybegin(YYINITIAL);
         zzStartRead = haddockStart;
         return HS_NOT_TERMINATED_COMMENT;
@@ -154,7 +153,6 @@ nhaddock_start      = {left_brace}{dash}{white_char}?{vertical_bar}
             haddockDepth--;
         }
         else {
-             int state = yystate();
              yybegin(YYINITIAL);
              zzStartRead = haddockStart;
              return HS_NHADDOCK;
@@ -177,7 +175,6 @@ nhaddock_start      = {left_brace}{dash}{white_char}?{vertical_bar}
     }
 
     <<EOF>> {
-        int state = yystate();
         yybegin(YYINITIAL);
         zzStartRead = commentStart;
         return HS_NOT_TERMINATED_COMMENT;
@@ -188,7 +185,6 @@ nhaddock_start      = {left_brace}{dash}{white_char}?{vertical_bar}
             commentDepth--;
         }
         else {
-             int state = yystate();
              yybegin(YYINITIAL);
              zzStartRead = commentStart;
              return HS_NCOMMENT;
@@ -245,10 +241,9 @@ nhaddock_start      = {left_brace}{dash}{white_char}?{vertical_bar}
     }
 
     <<EOF>> {
-        int state = yystate();
         yybegin(YYINITIAL);
         zzStartRead = qqStart;
-        return HS_QUASIQUOTE;
+        return HS_NOT_TERMINATED_QQ_EXPRESSION;
     }
 
     {vertical_bar} {right_bracket} {
@@ -256,7 +251,6 @@ nhaddock_start      = {left_brace}{dash}{white_char}?{vertical_bar}
             qqDepth--;
         }
         else {
-             int state = yystate();
              yybegin(YYINITIAL);
              zzStartRead = qqStart;
              return HS_QUASIQUOTE;
