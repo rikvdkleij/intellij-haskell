@@ -69,7 +69,9 @@ object OrmoluReformatAction {
             HaskellNotificationGroup.logWarningBalloonEvent(psiFile.getProject, s"Can not reformat file because could not determine path for file `${psiFile.getName}`. File exists only in memory")
             false
         }
-      case None => false
+      case None =>
+        HaskellNotificationGroup.logWarningBalloonEvent(psiFile.getProject, s"Can not reformat file because `${HTool.Ormolu.name}` is not (yet) available")
+        false
     }
   }
 
