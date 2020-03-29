@@ -79,7 +79,7 @@ object StackCommandLine {
     } else {
       Seq("--system-ghc")
     }
-    val arguments = systemGhcOption ++ Seq("-j1", "--stack-root", toolsStackRootPath.getPath, "--resolver", StackageLtsVersion, "--local-bin-path", toolsBinPath.getPath, "install", toolName)
+    val arguments = systemGhcOption ++ Seq("-j2", "--stack-root", toolsStackRootPath.getPath, "--resolver", StackageLtsVersion, "--local-bin-path", toolsBinPath.getPath, "install", toolName)
 
     val result = runWithProgressIndicator(project, workDir = Some(VfsUtil.getUserHomeDir.getPath), arguments, Some(progressIndicator)).exists(handler => {
       val output = handler.runProcessWithProgressIndicator(progressIndicator)
