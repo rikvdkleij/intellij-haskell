@@ -65,7 +65,7 @@ object CommandLine {
       }
 
       override def readerOptions(): BaseOutputReader.Options = {
-        BaseOutputReader.Options.NON_BLOCKING
+        BaseOutputReader.Options.BLOCKING
       }
     }
   }
