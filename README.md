@@ -24,7 +24,7 @@ Any feedback is welcomed!!
 ___
 ![Duke Lounge](logo/duke.png) 
 ### Duke lounge
-*
+* @seanjensengrey
 
 ___
 
