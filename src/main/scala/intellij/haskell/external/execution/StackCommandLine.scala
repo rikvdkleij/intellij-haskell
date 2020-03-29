@@ -27,6 +27,7 @@ import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Key
 import com.intellij.openapi.vfs.{CharsetToolkit, VfsUtil}
+import com.intellij.util.WaitFor
 import intellij.haskell.HaskellNotificationGroup
 import intellij.haskell.sdk.HaskellSdkType
 import intellij.haskell.settings.HaskellSettingsState
@@ -133,7 +134,18 @@ object StackCommandLine {
     })
   }
 
+  // To prevent message window is not yet available
+  def waitForProjectIsInitialized(project: Project): WaitFor = {
+    new WaitFor(5000, 1) {
+      override def condition(): Boolean = {
+        project.isInitialized
+      }
+    }
+  }
+
   def executeInMessageView(project: Project, commandPath: String, arguments: Seq[String]): Option[Boolean] = {
+    waitForProjectIsInitialized(project)
+
     val cmd = CommandLine.createCommandLine(project.getBasePath, commandPath, arguments ++ HaskellSettingsState.getExtraStackArguments)
     (try {
       Option(cmd.createProcess())
