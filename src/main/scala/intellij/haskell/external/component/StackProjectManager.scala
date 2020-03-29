@@ -136,9 +136,16 @@ object StackProjectManager {
         }
       }
 
+      /**
+        * Check if at least HLint is installed.
+        */
+      private def isHLintInstalled: Boolean = {
+        GlobalInfo.toolPath(HTool.Hlint).exists()
+      }
+
       override def run(progressIndicator: ProgressIndicator): Unit = {
         try {
-          if (update) {
+          if (update || !isHLintInstalled) {
             progressIndicator.setText(s"Busy with updating Stack's package index")
             StackCommandLine.updateStackIndex(project)
           }
