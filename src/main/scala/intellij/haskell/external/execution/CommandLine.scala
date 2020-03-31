@@ -153,7 +153,11 @@ private class CapturingProcessToLog(val project: Option[Project], val cmd: Gener
 private class CapturingProcessToProgressIndicator(project: Project, progressIndicator: ProgressIndicator) extends CapturingProcessAdapter() {
 
   override def onTextAvailable(event: ProcessEvent, outputType: Key[_]): Unit = {
-    progressIndicator.setText2(event.getText)
+    val text = event.getText.trim
+    if (text.nonEmpty) {
+      progressIndicator.setText2(text)
+      HaskellNotificationGroup.logInfoEvent(project, text)
+    }
   }
 }
 
