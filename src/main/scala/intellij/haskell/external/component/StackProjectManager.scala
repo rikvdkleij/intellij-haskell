@@ -28,6 +28,7 @@ import com.intellij.openapi.roots.{ModifiableRootModel, ModuleRootModificationUt
 import com.intellij.openapi.ui.Messages
 import com.intellij.openapi.vfs.VirtualFileManager
 import com.intellij.psi.{PsiTreeChangeAdapter, PsiTreeChangeEvent}
+import com.intellij.ui.EditorNotifications
 import intellij.haskell.HTool.{Hlint, Hoogle, Ormolu, StylishHaskell}
 import intellij.haskell.action.HaskellReformatAction
 import intellij.haskell.annotator.HaskellAnnotator
@@ -36,6 +37,7 @@ import intellij.haskell.external.execution.StackCommandLine
 import intellij.haskell.external.repl.StackRepl.LibType
 import intellij.haskell.external.repl.StackReplsManager
 import intellij.haskell.module.{HaskellModuleBuilder, StackProjectImportBuilder}
+import intellij.haskell.notification.ConfigFileWatcher
 import intellij.haskell.psi.HaskellPsiUtil
 import intellij.haskell.psi.stubs.types.HaskellFileElementType
 import intellij.haskell.sdk.HaskellSdkType
@@ -333,8 +335,12 @@ object StackProjectManager {
               })
 
               if (!project.isDisposed) {
+                val messageBus = project.getMessageBus
+                val notifications = EditorNotifications.getInstance(project)
+                messageBus.connect(project).subscribe(VirtualFileManager.VFS_CHANGES, new ConfigFileWatcher(project, notifications))
+
                 getStackProjectManager(project).map(_.projectLibraryFileWatcher).foreach { watcher =>
-                  ApplicationManager.getApplication.getMessageBus.connect(project).subscribe(VirtualFileManager.VFS_CHANGES, watcher)
+                  messageBus.connect(project).subscribe(VirtualFileManager.VFS_CHANGES, watcher)
                 }
               }
 
