@@ -1,10 +1,9 @@
 package intellij.haskell.notification
 
-import com.intellij.ProjectTopics
 import com.intellij.openapi.fileEditor.FileEditor
 import com.intellij.openapi.project.{Project, ProjectBundle}
+import com.intellij.openapi.roots.ProjectFileIndex
 import com.intellij.openapi.roots.ui.configuration.ProjectSettingsService
-import com.intellij.openapi.roots.{ModuleRootEvent, ModuleRootListener, ProjectFileIndex}
 import com.intellij.openapi.util.Key
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.ui.{EditorNotificationPanel, EditorNotifications}
@@ -16,17 +15,11 @@ object SetupHaskellSdkNotificationProvider {
   private val SdkNotificationPanelKey: Key[EditorNotificationPanel] = Key.create("Setup Haskell Stack SDK")
 }
 
-class SetupHaskellSdkNotificationProvider(project: Project, notifications: EditorNotifications) extends EditorNotifications.Provider[EditorNotificationPanel] {
-  project.getMessageBus.connect(project).subscribe(ProjectTopics.PROJECT_ROOTS, new ModuleRootListener() {
-
-    override def rootsChanged(event: ModuleRootEvent): Unit = {
-      notifications.updateAllNotifications()
-    }
-  })
+class SetupHaskellSdkNotificationProvider extends EditorNotifications.Provider[EditorNotificationPanel] {
 
   override def getKey: Key[EditorNotificationPanel] = SetupHaskellSdkNotificationProvider.SdkNotificationPanelKey
 
-  override def createNotificationPanel(virtualFile: VirtualFile, fileEditor: FileEditor): EditorNotificationPanel = {
+  override def createNotificationPanel(virtualFile: VirtualFile, fileEditor: FileEditor, project: Project): EditorNotificationPanel = {
     if (HaskellProjectUtil.isHaskellProject(project) && HaskellProjectUtil.isSourceFile(project, virtualFile)) {
       HaskellProjectUtil.findModuleForVirtualFile(project, virtualFile).flatMap(m => HaskellSdkType.getSdkName(project, m)) match {
         case None =>
@@ -43,6 +36,8 @@ class SetupHaskellSdkNotificationProvider(project: Project, notifications: Edito
   }
 
   private def createSdkSetupPanel(project: Project) = {
+    val notifications = EditorNotifications.getInstance(project)
+
     createPanel(
       project,
       ProjectBundle.message("project.sdk.not.defined"),

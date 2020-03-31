@@ -18,13 +18,14 @@ package intellij.haskell.external.component
 
 import java.io.File
 
+import com.intellij.ProjectTopics
 import com.intellij.openapi.actionSystem.ActionManager
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.components.ProjectComponent
 import com.intellij.openapi.progress.{PerformInBackgroundOption, ProgressIndicator, ProgressManager, Task}
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.projectRoots.ProjectJdkTable
-import com.intellij.openapi.roots.{ModifiableRootModel, ModuleRootModificationUtil}
+import com.intellij.openapi.roots.{ModifiableRootModel, ModuleRootEvent, ModuleRootListener, ModuleRootModificationUtil}
 import com.intellij.openapi.ui.Messages
 import com.intellij.openapi.vfs.VirtualFileManager
 import com.intellij.psi.{PsiTreeChangeAdapter, PsiTreeChangeEvent}
@@ -338,6 +339,13 @@ object StackProjectManager {
                 val messageBus = project.getMessageBus
                 val notifications = EditorNotifications.getInstance(project)
                 messageBus.connect(project).subscribe(VirtualFileManager.VFS_CHANGES, new ConfigFileWatcher(project, notifications))
+
+
+                messageBus.connect(project).subscribe(ProjectTopics.PROJECT_ROOTS, new ModuleRootListener() {
+                  override def rootsChanged(event: ModuleRootEvent): Unit = {
+                    notifications.updateAllNotifications()
+                  }
+                })
 
                 getStackProjectManager(project).map(_.projectLibraryFileWatcher).foreach { watcher =>
                   messageBus.connect(project).subscribe(VirtualFileManager.VFS_CHANGES, watcher)
