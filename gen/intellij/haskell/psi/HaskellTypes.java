@@ -135,6 +135,7 @@ public interface HaskellTypes {
   IElementType HS_LEFT_BRACKET = new HaskellTokenType("LEFT_BRACKET");
   IElementType HS_LEFT_PAREN = new HaskellTokenType("LEFT_PAREN");
   IElementType HS_LET = new HaskellTokenType("LET");
+  IElementType HS_LIST_COMPREHENSION = new HaskellTokenType("LIST_COMPREHENSION");
   IElementType HS_MODULE = new HaskellTokenType("MODULE");
   IElementType HS_NCOMMENT = new HaskellTokenType("NCOMMENT");
   IElementType HS_NEWLINE = new HaskellTokenType("NEWLINE");

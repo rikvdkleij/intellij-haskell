@@ -236,7 +236,7 @@ nhaddock_start      = {left_brace}{dash}{white_char}?{vertical_bar}
 
 
 <QQ> {
-    {left_bracket} ({var_id}|{con_id}|{dot})* {vertical_bar} {
+    {left_bracket} ({var_id}|{con_id}|{dot}|{white_char})* {vertical_bar} {
         qqDepth++;
     }
 
@@ -257,10 +257,21 @@ nhaddock_start      = {left_brace}{dash}{white_char}?{vertical_bar}
         }
     }
 
+    {right_bracket} {
+            if (qqDepth > 0) {
+                qqDepth--;
+            }
+            else {
+                 yybegin(YYINITIAL);
+                 zzStartRead = qqStart;
+                 return HS_LIST_COMPREHENSION;
+            }
+        }
+
     .|{white_char}|{newline} {}
 }
 
-{left_bracket} ({var_id}|{con_id}|{dot})* {vertical_bar} {
+{left_bracket} ({var_id}|{con_id}|{dot}|{white_char})* {vertical_bar} {
     yybegin(QQ);
     qqDepth = 0;
     qqStart = getTokenStart();
