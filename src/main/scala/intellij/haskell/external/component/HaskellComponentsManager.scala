@@ -122,16 +122,12 @@ object HaskellComponentsManager {
     HaskellModuleInfoComponent.invalidate(psiFile)
   }
 
-  def invalidateLocations(psiFile: PsiFile): Unit = {
-    DefinitionLocationComponent.invalidate(psiFile)
-  }
-
   def findProjectModulePackageNames(project: Project): Seq[(Module, String)] = {
     findStackComponentInfos(project).map(info => (info.module, info.packageName)).distinct
   }
 
-  def invalidateDefinitionLocations(psiFile: PsiFile): Unit = {
-    DefinitionLocationComponent.invalidate(psiFile)
+  def invalidateDefinitionLocations(project: Project): Unit = {
+    DefinitionLocationComponent.invalidate(project)
   }
 
   def findLibraryPackageInfos(project: Project): Seq[PackageInfo] = {
@@ -159,6 +155,7 @@ object HaskellComponentsManager {
     LibraryPackageInfoComponent.invalidate(project)
     HaskellModuleNameIndex.invalidate(project)
     FileModuleIdentifiers.invalidateAll(project)
+    StackComponentGlobalInfoComponent.invalidate(project)
     HaskellNotificationGroup.logInfoEvent(project, "Finished with invalidating cache")
   }
 

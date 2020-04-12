@@ -35,7 +35,7 @@ class HaskellRenameVariableProcessor extends RenamePsiElementProcessor {
     val project = targetElement.getProject
     for {
       cf <- getCurrentFile(project)
-      () = HaskellComponentsManager.invalidateDefinitionLocations(cf)
+      () = HaskellComponentsManager.invalidateDefinitionLocations(project)
       tf <- Option(targetElement.getContainingFile).map(_.getOriginalFile)
       targetInfo <- HaskellComponentsManager.findStackComponentInfo(tf)
       currentInfo <- HaskellComponentsManager.findStackComponentInfo(cf)
@@ -61,6 +61,7 @@ class HaskellRenameVariableProcessor extends RenamePsiElementProcessor {
   override def getPostRenameCallback(targetElement: PsiElement, newName: String, elementListener: RefactoringElementListener): Runnable = {
     ScalaUtil.runnable {
       val project = targetElement.getProject
+      HaskellComponentsManager.invalidateDefinitionLocations(project)
       HaskellFileUtil.saveFiles(project)
     }
   }

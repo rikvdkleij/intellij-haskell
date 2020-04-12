@@ -65,8 +65,8 @@ private[component] object DefinitionLocationComponent {
     synchronousCache.asMap().filter(_._1.psiFile.getProject == project).keys.foreach(synchronousCache.invalidate)
   }
 
-  def invalidate(psiFile: PsiFile): Unit = {
-    val keys = Cache.asMap().filter { case (k, v) =>
+  def invalidate(project: Project): Unit = {
+    val keys = Cache.asMap().filter { case (k, v) if k.psiFile.getProject == project =>
       if (checkValidKey(k)) {
         v.toOption match {
           case Some(definitionLocation) if checkValidLocation(definitionLocation) && checkValidName(k, definitionLocation) => false
