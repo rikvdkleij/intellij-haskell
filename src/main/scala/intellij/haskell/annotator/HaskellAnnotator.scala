@@ -34,7 +34,7 @@ import com.intellij.psi.PsiFile
 import com.intellij.psi.impl.source.tree.TreeUtil
 import com.intellij.psi.util.PsiTreeUtil
 import intellij.haskell.editor.{HaskellImportOptimizer, HaskellProblemsView}
-import intellij.haskell.external.component.{StackProjectManager, _}
+import intellij.haskell.external.component._
 import intellij.haskell.external.execution._
 import intellij.haskell.psi._
 import intellij.haskell.runconfig.console.HaskellConsoleView
@@ -52,9 +52,8 @@ class HaskellAnnotator extends ExternalAnnotator[PsiFile, CompilationResult] {
       null
     } else if (StackProjectManager.isInitializing(psiFile.getProject)) {
       val project = psiFile.getProject
-      // Last file is leading
-      HaskellNotificationGroup.logInfoEvent(project, s"File ${psiFile.getName} could not be loaded because project is still initializing")
-      HaskellAnnotator.NotLoadedFile.put(project, psiFile)
+      HaskellNotificationGroup.logInfoEvent(project, s"File ${psiFile.getName} could not be loaded because the REPL is not (yet) available")
+      HaskellAnnotator.addNotLoadedFile(psiFile)
       null
     } else {
       (psiFile, HaskellFileUtil.findVirtualFile(psiFile)) match {
@@ -148,7 +147,25 @@ object HaskellAnnotator {
   private final val HolePattern = """warning: \[\-Wtyped\-holes\] (.+)""".r
 
   // File which could not be loaded because project was not yet build
-  final val NotLoadedFile = new ConcurrentHashMap[Project, PsiFile].asScala
+  private final val NotLoadedFiles = new ConcurrentHashMap[Project, Set[PsiFile]]
+
+  import scala.jdk.FunctionConverters._
+
+  def addNotLoadedFile(psiFile: PsiFile): Set[PsiFile] = {
+    NotLoadedFiles.merge(psiFile.getProject, Set(psiFile), {
+      (x1: Set[PsiFile], x2: Set[PsiFile]) => x1 ++ x2
+    }.asJavaBiFunction)
+  }
+
+  def getNotLoadedFiles(project: Project): Set[PsiFile] = {
+    NotLoadedFiles.getOrDefault(project, Set[PsiFile]())
+  }
+
+  def removeNotLoadedFile(psiFile: PsiFile): Set[PsiFile] = {
+    NotLoadedFiles.compute(psiFile.getProject, {
+      (_: Project, x2: Set[PsiFile]) => x2.filter(_ != psiFile)
+    }.asJavaBiFunction)
+  }
 
   def getDaemonCodeAnalyzer(project: Project): DaemonCodeAnalyzerImpl = {
     DaemonCodeAnalyzer.getInstance(project).asInstanceOf[DaemonCodeAnalyzerImpl]

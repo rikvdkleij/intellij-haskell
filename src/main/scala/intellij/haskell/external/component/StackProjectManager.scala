@@ -397,7 +397,7 @@ object StackProjectManager {
 
             // Force-load the module in REPL when REPL can be started. IntelliJ could have wanted to load file (via HaskellAnnotator)
             // but the REPL couldn't be started yet.
-            HaskellAnnotator.NotLoadedFile.remove(project) foreach { psiFile =>
+            HaskellAnnotator.getNotLoadedFiles(project) foreach { psiFile =>
               HaskellNotificationGroup.logInfoEvent(project, s"${psiFile.getName} will be force-loaded")
               HaskellAnnotator.restartDaemonCodeAnalyzerForFile(psiFile)
             }

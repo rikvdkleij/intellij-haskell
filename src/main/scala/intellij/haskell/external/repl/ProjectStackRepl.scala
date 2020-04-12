@@ -28,7 +28,7 @@ import intellij.haskell.util.{HaskellFileUtil, ScalaFutureUtil}
 import scala.concurrent.{Future, blocking}
 import scala.jdk.CollectionConverters._
 
-case class ProjectStackRepl(project: Project, stackComponentInfo: StackComponentInfo, replTimeout: Int) extends StackRepl(project, Some(stackComponentInfo), Seq("--ghc-options", "-fobject-code"), replTimeout: Int) {
+case class ProjectStackRepl(project: Project, stackComponentInfo: StackComponentInfo, replTimeout: Int) extends StackRepl(project, Some(stackComponentInfo), Seq(), replTimeout: Int) {
 
   import intellij.haskell.external.repl.ProjectStackRepl._
 
@@ -59,9 +59,6 @@ case class ProjectStackRepl(project: Project, stackComponentInfo: StackComponent
   private[this] val loadedDependentModules = new ConcurrentHashMap[ModuleName, DependentModuleInfo]().asScala
   private[this] val everLoadedDependentModules = new ConcurrentHashMap[ModuleName, DependentModuleInfo]().asScala
 
-  @volatile
-  private var objectCodeEnabled = true
-
   import scala.concurrent.ExecutionContext.Implicits.global
 
   def findTypeInfo(moduleName: Option[String], psiFile: PsiFile, startLineNr: Int, startColumnNr: Int, endLineNr: Int, endColumnNr: Int, expression: String): Option[StackReplOutput] = {
@@ -91,7 +88,7 @@ case class ProjectStackRepl(project: Project, stackComponentInfo: StackComponent
   def findInfo(psiFile: PsiFile, name: String): Option[StackReplOutput] = {
     def execute = {
       blocking {
-        executeWithLoad(psiFile, s":info $name", mustBeByteCode = true)
+        executeWithLoad(psiFile, s":info $name")
       }
     }
 
@@ -99,11 +96,11 @@ case class ProjectStackRepl(project: Project, stackComponentInfo: StackComponent
   }
 
   def isModuleLoaded(moduleName: String): Boolean = {
-    everLoadedDependentModules.get(moduleName).isDefined
+    everLoadedDependentModules.contains(moduleName)
   }
 
   def isBrowseModuleLoaded(moduleName: String): Boolean = {
-    loadedDependentModules.get(moduleName).isDefined
+    loadedDependentModules.contains(moduleName)
   }
 
   def isFileLoaded(psiFile: PsiFile): IsFileLoaded = {
@@ -126,29 +123,19 @@ case class ProjectStackRepl(project: Project, stackComponentInfo: StackComponent
     }
   }
 
-  def load(psiFile: PsiFile, fileModified: Boolean, mustBeByteCode: Boolean): Option[(StackReplOutput, Boolean)] = synchronized {
-    val forceBytecodeLoad = if (mustBeByteCode) objectCodeEnabled else false
-    val reload = if (forceBytecodeLoad || !fileModified) {
-      false
-    } else {
+  def load(psiFile: PsiFile, fileModified: Boolean): Option[(StackReplOutput, Boolean)] = synchronized {
+    val reload = if (fileModified) {
       val loaded = isFileLoaded(psiFile)
       loaded == Loaded || loaded == Failed
+    } else {
+      false
     }
 
     val output = if (reload) {
       execute(s":reload")
     } else {
-      // In case module has to be compiled to byte-code: :set -fbyte-code AND load flag *
-      if (forceBytecodeLoad) {
-        objectCodeEnabled = false
-        execute(s":set -fbyte-code")
-      } else if (!objectCodeEnabled && !mustBeByteCode) {
-        objectCodeEnabled = true
-        execute(s":set -fobject-code")
-      }
-      val loadDependentModulesFlag = if (objectCodeEnabled) "" else "*"
       val filePath = getFilePath(psiFile)
-      execute(s":load $loadDependentModulesFlag$filePath")
+      execute(s":load *$filePath")
     }
 
     output match {
@@ -170,7 +157,7 @@ case class ProjectStackRepl(project: Project, stackComponentInfo: StackComponent
       Future {
         blocking {
           synchronized {
-            if (psiFile.isEmpty || isBrowseModuleLoaded(moduleName) || psiFile.exists(pf => load(pf, fileModified = false, mustBeByteCode = false).exists(_._2 == false))) {
+            if (psiFile.isEmpty || isBrowseModuleLoaded(moduleName) || psiFile.exists(pf => load(pf, fileModified = false).exists(_._2 == false))) {
               execute(s":browse! $moduleName")
             } else {
               HaskellNotificationGroup.logInfoEvent(project, s"Couldn't get module identifiers for module $moduleName because file ${psiFile.map(_.getName).getOrElse("-")} isn't loaded")
@@ -192,15 +179,15 @@ case class ProjectStackRepl(project: Project, stackComponentInfo: StackComponent
     if (moduleName.exists(isModuleLoaded)) {
       execute(command)
     } else {
-      executeWithLoad(psiFile, command, mustBeByteCode = false)
+      executeWithLoad(psiFile, command)
     }
   }
 
-  private def executeWithLoad(psiFile: PsiFile, command: String, moduleName: Option[String] = None, mustBeByteCode: Boolean): Option[StackReplOutput] = synchronized {
+  private def executeWithLoad(psiFile: PsiFile, command: String): Option[StackReplOutput] = synchronized {
     loadedFile match {
-      case Some(info) if info.psiFile == psiFile & !info.loadFailed & (if (mustBeByteCode) !objectCodeEnabled else true) => execute(command)
+      case Some(info) if info.psiFile == psiFile && !info.loadFailed => execute(command)
       case _ =>
-        load(psiFile, fileModified = false, mustBeByteCode)
+        load(psiFile, fileModified = false)
         loadedFile match {
           case None => None
           case Some(info) if info.psiFile == psiFile => execute(command)
