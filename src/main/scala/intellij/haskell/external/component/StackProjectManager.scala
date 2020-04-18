@@ -122,7 +122,7 @@ object StackProjectManager {
             case Hlint => HaskellSettingsState.hlintPath
             case Hoogle => HaskellSettingsState.hooglePath
             case Ormolu => HaskellSettingsState.ormoluPath
-            case StylishHaskell => None
+            case StylishHaskell => HaskellSettingsState.stylishHaskellPath
           }
         } else {
           if (!GlobalInfo.toolPath(tool).exists() || update) {

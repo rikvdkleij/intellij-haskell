@@ -71,6 +71,7 @@ class HaskellConfigurable extends Configurable {
     hlintPathField.getDocument.addDocumentListener(docListener)
     hooglePathField.getDocument.addDocumentListener(docListener)
     ormoluPathField.getDocument.addDocumentListener(docListener)
+    stylishHaskellPathField.getDocument.addDocumentListener(docListener)
     useSystemGhcToggle.addChangeListener { _ =>
       isModifiedByUser = true
     }
@@ -128,6 +129,7 @@ class HaskellConfigurable extends Configurable {
       (new JLabel(HlintPath), hlintPathField),
       (new JLabel(HooglePath), hooglePathField),
       (new JLabel(OrmoluPath), ormoluPathField),
+      (new JLabel(StylishHaskellPath), stylishHaskellPathField),
       (new JLabel(""), afterRestartLabel)
     )
 
@@ -164,6 +166,7 @@ class HaskellConfigurable extends Configurable {
     state.hlintPath = hlintPathField.getText
     state.hooglePath = hooglePathField.getText
     state.ormoluPath = ormoluPathField.getText
+    state.stylishHaskellPath = stylishHaskellPathField.getText
     state.customTools = useCustomToolsToggle.isSelected
     state.extraStackArguments = extraStackArgumentsField.getText
   }
@@ -191,6 +194,7 @@ class HaskellConfigurable extends Configurable {
     if (useCustomToolsToggle.isSelected) {
       if (
         ormoluPathField.getText.trim.isEmpty ||
+          stylishHaskellPathField.getText.trim.isEmpty ||
           hlintPathField.getText.trim.isEmpty ||
           hooglePathField.getText.trim.isEmpty) {
         throw new ConfigurationException(s"All Haskell tools paths have to be set")
@@ -199,6 +203,7 @@ class HaskellConfigurable extends Configurable {
       checkFileExists(hlintPathField.getText)
       checkFileExists(hooglePathField.getText)
       checkFileExists(ormoluPathField.getText)
+      checkFileExists(stylishHaskellPathField.getText)
     }
   }
 
@@ -216,6 +221,7 @@ class HaskellConfigurable extends Configurable {
     hlintPathField.setText(state.hlintPath)
     hooglePathField.setText(state.hooglePath)
     ormoluPathField.setText(state.ormoluPath)
+    stylishHaskellPathField.setText(state.stylishHaskellPath)
     useCustomToolsToggle.setSelected(state.customTools)
     extraStackArgumentsField.setText(state.extraStackArguments)
   }

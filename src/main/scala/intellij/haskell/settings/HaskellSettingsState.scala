@@ -67,6 +67,10 @@ object HaskellSettingsState {
     Option.when(customTools && state.ormoluPath.nonEmpty)(state.ormoluPath)
   }
 
+  def stylishHaskellPath: Option[String] = {
+    Option.when(customTools && state.stylishHaskellPath.nonEmpty)(state.stylishHaskellPath)
+  }
+
   def useCustomTools: Boolean = {
     state.customTools
   }
