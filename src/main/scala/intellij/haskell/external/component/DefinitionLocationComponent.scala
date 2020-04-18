@@ -83,7 +83,7 @@ private[component] object DefinitionLocationComponent {
     try {
       ApplicationUtil.runReadAction(key.qualifiedNameElement.isValid) && ApplicationUtil.runReadAction(key.qualifiedNameElement.getIdentifierElement.isValid)
     } catch {
-      case _: Exception => false
+      case _: Throwable => false
     }
   }
 
