@@ -123,8 +123,10 @@ case class ProjectStackRepl(project: Project, stackComponentInfo: StackComponent
     }
   }
 
-  def load(psiFile: PsiFile, fileModified: Boolean): Option[(StackReplOutput, Boolean)] = synchronized {
-    val reload = if (fileModified) {
+  def load(psiFile: PsiFile, fileModified: Boolean, forceNoReload: Boolean = false): Option[(StackReplOutput, Boolean)] = synchronized {
+    val reload = if (forceNoReload) {
+      false
+    } else if (fileModified) {
       val loaded = isFileLoaded(psiFile)
       loaded == Loaded || loaded == Failed
     } else {

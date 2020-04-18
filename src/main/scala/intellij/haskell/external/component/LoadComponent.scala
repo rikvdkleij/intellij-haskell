@@ -55,7 +55,7 @@ private[component] object LoadComponent {
       {
         if (HaskellAnnotator.getNotLoadedFiles(project).contains(psiFile)) {
           HaskellAnnotator.removeNotLoadedFile(psiFile)
-          projectRepl.load(psiFile, fileModified = true)
+          projectRepl.load(psiFile, fileModified, forceNoReload = true)
         } else {
           projectRepl.load(psiFile, fileModified)
         }
