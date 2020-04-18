@@ -39,7 +39,7 @@ object ApplicationUtil {
     } else {
       val progressIndicator = Option(ProgressIndicatorProvider.getGlobalProgressIndicator)
       val readAction = ReadAction.nonBlocking(ScalaUtil.callable(f))
-      progressIndicator.foreach(readAction.cancelWith)
+      progressIndicator.foreach(readAction.wrapProgress)
       project.foreach(readAction.expireWith)
       readAction.submit(AppExecutorUtil.getAppExecutorService).get(5, TimeUnit.SECONDS)
     }
@@ -51,7 +51,7 @@ object ApplicationUtil {
     } else {
       val progressIndicator = Option(ProgressIndicatorProvider.getGlobalProgressIndicator)
       val readAction = ReadAction.nonBlocking(ScalaUtil.callable(f)).inSmartMode(project)
-      progressIndicator.foreach(readAction.cancelWith)
+      progressIndicator.foreach(readAction.wrapProgress)
       readAction.expireWith(project)
       try {
         Option(readAction.submit(AppExecutorUtil.getAppExecutorService).get(5, TimeUnit.SECONDS)) match {
