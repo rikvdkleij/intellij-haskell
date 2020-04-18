@@ -166,7 +166,7 @@ q_names                     ::= q_name (COMMA q_name)*
 gtycon                      ::= QUOTE? q_name | LEFT_PAREN RIGHT_ARROW RIGHT_PAREN | LEFT_PAREN RIGHT_PAREN | QUOTE? LEFT_BRACKET RIGHT_BRACKET | LEFT_PAREN COMMA (COMMA)* RIGHT_PAREN
 
 private constrs             ::= constr (onls VERTICAL_BAR onls constr)*
-constr                      ::= (type_signature | ttype | constr1 | constr2 | constr3)
+constr                      ::= (constr1 | constr2 | constr3 | type_signature | ttype)
 constr1                     ::= pragma? (onls q_name)? (onls pragma)? onls LEFT_BRACE onl fielddecl? ((onl COMMA)? onl fielddecl)* onl RIGHT_BRACE
 constr2                     ::= pragma? onls (q_name+ | LEFT_PAREN q_name* RIGHT_PAREN | LEFT_BRACKET q_name* RIGHT_BRACKET) (onls pragma onls)? ((onls pragma)? onls ttype (onls pragma)?)*  // Base.hs: data () = () and GHC.Types.hs: data [] a = [] | a : [a]
 constr3                     ::= (onls pragma? onls ttype)+
@@ -240,7 +240,7 @@ cidecl                      ::= pragma | instance_declaration | default_declarat
                                   newtype_declaration | data_declaration | type_declaration | type_family_declaration | line_expression
 
 expression                  ::= line_expression (nls line_expression)*
-private line_expression     ::= general_id* LIST_COMPREHENSION general_id* | general_id+ | NOT_TERMINATED_QQ_EXPRESSION
+private line_expression     ::= (general_id | LIST_COMPREHENSION)+ | NOT_TERMINATED_QQ_EXPRESSION
 
 private general_id          ::= quasi_quote | q_name | symbol_reserved_op | reserved_id | LEFT_PAREN | RIGHT_PAREN | FLOAT |
                                   SEMICOLON | LEFT_BRACKET | RIGHT_BRACKET | literal | LEFT_BRACE | RIGHT_BRACE |

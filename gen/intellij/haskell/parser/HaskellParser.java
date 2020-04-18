@@ -1393,16 +1393,16 @@ public class HaskellParser implements PsiParser, LightPsiParser {
   }
 
   /* ********************************************************** */
-  // type_signature | ttype | constr1 | constr2 | constr3
+  // constr1 | constr2 | constr3 | type_signature | ttype
   public static boolean constr(PsiBuilder b, int l) {
     if (!recursion_guard_(b, l, "constr")) return false;
     boolean r;
     Marker m = enter_section_(b, l, _NONE_, HS_CONSTR, "<constr>");
-    r = type_signature(b, l + 1);
-    if (!r) r = ttype(b, l + 1);
-    if (!r) r = constr1(b, l + 1);
+    r = constr1(b, l + 1);
     if (!r) r = constr2(b, l + 1);
     if (!r) r = constr3(b, l + 1);
+    if (!r) r = type_signature(b, l + 1);
+    if (!r) r = ttype(b, l + 1);
     exit_section_(b, l, m, r, false, null);
     return r;
   }
@@ -4120,64 +4120,38 @@ public class HaskellParser implements PsiParser, LightPsiParser {
   }
 
   /* ********************************************************** */
-  // general_id* LIST_COMPREHENSION general_id* | general_id+ | NOT_TERMINATED_QQ_EXPRESSION
+  // (general_id | LIST_COMPREHENSION)+ | NOT_TERMINATED_QQ_EXPRESSION
   static boolean line_expression(PsiBuilder b, int l) {
     if (!recursion_guard_(b, l, "line_expression")) return false;
     boolean r;
     Marker m = enter_section_(b);
     r = line_expression_0(b, l + 1);
-    if (!r) r = line_expression_1(b, l + 1);
     if (!r) r = consumeToken(b, HS_NOT_TERMINATED_QQ_EXPRESSION);
     exit_section_(b, m, null, r);
     return r;
   }
 
-  // general_id* LIST_COMPREHENSION general_id*
+  // (general_id | LIST_COMPREHENSION)+
   private static boolean line_expression_0(PsiBuilder b, int l) {
     if (!recursion_guard_(b, l, "line_expression_0")) return false;
     boolean r;
     Marker m = enter_section_(b);
     r = line_expression_0_0(b, l + 1);
-    r = r && consumeToken(b, HS_LIST_COMPREHENSION);
-    r = r && line_expression_0_2(b, l + 1);
+    while (r) {
+      int c = current_position_(b);
+      if (!line_expression_0_0(b, l + 1)) break;
+      if (!empty_element_parsed_guard_(b, "line_expression_0", c)) break;
+    }
     exit_section_(b, m, null, r);
     return r;
   }
 
-  // general_id*
+  // general_id | LIST_COMPREHENSION
   private static boolean line_expression_0_0(PsiBuilder b, int l) {
     if (!recursion_guard_(b, l, "line_expression_0_0")) return false;
-    while (true) {
-      int c = current_position_(b);
-      if (!general_id(b, l + 1)) break;
-      if (!empty_element_parsed_guard_(b, "line_expression_0_0", c)) break;
-    }
-    return true;
-  }
-
-  // general_id*
-  private static boolean line_expression_0_2(PsiBuilder b, int l) {
-    if (!recursion_guard_(b, l, "line_expression_0_2")) return false;
-    while (true) {
-      int c = current_position_(b);
-      if (!general_id(b, l + 1)) break;
-      if (!empty_element_parsed_guard_(b, "line_expression_0_2", c)) break;
-    }
-    return true;
-  }
-
-  // general_id+
-  private static boolean line_expression_1(PsiBuilder b, int l) {
-    if (!recursion_guard_(b, l, "line_expression_1")) return false;
     boolean r;
-    Marker m = enter_section_(b);
     r = general_id(b, l + 1);
-    while (r) {
-      int c = current_position_(b);
-      if (!general_id(b, l + 1)) break;
-      if (!empty_element_parsed_guard_(b, "line_expression_1", c)) break;
-    }
-    exit_section_(b, m, null, r);
+    if (!r) r = consumeToken(b, HS_LIST_COMPREHENSION);
     return r;
   }
 
