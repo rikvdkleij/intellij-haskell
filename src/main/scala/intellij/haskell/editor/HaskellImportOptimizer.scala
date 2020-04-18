@@ -83,13 +83,14 @@ object HaskellImportOptimizer {
   def removeRedundantImportIds(psiFile: PsiFile, moduleName: String, idNames: Seq[String], lineNr: Option[Int]): Unit = {
     HaskellPsiUtil.findImportDeclarations(psiFile).find(d => d.getModuleName.contains(moduleName) && getLineNr(psiFile, d) == lineNr).foreach { importDeclaration =>
       val prefix = Option(importDeclaration.getImportQualifiedAs).map(_.getQualifier.getName).orElse(importDeclaration.getModuleName)
-      val idsToRemove = importDeclaration.getImportSpec.getImportIdsSpec.getImportIdList.asScala.flatMap(_.getQNameList.asScala).filter(qn => idNames.exists(idn => idn == qn.getName || prefix.exists(p => idn == p + "." + qn.getName)))
+      val idsToRemove = importDeclaration.getImportSpec.getImportIdsSpec.getImportIdList.asScala.filter(qn => idNames.exists(idn => idn == qn.getText || prefix.exists(p => idn == p + "." + qn.getText)))
       idsToRemove.foreach { iid =>
-        val iidParent = iid.getParent
-        val commaToRemove = Option(PsiTreeUtil.findSiblingBackward(iidParent, HS_COMMA, true, null)).orElse(Option(PsiTreeUtil.findSiblingForward(iidParent, HS_COMMA, true, null)))
-        val whiteSpaceRemove = Option(PsiTreeUtil.findSiblingBackward(iidParent, WHITE_SPACE, true, null)).orElse(Option(PsiTreeUtil.findSiblingForward(iidParent, WHITE_SPACE, true, null)))
+        val commaToRemove = Option(PsiTreeUtil.findSiblingBackward(iid, HS_COMMA, true, null)).orElse(Option(PsiTreeUtil.findSiblingForward(iid, HS_COMMA, true, null)))
+        val whiteSpaceRemove = Option(PsiTreeUtil.findSiblingBackward(iid, WHITE_SPACE, true, null)).orElse(Option(PsiTreeUtil.findSiblingForward(iid, WHITE_SPACE, true, null)))
+        val newline = whiteSpaceRemove.flatMap(s => Option(PsiTreeUtil.findSiblingForward(s, HS_NEWLINE, true, null)))
         WriteCommandAction.runWriteCommandAction(psiFile.getProject, ScalaUtil.computable {
           whiteSpaceRemove.foreach(_.delete())
+          newline.foreach(_.delete())
           commaToRemove.foreach(_.delete())
           iid.delete()
         })
