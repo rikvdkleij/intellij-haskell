@@ -66,16 +66,16 @@ private[component] object DefinitionLocationComponent {
   }
 
   def invalidate(project: Project): Unit = {
-    val keys = Cache.asMap().filter { case (k, v) if k.psiFile.getProject == project =>
+    val keys = Cache.asMap().collect { case (k, v) if k.psiFile.getProject == project =>
       if (checkValidKey(k)) {
         v.toOption match {
-          case Some(definitionLocation) if checkValidLocation(definitionLocation) && checkValidName(k, definitionLocation) => false
-          case _ => true
+          case Some(definitionLocation) if checkValidLocation(definitionLocation) && checkValidName(k, definitionLocation) => None
+          case _ => Some(k)
         }
       } else {
-        true
+        Some(k)
       }
-    }.keys
+    }.flatten
     Cache.invalidateAll(keys)
   }
 
