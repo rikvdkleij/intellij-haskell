@@ -14,10 +14,4 @@ public interface HaskellConstr extends HaskellCompositeElement {
   @Nullable
   HaskellConstr3 getConstr3();
 
-  @Nullable
-  HaskellTtype getTtype();
-
-  @Nullable
-  HaskellTypeSignature getTypeSignature();
-
 }

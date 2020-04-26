@@ -41,16 +41,4 @@ public class HaskellConstrImpl extends HaskellCompositeElementImpl implements Ha
     return PsiTreeUtil.getChildOfType(this, HaskellConstr3.class);
   }
 
-  @Override
-  @Nullable
-  public HaskellTtype getTtype() {
-    return PsiTreeUtil.getChildOfType(this, HaskellTtype.class);
-  }
-
-  @Override
-  @Nullable
-  public HaskellTypeSignature getTypeSignature() {
-    return PsiTreeUtil.getChildOfType(this, HaskellTypeSignature.class);
-  }
-
 }

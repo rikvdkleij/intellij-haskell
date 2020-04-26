@@ -16,4 +16,7 @@ public interface HaskellConstr2 extends HaskellCompositeElement {
   @NotNull
   List<HaskellTtype> getTtypeList();
 
+  @NotNull
+  List<HaskellTypeSignature> getTypeSignatureList();
+
 }

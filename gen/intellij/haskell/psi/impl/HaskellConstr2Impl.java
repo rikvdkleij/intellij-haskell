@@ -42,4 +42,10 @@ public class HaskellConstr2Impl extends HaskellCompositeElementImpl implements H
     return PsiTreeUtil.getChildrenOfTypeAsList(this, HaskellTtype.class);
   }
 
+  @Override
+  @NotNull
+  public List<HaskellTypeSignature> getTypeSignatureList() {
+    return PsiTreeUtil.getChildrenOfTypeAsList(this, HaskellTypeSignature.class);
+  }
+
 }

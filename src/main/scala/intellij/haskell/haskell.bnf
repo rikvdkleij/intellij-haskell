@@ -166,9 +166,9 @@ q_names                     ::= q_name (COMMA q_name)*
 gtycon                      ::= QUOTE? q_name | LEFT_PAREN RIGHT_ARROW RIGHT_PAREN | LEFT_PAREN RIGHT_PAREN | QUOTE? LEFT_BRACKET RIGHT_BRACKET | LEFT_PAREN COMMA (COMMA)* RIGHT_PAREN
 
 private constrs             ::= constr (onls VERTICAL_BAR onls constr)*
-constr                      ::= (constr1 | constr2 | constr3 | type_signature | ttype)
+constr                      ::= (constr1 | constr2 | constr3)
 constr1                     ::= pragma? (onls q_name)? (onls pragma)? onls LEFT_BRACE onl fielddecl? ((onl COMMA)? onl fielddecl)* onl RIGHT_BRACE
-constr2                     ::= pragma? onls (q_name+ | LEFT_PAREN q_name* RIGHT_PAREN | LEFT_BRACKET q_name* RIGHT_BRACKET) (onls pragma onls)? ((onls pragma)? onls ttype (onls pragma)?)*  // Base.hs: data () = () and GHC.Types.hs: data [] a = [] | a : [a]
+constr2                     ::= pragma? onls (type_signature | ttype | q_name | LEFT_PAREN q_name* RIGHT_PAREN | LEFT_BRACKET q_name* RIGHT_BRACKET)+ (onls pragma onls)? ((onls pragma)? onls ttype (onls pragma)?)*  // Base.hs: data () = () and GHC.Types.hs: data [] a = [] | a : [a]
 constr3                     ::= (onls pragma? onls ttype)+
 
 fielddecl                   ::= q_names (onl COLON_COLON pragma? (onls ("forall" | FORALL) (onls q_name)+)? (onls scontext onls DOUBLE_RIGHT_ARROW)? pragma? onls ttype)?

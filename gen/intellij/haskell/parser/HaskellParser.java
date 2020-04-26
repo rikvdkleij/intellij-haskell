@@ -1393,7 +1393,7 @@ public class HaskellParser implements PsiParser, LightPsiParser {
   }
 
   /* ********************************************************** */
-  // constr1 | constr2 | constr3 | type_signature | ttype
+  // constr1 | constr2 | constr3
   public static boolean constr(PsiBuilder b, int l) {
     if (!recursion_guard_(b, l, "constr")) return false;
     boolean r;
@@ -1401,8 +1401,6 @@ public class HaskellParser implements PsiParser, LightPsiParser {
     r = constr1(b, l + 1);
     if (!r) r = constr2(b, l + 1);
     if (!r) r = constr3(b, l + 1);
-    if (!r) r = type_signature(b, l + 1);
-    if (!r) r = ttype(b, l + 1);
     exit_section_(b, l, m, r, false, null);
     return r;
   }
@@ -1519,7 +1517,7 @@ public class HaskellParser implements PsiParser, LightPsiParser {
   }
 
   /* ********************************************************** */
-  // pragma? onls (q_name+ | LEFT_PAREN q_name* RIGHT_PAREN | LEFT_BRACKET q_name* RIGHT_BRACKET) (onls pragma onls)? ((onls pragma)? onls ttype (onls pragma)?)*
+  // pragma? onls (type_signature | ttype | q_name | LEFT_PAREN q_name* RIGHT_PAREN | LEFT_BRACKET q_name* RIGHT_BRACKET)+ (onls pragma onls)? ((onls pragma)? onls ttype (onls pragma)?)*
   public static boolean constr2(PsiBuilder b, int l) {
     if (!recursion_guard_(b, l, "constr2")) return false;
     boolean r;
@@ -1540,75 +1538,77 @@ public class HaskellParser implements PsiParser, LightPsiParser {
     return true;
   }
 
-  // q_name+ | LEFT_PAREN q_name* RIGHT_PAREN | LEFT_BRACKET q_name* RIGHT_BRACKET
+  // (type_signature | ttype | q_name | LEFT_PAREN q_name* RIGHT_PAREN | LEFT_BRACKET q_name* RIGHT_BRACKET)+
   private static boolean constr2_2(PsiBuilder b, int l) {
     if (!recursion_guard_(b, l, "constr2_2")) return false;
     boolean r;
     Marker m = enter_section_(b);
     r = constr2_2_0(b, l + 1);
-    if (!r) r = constr2_2_1(b, l + 1);
-    if (!r) r = constr2_2_2(b, l + 1);
-    exit_section_(b, m, null, r);
-    return r;
-  }
-
-  // q_name+
-  private static boolean constr2_2_0(PsiBuilder b, int l) {
-    if (!recursion_guard_(b, l, "constr2_2_0")) return false;
-    boolean r;
-    Marker m = enter_section_(b);
-    r = q_name(b, l + 1);
     while (r) {
       int c = current_position_(b);
-      if (!q_name(b, l + 1)) break;
-      if (!empty_element_parsed_guard_(b, "constr2_2_0", c)) break;
+      if (!constr2_2_0(b, l + 1)) break;
+      if (!empty_element_parsed_guard_(b, "constr2_2", c)) break;
     }
     exit_section_(b, m, null, r);
     return r;
   }
 
+  // type_signature | ttype | q_name | LEFT_PAREN q_name* RIGHT_PAREN | LEFT_BRACKET q_name* RIGHT_BRACKET
+  private static boolean constr2_2_0(PsiBuilder b, int l) {
+    if (!recursion_guard_(b, l, "constr2_2_0")) return false;
+    boolean r;
+    Marker m = enter_section_(b);
+    r = type_signature(b, l + 1);
+    if (!r) r = ttype(b, l + 1);
+    if (!r) r = q_name(b, l + 1);
+    if (!r) r = constr2_2_0_3(b, l + 1);
+    if (!r) r = constr2_2_0_4(b, l + 1);
+    exit_section_(b, m, null, r);
+    return r;
+  }
+
   // LEFT_PAREN q_name* RIGHT_PAREN
-  private static boolean constr2_2_1(PsiBuilder b, int l) {
-    if (!recursion_guard_(b, l, "constr2_2_1")) return false;
+  private static boolean constr2_2_0_3(PsiBuilder b, int l) {
+    if (!recursion_guard_(b, l, "constr2_2_0_3")) return false;
     boolean r;
     Marker m = enter_section_(b);
     r = consumeToken(b, HS_LEFT_PAREN);
-    r = r && constr2_2_1_1(b, l + 1);
+    r = r && constr2_2_0_3_1(b, l + 1);
     r = r && consumeToken(b, HS_RIGHT_PAREN);
     exit_section_(b, m, null, r);
     return r;
   }
 
   // q_name*
-  private static boolean constr2_2_1_1(PsiBuilder b, int l) {
-    if (!recursion_guard_(b, l, "constr2_2_1_1")) return false;
+  private static boolean constr2_2_0_3_1(PsiBuilder b, int l) {
+    if (!recursion_guard_(b, l, "constr2_2_0_3_1")) return false;
     while (true) {
       int c = current_position_(b);
       if (!q_name(b, l + 1)) break;
-      if (!empty_element_parsed_guard_(b, "constr2_2_1_1", c)) break;
+      if (!empty_element_parsed_guard_(b, "constr2_2_0_3_1", c)) break;
     }
     return true;
   }
 
   // LEFT_BRACKET q_name* RIGHT_BRACKET
-  private static boolean constr2_2_2(PsiBuilder b, int l) {
-    if (!recursion_guard_(b, l, "constr2_2_2")) return false;
+  private static boolean constr2_2_0_4(PsiBuilder b, int l) {
+    if (!recursion_guard_(b, l, "constr2_2_0_4")) return false;
     boolean r;
     Marker m = enter_section_(b);
     r = consumeToken(b, HS_LEFT_BRACKET);
-    r = r && constr2_2_2_1(b, l + 1);
+    r = r && constr2_2_0_4_1(b, l + 1);
     r = r && consumeToken(b, HS_RIGHT_BRACKET);
     exit_section_(b, m, null, r);
     return r;
   }
 
   // q_name*
-  private static boolean constr2_2_2_1(PsiBuilder b, int l) {
-    if (!recursion_guard_(b, l, "constr2_2_2_1")) return false;
+  private static boolean constr2_2_0_4_1(PsiBuilder b, int l) {
+    if (!recursion_guard_(b, l, "constr2_2_0_4_1")) return false;
     while (true) {
       int c = current_position_(b);
       if (!q_name(b, l + 1)) break;
-      if (!empty_element_parsed_guard_(b, "constr2_2_2_1", c)) break;
+      if (!empty_element_parsed_guard_(b, "constr2_2_0_4_1", c)) break;
     }
     return true;
   }
