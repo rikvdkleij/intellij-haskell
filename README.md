@@ -38,6 +38,9 @@ ___
 * @stefanscheidt
 * @aryairani
 * @lachezar
+* Value Object Comm.V
+* Simon Looschen
+* Титоренко Алексей
 
 # Installing the plugin
 You can install this plugin using the [Jetbrains plugin repository](https://plugins.jetbrains.com/idea/plugin/8258-intellij-haskell):
