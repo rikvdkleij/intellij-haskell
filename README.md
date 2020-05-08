@@ -15,6 +15,8 @@ GHC 8.2 and later is supported.
 
 Any feedback is welcomed!!
 
+## Currently the project importer is broken when importing a project from the Welcome Screen in IntellliJ 2020.1 because the IntelliJ SDK has changed. As a workaround, the project importer is still working when using the option to import from existing sources in the File menu
+  
 # GitHub Sponsors
 ![King Lounge](logo/king.png)  
 ### King lounge
