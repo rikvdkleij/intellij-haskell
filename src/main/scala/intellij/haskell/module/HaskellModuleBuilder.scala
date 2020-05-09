@@ -113,10 +113,18 @@ class HaskellModuleBuilder extends TemplateModuleBuilder(null, HaskellModuleType
         val processOutput = StackCommandLine.run(project, Seq("new", project.getName, "--bare", newProjectTemplateName, "-p", "author-email:Author email here", "-p", "author-name:Author name here", "-p", "category:App category here", "-p", "copyright:2019 Author name here", "-p", "github-username:Github username here"), timeoutInMillis = 60.seconds.toMillis, enableExtraArguments = false)
         processOutput match {
           case None =>
-            Messages.showErrorDialog("Unknown error while creating new Stack project by using Stack command for creating new project on file system", "Create Haskell module")
+            WriteAction.run {
+              () => {
+                Messages.showErrorDialog("Unknown error while creating new Stack project by using Stack command for creating new project on file system", "Create Haskell module")
+              }
+            }
           case Some(output) =>
             if (output.getExitCode != 0) {
-              Messages.showErrorDialog(s"Error while creating new Stack project: ${output.getStdout} ${output.getStderr}", "Create Haskell module")
+              WriteAction.run {
+                () => {
+                  Messages.showErrorDialog(s"Error while creating new Stack project: ${output.getStdout} ${output.getStderr}", "Create Haskell module")
+                }
+              }
             }
         }
       })
