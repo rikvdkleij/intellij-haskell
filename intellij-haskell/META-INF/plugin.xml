@@ -470,6 +470,7 @@
         <sdkType implementation="intellij.haskell.sdk.HaskellSdkType"/>
         <projectImportProvider implementation="intellij.haskell.module.StackProjectImportProvider"/>
         <projectImportBuilder implementation="intellij.haskell.module.StackProjectImportBuilder"/>
+        <projectOpenProcessor implementation="intellij.haskell.module.StackProjectOpenProcessor"/>
 
         <!-- Index -->
         <fileBasedIndex implementation="intellij.haskell.util.index.HaskellModuleNameIndex"/>
