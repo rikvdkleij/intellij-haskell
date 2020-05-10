@@ -340,7 +340,6 @@ class TypeSignatureIntentionAction(typeSignature: String) extends HaskellBaseInt
           typeSignature = moduleBody.addBefore(typeSignatureElement, psi)
         } yield {
           moduleBody.addAfter(HaskellElementFactory.createNewLine(project), typeSignature)
-          //          moduleBody.addAfter(de)
         }
       case None => ()
     }
@@ -359,8 +358,7 @@ class LanguageExtensionIntentionAction(languageExtension: String) extends Haskel
           case Some(fh) =>
             PsiTreeUtil.findChildrenOfType(fh, classOf[HaskellPragma]).asScala.lastOption match {
               case Some(lastPragmaElement) =>
-                val nl = fh.addAfter(HaskellElementFactory.createNewLine(project), lastPragmaElement)
-                fh.addAfter(languagePragmaElement, nl)
+                fh.addAfter(languagePragmaElement, lastPragmaElement)
               case None =>
                 val p = fh.add(languagePragmaElement)
                 fh.addAfter(HaskellElementFactory.createNewLine(project), p)
@@ -476,8 +474,7 @@ class NotInScopeIntentionAction(identifier: String, moduleName: String, psiFile:
   private def createImportDeclaration(importDeclarationElement: HaskellImportDeclaration, ids: HaskellImportDeclarations, project: Project) = {
     HaskellPsiUtil.findImportDeclarations(psiFile).lastOption match {
       case Some(id) =>
-        val nla = ids.addAfter(HaskellElementFactory.createNewLine(project), id)
-        ids.addAfter(importDeclarationElement, nla)
+        ids.addAfter(importDeclarationElement, id)
       case None =>
         val importElement = ids.addAfter(importDeclarationElement, null)
         ids.addAfter(HaskellElementFactory.createNewLine(project), importElement)
