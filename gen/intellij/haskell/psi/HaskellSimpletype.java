@@ -10,6 +10,9 @@ import java.util.List;
 public interface HaskellSimpletype extends HaskellCompositeElement {
 
   @NotNull
+  List<HaskellPragma> getPragmaList();
+
+  @NotNull
   List<HaskellQName> getQNameList();
 
   @Nullable

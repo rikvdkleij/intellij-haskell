@@ -52,6 +52,10 @@ object HaskellPsiUtil {
     Option(PsiTreeUtil.findChildOfType(psiFile.getOriginalFile, classOf[HaskellImportDeclarations]))
   }
 
+  def findFileHeader(psiFile: PsiFile): Option[HaskellFileHeader] = {
+    Option(PsiTreeUtil.findChildOfType(psiFile.getOriginalFile, classOf[HaskellFileHeader])).filter(_.getPragmaList.size > 0)
+  }
+
   def findLanguageExtensions(psiFile: PsiFile): Iterable[HaskellPragma] = {
     Option(PsiTreeUtil.findChildOfType(psiFile, classOf[HaskellFileHeader])) match {
       case Some(e) => PsiTreeUtil.findChildrenOfType(e, classOf[HaskellPragma]).asScala

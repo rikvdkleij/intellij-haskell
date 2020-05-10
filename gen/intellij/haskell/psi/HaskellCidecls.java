@@ -10,4 +10,7 @@ public interface HaskellCidecls extends HaskellCompositeElement {
   @NotNull
   List<HaskellCidecl> getCideclList();
 
+  @NotNull
+  List<HaskellPragma> getPragmaList();
+
 }

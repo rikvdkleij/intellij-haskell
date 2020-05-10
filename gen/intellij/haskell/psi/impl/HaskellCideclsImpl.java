@@ -6,6 +6,7 @@ import com.intellij.psi.PsiElementVisitor;
 import com.intellij.psi.util.PsiTreeUtil;
 import intellij.haskell.psi.HaskellCidecl;
 import intellij.haskell.psi.HaskellCidecls;
+import intellij.haskell.psi.HaskellPragma;
 import intellij.haskell.psi.HaskellVisitor;
 import org.jetbrains.annotations.NotNull;
 
@@ -30,6 +31,12 @@ public class HaskellCideclsImpl extends HaskellCompositeElementImpl implements H
   @NotNull
   public List<HaskellCidecl> getCideclList() {
     return PsiTreeUtil.getChildrenOfTypeAsList(this, HaskellCidecl.class);
+  }
+
+  @Override
+  @NotNull
+  public List<HaskellPragma> getPragmaList() {
+    return PsiTreeUtil.getChildrenOfTypeAsList(this, HaskellPragma.class);
   }
 
 }

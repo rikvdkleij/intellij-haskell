@@ -6,6 +6,7 @@ import com.intellij.psi.PsiElementVisitor;
 import com.intellij.psi.util.PsiTreeUtil;
 import intellij.haskell.psi.HaskellCdecl;
 import intellij.haskell.psi.HaskellCdecls;
+import intellij.haskell.psi.HaskellPragma;
 import intellij.haskell.psi.HaskellVisitor;
 import org.jetbrains.annotations.NotNull;
 
@@ -30,6 +31,12 @@ public class HaskellCdeclsImpl extends HaskellCompositeElementImpl implements Ha
   @NotNull
   public List<HaskellCdecl> getCdeclList() {
     return PsiTreeUtil.getChildrenOfTypeAsList(this, HaskellCdecl.class);
+  }
+
+  @Override
+  @NotNull
+  public List<HaskellPragma> getPragmaList() {
+    return PsiTreeUtil.getChildrenOfTypeAsList(this, HaskellPragma.class);
   }
 
 }

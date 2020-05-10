@@ -109,7 +109,7 @@ object HaskellElementFactory {
   }
 
   def createImportDeclaration(project: Project, moduleName: String, identifier: String): Option[HaskellImportDeclaration] = {
-    createElement(project, s"import $moduleName (${surroundWithParensIfSymbol(project, identifier)})", classOf[HaskellImportDeclaration])
+    createElement(project, s"import $moduleName (${surroundWithParensIfSymbol(project, identifier)})\n", classOf[HaskellImportDeclaration])
   }
 
   private def surroundWithParensIfSymbol(project: Project, identifier: String): String = {

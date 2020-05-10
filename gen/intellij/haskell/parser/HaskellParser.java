@@ -2725,28 +2725,22 @@ public class HaskellParser implements PsiParser, LightPsiParser {
   }
 
   /* ********************************************************** */
-  // ((pragma | INCLUDE_DIRECTIVE | DIRECTIVE) NEWLINE*)*
+  // (pragma | INCLUDE_DIRECTIVE | DIRECTIVE)? (NEWLINE* (pragma | INCLUDE_DIRECTIVE | DIRECTIVE))*
   public static boolean file_header(PsiBuilder b, int l) {
     if (!recursion_guard_(b, l, "file_header")) return false;
+    boolean r;
     Marker m = enter_section_(b, l, _NONE_, HS_FILE_HEADER, "<file header>");
-    while (true) {
-      int c = current_position_(b);
-      if (!file_header_0(b, l + 1)) break;
-      if (!empty_element_parsed_guard_(b, "file_header", c)) break;
-    }
-    exit_section_(b, l, m, true, false, null);
-    return true;
+    r = file_header_0(b, l + 1);
+    r = r && file_header_1(b, l + 1);
+    exit_section_(b, l, m, r, false, null);
+    return r;
   }
 
-  // (pragma | INCLUDE_DIRECTIVE | DIRECTIVE) NEWLINE*
+  // (pragma | INCLUDE_DIRECTIVE | DIRECTIVE)?
   private static boolean file_header_0(PsiBuilder b, int l) {
     if (!recursion_guard_(b, l, "file_header_0")) return false;
-    boolean r;
-    Marker m = enter_section_(b);
-    r = file_header_0_0(b, l + 1);
-    r = r && file_header_0_1(b, l + 1);
-    exit_section_(b, m, null, r);
-    return r;
+    file_header_0_0(b, l + 1);
+    return true;
   }
 
   // pragma | INCLUDE_DIRECTIVE | DIRECTIVE
@@ -2759,15 +2753,47 @@ public class HaskellParser implements PsiParser, LightPsiParser {
     return r;
   }
 
+  // (NEWLINE* (pragma | INCLUDE_DIRECTIVE | DIRECTIVE))*
+  private static boolean file_header_1(PsiBuilder b, int l) {
+    if (!recursion_guard_(b, l, "file_header_1")) return false;
+    while (true) {
+      int c = current_position_(b);
+      if (!file_header_1_0(b, l + 1)) break;
+      if (!empty_element_parsed_guard_(b, "file_header_1", c)) break;
+    }
+    return true;
+  }
+
+  // NEWLINE* (pragma | INCLUDE_DIRECTIVE | DIRECTIVE)
+  private static boolean file_header_1_0(PsiBuilder b, int l) {
+    if (!recursion_guard_(b, l, "file_header_1_0")) return false;
+    boolean r;
+    Marker m = enter_section_(b);
+    r = file_header_1_0_0(b, l + 1);
+    r = r && file_header_1_0_1(b, l + 1);
+    exit_section_(b, m, null, r);
+    return r;
+  }
+
   // NEWLINE*
-  private static boolean file_header_0_1(PsiBuilder b, int l) {
-    if (!recursion_guard_(b, l, "file_header_0_1")) return false;
+  private static boolean file_header_1_0_0(PsiBuilder b, int l) {
+    if (!recursion_guard_(b, l, "file_header_1_0_0")) return false;
     while (true) {
       int c = current_position_(b);
       if (!consumeToken(b, HS_NEWLINE)) break;
-      if (!empty_element_parsed_guard_(b, "file_header_0_1", c)) break;
+      if (!empty_element_parsed_guard_(b, "file_header_1_0_0", c)) break;
     }
     return true;
+  }
+
+  // pragma | INCLUDE_DIRECTIVE | DIRECTIVE
+  private static boolean file_header_1_0_1(PsiBuilder b, int l) {
+    if (!recursion_guard_(b, l, "file_header_1_0_1")) return false;
+    boolean r;
+    r = pragma(b, l + 1);
+    if (!r) r = consumeToken(b, HS_INCLUDE_DIRECTIVE);
+    if (!r) r = consumeToken(b, HS_DIRECTIVE);
+    return r;
   }
 
   /* ********************************************************** */
@@ -4438,7 +4464,7 @@ public class HaskellParser implements PsiParser, LightPsiParser {
   }
 
   /* ********************************************************** */
-  // (&<<containsSpaces>> NEWLINE)+
+  // (&<<containsSpaces>> NEWLINE | (DIRECTIVE | INCLUDE_DIRECTIVE) NEWLINE !keyword | pragma)+
   static boolean nls(PsiBuilder b, int l) {
     if (!recursion_guard_(b, l, "nls")) return false;
     boolean r;
@@ -4453,23 +4479,66 @@ public class HaskellParser implements PsiParser, LightPsiParser {
     return r;
   }
 
-  // &<<containsSpaces>> NEWLINE
+  // &<<containsSpaces>> NEWLINE | (DIRECTIVE | INCLUDE_DIRECTIVE) NEWLINE !keyword | pragma
   private static boolean nls_0(PsiBuilder b, int l) {
     if (!recursion_guard_(b, l, "nls_0")) return false;
     boolean r;
     Marker m = enter_section_(b);
     r = nls_0_0(b, l + 1);
+    if (!r) r = nls_0_1(b, l + 1);
+    if (!r) r = pragma(b, l + 1);
+    exit_section_(b, m, null, r);
+    return r;
+  }
+
+  // &<<containsSpaces>> NEWLINE
+  private static boolean nls_0_0(PsiBuilder b, int l) {
+    if (!recursion_guard_(b, l, "nls_0_0")) return false;
+    boolean r;
+    Marker m = enter_section_(b);
+    r = nls_0_0_0(b, l + 1);
     r = r && consumeToken(b, HS_NEWLINE);
     exit_section_(b, m, null, r);
     return r;
   }
 
   // &<<containsSpaces>>
-  private static boolean nls_0_0(PsiBuilder b, int l) {
-    if (!recursion_guard_(b, l, "nls_0_0")) return false;
+  private static boolean nls_0_0_0(PsiBuilder b, int l) {
+    if (!recursion_guard_(b, l, "nls_0_0_0")) return false;
     boolean r;
     Marker m = enter_section_(b, l, _AND_);
     r = containsSpaces(b, l + 1);
+    exit_section_(b, l, m, r, false, null);
+    return r;
+  }
+
+  // (DIRECTIVE | INCLUDE_DIRECTIVE) NEWLINE !keyword
+  private static boolean nls_0_1(PsiBuilder b, int l) {
+    if (!recursion_guard_(b, l, "nls_0_1")) return false;
+    boolean r;
+    Marker m = enter_section_(b);
+    r = nls_0_1_0(b, l + 1);
+    r = r && consumeToken(b, HS_NEWLINE);
+    r = r && nls_0_1_2(b, l + 1);
+    exit_section_(b, m, null, r);
+    return r;
+  }
+
+  // DIRECTIVE | INCLUDE_DIRECTIVE
+  private static boolean nls_0_1_0(PsiBuilder b, int l) {
+    if (!recursion_guard_(b, l, "nls_0_1_0")) return false;
+    boolean r;
+    r = consumeToken(b, HS_DIRECTIVE);
+    if (!r) r = consumeToken(b, HS_INCLUDE_DIRECTIVE);
+    return r;
+  }
+
+  // !keyword
+  private static boolean nls_0_1_2(PsiBuilder b, int l) {
+    if (!recursion_guard_(b, l, "nls_0_1_2")) return false;
+    boolean r;
+    Marker m = enter_section_(b, l, _NOT_);
+    r = !keyword(b, l + 1);
     exit_section_(b, l, m, r, false, null);
     return r;
   }
@@ -4498,7 +4567,7 @@ public class HaskellParser implements PsiParser, LightPsiParser {
   }
 
   /* ********************************************************** */
-  // (&<<containsSpaces>> NEWLINE | (DIRECTIVE | INCLUDE_DIRECTIVE) NEWLINE !keyword | pragma NEWLINE)*
+  // (&<<containsSpaces>> NEWLINE | (DIRECTIVE | INCLUDE_DIRECTIVE) NEWLINE !keyword | pragma)*
   static boolean onls(PsiBuilder b, int l) {
     if (!recursion_guard_(b, l, "onls")) return false;
     while (true) {
@@ -4509,14 +4578,14 @@ public class HaskellParser implements PsiParser, LightPsiParser {
     return true;
   }
 
-  // &<<containsSpaces>> NEWLINE | (DIRECTIVE | INCLUDE_DIRECTIVE) NEWLINE !keyword | pragma NEWLINE
+  // &<<containsSpaces>> NEWLINE | (DIRECTIVE | INCLUDE_DIRECTIVE) NEWLINE !keyword | pragma
   private static boolean onls_0(PsiBuilder b, int l) {
     if (!recursion_guard_(b, l, "onls_0")) return false;
     boolean r;
     Marker m = enter_section_(b);
     r = onls_0_0(b, l + 1);
     if (!r) r = onls_0_1(b, l + 1);
-    if (!r) r = onls_0_2(b, l + 1);
+    if (!r) r = pragma(b, l + 1);
     exit_section_(b, m, null, r);
     return r;
   }
@@ -4573,39 +4642,40 @@ public class HaskellParser implements PsiParser, LightPsiParser {
     return r;
   }
 
-  // pragma NEWLINE
-  private static boolean onls_0_2(PsiBuilder b, int l) {
-    if (!recursion_guard_(b, l, "onls_0_2")) return false;
-    boolean r;
-    Marker m = enter_section_(b);
-    r = pragma(b, l + 1);
-    r = r && consumeToken(b, HS_NEWLINE);
-    exit_section_(b, m, null, r);
-    return r;
-  }
-
   /* ********************************************************** */
-  // (&<<containsSpaces>> NEWLINE)?
+  // (&<<containsSpaces>> NEWLINE | (DIRECTIVE | INCLUDE_DIRECTIVE) NEWLINE !keyword | pragma)?
   static boolean oonls(PsiBuilder b, int l) {
     if (!recursion_guard_(b, l, "oonls")) return false;
     oonls_0(b, l + 1);
     return true;
   }
 
-  // &<<containsSpaces>> NEWLINE
+  // &<<containsSpaces>> NEWLINE | (DIRECTIVE | INCLUDE_DIRECTIVE) NEWLINE !keyword | pragma
   private static boolean oonls_0(PsiBuilder b, int l) {
     if (!recursion_guard_(b, l, "oonls_0")) return false;
     boolean r;
     Marker m = enter_section_(b);
     r = oonls_0_0(b, l + 1);
+    if (!r) r = oonls_0_1(b, l + 1);
+    if (!r) r = pragma(b, l + 1);
+    exit_section_(b, m, null, r);
+    return r;
+  }
+
+  // &<<containsSpaces>> NEWLINE
+  private static boolean oonls_0_0(PsiBuilder b, int l) {
+    if (!recursion_guard_(b, l, "oonls_0_0")) return false;
+    boolean r;
+    Marker m = enter_section_(b);
+    r = oonls_0_0_0(b, l + 1);
     r = r && consumeToken(b, HS_NEWLINE);
     exit_section_(b, m, null, r);
     return r;
   }
 
   // &<<containsSpaces>>
-  private static boolean oonls_0_0(PsiBuilder b, int l) {
-    if (!recursion_guard_(b, l, "oonls_0_0")) return false;
+  private static boolean oonls_0_0_0(PsiBuilder b, int l) {
+    if (!recursion_guard_(b, l, "oonls_0_0_0")) return false;
     boolean r;
     Marker m = enter_section_(b, l, _AND_);
     r = containsSpaces(b, l + 1);
@@ -4613,8 +4683,39 @@ public class HaskellParser implements PsiParser, LightPsiParser {
     return r;
   }
 
+  // (DIRECTIVE | INCLUDE_DIRECTIVE) NEWLINE !keyword
+  private static boolean oonls_0_1(PsiBuilder b, int l) {
+    if (!recursion_guard_(b, l, "oonls_0_1")) return false;
+    boolean r;
+    Marker m = enter_section_(b);
+    r = oonls_0_1_0(b, l + 1);
+    r = r && consumeToken(b, HS_NEWLINE);
+    r = r && oonls_0_1_2(b, l + 1);
+    exit_section_(b, m, null, r);
+    return r;
+  }
+
+  // DIRECTIVE | INCLUDE_DIRECTIVE
+  private static boolean oonls_0_1_0(PsiBuilder b, int l) {
+    if (!recursion_guard_(b, l, "oonls_0_1_0")) return false;
+    boolean r;
+    r = consumeToken(b, HS_DIRECTIVE);
+    if (!r) r = consumeToken(b, HS_INCLUDE_DIRECTIVE);
+    return r;
+  }
+
+  // !keyword
+  private static boolean oonls_0_1_2(PsiBuilder b, int l) {
+    if (!recursion_guard_(b, l, "oonls_0_1_2")) return false;
+    boolean r;
+    Marker m = enter_section_(b, l, _NOT_);
+    r = !keyword(b, l + 1);
+    exit_section_(b, l, m, r, false, null);
+    return r;
+  }
+
   /* ********************************************************** */
-  // PRAGMA_START general_pragma_content* PRAGMA_END
+  // PRAGMA_START general_pragma_content* PRAGMA_END NEWLINE?
   public static boolean pragma(PsiBuilder b, int l) {
     if (!recursion_guard_(b, l, "pragma")) return false;
     if (!nextTokenIs(b, HS_PRAGMA_START)) return false;
@@ -4623,7 +4724,8 @@ public class HaskellParser implements PsiParser, LightPsiParser {
     r = consumeToken(b, HS_PRAGMA_START);
     p = r; // pin = 1
     r = r && report_error_(b, pragma_1(b, l + 1));
-    r = p && consumeToken(b, HS_PRAGMA_END) && r;
+    r = p && report_error_(b, consumeToken(b, HS_PRAGMA_END)) && r;
+    r = p && pragma_3(b, l + 1) && r;
     exit_section_(b, l, m, r, p, null);
     return r || p;
   }
@@ -4639,26 +4741,66 @@ public class HaskellParser implements PsiParser, LightPsiParser {
     return true;
   }
 
+  // NEWLINE?
+  private static boolean pragma_3(PsiBuilder b, int l) {
+    if (!recursion_guard_(b, l, "pragma_3")) return false;
+    consumeToken(b, HS_NEWLINE);
+    return true;
+  }
+
   /* ********************************************************** */
-  // onl shebang_line? onl file_header onl module_body?
+  // NEWLINE* shebang_line? NEWLINE* file_header NEWLINE* module_body?
   static boolean program(PsiBuilder b, int l) {
     if (!recursion_guard_(b, l, "program")) return false;
     boolean r;
     Marker m = enter_section_(b);
-    r = onl(b, l + 1);
+    r = program_0(b, l + 1);
     r = r && program_1(b, l + 1);
-    r = r && onl(b, l + 1);
+    r = r && program_2(b, l + 1);
     r = r && file_header(b, l + 1);
-    r = r && onl(b, l + 1);
+    r = r && program_4(b, l + 1);
     r = r && program_5(b, l + 1);
     exit_section_(b, m, null, r);
     return r;
+  }
+
+  // NEWLINE*
+  private static boolean program_0(PsiBuilder b, int l) {
+    if (!recursion_guard_(b, l, "program_0")) return false;
+    while (true) {
+      int c = current_position_(b);
+      if (!consumeToken(b, HS_NEWLINE)) break;
+      if (!empty_element_parsed_guard_(b, "program_0", c)) break;
+    }
+    return true;
   }
 
   // shebang_line?
   private static boolean program_1(PsiBuilder b, int l) {
     if (!recursion_guard_(b, l, "program_1")) return false;
     shebang_line(b, l + 1);
+    return true;
+  }
+
+  // NEWLINE*
+  private static boolean program_2(PsiBuilder b, int l) {
+    if (!recursion_guard_(b, l, "program_2")) return false;
+    while (true) {
+      int c = current_position_(b);
+      if (!consumeToken(b, HS_NEWLINE)) break;
+      if (!empty_element_parsed_guard_(b, "program_2", c)) break;
+    }
+    return true;
+  }
+
+  // NEWLINE*
+  private static boolean program_4(PsiBuilder b, int l) {
+    if (!recursion_guard_(b, l, "program_4")) return false;
+    while (true) {
+      int c = current_position_(b);
+      if (!consumeToken(b, HS_NEWLINE)) break;
+      if (!empty_element_parsed_guard_(b, "program_4", c)) break;
+    }
     return true;
   }
 
@@ -5481,7 +5623,7 @@ public class HaskellParser implements PsiParser, LightPsiParser {
   }
 
   /* ********************************************************** */
-  // (top_declaration_line (NEWLINE | INCLUDE_DIRECTIVE | DIRECTIVE)*)* top_declaration?
+  // (top_declaration_line onl)* top_declaration?
   static boolean top_declarations(PsiBuilder b, int l) {
     if (!recursion_guard_(b, l, "top_declarations")) return false;
     boolean r;
@@ -5492,7 +5634,7 @@ public class HaskellParser implements PsiParser, LightPsiParser {
     return r;
   }
 
-  // (top_declaration_line (NEWLINE | INCLUDE_DIRECTIVE | DIRECTIVE)*)*
+  // (top_declaration_line onl)*
   private static boolean top_declarations_0(PsiBuilder b, int l) {
     if (!recursion_guard_(b, l, "top_declarations_0")) return false;
     while (true) {
@@ -5503,35 +5645,14 @@ public class HaskellParser implements PsiParser, LightPsiParser {
     return true;
   }
 
-  // top_declaration_line (NEWLINE | INCLUDE_DIRECTIVE | DIRECTIVE)*
+  // top_declaration_line onl
   private static boolean top_declarations_0_0(PsiBuilder b, int l) {
     if (!recursion_guard_(b, l, "top_declarations_0_0")) return false;
     boolean r;
     Marker m = enter_section_(b);
     r = top_declaration_line(b, l + 1);
-    r = r && top_declarations_0_0_1(b, l + 1);
+    r = r && onl(b, l + 1);
     exit_section_(b, m, null, r);
-    return r;
-  }
-
-  // (NEWLINE | INCLUDE_DIRECTIVE | DIRECTIVE)*
-  private static boolean top_declarations_0_0_1(PsiBuilder b, int l) {
-    if (!recursion_guard_(b, l, "top_declarations_0_0_1")) return false;
-    while (true) {
-      int c = current_position_(b);
-      if (!top_declarations_0_0_1_0(b, l + 1)) break;
-      if (!empty_element_parsed_guard_(b, "top_declarations_0_0_1", c)) break;
-    }
-    return true;
-  }
-
-  // NEWLINE | INCLUDE_DIRECTIVE | DIRECTIVE
-  private static boolean top_declarations_0_0_1_0(PsiBuilder b, int l) {
-    if (!recursion_guard_(b, l, "top_declarations_0_0_1_0")) return false;
-    boolean r;
-    r = consumeToken(b, HS_NEWLINE);
-    if (!r) r = consumeToken(b, HS_INCLUDE_DIRECTIVE);
-    if (!r) r = consumeToken(b, HS_DIRECTIVE);
     return r;
   }
 
