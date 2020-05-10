@@ -62,11 +62,11 @@ general_pragma_content      ::= ONE_PRAGMA | PRAGMA_SEP | CHARACTER_LITERAL | ST
 module_body                 ::= module_declaration onl body | onl body
 module_declaration          ::= MODULE modid onl pragma? onl (exports onl)? WHERE
 
-private body                ::= import_declarations top_declarations  (NEWLINE | DIRECTIVE | INCLUDE_DIRECTIVE)*
-import_declarations         ::= ((import_declaration | pragma | INCLUDE_DIRECTIVE | DIRECTIVE) onl)*
+private body                ::= import_declarations? onl top_declarations onl
+import_declarations         ::= import_declaration (onl import_declaration)*
 private top_declarations    ::= (top_declaration_line (NEWLINE | INCLUDE_DIRECTIVE | DIRECTIVE)*)* top_declaration?
 
-import_declaration          ::= IMPORT (onls pragma)? (onls import_qualified)? (onls import_package_name)? onls modid (onls import_qualified_as)? (onls import_spec)?    {methods=[getModuleName] pin=1}
+import_declaration          ::= IMPORT (onls pragma)? (onls import_qualified)? (onls import_package_name)? onls modid (onls import_qualified_as)? (onls import_spec)? NEWLINE?   {methods=[getModuleName] pin=1}
 import_qualified            ::= "qualified"
 import_qualified_as         ::= "as" qualifier
 import_spec                 ::= import_ids_spec |
@@ -134,8 +134,8 @@ private literal             ::= DECIMAL | HEXADECIMAL | OCTAL | FLOAT | CHARACTE
 
 private keyword             ::= DATA | CLASS | INSTANCE | NEWTYPE | DERIVING | DEFAULT | TYPE_FAMILY | TYPE | TYPE_INSTANCE | IMPORT | MODULE
 
-private onl                 ::= (DIRECTIVE | NEWLINE)*
-private onls                ::= (&<<containsSpaces>> NEWLINE | DIRECTIVE NEWLINE !keyword | pragma NEWLINE)*       // optional multiple (new line and spaces)
+private onl                 ::= (DIRECTIVE | NEWLINE | INCLUDE_DIRECTIVE | pragma)*
+private onls                ::= (&<<containsSpaces>> NEWLINE | (DIRECTIVE | INCLUDE_DIRECTIVE) NEWLINE !keyword | pragma NEWLINE)*       // optional multiple (new line and spaces)
 private nls                 ::= (&<<containsSpaces>> NEWLINE)+                          // multiple new lines and spaces
 private oonls               ::= (&<<containsSpaces>> NEWLINE)?                         // optional one (new line and spaces)
 

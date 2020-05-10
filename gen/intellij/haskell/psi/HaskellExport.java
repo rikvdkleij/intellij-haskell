@@ -15,6 +15,9 @@ public interface HaskellExport extends HaskellCompositeElement {
   HaskellModid getModid();
 
   @NotNull
+  List<HaskellPragma> getPragmaList();
+
+  @NotNull
   List<HaskellQName> getQNameList();
 
 }

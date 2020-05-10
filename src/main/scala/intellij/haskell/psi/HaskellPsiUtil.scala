@@ -48,6 +48,10 @@ object HaskellPsiUtil {
     PsiTreeUtil.findChildrenOfType(psiFile.getOriginalFile, classOf[HaskellImportDeclaration]).asScala
   }
 
+  def findImportDeclarationsBlock(psiFile: PsiFile): Option[HaskellImportDeclarations] = {
+    Option(PsiTreeUtil.findChildOfType(psiFile.getOriginalFile, classOf[HaskellImportDeclarations]))
+  }
+
   def findLanguageExtensions(psiFile: PsiFile): Iterable[HaskellPragma] = {
     Option(PsiTreeUtil.findChildOfType(psiFile, classOf[HaskellFileHeader])) match {
       case Some(e) => PsiTreeUtil.findChildrenOfType(e, classOf[HaskellPragma]).asScala

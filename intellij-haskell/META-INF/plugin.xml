@@ -377,6 +377,9 @@
         <lang.namesValidator language="Haskell" implementationClass="intellij.haskell.refactor.HaskellNamesValidator"/>
         <languageInjector implementation="intellij.haskell.alex.lang.psi.AlexHaskellInjector"/>
 
+        <lang.foldingBuilder language="Haskell"
+                             implementationClass="intellij.haskell.editor.HaskellFoldingBuilder"/>
+
         <!-- Commenter -->
         <lang.commenter language="Haskell" implementationClass="intellij.haskell.editor.HaskellCommenter"/>
         <lang.commenter language="Cabal" implementationClass="intellij.haskell.cabal.CabalCommenter"/>

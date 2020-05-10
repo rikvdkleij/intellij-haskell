@@ -7,6 +7,8 @@ import org.jetbrains.annotations.Nullable;
 import scala.Option;
 import scala.collection.immutable.Seq;
 
+import java.util.List;
+
 public interface HaskellModuleDeclaration extends HaskellDeclarationElement {
 
   @Nullable
@@ -15,8 +17,8 @@ public interface HaskellModuleDeclaration extends HaskellDeclarationElement {
   @NotNull
   HaskellModid getModid();
 
-  @Nullable
-  HaskellPragma getPragma();
+  @NotNull
+  List<HaskellPragma> getPragmaList();
 
   String getName();
 

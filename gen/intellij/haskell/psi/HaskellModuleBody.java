@@ -1,17 +1,21 @@
 // This is a generated file. Not intended for manual editing.
 package intellij.haskell.psi;
 
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
+
 import java.util.List;
-import org.jetbrains.annotations.*;
-import com.intellij.psi.PsiElement;
 
 public interface HaskellModuleBody extends HaskellCompositeElement {
 
-  @NotNull
+  @Nullable
   HaskellImportDeclarations getImportDeclarations();
 
   @Nullable
   HaskellModuleDeclaration getModuleDeclaration();
+
+  @NotNull
+  List<HaskellPragma> getPragmaList();
 
   @Nullable
   HaskellTopDeclaration getTopDeclaration();

@@ -1,14 +1,14 @@
 // This is a generated file. Not intended for manual editing.
 package intellij.haskell.psi.impl;
 
-import java.util.List;
-import org.jetbrains.annotations.*;
 import com.intellij.lang.ASTNode;
-import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiElementVisitor;
 import com.intellij.psi.util.PsiTreeUtil;
-import static intellij.haskell.psi.HaskellTypes.*;
 import intellij.haskell.psi.*;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
+
+import java.util.List;
 
 public class HaskellModuleBodyImpl extends HaskellCompositeElementImpl implements HaskellModuleBody {
 
@@ -26,15 +26,21 @@ public class HaskellModuleBodyImpl extends HaskellCompositeElementImpl implement
   }
 
   @Override
-  @NotNull
+  @Nullable
   public HaskellImportDeclarations getImportDeclarations() {
-    return notNullChild(PsiTreeUtil.getChildOfType(this, HaskellImportDeclarations.class));
+    return PsiTreeUtil.getChildOfType(this, HaskellImportDeclarations.class);
   }
 
   @Override
   @Nullable
   public HaskellModuleDeclaration getModuleDeclaration() {
     return PsiTreeUtil.getChildOfType(this, HaskellModuleDeclaration.class);
+  }
+
+  @Override
+  @NotNull
+  public List<HaskellPragma> getPragmaList() {
+    return PsiTreeUtil.getChildrenOfTypeAsList(this, HaskellPragma.class);
   }
 
   @Override
