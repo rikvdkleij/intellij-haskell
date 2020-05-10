@@ -63,7 +63,7 @@ module_body                 ::= module_declaration onl body | onl body
 module_declaration          ::= MODULE modid onl pragma? onl (exports onl)? WHERE
 
 private body                ::= import_declarations? onl top_declarations onl
-import_declarations         ::= import_declaration (onl import_declaration)*
+import_declarations         ::= import_declaration (onl import_declaration)* (DIRECTIVE | INCLUDE_DIRECTIVE)*
 private top_declarations    ::= (top_declaration_line onl)* top_declaration?
 
 import_declaration          ::= IMPORT (onls pragma)? (onls import_qualified)? (onls import_package_name)? onls modid (onls import_qualified_as)? (onls import_spec)? NEWLINE?   {methods=[getModuleName] pin=1}

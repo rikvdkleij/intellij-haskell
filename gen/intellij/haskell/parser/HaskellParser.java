@@ -3091,7 +3091,7 @@ public class HaskellParser implements PsiParser, LightPsiParser {
   }
 
   /* ********************************************************** */
-  // import_declaration (onl import_declaration)*
+  // import_declaration (onl import_declaration)* (DIRECTIVE | INCLUDE_DIRECTIVE)*
   public static boolean import_declarations(PsiBuilder b, int l) {
     if (!recursion_guard_(b, l, "import_declarations")) return false;
     if (!nextTokenIs(b, HS_IMPORT)) return false;
@@ -3099,6 +3099,7 @@ public class HaskellParser implements PsiParser, LightPsiParser {
     Marker m = enter_section_(b);
     r = import_declaration(b, l + 1);
     r = r && import_declarations_1(b, l + 1);
+    r = r && import_declarations_2(b, l + 1);
     exit_section_(b, m, HS_IMPORT_DECLARATIONS, r);
     return r;
   }
@@ -3122,6 +3123,26 @@ public class HaskellParser implements PsiParser, LightPsiParser {
     r = onl(b, l + 1);
     r = r && import_declaration(b, l + 1);
     exit_section_(b, m, null, r);
+    return r;
+  }
+
+  // (DIRECTIVE | INCLUDE_DIRECTIVE)*
+  private static boolean import_declarations_2(PsiBuilder b, int l) {
+    if (!recursion_guard_(b, l, "import_declarations_2")) return false;
+    while (true) {
+      int c = current_position_(b);
+      if (!import_declarations_2_0(b, l + 1)) break;
+      if (!empty_element_parsed_guard_(b, "import_declarations_2", c)) break;
+    }
+    return true;
+  }
+
+  // DIRECTIVE | INCLUDE_DIRECTIVE
+  private static boolean import_declarations_2_0(PsiBuilder b, int l) {
+    if (!recursion_guard_(b, l, "import_declarations_2_0")) return false;
+    boolean r;
+    r = consumeToken(b, HS_DIRECTIVE);
+    if (!r) r = consumeToken(b, HS_INCLUDE_DIRECTIVE);
     return r;
   }
 

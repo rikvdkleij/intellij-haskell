@@ -284,6 +284,8 @@ nhaddock_start      = {left_brace}{dash}{white_char}?{vertical_bar}
     {comment}             { return HS_COMMENT; }
     {white_space}         { return com.intellij.psi.TokenType.WHITE_SPACE; }
 
+    {include_directive}   { return HS_INCLUDE_DIRECTIVE; }
+    {directive}           { return HS_DIRECTIVE; }
 
     // not listed as reserved identifier but have meaning in certain context,
     // let's say specialreservedid
@@ -361,9 +363,6 @@ nhaddock_start      = {left_brace}{dash}{white_char}?{vertical_bar}
     {right_brace}         { return HS_RIGHT_BRACE; }
 
     {quote}               { return HS_QUOTE; }
-
-    {include_directive}   { return HS_INCLUDE_DIRECTIVE; }
-    {directive}           { return HS_DIRECTIVE; }
 
     {forall}              { return HS_FORALL; }
 
