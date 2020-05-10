@@ -285,6 +285,8 @@ object HaskellModuleBuilder {
     if (update || getProjectLibraryTable(project).getLibraries.isEmpty || !projectLibDirectory.exists()) {
       HaskellSdkType.getStackBinaryPath(project).foreach(stackPath => {
 
+        StackCommandLine.updateStackIndex(project)
+
         if (!projectLibDirectory.exists()) {
           FileUtil.createDirectory(projectLibDirectory)
         }
