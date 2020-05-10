@@ -40,29 +40,37 @@ class HLintQuickfix(startElement: PsiElement, endElement: PsiElement, startLineN
 
   override def invoke(project: Project, psiFile: PsiFile, startElement: PsiElement, endElement: PsiElement): Unit = {
     CommandProcessor.getInstance().executeCommand(project, () => {
-      val commonParent = PsiTreeUtil.findCommonParent(startElement, endElement)
-      for {
-        se <- findDirectChildOfCommonParent(startElement, commonParent)
-        ee <- findDirectChildOfCommonParent(endElement, commonParent)
-      } yield {
-        if (toSuggestion.isEmpty) {
-          if (Option(ee.getNextSibling).exists(e => e.getNode.getElementType == HaskellTypes.HS_NEWLINE)) {
-            commonParent.deleteChildRange(se, ee.getNextSibling)
+      if (startElement == endElement) {
+        applySuggestion(project, startElement)
+      } else {
+        val commonParent = PsiTreeUtil.findCommonParent(startElement, endElement)
+        for {
+          se <- findDirectChildOfCommonParent(startElement, commonParent)
+          ee <- findDirectChildOfCommonParent(endElement, commonParent)
+        } yield {
+          if (toSuggestion.isEmpty) {
+            if (Option(ee.getNextSibling).exists(e => e.getNode.getElementType == HaskellTypes.HS_NEWLINE)) {
+              commonParent.deleteChildRange(se, ee.getNextSibling)
+            } else {
+              commonParent.deleteChildRange(se, ee)
+            }
           } else {
-            commonParent.deleteChildRange(se, ee)
+            Option(se.getNextSibling).foreach(ns => {
+              commonParent.deleteChildRange(ns, ee)
+              // Adding spaces in case of line break to get the indentation right for valid Haskell code (should eventually be solved by BNF which is indentation sensitive)
+              applySuggestion(project, se)
+            })
           }
-        } else {
-          Option(se.getNextSibling).foreach(ns => {
-            commonParent.deleteChildRange(ns, ee)
-            // Adding spaces in case of line break to get the indentation right for valid Haskell code (should eventually be solved by BNF which is indentation sensitive)
-            HaskellElementFactory.createBody(project, toSuggestion.replaceAll("\n", "\n" + " " * (startColumnNr - 1))).foreach(se.replace)
-          })
         }
       }
 
       HaskellFileUtil.saveFile(psiFile)
       HaskellAnnotator.restartDaemonCodeAnalyzerForFile(psiFile)
     }, null, null)
+  }
+
+  private def applySuggestion(project: Project, startElement: PsiElement) = {
+    HaskellElementFactory.createBody(project, toSuggestion.replaceAll("\n", "\n" + " " * (startColumnNr - 1))).foreach(startElement.replace)
   }
 
   @tailrec
