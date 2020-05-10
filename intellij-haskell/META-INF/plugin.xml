@@ -377,6 +377,7 @@
         <lang.namesValidator language="Haskell" implementationClass="intellij.haskell.refactor.HaskellNamesValidator"/>
         <languageInjector implementation="intellij.haskell.alex.lang.psi.AlexHaskellInjector"/>
 
+        <!-- Folding builder -->
         <lang.foldingBuilder language="Haskell"
                              implementationClass="intellij.haskell.editor.HaskellFoldingBuilder"/>
 
