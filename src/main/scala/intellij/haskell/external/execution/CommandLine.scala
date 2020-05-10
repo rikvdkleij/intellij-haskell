@@ -33,7 +33,7 @@ import scala.concurrent.duration._
 import scala.jdk.CollectionConverters._
 
 object CommandLine {
-  val DefaultTimeout: FiniteDuration = 30.seconds
+  val DefaultTimeout: FiniteDuration = 60.seconds
   val DefaultNotifyBalloonError = false
   val DefaultIgnoreExitCode = false
   val DefaultLogOutput = false
