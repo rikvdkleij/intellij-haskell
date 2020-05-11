@@ -83,16 +83,15 @@ object ProjectLibraryBuilder {
       @tailrec
       def run(progressIndicator: ProgressIndicator): Unit = {
 
-        // Forced `-Wwarn` otherwise build will fail in case of warnings and that will cause that REPLs of dependent targets will not start anymore
-        val projectLibTargets = HaskellComponentsManager.findStackComponentInfos(project).filter(_.stanzaType == LibType).map(_.target)
+        val projectLibTargets = libComponentInfos.map(_.target).toSeq
 
         val buildMessage = s"Building targets: " + projectLibTargets.mkString(", ")
         HaskellNotificationGroup.logInfoEvent(project, buildMessage)
         progressIndicator.setText(buildMessage)
 
+        // Forced `-Wwarn` otherwise build will fail in case of warnings and that will cause that REPLs of dependent targets will not start anymore
         val output = StackCommandLine.buildInBackground(project, projectLibTargets ++ Seq("--ghc-options", "-Wwarn"))
         if (output.contains(true) && !project.isDisposed) {
-          val projectRepls = StackReplsManager.getRunningProjectRepls(project)
           val openFiles = FileEditorManager.getInstance(project).getOpenFiles.filter(HaskellFileUtil.isHaskellFile)
           val openProjectFiles = openFiles.filter(vf => HaskellProjectUtil.isSourceFile(project, vf))
           val openInfoFiles = openProjectFiles.toSeq.flatMap(f =>
@@ -101,6 +100,7 @@ object ProjectLibraryBuilder {
               case None => None
             })
 
+          val projectRepls = StackReplsManager.getRunningProjectRepls(project)
           val isDependentResult = libComponentInfos.map(libInfo => {
             val module = libInfo.module
             val dependentModules = ApplicationUtil.runReadAction(ModuleUtilCore.getAllDependentModules(module), Some(project))
