@@ -25,6 +25,7 @@ import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.vfs.{VfsUtilCore, VirtualFile}
 import com.intellij.psi.search.GlobalSearchScope
 import com.intellij.psi.{PsiElement, PsiFile}
+import com.intellij.util.PathUtilRt
 import intellij.haskell.GlobalInfo
 import intellij.haskell.external.component.HaskellComponentsManager
 import intellij.haskell.module.HaskellModuleType
@@ -78,7 +79,12 @@ object HaskellProjectUtil {
   }
 
   def getModuleDir(module: Module): File = {
-    new File(ModuleUtilCore.getModuleDirPath(module))
+    val path = ModuleUtilCore.getModuleDirPath(module)
+    new File(
+      if (path.endsWith(".idea"))
+        PathUtilRt.getParentPath(path)
+      else path
+    )
   }
 
   def findCabalFiles(project: Project): Iterable[File] = {
