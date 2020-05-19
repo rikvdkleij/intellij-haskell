@@ -80,11 +80,11 @@ object HaskellProjectUtil {
 
   def getModuleDir(module: Module): File = {
     val path = ModuleUtilCore.getModuleDirPath(module)
-    new File(
-      if (path.endsWith(".idea"))
-        PathUtilRt.getParentPath(path)
-      else path
-    )
+    val dir = new File(path)
+    dir.getName match {
+      case ".idea" => new File(PathUtilRt.getParentPath(path))
+      case _ => dir
+    }
   }
 
   def findCabalFiles(project: Project): Iterable[File] = {
