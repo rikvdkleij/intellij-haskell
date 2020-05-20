@@ -118,8 +118,7 @@ object FileModuleIdentifiers {
   }
 
   private def getModuleIdentifiersFromFullImportedModules(noImplicitPrelude: Boolean, psiFile: PsiFile, importDeclarations: Iterable[HaskellImportDeclaration]): Future[Iterable[Option[Iterable[ModuleIdentifier]]]] = {
-    val importInfos = getFullImportedModules(noImplicitPrelude, psiFile, importDeclarations)
-
+    val importInfos = getFullImportedModules(noImplicitPrelude, psiFile, importDeclarations).toSeq
     Future.sequence(importInfos.map(importInfo => {
       val allModuleIdentifiers = BrowseModuleComponent.findModuleIdentifiers(psiFile.getProject, importInfo.moduleName)
       allModuleIdentifiers.map(mi => mi.map(i => createQualifiedModuleIdentifiers(importInfo, i)))
@@ -127,8 +126,7 @@ object FileModuleIdentifiers {
   }
 
   private def getModuleIdentifiersFromHidingIdsImportedModules(psiFile: PsiFile, importDeclarations: Iterable[HaskellImportDeclaration]): Future[Iterable[Option[Iterable[ModuleIdentifier]]]] = {
-    val importInfos = getImportedModulesWithHidingIdsSpec(psiFile, importDeclarations)
-
+    val importInfos = getImportedModulesWithHidingIdsSpec(psiFile, importDeclarations).toSeq
     Future.sequence(importInfos.map(importInfo => {
       val allModuleIdentifiers = BrowseModuleComponent.findModuleIdentifiers(psiFile.getProject, importInfo.moduleName)
       allModuleIdentifiers.map(ids => ids.map(is => createQualifiedModuleIdentifiers(importInfo, is.filterNot(mi => importInfo.ids.exists(_ == mi.name)))))
@@ -136,8 +134,7 @@ object FileModuleIdentifiers {
   }
 
   private def getModuleIdentifiersFromSpecIdsImportedModules(psiFile: PsiFile, importDeclarations: Iterable[HaskellImportDeclaration]): Future[Iterable[Option[Iterable[ModuleIdentifier]]]] = {
-    val importInfos = getImportedModulesWithSpecIds(psiFile, importDeclarations)
-
+    val importInfos = getImportedModulesWithSpecIds(psiFile, importDeclarations).toSeq
     Future.sequence(importInfos.map(importInfo => {
       val allModuleIdentifiers = BrowseModuleComponent.findModuleIdentifiers(psiFile.getProject, importInfo.moduleName)
       allModuleIdentifiers.map(ids => ids.map(is => createQualifiedModuleIdentifiers(importInfo, is.filter(mi => importInfo.ids.exists(_ == mi.name)))))
