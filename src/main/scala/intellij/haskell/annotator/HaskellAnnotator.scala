@@ -104,14 +104,14 @@ class HaskellAnnotator extends ExternalAnnotator[PsiFile, CompilationResult] {
 
     for (annotation <- HaskellAnnotator.createAnnotations(project, psiFile, loadResult.currentFileProblems)) {
       annotation match {
-        case ErrorAnnotation(textRange, message, htmlMessage) => holder.createAnnotation(HighlightSeverity.ERROR, textRange, message, htmlMessage)
+        case ErrorAnnotation(textRange, message, htmlMessage) =>
+          HaskellAnnotator.annotation(holder, HighlightSeverity.ERROR, textRange, message, htmlMessage)
         case ErrorAnnotationWithIntentionActions(textRange, message, htmlMessage, intentionActions) =>
-          val annotation = holder.createAnnotation(HighlightSeverity.ERROR, textRange, message, htmlMessage)
-          intentionActions.foreach(annotation.registerFix)
-        case WarningAnnotation(textRange, message, htmlMessage) => holder.createAnnotation(HighlightSeverity.WARNING, textRange, message, htmlMessage)
+          HaskellAnnotator.annotation(holder, HighlightSeverity.ERROR, textRange, message, htmlMessage, intentionActions)
+        case WarningAnnotation(textRange, message, htmlMessage) =>
+          HaskellAnnotator.annotation(holder, HighlightSeverity.WARNING, textRange, message, htmlMessage)
         case WarningAnnotationWithIntentionActions(textRange, message, htmlMessage, intentionActions) =>
-          val annotation = holder.createAnnotation(HighlightSeverity.WARNING, textRange, message, htmlMessage)
-          intentionActions.foreach(annotation.registerFix)
+          HaskellAnnotator.annotation(holder, HighlightSeverity.WARNING, textRange, message, htmlMessage, intentionActions)
       }
     }
   }
@@ -148,6 +148,10 @@ object HaskellAnnotator {
 
   // File which could not be loaded because project was not yet build
   private final val NotLoadedFiles = new ConcurrentHashMap[Project, Set[PsiFile]]
+
+  def annotation(holder: AnnotationHolder, severity: HighlightSeverity, range: TextRange, message: String, html: String, intentions: List[HaskellBaseIntentionAction] = List()): Unit = {
+    intentions.foldLeft(holder.newAnnotation(severity, message).tooltip(html).range(range)) { (b, a) => b.withFix(a) }.create()
+  }
 
   import scala.jdk.FunctionConverters._
 

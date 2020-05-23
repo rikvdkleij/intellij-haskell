@@ -9,4 +9,6 @@ class HaskellTestConfigurationFactory(val typez: ConfigurationType) extends Conf
   override def createTemplateConfiguration(project: Project) = new HaskellTestConfiguration(name, project, this)
 
   override def getName: String = name
+
+  override def getId: String = name
 }

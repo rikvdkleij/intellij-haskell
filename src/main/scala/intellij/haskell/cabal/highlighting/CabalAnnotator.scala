@@ -5,6 +5,7 @@ import com.intellij.openapi.editor.colors.{EditorColorsManager, TextAttributesKe
 import com.intellij.psi.PsiElement
 import intellij.haskell.cabal.lang.psi.CabalTypes._
 import intellij.haskell.cabal.lang.psi._
+import intellij.haskell.highlighter.HighlightingAnnotator
 
 class CabalAnnotator extends Annotator {
 
@@ -19,8 +20,6 @@ class CabalAnnotator extends Annotator {
   }
 
   private def setHighlighting(element: PsiElement, holder: AnnotationHolder, key: TextAttributesKey): Unit = {
-    holder.createInfoAnnotation(element, null).setEnforcedTextAttributes(
-      EditorColorsManager.getInstance.getGlobalScheme.getAttributes(key)
-    )
+    HighlightingAnnotator.infoAnnotation(holder, element, EditorColorsManager.getInstance.getGlobalScheme.getAttributes(key))
   }
 }

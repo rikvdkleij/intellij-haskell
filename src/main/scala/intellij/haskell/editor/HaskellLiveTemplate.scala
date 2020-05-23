@@ -1,7 +1,6 @@
 package intellij.haskell.editor
 
 import com.intellij.codeInsight.template.TemplateContextType
-import com.intellij.codeInsight.template.impl.DefaultLiveTemplatesProvider
 import com.intellij.psi.PsiFile
 import com.intellij.psi.util.PsiTreeUtil
 import intellij.haskell.HaskellFileType
@@ -31,14 +30,3 @@ class HaskellGlobalDefinitionTemplateContextType extends TemplateContextType("HA
       PsiTreeUtil.getParentOfType(element, classOf[HaskellExpression]) == null
   }
 }
-
-object DefaultHolder {
-  val DEFAULT = Array("liveTemplates/Haskell")
-}
-
-class HaskellLiveTemplateProvider extends DefaultLiveTemplatesProvider {
-  override def getDefaultLiveTemplateFiles: Array[String] = DefaultHolder.DEFAULT
-
-  override def getHiddenLiveTemplateFiles: Array[String] = null
-}
-

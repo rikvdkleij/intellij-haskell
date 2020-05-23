@@ -443,8 +443,7 @@
         <liveTemplateContext implementation="intellij.haskell.editor.HaskellTemplateContextType"/>
         <liveTemplateContext implementation="intellij.haskell.editor.HaskellPragmaTemplateContextType"/>
         <liveTemplateContext implementation="intellij.haskell.editor.HaskellGlobalDefinitionTemplateContextType"/>
-        <defaultLiveTemplatesProvider implementation="intellij.haskell.editor.HaskellLiveTemplateProvider"/>
-
+        <defaultLiveTemplates file="liveTemplates/Haskell"/>
         <!-- Handler -->
         <typedHandler implementation="intellij.haskell.editor.HaskellTypedHandler" id="HaskellFile"/>
         <extendWordSelectionHandler implementation="intellij.haskell.editor.HaskellExtendWordSelectioner"/>
