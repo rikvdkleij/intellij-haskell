@@ -55,12 +55,9 @@ case class ProjectStackRepl(project: Project, stackComponentInfo: StackComponent
 
   private case class DependentModuleInfo()
 
-  private case class LoadedModuleInfo(info: Option[(StackReplOutput, Boolean)])
-
   private type ModuleName = String
   private[this] val loadedDependentModules = new ConcurrentHashMap[ModuleName, DependentModuleInfo]().asScala
   private[this] val everLoadedDependentModules = new ConcurrentHashMap[ModuleName, DependentModuleInfo]().asScala
-  private[this] val everLoadedInfo = new ConcurrentHashMap[String, LoadedModuleInfo]().asScala
 
   import scala.concurrent.ExecutionContext.Implicits.global
 
@@ -127,6 +124,8 @@ case class ProjectStackRepl(project: Project, stackComponentInfo: StackComponent
   }
 
   def load(psiFile: PsiFile, fileModified: Boolean, forceNoReload: Boolean = false): Option[(StackReplOutput, Boolean)] = synchronized {
+    val filePath = getFilePath(psiFile)
+
     val reload = if (forceNoReload) {
       false
     } else if (fileModified) {
@@ -136,30 +135,23 @@ case class ProjectStackRepl(project: Project, stackComponentInfo: StackComponent
       false
     }
 
-    if (!fileModified && !forceNoReload && everLoadedInfo.contains(getFilePath(psiFile))) {
-      everLoadedInfo(getFilePath(psiFile)).info
+    val output = if (reload) {
+      execute(s":reload")
     } else {
-      val output = if (reload) {
-        execute(s":reload")
-      } else {
-        val filePath = getFilePath(psiFile)
-        execute(s":load *$filePath")
-      }
+      execute(s":load *$filePath")
+    }
 
-      output match {
-        case Some(o) =>
-          val loadFailed = isLoadFailed(o)
-          setLoadedModules()
+    output match {
+      case Some(o) =>
+        val loadFailed = isLoadFailed(o)
+        setLoadedModules()
 
-          loadedFile = Some(ModuleInfo(psiFile, loadFailed))
-          everLoadedInfo.put(getFilePath(psiFile), LoadedModuleInfo(Some((o, loadFailed))))
-          Some(o, loadFailed)
-        case _ =>
-          loadedDependentModules.clear()
-          everLoadedInfo.remove(getFilePath(psiFile))
-          loadedFile = None
-          None
-      }
+        loadedFile = Some(ModuleInfo(psiFile, loadFailed))
+        Some(o, loadFailed)
+      case _ =>
+        loadedDependentModules.clear()
+        loadedFile = None
+        None
     }
   }
 
