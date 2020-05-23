@@ -58,7 +58,7 @@ class HaskellAnnotator extends ExternalAnnotator[PsiFile, CompilationResult] {
     } else {
       (psiFile, HaskellFileUtil.findVirtualFile(psiFile)) match {
         case (_, None) => null // can be in case if file is in memory only (just created file)
-        case (_, Some(f)) if f.getFileType != HaskellFileType.Instance => null
+        case (_, Some(f)) if f.getFileType != HaskellFileType.INSTANCE => null
         case (_, Some(_)) if !psiFile.isValid => null
         case (_, Some(_)) => psiFile
       }

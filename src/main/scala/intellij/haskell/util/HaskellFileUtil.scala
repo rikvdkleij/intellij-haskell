@@ -210,7 +210,7 @@ object HaskellFileUtil {
     isHaskellFileName(virtualFile.getName)
   }
 
-  private final val HaskellFileSuffix = "." + HaskellFileType.HaskellFileExtension
+  private final val HaskellFileSuffix = "." + HaskellFileType.INSTANCE.getDefaultExtension
 
   private def isHaskellFileName(name: String) = {
     name.endsWith(HaskellFileSuffix)

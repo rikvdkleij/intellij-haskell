@@ -350,8 +350,24 @@
     <idea-version since-build="193.6015.39"/>
 
     <extensions defaultExtensionNs="com.intellij">
-        <!-- File-type Factory -->
-        <fileTypeFactory implementation="intellij.haskell.HaskellLanguageFileTypeFactory"/>
+        <!-- File types -->
+        <fileType name="Alex"
+                  language="Alex"
+                  implementationClass="intellij.haskell.alex.AlexFileType"
+                  extensions="x"
+                  fieldName="INSTANCE"/>
+
+        <fileType name="Cabal"
+                  language="Cabal"
+                  implementationClass="intellij.haskell.cabal.CabalFileType"
+                  extensions="cabal"
+                  fieldName="INSTANCE"/>
+
+        <fileType name="Haskell"
+                  language="Haskell"
+                  implementationClass="intellij.haskell.HaskellFileType"
+                  extensions="hs"
+                  fieldName="INSTANCE"/>
 
         <!-- Parser -->
         <lang.parserDefinition language="Haskell" implementationClass="intellij.haskell.HaskellParserDefinition"/>

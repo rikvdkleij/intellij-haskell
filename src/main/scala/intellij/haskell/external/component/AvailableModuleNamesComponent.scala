@@ -86,7 +86,7 @@ import scala.jdk.CollectionConverters._
       try {
         val projectModulesScope = projectModules.foldLeft(GlobalSearchScope.EMPTY_SCOPE)({ case (x, y) => x.uniteWith(y.getModuleScope(false)) })
         val searchScope = currentModule.getModuleScope(includeTests).uniteWith(projectModulesScope)
-        FileTypeIndex.getFiles(HaskellFileType.Instance, searchScope).asScala
+        FileTypeIndex.getFiles(HaskellFileType.INSTANCE, searchScope).asScala
       } catch {
         case _: IndexNotReadyException =>
           HaskellNotificationGroup.logInfoEvent(project, s"Index not ready while findHaskellFiles for module ${currentModule.getName} ")

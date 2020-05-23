@@ -42,7 +42,7 @@ object HaskellModuleNameIndex {
   private val HaskellFileFilter = new FileBasedIndex.InputFilter() {
 
     override def acceptInput(file: VirtualFile): Boolean = {
-      file.getFileType == HaskellFileType.Instance
+      file.getFileType == HaskellFileType.INSTANCE
     }
   }
 

@@ -8,12 +8,12 @@ import intellij.haskell.psi.{HaskellExpression, HaskellFileHeader}
 
 class HaskellTemplateContextType extends TemplateContextType("HASKELL_FILE", "Haskell") {
   override def isInContext(file: PsiFile, offset: Int): Boolean =
-    file.getFileType == HaskellFileType.Instance
+    file.getFileType == HaskellFileType.INSTANCE
 }
 
 class HaskellPragmaTemplateContextType extends TemplateContextType("HASKELL_PRAGMA", "Pragma", classOf[HaskellTemplateContextType]) {
   override def isInContext(file: PsiFile, offset: Int): Boolean = {
-    if (file.getFileType != HaskellFileType.Instance) return false
+    if (file.getFileType != HaskellFileType.INSTANCE) return false
     if (offset < 5) return true
     val element = file.findElementAt(offset - 5)
     element != null &&
@@ -23,7 +23,7 @@ class HaskellPragmaTemplateContextType extends TemplateContextType("HASKELL_PRAG
 
 class HaskellGlobalDefinitionTemplateContextType extends TemplateContextType("HASKELL_GLOB_DEF", "Global definition", classOf[HaskellTemplateContextType]) {
   override def isInContext(file: PsiFile, offset: Int): Boolean = {
-    if (file.getFileType != HaskellFileType.Instance) return false
+    if (file.getFileType != HaskellFileType.INSTANCE) return false
     var element = file.findElementAt(offset)
     if (element == null) element = file.findElementAt(offset - 1)
     element != null &&

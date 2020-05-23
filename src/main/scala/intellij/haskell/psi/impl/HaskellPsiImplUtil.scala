@@ -77,7 +77,7 @@ object HaskellPsiImplUtil {
   }
 
   def setName(modid: HaskellModid, newName: String): PsiElement = {
-    if (newName.endsWith("." + HaskellFileType.Instance.getDefaultExtension)) {
+    if (newName.endsWith("." + HaskellFileType.INSTANCE.getDefaultExtension)) {
       val newModid = HaskellElementFactory.createModid(modid.getProject, HaskellRenameFileProcessor.createNewModuleName(modid.getName, newName))
       newModid.foreach(modid.replace)
       modid
@@ -342,7 +342,7 @@ object HaskellPsiImplUtil {
   }
 
   def removeFileExtension(name: String): String = {
-    val fileExtension = "." + HaskellFileType.Instance.getDefaultExtension
+    val fileExtension = "." + HaskellFileType.INSTANCE.getDefaultExtension
     if (name.endsWith(fileExtension)) {
       name.replaceFirst(fileExtension, "")
     } else {
