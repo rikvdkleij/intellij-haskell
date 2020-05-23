@@ -25,6 +25,7 @@ ___
 ![Duke Lounge](logo/duke.png) 
 ### Duke lounge
 * @seanjensengrey
+* @paweln1986
 
 ___
 
