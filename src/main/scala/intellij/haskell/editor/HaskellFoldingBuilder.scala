@@ -8,7 +8,7 @@ import com.intellij.openapi.util.TextRange
 import com.intellij.psi.PsiElement
 import com.intellij.psi.util.PsiTreeUtil
 import intellij.haskell.HaskellFile
-import intellij.haskell.psi.{HaskellFileHeader, HaskellImportDeclarations, HaskellPsiUtil, HaskellTypes}
+import intellij.haskell.psi._
 
 class HaskellFoldingBuilder extends FoldingBuilderEx with DumbAware {
 
@@ -16,7 +16,8 @@ class HaskellFoldingBuilder extends FoldingBuilderEx with DumbAware {
     root match {
       case file: HaskellFile =>
         HaskellPsiUtil.findImportDeclarationsBlock(file).map(createFoldingDescriptor).getOrElse(Array()) ++
-          HaskellPsiUtil.findFileHeader(file).map(createFoldingDescriptor).getOrElse(Array())
+          HaskellPsiUtil.findFileHeader(file).map(createFoldingDescriptor).getOrElse(Array()) ++
+          HaskellPsiUtil.findTopLevelExpressions(file).flatMap(createFoldingDescriptor)
       case _ => FoldingDescriptor.EMPTY
     }
   }
@@ -34,13 +35,21 @@ class HaskellFoldingBuilder extends FoldingBuilderEx with DumbAware {
   }
 
   override def isCollapsedByDefault(node: ASTNode): Boolean = {
-    true
+    val foldingSettings = HaskellFoldingSettings.getInstance()
+    if (node.getElementType == HaskellTypes.HS_IMPORT_DECLARATIONS) {
+      foldingSettings.isCollapseImports
+    } else if (node.getElementType == HaskellTypes.HS_FILE_HEADER) {
+      foldingSettings.isCollapseImports
+    } else if (node.getElementType == HaskellTypes.HS_EXPRESSION) {
+      foldingSettings.isCollapseTopLevelExpression
+    } else false
   }
 
   override def getPlaceholderText(node: ASTNode): String = {
     node.getPsi match {
       case _: HaskellImportDeclarations => "import ..."
       case _: HaskellFileHeader => "{-# ... #-}"
+      case e: HaskellExpression => Option(e.getFirstChild.getText).getOrElse("") + " ..."
       case _ => null
     }
   }
