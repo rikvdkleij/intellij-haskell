@@ -2,6 +2,7 @@ package intellij.haskell.highlighter
 
 import com.intellij.lang.annotation.{AnnotationHolder, Annotator, HighlightSeverity}
 import com.intellij.openapi.editor.colors.TextAttributesKey
+import com.intellij.openapi.editor.markup.TextAttributes
 import com.intellij.psi.PsiElement
 import intellij.haskell.psi._
 import intellij.haskell.psi.impl.HaskellStringLiteralElementImpl
@@ -27,6 +28,13 @@ object HighlightingAnnotator {
     holder.newAnnotation(HighlightSeverity.WEAK_WARNING, "")
       .range(psi)
       .textAttributes(attribute)
+      .create()
+  }
+
+  def infoAnnotation(holder: AnnotationHolder, psi: PsiElement, attributes: TextAttributes): Unit = {
+    holder.newAnnotation(HighlightSeverity.WEAK_WARNING, "")
+      .range(psi)
+      .enforcedTextAttributes(attributes)
       .create()
   }
 }
