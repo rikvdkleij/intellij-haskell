@@ -7,8 +7,8 @@ public class HaskellCodeFoldingOptionsProvider extends BeanConfigurable<HaskellF
     public HaskellCodeFoldingOptionsProvider() {
         super(HaskellFoldingSettings.getInstance().getState(), "Haskell");
         HaskellFoldingSettings settings = HaskellFoldingSettings.getInstance();
-        checkBox("Imports", settings::isCollapseImports, value -> settings.getState().COLLAPSE_IMPORTS = value);
         checkBox("File header", settings::isCollapseFileHeader, value -> settings.getState().COLLAPSE_FILE_HEADER = value);
+        checkBox("Imports", settings::isCollapseImports, value -> settings.getState().COLLAPSE_IMPORTS = value);
         checkBox("Top-level expression", settings::isCollapseTopLevelExpression, value -> settings.getState().COLLAPSE_TOP_LEVEL_EXPRESSION = value);
     }
 }
