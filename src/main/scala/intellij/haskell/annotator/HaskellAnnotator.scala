@@ -92,8 +92,8 @@ class HaskellAnnotator extends ExternalAnnotator[PsiFile, CompilationResult] {
 
     ApplicationManager.getApplication.invokeLater { () =>
       if (!project.isDisposed) {
+        haskellProblemsView.clearProgress()
         currentFile.foreach(cf => {
-          haskellProblemsView.clearProgress()
           haskellProblemsView.clearOldMessages(cf)
         })
         currentFileMessages.foreach(_.foreach(haskellProblemsView.addMessage))

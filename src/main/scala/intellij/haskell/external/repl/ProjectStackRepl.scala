@@ -23,6 +23,7 @@ import com.intellij.psi.PsiFile
 import intellij.haskell.HaskellNotificationGroup
 import intellij.haskell.external.component.HaskellComponentsManager.StackComponentInfo
 import intellij.haskell.external.repl.StackRepl.StackReplOutput
+import intellij.haskell.psi.HaskellPsiUtil
 import intellij.haskell.util.{HaskellFileUtil, ScalaFutureUtil}
 
 import scala.concurrent.{Future, blocking}
@@ -86,9 +87,10 @@ case class ProjectStackRepl(project: Project, stackComponentInfo: StackComponent
   }
 
   def findInfo(psiFile: PsiFile, name: String): Option[StackReplOutput] = {
+    val moduleName = HaskellPsiUtil.findModuleName(psiFile)
     def execute = {
       blocking {
-        executeWithLoad(psiFile, s":info $name")
+        executeWithLoad(psiFile, moduleName, s":info $name")
       }
     }
 
@@ -123,7 +125,7 @@ case class ProjectStackRepl(project: Project, stackComponentInfo: StackComponent
     }
   }
 
-  def load(psiFile: PsiFile, fileModified: Boolean, forceNoReload: Boolean = false): Option[(StackReplOutput, Boolean)] = synchronized {
+  def load(psiFile: PsiFile, fileModified: Boolean, moduleName: Option[String], forceNoReload: Boolean = false): Option[(StackReplOutput, Boolean)] = synchronized {
     val filePath = getFilePath(psiFile)
 
     val reload = if (forceNoReload) {
@@ -131,9 +133,7 @@ case class ProjectStackRepl(project: Project, stackComponentInfo: StackComponent
     } else if (fileModified) {
       val loaded = isFileLoaded(psiFile)
       loaded == Loaded || loaded == Failed
-    } else {
-      false
-    }
+    } else (moduleName.exists(mn => loadedDependentModules.contains(mn)))
 
     val output = if (reload) {
       execute(s":reload")
@@ -160,7 +160,7 @@ case class ProjectStackRepl(project: Project, stackComponentInfo: StackComponent
       Future {
         blocking {
           synchronized {
-            if (psiFile.isEmpty || isBrowseModuleLoaded(moduleName) || psiFile.exists(pf => load(pf, fileModified = false).exists(_._2 == false))) {
+            if (psiFile.isEmpty || isBrowseModuleLoaded(moduleName) || psiFile.exists(pf => load(pf, fileModified = false, Some(moduleName)).exists(_._2 == false))) {
               execute(s":browse! $moduleName")
             } else {
               HaskellNotificationGroup.logInfoEvent(project, s"Couldn't get module identifiers for module $moduleName because file ${psiFile.map(_.getName).getOrElse("-")} isn't loaded")
@@ -182,15 +182,15 @@ case class ProjectStackRepl(project: Project, stackComponentInfo: StackComponent
     if (moduleName.exists(isModuleLoaded)) {
       execute(command)
     } else {
-      executeWithLoad(psiFile, command)
+      executeWithLoad(psiFile, moduleName, command)
     }
   }
 
-  private def executeWithLoad(psiFile: PsiFile, command: String): Option[StackReplOutput] = synchronized {
+  private def executeWithLoad(psiFile: PsiFile, moduleName: Option[String], command: String): Option[StackReplOutput] = synchronized {
     loadedFile match {
       case Some(info) if info.psiFile == psiFile && !info.loadFailed => execute(command)
       case _ =>
-        load(psiFile, fileModified = false)
+        load(psiFile, fileModified = false, moduleName)
         loadedFile match {
           case None => None
           case Some(info) if info.psiFile == psiFile => execute(command)

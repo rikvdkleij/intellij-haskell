@@ -51,13 +51,14 @@ private[component] object LoadComponent {
       }
 
       ProjectLibraryBuilder.checkLibraryBuild(project, projectRepl.stackComponentInfo)
+      val moduleName = HaskellPsiUtil.findModuleName(psiFile)
 
       {
         if (HaskellAnnotator.getNotLoadedFiles(project).contains(psiFile)) {
           HaskellAnnotator.removeNotLoadedFile(psiFile)
-          projectRepl.load(psiFile, fileModified, forceNoReload = true)
+          projectRepl.load(psiFile, fileModified, moduleName, forceNoReload = true)
         } else {
-          projectRepl.load(psiFile, fileModified)
+          projectRepl.load(psiFile, fileModified, moduleName)
         }
       } match {
         case Some((loadOutput, loadFailed)) =>
@@ -66,7 +67,6 @@ private[component] object LoadComponent {
             DefinitionLocationComponent.invalidate(project)
             HaskellModuleNameIndex.invalidateNotFoundEntries(project)
 
-            val moduleName = HaskellPsiUtil.findModuleName(psiFile)
             if (!loadFailed) {
               moduleName.foreach(mn => {
                 BrowseModuleComponent.invalidateModuleNames(project, Seq(mn))
