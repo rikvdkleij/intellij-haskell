@@ -21,6 +21,7 @@ import java.util.concurrent.ConcurrentHashMap
 import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer
 import com.intellij.codeInsight.daemon.impl._
 import com.intellij.codeInsight.intention.impl.BaseIntentionAction
+import com.intellij.codeInsight.intention.{HighPriorityAction, PriorityAction}
 import com.intellij.compiler.CompilerMessageImpl
 import com.intellij.lang.annotation.{AnnotationHolder, ExternalAnnotator, HighlightSeverity}
 import com.intellij.openapi.application.ApplicationManager
@@ -148,7 +149,7 @@ object HaskellAnnotator {
 
   private final val DeprecatedPattern = """.*In the use of.*[‘`](.*)[’'].*Deprecated: "Use ([^ ]+).*"""".r
 
-  private final val HolePattern = """warning: \[\-Wtyped\-holes\] (.+)""".r
+  private final val HolePattern = """warning: \[-Wtyped-holes] (.+)""".r
 
   // File which could not be loaded because project was not yet build
   private final val NotLoadedFiles = new ConcurrentHashMap[Project, Set[PsiFile]]
@@ -196,10 +197,12 @@ object HaskellAnnotator {
 
   private def createAnnotations(project: Project, psiFile: PsiFile, problems: Iterable[CompilationProblem]): Iterable[Annotation] = {
 
+    lazy val importedModuleNames = HaskellPsiUtil.findImportDeclarations(psiFile).flatMap(_.getModuleName).toSeq
+
     def createErrorAnnotationWithMultiplePerhapsIntentions(problem: CompilationProblem, tr: TextRange, notInScopeMessage: String, suggestionsList: String, add: Option[(String, String)]) = {
       val notInScopeName = extractName(notInScopeMessage)
       val annotations = suggestionsList.split(",").flatMap(s => extractPerhapsYouMeantAction(s))
-      ErrorAnnotationWithIntentionActions(tr, problem.plainMessage, problem.htmlMessage, annotations.to(Iterable).toList ++ createNotInScopeIntentionActions(psiFile, notInScopeName) ++ add.map(a => new NotInScopeIntentionAction(a._2, a._1, psiFile)))
+      ErrorAnnotationWithIntentionActions(tr, problem.plainMessage, problem.htmlMessage, annotations.to(Iterable).toList ++ createNotInScopeIntentionActions(psiFile, notInScopeName, importedModuleNames) ++ add.map(a => new NotInScopeIntentionAction(a._2, a._1, psiFile, importedModuleNames)))
     }
 
     problems.flatMap {
@@ -221,12 +224,12 @@ object HaskellAnnotator {
               case PerhapsYouMeantSinglePattern(notInScopeMessage, suggestion) =>
                 val notInScopeName = extractName(notInScopeMessage)
                 val annotation = extractPerhapsYouMeantAction(suggestion)
-                ErrorAnnotationWithIntentionActions(tr, problem.plainMessage, problem.htmlMessage, annotation.to(Iterable).toList ++ createNotInScopeIntentionActions(psiFile, notInScopeName))
+                ErrorAnnotationWithIntentionActions(tr, problem.plainMessage, problem.htmlMessage, annotation.to(Iterable).toList ++ createNotInScopeIntentionActions(psiFile, notInScopeName, importedModuleNames))
               case NotInScopePattern(name) =>
-                ErrorAnnotationWithIntentionActions(tr, problem.plainMessage, problem.htmlMessage, createNotInScopeIntentionActions(psiFile, name).toList)
+                ErrorAnnotationWithIntentionActions(tr, problem.plainMessage, problem.htmlMessage, createNotInScopeIntentionActions(psiFile, name, importedModuleNames).toList)
               case NotInScopePattern2(name) =>
-                ErrorAnnotationWithIntentionActions(tr, problem.plainMessage, problem.htmlMessage, createNotInScopeIntentionActions(psiFile, name.split("::").headOption.getOrElse(name).trim).toList)
-              case UseAloneInstancesImportPattern(importDecl, useImport) => importAloneInstancesAction(problem, tr, importDecl, useImport)
+                ErrorAnnotationWithIntentionActions(tr, problem.plainMessage, problem.htmlMessage, createNotInScopeIntentionActions(psiFile, name.split("::").headOption.getOrElse(name).trim, importedModuleNames).toList)
+              case UseAloneInstancesImportPattern(importDecl, _) => importAloneInstancesAction(problem, tr, importDecl)
               case HolePattern(_) =>
                 ErrorAnnotation(tr, problem.plainMessage, problem.htmlMessage)
               //
@@ -269,17 +272,17 @@ object HaskellAnnotator {
     }
   }
 
-  private def createNotInScopeIntentionActions(psiFile: PsiFile, name: String): Iterable[NotInScopeIntentionAction] = {
+  private def createNotInScopeIntentionActions(psiFile: PsiFile, name: String, importedModuleNames: Seq[String]): Iterable[NotInScopeIntentionAction] = {
     val nameWithoutParens = StringUtil.removeOuterParens(name)
     val moduleIdentifiers = HaskellComponentsManager.findModuleIdentifiersInCache(psiFile.getProject).filter(_.name == nameWithoutParens)
-    moduleIdentifiers.map(mi => new NotInScopeIntentionAction(mi.name, mi.moduleName, psiFile))
+    moduleIdentifiers.map(mi => new NotInScopeIntentionAction(mi.name, mi.moduleName, psiFile, importedModuleNames))
   }
 
   private def createLanguageExtensionIntentionsAction(problem: CompilationProblem, tr: TextRange, languageExtensions: Iterable[String]): ErrorAnnotationWithIntentionActions = {
     ErrorAnnotationWithIntentionActions(tr, problem.plainMessage, problem.htmlMessage, languageExtensions.map(le => new LanguageExtensionIntentionAction(le)).toList)
   }
 
-  private def importAloneInstancesAction(problem: CompilationProblem, tr: TextRange, importDecl: String, useImport: String): WarningAnnotationWithIntentionActions = {
+  private def importAloneInstancesAction(problem: CompilationProblem, tr: TextRange, importDecl: String): WarningAnnotationWithIntentionActions = {
     WarningAnnotationWithIntentionActions(tr, problem.plainMessage, problem.htmlMessage, List(new ImportAloneInstancesAction(importDecl), new OptimizeImportIntentionAction(importDecl, None, problem.lineNr)))
   }
 
@@ -325,9 +328,13 @@ private case class WarningAnnotation(textRange: TextRange, message: String, html
 
 private case class WarningAnnotationWithIntentionActions(textRange: TextRange, message: String, htmlMessage: String, baseIntentionActions: List[HaskellBaseIntentionAction]) extends Annotation
 
-sealed abstract class HaskellBaseIntentionAction extends BaseIntentionAction {
+sealed abstract class HaskellBaseIntentionAction extends BaseIntentionAction with HighPriorityAction {
   override def isAvailable(project: Project, editor: Editor, file: PsiFile): Boolean = {
     file.isInstanceOf[HaskellFile]
+  }
+
+  override def getPriority: PriorityAction.Priority = {
+    PriorityAction.Priority.NORMAL
   }
 }
 
@@ -440,7 +447,7 @@ class DefinedButNotUsedUnderscoreIntentionAction(name: String) extends HaskellBa
   }
 }
 
-class NotInScopeIntentionAction(identifier: String, moduleName: String, psiFile: PsiFile) extends HaskellBaseIntentionAction {
+class NotInScopeIntentionAction(identifier: String, moduleName: String, psiFile: PsiFile, importedModuleNames: Seq[String]) extends HaskellBaseIntentionAction {
   setText(s"Import `$identifier` of module `$moduleName`")
 
   override def getFamilyName: String = "Perhaps you meant"
@@ -486,6 +493,14 @@ class NotInScopeIntentionAction(identifier: String, moduleName: String, psiFile:
       case None =>
         val importElement = ids.addAfter(importDeclarationElement, null)
         ids.addAfter(HaskellElementFactory.createNewLine(project), importElement)
+    }
+  }
+
+  override def getPriority: PriorityAction.Priority = {
+    if (importedModuleNames.contains(moduleName)) {
+      PriorityAction.Priority.HIGH
+    } else {
+      PriorityAction.Priority.LOW
     }
   }
 }
