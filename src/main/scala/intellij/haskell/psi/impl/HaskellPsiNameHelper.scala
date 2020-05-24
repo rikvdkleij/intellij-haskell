@@ -17,7 +17,7 @@ object HaskellPsiNameHelper {
 class HaskellPsiNameHelper private() extends PsiNameHelper {
   final private var myLanguageLevelExtension: LanguageLevelProjectExtension = _
 
-  def this(project: Project) {
+  def this(project: Project) = {
     this()
     myLanguageLevelExtension = LanguageLevelProjectExtension.getInstance(project)
   }
