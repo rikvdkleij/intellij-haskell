@@ -1,5 +1,5 @@
 /*
- * Copyright 2014-2019 Rik van der Kleij
+ * Copyright 2014-2020 Rik van der Kleij
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -96,9 +96,13 @@ class HaskellAnnotator extends ExternalAnnotator[PsiFile, CompilationResult] {
           haskellProblemsView.clearProgress()
           haskellProblemsView.clearOldMessages(cf)
         })
-
         currentFileMessages.foreach(_.foreach(haskellProblemsView.addMessage))
-        otherFileMessages.foreach(haskellProblemsView.addMessage)
+
+        val messagesPerFile = otherFileMessages.groupBy(_.getVirtualFile)
+        messagesPerFile.foreach { case (file, messages) =>
+          haskellProblemsView.clearOldMessages(file)
+          messages.foreach(haskellProblemsView.addMessage(_))
+        }
       }
     }
 
