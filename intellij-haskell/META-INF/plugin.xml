@@ -1,7 +1,7 @@
 <idea-plugin>
     <id>intellij.haskell</id>
     <name>IntelliJ-Haskell</name>
-    <version>1.0.0-beta71</version>
+    <version>1.0.0-beta72</version>
     <vendor email="rikvdkleij@gmail.com">Rik van der Kleij</vendor>
 
     <description><![CDATA[
@@ -20,6 +20,13 @@
     ]]></description>
 
     <change-notes><![CDATA[
+        <p>1.0.0-beta72</p>
+        <ul>
+            <li>Various improvements and fixes</li>
+            <li>Fixed some deprecation warnings (also by @i-walker)</li>
+            <li>Added support for folding top-level expressions</li>
+            <li>Added Haskell setting to set default code folding per type</li>
+        </ul>
         <p>1.0.0-beta71</p>
         <ul>
             <li>Some optimizations in REPL loads and background builds</li>
