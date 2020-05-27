@@ -78,14 +78,11 @@ Alternative way to install the latest beta version is to download `intellij-hask
 - Show error action to view formatted message. Useful in case message consists of multiple lines (Ctrl-F10, Meta-F10 on Mac OSX);
 - Intention actions to add language extension (depends on compiler error), add top-level type signature (depends on compiler warning);
 - Intention action to select which module to import if identifier is not in scope;
-- Code formatting with `hindent`, `stylish-haskell`, or both together. `hindent` can also be used to format a selected code block.
+- Default code formatting by `ormolu`. Alternatively by `stylish-haskell`.
 - Code completion for project module names, language extensions and package names in Cabal file;
 - Running REPL, tests and executables via `Run Configurations`;
 - Smart completion on typed holes (since GHC 8.4);
 
-### Usage with `hindent`
-
-When used with `hindent`, `intellij-haskell` automatically sets `--indent-size` as a command-line option in `hindent` from the `Indent` option in your project code style settings. It also automatically sets the `--line-length` command-line option from your `Hard wrap at` code style setting. This means that any `.hindent.yaml` files used for configuration will have these options overridden and may not fully work.
 
 
 # Getting started
@@ -96,12 +93,12 @@ When used with `hindent`, `intellij-haskell` automatically sets `--indent-size` 
   - Make sure your Stack project builds without errors. Preferably by using: `stack build --test --haddock --no-haddock-hyperlink-source`;
   - After your project is built successfully, import an existing project by:
     - Inside IntelliJ use `File`>`New`>`Project from Existing Sources...` from the IntelliJ menu;
-    - In the `Welcome to IntelliJ IDEA` dialog use `Import Project`; 
+    - In the `Welcome to IntelliJ IDEA` dialog use `Open or Import Project`; 
   - In the `New Project` wizard select `Import project from external model` and check `Haskell Stack`;
   - In next page of wizard configure `Project SDK` by configuring `Haskell Tool Stack` with selecting path to `stack` binary, e.g. `/usr/local/bin/stack` (you can use `which stack` on Linux or macOS or `where stack` on windows to find the path);
   - Finish wizard and project will be opened;
   - Wizard will automatically configure which folders are sources, test and which to exclude;
-  - Plugin will automatically build Haskell Tools (HLint, Hoogle, Hindent and Stylish Haskell) to prevent incompatibility issues
+  - Plugin will automatically build Haskell Tools (HLint, Hoogle, Ormolu and Stylish Haskell) to prevent incompatibility issues
   - Check `Project structure`>`Project settings`>`Modules` which folders to exclude (like `.stack-work` and `dist`) and which folders are `Source` and `Test` (normally `src` and `test`);
   - Plugin will automatically download library sources. They will be added as source libraries to module(s).
   - After changing the Cabal file and/or `stack.yaml` use `Haskell`>`Haskell`>`Update Settings and Restart REPLs` to download missing library sources and update the project settings;

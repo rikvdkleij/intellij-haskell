@@ -1,5 +1,5 @@
 lazy val commonSettings = Seq(
-  version := "1.0.0-beta72",
+  version := "1.0.0-beta73",
   scalaVersion := "2.13.2"
 )
 
