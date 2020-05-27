@@ -23,7 +23,7 @@ public class HaskellFoldingSettings implements PersistentStateComponent<HaskellF
     }
 
     public boolean isCollapseFileHeader() {
-        return myState.COLLAPSE_IMPORTS;
+        return myState.COLLAPSE_FILE_HEADER;
     }
 
     public boolean isCollapseTopLevelExpression() {
