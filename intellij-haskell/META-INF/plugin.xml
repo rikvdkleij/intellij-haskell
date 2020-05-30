@@ -1,7 +1,7 @@
 <idea-plugin>
     <id>intellij.haskell</id>
     <name>IntelliJ-Haskell</name>
-    <version>1.0.0-beta73</version>
+    <version>1.0.0-beta74</version>
     <vendor email="rikvdkleij@gmail.com">Rik van der Kleij</vendor>
 
     <description><![CDATA[
@@ -20,6 +20,10 @@
     ]]></description>
 
     <change-notes><![CDATA[
+        <p>1.0.0-beta74</p>
+        <ul>
+            <li>Various improvements and fixes</li>
+        </ul>
         <p>1.0.0-beta73</p>
         <ul>
             <li>Fix collapse file header setting</li>
