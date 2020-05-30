@@ -42,7 +42,7 @@ public class HaskellParser implements PsiParser, LightPsiParser {
   //                                   (q_name | UNDERSCORE)* QUOTE? LEFT_PAREN ttype2 RIGHT_PAREN |
   //                                   (q_name | UNDERSCORE)* QUOTE? LEFT_BRACE ttype2 RIGHT_BRACE |
   //                                   QUOTE? LEFT_BRACKET oonls ttype (oonls COMMA oonls ttype)* oonls RIGHT_BRACKET |
-  //                                   QUOTE? (q_name onls (oonls COLON_COLON oonls ttype)?)+ | QUOTE? LEFT_PAREN RIGHT_PAREN | QUOTE? LEFT_BRACKET RIGHT_BRACKET | LEFT_PAREN COMMA+ RIGHT_PAREN  | literal | LEFT_PAREN RIGHT_ARROW RIGHT_PAREN) !COLON_COLON
+  //                                   QUOTE? (q_name (oonls COLON_COLON oonls ttype)?)+ | QUOTE? LEFT_PAREN RIGHT_PAREN | QUOTE? LEFT_BRACKET RIGHT_BRACKET | LEFT_PAREN COMMA+ RIGHT_PAREN  | literal | LEFT_PAREN RIGHT_ARROW RIGHT_PAREN) !COLON_COLON
   static boolean atype(PsiBuilder b, int l) {
     if (!recursion_guard_(b, l, "atype")) return false;
     boolean r;
@@ -59,7 +59,7 @@ public class HaskellParser implements PsiParser, LightPsiParser {
   //                                   (q_name | UNDERSCORE)* QUOTE? LEFT_PAREN ttype2 RIGHT_PAREN |
   //                                   (q_name | UNDERSCORE)* QUOTE? LEFT_BRACE ttype2 RIGHT_BRACE |
   //                                   QUOTE? LEFT_BRACKET oonls ttype (oonls COMMA oonls ttype)* oonls RIGHT_BRACKET |
-  //                                   QUOTE? (q_name onls (oonls COLON_COLON oonls ttype)?)+ | QUOTE? LEFT_PAREN RIGHT_PAREN | QUOTE? LEFT_BRACKET RIGHT_BRACKET | LEFT_PAREN COMMA+ RIGHT_PAREN  | literal | LEFT_PAREN RIGHT_ARROW RIGHT_PAREN
+  //                                   QUOTE? (q_name (oonls COLON_COLON oonls ttype)?)+ | QUOTE? LEFT_PAREN RIGHT_PAREN | QUOTE? LEFT_BRACKET RIGHT_BRACKET | LEFT_PAREN COMMA+ RIGHT_PAREN  | literal | LEFT_PAREN RIGHT_ARROW RIGHT_PAREN
   private static boolean atype_0(PsiBuilder b, int l) {
     if (!recursion_guard_(b, l, "atype_0")) return false;
     boolean r;
@@ -481,7 +481,7 @@ public class HaskellParser implements PsiParser, LightPsiParser {
     return r;
   }
 
-  // QUOTE? (q_name onls (oonls COLON_COLON oonls ttype)?)+
+  // QUOTE? (q_name (oonls COLON_COLON oonls ttype)?)+
   private static boolean atype_0_6(PsiBuilder b, int l) {
     if (!recursion_guard_(b, l, "atype_0_6")) return false;
     boolean r;
@@ -499,7 +499,7 @@ public class HaskellParser implements PsiParser, LightPsiParser {
     return true;
   }
 
-  // (q_name onls (oonls COLON_COLON oonls ttype)?)+
+  // (q_name (oonls COLON_COLON oonls ttype)?)+
   private static boolean atype_0_6_1(PsiBuilder b, int l) {
     if (!recursion_guard_(b, l, "atype_0_6_1")) return false;
     boolean r;
@@ -514,28 +514,27 @@ public class HaskellParser implements PsiParser, LightPsiParser {
     return r;
   }
 
-  // q_name onls (oonls COLON_COLON oonls ttype)?
+  // q_name (oonls COLON_COLON oonls ttype)?
   private static boolean atype_0_6_1_0(PsiBuilder b, int l) {
     if (!recursion_guard_(b, l, "atype_0_6_1_0")) return false;
     boolean r;
     Marker m = enter_section_(b);
     r = q_name(b, l + 1);
-    r = r && onls(b, l + 1);
-    r = r && atype_0_6_1_0_2(b, l + 1);
+    r = r && atype_0_6_1_0_1(b, l + 1);
     exit_section_(b, m, null, r);
     return r;
   }
 
   // (oonls COLON_COLON oonls ttype)?
-  private static boolean atype_0_6_1_0_2(PsiBuilder b, int l) {
-    if (!recursion_guard_(b, l, "atype_0_6_1_0_2")) return false;
-    atype_0_6_1_0_2_0(b, l + 1);
+  private static boolean atype_0_6_1_0_1(PsiBuilder b, int l) {
+    if (!recursion_guard_(b, l, "atype_0_6_1_0_1")) return false;
+    atype_0_6_1_0_1_0(b, l + 1);
     return true;
   }
 
   // oonls COLON_COLON oonls ttype
-  private static boolean atype_0_6_1_0_2_0(PsiBuilder b, int l) {
-    if (!recursion_guard_(b, l, "atype_0_6_1_0_2_0")) return false;
+  private static boolean atype_0_6_1_0_1_0(PsiBuilder b, int l) {
+    if (!recursion_guard_(b, l, "atype_0_6_1_0_1_0")) return false;
     boolean r;
     Marker m = enter_section_(b);
     r = oonls(b, l + 1);
