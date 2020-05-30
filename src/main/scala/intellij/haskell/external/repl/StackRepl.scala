@@ -183,7 +183,7 @@ abstract class StackRepl(project: Project, componentInfo: Option[StackComponentI
       }
       catch {
         case e: Exception =>
-          logError(s"Error in communication with Stack repl: ${e.getMessage}. Check if your Haskell/Stack environment is working okay. Command was: `$command`")
+          logError(s"Error in communication with Stack REPL: ${e.getMessage}. Check if your Haskell/Stack environment is working okay. Command was: `$command`")
           drainQueues()
           logOutput()
           exit()

@@ -20,6 +20,7 @@ import java.util.concurrent.TimeUnit
 
 import com.intellij.openapi.application.{ApplicationManager, ReadAction}
 import com.intellij.openapi.progress.ProgressIndicatorProvider
+import com.intellij.openapi.progress.util.ProgressIndicatorBase
 import com.intellij.openapi.project.Project
 import com.intellij.util.concurrency.AppExecutorUtil
 import intellij.haskell.HaskellNotificationGroup
@@ -37,9 +38,9 @@ object ApplicationUtil {
     if (isBlockingReadAccessAllowed) {
       f
     } else {
-      val progressIndicator = Option(ProgressIndicatorProvider.getGlobalProgressIndicator)
+      val progressIndicator = Option(ProgressIndicatorProvider.getGlobalProgressIndicator).getOrElse(new ProgressIndicatorBase(false, false))
       val readAction = ReadAction.nonBlocking(ScalaUtil.callable(f))
-      progressIndicator.foreach(readAction.wrapProgress)
+      readAction.wrapProgress(progressIndicator)
       project.foreach(readAction.expireWith)
       readAction.submit(AppExecutorUtil.getAppExecutorService).get(5, TimeUnit.SECONDS)
     }
