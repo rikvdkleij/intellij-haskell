@@ -25,14 +25,14 @@ class HaskellHighlightingAnnotator extends Annotator {
 
 object HighlightingAnnotator {
   def infoAnnotation(holder: AnnotationHolder, psi: PsiElement, attribute: TextAttributesKey): Unit = {
-    holder.newAnnotation(HighlightSeverity.INFORMATION, "")
+    holder.newSilentAnnotation(HighlightSeverity.INFORMATION)
       .range(psi)
       .textAttributes(attribute)
       .create()
   }
 
   def infoAnnotation(holder: AnnotationHolder, psi: PsiElement, attributes: TextAttributes): Unit = {
-    holder.newAnnotation(HighlightSeverity.INFORMATION, "")
+    holder.newSilentAnnotation(HighlightSeverity.INFORMATION)
       .range(psi)
       .enforcedTextAttributes(attributes)
       .create()
