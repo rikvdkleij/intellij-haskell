@@ -60,7 +60,7 @@ class HoogleNavigationAction extends GotoActionBase {
 
       showNavigationPopup(actionEvent, model, new GotoActionBase.GotoActionCallback[Language]() {
         override protected def createFilter(popup: ChooseByNamePopup): ChooseByNameFilter[Language] = {
-          new ChooseByNameLanguageFilter(popup, model, GotoClassSymbolConfiguration.getInstance(project), project)
+          new ChooseByNameLanguageFilter(popup, model, GotoClassSymbolConfiguration.getInstance(project), project).asInstanceOf[ChooseByNameFilter[Language]]
         }
 
         def elementChosen(popup: ChooseByNamePopup, element: Any): Unit = {

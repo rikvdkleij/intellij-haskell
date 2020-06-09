@@ -42,6 +42,7 @@ class HaskellConsoleState(val configuration: HaskellConsoleConfiguration, val en
         val commandLine = new GeneralCommandLine(stackPath)
           .withParameters(configuration.replCommand, "--ghci-options", s"-ghci-script ${ghciScript.getAbsolutePath}")
           .withWorkDirectory(project.getBasePath)
+          .withEnvironment(GlobalInfo.pathVariables)
 
         if (stackTarget.nonEmpty) {
           commandLine.addParameter(stackTarget)
