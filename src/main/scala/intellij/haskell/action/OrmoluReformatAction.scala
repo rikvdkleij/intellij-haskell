@@ -61,7 +61,7 @@ object OrmoluReformatAction {
                   HaskellFileUtil.saveFileWithNewContent(psiFile, processOutput.getStdout)
                   true
                 } else {
-                  HaskellNotificationGroup.logInfoEvent(project, s"Error while reformatting by `${HTool.Ormolu.name}`. Error: ${processOutput.getStderr}")
+                  HaskellNotificationGroup.logErrorBalloonEvent(project, s"Error while reformatting by `${HTool.Ormolu.name}`. Error: ${processOutput.getStderr}")
                   false
                 }
             }

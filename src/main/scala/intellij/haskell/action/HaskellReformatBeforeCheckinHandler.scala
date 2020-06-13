@@ -80,7 +80,7 @@ class HaskellReformatBeforeCheckinHandler(project: Project, checkinProjectPanel:
     }
 
     if (HaskellSettingsState.isReformatCodeBeforeCommit && !DumbService.isDumb(project)) {
-      val reformatResult = virtualFiles.asScala.forall(vf => HaskellFileUtil.convertToHaskellFileDispatchThread(project, vf).exists(OrmoluReformatAction.reformat))
+      val reformatResult = virtualFiles.asScala.filter(vf => HaskellFileUtil.isHaskellFile(vf)).forall(vf => HaskellFileUtil.convertToHaskellFileDispatchThread(project, vf).exists(OrmoluReformatAction.reformat))
       if (reformatResult) {
         performCheckoutAction.run()
       }
