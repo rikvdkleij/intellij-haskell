@@ -26,7 +26,7 @@ ___
 ### Duke lounge
 * @seanjensengrey
 * @paweln1986
-* 0xd34df00d
+* @0xd34df00d
 
 ___
 
