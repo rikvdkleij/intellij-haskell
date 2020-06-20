@@ -27,7 +27,8 @@ public interface HaskellTypes {
   IElementType HS_DATA_DECLARATION_DERIVING = new HaskellCompositeElementType("HS_DATA_DECLARATION_DERIVING");
   IElementType HS_DEFAULT_DECLARATION = new HaskellCompositeElementType("HS_DEFAULT_DECLARATION");
   IElementType HS_DERIVING_DECLARATION = new HaskellCompositeElementType("HS_DERIVING_DECLARATION");
-  IElementType HS_DOT_DOT = new HaskellCompositeElementType("HS_DOT_DOT");
+    IElementType HS_DERIVING_VIA = new HaskellCompositeElementType("HS_DERIVING_VIA");
+    IElementType HS_DOT_DOT = new HaskellCompositeElementType("HS_DOT_DOT");
   IElementType HS_EXPORT = new HaskellCompositeElementType("HS_EXPORT");
   IElementType HS_EXPORTS = new HaskellCompositeElementType("HS_EXPORTS");
   IElementType HS_EXPRESSION = new HaskellCompositeElementType("HS_EXPRESSION");
@@ -171,173 +172,175 @@ public interface HaskellTypes {
   class Factory {
     public static PsiElement createElement(ASTNode node) {
       IElementType type = node.getElementType();
-      if (type == HS_CCONTEXT) {
-        return new HaskellCcontextImpl(node);
-      } else if (type == HS_CDECL) {
-        return new HaskellCdeclImpl(node);
-      } else if (type == HS_CDECLS) {
-        return new HaskellCdeclsImpl(node);
-      } else if (type == HS_CDECL_DATA_DECLARATION) {
-        return new HaskellCdeclDataDeclarationImpl(node);
-      } else if (type == HS_CIDECL) {
-        return new HaskellCideclImpl(node);
-      } else if (type == HS_CIDECLS) {
-        return new HaskellCideclsImpl(node);
-      } else if (type == HS_CLASS_DECLARATION) {
-        return new HaskellClassDeclarationImpl(node);
-      } else if (type == HS_CLAZZ) {
-        return new HaskellClazzImpl(node);
-      } else if (type == HS_COMMENTS) {
-        return new HaskellCommentsImpl(node);
-      } else if (type == HS_CONID) {
-        return new HaskellConidImpl(node);
-      } else if (type == HS_CONSTR) {
-        return new HaskellConstrImpl(node);
-      } else if (type == HS_CONSTR_1) {
-        return new HaskellConstr1Impl(node);
-      } else if (type == HS_CONSTR_2) {
-        return new HaskellConstr2Impl(node);
-      } else if (type == HS_CONSTR_3) {
-        return new HaskellConstr3Impl(node);
-      } else if (type == HS_CONSYM) {
-        return new HaskellConsymImpl(node);
-      } else if (type == HS_DATA_DECLARATION) {
-        return new HaskellDataDeclarationImpl(node);
-      } else if (type == HS_DATA_DECLARATION_DERIVING) {
-        return new HaskellDataDeclarationDerivingImpl(node);
-      } else if (type == HS_DEFAULT_DECLARATION) {
-        return new HaskellDefaultDeclarationImpl(node);
-      } else if (type == HS_DERIVING_DECLARATION) {
-        return new HaskellDerivingDeclarationImpl(node);
-      } else if (type == HS_DOT_DOT) {
-        return new HaskellDotDotImpl(node);
-      } else if (type == HS_EXPORT) {
-        return new HaskellExportImpl(node);
-      } else if (type == HS_EXPORTS) {
-        return new HaskellExportsImpl(node);
-      } else if (type == HS_EXPRESSION) {
-        return new HaskellExpressionImpl(node);
-      } else if (type == HS_FIELDDECL) {
-        return new HaskellFielddeclImpl(node);
-      } else if (type == HS_FILE_HEADER) {
-        return new HaskellFileHeaderImpl(node);
-      } else if (type == HS_FIXITY_DECLARATION) {
-        return new HaskellFixityDeclarationImpl(node);
-      } else if (type == HS_FOREIGN_DECLARATION) {
-        return new HaskellForeignDeclarationImpl(node);
-      } else if (type == HS_GENERAL_PRAGMA_CONTENT) {
-        return new HaskellGeneralPragmaContentImpl(node);
-      } else if (type == HS_GTYCON) {
-        return new HaskellGtyconImpl(node);
-      } else if (type == HS_IMPORT_DECLARATION) {
-        return new HaskellImportDeclarationImpl(node);
-      } else if (type == HS_IMPORT_DECLARATIONS) {
-        return new HaskellImportDeclarationsImpl(node);
-      } else if (type == HS_IMPORT_EMPTY_SPEC) {
-        return new HaskellImportEmptySpecImpl(node);
-      } else if (type == HS_IMPORT_HIDING) {
-        return new HaskellImportHidingImpl(node);
-      } else if (type == HS_IMPORT_HIDING_SPEC) {
-        return new HaskellImportHidingSpecImpl(node);
-      } else if (type == HS_IMPORT_ID) {
-        return new HaskellImportIdImpl(node);
-      } else if (type == HS_IMPORT_IDS_SPEC) {
-        return new HaskellImportIdsSpecImpl(node);
-      } else if (type == HS_IMPORT_PACKAGE_NAME) {
-        return new HaskellImportPackageNameImpl(node);
-      } else if (type == HS_IMPORT_QUALIFIED) {
-        return new HaskellImportQualifiedImpl(node);
-      } else if (type == HS_IMPORT_QUALIFIED_AS) {
-        return new HaskellImportQualifiedAsImpl(node);
-      } else if (type == HS_IMPORT_SPEC) {
-        return new HaskellImportSpecImpl(node);
-      } else if (type == HS_INST) {
-        return new HaskellInstImpl(node);
-      } else if (type == HS_INSTANCE_DECLARATION) {
-        return new HaskellInstanceDeclarationImpl(node);
-      } else if (type == HS_INSTVAR) {
-        return new HaskellInstvarImpl(node);
-      } else if (type == HS_KIND_SIGNATURE) {
-        return new HaskellKindSignatureImpl(node);
-      } else if (type == HS_LIST_TYPE) {
-        return new HaskellListTypeImpl(node);
-      } else if (type == HS_MODID) {
-        return new HaskellModidImpl(node);
-      } else if (type == HS_MODULE_BODY) {
-        return new HaskellModuleBodyImpl(node);
-      } else if (type == HS_MODULE_DECLARATION) {
-        return new HaskellModuleDeclarationImpl(node);
-      } else if (type == HS_NEWCONSTR) {
-        return new HaskellNewconstrImpl(node);
-      } else if (type == HS_NEWCONSTR_FIELDDECL) {
-        return new HaskellNewconstrFielddeclImpl(node);
-      } else if (type == HS_NEWTYPE_DECLARATION) {
-        return new HaskellNewtypeDeclarationImpl(node);
-      } else if (type == HS_PRAGMA) {
-        return new HaskellPragmaImpl(node);
-      } else if (type == HS_QUALIFIER) {
-        return new HaskellQualifierImpl(node);
-      } else if (type == HS_QUASI_QUOTE) {
-        return new HaskellQuasiQuoteImpl(node);
-      } else if (type == HS_Q_CON) {
-        return new HaskellQConImpl(node);
-      } else if (type == HS_Q_CON_QUALIFIER) {
-        return new HaskellQConQualifierImpl(node);
-      } else if (type == HS_Q_CON_QUALIFIER_1) {
-        return new HaskellQConQualifier1Impl(node);
-      } else if (type == HS_Q_CON_QUALIFIER_2) {
-        return new HaskellQConQualifier2Impl(node);
-      } else if (type == HS_Q_CON_QUALIFIER_3) {
-        return new HaskellQConQualifier3Impl(node);
-      } else if (type == HS_Q_CON_QUALIFIER_4) {
-        return new HaskellQConQualifier4Impl(node);
-      } else if (type == HS_Q_NAME) {
-        return new HaskellQNameImpl(node);
-      } else if (type == HS_Q_NAMES) {
-        return new HaskellQNamesImpl(node);
-      } else if (type == HS_Q_VAR_CON) {
-        return new HaskellQVarConImpl(node);
-      } else if (type == HS_RESERVED_ID) {
-        return new HaskellReservedIdImpl(node);
-      } else if (type == HS_SCONTEXT) {
-        return new HaskellScontextImpl(node);
-      } else if (type == HS_SHEBANG_LINE) {
-        return new HaskellShebangLineImpl(node);
-      } else if (type == HS_SIMPLECLASS) {
-        return new HaskellSimpleclassImpl(node);
-      } else if (type == HS_SIMPLETYPE) {
-        return new HaskellSimpletypeImpl(node);
-      } else if (type == HS_TEXT_LITERAL) {
-        return new HaskellTextLiteralImpl(node);
-      } else if (type == HS_TOP_DECLARATION) {
-        return new HaskellTopDeclarationImpl(node);
-      } else if (type == HS_TOP_DECLARATION_LINE) {
-        return new HaskellTopDeclarationLineImpl(node);
-      } else if (type == HS_TTYPE) {
-        return new HaskellTtypeImpl(node);
-      } else if (type == HS_TTYPE_1) {
-        return new HaskellTtype1Impl(node);
-      } else if (type == HS_TTYPE_2) {
-        return new HaskellTtype2Impl(node);
-      } else if (type == HS_TYPE_DECLARATION) {
-        return new HaskellTypeDeclarationImpl(node);
-      } else if (type == HS_TYPE_EQUALITY) {
-        return new HaskellTypeEqualityImpl(node);
-      } else if (type == HS_TYPE_FAMILY_DECLARATION) {
-        return new HaskellTypeFamilyDeclarationImpl(node);
-      } else if (type == HS_TYPE_FAMILY_TYPE) {
-        return new HaskellTypeFamilyTypeImpl(node);
-      } else if (type == HS_TYPE_INSTANCE_DECLARATION) {
-        return new HaskellTypeInstanceDeclarationImpl(node);
-      } else if (type == HS_TYPE_SIGNATURE) {
-        return new HaskellTypeSignatureImpl(node);
-      } else if (type == HS_VARID) {
-        return new HaskellVaridImpl(node);
-      } else if (type == HS_VARSYM) {
-        return new HaskellVarsymImpl(node);
-      } else if (type == HS_VAR_CON) {
-        return new HaskellVarConImpl(node);
-      }
+        if (type == HS_CCONTEXT) {
+            return new HaskellCcontextImpl(node);
+        } else if (type == HS_CDECL) {
+            return new HaskellCdeclImpl(node);
+        } else if (type == HS_CDECLS) {
+            return new HaskellCdeclsImpl(node);
+        } else if (type == HS_CDECL_DATA_DECLARATION) {
+            return new HaskellCdeclDataDeclarationImpl(node);
+        } else if (type == HS_CIDECL) {
+            return new HaskellCideclImpl(node);
+        } else if (type == HS_CIDECLS) {
+            return new HaskellCideclsImpl(node);
+        } else if (type == HS_CLASS_DECLARATION) {
+            return new HaskellClassDeclarationImpl(node);
+        } else if (type == HS_CLAZZ) {
+            return new HaskellClazzImpl(node);
+        } else if (type == HS_COMMENTS) {
+            return new HaskellCommentsImpl(node);
+        } else if (type == HS_CONID) {
+            return new HaskellConidImpl(node);
+        } else if (type == HS_CONSTR) {
+            return new HaskellConstrImpl(node);
+        } else if (type == HS_CONSTR_1) {
+            return new HaskellConstr1Impl(node);
+        } else if (type == HS_CONSTR_2) {
+            return new HaskellConstr2Impl(node);
+        } else if (type == HS_CONSTR_3) {
+            return new HaskellConstr3Impl(node);
+        } else if (type == HS_CONSYM) {
+            return new HaskellConsymImpl(node);
+        } else if (type == HS_DATA_DECLARATION) {
+            return new HaskellDataDeclarationImpl(node);
+        } else if (type == HS_DATA_DECLARATION_DERIVING) {
+            return new HaskellDataDeclarationDerivingImpl(node);
+        } else if (type == HS_DEFAULT_DECLARATION) {
+            return new HaskellDefaultDeclarationImpl(node);
+        } else if (type == HS_DERIVING_DECLARATION) {
+            return new HaskellDerivingDeclarationImpl(node);
+        } else if (type == HS_DERIVING_VIA) {
+            return new HaskellDerivingViaImpl(node);
+        } else if (type == HS_DOT_DOT) {
+            return new HaskellDotDotImpl(node);
+        } else if (type == HS_EXPORT) {
+            return new HaskellExportImpl(node);
+        } else if (type == HS_EXPORTS) {
+            return new HaskellExportsImpl(node);
+        } else if (type == HS_EXPRESSION) {
+            return new HaskellExpressionImpl(node);
+        } else if (type == HS_FIELDDECL) {
+            return new HaskellFielddeclImpl(node);
+        } else if (type == HS_FILE_HEADER) {
+            return new HaskellFileHeaderImpl(node);
+        } else if (type == HS_FIXITY_DECLARATION) {
+            return new HaskellFixityDeclarationImpl(node);
+        } else if (type == HS_FOREIGN_DECLARATION) {
+            return new HaskellForeignDeclarationImpl(node);
+        } else if (type == HS_GENERAL_PRAGMA_CONTENT) {
+            return new HaskellGeneralPragmaContentImpl(node);
+        } else if (type == HS_GTYCON) {
+            return new HaskellGtyconImpl(node);
+        } else if (type == HS_IMPORT_DECLARATION) {
+            return new HaskellImportDeclarationImpl(node);
+        } else if (type == HS_IMPORT_DECLARATIONS) {
+            return new HaskellImportDeclarationsImpl(node);
+        } else if (type == HS_IMPORT_EMPTY_SPEC) {
+            return new HaskellImportEmptySpecImpl(node);
+        } else if (type == HS_IMPORT_HIDING) {
+            return new HaskellImportHidingImpl(node);
+        } else if (type == HS_IMPORT_HIDING_SPEC) {
+            return new HaskellImportHidingSpecImpl(node);
+        } else if (type == HS_IMPORT_ID) {
+            return new HaskellImportIdImpl(node);
+        } else if (type == HS_IMPORT_IDS_SPEC) {
+            return new HaskellImportIdsSpecImpl(node);
+        } else if (type == HS_IMPORT_PACKAGE_NAME) {
+            return new HaskellImportPackageNameImpl(node);
+        } else if (type == HS_IMPORT_QUALIFIED) {
+            return new HaskellImportQualifiedImpl(node);
+        } else if (type == HS_IMPORT_QUALIFIED_AS) {
+            return new HaskellImportQualifiedAsImpl(node);
+        } else if (type == HS_IMPORT_SPEC) {
+            return new HaskellImportSpecImpl(node);
+        } else if (type == HS_INST) {
+            return new HaskellInstImpl(node);
+        } else if (type == HS_INSTANCE_DECLARATION) {
+            return new HaskellInstanceDeclarationImpl(node);
+        } else if (type == HS_INSTVAR) {
+            return new HaskellInstvarImpl(node);
+        } else if (type == HS_KIND_SIGNATURE) {
+            return new HaskellKindSignatureImpl(node);
+        } else if (type == HS_LIST_TYPE) {
+            return new HaskellListTypeImpl(node);
+        } else if (type == HS_MODID) {
+            return new HaskellModidImpl(node);
+        } else if (type == HS_MODULE_BODY) {
+            return new HaskellModuleBodyImpl(node);
+        } else if (type == HS_MODULE_DECLARATION) {
+            return new HaskellModuleDeclarationImpl(node);
+        } else if (type == HS_NEWCONSTR) {
+            return new HaskellNewconstrImpl(node);
+        } else if (type == HS_NEWCONSTR_FIELDDECL) {
+            return new HaskellNewconstrFielddeclImpl(node);
+        } else if (type == HS_NEWTYPE_DECLARATION) {
+            return new HaskellNewtypeDeclarationImpl(node);
+        } else if (type == HS_PRAGMA) {
+            return new HaskellPragmaImpl(node);
+        } else if (type == HS_QUALIFIER) {
+            return new HaskellQualifierImpl(node);
+        } else if (type == HS_QUASI_QUOTE) {
+            return new HaskellQuasiQuoteImpl(node);
+        } else if (type == HS_Q_CON) {
+            return new HaskellQConImpl(node);
+        } else if (type == HS_Q_CON_QUALIFIER) {
+            return new HaskellQConQualifierImpl(node);
+        } else if (type == HS_Q_CON_QUALIFIER_1) {
+            return new HaskellQConQualifier1Impl(node);
+        } else if (type == HS_Q_CON_QUALIFIER_2) {
+            return new HaskellQConQualifier2Impl(node);
+        } else if (type == HS_Q_CON_QUALIFIER_3) {
+            return new HaskellQConQualifier3Impl(node);
+        } else if (type == HS_Q_CON_QUALIFIER_4) {
+            return new HaskellQConQualifier4Impl(node);
+        } else if (type == HS_Q_NAME) {
+            return new HaskellQNameImpl(node);
+        } else if (type == HS_Q_NAMES) {
+            return new HaskellQNamesImpl(node);
+        } else if (type == HS_Q_VAR_CON) {
+            return new HaskellQVarConImpl(node);
+        } else if (type == HS_RESERVED_ID) {
+            return new HaskellReservedIdImpl(node);
+        } else if (type == HS_SCONTEXT) {
+            return new HaskellScontextImpl(node);
+        } else if (type == HS_SHEBANG_LINE) {
+            return new HaskellShebangLineImpl(node);
+        } else if (type == HS_SIMPLECLASS) {
+            return new HaskellSimpleclassImpl(node);
+        } else if (type == HS_SIMPLETYPE) {
+            return new HaskellSimpletypeImpl(node);
+        } else if (type == HS_TEXT_LITERAL) {
+            return new HaskellTextLiteralImpl(node);
+        } else if (type == HS_TOP_DECLARATION) {
+            return new HaskellTopDeclarationImpl(node);
+        } else if (type == HS_TOP_DECLARATION_LINE) {
+            return new HaskellTopDeclarationLineImpl(node);
+        } else if (type == HS_TTYPE) {
+            return new HaskellTtypeImpl(node);
+        } else if (type == HS_TTYPE_1) {
+            return new HaskellTtype1Impl(node);
+        } else if (type == HS_TTYPE_2) {
+            return new HaskellTtype2Impl(node);
+        } else if (type == HS_TYPE_DECLARATION) {
+            return new HaskellTypeDeclarationImpl(node);
+        } else if (type == HS_TYPE_EQUALITY) {
+            return new HaskellTypeEqualityImpl(node);
+        } else if (type == HS_TYPE_FAMILY_DECLARATION) {
+            return new HaskellTypeFamilyDeclarationImpl(node);
+        } else if (type == HS_TYPE_FAMILY_TYPE) {
+            return new HaskellTypeFamilyTypeImpl(node);
+        } else if (type == HS_TYPE_INSTANCE_DECLARATION) {
+            return new HaskellTypeInstanceDeclarationImpl(node);
+        } else if (type == HS_TYPE_SIGNATURE) {
+            return new HaskellTypeSignatureImpl(node);
+        } else if (type == HS_VARID) {
+            return new HaskellVaridImpl(node);
+        } else if (type == HS_VARSYM) {
+            return new HaskellVarsymImpl(node);
+        } else if (type == HS_VAR_CON) {
+            return new HaskellVarConImpl(node);
+        }
       throw new AssertionError("Unknown element type: " + type);
     }
   }

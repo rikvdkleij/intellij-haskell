@@ -16,24 +16,30 @@ public class HaskellNewconstrImpl extends HaskellCompositeElementImpl implements
     super(node);
   }
 
-  public void accept(@NotNull HaskellVisitor visitor) {
-    visitor.visitNewconstr(this);
-  }
+    public void accept(@NotNull HaskellVisitor visitor) {
+        visitor.visitNewconstr(this);
+    }
 
-  public void accept(@NotNull PsiElementVisitor visitor) {
-    if (visitor instanceof HaskellVisitor) accept((HaskellVisitor) visitor);
-    else super.accept(visitor);
-  }
+    public void accept(@NotNull PsiElementVisitor visitor) {
+        if (visitor instanceof HaskellVisitor) accept((HaskellVisitor) visitor);
+        else super.accept(visitor);
+    }
 
-  @Override
-  @Nullable
-  public HaskellNewconstrFielddecl getNewconstrFielddecl() {
-    return PsiTreeUtil.getChildOfType(this, HaskellNewconstrFielddecl.class);
-  }
+    @Override
+    @NotNull
+    public List<HaskellDerivingVia> getDerivingViaList() {
+        return PsiTreeUtil.getChildrenOfTypeAsList(this, HaskellDerivingVia.class);
+    }
 
-  @Override
-  @NotNull
-  public List<HaskellPragma> getPragmaList() {
+    @Override
+    @Nullable
+    public HaskellNewconstrFielddecl getNewconstrFielddecl() {
+        return PsiTreeUtil.getChildOfType(this, HaskellNewconstrFielddecl.class);
+    }
+
+    @Override
+    @NotNull
+    public List<HaskellPragma> getPragmaList() {
     return PsiTreeUtil.getChildrenOfTypeAsList(this, HaskellPragma.class);
   }
 

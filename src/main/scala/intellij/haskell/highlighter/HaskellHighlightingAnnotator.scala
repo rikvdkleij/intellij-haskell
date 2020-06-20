@@ -18,6 +18,7 @@ class HaskellHighlightingAnnotator extends Annotator {
         Option(psi.getLastChild).map(_.getPrevSibling).foreach(c => HighlightingAnnotator.infoAnnotation(holder, c, HaskellSyntaxHighlighter.Pragma))
       case psi: HaskellTypeSignature => HighlightingAnnotator.infoAnnotation(holder, psi.getFirstChild, HaskellSyntaxHighlighter.FunctionName)
       case psi: HaskellStringLiteralElementImpl => HighlightingAnnotator.infoAnnotation(holder, psi, HaskellSyntaxHighlighter.String)
+      case psi: HaskellDerivingVia => HighlightingAnnotator.infoAnnotation(holder, psi, HaskellSyntaxHighlighter.Keyword)
       case _ =>
     }
   }

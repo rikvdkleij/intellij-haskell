@@ -8,14 +8,17 @@ import java.util.List;
 
 public interface HaskellClazz extends HaskellCompositeElement {
 
-  @NotNull
-  List<HaskellPragma> getPragmaList();
+    @NotNull
+    List<HaskellDerivingVia> getDerivingViaList();
 
-  @NotNull
-  List<HaskellQName> getQNameList();
+    @NotNull
+    List<HaskellPragma> getPragmaList();
 
-  @NotNull
-  List<HaskellTextLiteral> getTextLiteralList();
+    @NotNull
+    List<HaskellQName> getQNameList();
+
+    @NotNull
+    List<HaskellTextLiteral> getTextLiteralList();
 
   @Nullable
   HaskellTtype getTtype();

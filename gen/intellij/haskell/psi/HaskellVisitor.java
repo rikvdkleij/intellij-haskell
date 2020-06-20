@@ -74,24 +74,28 @@ public class HaskellVisitor extends PsiElementVisitor {
     visitCompositeElement(o);
   }
 
-  public void visitDefaultDeclaration(@NotNull HaskellDefaultDeclaration o) {
-    visitDeclarationElement(o);
-    // visitDeclarationElement(o);
-  }
+    public void visitDefaultDeclaration(@NotNull HaskellDefaultDeclaration o) {
+        visitDeclarationElement(o);
+        // visitDeclarationElement(o);
+    }
 
-  public void visitDerivingDeclaration(@NotNull HaskellDerivingDeclaration o) {
-    visitDeclarationElement(o);
-  }
+    public void visitDerivingDeclaration(@NotNull HaskellDerivingDeclaration o) {
+        visitDeclarationElement(o);
+    }
 
-  public void visitDotDot(@NotNull HaskellDotDot o) {
-    visitCompositeElement(o);
-  }
+    public void visitDerivingVia(@NotNull HaskellDerivingVia o) {
+        visitCompositeElement(o);
+    }
 
-  public void visitExport(@NotNull HaskellExport o) {
-    visitCompositeElement(o);
-  }
+    public void visitDotDot(@NotNull HaskellDotDot o) {
+        visitCompositeElement(o);
+    }
 
-  public void visitExports(@NotNull HaskellExports o) {
+    public void visitExport(@NotNull HaskellExport o) {
+        visitCompositeElement(o);
+    }
+
+    public void visitExports(@NotNull HaskellExports o) {
     visitCompositeElement(o);
   }
 

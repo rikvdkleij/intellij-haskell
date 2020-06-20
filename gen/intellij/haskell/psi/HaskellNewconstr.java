@@ -8,14 +8,17 @@ import java.util.List;
 
 public interface HaskellNewconstr extends HaskellCompositeElement {
 
-  @Nullable
-  HaskellNewconstrFielddecl getNewconstrFielddecl();
+    @NotNull
+    List<HaskellDerivingVia> getDerivingViaList();
 
-  @NotNull
-  List<HaskellPragma> getPragmaList();
+    @Nullable
+    HaskellNewconstrFielddecl getNewconstrFielddecl();
 
-  @NotNull
-  List<HaskellQName> getQNameList();
+    @NotNull
+    List<HaskellPragma> getPragmaList();
+
+    @NotNull
+    List<HaskellQName> getQNameList();
 
   @Nullable
   HaskellTextLiteral getTextLiteral();
