@@ -103,8 +103,7 @@ object StackCommandLine {
   }
 
   def updateStackIndex(project: Project): Option[ProcessOutput] = {
-    import intellij.haskell.GlobalInfo._
-    val arguments = Seq("update", "--stack-root", toolsStackRootPath.getPath)
+    val arguments = Seq("update")
     run(project, arguments, -1, logOutput = true, notifyBalloonError = true, enableExtraArguments = false)
   }
 
