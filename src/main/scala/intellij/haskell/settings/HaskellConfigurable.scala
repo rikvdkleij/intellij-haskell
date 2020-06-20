@@ -194,7 +194,6 @@ class HaskellConfigurable extends Configurable {
     if (useCustomToolsToggle.isSelected) {
       if (
         ormoluPathField.getText.trim.isEmpty ||
-          stylishHaskellPathField.getText.trim.isEmpty ||
           hlintPathField.getText.trim.isEmpty ||
           hooglePathField.getText.trim.isEmpty) {
         throw new ConfigurationException(s"All Haskell tools paths have to be set")
