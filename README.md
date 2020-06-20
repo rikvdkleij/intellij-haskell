@@ -26,6 +26,7 @@ ___
 ### Duke lounge
 * @seanjensengrey
 * @paweln1986
+* 0xd34df00d
 
 ___
 
@@ -43,6 +44,8 @@ ___
 * Simon Looschen
 * Титоренко Алексей
 * @declension
+* Uri Brecher
+* Ушаков Сергей
 
 # Installing the plugin
 You can install this plugin using the [Jetbrains plugin repository](https://plugins.jetbrains.com/idea/plugin/8258-intellij-haskell):
