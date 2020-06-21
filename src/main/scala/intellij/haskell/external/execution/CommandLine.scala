@@ -65,7 +65,7 @@ object CommandLine {
       }
 
       override def readerOptions(): BaseOutputReader.Options = {
-        BaseOutputReader.Options.BLOCKING
+        BaseOutputReader.Options.forMostlySilentProcess()
       }
     }
   }
