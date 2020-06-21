@@ -479,7 +479,7 @@
         <defaultLiveTemplates file="liveTemplates/Haskell"/>
         <!-- Handler -->
         <typedHandler implementation="intellij.haskell.editor.HaskellTypedHandler" id="HaskellFile"/>
-        <extendWordSelectionHandler implementation="intellij.haskell.editor.HaskellExtendWordSelectioner"/>
+        <extendWordSelectionHandler implementation="intellij.haskell.editor.HaskellExtendWordSelectionHandler"/>
         <enterHandlerDelegate implementation="intellij.haskell.editor.EnterInHaddockHandler"
                               id="EnterInHaddockHandler"/>
         <quoteHandler fileType="Haskell" className="intellij.haskell.editor.HaskellQuoteHandler"/>

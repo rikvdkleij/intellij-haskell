@@ -21,6 +21,7 @@ import java.util
 import com.intellij.codeInsight.editorActions.ExtendWordSelectionHandler
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.util.TextRange
+import com.intellij.psi.tree.IElementType
 import com.intellij.psi.{PsiComment, PsiElement, PsiWhiteSpace}
 import intellij.haskell.HaskellFile
 import intellij.haskell.psi.HaskellPsiUtil
@@ -29,7 +30,7 @@ import intellij.haskell.psi.HaskellTypes._
 import scala.collection.mutable.ListBuffer
 import scala.jdk.CollectionConverters._
 
-class HaskellExtendWordSelectioner extends ExtendWordSelectionHandler {
+class HaskellExtendWordSelectionHandler extends ExtendWordSelectionHandler {
 
   override def canSelect(e: PsiElement): Boolean = {
     Option(e.getContainingFile).exists(_.isInstanceOf[HaskellFile]) && !e.isInstanceOf[PsiComment] && !e.isInstanceOf[PsiWhiteSpace]
@@ -37,16 +38,34 @@ class HaskellExtendWordSelectioner extends ExtendWordSelectionHandler {
 
   override def select(e: PsiElement, editorText: CharSequence, cursorOffset: Int, editor: Editor): util.List[TextRange] = {
     val startOffset = e.getTextRange.getStartOffset
-    val nextEndOffsets = getOffsets(Some(e), ListBuffer.empty[Int], (e: PsiElement) => e.getNextSibling, (e: PsiElement) => e.getTextRange.getEndOffset)
+    val nextEndOffsets = getOffsets(Some(e), ListBuffer.empty[(Int, IElementType)], (e: PsiElement) => e.getNextSibling, (e: PsiElement) => (e.getTextRange.getEndOffset, e.getNode.getElementType))
 
-    val prevStartOffsets = getOffsets(Option(e.getPrevSibling), ListBuffer.empty[Int], (e: PsiElement) => e.getPrevSibling, (e: PsiElement) => e.getTextRange.getStartOffset)
-    val lastEndOffset = nextEndOffsets.lastOption.getOrElse(e.getTextRange.getEndOffset)
+    val prevStartOffsets = getOffsets(Option(e.getPrevSibling), ListBuffer.empty[(Int, IElementType)], (e: PsiElement) => e.getPrevSibling, (e: PsiElement) => (e.getTextRange.getStartOffset, e.getNode.getElementType))
+    val lastEndOffset = nextEndOffsets.lastOption.getOrElse((e.getTextRange.getEndOffset, e.getNode.getElementType))
 
-    (nextEndOffsets.map(eo => new TextRange(startOffset, eo)) ++ prevStartOffsets.map(so => new TextRange(so, lastEndOffset))).asJava
+    val allSelectOptions = nextEndOffsets.map(eo => (e.getNode.getElementType, eo._2, new TextRange(startOffset, eo._1))) ++ prevStartOffsets.map(so => (so._2, lastEndOffset._2, new TextRange(so._1, lastEndOffset._1)))
+
+    allSelectOptions.filter(x =>
+      if (x._1 == HS_LEFT_PAREN) {
+        x._2 == HS_RIGHT_PAREN
+      } else if (x._1 == HS_LEFT_BRACE) {
+        x._2 == HS_RIGHT_BRACE
+      } else if (x._1 == HS_LEFT_BRACKET) {
+        x._2 == HS_RIGHT_BRACKET
+      } else if (x._2 == HS_RIGHT_PAREN) {
+        x._1 == HS_LEFT_PAREN
+      } else if (x._2 == HS_RIGHT_BRACE) {
+        x._1 == HS_LEFT_BRACE
+      } else if (x._2 == HS_RIGHT_BRACKET) {
+        x._1 == HS_LEFT_BRACKET
+      } else {
+        true
+      }
+    ).map(_._3).asJava
   }
 
-  private def getOffsets(element: Option[PsiElement], offsets: ListBuffer[Int], getSibling: PsiElement => PsiElement, getOffset: PsiElement => Int): ListBuffer[Int] = {
-    def recur(e: PsiElement): ListBuffer[Int] = {
+  private def getOffsets(element: Option[PsiElement], offsets: ListBuffer[(Int, IElementType)], getSibling: PsiElement => PsiElement, getOffset: PsiElement => (Int, IElementType)): ListBuffer[(Int, IElementType)] = {
+    def recur(e: PsiElement): ListBuffer[(Int, IElementType)] = {
       getOffsets(Option(getSibling(e)), offsets, getSibling, getOffset)
     }
 
