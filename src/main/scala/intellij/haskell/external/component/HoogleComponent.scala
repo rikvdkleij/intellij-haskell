@@ -129,8 +129,8 @@ object HoogleComponent {
         }
 
         if (buildHaddockOutput.contains(true)) {
-          GlobalProjectInfoComponent.findGlobalProjectInfo(project).map(_.localDocRoot) match {
-            case Some(localDocRoot) => StackCommandLine.executeInMessageView(project, hooglePath, Seq("generate", s"--local=$localDocRoot", s"--database=${
+          GlobalProjectInfoComponent.findGlobalProjectInfo(project).map(info => (info.localDocRoot, info.snapshotDocRoot)) match {
+            case Some((localDocRoot, snapshotDocRoot)) => StackCommandLine.executeInMessageView(project, hooglePath, Seq("generate", s"--local=$localDocRoot", s"--local=$snapshotDocRoot", s"--database=${
               hoogleDbPath(project)
             }"))
             case None => HaskellNotificationGroup.logErrorBalloonEvent(project, "Couldn't generate Hoogle DB because path to local doc root is unknown")
