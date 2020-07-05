@@ -126,7 +126,7 @@ private[component] object DefinitionLocationComponent {
     } else if (elementType == HaskellTypes.HS_CONID || elementType == HaskellTypes.HS_CONSYM) {
       // GHCi :loc-at does not always give the right location so using :info in the case is workaround
       ProgressManager.checkCanceled()
-      findLocationByImportedIdentifiers(project, psiFile, importQualifier, qualifiedNameElement).orElse(findLocationByNameInfo(project, psiFile, qualifiedNameElement, identifierElement))
+      findLocationByNameInfo(project, psiFile, qualifiedNameElement, identifierElement).orElse(findLocationByImportedIdentifiers(project, psiFile, importQualifier, qualifiedNameElement))
     } else {
       ProgressManager.checkCanceled()
       findLocationByRepl(project, psiFile, moduleName, qualifiedNameElement).orElse(findLocationByImportedIdentifiers(project, psiFile, importQualifier, qualifiedNameElement))
