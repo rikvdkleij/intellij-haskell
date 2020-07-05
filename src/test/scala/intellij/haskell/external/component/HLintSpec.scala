@@ -16,9 +16,11 @@
 
 package intellij.haskell.external.component
 
-import org.scalatest.{FunSpec, GivenWhenThen, Matchers}
+import org.scalatest.GivenWhenThen
+import org.scalatest.funspec.AnyFunSpec
+import org.scalatest.matchers.should.Matchers
 
-class HLintSpec extends FunSpec with Matchers with GivenWhenThen {
+class HLintSpec extends AnyFunSpec with Matchers with GivenWhenThen {
 
   describe("HLint component") {
     it("should parse HLint output") {

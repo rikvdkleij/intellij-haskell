@@ -16,9 +16,11 @@
 
 package intellij.haskell.external.execution
 
-import org.scalatest.{BeforeAndAfterEach, FunSpec, GivenWhenThen, Matchers}
+import org.scalatest.funspec.AnyFunSpec
+import org.scalatest.matchers.should.Matchers
+import org.scalatest.{BeforeAndAfterEach, GivenWhenThen}
 
-class HaskellCompilationResultHelperSpec extends FunSpec with Matchers with GivenWhenThen with BeforeAndAfterEach {
+class HaskellCompilationResultHelperSpec extends AnyFunSpec with Matchers with GivenWhenThen with BeforeAndAfterEach {
 
   describe("LoadComponent") {
     it("should parse `:load` output") {
