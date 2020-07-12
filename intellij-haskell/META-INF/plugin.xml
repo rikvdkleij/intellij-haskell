@@ -367,7 +367,7 @@
     </change-notes>
 
     <!-- please see http://confluence.jetbrains.com/display/IDEADEV/Build+Number+Ranges for description -->
-    <idea-version since-build="193.6015.39" until-build="201.*"/>
+    <idea-version since-build="201"/>
 
     <extensions defaultExtensionNs="com.intellij">
         <!-- File types -->
@@ -572,6 +572,10 @@
         <applicationService serviceInterface="com.intellij.codeInsight.TargetElementUtil"
                             serviceImplementation="intellij.haskell.navigation.HaskellTargetElementUtil"
                             overrides="true"/>
+
+        <targetElementEvaluator language="Haskell"
+                                implementationClass="intellij.haskell.navigation.HaskellTargetElementUtil2"/>
+
     </extensions>
 
     <application-components>
