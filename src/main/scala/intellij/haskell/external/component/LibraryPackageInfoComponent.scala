@@ -30,7 +30,7 @@ private[component] object LibraryPackageInfoComponent {
 
   private case class Key(project: Project, packageName: String)
 
-  private type Result = Option[PackageInfo]
+  private type Result = Option[LibraryPackageInfo]
 
   type Exposed = Boolean
   private final val AllCache: Cache[String, Exposed] = Scaffeine().build()
@@ -86,7 +86,7 @@ private[component] object LibraryPackageInfoComponent {
     }
   }
 
-  def libraryPackageInfos(project: Project): Iterable[PackageInfo] = {
+  def libraryPackageInfos(project: Project): Iterable[LibraryPackageInfo] = {
     Cache.asMap().values.flatten
   }
 
@@ -105,7 +105,7 @@ private[component] object LibraryPackageInfoComponent {
     }
   }
 
-  private def findPackageInfo(lines: Seq[String]): Option[PackageInfo] = {
+  private def findPackageInfo(lines: Seq[String]): Option[LibraryPackageInfo] = {
     val packageInfoMap = ScalaUtil.linesToMap(lines)
 
     for {
@@ -115,7 +115,7 @@ private[component] object LibraryPackageInfoComponent {
       exposedModuleNames = packageInfoMap.get("exposed-modules").map(splitLine).getOrElse(Seq())
       hiddenModuleNames = packageInfoMap.get("hidden-modules").map(splitLine).getOrElse(Seq())
       dependsPackageNames = packageInfoMap.get("depends").map(splitLine).getOrElse(Seq()).flatMap(toPackageNameversion)
-    } yield PackageInfo(name, version, id, exposedModuleNames, hiddenModuleNames, dependsPackageNames)
+    } yield LibraryPackageInfo(name, version, id, exposedModuleNames, hiddenModuleNames, dependsPackageNames)
   }
 
   private def splitLine(s: String): Seq[String] = {
@@ -129,6 +129,6 @@ private[component] object LibraryPackageInfoComponent {
 }
 
 
-case class PackageInfo(packageName: String, version: String, id: String, exposedModuleNames: Seq[String], hiddenModuleNames: Seq[String], dependsOnPackageIds: Seq[PackageId])
+case class LibraryPackageInfo(packageName: String, version: String, id: String, exposedModuleNames: Seq[String], hiddenModuleNames: Seq[String], dependsOnPackageIds: Seq[PackageId])
 
 case class PackageId(name: String, version: String)

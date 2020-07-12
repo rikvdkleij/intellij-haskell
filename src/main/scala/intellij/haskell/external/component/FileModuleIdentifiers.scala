@@ -23,7 +23,7 @@ import com.github.blemale.scaffeine.{AsyncLoadingCache, Scaffeine}
 import com.intellij.openapi.project.Project
 import com.intellij.psi.PsiFile
 import intellij.haskell.HaskellNotificationGroup
-import intellij.haskell.external.component.HaskellComponentsManager.StackComponentInfo
+import intellij.haskell.external.component.HaskellComponentsManager.ComponentTarget
 import intellij.haskell.psi.HaskellPsiUtil.findImportDeclarations
 import intellij.haskell.psi.{HaskellImportDeclaration, HaskellImportId, HaskellPsiUtil}
 import intellij.haskell.util.{ApplicationUtil, HaskellProjectUtil, ScalaFutureUtil}
@@ -43,11 +43,11 @@ object FileModuleIdentifiers {
   import scala.concurrent.ExecutionContext.Implicits.global
 
   def invalidate(psiFile: PsiFile): Unit = {
-    Cache.synchronous.invalidate(Key(psiFile))
+    Cache.synchronous().invalidate(Key(psiFile))
   }
 
   def refresh(psiFile: PsiFile): Unit = {
-    Cache.synchronous.refresh(Key(psiFile))
+    Cache.synchronous().refresh(Key(psiFile))
   }
 
   // Invalidate files which have imported this module
@@ -73,11 +73,11 @@ object FileModuleIdentifiers {
     Cache.get(key).map {
       case Some(mids) =>
         if (mids.toSeq.contains(None)) {
-          Cache.synchronous.invalidate(key)
+          Cache.synchronous().invalidate(key)
         }
         mids.flatten.flatten
       case None =>
-        Cache.synchronous.invalidate(key)
+        Cache.synchronous().invalidate(key)
         Iterable()
     }
   }
@@ -155,7 +155,7 @@ object FileModuleIdentifiers {
 
   private case class ImportWithIds(moduleName: String, ids: Iterable[String], qualified: Boolean, as: Option[String]) extends ImportInfo
 
-  private def isNoImplicitPreludeActive(info: StackComponentInfo, psiFile: PsiFile): Boolean = {
+  private def isNoImplicitPreludeActive(info: ComponentTarget, psiFile: PsiFile): Boolean = {
     info.isImplicitPreludeActive || ApplicationUtil.runReadAction(HaskellPsiUtil.findLanguageExtensions(psiFile), Some(psiFile.getProject)).exists(p => ApplicationUtil.runReadAction(p.getText).contains("NoImplicitPrelude"))
   }
 

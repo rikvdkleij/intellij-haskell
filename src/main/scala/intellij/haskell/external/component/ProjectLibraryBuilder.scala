@@ -16,23 +16,21 @@
 
 package intellij.haskell.external.component
 
-import java.util
 import java.util.concurrent.ConcurrentHashMap
 
 import com.intellij.openapi.fileEditor.FileEditorManager
-import com.intellij.openapi.module.{Module, ModuleUtilCore}
 import com.intellij.openapi.progress.{PerformInBackgroundOption, ProgressIndicator, ProgressManager, Task}
 import com.intellij.openapi.project.Project
 import intellij.haskell.HaskellNotificationGroup
 import intellij.haskell.annotator.HaskellAnnotator
 import intellij.haskell.editor.HaskellProblemsView
-import intellij.haskell.external.component.HaskellComponentsManager.StackComponentInfo
+import intellij.haskell.external.component.HaskellComponentsManager.ComponentTarget
 import intellij.haskell.external.execution.StackCommandLine
 import intellij.haskell.external.repl.StackRepl.LibType
 import intellij.haskell.external.repl.StackReplsManager
-import intellij.haskell.util.{ApplicationUtil, HaskellFileUtil, HaskellProjectUtil}
+import intellij.haskell.external.repl.StackReplsManager.ProjectReplTargets
+import intellij.haskell.util.{HaskellFileUtil, HaskellProjectUtil}
 
-import scala.annotation.tailrec
 import scala.jdk.CollectionConverters._
 
 object ProjectLibraryBuilder {
@@ -52,73 +50,57 @@ object ProjectLibraryBuilder {
 
   sealed trait BuildStatus
 
-  case class Building(stackComponentInfos: Set[StackComponentInfo]) extends BuildStatus
+  case class Building(stackComponentInfos: Set[ComponentTarget]) extends BuildStatus
 
-  case class Build(stackComponentInfos: Set[StackComponentInfo]) extends BuildStatus
+  case class Build(stackComponentInfos: Set[ComponentTarget]) extends BuildStatus
 
-  def addBuild(project: Project, libComponentInfos: Set[StackComponentInfo]): Option[BuildStatus] = {
-    synchronized {
-      buildStatus.get(project) match {
-        case Some(Building(_)) => buildStatus.put(project, Build(libComponentInfos))
-        case Some(Build(componentInfos)) => buildStatus.put(project, Build(componentInfos.++(libComponentInfos)))
-        case None => buildStatus.put(project, Build(libComponentInfos))
-      }
+  def addBuild(project: Project, componentTargets: Set[ComponentTarget]): Option[BuildStatus] = synchronized {
+    buildStatus.get(project) match {
+      case Some(Building(_)) => buildStatus.put(project, Build(componentTargets))
+      case Some(Build(targets)) => buildStatus.put(project, Build(targets ++ componentTargets))
+      case None => buildStatus.put(project, Build(componentTargets))
     }
   }
 
-  def checkLibraryBuild(project: Project, currentInfo: StackComponentInfo): Unit = synchronized {
+  def checkLibraryBuild(project: Project, currentTargets: ProjectReplTargets): Unit = synchronized {
     if (!StackProjectManager.isInitializing(project) && !StackProjectManager.isHaddockBuilding(project) && !project.isDisposed) {
-      buildStatus.get(project) match {
-        case Some(Build(infos)) if !isBuilding(project) && infos.exists(_ != currentInfo) => build(project, infos)
+      val libTargetsName = StackReplsManager.getReplsManager(project).flatMap(_.libTargetsName)
+      (buildStatus.get(project), libTargetsName) match {
+        case (Some(Build(targets)), Some(libTargetsName)) if currentTargets.stanzaType != LibType && !isBuilding(project) => build(project, targets, libTargetsName)
         case _ => ()
       }
     }
   }
 
-  private def build(project: Project, libComponentInfos: Set[StackComponentInfo]): Unit = {
-    buildStatus.put(project, Building(libComponentInfos))
+  private def build(project: Project, componentLibTargets: Set[ComponentTarget], libTargetsName: String): Unit = {
+    buildStatus.put(project, Building(componentLibTargets))
 
     ProgressManager.getInstance().run(new Task.Backgroundable(project, "Building project", false, PerformInBackgroundOption.ALWAYS_BACKGROUND) {
 
-      @tailrec
       def run(progressIndicator: ProgressIndicator): Unit = {
 
-        val projectLibTargets = libComponentInfos.map(_.target).toSeq
-
-        val buildMessage = s"Building targets: " + projectLibTargets.mkString(", ")
+        val buildMessage = s"Building targets: " + libTargetsName
         HaskellNotificationGroup.logInfoEvent(project, buildMessage)
         progressIndicator.setText(buildMessage)
 
         // Forced `-Wwarn` otherwise build will fail in case of warnings and that will cause that REPLs of dependent targets will not start anymore
-        val output = StackCommandLine.buildInBackground(project, projectLibTargets ++ Seq("--ghc-options", "-Wwarn"))
-        if (output.contains(true) && !project.isDisposed) {
+        val buildResult = StackCommandLine.buildInBackground(project, Seq(libTargetsName, "--ghc-options", "-Wwarn"))
+        if (buildResult && !project.isDisposed) {
           val openFiles = FileEditorManager.getInstance(project).getOpenFiles.filter(HaskellFileUtil.isHaskellFile)
           val openProjectFiles = openFiles.filter(vf => HaskellProjectUtil.isSourceFile(project, vf))
-          val openInfoFiles = openProjectFiles.toSeq.flatMap(f =>
-            HaskellComponentsManager.findStackComponentInfo(project, HaskellFileUtil.getAbsolutePath(f)) match {
-              case Some(i) => Some((i, f))
+          val openNonLibFiles = openProjectFiles.flatMap(file =>
+            HaskellComponentsManager.findComponentTarget(project, HaskellFileUtil.getAbsolutePath(file)) match {
+              case Some(target) => Some((target, file))
               case None => None
-            })
+            }).filter(_._1.stanzaType != LibType)
 
-          val projectRepls = StackReplsManager.getRunningProjectRepls(project)
-          val isDependentResult = libComponentInfos.map(libInfo => {
-            val module = libInfo.module
-            val dependentModules = ApplicationUtil.runReadAction(ModuleUtilCore.getAllDependentModules(module), Some(project))
-
-            val dependentFiles = openInfoFiles.filter { case (info, _) => isDependent(libInfo, dependentModules, info) }.map(_._2)
-            val dependentRepls = projectRepls.filter(r => isDependent(libInfo, dependentModules, r.stackComponentInfo))
-            (dependentFiles, dependentRepls)
-          })
-
-          val dependentFiles = isDependentResult.flatMap(_._1)
-          val dependentRepls = isDependentResult.flatMap(_._2)
-
-          dependentRepls.foreach { repl =>
+          val projectNonLibRepls = StackReplsManager.getRunningProjectRepls(project).filter(_.stanzaType != LibType)
+          projectNonLibRepls.foreach { repl =>
             repl.restart()
           }
 
           // When project is opened and has build errors some REPLs could not have been started
-          StackReplsManager.getReplsManager(project).foreach(_.stackComponentInfos.filter(_.stanzaType == LibType).foreach { info =>
+          StackReplsManager.getReplsManager(project).foreach(_.projectReplTargets.filter(_.stanzaType == LibType).foreach { info =>
             StackReplsManager.getProjectRepl(project, info).foreach { repl =>
               if (!repl.available && !repl.starting) {
                 repl.start()
@@ -126,9 +108,9 @@ object ProjectLibraryBuilder {
             }
           })
 
-          HaskellComponentsManager.invalidateBrowseInfo(project, libComponentInfos.flatMap(_.exposedModuleNames).toSeq)
+          HaskellComponentsManager.invalidateBrowseInfo(project, componentLibTargets.flatMap(_.exposedModuleNames).toSeq)
 
-          dependentFiles.foreach { vf =>
+          openNonLibFiles.map(_._2).foreach { vf =>
             HaskellFileUtil.convertToHaskellFileInReadAction(project, vf).toOption match {
               case Some(psiFile) =>
                 val haskellProblemsView = HaskellProblemsView.getInstance(project)
@@ -138,21 +120,8 @@ object ProjectLibraryBuilder {
             }
           }
         }
-
-        if (!project.isDisposed) {
-          buildStatus.get(project) match {
-            case Some(Build(componentInfos)) =>
-              buildStatus.put(project, Building(componentInfos))
-              run(progressIndicator)
-            case _ =>
-              buildStatus.remove(project)
-          }
-        }
+        buildStatus.remove(project)
       }
     })
-  }
-
-  private def isDependent(libInfo: StackComponentInfo, dependentModules: util.List[Module], info: StackComponentInfo) = {
-    (info.module == libInfo.module && info.stanzaType != LibType) || dependentModules.contains(info.module)
   }
 }

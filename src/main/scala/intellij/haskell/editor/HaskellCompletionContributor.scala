@@ -336,7 +336,7 @@ class HaskellCompletionContributor extends CompletionContributor {
     element.getNode.getElementType == HS_NCOMMENT
   }
 
-  private def getGlobalInfo(psiFile: PsiFile): Option[(StackComponentInfo, StackComponentGlobalInfo)] = {
+  private def getGlobalInfo(psiFile: PsiFile): Option[(ComponentTarget, StackComponentGlobalInfo)] = {
     for {
       info <- HaskellComponentsManager.findStackComponentInfo(psiFile)
       globalInfo <- HaskellComponentsManager.findStackComponentGlobalInfo(info)

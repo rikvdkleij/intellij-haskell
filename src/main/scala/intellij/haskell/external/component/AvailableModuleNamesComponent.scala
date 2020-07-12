@@ -20,7 +20,7 @@ import com.github.blemale.scaffeine.{AsyncLoadingCache, Scaffeine}
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.project.{IndexNotReadyException, Project}
 import com.intellij.psi.search.{FileTypeIndex, GlobalSearchScope}
-import intellij.haskell.external.component.HaskellComponentsManager.StackComponentInfo
+import intellij.haskell.external.component.HaskellComponentsManager.ComponentTarget
 import intellij.haskell.external.repl.StackRepl.{BenchmarkType, TestSuiteType}
 import intellij.haskell.psi.HaskellPsiUtil
 import intellij.haskell.util.{ApplicationUtil, HaskellFileUtil, ScalaFutureUtil}
@@ -37,16 +37,16 @@ import scala.jdk.CollectionConverters._
 
    private final val Cache: AsyncLoadingCache[Key, Iterable[String]] = Scaffeine().refreshAfterWrite(10.seconds).buildAsync((k: Key) => findAvailableProjectModuleNamesWithIndex(k))
 
-   def findAvailableModuleNamesWithIndex(stackComponentInfo: StackComponentInfo): Iterable[String] = {
+   def findAvailableModuleNamesWithIndex(stackComponentInfo: ComponentTarget): Iterable[String] = {
      // A module can be a project module AND library module
      findAvailableLibraryModuleNames(stackComponentInfo) ++ findAvailableProjectModuleNames(stackComponentInfo)
-  }
+   }
 
   def findAvailableModuleLibraryModuleNamesWithIndex(module: Module): Iterable[String] = {
     findModuleNamesInModule(module.getProject, module, Seq.empty, includeTests = false)
   }
 
-   def findAvailableProjectModuleNames(stackComponentInfo: StackComponentInfo): Iterable[String] = {
+   def findAvailableProjectModuleNames(stackComponentInfo: ComponentTarget): Iterable[String] = {
      val key = Key(stackComponentInfo.module.getProject, stackComponentInfo.target)
      ScalaFutureUtil.waitForValue(stackComponentInfo.module.getProject, Cache.get(key), s"getting project module names for target ${key.target}", 1.second) match {
        case Some(files) => files
@@ -57,7 +57,7 @@ import scala.jdk.CollectionConverters._
    }
 
    def isProjectModule(project: Project, moduleName: String): Boolean = {
-     Cache.synchronous.asMap().exists { case (k, v) => k.project == project && v.exists(_ == moduleName) }
+     Cache.synchronous().asMap().exists { case (k, v) => k.project == project && v.exists(_ == moduleName) }
    }
 
    private def findAvailableProjectModuleNamesWithIndex(key: Key): Iterable[String] = {
@@ -69,7 +69,7 @@ import scala.jdk.CollectionConverters._
      }.getOrElse(Iterable())
    }
 
-   private def findAvailableLibraryModuleNames(stackComponentInfo: StackComponentInfo): Iterable[String] = {
+   private def findAvailableLibraryModuleNames(stackComponentInfo: ComponentTarget): Iterable[String] = {
      HaskellComponentsManager.findStackComponentGlobalInfo(stackComponentInfo).map(_.packageInfos.flatMap(_.exposedModuleNames)).getOrElse(Iterable())
    }
 

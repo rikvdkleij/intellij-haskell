@@ -32,14 +32,14 @@ class ProjectLibraryFileWatcher(project: Project) extends BulkFileListener {
 
   override def after(events: util.List[_ <: VFileEvent]): Unit = {
     if (!project.isDisposed) {
-      val libComponentInfos = (for {
+      val componentTargets = (for {
         virtualFile <- events.asScala.filter(e => e.isInstanceOf[VFileContentChangeEvent] && HaskellFileUtil.isHaskellFile(e.getFile) && HaskellProjectUtil.isSourceFile(project, e.getFile)).map(_.getFile)
-        componentInfo <- HaskellComponentsManager.findStackComponentInfo(project, HaskellFileUtil.getAbsolutePath(virtualFile))
-        if componentInfo.stanzaType == LibType
-      } yield componentInfo).toSet
+        componentTarget <- HaskellComponentsManager.findComponentTarget(project, HaskellFileUtil.getAbsolutePath(virtualFile))
+        if componentTarget.stanzaType == LibType
+      } yield componentTarget).toSet
 
-      if (libComponentInfos.nonEmpty) {
-        ProjectLibraryBuilder.addBuild(project, libComponentInfos)
+      if (componentTargets.nonEmpty) {
+        ProjectLibraryBuilder.addBuild(project, componentTargets)
       }
     }
   }

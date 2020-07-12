@@ -21,23 +21,21 @@ import java.util.concurrent.ConcurrentHashMap
 import com.intellij.openapi.project.Project
 import com.intellij.psi.PsiFile
 import intellij.haskell.HaskellNotificationGroup
-import intellij.haskell.external.component.HaskellComponentsManager.StackComponentInfo
 import intellij.haskell.external.repl.StackRepl.StackReplOutput
+import intellij.haskell.external.repl.StackReplsManager.ProjectReplTargets
 import intellij.haskell.psi.HaskellPsiUtil
 import intellij.haskell.util.{HaskellFileUtil, ScalaFutureUtil}
 
 import scala.concurrent.{Future, blocking}
 import scala.jdk.CollectionConverters._
 
-case class ProjectStackRepl(project: Project, stackComponentInfo: StackComponentInfo, replTimeout: Int) extends StackRepl(project, Some(stackComponentInfo), Seq(), replTimeout: Int) {
+case class ProjectStackRepl(project: Project, projectReplTargets: ProjectReplTargets, replTimeout: Int) extends StackRepl(project, Some(projectReplTargets), Seq(), replTimeout: Int) {
 
   import intellij.haskell.external.repl.ProjectStackRepl._
 
-  val target: String = stackComponentInfo.target
+  val target: String = projectReplTargets.targetsName
 
-  val stanzaType: StackRepl.StanzaType = stackComponentInfo.stanzaType
-
-  val packageName: String = stackComponentInfo.packageName
+  val stanzaType: StackRepl.StanzaType = projectReplTargets.stanzaType
 
   def clearLoadedModules(): Unit = {
     loadedFile = None
@@ -133,7 +131,7 @@ case class ProjectStackRepl(project: Project, stackComponentInfo: StackComponent
     } else if (fileModified) {
       val loaded = isFileLoaded(psiFile)
       loaded == Loaded || loaded == Failed
-    } else (moduleName.exists(mn => loadedDependentModules.contains(mn)))
+    } else moduleName.exists(mn => loadedDependentModules.contains(mn))
 
     val output = if (reload) {
       execute(s":reload")

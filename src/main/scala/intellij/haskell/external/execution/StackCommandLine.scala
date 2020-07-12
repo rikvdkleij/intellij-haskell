@@ -35,7 +35,7 @@ import intellij.haskell.util.{HaskellFileUtil, HaskellProjectUtil}
 import intellij.haskell.{GlobalInfo, HaskellNotificationGroup}
 
 import scala.jdk.CollectionConverters._
-import scala.sys.process.Process
+import scala.sys.process.{Process, ProcessLogger}
 
 object StackCommandLine {
 
@@ -47,7 +47,14 @@ object StackCommandLine {
     try {
       val command = Seq(StackPath, "--numeric-version").mkString(" ")
       val processBuilder = Process(command, new File(VfsUtil.getUserHomeDir.getPath), GlobalInfo.pathVariables.asScala.toSeq: _*)
-      val process = processBuilder.run()
+      val process = processBuilder.run(new ProcessLogger(
+      ) {
+        override def out(s: => String): Unit = ()
+
+        override def err(s: => String): Unit = ()
+
+        override def buffer[T](f: => T): T = f
+      })
       process.exitValue() == 0
     } catch {
       case _: Exception => false

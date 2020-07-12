@@ -31,9 +31,9 @@ import intellij.haskell.util.{ApplicationUtil, HaskellFileUtil}
 
 import scala.io.Source
 
-object CabalInfo {
+object PackageInfo {
 
-  def create(project: Project, cabalFile: File): Option[CabalInfo] = {
+  def create(project: Project, cabalFile: File): Option[PackageInfo] = {
     val source = try {
       Option(Source.fromFile(cabalFile, StandardCharsets.UTF_8.toString)).map(_.mkString)
     } catch {
@@ -43,7 +43,7 @@ object CabalInfo {
     }
 
     source.flatMap(src => Option(PsiFileFactory.getInstance(project).createFileFromText(cabalFile.getName, CabalLanguage.Instance, src)) match {
-      case Some(cabalPsiFile: CabalFile) => Some(new CabalInfo(cabalPsiFile, cabalFile.getParentFile.getAbsolutePath))
+      case Some(cabalPsiFile: CabalFile) => Some(new PackageInfo(cabalPsiFile, cabalFile.getParentFile.getAbsolutePath))
       case _ =>
         HaskellNotificationGroup.logErrorBalloonEvent(project, s"Could not parse Cabal file ${cabalFile.getName}")
         None
@@ -51,7 +51,7 @@ object CabalInfo {
   }
 }
 
-class CabalInfo(cabalFile: CabalFile, modulePath: String) {
+class PackageInfo(cabalFile: CabalFile, modulePath: String) {
 
   lazy val packageName: String = ApplicationUtil.runReadAction {
     for {

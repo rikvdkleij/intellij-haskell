@@ -50,7 +50,7 @@ private[component] object LoadComponent {
         }
       }
 
-      ProjectLibraryBuilder.checkLibraryBuild(project, projectRepl.stackComponentInfo)
+      ProjectLibraryBuilder.checkLibraryBuild(project, projectRepl.projectReplTargets)
       val moduleName = HaskellPsiUtil.findModuleName(psiFile)
 
       {

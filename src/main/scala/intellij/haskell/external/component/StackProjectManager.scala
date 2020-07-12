@@ -201,11 +201,11 @@ object StackProjectManager {
               }
 
               if (restart) {
-                val projectRepsl = StackReplsManager.getRunningProjectRepls(project)
-                progressIndicator.setText("Busy stopping Stack REPLs")
+                val projectRepls = StackReplsManager.getRunningProjectRepls(project)
+                progressIndicator.setText("Busy stopping REPLs")
                 StackReplsManager.getGlobalRepl(project).foreach(_.exit())
                 StackReplsManager.getGlobalRepl2(project).foreach(_.exit())
-                projectRepsl.foreach(_.exit())
+                projectRepls.foreach(_.exit())
 
                 progressIndicator.setText("Busy cleaning cache")
                 HaskellComponentsManager.invalidateGlobalCaches(project)
@@ -234,7 +234,7 @@ object StackProjectManager {
                   }
                 })
 
-                StackReplsManager.getReplsManager(project).map(_.moduleCabalInfos).foreach { moduleCabalInfos =>
+                StackReplsManager.getReplsManager(project).map(_.modulePackageInfos).foreach { moduleCabalInfos =>
                   moduleCabalInfos.foreach { case (module, cabalInfo) =>
                     ModuleRootModificationUtil.updateModel(module, (modifiableRootModel: ModifiableRootModel) => {
                       modifiableRootModel.getContentEntries.headOption.foreach { contentEntry =>
@@ -247,11 +247,11 @@ object StackProjectManager {
               }
 
               val replsLoad = ApplicationManager.getApplication.executeOnPooledThread(ScalaUtil.runnable {
-                StackReplsManager.getReplsManager(project).foreach(_.stackComponentInfos.filter(_.stanzaType == LibType).foreach { info =>
-                  progressIndicator.setText("Busy starting project REPL " + info.packageName)
+                StackReplsManager.getReplsManager(project).foreach(_.projectReplTargets.filter(_.stanzaType == LibType).foreach { info =>
+                  progressIndicator.setText("Busy starting project REPL " + info.targetsName)
                   StackReplsManager.getProjectRepl(project, info) match {
-                    case Some(r) if r.available => HaskellNotificationGroup.logInfoEvent(project, s"REPL ${info.packageName} is started")
-                    case _ => HaskellNotificationGroup.logWarningEvent(project, s"REPL ${info.packageName} isn't started")
+                    case Some(r) if r.available => HaskellNotificationGroup.logInfoEvent(project, s"REPL ${info.targetsName} is started")
+                    case _ => HaskellNotificationGroup.logWarningEvent(project, s"REPL ${info.targetsName} isn't started")
                   }
                   Thread.sleep(1000) // Have to wait between starting the REPLs otherwise timeouts while starting
                 })
@@ -404,7 +404,7 @@ object StackProjectManager {
               HoogleComponent.showHoogleDatabaseDoesNotExistNotification(project)
             }
 
-            StackReplsManager.getReplsManager(project).foreach(_.moduleCabalInfos.foreach { case (module, cabalInfo) =>
+            StackReplsManager.getReplsManager(project).foreach(_.modulePackageInfos.foreach { case (module, cabalInfo) =>
               val intersection = cabalInfo.sourceRoots.toSeq.intersect(cabalInfo.testSourceRoots.toSeq)
               if (intersection.nonEmpty) {
                 intersection.foreach(p => {

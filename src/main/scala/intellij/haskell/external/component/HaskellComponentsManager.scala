@@ -21,7 +21,7 @@ import com.intellij.openapi.module.Module
 import com.intellij.openapi.project.Project
 import com.intellij.psi.{PsiElement, PsiFile}
 import intellij.haskell.HaskellNotificationGroup
-import intellij.haskell.cabal.CabalInfo
+import intellij.haskell.cabal.PackageInfo
 import intellij.haskell.external.component.DefinitionLocationComponent.DefinitionLocationResult
 import intellij.haskell.external.component.NameInfoComponentResult.NameInfoResult
 import intellij.haskell.external.component.TypeInfoComponentResult.TypeInfoResult
@@ -36,8 +36,8 @@ import scala.concurrent._
 
 object HaskellComponentsManager {
 
-  case class StackComponentInfo(module: Module, modulePath: String, packageName: String, target: String, stanzaType: StanzaType, sourceDirs: Seq[String],
-                                mainIs: Option[String], isImplicitPreludeActive: Boolean, buildDepends: Seq[String], exposedModuleNames: Seq[String] = Seq.empty)
+  case class ComponentTarget(module: Module, modulePath: String, packageName: String, target: String, stanzaType: StanzaType, sourceDirs: Seq[String],
+                             mainIs: Option[String], isImplicitPreludeActive: Boolean, buildDepends: Seq[String], exposedModuleNames: Seq[String] = Seq.empty)
 
   def findModuleIdentifiersInCache(project: Project): Iterable[ModuleIdentifier] = {
     import scala.concurrent.ExecutionContext.Implicits.global
@@ -70,7 +70,7 @@ object HaskellComponentsManager {
     NameInfoComponent.findNameInfo(psiElement)
   }
 
-  def findAvailableModuleNamesWithIndex(stackComponentInfo: StackComponentInfo): Iterable[String] = {
+  def findAvailableModuleNamesWithIndex(stackComponentInfo: ComponentTarget): Iterable[String] = {
     AvailableModuleNamesComponent.findAvailableModuleNamesWithIndex(stackComponentInfo)
   }
 
@@ -78,16 +78,16 @@ object HaskellComponentsManager {
     AvailableModuleNamesComponent.findAvailableModuleLibraryModuleNamesWithIndex(module)
   }
 
-  def findStackComponentGlobalInfo(stackComponentInfo: StackComponentInfo): Option[StackComponentGlobalInfo] = {
+  def findStackComponentGlobalInfo(stackComponentInfo: ComponentTarget): Option[StackComponentGlobalInfo] = {
     StackComponentGlobalInfoComponent.findStackComponentGlobalInfo(stackComponentInfo)
   }
 
-  def findStackComponentInfo(psiFile: PsiFile): Option[StackComponentInfo] = {
-    HaskellModuleInfoComponent.findHaskellProjectFileInfo(psiFile)
+  def findStackComponentInfo(psiFile: PsiFile): Option[ComponentTarget] = {
+    HaskellModuleInfoComponent.findComponentTarget(psiFile)
   }
 
-  def findStackComponentInfo(project: Project, filePath: String): Option[StackComponentInfo] = {
-    HaskellModuleInfoComponent.findHaskellProjectFileInfo(project, filePath)
+  def findComponentTarget(project: Project, filePath: String): Option[ComponentTarget] = {
+    HaskellModuleInfoComponent.findComponentTarget(project, filePath)
   }
 
   def getGlobalProjectInfo(project: Project): Option[GlobalProjectInfo] = {
@@ -107,11 +107,11 @@ object HaskellComponentsManager {
   }
 
   def findProjectPackageNames(project: Project): Option[Iterable[String]] = {
-    StackReplsManager.getReplsManager(project).map(_.moduleCabalInfos.map { case (_, ci) => ci.packageName })
+    StackReplsManager.getReplsManager(project).map(_.modulePackageInfos.map { case (_, ci) => ci.packageName })
   }
 
-  def findCabalInfos(project: Project): Iterable[CabalInfo] = {
-    StackReplsManager.getReplsManager(project).map(_.moduleCabalInfos.map { case (_, ci) => ci }).getOrElse(Iterable())
+  def findCabalInfos(project: Project): Iterable[PackageInfo] = {
+    StackReplsManager.getReplsManager(project).map(_.modulePackageInfos.map { case (_, ci) => ci }).getOrElse(Iterable())
   }
 
   def loadHaskellFile(psiFile: PsiFile, fileModified: Boolean): Option[CompilationResult] = {
@@ -130,7 +130,7 @@ object HaskellComponentsManager {
     DefinitionLocationComponent.invalidate(project)
   }
 
-  def findLibraryPackageInfos(project: Project): Seq[PackageInfo] = {
+  def findLibraryPackageInfos(project: Project): Seq[LibraryPackageInfo] = {
     LibraryPackageInfoComponent.libraryPackageInfos(project).toSeq
   }
 
@@ -138,8 +138,8 @@ object HaskellComponentsManager {
     BrowseModuleComponent.invalidateModuleNames(project, moduleNames)
   }
 
-  def findStackComponentInfos(project: Project): Seq[StackComponentInfo] = {
-    StackReplsManager.getReplsManager(project).map(_.stackComponentInfos.toSeq).getOrElse(Seq())
+  def findStackComponentInfos(project: Project): Seq[ComponentTarget] = {
+    StackReplsManager.getReplsManager(project).map(_.componentTargets.toSeq).getOrElse(Seq())
   }
 
   def invalidateGlobalCaches(project: Project): Unit = {

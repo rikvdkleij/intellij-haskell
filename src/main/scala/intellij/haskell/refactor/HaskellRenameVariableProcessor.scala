@@ -37,10 +37,10 @@ class HaskellRenameVariableProcessor extends RenamePsiElementProcessor {
       cf <- getCurrentFile(project)
       () = HaskellComponentsManager.invalidateDefinitionLocations(project)
       tf <- Option(targetElement.getContainingFile).map(_.getOriginalFile)
-      targetInfo <- HaskellComponentsManager.findStackComponentInfo(tf)
-      currentInfo <- HaskellComponentsManager.findStackComponentInfo(cf)
-    } yield if (targetInfo != currentInfo && targetInfo.stanzaType == LibType)
-      ProjectLibraryBuilder.addBuild(project, Set(targetInfo)) else ()
+      componentTarget <- HaskellComponentsManager.findStackComponentInfo(tf)
+      currentComponentTarget <- HaskellComponentsManager.findStackComponentInfo(cf)
+    } yield if (componentTarget != currentComponentTarget && componentTarget.stanzaType == LibType)
+      ProjectLibraryBuilder.addBuild(project, Set(componentTarget)) else ()
   }
 
   override def canProcessElement(psiElement: PsiElement): Boolean = {

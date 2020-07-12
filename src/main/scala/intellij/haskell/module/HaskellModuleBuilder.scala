@@ -54,9 +54,9 @@ import scala.jdk.CollectionConverters._
 
 class HaskellModuleBuilder extends TemplateModuleBuilder(null, HaskellModuleType.getInstance, List().asJava) {
 
-  private var cabalInfo: CabalInfo = _
+  private var cabalInfo: PackageInfo = _
 
-  def setCabalInfo(cabalInfo: CabalInfo): Unit = {
+  def setCabalInfo(cabalInfo: PackageInfo): Unit = {
     this.cabalInfo = cabalInfo
   }
 
@@ -211,7 +211,7 @@ class HaskellModuleWizardStep(isNewProject: Boolean) extends ModuleWizardStep {
 
 object HaskellModuleBuilder {
 
-  def addSourceFolders(cabalInfo: CabalInfo, contentEntry: ContentEntry): Unit = {
+  def addSourceFolders(cabalInfo: PackageInfo, contentEntry: ContentEntry): Unit = {
     cabalInfo.sourceRoots.foreach(path => {
       Option(LocalFileSystem.getInstance.refreshAndFindFileByPath(FileUtil.toSystemIndependentName(path))).foreach(f =>
         contentEntry.addSourceFolder(f, false)
@@ -225,7 +225,7 @@ object HaskellModuleBuilder {
     })
   }
 
-  def createCabalInfo(project: Project, modulePath: String, packageRelativePath: String): Option[CabalInfo] = {
+  def createCabalInfo(project: Project, modulePath: String, packageRelativePath: String): Option[PackageInfo] = {
     val moduleDirectory = getModuleRootDirectory(packageRelativePath, modulePath)
     for {
       cabalFile <- getCabalFile(project, moduleDirectory)
@@ -279,8 +279,8 @@ object HaskellModuleBuilder {
     }
   }
 
-  private def getCabalInfo(project: Project, cabalFile: File): Option[CabalInfo] = {
-    CabalInfo.create(project, cabalFile) match {
+  private def getCabalInfo(project: Project, cabalFile: File): Option[PackageInfo] = {
+    PackageInfo.create(project, cabalFile) match {
       case Some(f) => Option(f)
       case None =>
         Messages.showErrorDialog(project, s"Couldn't create Haskell module because Cabal file `$cabalFile` can't be parsed", "Haskell module can't be created")
@@ -288,11 +288,11 @@ object HaskellModuleBuilder {
     }
   }
 
-  private def getDependsOnPackageInfos(libraryPackageInfos: Seq[PackageInfo], modulePackageInfos: Seq[PackageInfo]): Seq[PackageInfo] = {
+  private def getDependsOnPackageInfos(libraryPackageInfos: Seq[LibraryPackageInfo], modulePackageInfos: Seq[LibraryPackageInfo]): Seq[LibraryPackageInfo] = {
     val libraryPackageInfoByName = libraryPackageInfos.map(pi => (pi.packageName, pi)).toMap
 
     @tailrec
-    def go(packageInfos: Seq[PackageInfo], dependsOnPackageInfos: ListBuffer[PackageInfo]): Seq[PackageInfo] = {
+    def go(packageInfos: Seq[LibraryPackageInfo], dependsOnPackageInfos: ListBuffer[LibraryPackageInfo]): Seq[LibraryPackageInfo] = {
       val dependsOn = packageInfos.flatMap { pi =>
         dependsOnPackageInfos += pi
         pi.dependsOnPackageIds.map(_.name).flatMap(libraryPackageInfoByName.get).filterNot(dependsOnPackageInfos.contains)
@@ -305,12 +305,12 @@ object HaskellModuleBuilder {
       }
     }
 
-    val dependsOnPackageInfos = ListBuffer[PackageInfo]()
+    val dependsOnPackageInfos = ListBuffer[LibraryPackageInfo]()
 
     go(modulePackageInfos, dependsOnPackageInfos).filterNot(_.packageName == "rts")
   }
 
-  private def getModuleLibraryDependencies(moduleDependencies: Seq[HaskellDependency], libraryPackageInfos: Seq[PackageInfo]): Seq[HaskellLibraryDependency] = {
+  private def getModuleLibraryDependencies(moduleDependencies: Seq[HaskellDependency], libraryPackageInfos: Seq[LibraryPackageInfo]): Seq[HaskellLibraryDependency] = {
     val moduleLibraryPackageInfos = moduleDependencies.filter(_.isInstanceOf[HaskellLibraryDependency]).flatMap(d => libraryPackageInfos.find(_.packageName == d.name))
     val dependsOnPackageInfos = getDependsOnPackageInfos(libraryPackageInfos, moduleLibraryPackageInfos)
     dependsOnPackageInfos.map(pi => HaskellLibraryDependency(pi.packageName, pi.version))
