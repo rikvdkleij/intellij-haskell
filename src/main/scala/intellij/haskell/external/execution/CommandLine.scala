@@ -43,13 +43,13 @@ object CommandLine {
     run3(Some(project), project.getBasePath, commandPath, arguments, timeoutInMillis, notifyBalloonError, ignoreExitCode, logOutput)
   }
 
-  def run1(project: Project, workDir: String, commandPath: String, arguments: Seq[String], timeoutInMillis: Long = DefaultTimeout.toMillis,
-           notifyBalloonError: Boolean = DefaultNotifyBalloonError, ignoreExitCode: Boolean = DefaultIgnoreExitCode, logOutput: Boolean = DefaultLogOutput): ProcessOutput = {
+  def runInWorkDir(project: Project, workDir: String, commandPath: String, arguments: Seq[String], timeoutInMillis: Long = DefaultTimeout.toMillis,
+                   notifyBalloonError: Boolean = DefaultNotifyBalloonError, ignoreExitCode: Boolean = DefaultIgnoreExitCode, logOutput: Boolean = DefaultLogOutput): ProcessOutput = {
     run3(Some(project), workDir, commandPath, arguments, timeoutInMillis, notifyBalloonError, ignoreExitCode, logOutput)
   }
 
-  def run2(commandPath: String, arguments: Seq[String], timeoutInMillis: Long = DefaultTimeout.toMillis,
-           notifyBalloonError: Boolean = DefaultNotifyBalloonError, ignoreExitCode: Boolean = DefaultIgnoreExitCode, logOutput: Boolean = DefaultLogOutput): ProcessOutput = {
+  def runInHomeDir(commandPath: String, arguments: Seq[String], timeoutInMillis: Long = DefaultTimeout.toMillis,
+                   notifyBalloonError: Boolean = DefaultNotifyBalloonError, ignoreExitCode: Boolean = DefaultIgnoreExitCode, logOutput: Boolean = DefaultLogOutput): ProcessOutput = {
     run3(None, VfsUtil.getUserHomeDir.getPath, commandPath, arguments, timeoutInMillis, notifyBalloonError, ignoreExitCode, logOutput)
   }
 
