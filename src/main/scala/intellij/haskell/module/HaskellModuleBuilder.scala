@@ -20,15 +20,12 @@ import java.awt.event.{MouseAdapter, MouseEvent}
 import java.awt.{Color, Cursor, Desktop}
 import java.io.{File, IOException}
 import java.net.{URI, URISyntaxException}
-import java.nio.file.Paths
 
-import com.intellij.ide.impl.OpenProjectTask
 import com.intellij.ide.util.projectWizard._
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.{ApplicationManager, WriteAction}
 import com.intellij.openapi.module.{ModifiableModuleModel, Module, ModuleType}
-import com.intellij.openapi.project.Project
-import com.intellij.openapi.project.ex.ProjectManagerEx
+import com.intellij.openapi.project.{Project, ProjectManager}
 import com.intellij.openapi.roots._
 import com.intellij.openapi.roots.libraries.{Library, LibraryTablesRegistrar, LibraryUtil}
 import com.intellij.openapi.roots.ui.configuration.ModulesProvider
@@ -141,9 +138,7 @@ class HaskellModuleBuilder extends TemplateModuleBuilder(null, HaskellModuleType
   }
 
   override def createProject(name: String, path: String): Project = {
-    val options = OpenProjectTask.newProject.withProjectName(name)
-    val projectFile = Paths.get(path)
-    ProjectManagerEx.getInstanceEx.newProject(projectFile, options)
+    ProjectManager.getInstance.createProject(name, path)
   }
 
   // To prevent first page of wizard is empty.
