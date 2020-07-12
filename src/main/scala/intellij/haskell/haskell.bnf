@@ -228,7 +228,7 @@ private export1             ::= MODULE modid
 private export2             ::= q_name (onl LEFT_PAREN (onl (dot_dot | q_name) (onl COMMA onl q_name)*)? onl RIGHT_PAREN)?
 private export3             ::= TYPE onl q_name
 
-newconstr                   ::= newconstr_fielddecl | q_name atype
+newconstr                   ::= newconstr_fielddecl | q_name+ onl (DERIVING onl NEWTYPE)? onl atype
 newconstr_fielddecl         ::= q_name onls LEFT_BRACE? onls type_signature onls RIGHT_BRACE?
 
 cdecls                      ::= cdecl (nls cdecl)*

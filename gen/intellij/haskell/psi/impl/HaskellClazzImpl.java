@@ -12,9 +12,9 @@ import java.util.List;
 
 public class HaskellClazzImpl extends HaskellCompositeElementImpl implements HaskellClazz {
 
-  public HaskellClazzImpl(ASTNode node) {
-    super(node);
-  }
+    public HaskellClazzImpl(ASTNode node) {
+        super(node);
+    }
 
     public void accept(@NotNull HaskellVisitor visitor) {
         visitor.visitClazz(this);
@@ -40,37 +40,37 @@ public class HaskellClazzImpl extends HaskellCompositeElementImpl implements Has
     @Override
     @NotNull
     public List<HaskellQName> getQNameList() {
-    return PsiTreeUtil.getChildrenOfTypeAsList(this, HaskellQName.class);
-  }
+        return PsiTreeUtil.getChildrenOfTypeAsList(this, HaskellQName.class);
+    }
 
-  @Override
-  @NotNull
-  public List<HaskellTextLiteral> getTextLiteralList() {
-    return PsiTreeUtil.getChildrenOfTypeAsList(this, HaskellTextLiteral.class);
-  }
+    @Override
+    @NotNull
+    public List<HaskellTextLiteral> getTextLiteralList() {
+        return PsiTreeUtil.getChildrenOfTypeAsList(this, HaskellTextLiteral.class);
+    }
 
-  @Override
-  @Nullable
-  public HaskellTtype getTtype() {
-    return PsiTreeUtil.getChildOfType(this, HaskellTtype.class);
-  }
+    @Override
+    @Nullable
+    public HaskellTtype getTtype() {
+        return PsiTreeUtil.getChildOfType(this, HaskellTtype.class);
+    }
 
-  @Override
-  @NotNull
-  public List<HaskellTtype1> getTtype1List() {
-    return PsiTreeUtil.getChildrenOfTypeAsList(this, HaskellTtype1.class);
-  }
+    @Override
+    @NotNull
+    public List<HaskellTtype1> getTtype1List() {
+        return PsiTreeUtil.getChildrenOfTypeAsList(this, HaskellTtype1.class);
+    }
 
-  @Override
-  @NotNull
-  public List<HaskellTtype2> getTtype2List() {
-    return PsiTreeUtil.getChildrenOfTypeAsList(this, HaskellTtype2.class);
-  }
+    @Override
+    @NotNull
+    public List<HaskellTtype2> getTtype2List() {
+        return PsiTreeUtil.getChildrenOfTypeAsList(this, HaskellTtype2.class);
+    }
 
-  @Override
-  @NotNull
-  public List<HaskellTypeSignature> getTypeSignatureList() {
-    return PsiTreeUtil.getChildrenOfTypeAsList(this, HaskellTypeSignature.class);
-  }
+    @Override
+    @NotNull
+    public List<HaskellTypeSignature> getTypeSignatureList() {
+        return PsiTreeUtil.getChildrenOfTypeAsList(this, HaskellTypeSignature.class);
+    }
 
 }

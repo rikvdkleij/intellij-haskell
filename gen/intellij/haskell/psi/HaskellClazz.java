@@ -20,16 +20,16 @@ public interface HaskellClazz extends HaskellCompositeElement {
     @NotNull
     List<HaskellTextLiteral> getTextLiteralList();
 
-  @Nullable
-  HaskellTtype getTtype();
+    @Nullable
+    HaskellTtype getTtype();
 
-  @NotNull
-  List<HaskellTtype1> getTtype1List();
+    @NotNull
+    List<HaskellTtype1> getTtype1List();
 
-  @NotNull
-  List<HaskellTtype2> getTtype2List();
+    @NotNull
+    List<HaskellTtype2> getTtype2List();
 
-  @NotNull
-  List<HaskellTypeSignature> getTypeSignatureList();
+    @NotNull
+    List<HaskellTypeSignature> getTypeSignatureList();
 
 }

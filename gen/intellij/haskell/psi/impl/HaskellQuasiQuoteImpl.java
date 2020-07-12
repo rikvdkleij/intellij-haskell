@@ -9,17 +9,17 @@ import org.jetbrains.annotations.NotNull;
 
 public class HaskellQuasiQuoteImpl extends HaskellQuasiQuoteElementImpl implements HaskellQuasiQuote {
 
-  public HaskellQuasiQuoteImpl(ASTNode node) {
-    super(node);
-  }
+    public HaskellQuasiQuoteImpl(ASTNode node) {
+        super(node);
+    }
 
-  public void accept(@NotNull HaskellVisitor visitor) {
-    visitor.visitQuasiQuote(this);
-  }
+    public void accept(@NotNull HaskellVisitor visitor) {
+        visitor.visitQuasiQuote(this);
+    }
 
-  public void accept(@NotNull PsiElementVisitor visitor) {
-    if (visitor instanceof HaskellVisitor) accept((HaskellVisitor) visitor);
-    else super.accept(visitor);
-  }
+    public void accept(@NotNull PsiElementVisitor visitor) {
+        if (visitor instanceof HaskellVisitor) accept((HaskellVisitor) visitor);
+        else super.accept(visitor);
+    }
 
 }

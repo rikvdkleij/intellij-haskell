@@ -14,29 +14,29 @@ import java.util.List;
 
 public class HaskellImportIdsSpecImpl extends HaskellCompositeElementImpl implements HaskellImportIdsSpec {
 
-  public HaskellImportIdsSpecImpl(ASTNode node) {
-    super(node);
-  }
+    public HaskellImportIdsSpecImpl(ASTNode node) {
+        super(node);
+    }
 
-  public void accept(@NotNull HaskellVisitor visitor) {
-    visitor.visitImportIdsSpec(this);
-  }
+    public void accept(@NotNull HaskellVisitor visitor) {
+        visitor.visitImportIdsSpec(this);
+    }
 
-  public void accept(@NotNull PsiElementVisitor visitor) {
-    if (visitor instanceof HaskellVisitor) accept((HaskellVisitor) visitor);
-    else super.accept(visitor);
-  }
+    public void accept(@NotNull PsiElementVisitor visitor) {
+        if (visitor instanceof HaskellVisitor) accept((HaskellVisitor) visitor);
+        else super.accept(visitor);
+    }
 
-  @Override
-  @NotNull
-  public List<HaskellImportId> getImportIdList() {
-    return PsiTreeUtil.getChildrenOfTypeAsList(this, HaskellImportId.class);
-  }
+    @Override
+    @NotNull
+    public List<HaskellImportId> getImportIdList() {
+        return PsiTreeUtil.getChildrenOfTypeAsList(this, HaskellImportId.class);
+    }
 
-  @Override
-  @NotNull
-  public List<HaskellPragma> getPragmaList() {
-    return PsiTreeUtil.getChildrenOfTypeAsList(this, HaskellPragma.class);
-  }
+    @Override
+    @NotNull
+    public List<HaskellPragma> getPragmaList() {
+        return PsiTreeUtil.getChildrenOfTypeAsList(this, HaskellPragma.class);
+    }
 
 }

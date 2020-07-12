@@ -10,35 +10,35 @@ import org.jetbrains.annotations.Nullable;
 
 public class HaskellCdeclImpl extends HaskellCompositeElementImpl implements HaskellCdecl {
 
-  public HaskellCdeclImpl(ASTNode node) {
-    super(node);
-  }
+    public HaskellCdeclImpl(ASTNode node) {
+        super(node);
+    }
 
-  public void accept(@NotNull HaskellVisitor visitor) {
-    visitor.visitCdecl(this);
-  }
+    public void accept(@NotNull HaskellVisitor visitor) {
+        visitor.visitCdecl(this);
+    }
 
-  public void accept(@NotNull PsiElementVisitor visitor) {
-    if (visitor instanceof HaskellVisitor) accept((HaskellVisitor) visitor);
-    else super.accept(visitor);
-  }
+    public void accept(@NotNull PsiElementVisitor visitor) {
+        if (visitor instanceof HaskellVisitor) accept((HaskellVisitor) visitor);
+        else super.accept(visitor);
+    }
 
-  @Override
-  @Nullable
-  public HaskellCdeclDataDeclaration getCdeclDataDeclaration() {
-    return PsiTreeUtil.getChildOfType(this, HaskellCdeclDataDeclaration.class);
-  }
+    @Override
+    @Nullable
+    public HaskellCdeclDataDeclaration getCdeclDataDeclaration() {
+        return PsiTreeUtil.getChildOfType(this, HaskellCdeclDataDeclaration.class);
+    }
 
-  @Override
-  @Nullable
-  public HaskellCidecl getCidecl() {
-    return PsiTreeUtil.getChildOfType(this, HaskellCidecl.class);
-  }
+    @Override
+    @Nullable
+    public HaskellCidecl getCidecl() {
+        return PsiTreeUtil.getChildOfType(this, HaskellCidecl.class);
+    }
 
-  @Override
-  @Nullable
-  public HaskellTypeSignature getTypeSignature() {
-    return PsiTreeUtil.getChildOfType(this, HaskellTypeSignature.class);
-  }
+    @Override
+    @Nullable
+    public HaskellTypeSignature getTypeSignature() {
+        return PsiTreeUtil.getChildOfType(this, HaskellTypeSignature.class);
+    }
 
 }

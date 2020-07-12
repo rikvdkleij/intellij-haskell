@@ -20,19 +20,19 @@ public interface HaskellTtype extends HaskellCompositeElement {
     @NotNull
     List<HaskellQName> getQNameList();
 
-  @NotNull
-  List<HaskellTextLiteral> getTextLiteralList();
+    @NotNull
+    List<HaskellTextLiteral> getTextLiteralList();
 
-  @NotNull
-  List<HaskellTtype> getTtypeList();
+    @NotNull
+    List<HaskellTtype> getTtypeList();
 
-  @NotNull
-  List<HaskellTtype1> getTtype1List();
+    @NotNull
+    List<HaskellTtype1> getTtype1List();
 
-  @NotNull
-  List<HaskellTtype2> getTtype2List();
+    @NotNull
+    List<HaskellTtype2> getTtype2List();
 
-  @NotNull
-  List<HaskellTypeSignature> getTypeSignatureList();
+    @NotNull
+    List<HaskellTypeSignature> getTypeSignatureList();
 
 }

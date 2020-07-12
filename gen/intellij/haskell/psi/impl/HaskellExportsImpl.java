@@ -14,29 +14,29 @@ import java.util.List;
 
 public class HaskellExportsImpl extends HaskellCompositeElementImpl implements HaskellExports {
 
-  public HaskellExportsImpl(ASTNode node) {
-    super(node);
-  }
+    public HaskellExportsImpl(ASTNode node) {
+        super(node);
+    }
 
-  public void accept(@NotNull HaskellVisitor visitor) {
-    visitor.visitExports(this);
-  }
+    public void accept(@NotNull HaskellVisitor visitor) {
+        visitor.visitExports(this);
+    }
 
-  public void accept(@NotNull PsiElementVisitor visitor) {
-    if (visitor instanceof HaskellVisitor) accept((HaskellVisitor) visitor);
-    else super.accept(visitor);
-  }
+    public void accept(@NotNull PsiElementVisitor visitor) {
+        if (visitor instanceof HaskellVisitor) accept((HaskellVisitor) visitor);
+        else super.accept(visitor);
+    }
 
-  @Override
-  @NotNull
-  public List<HaskellExport> getExportList() {
-    return PsiTreeUtil.getChildrenOfTypeAsList(this, HaskellExport.class);
-  }
+    @Override
+    @NotNull
+    public List<HaskellExport> getExportList() {
+        return PsiTreeUtil.getChildrenOfTypeAsList(this, HaskellExport.class);
+    }
 
-  @Override
-  @NotNull
-  public List<HaskellPragma> getPragmaList() {
-    return PsiTreeUtil.getChildrenOfTypeAsList(this, HaskellPragma.class);
-  }
+    @Override
+    @NotNull
+    public List<HaskellPragma> getPragmaList() {
+        return PsiTreeUtil.getChildrenOfTypeAsList(this, HaskellPragma.class);
+    }
 
 }

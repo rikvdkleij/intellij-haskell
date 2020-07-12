@@ -15,61 +15,61 @@ import java.util.List;
 
 public class HaskellDerivingDeclarationImpl extends HaskellCompositeElementImpl implements HaskellDerivingDeclaration {
 
-  public HaskellDerivingDeclarationImpl(ASTNode node) {
-    super(node);
-  }
+    public HaskellDerivingDeclarationImpl(ASTNode node) {
+        super(node);
+    }
 
-  public void accept(@NotNull HaskellVisitor visitor) {
-    visitor.visitDerivingDeclaration(this);
-  }
+    public void accept(@NotNull HaskellVisitor visitor) {
+        visitor.visitDerivingDeclaration(this);
+    }
 
-  public void accept(@NotNull PsiElementVisitor visitor) {
-    if (visitor instanceof HaskellVisitor) accept((HaskellVisitor) visitor);
-    else super.accept(visitor);
-  }
+    public void accept(@NotNull PsiElementVisitor visitor) {
+        if (visitor instanceof HaskellVisitor) accept((HaskellVisitor) visitor);
+        else super.accept(visitor);
+    }
 
-  @Override
-  @NotNull
-  public HaskellInst getInst() {
-    return notNullChild(PsiTreeUtil.getChildOfType(this, HaskellInst.class));
-  }
+    @Override
+    @NotNull
+    public HaskellInst getInst() {
+        return notNullChild(PsiTreeUtil.getChildOfType(this, HaskellInst.class));
+    }
 
-  @Override
-  @NotNull
-  public List<HaskellPragma> getPragmaList() {
-    return PsiTreeUtil.getChildrenOfTypeAsList(this, HaskellPragma.class);
-  }
+    @Override
+    @NotNull
+    public List<HaskellPragma> getPragmaList() {
+        return PsiTreeUtil.getChildrenOfTypeAsList(this, HaskellPragma.class);
+    }
 
-  @Override
-  @NotNull
-  public HaskellQName getQName() {
-    return notNullChild(PsiTreeUtil.getChildOfType(this, HaskellQName.class));
-  }
+    @Override
+    @NotNull
+    public HaskellQName getQName() {
+        return notNullChild(PsiTreeUtil.getChildOfType(this, HaskellQName.class));
+    }
 
-  @Override
-  @Nullable
-  public HaskellScontext getScontext() {
-    return PsiTreeUtil.getChildOfType(this, HaskellScontext.class);
-  }
+    @Override
+    @Nullable
+    public HaskellScontext getScontext() {
+        return PsiTreeUtil.getChildOfType(this, HaskellScontext.class);
+    }
 
-  @Override
-  public String getName() {
-    return HaskellPsiImplUtil.getName(this);
-  }
+    @Override
+    public String getName() {
+        return HaskellPsiImplUtil.getName(this);
+    }
 
-  @Override
-  public ItemPresentation getPresentation() {
-    return HaskellPsiImplUtil.getPresentation(this);
-  }
+    @Override
+    public ItemPresentation getPresentation() {
+        return HaskellPsiImplUtil.getPresentation(this);
+    }
 
-  @Override
-  public Seq<HaskellNamedElement> getIdentifierElements() {
-    return HaskellPsiImplUtil.getIdentifierElements(this);
-  }
+    @Override
+    public Seq<HaskellNamedElement> getIdentifierElements() {
+        return HaskellPsiImplUtil.getIdentifierElements(this);
+    }
 
-  @Override
-  public Option<String> getModuleName() {
-    return HaskellPsiImplUtil.getModuleName(this);
-  }
+    @Override
+    public Option<String> getModuleName() {
+        return HaskellPsiImplUtil.getModuleName(this);
+    }
 
 }
