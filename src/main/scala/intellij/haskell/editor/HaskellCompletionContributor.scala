@@ -27,7 +27,7 @@ import com.intellij.psi.{PsiElement, PsiFile, TokenType}
 import com.intellij.util.ProcessingContext
 import icons.HaskellIcons
 import intellij.haskell.annotator.HaskellAnnotator
-import intellij.haskell.external.component.HaskellComponentsManager.StackComponentInfo
+import intellij.haskell.external.component.HaskellComponentsManager.ComponentTarget
 import intellij.haskell.external.component._
 import intellij.haskell.psi.HaskellTypes._
 import intellij.haskell.psi._
@@ -418,7 +418,7 @@ class HaskellCompletionContributor extends CompletionContributor {
 
     val expressionLookupElements = HaskellPsiUtil.findTopLevelExpressions(psiFile).flatMap(_.getQNameList.asScala.headOption.map(_.getIdentifierElement)).filterNot(e => currentElement.contains(e)).map(createLocalLookupElement)
 
-    ApplicationUtil.runReadAction(HaskellPsiUtil.findTopLevelDeclarations(psiFile)).
+    val declarationLookupElements = ApplicationUtil.runReadAction(HaskellPsiUtil.findTopLevelDeclarations(psiFile)).
       flatMap(d => getIdentifiers(d).map { e =>
         d match {
           case dd: HaskellDataDeclaration =>
@@ -431,7 +431,8 @@ class HaskellCompletionContributor extends CompletionContributor {
             LookupElementBuilder.create(e.getName).withTypeText(s"$constrType -> $dataType")
           case _ => createTopLevelDeclarationLookupElement(e, d)
         }
-      }) ++ expressionLookupElements
+      })
+    expressionLookupElements.toSeq.diff(declarationLookupElements.toSeq)
   }
 
   private def getIdentifiers(declarationElement: HaskellDeclarationElement) = {
