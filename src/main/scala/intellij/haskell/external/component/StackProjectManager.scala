@@ -24,7 +24,6 @@ import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.components.ProjectComponent
 import com.intellij.openapi.progress.{PerformInBackgroundOption, ProgressIndicator, ProgressManager, Task}
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.projectRoots.ProjectJdkTable
 import com.intellij.openapi.roots.{ModifiableRootModel, ModuleRootEvent, ModuleRootListener, ModuleRootModificationUtil}
 import com.intellij.openapi.ui.Messages
 import com.intellij.openapi.vfs.VirtualFileManager
@@ -41,7 +40,6 @@ import intellij.haskell.module.{HaskellModuleBuilder, StackProjectImportBuilder}
 import intellij.haskell.notification.ConfigFileWatcher
 import intellij.haskell.psi.HaskellPsiUtil
 import intellij.haskell.psi.stubs.types.HaskellFileElementType
-import intellij.haskell.sdk.HaskellSdkType
 import intellij.haskell.settings.HaskellSettingsState
 import intellij.haskell.util._
 import intellij.haskell.util.index.{HaskellFileIndex, HaskellModuleNameIndex}
@@ -168,7 +166,7 @@ object StackProjectManager {
   }
 
   private def init(project: Project, restart: Boolean = false): Unit = {
-    if (HaskellProjectUtil.isValidHaskellProject(project, notifyNoSdk = true)) {
+    if (HaskellProjectUtil.isValidHaskellProject(project)) {
       if (isInitializing(project)) {
         HaskellNotificationGroup.logWarningBalloonEvent(project, "Action not possible whilst project is initializing")
       } else {
@@ -481,13 +479,15 @@ class StackProjectManager(project: Project) extends ProjectComponent {
     if (HaskellProjectUtil.isHaskellProject(project)) {
       disableDefaultReformatAction()
 
-      fixSdkStackVersion()
-
-      initStackReplsManager()
-      if (replsManager.exists(_.stackComponentInfos.isEmpty)) {
-        Messages.showErrorDialog(project, s"Can't start project as no Cabal file was found (or could not be read)", "Can't start project")
+      if (StackCommandLine.isStackOnPath) {
+        initStackReplsManager()
+        if (replsManager.exists(_.componentTargets.isEmpty)) {
+          Messages.showErrorDialog(project, s"Can't start project as no Cabal file was found (or could not be read)", "Can't start project")
+        } else {
+          StackProjectManager.start(project)
+        }
       } else {
-        StackProjectManager.start(project)
+        Messages.showErrorDialog(project, s"Can't start project because the Stack binary is not on the PATH", "Can't start project")
       }
     }
   }
@@ -499,15 +499,5 @@ class StackProjectManager(project: Project) extends ProjectComponent {
     // Overriding IntelliJ's default shortcut for formatting
     actionManager.unregisterAction("ReformatCode")
     actionManager.registerAction("ReformatCode", new HaskellReformatAction)
-  }
-
-  // Make sure that after Stack binary is updated the right version is displayed.
-  private def fixSdkStackVersion(): Unit = {
-    val sdks = ProjectJdkTable.getInstance.getSdksOfType(HaskellSdkType.getInstance)
-    sdks.forEach { sdk =>
-      val sdkModificator = sdk.getSdkModificator
-      sdkModificator.setVersionString(HaskellSdkType.getInstance.getVersionString(sdk))
-      sdkModificator.commitChanges()
-    }
   }
 }

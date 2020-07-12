@@ -48,7 +48,7 @@ object HaskellEditorUtil {
     Option(actionEvent.getProject) match {
       case Some(project) if HaskellProjectUtil.isHaskellProject(project) =>
         actionEvent.getPresentation.setVisible(true)
-        actionEvent.getPresentation.setEnabled(HaskellProjectUtil.isValidHaskellProject(project, notifyNoSdk = false) && enableCondition(project))
+        actionEvent.getPresentation.setEnabled(HaskellProjectUtil.isValidHaskellProject(project) && enableCondition(project))
       case _ => actionEvent.getPresentation.setEnabledAndVisible(false)
     }
   }

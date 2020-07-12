@@ -16,14 +16,19 @@
 
 package intellij.haskell.module
 
-import java.io.File
+import java.awt.event.{MouseAdapter, MouseEvent}
+import java.awt.{Color, Cursor, Desktop}
+import java.io.{File, IOException}
+import java.net.{URI, URISyntaxException}
+import java.nio.file.Paths
 
+import com.intellij.ide.impl.OpenProjectTask
 import com.intellij.ide.util.projectWizard._
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.{ApplicationManager, WriteAction}
 import com.intellij.openapi.module.{ModifiableModuleModel, Module, ModuleType}
-import com.intellij.openapi.project.{Project, ProjectManager}
-import com.intellij.openapi.projectRoots.SdkTypeId
+import com.intellij.openapi.project.Project
+import com.intellij.openapi.project.ex.ProjectManagerEx
 import com.intellij.openapi.roots._
 import com.intellij.openapi.roots.libraries.{Library, LibraryTablesRegistrar, LibraryUtil}
 import com.intellij.openapi.roots.ui.configuration.ModulesProvider
@@ -32,15 +37,15 @@ import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.vfs.LocalFileSystem
 import com.intellij.platform.templates.TemplateModuleBuilder
 import icons.HaskellIcons
-import intellij.haskell.cabal.CabalInfo
-import intellij.haskell.external.component.{HaskellComponentsManager, PackageInfo}
+import intellij.haskell.cabal.PackageInfo
+import intellij.haskell.external.component.{HaskellComponentsManager, LibraryPackageInfo}
+import intellij.haskell.external.execution.StackCommandLine.{StackPath, isStackOnPath}
 import intellij.haskell.external.execution.{CommandLine, StackCommandLine}
-import intellij.haskell.sdk.HaskellSdkType
 import intellij.haskell.settings.HaskellSettingsState
 import intellij.haskell.stackyaml.StackYamlComponent
 import intellij.haskell.util.{FutureUtil, HaskellFileUtil, HaskellProjectUtil, ScalaUtil}
 import intellij.haskell.{GlobalInfo, HaskellNotificationGroup}
-import javax.swing.Icon
+import javax.swing._
 
 import scala.annotation.tailrec
 import scala.collection.mutable.ListBuffer
@@ -59,15 +64,10 @@ class HaskellModuleBuilder extends TemplateModuleBuilder(null, HaskellModuleType
 
   override def getModuleType: ModuleType[_ <: ModuleBuilder] = HaskellModuleType.getInstance
 
-  override def isSuitableSdkType(sdkType: SdkTypeId): Boolean = {
-    sdkType == HaskellSdkType.getInstance
-  }
-
   override def getNodeIcon: Icon = HaskellIcons.HaskellLogo
 
   override def setupRootModel(rootModel: ModifiableRootModel): Unit = {
     if (rootModel.getSdk == null) {
-      rootModel.setSdk(HaskellSdkType.findOrCreateSdk())
       rootModel.inheritSdk()
     }
 
@@ -97,7 +97,7 @@ class HaskellModuleBuilder extends TemplateModuleBuilder(null, HaskellModuleType
   // Only called in case new project without existing Stack project
   override def getCustomOptionsStep(context: WizardContext, parentDisposable: Disposable): ModuleWizardStep = {
     isNewProjectWithoutExistingSources = true
-    new HaskellModuleWizardStep(context, this)
+    new HaskellModuleWizardStep(isNewProjectWithoutExistingSources)
   }
 
   override def createModule(moduleModel: ModifiableModuleModel): Module = {
@@ -110,21 +110,12 @@ class HaskellModuleBuilder extends TemplateModuleBuilder(null, HaskellModuleType
     if (isNewProjectWithoutExistingSources) {
       val createModuleAction = ApplicationManager.getApplication.executeOnPooledThread(ScalaUtil.runnable {
         val processOutput = StackCommandLine.run(project, Seq("new", project.getName, "--bare", newProjectTemplateName, "-p", "author-email:Author email here", "-p", "author-name:Author name here", "-p", "category:App category here", "-p", "copyright:2019 Author name here", "-p", "github-username:Github username here"), timeoutInMillis = 60.seconds.toMillis, enableExtraArguments = false)
-        processOutput match {
-          case None =>
-            WriteAction.run {
-              () => {
-                Messages.showErrorDialog("Unknown error while creating new Stack project by using Stack command for creating new project on file system", "Create Haskell module")
-              }
+        if (processOutput.getExitCode != 0) {
+          WriteAction.run {
+            () => {
+              Messages.showErrorDialog(s"Error while creating new Stack project: ${processOutput.getStdout} ${processOutput.getStderr}", "Create Haskell module")
             }
-          case Some(output) =>
-            if (output.getExitCode != 0) {
-              WriteAction.run {
-                () => {
-                  Messages.showErrorDialog(s"Error while creating new Stack project: ${output.getStdout} ${output.getStderr}", "Create Haskell module")
-                }
-              }
-            }
+          }
         }
       })
       FutureUtil.waitForValue(project, createModuleAction, "Creating Haskell module", 120) match {
@@ -149,27 +140,72 @@ class HaskellModuleBuilder extends TemplateModuleBuilder(null, HaskellModuleType
     Array()
   }
 
-  override def createProject(name: String, path: String): Project = ProjectManager.getInstance.createProject(name, path)
+  override def createProject(name: String, path: String): Project = {
+    val options = OpenProjectTask.newProject.withProjectName(name)
+    val projectFile = Paths.get(path)
+    ProjectManagerEx.getInstanceEx.newProject(projectFile, options)
+  }
 
   // To prevent first page of wizard is empty.
   override def isTemplateBased: Boolean = false
 
 }
 
-class HaskellModuleWizardStep(wizardContext: WizardContext, haskellModuleBuilder: HaskellModuleBuilder) extends ProjectJdkForModuleStep(wizardContext, HaskellSdkType.getInstance) {
+class HaskellModuleWizardStep(isNewProject: Boolean) extends ModuleWizardStep {
 
   override def updateDataModel(): Unit = {
-    super.updateDataModel()
-    haskellModuleBuilder.setModuleJdk(getJdk)
   }
 
   override def validate(): Boolean = {
-    if (getJdk == null) {
-      Messages.showErrorDialog("You can't create a Haskell project without Stack configured as SDK", "No Haskell Tool Stack specified")
-      false
-    } else {
+    if (isStackOnPath) {
       true
+    } else {
+      Messages.showErrorDialog("You can't create a Haskell project without the Stack binary on the PATH", "No Stack on PATH")
+      false
     }
+  }
+
+  override def getComponent: JComponent = {
+    val panel = new JPanel
+    val layout = new BoxLayout(panel, BoxLayout.Y_AXIS)
+    panel.setLayout(layout)
+    val line = if (isNewProject) {
+      "Click the 'Next' button to generate a new Haskell project with Stack"
+    } else {
+      "Click the 'Finish' button to import the Haskell project"
+    }
+    val label = new JLabel(
+      "<html>" +
+        "<h3>IntelliJ-Haskell</h3>" +
+        line +
+        "<br><br><b>IMPORTANT:</b>" +
+        "<ul>" +
+        "<li>The Stack binary has to be on the PATH</li>" +
+        "<li>It's not required to set a SDK</li>" +
+        "</ul>" +
+        "</html>")
+    panel.add(label)
+    panel.add(createLinkLabel)
+    panel
+  }
+
+  private def createLinkLabel = {
+    val linkLabel = new JLabel("<html><br><h3>IntelliJ-Haskell home page</h3></html>")
+    linkLabel.setForeground(Color.YELLOW)
+    linkLabel.setCursor(new Cursor(Cursor.HAND_CURSOR))
+
+    linkLabel.addMouseListener(new MouseAdapter() {
+      override def mouseClicked(e: MouseEvent): Unit = {
+        try {
+          Desktop.getDesktop.browse(new URI("https://github.com/rikvdkleij/intellij-haskell"))
+        }
+        catch {
+          case e@(_: IOException | _: URISyntaxException) =>
+            HaskellNotificationGroup.logErrorBalloonEvent(s"Error while trying to open IntelliJ-Haskll Github page. Error: ${e.getMessage}")
+        }
+      }
+    })
+    linkLabel
   }
 }
 
@@ -283,34 +319,32 @@ object HaskellModuleBuilder {
   def addLibrarySources(project: Project, update: Boolean): Unit = {
     val projectLibDirectory = HaskellProjectUtil.getProjectLibrarySourcesDirectory(project)
     if (update || getProjectLibraryTable(project).getLibraries.isEmpty || !projectLibDirectory.exists()) {
-      HaskellSdkType.getStackBinaryPath(project).foreach(stackPath => {
 
-        StackCommandLine.updateStackIndex(project)
+      StackCommandLine.updateStackIndex(project)
 
-        if (!projectLibDirectory.exists()) {
-          FileUtil.createDirectory(projectLibDirectory)
-        }
+      if (!projectLibDirectory.exists()) {
+        FileUtil.createDirectory(projectLibDirectory)
+      }
 
-        val libraryPackageInfos = HaskellComponentsManager.findLibraryPackageInfos(project)
-        val libraryDependencies = libraryPackageInfos.map(pi => HaskellLibraryDependency(pi.packageName, pi.version))
+      val libraryPackageInfos = HaskellComponentsManager.findLibraryPackageInfos(project)
+      val libraryDependencies = libraryPackageInfos.map(pi => HaskellLibraryDependency(pi.packageName, pi.version))
 
-        val projectModulePackageNames = HaskellComponentsManager.findProjectModulePackageNames(project)
+      val projectModulePackageNames = HaskellComponentsManager.findProjectModulePackageNames(project)
 
-        val dependenciesByModule = for {
-          (module, packageName) <- projectModulePackageNames
-          moduleDependencies = getDependencies(project, module, packageName, libraryDependencies)
-        } yield (module, moduleDependencies, getModuleLibraryDependencies(moduleDependencies, libraryPackageInfos))
+      val dependenciesByModule = for {
+        (module, packageName) <- projectModulePackageNames
+        moduleDependencies = getDependencies(project, module, packageName, libraryDependencies)
+      } yield (module, moduleDependencies, getModuleLibraryDependencies(moduleDependencies, libraryPackageInfos))
 
-        val projectLibraryDependencies = dependenciesByModule.flatMap(_._3).distinct
+      val projectLibraryDependencies = dependenciesByModule.flatMap(_._3).distinct
 
-        downloadHaskellPackageSources(project, projectLibDirectory, stackPath, projectLibraryDependencies)
+      downloadHaskellPackageSources(project, projectLibDirectory, StackPath, projectLibraryDependencies)
 
-        setupProjectLibraries(project, projectLibraryDependencies, projectLibDirectory)
+      setupProjectLibraries(project, projectLibraryDependencies, projectLibDirectory)
 
-        dependenciesByModule.foreach { case (module, moduleDependencies, moduleLibraryDependencies) =>
-          setupModuleLibraries(module, moduleDependencies ++ moduleLibraryDependencies)
-        }
-      })
+      dependenciesByModule.foreach { case (module, moduleDependencies, moduleLibraryDependencies) =>
+        setupModuleLibraries(module, moduleDependencies ++ moduleLibraryDependencies)
+      }
     }
   }
 

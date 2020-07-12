@@ -28,8 +28,8 @@ import com.intellij.psi.{PsiElement, PsiFile}
 import com.intellij.util.PathUtilRt
 import intellij.haskell.GlobalInfo
 import intellij.haskell.external.component.HaskellComponentsManager
+import intellij.haskell.external.execution.StackCommandLine
 import intellij.haskell.module.HaskellModuleType
-import intellij.haskell.sdk.HaskellSdkType
 import org.jetbrains.jps.model.java.JavaModuleSourceRootTypes
 
 import scala.jdk.CollectionConverters._
@@ -44,8 +44,8 @@ object HaskellProjectUtil {
     )
   }
 
-  def isValidHaskellProject(project: Project, notifyNoSdk: Boolean): Boolean = {
-    isHaskellProject(project) && HaskellSdkType.getStackBinaryPath(project, notifyNoSdk).isDefined
+  def isValidHaskellProject(project: Project): Boolean = {
+    isHaskellProject(project) && StackCommandLine.isStackOnPath
   }
 
   def isHaskellProject(project: Project): Boolean = {
