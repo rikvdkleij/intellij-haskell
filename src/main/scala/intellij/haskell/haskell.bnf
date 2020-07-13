@@ -99,7 +99,7 @@ data_declaration            ::= DATA (onls pragma)? onls INSTANCE? onls (ccontex
 
 kind_signature              ::= q_name COLON_COLON ttype
 
-data_declaration_deriving   ::= (DERIVING onl ttype | DERIVING onl LEFT_PAREN ttype (onl COMMA onl ttype)* onl RIGHT_PAREN)+
+data_declaration_deriving   ::= (onl DERIVING onl ttype | onl DERIVING onl LEFT_PAREN ttype (onl COMMA onl ttype)* onl RIGHT_PAREN)+
 
 newtype_declaration         ::= NEWTYPE onls INSTANCE? (onls pragma)? (onls ccontext onls DOUBLE_RIGHT_ARROW)? onls simpletype onls EQUAL onls newconstr (onls DERIVING onls ttype)?
 
