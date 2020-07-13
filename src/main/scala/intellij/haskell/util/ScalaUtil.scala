@@ -68,9 +68,13 @@ object ScalaUtil {
       } else xs.+=(s)
     }
 
-    linePerKey.map(x => {
+    linePerKey.flatMap(x => {
       val keyValuePair = x.split(": ", 2)
-      (keyValuePair(0), keyValuePair(1).trim)
+      if (keyValuePair.size == 2) {
+        Some(keyValuePair(0), keyValuePair(1).trim)
+      } else {
+        None
+      }
     }).toMap
   }
 }
