@@ -1,7 +1,7 @@
 <idea-plugin>
     <id>intellij.haskell</id>
     <name>IntelliJ-Haskell</name>
-    <version>1.0.0-beta75</version>
+    <version>1.0.0-beta76</version>
     <vendor email="rikvdkleij@gmail.com">Rik van der Kleij</vendor>
 
     <description><![CDATA[
@@ -20,6 +20,14 @@
     ]]></description>
 
     <change-notes><![CDATA[
+        <p>1.0.0-beta76</p>
+        <ul>
+            <li>Various improvements and fixes</li>
+            <li>Removed the Haskell SDK which was containing the location of the stack binary.
+               <br> That is replaced by using the stack binary of the PATH.</li>
+            <li>One REPL per component target is replaced by a solution of one REPL per stanza type to get faster feedback of GHC. <br>
+             So make sure that all component targets of one stanza type do have similar settings as default language extensions (so without conflicts)</li>
+        </ul>
         <p>1.0.0-beta75</p>
         <ul>
             <li>Various improvements and fixes</li>
