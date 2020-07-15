@@ -419,20 +419,20 @@ class HaskellCompletionContributor extends CompletionContributor {
     val expressionLookupElements = HaskellPsiUtil.findTopLevelExpressions(psiFile).flatMap(_.getQNameList.asScala.headOption.map(_.getIdentifierElement)).filterNot(e => currentElement.contains(e)).map(createLocalLookupElement)
 
     val declarationLookupElements = ApplicationUtil.runReadAction(HaskellPsiUtil.findTopLevelDeclarations(psiFile)).
-      flatMap(d => getIdentifiers(d).map { e =>
+      flatMap(d => getIdentifiers(d).flatMap { e =>
         d match {
           case dd: HaskellDataDeclaration =>
             val dataType = dd.getSimpletype.getText
-            val constrType = HaskellComponentsManager.findTypeInfoForElement(e).toOption.filterNot(_.withFailure).getOrElse(
+            val constrType = HaskellComponentsManager.findTypeInfoForElement(e).toOption.filterNot(_.withFailure).map(_.typeSignature).getOrElse(
               HaskellPsiUtil.findDataFieldDecl(e).orElse(HaskellPsiUtil.findDataConstr(e)) match {
                 case Some(ce) => ce.getText
-                case None => createTopLevelDeclarationLookupElement(e, d)
+                case None => createTopLevelDeclarationLookupElement(e, d).getLookupString
               })
-            LookupElementBuilder.create(e.getName).withTypeText(s"$constrType -> $dataType")
-          case _ => createTopLevelDeclarationLookupElement(e, d)
+            Seq(LookupElementBuilder.create(e.getName).withTypeText(s"$constrType -> $dataType"))
+          case _ => Seq()
         }
       })
-    expressionLookupElements.toSeq.diff(declarationLookupElements.toSeq)
+    expressionLookupElements ++ declarationLookupElements
   }
 
   private def getIdentifiers(declarationElement: HaskellDeclarationElement) = {
