@@ -1,7 +1,7 @@
 <idea-plugin>
     <id>intellij.haskell</id>
     <name>IntelliJ-Haskell</name>
-    <version>1.0.0-beta76</version>
+    <version>1.0.0-beta77</version>
     <vendor email="rikvdkleij@gmail.com">Rik van der Kleij</vendor>
 
     <description><![CDATA[
@@ -22,6 +22,10 @@
     ]]></description>
 
     <change-notes><![CDATA[
+        <p>1.0.0-beta77</p>
+        <ul>
+            <li>Better support for stack executable on the PATH</li>
+        </ul>
         <p>1.0.0-beta76</p>
         <ul>
             <li>Various improvements and fixes</li>
