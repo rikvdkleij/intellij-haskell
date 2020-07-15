@@ -6,8 +6,11 @@ import com.intellij.application.options.PathMacrosImpl
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.SystemInfo
 import com.intellij.openapi.util.io.FileUtil
+import com.intellij.util.EnvironmentUtil
 import intellij.haskell.util.HaskellFileUtil
 import io.github.soc.directories.ProjectDirectories
+
+import scala.jdk.CollectionConverters._
 
 object GlobalInfo {
 
@@ -78,6 +81,6 @@ object GlobalInfo {
   }
 
   def pathVariables: java.util.Map[String, String] = {
-    PathMacrosImpl.getInstanceEx.getUserMacros
+    (PathMacrosImpl.getInstanceEx.getUserMacros.asScala ++ EnvironmentUtil.getEnvironmentMap.asScala).asJava
   }
 }
