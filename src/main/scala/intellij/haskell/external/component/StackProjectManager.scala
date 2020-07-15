@@ -487,7 +487,7 @@ class StackProjectManager(project: Project) extends ProjectComponent {
           StackProjectManager.start(project)
         }
       } else {
-        Messages.showErrorDialog(project, s"Can't start project because the Stack binary is not on the PATH", "Can't start project")
+        Messages.showErrorDialog(project, s"Can't start project because the stack executable is not on the PATH", "Can't start project")
       }
     }
   }

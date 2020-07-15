@@ -95,13 +95,13 @@ Alternative way to install the latest beta version is to download `intellij-hask
 - If you don't already have IntelliJ, [download it](https://www.jetbrains.com/idea/download/) - the Community Edition is sufficient.
 - Install this plugin using the [Jetbrains plugin repository](https://plugins.jetbrains.com/idea/plugin/8258-intellij-haskell): `Settings`/`Plugins`/`Browse repositories`/`Intellij-Haskell`. Make sure no other Haskell plugin is installed in IntelliJ;
 - Install latest version of [Stack](https://github.com/commercialhaskell/stack); use `stack upgrade` to confirm you are on the latest version.
+- Make sure the stack executable is on the PATH.
 - Setup the project:
   - Make sure your Stack project builds without errors. Preferably by using: `stack build --test --haddock --no-haddock-hyperlink-source`;
   - After your project is built successfully, import an existing project by:
     - Inside IntelliJ use `File`>`New`>`Project from Existing Sources...` from the IntelliJ menu;
     - In the `Welcome to IntelliJ IDEA` dialog use `Open or Import Project`; 
   - In the `New Project` wizard select `Import project from external model` and check `Haskell Stack`;
-  - In next page of wizard configure `Project SDK` by configuring `Haskell Tool Stack` with selecting path to `stack` binary, e.g. `/usr/local/bin/stack` (you can use `which stack` on Linux or macOS or `where stack` on windows to find the path);
   - Finish wizard and project will be opened;
   - Wizard will automatically configure which folders are sources, test and which to exclude;
   - Plugin will automatically build Haskell Tools (HLint, Hoogle, Ormolu and Stylish Haskell) to prevent incompatibility issues

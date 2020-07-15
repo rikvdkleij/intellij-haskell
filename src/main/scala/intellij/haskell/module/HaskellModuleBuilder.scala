@@ -155,7 +155,7 @@ class HaskellModuleWizardStep(isNewProject: Boolean) extends ModuleWizardStep {
     if (isStackOnPath) {
       true
     } else {
-      Messages.showErrorDialog("You can't create a Haskell project without the Stack binary on the PATH", "No Stack on PATH")
+      Messages.showErrorDialog("You can't create a Haskell project without the stack executable on the PATH", "No Stack on PATH")
       false
     }
   }
@@ -175,7 +175,7 @@ class HaskellModuleWizardStep(isNewProject: Boolean) extends ModuleWizardStep {
         line +
         "<br><br><b>IMPORTANT:</b>" +
         "<ul>" +
-        "<li>The Stack binary has to be on the PATH</li>" +
+        "<li>The stack executable has to be on the PATH</li>" +
         "<li>It's not required to set a SDK</li>" +
         "</ul>" +
         "</html>")

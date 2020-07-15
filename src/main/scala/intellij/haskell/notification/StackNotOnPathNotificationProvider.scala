@@ -48,7 +48,7 @@ class StackNotOnPathNotificationProvider extends EditorNotifications.Provider[Ed
 
   private def createPanel(project: Project, action: Project => Runnable): EditorNotificationPanel = {
     val panel = new EditorNotificationPanel
-    panel.setText("Stack binary is not on the PATH")
+    panel.setText("Stack executable is not on the PATH")
     panel.createActionLabel("Restart", action(project))
     panel
   }

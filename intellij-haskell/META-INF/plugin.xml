@@ -9,6 +9,8 @@
         This plugin depends mainly on Stack.
         It can create new Stack projects and import existing Stack projects.
 
+        After installing stack make that the stack executable is on the PATH.
+
         Please <a href="https://github.com/rikvdkleij/intellij-haskell/blob/master/README.md">README</a>
 
         <br>
