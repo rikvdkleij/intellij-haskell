@@ -13,6 +13,9 @@ This plugin depends mainly on Stack. It can create new Stack projects and import
 
 GHC 8.2 and later is supported.
 
+The plugin expects that the Stack executable is on the PATH.
+A Haskell project does **not** depend on a SDK.
+ 
 Any feedback is welcomed!!
 
 # GitHub Sponsors

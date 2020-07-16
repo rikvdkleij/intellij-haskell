@@ -5,15 +5,15 @@
     <vendor email="rikvdkleij@gmail.com">Rik van der Kleij</vendor>
 
     <description><![CDATA[
-        Haskell language support.
-        This plugin depends mainly on Stack.
-        It can create new Stack projects and import existing Stack projects.
+        <p> Haskell language support.</p>
+        <ul>
+            <li>This plugin depends mainly on Stack.</li>
+            <li>It can create new Stack projects and import existing Stack projects.</li>
+            <li>After installing Stack make that the stack executable is on the PATH.</li>
+            <li>A Haskell project does <strong>not</strong> depend on a SDK.</li>
+            <li>Please <a href="https://github.com/rikvdkleij/intellij-haskell/blob/master/README.md">README</a></li>
+        </ul>
 
-        After installing stack make that the stack executable is on the PATH.
-
-        Please <a href="https://github.com/rikvdkleij/intellij-haskell/blob/master/README.md">README</a>
-
-        <br>
         <p>
             <a href="https://www.paypal.com/cgi-bin/webscr?cmd=_donations&business=H6QKQKFRKJBF2&item_name=IntelliJ-Haskell&currency_code=EUR">
                 <img src="https://www.paypalobjects.com/en_US/i/btn/btn_donateCC_LG.gif">
