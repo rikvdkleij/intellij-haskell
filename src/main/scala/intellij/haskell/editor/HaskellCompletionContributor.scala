@@ -429,6 +429,7 @@ class HaskellCompletionContributor extends CompletionContributor {
                 case None => createTopLevelDeclarationLookupElement(e, d).getLookupString
               })
             Seq(LookupElementBuilder.create(e.getName).withTypeText(s"$constrType -> $dataType"))
+          case d: HaskellDeclarationElement if !d.isInstanceOf[HaskellTypeSignature] => Seq(createTopLevelDeclarationLookupElement(e, d))
           case _ => Seq()
         }
       })
