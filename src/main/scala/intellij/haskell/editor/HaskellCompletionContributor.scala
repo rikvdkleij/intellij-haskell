@@ -37,6 +37,7 @@ import intellij.haskell.{HaskellFile, HaskellParserDefinition}
 import org.apache.commons.lang.StringEscapeUtils
 
 import scala.jdk.CollectionConverters._
+import scala.util.matching.Regex
 
 class HaskellCompletionContributor extends CompletionContributor {
 
@@ -70,6 +71,8 @@ class HaskellCompletionContributor extends CompletionContributor {
   private final val InsideImportKeywords = LazyList("as", "hiding", "qualified")
   private final val CommentIds = LazyList("{-", "-}", "--")
   private final val HaddockIds = LazyList("{-|", "-- |", "-- ^")
+
+  private final val TypeWildcard: Regex = """.*Found.type.wildcard.[`|‘][^'’]+['|’].standing.for.[`|‘]([^'’]+)['|’].*""".r
 
   private def findQualifiedNamedElementToComplete(element: PsiElement): Option[HaskellQualifiedNameElement] = {
     val elementType = Option(element.getNode.getElementType)
@@ -172,7 +175,7 @@ class HaskellCompletionContributor extends CompletionContributor {
             resultSet.addAllElements(getModulePragmaIdsLookupElements.asJavaCollection)
             resultSet.addAllElements(getPragmaStartEndIdsLookupElements.asJavaCollection)
           case Some(e) if isImportSpecInProgress(e) =>
-            globalInfo.foreach(gi => resultSet.addAllElements(findAvailableIdsForImportModuleSpec(gi, psiFile, e).asJavaCollection))
+            resultSet.addAllElements(findAvailableIdsForImportModuleSpec(psiFile, e).asJavaCollection)
           case Some(e) if isImportModuleDeclarationInProgress(e) =>
             // Do not give suggestions when defining import qualifier
             if (e.getParent.getNode.getElementType != HS_QUALIFIER) {
@@ -234,7 +237,7 @@ class HaskellCompletionContributor extends CompletionContributor {
         HaskellEditorUtil.showHaskellSupportIsNotAvailableWhileInitializing(project)
       } else {
         Option(parameters.getOriginalPosition) match {
-          case Some(position) if HaskellPsiUtil.findExpression(position).isDefined & position.getNode.getElementType == HaskellTypes.HS_UNDERSCORE =>
+          case Some(position) if HaskellPsiUtil.findExpression(position).isDefined & position.getText.startsWith("_") =>
             val offset = position.getTextOffset
             val editor = parameters.getEditor
             HaskellAnnotator.findHighlightInfo(project, offset, editor) match {
@@ -252,7 +255,19 @@ class HaskellCompletionContributor extends CompletionContributor {
                 }
               case None => ()
             }
-
+          case Some(position) if HaskellPsiUtil.findTypeSignatureDeclaration(position).isDefined & position.getText.startsWith("_") =>
+            val offset = position.getTextOffset
+            val editor = parameters.getEditor
+            HaskellAnnotator.findHighlightInfo(project, offset, editor) match {
+              case Some(highlightInfo) =>
+                val messageLines = highlightInfo.getDescription.split("\n")
+                val suggestions = messageLines.collect {
+                  case TypeWildcard(name) => name
+                }
+                val lookupElements = suggestions.map(LookupElementBuilder.create).to(LazyList)
+                originalResultSet.addAllElements(lookupElements.asJavaCollection)
+              case None => ()
+            }
           case _ => ()
         }
       }
@@ -329,7 +344,7 @@ class HaskellCompletionContributor extends CompletionContributor {
 
   private def isImportIdInProgressInsideImportModuleDeclaration(element: PsiElement): Boolean = {
     val prevNode = Option(TreeUtil.prevLeaf(element.getNode))
-    prevNode.exists(node => HaskellPsiUtil.findImportDeclaration(element).isDefined)
+    prevNode.exists(_ => HaskellPsiUtil.findImportDeclaration(element).isDefined)
   }
 
   private def isNCommentInProgress(element: PsiElement): Boolean = {
@@ -343,7 +358,7 @@ class HaskellCompletionContributor extends CompletionContributor {
     } yield (info, globalInfo)
   }
 
-  private def findAvailableIdsForImportModuleSpec(stackComponentGlobalInfo: StackComponentGlobalInfo, psiFile: PsiFile, element: PsiElement): Iterable[LookupElementBuilder] = {
+  private def findAvailableIdsForImportModuleSpec(psiFile: PsiFile, element: PsiElement): Iterable[LookupElementBuilder] = {
     import scala.concurrent.ExecutionContext.Implicits.global
 
     HaskellPsiUtil.findImportDeclaration(element).flatMap(_.getModuleName) match {
@@ -394,9 +409,8 @@ class HaskellCompletionContributor extends CompletionContributor {
   }
 
   private def getAvailableLookupElements(psiFile: PsiFile, currentElement: Option[HaskellNamedElement]): Iterable[LookupElementBuilder] = {
-    val moduleName = HaskellPsiUtil.findModuleName(psiFile)
     ProgressManager.checkCanceled()
-    FileModuleIdentifiers.findAvailableModuleIdentifiers(psiFile).map(createLookupElement(_)) ++ findTopLeveLookupElements(psiFile, moduleName, currentElement)
+    FileModuleIdentifiers.findAvailableModuleIdentifiers(psiFile).map(createLookupElement(_)) ++ findTopLeveLookupElements(psiFile, currentElement)
   }
 
   private lazy val getKeywordLookupElements = {
@@ -411,27 +425,28 @@ class HaskellCompletionContributor extends CompletionContributor {
     SpecialReservedIds.map(sr => LookupElementBuilder.create(sr).withIcon(HaskellIcons.HaskellSmallBlueLogo).withTailText(" special keyword", true))
   }
 
-  private def findTopLeveLookupElements(psiFile: PsiFile, moduleName: Option[String], currentElement: Option[HaskellNamedElement]): Iterable[LookupElementBuilder] = {
+  private def findTopLeveLookupElements(psiFile: PsiFile, currentElement: Option[HaskellNamedElement]): Iterable[LookupElementBuilder] = {
     def createTopLevelDeclarationLookupElement(e: HaskellNamedElement, d: HaskellDeclarationElement) = {
-      createLocalTopLevelLookupElement(ApplicationUtil.runReadAction(e.getName), ApplicationUtil.runReadAction(d.getPresentation.getPresentableText), moduleName.getOrElse("-"))
+      createLocalTopLevelLookupElement(ApplicationUtil.runReadAction(e.getName), ApplicationUtil.runReadAction(d.getPresentation.getPresentableText))
     }
 
     val expressionLookupElements = HaskellPsiUtil.findTopLevelExpressions(psiFile).flatMap(_.getQNameList.asScala.headOption.map(_.getIdentifierElement)).filterNot(e => currentElement.contains(e)).map(createLocalLookupElement)
 
     val declarationLookupElements = ApplicationUtil.runReadAction(HaskellPsiUtil.findTopLevelDeclarations(psiFile)).
-      flatMap(d => getIdentifiers(d).flatMap { e =>
-        d match {
-          case dd: HaskellDataDeclaration =>
-            val dataType = dd.getSimpletype.getText
-            val constrType = HaskellComponentsManager.findTypeInfoForElement(e).toOption.filterNot(_.withFailure).map(_.typeSignature).getOrElse(
-              HaskellPsiUtil.findDataFieldDecl(e).orElse(HaskellPsiUtil.findDataConstr(e)) match {
-                case Some(ce) => ce.getText
-                case None => createTopLevelDeclarationLookupElement(e, d).getLookupString
-              })
-            Seq(LookupElementBuilder.create(e.getName).withTypeText(s"$constrType -> $dataType"))
-          case d: HaskellDeclarationElement if !d.isInstanceOf[HaskellTypeSignature] => Seq(createTopLevelDeclarationLookupElement(e, d))
-          case _ => Seq()
-        }
+      flatMap(d => getIdentifiers(d).flatMap {
+        e =>
+          d match {
+            case dd: HaskellDataDeclaration =>
+              val dataType = dd.getSimpletype.getText
+              val constrType = HaskellComponentsManager.findTypeInfoForElement(e).toOption.filterNot(_.withFailure).map(_.typeSignature).getOrElse(
+                HaskellPsiUtil.findDataFieldDecl(e).orElse(HaskellPsiUtil.findDataConstr(e)) match {
+                  case Some(ce) => ce.getText
+                  case None => createTopLevelDeclarationLookupElement(e, d).getLookupString
+                })
+              Seq(LookupElementBuilder.create(e.getName).withTypeText(s"$constrType -> $dataType"))
+            case d: HaskellDeclarationElement if !d.isInstanceOf[HaskellTypeSignature] => Seq(createTopLevelDeclarationLookupElement(e, d))
+            case _ => Seq()
+          }
       })
     expressionLookupElements ++ declarationLookupElements
   }
@@ -461,7 +476,7 @@ class HaskellCompletionContributor extends CompletionContributor {
     })
   }
 
-  private def createLocalTopLevelLookupElement(name: String, declaration: String, module: String): LookupElementBuilder = {
+  private def createLocalTopLevelLookupElement(name: String, declaration: String): LookupElementBuilder = {
     LookupElementBuilder.create(name).withTypeText(declaration).withIcon(findIcon(declaration))
   }
 
