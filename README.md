@@ -90,7 +90,7 @@ Alternative way to install the latest beta version is to download `intellij-hask
 - Default code formatting by `ormolu`. Alternatively by `stylish-haskell`.
 - Code completion for project module names, language extensions and package names in Cabal file;
 - Running REPL, tests and executables via `Run Configurations`;
-- Smart completion on typed holes (since GHC 8.4);
+- Smart code completion on typed holes (since GHC 8.4);
 
 
 
