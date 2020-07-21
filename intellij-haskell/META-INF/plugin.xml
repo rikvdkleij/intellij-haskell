@@ -1,7 +1,7 @@
 <idea-plugin>
     <id>intellij.haskell</id>
     <name>IntelliJ-Haskell</name>
-    <version>1.0.0-beta77</version>
+    <version>1.0.0-beta78</version>
     <vendor email="rikvdkleij@gmail.com">Rik van der Kleij</vendor>
 
     <description><![CDATA[
@@ -9,8 +9,6 @@
         <ul>
             <li>This plugin depends mainly on Stack.</li>
             <li>It can create new Stack projects and import existing Stack projects.</li>
-            <li>After installing Stack make that the stack executable is on the PATH.</li>
-            <li>A Haskell project does <strong>not</strong> depend on a SDK.</li>
             <li>Please <a href="https://github.com/rikvdkleij/intellij-haskell/blob/master/README.md">README</a></li>
         </ul>
 
@@ -22,6 +20,11 @@
     ]]></description>
 
     <change-notes><![CDATA[
+        <p>1.0.0-beta78</p>
+        <ul>
+            <li>Reverted the change which removed the Haskell SDK.</li>
+            <li>Improvements and fixes in (smart) code completion.</li>
+        </ul>
         <p>1.0.0-beta77</p>
         <ul>
             <li>Better support for stack executable on the PATH</li>
