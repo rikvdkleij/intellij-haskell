@@ -61,9 +61,9 @@ private[component] object GlobalProjectInfoComponent {
 
   private def createGlobalProjectInfo(key: Key): Option[GlobalProjectInfo] = {
     val project = key.project
-    val pathLines = findPathLines(project)
-    val pathInfoMap = ScalaUtil.linesToMap(pathLines)
     for {
+      pathLines <- findPathLines(project)
+      pathInfoMap = ScalaUtil.linesToMap(pathLines)
       binPaths <- findBinPaths(pathInfoMap)
       packageDbPaths <- findPackageDbPaths(pathInfoMap)
       ghcPath = new File(binPaths.compilerBinPath, "ghc").getPath
@@ -76,8 +76,8 @@ private[component] object GlobalProjectInfoComponent {
     } yield GlobalProjectInfo(ghcVersion, ghcPath, ghcPkgPath, localDocRoot, snapshotDocRoot, packageDbPaths, binPaths, extensions, stackagePackageNames)
   }
 
-  private def findPathLines(project: Project): Seq[String] = {
-    StackCommandLine.run(project, Seq("path"), enableExtraArguments = false).getStdoutLines.asScala.toSeq
+  private def findPathLines(project: Project): Option[Seq[String]] = {
+    StackCommandLine.run(project, Seq("path"), enableExtraArguments = false).map(_.getStdoutLines.asScala.toSeq)
   }
 
   private def findGhcVersion(project: Project, ghcPath: String): GhcVersion = {

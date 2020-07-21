@@ -21,9 +21,9 @@ import java.util.concurrent.LinkedBlockingQueue
 
 import com.intellij.openapi.project.Project
 import intellij.haskell.external.execution.StackCommandLine
-import intellij.haskell.external.execution.StackCommandLine.StackPath
 import intellij.haskell.external.repl.StackRepl.{BenchmarkType, ExeType, StackReplOutput, TestSuiteType}
 import intellij.haskell.external.repl.StackReplsManager.ProjectReplTargets
+import intellij.haskell.sdk.HaskellSdkType
 import intellij.haskell.util.{HaskellEditorUtil, HaskellFileUtil, HaskellProjectUtil, StringUtil}
 import intellij.haskell.{GlobalInfo, HaskellNotificationGroup}
 
@@ -217,83 +217,85 @@ abstract class StackRepl(project: Project, projectReplTargets: Option[ProjectRep
       starting = true
       clearLoadedModules()
 
-      try {
-        val extraOptions = if (stanzaType.contains(TestSuiteType)) {
-          extraReplOptions ++ Seq("--test")
-        } else if (stanzaType.contains(BenchmarkType)) {
-          extraReplOptions ++ Seq("--bench")
-        } else if (stanzaType.contains(ExeType)) {
-          extraReplOptions ++ Seq("--no-load")
-        } else {
-          extraReplOptions
-        }
-
-        val replGhciOptionsFilePath = createGhciOptionsFile.getAbsolutePath
-        val command = (Seq(StackPath, "repl") ++
-          projectReplTargets.map(_.targetsName).toSeq ++
-          Seq("--no-build", "--ghci-options", s"-ghci-script=$replGhciOptionsFilePath", "--silent", "--ghc-options", "-v1") ++ extraOptions).mkString(" ")
-
-        logInfo(s"REPL will be started with command: $command")
-
-        val processBuilder = Process(command, new File(project.getBasePath), GlobalInfo.pathVariables.asScala.toSeq: _*)
-
-        stdoutQueue.clear()
-        stderrQueue.clear()
-
-        val process = processBuilder.run(
-          new ProcessIO(
-            in => outputStreamQueue.put(in),
-            (out: InputStream) => Source.fromInputStream(out).getLines.foreach(stdoutQueue.add),
-            (err: InputStream) => Source.fromInputStream(err).getLines.foreach(stderrQueue.add)
-          ))
-
-        def isStarted = {
-          process.isAlive() && stdoutQueue.toArray(Array[String]()).lastOption.exists(_.contains(EndOfOutputIndicator))
-        }
-
-        def hasDependencyError = {
-          stderrQueue.asScala.exists(_.startsWith(CanNotSatisfyErrorMessageIndicator))
-        }
-
-        val deadline = DefaultTimeout.fromNow
-        while (process.isAlive() && deadline.hasTimeLeft && !isStarted && !hasDependencyError && !project.isDisposed) {
-          // We have to wait till REPL is started
-          Thread.sleep(DelayBetweenReadsInMillis)
-        }
-
-        if (isStarted && !hasDependencyError) {
-          if (stanzaType.isDefined) {
-            execute(":set +c", forceExecute = true)
-            execute(":set -fdefer-type-errors", forceExecute = true)
-            execute(":set -fno-max-valid-substitutions", forceExecute = true)
-            if (HaskellProjectUtil.setNoDiagnosticsShowCaretFlag(project)) {
-              execute(s":set ${StackCommandLine.NoDiagnosticsShowCaretFlag}", forceExecute = true)
-            }
+      HaskellSdkType.getStackPath(project).foreach(stackPath => {
+        try {
+          val extraOptions = if (stanzaType.contains(TestSuiteType)) {
+            extraReplOptions ++ Seq("--test")
+          } else if (stanzaType.contains(BenchmarkType)) {
+            extraReplOptions ++ Seq("--bench")
+          } else if (stanzaType.contains(ExeType)) {
+            extraReplOptions ++ Seq("--no-load")
+          } else {
+            extraReplOptions
           }
-          logInfo("REPL is started")
-          available = true
-        } else if (hasDependencyError) {
-          val target = projectReplTargets.map(_.targetsName).getOrElse("-")
-          val error = stderrQueue.asScala.find(_.startsWith(CanNotSatisfyErrorMessageIndicator)).map(_.replace("<command line>:", "").trim).getOrElse("a dependency failed to build")
-          val message = s"REPL couldn't be started for target `$target` due to: $error"
-          logInfo(message)
-          HaskellNotificationGroup.logWarningBalloonEvent(project, message)
-          closeResources()
-        } else {
-          logError(s"REPL couldn't be started within $DefaultTimeout")
-          writeOutputToLog()
-          closeResources()
+
+          val replGhciOptionsFilePath = createGhciOptionsFile.getAbsolutePath
+          val command = (Seq(stackPath, "repl") ++
+            projectReplTargets.map(_.targetsName).toSeq ++
+            Seq("--no-build", "--ghci-options", s"-ghci-script=$replGhciOptionsFilePath", "--silent", "--ghc-options", "-v1") ++ extraOptions).mkString(" ")
+
+          logInfo(s"REPL will be started with command: $command")
+
+          val processBuilder = Process(command, new File(project.getBasePath), GlobalInfo.pathVariables.asScala.toSeq: _*)
+
+          stdoutQueue.clear()
+          stderrQueue.clear()
+
+          val process = processBuilder.run(
+            new ProcessIO(
+              in => outputStreamQueue.put(in),
+              (out: InputStream) => Source.fromInputStream(out).getLines.foreach(stdoutQueue.add),
+              (err: InputStream) => Source.fromInputStream(err).getLines.foreach(stderrQueue.add)
+            ))
+
+          def isStarted = {
+            process.isAlive() && stdoutQueue.toArray(Array[String]()).lastOption.exists(_.contains(EndOfOutputIndicator))
+          }
+
+          def hasDependencyError = {
+            stderrQueue.asScala.exists(_.startsWith(CanNotSatisfyErrorMessageIndicator))
+          }
+
+          val deadline = DefaultTimeout.fromNow
+          while (process.isAlive() && deadline.hasTimeLeft && !isStarted && !hasDependencyError && !project.isDisposed) {
+            // We have to wait till REPL is started
+            Thread.sleep(DelayBetweenReadsInMillis)
+          }
+
+          if (isStarted && !hasDependencyError) {
+            if (stanzaType.isDefined) {
+              execute(":set +c", forceExecute = true)
+              execute(":set -fdefer-type-errors", forceExecute = true)
+              execute(":set -fno-max-valid-substitutions", forceExecute = true)
+              if (HaskellProjectUtil.setNoDiagnosticsShowCaretFlag(project)) {
+                execute(s":set ${StackCommandLine.NoDiagnosticsShowCaretFlag}", forceExecute = true)
+              }
+            }
+            logInfo("REPL is started")
+            available = true
+          } else if (hasDependencyError) {
+            val target = projectReplTargets.map(_.targetsName).getOrElse("-")
+            val error = stderrQueue.asScala.find(_.startsWith(CanNotSatisfyErrorMessageIndicator)).map(_.replace("<command line>:", "").trim).getOrElse("a dependency failed to build")
+            val message = s"REPL couldn't be started for target `$target` due to: $error"
+            logInfo(message)
+            HaskellNotificationGroup.logWarningBalloonEvent(project, message)
+            closeResources()
+          } else {
+            logError(s"REPL couldn't be started within $DefaultTimeout")
+            writeOutputToLog()
+            closeResources()
+          }
         }
-      }
-      catch {
-        case e: Exception =>
-          logError(s"Couldn't start REPL. Error message ${e.getMessage}")
-          writeOutputToLog()
-          exit(forceExit = true)
-      }
-      finally {
-        starting = false
-      }
+        catch {
+          case e: Exception =>
+            logError(s"Couldn't start REPL. Error message ${e.getMessage}")
+            writeOutputToLog()
+            exit(forceExit = true)
+        }
+        finally {
+          starting = false
+        }
+      })
     }
   }
 

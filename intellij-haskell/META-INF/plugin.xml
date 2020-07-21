@@ -51,7 +51,7 @@
         <ul>
             <li>Various improvements and fixes</li>
             <li>Fixed some deprecation warnings (also by @i-walker)</li>
-            li>Added support for folding top-level expressions</li>
+            <li>Added support for folding top-level expressions</li>
             <li>Added Haskell setting to set default code folding per type</li>
         </ul>
         <p>1.0.0-beta71</p>
@@ -531,6 +531,7 @@
         </intentionAction>
 
         <!-- Stack -->
+        <sdkType implementation="intellij.haskell.sdk.HaskellSdkType"/>
         <projectImportProvider implementation="intellij.haskell.module.StackProjectImportProvider"/>
         <projectImportBuilder implementation="intellij.haskell.module.StackProjectImportBuilder"/>
         <projectOpenProcessor implementation="intellij.haskell.module.StackProjectOpenProcessor"/>
@@ -571,7 +572,7 @@
         <!-- Notification -->
         <editorNotificationProvider
                 implementation="intellij.haskell.notification.ConfigFileWatcherNotificationProvider"/>
-        <editorNotificationProvider implementation="intellij.haskell.notification.StackNotOnPathNotificationProvider"/>
+        <projectSdkSetupValidator implementation="intellij.haskell.notification.HaskellProjectSdkSetupValidator"/>
 
         <!-- Mover -->
         <!--<statementUpDownMover implementation="intellij.haskell.editor.HaskellStatementMover"/>-->

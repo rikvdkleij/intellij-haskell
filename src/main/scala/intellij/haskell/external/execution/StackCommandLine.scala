@@ -16,7 +16,6 @@
 
 package intellij.haskell.external.execution
 
-import java.io.File
 import java.util.concurrent.{LinkedBlockingDeque, TimeUnit}
 
 import com.intellij.compiler.impl._
@@ -29,63 +28,48 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Key
 import com.intellij.openapi.vfs.{CharsetToolkit, VfsUtil}
 import com.intellij.util.WaitFor
+import intellij.haskell.HaskellNotificationGroup
+import intellij.haskell.sdk.HaskellSdkType
 import intellij.haskell.settings.HaskellSettingsState
 import intellij.haskell.stackyaml.StackYamlComponent
 import intellij.haskell.util.{HaskellFileUtil, HaskellProjectUtil}
-import intellij.haskell.{GlobalInfo, HaskellNotificationGroup}
 
 import scala.jdk.CollectionConverters._
-import scala.sys.process.{Process, ProcessLogger}
 
 object StackCommandLine {
 
   final val NoDiagnosticsShowCaretFlag = "-fno-diagnostics-show-caret"
 
-  final val StackPath = "stack"
-
-  def isStackOnPath: Boolean = {
-    try {
-      val command = Seq(StackPath, "--numeric-version").mkString(" ")
-      val processBuilder = Process(command, new File(VfsUtil.getUserHomeDir.getPath), GlobalInfo.pathVariables.asScala.toSeq: _*)
-      val process = processBuilder.run(new ProcessLogger(
-      ) {
-        override def out(s: => String): Unit = ()
-
-        override def err(s: => String): Unit = ()
-
-        override def buffer[T](f: => T): T = f
-      })
-      process.exitValue() == 0
-    } catch {
-      case _: Exception => false
-    }
-  }
-
   def stackVersion(project: Project): Option[String] = {
-    run(project, Seq("--numeric-version"), enableExtraArguments = false).getStdoutLines.asScala.headOption
+    StackCommandLine.run(project, Seq("--numeric-version"), enableExtraArguments = false).flatMap(_.getStdoutLines.asScala.headOption)
   }
 
   def run(project: Project, arguments: Seq[String], timeoutInMillis: Long = CommandLine.DefaultTimeout.toMillis,
-          ignoreExitCode: Boolean = false, logOutput: Boolean = false, notifyBalloonError: Boolean = false, enableExtraArguments: Boolean = true): ProcessOutput = {
-    CommandLine.run(
-      project,
-      StackPath,
-      arguments ++ (if (enableExtraArguments) HaskellSettingsState.getExtraStackArguments else Seq()),
-      timeoutInMillis.toInt,
-      ignoreExitCode = ignoreExitCode,
-      logOutput = logOutput,
-      notifyBalloonError = notifyBalloonError
-    )
+          ignoreExitCode: Boolean = false, logOutput: Boolean = false, workDir: Option[String] = None, notifyBalloonError: Boolean = false, enableExtraArguments: Boolean = true): Option[ProcessOutput] = {
+    HaskellSdkType.getStackPath(project).map(stackPath => {
+      CommandLine.runInWorkDir(
+        project,
+        workDir.getOrElse(project.getBasePath),
+        stackPath,
+        arguments ++ (if (enableExtraArguments) HaskellSettingsState.getExtraStackArguments else Seq()),
+        timeoutInMillis.toInt,
+        ignoreExitCode = ignoreExitCode,
+        logOutput = logOutput,
+        notifyBalloonError = notifyBalloonError
+      )
+    })
   }
 
-  def runWithProgressIndicator(project: Project, workDir: Option[String], arguments: Seq[String], progressIndicator: Option[ProgressIndicator]): CapturingProcessHandler = {
-    CommandLine.runWithProgressIndicator(
-      project,
-      workDir,
-      StackPath,
-      arguments,
-      progressIndicator
-    )
+  def runWithProgressIndicator(project: Project, workDir: Option[String], arguments: Seq[String], progressIndicator: Option[ProgressIndicator]): Option[CapturingProcessHandler] = {
+    HaskellSdkType.getStackPath(project).map(stackPath => {
+      CommandLine.runWithProgressIndicator(
+        project,
+        workDir,
+        stackPath,
+        arguments,
+        progressIndicator
+      )
+    })
   }
 
   def installTool(project: Project, progressIndicator: ProgressIndicator, toolName: String): Boolean = {
@@ -97,25 +81,28 @@ object StackCommandLine {
     }
     val arguments = systemGhcOption ++ Seq("-j2", "--stack-root", toolsStackRootPath.getPath, "--resolver", StackageLtsVersion, "--local-bin-path", toolsBinPath.getPath, "install", toolName)
 
-    val handler = runWithProgressIndicator(project, workDir = Some(VfsUtil.getUserHomeDir.getPath), arguments, Some(progressIndicator))
-    val output = handler.runProcessWithProgressIndicator(progressIndicator)
+    val result = runWithProgressIndicator(project, workDir = Some(VfsUtil.getUserHomeDir.getPath), arguments, Some(progressIndicator)).exists(handler => {
+      val output = handler.runProcessWithProgressIndicator(progressIndicator)
 
-    if (output.isCancelled) {
-      handler.destroyProcess()
-    }
+      if (output.isCancelled) {
+        handler.destroyProcess()
+      }
 
-    if (output.getExitCode != 0) {
-      if (output.getStderr.nonEmpty) {
-        HaskellNotificationGroup.logErrorBalloonEvent(project, output.getStderr)
+      if (output.getExitCode != 0) {
+        if (output.getStderr.nonEmpty) {
+          HaskellNotificationGroup.logErrorBalloonEvent(project, output.getStderr)
+        }
+        if (output.getStdout.nonEmpty) {
+          HaskellNotificationGroup.logErrorBalloonEvent(project, output.getStdout)
+        }
       }
-      if (output.getStdout.nonEmpty) {
-        HaskellNotificationGroup.logErrorBalloonEvent(project, output.getStdout)
-      }
-    }
-    output.getExitCode == 0 && !output.isCancelled && !output.isTimeout
+      output.getExitCode == 0 && !output.isCancelled && !output.isTimeout
+    })
+
+    result
   }
 
-  def updateStackIndex(project: Project): ProcessOutput = {
+  def updateStackIndex(project: Project): Option[ProcessOutput] = {
     val arguments = Seq("update")
     run(project, arguments, -1, logOutput = true, notifyBalloonError = true, enableExtraArguments = false)
   }
@@ -132,8 +119,8 @@ object StackCommandLine {
     }
   }
 
-  def buildInBackground(project: Project, arguments: Seq[String]): Boolean = {
-    run(project, Seq("build", "--fast") ++ arguments).getExitCode == 0
+  def buildInBackground(project: Project, arguments: Seq[String]): Option[Boolean] = {
+    run(project, Seq("build", "--fast") ++ arguments).map(_.getExitCode == 0)
   }
 
   def buildInMessageView(project: Project, arguments: Seq[String]): Option[Boolean] = {
@@ -141,7 +128,9 @@ object StackCommandLine {
   }
 
   def executeStackCommandInMessageView(project: Project, arguments: Seq[String]): Option[Boolean] = {
-    executeInMessageView(project, StackPath, arguments)
+    HaskellSdkType.getStackPath(project).flatMap(stackPath => {
+      executeInMessageView(project, stackPath, arguments)
+    })
   }
 
   // To prevent message window is not yet available

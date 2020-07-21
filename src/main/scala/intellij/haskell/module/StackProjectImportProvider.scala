@@ -27,7 +27,7 @@ import intellij.haskell.util.HaskellFileUtil
 class StackProjectImportProvider extends ProjectImportProvider(new StackProjectImportBuilder) {
 
   override def createSteps(context: WizardContext): Array[ModuleWizardStep] =
-    Array(new HaskellModuleWizardStep(false))
+    Array(new HaskellModuleWizardStep(context, HaskellModuleType.getInstance.createModuleBuilder()))
 
   override def canImport(fileOrDirectory: VirtualFile, project: Project): Boolean = {
     val file = new File(HaskellFileUtil.getAbsolutePath(fileOrDirectory))
