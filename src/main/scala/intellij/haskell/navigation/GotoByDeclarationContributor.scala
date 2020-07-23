@@ -43,7 +43,7 @@ class GotoByDeclarationContributor extends GotoClassContributor {
   }
 
   override def getQualifiedName(item: NavigationItem): String = {
-    item.getPresentation.getPresentableText
+    Option(item.getPresentation).map(_.getPresentableText).getOrElse("-")
   }
 
   override def getQualifiedNameSeparator: String = {
