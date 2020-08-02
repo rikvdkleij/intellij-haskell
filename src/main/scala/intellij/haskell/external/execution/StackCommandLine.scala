@@ -193,11 +193,11 @@ object StackCommandLine {
 
     override def onTextAvailable(event: ProcessEvent, outputType: Key[_]): Unit = {
       // Workaround to remove the indentation after `-- While building` so the error/warning lines can be properly  parsed.
-      val text = if (whileBuildingTextIsPassed) {
+      val text = AnsiDecoder.decodeAnsiCommandsToString(if (whileBuildingTextIsPassed) {
         event.getText.drop(4)
       } else {
         event.getText
-      }
+      }, outputType)
       progressIndicator.setText(text)
       addToMessageView(text, outputType)
       if (text.startsWith(WhileBuildingText)) {

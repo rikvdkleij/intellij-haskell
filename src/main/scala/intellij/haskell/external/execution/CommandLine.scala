@@ -29,6 +29,7 @@ import intellij.haskell.{GlobalInfo, HaskellNotificationGroup}
 import org.jetbrains.jps.incremental.messages.BuildMessage
 import org.jetbrains.jps.incremental.messages.BuildMessage.Kind
 
+import scala.collection.mutable.ArrayBuffer
 import scala.concurrent.duration._
 import scala.jdk.CollectionConverters._
 
@@ -133,6 +134,15 @@ object CommandLine {
   }
 }
 
+object AnsiDecoder {
+  private val ansiEscapeDecoder = new AnsiEscapeDecoder()
+  def decodeAnsiCommandsToString(ansi: String, outputType: Key[_]): String = {
+    val chunks = ArrayBuffer[String]()
+    ansiEscapeDecoder.escapeText(ansi, outputType, (text, _) => chunks.addOne(text))
+    chunks.mkString
+  }
+}
+
 private class HaskellBuildMessage(message: String, kind: Kind) extends BuildMessage(message, kind)
 
 private class CapturingProcessToLog(val project: Option[Project], val cmd: GeneralCommandLine, val output: ProcessOutput) extends CapturingProcessAdapter(output) {
@@ -153,7 +163,7 @@ private class CapturingProcessToLog(val project: Option[Project], val cmd: Gener
 private class CapturingProcessToProgressIndicator(project: Project, progressIndicator: ProgressIndicator) extends CapturingProcessAdapter() {
 
   override def onTextAvailable(event: ProcessEvent, outputType: Key[_]): Unit = {
-    val text = event.getText.trim
+    val text = AnsiDecoder.decodeAnsiCommandsToString(event.getText, outputType)
     if (text.nonEmpty) {
       progressIndicator.setText2(text)
       HaskellNotificationGroup.logInfoEvent(project, text)
