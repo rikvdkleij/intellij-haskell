@@ -135,11 +135,10 @@ object CommandLine {
 }
 
 object AnsiDecoder {
-  private val ansiEscapeDecoder = new AnsiEscapeDecoder()
-  def decodeAnsiCommandsToString(ansi: String, outputType: Key[_]): String = {
-    val chunks = ArrayBuffer[String]()
-    ansiEscapeDecoder.escapeText(ansi, outputType, (text, _) => chunks.addOne(text))
-    chunks.mkString
+  def decodeAnsiCommandsToString(ansi: String, outputType: Key[_], decoder: AnsiEscapeDecoder): String = {
+    val buffer = new StringBuilder()
+    decoder.escapeText(ansi, outputType, (text, _) => buffer.append(text))
+    buffer.result()
   }
 }
 
@@ -162,8 +161,10 @@ private class CapturingProcessToLog(val project: Option[Project], val cmd: Gener
 
 private class CapturingProcessToProgressIndicator(project: Project, progressIndicator: ProgressIndicator) extends CapturingProcessAdapter() {
 
+  private val ansiEscapeDecoder = new AnsiEscapeDecoder()
+
   override def onTextAvailable(event: ProcessEvent, outputType: Key[_]): Unit = {
-    val text = AnsiDecoder.decodeAnsiCommandsToString(event.getText, outputType)
+    val text = AnsiDecoder.decodeAnsiCommandsToString(event.getText, outputType, ansiEscapeDecoder)
     if (text.nonEmpty) {
       progressIndicator.setText2(text)
       HaskellNotificationGroup.logInfoEvent(project, text)

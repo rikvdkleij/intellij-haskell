@@ -187,6 +187,7 @@ object StackCommandLine {
     private final val WhileBuildingText = "--  While building "
     private final var whileBuildingTextIsPassed = false
 
+    private val ansiEscapeDecoder = new AnsiEscapeDecoder()
     private val previousMessageLines = new LinkedBlockingDeque[String]
     @volatile
     private var globalError = false
@@ -197,7 +198,7 @@ object StackCommandLine {
         event.getText.drop(4)
       } else {
         event.getText
-      }, outputType)
+      }, outputType, ansiEscapeDecoder)
       progressIndicator.setText(text)
       addToMessageView(text, outputType)
       if (text.startsWith(WhileBuildingText)) {
