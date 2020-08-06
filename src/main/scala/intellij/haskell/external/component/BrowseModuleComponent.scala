@@ -160,7 +160,13 @@ private[component] object BrowseModuleComponent {
     DeclarationUtil.getDeclarationInfo(declarationLine, containsQualifiedIds = true).map(declarationInfo => {
       val id = declarationInfo.id
       if (moduleName == HaskellProjectUtil.Prelude) {
-        val baseModuleName = declarationInfo.qualifiedId.map(_.split('.').init.mkString("."))
+        val baseModuleName = declarationInfo.qualifiedId.flatMap(id => {
+          if (id.contains(".") && id != ".") {
+            Some(id.split('.').init.mkString("."))
+          } else {
+            None
+          }
+        })
         ModuleIdentifier(id, moduleName, declarationInfo.declarationLine, declarationInfo.operator, baseModuleName)
       } else {
         ModuleIdentifier(id, moduleName, declarationInfo.declarationLine, declarationInfo.operator)
