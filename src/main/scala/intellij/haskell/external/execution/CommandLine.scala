@@ -23,6 +23,7 @@ import com.intellij.execution.process._
 import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Key
+import com.intellij.openapi.util.text.StringUtil
 import com.intellij.openapi.vfs.VfsUtil
 import com.intellij.util.io.BaseOutputReader
 import intellij.haskell.{GlobalInfo, HaskellNotificationGroup}
@@ -165,7 +166,7 @@ private class CapturingProcessToProgressIndicator(project: Project, progressIndi
 
   override def onTextAvailable(event: ProcessEvent, outputType: Key[_]): Unit = {
     val text = AnsiDecoder.decodeAnsiCommandsToString(event.getText, outputType, ansiEscapeDecoder)
-    if (text.nonEmpty) {
+    if (!StringUtil.isEmptyOrSpaces(text)) {
       progressIndicator.setText2(text)
       HaskellNotificationGroup.logInfoEvent(project, text)
     }
