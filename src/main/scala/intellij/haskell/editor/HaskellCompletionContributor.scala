@@ -438,14 +438,13 @@ class HaskellCompletionContributor extends CompletionContributor {
           d match {
             case dd: HaskellDataDeclaration =>
               val dataType = dd.getSimpletype.getText
-              val constrType = HaskellComponentsManager.findTypeInfoForElement(e).toOption.filterNot(_.withFailure).map(_.typeSignature).getOrElse(
+              HaskellComponentsManager.findTypeInfoForElement(e).toOption.filterNot(_.withFailure).map(_.typeSignature).map(ts => LookupElementBuilder.create(e.getName).withTypeText(ts)).orElse(
                 HaskellPsiUtil.findDataFieldDecl(e).orElse(HaskellPsiUtil.findDataConstr(e)) match {
-                  case Some(ce) => ce.getText
-                  case None => createTopLevelDeclarationLookupElement(e, d).getLookupString
+                  case Some(ce) => Some(LookupElementBuilder.create(e.getName).withTypeText(s"${ce.getText} -> $dataType"))
+                  case None => Some(createTopLevelDeclarationLookupElement(e, d))
                 })
-              Seq(LookupElementBuilder.create(e.getName).withTypeText(s"$constrType -> $dataType"))
-            case d: HaskellDeclarationElement if !d.isInstanceOf[HaskellTypeSignature] => Seq(createTopLevelDeclarationLookupElement(e, d))
-            case _ => Seq()
+            case d: HaskellDeclarationElement if !d.isInstanceOf[HaskellTypeSignature] => Some(createTopLevelDeclarationLookupElement(e, d))
+            case _ => None
           }
       })
     expressionLookupElements ++ declarationLookupElements
