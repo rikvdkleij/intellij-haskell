@@ -109,6 +109,7 @@ object ProjectLibraryBuilder {
           })
 
           HaskellComponentsManager.invalidateBrowseInfo(project, componentLibTargets.flatMap(_.exposedModuleNames).toSeq)
+          componentLibTargets.foreach(target => target.exposedModuleNames.foreach(FileModuleIdentifiers.invalidate))
 
           openNonLibFiles.map(_._2).foreach { vf =>
             HaskellFileUtil.convertToHaskellFileInReadAction(project, vf).toOption match {

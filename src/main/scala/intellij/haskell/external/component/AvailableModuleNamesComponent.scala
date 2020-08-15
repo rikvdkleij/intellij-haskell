@@ -35,7 +35,7 @@ import scala.jdk.CollectionConverters._
 
    private case class Key(project: Project, target: String)
 
-   private final val Cache: AsyncLoadingCache[Key, Iterable[String]] = Scaffeine().refreshAfterWrite(10.seconds).buildAsync((k: Key) => findAvailableProjectModuleNamesWithIndex(k))
+   private final val Cache: AsyncLoadingCache[Key, Iterable[String]] = Scaffeine().expireAfterWrite(5.seconds).buildAsync((k: Key) => findAvailableProjectModuleNamesWithIndex(k))
 
    def findAvailableModuleNamesWithIndex(stackComponentInfo: ComponentTarget): Iterable[String] = {
      // A module can be a project module AND library module
