@@ -2,12 +2,13 @@ package intellij.haskell.cabal.lang.psi.impl
 
 import java.util.regex.Pattern
 
-import com.intellij.openapi.project.DumbService
+import com.intellij.openapi.project.{DumbService, Project}
 import com.intellij.openapi.util.TextRange
-import com.intellij.psi.impl.source.tree.LeafPsiElement
 import com.intellij.psi.search.{GlobalSearchScope, GlobalSearchScopesCore}
-import com.intellij.psi.{PsiDirectory, PsiElement, PsiReference}
+import com.intellij.psi.util.PsiTreeUtil
+import com.intellij.psi.{PsiDirectory, PsiElement, PsiFileFactory, PsiReference}
 import intellij.haskell.cabal.lang.psi._
+import intellij.haskell.cabal.{CabalFile, CabalLanguage}
 import intellij.haskell.psi.HaskellPsiUtil
 import intellij.haskell.util.index.{HaskellFileIndex, HaskellModuleNameIndex}
 import intellij.haskell.util.{HaskellProjectUtil, ScalaUtil}
@@ -22,7 +23,18 @@ trait ModulePartImpl extends CabalNamedElementImpl {
   override def getName: String = getNode.getText
 
   override def setName(name: String): PsiElement = {
-    replace(new ModulePart(new LeafPsiElement(CabalTypes.IDENT, name)))
+    val modulePart = createElement(getProject, s"library\n  exposed-modules:\n    $name", classOf[ModulePart])
+    modulePart.foreach(this.replace)
+    this
+  }
+
+  def createElement[C <: PsiElement](project: Project, newName: String, namedElementClass: Class[C]): Option[C] = {
+    val file = createFileFromText(project, newName)
+    Option(PsiTreeUtil.findChildOfType(file, namedElementClass))
+  }
+
+  private def createFileFromText(project: Project, text: String): CabalFile = {
+    PsiFileFactory.getInstance(project).createFileFromText("a.cabal", CabalLanguage.Instance, text).asInstanceOf[CabalFile]
   }
 
   override def getNameIdentifier: PsiElement = this

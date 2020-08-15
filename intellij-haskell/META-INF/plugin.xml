@@ -439,6 +439,9 @@
         <lang.namesValidator language="Haskell" implementationClass="intellij.haskell.refactor.HaskellNamesValidator"/>
         <languageInjector implementation="intellij.haskell.alex.lang.psi.AlexHaskellInjector"/>
 
+        <lang.elementManipulator forClass="intellij.haskell.cabal.lang.psi.CabalNamedElement"
+                                 implementationClass="intellij.haskell.cabal.lang.psi.CabalNamedElementManipulator"/>
+
         <!-- Folding -->
         <lang.foldingBuilder language="Haskell"
                              implementationClass="intellij.haskell.editor.HaskellFoldingBuilder"/>

@@ -23,7 +23,6 @@ import com.intellij.util.ArrayUtil
 import icons.HaskellIcons
 import intellij.haskell.HaskellFileType
 import intellij.haskell.psi._
-import intellij.haskell.refactor.HaskellRenameFileProcessor
 import intellij.haskell.util.StringUtil
 import javax.swing._
 
@@ -77,13 +76,9 @@ object HaskellPsiImplUtil {
   }
 
   def setName(modid: HaskellModid, newName: String): PsiElement = {
-    if (newName.endsWith("." + HaskellFileType.INSTANCE.getDefaultExtension)) {
-      val newModid = HaskellElementFactory.createModid(modid.getProject, HaskellRenameFileProcessor.createNewModuleName(modid.getName, newName))
-      newModid.foreach(modid.replace)
-      modid
-    } else {
-      modid
-    }
+    val newModid = HaskellElementFactory.createModid(modid.getProject, newName)
+    newModid.foreach(modid.replace)
+    modid
   }
 
   def getName(varid: HaskellVarid): String = {

@@ -30,11 +30,9 @@ import intellij.haskell.util.index.HaskellModuleNameIndex
 
 class HaskellReference(element: HaskellNamedElement, textRange: TextRange) extends PsiPolyVariantReferenceBase[HaskellNamedElement](element, textRange) {
 
-  private def findModule(project: Project, modId: HaskellModid) = {
-    ProgressManager.checkCanceled()
-
-    HaskellModuleNameIndex.findFilesByModuleName(project, modId.getName) match {
-      case Right(files) => files.headOption.map(HaskellFileResolveResult)
+  private def findModule(project: Project, moduleName: String) = {
+    HaskellModuleNameIndex.findFilesByModuleName(project, moduleName) match {
+      case Right(files) => files.headOption.flatMap(f => HaskellPsiUtil.findModuleDeclaration(f).map(_.getModid)).map(HaskellNamedElementResolveResult)
       case Left(noInfo) => Some(NoResolveResult(noInfo))
     }
   }
@@ -45,13 +43,7 @@ class HaskellReference(element: HaskellNamedElement, textRange: TextRange) exten
     val importDeclarations = HaskellPsiUtil.findImportDeclarations(psiFile)
     findQualifier(importDeclarations, qualifier) match {
       case Some(ne) => Some(HaskellNamedElementResolveResult(ne))
-      case None => None
-        ProgressManager.checkCanceled()
-
-        findHaskellFile(importDeclarations, qualifier, project) match {
-          case Right(r) => r.map(HaskellFileResolveResult)
-          case Left(noInfo) => Some(NoResolveResult(noInfo))
-        }
+      case None => findModule(project, qualifier.getName)
     }
   }
 
@@ -97,7 +89,7 @@ class HaskellReference(element: HaskellNamedElement, textRange: TextRange) exten
       val result = element match {
         case q: HaskellQualifierElement if isPartOfQualifiedAs(q) => Some(HaskellNamedElementResolveResult(q))
         case q: HaskellQualifierElement => findQualifierDeclaration(project, psiFile, q)
-        case mid: HaskellModid => findModule(project, mid)
+        case mid: HaskellModid => findModule(project, mid.getName)
         case ne: HaskellNamedElement if isPartOfQualifier(ne) | isPartOfQualifiedAs(ne) | isPartOfModId(ne) => None
         case ne: HaskellNamedElement =>
           ProgressManager.checkCanceled()
@@ -149,7 +141,7 @@ class HaskellReference(element: HaskellNamedElement, textRange: TextRange) exten
     }
   }
 
-  /** Implemented in [[intellij.haskell.editor.HaskellCompletionContributor]] **/
+  /** Implemented in [[intellij.haskell.editor.HaskellCompletionContributor]] * */
   override def getVariants: Array[AnyRef] = {
     Array()
   }
