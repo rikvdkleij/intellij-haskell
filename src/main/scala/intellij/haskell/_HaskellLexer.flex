@@ -236,7 +236,7 @@ nhaddock_start      = {left_brace}{dash}{white_char}?{vertical_bar}
 
 
 <QQ> {
-    {left_bracket} ({var_id}|{con_id}|{dot}|{white_char})* {vertical_bar} {
+    {left_bracket} ({var_id}|{con_id}|{dot}|{white_char}|{varsym_id})* {vertical_bar} {
         qqDepth++;
     }
 
@@ -271,7 +271,7 @@ nhaddock_start      = {left_brace}{dash}{white_char}?{vertical_bar}
     .|{white_char}|{newline} {}
 }
 
-{left_bracket} ({var_id}|{con_id}|{dot}|{white_char})* {vertical_bar} {
+{left_bracket} ({var_id}|{con_id}|{dot}|{white_char}|{varsym_id})* {vertical_bar} {
     yybegin(QQ);
     qqDepth = 0;
     qqStart = getTokenStart();
