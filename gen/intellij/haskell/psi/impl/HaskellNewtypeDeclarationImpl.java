@@ -36,6 +36,12 @@ public class HaskellNewtypeDeclarationImpl extends HaskellCompositeElementImpl i
 
     @Override
     @NotNull
+    public List<HaskellDerivingVia> getDerivingViaList() {
+        return PsiTreeUtil.getChildrenOfTypeAsList(this, HaskellDerivingVia.class);
+    }
+
+    @Override
+    @NotNull
     public HaskellNewconstr getNewconstr() {
         return notNullChild(PsiTreeUtil.getChildOfType(this, HaskellNewconstr.class));
     }
@@ -48,14 +54,44 @@ public class HaskellNewtypeDeclarationImpl extends HaskellCompositeElementImpl i
 
     @Override
     @NotNull
+    public List<HaskellQName> getQNameList() {
+        return PsiTreeUtil.getChildrenOfTypeAsList(this, HaskellQName.class);
+    }
+
+    @Override
+    @NotNull
     public HaskellSimpletype getSimpletype() {
         return notNullChild(PsiTreeUtil.getChildOfType(this, HaskellSimpletype.class));
     }
 
     @Override
     @Nullable
-    public HaskellTtype getTtype() {
-        return PsiTreeUtil.getChildOfType(this, HaskellTtype.class);
+    public HaskellTextLiteral getTextLiteral() {
+        return PsiTreeUtil.getChildOfType(this, HaskellTextLiteral.class);
+    }
+
+    @Override
+    @NotNull
+    public List<HaskellTtype> getTtypeList() {
+        return PsiTreeUtil.getChildrenOfTypeAsList(this, HaskellTtype.class);
+    }
+
+    @Override
+    @Nullable
+    public HaskellTtype1 getTtype1() {
+        return PsiTreeUtil.getChildOfType(this, HaskellTtype1.class);
+    }
+
+    @Override
+    @Nullable
+    public HaskellTtype2 getTtype2() {
+        return PsiTreeUtil.getChildOfType(this, HaskellTtype2.class);
+    }
+
+    @Override
+    @NotNull
+    public List<HaskellTypeSignature> getTypeSignatureList() {
+        return PsiTreeUtil.getChildrenOfTypeAsList(this, HaskellTypeSignature.class);
     }
 
     @Override

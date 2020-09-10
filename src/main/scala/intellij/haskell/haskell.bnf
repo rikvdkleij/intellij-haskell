@@ -101,7 +101,7 @@ kind_signature              ::= q_name COLON_COLON ttype
 
 data_declaration_deriving   ::= (onl DERIVING onl ttype | onl DERIVING onl LEFT_PAREN ttype (onl COMMA onl ttype)* onl RIGHT_PAREN)+
 
-newtype_declaration         ::= NEWTYPE onls INSTANCE? (onls pragma)? (onls ccontext onls DOUBLE_RIGHT_ARROW)? onls simpletype onls EQUAL onls newconstr (onls DERIVING onls ttype)?
+newtype_declaration         ::= NEWTYPE onls INSTANCE? (onls pragma)? (onls ccontext onls DOUBLE_RIGHT_ARROW)? onls simpletype onls EQUAL onls newconstr (onl DERIVING onl NEWTYPE onl atype)?
 
 class_declaration           ::= CLASS (onls scontext onls DOUBLE_RIGHT_ARROW)? onls (q_name+ | ttype) (onls q_name | LEFT_PAREN ttype (onls COMMA onls ttype)* RIGHT_PAREN)*
                                     (onls VERTICAL_BAR onls ttype (onls COMMA onls ttype)*)? (onls WHERE)? (onls cdecls)? |
@@ -228,8 +228,8 @@ private export1             ::= MODULE modid
 private export2             ::= q_name (onl LEFT_PAREN (onl (dot_dot | q_name) (onl COMMA onl q_name)*)? onl RIGHT_PAREN)?
 private export3             ::= TYPE onl q_name
 
-newconstr                   ::= newconstr_fielddecl | q_name+ onl (DERIVING onl NEWTYPE)? onl atype
-newconstr_fielddecl         ::= q_name onls LEFT_BRACE? onls type_signature onls RIGHT_BRACE?
+newconstr                   ::= newconstr_fielddecl | q_name+ (onls ttype)?
+newconstr_fielddecl         ::= q_name+ onl LEFT_PAREN onl ttype onl RIGHT_PAREN
 
 cdecls                      ::= cdecl (nls cdecl)*
 cidecls                     ::= cidecl (nls cidecl)*

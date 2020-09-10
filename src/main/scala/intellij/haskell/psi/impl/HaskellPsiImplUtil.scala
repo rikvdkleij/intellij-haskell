@@ -266,8 +266,8 @@ object HaskellPsiImplUtil {
   def getIdentifierElements(newtypeDeclaration: HaskellNewtypeDeclaration): Seq[HaskellNamedElement] = {
     val fielddecl = Option(newtypeDeclaration.getNewconstr.getNewconstrFielddecl)
     newtypeDeclaration.getSimpletype.getIdentifierElements ++
-      fielddecl.flatMap(_.getTypeSignature.getQNamesList.asScala.headOption).map(_.getQNameList.asScala.headOption.map(_.getIdentifierElement).toSeq).getOrElse(Seq()) ++
-      fielddecl.map(_.getQName.getIdentifierElement).toSeq ++
+      //      fielddecl.flatMap(_.getTtype.getQNameList.asScala.headOption).map(_.getIdentifierElement)).getOrElse(Seq()) ++
+      fielddecl.map(_.getQNameList.asScala.map(_.getIdentifierElement)).getOrElse(Seq()) ++
       newtypeDeclaration.getNewconstr.getQNameList.asScala.headOption.map(_.getIdentifierElement).toSeq
   }
 

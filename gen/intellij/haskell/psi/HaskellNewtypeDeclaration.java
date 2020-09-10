@@ -11,29 +11,47 @@ import java.util.List;
 
 public interface HaskellNewtypeDeclaration extends HaskellDataConstructorDeclarationElement {
 
-  @Nullable
-  HaskellCcontext getCcontext();
+    @Nullable
+    HaskellCcontext getCcontext();
 
-  @NotNull
-  HaskellNewconstr getNewconstr();
+    @NotNull
+    List<HaskellDerivingVia> getDerivingViaList();
 
-  @NotNull
-  List<HaskellPragma> getPragmaList();
+    @NotNull
+    HaskellNewconstr getNewconstr();
 
-  @NotNull
-  HaskellSimpletype getSimpletype();
+    @NotNull
+    List<HaskellPragma> getPragmaList();
 
-  @Nullable
-  HaskellTtype getTtype();
+    @NotNull
+    List<HaskellQName> getQNameList();
 
-  String getName();
+    @NotNull
+    HaskellSimpletype getSimpletype();
 
-  ItemPresentation getPresentation();
+    @Nullable
+    HaskellTextLiteral getTextLiteral();
 
-  Seq<HaskellNamedElement> getIdentifierElements();
+    @NotNull
+    List<HaskellTtype> getTtypeList();
 
-  Option<String> getModuleName();
+    @Nullable
+    HaskellTtype1 getTtype1();
 
-  HaskellNamedElement getDataTypeConstructor();
+    @Nullable
+    HaskellTtype2 getTtype2();
+
+    @NotNull
+    List<HaskellTypeSignature> getTypeSignatureList();
+
+    String getName();
+
+    ItemPresentation getPresentation();
+
+    Seq<HaskellNamedElement> getIdentifierElements();
+
+    Option<String> getModuleName();
+
+    HaskellNamedElement getDataTypeConstructor();
 
 }

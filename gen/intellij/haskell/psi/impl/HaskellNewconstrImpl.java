@@ -26,12 +26,6 @@ public class HaskellNewconstrImpl extends HaskellCompositeElementImpl implements
     }
 
     @Override
-    @NotNull
-    public List<HaskellDerivingVia> getDerivingViaList() {
-        return PsiTreeUtil.getChildrenOfTypeAsList(this, HaskellDerivingVia.class);
-    }
-
-    @Override
     @Nullable
     public HaskellNewconstrFielddecl getNewconstrFielddecl() {
         return PsiTreeUtil.getChildOfType(this, HaskellNewconstrFielddecl.class);
@@ -51,32 +45,8 @@ public class HaskellNewconstrImpl extends HaskellCompositeElementImpl implements
 
     @Override
     @Nullable
-    public HaskellTextLiteral getTextLiteral() {
-        return PsiTreeUtil.getChildOfType(this, HaskellTextLiteral.class);
-    }
-
-    @Override
-    @NotNull
-    public List<HaskellTtype> getTtypeList() {
-        return PsiTreeUtil.getChildrenOfTypeAsList(this, HaskellTtype.class);
-    }
-
-    @Override
-    @Nullable
-    public HaskellTtype1 getTtype1() {
-        return PsiTreeUtil.getChildOfType(this, HaskellTtype1.class);
-    }
-
-    @Override
-    @Nullable
-    public HaskellTtype2 getTtype2() {
-        return PsiTreeUtil.getChildOfType(this, HaskellTtype2.class);
-    }
-
-    @Override
-    @NotNull
-    public List<HaskellTypeSignature> getTypeSignatureList() {
-        return PsiTreeUtil.getChildrenOfTypeAsList(this, HaskellTypeSignature.class);
+    public HaskellTtype getTtype() {
+        return PsiTreeUtil.getChildOfType(this, HaskellTtype.class);
     }
 
 }

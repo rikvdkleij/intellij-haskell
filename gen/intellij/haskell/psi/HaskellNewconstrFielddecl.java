@@ -11,9 +11,9 @@ public interface HaskellNewconstrFielddecl extends HaskellCompositeElement {
   List<HaskellPragma> getPragmaList();
 
   @NotNull
-  HaskellQName getQName();
+  List<HaskellQName> getQNameList();
 
-  @NotNull
-  HaskellTypeSignature getTypeSignature();
+    @NotNull
+    HaskellTtype getTtype();
 
 }
