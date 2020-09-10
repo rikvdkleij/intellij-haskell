@@ -123,7 +123,7 @@ object HoogleComponent {
       case Some(hooglePath) =>
         val buildHaddockOutput = try {
           StackProjectManager.setHaddockBuilding(project, state = true)
-          StackCommandLine.executeStackCommandInMessageView(project, Seq("haddock", "--no-haddock-hyperlink-source"))
+          StackCommandLine.executeStackCommandInMessageView(project, Seq("haddock", "--test", "--no-run-tests", "--no-haddock-hyperlink-source"))
         } finally {
           StackProjectManager.setHaddockBuilding(project, state = false)
         }
