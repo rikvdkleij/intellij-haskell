@@ -134,7 +134,7 @@ object StackCommandLine {
   }
 
   // To prevent message window is not yet available
-  def waitForProjectIsInitialized(project: Project): WaitFor = {
+  private def waitForProjectIsInitialized(project: Project): WaitFor = {
     new WaitFor(5000, 1) {
       override def condition(): Boolean = {
         project.isInitialized
@@ -177,7 +177,10 @@ object StackCommandLine {
         compileResult.put(compileTask.execute(compileContext))
       }, null)
 
-      compileResult.poll(30, TimeUnit.MINUTES) // Wait max half an hour
+      val result = compileResult.poll(30, TimeUnit.MINUTES) // Wait max half an hour
+      val exitStatus = if (result) ExitStatus.SUCCESS else ExitStatus.ERRORS
+      compilerTask.setEndCompilationStamp(exitStatus, System.currentTimeMillis)
+      result
     })
   }
 
@@ -199,7 +202,6 @@ object StackCommandLine {
       } else {
         event.getText
       }, outputType, ansiEscapeDecoder)
-      progressIndicator.setText(text)
       addToMessageView(text, outputType)
       if (text.startsWith(WhileBuildingText)) {
         whileBuildingTextIsPassed = true
