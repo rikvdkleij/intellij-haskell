@@ -131,6 +131,8 @@ case class ProjectStackRepl(project: Project, projectReplTargets: ProjectReplTar
     } else if (fileModified) {
       val loaded = isFileLoaded(psiFile)
       loaded == Loaded || loaded == Failed
+    } else if (!fileModified && isFileLoaded(psiFile) != Loaded) {
+      false
     } else moduleName.exists(mn => loadedDependentModules.contains(mn))
 
     val output = if (reload) {
@@ -158,7 +160,9 @@ case class ProjectStackRepl(project: Project, projectReplTargets: ProjectReplTar
       Future {
         blocking {
           synchronized {
-            if (psiFile.isEmpty || isBrowseModuleLoaded(moduleName) || psiFile.exists(pf => load(pf, fileModified = false, Some(moduleName)).exists(_._2 == false))) {
+            if (psiFile.isEmpty || isBrowseModuleLoaded(moduleName)
+              || psiFile.exists(pf => load(pf, fileModified = false, Some(moduleName)).exists(_._2 == false))
+            ) {
               execute(s":browse! $moduleName")
             } else {
               HaskellNotificationGroup.logInfoEvent(project, s"Couldn't get module identifiers for module $moduleName because file ${psiFile.map(_.getName).getOrElse("-")} isn't loaded")

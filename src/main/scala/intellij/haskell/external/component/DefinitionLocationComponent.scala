@@ -60,6 +60,10 @@ private[component] object DefinitionLocationComponent {
     Cache.asMap().find { case (k, _) => k.psiFile == psiFile && k.qualifiedNameElement == qualifiedNameElement }.flatMap(_._2.toOption)
   }
 
+  def invalidateNotFound(project: Project): Unit = {
+    Cache.asMap().filter { case (k, v) => k.psiFile.getProject == project && v.isLeft && HaskellProjectUtil.isSourceFile(k.psiFile) }.keys.foreach(Cache.invalidate)
+  }
+
   def invalidateAll(project: Project): Unit = {
     val synchronousCache = Cache
     synchronousCache.asMap().filter(_._1.psiFile.getProject == project).keys.foreach(synchronousCache.invalidate)

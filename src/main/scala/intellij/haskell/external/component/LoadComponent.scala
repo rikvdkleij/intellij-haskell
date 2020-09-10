@@ -69,6 +69,8 @@ private[component] object LoadComponent {
 
             if (!loadFailed) {
               moduleName.foreach(mn => {
+                NameInfoComponent.invalidateNotFound(project)
+                DefinitionLocationComponent.invalidateNotFound(project)
                 BrowseModuleComponent.invalidateModuleNames(project, Seq(mn))
                 FileModuleIdentifiers.invalidate(mn)
               })

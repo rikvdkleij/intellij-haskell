@@ -50,6 +50,10 @@ private[component] object NameInfoComponent {
     Cache.asMap().filter(_._1.psiFile == psiFile).keys.foreach(Cache.invalidate)
   }
 
+  def invalidateNotFound(project: Project): Unit = {
+    Cache.asMap().filter { case (k, v) => k.psiFile.getProject == project && v.isLeft && HaskellProjectUtil.isSourceFile(k.psiFile) }.keys.foreach(Cache.invalidate)
+  }
+
   def invalidateElements(psiFile: PsiFile, qualifiedNamedElements: Iterable[HaskellQualifiedNameElement]): Unit = {
     val allKeys = qualifiedNamedElements.map(qne => {
       Key(psiFile, qne.getName)
