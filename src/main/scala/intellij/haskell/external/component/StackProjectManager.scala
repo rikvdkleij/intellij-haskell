@@ -338,17 +338,17 @@ object StackProjectManager {
               if (!project.isDisposed) {
                 val messageBus = project.getMessageBus
                 val notifications = EditorNotifications.getInstance(project)
-                messageBus.connect(project).subscribe(VirtualFileManager.VFS_CHANGES, new ConfigFileWatcher(project, notifications))
+                messageBus.connect().subscribe(VirtualFileManager.VFS_CHANGES, new ConfigFileWatcher(project, notifications))
 
 
-                messageBus.connect(project).subscribe(ProjectTopics.PROJECT_ROOTS, new ModuleRootListener() {
+                messageBus.connect().subscribe(ProjectTopics.PROJECT_ROOTS, new ModuleRootListener() {
                   override def rootsChanged(event: ModuleRootEvent): Unit = {
                     notifications.updateAllNotifications()
                   }
                 })
 
                 getStackProjectManager(project).map(_.projectLibraryFileWatcher).foreach { watcher =>
-                  messageBus.connect(project).subscribe(VirtualFileManager.VFS_CHANGES, watcher)
+                  messageBus.connect().subscribe(VirtualFileManager.VFS_CHANGES, watcher)
                 }
               }
 
