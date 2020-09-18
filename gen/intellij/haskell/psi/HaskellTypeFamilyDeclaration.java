@@ -11,21 +11,21 @@ import java.util.List;
 
 public interface HaskellTypeFamilyDeclaration extends HaskellDeclarationElement {
 
-  @Nullable
-  HaskellExpression getExpression();
+    @Nullable
+    HaskellExpression getExpression();
 
-  @NotNull
-  List<HaskellPragma> getPragmaList();
+    @NotNull
+    List<HaskellPragma> getPragmaList();
 
-  @NotNull
-  HaskellTypeFamilyType getTypeFamilyType();
+    @NotNull
+    HaskellTypeFamilyType getTypeFamilyType();
 
-  String getName();
+    String getName();
 
-  ItemPresentation getPresentation();
+    ItemPresentation getPresentation();
 
-  Seq<HaskellNamedElement> getIdentifierElements();
+    Seq<HaskellNamedElement> getIdentifierElements();
 
-  Option<String> getModuleName();
+    Option<String> getModuleName();
 
 }

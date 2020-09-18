@@ -29,8 +29,8 @@ import scala.jdk.CollectionConverters._
 
 object HaskellElementFactory {
 
-  def createUnderscore(project: Project): Option[PsiElement] = {
-    createElement(project, "_", classOf[HaskellReservedId])
+  def createUnderscore(project: Project): Option[HaskellExpression] = {
+    createElement(project, "_", classOf[HaskellExpression])
   }
 
   def createVarid(project: Project, name: String): Option[HaskellVarid] = {
@@ -74,12 +74,12 @@ object HaskellElementFactory {
     PsiTreeUtil.findChildrenOfType(haskellFile, classOf[LeafPsiElement])
   }
 
-  def getLeftParenElement(project: Project): Option[LeafPsiElement] = {
-    createLeafPsiElements(project, "add = (1 + 2)").asScala.find(_.getNode.getElementType == HS_LEFT_PAREN)
+  def getLeftParenElement(project: Project): LeafPsiElement = {
+    createLeafPsiElements(project, "add = (1 + 2)").asScala.find(_.getNode.getElementType == HS_LEFT_PAREN).getOrElse(throw new IllegalStateException())
   }
 
-  def getRightParenElement(project: Project): Option[LeafPsiElement] = {
-    createLeafPsiElements(project, "add = (1 + 2)").asScala.find(_.getNode.getElementType == HS_RIGHT_PAREN)
+  def getRightParenElement(project: Project): LeafPsiElement = {
+    createLeafPsiElements(project, "add = (1 + 2)").asScala.find(_.getNode.getElementType == HS_RIGHT_PAREN).getOrElse(throw new IllegalStateException())
   }
 
   def createWhiteSpace(project: Project, space: String = " "): Option[PsiWhiteSpace] = {

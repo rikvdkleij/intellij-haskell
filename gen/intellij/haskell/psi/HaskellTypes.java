@@ -72,7 +72,6 @@ public interface HaskellTypes {
     IElementType HS_Q_NAME = new HaskellCompositeElementType("HS_Q_NAME");
     IElementType HS_Q_NAMES = new HaskellCompositeElementType("HS_Q_NAMES");
     IElementType HS_Q_VAR_CON = new HaskellCompositeElementType("HS_Q_VAR_CON");
-    IElementType HS_RESERVED_ID = new HaskellCompositeElementType("HS_RESERVED_ID");
     IElementType HS_SCONTEXT = new HaskellCompositeElementType("HS_SCONTEXT");
     IElementType HS_SHEBANG_LINE = new HaskellCompositeElementType("HS_SHEBANG_LINE");
     IElementType HS_SIMPLECLASS = new HaskellCompositeElementType("HS_SIMPLECLASS");
@@ -300,8 +299,6 @@ public interface HaskellTypes {
                 return new HaskellQNamesImpl(node);
             } else if (type == HS_Q_VAR_CON) {
                 return new HaskellQVarConImpl(node);
-            } else if (type == HS_RESERVED_ID) {
-                return new HaskellReservedIdImpl(node);
             } else if (type == HS_SCONTEXT) {
                 return new HaskellScontextImpl(node);
             } else if (type == HS_SHEBANG_LINE) {

@@ -7,11 +7,11 @@ import java.util.List;
 
 public interface HaskellNewconstrFielddecl extends HaskellCompositeElement {
 
-  @NotNull
-  List<HaskellPragma> getPragmaList();
+    @NotNull
+    List<HaskellPragma> getPragmaList();
 
-  @NotNull
-  List<HaskellQName> getQNameList();
+    @NotNull
+    List<HaskellQName> getQNameList();
 
     @NotNull
     HaskellTtype getTtype();

@@ -7,10 +7,10 @@ import java.util.List;
 
 public interface HaskellDataDeclarationDeriving extends HaskellCompositeElement {
 
-  @NotNull
-  List<HaskellPragma> getPragmaList();
+    @NotNull
+    List<HaskellPragma> getPragmaList();
 
-  @NotNull
-  List<HaskellTtype> getTtypeList();
+    @NotNull
+    List<HaskellTtype> getTtypeList();
 
 }

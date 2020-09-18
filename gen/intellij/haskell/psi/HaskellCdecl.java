@@ -5,13 +5,13 @@ import org.jetbrains.annotations.Nullable;
 
 public interface HaskellCdecl extends HaskellCompositeElement {
 
-  @Nullable
-  HaskellCdeclDataDeclaration getCdeclDataDeclaration();
+    @Nullable
+    HaskellCdeclDataDeclaration getCdeclDataDeclaration();
 
-  @Nullable
-  HaskellCidecl getCidecl();
+    @Nullable
+    HaskellCidecl getCidecl();
 
-  @Nullable
-  HaskellTypeSignature getTypeSignature();
+    @Nullable
+    HaskellTypeSignature getTypeSignature();
 
 }

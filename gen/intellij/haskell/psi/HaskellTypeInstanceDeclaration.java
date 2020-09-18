@@ -10,18 +10,18 @@ import java.util.List;
 
 public interface HaskellTypeInstanceDeclaration extends HaskellDeclarationElement {
 
-  @NotNull
-  HaskellExpression getExpression();
+    @NotNull
+    HaskellExpression getExpression();
 
-  @NotNull
-  List<HaskellPragma> getPragmaList();
+    @NotNull
+    List<HaskellPragma> getPragmaList();
 
-  String getName();
+    String getName();
 
-  ItemPresentation getPresentation();
+    ItemPresentation getPresentation();
 
-  Seq<HaskellNamedElement> getIdentifierElements();
+    Seq<HaskellNamedElement> getIdentifierElements();
 
-  Option<String> getModuleName();
+    Option<String> getModuleName();
 
 }

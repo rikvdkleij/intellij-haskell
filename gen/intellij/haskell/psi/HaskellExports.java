@@ -7,10 +7,10 @@ import java.util.List;
 
 public interface HaskellExports extends HaskellCompositeElement {
 
-  @NotNull
-  List<HaskellExport> getExportList();
+    @NotNull
+    List<HaskellExport> getExportList();
 
-  @NotNull
-  List<HaskellPragma> getPragmaList();
+    @NotNull
+    List<HaskellPragma> getPragmaList();
 
 }

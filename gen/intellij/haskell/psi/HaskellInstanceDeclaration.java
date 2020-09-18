@@ -11,33 +11,33 @@ import java.util.List;
 
 public interface HaskellInstanceDeclaration extends HaskellDeclarationElement {
 
-  @Nullable
-  HaskellCidecls getCidecls();
+    @Nullable
+    HaskellCidecls getCidecls();
 
-  @Nullable
-  HaskellInst getInst();
+    @Nullable
+    HaskellInst getInst();
 
-  @NotNull
-  List<HaskellPragma> getPragmaList();
+    @NotNull
+    List<HaskellPragma> getPragmaList();
 
-  @Nullable
-  HaskellQName getQName();
+    @Nullable
+    HaskellQName getQName();
 
-  @Nullable
-  HaskellScontext getScontext();
+    @Nullable
+    HaskellScontext getScontext();
 
-  @Nullable
-  HaskellTypeEquality getTypeEquality();
+    @Nullable
+    HaskellTypeEquality getTypeEquality();
 
-  @NotNull
-  List<HaskellVarid> getVaridList();
+    @NotNull
+    List<HaskellVarid> getVaridList();
 
-  String getName();
+    String getName();
 
-  ItemPresentation getPresentation();
+    ItemPresentation getPresentation();
 
-  Seq<HaskellNamedElement> getIdentifierElements();
+    Seq<HaskellNamedElement> getIdentifierElements();
 
-  Option<String> getModuleName();
+    Option<String> getModuleName();
 
 }

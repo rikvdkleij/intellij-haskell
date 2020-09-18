@@ -11,33 +11,33 @@ import java.util.List;
 
 public interface HaskellTypeDeclaration extends HaskellDeclarationElement {
 
-  @Nullable
-  HaskellExpression getExpression();
+    @Nullable
+    HaskellExpression getExpression();
 
-  @NotNull
-  List<HaskellKindSignature> getKindSignatureList();
+    @NotNull
+    List<HaskellKindSignature> getKindSignatureList();
 
-  @NotNull
-  List<HaskellPragma> getPragmaList();
+    @NotNull
+    List<HaskellPragma> getPragmaList();
 
-  @NotNull
-  List<HaskellQName> getQNameList();
+    @NotNull
+    List<HaskellQName> getQNameList();
 
-  @NotNull
-  HaskellSimpletype getSimpletype();
+    @NotNull
+    HaskellSimpletype getSimpletype();
 
-  @Nullable
-  HaskellTtype getTtype();
+    @Nullable
+    HaskellTtype getTtype();
 
-  @Nullable
-  HaskellTypeSignature getTypeSignature();
+    @Nullable
+    HaskellTypeSignature getTypeSignature();
 
-  String getName();
+    String getName();
 
-  ItemPresentation getPresentation();
+    ItemPresentation getPresentation();
 
-  Seq<HaskellNamedElement> getIdentifierElements();
+    Seq<HaskellNamedElement> getIdentifierElements();
 
-  Option<String> getModuleName();
+    Option<String> getModuleName();
 
 }

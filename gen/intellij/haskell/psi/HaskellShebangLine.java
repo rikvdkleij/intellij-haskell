@@ -7,22 +7,19 @@ import java.util.List;
 
 public interface HaskellShebangLine extends HaskellCompositeElement {
 
-  @NotNull
-  List<HaskellDotDot> getDotDotList();
+    @NotNull
+    List<HaskellDotDot> getDotDotList();
 
-  @NotNull
-  List<HaskellPragma> getPragmaList();
+    @NotNull
+    List<HaskellPragma> getPragmaList();
 
-  @NotNull
-  List<HaskellQName> getQNameList();
+    @NotNull
+    List<HaskellQName> getQNameList();
 
-  @NotNull
-  List<HaskellQuasiQuote> getQuasiQuoteList();
+    @NotNull
+    List<HaskellQuasiQuote> getQuasiQuoteList();
 
-  @NotNull
-  List<HaskellReservedId> getReservedIdList();
-
-  @NotNull
-  List<HaskellTextLiteral> getTextLiteralList();
+    @NotNull
+    List<HaskellTextLiteral> getTextLiteralList();
 
 }

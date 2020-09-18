@@ -8,13 +8,13 @@ import java.util.List;
 
 public interface HaskellImportId extends HaskellCompositeElement {
 
-  @Nullable
-  HaskellDotDot getDotDot();
+    @Nullable
+    HaskellDotDot getDotDot();
 
-  @NotNull
-  List<HaskellPragma> getPragmaList();
+    @NotNull
+    List<HaskellPragma> getPragmaList();
 
-  @NotNull
-  List<HaskellQName> getQNameList();
+    @NotNull
+    List<HaskellQName> getQNameList();
 
 }

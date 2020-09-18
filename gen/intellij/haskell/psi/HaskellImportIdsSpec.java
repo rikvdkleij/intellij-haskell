@@ -7,10 +7,10 @@ import java.util.List;
 
 public interface HaskellImportIdsSpec extends HaskellCompositeElement {
 
-  @NotNull
-  List<HaskellImportId> getImportIdList();
+    @NotNull
+    List<HaskellImportId> getImportIdList();
 
-  @NotNull
-  List<HaskellPragma> getPragmaList();
+    @NotNull
+    List<HaskellPragma> getPragmaList();
 
 }

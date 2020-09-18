@@ -7,13 +7,13 @@ import java.util.List;
 
 public interface HaskellImportHidingSpec extends HaskellCompositeElement {
 
-  @NotNull
-  HaskellImportHiding getImportHiding();
+    @NotNull
+    HaskellImportHiding getImportHiding();
 
-  @NotNull
-  List<HaskellImportId> getImportIdList();
+    @NotNull
+    List<HaskellImportId> getImportIdList();
 
-  @NotNull
-  List<HaskellPragma> getPragmaList();
+    @NotNull
+    List<HaskellPragma> getPragmaList();
 
 }

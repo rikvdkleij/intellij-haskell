@@ -50,12 +50,6 @@ public class HaskellShebangLineImpl extends HaskellCompositeElementImpl implemen
 
     @Override
     @NotNull
-    public List<HaskellReservedId> getReservedIdList() {
-        return PsiTreeUtil.getChildrenOfTypeAsList(this, HaskellReservedId.class);
-    }
-
-    @Override
-    @NotNull
     public List<HaskellTextLiteral> getTextLiteralList() {
         return PsiTreeUtil.getChildrenOfTypeAsList(this, HaskellTextLiteral.class);
     }

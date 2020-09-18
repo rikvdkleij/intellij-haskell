@@ -8,40 +8,37 @@ import java.util.List;
 
 public interface HaskellCidecl extends HaskellCompositeElement {
 
-  @Nullable
-  HaskellDataDeclaration getDataDeclaration();
+    @Nullable
+    HaskellDataDeclaration getDataDeclaration();
 
-  @Nullable
-  HaskellDefaultDeclaration getDefaultDeclaration();
+    @Nullable
+    HaskellDefaultDeclaration getDefaultDeclaration();
 
-  @NotNull
-  List<HaskellDotDot> getDotDotList();
+    @NotNull
+    List<HaskellDotDot> getDotDotList();
 
-  @Nullable
-  HaskellInstanceDeclaration getInstanceDeclaration();
+    @Nullable
+    HaskellInstanceDeclaration getInstanceDeclaration();
 
-  @Nullable
-  HaskellNewtypeDeclaration getNewtypeDeclaration();
+    @Nullable
+    HaskellNewtypeDeclaration getNewtypeDeclaration();
 
-  @Nullable
-  HaskellPragma getPragma();
+    @Nullable
+    HaskellPragma getPragma();
 
-  @NotNull
-  List<HaskellQName> getQNameList();
+    @NotNull
+    List<HaskellQName> getQNameList();
 
-  @NotNull
-  List<HaskellQuasiQuote> getQuasiQuoteList();
+    @NotNull
+    List<HaskellQuasiQuote> getQuasiQuoteList();
 
-  @NotNull
-  List<HaskellReservedId> getReservedIdList();
+    @NotNull
+    List<HaskellTextLiteral> getTextLiteralList();
 
-  @NotNull
-  List<HaskellTextLiteral> getTextLiteralList();
+    @Nullable
+    HaskellTypeDeclaration getTypeDeclaration();
 
-  @Nullable
-  HaskellTypeDeclaration getTypeDeclaration();
-
-  @Nullable
-  HaskellTypeFamilyDeclaration getTypeFamilyDeclaration();
+    @Nullable
+    HaskellTypeFamilyDeclaration getTypeFamilyDeclaration();
 
 }

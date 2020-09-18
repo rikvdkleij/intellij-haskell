@@ -7,19 +7,19 @@ import java.util.List;
 
 public interface HaskellTypeFamilyType extends HaskellCompositeElement {
 
-  @NotNull
-  List<HaskellCcontext> getCcontextList();
+    @NotNull
+    List<HaskellCcontext> getCcontextList();
 
-  @NotNull
-  List<HaskellPragma> getPragmaList();
+    @NotNull
+    List<HaskellPragma> getPragmaList();
 
-  @NotNull
-  List<HaskellQName> getQNameList();
+    @NotNull
+    List<HaskellQName> getQNameList();
 
-  @NotNull
-  List<HaskellQNames> getQNamesList();
+    @NotNull
+    List<HaskellQNames> getQNamesList();
 
-  @NotNull
-  List<HaskellTtype> getTtypeList();
+    @NotNull
+    List<HaskellTtype> getTtypeList();
 
 }

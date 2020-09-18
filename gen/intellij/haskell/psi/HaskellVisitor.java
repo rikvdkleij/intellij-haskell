@@ -269,10 +269,6 @@ public class HaskellVisitor extends PsiElementVisitor {
         // visitPsiLanguageInjectionHost(o);
     }
 
-    public void visitReservedId(@NotNull HaskellReservedId o) {
-        visitCompositeElement(o);
-    }
-
     public void visitScontext(@NotNull HaskellScontext o) {
         visitCompositeElement(o);
     }

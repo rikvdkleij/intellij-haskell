@@ -5272,10 +5272,9 @@ public class HaskellParser implements PsiParser, LightPsiParser {
 
     /* ********************************************************** */
     // CASE | CLASS | DATA | DEFAULT | DERIVING | DO | ELSE | IF | IMPORT | IN | INSTANCE | LET | MODULE | NEWTYPE | OF | THEN | TYPE | WHERE | UNDERSCORE
-    public static boolean reserved_id(PsiBuilder b, int l) {
+    static boolean reserved_id(PsiBuilder b, int l) {
         if (!recursion_guard_(b, l, "reserved_id")) return false;
         boolean r;
-        Marker m = enter_section_(b, l, _NONE_, HS_RESERVED_ID, "<reserved id>");
         r = consumeToken(b, HS_CASE);
         if (!r) r = consumeToken(b, HS_CLASS);
         if (!r) r = consumeToken(b, HS_DATA);
@@ -5295,7 +5294,6 @@ public class HaskellParser implements PsiParser, LightPsiParser {
         if (!r) r = consumeToken(b, HS_TYPE);
         if (!r) r = consumeToken(b, HS_WHERE);
         if (!r) r = consumeToken(b, HS_UNDERSCORE);
-        exit_section_(b, l, m, r, false, null);
         return r;
     }
 

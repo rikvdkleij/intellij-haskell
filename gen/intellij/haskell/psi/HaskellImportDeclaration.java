@@ -9,24 +9,24 @@ import java.util.List;
 
 public interface HaskellImportDeclaration extends HaskellCompositeElement {
 
-  @Nullable
-  HaskellImportPackageName getImportPackageName();
+    @Nullable
+    HaskellImportPackageName getImportPackageName();
 
-  @Nullable
-  HaskellImportQualified getImportQualified();
+    @Nullable
+    HaskellImportQualified getImportQualified();
 
-  @Nullable
-  HaskellImportQualifiedAs getImportQualifiedAs();
+    @Nullable
+    HaskellImportQualifiedAs getImportQualifiedAs();
 
-  @Nullable
-  HaskellImportSpec getImportSpec();
+    @Nullable
+    HaskellImportSpec getImportSpec();
 
-  @Nullable
-  HaskellModid getModid();
+    @Nullable
+    HaskellModid getModid();
 
-  @NotNull
-  List<HaskellPragma> getPragmaList();
+    @NotNull
+    List<HaskellPragma> getPragmaList();
 
-  Option<String> getModuleName();
+    Option<String> getModuleName();
 
 }

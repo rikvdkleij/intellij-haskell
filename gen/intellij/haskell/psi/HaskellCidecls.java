@@ -7,10 +7,10 @@ import java.util.List;
 
 public interface HaskellCidecls extends HaskellCompositeElement {
 
-  @NotNull
-  List<HaskellCidecl> getCideclList();
+    @NotNull
+    List<HaskellCidecl> getCideclList();
 
-  @NotNull
-  List<HaskellPragma> getPragmaList();
+    @NotNull
+    List<HaskellPragma> getPragmaList();
 
 }
