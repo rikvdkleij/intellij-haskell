@@ -126,7 +126,7 @@ case class ProjectStackRepl(project: Project, projectReplTargets: ProjectReplTar
   def load(psiFile: PsiFile, fileModified: Boolean, moduleName: Option[String], forceNoReload: Boolean = false): Option[(StackReplOutput, Boolean)] = synchronized {
     val filePath = getFilePath(psiFile)
 
-    val reload = if (forceNoReload) {
+    val reload = if (!fileModified || forceNoReload) {
       false
     } else if (fileModified) {
       val loaded = isFileLoaded(psiFile)
