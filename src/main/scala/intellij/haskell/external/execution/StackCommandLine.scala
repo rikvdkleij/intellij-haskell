@@ -108,7 +108,7 @@ object StackCommandLine {
   }
 
   def buildProjectDependenciesInMessageView(project: Project): Option[Boolean] = {
-    buildInMessageView(project, Seq("--test", "--bench", "--no-run-tests", "--no-run-benchmarks", "--only-dependencies"))
+    buildInMessageView(project, "Build project dependencies", Seq("--test", "--bench", "--no-run-tests", "--no-run-benchmarks", "--only-dependencies"))
   }
 
   private def ghcOptions(project: Project) = {
@@ -123,13 +123,13 @@ object StackCommandLine {
     run(project, Seq("build", "--fast") ++ arguments).map(_.getExitCode == 0)
   }
 
-  def buildInMessageView(project: Project, arguments: Seq[String]): Option[Boolean] = {
-    executeStackCommandInMessageView(project, Seq("build", "--fast", "--no-interleaved-output") ++ arguments ++ ghcOptions(project))
+  def buildInMessageView(project: Project, description: String, arguments: Seq[String]): Option[Boolean] = {
+    executeStackCommandInMessageView(project, description, Seq("build", "--fast", "--no-interleaved-output") ++ arguments ++ ghcOptions(project))
   }
 
-  def executeStackCommandInMessageView(project: Project, arguments: Seq[String]): Option[Boolean] = {
+  def executeStackCommandInMessageView(project: Project, description: String, arguments: Seq[String]): Option[Boolean] = {
     HaskellSdkType.getStackPath(project).flatMap(stackPath => {
-      executeInMessageView(project, stackPath, arguments)
+      executeInMessageView(project, description, stackPath, arguments)
     })
   }
 
@@ -142,7 +142,7 @@ object StackCommandLine {
     }
   }
 
-  def executeInMessageView(project: Project, commandPath: String, arguments: Seq[String]): Option[Boolean] = {
+  def executeInMessageView(project: Project, description: String, commandPath: String, arguments: Seq[String]): Option[Boolean] = {
     waitForProjectIsInitialized(project)
 
     val cmd = CommandLine.createCommandLine(project.getBasePath, commandPath, arguments ++ HaskellSettingsState.getExtraStackArguments)
@@ -156,7 +156,7 @@ object StackCommandLine {
 
       val handler = new BaseOSProcessHandler(process, cmd.getCommandLineString, CharsetToolkit.getDefaultSystemCharset)
 
-      val compilerTask = new CompilerTask(project, s"executing `${cmd.getCommandLineString}`", false, false, true, true)
+      val compilerTask = new CompilerTask(project, description, false, false, true, true)
       val compileTask = new CompileTask {
 
         def execute(compileContext: CompileContext): Boolean = {

@@ -197,7 +197,7 @@ object StackProjectManager {
               if (dependenciesBuildResult.contains(true)) {
                 progressIndicator.setText("Busy building project")
                 val projectLibTargets = HaskellComponentsManager.findStackComponentInfos(project).filter(_.stanzaType == LibType).map(_.target)
-                StackCommandLine.buildInMessageView(project, projectLibTargets)
+                StackCommandLine.buildInMessageView(project, "Build project libraries", projectLibTargets)
               } else {
                 HaskellNotificationGroup.logErrorBalloonEvent(project, "Project won't be built because building its dependencies failed")
               }
