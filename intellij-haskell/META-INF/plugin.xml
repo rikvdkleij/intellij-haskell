@@ -535,6 +535,11 @@
             <className>intellij.haskell.intention.RemoveParensIntention</className>
             <category>Haskell</category>
         </intentionAction>
+        <intentionAction>
+            <className>intellij.haskell.intention.CaseSplitIntention</className>
+            <category>Haskell</category>
+        </intentionAction>
+
 
         <!-- Stack -->
         <sdkType implementation="intellij.haskell.sdk.HaskellSdkType"/>
@@ -763,5 +768,5 @@
             </action>
         </group>
     </actions>
-    <depends>com.intellij.modules.java</depends>
+    <!--    <depends>com.intellij.modules.java</depends>-->
 </idea-plugin>

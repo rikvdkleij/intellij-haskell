@@ -12,23 +12,19 @@ class AddParensIntention extends PsiElementBaseIntentionAction {
 
   override def invoke(project: Project, editor: Editor, psiElement: PsiElement): Unit = {
     val selectionStartEnd = HaskellPsiUtil.getSelectionStartEnd(psiElement, editor)
-    for {
-      left <- HaskellElementFactory.getLeftParenElement(project)
-      right <- HaskellElementFactory.getRightParenElement(project)
-    } yield {
-      if (selectionStartEnd.isDefined) {
-        for {
-          (start, end) <- selectionStartEnd
-        } yield {
-          if (start.getNode.getElementType != HS_NEWLINE) {
-            start.getParent.addBefore(left, start)
-            end.getParent.addAfter(right, start)
-          }
+    if (selectionStartEnd.isDefined) {
+      for {
+        (start, end) <- selectionStartEnd
+      } yield {
+        if (start.getNode.getElementType != HS_NEWLINE) {
+          val left = HaskellElementFactory.getLeftParenElement(project)
+          val right = HaskellElementFactory.getRightParenElement(project)
+          start.getParent.addBefore(left, start)
+          end.getParent.addAfter(right, start)
         }
-      } else {
-        psiElement.getParent.addBefore(left, psiElement)
-        psiElement.getParent.addAfter(right, psiElement)
       }
+    } else {
+      AddParensIntention.addParens(project, psiElement)
     }
   }
 
@@ -42,4 +38,14 @@ class AddParensIntention extends PsiElementBaseIntentionAction {
   override def getFamilyName: String = getText
 
   override def getText: String = "Add parens around expression"
+}
+
+object AddParensIntention {
+
+  def addParens(project: Project, psiElement: PsiElement): PsiElement = {
+    val left = HaskellElementFactory.getLeftParenElement(project)
+    val right = HaskellElementFactory.getRightParenElement(project)
+    psiElement.getParent.addBefore(left, psiElement)
+    psiElement.getParent.addAfter(right, psiElement)
+  }
 }

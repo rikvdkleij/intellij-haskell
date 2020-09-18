@@ -53,7 +53,7 @@ class HaskellRenameVariableProcessor extends RenamePsiElementProcessor {
           (psiElement match {
             case pf: PsiFile => HaskellProjectUtil.isSourceFile(pf)
             case _ =>
-              Option(psiElement.getReference).map(_.getElement) match {
+              Option(psiElement.getReference).flatMap(x => Option(x.resolve)) match {
                 case Some(_: PsiElement) => HaskellProjectUtil.isSourceFile(psiFile)
                 case _ => false
               }

@@ -27,7 +27,7 @@ class HaskellRefactoringSupportProvider extends RefactoringSupportProvider {
   }
 
   private def isDefinedInProject(psiElement: PsiElement) = {
-    Option(psiElement.getReference).map(_.getElement) match {
+    Option(psiElement.getReference).flatMap(x => Option(x.resolve)) match {
       case Some(e) => Option(e.getContainingFile).map(_.getOriginalFile).exists(pf => HaskellProjectUtil.isSourceFile(pf))
       case _ => false
     }

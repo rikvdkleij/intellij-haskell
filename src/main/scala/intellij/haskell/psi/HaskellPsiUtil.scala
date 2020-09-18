@@ -173,6 +173,13 @@ object HaskellPsiUtil {
     }
   }
 
+  def findQName(psiElement: PsiElement): Option[HaskellQName] = {
+    psiElement match {
+      case e: HaskellQName => Some(e)
+      case e => Option(TreeUtil.findParent(e.getNode, HaskellTypes.HS_Q_NAME)).map(_.getPsi.asInstanceOf[HaskellQName])
+    }
+  }
+
   def findTtype(psiElement: PsiElement): Option[HaskellTtype] = {
     psiElement match {
       case e: HaskellTtype => Some(e)
@@ -216,6 +223,20 @@ object HaskellPsiUtil {
     psiElement match {
       case e: HaskellTypeSignature => Some(e)
       case e => Option(TreeUtil.findParent(e.getNode, HaskellTypes.HS_TYPE_SIGNATURE)).map(_.getPsi.asInstanceOf[HaskellTypeSignature])
+    }
+  }
+
+  def findDataDeclaration(psiElement: PsiElement): Option[HaskellDataDeclaration] = {
+    psiElement match {
+      case e: HaskellDataDeclaration => Some(e)
+      case e => Option(TreeUtil.findParent(e.getNode, HaskellTypes.HS_DATA_DECLARATION)).map(_.getPsi.asInstanceOf[HaskellDataDeclaration])
+    }
+  }
+
+  def findNewTypeDeclaration(psiElement: PsiElement): Option[HaskellNewtypeDeclaration] = {
+    psiElement match {
+      case e: HaskellNewtypeDeclaration => Some(e)
+      case e => Option(TreeUtil.findParent(e.getNode, HaskellTypes.HS_NEWTYPE_DECLARATION)).map(_.getPsi.asInstanceOf[HaskellNewtypeDeclaration])
     }
   }
 
