@@ -45,7 +45,7 @@ private[component] object BrowseModuleComponent {
     val result = Cache.get(key)
     result.map {
       case Right(ids) => Some(ids)
-      case Left(NoInfoAvailable(_, _)) | Left(NoMatchingExport) =>
+      case Left(NoInfoAvailable(_, _, _)) | Left(NoMatchingExport) =>
         None
       case Left(ReplNotAvailable) | Left(IndexNotReady) | Left(ModuleNotAvailable(_)) | Left(ReadActionTimeout(_)) =>
         Cache.synchronous().invalidate(key)

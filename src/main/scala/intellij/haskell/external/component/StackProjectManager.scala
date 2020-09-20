@@ -360,12 +360,6 @@ object StackProjectManager {
                       if (Option(event.getNewChild).orElse(Option(event.getParent)).flatMap(HaskellPsiUtil.findImportDeclarations).isDefined) {
                         // Have to refresh because import declarations can be changed
                         FileModuleIdentifiers.refresh(f)
-                      } else {
-                        val element = Option(event.getNewChild).flatMap(HaskellPsiUtil.findTopDeclarationParent).
-                          orElse(Option(event.getParent).flatMap(HaskellPsiUtil.findTopDeclarationParent))
-                        val elements = element.map(HaskellPsiUtil.findQualifiedNamedElements).getOrElse(Seq())
-                        TypeInfoComponent.invalidateElements(f, elements)
-                        NameInfoComponent.invalidateElements(f, elements)
                       }
                     })
                   }

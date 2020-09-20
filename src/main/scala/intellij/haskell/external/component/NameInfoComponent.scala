@@ -46,24 +46,20 @@ private[component] object NameInfoComponent {
     }
   }
 
-  def invalidate(psiFile: PsiFile): Unit = {
-    Cache.asMap().filter(_._1.psiFile == psiFile).keys.foreach(Cache.invalidate)
-  }
-
   def invalidateNotFound(project: Project): Unit = {
     Cache.asMap().filter { case (k, v) => k.psiFile.getProject == project && v.isLeft && HaskellProjectUtil.isSourceFile(k.psiFile) }.keys.foreach(Cache.invalidate)
   }
 
-  def invalidateElements(psiFile: PsiFile, qualifiedNamedElements: Iterable[HaskellQualifiedNameElement]): Unit = {
-    val allKeys = qualifiedNamedElements.map(qne => {
-      Key(psiFile, qne.getName)
-    })
-    val keys = allKeys.filter(k => Cache.getIfPresent(k).exists(_.exists(_.exists(_.isInstanceOf[ProjectNameInfo]))))
-    Cache.invalidateAll(keys)
-  }
-
   def invalidateAll(project: Project): Unit = {
     Cache.asMap().map(_._1.psiFile).filter(_.getProject == project).foreach(invalidate)
+  }
+
+  private def invalidate(psiFile: PsiFile): Unit = {
+    Cache.asMap().filter(_._1.psiFile == psiFile).keys.foreach(Cache.invalidate)
+  }
+
+  def invalidateProjectInfo(project: Project): Unit = {
+    Cache.asMap().filter { case (k, v) => k.psiFile.getProject == project && v.toOption.exists(_.toSeq.exists(_.isInstanceOf[ProjectNameInfo])) }.keys.foreach(Cache.invalidate)
   }
 
   private def findNameInfo(qualifiedNameElement: HaskellQualifiedNameElement, importQualifier: Option[String]): NameInfoResult = {

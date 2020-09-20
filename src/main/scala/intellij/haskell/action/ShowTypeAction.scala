@@ -68,21 +68,13 @@ object ShowTypeAction {
 
   private def getTypeInfo(psiFile: PsiFile, psiElement: PsiElement): String = {
     HaskellComponentsManager.findTypeInfoForElement(psiElement) match {
-      case Right(info) =>
-        val typeSignatureFromScope =
-          if (info.withFailure) {
-            findTypeSignatureFromScope(psiFile, psiElement)
-          } else {
-            None
-          }
-        typeSignatureFromScope.getOrElse(info.typeSignature)
-
+      case Right(info) => info.typeSignature
       case Left(noInfo) =>
         findTypeSignatureFromScope(psiFile, psiElement) match {
           case Some(typeSignature) => typeSignature
           case None =>
-            val message = s"Could not determine type for `${psiElement.getText}`. ${noInfo.message}"
-            HaskellNotificationGroup.logInfoEvent(psiFile.getProject, message)
+            val message = s"Could not determine type for `${psiElement.getText}` | ${noInfo.message}"
+            HaskellNotificationGroup.logWarningBalloonEvent(psiFile.getProject, message)
             message
         }
     }

@@ -66,7 +66,8 @@ private[component] object TypeInfoComponent {
           ep <- LineColumnPosition.fromOffset(vf, selectionModel.getSelectionEnd)
         } yield {
           StackReplsManager.getProjectRepl(psiFile).flatMap(_.findTypeInfo(moduleName, psiFile, sp.lineNr, sp.columnNr, ep.lineNr, ep.columnNr, selectionModel.getSelectedText)) match {
-            case Some(output) => output.stdoutLines.headOption.filterNot(_.trim.isEmpty).map(ti => Right(TypeInfo(ti, output.stderrLines.nonEmpty))).getOrElse(Left(NoInfoAvailable(selectionModel.getSelectedText, psiFile.getName)))
+            case Some(output) if output.stderrLines.nonEmpty => Left(NoInfoAvailable(selectionModel.getSelectedText, psiFile.getName, Some(output.stderrLines.mkString(" "))))
+            case Some(output) => Right(TypeInfo(output.stdoutLines.headOption.filterNot(_.trim.isEmpty).mkString(" ")))
             case None => Left(ReplNotAvailable)
           }
         }
@@ -74,15 +75,6 @@ private[component] object TypeInfoComponent {
     } else {
       Left(ModuleNotAvailable(moduleName.getOrElse(psiFile.getName)))
     }
-  }
-
-  def invalidateElements(psiFile: PsiFile, namedElements: Iterable[HaskellQualifiedNameElement]): Unit = {
-    namedElements.foreach(qne => Cache.invalidate(Key(psiFile, qne)))
-  }
-
-  def invalidate(psiFile: PsiFile): Unit = {
-    val keys = Cache.asMap().filter(_._1.psiFile == psiFile).keys.filterNot(_.qualifiedNameElement.isValid)
-    Cache.invalidateAll(keys)
   }
 
   def invalidateAll(project: Project): Unit = {
@@ -97,7 +89,7 @@ private[component] object TypeInfoComponent {
       sp <- LineColumnPosition.fromOffset(vf, to)
       _ = ProgressManager.checkCanceled()
       t = element.getText
-      ep <- LineColumnPosition.fromOffset(vf, to + t.length)
+      ep <- LineColumnPosition.fromOffset(vf, to + (if (t.length > 1) t.length - 1 else 1))
       t = element.getText
       _ = ProgressManager.checkCanceled()
       mn = HaskellPsiUtil.findModuleName(psiFile)
@@ -116,7 +108,8 @@ private[component] object TypeInfoComponent {
             Left(ReplNotAvailable)
           } else {
             f(repl) match {
-              case Some(output) => output.stdoutLines.filterNot(_.trim.isEmpty).headOption.map(ti => Right(TypeInfo(ti, output.stderrLines.nonEmpty))).getOrElse(Left(NoInfoAvailable(element.getText, psiFile.getName)))
+              case Some(output) if output.stderrLines.nonEmpty => Left(NoInfoAvailable(element.getText, psiFile.getName, Some(output.stderrLines.mkString(" "))))
+              case Some(output) => Right(TypeInfo(output.stdoutLines.filterNot(_.trim.isEmpty).mkString(" ")))
               case None => Left(ReplNotAvailable)
             }
           }
@@ -145,6 +138,6 @@ object TypeInfoComponentResult {
 
   type TypeInfoResult = Either[NoInfo, TypeInfo]
 
-  case class TypeInfo(typeSignature: String, withFailure: Boolean)
+  case class TypeInfo(typeSignature: String)
 
 }

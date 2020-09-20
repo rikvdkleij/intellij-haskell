@@ -66,6 +66,8 @@ private[component] object LoadComponent {
 
             DefinitionLocationComponent.invalidate(project)
             HaskellModuleNameIndex.invalidateNotFoundEntries(project)
+            TypeInfoComponent.invalidateAll(project)
+            NameInfoComponent.invalidateProjectInfo(project)
 
             if (!loadFailed) {
               moduleName.foreach(mn => {

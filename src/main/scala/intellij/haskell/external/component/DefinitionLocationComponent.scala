@@ -56,8 +56,8 @@ private[component] object DefinitionLocationComponent {
     }
   }
 
-  def findDefinitionLocationInCache(psiFile: PsiFile, qualifiedNameElement: HaskellQualifiedNameElement): Option[DefinitionLocation] = {
-    Cache.asMap().find { case (k, _) => k.psiFile == psiFile && k.qualifiedNameElement == qualifiedNameElement }.flatMap(_._2.toOption)
+  def findReferringToLocationsCache(qualifiedNameElement: HaskellQualifiedNameElement) = {
+    Cache.asMap().filter { case (_, v) => v.toOption.exists(_.namedElement == qualifiedNameElement.getIdentifierElement) }.map(e => (e._1.psiFile, e._1.qualifiedNameElement)).toSeq
   }
 
   def invalidateNotFound(project: Project): Unit = {
