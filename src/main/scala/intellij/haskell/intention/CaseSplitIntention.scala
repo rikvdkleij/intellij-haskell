@@ -23,7 +23,6 @@ import com.intellij.openapi.project.Project
 import com.intellij.psi.PsiElement
 import com.intellij.psi.impl.source.tree.TreeUtil
 import com.intellij.psi.util.PsiTreeUtil
-import intellij.haskell.external.component.TypeInfoComponentResult.TypeInfo
 import intellij.haskell.external.component.{HaskellComponentsManager, StackProjectManager}
 import intellij.haskell.psi._
 import intellij.haskell.util.ScalaUtil
@@ -77,7 +76,8 @@ object CaseSplitIntention {
       caseSplitKind <- topLevelCaseSplitting(psiElement).orElse(caseOfCaseSplitting(psiElement))
       typeInfo <- HaskellComponentsManager.findTypeInfoForElement(psiElement).toOption
       currentDeclarationLine <- HaskellPsiUtil.findTopDeclarationLineParent(psiElement)
-      constrs <- findDataConstructors(currentDeclarationLine, typeInfo).orElse(findNewtypeConstr(currentDeclarationLine, typeInfo))
+      typeName = typeInfo.typeSignature.split("::").last.trim
+      constrs <- findDataConstructors(currentDeclarationLine, typeName).orElse(findNewtypeConstr(currentDeclarationLine, typeName))
     } yield {
       if (execute) {
         WriteCommandAction.runWriteCommandAction(project, ScalaUtil.runnable {
@@ -160,23 +160,34 @@ object CaseSplitIntention {
     val pattern = constr.copy()
     val currentNames = currentLineElements.map(_.getName)
     val patternNames = PatternNames.filterNot(currentNames.contains)
-    HaskellPsiUtil.findNamedElements(pattern).tail.zip(patternNames).map { case (e, n) => e.replace(HaskellElementFactory.createVarid(project, n).get) }
+    if (HaskellPsiUtil.findNamedElements(pattern).isEmpty) {
+      // Do nothing
+    } else if (pattern.getText == "a : a") {
+      HaskellPsiUtil.findNamedElements(pattern).filterNot(e => e.getText == ":").zip(patternNames).map { case (e, n) => e.replace(HaskellElementFactory.createVarid(project, n).get) }
+    } else {
+      HaskellPsiUtil.findNamedElements(pattern).tail.zip(patternNames).map { case (e, n) => e.replace(HaskellElementFactory.createVarid(project, n).get) }
+    }
     pattern
   }
 
-  private def findDataConstructors(psiElement: HaskellTopDeclarationLine, typeInfo: TypeInfo): Option[Seq[HaskellConstr]] = {
-    findDefinitionLocation(psiElement, typeInfo) match {
-      case Some(e) =>
-        HaskellPsiUtil.findNamedElement(e).flatMap(e => Option(e.getReference)).flatMap(r => Option(r.resolve)) match {
-          case Some(e) => HaskellPsiUtil.findDataDeclaration(e).map(_.getConstrList.asScala.toSeq)
+  private def findDataConstructors(psiElement: HaskellTopDeclarationLine, typeName: String): Option[Seq[HaskellConstr]] = {
+    typeName match {
+      case s"[$x]" =>
+        val d = HaskellElementFactory.createDataDeclaration(psiElement.getProject, "data [] a = [] | a : a") // Just a hack to create the right pattern in createPattern
+        d.map(_.getConstrList.asScala.toSeq)
+      case _ =>
+        findDefinitionLocation(psiElement, typeName) match {
+          case Some(e) =>
+            HaskellPsiUtil.findNamedElement(e).flatMap(e => Option(e.getReference)).flatMap(r => Option(r.resolve)) match {
+              case Some(e) => HaskellPsiUtil.findDataDeclaration(e).map(_.getConstrList.asScala.toSeq)
+              case None => None
+            }
           case None => None
         }
-      case None => None
     }
   }
 
-  private def findDefinitionLocation(psiElement: HaskellTopDeclarationLine, typeInfo: TypeInfo): Option[HaskellNamedElement] = {
-    val typeName = typeInfo.typeSignature.split("::").last.trim
+  private def findDefinitionLocation(psiElement: HaskellTopDeclarationLine, typeName: String): Option[HaskellNamedElement] = {
     findTypeSignatureDeclaration(psiElement).flatMap(d => HaskellPsiUtil.findNamedElements(d).find(_.getName == typeName))
   }
 
@@ -188,8 +199,8 @@ object CaseSplitIntention {
     }
   }
 
-  private def findNewtypeConstr(psiElement: HaskellTopDeclarationLine, typeInfo: TypeInfo): Option[Seq[HaskellNewconstr]] = {
-    findDefinitionLocation(psiElement, typeInfo) match {
+  private def findNewtypeConstr(psiElement: HaskellTopDeclarationLine, typeName: String): Option[Seq[HaskellNewconstr]] = {
+    findDefinitionLocation(psiElement, typeName) match {
       case Some(e) =>
         HaskellPsiUtil.findNamedElement(e).flatMap(e => Option(e.getReference)).flatMap(r => Option(r.resolve)) match {
           case Some(e) => HaskellPsiUtil.findNewTypeDeclaration(e).map(x => Seq(x.getNewconstr))

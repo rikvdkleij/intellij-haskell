@@ -65,6 +65,10 @@ object HaskellElementFactory {
     createElement(project, declaration, classOf[HaskellTopDeclaration])
   }
 
+  def createDataDeclaration(project: Project, declaration: String): Option[HaskellDataDeclaration] = {
+    createElement(project, declaration, classOf[HaskellDataDeclaration])
+  }
+
   def createLanguagePragma(project: Project, languagePragma: String): Option[HaskellPragma] = {
     createElement(project, languagePragma, classOf[HaskellPragma])
   }
