@@ -430,7 +430,8 @@ class HaskellCompletionContributor extends CompletionContributor {
       createLocalTopLevelLookupElement(ApplicationUtil.runReadAction(e.getName), ApplicationUtil.runReadAction(d.getPresentation.getPresentableText))
     }
 
-    val expressionLookupElements = HaskellPsiUtil.findTopLevelExpressions(psiFile).flatMap(_.getQNameList.asScala.headOption.map(_.getIdentifierElement)).filterNot(e => currentElement.contains(e)).map(createLocalLookupElement)
+    val expressionElements = HaskellPsiUtil.findTopLevelExpressions(psiFile).flatMap(_.getQNameList.asScala.headOption.map(_.getIdentifierElement)).filterNot(e => currentElement.contains(e))
+    val expressionLookupElements = expressionElements.map(createLocalLookupElement)
 
     val declarationLookupElements = ApplicationUtil.runReadAction(HaskellPsiUtil.findTopLevelDeclarations(psiFile)).
       flatMap(d => getIdentifiers(d).flatMap {
@@ -444,6 +445,12 @@ class HaskellCompletionContributor extends CompletionContributor {
                   case None => Some(createTopLevelDeclarationLookupElement(e, d))
                 })
             case d: HaskellDeclarationElement if !d.isInstanceOf[HaskellTypeSignature] => Some(createTopLevelDeclarationLookupElement(e, d))
+            case d: HaskellDeclarationElement if d.isInstanceOf[HaskellTypeSignature] =>
+              if (!d.getIdentifierElements.headOption.map(_.getName).exists(n => expressionElements.toSeq.map(_.getName).contains(n))) {
+                Some(createTopLevelDeclarationLookupElement(e, d))
+              } else {
+                None
+              }
             case _ => None
           }
       })
