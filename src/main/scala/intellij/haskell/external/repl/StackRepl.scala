@@ -266,6 +266,7 @@ abstract class StackRepl(project: Project, projectReplTargets: Option[ProjectRep
             if (stanzaType.isDefined) {
               execute(":set +c", forceExecute = true)
               execute(":set -fdefer-type-errors", forceExecute = true)
+              execute(":set -fshow-loaded-modules", forceExecute = true)
               execute(":set -fno-max-valid-substitutions", forceExecute = true)
               if (HaskellProjectUtil.setNoDiagnosticsShowCaretFlag(project)) {
                 execute(s":set ${StackCommandLine.NoDiagnosticsShowCaretFlag}", forceExecute = true)

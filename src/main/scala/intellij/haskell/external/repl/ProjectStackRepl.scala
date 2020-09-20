@@ -86,6 +86,7 @@ case class ProjectStackRepl(project: Project, projectReplTargets: ProjectReplTar
 
   def findInfo(psiFile: PsiFile, name: String): Option[StackReplOutput] = {
     val moduleName = HaskellPsiUtil.findModuleName(psiFile)
+
     def execute = {
       blocking {
         executeWithLoad(psiFile, moduleName, s":info $name")
@@ -112,15 +113,15 @@ case class ProjectStackRepl(project: Project, projectReplTargets: ProjectReplTar
     }
   }
 
-  private def setLoadedModules(): Unit = {
+  private def setLoadedModules(output: StackReplOutput): Unit = {
     loadedDependentModules.clear()
-    execute(":show modules") match {
-      case Some(output) =>
-        val loadedModuleNames = output.stdoutLines.map(l => l.takeWhile(_ != ' '))
+    output.stdoutLines.lastOption.foreach(line =>
+      if (!line.contains("modules loaded: none.") && line.contains("modules loaded: ")) {
+        val modulesLine = line.split("loaded:")(1).init // The init to get rid of the dot which is last character
+        val loadedModuleNames = modulesLine.split(",").map(_.trim)
         loadedModuleNames.foreach(mn => loadedDependentModules.put(mn, DependentModuleInfo()))
         loadedModuleNames.foreach(mn => everLoadedDependentModules.put(mn, DependentModuleInfo()))
-      case None => ()
-    }
+      })
   }
 
   def load(psiFile: PsiFile, fileModified: Boolean, moduleName: Option[String], forceNoReload: Boolean = false): Option[(StackReplOutput, Boolean)] = synchronized {
@@ -144,7 +145,7 @@ case class ProjectStackRepl(project: Project, projectReplTargets: ProjectReplTar
     output match {
       case Some(o) =>
         val loadFailed = isLoadFailed(o)
-        setLoadedModules()
+        setLoadedModules(o)
 
         loadedFile = Some(ModuleInfo(psiFile, loadFailed))
         Some(o, loadFailed)
