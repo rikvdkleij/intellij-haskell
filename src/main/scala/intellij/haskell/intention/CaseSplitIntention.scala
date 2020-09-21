@@ -27,6 +27,7 @@ import intellij.haskell.external.component.{HaskellComponentsManager, StackProje
 import intellij.haskell.psi._
 import intellij.haskell.util.ScalaUtil
 
+import scala.annotation.tailrec
 import scala.jdk.CollectionConverters._
 
 class CaseSplitIntention extends PsiElementBaseIntentionAction {
@@ -160,12 +161,23 @@ object CaseSplitIntention {
     val pattern = constr.copy()
     val currentNames = currentLineElements.map(_.getName)
     val patternNames = PatternNames.filterNot(currentNames.contains)
-    if (HaskellPsiUtil.findNamedElements(pattern).isEmpty) {
+    val namedElements = HaskellPsiUtil.findNamedElements(pattern)
+    val hasConssym = namedElements.exists(_.isInstanceOf[HaskellConsym])
+
+    if (namedElements.isEmpty) {
       // Do nothing
-    } else if (pattern.getText == "a : a") {
-      HaskellPsiUtil.findNamedElements(pattern).filterNot(e => e.getText == ":").zip(patternNames).map { case (e, n) => e.replace(HaskellElementFactory.createVarid(project, n).get) }
+    } else if (hasConssym) {
+      namedElements.filterNot(_.isInstanceOf[HaskellConsym]).zip(patternNames).map { case (e, n) => e.replace(HaskellElementFactory.createVarid(project, n).get) }
     } else {
-      HaskellPsiUtil.findNamedElements(pattern).tail.zip(patternNames).map { case (e, n) => e.replace(HaskellElementFactory.createVarid(project, n).get) }
+      namedElements.tail.zip(patternNames).map { case (e, n) =>
+        HaskellPsiUtil.findTtype(e).find(e => Option(e.getNextSibling).map(_.getNode).exists(_.getElementType == HaskellTypes.HS_RIGHT_BRACKET)) match {
+          case Some(ttype) =>
+            ttype.getNextSibling.delete()
+            ttype.getPrevSibling.delete()
+          case None => ()
+        }
+        e.replace(HaskellElementFactory.createVarid(project, n).get)
+      }
     }
     pattern
   }
@@ -191,6 +203,7 @@ object CaseSplitIntention {
     findTypeSignatureDeclaration(psiElement).flatMap(d => HaskellPsiUtil.findNamedElements(d).find(_.getName == typeName))
   }
 
+  @tailrec
   private def findTypeSignatureDeclaration(currentDeclarationLine: HaskellTopDeclarationLine): Option[HaskellTopDeclarationLine] = {
     Option(PsiTreeUtil.findSiblingBackward(currentDeclarationLine, HaskellTypes.HS_TOP_DECLARATION_LINE, null)) match {
       case Some(d: HaskellTopDeclarationLine) if Option(d.getFirstChild).flatMap(c => Option(c.getFirstChild)).exists(_.isInstanceOf[HaskellTypeSignature]) => Some(d)
