@@ -66,20 +66,20 @@ class HaskellModuleBuilder extends TemplateModuleBuilder(null, HaskellModuleType
   override def getNodeIcon: Icon = HaskellIcons.HaskellLogo
 
   override def setupRootModel(rootModel: ModifiableRootModel): Unit = {
-    if (rootModel.getSdk == null) {
-      rootModel.setSdk(HaskellSdkType.findOrCreateSdk())
-      rootModel.inheritSdk()
-    }
+    rootModel.setSdk(HaskellSdkType.findOrCreateSdk())
+    rootModel.inheritSdk()
 
     val contentEntry = doAddContentEntry(rootModel)
     val project = rootModel.getProject
 
     if (isNewProjectWithoutExistingSources) {
+
+      createStackProject(project)
+
       val packageRelativePath = StackYamlComponent.getPackagePaths(project).flatMap(_.headOption)
       packageRelativePath.flatMap(pp => HaskellModuleBuilder.createCabalInfo(rootModel.getProject, project.getBasePath, pp)) match {
         case Some(ci) => cabalInfo = ci
-        case None =>
-          HaskellNotificationGroup.logErrorBalloonEvent(project, s"Couldn't create Haskell module due to failure retrieving or parsing Cabal file for package path `${project.getBasePath}`")
+        case None => throw new Exception(s"Couldn't create Haskell module due to failure retrieving or parsing Cabal file for package path `${project.getBasePath}`")
       }
     }
 
@@ -105,33 +105,7 @@ class HaskellModuleBuilder extends TemplateModuleBuilder(null, HaskellModuleType
     val moduleType = getModuleType
     val module = moduleModel.newModule(getModuleFilePath, moduleType.getId)
     val project = module.getProject
-    val newProjectTemplateName = HaskellSettingsState.getNewProjectTemplateName
 
-    if (isNewProjectWithoutExistingSources) {
-      val createModuleAction = ApplicationManager.getApplication.executeOnPooledThread(ScalaUtil.runnable {
-        val processOutput = StackCommandLine.run(project, Seq("new", project.getName, "--bare", newProjectTemplateName, "-p", "author-email:Author email here", "-p", "author-name:Author name here", "-p", "category:App category here", "-p", "copyright:2019 Author name here", "-p", "github-username:Github username here"), timeoutInMillis = 60.seconds.toMillis, enableExtraArguments = false)
-        processOutput match {
-          case None =>
-            WriteAction.run {
-              () => {
-                Messages.showErrorDialog("Unknown error while creating new Stack project by using Stack command for creating new project on file system", "Create Haskell module")
-              }
-            }
-          case Some(output) =>
-            if (output.getExitCode != 0) {
-              WriteAction.run {
-                () => {
-                  Messages.showErrorDialog(s"Error while creating new Stack project: ${output.getStdout} ${output.getStderr}", "Create Haskell module")
-                }
-              }
-            }
-        }
-      })
-      FutureUtil.waitForValue(project, createModuleAction, "Creating Haskell module", 120) match {
-        case None => HaskellNotificationGroup.logErrorBalloonEvent(project, s"Timeout while creating new Stack project by using: `stack new`")
-        case Some(_) => ()
-      }
-    }
     setupModule(module)
     module
   }
@@ -153,9 +127,35 @@ class HaskellModuleBuilder extends TemplateModuleBuilder(null, HaskellModuleType
     ProjectManager.getInstance.createProject(name, path)
   }
 
+
+  /** From `stack new` output:
+    * Package names consist of one or more alphanumeric words separated by hyphens.
+    * To avoid ambiguity with version numbers, each of these words must contain at least one letter.
+    */
+  override def validateModuleName(moduleName: String): Boolean = {
+    moduleName.matches("""([a-z0-9]*[a-z]+[a-z0-9]*)(-([a-z0-9]*[a-z]+[a-z0-9]*))*""")
+  }
+
   // To prevent first page of wizard is empty.
   override def isTemplateBased: Boolean = false
 
+  private def createStackProject(project: Project): Unit = {
+    val newProjectTemplateName = HaskellSettingsState.getNewProjectTemplateName
+    val createModuleAction = ApplicationManager.getApplication.executeOnPooledThread(ScalaUtil.runnable {
+      val processOutput = StackCommandLine.run(project, Seq("new", s"${project.getName}", "--bare", newProjectTemplateName, "-p", "author-email:Author email here", "-p", "author-name:Author name here", "-p", "category:App category here", "-p", "copyright:2019 Author name here", "-p", "github-username:Github username here"), timeoutInMillis = 60.seconds.toMillis, enableExtraArguments = false)
+      processOutput match {
+        case None => throw new Exception("Unknown error while creating new Stack project by using Stack command for creating new project on file system")
+        case Some(output) =>
+          if (output.getExitCode != 0) {
+            throw new Exception(s"Error while creating new Stack project: ${output.getStdout} ${output.getStderr}")
+          }
+      }
+    })
+    FutureUtil.waitForValue(project, createModuleAction, "Creating Haskell module", 120) match {
+      case None => HaskellNotificationGroup.logErrorBalloonEvent(project, s"Timeout while creating new Stack project by using: `stack new`")
+      case Some(_) => ()
+    }
+  }
 }
 
 class HaskellModuleWizardStep(wizardContext: WizardContext, haskellModuleBuilder: HaskellModuleBuilder) extends ProjectJdkForModuleStep(wizardContext, HaskellSdkType.getInstance) {
