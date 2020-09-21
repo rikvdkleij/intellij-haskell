@@ -163,7 +163,7 @@ object StackCommandLine {
           val adapter = new MessageViewProcessAdapter(compileContext, compilerTask.getIndicator)
           handler.addProcessListener(adapter)
           handler.startNotify()
-          handler.waitFor()
+          handler.waitFor(30 * 60 + 1000) // Wait max half an hour
           adapter.addLastMessage()
           handler.getExitCode == 0
         }
