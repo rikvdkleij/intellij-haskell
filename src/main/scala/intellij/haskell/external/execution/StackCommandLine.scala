@@ -165,7 +165,7 @@ object StackCommandLine {
           handler.startNotify()
           handler.waitFor(30 * 60 + 1000) // Wait max half an hour
           adapter.addLastMessage()
-          handler.getExitCode == 0
+          handler.getExitCode == 0 || handler.getExitCode == null
         }
       }
 
