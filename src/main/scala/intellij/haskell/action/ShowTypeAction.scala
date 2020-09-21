@@ -20,7 +20,6 @@ import com.intellij.openapi.actionSystem.{AnAction, AnActionEvent}
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.project.Project
 import com.intellij.psi.{PsiElement, PsiFile, TokenType}
-import intellij.haskell.HaskellNotificationGroup
 import intellij.haskell.external.component.{FileModuleIdentifiers, HaskellComponentsManager, StackProjectManager}
 import intellij.haskell.psi.HaskellTypes.HS_NEWLINE
 import intellij.haskell.psi._
@@ -72,10 +71,7 @@ object ShowTypeAction {
       case Left(noInfo) =>
         findTypeSignatureFromScope(psiFile, psiElement) match {
           case Some(typeSignature) => typeSignature
-          case None =>
-            val message = s"Could not determine type for `${psiElement.getText}` | ${noInfo.message}"
-            HaskellNotificationGroup.logWarningBalloonEvent(psiFile.getProject, message)
-            message
+          case None => s"Could not determine type for `${psiElement.getText}` | ${noInfo.message}"
         }
     }
   }
