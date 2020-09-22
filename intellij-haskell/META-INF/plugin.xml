@@ -1,7 +1,7 @@
 <idea-plugin>
     <id>intellij.haskell</id>
     <name>IntelliJ-Haskell</name>
-    <version>1.0.0-beta78</version>
+    <version>1.0.0-beta79</version>
     <vendor email="rikvdkleij@gmail.com">Rik van der Kleij</vendor>
 
     <description><![CDATA[
@@ -20,6 +20,16 @@
     ]]></description>
 
     <change-notes><![CDATA[
+        <p>1.0.0-beta79</p>
+        <ul>
+            <li>Various improvements and fixes</li>
+            <li>Case split support on top level (#581)</li>
+            <li>Fix creating new project without already defined Haskell Stack SDK (#605)</li>
+            <li>Check if module name is a valid package name (#567)</li>
+            <li>Use ANSI escape sequence processor in the initial tool setup progress bar by @ForNeVeR (#585)</li>
+            <li>New high resolution Haskell icons by @Sineaggi</li>
+            <li>Default REPL GHC options set in Haskell Settings</li>
+        </ul>
         <p>1.0.0-beta78</p>
         <ul>
             <li>Reverted the change which removed the Haskell SDK.</li>
@@ -768,5 +778,4 @@
             </action>
         </group>
     </actions>
-    <!--    <depends>com.intellij.modules.java</depends>-->
 </idea-plugin>
