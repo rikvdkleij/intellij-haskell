@@ -33,7 +33,7 @@ import scala.io._
 import scala.jdk.CollectionConverters._
 import scala.sys.process._
 
-abstract class StackRepl(project: Project, projectReplTargets: Option[ProjectReplTargets], extraReplOptions: Seq[String] = Seq(), replTimeout: Int) {
+abstract class StackRepl(project: Project, projectReplTargets: Option[ProjectReplTargets], extraReplOptions: Seq[String] = Seq(), replTimeout: Int, ghcOptions: Seq[String] = Seq()) {
 
   private val stanzaType = projectReplTargets.map(_.stanzaType)
 
@@ -232,7 +232,7 @@ abstract class StackRepl(project: Project, projectReplTargets: Option[ProjectRep
           val replGhciOptionsFilePath = createGhciOptionsFile.getAbsolutePath
           val command = (Seq(stackPath, "repl") ++
             projectReplTargets.map(_.targetsName).toSeq ++
-            Seq("--no-build", "--ghci-options", s"-ghci-script=$replGhciOptionsFilePath", "--silent", "--ghc-options", "-v1") ++ extraOptions).mkString(" ")
+            Seq("--no-build", "--ghci-options", s"-ghci-script=$replGhciOptionsFilePath", "--silent", "--ghc-options", s""""-v1 ${ghcOptions.mkString(" ")}"""") ++ extraOptions).mkString(" ")
 
           logInfo(s"REPL will be started with command: $command")
 

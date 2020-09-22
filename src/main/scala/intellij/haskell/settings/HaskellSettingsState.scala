@@ -78,4 +78,8 @@ object HaskellSettingsState {
   def getExtraStackArguments: Seq[String] = {
     Option.when(state.extraStackArguments.trim.nonEmpty)(state.extraStackArguments).map(_.split("""\s+""").toSeq).getOrElse(Seq())
   }
+
+  def getDefaultGhcOptions: Seq[String] = {
+    state.defaultGhcOptions.split(" ").map(_.trim)
+  }
 }

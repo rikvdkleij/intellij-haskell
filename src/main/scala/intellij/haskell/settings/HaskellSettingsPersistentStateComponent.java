@@ -60,5 +60,6 @@ public class HaskellSettingsPersistentStateComponent implements PersistentStateC
         public String stylishHaskellPath = "";
         public Boolean customTools = false;
         public String extraStackArguments = "";
+        public String defaultGhcOptions = "-Wall -Wcompat -Wincomplete-record-updates -Wincomplete-uni-patterns -Wredundant-constraints";
     }
 }

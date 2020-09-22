@@ -37,6 +37,7 @@ class HaskellConfigurable extends Configurable {
   private val stylishHaskellPathField = new JTextField
   private val useCustomToolsToggle = new JCheckBox
   private val extraStackArgumentsField = new JTextField
+  private val defaultGhcOptionsField = new JTextField
 
   override def getDisplayName: String = {
     "Haskell"
@@ -80,6 +81,7 @@ class HaskellConfigurable extends Configurable {
       toggleToolPathsVisibility()
     }
     extraStackArgumentsField.getDocument.addDocumentListener(docListener)
+    defaultGhcOptionsField.getDocument.addDocumentListener(docListener)
 
     class SettingsGridBagConstraints extends GridBagConstraints {
 
@@ -119,6 +121,7 @@ class HaskellConfigurable extends Configurable {
     }
 
     val labeledControls = List(
+      (new JLabel(DefaultGhcOptions), defaultGhcOptionsField),
       (new JLabel(HlintOptions), hlintOptionsField),
       (new JLabel(ReplTimout), replTimeoutField),
       (new JLabel(ExtraStackArguments), extraStackArgumentsField),
@@ -159,6 +162,7 @@ class HaskellConfigurable extends Configurable {
 
     validateCustomTools()
 
+    state.defaultGhcOptions = defaultGhcOptionsField.getText
     state.replTimeout = validREPLTimeout
     state.hlintOptions = hlintOptionsField.getText
     state.useSystemGhc = useSystemGhcToggle.isSelected
@@ -213,6 +217,7 @@ class HaskellConfigurable extends Configurable {
 
   override def reset(): Unit = {
     val state = HaskellSettingsPersistentStateComponent.getInstance().getState
+    defaultGhcOptionsField.setText(state.defaultGhcOptions)
     hlintOptionsField.setText(state.hlintOptions)
     useSystemGhcToggle.setSelected(state.useSystemGhc)
     replTimeoutField.setText(state.replTimeout.toString)
@@ -227,6 +232,7 @@ class HaskellConfigurable extends Configurable {
 }
 
 object HaskellConfigurable {
+  final val DefaultGhcOptions = "Default REPL GHC options"
   final val ReplTimout = "Background REPL timeout in seconds *"
   final val HlintOptions = "Hlint options"
   final val NewProjectTemplateName = "Template name for new project"

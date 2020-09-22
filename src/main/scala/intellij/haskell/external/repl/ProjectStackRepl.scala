@@ -24,12 +24,13 @@ import intellij.haskell.HaskellNotificationGroup
 import intellij.haskell.external.repl.StackRepl.StackReplOutput
 import intellij.haskell.external.repl.StackReplsManager.ProjectReplTargets
 import intellij.haskell.psi.HaskellPsiUtil
+import intellij.haskell.settings.HaskellSettingsState
 import intellij.haskell.util.{HaskellFileUtil, ScalaFutureUtil}
 
 import scala.concurrent.{Future, blocking}
 import scala.jdk.CollectionConverters._
 
-case class ProjectStackRepl(project: Project, projectReplTargets: ProjectReplTargets, replTimeout: Int) extends StackRepl(project, Some(projectReplTargets), Seq(), replTimeout: Int) {
+case class ProjectStackRepl(project: Project, projectReplTargets: ProjectReplTargets, replTimeout: Int) extends StackRepl(project, Some(projectReplTargets), Seq(), replTimeout: Int, HaskellSettingsState.getDefaultGhcOptions) {
 
   import intellij.haskell.external.repl.ProjectStackRepl._
 
