@@ -1,10 +1,10 @@
 <component name="ProjectRunConfigurationManager">
-    <configuration default="false" name="IntelliJ-Haskell"
-                   type="#org.jetbrains.idea.devkit.run.PluginConfigurationType">
+    <configuration default="false" name="IntelliJ-Haskell" type="#org.jetbrains.idea.devkit.run.PluginConfigurationType"
+                   show_console_on_std_out="true">
         <module name="intellij-haskell"/>
         <option name="VM_PARAMETERS" value="-Xmx512m -Xms256m -ea -Ddump.threads.on.long.write.action.waiting=50"/>
         <option name="PROGRAM_PARAMETERS" value=""/>
-        <alternative-path path="IntelliJ IDEA IU-202.6397.94" alternative-path-enabled="true"/>
+        <alternative-path path="IntelliJ IDEA IU-202.7319.50" alternative-path-enabled="true"/>
         <predefined_log_file enabled="true" id="idea.log"/>
         <method v="2">
             <option name="Make" enabled="true"/>
