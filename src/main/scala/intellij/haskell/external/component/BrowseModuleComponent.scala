@@ -63,13 +63,13 @@ private[component] object BrowseModuleComponent {
   }
 
   def invalidateModuleNames(project: Project, moduleNames: Seq[String]): Unit = {
-    val synchronousCache = Cache.synchronous
+    val synchronousCache = Cache.synchronous()
     val keys = synchronousCache.asMap().keys.filter(k => k.project == project && moduleNames.contains(k.moduleName))
     keys.foreach(synchronousCache.invalidate)
   }
 
   def invalidate(project: Project): Unit = {
-    val synchronousCache = Cache.synchronous
+    val synchronousCache = Cache.synchronous()
     val keys = synchronousCache.asMap().keys.filter(_.project == project)
     synchronousCache.invalidateAll(keys)
   }

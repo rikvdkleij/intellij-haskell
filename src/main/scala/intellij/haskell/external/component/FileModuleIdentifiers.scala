@@ -52,13 +52,13 @@ object FileModuleIdentifiers {
 
   // Invalidate files which have imported this module
   def invalidate(moduleName: String): Unit = {
-    val syncCache = Cache.synchronous
+    val syncCache = Cache.synchronous()
     val keys = syncCache.asMap().filter { case (_, v) => v.exists(_.exists(_.exists(_.exists(_.moduleName == moduleName)))) }.keys
     syncCache.invalidateAll(keys)
   }
 
   def invalidateAll(project: Project): Unit = {
-    val syncCache = Cache.synchronous
+    val syncCache = Cache.synchronous()
     syncCache.asMap().filter(_._1.psiFile.getProject == project).keys.foreach(syncCache.invalidate)
   }
 

@@ -158,14 +158,14 @@ abstract class StackRepl(project: Project, projectReplTargets: Option[ProjectRep
             val timeout = if (ghciCommand == GhciCommand.Load || ghciCommand == GhciCommand.Browse) LoadTimeout else DefaultTimeout
 
             val deadline = timeout.fromNow
-            while (deadline.hasTimeLeft && !hasReachedEndOfOutput && !project.isDisposed) {
+            while (deadline.hasTimeLeft() && !hasReachedEndOfOutput && !project.isDisposed) {
               drainQueues()
 
               // We have to wait...
               Thread.sleep(DelayBetweenReadsInMillis)
             }
 
-            if (deadline.hasTimeLeft) {
+            if (deadline.hasTimeLeft()) {
               logInfo(s"Command $command took + ${(timeout - deadline.timeLeft).toMillis} ms")
               logOutput(errorAsInfo = true)
 
@@ -244,8 +244,8 @@ abstract class StackRepl(project: Project, projectReplTargets: Option[ProjectRep
           val process = processBuilder.run(
             new ProcessIO(
               in => outputStreamQueue.put(in),
-              (out: InputStream) => Source.fromInputStream(out).getLines.foreach(stdoutQueue.add),
-              (err: InputStream) => Source.fromInputStream(err).getLines.foreach(stderrQueue.add)
+              (out: InputStream) => Source.fromInputStream(out).getLines().foreach(stdoutQueue.add),
+              (err: InputStream) => Source.fromInputStream(err).getLines().foreach(stderrQueue.add)
             ))
 
           def isStarted = {
@@ -257,7 +257,7 @@ abstract class StackRepl(project: Project, projectReplTargets: Option[ProjectRep
           }
 
           val deadline = DefaultTimeout.fromNow
-          while (process.isAlive() && deadline.hasTimeLeft && !isStarted && !hasDependencyError && !project.isDisposed) {
+          while (process.isAlive() && deadline.hasTimeLeft() && !isStarted && !hasDependencyError && !project.isDisposed) {
             // We have to wait till REPL is started
             Thread.sleep(DelayBetweenReadsInMillis)
           }
