@@ -4462,7 +4462,7 @@ public class HaskellParser implements PsiParser, LightPsiParser {
     }
 
     /* ********************************************************** */
-    // NEWTYPE onls INSTANCE? (onls pragma)? (onls ccontext onls DOUBLE_RIGHT_ARROW)? onls simpletype onls EQUAL onls newconstr (onl DERIVING onl NEWTYPE onl atype)?
+    // NEWTYPE onls INSTANCE? (onls pragma)? (onls ccontext onls DOUBLE_RIGHT_ARROW)? onls simpletype onls EQUAL onls newconstr (onl DERIVING (onl NEWTYPE)? onl atype)?
     public static boolean newtype_declaration(PsiBuilder b, int l) {
         if (!recursion_guard_(b, l, "newtype_declaration")) return false;
         if (!nextTokenIs(b, HS_NEWTYPE)) return false;
@@ -4529,24 +4529,41 @@ public class HaskellParser implements PsiParser, LightPsiParser {
         return r;
     }
 
-    // (onl DERIVING onl NEWTYPE onl atype)?
+    // (onl DERIVING (onl NEWTYPE)? onl atype)?
     private static boolean newtype_declaration_11(PsiBuilder b, int l) {
         if (!recursion_guard_(b, l, "newtype_declaration_11")) return false;
         newtype_declaration_11_0(b, l + 1);
         return true;
     }
 
-    // onl DERIVING onl NEWTYPE onl atype
+    // onl DERIVING (onl NEWTYPE)? onl atype
     private static boolean newtype_declaration_11_0(PsiBuilder b, int l) {
         if (!recursion_guard_(b, l, "newtype_declaration_11_0")) return false;
         boolean r;
         Marker m = enter_section_(b);
         r = onl(b, l + 1);
         r = r && consumeToken(b, HS_DERIVING);
-        r = r && onl(b, l + 1);
-        r = r && consumeToken(b, HS_NEWTYPE);
+        r = r && newtype_declaration_11_0_2(b, l + 1);
         r = r && onl(b, l + 1);
         r = r && atype(b, l + 1);
+        exit_section_(b, m, null, r);
+        return r;
+    }
+
+    // (onl NEWTYPE)?
+    private static boolean newtype_declaration_11_0_2(PsiBuilder b, int l) {
+        if (!recursion_guard_(b, l, "newtype_declaration_11_0_2")) return false;
+        newtype_declaration_11_0_2_0(b, l + 1);
+        return true;
+    }
+
+    // onl NEWTYPE
+    private static boolean newtype_declaration_11_0_2_0(PsiBuilder b, int l) {
+        if (!recursion_guard_(b, l, "newtype_declaration_11_0_2_0")) return false;
+        boolean r;
+        Marker m = enter_section_(b);
+        r = onl(b, l + 1);
+        r = r && consumeToken(b, HS_NEWTYPE);
         exit_section_(b, m, null, r);
         return r;
     }
