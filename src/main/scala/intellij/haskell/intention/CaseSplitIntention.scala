@@ -22,6 +22,7 @@ import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.project.Project
 import com.intellij.psi.PsiElement
 import com.intellij.psi.impl.source.tree.TreeUtil
+import com.intellij.psi.tree.TokenSet
 import com.intellij.psi.util.PsiTreeUtil
 import intellij.haskell.external.component.{HaskellComponentsManager, StackProjectManager}
 import intellij.haskell.psi._
@@ -158,18 +159,35 @@ object CaseSplitIntention {
   }
 
   private def createPattern(project: Project, constr: HaskellCompositeElement, currentLineElements: Seq[HaskellNamedElement]): PsiElement = {
+    def defaultPatternNamedElements(psiElement: PsiElement) = {
+      val elements = HaskellPsiUtil.findNamedElements(psiElement)
+      if (elements.exists(_.isInstanceOf[HaskellConsym])) {
+        elements.filterNot(_.isInstanceOf[HaskellConsym])
+      } else {
+        elements.tail
+      }
+    }
+
     val pattern = constr.copy()
     val currentNames = currentLineElements.map(_.getName)
     val patternNames = PatternNames.filterNot(currentNames.contains)
-    val namedElements = HaskellPsiUtil.findNamedElements(pattern)
-    val hasConssym = namedElements.exists(_.isInstanceOf[HaskellConsym])
+
+    val namedElements = pattern match {
+      case c: HaskellConstr => Option(c.getConstr1) match {
+        case Some(constr1: HaskellConstr1) =>
+          constr1.getFielddeclList.asScala.map(_.getTtype).foreach(_.delete())
+          constr1.getFielddeclList.asScala.flatMap(_.getNode.getChildren(TokenSet.create(HaskellTypes.HS_COLON_COLON))).foreach(_.getPsi.delete())
+          constr1.getNode.getChildren(TokenSet.create(HaskellTypes.HS_COMMA, HaskellTypes.HS_LEFT_BRACE, HaskellTypes.HS_RIGHT_BRACE)).foreach(_.getPsi.delete())
+          constr1.getFielddeclList.asScala.flatMap(_.getQNameList.asScala).map(_.getIdentifierElement)
+        case _ => defaultPatternNamedElements(pattern)
+      }
+      case _ => defaultPatternNamedElements(pattern)
+    }
 
     if (namedElements.isEmpty) {
       // Do nothing
-    } else if (hasConssym) {
-      namedElements.filterNot(_.isInstanceOf[HaskellConsym]).zip(patternNames).map { case (e, n) => e.replace(HaskellElementFactory.createVarid(project, n).get) }
     } else {
-      namedElements.tail.zip(patternNames).map { case (e, n) =>
+      namedElements.zip(patternNames).map { case (e, n) =>
         HaskellPsiUtil.findTtype(e).find(e => Option(e.getNextSibling).map(_.getNode).exists(_.getElementType == HaskellTypes.HS_RIGHT_BRACKET)) match {
           case Some(ttype) =>
             ttype.getNextSibling.delete()
