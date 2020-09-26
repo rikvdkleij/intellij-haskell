@@ -109,7 +109,13 @@ private[external] class StackReplsManager(val project: Project) {
 
   val componentTargets: Iterable[ComponentTarget] = StackReplsManager.createComponentTargets(modulePackageInfos)
 
-  val projectReplTargets: Iterable[ProjectReplTargets] = componentTargets.groupBy(_.stanzaType).map(x => ProjectReplTargets(x._1, x._2.toSeq))
+  val projectReplTargets: Iterable[ProjectReplTargets] = componentTargets.groupBy(_.stanzaType).flatMap { case (stanzaType, targets) =>
+    if (stanzaType == LibType) {
+      Seq(ProjectReplTargets(stanzaType, targets.toSeq))
+    } else {
+      targets.map(target => ProjectReplTargets(stanzaType, Seq(target)))
+    }
+  }
 
   def getRunningProjectRepls: Iterable[ProjectStackRepl] = {
     startedTargetProjectRepls.values.filter(_.available)

@@ -83,7 +83,7 @@ abstract class StackRepl(project: Project, projectReplTargets: Option[ProjectRep
 
   protected def clearLoadedModules(): Unit
 
-  def getComponentName: String = projectReplTargets.map(_.stanzaType).map(t => "project-stack-repl-" + t).getOrElse("global-stack-repl")
+  def getComponentName: String = projectReplTargets.map(_.targetsName).map(name => "project-stack-repl-" + name).getOrElse("global-stack-repl")
 
   def isGlobalRepl: Boolean = projectReplTargets.isEmpty
 
