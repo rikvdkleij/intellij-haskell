@@ -69,13 +69,13 @@ object CaseSplitIntention {
 
     case class TopLevelNamed(namedElement: HaskellNamedElement) extends TopLevel
 
-    case class CaseOf(psiElement: PsiElement) extends CaseSplitKind
+    case class SubTopLevel(psiElement: PsiElement) extends CaseSplitKind
 
   }
 
   def caseSplit(project: Project, psiElement: PsiElement, execute: Boolean = false): Boolean = {
     (for {
-      caseSplitKind <- topLevelCaseSplitting(psiElement).orElse(caseOfCaseSplitting(psiElement))
+      caseSplitKind <- subTopLevelSplitting(psiElement).orElse(topLevelCaseSplitting(psiElement))
       typeInfo <- HaskellComponentsManager.findTypeInfoForElement(psiElement).toOption
       currentDeclarationLine <- HaskellPsiUtil.findTopDeclarationLineParent(psiElement)
       typeName = typeInfo.typeSignature.split("::").last.trim
@@ -84,7 +84,7 @@ object CaseSplitIntention {
       if (execute) {
         WriteCommandAction.runWriteCommandAction(project, ScalaUtil.runnable {
           caseSplitKind match {
-            case CaseOf(element) => doCaseSplitCase(project, element, constrs)
+            case SubTopLevel(element) => doSubTopLevelSpitCase(project, element, constrs)
             case tl: TopLevel => doTopLevelSplitCase(tl, project, constrs, currentDeclarationLine)
           }
         })
@@ -92,14 +92,14 @@ object CaseSplitIntention {
     }).isDefined
   }
 
-  private def caseOfCaseSplitting(psiElement: PsiElement): Option[CaseSplitKind] = {
+  private def subTopLevelSplitting(psiElement: PsiElement): Option[CaseSplitKind] = {
     if (psiElement.getNode.getElementType == HaskellTypes.HS_UNDERSCORE) {
-      Option(TreeUtil.findSiblingBackward(psiElement.getNode, HaskellTypes.HS_OF)).flatMap(x => Option(TreeUtil.findSibling(x, HaskellTypes.HS_NEWLINE))).map(_ => CaseOf(psiElement))
+      Option(TreeUtil.findSiblingBackward(psiElement.getNode, TokenSet.create(HaskellTypes.HS_WHERE, HaskellTypes.HS_OF))).flatMap(x => Option(TreeUtil.findSibling(x, HaskellTypes.HS_NEWLINE))).map(_ => SubTopLevel(psiElement))
     } else {
       for {
         nameElement <- HaskellPsiUtil.findQName(psiElement)
-        _ <- Option(PsiTreeUtil.findSiblingBackward(nameElement, HaskellTypes.HS_OF, null)).flatMap(x => Option(PsiTreeUtil.findSiblingForward(x, HaskellTypes.HS_NEWLINE, null)))
-      } yield CaseOf(nameElement)
+        _ <- Option(TreeUtil.findSiblingBackward(nameElement.getNode, TokenSet.create(HaskellTypes.HS_WHERE, HaskellTypes.HS_OF))).flatMap(x => Option(PsiTreeUtil.findSiblingForward(x.getPsi, HaskellTypes.HS_NEWLINE, null)))
+      } yield SubTopLevel(nameElement)
     }
   }
 
@@ -111,14 +111,20 @@ object CaseSplitIntention {
     }
   }
 
-  private def doTopLevelSplitCase(topLevel: TopLevel, project: Project, constrs: Seq[HaskellCompositeElement], currentDeclarationLine: HaskellTopDeclarationLine): Unit = {
+  private def doTopLevelSplitCase(topLevel: TopLevel, project: Project, constrs: Seq[HaskellCompositeElement], currentDeclarationLine: HaskellTopDeclaration): Unit = {
     constrs.foreach { constr =>
-      val newLine = currentDeclarationLine.getParent.addAfter(currentDeclarationLine.copy, currentDeclarationLine)
+      val newLine = if (currentDeclarationLine.getNode.getChildren(TokenSet.create(HaskellTypes.HS_NEWLINE)).nonEmpty) {
+        currentDeclarationLine.getParent.addAfter(currentDeclarationLine.copy, currentDeclarationLine)
+      } else {
+        val nl = HaskellElementFactory.createNewLine(project)
+        val line = currentDeclarationLine.getParent.addAfter(nl, currentDeclarationLine)
+        currentDeclarationLine.getParent.addAfter(currentDeclarationLine.copy(), line)
+      }
       val elementToReplace = topLevel match {
         case TopLevelUnderscore(psiElement) =>
-          val firstChild = currentDeclarationLine.getFirstChild.getFirstChild
+          val firstChild = currentDeclarationLine.getFirstChild
           val elementToReplaceIndex = firstChild.getNode.getChildren(null).indexWhere(_ == psiElement.getNode)
-          newLine.getFirstChild.getFirstChild.getNode.getChildren(null).array.apply(elementToReplaceIndex).getPsi
+          newLine.getFirstChild.getNode.getChildren(null).array.apply(elementToReplaceIndex).getPsi
         case TopLevelNamed(psiElement) =>
           val elementToReplaceIndex = HaskellPsiUtil.findNamedElements(currentDeclarationLine).toArray.indexWhere(_ == psiElement)
           HaskellPsiUtil.findNamedElements(newLine).toArray.apply(elementToReplaceIndex)
@@ -134,15 +140,15 @@ object CaseSplitIntention {
     currentDeclarationLine.delete()
   }
 
-  private def doCaseSplitCase(project: Project, psiElement: PsiElement, constrs: Seq[HaskellCompositeElement]): Unit = {
+  private def doSubTopLevelSpitCase(project: Project, psiElement: PsiElement, constrs: Seq[HaskellCompositeElement]): Unit = {
     for {
       expression <- HaskellPsiUtil.findExpression(psiElement)
       psi1 <- Option(TreeUtil.findSiblingBackward(psiElement.getNode, HaskellTypes.HS_NEWLINE)).map(_.getPsi)
-      psi2 = Option(TreeUtil.findSibling(psiElement.getNode, HaskellTypes.HS_NEWLINE)).map(_.getPsi).getOrElse(expression.getLastChild)
+      psi2 = Option(TreeUtil.findSibling(psiElement.getNode, HaskellTypes.HS_NEWLINE)).flatMap(e => Option(e.getPsi.getPrevSibling)).getOrElse(expression.getLastChild)
       elements = PsiTreeUtil.getElementsOfRange(psi1, psi2)
     } yield {
       for (constr <- constrs) {
-        val pattern = createPattern(project, constr, elements.asScala.flatMap(e => HaskellPsiUtil.findNamedElement(e)).toSeq)
+        val pattern = createPattern(project, constr, elements.asScala.flatMap(e => HaskellPsiUtil.findNamedElements(e)).toSeq)
         elements.forEach(e =>
           if (e == psiElement) {
             val newElement = expression.add(pattern)
@@ -164,7 +170,11 @@ object CaseSplitIntention {
       if (elements.exists(_.isInstanceOf[HaskellConsym])) {
         elements.filterNot(_.isInstanceOf[HaskellConsym])
       } else {
-        elements.tail
+        if (elements.nonEmpty) {
+          elements.tail
+        } else {
+          elements
+        }
       }
     }
 
@@ -175,10 +185,11 @@ object CaseSplitIntention {
     val namedElements = pattern match {
       case c: HaskellConstr => Option(c.getConstr1) match {
         case Some(constr1: HaskellConstr1) =>
-          constr1.getFielddeclList.asScala.map(_.getTtype).foreach(_.delete())
-          constr1.getFielddeclList.asScala.flatMap(_.getNode.getChildren(TokenSet.create(HaskellTypes.HS_COLON_COLON))).foreach(_.getPsi.delete())
+          val fieldDecls = constr1.getFielddeclList.asScala
+          fieldDecls.map(_.getTtype).foreach(_.delete())
+          fieldDecls.flatMap(_.getNode.getChildren(TokenSet.create(HaskellTypes.HS_COLON_COLON))).foreach(_.getPsi.delete())
           constr1.getNode.getChildren(TokenSet.create(HaskellTypes.HS_COMMA, HaskellTypes.HS_LEFT_BRACE, HaskellTypes.HS_RIGHT_BRACE)).foreach(_.getPsi.delete())
-          constr1.getFielddeclList.asScala.flatMap(_.getQNameList.asScala).map(_.getIdentifierElement)
+          fieldDecls.flatMap(_.getQNameList.asScala).map(_.getIdentifierElement)
         case _ => defaultPatternNamedElements(pattern)
       }
       case _ => defaultPatternNamedElements(pattern)
@@ -200,7 +211,7 @@ object CaseSplitIntention {
     pattern
   }
 
-  private def findDataConstructors(psiElement: HaskellTopDeclarationLine, typeName: String): Option[Seq[HaskellConstr]] = {
+  private def findDataConstructors(psiElement: HaskellTopDeclaration, typeName: String): Option[Seq[HaskellConstr]] = {
     typeName match {
       case s"[$x]" =>
         val d = HaskellElementFactory.createDataDeclaration(psiElement.getProject, "data [] a = [] | a : a") // Just a hack to create the right pattern in createPattern
@@ -217,20 +228,20 @@ object CaseSplitIntention {
     }
   }
 
-  private def findDefinitionLocation(psiElement: HaskellTopDeclarationLine, typeName: String): Option[HaskellNamedElement] = {
+  private def findDefinitionLocation(psiElement: HaskellTopDeclaration, typeName: String): Option[HaskellNamedElement] = {
     findTypeSignatureDeclaration(psiElement).flatMap(d => HaskellPsiUtil.findNamedElements(d).find(_.getName == typeName))
   }
 
   @tailrec
-  private def findTypeSignatureDeclaration(currentDeclarationLine: HaskellTopDeclarationLine): Option[HaskellTopDeclarationLine] = {
-    Option(PsiTreeUtil.findSiblingBackward(currentDeclarationLine, HaskellTypes.HS_TOP_DECLARATION_LINE, null)) match {
-      case Some(d: HaskellTopDeclarationLine) if Option(d.getFirstChild).flatMap(c => Option(c.getFirstChild)).exists(_.isInstanceOf[HaskellTypeSignature]) => Some(d)
-      case Some(d: HaskellTopDeclarationLine) => findTypeSignatureDeclaration(d)
+  private def findTypeSignatureDeclaration(currentDeclarationLine: HaskellTopDeclaration): Option[HaskellTopDeclaration] = {
+    Option(PsiTreeUtil.findSiblingBackward(currentDeclarationLine, HaskellTypes.HS_TOP_DECLARATION, null)) match {
+      case Some(d: HaskellTopDeclaration) if Option(d.getFirstChild).exists(_.isInstanceOf[HaskellTypeSignature]) => Some(d)
+      case Some(d: HaskellTopDeclaration) => findTypeSignatureDeclaration(d)
       case _ => None
     }
   }
 
-  private def findNewtypeConstr(psiElement: HaskellTopDeclarationLine, typeName: String): Option[Seq[HaskellNewconstr]] = {
+  private def findNewtypeConstr(psiElement: HaskellTopDeclaration, typeName: String): Option[Seq[HaskellNewconstr]] = {
     findDefinitionLocation(psiElement, typeName) match {
       case Some(e) =>
         HaskellPsiUtil.findNamedElement(e).flatMap(e => Option(e.getReference)).flatMap(r => Option(r.resolve)) match {

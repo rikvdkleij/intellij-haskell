@@ -64,7 +64,7 @@ module_declaration          ::= MODULE modid onl pragma? onl (exports onl)? WHER
 
 private body                ::= import_declarations? onl top_declarations onl
 import_declarations         ::= import_declaration (onl import_declaration)* (DIRECTIVE | INCLUDE_DIRECTIVE)*
-private top_declarations    ::= (top_declaration_line onl)* top_declaration?
+private top_declarations    ::= (top_declaration onl)* top_declaration?
 
 import_declaration          ::= IMPORT (onls pragma)? (onls import_qualified)? (onls import_package_name)? onls modid (onls import_qualified_as)? (onls import_spec)? NEWLINE?   {methods=[getModuleName] pin=1}
 import_qualified            ::= "qualified"
@@ -80,10 +80,9 @@ import_hiding               ::= "hiding"
 import_id                   ::= TYPE? (q_name LEFT_PAREN onls dot_dot onls RIGHT_PAREN | q_name onls LEFT_PAREN onls (q_name onls (COMMA onls q_name onls)* onls)? RIGHT_PAREN | q_name)
 import_package_name         ::= text_literal
 
-top_declaration_line        ::= top_declaration SEMICOLON? NEWLINE
-top_declaration             ::= type_declaration | data_declaration | newtype_declaration | class_declaration | instance_declaration | default_declaration |
+top_declaration             ::= (type_declaration | data_declaration | newtype_declaration | class_declaration | instance_declaration | default_declaration |
                                   foreign_declaration | type_family_declaration | deriving_declaration | type_instance_declaration | type_signature |
-                                  pragma | fixity_declaration | expression | DIRECTIVE
+                                  pragma | fixity_declaration | expression | DIRECTIVE) SEMICOLON? NEWLINE?
 
 type_declaration            ::= TYPE onls simpletype onls COLON_COLON onls ttype |
                                   TYPE onls simpletype onls EQUAL onls ttype onls VERTICAL_BAR q_name RIGHT_ARROW q_name |

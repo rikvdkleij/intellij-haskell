@@ -17,10 +17,7 @@ public interface HaskellModuleBody extends HaskellCompositeElement {
     @NotNull
     List<HaskellPragma> getPragmaList();
 
-    @Nullable
-    HaskellTopDeclaration getTopDeclaration();
-
     @NotNull
-    List<HaskellTopDeclarationLine> getTopDeclarationLineList();
+    List<HaskellTopDeclaration> getTopDeclarationList();
 
 }

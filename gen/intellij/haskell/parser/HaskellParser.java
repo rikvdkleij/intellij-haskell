@@ -5679,13 +5679,26 @@ public class HaskellParser implements PsiParser, LightPsiParser {
     }
 
     /* ********************************************************** */
-    // type_declaration | data_declaration | newtype_declaration | class_declaration | instance_declaration | default_declaration |
+    // (type_declaration | data_declaration | newtype_declaration | class_declaration | instance_declaration | default_declaration |
     //                                   foreign_declaration | type_family_declaration | deriving_declaration | type_instance_declaration | type_signature |
-    //                                   pragma | fixity_declaration | expression | DIRECTIVE
+    //                                   pragma | fixity_declaration | expression | DIRECTIVE) SEMICOLON? NEWLINE?
     public static boolean top_declaration(PsiBuilder b, int l) {
         if (!recursion_guard_(b, l, "top_declaration")) return false;
         boolean r;
         Marker m = enter_section_(b, l, _NONE_, HS_TOP_DECLARATION, "<top declaration>");
+        r = top_declaration_0(b, l + 1);
+        r = r && top_declaration_1(b, l + 1);
+        r = r && top_declaration_2(b, l + 1);
+        exit_section_(b, l, m, r, false, null);
+        return r;
+    }
+
+    // type_declaration | data_declaration | newtype_declaration | class_declaration | instance_declaration | default_declaration |
+    //                                   foreign_declaration | type_family_declaration | deriving_declaration | type_instance_declaration | type_signature |
+    //                                   pragma | fixity_declaration | expression | DIRECTIVE
+    private static boolean top_declaration_0(PsiBuilder b, int l) {
+        if (!recursion_guard_(b, l, "top_declaration_0")) return false;
+        boolean r;
         r = type_declaration(b, l + 1);
         if (!r) r = data_declaration(b, l + 1);
         if (!r) r = newtype_declaration(b, l + 1);
@@ -5701,32 +5714,25 @@ public class HaskellParser implements PsiParser, LightPsiParser {
         if (!r) r = fixity_declaration(b, l + 1);
         if (!r) r = expression(b, l + 1);
         if (!r) r = consumeToken(b, HS_DIRECTIVE);
-        exit_section_(b, l, m, r, false, null);
-        return r;
-    }
-
-    /* ********************************************************** */
-    // top_declaration SEMICOLON? NEWLINE
-    public static boolean top_declaration_line(PsiBuilder b, int l) {
-        if (!recursion_guard_(b, l, "top_declaration_line")) return false;
-        boolean r;
-        Marker m = enter_section_(b, l, _NONE_, HS_TOP_DECLARATION_LINE, "<top declaration line>");
-        r = top_declaration(b, l + 1);
-        r = r && top_declaration_line_1(b, l + 1);
-        r = r && consumeToken(b, HS_NEWLINE);
-        exit_section_(b, l, m, r, false, null);
         return r;
     }
 
     // SEMICOLON?
-    private static boolean top_declaration_line_1(PsiBuilder b, int l) {
-        if (!recursion_guard_(b, l, "top_declaration_line_1")) return false;
+    private static boolean top_declaration_1(PsiBuilder b, int l) {
+        if (!recursion_guard_(b, l, "top_declaration_1")) return false;
         consumeToken(b, HS_SEMICOLON);
         return true;
     }
 
+    // NEWLINE?
+    private static boolean top_declaration_2(PsiBuilder b, int l) {
+        if (!recursion_guard_(b, l, "top_declaration_2")) return false;
+        consumeToken(b, HS_NEWLINE);
+        return true;
+    }
+
     /* ********************************************************** */
-    // (top_declaration_line onl)* top_declaration?
+    // (top_declaration onl)* top_declaration?
     static boolean top_declarations(PsiBuilder b, int l) {
         if (!recursion_guard_(b, l, "top_declarations")) return false;
         boolean r;
@@ -5737,7 +5743,7 @@ public class HaskellParser implements PsiParser, LightPsiParser {
         return r;
     }
 
-    // (top_declaration_line onl)*
+    // (top_declaration onl)*
     private static boolean top_declarations_0(PsiBuilder b, int l) {
         if (!recursion_guard_(b, l, "top_declarations_0")) return false;
         while (true) {
@@ -5748,12 +5754,12 @@ public class HaskellParser implements PsiParser, LightPsiParser {
         return true;
     }
 
-    // top_declaration_line onl
+    // top_declaration onl
     private static boolean top_declarations_0_0(PsiBuilder b, int l) {
         if (!recursion_guard_(b, l, "top_declarations_0_0")) return false;
         boolean r;
         Marker m = enter_section_(b);
-        r = top_declaration_line(b, l + 1);
+        r = top_declaration(b, l + 1);
         r = r && onl(b, l + 1);
         exit_section_(b, m, null, r);
         return r;

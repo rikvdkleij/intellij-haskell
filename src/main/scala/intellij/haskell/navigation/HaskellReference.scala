@@ -104,8 +104,9 @@ class HaskellReference(element: HaskellNamedElement, textRange: TextRange) exten
               case Some(ts) =>
 
                 def find(e: PsiElement): Option[HaskellNamedElement] = {
-                  Option(PsiTreeUtil.findSiblingForward(e, HaskellTypes.HS_TOP_DECLARATION_LINE, null)) match {
-                    case Some(d) if Option(d.getFirstChild).flatMap(c => Option(c.getFirstChild)).exists(_.isInstanceOf[HaskellExpression]) => HaskellPsiUtil.findNamedElements(d).headOption.find(_.getName == ne.getName)
+                  Option(PsiTreeUtil.findSiblingForward(e, HaskellTypes.HS_TOP_DECLARATION, null)) match {
+                    case Some(d) if Option(d.getFirstChild).exists(_.isInstanceOf[HaskellExpression]) =>
+                      HaskellPsiUtil.findNamedElements(d).headOption.find(_.getName == ne.getName)
                     case _ => None
                   }
                 }
@@ -114,19 +115,15 @@ class HaskellReference(element: HaskellNamedElement, textRange: TextRange) exten
 
                 // For not exported identifiers the definition location for the type signature has to be resolved "manually".
                 // Making no exception and doing this manually resolving for all type signatures.
-                Option(ts.getParent).flatMap(p => Option(p.getParent)) match {
+                Option(ts.getParent) match {
                   case Some(p) =>
                     find(p) match {
                       case Some(ee) => Some(HaskellNamedElementResolveResult(ee))
                       case None =>
-                        //                        ne match {
-                        //                          case _: HaskellConid | _: HaskellConsym =>
                         resolveReference(ne, psiFile, project, None) match {
                           case Right(r) => Some(HaskellNamedElementResolveResult(r))
                           case Left(noInfo) => Some(NoResolveResult(noInfo))
                         }
-                      //                          case _ => Some(HaskellNamedElementResolveResult(ne))
-                      //                        }
                     }
                   case None => resolveReference(ne, psiFile, project, None) match {
                     case Right(r) => Some(HaskellNamedElementResolveResult(r))
