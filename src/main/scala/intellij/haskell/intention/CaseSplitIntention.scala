@@ -160,7 +160,7 @@ object CaseSplitIntention {
           }
         )
       }
-      elements.asScala.foreach(e => if (e.isValid) e.delete())
+      expression.deleteChildRange(psi1, psi2)
     }
   }
 
