@@ -1,7 +1,7 @@
 <idea-plugin>
     <id>intellij.haskell</id>
     <name>IntelliJ-Haskell</name>
-    <version>1.0.0-beta79</version>
+    <version>1.0.0-beta80</version>
     <vendor email="rikvdkleij@gmail.com">Rik van der Kleij</vendor>
 
     <description><![CDATA[
@@ -20,10 +20,16 @@
     ]]></description>
 
     <change-notes><![CDATA[
+        <p>1.0.0-beta80</p>
+           <ul>
+            <li>Improved support for top-level case splitting (#609, #611)</li>
+            <li>Fix parser issue.</li>
+            <li>One REPL per non-library components to prevent conflicts (#608)</li>
+        </ul>
         <p>1.0.0-beta79</p>
         <ul>
             <li>Various improvements and fixes</li>
-            <li>Case split support on top level (#581)</li>
+            <li>Case split support on top-level (#581)</li>
             <li>Fix creating new project without already defined Haskell Stack SDK (#605)</li>
             <li>Check if module name is a valid package name (#567)</li>
             <li>Use ANSI escape sequence processor in the initial tool setup progress bar by @ForNeVeR (#585)</li>
