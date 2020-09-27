@@ -73,7 +73,7 @@ private[component] object DefinitionLocationComponent {
     val keys = Cache.asMap().collect { case (k, v) if k.psiFile.getProject == project =>
       if (checkValidKey(k)) {
         v.toOption match {
-          case Some(definitionLocation) if checkValidLocation(definitionLocation) && checkValidName(k, definitionLocation) => None
+          case Some(definitionLocation) if checkValidLocation(definitionLocation) && checkValidKey(k) && checkValidName(k, definitionLocation) => None
           case _ => Some(k)
         }
       } else {
@@ -83,30 +83,26 @@ private[component] object DefinitionLocationComponent {
     Cache.invalidateAll(keys)
   }
 
-  private def checkValidKey(key: Key): Boolean = {
+  private def ignoreException(action: => Boolean): Boolean = {
     try {
-      ApplicationUtil.runReadAction(key.qualifiedNameElement.isValid) && ApplicationUtil.runReadAction(key.qualifiedNameElement.getIdentifierElement.isValid)
+      action
     } catch {
       case _: Throwable => false
     }
   }
 
+  private def checkValidKey(key: Key): Boolean = {
+    ApplicationUtil.runReadAction(ignoreException(key.qualifiedNameElement.isValid)) && ApplicationUtil.runReadAction(ignoreException(key.qualifiedNameElement.getIdentifierElement.isValid))
+  }
+
   private def checkValidLocation(definitionLocation: DefinitionLocation): Boolean = {
-    try {
-      ApplicationUtil.runReadAction(definitionLocation.namedElement.isValid)
-    } catch {
-      case _: Exception => false
-    }
+    ApplicationUtil.runReadAction(ignoreException(definitionLocation.namedElement.isValid))
   }
 
   private def checkValidName(key: Key, definitionLocation: DefinitionLocation): Boolean = {
-    try {
-      val keyName = ApplicationUtil.runReadAction(Option(key.qualifiedNameElement.getIdentifierElement.getName))
-      keyName == ApplicationUtil.runReadAction(Option(definitionLocation.namedElement.getName)) &&
-        keyName.contains(definitionLocation.originalName)
-    } catch {
-      case _: Exception => false
-    }
+    val keyName = ApplicationUtil.runReadAction(Option(key.qualifiedNameElement.getIdentifierElement.getName))
+    keyName == ApplicationUtil.runReadAction(Option(definitionLocation.namedElement.getName)) &&
+      keyName.contains(definitionLocation.originalName)
   }
 
   private def findDefinitionLocationResult(key: Key): DefinitionLocationResult = {
