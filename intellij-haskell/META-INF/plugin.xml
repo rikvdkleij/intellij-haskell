@@ -1,7 +1,7 @@
 <idea-plugin>
     <id>intellij.haskell</id>
     <name>IntelliJ-Haskell</name>
-    <version>1.0.0-beta80</version>
+    <version>1.0.0-beta81</version>
     <vendor email="rikvdkleij@gmail.com">Rik van der Kleij</vendor>
 
     <description><![CDATA[
@@ -20,6 +20,10 @@
     ]]></description>
 
     <change-notes><![CDATA[
+        <p>1.0.0-beta81</p>
+           <ul>
+            <li>Improved support for top-level case splitting (#609)</li>
+        </ul>
         <p>1.0.0-beta80</p>
            <ul>
             <li>Improved support for top-level case splitting (#609, #611)</li>
