@@ -27,12 +27,6 @@ public interface HaskellTtype extends HaskellCompositeElement {
     List<HaskellTtype> getTtypeList();
 
     @NotNull
-    List<HaskellTtype1> getTtype1List();
-
-    @NotNull
-    List<HaskellTtype2> getTtype2List();
-
-    @NotNull
     List<HaskellTypeSignature> getTypeSignatureList();
 
 }

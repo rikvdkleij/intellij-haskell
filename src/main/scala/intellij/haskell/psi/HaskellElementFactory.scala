@@ -57,6 +57,10 @@ object HaskellElementFactory {
     createElement(project, name, classOf[HaskellQualifiedNameElement])
   }
 
+  def createQNameElement(project: Project, name: String): Option[HaskellQName] = {
+    createElement(project, name, classOf[HaskellQName])
+  }
+
   def createBody(project: Project, body: String): Option[HaskellModuleBody] = {
     createElement(project, body, classOf[HaskellModuleBody])
   }

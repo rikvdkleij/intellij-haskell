@@ -182,9 +182,8 @@ private atype               ::= (("forall" | FORALL) onl (((q_name onls)+ LEFT_P
                                   QUOTE? LEFT_BRACKET oonls ttype (oonls COMMA oonls ttype)* oonls RIGHT_BRACKET |
                                   QUOTE? ((deriving_via | q_name) (oonls COLON_COLON oonls ttype)?)+ | QUOTE? LEFT_PAREN RIGHT_PAREN | QUOTE? LEFT_BRACKET RIGHT_BRACKET | LEFT_PAREN COMMA+ RIGHT_PAREN  | literal | LEFT_PAREN RIGHT_ARROW RIGHT_PAREN) !COLON_COLON
 
-ttype1                      ::= (onl "#")? onl ttype ((onl COMMA)? onl ttype)* onl ("#" onl)?
-ttype2                      ::= ("forall" | FORALL)? onl ttype (onl DOUBLE_RIGHT_ARROW onl ttype)? onl
-
+private ttype1              ::= (onl "#")? onl ttype ((onl COMMA)? onl ttype)* onl ("#" onl)?
+private ttype2              ::= ("forall" | FORALL)? onl ttype (onl DOUBLE_RIGHT_ARROW onl ttype)? onl
 
 ttype                       ::= "!"? (btype (oonls RIGHT_ARROW oonls ttype)* | list_type q_name* | LEFT_PAREN RIGHT_ARROW RIGHT_PAREN)
 

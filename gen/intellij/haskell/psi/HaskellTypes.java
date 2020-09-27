@@ -79,8 +79,6 @@ public interface HaskellTypes {
     IElementType HS_TEXT_LITERAL = new HaskellCompositeElementType("HS_TEXT_LITERAL");
     IElementType HS_TOP_DECLARATION = new HaskellCompositeElementType("HS_TOP_DECLARATION");
     IElementType HS_TTYPE = new HaskellCompositeElementType("HS_TTYPE");
-    IElementType HS_TTYPE_1 = new HaskellCompositeElementType("HS_TTYPE_1");
-    IElementType HS_TTYPE_2 = new HaskellCompositeElementType("HS_TTYPE_2");
     IElementType HS_TYPE_DECLARATION = new HaskellCompositeElementType("HS_TYPE_DECLARATION");
     IElementType HS_TYPE_EQUALITY = new HaskellCompositeElementType("HS_TYPE_EQUALITY");
     IElementType HS_TYPE_FAMILY_DECLARATION = new HaskellCompositeElementType("HS_TYPE_FAMILY_DECLARATION");
@@ -312,10 +310,6 @@ public interface HaskellTypes {
                 return new HaskellTopDeclarationImpl(node);
             } else if (type == HS_TTYPE) {
                 return new HaskellTtypeImpl(node);
-            } else if (type == HS_TTYPE_1) {
-                return new HaskellTtype1Impl(node);
-            } else if (type == HS_TTYPE_2) {
-                return new HaskellTtype2Impl(node);
             } else if (type == HS_TYPE_DECLARATION) {
                 return new HaskellTypeDeclarationImpl(node);
             } else if (type == HS_TYPE_EQUALITY) {

@@ -102,6 +102,10 @@ object HaskellPsiUtil {
     PsiTreeUtil.findChildrenOfType(psiElement, classOf[HaskellNamedElement]).asScala
   }
 
+  def findQNameElements(psiElement: PsiElement): Iterable[HaskellQName] = {
+    PsiTreeUtil.findChildrenOfType(psiElement, classOf[HaskellQName]).asScala
+  }
+
   def findQualifiedNamedElements(psiElement: PsiElement): Iterable[HaskellQualifiedNameElement] = {
     PsiTreeUtil.findChildrenOfType(psiElement, classOf[HaskellQualifiedNameElement]).asScala
   }

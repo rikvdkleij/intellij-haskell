@@ -24,6 +24,7 @@ import com.intellij.psi.PsiElement
 import com.intellij.psi.impl.source.tree.TreeUtil
 import com.intellij.psi.tree.TokenSet
 import com.intellij.psi.util.PsiTreeUtil
+import com.intellij.util.FileContentUtilCore
 import intellij.haskell.external.component.{HaskellComponentsManager, StackProjectManager}
 import intellij.haskell.psi._
 import intellij.haskell.util.ScalaUtil
@@ -82,12 +83,14 @@ object CaseSplitIntention {
       constrs <- findDataConstructors(currentDeclarationLine, typeName).orElse(findNewtypeConstr(currentDeclarationLine, typeName))
     } yield {
       if (execute) {
+        val vFile = psiElement.getContainingFile.getVirtualFile
         WriteCommandAction.runWriteCommandAction(project, ScalaUtil.runnable {
           caseSplitKind match {
             case SubTopLevel(element) => doSubTopLevelSpitCase(project, element, constrs)
             case tl: TopLevel => doTopLevelSplitCase(tl, project, constrs, currentDeclarationLine)
           }
         })
+        FileContentUtilCore.reparseFiles(vFile)
       }
     }).isDefined
   }
@@ -117,8 +120,8 @@ object CaseSplitIntention {
         currentDeclarationLine.getParent.addAfter(currentDeclarationLine.copy, currentDeclarationLine)
       } else {
         val nl = HaskellElementFactory.createNewLine(project)
-        val line = currentDeclarationLine.getParent.addAfter(nl, currentDeclarationLine)
-        currentDeclarationLine.getParent.addAfter(currentDeclarationLine.copy(), line)
+        val newline = currentDeclarationLine.copy()
+        currentDeclarationLine.getParent.addAfter(newline, currentDeclarationLine)
       }
       val elementToReplace = topLevel match {
         case TopLevelUnderscore(psiElement) =>
@@ -165,10 +168,9 @@ object CaseSplitIntention {
   }
 
   private def createPattern(project: Project, constr: HaskellCompositeElement, currentLineElements: Seq[HaskellNamedElement]): PsiElement = {
-    def defaultPatternNamedElements(psiElement: PsiElement) = {
-      val elements = HaskellPsiUtil.findNamedElements(psiElement)
-      if (elements.exists(_.isInstanceOf[HaskellConsym])) {
-        elements.filterNot(_.isInstanceOf[HaskellConsym])
+    def defaultPatternNamedElements(elements: Seq[HaskellQName]) = {
+      if (elements.map(_.getIdentifierElement).exists(_.isInstanceOf[HaskellConsym])) {
+        elements.filterNot(x => x.getIdentifierElement.isInstanceOf[HaskellConsym])
       } else {
         if (elements.nonEmpty) {
           elements.tail
@@ -183,29 +185,39 @@ object CaseSplitIntention {
     val patternNames = PatternNames.filterNot(currentNames.contains)
 
     val namedElements = pattern match {
-      case c: HaskellConstr => Option(c.getConstr1) match {
+      case c: HaskellConstr => Option(c.getFirstChild) match {
         case Some(constr1: HaskellConstr1) =>
           val fieldDecls = constr1.getFielddeclList.asScala
           fieldDecls.map(_.getTtype).foreach(_.delete())
           fieldDecls.flatMap(_.getNode.getChildren(TokenSet.create(HaskellTypes.HS_COLON_COLON))).foreach(_.getPsi.delete())
           constr1.getNode.getChildren(TokenSet.create(HaskellTypes.HS_COMMA, HaskellTypes.HS_LEFT_BRACE, HaskellTypes.HS_RIGHT_BRACE)).foreach(_.getPsi.delete())
-          fieldDecls.flatMap(_.getQNameList.asScala).map(_.getIdentifierElement)
-        case _ => defaultPatternNamedElements(pattern)
+          fieldDecls.flatMap(_.getQNameList.asScala)
+        case Some(constr2: HaskellConstr2) =>
+          val firstTtype = constr2.getTtypeList.asScala.headOption
+          val qNameElements = firstTtype.toSeq.flatMap(_.getQNameList.asScala)
+          val typeElements = firstTtype.toSeq.flatMap(_.getTtypeList.asScala.headOption)
+
+          defaultPatternNamedElements(qNameElements) ++ typeElements
+        case _ =>
+          val elements = HaskellPsiUtil.findQNameElements(pattern).toSeq
+          defaultPatternNamedElements(elements)
       }
-      case _ => defaultPatternNamedElements(pattern)
+      case _ =>
+        val elements = HaskellPsiUtil.findQNameElements(pattern).toSeq
+        defaultPatternNamedElements(elements)
     }
 
     if (namedElements.isEmpty) {
       // Do nothing
     } else {
       namedElements.zip(patternNames).map { case (e, n) =>
-        HaskellPsiUtil.findTtype(e).find(e => Option(e.getNextSibling).map(_.getNode).exists(_.getElementType == HaskellTypes.HS_RIGHT_BRACKET)) match {
+        HaskellPsiUtil.findTtype(e).find(e => Option(e.getNextSibling).map(_.getNode).exists(e => List(HaskellTypes.HS_RIGHT_BRACKET, HaskellTypes.HS_RIGHT_PAREN).contains(e.getElementType))) match {
           case Some(ttype) =>
             ttype.getNextSibling.delete()
             ttype.getPrevSibling.delete()
           case None => ()
         }
-        e.replace(HaskellElementFactory.createVarid(project, n).get)
+        e.replace(HaskellElementFactory.createQNameElement(project, n).get)
       }
     }
     pattern

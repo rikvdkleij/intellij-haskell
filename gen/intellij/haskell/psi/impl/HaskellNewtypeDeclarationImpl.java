@@ -77,18 +77,6 @@ public class HaskellNewtypeDeclarationImpl extends HaskellCompositeElementImpl i
     }
 
     @Override
-    @Nullable
-    public HaskellTtype1 getTtype1() {
-        return PsiTreeUtil.getChildOfType(this, HaskellTtype1.class);
-    }
-
-    @Override
-    @Nullable
-    public HaskellTtype2 getTtype2() {
-        return PsiTreeUtil.getChildOfType(this, HaskellTtype2.class);
-    }
-
-    @Override
     @NotNull
     public List<HaskellTypeSignature> getTypeSignatureList() {
         return PsiTreeUtil.getChildrenOfTypeAsList(this, HaskellTypeSignature.class);

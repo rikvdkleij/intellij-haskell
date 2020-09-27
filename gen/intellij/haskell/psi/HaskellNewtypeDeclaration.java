@@ -35,12 +35,6 @@ public interface HaskellNewtypeDeclaration extends HaskellDataConstructorDeclara
     @NotNull
     List<HaskellTtype> getTtypeList();
 
-    @Nullable
-    HaskellTtype1 getTtype1();
-
-    @Nullable
-    HaskellTtype2 getTtype2();
-
     @NotNull
     List<HaskellTypeSignature> getTypeSignatureList();
 

@@ -298,14 +298,6 @@ public class HaskellVisitor extends PsiElementVisitor {
         visitCompositeElement(o);
     }
 
-    public void visitTtype1(@NotNull HaskellTtype1 o) {
-        visitCompositeElement(o);
-    }
-
-    public void visitTtype2(@NotNull HaskellTtype2 o) {
-        visitCompositeElement(o);
-    }
-
     public void visitTypeDeclaration(@NotNull HaskellTypeDeclaration o) {
         visitDeclarationElement(o);
     }

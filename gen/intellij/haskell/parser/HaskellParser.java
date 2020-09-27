@@ -5862,17 +5862,17 @@ public class HaskellParser implements PsiParser, LightPsiParser {
 
     /* ********************************************************** */
     // (onl "#")? onl ttype ((onl COMMA)? onl ttype)* onl ("#" onl)?
-    public static boolean ttype1(PsiBuilder b, int l) {
+    static boolean ttype1(PsiBuilder b, int l) {
         if (!recursion_guard_(b, l, "ttype1")) return false;
         boolean r;
-        Marker m = enter_section_(b, l, _NONE_, HS_TTYPE_1, "<ttype 1>");
+        Marker m = enter_section_(b);
         r = ttype1_0(b, l + 1);
         r = r && onl(b, l + 1);
         r = r && ttype(b, l + 1);
         r = r && ttype1_3(b, l + 1);
         r = r && onl(b, l + 1);
         r = r && ttype1_5(b, l + 1);
-        exit_section_(b, l, m, r, false, null);
+        exit_section_(b, m, null, r);
         return r;
     }
 
@@ -5955,16 +5955,16 @@ public class HaskellParser implements PsiParser, LightPsiParser {
 
     /* ********************************************************** */
     // ("forall" | FORALL)? onl ttype (onl DOUBLE_RIGHT_ARROW onl ttype)? onl
-    public static boolean ttype2(PsiBuilder b, int l) {
+    static boolean ttype2(PsiBuilder b, int l) {
         if (!recursion_guard_(b, l, "ttype2")) return false;
         boolean r;
-        Marker m = enter_section_(b, l, _NONE_, HS_TTYPE_2, "<ttype 2>");
+        Marker m = enter_section_(b);
         r = ttype2_0(b, l + 1);
         r = r && onl(b, l + 1);
         r = r && ttype(b, l + 1);
         r = r && ttype2_3(b, l + 1);
         r = r && onl(b, l + 1);
-        exit_section_(b, l, m, r, false, null);
+        exit_section_(b, m, null, r);
         return r;
     }
 
