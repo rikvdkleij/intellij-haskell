@@ -268,6 +268,10 @@ nhaddock_start      = {left_brace}{dash}{white_char}?{vertical_bar}
             }
         }
 
+    {left_bracket} {
+        qqDepth++;
+      }
+
     .|{white_char}|{newline} {}
 }
 

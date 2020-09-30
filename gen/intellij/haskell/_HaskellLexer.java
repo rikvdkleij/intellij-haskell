@@ -18,15 +18,19 @@ public class _HaskellLexer implements FlexLexer {
   /** This character denotes the end of file */
   public static final int YYEOF = -1;
 
-  /** initial size of the lookahead buffer */
-  private static final int ZZ_BUFFERSIZE = 16384;
+    /**
+     * initial size of the lookahead buffer
+     */
+    private static final int ZZ_BUFFERSIZE = 16384;
 
-  /** lexical states */
-  public static final int YYINITIAL = 0;
-  public static final int NCOMMENT = 2;
-  public static final int NHADDOCK = 4;
-  public static final int QQ = 6;
-  public static final int OPTIONS_GHC = 8;
+    /**
+     * lexical states
+     */
+    public static final int YYINITIAL = 0;
+    public static final int NCOMMENT = 2;
+    public static final int NHADDOCK = 4;
+    public static final int QQ = 6;
+    public static final int OPTIONS_GHC = 8;
 
     /**
      * ZZ_LEXSTATE[l] is the state in the DFA for the lexical state l
@@ -81,22 +85,23 @@ public class _HaskellLexer implements FlexLexer {
                     "\1\4\1\15\3\4\1\16\1\17\1\20\1\21\1\22" +
                     "\1\23\1\24\1\25\1\26\1\27\1\30\1\31\1\32" +
                     "\1\33\1\34\1\35\1\36\1\37\3\5\6\40\1\41" +
-                    "\2\40\1\42\2\43\1\44\1\43\1\45\1\0\6\5" +
-                    "\1\46\1\47\3\5\1\50\4\5\1\51\2\5\2\0" +
-                    "\1\52\1\0\2\5\1\11\4\0\1\53\5\0\2\22" +
-                    "\1\23\3\0\1\54\1\0\1\55\4\5\1\56\1\57" +
-                    "\1\60\1\61\1\62\3\0\1\63\2\0\1\43\1\52" +
-                    "\2\43\4\0\1\64\17\5\1\65\2\5\20\0\1\5" +
-                    "\1\66\1\0\1\66\3\53\1\67\1\70\1\71\20\0" +
-                    "\1\72\1\73\4\5\1\74\16\43\1\71\17\43\6\0" +
-                    "\1\64\15\5\1\75\1\76\2\5\1\77\13\0\1\53" +
-                    "\1\100\1\53\15\0\1\101\1\102\2\5\27\43\7\0" +
-                    "\1\64\3\5\1\103\6\5\1\104\3\0\1\5\1\105" +
-                    "\3\0\1\5\1\106\1\107\1\5\1\110\4\5\6\0" +
-                    "\1\111\1\0\3\5\1\112\1\5\1\113\2\0\1\100" +
-                    "\3\0\1\64\1\114\1\0\1\115\2\0\2\100\3\0" +
-                    "\1\64\7\0\1\64\7\0\1\116\5\0\1\117\1\116" +
-                    "\2\0\1\53\5\0\1\120\1\121\1\122\3\0\1\100";
+                    "\1\40\1\42\1\43\2\44\1\45\1\44\1\46\1\0" +
+                    "\6\5\1\47\1\50\3\5\1\51\4\5\1\52\2\5" +
+                    "\2\0\1\53\1\0\2\5\1\11\4\0\1\54\5\0" +
+                    "\2\22\1\23\3\0\1\55\1\0\1\56\4\5\1\57" +
+                    "\1\60\1\61\1\62\1\63\3\0\1\42\2\0\1\44" +
+                    "\1\53\2\44\4\0\1\64\17\5\1\65\2\5\20\0" +
+                    "\1\5\1\66\1\0\1\66\3\54\1\67\1\70\1\71" +
+                    "\20\0\1\72\1\73\4\5\1\74\16\44\1\71\17\44" +
+                    "\6\0\1\64\15\5\1\75\1\76\2\5\1\77\13\0" +
+                    "\1\54\1\100\1\54\15\0\1\101\1\102\2\5\27\44" +
+                    "\7\0\1\64\3\5\1\103\6\5\1\104\3\0\1\5" +
+                    "\1\105\3\0\1\5\1\106\1\107\1\5\1\110\4\5" +
+                    "\6\0\1\111\1\0\3\5\1\112\1\5\1\113\2\0" +
+                    "\1\100\3\0\1\64\1\114\1\0\1\115\2\0\2\100" +
+                    "\3\0\1\64\7\0\1\64\7\0\1\116\5\0\1\117" +
+                    "\1\116\2\0\1\54\5\0\1\120\1\121\1\122\3\0" +
+                    "\1\100";
 
     private static int[] zzUnpackAction() {
         int[] result = new int[423];
@@ -966,16 +971,16 @@ public class _HaskellLexer implements FlexLexer {
         return zzStartRead;
     }
 
-  public final int getTokenEnd() {
-    return getTokenStart() + yylength();
-  }
+    public final int getTokenEnd() {
+        return getTokenStart() + yylength();
+    }
 
-  public void reset(CharSequence buffer, int start, int end, int initialState) {
-    zzBuffer = buffer;
-    zzCurrentPos = zzMarkedPos = zzStartRead = start;
-    zzAtEOF  = false;
-    zzAtBOL = true;
-    zzEndRead = end;
+    public void reset(CharSequence buffer, int start, int end, int initialState) {
+        zzBuffer = buffer;
+        zzCurrentPos = zzMarkedPos = zzStartRead = start;
+        zzAtEOF = false;
+        zzAtBOL = true;
+        zzEndRead = end;
     yybegin(initialState);
   }
 
@@ -1404,82 +1409,88 @@ public class _HaskellLexer implements FlexLexer {
                     case 115:
                         break;
                     case 34: {
-                        return HS_HASH;
+                        qqDepth++;
                     }
                     // fall through
                     case 116:
                         break;
                     case 35: {
-                        return HS_ONE_PRAGMA;
+                        return HS_HASH;
                     }
                     // fall through
                     case 117:
                         break;
                     case 36: {
-                        return HS_DASH;
+                        return HS_ONE_PRAGMA;
                     }
                     // fall through
                     case 118:
                         break;
                     case 37: {
-                        return HS_PRAGMA_SEP;
+                        return HS_DASH;
                     }
                     // fall through
                     case 119:
                         break;
                     case 38: {
-                        return HS_IF;
+                        return HS_PRAGMA_SEP;
                     }
                     // fall through
                     case 120:
                         break;
                     case 39: {
-                        return HS_IN;
+                        return HS_IF;
                     }
                     // fall through
                     case 121:
                         break;
                     case 40: {
-                        return HS_DO;
+                        return HS_IN;
                     }
                     // fall through
                     case 122:
                         break;
                     case 41: {
-                        return HS_OF;
+                        return HS_DO;
                     }
                     // fall through
                     case 123:
                         break;
                     case 42: {
-                        return HS_STRING_LITERAL;
+                        return HS_OF;
                     }
                     // fall through
                     case 124:
                         break;
                     case 43: {
-                        return HS_COMMENT;
+                        return HS_STRING_LITERAL;
                     }
                     // fall through
                     case 125:
                         break;
                     case 44: {
-                        yybegin(QQ);
-                        qqDepth = 0;
-                        qqStart = getTokenStart();
+                        return HS_COMMENT;
                     }
                     // fall through
                     case 126:
                         break;
                     case 45: {
-                        yybegin(NCOMMENT);
-                        commentDepth = 0;
-                        commentStart = getTokenStart();
+                        yybegin(QQ);
+                        qqDepth = 0;
+                        qqStart = getTokenStart();
                     }
                     // fall through
                     case 127:
                         break;
                     case 46: {
+                        yybegin(NCOMMENT);
+                        commentDepth = 0;
+                        commentStart = getTokenStart();
+                    }
+                    // fall through
+                    case 128:
+                        break;
+                    case 47: {
                         if (commentDepth > 0) {
                             commentDepth--;
                         } else {
@@ -1489,15 +1500,15 @@ public class _HaskellLexer implements FlexLexer {
                         }
                     }
                     // fall through
-                    case 128:
-                        break;
-                    case 47: {
-                        commentDepth++;
-                    }
-                    // fall through
                     case 129:
                         break;
                     case 48: {
+                        commentDepth++;
+                    }
+                    // fall through
+                    case 130:
+                        break;
+                    case 49: {
                         if (haddockDepth > 0) {
                             haddockDepth--;
                         } else {
@@ -1507,15 +1518,15 @@ public class _HaskellLexer implements FlexLexer {
                         }
                     }
                     // fall through
-                    case 130:
-                        break;
-                    case 49: {
-                        haddockDepth++;
-                    }
-                    // fall through
                     case 131:
                         break;
                     case 50: {
+                        haddockDepth++;
+                    }
+                    // fall through
+                    case 132:
+                        break;
+                    case 51: {
                         if (qqDepth > 0) {
                             qqDepth--;
                         } else {
@@ -1523,12 +1534,6 @@ public class _HaskellLexer implements FlexLexer {
                             zzStartRead = qqStart;
                             return HS_QUASIQUOTE;
                         }
-                    }
-                    // fall through
-                    case 132:
-                        break;
-                    case 51: {
-                        qqDepth++;
                     }
                     // fall through
                     case 133:
@@ -1719,7 +1724,7 @@ public class _HaskellLexer implements FlexLexer {
                         break;
                     case 82: {
                         return HS_FOREIGN_EXPORT;
-                    }
+            } 
             // fall through
           case 164: break;
           default:
