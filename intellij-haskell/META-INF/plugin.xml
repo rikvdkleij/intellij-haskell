@@ -527,6 +527,9 @@
         <extendWordSelectionHandler implementation="intellij.haskell.editor.HaskellExtendWordSelectionHandler"/>
         <enterHandlerDelegate implementation="intellij.haskell.editor.EnterInHaddockHandler"
                               id="EnterInHaddockHandler"/>
+        <enterHandlerDelegate implementation="intellij.haskell.editor.IndentAfterEnterHandler"
+                              id="IndentAfterEnterHandler"/>
+
         <quoteHandler fileType="Haskell" className="intellij.haskell.editor.HaskellQuoteHandler"/>
 
         <!-- Code Style -->
