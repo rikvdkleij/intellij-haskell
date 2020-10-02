@@ -220,7 +220,7 @@ instvar                     ::= ttype | q_name | LEFT_BRACKET q_name+ RIGHT_BRAC
 
 private fixity              ::= INFIXL | INFIXR | INFIX
 
-exports                     ::= LEFT_PAREN onl export ((onl COMMA)? onl export)* (onl COMMA)? onl RIGHT_PAREN | LEFT_PAREN RIGHT_PAREN
+exports                     ::= LEFT_PAREN ((onl COMMA)? onl export)* (onl COMMA)? onl RIGHT_PAREN | LEFT_PAREN RIGHT_PAREN
 export                      ::= export1 | export2 | export3
 private export1             ::= MODULE modid
 private export2             ::= q_name (onl LEFT_PAREN (onl (dot_dot | q_name) (onl COMMA onl q_name)*)? onl RIGHT_PAREN)?
