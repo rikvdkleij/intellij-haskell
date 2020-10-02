@@ -317,7 +317,10 @@ object HaskellModuleBuilder {
 
   private def downloadHaskellPackageSources(project: Project, projectLibDirectory: File, stackPath: String, libraryDependencies: Seq[HaskellLibraryDependency]): Unit = {
     libraryDependencies.filterNot(libraryDependency => getPackageDirectory(projectLibDirectory, libraryDependency).exists()).foreach(libraryDependency => {
-      CommandLine.runInWorkDir(project, projectLibDirectory.getAbsolutePath, stackPath, Seq("--no-nix", "unpack", libraryDependency.nameVersion), 10000)
+      val output = CommandLine.runInWorkDir(project, projectLibDirectory.getAbsolutePath, stackPath, Seq("--no-nix", "unpack", libraryDependency.nameVersion), 10000)
+      if (output.getExitCode != 0 && libraryDependency.name != "ghc-boot-th") {
+        HaskellNotificationGroup.logWarningBalloonEvent(project, s"Could not download sources for ${libraryDependency.nameVersion} | Output: ${output.getStderr}")
+      }
     })
   }
 
