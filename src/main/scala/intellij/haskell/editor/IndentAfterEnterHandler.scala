@@ -25,6 +25,7 @@ import com.intellij.openapi.util.Ref
 import com.intellij.psi.tree.TokenSet
 import com.intellij.psi.{PsiDocumentManager, PsiElement, PsiFile, TokenType}
 import intellij.haskell.HaskellFile
+import intellij.haskell.psi.HaskellPsiUtil
 import intellij.haskell.psi.HaskellTypes._
 
 class IndentAfterEnterHandler extends EnterHandlerDelegateAdapter {
@@ -32,7 +33,8 @@ class IndentAfterEnterHandler extends EnterHandlerDelegateAdapter {
   private val IndentTokenSet = TokenSet.create(HS_WHERE, HS_OF, HS_EQUAL, HS_IN, HS_DO, HS_IF, HS_THEN, HS_ELSE)
 
   override def preprocessEnter(file: PsiFile, editor: Editor, caretOffset: Ref[Integer], caretAdvance: Ref[Integer], dataContext: DataContext, originalHandler: EditorActionHandler): Result = {
-    if (!file.isInstanceOf[HaskellFile]) return Result.Continue
+    if (!file.isInstanceOf[HaskellFile] &&
+      Option(caretOffset.get()).flatMap(offset => Option(file.findElementAt(offset))).exists(e => HaskellPsiUtil.findExpression(e).isEmpty)) return Result.Continue
 
     val document = editor.getDocument
     PsiDocumentManager.getInstance(file.getProject).commitDocument(document)
