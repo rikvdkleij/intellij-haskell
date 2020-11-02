@@ -78,9 +78,9 @@ object CaseSplitIntention {
     (for {
       caseSplitKind <- subTopLevelSplitting(psiElement).orElse(topLevelCaseSplitting(psiElement))
       typeInfo <- HaskellComponentsManager.findTypeInfoForElement(psiElement).toOption
-      currentDeclarationLine <- HaskellPsiUtil.findTopDeclarationLineParent(psiElement)
-      typeName = typeInfo.typeSignature.split("::").last.trim
-      constrs <- findDataConstructors(currentDeclarationLine, typeName).orElse(findNewtypeConstr(currentDeclarationLine, typeName))
+      currentDeclarationLine <- HaskellPsiUtil.findTopDeclarationParent(psiElement)
+      fullType = typeInfo.typeSignature.split("::").last.trim
+      constrs <- findDataConstructors(currentDeclarationLine, fullType).orElse(findNewtypeConstr(currentDeclarationLine, fullType))
     } yield {
       if (execute) {
         val vFile = psiElement.getContainingFile.getVirtualFile
@@ -223,12 +223,13 @@ object CaseSplitIntention {
     pattern
   }
 
-  private def findDataConstructors(psiElement: HaskellTopDeclaration, typeName: String): Option[Seq[HaskellConstr]] = {
-    typeName match {
+  private def findDataConstructors(psiElement: HaskellTopDeclaration, fullType: String): Option[Seq[HaskellConstr]] = {
+    fullType match {
       case s"[$x]" =>
         val d = HaskellElementFactory.createDataDeclaration(psiElement.getProject, "data [] a = [] | a : a") // Just a hack to create the right pattern in createPattern
         d.map(_.getConstrList.asScala.toSeq)
       case _ =>
+        val typeName = fullType.split("""\s+""").headOption.getOrElse(fullType)
         findDefinitionLocation(psiElement, typeName) match {
           case Some(e) =>
             HaskellPsiUtil.findNamedElement(e).flatMap(e => Option(e.getReference)).flatMap(r => Option(r.resolve)) match {
