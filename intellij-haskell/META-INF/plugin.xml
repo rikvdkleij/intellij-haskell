@@ -1,7 +1,7 @@
 <idea-plugin>
     <id>intellij.haskell</id>
     <name>IntelliJ-Haskell</name>
-    <version>1.0.0-beta83</version>
+    <version>1.0.0-beta84</version>
     <vendor email="rikvdkleij@gmail.com">Rik van der Kleij</vendor>
 
     <description><![CDATA[
@@ -20,6 +20,12 @@
     ]]></description>
 
     <change-notes><![CDATA[
+        <p>1.0.0-beta84</p>
+           <ul>
+            <li>Improved parser</li>
+            <li>Improved support for top-level case splitting (#610)</li>
+            <li>Support url as resolver in stack.yaml (#599 and #620)</li>
+           </ul>
         <p>1.0.0-beta83</p>
            <ul>
             <li>Show warning when library source code can't be downloaded</li>
