@@ -27,7 +27,12 @@ object StackYamlComponent {
   }
 
   def getResolver(project: Project): Option[String] = {
-    getYamlItems(project).flatMap(_.get("resolver")).map(_.asInstanceOf[String])
+    val resolver = getYamlItems(project).flatMap(_.get("resolver"))
+    resolver.flatMap {
+      case m: util.Map[_, _] => m.asScala.headOption.map(_._2.asInstanceOf[String])
+      case s: String => Some(s)
+      case _ => None
+    }
   }
 
   def getPackagePaths(project: Project): Option[Seq[String]] = {
