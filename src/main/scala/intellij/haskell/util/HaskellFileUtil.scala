@@ -17,6 +17,7 @@
 package intellij.haskell.util
 
 import java.io.{File, FileOutputStream, InputStream}
+import java.nio.charset.Charset
 import java.nio.file.attribute.PosixFilePermission
 import java.nio.file.{Files, Paths}
 
@@ -114,6 +115,10 @@ object HaskellFileUtil {
       case Some(vf) => Some(getAbsolutePath(vf))
       case None => None
     }
+  }
+
+  def getCharset(psiFile: PsiFile): Option[Charset] = {
+    findVirtualFile(psiFile).map(_.getCharset)
   }
 
   def getAbsolutePath(virtualFile: VirtualFile): String = {
