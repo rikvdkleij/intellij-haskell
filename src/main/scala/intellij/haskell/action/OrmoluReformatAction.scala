@@ -51,7 +51,8 @@ object OrmoluReformatAction {
         HaskellFileUtil.getAbsolutePath(psiFile) match {
           case Some(path) =>
             val processOutputFuture = ApplicationManager.getApplication.executeOnPooledThread(ScalaUtil.callable[ProcessOutput] {
-              CommandLine.run(project, ormoluPath, Seq(path))
+              val fileCharset = HaskellFileUtil.getCharset(psiFile)
+              CommandLine.run(project, ormoluPath, Seq(path), charset = fileCharset)
             })
 
             FutureUtil.waitForValue(project, processOutputFuture, s"reformatting by ${HTool.Ormolu.name}") match {
