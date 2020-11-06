@@ -108,9 +108,20 @@ object CaseSplitIntention {
 
   private def topLevelCaseSplitting(psiElement: PsiElement): Option[CaseSplitKind] = {
     if (psiElement.getNode.getElementType == HaskellTypes.HS_UNDERSCORE) {
-      Option(TreeUtil.findSibling(psiElement.getNode, HaskellTypes.HS_EQUAL)).map(_ => TopLevelUnderscore(psiElement))
+      if (Option(TreeUtil.findSiblingBackward(psiElement.getNode, HaskellTypes.HS_EQUAL)).isEmpty &&
+        Option(TreeUtil.findSibling(psiElement.getNode, HaskellTypes.HS_EQUAL)).isDefined) {
+        Some(TopLevelUnderscore(psiElement))
+      } else {
+        None
+      }
     } else {
-      HaskellPsiUtil.findQName(psiElement).flatMap(ne => Option(PsiTreeUtil.findSiblingForward(ne, HaskellTypes.HS_EQUAL, null)).map(_ => TopLevelNamed(ne.getIdentifierElement)))
+      HaskellPsiUtil.findQName(psiElement).flatMap(ne =>
+        if (Option(PsiTreeUtil.findSiblingBackward(ne, HaskellTypes.HS_EQUAL, null)).isEmpty &&
+          (Option(PsiTreeUtil.findSiblingForward(ne, HaskellTypes.HS_EQUAL, null)).isDefined)) {
+          Some(TopLevelNamed(ne.getIdentifierElement))
+        } else {
+          None
+        })
     }
   }
 
@@ -119,7 +130,6 @@ object CaseSplitIntention {
       val newLine = if (currentDeclarationLine.getNode.getChildren(TokenSet.create(HaskellTypes.HS_NEWLINE)).nonEmpty) {
         currentDeclarationLine.getParent.addAfter(currentDeclarationLine.copy, currentDeclarationLine)
       } else {
-        val nl = HaskellElementFactory.createNewLine(project)
         val newline = currentDeclarationLine.copy()
         currentDeclarationLine.getParent.addAfter(newline, currentDeclarationLine)
       }
