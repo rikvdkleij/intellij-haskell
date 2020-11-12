@@ -22,6 +22,7 @@ import com.intellij.ide.util.projectWizard._
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.{ApplicationManager, WriteAction}
 import com.intellij.openapi.module.{ModifiableModuleModel, Module, ModuleType}
+import com.intellij.openapi.options.ConfigurationException
 import com.intellij.openapi.project.{Project, ProjectManager}
 import com.intellij.openapi.projectRoots.SdkTypeId
 import com.intellij.openapi.roots._
@@ -133,7 +134,12 @@ class HaskellModuleBuilder extends TemplateModuleBuilder(null, HaskellModuleType
     * To avoid ambiguity with version numbers, each of these words must contain at least one letter.
     */
   override def validateModuleName(moduleName: String): Boolean = {
-    moduleName.matches("""([a-z0-9]*[a-z]+[a-z0-9]*)(-([a-z0-9]*[a-z]+[a-z0-9]*))*""")
+    val valid = moduleName.matches("""([a-zA-Z0-9]*[a-zA-Z]+[a-zA-Z0-9]*)(-([a-zA-Z0-9]*[a-zA-  Z]+[a-zA-Z0-9]*))*""")
+    if (valid) {
+      true
+    } else {
+      throw new ConfigurationException("Package names should consist of one or more alphanumeric words separated by hyphens. To avoid ambiguity with version numbers, each of these words must contain at least one letter.")
+    }
   }
 
   // To prevent first page of wizard is empty.
