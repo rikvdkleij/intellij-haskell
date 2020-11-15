@@ -39,7 +39,7 @@ object HLintComponent {
               HaskellNotificationGroup.logErrorBalloonEvent(project, s"Error while calling ${HTool.Hlint.name}: ${output.getStderr}")
               Seq()
             } else {
-              deserializeHLintInfo(project, output.getStdout)
+              parseHLintOutput(project, output.getStdout)
             }
           case None => ()
             HaskellNotificationGroup.logWarningBalloonEvent(psiFile.getProject, s"Can not display HLint suggestions because can not determine path for file `${psiFile.getName}`. File exists only in memory")
@@ -63,24 +63,24 @@ object HLintComponent {
   }
 
   private object HlintJsonProtocol extends DefaultJsonProtocol {
-    implicit val hlintInfoFormat: RootJsonFormat[HLintInfo] = jsonFormat12(HLintInfo)
+    implicit val hlintInfoFormat: RootJsonFormat[HLintInfo] = jsonFormat13(HLintInfo)
   }
 
   import intellij.haskell.external.component.HLintComponent.HlintJsonProtocol._
 
-  private[external] def deserializeHLintInfo(project: Project, hlintInfo: String) = {
-    if (hlintInfo.trim.isEmpty || hlintInfo == "[]") {
+  private[external] def parseHLintOutput(project: Project, hlintOutput: String) = {
+    if (hlintOutput.trim.isEmpty || hlintOutput == "[]") {
       Seq()
     } else {
       try {
-        hlintInfo.parseJson.convertTo[Seq[HLintInfo]]
+        hlintOutput.parseJson.convertTo[Seq[HLintInfo]]
       } catch {
         case e: ParsingException =>
-          HaskellNotificationGroup.logErrorEvent(project, s"Error `${e.getMessage}` while parsing `$hlintInfo`")
+          HaskellNotificationGroup.logErrorEvent(project, s"Error while parsing HLint output | Message: ${e.getMessage} | HLintOutput: $hlintOutput")
           Seq()
       }
     }
   }
 }
 
-case class HLintInfo(module: Seq[String], decl: Seq[String], severity: String, hint: String, file: String, startLine: Int, startColumn: Int, endLine: Int, endColumn: Int, from: String = "", to: Option[String], note: Seq[String])
+case class HLintInfo(module: Seq[String], decl: Seq[String], severity: String, hint: String, file: String, startLine: Int, startColumn: Int, endLine: Int, endColumn: Int, from: String = "", to: Option[String], note: Seq[String], refactorings: String)

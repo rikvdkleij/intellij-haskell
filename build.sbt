@@ -8,6 +8,7 @@ val sprayJson = "io.spray" %% "spray-json" % "1.3.5"
 val snakeYaml = "org.yaml" % "snakeyaml" % "1.26"
 val scaffeine = "com.github.blemale" %% "scaffeine" % "4.0.1"
 val directories = "io.github.soc" % "directories" % "12"
+val fastparse = "com.lihaoyi" %% "fastparse" % "2.2.2"
 
 intellijPluginName in ThisBuild := "IntelliJ-Haskell"
 
