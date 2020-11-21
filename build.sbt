@@ -4,9 +4,9 @@ lazy val commonSettings = Seq(
 )
 
 val scalaTest = "org.scalatest" %% "scalatest" % "3.2.0" % Test
-val sprayJson = "io.spray" %% "spray-json" % "1.3.5"
+val sprayJson = "io.spray" %% "spray-json" % "1.3.6"
 val snakeYaml = "org.yaml" % "snakeyaml" % "1.26"
-val scaffeine = "com.github.blemale" %% "scaffeine" % "4.0.1"
+val scaffeine = "com.github.blemale" %% "scaffeine" % "4.0.2"
 val directories = "io.github.soc" % "directories" % "12"
 val fastparse = "com.lihaoyi" %% "fastparse" % "2.2.2"
 
@@ -24,9 +24,14 @@ lazy val intellijHaskell = (project in file(".")).
     libraryDependencies += snakeYaml,
     libraryDependencies += scaffeine,
     libraryDependencies += directories,
+    libraryDependencies += fastparse,
     unmanagedSourceDirectories in Compile += baseDirectory.value / "gen"
   )
 
-intellijBuild in ThisBuild := "202.7319.50"
+intellijBuild in ThisBuild := "202.7660.26"
 
 intellijPlugins += "com.intellij.java".toPlugin
+
+// Get rid of:
+//   Unrecognized VM option 'UseConcMarkSweepGC'
+intellijVMOptions := intellijVMOptions.value.copy(gc = "")
