@@ -21,7 +21,7 @@ import com.intellij.openapi.editor.Document
 import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.util.TextRange
 import com.intellij.openapi.vfs.VirtualFile
-import com.intellij.psi.{PsiElement, PsiFile}
+import com.intellij.psi.PsiFile
 import com.intellij.util.WaitFor
 import intellij.haskell.HaskellNotificationGroup
 import intellij.haskell.external.component.HLintRefactoringsParser._
@@ -87,14 +87,8 @@ class HLintInspectionTool extends LocalInspectionTool {
           }
 
           quickFix match {
-            case Some(qf) =>
-              problemsHolder.registerProblem(new ProblemDescriptorBase(qf.getStartElement, qf.getEndElement, hlintInfo.hint, Array(qf), problemType, false, null, true, isOnTheFly))
-            case None =>
-              for {
-                se <- findStartHaskellElement(virtualFile, psiFile, hlintInfo)
-                ee <- findEndHaskellElement(virtualFile, psiFile, hlintInfo)
-              } yield problemsHolder.registerProblem(new ProblemDescriptorBase(se, ee, hlintInfo.hint, Array(), problemType, false, null, true, isOnTheFly))
-
+            case Some(qf) => problemsHolder.registerProblem(new ProblemDescriptorBase(qf.getStartElement, qf.getEndElement, hlintInfo.hint, Array(qf), problemType, false, null, true, isOnTheFly))
+            case None => ManualHLintQuickfix.registerProblem(psiFile, virtualFile, hlintInfo, problemsHolder, problemType, isOnTheFly)
           }
         }
 
@@ -107,20 +101,6 @@ class HLintInspectionTool extends LocalInspectionTool {
         }
       case _ => null
     }
-  }
-
-  private def findStartHaskellElement(virtualFile: VirtualFile, psiFile: PsiFile, hlintInfo: HLintInfo): Option[PsiElement] = {
-    val offset = LineColumnPosition.getOffset(virtualFile, LineColumnPosition(hlintInfo.startLine, hlintInfo.startColumn))
-    offset.flatMap(offset => Option(psiFile.findElementAt(offset)))
-  }
-
-  private def findEndHaskellElement(virtualFile: VirtualFile, psiFile: PsiFile, hlintInfo: HLintInfo): Option[PsiElement] = {
-    val offset = if (hlintInfo.endLine >= hlintInfo.startLine && hlintInfo.endColumn > hlintInfo.startColumn) {
-      LineColumnPosition.getOffset(virtualFile, LineColumnPosition(hlintInfo.endLine, hlintInfo.endColumn - 1))
-    } else {
-      LineColumnPosition.getOffset(virtualFile, LineColumnPosition(hlintInfo.endLine, hlintInfo.endColumn))
-    }
-    offset.flatMap(offset => Option(psiFile.findElementAt(offset)))
   }
 
   private def findTextWithOffsets(virtualFile: VirtualFile, document: Document, pos: SrcSpan) = {
