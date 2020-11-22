@@ -16,8 +16,6 @@
 
 package intellij.haskell.module
 
-import java.io.File
-
 import com.intellij.ide.util.projectWizard._
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.{ApplicationManager, WriteAction}
@@ -41,8 +39,9 @@ import intellij.haskell.settings.HaskellSettingsState
 import intellij.haskell.stackyaml.StackYamlComponent
 import intellij.haskell.util.{FutureUtil, HaskellFileUtil, HaskellProjectUtil, ScalaUtil}
 import intellij.haskell.{GlobalInfo, HaskellNotificationGroup}
-import javax.swing.Icon
 
+import java.io.File
+import javax.swing.Icon
 import scala.annotation.tailrec
 import scala.collection.mutable.ListBuffer
 import scala.concurrent.duration._
@@ -134,7 +133,7 @@ class HaskellModuleBuilder extends TemplateModuleBuilder(null, HaskellModuleType
     * To avoid ambiguity with version numbers, each of these words must contain at least one letter.
     */
   override def validateModuleName(moduleName: String): Boolean = {
-    val valid = moduleName.matches("""([a-zA-Z0-9]*[a-zA-Z]+[a-zA-Z0-9]*)(-([a-zA-Z0-9]*[a-zA-  Z]+[a-zA-Z0-9]*))*""")
+    val valid = moduleName.matches("""([a-zA-Z0-9]*[a-zA-Z]+[a-zA-Z0-9]*)(-([a-zA-Z0-9]*[a-zA-Z]+[a-zA-Z0-9]*))*""")
     if (valid) {
       true
     } else {
