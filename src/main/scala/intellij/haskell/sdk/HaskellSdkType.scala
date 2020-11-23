@@ -16,8 +16,6 @@
 
 package intellij.haskell.sdk
 
-import java.io.File
-
 import com.intellij.openapi.fileChooser.FileChooserDescriptor
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.projectRoots._
@@ -29,14 +27,16 @@ import icons.HaskellIcons
 import intellij.haskell.HaskellNotificationGroup
 import intellij.haskell.external.execution.CommandLine
 import intellij.haskell.util.{HaskellFileUtil, HaskellProjectUtil}
-import javax.swing.Icon
 import org.jdom.Element
+
+import java.io.File
+import javax.swing.Icon
 
 class HaskellSdkType extends SdkType("Haskell Tool Stack SDK") {
 
   override def suggestHomePath(): String = {
     if (SystemInfo.isLinux)
-      "/usr/bin/stack"
+      "/usr/local/bin/stack"
     else if (SystemInfo.isMac)
       "/usr/local/bin/stack"
     else null
