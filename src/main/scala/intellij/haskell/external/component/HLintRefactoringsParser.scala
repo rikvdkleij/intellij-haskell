@@ -1,10 +1,8 @@
 package intellij.haskell.external.component
 
-import com.intellij.openapi.project.Project
 import fastparse.Parsed.{Failure, Success}
 import fastparse.SingleLineWhitespace._
 import fastparse._
-import intellij.haskell.HaskellNotificationGroup
 
 object HLintRefactoringsParser {
 
@@ -12,9 +10,12 @@ object HLintRefactoringsParser {
 
   type Subts = Seq[(String, SrcSpan)]
 
-  sealed trait Refactoring extends Any
+  sealed trait Refactoring
   case class Delete(rType: RType, pos: SrcSpan) extends Refactoring
   case class Replace(rType: RType, pos: SrcSpan, subts: Subts, orig: String) extends Refactoring
+  case class ModifyComment(pos: SrcSpan, newComment: String) extends Refactoring
+  case class InsertComment(pos: SrcSpan, insertComment: String) extends Refactoring
+  case class RemoveAsKeyword(pos: SrcSpan) extends Refactoring
 
   sealed trait RType
   case object Expr extends RType
@@ -27,19 +28,12 @@ object HLintRefactoringsParser {
   case object Match extends RType
   case object Import extends RType
 
-
-  def parseRefactoring(project: Project, hlintOutput: String): Option[Refactoring] = parse(hlintOutput, refactoringParser(_)) match {
-    case Success(value, _) => Some(value)
-    case Failure(label, i, _) =>
-      HaskellNotificationGroup.logErrorEvent(project, (s"Could not parse HLint output | HLintOutput: $hlintOutput | Label: $label | Index: $i"))
-      None
+  def parseRefactoring(hlintOutput: String): Either[String, Refactoring] = parse(hlintOutput, refactoringParser(_), verboseFailures = true) match {
+    case Success(value, _) => Right(value)
+    case Failure(label, i, _) => Left(s"Could not parse HLint output | HLintOutput: $hlintOutput | Label: $label | Index: $i")
   }
 
-  def refactoringParser[_: P]: P[Refactoring] = P(deleteParser | replaceParser)
-
-  def parseDeleteRefactoring(hlintOutput: String): Parsed[Delete] = parse(hlintOutput, deleteParser(_), verboseFailures = true)
-
-  def parseReplaceRefactoring(hlintOutput: String): Parsed[Replace] = parse(hlintOutput, replaceParser(_), verboseFailures = true)
+  private def refactoringParser[_: P]: P[Refactoring] = P(deleteParser | replaceParser | modifyCommentParser | insertCommentParser | removeAsKeywordParser)
 
   private[component] def parseSubts(hlintOutput: String): Parsed[Subts] = parse(hlintOutput, subtsParser(_), verboseFailures = true)
 
@@ -49,6 +43,15 @@ object HLintRefactoringsParser {
 
   private def replaceParser[_: P]: P[Replace] = P("[Replace" ~ keyRtypePosParser(commaParser ~ "subts =" ~ subtsParser ~ commaParser ~ keyValueParser("orig", string)) ~ "]")
     .map({ case (x, y, (w, z)) => Replace(x, y, w, z) })
+
+  private def modifyCommentParser[_: P]: P[ModifyComment] = P("[ModifyComment" ~ "{" ~ posParser ~ commaParser ~ keyValueParser("newComment", string) ~ "}]").
+    map({ case (x, y) => ModifyComment(x, y) })
+
+  private def insertCommentParser[_: P]: P[InsertComment] = P("[InsertComment" ~ "{" ~ posParser ~ commaParser ~ keyValueParser("newComment", string) ~ "}]").
+    map({ case (x, y) => InsertComment(x, y) })
+
+  private def removeAsKeywordParser[_: P]: P[RemoveAsKeyword] = P("[RemoveAsKeyword" ~ "{" ~ posParser ~ "}]").
+    map({ case (x) => RemoveAsKeyword(x) })
 
   private def keyRtypePosParser[_: P, A](rest: => P[A]) = "{" ~ keyRtypeParser ~ commaParser ~ posParser ~ rest ~ "}"
 
@@ -80,13 +83,8 @@ object HLintRefactoringsParser {
 
   private def string[_: P] = P("\"" ~/ (strChars | escape).rep.! ~ "\"")
 
-  //  private def string[_: P] = P(spaces ~ "\"" ~/ (strChars | escape).rep.! ~ "\"")
-
-  //  private def spaces[_: P] = Pass // P(CharsWhileIn(" \r\n", 0))
-
   private def digits[_: P] = P(CharsWhileIn("0-9"))
 
-  //  private def keyValueParser[_: P, A](keyName: String, valueParser: => P[A]) = s"$keyName" ~ spaces ~ "=" ~ spaces ~ valueParser
   private def keyValueParser[_: P, A](keyName: String, valueParser: => P[A]) = s"$keyName" ~ "=" ~ valueParser
 
   private def keyDigitsParser[_: P](keyName: String) = keyValueParser[P[String], String](keyName, digits.!).map(_.toInt)
@@ -95,12 +93,8 @@ object HLintRefactoringsParser {
 
   private def commaParser[_: P] = ","
 
-  //  private def commaParser[_: P] = spaces ~ "," ~ spaces
-
-  //  private def posParser[_: P] = "pos" ~ spaces ~ "=" ~ spaces ~ srcSpanParser
   private def posParser[_: P] = "pos" ~ "=" ~ srcSpanParser
 
-  //  private def srcSpanParser[_: P] = "SrcSpan" ~ spaces ~
   private def srcSpanParser[_: P] = "SrcSpan" ~
     ("{" ~
       keyDigitsParser("startLine") ~ commaParser ~

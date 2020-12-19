@@ -79,10 +79,15 @@ class HLintInspectionTool extends LocalInspectionTool {
             HaskellNotificationGroup.logWarningEvent(project, s"No HLint refactorings for: ${hlintInfo.from} | ${hlintInfo.hint}")
             None
           } else {
-            HLintRefactoringsParser.parseRefactoring(project, hlintInfo.refactorings) match {
-              case Some(Delete(rType, pos)) => None
-              case Some(Replace(rType, pos, subts, orig)) => createReplaceQuickfix(document, virtualFile, psiFile, rType, pos, subts, orig, hlintInfo.hint, hlintInfo.note)
-              case _ => None
+            HLintRefactoringsParser.parseRefactoring(hlintInfo.refactorings) match {
+              case Right(Delete(_, pos)) => createDeleteQuickfix(document, virtualFile, psiFile, pos, hlintInfo.hint)
+              case Right(Replace(_, pos, subts, orig)) => createReplaceQuickfix(document, virtualFile, psiFile, pos, subts, orig, hlintInfo.hint, hlintInfo.note)
+              case Right(ModifyComment(pos, newComment)) => createModifyCommentQuickfix(document, virtualFile, psiFile, pos, newComment, hlintInfo.hint, hlintInfo.note)
+              case Right(InsertComment(pos, insertComment)) => createInsertCommentQuickfix(document, virtualFile, psiFile, pos, insertComment, hlintInfo.hint, hlintInfo.note)
+              case Right(RemoveAsKeyword(_)) => None  // Fallback to manual applying suggestion
+              case Left(error) =>
+                HaskellNotificationGroup.logErrorEvent(project, error)
+                None
             }
           }
 
@@ -103,6 +108,51 @@ class HLintInspectionTool extends LocalInspectionTool {
     }
   }
 
+  private def findOffsets(document: Document, virtualFile: VirtualFile, psiFile: PsiFile, pos: SrcSpan, newText: Option[String]) =
+    for {
+      (replaceStartOffset, replaceEndOffset, originalText) <- findTextWithOffsets(virtualFile, document, pos)
+      startElement <- Option(psiFile.findElementAt(replaceStartOffset))
+      endElement <- Option(psiFile.findElementAt(replaceEndOffset - 1))
+    } yield {
+      val replaceEndOffset2 = if (newText.exists(_.isEmpty) && replaceEndOffset < psiFile.getTextLength - 1) {
+        replaceEndOffset + 1
+      } else {
+        replaceEndOffset
+      }
+      (replaceStartOffset, replaceEndOffset2, startElement, endElement, originalText)
+    }
+
+  private def createModifyCommentQuickfix(document: Document, virtualFile: VirtualFile, psiFile: PsiFile, pos: SrcSpan, newComment: String, hint: String, note: Seq[String]) = {
+    for {
+      (replaceStartOffset, replaceEndOffset, startElement, endElement, _) <- findOffsets(document, virtualFile, psiFile, pos, Some(newComment))
+    } yield {
+      new HLintReplaceQuickfix(virtualFile, startElement, endElement, replaceStartOffset, replaceEndOffset, newComment, hint, note)
+    }
+  }
+
+  private def createInsertCommentQuickfix(document: Document, virtualFile: VirtualFile, psiFile: PsiFile, pos: SrcSpan, insertComment: String, hint: String, note: Seq[String]) = {
+    for {
+      (replaceStartOffset, replaceEndOffset, startElement, endElement, _) <- findOffsets(document, virtualFile, psiFile, pos, None)
+    } yield {
+      new HLintInsertCommentQuickfix(virtualFile, startElement, endElement, replaceStartOffset, replaceEndOffset, insertComment + "\n", hint, note)
+    }
+  }
+
+  private def createReplaceQuickfix(document: Document, virtualFile: VirtualFile, psiFile: PsiFile, pos: SrcSpan, subts: Subts, orig: String, hint: String, note: Seq[String]) = {
+    for {
+      (replaceStartOffset, replaceEndOffset, startElement, endElement, _) <- findOffsets(document, virtualFile, psiFile, pos, None)
+      newText = subts.map({ case (x, pos) => (x, findText(virtualFile, document, pos)) }).collect {
+        case (w, Some(toReplace)) => (w, toReplace)
+      }.foldLeft(orig)({ case (x, y) => x.replace(y._1, y._2) })
+    } yield new HLintReplaceQuickfix(virtualFile, startElement, endElement, replaceStartOffset, replaceEndOffset, newText, hint, note)
+  }
+
+  private def createDeleteQuickfix(document: Document, virtualFile: VirtualFile, psiFile: PsiFile, pos: SrcSpan, hint: String) = {
+    for {
+      (replaceStartOffset, replaceEndOffset, startElement, endElement, originalText) <- findOffsets(document, virtualFile, psiFile, pos, Some(""))
+    } yield new HLintDeleteQuickfix(virtualFile, startElement, endElement, replaceStartOffset, replaceEndOffset, hint, originalText)
+  }
+
   private def findTextWithOffsets(virtualFile: VirtualFile, document: Document, pos: SrcSpan) = {
     for {
       startOffset <- LineColumnPosition.getOffset(virtualFile, LineColumnPosition(pos.startLine, pos.startCol))
@@ -113,17 +163,6 @@ class HLintInspectionTool extends LocalInspectionTool {
 
   private def findText(virtualFile: VirtualFile, document: Document, pos: SrcSpan) =
     findTextWithOffsets(virtualFile, document, pos).map(_._3)
-
-  private def createReplaceQuickfix(document: Document, virtualFile: VirtualFile, psiFile: PsiFile, rType: RType, pos: SrcSpan, subts: Subts, orig: String, hint: String, note: Seq[String]) = {
-    for {
-      (replaceStartOffset, replaceEndOffset, _) <- findTextWithOffsets(virtualFile, document, pos)
-      startElement <- Option(psiFile.findElementAt(replaceStartOffset))
-      endElement <- Option(psiFile.findElementAt(replaceEndOffset - 1))
-      newText = subts.map({ case (x, pos) => (x, findText(virtualFile, document, pos)) }).collect {
-        case (w, Some(toReplace)) => (w, toReplace)
-      }.foldLeft(orig)({ case (x, y) => x.replace(y._1, y._2) })
-    } yield new HLintQuickfix(virtualFile, startElement, endElement, replaceStartOffset, replaceEndOffset, newText, hint, note)
-  }
 
   private def findProblemHighlightType(hlintInfo: HLintInfo) = hlintInfo.severity match {
     case "Warning" => ProblemHighlightType.GENERIC_ERROR_OR_WARNING
