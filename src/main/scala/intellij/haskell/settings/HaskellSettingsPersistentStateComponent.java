@@ -20,6 +20,7 @@ import com.intellij.openapi.components.PersistentStateComponent;
 import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.components.State;
 import com.intellij.openapi.components.Storage;
+import intellij.haskell.GlobalInfo;
 import org.jetbrains.annotations.NotNull;
 
 @State(
@@ -54,6 +55,7 @@ public class HaskellSettingsPersistentStateComponent implements PersistentStateC
         public Boolean reformatCodeBeforeCommit = false;
         public Boolean optimizeImportsBeforeCommit = false;
         public String newProjectTemplateName = "new-template";
+        public String cachePath = GlobalInfo.DefaultCachePath();
         public String hlintPath = "";
         public String hooglePath = "";
         public String ormoluPath = "";

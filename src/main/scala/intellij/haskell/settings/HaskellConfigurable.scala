@@ -16,11 +16,11 @@
 
 package intellij.haskell.settings
 
-import java.awt.{GridBagConstraints, GridBagLayout, Insets}
-
 import com.intellij.openapi.options.{Configurable, ConfigurationException}
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.ui.DocumentAdapter
+
+import java.awt.{GridBagConstraints, GridBagLayout, Insets}
 import javax.swing._
 import javax.swing.event.DocumentEvent
 
@@ -29,8 +29,9 @@ class HaskellConfigurable extends Configurable {
   private val hlintOptionsField = new JTextField
   private val useSystemGhcToggle = new JCheckBox
   private val replTimeoutField = new JTextField
-  private val afterRestartLabel = new JLabel("*) Changes will take effect after restarting project")
+  private val afterRestartLabel = new JLabel("*) Changes will take effect after restarting IntelliJ")
   private val newProjectTemplateNameField = new JTextField
+  private val cachePathField = new JTextField
   private val hlintPathField = new JTextField
   private val hooglePathField = new JTextField
   private val ormoluPathField = new JTextField
@@ -69,6 +70,7 @@ class HaskellConfigurable extends Configurable {
     hlintOptionsField.getDocument.addDocumentListener(docListener)
     replTimeoutField.getDocument.addDocumentListener(docListener)
     newProjectTemplateNameField.getDocument.addDocumentListener(docListener)
+    cachePathField.getDocument.addDocumentListener(docListener)
     hlintPathField.getDocument.addDocumentListener(docListener)
     hooglePathField.getDocument.addDocumentListener(docListener)
     ormoluPathField.getDocument.addDocumentListener(docListener)
@@ -127,6 +129,7 @@ class HaskellConfigurable extends Configurable {
       (new JLabel(ExtraStackArguments), extraStackArgumentsField),
       (new JLabel(""), afterRestartLabel),
       (new JLabel(NewProjectTemplateName), newProjectTemplateNameField),
+      (new JLabel(CachePath), cachePathField),
       (new JLabel(BuildToolsUsingSystemGhc), useSystemGhcToggle),
       (new JLabel(UseCustomTool), useCustomToolsToggle),
       (new JLabel(HlintPath), hlintPathField),
@@ -167,6 +170,7 @@ class HaskellConfigurable extends Configurable {
     state.hlintOptions = hlintOptionsField.getText
     state.useSystemGhc = useSystemGhcToggle.isSelected
     state.newProjectTemplateName = newProjectTemplateNameField.getText
+    state.cachePath = cachePathField.getText
     state.hlintPath = hlintPathField.getText
     state.hooglePath = hooglePathField.getText
     state.ormoluPath = ormoluPathField.getText
@@ -222,6 +226,7 @@ class HaskellConfigurable extends Configurable {
     useSystemGhcToggle.setSelected(state.useSystemGhc)
     replTimeoutField.setText(state.replTimeout.toString)
     newProjectTemplateNameField.setText(state.newProjectTemplateName)
+    cachePathField.setText(state.cachePath)
     hlintPathField.setText(state.hlintPath)
     hooglePathField.setText(state.hooglePath)
     ormoluPathField.setText(state.ormoluPath)
@@ -236,6 +241,7 @@ object HaskellConfigurable {
   final val ReplTimout = "Background REPL timeout in seconds *"
   final val HlintOptions = "Hlint options"
   final val NewProjectTemplateName = "Template name for new project"
+  final val CachePath = "Cache path *"
   final val BuildToolsUsingSystemGhc = "Build tools using system GHC *"
   final val HlintPath = "Hlint path"
   final val HooglePath = "Hoogle path"

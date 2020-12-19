@@ -35,6 +35,10 @@ object HaskellSettingsState {
     state.newProjectTemplateName
   }
 
+  def getCachePath: String = {
+    state.cachePath
+  }
+
   def isReformatCodeBeforeCommit: Boolean = {
     state.reformatCodeBeforeCommit
   }
