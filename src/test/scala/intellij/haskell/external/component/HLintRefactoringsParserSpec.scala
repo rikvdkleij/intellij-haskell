@@ -14,6 +14,8 @@ class HLintRefactoringsParserSpec extends AnyFlatSpec with Matchers {
     "(\"x\",SrcSpan {startLine = 1, startCol = 36, endLine = 1, endCol = 45})], " +
     "orig = \"concatMap f . x\"}])]"
 
+  val replaceDelete = "[Replace {rtype = Stmt, pos = SrcSpan {startLine = 1, startCol = 10, endLine = 1, endCol = 18}, subts = [(\"x\",SrcSpan {startLine = 1, startCol = 15, endLine = 1, endCol = 18})], orig = \"join x\"},Delete {rtype = Stmt, pos = SrcSpan {startLine = 1, startCol = 20, endLine = 1, endCol = 21}}])"
+
   val subts = "[(\"f\",SrcSpan {startLine = 1, startCol = 32, endLine = 1, endCol = 33}),(\"x\",SrcSpan {startLine = 1, startCol = 36, endLine = 1, endCol = 45})]"
 
   val modifyComment = "[ModifyComment {pos = SrcSpan {startLine = 1, startCol = 1, endLine = 1, endCol = 19}, newComment = \"{-# INLINE[~k] f #-}\"}]"
@@ -40,7 +42,17 @@ class HLintRefactoringsParserSpec extends AnyFlatSpec with Matchers {
 
   "replace parser" should "pass" in {
     parseRefactoring(replace) should matchPattern {
-      case Right(Replace(Expr, SrcSpan(1, 19, 1, 45), List(("f", SrcSpan(1, 32, 1, 33)), ("x", SrcSpan(1, 36, 1, 45))), "concatMap f . x")) =>
+      case Right(Replace(Expr, SrcSpan(1, 19, 1, 45), List(("f", SrcSpan(1, 32, 1, 33)), ("x", SrcSpan(1, 36, 1, 45))), "concatMap f . x", Seq())) =>
+    }
+  }
+
+  "replace delete parser" should "pass" in {
+    parseRefactoring(replaceDelete) should matchPattern {
+      case Right(
+      Replace(Stmt, SrcSpan(1, 10, 1, 18), List(("x", SrcSpan(1, 15, 1, 18))), "join x",
+      Seq(Delete(Stmt, SrcSpan(1, 20, 1, 21)))
+      )
+      ) =>
     }
   }
 

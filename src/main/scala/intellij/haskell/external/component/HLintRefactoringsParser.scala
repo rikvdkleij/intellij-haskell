@@ -12,7 +12,7 @@ object HLintRefactoringsParser {
 
   sealed trait Refactoring
   case class Delete(rType: RType, pos: SrcSpan) extends Refactoring
-  case class Replace(rType: RType, pos: SrcSpan, subts: Subts, orig: String) extends Refactoring
+  case class Replace(rType: RType, pos: SrcSpan, subts: Subts, orig: String, deletes: Seq[Delete]) extends Refactoring
   case class ModifyComment(pos: SrcSpan, newComment: String) extends Refactoring
   case class InsertComment(pos: SrcSpan, insertComment: String) extends Refactoring
   case class RemoveAsKeyword(pos: SrcSpan) extends Refactoring
@@ -33,24 +33,24 @@ object HLintRefactoringsParser {
     case Failure(label, i, _) => Left(s"Could not parse HLint output | HLintOutput: $hlintOutput | Label: $label | Index: $i")
   }
 
-  private def refactoringParser[_: P]: P[Refactoring] = P(deleteParser | replaceParser | modifyCommentParser | insertCommentParser | removeAsKeywordParser)
+  private def refactoringParser[_: P]: P[Refactoring] = P("[" ~ (deleteParser | replaceParser | modifyCommentParser | insertCommentParser | removeAsKeywordParser) ~ "]")
 
   private[component] def parseSubts(hlintOutput: String): Parsed[Subts] = parse(hlintOutput, subtsParser(_), verboseFailures = true)
 
   private[component] def parsePos(hlintOutput: String): Parsed[SrcSpan] = parse(hlintOutput, posParser(_), verboseFailures = true)
 
-  private def deleteParser[_: P]: P[Delete] = P("[Delete" ~ keyRtypePosParser(Pass) ~ "]").map({ case (x, y, _) => Delete(x, y) })
+  private def deleteParser[_: P]: P[Delete] = P("Delete" ~ keyRtypePosParser(Pass)).map({ case (x, y, _) => Delete(x, y) })
 
-  private def replaceParser[_: P]: P[Replace] = P("[Replace" ~ keyRtypePosParser(commaParser ~ "subts =" ~ subtsParser ~ commaParser ~ keyValueParser("orig", string)) ~ "]")
-    .map({ case (x, y, (w, z)) => Replace(x, y, w, z) })
+  private def replaceParser[_: P]: P[Replace] = P("Replace" ~ keyRtypePosParser(commaParser ~ "subts =" ~ subtsParser ~ commaParser ~ keyValueParser("orig", string)) ~ (commaParser ~ deleteParser).rep)
+    .map({ case (x, y, (w, z), q) => Replace(x, y, w, z, q) })
 
-  private def modifyCommentParser[_: P]: P[ModifyComment] = P("[ModifyComment" ~ "{" ~ posParser ~ commaParser ~ keyValueParser("newComment", string) ~ "}]").
+  private def modifyCommentParser[_: P]: P[ModifyComment] = P("ModifyComment" ~ "{" ~ posParser ~ commaParser ~ keyValueParser("newComment", string) ~ "}").
     map({ case (x, y) => ModifyComment(x, y) })
 
-  private def insertCommentParser[_: P]: P[InsertComment] = P("[InsertComment" ~ "{" ~ posParser ~ commaParser ~ keyValueParser("newComment", string) ~ "}]").
+  private def insertCommentParser[_: P]: P[InsertComment] = P("InsertComment" ~ "{" ~ posParser ~ commaParser ~ keyValueParser("newComment", string) ~ "}").
     map({ case (x, y) => InsertComment(x, y) })
 
-  private def removeAsKeywordParser[_: P]: P[RemoveAsKeyword] = P("[RemoveAsKeyword" ~ "{" ~ posParser ~ "}]").
+  private def removeAsKeywordParser[_: P]: P[RemoveAsKeyword] = P("RemoveAsKeyword" ~ "{" ~ posParser ~ "}").
     map({ case (x) => RemoveAsKeyword(x) })
 
   private def keyRtypePosParser[_: P, A](rest: => P[A]) = "{" ~ keyRtypeParser ~ commaParser ~ posParser ~ rest ~ "}"

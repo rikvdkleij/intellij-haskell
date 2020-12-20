@@ -18,6 +18,7 @@ package intellij.haskell.inspection
 
 import com.intellij.codeInspection.LocalQuickFixOnPsiElement
 import com.intellij.openapi.command.CommandProcessor
+import com.intellij.openapi.editor.Document
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.psi.{PsiElement, PsiFile}
@@ -30,54 +31,48 @@ abstract class HLintQuickfix(startElement: PsiElement, endElement: PsiElement) e
   override def getFamilyName: String = "Inspection by HLint"
 }
 
-class HLintReplaceQuickfix(virtualFile: VirtualFile, startElement: PsiElement, endElement: PsiElement, startOffset: Int, endOffset: Int, replacement: String, hint: String, note: Seq[String]) extends HLintQuickfix(startElement, endElement) {
+class HLintReplaceQuickfix(document: Document, virtualFile: VirtualFile, startElement: PsiElement, endElement: PsiElement, startOffset: Int, endOffset: Int, replacement: String, hint: String, note: Seq[String], deletes: Seq[HLintDeleteQuickfix]) extends HLintQuickfix(startElement, endElement) {
 
   override def getText: String =
     s"$hint, change to `$replacement` | ${noteText(note)}"
 
-  override def invoke(project: Project, psiFile: PsiFile, startElement: PsiElement, endElement: PsiElement): Unit =
-    invokeReplace(project, virtualFile, psiFile, startOffset, endOffset, replacement)
+  override def invoke(project: Project, psiFile: PsiFile, startElement: PsiElement, endElement: PsiElement): Unit = {
+    invokeReplace(project, document, virtualFile, psiFile, startOffset, endOffset, replacement)
+    deletes.foreach(_.invoke(project, psiFile, startElement, endElement))
+  }
 }
 
-class HLintDeleteQuickfix(virtualFile: VirtualFile, startElement: PsiElement, endElement: PsiElement, startOffset: Int, endOffset: Int, hint: String, originalText: String) extends HLintQuickfix(startElement, endElement) {
+class HLintDeleteQuickfix(document: Document, virtualFile: VirtualFile, startElement: PsiElement, endElement: PsiElement, startOffset: Int, endOffset: Int, hint: String, originalText: String) extends HLintQuickfix(startElement, endElement) {
 
   override def getText: String = s"$hint, delete `$originalText`"
 
   override def invoke(project: Project, psiFile: PsiFile, startElement: PsiElement, endElement: PsiElement): Unit =
     CommandProcessor.getInstance().executeCommand(project, () => {
-      for {
-        document <- HaskellFileUtil.findDocument(virtualFile)
-      } yield {
-        document.deleteString(startOffset, endOffset)
-        HaskellFileUtil.saveFile(psiFile)
-        HaskellAnnotator.restartDaemonCodeAnalyzerForFile(psiFile)
-      }
+      document.deleteString(startOffset, endOffset)
+      HaskellFileUtil.saveFile(psiFile)
+      HaskellAnnotator.restartDaemonCodeAnalyzerForFile(psiFile)
     }, null, null)
 }
 
-class HLintModifyCommentQuickfix(virtualFile: VirtualFile, startElement: PsiElement, endElement: PsiElement, startOffset: Int, endOffset: Int, newComment: String, hint: String, note: Seq[String]) extends HLintQuickfix(startElement, endElement) {
+class HLintModifyCommentQuickfix(document: Document, virtualFile: VirtualFile, startElement: PsiElement, endElement: PsiElement, startOffset: Int, endOffset: Int, newComment: String, hint: String, note: Seq[String]) extends HLintQuickfix(startElement, endElement) {
 
   override def getText: String =
     s"$hint, change to `$newComment` | ${noteText(note)} "
 
   override def invoke(project: Project, psiFile: PsiFile, startElement: PsiElement, endElement: PsiElement): Unit =
-    invokeReplace(project, virtualFile, psiFile, startOffset, endOffset, newComment)
+    invokeReplace(project, document, virtualFile, psiFile, startOffset, endOffset, newComment)
 }
 
-class HLintInsertCommentQuickfix(virtualFile: VirtualFile, startElement: PsiElement, endElement: PsiElement, startOffset: Int, endOffset: Int, insertComment: String, hint: String, note: Seq[String]) extends HLintQuickfix(startElement, endElement) {
+class HLintInsertCommentQuickfix(document: Document, virtualFile: VirtualFile, startElement: PsiElement, endElement: PsiElement, startOffset: Int, endOffset: Int, insertComment: String, hint: String, note: Seq[String]) extends HLintQuickfix(startElement, endElement) {
 
   override def getText: String =
     s"$hint, insert `$insertComment` | ${noteText(note)} "
 
   override def invoke(project: Project, psiFile: PsiFile, startElement: PsiElement, endElement: PsiElement): Unit =
     CommandProcessor.getInstance().executeCommand(project, () => {
-      for {
-        document <- HaskellFileUtil.findDocument(virtualFile)
-      } yield {
-        document.insertString(startOffset, insertComment)
-        HaskellFileUtil.saveFile(psiFile)
-        HaskellAnnotator.restartDaemonCodeAnalyzerForFile(psiFile)
-      }
+      document.insertString(startOffset, insertComment)
+      HaskellFileUtil.saveFile(psiFile)
+      HaskellAnnotator.restartDaemonCodeAnalyzerForFile(psiFile)
     }, null, null)
 }
 
@@ -91,17 +86,13 @@ object HLintQuickfix {
     }
   }
 
-  private[inspection] def invokeReplace(project: Project, virtualFile: VirtualFile, psiFile: PsiFile, startOffset: Int, endOffset: Int, replacement: String): Unit = {
+  private[inspection] def invokeReplace(project: Project, document: Document, virtualFile: VirtualFile, psiFile: PsiFile, startOffset: Int, endOffset: Int, replacement: String): Unit = {
     CommandProcessor.getInstance().executeCommand(project, () => {
-      for {
-        document <- HaskellFileUtil.findDocument(virtualFile)
-      } yield {
-        document.replaceString(startOffset, endOffset, replacement)
-        HaskellFileUtil.saveFile(psiFile)
-        HaskellAnnotator.restartDaemonCodeAnalyzerForFile(psiFile)
-      }
+      document.replaceString(startOffset, endOffset, replacement
+        .replace("\\n", "\n")
+      )
+      HaskellFileUtil.saveFile(psiFile)
+      HaskellAnnotator.restartDaemonCodeAnalyzerForFile(psiFile)
     }, null, null)
   }
-
-
 }
