@@ -1,7 +1,7 @@
 <idea-plugin>
     <id>intellij.haskell</id>
     <name>IntelliJ-Haskell</name>
-    <version>1.0.0-beta84</version>
+    <version>1.0.0-beta85</version>
     <vendor email="rikvdkleij@gmail.com">Rik van der Kleij</vendor>
 
     <description><![CDATA[
@@ -20,6 +20,13 @@
     ]]></description>
 
     <change-notes><![CDATA[
+        <p>1.0.0-beta85</p>
+           <ul>
+            <li>Various improvements and fixes</li>
+            <li>Improved applying HLint suggestions</li>
+            <li>Making command line processes charset aware by @sgt (#623)</li>
+            <li>Path to cache directory is configurable in Haskell Settings</li>
+           </ul>
         <p>1.0.0-beta84</p>
            <ul>
             <li>Improved parser</li>
