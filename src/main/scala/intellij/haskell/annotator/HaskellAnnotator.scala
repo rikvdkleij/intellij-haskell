@@ -149,7 +149,7 @@ object HaskellAnnotator {
 
   private final val DeprecatedPattern = """.*In the use of.*[‘`](.*)[’'].*Deprecated: "Use ([^ ]+).*"""".r
 
-  private final val HolePattern = """warning: \[-Wtyped-holes] (.+)""".r
+  private final val HolePattern = """warning: \[-Wtyped-holes].*?Found hole: ([^ ]+)(.*?) In the.*""".r
 
   // File which could not be loaded because project was not yet build
   private final val NotLoadedFiles = new ConcurrentHashMap[Project, Set[PsiFile]]
@@ -230,8 +230,8 @@ object HaskellAnnotator {
               case NotInScopePattern2(name) =>
                 ErrorAnnotationWithIntentionActions(tr, problem.plainMessage, problem.htmlMessage, createNotInScopeIntentionActions(psiFile, name.split("::").headOption.getOrElse(name).trim, importedModuleNames).toList)
               case UseAloneInstancesImportPattern(importDecl, _) => importAloneInstancesAction(problem, tr, importDecl)
-              case HolePattern(_) =>
-                ErrorAnnotation(tr, problem.plainMessage, problem.htmlMessage)
+              case HolePattern(name, typeSignature) =>
+                ErrorAnnotationWithIntentionActions(tr, problem.plainMessage, problem.htmlMessage, List(new CreateStubIntentionAction(name, typeSignature)))
               //
               case NoTypeSignaturePattern(typeSignature) => WarningAnnotationWithIntentionActions(tr, problem.plainMessage, problem.htmlMessage, List(new TypeSignatureIntentionAction(typeSignature)))
               case HaskellImportOptimizer.WarningRedundantImport(moduleName) => WarningAnnotationWithIntentionActions(tr, problem.plainMessage, problem.htmlMessage, List(new OptimizeImportIntentionAction(moduleName, None, problem.lineNr)))
@@ -335,6 +335,34 @@ sealed abstract class HaskellBaseIntentionAction extends BaseIntentionAction wit
 
   override def getPriority: PriorityAction.Priority = {
     PriorityAction.Priority.NORMAL
+  }
+}
+
+class CreateStubIntentionAction(name: String, typeSignature: String) extends HaskellBaseIntentionAction {
+  setText(s"Create stub for `$name$typeSignature`")
+
+  override def getFamilyName: String = "Create stub"
+
+  override def invoke(project: Project, editor: Editor, file: PsiFile): Unit = {
+    val offset = editor.getCaretModel.getOffset
+
+    Option(file.findElementAt(offset)) match {
+      case Some(e) => for {
+        newName <- HaskellElementFactory.createQNameElement(project, "helper")
+        topDeclaration <- Option(TreeUtil.findParent(e.getNode, HaskellTypes.HS_TOP_DECLARATION))
+        moduleBody <- Option(topDeclaration.getPsi.getParent)
+        sigDecl <- HaskellElementFactory.createTopDeclaration(project, newName.getName + typeSignature)
+        bodDecl <- HaskellElementFactory.createTopDeclaration(project, newName.getName + " = undefined")
+      } yield {
+        e.replace(newName)
+        var nl = moduleBody.addAfter(HaskellElementFactory.createNewLine(project), topDeclaration.getPsi)
+        val sig = moduleBody.addAfter(sigDecl, nl)
+        nl = moduleBody.addAfter(HaskellElementFactory.createNewLine(project), sig)
+        val bodyElement = moduleBody.addAfter(bodDecl, nl)
+        moduleBody.addAfter(HaskellElementFactory.createNewLine(project), bodyElement)
+      }
+      case None => ()
+    }
   }
 }
 
