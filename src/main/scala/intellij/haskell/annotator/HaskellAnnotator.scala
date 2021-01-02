@@ -24,7 +24,7 @@ import com.intellij.codeInsight.intention.impl.BaseIntentionAction
 import com.intellij.codeInsight.intention.{HighPriorityAction, PriorityAction}
 import com.intellij.compiler.CompilerMessageImpl
 import com.intellij.lang.annotation.{AnnotationHolder, ExternalAnnotator, HighlightSeverity}
-import com.intellij.openapi.application.ApplicationManager
+import com.intellij.openapi.application.{ApplicationManager, WriteAction}
 import com.intellij.openapi.compiler.CompilerMessageCategory
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.fileEditor.FileDocumentManager
@@ -34,11 +34,13 @@ import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.psi.PsiFile
 import com.intellij.psi.impl.source.tree.TreeUtil
 import com.intellij.psi.util.PsiTreeUtil
+import com.intellij.refactoring.rename.RenameUtil
 import intellij.haskell.editor.{HaskellImportOptimizer, HaskellProblemsView}
 import intellij.haskell.external.component._
 import intellij.haskell.external.execution._
 import intellij.haskell.psi._
 import intellij.haskell.runconfig.console.HaskellConsoleView
+import intellij.haskell.ui.EnterNameDialog
 import intellij.haskell.util._
 import intellij.haskell.{HaskellFile, HaskellFileType, HaskellNotificationGroup}
 
@@ -149,7 +151,7 @@ object HaskellAnnotator {
 
   private final val DeprecatedPattern = """.*In the use of.*[‘`](.*)[’'].*Deprecated: "Use ([^ ]+).*"""".r
 
-  private final val HolePattern = """warning: \[-Wtyped-holes] (.+)""".r
+  private final val HolePattern = """warning: \[-Wtyped-holes].*?Found hole: ([^ ]+)(.*?) (?:Or perhaps|In the).*""".r
 
   // File which could not be loaded because project was not yet build
   private final val NotLoadedFiles = new ConcurrentHashMap[Project, Set[PsiFile]]
@@ -230,8 +232,8 @@ object HaskellAnnotator {
               case NotInScopePattern2(name) =>
                 ErrorAnnotationWithIntentionActions(tr, problem.plainMessage, problem.htmlMessage, createNotInScopeIntentionActions(psiFile, name.split("::").headOption.getOrElse(name).trim, importedModuleNames).toList)
               case UseAloneInstancesImportPattern(importDecl, _) => importAloneInstancesAction(problem, tr, importDecl)
-              case HolePattern(_) =>
-                ErrorAnnotation(tr, problem.plainMessage, problem.htmlMessage)
+              case HolePattern(name, typeSignature) =>
+                ErrorAnnotationWithIntentionActions(tr, problem.plainMessage, problem.htmlMessage, List(new CreateStubIntentionAction(name, typeSignature)))
               //
               case NoTypeSignaturePattern(typeSignature) => WarningAnnotationWithIntentionActions(tr, problem.plainMessage, problem.htmlMessage, List(new TypeSignatureIntentionAction(typeSignature)))
               case HaskellImportOptimizer.WarningRedundantImport(moduleName) => WarningAnnotationWithIntentionActions(tr, problem.plainMessage, problem.htmlMessage, List(new OptimizeImportIntentionAction(moduleName, None, problem.lineNr)))
@@ -335,6 +337,41 @@ sealed abstract class HaskellBaseIntentionAction extends BaseIntentionAction wit
 
   override def getPriority: PriorityAction.Priority = {
     PriorityAction.Priority.NORMAL
+  }
+}
+
+class CreateStubIntentionAction(name: String, typeSignature: String) extends HaskellBaseIntentionAction {
+  setText(s"Create stub for `$name$typeSignature`")
+
+  override def getFamilyName: String = "Create stub"
+
+  override def startInWriteAction(): Boolean = false
+
+  override def invoke(project: Project, editor: Editor, file: PsiFile): Unit = {
+    val offset = editor.getCaretModel.getOffset
+
+    val dialog = new EnterNameDialog("Enter variable name", name.drop(1))
+    if (dialog.showAndGet())
+
+    Option(file.findElementAt(offset)) match {
+      case Some(e) => if (RenameUtil.isValidName(project, e, dialog.getName)) for {
+        newName <- HaskellElementFactory.createQNameElement(project, dialog.getName)
+        topDeclaration <- Option(TreeUtil.findParent(e.getNode, HaskellTypes.HS_TOP_DECLARATION))
+        moduleBody <- Option(topDeclaration.getPsi.getParent)
+        sigDecl <- HaskellElementFactory.createTopDeclaration(project, newName.getName + typeSignature)
+        bodDecl <- HaskellElementFactory.createTopDeclaration(project, newName.getName + " = undefined")
+      } yield {
+        WriteAction.run(() => {
+          e.replace(newName)
+          var nl = moduleBody.addAfter(HaskellElementFactory.createNewLine(project), topDeclaration.getPsi)
+          val sig = moduleBody.addAfter(sigDecl, nl)
+          nl = moduleBody.addAfter(HaskellElementFactory.createNewLine(project), sig)
+          val bodyElement = moduleBody.addAfter(bodDecl, nl)
+          moduleBody.addAfter(HaskellElementFactory.createNewLine(project), bodyElement)
+        })
+      }
+      case None => ()
+    }
   }
 }
 
