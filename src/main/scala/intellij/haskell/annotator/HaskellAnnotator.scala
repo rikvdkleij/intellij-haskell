@@ -39,6 +39,7 @@ import intellij.haskell.external.component._
 import intellij.haskell.external.execution._
 import intellij.haskell.psi._
 import intellij.haskell.runconfig.console.HaskellConsoleView
+import intellij.haskell.ui.EnterNameDialog
 import intellij.haskell.util._
 import intellij.haskell.{HaskellFile, HaskellFileType, HaskellNotificationGroup}
 
@@ -346,9 +347,12 @@ class CreateStubIntentionAction(name: String, typeSignature: String) extends Has
   override def invoke(project: Project, editor: Editor, file: PsiFile): Unit = {
     val offset = editor.getCaretModel.getOffset
 
+    val dialog = new EnterNameDialog("Enter variable name")
+    if (dialog.showAndGet())
+
     Option(file.findElementAt(offset)) match {
       case Some(e) => for {
-        newName <- HaskellElementFactory.createQNameElement(project, "helper")
+        newName <- HaskellElementFactory.createQNameElement(project, dialog.getName)
         topDeclaration <- Option(TreeUtil.findParent(e.getNode, HaskellTypes.HS_TOP_DECLARATION))
         moduleBody <- Option(topDeclaration.getPsi.getParent)
         sigDecl <- HaskellElementFactory.createTopDeclaration(project, newName.getName + typeSignature)
