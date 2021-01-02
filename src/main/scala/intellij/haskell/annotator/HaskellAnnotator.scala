@@ -34,6 +34,7 @@ import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.psi.PsiFile
 import com.intellij.psi.impl.source.tree.TreeUtil
 import com.intellij.psi.util.PsiTreeUtil
+import com.intellij.refactoring.rename.RenameUtil
 import intellij.haskell.editor.{HaskellImportOptimizer, HaskellProblemsView}
 import intellij.haskell.external.component._
 import intellij.haskell.external.execution._
@@ -353,7 +354,7 @@ class CreateStubIntentionAction(name: String, typeSignature: String) extends Has
     if (dialog.showAndGet())
 
     Option(file.findElementAt(offset)) match {
-      case Some(e) => for {
+      case Some(e) => if (RenameUtil.isValidName(project, e, dialog.getName)) for {
         newName <- HaskellElementFactory.createQNameElement(project, dialog.getName)
         topDeclaration <- Option(TreeUtil.findParent(e.getNode, HaskellTypes.HS_TOP_DECLARATION))
         moduleBody <- Option(topDeclaration.getPsi.getParent)
