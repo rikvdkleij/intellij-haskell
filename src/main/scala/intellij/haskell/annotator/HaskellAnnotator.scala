@@ -350,7 +350,7 @@ class CreateStubIntentionAction(name: String, typeSignature: String) extends Has
   override def invoke(project: Project, editor: Editor, file: PsiFile): Unit = {
     val offset = editor.getCaretModel.getOffset
 
-    val dialog = new EnterNameDialog("Enter variable name")
+    val dialog = new EnterNameDialog("Enter variable name", name.drop(1))
     if (dialog.showAndGet())
 
     Option(file.findElementAt(offset)) match {

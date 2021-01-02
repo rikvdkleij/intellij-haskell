@@ -5,8 +5,8 @@ import java.awt.BorderLayout
 import com.intellij.openapi.ui.DialogWrapper
 import javax.swing.{JComponent, JLabel, JPanel, JTextField}
 
-class EnterNameDialog(prompt: String) extends DialogWrapper(true) {
-  private val textField = new JTextField(10)
+class EnterNameDialog(prompt: String, suggestion: String = "") extends DialogWrapper(true) {
+  private val textField = if (suggestion.isEmpty) new JTextField(10) else new JTextField(suggestion)
   init()
   setTitle(prompt)
   override def createCenterPanel(): JComponent = {
