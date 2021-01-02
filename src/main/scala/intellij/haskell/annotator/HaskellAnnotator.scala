@@ -151,7 +151,7 @@ object HaskellAnnotator {
 
   private final val DeprecatedPattern = """.*In the use of.*[‘`](.*)[’'].*Deprecated: "Use ([^ ]+).*"""".r
 
-  private final val HolePattern = """warning: \[-Wtyped-holes].*?Found hole: ([^ ]+)(.*?) In the.*""".r
+  private final val HolePattern = """warning: \[-Wtyped-holes].*?Found hole: ([^ ]+)(.*?) (?:Or perhaps|In the).*""".r
 
   // File which could not be loaded because project was not yet build
   private final val NotLoadedFiles = new ConcurrentHashMap[Project, Set[PsiFile]]
