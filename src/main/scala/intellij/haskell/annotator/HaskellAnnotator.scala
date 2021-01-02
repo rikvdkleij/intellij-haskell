@@ -24,7 +24,7 @@ import com.intellij.codeInsight.intention.impl.BaseIntentionAction
 import com.intellij.codeInsight.intention.{HighPriorityAction, PriorityAction}
 import com.intellij.compiler.CompilerMessageImpl
 import com.intellij.lang.annotation.{AnnotationHolder, ExternalAnnotator, HighlightSeverity}
-import com.intellij.openapi.application.ApplicationManager
+import com.intellij.openapi.application.{ApplicationManager, WriteAction}
 import com.intellij.openapi.compiler.CompilerMessageCategory
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.fileEditor.FileDocumentManager
@@ -344,6 +344,8 @@ class CreateStubIntentionAction(name: String, typeSignature: String) extends Has
 
   override def getFamilyName: String = "Create stub"
 
+  override def startInWriteAction(): Boolean = false
+
   override def invoke(project: Project, editor: Editor, file: PsiFile): Unit = {
     val offset = editor.getCaretModel.getOffset
 
@@ -358,12 +360,14 @@ class CreateStubIntentionAction(name: String, typeSignature: String) extends Has
         sigDecl <- HaskellElementFactory.createTopDeclaration(project, newName.getName + typeSignature)
         bodDecl <- HaskellElementFactory.createTopDeclaration(project, newName.getName + " = undefined")
       } yield {
-        e.replace(newName)
-        var nl = moduleBody.addAfter(HaskellElementFactory.createNewLine(project), topDeclaration.getPsi)
-        val sig = moduleBody.addAfter(sigDecl, nl)
-        nl = moduleBody.addAfter(HaskellElementFactory.createNewLine(project), sig)
-        val bodyElement = moduleBody.addAfter(bodDecl, nl)
-        moduleBody.addAfter(HaskellElementFactory.createNewLine(project), bodyElement)
+        WriteAction.run(() => {
+          e.replace(newName)
+          var nl = moduleBody.addAfter(HaskellElementFactory.createNewLine(project), topDeclaration.getPsi)
+          val sig = moduleBody.addAfter(sigDecl, nl)
+          nl = moduleBody.addAfter(HaskellElementFactory.createNewLine(project), sig)
+          val bodyElement = moduleBody.addAfter(bodDecl, nl)
+          moduleBody.addAfter(HaskellElementFactory.createNewLine(project), bodyElement)
+        })
       }
       case None => ()
     }
