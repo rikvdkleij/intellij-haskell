@@ -27,7 +27,7 @@ public class HaskellConsymStub extends NamedStubBase<HaskellConsym> {
         super(parent, elementType, name);
     }
 
-    public HaskellConsymStub(StubElement parent, IStubElementType elementType, String name) {
+    public HaskellConsymStub(StubElement<?> parent, IStubElementType elementType, String name) {
         super(parent, elementType, name);
     }
 }
