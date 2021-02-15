@@ -18,10 +18,13 @@ package intellij.haskell.refactor
 
 import com.intellij.lang.refactoring.RefactoringSupportProvider
 import com.intellij.openapi.actionSystem.DataContext
-import com.intellij.openapi.editor.Editor
+import com.intellij.openapi.command.WriteCommandAction.writeCommandAction
+import com.intellij.openapi.editor.{Editor, SelectionModel}
 import com.intellij.openapi.project.Project
 import com.intellij.psi._
+import com.intellij.psi.util.PsiTreeUtil
 import com.intellij.refactoring.RefactoringActionHandler
+import intellij.haskell.psi.HaskellExpression
 import intellij.haskell.util.HaskellProjectUtil
 
 class HaskellRefactoringSupportProvider extends RefactoringSupportProvider {
@@ -40,7 +43,25 @@ class HaskellRefactoringSupportProvider extends RefactoringSupportProvider {
   override def getIntroduceVariableHandler: RefactoringActionHandler = {
     new RefactoringActionHandler {
       override def invoke(project: Project, editor: Editor, file: PsiFile, dataContext: DataContext): Unit = {
-        println("Hello 1")
+        val model: SelectionModel = editor.getSelectionModel
+
+        if (!model.hasSelection) return
+
+        val element1: PsiElement = file.findElementAt(model.getSelectionStart)
+        val element2: PsiElement = file.findElementAt(model.getSelectionEnd - 1)
+
+        // Ideally, once we fix the parser, this would be the expression selection
+        var parent = PsiTreeUtil.findCommonParent(element1, element2)
+        parent = PsiTreeUtil.getParentOfType[HaskellExpression](parent, classOf[HaskellExpression])
+
+        if (!(parent != null
+          && PsiTreeUtil.getDeepestFirst(parent) == element1
+          && PsiTreeUtil.getDeepestLast(parent) == element2))
+          return
+
+        writeCommandAction(project, file).withName("Introduce Variable").withGroupId(null).run(() => {
+          editor.getDocument.replaceString(model.getSelectionStart, model.getSelectionEnd, "x")
+        })
       }
 
       override def invoke(project: Project, elements: Array[PsiElement], dataContext: DataContext): Unit = {
