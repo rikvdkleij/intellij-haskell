@@ -17,7 +17,11 @@
 package intellij.haskell.refactor
 
 import com.intellij.lang.refactoring.RefactoringSupportProvider
+import com.intellij.openapi.actionSystem.DataContext
+import com.intellij.openapi.editor.Editor
+import com.intellij.openapi.project.Project
 import com.intellij.psi._
+import com.intellij.refactoring.RefactoringActionHandler
 import intellij.haskell.util.HaskellProjectUtil
 
 class HaskellRefactoringSupportProvider extends RefactoringSupportProvider {
@@ -30,6 +34,18 @@ class HaskellRefactoringSupportProvider extends RefactoringSupportProvider {
     Option(psiElement.getReference).flatMap(x => Option(x.resolve)) match {
       case Some(e) => Option(e.getContainingFile).map(_.getOriginalFile).exists(pf => HaskellProjectUtil.isSourceFile(pf))
       case _ => false
+    }
+  }
+
+  override def getIntroduceVariableHandler: RefactoringActionHandler = {
+    new RefactoringActionHandler {
+      override def invoke(project: Project, editor: Editor, file: PsiFile, dataContext: DataContext): Unit = {
+        println("Hello 1")
+      }
+
+      override def invoke(project: Project, elements: Array[PsiElement], dataContext: DataContext): Unit = {
+        // This does not get called
+      }
     }
   }
 }
