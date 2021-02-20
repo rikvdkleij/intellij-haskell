@@ -324,9 +324,12 @@ object HaskellReference {
   }
 
   def findIdentifiersByNameInfo(nameInfo: NameInfo, namedElement: HaskellNamedElement, project: Project): Either[NoInfo, (Option[String], HaskellNamedElement, Option[String])] = {
+    findIdentifiersByNameInfo(nameInfo, namedElement.getName, project)
+  }
+
+  def findIdentifiersByNameInfo(nameInfo: NameInfo, name: String, project: Project): Either[NoInfo, (Option[String], HaskellNamedElement, Option[String])] = {
     ProgressManager.checkCanceled()
 
-    val name = namedElement.getName
     nameInfo match {
       case pni: ProjectNameInfo =>
         val (virtualFile, psiFile) = HaskellFileUtil.findFileInRead(project, pni.filePath)

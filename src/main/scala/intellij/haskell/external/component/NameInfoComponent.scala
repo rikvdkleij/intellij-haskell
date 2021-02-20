@@ -70,7 +70,12 @@ private[component] object NameInfoComponent {
       case None => qualifiedNameElement.getName
       case Some(q) => q + "." + qualifiedNameElement.getIdentifierElement.getName
     }
-    val key = Key(psiFile, qName)
+
+    findNameInfoByQualifiedName(psiFile, qName)
+  }
+
+  def findNameInfoByQualifiedName(psiFile: PsiFile, qualifiedName: String): NameInfoResult = {
+    val key = Key(psiFile, qualifiedName)
 
     ProgressManager.checkCanceled()
 

@@ -18,7 +18,8 @@ package intellij.haskell.external.component
 
 import com.intellij.lang.documentation.AbstractDocumentationProvider
 import com.intellij.openapi.progress.ProgressManager
-import com.intellij.psi.{PsiElement, PsiFile}
+import com.intellij.psi.{PsiElement, PsiFile, PsiManager}
+import intellij.haskell.navigation.HaskellReference
 import intellij.haskell.psi.HaskellPsiUtil
 import intellij.haskell.psi.impl.HaskellPsiImplUtil
 import intellij.haskell.util.{HaskellEditorUtil, HaskellProjectUtil, HtmlElement, StringUtil}
@@ -62,13 +63,13 @@ class HaskellDocumentationProvider extends AbstractDocumentationProvider {
 
     val project = Option(element).map(_.getProject)
     if (project.exists(p => !StackProjectManager.isInitializing(p))) {
-      (Option(element), Option(originalElement)) match {
-        case (Some(e), Some(oe)) =>
+      Option(element) match {
+        case Some(e) =>
           val project = e.getProject
           if (e.isInstanceOf[PsiFile]) {
-            getQuickNavigateInfo(e, oe)
+            getQuickNavigateInfo(e, e)
           } else {
-            HaskellPsiUtil.findQualifiedName(oe) match {
+            HaskellPsiUtil.findQualifiedName(e) match {
               case Some(qone) =>
                 val presentationText = HaskellPsiUtil.findNamedElement(e).flatMap { ne =>
                   Some(DoubleNbsp + "<code>" +
@@ -82,8 +83,8 @@ class HaskellDocumentationProvider extends AbstractDocumentationProvider {
 
                 ProgressManager.checkCanceled()
                 val documentationText = HoogleComponent.findDocumentation(project, qone).getOrElse("No documentation found")
-                (documentationText + Separator + getQuickNavigateInfo(e, oe) + presentationText.map(t => Separator + t).getOrElse("")) + Separator
-              case _ => getQuickNavigateInfo(e, oe)
+                (documentationText + Separator + getQuickNavigateInfo(e, e) + presentationText.map(t => Separator + t).getOrElse("")) + Separator
+              case _ => getQuickNavigateInfo(e, e)
             }
           }
         case _ => null
@@ -92,4 +93,28 @@ class HaskellDocumentationProvider extends AbstractDocumentationProvider {
       HaskellEditorUtil.HaskellSupportIsNotAvailableWhileInitializingText
     }
   }
+
+  override def getDocumentationElementForLookupItem(psiManager: PsiManager, obj: Object, element: PsiElement): PsiElement = {
+    obj match {
+      case s: String =>
+        val dotIndex = s.lastIndexOf(".")
+        val name = if (dotIndex >= 0) {
+          s.substring(dotIndex + 1)
+        } else {
+          s
+        }
+
+        NameInfoComponent.findNameInfoByQualifiedName(element.getContainingFile, s) match {
+          case Right(infos) => infos.headOption match {
+            case Some(info) => HaskellReference.findIdentifiersByNameInfo(info, name, psiManager.getProject) match {
+              case Right((_, hne, _)) => Some(hne)
+              case Left(_) => None
+            }
+            case None => None
+          }
+          case Left(_) => None
+        }
+      case _ => None
+    }
+  }.getOrElse(element)
 }
