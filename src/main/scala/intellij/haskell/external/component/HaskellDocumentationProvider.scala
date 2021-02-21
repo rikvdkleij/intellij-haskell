@@ -96,15 +96,15 @@ class HaskellDocumentationProvider extends AbstractDocumentationProvider {
 
   override def getDocumentationElementForLookupItem(psiManager: PsiManager, obj: Object, element: PsiElement): PsiElement = {
     obj match {
-      case s: String =>
-        val dotIndex = s.lastIndexOf(".")
+      case mi: ModuleIdentifier =>
+        val dotIndex = mi.name.lastIndexOf(".")
         val name = if (dotIndex >= 0) {
-          s.substring(dotIndex + 1)
+          mi.name.substring(dotIndex + 1)
         } else {
-          s
+          mi.name
         }
 
-        NameInfoComponent.findNameInfoByQualifiedName(element.getContainingFile, s) match {
+        NameInfoComponent.findNameInfoByQualifiedName(element.getContainingFile, mi.name) match {
           case Right(infos) => infos.headOption match {
             case Some(info) => HaskellReference.findIdentifiersByNameInfo(info, name, psiManager.getProject) match {
               case Right((_, hne, _)) => Some(hne)
