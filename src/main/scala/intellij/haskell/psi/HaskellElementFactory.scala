@@ -1,5 +1,5 @@
 /*
- * Copyright 2014-2019 Rik van der Kleij
+ * Copyright 2014-2020 Rik van der Kleij
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -29,8 +29,8 @@ import scala.jdk.CollectionConverters._
 
 object HaskellElementFactory {
 
-  def createUnderscore(project: Project): Option[PsiElement] = {
-    createElement(project, "_", classOf[HaskellReservedId])
+  def createUnderscore(project: Project): Option[HaskellExpression] = {
+    createElement(project, "_", classOf[HaskellExpression])
   }
 
   def createVarid(project: Project, name: String): Option[HaskellVarid] = {
@@ -57,12 +57,20 @@ object HaskellElementFactory {
     createElement(project, name, classOf[HaskellQualifiedNameElement])
   }
 
+  def createQNameElement(project: Project, name: String): Option[HaskellQName] = {
+    createElement(project, name, classOf[HaskellQName])
+  }
+
   def createBody(project: Project, body: String): Option[HaskellModuleBody] = {
     createElement(project, body, classOf[HaskellModuleBody])
   }
 
   def createTopDeclaration(project: Project, declaration: String): Option[HaskellTopDeclaration] = {
     createElement(project, declaration, classOf[HaskellTopDeclaration])
+  }
+
+  def createDataDeclaration(project: Project, declaration: String): Option[HaskellDataDeclaration] = {
+    createElement(project, declaration, classOf[HaskellDataDeclaration])
   }
 
   def createLanguagePragma(project: Project, languagePragma: String): Option[HaskellPragma] = {
@@ -74,12 +82,12 @@ object HaskellElementFactory {
     PsiTreeUtil.findChildrenOfType(haskellFile, classOf[LeafPsiElement])
   }
 
-  def getLeftParenElement(project: Project): Option[LeafPsiElement] = {
-    createLeafPsiElements(project, "add = (1 + 2)").asScala.find(_.getNode.getElementType == HS_LEFT_PAREN)
+  def getLeftParenElement(project: Project): LeafPsiElement = {
+    createLeafPsiElements(project, "add = (1 + 2)").asScala.find(_.getNode.getElementType == HS_LEFT_PAREN).getOrElse(throw new IllegalStateException())
   }
 
-  def getRightParenElement(project: Project): Option[LeafPsiElement] = {
-    createLeafPsiElements(project, "add = (1 + 2)").asScala.find(_.getNode.getElementType == HS_RIGHT_PAREN)
+  def getRightParenElement(project: Project): LeafPsiElement = {
+    createLeafPsiElements(project, "add = (1 + 2)").asScala.find(_.getNode.getElementType == HS_RIGHT_PAREN).getOrElse(throw new IllegalStateException())
   }
 
   def createWhiteSpace(project: Project, space: String = " "): Option[PsiWhiteSpace] = {
@@ -109,7 +117,7 @@ object HaskellElementFactory {
   }
 
   def createImportDeclaration(project: Project, moduleName: String, identifier: String): Option[HaskellImportDeclaration] = {
-    createElement(project, s"import $moduleName (${surroundWithParensIfSymbol(project, identifier)})", classOf[HaskellImportDeclaration])
+    createElement(project, s"import $moduleName (${surroundWithParensIfSymbol(project, identifier)})\n", classOf[HaskellImportDeclaration])
   }
 
   private def surroundWithParensIfSymbol(project: Project, identifier: String): String = {
@@ -122,6 +130,10 @@ object HaskellElementFactory {
 
   def createImportDeclaration(project: Project, importDecl: String): Option[HaskellImportDeclaration] = {
     createElement(project, s"$importDecl \n", classOf[HaskellImportDeclaration])
+  }
+
+  def createQuasiQuote(project: Project, quasiQuoteText: String): Option[HaskellQuasiQuote] = {
+    createElement(project, quasiQuoteText, classOf[HaskellQuasiQuote])
   }
 
   private def createElement[C <: PsiElement](project: Project, newName: String, namedElementClass: Class[C]): Option[C] = {

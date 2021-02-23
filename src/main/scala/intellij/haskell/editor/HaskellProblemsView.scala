@@ -20,7 +20,7 @@ import com.intellij.util.concurrency.SequentialTaskExecutor
 import com.intellij.util.ui.UIUtil
 import intellij.haskell.util.HaskellProjectUtil
 
-class HaskellProblemsView(project: Project, toolWindowManager: ToolWindowManager) extends ProblemsView(project) {
+class HaskellProblemsView(project: Project) extends ProblemsView(project) {
 
   private final val ProblemsToolWindowId = "Haskell Problems"
   private final val ActiveIcon = AllIcons.Toolwindows.Problems
@@ -28,7 +28,9 @@ class HaskellProblemsView(project: Project, toolWindowManager: ToolWindowManager
 
   private val viewUpdater = SequentialTaskExecutor.createSequentialApplicationPoolExecutor("ProblemsView Pool")
 
-  private val problemsPanel = new ProblemsViewPanel(project)
+  private lazy val problemsPanel = new ProblemsViewPanel(project)
+
+  private val toolWindowManager = ToolWindowManager.getInstance(project)
 
   Disposer.register(project, () => {
     Disposer.dispose(problemsPanel)
@@ -88,6 +90,12 @@ class HaskellProblemsView(project: Project, toolWindowManager: ToolWindowManager
     addMessage(categoryIndex, messageText, groupName, navigatable, message.getExportTextPrefix, message.getRenderTextPrefix, null)
   }
 
+  def clear(): Unit = {
+    val view = problemsPanel.getErrorViewStructure
+    view.clear()
+    problemsPanel.reload()
+  }
+
   override def setProgress(text: String, fraction: Float): Unit = {
     problemsPanel.setProgress(text, fraction)
   }
@@ -132,5 +140,11 @@ class HaskellProblemsView(project: Project, toolWindowManager: ToolWindowManager
         }
       }
     })
+  }
+}
+
+object HaskellProblemsView {
+  def getInstance(project: Project): HaskellProblemsView = {
+    ProblemsView.SERVICE.getInstance(project).asInstanceOf[HaskellProblemsView]
   }
 }

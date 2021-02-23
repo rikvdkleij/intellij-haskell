@@ -64,6 +64,7 @@ public interface CabalTypes {
   CabalComparatorTokenType EQ = new CabalComparatorTokenType("==");
   CabalComparatorTokenType GT = new CabalComparatorTokenType(">");
   CabalComparatorTokenType GTE = new CabalComparatorTokenType(">=");
+  CabalComparatorTokenType PVP_GTE = new CabalComparatorTokenType("^>=");
   CabalComparatorTokenType LT = new CabalComparatorTokenType("<");
   CabalComparatorTokenType LTE = new CabalComparatorTokenType("<=");
 

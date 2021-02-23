@@ -7,7 +7,7 @@ Haskell file
         PsiElement(HaskellTokenType.ONE_PRAGMA)('Hey')
       PsiWhiteSpace(' ')
       PsiElement(HaskellTokenType.PRAGMA_END)('#-}')
-    PsiWhiteSpace('\n')
+      PsiElement(HaskellTokenType.NEWLINE)('\n')
     HS_PRAGMA
       PsiElement(HaskellTokenType.PRAGMA_START)('{-#')
       PsiWhiteSpace(' ')
@@ -18,7 +18,7 @@ Haskell file
         PsiElement(HaskellTokenType.ONE_PRAGMA)('OhMyGod')
       PsiWhiteSpace(' ')
       PsiElement(HaskellTokenType.PRAGMA_END)('#-}')
-    PsiWhiteSpace('\n')
+      PsiElement(HaskellTokenType.NEWLINE)('\n')
     HS_PRAGMA
       PsiElement(HaskellTokenType.PRAGMA_START)('{-#')
       PsiWhiteSpace(' ')
@@ -26,7 +26,11 @@ Haskell file
         PsiElement(HaskellTokenType.ONE_PRAGMA)('OPTIONS_GHC')
       PsiWhiteSpace(' ')
       HS_GENERAL_PRAGMA_CONTENT
-        PsiElement(HaskellTokenType.ONE_PRAGMA)('--omG')
+        PsiElement(HaskellTokenType.DASH)('-')
+      HS_GENERAL_PRAGMA_CONTENT
+        PsiElement(HaskellTokenType.DASH)('-')
+      HS_GENERAL_PRAGMA_CONTENT
+        PsiElement(HaskellTokenType.ONE_PRAGMA)('omG')
       PsiWhiteSpace(' ')
       PsiElement(HaskellTokenType.PRAGMA_END)('#-}')
   HS_MODULE_BODY

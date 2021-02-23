@@ -11,51 +11,59 @@ import org.jetbrains.annotations.Nullable;
 import scala.Option;
 import scala.collection.immutable.Seq;
 
-public class HaskellTypeFamilyDeclarationImpl extends HaskellTopDeclarationImpl implements HaskellTypeFamilyDeclaration {
+import java.util.List;
 
-  public HaskellTypeFamilyDeclarationImpl(ASTNode node) {
-    super(node);
-  }
+public class HaskellTypeFamilyDeclarationImpl extends HaskellCompositeElementImpl implements HaskellTypeFamilyDeclaration {
 
-  public void accept(@NotNull HaskellVisitor visitor) {
-    visitor.visitTypeFamilyDeclaration(this);
-  }
+    public HaskellTypeFamilyDeclarationImpl(ASTNode node) {
+        super(node);
+    }
 
-  public void accept(@NotNull PsiElementVisitor visitor) {
-    if (visitor instanceof HaskellVisitor) accept((HaskellVisitor)visitor);
-    else super.accept(visitor);
-  }
+    public void accept(@NotNull HaskellVisitor visitor) {
+        visitor.visitTypeFamilyDeclaration(this);
+    }
 
-  @Override
-  @Nullable
-  public HaskellExpression getExpression() {
-    return PsiTreeUtil.getChildOfType(this, HaskellExpression.class);
-  }
+    public void accept(@NotNull PsiElementVisitor visitor) {
+        if (visitor instanceof HaskellVisitor) accept((HaskellVisitor) visitor);
+        else super.accept(visitor);
+    }
 
-  @Override
-  @NotNull
-  public HaskellTypeFamilyType getTypeFamilyType() {
-    return notNullChild(PsiTreeUtil.getChildOfType(this, HaskellTypeFamilyType.class));
-  }
+    @Override
+    @Nullable
+    public HaskellExpression getExpression() {
+        return PsiTreeUtil.getChildOfType(this, HaskellExpression.class);
+    }
 
-  @Override
-  public String getName() {
-    return HaskellPsiImplUtil.getName(this);
-  }
+    @Override
+    @NotNull
+    public List<HaskellPragma> getPragmaList() {
+        return PsiTreeUtil.getChildrenOfTypeAsList(this, HaskellPragma.class);
+    }
 
-  @Override
-  public ItemPresentation getPresentation() {
-    return HaskellPsiImplUtil.getPresentation(this);
-  }
+    @Override
+    @NotNull
+    public HaskellTypeFamilyType getTypeFamilyType() {
+        return notNullChild(PsiTreeUtil.getChildOfType(this, HaskellTypeFamilyType.class));
+    }
 
-  @Override
-  public Seq<HaskellNamedElement> getIdentifierElements() {
-    return HaskellPsiImplUtil.getIdentifierElements(this);
-  }
+    @Override
+    public String getName() {
+        return HaskellPsiImplUtil.getName(this);
+    }
 
-  @Override
-  public Option<String> getModuleName() {
-    return HaskellPsiImplUtil.getModuleName(this);
-  }
+    @Override
+    public ItemPresentation getPresentation() {
+        return HaskellPsiImplUtil.getPresentation(this);
+    }
+
+    @Override
+    public Seq<HaskellNamedElement> getIdentifierElements() {
+        return HaskellPsiImplUtil.getIdentifierElements(this);
+    }
+
+    @Override
+    public Option<String> getModuleName() {
+        return HaskellPsiImplUtil.getModuleName(this);
+    }
 
 }

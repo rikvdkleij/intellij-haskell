@@ -1,5 +1,5 @@
 /*
- * Copyright 2014-2019 Rik van der Kleij
+ * Copyright 2014-2020 Rik van der Kleij
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -22,13 +22,10 @@ import com.intellij.psi.{PsiElement, PsiReference}
 import com.intellij.util.ArrayUtil
 import icons.HaskellIcons
 import intellij.haskell.HaskellFileType
-import intellij.haskell.psi.HaskellTypes._
 import intellij.haskell.psi._
-import intellij.haskell.refactor.HaskellRenameFileProcessor
-import intellij.haskell.util.{HaskellFileUtil, StringUtil}
+import intellij.haskell.util.StringUtil
 import javax.swing._
 
-import scala.annotation.tailrec
 import scala.jdk.CollectionConverters._
 
 object HaskellPsiImplUtil {
@@ -86,26 +83,6 @@ object HaskellPsiImplUtil {
         orElse(Option(qvc.getQCon).flatMap(qc => Option(qc.getQConQualifier1).orElse(Option(qc.getQConQualifier2)).orElse(Option(qc.getQConQualifier3)).map(_.getText))))
   }
 
-  def getName(cname: HaskellCname): String = {
-    cname.getText
-  }
-
-  def getIdentifierElement(cname: HaskellCname): HaskellNamedElement = {
-    Option(cname.getVar).flatMap(v => Option(v.getVarsym)).
-      orElse(Option(cname.getVar).flatMap(v => Option(v.getVarid))).
-      orElse(Option(cname.getVarop).flatMap(v => Option(v.getVarid))).
-      orElse(Option(cname.getVarop).flatMap(v => Option(v.getVarsym))).
-      orElse(Option(cname.getCon).flatMap(v => Option(v.getConid))).
-      orElse(Option(cname.getCon).flatMap(v => Option(v.getConsym))).
-      orElse(Option(cname.getConop).flatMap(v => Option(v.getConid))).
-      orElse(Option(cname.getConop).flatMap(v => Option(v.getConsym))).
-      getOrElse(throw new IllegalStateException(s"Identifier for $cname should exist"))
-  }
-
-  def getQualifierName(cname: HaskellCname): Option[String] = {
-    None
-  }
-
   def getName(modid: HaskellModid): String = {
     modid.getText
   }
@@ -115,13 +92,9 @@ object HaskellPsiImplUtil {
   }
 
   def setName(modid: HaskellModid, newName: String): PsiElement = {
-    if (newName.endsWith("." + HaskellFileType.Instance.getDefaultExtension)) {
-      val newModid = HaskellElementFactory.createModid(modid.getProject, HaskellRenameFileProcessor.createNewModuleName(modid.getName, newName))
-      newModid.foreach(modid.replace)
-      modid
-    } else {
-      modid
-    }
+    val newModid = HaskellElementFactory.createModid(modid.getProject, newName)
+    newModid.foreach(modid.replace)
+    modid
   }
 
   def getName(varid: HaskellVarid): String = {
@@ -212,22 +185,6 @@ object HaskellPsiImplUtil {
     ArrayUtil.getFirstElement(ReferenceProvidersRegistry.getReferencesFromProviders(element))
   }
 
-  def getName(`var`: HaskellVar): String = {
-    Option(`var`.getVarid).getOrElse(`var`.getVarsym).getName
-  }
-
-  def getName(con: HaskellCon): String = {
-    Option(con.getConid).getOrElse(con.getConsym).getName
-  }
-
-  def getName(varop: HaskellVarop): String = {
-    Option(varop.getVarid).getOrElse(varop.getVarsym).getName
-  }
-
-  def getName(conop: HaskellConop): String = {
-    Option(conop.getConid).getOrElse(conop.getConsym).getName
-  }
-
   private abstract class HaskellItemPresentation(haskellElement: PsiElement) extends ItemPresentation {
 
     def getLocationString: String = {
@@ -276,59 +233,26 @@ object HaskellPsiImplUtil {
 
     new HaskellItemPresentation(declarationElement) {
       def getPresentableText: String = {
-        getDeclarationInfo(declarationElement, shortened = true)
+        getDeclarationText(declarationElement)
       }
     }
   }
 
-  def getItemPresentableText(element: PsiElement, shortened: Boolean = true): String = {
+  def getItemPresentableText(element: PsiElement): String = {
     HaskellPsiUtil.findNamedElement(element) match {
       case Some(namedElement) =>
         HaskellPsiUtil.findHighestDeclarationElement(element) match {
-          case Some(de) if de.getIdentifierElements.exists(_ == namedElement) => HaskellPsiUtil.findDeclarationElement(namedElement).map(de => getDeclarationInfo(de, shortened)).
-            orElse(HaskellPsiUtil.findExpression(namedElement).map(e => StringUtil.removeCommentsAndWhiteSpaces(e.getText))).
-            getOrElse(s"${namedElement.getName} `in` ${getDeclarationInfo(de, shortened)}")
-          case Some(de) => s"${namedElement.getName} `in` ${getDeclarationInfo(de, shortened)}"
-          case _ if shortened && HaskellPsiUtil.findExpression(namedElement).isDefined => getContainingLineText(namedElement).getOrElse(namedElement.getName).trim
+          case Some(de) => getDeclarationText(de)
           case _ => HaskellPsiUtil.findExpression(namedElement).map(_.getText).getOrElse(namedElement.getName)
         }
       case _ => element.getText
     }
   }
 
-  private def getDeclarationInfo(declarationElement: HaskellDeclarationElement, shortened: Boolean): String = {
-    val info = declarationElement match {
+  private def getDeclarationText(declarationElement: HaskellDeclarationElement): String = {
+    declarationElement match {
       case md: HaskellModuleDeclaration => s"module  ${md.getModid.getName}"
-      case de if shortened => StringUtil.shortenHaskellDeclaration(de.getText)
-      case de => de.getText
-    }
-    if (shortened && info.length > 100) {
-      getFirstLineDeclarationText(declarationElement) + "..."
-    } else {
-      info
-    }
-  }
-
-  private def getFirstLineDeclarationText(declarationElement: HaskellDeclarationElement) = {
-    StringUtil.removeCommentsAndWhiteSpaces(declarationElement.getNode.getChildren(null).takeWhile(n => n.getElementType != HS_WHERE && n.getElementType != HS_EQUAL).map(_.getText).mkString(" "))
-  }
-
-  private def getContainingLineText(namedElement: PsiElement) = {
-    val psiFile = namedElement.getContainingFile.getOriginalFile
-    for {
-      doc <- HaskellFileUtil.findDocument(psiFile)
-      element <- HaskellPsiUtil.findQualifiedName(namedElement)
-      start = findNewline(element, e => e.getPrevSibling).getTextOffset
-      end = findNewline(element, e => e.getNextSibling).getTextOffset
-    } yield StringUtil.removeCommentsAndWhiteSpaces(doc.getCharsSequence.subSequence(start, end).toString.trim)
-  }
-
-  @tailrec
-  def findNewline(psiElement: PsiElement, getSibling: PsiElement => PsiElement): PsiElement = {
-    Option(getSibling(psiElement)) match {
-      case None => psiElement
-      case Some(e) if e.getNode.getElementType == HS_NEWLINE => e
-      case Some(e) => findNewline(e, getSibling)
+      case de => StringUtil.sanitizeDeclaration(de.getText)
     }
   }
 
@@ -347,7 +271,8 @@ object HaskellPsiImplUtil {
       constrs.flatMap(constr => Option(constr.getConstr1)).flatMap(c => Option(c.getQName).map(_.getIdentifierElement) ++
         c.getFielddeclList.asScala.flatMap(_.getQNames.getQNameList.asScala.headOption.map(_.getIdentifierElement))) ++
       constrs.flatMap(constr => Option(constr.getConstr3)).flatMap(_.getTtypeList.asScala.headOption.flatMap(_.getQNameList.asScala.headOption.map(_.getIdentifierElement))) ++
-      constrs.flatMap(constr => Option(constr.getConstr2)).flatMap(c => Option(c.getQName).map(_.getIdentifierElement).orElse(c.getTtypeList.asScala.headOption.flatMap(_.getQNameList.asScala.headOption.map(_.getIdentifierElement))))
+      constrs.flatMap(constr => Option(constr.getConstr2)).flatMap(c => c.getQNameList.asScala.map(_.getIdentifierElement).find(e => e.isInstanceOf[HaskellConsym] || e.isInstanceOf[HaskellConid]).toSeq ++
+        c.getTtypeList.asScala.headOption.flatMap(_.getQNameList.asScala.headOption.map(_.getIdentifierElement)))
   }
 
   def getIdentifierElements(typeDeclaration: HaskellTypeDeclaration): Seq[HaskellNamedElement] = {
@@ -355,18 +280,18 @@ object HaskellPsiImplUtil {
   }
 
   def getIdentifierElements(newtypeDeclaration: HaskellNewtypeDeclaration): Seq[HaskellNamedElement] = {
+    val fielddecl = Option(newtypeDeclaration.getNewconstr.getNewconstrFielddecl)
     newtypeDeclaration.getSimpletype.getIdentifierElements ++
-      Option(newtypeDeclaration.getNewconstr.getNewconstrFielddecl).flatMap(_.getTypeSignature.getQNamesList.asScala.headOption).map(_.getQNameList.asScala.headOption.map(_.getIdentifierElement).toSeq).getOrElse(Seq()) ++
-      Option(newtypeDeclaration.getNewconstr.getNewconstrFielddecl).map(_.getQName.getIdentifierElement).toSeq ++
+      //      fielddecl.flatMap(_.getTtype.getQNameList.asScala.headOption).map(_.getIdentifierElement)).getOrElse(Seq()) ++
+      fielddecl.map(_.getQNameList.asScala.map(_.getIdentifierElement)).getOrElse(Seq()) ++
       newtypeDeclaration.getNewconstr.getQNameList.asScala.headOption.map(_.getIdentifierElement).toSeq
   }
 
   def getIdentifierElements(classDeclaration: HaskellClassDeclaration): Seq[HaskellNamedElement] = {
+    val cdecls = Option(classDeclaration.getCdecls).map(_.getCdeclList.asScala).getOrElse(Seq())
     classDeclaration.getQNameList.asScala.headOption.map(_.getIdentifierElement).toSeq ++
-      Option(classDeclaration.getCdecls).map(_.getTypeSignatureList.asScala.flatMap(_.getIdentifierElements)).getOrElse(Seq()) ++
-      // FIXME
-      Option(classDeclaration.getCdecls).map(_.getTopDeclarationList.asScala.filter(_.isInstanceOf[HaskellTypeDeclaration]).map(_.asInstanceOf[HaskellTypeDeclaration]).flatMap(_.getIdentifierElements)).getOrElse(Seq()) ++
-      Option(classDeclaration.getCdecls).map(_.getTopDeclarationList.asScala.filter(_.isInstanceOf[HaskellCdeclDataDeclaration]).map(_.asInstanceOf[HaskellCdeclDataDeclaration]).flatMap(_.getSimpletype.getIdentifierElements)).getOrElse(Seq())
+      cdecls.flatMap(cd => Option(cd.getTypeSignature).map(_.getIdentifierElements).getOrElse(Seq())) ++
+      cdecls.flatMap(cd => Option(cd.getCdeclDataDeclaration).toSeq.flatMap(_.getQNameList.asScala.map(_.getIdentifierElement)))
   }
 
   def getIdentifierElements(instanceDeclaration: HaskellInstanceDeclaration): Seq[HaskellNamedElement] = {
@@ -377,8 +302,9 @@ object HaskellPsiImplUtil {
   }
 
   def getIdentifierElements(typeFamilyDeclaration: HaskellTypeFamilyDeclaration): Seq[HaskellNamedElement] = {
-    typeFamilyDeclaration.getTypeFamilyType.getQNameList.asScala.map(_.getIdentifierElement).toSeq ++
-      typeFamilyDeclaration.getTypeFamilyType.getQNamesList.asScala.flatMap(_.getQNameList.asScala.map(_.getIdentifierElement))
+    val familyType = typeFamilyDeclaration.getTypeFamilyType
+    familyType.getQNameList.asScala.map(_.getIdentifierElement).toSeq ++
+      familyType.getQNamesList.asScala.flatMap(_.getQNameList.asScala.map(_.getIdentifierElement))
   }
 
   def getIdentifierElements(derivingDeclaration: HaskellDerivingDeclaration): Seq[HaskellNamedElement] = {
@@ -390,14 +316,12 @@ object HaskellPsiImplUtil {
   }
 
   def getIdentifierElements(simpleType: HaskellSimpletype): Seq[HaskellNamedElement] = {
-    {
-      simpleType.getQNameList.asScala.map(_.getIdentifierElement) ++ {
-        Option(simpleType.getTtype) match {
-          case Some(t) => t.getQNameList.asScala.headOption.map(_.getIdentifierElement)
-          case None => simpleType.getQNameList.asScala.headOption.map(_.getIdentifierElement)
-        }
+    simpleType.getQNameList.asScala.map(_.getIdentifierElement).toSeq ++ {
+      Option(simpleType.getTtype) match {
+        case Some(t) => t.getQNameList.asScala.map(_.getIdentifierElement)
+        case None => simpleType.getQNameList.asScala.map(_.getIdentifierElement)
       }
-    }.toSeq
+    }.filter(e => e.isInstanceOf[HaskellConid] || e.isInstanceOf[HaskellConsym])
   }
 
   def getIdentifierElements(defaultDeclaration: HaskellDefaultDeclaration): Seq[HaskellNamedElement] = {
@@ -429,7 +353,7 @@ object HaskellPsiImplUtil {
   }
 
   def removeFileExtension(name: String): String = {
-    val fileExtension = "." + HaskellFileType.Instance.getDefaultExtension
+    val fileExtension = "." + HaskellFileType.INSTANCE.getDefaultExtension
     if (name.endsWith(fileExtension)) {
       name.replaceFirst(fileExtension, "")
     } else {

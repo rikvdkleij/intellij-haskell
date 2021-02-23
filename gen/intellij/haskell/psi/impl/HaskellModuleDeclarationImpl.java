@@ -11,57 +11,59 @@ import org.jetbrains.annotations.Nullable;
 import scala.Option;
 import scala.collection.immutable.Seq;
 
-public class HaskellModuleDeclarationImpl extends HaskellTopDeclarationImpl implements HaskellModuleDeclaration {
+import java.util.List;
 
-  public HaskellModuleDeclarationImpl(ASTNode node) {
-    super(node);
-  }
+public class HaskellModuleDeclarationImpl extends HaskellCompositeElementImpl implements HaskellModuleDeclaration {
 
-  public void accept(@NotNull HaskellVisitor visitor) {
-    visitor.visitModuleDeclaration(this);
-  }
+    public HaskellModuleDeclarationImpl(ASTNode node) {
+        super(node);
+    }
 
-  public void accept(@NotNull PsiElementVisitor visitor) {
-    if (visitor instanceof HaskellVisitor) accept((HaskellVisitor)visitor);
-    else super.accept(visitor);
-  }
+    public void accept(@NotNull HaskellVisitor visitor) {
+        visitor.visitModuleDeclaration(this);
+    }
 
-  @Override
-  @Nullable
-  public HaskellExports getExports() {
-    return PsiTreeUtil.getChildOfType(this, HaskellExports.class);
-  }
+    public void accept(@NotNull PsiElementVisitor visitor) {
+        if (visitor instanceof HaskellVisitor) accept((HaskellVisitor) visitor);
+        else super.accept(visitor);
+    }
 
-  @Override
-  @NotNull
-  public HaskellModid getModid() {
-    return notNullChild(PsiTreeUtil.getChildOfType(this, HaskellModid.class));
-  }
+    @Override
+    @Nullable
+    public HaskellExports getExports() {
+        return PsiTreeUtil.getChildOfType(this, HaskellExports.class);
+    }
 
-  @Override
-  @NotNull
-  public HaskellWhereClause getWhereClause() {
-    return notNullChild(PsiTreeUtil.getChildOfType(this, HaskellWhereClause.class));
-  }
+    @Override
+    @NotNull
+    public HaskellModid getModid() {
+        return notNullChild(PsiTreeUtil.getChildOfType(this, HaskellModid.class));
+    }
 
-  @Override
-  public String getName() {
-    return HaskellPsiImplUtil.getName(this);
-  }
+    @Override
+    @NotNull
+    public List<HaskellPragma> getPragmaList() {
+        return PsiTreeUtil.getChildrenOfTypeAsList(this, HaskellPragma.class);
+    }
 
-  @Override
-  public ItemPresentation getPresentation() {
-    return HaskellPsiImplUtil.getPresentation(this);
-  }
+    @Override
+    public String getName() {
+        return HaskellPsiImplUtil.getName(this);
+    }
 
-  @Override
-  public Seq<HaskellNamedElement> getIdentifierElements() {
-    return HaskellPsiImplUtil.getIdentifierElements(this);
-  }
+    @Override
+    public ItemPresentation getPresentation() {
+        return HaskellPsiImplUtil.getPresentation(this);
+    }
 
-  @Override
-  public Option<String> getModuleName() {
-    return HaskellPsiImplUtil.getModuleName(this);
-  }
+    @Override
+    public Seq<HaskellNamedElement> getIdentifierElements() {
+        return HaskellPsiImplUtil.getIdentifierElements(this);
+    }
+
+    @Override
+    public Option<String> getModuleName() {
+        return HaskellPsiImplUtil.getModuleName(this);
+    }
 
 }

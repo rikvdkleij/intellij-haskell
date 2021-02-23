@@ -1,5 +1,5 @@
 /*
- * Copyright 2014-2019 Rik van der Kleij
+ * Copyright 2014-2020 Rik van der Kleij
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -33,6 +33,7 @@ object HaskellSyntaxHighlighter {
   final val Comment = createTextAttributesKey("HS_COMMENT", DefaultLanguageHighlighterColors.LINE_COMMENT)
   final val BlockComment = createTextAttributesKey("HS_NCOMMENT", DefaultLanguageHighlighterColors.BLOCK_COMMENT)
   final val DocComment = createTextAttributesKey("HS_HADDOCK", DefaultLanguageHighlighterColors.DOC_COMMENT)
+  final val BlockDocComment = createTextAttributesKey("HS_NHADDOCK", DefaultLanguageHighlighterColors.DOC_COMMENT)
   final val String = createTextAttributesKey("HS_STRING", DefaultLanguageHighlighterColors.STRING)
   final val Number = createTextAttributesKey("HS_NUMBER", DefaultLanguageHighlighterColors.NUMBER)
   final val Keyword = createTextAttributesKey("HS_KEYWORD", DefaultLanguageHighlighterColors.KEYWORD)

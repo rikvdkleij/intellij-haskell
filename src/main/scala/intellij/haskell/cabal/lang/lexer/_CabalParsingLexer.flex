@@ -64,6 +64,7 @@ COMMENT="--" [^\r\n]*
   "=="  { return CabalTypes.EQ; }
   ">"   { return CabalTypes.GT; }
   ">="  { return CabalTypes.GTE; }
+  "^>="  { return CabalTypes.PVP_GTE; }
   "<"   { return CabalTypes.LT; }
   "<="  { return CabalTypes.LTE; }
   "&&"  { return CabalTypes.AND; }

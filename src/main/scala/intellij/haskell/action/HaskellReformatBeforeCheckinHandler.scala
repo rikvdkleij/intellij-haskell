@@ -15,7 +15,7 @@
  */
 
 /*
- * Copyright 2014-2019 Rik van der Kleij
+ * Copyright 2014-2020 Rik van der Kleij
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -80,7 +80,7 @@ class HaskellReformatBeforeCheckinHandler(project: Project, checkinProjectPanel:
     }
 
     if (HaskellSettingsState.isReformatCodeBeforeCommit && !DumbService.isDumb(project)) {
-      val reformatResult = virtualFiles.asScala.forall(vf => HaskellFileUtil.convertToHaskellFileDispatchThread(project, vf).exists(HaskellReformatAction.reformatFile))
+      val reformatResult = virtualFiles.asScala.filter(vf => HaskellFileUtil.isHaskellFile(vf)).forall(vf => HaskellFileUtil.convertToHaskellFileDispatchThread(project, vf).exists(OrmoluReformatAction.reformat))
       if (reformatResult) {
         performCheckoutAction.run()
       }
@@ -90,7 +90,7 @@ class HaskellReformatBeforeCheckinHandler(project: Project, checkinProjectPanel:
   }
 
 
-  private def disableWhenDumb(project: Project, checkBox: JCheckBox, tooltip: String) = {
+  private def disableWhenDumb(project: Project, checkBox: JCheckBox, tooltip: String): Unit = {
     val dumb = DumbService.isDumb(project)
     checkBox.setEnabled(!dumb)
     checkBox.setToolTipText(if (dumb) tooltip else "")

@@ -14,23 +14,19 @@ import scala.jdk.CollectionConverters._
 class HaskellRunConfiguration(name: String, project: Project, configurationFactory: ConfigurationFactory)
   extends HaskellStackConfigurationBase(name, project, configurationFactory) {
 
-  private var executableName: String = ""
+  private var executableName: Option[String] = None
   private var programArgs: String = ""
 
   def getExecutableNames: lang.Iterable[String] = {
     HaskellComponentsManager.findCabalInfos(project).flatMap(_.executables.flatMap(_.name)).asJava
   }
 
-  def setExecutable(executableName: String): Unit = {
-    this.executableName = executableName
+  def setExecutableName(executableName: String): Unit = {
+    this.executableName = Option(executableName).orElse(getExecutableNames.asScala.headOption)
   }
 
-  def getExecutable: String = {
-    if (executableName.isEmpty) {
-      getExecutableNames.asScala.headOption.getOrElse("")
-    } else {
-      executableName
-    }
+  def getExecutableName: String = {
+    executableName.orNull
   }
 
   def setProgramArgs(programArgs: String): Unit = {
@@ -44,11 +40,15 @@ class HaskellRunConfiguration(name: String, project: Project, configurationFacto
   override def getConfigurationEditor = new HaskellRunConfigurationForm()
 
   override def getState(executor: Executor, environment: ExecutionEnvironment): HaskellStackStateBase = {
-    val executableNameWithArgs = if (programArgs.isEmpty) {
-      executableName
-    } else {
-      s"$executableName $programArgs"
+    executableName match {
+      case Some(name) =>
+        val executableNameWithArgs = if (programArgs.isEmpty) {
+          name
+        } else {
+          s"$name $programArgs"
+        }
+        new HaskellStackStateBase(this, environment, List("build", "--exec", executableNameWithArgs))
+      case None => null
     }
-    new HaskellStackStateBase(this, environment, List("build", "--exec", executableNameWithArgs))
   }
 }

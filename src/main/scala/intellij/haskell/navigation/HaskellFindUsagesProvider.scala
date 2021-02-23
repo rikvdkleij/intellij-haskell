@@ -1,5 +1,5 @@
 /*
- * Copyright 2014-2019 Rik van der Kleij
+ * Copyright 2014-2020 Rik van der Kleij
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -31,7 +31,7 @@ import scala.collection.mutable.ListBuffer
 class HaskellFindUsagesProvider extends FindUsagesProvider {
 
   override def getWordsScanner: WordsScanner = {
-    (fileText: CharSequence, processor: Processor[WordOccurrence]) => {
+    (fileText: CharSequence, processor: Processor[_ >: WordOccurrence]) => {
       val lexer = new HaskellLexer
       lexer.start(fileText)
       processTokens(lexer, fileText, processor, ListBuffer.empty)
@@ -39,7 +39,7 @@ class HaskellFindUsagesProvider extends FindUsagesProvider {
   }
 
   @tailrec
-  private def processTokens(lexer: HaskellLexer, fileText: CharSequence, processor: Processor[WordOccurrence], prevDots: ListBuffer[IElementType]): Unit = {
+  private def processTokens(lexer: HaskellLexer, fileText: CharSequence, processor: Processor[_ >: WordOccurrence], prevDots: ListBuffer[IElementType]): Unit = {
     val tokenType = lexer.getTokenType
     if (tokenType != null) {
       if (HaskellParserDefinition.Ids.contains(tokenType) || tokenType == HS_DOT) {

@@ -1,5 +1,5 @@
 /*
- * Copyright 2014-2019 Rik van der Kleij
+ * Copyright 2014-2020 Rik van der Kleij
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,8 +16,6 @@
 
 package intellij.haskell.framework
 
-import javax.swing.JComponent
-
 import com.intellij.framework.FrameworkTypeEx
 import com.intellij.framework.addSupport.{FrameworkSupportInModuleConfigurable, FrameworkSupportInModuleProvider}
 import com.intellij.ide.util.frameworkSupport.FrameworkSupportModel
@@ -25,6 +23,7 @@ import com.intellij.ide.util.projectWizard.ModuleBuilder
 import com.intellij.openapi.module.{Module, ModuleType}
 import com.intellij.openapi.roots.{ModifiableModelsProvider, ModifiableRootModel}
 import intellij.haskell.module.HaskellModuleType
+import javax.swing.JComponent
 
 class HaskellFrameworkSupportProvider extends FrameworkSupportInModuleProvider {
   override def getFrameworkType: FrameworkTypeEx = HaskellFrameworkType.getInstance

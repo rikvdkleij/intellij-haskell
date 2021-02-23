@@ -1,5 +1,5 @@
 /*
- * Copyright 2014-2019 Rik van der Kleij
+ * Copyright 2014-2020 Rik van der Kleij
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -20,6 +20,7 @@ import com.intellij.openapi.components.PersistentStateComponent;
 import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.components.State;
 import com.intellij.openapi.components.Storage;
+import intellij.haskell.GlobalInfo;
 import org.jetbrains.annotations.NotNull;
 
 @State(
@@ -50,8 +51,17 @@ public class HaskellSettingsPersistentStateComponent implements PersistentStateC
     static class HaskellSettingsState {
         public Integer replTimeout = 30;
         public String hlintOptions = "";
+        public Boolean useSystemGhc = false;
         public Boolean reformatCodeBeforeCommit = false;
         public Boolean optimizeImportsBeforeCommit = false;
+        public String newProjectTemplateName = "new-template";
+        public String cachePath = GlobalInfo.DefaultCachePath();
+        public String hlintPath = "";
+        public String hooglePath = "";
+        public String ormoluPath = "";
+        public String stylishHaskellPath = "";
+        public Boolean customTools = false;
         public String extraStackArguments = "";
+        public String defaultGhcOptions = "-Wall -Wcompat -Wincomplete-record-updates -Wincomplete-uni-patterns -Wredundant-constraints";
     }
 }

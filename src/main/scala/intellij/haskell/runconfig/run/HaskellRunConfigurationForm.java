@@ -23,7 +23,7 @@ public class HaskellRunConfigurationForm extends SettingsEditor<HaskellRunConfig
             //noinspection unchecked
             myExecutableComboBox.addItem(executable);
         }
-        myExecutableComboBox.setSelectedItem(config.getExecutable());
+        myExecutableComboBox.setSelectedItem(config.getExecutableName());
 
         stackArgsEditor.setText(config.getStackArgs());
         programArgsEditor.setText(config.getProgramArgs());
@@ -32,7 +32,7 @@ public class HaskellRunConfigurationForm extends SettingsEditor<HaskellRunConfig
     @Override
     protected void applyEditorTo(@NotNull HaskellRunConfiguration config) throws ConfigurationException {
         config.setStackArgs(stackArgsEditor.getText());
-        config.setExecutable((String) myExecutableComboBox.getSelectedItem());
+        config.setExecutableName((String) myExecutableComboBox.getSelectedItem());
         config.setProgramArgs(programArgsEditor.getText());
     }
 

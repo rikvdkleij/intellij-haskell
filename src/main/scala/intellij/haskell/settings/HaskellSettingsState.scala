@@ -1,5 +1,5 @@
 /*
- * Copyright 2014-2019 Rik van der Kleij
+ * Copyright 2014-2020 Rik van der Kleij
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -27,6 +27,18 @@ object HaskellSettingsState {
     state.hlintOptions
   }
 
+  def useSystemGhc: Boolean = {
+    state.useSystemGhc
+  }
+
+  def getNewProjectTemplateName: String = {
+    state.newProjectTemplateName
+  }
+
+  def getCachePath: String = {
+    state.cachePath
+  }
+
   def isReformatCodeBeforeCommit: Boolean = {
     state.reformatCodeBeforeCommit
   }
@@ -43,7 +55,35 @@ object HaskellSettingsState {
     state.optimizeImportsBeforeCommit = optimize
   }
 
-  def getExtraStackArguments: String = {
-    state.extraStackArguments.trim
+  def customTools: Boolean = {
+    state.customTools
+  }
+
+  def hlintPath: Option[String] = {
+    Option.when(customTools && state.hlintPath.nonEmpty)(state.hlintPath)
+  }
+
+  def hooglePath: Option[String] = {
+    Option.when(customTools && state.hooglePath.nonEmpty)(state.hooglePath)
+  }
+
+  def ormoluPath: Option[String] = {
+    Option.when(customTools && state.ormoluPath.nonEmpty)(state.ormoluPath)
+  }
+
+  def stylishHaskellPath: Option[String] = {
+    Option.when(customTools && state.stylishHaskellPath.nonEmpty)(state.stylishHaskellPath)
+  }
+
+  def useCustomTools: Boolean = {
+    state.customTools
+  }
+
+  def getExtraStackArguments: Seq[String] = {
+    Option.when(state.extraStackArguments.trim.nonEmpty)(state.extraStackArguments).map(_.split("""\s+""").toSeq).getOrElse(Seq())
+  }
+
+  def getDefaultGhcOptions: Seq[String] = {
+    state.defaultGhcOptions.split(" ").map(_.trim)
   }
 }

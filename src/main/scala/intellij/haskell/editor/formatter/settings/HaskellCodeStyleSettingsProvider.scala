@@ -1,5 +1,5 @@
 /*
- * Copyright 2014-2019 Rik van der Kleij
+ * Copyright 2014-2020 Rik van der Kleij
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,8 +16,10 @@
 
 package intellij.haskell.editor.formatter.settings
 
+import com.intellij.lang.Language
 import com.intellij.openapi.options.Configurable
 import com.intellij.psi.codeStyle.{CodeStyleSettings, CodeStyleSettingsProvider, CustomCodeStyleSettings}
+import intellij.haskell.HaskellLanguage
 import org.jetbrains.annotations.NotNull
 
 class HaskellCodeStyleSettingsProvider extends CodeStyleSettingsProvider {
@@ -33,5 +35,9 @@ class HaskellCodeStyleSettingsProvider extends CodeStyleSettingsProvider {
   @NotNull
   override def createCustomSettings(settings: CodeStyleSettings): CustomCodeStyleSettings = {
     new HaskellCodeStyleSettings(settings)
+  }
+
+  override def getLanguage: Language = {
+    HaskellLanguage.Instance
   }
 }

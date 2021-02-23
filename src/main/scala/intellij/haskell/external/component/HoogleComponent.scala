@@ -1,5 +1,5 @@
 /*
- * Copyright 2014-2019 Rik van der Kleij
+ * Copyright 2014-2020 Rik van der Kleij
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -25,7 +25,7 @@ import com.intellij.openapi.project.Project
 import intellij.haskell.external.execution.{CommandLine, StackCommandLine}
 import intellij.haskell.psi.{HaskellPsiUtil, HaskellQualifiedNameElement}
 import intellij.haskell.util.{HtmlElement, ScalaFutureUtil}
-import intellij.haskell.{GlobalInfo, HaskellNotificationGroup}
+import intellij.haskell.{GlobalInfo, HTool, HaskellNotificationGroup}
 
 import scala.collection.mutable
 import scala.concurrent.{Future, blocking}
@@ -33,15 +33,13 @@ import scala.jdk.CollectionConverters._
 
 object HoogleComponent {
 
-  final val HoogleName = "hoogle"
-  private final val HooglePath = GlobalInfo.toolPath(HoogleName).toString
   private final val HoogleDbName = "hoogle"
 
   def runHoogle(project: Project, pattern: String, count: Int = 100): Option[Seq[String]] = {
     if (isHoogleFeatureAvailable(project)) {
       ProgressManager.checkCanceled()
 
-      runHoogle(project, Seq( s""""$pattern"""", s"--count=$count")).
+      runHoogle(project, Seq(s""""$pattern"""", s"--count=$count")).
         map(o =>
           if (o.getStdoutLines.isEmpty || o.getStdout.contains("No results found"))
             Seq()
@@ -112,8 +110,8 @@ object HoogleComponent {
   }
 
   private def isHoogleFeatureAvailable(project: Project): Boolean = {
-    if (!StackProjectManager.isHoogleAvailable(project)) {
-      HaskellNotificationGroup.logInfoEvent(project, s"$HoogleName isn't (yet) available")
+    if (StackProjectManager.isHoogleAvailable(project).isEmpty) {
+      HaskellNotificationGroup.logInfoEvent(project, s"${HTool.Hoogle.name} isn't (yet) available")
       false
     } else {
       doesHoogleDatabaseExist(project)
@@ -121,18 +119,24 @@ object HoogleComponent {
   }
 
   def rebuildHoogle(project: Project): Unit = {
-    val buildHaddockOutput = try {
-      StackProjectManager.setHaddockBuilding(project, state = true)
-      StackCommandLine.executeStackCommandInMessageView(project, Seq("haddock", "--no-haddock-hyperlink-source"))
-    } finally {
-      StackProjectManager.setHaddockBuilding(project, state = false)
-    }
+    StackProjectManager.isHoogleAvailable(project) match {
+      case Some(hooglePath) =>
+        val buildHaddockOutput = try {
+          StackProjectManager.setHaddockBuilding(project, state = true)
+          StackCommandLine.executeStackCommandInMessageView(project, "Build haddock", Seq("haddock", "--test", "--no-run-tests", "--no-haddock-hyperlink-source"))
+        } finally {
+          StackProjectManager.setHaddockBuilding(project, state = false)
+        }
 
-    if (buildHaddockOutput.contains(true)) {
-      GlobalProjectInfoComponent.findGlobalProjectInfo(project).map(_.localDocRoot) match {
-        case Some(localDocRoot) => StackCommandLine.executeInMessageView(project, HooglePath, Seq("generate", s"--local=$localDocRoot", s"--database=${hoogleDbPath(project)}"))
-        case None => HaskellNotificationGroup.logErrorBalloonEvent(project, "Couldn't generate Hoogle DB because path to local doc root is unknown")
-      }
+        if (buildHaddockOutput.contains(true)) {
+          GlobalProjectInfoComponent.findGlobalProjectInfo(project).map(info => (info.localDocRoot, info.snapshotDocRoot)) match {
+            case Some((localDocRoot, snapshotDocRoot)) => StackCommandLine.executeInMessageView(project, "Generating Hoogle database", hooglePath, Seq("generate", s"--local=$localDocRoot", s"--local=$snapshotDocRoot", s"--database=${
+              hoogleDbPath(project)
+            }"))
+            case None => HaskellNotificationGroup.logErrorBalloonEvent(project, "Couldn't generate Hoogle DB because path to local doc root is unknown")
+          }
+        }
+      case None => ()
     }
   }
 
@@ -141,14 +145,13 @@ object HoogleComponent {
   }
 
   def showHoogleDatabaseDoesNotExistNotification(project: Project): Unit = {
-    HaskellNotificationGroup.logInfoBalloonEvent(project, "Hoogle database doesn't exist. Hoogle features can be enabled by menu option `Haskell`/`(Re)Build Hoogle database`")
+    HaskellNotificationGroup.logInfoBalloonEvent(project, "Hoogle features can be enabled by menu option `Haskell`/`(Re)Build Hoogle database`")
   }
 
   def versionInfo(project: Project): String = {
-    if (StackProjectManager.isHoogleAvailable(project)) {
-      CommandLine.run(project, HooglePath, Seq("--version")).getStdout
-    } else {
-      "-"
+    StackProjectManager.isHoogleAvailable(project) match {
+      case Some(hooglePath) => CommandLine.run(project, hooglePath, Seq("--version")).getStdout
+      case None => "-"
     }
   }
 
@@ -157,12 +160,17 @@ object HoogleComponent {
   private def runHoogle(project: Project, arguments: Seq[String]): Option[ProcessOutput] = {
     ProgressManager.checkCanceled()
 
-    ScalaFutureUtil.waitWithCheckCancelled(project,
-      Future {
-        blocking {
-          CommandLine.run(project, HooglePath, Seq(s"--database=${hoogleDbPath(project)}") ++ arguments, logOutput = true)
-        }
-      }, "runHoogle")
+    StackProjectManager.isHoogleAvailable(project) match {
+      case Some(hooglePath) =>
+
+        ScalaFutureUtil.waitForValue(project,
+          Future {
+            blocking {
+              CommandLine.run(project, hooglePath, Seq(s"--database=${hoogleDbPath(project)}") ++ arguments, logOutput = true)
+            }
+          }, "runHoogle")
+      case None => None
+    }
   }
 
   private def hoogleDbPath(project: Project) = {

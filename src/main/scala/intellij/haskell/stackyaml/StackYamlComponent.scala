@@ -27,7 +27,12 @@ object StackYamlComponent {
   }
 
   def getResolver(project: Project): Option[String] = {
-    getYamlItems(project).flatMap(_.get("resolver")).map(_.asInstanceOf[String])
+    val resolver = getYamlItems(project).flatMap(_.get("resolver"))
+    resolver.flatMap {
+      case m: util.Map[_, _] => m.asScala.headOption.map(_._2.asInstanceOf[String])
+      case s: String => Some(s)
+      case _ => None
+    }
   }
 
   def getPackagePaths(project: Project): Option[Seq[String]] = {
@@ -58,7 +63,7 @@ object StackYamlComponent {
     items.get("packages") match {
       case Some(p) => Some(p)
       case _ =>
-        HaskellNotificationGroup.logErrorEvent(project, s"Could not find `packages` in `stack.yaml` file in project directory")
+        HaskellNotificationGroup.logInfoEvent(project, s"Could not find `packages` in `stack.yaml` file in project directory")
         None
     }
   }
@@ -71,7 +76,7 @@ object StackYamlComponent {
     items.get("location") match {
       case Some(l: String) if isNotURL(l) => Some(l)
       case _ =>
-        HaskellNotificationGroup.logErrorEvent(project, s"Only local paths are supported in `location` of `packages` in `stack.yaml`")
+        HaskellNotificationGroup.logErrorBalloonEvent(project, s"Only local paths are supported in `location` of `packages` in `stack.yaml`")
         None
     }
   }

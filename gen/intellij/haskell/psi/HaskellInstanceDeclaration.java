@@ -9,32 +9,35 @@ import scala.collection.immutable.Seq;
 
 import java.util.List;
 
-public interface HaskellInstanceDeclaration extends HaskellTopDeclaration, HaskellDeclarationElement {
+public interface HaskellInstanceDeclaration extends HaskellDeclarationElement {
 
-  @Nullable
-  HaskellCidecls getCidecls();
+    @Nullable
+    HaskellCidecls getCidecls();
 
-  @Nullable
-  HaskellInst getInst();
+    @Nullable
+    HaskellInst getInst();
 
-  @Nullable
-  HaskellQName getQName();
+    @NotNull
+    List<HaskellPragma> getPragmaList();
 
-  @Nullable
-  HaskellScontext getScontext();
+    @Nullable
+    HaskellQName getQName();
 
-  @Nullable
-  HaskellTypeEquality getTypeEquality();
+    @Nullable
+    HaskellScontext getScontext();
 
-  @NotNull
-  List<HaskellVarCon> getVarConList();
+    @Nullable
+    HaskellTypeEquality getTypeEquality();
 
-  String getName();
+    @NotNull
+    List<HaskellVarid> getVaridList();
 
-  ItemPresentation getPresentation();
+    String getName();
 
-  Seq<HaskellNamedElement> getIdentifierElements();
+    ItemPresentation getPresentation();
 
-  Option<String> getModuleName();
+    Seq<HaskellNamedElement> getIdentifierElements();
+
+    Option<String> getModuleName();
 
 }

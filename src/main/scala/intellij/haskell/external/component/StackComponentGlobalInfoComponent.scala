@@ -1,5 +1,5 @@
 /*
- * Copyright 2014-2019 Rik van der Kleij
+ * Copyright 2014-2020 Rik van der Kleij
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,10 +16,10 @@
 
 package intellij.haskell.external.component
 
-import com.github.blemale.scaffeine.{LoadingCache, Scaffeine}
+import com.github.blemale.scaffeine.{AsyncLoadingCache, Scaffeine}
 import com.intellij.openapi.project.Project
-import intellij.haskell.external.component.HaskellComponentsManager.StackComponentInfo
-import intellij.haskell.util.HaskellProjectUtil
+import intellij.haskell.external.component.HaskellComponentsManager.ComponentTarget
+import intellij.haskell.util.{HaskellProjectUtil, ScalaFutureUtil}
 
 import scala.concurrent.duration._
 import scala.concurrent.{Await, Future, blocking}
@@ -28,18 +28,18 @@ private[component] object StackComponentGlobalInfoComponent {
 
   import scala.concurrent.ExecutionContext.Implicits.global
 
-  private case class Key(stackComponentInfo: StackComponentInfo)
+  private case class Key(stackComponentInfo: ComponentTarget)
 
   private type Result = Option[StackComponentGlobalInfo]
 
-  private final val Cache: LoadingCache[Key, Result] = Scaffeine().build((k: Key) => createStackInfo(k))
+  private final val Cache: AsyncLoadingCache[Key, Result] = Scaffeine().buildAsync((k: Key) => createStackInfo(k))
 
-  def findStackComponentGlobalInfo(stackComponentInfo: StackComponentInfo): Option[StackComponentGlobalInfo] = {
+  def findStackComponentGlobalInfo(stackComponentInfo: ComponentTarget): Option[StackComponentGlobalInfo] = {
     val key = Key(stackComponentInfo)
-    Cache.get(key) match {
+    ScalaFutureUtil.waitForValue(stackComponentInfo.module.getProject, Cache.get(key), "Getting global info").flatten match {
       case result@Some(_) => result
       case _ =>
-        Cache.invalidate(key)
+        Cache.synchronous().invalidate(key)
         None
     }
   }
@@ -50,9 +50,9 @@ private[component] object StackComponentGlobalInfoComponent {
     findAvailableLibraryModuleNames(project, stackComponentInfo)
   }
 
-  private def findAvailableLibraryModuleNames(project: Project, componentInfo: StackComponentInfo): Result = {
+  private def findAvailableLibraryModuleNames(project: Project, componentInfo: ComponentTarget): Result = {
     val projectPackageNames = HaskellProjectUtil.findProjectPackageNames(project)
-    val buildDependsLibraryPackages = componentInfo.buildDepends.filterNot(projectPackageNames.contains)
+    val buildDependsLibraryPackages = componentInfo.buildDepends.filterNot(projectPackageNames.contains) ++ Seq("ghc-prim")
 
     val libraryModuleNamesFutures = buildDependsLibraryPackages.grouped(5).map { packageNames =>
       Future {
@@ -74,9 +74,9 @@ private[component] object StackComponentGlobalInfoComponent {
   }
 
   def invalidate(project: Project): Unit = {
-    val keys = Cache.asMap().keys.filter(_.stackComponentInfo.module.getProject == project)
-    keys.foreach(Cache.invalidate)
+    val keys = Cache.synchronous().asMap().keys.filter(_.stackComponentInfo.module.getProject == project)
+    keys.foreach(Cache.synchronous().invalidate)
   }
 }
 
-case class StackComponentGlobalInfo(stackComponentInfo: StackComponentInfo, packageInfos: Seq[PackageInfo])
+case class StackComponentGlobalInfo(stackComponentInfo: ComponentTarget, packageInfos: Seq[LibraryPackageInfo])

@@ -11,68 +11,100 @@ import org.jetbrains.annotations.Nullable;
 import scala.Option;
 import scala.collection.immutable.Seq;
 
-public class HaskellNewtypeDeclarationImpl extends HaskellTopDeclarationImpl implements HaskellNewtypeDeclaration {
+import java.util.List;
 
-  public HaskellNewtypeDeclarationImpl(ASTNode node) {
-    super(node);
-  }
+public class HaskellNewtypeDeclarationImpl extends HaskellCompositeElementImpl implements HaskellNewtypeDeclaration {
 
-  public void accept(@NotNull HaskellVisitor visitor) {
-    visitor.visitNewtypeDeclaration(this);
-  }
+    public HaskellNewtypeDeclarationImpl(ASTNode node) {
+        super(node);
+    }
 
-  public void accept(@NotNull PsiElementVisitor visitor) {
-    if (visitor instanceof HaskellVisitor) accept((HaskellVisitor)visitor);
-    else super.accept(visitor);
-  }
+    public void accept(@NotNull HaskellVisitor visitor) {
+        visitor.visitNewtypeDeclaration(this);
+    }
 
-  @Override
-  @Nullable
-  public HaskellCcontext getCcontext() {
-    return PsiTreeUtil.getChildOfType(this, HaskellCcontext.class);
-  }
+    public void accept(@NotNull PsiElementVisitor visitor) {
+        if (visitor instanceof HaskellVisitor) accept((HaskellVisitor) visitor);
+        else super.accept(visitor);
+    }
 
-  @Override
-  @NotNull
-  public HaskellNewconstr getNewconstr() {
-    return notNullChild(PsiTreeUtil.getChildOfType(this, HaskellNewconstr.class));
-  }
+    @Override
+    @Nullable
+    public HaskellCcontext getCcontext() {
+        return PsiTreeUtil.getChildOfType(this, HaskellCcontext.class);
+    }
 
-  @Override
-  @NotNull
-  public HaskellSimpletype getSimpletype() {
-    return notNullChild(PsiTreeUtil.getChildOfType(this, HaskellSimpletype.class));
-  }
+    @Override
+    @NotNull
+    public List<HaskellDerivingVia> getDerivingViaList() {
+        return PsiTreeUtil.getChildrenOfTypeAsList(this, HaskellDerivingVia.class);
+    }
 
-  @Override
-  @Nullable
-  public HaskellTtype getTtype() {
-    return PsiTreeUtil.getChildOfType(this, HaskellTtype.class);
-  }
+    @Override
+    @NotNull
+    public HaskellNewconstr getNewconstr() {
+        return notNullChild(PsiTreeUtil.getChildOfType(this, HaskellNewconstr.class));
+    }
 
-  @Override
-  public String getName() {
-    return HaskellPsiImplUtil.getName(this);
-  }
+    @Override
+    @NotNull
+    public List<HaskellPragma> getPragmaList() {
+        return PsiTreeUtil.getChildrenOfTypeAsList(this, HaskellPragma.class);
+    }
 
-  @Override
-  public ItemPresentation getPresentation() {
-    return HaskellPsiImplUtil.getPresentation(this);
-  }
+    @Override
+    @NotNull
+    public List<HaskellQName> getQNameList() {
+        return PsiTreeUtil.getChildrenOfTypeAsList(this, HaskellQName.class);
+    }
 
-  @Override
-  public Seq<HaskellNamedElement> getIdentifierElements() {
-    return HaskellPsiImplUtil.getIdentifierElements(this);
-  }
+    @Override
+    @NotNull
+    public HaskellSimpletype getSimpletype() {
+        return notNullChild(PsiTreeUtil.getChildOfType(this, HaskellSimpletype.class));
+    }
 
-  @Override
-  public Option<String> getModuleName() {
-    return HaskellPsiImplUtil.getModuleName(this);
-  }
+    @Override
+    @Nullable
+    public HaskellTextLiteral getTextLiteral() {
+        return PsiTreeUtil.getChildOfType(this, HaskellTextLiteral.class);
+    }
 
-  @Override
-  public HaskellNamedElement getDataTypeConstructor() {
-    return HaskellPsiImplUtil.getDataTypeConstructor(this);
-  }
+    @Override
+    @NotNull
+    public List<HaskellTtype> getTtypeList() {
+        return PsiTreeUtil.getChildrenOfTypeAsList(this, HaskellTtype.class);
+    }
+
+    @Override
+    @NotNull
+    public List<HaskellTypeSignature> getTypeSignatureList() {
+        return PsiTreeUtil.getChildrenOfTypeAsList(this, HaskellTypeSignature.class);
+    }
+
+    @Override
+    public String getName() {
+        return HaskellPsiImplUtil.getName(this);
+    }
+
+    @Override
+    public ItemPresentation getPresentation() {
+        return HaskellPsiImplUtil.getPresentation(this);
+    }
+
+    @Override
+    public Seq<HaskellNamedElement> getIdentifierElements() {
+        return HaskellPsiImplUtil.getIdentifierElements(this);
+    }
+
+    @Override
+    public Option<String> getModuleName() {
+        return HaskellPsiImplUtil.getModuleName(this);
+    }
+
+    @Override
+    public HaskellNamedElement getDataTypeConstructor() {
+        return HaskellPsiImplUtil.getDataTypeConstructor(this);
+    }
 
 }

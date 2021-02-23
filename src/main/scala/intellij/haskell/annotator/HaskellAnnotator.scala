@@ -1,5 +1,5 @@
 /*
- * Copyright 2014-2019 Rik van der Kleij
+ * Copyright 2014-2020 Rik van der Kleij
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -21,9 +21,10 @@ import java.util.concurrent.ConcurrentHashMap
 import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer
 import com.intellij.codeInsight.daemon.impl._
 import com.intellij.codeInsight.intention.impl.BaseIntentionAction
-import com.intellij.compiler.{CompilerMessageImpl, ProblemsView}
+import com.intellij.codeInsight.intention.{HighPriorityAction, PriorityAction}
+import com.intellij.compiler.CompilerMessageImpl
 import com.intellij.lang.annotation.{AnnotationHolder, ExternalAnnotator, HighlightSeverity}
-import com.intellij.openapi.application.ApplicationManager
+import com.intellij.openapi.application.{ApplicationManager, WriteAction}
 import com.intellij.openapi.compiler.CompilerMessageCategory
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.fileEditor.FileDocumentManager
@@ -33,11 +34,13 @@ import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.psi.PsiFile
 import com.intellij.psi.impl.source.tree.TreeUtil
 import com.intellij.psi.util.PsiTreeUtil
+import com.intellij.refactoring.rename.RenameUtil
 import intellij.haskell.editor.{HaskellImportOptimizer, HaskellProblemsView}
-import intellij.haskell.external.component.{StackProjectManager, _}
+import intellij.haskell.external.component._
 import intellij.haskell.external.execution._
 import intellij.haskell.psi._
 import intellij.haskell.runconfig.console.HaskellConsoleView
+import intellij.haskell.ui.EnterNameDialog
 import intellij.haskell.util._
 import intellij.haskell.{HaskellFile, HaskellFileType, HaskellNotificationGroup}
 
@@ -52,14 +55,13 @@ class HaskellAnnotator extends ExternalAnnotator[PsiFile, CompilationResult] {
       null
     } else if (StackProjectManager.isInitializing(psiFile.getProject)) {
       val project = psiFile.getProject
-      // Last file is leading
-      HaskellNotificationGroup.logInfoEvent(project, s"File ${psiFile.getName} could not be loaded because project is still initializing")
-      HaskellAnnotator.NotLoadedFile.put(project, psiFile)
+      HaskellNotificationGroup.logInfoEvent(project, s"File ${psiFile.getName} could not be loaded because the REPL is not (yet) available")
+      HaskellAnnotator.addNotLoadedFile(psiFile)
       null
     } else {
       (psiFile, HaskellFileUtil.findVirtualFile(psiFile)) match {
         case (_, None) => null // can be in case if file is in memory only (just created file)
-        case (_, Some(f)) if f.getFileType != HaskellFileType.Instance => null
+        case (_, Some(f)) if f.getFileType != HaskellFileType.INSTANCE => null
         case (_, Some(_)) if !psiFile.isValid => null
         case (_, Some(_)) => psiFile
       }
@@ -69,16 +71,16 @@ class HaskellAnnotator extends ExternalAnnotator[PsiFile, CompilationResult] {
   override def doAnnotate(psiFile: PsiFile): CompilationResult = {
     HaskellFileUtil.findVirtualFile(psiFile) match {
       case Some(virtualFile) =>
-        val fileChanged = FileDocumentManager.getInstance().isFileModified(virtualFile)
-        HaskellFileUtil.saveFileInDispatchThread(psiFile.getProject, virtualFile)
-        HaskellComponentsManager.loadHaskellFile(psiFile, fileChanged).orNull
+        val fileModified = FileDocumentManager.getInstance().isFileModified(virtualFile)
+        HaskellFileUtil.saveFileAsIsInDispatchThread(psiFile.getProject, virtualFile)
+        HaskellComponentsManager.loadHaskellFile(psiFile, fileModified).orNull
       case None => CompilationResult(Iterable(), Iterable(), failed = false)
     }
   }
 
   override def apply(psiFile: PsiFile, loadResult: CompilationResult, holder: AnnotationHolder): Unit = {
-    val haskellProblemsView = ProblemsView.SERVICE.getInstance(psiFile.getProject).asInstanceOf[HaskellProblemsView]
     val project = psiFile.getProject
+    val haskellProblemsView = HaskellProblemsView.getInstance(project)
 
     val currentFile = HaskellFileUtil.findVirtualFile(psiFile)
     val currentFileMessages = currentFile.map { cf =>
@@ -93,26 +95,30 @@ class HaskellAnnotator extends ExternalAnnotator[PsiFile, CompilationResult] {
 
     ApplicationManager.getApplication.invokeLater { () =>
       if (!project.isDisposed) {
+        haskellProblemsView.clearProgress()
         currentFile.foreach(cf => {
-          haskellProblemsView.clearProgress()
           haskellProblemsView.clearOldMessages(cf)
         })
-
         currentFileMessages.foreach(_.foreach(haskellProblemsView.addMessage))
-        otherFileMessages.foreach(haskellProblemsView.addMessage)
+
+        val messagesPerFile = otherFileMessages.groupBy(_.getVirtualFile)
+        messagesPerFile.foreach { case (file, messages) =>
+          haskellProblemsView.clearOldMessages(file)
+          messages.foreach(haskellProblemsView.addMessage(_))
+        }
       }
     }
 
     for (annotation <- HaskellAnnotator.createAnnotations(project, psiFile, loadResult.currentFileProblems)) {
       annotation match {
-        case ErrorAnnotation(textRange, message, htmlMessage) => holder.createAnnotation(HighlightSeverity.ERROR, textRange, message, htmlMessage)
+        case ErrorAnnotation(textRange, message, htmlMessage) =>
+          HaskellAnnotator.annotation(holder, HighlightSeverity.ERROR, textRange, message, htmlMessage)
         case ErrorAnnotationWithIntentionActions(textRange, message, htmlMessage, intentionActions) =>
-          val annotation = holder.createAnnotation(HighlightSeverity.ERROR, textRange, message, htmlMessage)
-          intentionActions.foreach(annotation.registerFix)
-        case WarningAnnotation(textRange, message, htmlMessage) => holder.createAnnotation(HighlightSeverity.WARNING, textRange, message, htmlMessage)
+          HaskellAnnotator.annotation(holder, HighlightSeverity.ERROR, textRange, message, htmlMessage, intentionActions)
+        case WarningAnnotation(textRange, message, htmlMessage) =>
+          HaskellAnnotator.annotation(holder, HighlightSeverity.WARNING, textRange, message, htmlMessage)
         case WarningAnnotationWithIntentionActions(textRange, message, htmlMessage, intentionActions) =>
-          val annotation = holder.createAnnotation(HighlightSeverity.WARNING, textRange, message, htmlMessage)
-          intentionActions.foreach(annotation.registerFix)
+          HaskellAnnotator.annotation(holder, HighlightSeverity.WARNING, textRange, message, htmlMessage, intentionActions)
       }
     }
   }
@@ -145,10 +151,32 @@ object HaskellAnnotator {
 
   private final val DeprecatedPattern = """.*In the use of.*[‘`](.*)[’'].*Deprecated: "Use ([^ ]+).*"""".r
 
-  private final val HolePattern = """warning: \[\-Wtyped\-holes\] (.+)""".r
+  private final val HolePattern = """warning: \[-Wtyped-holes].*?Found hole: ([^ ]+)(.*?) (?:Or perhaps|In the).*""".r
 
   // File which could not be loaded because project was not yet build
-  final val NotLoadedFile = new ConcurrentHashMap[Project, PsiFile].asScala
+  private final val NotLoadedFiles = new ConcurrentHashMap[Project, Set[PsiFile]]
+
+  def annotation(holder: AnnotationHolder, severity: HighlightSeverity, range: TextRange, message: String, html: String, intentions: List[HaskellBaseIntentionAction] = List()): Unit = {
+    intentions.foldLeft(holder.newAnnotation(severity, message).tooltip(html).range(range)) { (b, a) => b.withFix(a) }.create()
+  }
+
+  import scala.jdk.FunctionConverters._
+
+  def addNotLoadedFile(psiFile: PsiFile): Set[PsiFile] = {
+    NotLoadedFiles.merge(psiFile.getProject, Set(psiFile), {
+      (x1: Set[PsiFile], x2: Set[PsiFile]) => x1 ++ x2
+    }.asJavaBiFunction)
+  }
+
+  def getNotLoadedFiles(project: Project): Set[PsiFile] = {
+    NotLoadedFiles.getOrDefault(project, Set[PsiFile]())
+  }
+
+  def removeNotLoadedFile(psiFile: PsiFile): Set[PsiFile] = {
+    NotLoadedFiles.compute(psiFile.getProject, {
+      (_: Project, x2: Set[PsiFile]) => x2.filter(_ != psiFile)
+    }.asJavaBiFunction)
+  }
 
   def getDaemonCodeAnalyzer(project: Project): DaemonCodeAnalyzerImpl = {
     DaemonCodeAnalyzer.getInstance(project).asInstanceOf[DaemonCodeAnalyzerImpl]
@@ -171,10 +199,12 @@ object HaskellAnnotator {
 
   private def createAnnotations(project: Project, psiFile: PsiFile, problems: Iterable[CompilationProblem]): Iterable[Annotation] = {
 
+    lazy val importedModuleNames = HaskellPsiUtil.findImportDeclarations(psiFile).flatMap(_.getModuleName).toSeq
+
     def createErrorAnnotationWithMultiplePerhapsIntentions(problem: CompilationProblem, tr: TextRange, notInScopeMessage: String, suggestionsList: String, add: Option[(String, String)]) = {
       val notInScopeName = extractName(notInScopeMessage)
       val annotations = suggestionsList.split(",").flatMap(s => extractPerhapsYouMeantAction(s))
-      ErrorAnnotationWithIntentionActions(tr, problem.plainMessage, problem.htmlMessage, annotations.to(Iterable) ++ createNotInScopeIntentionActions(psiFile, notInScopeName) ++ add.map(a => new NotInScopeIntentionAction(a._2, a._1, psiFile)))
+      ErrorAnnotationWithIntentionActions(tr, problem.plainMessage, problem.htmlMessage, annotations.to(Iterable).toList ++ createNotInScopeIntentionActions(psiFile, notInScopeName, importedModuleNames) ++ add.map(a => new NotInScopeIntentionAction(a._2, a._1, psiFile, importedModuleNames)))
     }
 
     problems.flatMap {
@@ -196,20 +226,20 @@ object HaskellAnnotator {
               case PerhapsYouMeantSinglePattern(notInScopeMessage, suggestion) =>
                 val notInScopeName = extractName(notInScopeMessage)
                 val annotation = extractPerhapsYouMeantAction(suggestion)
-                ErrorAnnotationWithIntentionActions(tr, problem.plainMessage, problem.htmlMessage, annotation.to(Iterable) ++ createNotInScopeIntentionActions(psiFile, notInScopeName))
+                ErrorAnnotationWithIntentionActions(tr, problem.plainMessage, problem.htmlMessage, annotation.to(Iterable).toList ++ createNotInScopeIntentionActions(psiFile, notInScopeName, importedModuleNames))
               case NotInScopePattern(name) =>
-                ErrorAnnotationWithIntentionActions(tr, problem.plainMessage, problem.htmlMessage, createNotInScopeIntentionActions(psiFile, name))
+                ErrorAnnotationWithIntentionActions(tr, problem.plainMessage, problem.htmlMessage, createNotInScopeIntentionActions(psiFile, name, importedModuleNames).toList)
               case NotInScopePattern2(name) =>
-                ErrorAnnotationWithIntentionActions(tr, problem.plainMessage, problem.htmlMessage, createNotInScopeIntentionActions(psiFile, name.split("::").headOption.getOrElse(name).trim))
-              case UseAloneInstancesImportPattern(importDecl, useImport) => importAloneInstancesAction(problem, tr, importDecl, useImport)
-              case HolePattern(_) =>
-                ErrorAnnotation(tr, problem.plainMessage, problem.htmlMessage)
+                ErrorAnnotationWithIntentionActions(tr, problem.plainMessage, problem.htmlMessage, createNotInScopeIntentionActions(psiFile, name.split("::").headOption.getOrElse(name).trim, importedModuleNames).toList)
+              case UseAloneInstancesImportPattern(importDecl, _) => importAloneInstancesAction(problem, tr, importDecl)
+              case HolePattern(name, typeSignature) =>
+                ErrorAnnotationWithIntentionActions(tr, problem.plainMessage, problem.htmlMessage, List(new CreateStubIntentionAction(name, typeSignature)))
               //
-              case NoTypeSignaturePattern(typeSignature) => WarningAnnotationWithIntentionActions(tr, problem.plainMessage, problem.htmlMessage, Iterable(new TypeSignatureIntentionAction(typeSignature)))
-              case HaskellImportOptimizer.WarningRedundantImport(moduleName) => WarningAnnotationWithIntentionActions(tr, problem.plainMessage, problem.htmlMessage, Iterable(new OptimizeImportIntentionAction(moduleName, None)))
-              case HaskellImportOptimizer.WarningRedundant2Import(idNames, moduleName) => WarningAnnotationWithIntentionActions(tr, problem.plainMessage, problem.htmlMessage, Iterable(new OptimizeImportIntentionAction(moduleName, Some(idNames))))
-              case DefinedButNotUsedPattern(n) => WarningAnnotationWithIntentionActions(tr, problem.plainMessage, problem.htmlMessage, Iterable(new DefinedButNotUsedRemoveIntentionAction(n), new DefinedButNotUsedUnderscoreIntentionAction(n)))
-              case DeprecatedPattern(name, suggestion) => WarningAnnotationWithIntentionActions(tr, problem.plainMessage, problem.htmlMessage, Iterable(new DeprecatedUseAction(name, StringUtil.removeOuterQuotes(suggestion))))
+              case NoTypeSignaturePattern(typeSignature) => WarningAnnotationWithIntentionActions(tr, problem.plainMessage, problem.htmlMessage, List(new TypeSignatureIntentionAction(typeSignature)))
+              case HaskellImportOptimizer.WarningRedundantImport(moduleName) => WarningAnnotationWithIntentionActions(tr, problem.plainMessage, problem.htmlMessage, List(new OptimizeImportIntentionAction(moduleName, None, problem.lineNr)))
+              case HaskellImportOptimizer.WarningRedundant2Import(idNames, moduleName) => WarningAnnotationWithIntentionActions(tr, problem.plainMessage, problem.htmlMessage, List(new OptimizeImportIntentionAction(moduleName, Some(idNames), problem.lineNr)))
+              case DefinedButNotUsedPattern(n) => WarningAnnotationWithIntentionActions(tr, problem.plainMessage, problem.htmlMessage, List(new DefinedButNotUsedRemoveIntentionAction(n), new DefinedButNotUsedUnderscoreIntentionAction(n)))
+              case DeprecatedPattern(name, suggestion) => WarningAnnotationWithIntentionActions(tr, problem.plainMessage, problem.htmlMessage, List(new DeprecatedUseAction(name, StringUtil.removeOuterQuotes(suggestion))))
               case _ =>
                 findSuggestedLanguageExtension(project, plainMessage) match {
                   case les if les.nonEmpty => createLanguageExtensionIntentionsAction(problem, tr, les)
@@ -244,18 +274,18 @@ object HaskellAnnotator {
     }
   }
 
-  private def createNotInScopeIntentionActions(psiFile: PsiFile, name: String): Iterable[NotInScopeIntentionAction] = {
+  private def createNotInScopeIntentionActions(psiFile: PsiFile, name: String, importedModuleNames: Seq[String]): Iterable[NotInScopeIntentionAction] = {
     val nameWithoutParens = StringUtil.removeOuterParens(name)
     val moduleIdentifiers = HaskellComponentsManager.findModuleIdentifiersInCache(psiFile.getProject).filter(_.name == nameWithoutParens)
-    moduleIdentifiers.map(mi => new NotInScopeIntentionAction(mi.name, mi.moduleName, psiFile))
+    moduleIdentifiers.map(mi => new NotInScopeIntentionAction(mi.name, mi.moduleName, psiFile, importedModuleNames))
   }
 
   private def createLanguageExtensionIntentionsAction(problem: CompilationProblem, tr: TextRange, languageExtensions: Iterable[String]): ErrorAnnotationWithIntentionActions = {
-    ErrorAnnotationWithIntentionActions(tr, problem.plainMessage, problem.htmlMessage, languageExtensions.map(le => new LanguageExtensionIntentionAction(le)))
+    ErrorAnnotationWithIntentionActions(tr, problem.plainMessage, problem.htmlMessage, languageExtensions.map(le => new LanguageExtensionIntentionAction(le)).toList)
   }
 
-  private def importAloneInstancesAction(problem: CompilationProblem, tr: TextRange, importDecl: String, useImport: String): WarningAnnotationWithIntentionActions = {
-    WarningAnnotationWithIntentionActions(tr, problem.plainMessage, problem.htmlMessage, Iterable(new ImportAloneInstancesAction(importDecl), new OptimizeImportIntentionAction(importDecl, None)))
+  private def importAloneInstancesAction(problem: CompilationProblem, tr: TextRange, importDecl: String): WarningAnnotationWithIntentionActions = {
+    WarningAnnotationWithIntentionActions(tr, problem.plainMessage, problem.htmlMessage, List(new ImportAloneInstancesAction(importDecl), new OptimizeImportIntentionAction(importDecl, None, problem.lineNr)))
   }
 
   private def getProblemTextRange(psiFile: PsiFile, problem: CompilationProblem): Option[TextRange] = {
@@ -294,15 +324,54 @@ private sealed trait Annotation {
 
 private case class ErrorAnnotation(textRange: TextRange, message: String, htmlMessage: String) extends Annotation
 
-private case class ErrorAnnotationWithIntentionActions(textRange: TextRange, message: String, htmlMessage: String, baseIntentionActions: Iterable[HaskellBaseIntentionAction]) extends Annotation
+private case class ErrorAnnotationWithIntentionActions(textRange: TextRange, message: String, htmlMessage: String, baseIntentionActions: List[HaskellBaseIntentionAction]) extends Annotation
 
 private case class WarningAnnotation(textRange: TextRange, message: String, htmlMessage: String) extends Annotation
 
-private case class WarningAnnotationWithIntentionActions(textRange: TextRange, message: String, htmlMessage: String, baseIntentionActions: Iterable[HaskellBaseIntentionAction]) extends Annotation
+private case class WarningAnnotationWithIntentionActions(textRange: TextRange, message: String, htmlMessage: String, baseIntentionActions: List[HaskellBaseIntentionAction]) extends Annotation
 
-sealed abstract class HaskellBaseIntentionAction extends BaseIntentionAction {
+sealed abstract class HaskellBaseIntentionAction extends BaseIntentionAction with HighPriorityAction {
   override def isAvailable(project: Project, editor: Editor, file: PsiFile): Boolean = {
     file.isInstanceOf[HaskellFile]
+  }
+
+  override def getPriority: PriorityAction.Priority = {
+    PriorityAction.Priority.NORMAL
+  }
+}
+
+class CreateStubIntentionAction(name: String, typeSignature: String) extends HaskellBaseIntentionAction {
+  setText(s"Create stub for `$name$typeSignature`")
+
+  override def getFamilyName: String = "Create stub"
+
+  override def startInWriteAction(): Boolean = false
+
+  override def invoke(project: Project, editor: Editor, file: PsiFile): Unit = {
+    val offset = editor.getCaretModel.getOffset
+
+    val dialog = new EnterNameDialog("Enter variable name", name.drop(1))
+    if (dialog.showAndGet())
+
+    Option(file.findElementAt(offset)) match {
+      case Some(e) => if (RenameUtil.isValidName(project, e, dialog.getName)) for {
+        newName <- HaskellElementFactory.createQNameElement(project, dialog.getName)
+        topDeclaration <- Option(TreeUtil.findParent(e.getNode, HaskellTypes.HS_TOP_DECLARATION))
+        moduleBody <- Option(topDeclaration.getPsi.getParent)
+        sigDecl <- HaskellElementFactory.createTopDeclaration(project, newName.getName + typeSignature)
+        bodDecl <- HaskellElementFactory.createTopDeclaration(project, newName.getName + " = undefined")
+      } yield {
+        WriteAction.run(() => {
+          e.replace(newName)
+          var nl = moduleBody.addAfter(HaskellElementFactory.createNewLine(project), topDeclaration.getPsi)
+          val sig = moduleBody.addAfter(sigDecl, nl)
+          nl = moduleBody.addAfter(HaskellElementFactory.createNewLine(project), sig)
+          val bodyElement = moduleBody.addAfter(bodDecl, nl)
+          moduleBody.addAfter(HaskellElementFactory.createNewLine(project), bodyElement)
+        })
+      }
+      case None => ()
+    }
   }
 }
 
@@ -323,7 +392,6 @@ class TypeSignatureIntentionAction(typeSignature: String) extends HaskellBaseInt
           typeSignature = moduleBody.addBefore(typeSignatureElement, psi)
         } yield {
           moduleBody.addAfter(HaskellElementFactory.createNewLine(project), typeSignature)
-          //          moduleBody.addAfter(de)
         }
       case None => ()
     }
@@ -342,8 +410,7 @@ class LanguageExtensionIntentionAction(languageExtension: String) extends Haskel
           case Some(fh) =>
             PsiTreeUtil.findChildrenOfType(fh, classOf[HaskellPragma]).asScala.lastOption match {
               case Some(lastPragmaElement) =>
-                val nl = fh.addAfter(HaskellElementFactory.createNewLine(project), lastPragmaElement)
-                fh.addAfter(languagePragmaElement, nl)
+                fh.addAfter(languagePragmaElement, lastPragmaElement)
               case None =>
                 val p = fh.add(languagePragmaElement)
                 fh.addAfter(HaskellElementFactory.createNewLine(project), p)
@@ -417,7 +484,7 @@ class DefinedButNotUsedUnderscoreIntentionAction(name: String) extends HaskellBa
   }
 }
 
-class NotInScopeIntentionAction(identifier: String, moduleName: String, psiFile: PsiFile) extends HaskellBaseIntentionAction {
+class NotInScopeIntentionAction(identifier: String, moduleName: String, psiFile: PsiFile, importedModuleNames: Seq[String]) extends HaskellBaseIntentionAction {
   setText(s"Import `$identifier` of module `$moduleName`")
 
   override def getFamilyName: String = "Perhaps you meant"
@@ -459,24 +526,31 @@ class NotInScopeIntentionAction(identifier: String, moduleName: String, psiFile:
   private def createImportDeclaration(importDeclarationElement: HaskellImportDeclaration, ids: HaskellImportDeclarations, project: Project) = {
     HaskellPsiUtil.findImportDeclarations(psiFile).lastOption match {
       case Some(id) =>
-        val nla = ids.addAfter(HaskellElementFactory.createNewLine(project), id)
-        ids.addAfter(importDeclarationElement, nla)
+        ids.addAfter(importDeclarationElement, id)
       case None =>
         val importElement = ids.addAfter(importDeclarationElement, null)
         ids.addAfter(HaskellElementFactory.createNewLine(project), importElement)
     }
   }
+
+  override def getPriority: PriorityAction.Priority = {
+    if (importedModuleNames.contains(moduleName)) {
+      PriorityAction.Priority.HIGH
+    } else {
+      PriorityAction.Priority.LOW
+    }
+  }
 }
 
-class OptimizeImportIntentionAction(moduleName: String, mids: Option[String]) extends HaskellBaseIntentionAction {
+class OptimizeImportIntentionAction(moduleName: String, mids: Option[String], lineNr: Integer) extends HaskellBaseIntentionAction {
   setText(s"Remove redundant import for `$moduleName`" + mids.getOrElse(""))
 
   override def getFamilyName: String = "Optimize imports"
 
   override def invoke(project: Project, editor: Editor, psiFile: PsiFile): Unit = {
     mids match {
-      case None => HaskellImportOptimizer.removeRedundantImport(psiFile, moduleName)
-      case Some(ids) => HaskellImportOptimizer.removeRedundantImportIds(psiFile, moduleName, ids.split(',').toSeq.map(_.trim))
+      case None => HaskellImportOptimizer.removeRedundantImport(psiFile, moduleName, Some(lineNr))
+      case Some(ids) => HaskellImportOptimizer.removeRedundantImportIds(psiFile, moduleName, ids.split(',').toSeq.map(_.trim), Some(lineNr))
     }
   }
 }

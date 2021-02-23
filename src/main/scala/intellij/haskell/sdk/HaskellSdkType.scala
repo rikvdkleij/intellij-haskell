@@ -1,5 +1,5 @@
 /*
- * Copyright 2014-2019 Rik van der Kleij
+ * Copyright 2014-2020 Rik van der Kleij
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,10 +16,7 @@
 
 package intellij.haskell.sdk
 
-import java.io.File
-
 import com.intellij.openapi.fileChooser.FileChooserDescriptor
-import com.intellij.openapi.module.Module
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.projectRoots._
 import com.intellij.openapi.projectRoots.impl.SdkConfigurationUtil
@@ -30,14 +27,16 @@ import icons.HaskellIcons
 import intellij.haskell.HaskellNotificationGroup
 import intellij.haskell.external.execution.CommandLine
 import intellij.haskell.util.{HaskellFileUtil, HaskellProjectUtil}
-import javax.swing.Icon
 import org.jdom.Element
+
+import java.io.File
+import javax.swing.Icon
 
 class HaskellSdkType extends SdkType("Haskell Tool Stack SDK") {
 
   override def suggestHomePath(): String = {
     if (SystemInfo.isLinux)
-      "/usr/bin/stack"
+      "/usr/local/bin/stack"
     else if (SystemInfo.isMac)
       "/usr/local/bin/stack"
     else null
@@ -58,7 +57,7 @@ class HaskellSdkType extends SdkType("Haskell Tool Stack SDK") {
     }
   }
 
-  override def getPresentableName: String = "Stack binary"
+  override def getPresentableName: String = "Stack executable"
 
   override def saveAdditionalData(additionalData: SdkAdditionalData, additional: Element): Unit = {}
 
@@ -88,7 +87,7 @@ class HaskellSdkType extends SdkType("Haskell Tool Stack SDK") {
           if (!pathValid) {
             pathValid = isValidSdkHome(adjustSelectedSdkHome(selectedPath))
             if (!pathValid) {
-              val message = "The selected file is not a valid Stack binary"
+              val message = "The selected file is not a valid Stack executable"
               throw new Exception(message)
             }
           }
@@ -101,9 +100,7 @@ class HaskellSdkType extends SdkType("Haskell Tool Stack SDK") {
   }
 
   private def getNumericVersion(stackPath: String): Option[String] = {
-    val workDir = new File(stackPath).getParent
-    val output = CommandLine.run0(
-      workDir,
+    val output = CommandLine.runInHomeDir(
       stackPath,
       Seq("--numeric-version"),
       notifyBalloonError = true
@@ -124,22 +121,13 @@ object HaskellSdkType {
     SdkConfigurationUtil.findOrCreateSdk(null, getInstance)
   }
 
-  private def getProjectStackPath(project: Project): Option[String] = {
-    val projectRootManager = HaskellProjectUtil.getProjectRootManager(project)
-    val stackPath = for {
-      pm <- projectRootManager
-      sdk <- Option(pm.getProjectSdk)
-      p <- Option(sdk.getHomePath)
-    } yield p
-    stackPath
-  }
-
-  def getStackBinaryPath(project: Project, notifyNoSdk: Boolean = true): Option[String] = {
+  def getStackPath(project: Project, notifyNoSdk: Boolean = true): Option[String] = {
     val haskellProjectModule = HaskellProjectUtil.findProjectHaskellModules(project).headOption
     val stackPath = for {
       hpm <- haskellProjectModule
       m <- HaskellProjectUtil.getModuleRootManager(project, hpm)
       sdk <- Option(m.getSdk)
+      if sdk.getSdkType == HaskellSdkType.getInstance
       p <- Option(sdk.getHomePath)
     } yield p
 
@@ -147,13 +135,20 @@ object HaskellSdkType {
       case path@Some(_) => path
       case None =>
         if (notifyNoSdk) {
-          HaskellNotificationGroup.logErrorBalloonEvent(project, "Path to Haskell Stack binary is not configured in Project SDK setting / Modules.")
+          HaskellNotificationGroup.logErrorBalloonEvent(project, "Haskell SDK is not defined in Project Settings")
         }
         None
     }
   }
 
-  def getSdkName(project: Project, module: Module): Option[String] = {
-    HaskellProjectUtil.getModuleRootManager(project, module).map(_.getModifiableModel).flatMap(m => Option(m.getSdkName))
+  private def getProjectStackPath(project: Project): Option[String] = {
+    val projectRootManager = HaskellProjectUtil.getProjectRootManager(project)
+    val stackPath = for {
+      pm <- projectRootManager
+      sdk <- Option(pm.getProjectSdk)
+      if sdk.getSdkType == HaskellSdkType.getInstance
+      p <- Option(sdk.getHomePath)
+    } yield p
+    stackPath
   }
 }

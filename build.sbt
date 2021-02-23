@@ -1,13 +1,16 @@
 lazy val commonSettings = Seq(
-  version := "1.0.0-beta51",
-  scalaVersion := "2.13.0"
+  version := "1.0.0-beta85",
+  scalaVersion := "2.13.3"
 )
 
-val scalaTest = "org.scalatest" %% "scalatest" % "3.0.8" % Test
-val sprayJson = "io.spray" %% "spray-json" % "1.3.5"
-val snakeYaml = "org.yaml" % "snakeyaml" % "1.23"
-val scaffeine = "com.github.blemale" %% "scaffeine" % "3.0.0"
-val directories = "io.github.soc" % "directories" % "11"
+val scalaTest = "org.scalatest" %% "scalatest" % "3.2.0" % Test
+val sprayJson = "io.spray" %% "spray-json" % "1.3.6"
+val snakeYaml = "org.yaml" % "snakeyaml" % "1.26"
+val scaffeine = "com.github.blemale" %% "scaffeine" % "4.0.2"
+val directories = "io.github.soc" % "directories" % "12"
+val fastparse = "com.lihaoyi" %% "fastparse" % "2.2.2"
+
+intellijPluginName in ThisBuild := "IntelliJ-Haskell"
 
 lazy val intellijHaskell = (project in file(".")).
   enablePlugins(SbtIdeaPlugin).
@@ -21,8 +24,14 @@ lazy val intellijHaskell = (project in file(".")).
     libraryDependencies += snakeYaml,
     libraryDependencies += scaffeine,
     libraryDependencies += directories,
+    libraryDependencies += fastparse,
     unmanagedSourceDirectories in Compile += baseDirectory.value / "gen"
   )
 
+intellijBuild in ThisBuild := "202.8194.7"
 
-ideaBuild in ThisBuild := "191.7479.19"
+intellijPlugins += "com.intellij.java".toPlugin
+
+// Get rid of:
+//   Unrecognized VM option 'UseConcMarkSweepGC'
+intellijVMOptions := intellijVMOptions.value.copy(gc = "")

@@ -9,40 +9,43 @@ import scala.collection.immutable.Seq;
 
 import java.util.List;
 
-public interface HaskellDataDeclaration extends HaskellTopDeclaration, HaskellDataConstructorDeclarationElement {
+public interface HaskellDataDeclaration extends HaskellDataConstructorDeclarationElement {
 
-  @Nullable
-  HaskellCcontext getCcontext();
+    @Nullable
+    HaskellCcontext getCcontext();
 
-  @NotNull
-  List<HaskellConstr> getConstrList();
+    @NotNull
+    List<HaskellConstr> getConstrList();
 
-  @Nullable
-  HaskellDataDeclarationDeriving getDataDeclarationDeriving();
+    @Nullable
+    HaskellDataDeclarationDeriving getDataDeclarationDeriving();
 
-  @NotNull
-  List<HaskellKindSignature> getKindSignatureList();
+    @NotNull
+    List<HaskellKindSignature> getKindSignatureList();
 
-  @NotNull
-  List<HaskellQName> getQNameList();
+    @NotNull
+    List<HaskellPragma> getPragmaList();
 
-  @NotNull
-  HaskellSimpletype getSimpletype();
+    @NotNull
+    List<HaskellQName> getQNameList();
 
-  @Nullable
-  HaskellTtype getTtype();
+    @NotNull
+    HaskellSimpletype getSimpletype();
 
-  @NotNull
-  List<HaskellTypeSignature> getTypeSignatureList();
+    @Nullable
+    HaskellTtype getTtype();
 
-  String getName();
+    @NotNull
+    List<HaskellTypeSignature> getTypeSignatureList();
 
-  ItemPresentation getPresentation();
+    String getName();
 
-  Seq<HaskellNamedElement> getIdentifierElements();
+    ItemPresentation getPresentation();
 
-  Option<String> getModuleName();
+    Seq<HaskellNamedElement> getIdentifierElements();
 
-  HaskellNamedElement getDataTypeConstructor();
+    Option<String> getModuleName();
+
+    HaskellNamedElement getDataTypeConstructor();
 
 }

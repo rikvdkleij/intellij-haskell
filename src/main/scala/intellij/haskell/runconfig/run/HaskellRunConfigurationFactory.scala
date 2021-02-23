@@ -9,4 +9,6 @@ class HaskellRunConfigurationFactory(val typez: ConfigurationType) extends Confi
   override def createTemplateConfiguration(project: Project) = new HaskellRunConfiguration(name, project, this)
 
   override def getName: String = name
+
+  override def getId: String = name
 }

@@ -15,14 +15,12 @@ class HaskellImplementationTextSelectioner extends ImplementationTextSelectioner
   }
 
   private def getTextRange(element: PsiElement) = {
-    HaskellPsiUtil.findTopDeclarationLineParent(element) match {
+    HaskellPsiUtil.findTopDeclarationParent(element) match {
       case Some(dp) => Option(dp.getNextSibling) match {
-        // FIXME
-        // case Some(e: HaskellTopDeclarationLine) => (dp.getTextRange.getStartOffset, e.getTextRange.getEndOffset)
+        case Some(e: HaskellTopDeclaration) => (dp.getTextRange.getStartOffset, e.getTextRange.getEndOffset)
         case Some(e: HaskellTopDeclaration) => (dp.getTextRange.getStartOffset, e.getTextRange.getEndOffset)
         case _ => Option(dp.getPrevSibling) match {
-          // FIXME
-          // case Some(e: HaskellTopDeclarationLine) => (e.getTextRange.getStartOffset, dp.getTextRange.getEndOffset)
+          case Some(e: HaskellTopDeclaration) => (e.getTextRange.getStartOffset, dp.getTextRange.getEndOffset)
           case _ => (dp.getTextRange.getStartOffset, dp.getTextRange.getEndOffset)
         }
       }

@@ -1,5 +1,5 @@
 /*
- * Copyright 2014-2019 Rik van der Kleij
+ * Copyright 2014-2020 Rik van der Kleij
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,8 +19,7 @@ package intellij.haskell.navigation
 import com.intellij.BundleBase
 import com.intellij.ide.IdeBundle
 import com.intellij.ide.util.PropertiesComponent
-import com.intellij.ide.util.gotoByName.{CustomMatcherModel, FilteringGotoByModel}
-import com.intellij.lang.Language
+import com.intellij.ide.util.gotoByName.{CustomMatcherModel, FilteringGotoByModel, LanguageRef}
 import com.intellij.navigation.{ChooseByNameContributor, NavigationItem}
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.SystemInfo
@@ -28,12 +27,12 @@ import com.intellij.psi.PsiElement
 import com.intellij.psi.presentation.java.SymbolPresentationUtil
 import javax.swing.ListCellRenderer
 
-class GotoByHoogleModel(val project: Project, val contributors: Array[ChooseByNameContributor]) extends FilteringGotoByModel[Language](project, contributors) with CustomMatcherModel {
+class GotoByHoogleModel(val project: Project, val contributors: Array[ChooseByNameContributor]) extends FilteringGotoByModel[LanguageRef](project, contributors) with CustomMatcherModel {
 
   // Helping the Scala compiler to see that ListCellRenderer is parameterized by AnyRef
   override def getListCellRenderer: ListCellRenderer[_] = super.getListCellRenderer
 
-  protected def filterValueFor(item: NavigationItem): Language = {
+  protected def filterValueFor(item: NavigationItem): LanguageRef = {
     null
   }
 

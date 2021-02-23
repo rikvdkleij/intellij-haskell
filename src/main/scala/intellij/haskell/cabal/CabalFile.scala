@@ -1,5 +1,5 @@
 /*
- * Copyright 2014-2019 Rik van der Kleij
+ * Copyright 2014-2020 Rik van der Kleij
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,9 +17,8 @@
 package intellij.haskell.cabal
 
 import com.intellij.extapi.psi.PsiFileBase
-import com.intellij.openapi.fileTypes.{FileType, LanguageFileType}
+import com.intellij.openapi.fileTypes.FileType
 import com.intellij.psi.FileViewProvider
-import icons.HaskellIcons
 import javax.swing._
 import org.jetbrains.annotations.NotNull
 
@@ -36,28 +35,5 @@ class CabalFile(viewProvider: FileViewProvider) extends PsiFileBase(viewProvider
 
   override def getIcon(flags: Int): Icon = {
     super.getIcon(flags)
-  }
-}
-
-object CabalFileType {
-  final val INSTANCE = new CabalFileType
-}
-
-class CabalFileType extends LanguageFileType(CabalLanguage.Instance) {
-
-  def getName: String = {
-    "Cabal file"
-  }
-
-  def getDescription: String = {
-    "Cabal file (Haskell package description)"
-  }
-
-  def getDefaultExtension: String = {
-    "cabal"
-  }
-
-  def getIcon: Icon = {
-    HaskellIcons.CabalLogo
   }
 }

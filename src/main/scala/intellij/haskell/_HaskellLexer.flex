@@ -37,11 +37,12 @@ import static intellij.haskell.psi.HaskellTypes.*;
 newline             = \r|\n|\r\n
 unispace            = \x05
 white_char          = [\ \t\f\x0B\ \x0D ] | {unispace}    // second "space" is probably ^M, I could not find other solution then justing pasting it in to prevent bad character.
-directive           = "#"{white_char}*("if"|"ifdef"|"ifndef"|"define"|"elif"|"else"|"error"|"endif"|"include"|"undef")  ("\\" (\r|\n|\r\n) | [^\r\n])*
+directive           = "#"{white_char}*("if"|"ifdef"|"ifndef"|"define"|"elif"|"else"|"error"|"endif"|"include"|"undef")("\\" (\r|\n|\r\n) | [^\r\n])*
+include_directive   = "#"{white_char}*"include"{white_char}*\"({small}|{large}|{digit}|{dot})+\"
 white_space         = {white_char}+
 
 underscore          = "_"
-small               = [a-z] | {underscore} | [\u03B1-\u03C9] | 𝑖 | 𝕧
+small               = [a-z] | {underscore} | [\u03B1-\u03C9] | 𝑖 | 𝕧 | µ | ¬
 large               = [A-Z] | [\u0391-\u03A9] | ℝ | ℂ | ℕ | ℤ | ℚ
 
 digit               = [0-9] | [\u2070-\u2079] | [\u2080-\u2089]
@@ -110,17 +111,17 @@ double_quotes       = "\""
 forall              = "∀"
 
 symbol_no_dot       = {equal} | {at} | {backslash} | {vertical_bar} | {tilde} | {exclamation_mark} | {hash} | {dollar} | {percentage} | {ampersand} | {star} |
-                        {plus} | {slash} | {lt} | {gt} | {question_mark} | {caret} | {dash} | ⊜ | ≣ | ≤ | ≥ | · | & | ¦ | ¿ | — | ⊕ | ∅ | ¬ | ∧ | ∨ | ≡ | ≢ | ≠ |
-                        ≮| ≯ | − |÷ |⋅ |∘ | ⧺ | ∈ |∉ |‼ | ⊥ | ∣ | ∤ | 𝜀
+                        {plus} | {slash} | {lt} | {gt} | {question_mark} | {caret} | {dash} | [\u2201-\u22FF]
 
 
 symbol              = {symbol_no_dot} | {dot}
 
-var_id              = {question_mark}? {small} ({small} | {large} | {digit} | {quote})*
-varsym_id           = (({symbol_no_dot} | {colon} | {colon_colon} | {left_arrow} | {right_arrow} | {double_right_arrow}) ({symbol} | {colon})+) |
+base_var_id         = {small} ({small} | {large} | {digit} | {quote})*
+var_id              = {question_mark}? {base_var_id} | {hash} {base_var_id} | {base_var_id} {hash}
+varsym_id           = (({symbol_no_dot} | {left_arrow} | {right_arrow} | {double_right_arrow}) ({symbol} | {colon})+) |
                         {symbol_no_dot} ({symbol} | {colon})*
 
-con_id              = {large} ({small} | {large} | {digit} | {quote})*
+con_id              = {large} ({small} | {large} | {digit} | {quote})* {hash}?
 consym_id           = {quote}? {colon} ({symbol} | {colon})*
 
 
@@ -131,7 +132,7 @@ pragma_end          = {hash}{dash}{right_brace}
 comment             = {dash}{dash}{dash}*[^\r\n\!\#\$\%\&\⋆\+\.\/\<\=\>\?\@\*][^\r\n]* | {dash}{dash}{white_char}* | "\\begin{code}"
 ncomment_start      = {left_brace}{dash}
 ncomment_end        = {dash}{right_brace}
-haddock             = {dash}{dash}{white_char}[\^\|][^\r\n]* ({newline}{white_char}*{comment})*
+haddock             = {dash}{dash}{white_char}[\^\|][^\r\n]* ({newline}+{white_char}*{comment})*
 nhaddock_start      = {left_brace}{dash}{white_char}?{vertical_bar}
 
 %%
@@ -142,7 +143,6 @@ nhaddock_start      = {left_brace}{dash}{white_char}?{vertical_bar}
     }
 
     <<EOF>> {
-        int state = yystate();
         yybegin(YYINITIAL);
         zzStartRead = haddockStart;
         return HS_NOT_TERMINATED_COMMENT;
@@ -153,7 +153,6 @@ nhaddock_start      = {left_brace}{dash}{white_char}?{vertical_bar}
             haddockDepth--;
         }
         else {
-             int state = yystate();
              yybegin(YYINITIAL);
              zzStartRead = haddockStart;
              return HS_NHADDOCK;
@@ -176,7 +175,6 @@ nhaddock_start      = {left_brace}{dash}{white_char}?{vertical_bar}
     }
 
     <<EOF>> {
-        int state = yystate();
         yybegin(YYINITIAL);
         zzStartRead = commentStart;
         return HS_NOT_TERMINATED_COMMENT;
@@ -187,7 +185,6 @@ nhaddock_start      = {left_brace}{dash}{white_char}?{vertical_bar}
             commentDepth--;
         }
         else {
-             int state = yystate();
              yybegin(YYINITIAL);
              zzStartRead = commentStart;
              return HS_NCOMMENT;
@@ -226,17 +223,12 @@ nhaddock_start      = {left_brace}{dash}{white_char}?{vertical_bar}
     {hash}                { return HS_HASH; }
     {white_space}         { return com.intellij.psi.TokenType.WHITE_SPACE; }
 
-    [\-a-zA-Z0-9_=\(\):<>*/|'!?\.+\^&%$@\[\];,~\\`]+ {
+    ([a-zA-Z0-9_=\(\):<>*/\|\'\!\?\.+\^&%$@\[\];,~\\`\"\{\}]|[\u2200-\u22FF]|[\u2190-\u21FF]|[\u0370-\u03FF]) + {
         return HS_ONE_PRAGMA;
     }
 
     #[^-]+ {
         return HS_ONE_PRAGMA;
-    }
-
-    {left_brace}|{right_brace} {
-        yybegin(YYINITIAL);
-        return com.intellij.psi.TokenType.BAD_CHARACTER;
     }
 }
 
@@ -247,15 +239,14 @@ nhaddock_start      = {left_brace}{dash}{white_char}?{vertical_bar}
 
 
 <QQ> {
-    {left_bracket} ({var_id}|{con_id}|{dot})* {vertical_bar} {
+    {left_bracket} ({var_id}|{con_id}|{dot}|{white_char}|{varsym_id})* {vertical_bar} {
         qqDepth++;
     }
 
     <<EOF>> {
-        int state = yystate();
         yybegin(YYINITIAL);
         zzStartRead = qqStart;
-        return HS_QUASIQUOTE;
+        return HS_NOT_TERMINATED_QQ_EXPRESSION;
     }
 
     {vertical_bar} {right_bracket} {
@@ -263,17 +254,31 @@ nhaddock_start      = {left_brace}{dash}{white_char}?{vertical_bar}
             qqDepth--;
         }
         else {
-             int state = yystate();
              yybegin(YYINITIAL);
              zzStartRead = qqStart;
              return HS_QUASIQUOTE;
         }
     }
 
+    {right_bracket} {
+            if (qqDepth > 0) {
+                qqDepth--;
+            }
+            else {
+                 yybegin(YYINITIAL);
+                 zzStartRead = qqStart;
+                 return HS_LIST_COMPREHENSION;
+            }
+        }
+
+    {left_bracket} {
+        qqDepth++;
+      }
+
     .|{white_char}|{newline} {}
 }
 
-{left_bracket} ({var_id}|{con_id}|{dot})* {vertical_bar} {
+{left_bracket} ({var_id}|{con_id}|{dot}|{white_char}|{varsym_id})* {vertical_bar} {
     yybegin(QQ);
     qqDepth = 0;
     qqStart = getTokenStart();
@@ -286,6 +291,8 @@ nhaddock_start      = {left_brace}{dash}{white_char}?{vertical_bar}
     {comment}             { return HS_COMMENT; }
     {white_space}         { return com.intellij.psi.TokenType.WHITE_SPACE; }
 
+    {include_directive}   { return HS_INCLUDE_DIRECTIVE; }
+    {directive}           { return HS_DIRECTIVE; }
 
     // not listed as reserved identifier but have meaning in certain context,
     // let's say specialreservedid
@@ -363,8 +370,6 @@ nhaddock_start      = {left_brace}{dash}{white_char}?{vertical_bar}
     {right_brace}         { return HS_RIGHT_BRACE; }
 
     {quote}               { return HS_QUOTE; }
-
-    {directive}           { return HS_DIRECTIVE; }
 
     {forall}              { return HS_FORALL; }
 

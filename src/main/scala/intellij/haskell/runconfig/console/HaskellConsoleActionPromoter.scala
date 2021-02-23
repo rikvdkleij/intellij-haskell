@@ -21,7 +21,7 @@ class HaskellConsoleActionPromoter extends ActionPromoter {
   }
 
   def promote(actions: util.List[AnAction], context: DataContext): util.List[AnAction] = {
-    val result = ContainerUtil.newArrayList(actions)
+    val result = new util.ArrayList[AnAction](actions)
     ContainerUtil.sort(result, Comparator)
     result
   }

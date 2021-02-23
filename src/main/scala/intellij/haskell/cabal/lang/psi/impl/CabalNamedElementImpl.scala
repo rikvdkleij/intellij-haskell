@@ -1,11 +1,9 @@
 package intellij.haskell.cabal.lang.psi.impl
 
-import com.intellij.navigation.NavigationItem
-import com.intellij.psi.{PsiElement, PsiNameIdentifierOwner, PsiReference}
+import com.intellij.psi.{PsiElement, PsiReference}
+import intellij.haskell.cabal.lang.psi.{CabalNamedElement, CabalReference}
 
-import intellij.haskell.cabal.lang.psi.CabalReference
-
-trait CabalNamedElementImpl extends PsiNameIdentifierOwner with NavigationItem {
+trait CabalNamedElementImpl extends CabalNamedElement {
 
   def getVariants: Array[AnyRef]
 

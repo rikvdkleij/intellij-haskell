@@ -1,5 +1,5 @@
 /*
- * Copyright 2014-2019 Rik van der Kleij
+ * Copyright 2014-2020 Rik van der Kleij
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -27,6 +27,7 @@ import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Key
 import com.intellij.openapi.vfs.{CharsetToolkit, VfsUtil}
+import com.intellij.util.WaitFor
 import intellij.haskell.HaskellNotificationGroup
 import intellij.haskell.sdk.HaskellSdkType
 import intellij.haskell.settings.HaskellSettingsState
@@ -39,27 +40,18 @@ object StackCommandLine {
 
   final val NoDiagnosticsShowCaretFlag = "-fno-diagnostics-show-caret"
 
-  private def extraStackArguments: Seq[String] = {
-    val extraStackArgumentsString = HaskellSettingsState.getExtraStackArguments
-    if (extraStackArgumentsString.nonEmpty) {
-      extraStackArgumentsString.split("""\s+""").toSeq
-    } else {
-      Seq()
-    }
-  }
-
   def stackVersion(project: Project): Option[String] = {
     StackCommandLine.run(project, Seq("--numeric-version"), enableExtraArguments = false).flatMap(_.getStdoutLines.asScala.headOption)
   }
 
   def run(project: Project, arguments: Seq[String], timeoutInMillis: Long = CommandLine.DefaultTimeout.toMillis,
           ignoreExitCode: Boolean = false, logOutput: Boolean = false, workDir: Option[String] = None, notifyBalloonError: Boolean = false, enableExtraArguments: Boolean = true): Option[ProcessOutput] = {
-    HaskellSdkType.getStackBinaryPath(project).map(stackPath => {
-      CommandLine.run1(
+    HaskellSdkType.getStackPath(project).map(stackPath => {
+      CommandLine.runInWorkDir(
         project,
         workDir.getOrElse(project.getBasePath),
         stackPath,
-        arguments ++ (if (enableExtraArguments) extraStackArguments else Seq()),
+        arguments ++ (if (enableExtraArguments) HaskellSettingsState.getExtraStackArguments else Seq()),
         timeoutInMillis.toInt,
         ignoreExitCode = ignoreExitCode,
         logOutput = logOutput,
@@ -68,26 +60,55 @@ object StackCommandLine {
     })
   }
 
-  def installTool(project: Project, toolName: String): Boolean = {
+  def runWithProgressIndicator(project: Project, workDir: Option[String], arguments: Seq[String], progressIndicator: Option[ProgressIndicator]): Option[CapturingProcessHandler] = {
+    HaskellSdkType.getStackPath(project).map(stackPath => {
+      CommandLine.runWithProgressIndicator(
+        project,
+        workDir,
+        stackPath,
+        arguments,
+        progressIndicator
+      )
+    })
+  }
+
+  def installTool(project: Project, progressIndicator: ProgressIndicator, toolName: String): Boolean = {
     import intellij.haskell.GlobalInfo._
-    val systemGhcOption = if (StackYamlComponent.isNixEnabled(project)) {
+    val systemGhcOption = if (StackYamlComponent.isNixEnabled(project) || !HaskellSettingsState.useSystemGhc) {
       Seq()
     } else {
       Seq("--system-ghc")
     }
-    val arguments = systemGhcOption ++ Seq("-j1", "--stack-root", toolsStackRootPath.getPath, "--resolver", StackageLtsVersion, "--local-bin-path", toolsBinPath.getPath, "install", toolName)
-    val processOutput = run(project, arguments, -1, logOutput = true, notifyBalloonError = true, workDir = Some(VfsUtil.getUserHomeDir.getPath), enableExtraArguments = false)
-    processOutput.exists(o => o.getExitCode == 0 && !o.isTimeout)
+    val arguments = systemGhcOption ++ Seq("-j2", "--stack-root", toolsStackRootPath.getPath, "--resolver", StackageLtsVersion, "--local-bin-path", toolsBinPath.getPath, "install", toolName)
+
+    val result = runWithProgressIndicator(project, workDir = Some(VfsUtil.getUserHomeDir.getPath), arguments, Some(progressIndicator)).exists(handler => {
+      val output = handler.runProcessWithProgressIndicator(progressIndicator)
+
+      if (output.isCancelled) {
+        handler.destroyProcess()
+      }
+
+      if (output.getExitCode != 0) {
+        if (output.getStderr.nonEmpty) {
+          HaskellNotificationGroup.logErrorBalloonEvent(project, output.getStderr)
+        }
+        if (output.getStdout.nonEmpty) {
+          HaskellNotificationGroup.logErrorBalloonEvent(project, output.getStdout)
+        }
+      }
+      output.getExitCode == 0 && !output.isCancelled && !output.isTimeout
+    })
+
+    result
   }
 
   def updateStackIndex(project: Project): Option[ProcessOutput] = {
-    import intellij.haskell.GlobalInfo._
-    val arguments = Seq("update", "--stack-root", toolsStackRootPath.getPath)
+    val arguments = Seq("update")
     run(project, arguments, -1, logOutput = true, notifyBalloonError = true, enableExtraArguments = false)
   }
 
   def buildProjectDependenciesInMessageView(project: Project): Option[Boolean] = {
-    buildInMessageView(project, Seq("--test", "--bench", "--no-run-tests", "--no-run-benchmarks", "--only-dependencies"))
+    buildInMessageView(project, "Build project dependencies", Seq("--test", "--bench", "--no-run-tests", "--no-run-benchmarks", "--only-dependencies"))
   }
 
   private def ghcOptions(project: Project) = {
@@ -102,18 +123,29 @@ object StackCommandLine {
     run(project, Seq("build", "--fast") ++ arguments).map(_.getExitCode == 0)
   }
 
-  def buildInMessageView(project: Project, arguments: Seq[String]): Option[Boolean] = {
-    executeStackCommandInMessageView(project, Seq("build", "--fast", "--no-interleaved-output") ++ arguments ++ ghcOptions(project))
+  def buildInMessageView(project: Project, description: String, arguments: Seq[String]): Option[Boolean] = {
+    executeStackCommandInMessageView(project, description, Seq("build", "--fast", "--no-interleaved-output") ++ arguments ++ ghcOptions(project))
   }
 
-  def executeStackCommandInMessageView(project: Project, arguments: Seq[String]): Option[Boolean] = {
-    HaskellSdkType.getStackBinaryPath(project).flatMap(stackPath => {
-      executeInMessageView(project, stackPath, arguments)
+  def executeStackCommandInMessageView(project: Project, description: String, arguments: Seq[String]): Option[Boolean] = {
+    HaskellSdkType.getStackPath(project).flatMap(stackPath => {
+      executeInMessageView(project, description, stackPath, arguments)
     })
   }
 
-  def executeInMessageView(project: Project, commandPath: String, arguments: Seq[String]): Option[Boolean] = {
-    val cmd = CommandLine.createCommandLine(project.getBasePath, commandPath, arguments ++ extraStackArguments)
+  // To prevent message window is not yet available
+  private def waitForProjectIsInitialized(project: Project): WaitFor = {
+    new WaitFor(5000, 1) {
+      override def condition(): Boolean = {
+        project.isInitialized
+      }
+    }
+  }
+
+  def executeInMessageView(project: Project, description: String, commandPath: String, arguments: Seq[String]): Option[Boolean] = {
+    waitForProjectIsInitialized(project)
+
+    val cmd = CommandLine.createCommandLine(project.getBasePath, commandPath, arguments ++ HaskellSettingsState.getExtraStackArguments)
     (try {
       Option(cmd.createProcess())
     } catch {
@@ -124,16 +156,16 @@ object StackCommandLine {
 
       val handler = new BaseOSProcessHandler(process, cmd.getCommandLineString, CharsetToolkit.getDefaultSystemCharset)
 
-      val compilerTask = new CompilerTask(project, s"executing `${cmd.getCommandLineString}`", false, false, true, true)
+      val compilerTask = new CompilerTask(project, description, false, false, true, true)
       val compileTask = new CompileTask {
 
         def execute(compileContext: CompileContext): Boolean = {
           val adapter = new MessageViewProcessAdapter(compileContext, compilerTask.getIndicator)
           handler.addProcessListener(adapter)
           handler.startNotify()
-          handler.waitFor()
+          handler.waitFor(30 * 60 + 1000) // Wait max half an hour
           adapter.addLastMessage()
-          handler.getExitCode == 0
+          handler.getExitCode == 0 || handler.getExitCode == null
         }
       }
 
@@ -145,7 +177,10 @@ object StackCommandLine {
         compileResult.put(compileTask.execute(compileContext))
       }, null)
 
-      compileResult.poll(30, TimeUnit.MINUTES) // Wait max half an hour
+      val result = compileResult.poll(30, TimeUnit.MINUTES) // Wait max half an hour
+      val exitStatus = if (result) ExitStatus.SUCCESS else ExitStatus.ERRORS
+      compilerTask.setEndCompilationStamp(exitStatus, System.currentTimeMillis)
+      result
     })
   }
 
@@ -155,18 +190,18 @@ object StackCommandLine {
     private final val WhileBuildingText = "--  While building "
     private final var whileBuildingTextIsPassed = false
 
+    private val ansiEscapeDecoder = new AnsiEscapeDecoder()
     private val previousMessageLines = new LinkedBlockingDeque[String]
     @volatile
     private var globalError = false
 
     override def onTextAvailable(event: ProcessEvent, outputType: Key[_]): Unit = {
       // Workaround to remove the indentation after `-- While building` so the error/warning lines can be properly  parsed.
-      val text = if (whileBuildingTextIsPassed) {
+      val text = AnsiDecoder.decodeAnsiCommandsToString(if (whileBuildingTextIsPassed) {
         event.getText.drop(4)
       } else {
         event.getText
-      }
-      progressIndicator.setText(text)
+      }, outputType, ansiEscapeDecoder)
       addToMessageView(text, outputType)
       if (text.startsWith(WhileBuildingText)) {
         whileBuildingTextIsPassed = true

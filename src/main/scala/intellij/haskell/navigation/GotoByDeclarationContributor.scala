@@ -1,5 +1,5 @@
 /*
- * Copyright 2014-2019 Rik van der Kleij
+ * Copyright 2014-2020 Rik van der Kleij
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -25,7 +25,7 @@ import com.intellij.psi.stubs.StubIndex
 import com.intellij.util.{ArrayUtil, Processor}
 import intellij.haskell.HaskellLanguage
 import intellij.haskell.psi.stubs.index.HaskellAllNameIndex
-import intellij.haskell.psi.{HaskellClassDeclaration, HaskellDeclarationElement, HaskellNamedElement, HaskellPsiUtil}
+import intellij.haskell.psi.{HaskellNamedElement, HaskellPsiUtil}
 import intellij.haskell.util.HaskellProjectUtil
 
 import scala.collection.mutable.ListBuffer
@@ -39,19 +39,11 @@ class GotoByDeclarationContributor extends GotoClassContributor {
 
   override def getItemsByName(name: String, pattern: String, project: Project, includeNonProjectItems: Boolean): Array[NavigationItem] = {
     val namedElements = GotoHelper.getNamedElements(name, pattern, project, includeNonProjectItems)
-    val declarationElements = namedElements.map(ne => (ne, HaskellPsiUtil.findHighestDeclarationElement(ne)))
-    declarationElements.sortWith(sortByClassDeclarationFirst).flatMap(_._2).toArray
-  }
-
-  private def sortByClassDeclarationFirst(namedAndDeclarationElement1: (HaskellNamedElement, Option[HaskellDeclarationElement]), namedAndDeclarationElement2: (HaskellNamedElement, Option[HaskellDeclarationElement])): Boolean = {
-    (namedAndDeclarationElement1._2, namedAndDeclarationElement2._2) match {
-      case (Some(_: HaskellClassDeclaration), _) => true
-      case (_, _) => false
-    }
+    namedElements.flatMap(ne => HaskellPsiUtil.findHighestDeclarationElement(ne)).toArray
   }
 
   override def getQualifiedName(item: NavigationItem): String = {
-    item.getPresentation.getPresentableText
+    Option(item.getPresentation).map(_.getPresentableText).getOrElse("-")
   }
 
   override def getQualifiedNameSeparator: String = {

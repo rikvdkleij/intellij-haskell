@@ -7,23 +7,25 @@ import org.jetbrains.annotations.Nullable;
 import scala.Option;
 import scala.collection.immutable.Seq;
 
-public interface HaskellModuleDeclaration extends HaskellTopDeclaration, HaskellDeclarationElement {
+import java.util.List;
 
-  @Nullable
-  HaskellExports getExports();
+public interface HaskellModuleDeclaration extends HaskellDeclarationElement {
 
-  @NotNull
-  HaskellModid getModid();
+    @Nullable
+    HaskellExports getExports();
 
-  @NotNull
-  HaskellWhereClause getWhereClause();
+    @NotNull
+    HaskellModid getModid();
 
-  String getName();
+    @NotNull
+    List<HaskellPragma> getPragmaList();
 
-  ItemPresentation getPresentation();
+    String getName();
 
-  Seq<HaskellNamedElement> getIdentifierElements();
+    ItemPresentation getPresentation();
 
-  Option<String> getModuleName();
+    Seq<HaskellNamedElement> getIdentifierElements();
+
+    Option<String> getModuleName();
 
 }

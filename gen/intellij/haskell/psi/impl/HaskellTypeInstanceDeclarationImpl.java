@@ -5,53 +5,58 @@ import com.intellij.lang.ASTNode;
 import com.intellij.navigation.ItemPresentation;
 import com.intellij.psi.PsiElementVisitor;
 import com.intellij.psi.util.PsiTreeUtil;
-import intellij.haskell.psi.HaskellExpression;
-import intellij.haskell.psi.HaskellNamedElement;
-import intellij.haskell.psi.HaskellTypeInstanceDeclaration;
-import intellij.haskell.psi.HaskellVisitor;
+import intellij.haskell.psi.*;
 import org.jetbrains.annotations.NotNull;
 import scala.Option;
 import scala.collection.immutable.Seq;
 
-public class HaskellTypeInstanceDeclarationImpl extends HaskellTopDeclarationImpl implements HaskellTypeInstanceDeclaration {
+import java.util.List;
 
-  public HaskellTypeInstanceDeclarationImpl(ASTNode node) {
-    super(node);
-  }
+public class HaskellTypeInstanceDeclarationImpl extends HaskellCompositeElementImpl implements HaskellTypeInstanceDeclaration {
 
-  public void accept(@NotNull HaskellVisitor visitor) {
-    visitor.visitTypeInstanceDeclaration(this);
-  }
+    public HaskellTypeInstanceDeclarationImpl(ASTNode node) {
+        super(node);
+    }
 
-  public void accept(@NotNull PsiElementVisitor visitor) {
-    if (visitor instanceof HaskellVisitor) accept((HaskellVisitor)visitor);
-    else super.accept(visitor);
-  }
+    public void accept(@NotNull HaskellVisitor visitor) {
+        visitor.visitTypeInstanceDeclaration(this);
+    }
 
-  @Override
-  @NotNull
-  public HaskellExpression getExpression() {
-    return notNullChild(PsiTreeUtil.getChildOfType(this, HaskellExpression.class));
-  }
+    public void accept(@NotNull PsiElementVisitor visitor) {
+        if (visitor instanceof HaskellVisitor) accept((HaskellVisitor) visitor);
+        else super.accept(visitor);
+    }
 
-  @Override
-  public String getName() {
-    return HaskellPsiImplUtil.getName(this);
-  }
+    @Override
+    @NotNull
+    public HaskellExpression getExpression() {
+        return notNullChild(PsiTreeUtil.getChildOfType(this, HaskellExpression.class));
+    }
 
-  @Override
-  public ItemPresentation getPresentation() {
-    return HaskellPsiImplUtil.getPresentation(this);
-  }
+    @Override
+    @NotNull
+    public List<HaskellPragma> getPragmaList() {
+        return PsiTreeUtil.getChildrenOfTypeAsList(this, HaskellPragma.class);
+    }
 
-  @Override
-  public Seq<HaskellNamedElement> getIdentifierElements() {
-    return HaskellPsiImplUtil.getIdentifierElements(this);
-  }
+    @Override
+    public String getName() {
+        return HaskellPsiImplUtil.getName(this);
+    }
 
-  @Override
-  public Option<String> getModuleName() {
-    return HaskellPsiImplUtil.getModuleName(this);
-  }
+    @Override
+    public ItemPresentation getPresentation() {
+        return HaskellPsiImplUtil.getPresentation(this);
+    }
+
+    @Override
+    public Seq<HaskellNamedElement> getIdentifierElements() {
+        return HaskellPsiImplUtil.getIdentifierElements(this);
+    }
+
+    @Override
+    public Option<String> getModuleName() {
+        return HaskellPsiImplUtil.getModuleName(this);
+    }
 
 }

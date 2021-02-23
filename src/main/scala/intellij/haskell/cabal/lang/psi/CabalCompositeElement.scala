@@ -2,19 +2,26 @@ package intellij.haskell.cabal.lang.psi
 
 import com.intellij.extapi.psi.ASTWrapperPsiElement
 import com.intellij.lang.ASTNode
-import com.intellij.psi.PsiElement
+import com.intellij.navigation.NavigationItem
+import com.intellij.psi.search.SearchScope
+import com.intellij.psi.{PsiElement, PsiNameIdentifierOwner}
 import intellij.haskell.cabal.lang.psi.impl._
 
 sealed trait CabalCompositeElement extends PsiElement
 
+trait CabalNamedElement extends CabalCompositeElement with PsiNameIdentifierOwner with NavigationItem {
+  def getUseScope: SearchScope
+}
+
 sealed abstract class CabalCompositeElementImpl(node: ASTNode)
   extends ASTWrapperPsiElement(node)
-  with CabalCompositeElement {
+    with CabalCompositeElement {
 
   override def toString: String = getNode.getElementType.toString
 }
 
 sealed abstract class CabalFieldElement(node: ASTNode) extends CabalCompositeElementImpl(node)
+
 sealed abstract class CabalFieldValueElement(node: ASTNode) extends CabalCompositeElementImpl(node)
 sealed abstract class CabalStanzaElement(node: ASTNode) extends CabalCompositeElementImpl(node)
 

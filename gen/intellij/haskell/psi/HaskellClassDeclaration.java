@@ -11,24 +11,27 @@ import java.util.List;
 
 public interface HaskellClassDeclaration extends HaskellTopDeclaration, HaskellDeclarationElement {
 
-  @Nullable
-  HaskellCdecls getCdecls();
+    @Nullable
+    HaskellCdecls getCdecls();
 
-  @NotNull
-  List<HaskellQName> getQNameList();
+    @NotNull
+    List<HaskellPragma> getPragmaList();
 
-  @Nullable
-  HaskellScontext getScontext();
+    @NotNull
+    List<HaskellQName> getQNameList();
 
-  @NotNull
-  List<HaskellTtype> getTtypeList();
+    @Nullable
+    HaskellScontext getScontext();
 
-  String getName();
+    @NotNull
+    List<HaskellTtype> getTtypeList();
 
-  ItemPresentation getPresentation();
+    String getName();
 
-  Seq<HaskellNamedElement> getIdentifierElements();
+    ItemPresentation getPresentation();
 
-  Option<String> getModuleName();
+    Seq<HaskellNamedElement> getIdentifierElements();
+
+    Option<String> getModuleName();
 
 }

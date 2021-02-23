@@ -1,5 +1,5 @@
 /*
- * Copyright 2014-2019 Rik van der Kleij
+ * Copyright 2014-2020 Rik van der Kleij
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -21,10 +21,10 @@ import com.intellij.psi.codeStyle.CodeStyleSettings
 import intellij.haskell.HaskellLanguage
 import org.jetbrains.annotations.NotNull
 
-class HaskellCodeStyleConfigurable(@NotNull settings: CodeStyleSettings, cloneSettings: CodeStyleSettings) extends CodeStyleAbstractConfigurable(settings, cloneSettings, "Haskell") {
+class HaskellCodeStyleConfigurable(@NotNull settings: CodeStyleSettings, originalSettings: CodeStyleSettings) extends CodeStyleAbstractConfigurable(settings, originalSettings, "Haskell") {
 
   protected def createPanel(settings: CodeStyleSettings): CodeStyleAbstractPanel = {
-    new HaskellCodeStyleMainPanel(getCurrentSettings, settings)
+    new HaskellCodeStyleMainPanel(settings, originalSettings)
   }
 
   override def getHelpTopic: String = {

@@ -7,20 +7,25 @@ import org.jetbrains.annotations.Nullable;
 import scala.Option;
 import scala.collection.immutable.Seq;
 
-public interface HaskellTypeFamilyDeclaration extends HaskellTopDeclaration, HaskellDeclarationElement {
+import java.util.List;
 
-  @Nullable
-  HaskellExpression getExpression();
+public interface HaskellTypeFamilyDeclaration extends HaskellDeclarationElement {
 
-  @NotNull
-  HaskellTypeFamilyType getTypeFamilyType();
+    @Nullable
+    HaskellExpression getExpression();
 
-  String getName();
+    @NotNull
+    List<HaskellPragma> getPragmaList();
 
-  ItemPresentation getPresentation();
+    @NotNull
+    HaskellTypeFamilyType getTypeFamilyType();
 
-  Seq<HaskellNamedElement> getIdentifierElements();
+    String getName();
 
-  Option<String> getModuleName();
+    ItemPresentation getPresentation();
+
+    Seq<HaskellNamedElement> getIdentifierElements();
+
+    Option<String> getModuleName();
 
 }

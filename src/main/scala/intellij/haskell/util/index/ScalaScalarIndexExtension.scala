@@ -1,5 +1,5 @@
 /*
- * Copyright 2014-2019 Rik van der Kleij
+ * Copyright 2014-2020 Rik van der Kleij
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -34,14 +34,13 @@ object ScalaScalarIndexExtension {
     }
 
     def read(in: DataInput): Unit = {
-      ()
     }
   }
 
 }
 
 abstract class ScalaScalarIndexExtension[K] extends FileBasedIndexExtension[K, Unit] {
-  final def getValueExternalizer: DataExternalizer[Unit] = {
+  override def getValueExternalizer: DataExternalizer[Unit] = {
     ScalaScalarIndexExtension.VoidDataExternalizer
   }
 }

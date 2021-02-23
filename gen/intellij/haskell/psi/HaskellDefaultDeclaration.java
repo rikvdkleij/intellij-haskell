@@ -9,17 +9,23 @@ import scala.collection.immutable.Seq;
 
 import java.util.List;
 
-public interface HaskellDefaultDeclaration extends HaskellTopDeclaration, HaskellDeclarationElement {
+public interface HaskellDefaultDeclaration extends HaskellDeclarationElement {
 
-  @NotNull
-  List<HaskellTtype> getTtypeList();
+    @NotNull
+    List<HaskellPragma> getPragmaList();
 
-  String getName();
+    @NotNull
+    List<HaskellTtype> getTtypeList();
 
-  ItemPresentation getPresentation();
+    @Nullable
+    HaskellTypeSignature getTypeSignature();
 
-  Seq<HaskellNamedElement> getIdentifierElements();
+    String getName();
 
-  Option<String> getModuleName();
+    ItemPresentation getPresentation();
+
+    Seq<HaskellNamedElement> getIdentifierElements();
+
+    Option<String> getModuleName();
 
 }

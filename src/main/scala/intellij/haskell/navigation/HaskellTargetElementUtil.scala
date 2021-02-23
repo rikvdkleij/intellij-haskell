@@ -22,7 +22,7 @@ class HaskellTargetElementUtil extends TargetElementUtil {
           r match {
             case NoResolveResult(noInfo) =>
               noInfo match {
-                case NoInfoAvailable(_, _) => ()
+                case NoInfoAvailable(_, _, _) => ()
                 case ni => HaskellEditorUtil.showStatusBarMessage(reference.getElement.getProject, s"Navigation is not available at this moment: ${ni.message}")
               }
             case _ =>

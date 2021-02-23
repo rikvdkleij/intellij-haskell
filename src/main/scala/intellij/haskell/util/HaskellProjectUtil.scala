@@ -1,5 +1,5 @@
 /*
- * Copyright 2014-2019 Rik van der Kleij
+ * Copyright 2014-2020 Rik van der Kleij
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -25,6 +25,7 @@ import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.vfs.{VfsUtilCore, VirtualFile}
 import com.intellij.psi.search.GlobalSearchScope
 import com.intellij.psi.{PsiElement, PsiFile}
+import com.intellij.util.PathUtilRt
 import intellij.haskell.GlobalInfo
 import intellij.haskell.external.component.HaskellComponentsManager
 import intellij.haskell.module.HaskellModuleType
@@ -44,7 +45,7 @@ object HaskellProjectUtil {
   }
 
   def isValidHaskellProject(project: Project, notifyNoSdk: Boolean): Boolean = {
-    isHaskellProject(project) && HaskellSdkType.getStackBinaryPath(project, notifyNoSdk).isDefined
+    isHaskellProject(project) && HaskellSdkType.getStackPath(project, notifyNoSdk).isDefined
   }
 
   def isHaskellProject(project: Project): Boolean = {
@@ -78,7 +79,12 @@ object HaskellProjectUtil {
   }
 
   def getModuleDir(module: Module): File = {
-    new File(ModuleUtilCore.getModuleDirPath(module))
+    val path = ModuleUtilCore.getModuleDirPath(module)
+    val dir = new File(path)
+    dir.getName match {
+      case ".idea" => new File(PathUtilRt.getParentPath(path))
+      case _ => dir
+    }
   }
 
   def findCabalFiles(project: Project): Iterable[File] = {
@@ -110,17 +116,12 @@ object HaskellProjectUtil {
     directory.listFiles.find(_.getName == "package.yaml")
   }
 
-  def getProjectAndLibrariesModulesSearchScope(project: Project): GlobalSearchScope = {
-    val projectModules = findProjectHaskellModules(project).map(m => GlobalSearchScope.moduleWithDependenciesAndLibrariesScope(m, true))
-    if (projectModules.isEmpty) {
-      GlobalSearchScope.EMPTY_SCOPE
-    } else {
-      projectModules.reduce(_.uniteWith(_))
-    }
+  def getProjectSearchScope(project: Project): GlobalSearchScope = {
+    GlobalSearchScope.allScope(project)
   }
 
   def getSearchScope(project: Project, includeNonProjectItems: Boolean): GlobalSearchScope = {
-    if (includeNonProjectItems) getProjectAndLibrariesModulesSearchScope(project) else GlobalSearchScope.projectScope(project)
+    if (includeNonProjectItems) getProjectSearchScope(project) else GlobalSearchScope.projectScope(project)
   }
 
   import ScalaUtil._

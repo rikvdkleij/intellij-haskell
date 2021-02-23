@@ -1,5 +1,5 @@
 /*
- * Copyright 2014-2019 Rik van der Kleij
+ * Copyright 2014-2020 Rik van der Kleij
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -36,18 +36,18 @@ import javax.swing.Icon
 
 import scala.jdk.CollectionConverters._
 
-class StackProjectImportBuilder extends ProjectImportBuilder[Unit] {
+class StackProjectImportBuilder extends ProjectImportBuilder[AnyRef] {
   override def getName: String = "Haskell Stack"
 
-  override def getList: util.List[Unit] = new util.ArrayList[Unit]()
+  override def getList: util.List[AnyRef] = new util.ArrayList[AnyRef]()
 
   override def getIcon: Icon = HaskellIcons.HaskellLogo
 
   override def setOpenProjectSettingsAfter(on: Boolean): Unit = {}
 
-  override def setList(list: util.List[Unit]): Unit = ()
+  override def setList(list: util.List[AnyRef]): Unit = ()
 
-  override def isMarked(element: Unit): Boolean = true
+  override def isMarked(element: AnyRef): Boolean = true
 
   override def getTitle: String = "Stack project importer"
 
@@ -81,7 +81,7 @@ object StackProjectImportBuilder {
     val moduleBuilder = HaskellModuleType.getInstance.createModuleBuilder()
     val moduleDirectory = HaskellModuleBuilder.getModuleRootDirectory(packageRelativePath, projectRoot)
     if (moduleDirectory.exists()) {
-      ApplicationUtil.runReadAction(HaskellModuleBuilder.createCabalInfo(project, projectRoot, packageRelativePath)) match {
+      ApplicationUtil.runReadAction(HaskellModuleBuilder.createCabalInfo(project, projectRoot, packageRelativePath), Some(project)) match {
         case Some(cabalInfo) =>
           val packageName = cabalInfo.packageName
           moduleBuilder.setCabalInfo(cabalInfo)

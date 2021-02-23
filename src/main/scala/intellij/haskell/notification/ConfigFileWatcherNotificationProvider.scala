@@ -6,9 +6,9 @@ import java.util.concurrent.ConcurrentHashMap
 import com.intellij.openapi.fileEditor.FileEditor
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Key
+import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.vfs.newvfs.BulkFileListener
 import com.intellij.openapi.vfs.newvfs.events.{VFileContentChangeEvent, VFileEvent}
-import com.intellij.openapi.vfs.{VirtualFile, VirtualFileManager}
 import com.intellij.ui.{EditorNotificationPanel, EditorNotifications}
 import intellij.haskell.external.component.StackProjectManager
 import intellij.haskell.util.{HaskellFileUtil, HaskellProjectUtil}
@@ -21,12 +21,11 @@ object ConfigFileWatcherNotificationProvider {
   val showNotificationsByProject: concurrent.Map[Project, Boolean] = new ConcurrentHashMap[Project, Boolean]().asScala
 }
 
-class ConfigFileWatcherNotificationProvider(project: Project, notifications: EditorNotifications) extends EditorNotifications.Provider[EditorNotificationPanel] {
-  project.getMessageBus.connect(project).subscribe(VirtualFileManager.VFS_CHANGES, new ConfigFileWatcher(project, notifications))
+class ConfigFileWatcherNotificationProvider extends EditorNotifications.Provider[EditorNotificationPanel] {
 
   override def getKey: Key[EditorNotificationPanel] = ConfigFileWatcherNotificationProvider.ConfigFileWatcherKey
 
-  override def createNotificationPanel(virtualFile: VirtualFile, fileEditor: FileEditor): EditorNotificationPanel = {
+  override def createNotificationPanel(virtualFile: VirtualFile, fileEditor: FileEditor, project: Project): EditorNotificationPanel = {
     if (HaskellProjectUtil.isHaskellProject(project) && ConfigFileWatcherNotificationProvider.showNotificationsByProject.get(project).contains(true)) {
       createPanel(project, virtualFile)
     } else {
@@ -35,6 +34,8 @@ class ConfigFileWatcherNotificationProvider(project: Project, notifications: Edi
   }
 
   private def createPanel(project: Project, file: VirtualFile): EditorNotificationPanel = {
+    val notifications = EditorNotifications.getInstance(project)
+
     val panel = new EditorNotificationPanel
     panel.setText("Haskell project configuration file is updated")
     panel.createActionLabel("Update Settings and restart REPLs", () => {
@@ -50,7 +51,7 @@ class ConfigFileWatcherNotificationProvider(project: Project, notifications: Edi
   }
 }
 
-private class ConfigFileWatcher(project: Project, notifications: EditorNotifications) extends BulkFileListener {
+class ConfigFileWatcher(project: Project, notifications: EditorNotifications) extends BulkFileListener {
 
   private val watchFiles = HaskellProjectUtil.findStackFile(project).toIterable ++ HaskellProjectUtil.findCabalFiles(project) ++ HaskellProjectUtil.findPackageFiles(project)
 

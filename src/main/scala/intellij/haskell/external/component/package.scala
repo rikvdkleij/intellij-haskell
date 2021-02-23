@@ -10,8 +10,8 @@ package object component {
     def message: String = "No info because REPL isn't (yet) available"
   }
 
-  case class NoInfoAvailable(name: String, locationName: String) extends NoInfo {
-    override def message: String = s"No info available for $name in $locationName"
+  case class NoInfoAvailable(name: String, locationName: String, errorMessage: Option[String] = None) extends NoInfo {
+    override def message: String = s"No info available for $name in $locationName" + errorMessage.map(m => s" | Error message: $m").getOrElse("")
   }
 
   case object IndexNotReady extends NoInfo {

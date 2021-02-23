@@ -1,5 +1,5 @@
 /*
- * Copyright 2014-2019 Rik van der Kleij
+ * Copyright 2014-2020 Rik van der Kleij
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,10 +17,11 @@
 package intellij.haskell.util
 
 import java.io.{File, FileOutputStream, InputStream}
+import java.nio.charset.Charset
 import java.nio.file.attribute.PosixFilePermission
 import java.nio.file.{Files, Paths}
 
-import com.intellij.openapi.application.ApplicationManager
+import com.intellij.openapi.application.{ApplicationManager, WriteAction}
 import com.intellij.openapi.command.CommandProcessor
 import com.intellij.openapi.editor.Document
 import com.intellij.openapi.fileEditor.{FileDocumentManager, FileEditorManager}
@@ -33,49 +34,42 @@ import com.intellij.openapi.vfs.{LocalFileSystem, VirtualFile, VirtualFileManage
 import com.intellij.psi.impl.PsiManagerEx
 import com.intellij.psi.{PsiDocumentManager, PsiFile, PsiManager}
 import intellij.haskell.HaskellFileType
-import intellij.haskell.action.SelectionContext
 import intellij.haskell.external.component.{NoInfo, NoInfoAvailable}
+import intellij.haskell.psi.HaskellPsiUtil
 
 object HaskellFileUtil {
 
-  def saveAllFiles(project: Project): Unit = {
+  private final val FileDocManager = FileDocumentManager.getInstance
+
+  def saveFiles(project: Project): Unit = {
     val openFiles = FileEditorManager.getInstance(project).getOpenFiles.filter(HaskellFileUtil.isHaskellFile)
     val documentManager = PsiDocumentManager.getInstance(project)
     openFiles.flatMap(f => findDocument(f)).foreach(documentManager.doPostponedOperationsAndUnblockDocument)
     documentManager.performWhenAllCommitted(
       () => {
-        FileDocumentManager.getInstance.saveAllDocuments()
+        FileDocManager.saveAllDocuments()
       }
     )
   }
 
-  def saveFileInDispatchThread(psiFile: PsiFile): Unit = {
-    findDocument(psiFile).foreach(d => {
-      PsiDocumentManager.getInstance(psiFile.getProject).doPostponedOperationsAndUnblockDocument(d)
-      ApplicationManager.getApplication.invokeAndWait(() => {
-        FileDocumentManager.getInstance.saveDocument(d)
-      })
-    })
-  }
-
-  def saveFileInDispatchThread(project: Project, virtualFile: VirtualFile): Unit = {
+  def saveFileAsIsInDispatchThread(project: Project, virtualFile: VirtualFile): Unit = {
     findDocument(virtualFile).foreach(d => {
-      PsiDocumentManager.getInstance(project).doPostponedOperationsAndUnblockDocument(d)
-      ApplicationManager.getApplication.invokeAndWait(() => {
-        FileDocumentManager.getInstance.saveDocument(d)
-      })
+      WriteAction.runAndWait(() =>
+        FileDocManager.saveDocumentAsIs(d)
+      )
     })
   }
 
   def saveFile(psiFile: PsiFile): Unit = {
     findDocument(psiFile).foreach(d => {
-      PsiDocumentManager.getInstance(psiFile.getProject).doPostponedOperationsAndUnblockDocument(d)
-      FileDocumentManager.getInstance.saveDocument(d)
+      WriteAction.run(() =>
+        FileDocManager.saveDocumentAsIs(d)
+      )
     })
   }
 
   def isDocumentUnsaved(document: Document): Boolean = {
-    FileDocumentManager.getInstance().isDocumentUnsaved(document)
+    FileDocManager.isDocumentUnsaved(document)
   }
 
   def findFileInRead(project: Project, filePath: String): (Option[VirtualFile], Either[NoInfo, PsiFile]) = {
@@ -112,8 +106,7 @@ object HaskellFileUtil {
   def findDocument(psiFile: PsiFile): Option[Document] = {
     for {
       vf <- findVirtualFile(psiFile)
-      fileDocumentManager = FileDocumentManager.getInstance()
-      d <- Option(fileDocumentManager.getCachedDocument(vf))
+      d <- Option(FileDocManager.getCachedDocument(vf))
     } yield d
   }
 
@@ -122,6 +115,10 @@ object HaskellFileUtil {
       case Some(vf) => Some(getAbsolutePath(vf))
       case None => None
     }
+  }
+
+  def getCharset(psiFile: PsiFile): Option[Charset] = {
+    findVirtualFile(psiFile).map(_.getCharset)
   }
 
   def getAbsolutePath(virtualFile: VirtualFile): String = {
@@ -145,15 +142,11 @@ object HaskellFileUtil {
   }
 
   def convertToHaskellFiles(project: Project, virtualFiles: Iterable[VirtualFile]): Iterable[PsiFile] = {
-    if (project.isDisposed) {
-      Iterable()
-    } else {
-      val psiManager = PsiManager.getInstance(project)
+    HaskellPsiUtil.getPsiManager(project).map(psiManager =>
       virtualFiles.flatMap(vf => findCachedPsiFile(psiManager, vf) match {
         case Some(pf) => Some(pf)
         case _ => None
-      })
-    }
+      })).getOrElse(Iterable())
   }
 
   private def findCachedPsiFile(psiManager: PsiManager, virtualFile: VirtualFile): Option[PsiFile] = {
@@ -168,26 +161,25 @@ object HaskellFileUtil {
   }
 
   def convertToHaskellFileDispatchThread(project: Project, virtualFile: VirtualFile): Option[PsiFile] = {
-    val psiManager = PsiManager.getInstance(project)
-
-    findCachedPsiFile(psiManager, virtualFile) match {
-      case pf@Some(_) => pf
-      case None => findPsiFile(psiManager, virtualFile)
-    }
+    HaskellPsiUtil.getPsiManager(project).flatMap(psiManager =>
+      findCachedPsiFile(psiManager, virtualFile) match {
+        case pf@Some(_) => pf
+        case None => findPsiFile(psiManager, virtualFile)
+      })
   }
 
   def convertToHaskellFileInReadAction(project: Project, virtualFile: VirtualFile): Either[NoInfo, PsiFile] = {
-    val psiManager = PsiManager.getInstance(project)
-
-    val actionMessage = s"Converting ${virtualFile.getName} to psi file"
-    ApplicationUtil.runInReadActionWithWriteActionPriority(project, findCachedPsiFile(psiManager, virtualFile), readActionDescription = actionMessage) match {
-      case Right(Some(pf)) => Right(pf)
-      case _ => ApplicationUtil.runInReadActionWithWriteActionPriority(project, findPsiFile(psiManager, virtualFile), readActionDescription = actionMessage) match {
+    HaskellPsiUtil.getPsiManager(project).map(psiManager => {
+      val actionMessage = s"Converting ${virtualFile.getName} to psi file"
+      ApplicationUtil.runReadActionWithFileAccess(project, findCachedPsiFile(psiManager, virtualFile), actionDescription = actionMessage) match {
         case Right(Some(pf)) => Right(pf)
-        case Right(None) => Left(NoInfoAvailable(virtualFile.getName, "-"))
-        case Left(noInfo) => Left(noInfo)
+        case _ => ApplicationUtil.runReadActionWithFileAccess(project, findPsiFile(psiManager, virtualFile), actionDescription = actionMessage) match {
+          case Right(Some(pf)) => Right(pf)
+          case Right(None) => Left(NoInfoAvailable(virtualFile.getName, "-"))
+          case Left(noInfo) => Left(noInfo)
+        }
       }
-    }
+    }).getOrElse(Left(NoInfoAvailable(virtualFile.getName, "-")))
   }
 
   def saveFileWithNewContent(psiFile: PsiFile, sourceCode: String): Unit = {
@@ -196,17 +188,6 @@ object HaskellFileUtil {
         override def run(): Unit = {
           val document = findDocument(psiFile)
           document.foreach(_.setText(sourceCode))
-        }
-      })
-    }, null, null)
-  }
-
-  def saveFileWithPartlyNewContent(psiFile: PsiFile, sourceCode: String, selectionContext: SelectionContext): Unit = {
-    CommandProcessor.getInstance().executeCommand(psiFile.getProject, () => {
-      ApplicationManager.getApplication.runWriteAction(new Runnable {
-        override def run(): Unit = {
-          val document = findDocument(psiFile)
-          document.foreach(_.replaceString(selectionContext.start, selectionContext.end, sourceCode))
         }
       })
     }, null, null)
@@ -234,7 +215,7 @@ object HaskellFileUtil {
     isHaskellFileName(virtualFile.getName)
   }
 
-  private final val HaskellFileSuffix = "." + HaskellFileType.HaskellFileExtension
+  private final val HaskellFileSuffix = "." + HaskellFileType.INSTANCE.getDefaultExtension
 
   private def isHaskellFileName(name: String) = {
     name.endsWith(HaskellFileSuffix)
@@ -261,7 +242,7 @@ object HaskellFileUtil {
   def createDirectoryIfNotExists(directory: File, onlyWriteableByOwner: Boolean): Unit = {
     if (!directory.exists()) {
       val result = FileUtil.createDirectory(directory)
-      if (!result) {
+      if (!result && !directory.exists()) {
         throw new RuntimeException(s"Could not create directory `${directory.getAbsolutePath}`")
       }
       if (onlyWriteableByOwner) {

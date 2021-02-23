@@ -1,5 +1,5 @@
 /*
- * Copyright 2014-2019 Rik van der Kleij
+ * Copyright 2014-2020 Rik van der Kleij
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -20,7 +20,7 @@ import com.intellij.openapi.actionSystem.{AnAction, AnActionEvent}
 import com.intellij.openapi.progress.{ProgressIndicator, ProgressManager, Task}
 import com.intellij.openapi.project.Project
 import intellij.haskell.HaskellNotificationGroup
-import intellij.haskell.external.component.{HoogleComponent, ProjectLibraryFileWatcher, StackProjectManager}
+import intellij.haskell.external.component.{HoogleComponent, ProjectLibraryBuilder, StackProjectManager}
 import intellij.haskell.util.HaskellEditorUtil
 
 class BuildHoogleDbAction extends AnAction {
@@ -28,8 +28,8 @@ class BuildHoogleDbAction extends AnAction {
   override def update(actionEvent: AnActionEvent): Unit = {
     HaskellEditorUtil.enableExternalAction(actionEvent, (project: Project) =>
       !StackProjectManager.isInitializing(project) &&
-        StackProjectManager.isHoogleAvailable(project) &&
-        !ProjectLibraryFileWatcher.isBuilding(project) &&
+        StackProjectManager.isHoogleAvailable(project).isDefined &&
+        !ProjectLibraryBuilder.isBuilding(project) &&
         !StackProjectManager.isHaddockBuilding(project))
   }
 
@@ -40,6 +40,7 @@ class BuildHoogleDbAction extends AnAction {
 
         def run(progressIndicator: ProgressIndicator): Unit = {
           HaskellNotificationGroup.logInfoEvent(project, message)
+          ProjectLibraryBuilder.resetBuildStatus(project)
           HoogleComponent.rebuildHoogle(project)
         }
       })

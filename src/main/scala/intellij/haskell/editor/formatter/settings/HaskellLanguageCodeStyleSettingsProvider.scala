@@ -1,5 +1,5 @@
 /*
- * Copyright 2014-2019 Rik van der Kleij
+ * Copyright 2014-2020 Rik van der Kleij
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -30,20 +30,19 @@ class HaskellLanguageCodeStyleSettingsProvider extends LanguageCodeStyleSettings
     HaskellLanguage.Instance
   }
 
-  override def getDefaultCommonSettings: CommonCodeStyleSettings = {
-    val defaultSettings = new CommonCodeStyleSettings(getLanguage)
-    defaultSettings.KEEP_BLANK_LINES_IN_CODE = 1
-
-    val indentOptions = defaultSettings.initIndentOptions
+  override def customizeDefaults(commonSettings: CommonCodeStyleSettings, indentOptions: CommonCodeStyleSettings.IndentOptions): Unit = {
     indentOptions.INDENT_SIZE = 2
     indentOptions.CONTINUATION_INDENT_SIZE = 4
     indentOptions.TAB_SIZE = 2
-    defaultSettings
+    indentOptions.USE_TAB_CHARACTER = false
   }
 
   override def getIndentOptionsEditor: SmartIndentOptionsEditor = {
-    new SmartIndentOptionsEditor
+    new SmartIndentOptionsEditor(this)
   }
 
-  override def getCodeSample(settingsType: SettingsType): String = ""
+  override def getCodeSample(settingsType: SettingsType): String =
+    """-- Reformatting is done externally by Ormolu.
+      |-- Setting code style options here has no effect.
+    """.stripMargin
 }

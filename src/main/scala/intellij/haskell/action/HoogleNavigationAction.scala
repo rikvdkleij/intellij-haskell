@@ -1,5 +1,5 @@
 /*
- * Copyright 2014-2019 Rik van der Kleij
+ * Copyright 2014-2020 Rik van der Kleij
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  *//*
- * Copyright 2014-2019 Rik van der Kleij
+ * Copyright 2014-2020 Rik van der Kleij
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -47,7 +47,7 @@ class HoogleNavigationAction extends GotoActionBase {
   private val contributors = Array[ChooseByNameContributor](new HoogleByNameContributor)
 
   override def update(actionEvent: AnActionEvent): Unit = {
-    HaskellEditorUtil.enableExternalAction(actionEvent, (project: Project) => !StackProjectManager.isInitializing(project) && StackProjectManager.isHoogleAvailable(project) && HoogleComponent.doesHoogleDatabaseExist(project))
+    HaskellEditorUtil.enableExternalAction(actionEvent, (project: Project) => !StackProjectManager.isInitializing(project) && StackProjectManager.isHoogleAvailable(project).isDefined && HoogleComponent.doesHoogleDatabaseExist(project))
   }
 
   def gotoActionPerformed(actionEvent: AnActionEvent): Unit = {
@@ -60,7 +60,7 @@ class HoogleNavigationAction extends GotoActionBase {
 
       showNavigationPopup(actionEvent, model, new GotoActionBase.GotoActionCallback[Language]() {
         override protected def createFilter(popup: ChooseByNamePopup): ChooseByNameFilter[Language] = {
-          new ChooseByNameLanguageFilter(popup, model, GotoClassSymbolConfiguration.getInstance(project), project)
+          new ChooseByNameLanguageFilter(popup, model, GotoClassSymbolConfiguration.getInstance(project), project).asInstanceOf[ChooseByNameFilter[Language]]
         }
 
         def elementChosen(popup: ChooseByNamePopup, element: Any): Unit = {

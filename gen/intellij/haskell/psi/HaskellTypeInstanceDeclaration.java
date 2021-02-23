@@ -6,17 +6,22 @@ import org.jetbrains.annotations.NotNull;
 import scala.Option;
 import scala.collection.immutable.Seq;
 
-public interface HaskellTypeInstanceDeclaration extends HaskellTopDeclaration, HaskellDeclarationElement {
+import java.util.List;
 
-  @NotNull
-  HaskellExpression getExpression();
+public interface HaskellTypeInstanceDeclaration extends HaskellDeclarationElement {
 
-  String getName();
+    @NotNull
+    HaskellExpression getExpression();
 
-  ItemPresentation getPresentation();
+    @NotNull
+    List<HaskellPragma> getPragmaList();
 
-  Seq<HaskellNamedElement> getIdentifierElements();
+    String getName();
 
-  Option<String> getModuleName();
+    ItemPresentation getPresentation();
+
+    Seq<HaskellNamedElement> getIdentifierElements();
+
+    Option<String> getModuleName();
 
 }

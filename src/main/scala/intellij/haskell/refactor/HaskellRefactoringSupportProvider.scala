@@ -1,5 +1,5 @@
 /*
- * Copyright 2014-2019 Rik van der Kleij
+ * Copyright 2014-2020 Rik van der Kleij
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -27,7 +27,7 @@ class HaskellRefactoringSupportProvider extends RefactoringSupportProvider {
   }
 
   private def isDefinedInProject(psiElement: PsiElement) = {
-    Option(psiElement.getReference).map(_.getElement) match {
+    Option(psiElement.getReference).flatMap(x => Option(x.resolve)) match {
       case Some(e) => Option(e.getContainingFile).map(_.getOriginalFile).exists(pf => HaskellProjectUtil.isSourceFile(pf))
       case _ => false
     }

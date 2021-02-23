@@ -1,5 +1,5 @@
 /*
- * Copyright 2014-2019 Rik van der Kleij
+ * Copyright 2014-2020 Rik van der Kleij
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -31,25 +31,20 @@ object ScalaUtil {
     final def optionNot[A](a: => A): Option[A] = if (b) None else Option(a)
   }
 
-  def runnable(f: => Unit): Runnable {
-    def run(): Unit} = new Runnable {
-    override def run(): Unit = f
+  def runnable(f: => Unit): Runnable = {
+    () => f
   }
 
-  def computable[A](f: => A): Computable[A] {
-    def compute(): A} = new Computable[A] {
-    override def compute(): A = f
+  def computable[A](f: => A): Computable[A] = {
+    () => f
   }
 
-  def callable[A](f: => A): Callable[A] {
-    def call(): A} = new Callable[A] {
-    override def call(): A = f
+  def callable[A](f: => A): Callable[A] = {
+    () => f
   }
 
-  def condition[A](f: A => Boolean): Condition[A] {
-    def value(t: A): Boolean
-  } = new Condition[A] {
-    override def value(t: A): Boolean = f(t)
+  def condition[A](f: A => Boolean): Condition[A] = {
+    t: A => f(t)
   }
 
   def maxsBy[A, B](xs: Iterable[A])(f: A => B)(implicit cmp: Ordering[B]): Iterable[A] = {
@@ -73,9 +68,13 @@ object ScalaUtil {
       } else xs.+=(s)
     }
 
-    linePerKey.map(x => {
+    linePerKey.flatMap(x => {
       val keyValuePair = x.split(": ", 2)
-      (keyValuePair(0), keyValuePair(1).trim)
+      if (keyValuePair.size == 2) {
+        Some(keyValuePair(0), keyValuePair(1).trim)
+      } else {
+        None
+      }
     }).toMap
   }
 }

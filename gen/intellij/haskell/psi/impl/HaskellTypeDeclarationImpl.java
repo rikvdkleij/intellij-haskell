@@ -13,63 +13,81 @@ import scala.collection.immutable.Seq;
 
 import java.util.List;
 
-public class HaskellTypeDeclarationImpl extends HaskellTopDeclarationImpl implements HaskellTypeDeclaration {
+public class HaskellTypeDeclarationImpl extends HaskellCompositeElementImpl implements HaskellTypeDeclaration {
 
-  public HaskellTypeDeclarationImpl(ASTNode node) {
-    super(node);
-  }
+    public HaskellTypeDeclarationImpl(ASTNode node) {
+        super(node);
+    }
 
-  public void accept(@NotNull HaskellVisitor visitor) {
-    visitor.visitTypeDeclaration(this);
-  }
+    public void accept(@NotNull HaskellVisitor visitor) {
+        visitor.visitTypeDeclaration(this);
+    }
 
-  public void accept(@NotNull PsiElementVisitor visitor) {
-    if (visitor instanceof HaskellVisitor) accept((HaskellVisitor)visitor);
-    else super.accept(visitor);
-  }
+    public void accept(@NotNull PsiElementVisitor visitor) {
+        if (visitor instanceof HaskellVisitor) accept((HaskellVisitor) visitor);
+        else super.accept(visitor);
+    }
 
-  @Override
-  @Nullable
-  public HaskellExpression getExpression() {
-    return PsiTreeUtil.getChildOfType(this, HaskellExpression.class);
-  }
+    @Override
+    @Nullable
+    public HaskellExpression getExpression() {
+        return PsiTreeUtil.getChildOfType(this, HaskellExpression.class);
+    }
 
-  @Override
-  @NotNull
-  public List<HaskellKindSignature> getKindSignatureList() {
-    return PsiTreeUtil.getChildrenOfTypeAsList(this, HaskellKindSignature.class);
-  }
+    @Override
+    @NotNull
+    public List<HaskellKindSignature> getKindSignatureList() {
+        return PsiTreeUtil.getChildrenOfTypeAsList(this, HaskellKindSignature.class);
+    }
 
-  @Override
-  @NotNull
-  public HaskellSimpletype getSimpletype() {
-    return notNullChild(PsiTreeUtil.getChildOfType(this, HaskellSimpletype.class));
-  }
+    @Override
+    @NotNull
+    public List<HaskellPragma> getPragmaList() {
+        return PsiTreeUtil.getChildrenOfTypeAsList(this, HaskellPragma.class);
+    }
 
-  @Override
-  @Nullable
-  public HaskellTtype getTtype() {
-    return PsiTreeUtil.getChildOfType(this, HaskellTtype.class);
-  }
+    @Override
+    @NotNull
+    public List<HaskellQName> getQNameList() {
+        return PsiTreeUtil.getChildrenOfTypeAsList(this, HaskellQName.class);
+    }
 
-  @Override
-  public String getName() {
-    return HaskellPsiImplUtil.getName(this);
-  }
+    @Override
+    @NotNull
+    public HaskellSimpletype getSimpletype() {
+        return notNullChild(PsiTreeUtil.getChildOfType(this, HaskellSimpletype.class));
+    }
 
-  @Override
-  public ItemPresentation getPresentation() {
-    return HaskellPsiImplUtil.getPresentation(this);
-  }
+    @Override
+    @Nullable
+    public HaskellTtype getTtype() {
+        return PsiTreeUtil.getChildOfType(this, HaskellTtype.class);
+    }
 
-  @Override
-  public Seq<HaskellNamedElement> getIdentifierElements() {
-    return HaskellPsiImplUtil.getIdentifierElements(this);
-  }
+    @Override
+    @Nullable
+    public HaskellTypeSignature getTypeSignature() {
+        return PsiTreeUtil.getChildOfType(this, HaskellTypeSignature.class);
+    }
 
-  @Override
-  public Option<String> getModuleName() {
-    return HaskellPsiImplUtil.getModuleName(this);
-  }
+    @Override
+    public String getName() {
+        return HaskellPsiImplUtil.getName(this);
+    }
+
+    @Override
+    public ItemPresentation getPresentation() {
+        return HaskellPsiImplUtil.getPresentation(this);
+    }
+
+    @Override
+    public Seq<HaskellNamedElement> getIdentifierElements() {
+        return HaskellPsiImplUtil.getIdentifierElements(this);
+    }
+
+    @Override
+    public Option<String> getModuleName() {
+        return HaskellPsiImplUtil.getModuleName(this);
+    }
 
 }

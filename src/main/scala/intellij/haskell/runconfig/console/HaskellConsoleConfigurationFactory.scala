@@ -9,4 +9,6 @@ class HaskellConsoleConfigurationFactory(val typez: ConfigurationType) extends C
   override def createTemplateConfiguration(project: Project) = new HaskellConsoleConfiguration(name, project, this)
 
   override def getName: String = name
+
+  override def getId: String = getName
 }

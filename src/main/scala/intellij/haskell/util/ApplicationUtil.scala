@@ -1,5 +1,5 @@
 /*
- * Copyright 2014-2019 Rik van der Kleij
+ * Copyright 2014-2020 Rik van der Kleij
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,121 +16,54 @@
 
 package intellij.haskell.util
 
-import java.util.concurrent.atomic.AtomicReference
+import java.util.concurrent.TimeUnit
 
-import com.intellij.openapi.application.ApplicationManager
-import com.intellij.openapi.progress.util.ReadTask.Continuation
-import com.intellij.openapi.progress.util.{ProgressIndicatorUtils, ReadTask}
-import com.intellij.openapi.progress.{ProgressIndicator, ProgressManager}
-import com.intellij.openapi.project.{DumbService, Project}
+import com.intellij.openapi.application.{ApplicationManager, ReadAction}
+import com.intellij.openapi.progress.ProgressIndicatorProvider
+import com.intellij.openapi.progress.util.ProgressIndicatorBase
+import com.intellij.openapi.project.Project
+import com.intellij.util.concurrency.AppExecutorUtil
 import intellij.haskell.HaskellNotificationGroup
-import intellij.haskell.external.component.{NoInfo, ReadActionTimeout}
+import intellij.haskell.external.component.{IndexNotReady, NoInfo, ReadActionTimeout}
 
-import scala.concurrent.duration._
+import scala.concurrent.TimeoutException
 
 object ApplicationUtil {
 
-  def timeout: Int = {
-    if (ApplicationManager.getApplication.isDispatchThread) {
-      50
-    } else {
-      60000
-    }
-  }
-
-  private def isReadAccessAllowed = {
+  def isBlockingReadAccessAllowed: Boolean = {
     ApplicationManager.getApplication.isReadAccessAllowed
   }
 
-  def runReadAction[T](f: => T): T = {
-    if (isReadAccessAllowed) {
+  def runReadAction[T](f: => T, project: Option[Project] = None): T = {
+    if (isBlockingReadAccessAllowed) {
       f
     } else {
-      ApplicationManager.getApplication.runReadAction(ScalaUtil.computable(f))
+      val progressIndicator = Option(ProgressIndicatorProvider.getGlobalProgressIndicator).getOrElse(new ProgressIndicatorBase(false, false))
+      val readAction = ReadAction.nonBlocking(ScalaUtil.callable(f))
+      readAction.wrapProgress(progressIndicator)
+      project.foreach(readAction.expireWith)
+      readAction.submit(AppExecutorUtil.getAppExecutorService).get(5, TimeUnit.SECONDS)
     }
   }
 
-  private final val RunInReadActionTimeout = 50.millis
-
-  def runInReadActionWithWriteActionPriority[A](project: Project, f: => A, readActionDescription: => String, timeout: FiniteDuration = RunInReadActionTimeout): Either[NoInfo, A] = {
-    val r = new AtomicReference[A]
-
-    if (isReadAccessAllowed) {
+  def runReadActionWithFileAccess[A](project: Project, f: => A, actionDescription: => String): Either[NoInfo, A] = {
+    if (isBlockingReadAccessAllowed) {
       Right(f)
     } else {
-      def run(): Boolean = {
-        ProgressIndicatorUtils.runInReadActionWithWriteActionPriority {
-          ScalaUtil.runnable {
-            ProgressManager.checkCanceled()
-            r.set(f)
-          }
+      val progressIndicator = Option(ProgressIndicatorProvider.getGlobalProgressIndicator)
+      val readAction = ReadAction.nonBlocking(ScalaUtil.callable(f)).inSmartMode(project)
+      progressIndicator.foreach(readAction.wrapProgress)
+      readAction.expireWith(project)
+      try {
+        Option(readAction.submit(AppExecutorUtil.getAppExecutorService).get(5, TimeUnit.SECONDS)) match {
+          case Some(x) => Right(x)
+          case None => Left(IndexNotReady)
         }
+      } catch {
+        case _: TimeoutException =>
+          HaskellNotificationGroup.logInfoEvent(project, s"Timeout in readActionWithFileAccess while $actionDescription")
+          Left(ReadActionTimeout(actionDescription))
       }
-
-      val deadline = timeout.fromNow
-
-      while (!run() && deadline.hasTimeLeft && !project.isDisposed) {
-        Thread.sleep(1)
-      }
-
-      val result = r.get()
-      if (result == null) {
-        HaskellNotificationGroup.logInfoEvent(project, s"Timeout ($timeout) in runInReadActionWithWriteActionPriority while $readActionDescription")
-        Left(ReadActionTimeout(readActionDescription))
-      } else {
-        Right(result)
-      }
-    }
-  }
-
-  private final val ScheduleInReadActionTimeout = 60.seconds
-
-  def scheduleInReadActionWithWriteActionPriority[A](project: Project, f: => A, scheduleInReadActionDescription: => String, timeout: FiniteDuration = ScheduleInReadActionTimeout, reschedule: Boolean = true): Either[NoInfo, A] = {
-    val r = new AtomicReference[A]
-    var cancelled = false
-
-    ProgressIndicatorUtils.scheduleWithWriteActionPriority {
-      new ReadTask {
-
-        override def runBackgroundProcess(indicator: ProgressIndicator): Continuation = {
-          DumbService.getInstance(project).runReadActionInSmartMode(() => {
-            performInReadAction(indicator)
-          })
-        }
-
-        override def onCanceled(indicator: ProgressIndicator): Unit = {
-          cancelled = true
-          // When user is typing it does not make sense to reschedule the action because it makes the UI unresponsive
-          if (reschedule) {
-            HaskellNotificationGroup.logInfoEvent(project, s"scheduleInReadActionWithWriteActionPriority while $scheduleInReadActionDescription" + " is cancelled!! Retrying")
-            ProgressIndicatorUtils.scheduleWithWriteActionPriority(this)
-          }
-        }
-
-        override def computeInReadAction(indicator: ProgressIndicator): Unit = {
-          r.set(f)
-        }
-      }
-    }
-
-    val deadline = timeout.fromNow
-
-    if (reschedule) {
-      while (r.get == null && deadline.hasTimeLeft && !project.isDisposed) {
-        Thread.sleep(1)
-      }
-    } else {
-      while (r.get == null && !cancelled && deadline.hasTimeLeft && !project.isDisposed) {
-        Thread.sleep(1)
-      }
-    }
-
-    val result = r.get()
-    if (result == null) {
-      HaskellNotificationGroup.logInfoEvent(project, s"Timeout ($timeout) in scheduleInReadActionWithWriteActionPriority while $scheduleInReadActionDescription and reschedule $reschedule")
-      Left(ReadActionTimeout(scheduleInReadActionDescription))
-    } else {
-      Right(result)
     }
   }
 }

@@ -1,19 +1,16 @@
 // This is a generated file. Not intended for manual editing.
 package intellij.haskell.psi;
 
+import org.jetbrains.annotations.NotNull;
+
 import java.util.List;
-import org.jetbrains.annotations.*;
-import com.intellij.psi.PsiElement;
 
 public interface HaskellCdecls extends HaskellCompositeElement {
 
-  @NotNull
-  List<HaskellPragma> getPragmaList();
+    @NotNull
+    List<HaskellCdecl> getCdeclList();
 
-  @NotNull
-  List<HaskellTopDeclaration> getTopDeclarationList();
-
-  @NotNull
-  List<HaskellTypeSignature> getTypeSignatureList();
+    @NotNull
+    List<HaskellPragma> getPragmaList();
 
 }

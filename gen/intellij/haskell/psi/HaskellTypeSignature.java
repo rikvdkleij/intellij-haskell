@@ -10,21 +10,24 @@ import java.util.List;
 
 public interface HaskellTypeSignature extends HaskellDeclarationElement {
 
-  @NotNull
-  List<HaskellCcontext> getCcontextList();
+    @NotNull
+    List<HaskellCcontext> getCcontextList();
 
-  @NotNull
-  List<HaskellQNames> getQNamesList();
+    @NotNull
+    List<HaskellPragma> getPragmaList();
 
-  @NotNull
-  HaskellTtype getTtype();
+    @NotNull
+    List<HaskellQNames> getQNamesList();
 
-  String getName();
+    @NotNull
+    HaskellTtype getTtype();
 
-  ItemPresentation getPresentation();
+    String getName();
 
-  Seq<HaskellNamedElement> getIdentifierElements();
+    ItemPresentation getPresentation();
 
-  Option<String> getModuleName();
+    Seq<HaskellNamedElement> getIdentifierElements();
+
+    Option<String> getModuleName();
 
 }

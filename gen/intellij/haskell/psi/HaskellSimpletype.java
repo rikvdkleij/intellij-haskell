@@ -9,15 +9,18 @@ import java.util.List;
 
 public interface HaskellSimpletype extends HaskellCompositeElement {
 
-  @NotNull
-  List<HaskellQName> getQNameList();
+    @NotNull
+    List<HaskellPragma> getPragmaList();
 
-  @Nullable
-  HaskellTtype getTtype();
+    @NotNull
+    List<HaskellQName> getQNameList();
 
-  @NotNull
-  List<HaskellTypeSignature> getTypeSignatureList();
+    @Nullable
+    HaskellTtype getTtype();
 
-  Seq<HaskellNamedElement> getIdentifierElements();
+    @NotNull
+    List<HaskellTypeSignature> getTypeSignatureList();
+
+    Seq<HaskellNamedElement> getIdentifierElements();
 
 }

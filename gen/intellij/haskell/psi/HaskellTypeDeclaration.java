@@ -9,26 +9,35 @@ import scala.collection.immutable.Seq;
 
 import java.util.List;
 
-public interface HaskellTypeDeclaration extends HaskellTopDeclaration, HaskellDeclarationElement {
+public interface HaskellTypeDeclaration extends HaskellDeclarationElement {
 
-  @Nullable
-  HaskellExpression getExpression();
+    @Nullable
+    HaskellExpression getExpression();
 
-  @NotNull
-  List<HaskellKindSignature> getKindSignatureList();
+    @NotNull
+    List<HaskellKindSignature> getKindSignatureList();
 
-  @NotNull
-  HaskellSimpletype getSimpletype();
+    @NotNull
+    List<HaskellPragma> getPragmaList();
 
-  @Nullable
-  HaskellTtype getTtype();
+    @NotNull
+    List<HaskellQName> getQNameList();
 
-  String getName();
+    @NotNull
+    HaskellSimpletype getSimpletype();
 
-  ItemPresentation getPresentation();
+    @Nullable
+    HaskellTtype getTtype();
 
-  Seq<HaskellNamedElement> getIdentifierElements();
+    @Nullable
+    HaskellTypeSignature getTypeSignature();
 
-  Option<String> getModuleName();
+    String getName();
+
+    ItemPresentation getPresentation();
+
+    Seq<HaskellNamedElement> getIdentifierElements();
+
+    Option<String> getModuleName();
 
 }

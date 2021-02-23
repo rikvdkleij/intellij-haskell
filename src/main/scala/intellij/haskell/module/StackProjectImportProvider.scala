@@ -1,5 +1,5 @@
 /*
- * Copyright 2014-2019 Rik van der Kleij
+ * Copyright 2014-2020 Rik van der Kleij
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -24,7 +24,7 @@ import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.projectImport.ProjectImportProvider
 import intellij.haskell.util.HaskellFileUtil
 
-class StackProjectImportProvider(builder: StackProjectImportBuilder) extends ProjectImportProvider(builder) {
+class StackProjectImportProvider extends ProjectImportProvider(new StackProjectImportBuilder) {
 
   override def createSteps(context: WizardContext): Array[ModuleWizardStep] =
     Array(new HaskellModuleWizardStep(context, HaskellModuleType.getInstance.createModuleBuilder()))

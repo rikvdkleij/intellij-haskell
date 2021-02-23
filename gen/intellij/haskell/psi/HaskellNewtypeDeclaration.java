@@ -7,28 +7,45 @@ import org.jetbrains.annotations.Nullable;
 import scala.Option;
 import scala.collection.immutable.Seq;
 
-public interface HaskellNewtypeDeclaration extends HaskellTopDeclaration, HaskellDataConstructorDeclarationElement {
+import java.util.List;
 
-  @Nullable
-  HaskellCcontext getCcontext();
+public interface HaskellNewtypeDeclaration extends HaskellDataConstructorDeclarationElement {
 
-  @NotNull
-  HaskellNewconstr getNewconstr();
+    @Nullable
+    HaskellCcontext getCcontext();
 
-  @NotNull
-  HaskellSimpletype getSimpletype();
+    @NotNull
+    List<HaskellDerivingVia> getDerivingViaList();
 
-  @Nullable
-  HaskellTtype getTtype();
+    @NotNull
+    HaskellNewconstr getNewconstr();
 
-  String getName();
+    @NotNull
+    List<HaskellPragma> getPragmaList();
 
-  ItemPresentation getPresentation();
+    @NotNull
+    List<HaskellQName> getQNameList();
 
-  Seq<HaskellNamedElement> getIdentifierElements();
+    @NotNull
+    HaskellSimpletype getSimpletype();
 
-  Option<String> getModuleName();
+    @Nullable
+    HaskellTextLiteral getTextLiteral();
 
-  HaskellNamedElement getDataTypeConstructor();
+    @NotNull
+    List<HaskellTtype> getTtypeList();
+
+    @NotNull
+    List<HaskellTypeSignature> getTypeSignatureList();
+
+    String getName();
+
+    ItemPresentation getPresentation();
+
+    Seq<HaskellNamedElement> getIdentifierElements();
+
+    Option<String> getModuleName();
+
+    HaskellNamedElement getDataTypeConstructor();
 
 }

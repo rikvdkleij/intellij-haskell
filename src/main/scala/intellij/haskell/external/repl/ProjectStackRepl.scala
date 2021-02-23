@@ -1,5 +1,5 @@
 /*
- * Copyright 2014-2019 Rik van der Kleij
+ * Copyright 2014-2020 Rik van der Kleij
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,27 +18,25 @@ package intellij.haskell.external.repl
 
 import java.util.concurrent.ConcurrentHashMap
 
-import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.project.Project
 import com.intellij.psi.PsiFile
 import intellij.haskell.HaskellNotificationGroup
-import intellij.haskell.external.component.HaskellComponentsManager.StackComponentInfo
 import intellij.haskell.external.repl.StackRepl.StackReplOutput
+import intellij.haskell.external.repl.StackReplsManager.ProjectReplTargets
+import intellij.haskell.psi.HaskellPsiUtil
+import intellij.haskell.settings.HaskellSettingsState
 import intellij.haskell.util.{HaskellFileUtil, ScalaFutureUtil}
 
-import scala.concurrent.duration._
 import scala.concurrent.{Future, blocking}
 import scala.jdk.CollectionConverters._
 
-case class ProjectStackRepl(project: Project, stackComponentInfo: StackComponentInfo, replTimeout: Int) extends StackRepl(project, Some(stackComponentInfo), Seq("--ghc-options", "-fobject-code"), replTimeout: Int) {
+case class ProjectStackRepl(project: Project, projectReplTargets: ProjectReplTargets, replTimeout: Int) extends StackRepl(project, Some(projectReplTargets), Seq(), replTimeout: Int, HaskellSettingsState.getDefaultGhcOptions) {
 
   import intellij.haskell.external.repl.ProjectStackRepl._
 
-  val target: String = stackComponentInfo.target
+  val target: String = projectReplTargets.targetsName
 
-  val stanzaType: StackRepl.StanzaType = stackComponentInfo.stanzaType
-
-  val packageName: String = stackComponentInfo.packageName
+  val stanzaType: StackRepl.StanzaType = projectReplTargets.stanzaType
 
   def clearLoadedModules(): Unit = {
     loadedFile = None
@@ -61,12 +59,7 @@ case class ProjectStackRepl(project: Project, stackComponentInfo: StackComponent
   private[this] val loadedDependentModules = new ConcurrentHashMap[ModuleName, DependentModuleInfo]().asScala
   private[this] val everLoadedDependentModules = new ConcurrentHashMap[ModuleName, DependentModuleInfo]().asScala
 
-  @volatile
-  private var objectCodeEnabled = true
-
   import scala.concurrent.ExecutionContext.Implicits.global
-
-  private def isReadAccessAllowed = ApplicationManager.getApplication.isReadAccessAllowed
 
   def findTypeInfo(moduleName: Option[String], psiFile: PsiFile, startLineNr: Int, startColumnNr: Int, endLineNr: Int, endColumnNr: Int, expression: String): Option[StackReplOutput] = {
     val filePath = getFilePath(psiFile)
@@ -77,11 +70,7 @@ case class ProjectStackRepl(project: Project, stackComponentInfo: StackComponent
       }
     }
 
-    if (isReadAccessAllowed) {
-      ScalaFutureUtil.waitWithCheckCancelled(project, Future(execute), "Wait on :type-at in ProjectStackRepl", 30.seconds).flatten
-    } else {
-      execute
-    }
+    ScalaFutureUtil.waitForValue(project, Future(execute), ":type-at in ProjectStackRepl").flatten
   }
 
   def findLocationInfo(moduleName: Option[String], psiFile: PsiFile, startLineNr: Int, startColumnNr: Int, endLineNr: Int, endColumnNr: Int, expression: String): Option[StackReplOutput] = {
@@ -93,33 +82,27 @@ case class ProjectStackRepl(project: Project, stackComponentInfo: StackComponent
       }
     }
 
-    if (isReadAccessAllowed) {
-      ScalaFutureUtil.waitWithCheckCancelled(project, Future(execute), "Wait on :loc-at in ProjectStackRepl", timeout = 30.seconds).flatten
-    } else {
-      execute
-    }
+    ScalaFutureUtil.waitForValue(project, Future(execute), ":loc-at in ProjectStackRepl").flatten
   }
 
   def findInfo(psiFile: PsiFile, name: String): Option[StackReplOutput] = {
+    val moduleName = HaskellPsiUtil.findModuleName(psiFile)
+
     def execute = {
       blocking {
-        executeWithLoad(psiFile, s":info $name", mustBeByteCode = true)
+        executeWithLoad(psiFile, moduleName, s":info $name")
       }
     }
 
-    if (isReadAccessAllowed) {
-      ScalaFutureUtil.waitWithCheckCancelled(psiFile.getProject, Future(execute), "Wait on :info in ProjectStackRepl", 30.seconds).flatten
-    } else {
-      execute
-    }
+    ScalaFutureUtil.waitForValue(psiFile.getProject, Future(execute), ":info in ProjectStackRepl").flatten
   }
 
   def isModuleLoaded(moduleName: String): Boolean = {
-    everLoadedDependentModules.get(moduleName).isDefined
+    everLoadedDependentModules.contains(moduleName)
   }
 
   def isBrowseModuleLoaded(moduleName: String): Boolean = {
-    loadedDependentModules.get(moduleName).isDefined
+    loadedDependentModules.contains(moduleName)
   }
 
   def isFileLoaded(psiFile: PsiFile): IsFileLoaded = {
@@ -131,50 +114,39 @@ case class ProjectStackRepl(project: Project, stackComponentInfo: StackComponent
     }
   }
 
-  private final val FailedModulesLoaded = "Failed, "
-
-  private final val OkModulesLoaded = "Ok, "
-
-  private def setLoadedModules(): Unit = {
+  private def setLoadedModules(output: StackReplOutput): Unit = {
     loadedDependentModules.clear()
-    execute(":show modules") match {
-      case Some(output) =>
-        val loadedModuleNames = output.stdoutLines.map(l => l.takeWhile(_ != ' '))
+    output.stdoutLines.lastOption.foreach(line =>
+      if (!line.contains("modules loaded: none.") && line.contains("modules loaded: ")) {
+        val modulesLine = line.split("loaded:")(1).init // The init to get rid of the dot which is last character
+        val loadedModuleNames = modulesLine.split(",").map(_.trim)
         loadedModuleNames.foreach(mn => loadedDependentModules.put(mn, DependentModuleInfo()))
         loadedModuleNames.foreach(mn => everLoadedDependentModules.put(mn, DependentModuleInfo()))
-      case None => ()
-    }
+      })
   }
 
-  def load(psiFile: PsiFile, fileChanged: Boolean, mustBeByteCode: Boolean): Option[(StackReplOutput, Boolean)] = synchronized {
-    val forceBytecodeLoad = if (mustBeByteCode) objectCodeEnabled else false
-    val reload = if (forceBytecodeLoad || !fileChanged) {
+  def load(psiFile: PsiFile, fileModified: Boolean, moduleName: Option[String], forceNoReload: Boolean = false): Option[(StackReplOutput, Boolean)] = synchronized {
+    val filePath = getFilePath(psiFile)
+
+    val reload = if (!fileModified || forceNoReload) {
       false
-    } else {
+    } else if (fileModified) {
       val loaded = isFileLoaded(psiFile)
       loaded == Loaded || loaded == Failed
-    }
+    } else if (!fileModified && isFileLoaded(psiFile) != Loaded) {
+      false
+    } else moduleName.exists(mn => loadedDependentModules.contains(mn))
 
     val output = if (reload) {
       execute(s":reload")
     } else {
-      // In case module has to be compiled to byte-code: :set -fbyte-code AND load flag *
-      val byteCodeFlag = if (forceBytecodeLoad) "*" else ""
-      if (forceBytecodeLoad) {
-        objectCodeEnabled = false
-        execute(s":set -fbyte-code")
-      } else if (!objectCodeEnabled) {
-        objectCodeEnabled = true
-        execute(s":set -fobject-code")
-      }
-      val filePath = getFilePath(psiFile)
-      execute(s":load $byteCodeFlag$filePath")
+      execute(s":load *$filePath")
     }
 
     output match {
       case Some(o) =>
         val loadFailed = isLoadFailed(o)
-        setLoadedModules()
+        setLoadedModules(o)
 
         loadedFile = Some(ModuleInfo(psiFile, loadFailed))
         Some(o, loadFailed)
@@ -185,23 +157,22 @@ case class ProjectStackRepl(project: Project, stackComponentInfo: StackComponent
     }
   }
 
-  private def findLoadedModuleNames(line: String): Array[String] = {
-    if (line.startsWith(OkModulesLoaded)) {
-      line.replace(OkModulesLoaded, "").init.split(",").map(_.trim)
-    } else if (line.startsWith(FailedModulesLoaded)) {
-      line.replace(FailedModulesLoaded, "").init.split(",").map(_.trim)
-    } else {
-      Array()
-    }
-  }
-
-  def getModuleIdentifiers(moduleName: String, psiFile: Option[PsiFile]): Option[StackReplOutput] = synchronized {
-    if (psiFile.isEmpty || isBrowseModuleLoaded(moduleName) || psiFile.exists(pf => load(pf, fileChanged = false, mustBeByteCode = false).exists(_._2 == false))) {
-      execute(s":browse! $moduleName")
-    } else {
-      HaskellNotificationGroup.logInfoEvent(project, s"Couldn't get module identifiers for module $moduleName because file ${psiFile.map(_.getName).getOrElse("-")} isn't loaded")
-      None
-    }
+  def getModuleIdentifiers(project: Project, moduleName: String, psiFile: Option[PsiFile]): Option[StackReplOutput] = {
+    ScalaFutureUtil.waitForValue(project,
+      Future {
+        blocking {
+          synchronized {
+            if (psiFile.isEmpty || isBrowseModuleLoaded(moduleName)
+              || psiFile.exists(pf => load(pf, fileModified = false, Some(moduleName)).exists(_._2 == false))
+            ) {
+              execute(s":browse! $moduleName")
+            } else {
+              HaskellNotificationGroup.logInfoEvent(project, s"Couldn't get module identifiers for module $moduleName because file ${psiFile.map(_.getName).getOrElse("-")} isn't loaded")
+              None
+            }
+          }
+        }
+      }, "getModuleIdentifiers in ProjectStackRepl").flatten
   }
 
   override def restart(forceExit: Boolean): Unit = synchronized {
@@ -215,20 +186,19 @@ case class ProjectStackRepl(project: Project, stackComponentInfo: StackComponent
     if (moduleName.exists(isModuleLoaded)) {
       execute(command)
     } else {
-      executeWithLoad(psiFile, command, mustBeByteCode = false)
+      executeWithLoad(psiFile, moduleName, command)
     }
   }
 
-  private def executeWithLoad(psiFile: PsiFile, command: String, moduleName: Option[String] = None, mustBeByteCode: Boolean): Option[StackReplOutput] = synchronized {
+  private def executeWithLoad(psiFile: PsiFile, moduleName: Option[String], command: String): Option[StackReplOutput] = synchronized {
     loadedFile match {
-      case Some(info) if info.psiFile == psiFile & !info.loadFailed & (if (mustBeByteCode) !objectCodeEnabled else true) => execute(command)
-      case Some(info) if info.psiFile == psiFile & info.loadFailed => Some(StackReplOutput())
+      case Some(info) if info.psiFile == psiFile && !info.loadFailed => execute(command)
       case _ =>
-        load(psiFile, fileChanged = false, mustBeByteCode)
+        load(psiFile, fileModified = false, moduleName)
         loadedFile match {
           case None => None
-          case Some(info) if info.psiFile == psiFile && !info.loadFailed => execute(command)
-          case _ => Some(StackReplOutput())
+          case Some(info) if info.psiFile == psiFile => execute(command)
+          case _ => None
         }
     }
   }

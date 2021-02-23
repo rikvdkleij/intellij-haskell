@@ -1,5 +1,5 @@
 /*
- * Copyright 2014-2019 Rik van der Kleij
+ * Copyright 2014-2020 Rik van der Kleij
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,9 +16,9 @@
 
 package intellij.haskell.module
 
-import javax.swing.Icon
 import com.intellij.openapi.module.{ModuleType, ModuleTypeManager}
 import icons.HaskellIcons
+import javax.swing.Icon
 
 class HaskellModuleType extends ModuleType[HaskellModuleBuilder](HaskellModuleType.Id) {
 

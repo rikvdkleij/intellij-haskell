@@ -1,28 +1,29 @@
 // This is a generated file. Not intended for manual editing.
 package intellij.haskell.psi;
 
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
+
 import java.util.List;
-import org.jetbrains.annotations.*;
-import com.intellij.psi.PsiElement;
 
 public interface HaskellClazz extends HaskellCompositeElement {
 
-  @NotNull
-  List<HaskellQName> getQNameList();
+    @NotNull
+    List<HaskellDerivingVia> getDerivingViaList();
 
-  @NotNull
-  List<HaskellTextLiteral> getTextLiteralList();
+    @NotNull
+    List<HaskellPragma> getPragmaList();
 
-  @Nullable
-  HaskellTtype getTtype();
+    @NotNull
+    List<HaskellQName> getQNameList();
 
-  @NotNull
-  List<HaskellTtype1> getTtype1List();
+    @NotNull
+    List<HaskellTextLiteral> getTextLiteralList();
 
-  @NotNull
-  List<HaskellTtype2> getTtype2List();
+    @Nullable
+    HaskellTtype getTtype();
 
-  @NotNull
-  List<HaskellTypeSignature> getTypeSignatureList();
+    @NotNull
+    List<HaskellTypeSignature> getTypeSignatureList();
 
 }

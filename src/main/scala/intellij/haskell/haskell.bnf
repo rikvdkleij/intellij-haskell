@@ -36,16 +36,12 @@
 
   methods("var_con|q_var_con")=[getName getIdentifierElement]
 
-  methods("q_name|cname")=[getName getIdentifierElement getQualifierName]
-  implements("q_name|cname")="intellij.haskell.psi.HaskellQualifiedNameElement"
+  methods("q_name")=[getName getIdentifierElement getQualifierName]
+  implements("q_name")="intellij.haskell.psi.HaskellQualifiedNameElement"
 
   implements("expression")="intellij.haskell.psi.HaskellExpressionElement"
   mixin("expression")="intellij.haskell.psi.impl.HaskellExpressionElementImpl"
   extends(".*_expression")=expression
-
-  methods("var|con|varop|conop")=[getName]
-  implements("var|con|varop|conop")="intellij.haskell.psi.HaskellCNameElement"
-  mixin("var|con|varop|conop")="intellij.haskell.psi.impl.HaskellCNameElementImpl"
 
   methods("q_con_qualifier1|q_con_qualifier2|q_con_qualifier3|q_con_qualifier4|qualifier")=[getName setName getNameIdentifier getReference getPresentation]
   implements("q_con_qualifier1|q_con_qualifier2|q_con_qualifier3|q_con_qualifier4|qualifier")="intellij.haskell.psi.HaskellQualifierElement"
@@ -54,62 +50,68 @@
 
   implements("text_literal")=["intellij.haskell.psi.HaskellStringLiteralElement" "com.intellij.psi.PsiLanguageInjectionHost"]
   mixin("text_literal")="intellij.haskell.psi.impl.HaskellStringLiteralElementImpl"
+
+  implements("quasi_quote")=["intellij.haskell.psi.HaskellQuasiQuoteElement" "com.intellij.psi.PsiLanguageInjectionHost"]
+  mixin("quasi_quote")="intellij.haskell.psi.impl.HaskellQuasiQuoteElementImpl"
 }
 
-program                     ::= onl shebang_line? onl file_header? onl module_body?
+program                     ::= NEWLINE* shebang_line? NEWLINE* file_header NEWLINE* module_body?
 
 shebang_line                ::= "#!" general_id+
-file_header                 ::= (pragma onl)+
-pragma                      ::= PRAGMA_START general_pragma_content* PRAGMA_END {pin=1}
+file_header                 ::= (pragma | INCLUDE_DIRECTIVE | DIRECTIVE)? (NEWLINE* (pragma | INCLUDE_DIRECTIVE | DIRECTIVE))*
+pragma                      ::= PRAGMA_START general_pragma_content* PRAGMA_END NEWLINE?    {pin=1}
 general_pragma_content      ::= ONE_PRAGMA | PRAGMA_SEP | CHARACTER_LITERAL | STRING_LITERAL | NEWLINE | DASH | HASH
 
-module_body                 ::= module_declaration | body
+module_body                 ::= module_declaration onl body | onl body
 module_declaration          ::= MODULE modid onl pragma? onl (exports onl)? where_clause
 where_clause                ::= WHERE LEFT_BRACE body RIGHT_BRACE? {pin=1}
 
-private body                ::= import_declarations? top_declarations? onl
-import_declarations         ::= ((import_declaration | pragma | DIRECTIVE) onl)+
-private top_declarations    ::= (top_declaration semi)+
+private body                ::= import_declarations? onl top_declarations onl
+import_declarations         ::= import_declaration (onl import_declaration)* (DIRECTIVE | INCLUDE_DIRECTIVE)*
+private top_declarations    ::= (top_declaration onl)* top_declaration?
 
-import_declaration          ::= IMPORT (onls pragma)? (onls import_qualified)? (onls import_package_name)? onls modid onls import_qualified_as? onls import_spec?    {methods=[getModuleName] pin=1}
+import_declaration          ::= IMPORT (onls pragma)? (onls import_qualified)? (onls import_package_name)? onls modid (onls import_qualified_as)? (onls import_spec)? NEWLINE?   {methods=[getModuleName] pin=1}
 import_qualified            ::= "qualified"
 import_qualified_as         ::= "as" qualifier
-import_spec                 ::= import_ids_spec | import_hiding_spec
+import_spec                 ::= import_ids_spec |
+                                  import_hiding_spec |
+                                  import_empty_spec
 
-import_ids_spec             ::= LEFT_PAREN onls imported_ids? RIGHT_PAREN
-private imported_ids        ::= import_id (onls COMMA? onls import_id)* onls COMMA? onls
-import_hiding_spec          ::= import_hiding onls LEFT_PAREN onls (import_id onls (onls COMMA onls import_id)* onls COMMA?)? onls RIGHT_PAREN
+import_ids_spec             ::= LEFT_PAREN onls import_id (onls COMMA? onls import_id)* onls (COMMA)? onls RIGHT_PAREN
+import_hiding_spec          ::= import_hiding onls LEFT_PAREN onls (import_id onls (onls COMMA onls import_id)* onls (COMMA)?)? onls RIGHT_PAREN
+import_empty_spec           ::= LEFT_PAREN RIGHT_PAREN
 import_hiding               ::= "hiding"
-import_id                   ::= TYPE? (cname onls LEFT_PAREN onls (cname_dot_dot onls (COMMA onls cname_dot_dot onls)* onls)? RIGHT_PAREN | cname)
+import_id                   ::= TYPE? (q_name LEFT_PAREN onls dot_dot onls RIGHT_PAREN | q_name onls LEFT_PAREN onls (q_name onls (COMMA onls q_name onls)* onls)? RIGHT_PAREN | q_name)
 import_package_name         ::= text_literal
 
-top_declaration             ::= type_declaration | data_declaration | newtype_declaration | class_declaration | instance_declaration | default_declaration |
+top_declaration             ::= (type_declaration | data_declaration | newtype_declaration | class_declaration | instance_declaration | default_declaration |
                                   foreign_declaration | type_family_declaration | deriving_declaration | type_instance_declaration | type_signature |
-                                  pragma | fixity_declaration | DIRECTIVE | implementation_declaration
+                                  pragma | fixity_declaration | expression | DIRECTIVE | implementation_declaration) SEMICOLON? NEWLINE?
 implementation_declaration  ::= expression EQUAL expression {pin=2}
 
 type_declaration            ::= TYPE onls simpletype onls COLON_COLON onls ttype |
+                                  TYPE onls simpletype onls EQUAL onls ttype onls VERTICAL_BAR q_name RIGHT_ARROW q_name |
                                   TYPE onls simpletype onls (EQUAL | WHERE) onls (ttype | type_signature) (DOUBLE_RIGHT_ARROW ttype)? |
                                   TYPE onls simpletype onls EQUAL onls expression |
                                   TYPE onls simpletype onls (LEFT_PAREN onls kind_signature onls RIGHT_PAREN)* onls (EQUAL onls ttype | COLON_COLON ttype) |
                                   TYPE onls simpletype
 
 
-data_declaration            ::= DATA (onls pragma)? onls INSTANCE? onls (ccontext onls DOUBLE_RIGHT_ARROW)? onls simpletype onls (LEFT_PAREN onls kind_signature onls RIGHT_PAREN)* onls (COLON_COLON ttype)? onls q_name* onls (EQUAL | WHERE)?
-                                    onls (type_signature (nls type_signature)* | constrs) (onls data_declaration_deriving)? |
-                                  DATA (onls pragma)? onls (LEFT_PAREN onls kind_signature onls RIGHT_PAREN)* onls simpletype onls (LEFT_PAREN onls kind_signature onls RIGHT_PAREN)* onls (COLON_COLON ttype)? onls q_name* (onls data_declaration_deriving)?
+data_declaration            ::= DATA (onls pragma)? onls INSTANCE? onls (ccontext onls DOUBLE_RIGHT_ARROW)? onls simpletype (onls LEFT_PAREN onls kind_signature onls RIGHT_PAREN)* (onls COLON_COLON ttype)? (onls q_name)* (onls (EQUAL | WHERE))?
+                                    (onls type_signature (nls type_signature)* | constrs) (onls data_declaration_deriving)? |
+                                  DATA (onls pragma)? (onls LEFT_PAREN onls kind_signature onls RIGHT_PAREN)* onls simpletype (onls LEFT_PAREN onls kind_signature onls RIGHT_PAREN)* (onls COLON_COLON ttype)? (onls q_name)* (onls data_declaration_deriving)?
 
 kind_signature              ::= q_name COLON_COLON ttype
 
-data_declaration_deriving   ::= (DERIVING onl ttype | DERIVING onl LEFT_PAREN ttype (onl COMMA onl ttype)* onl RIGHT_PAREN)+
+data_declaration_deriving   ::= (onl DERIVING onl ttype | onl DERIVING onl LEFT_PAREN ttype (onl COMMA onl ttype)* onl RIGHT_PAREN)+
 
-newtype_declaration         ::= NEWTYPE onls INSTANCE? onls pragma? onls (ccontext onls DOUBLE_RIGHT_ARROW)? onls simpletype onls EQUAL onls newconstr (onls DERIVING onls ttype)?
+newtype_declaration         ::= NEWTYPE onls INSTANCE? (onls pragma)? (onls ccontext onls DOUBLE_RIGHT_ARROW)? onls simpletype onls EQUAL onls newconstr (onl DERIVING (onl NEWTYPE)? onl atype)?
 
-class_declaration           ::= CLASS onls (scontext onls DOUBLE_RIGHT_ARROW)? onls (q_name+ | ttype) onls (q_name | LEFT_PAREN ttype (onls COMMA onls ttype)* RIGHT_PAREN)*
-                                    (onls VERTICAL_BAR onls ttype (onls COMMA onls ttype)*)? onls WHERE? onls cdecls? |
-                                  CLASS onls scontext onls DOUBLE_RIGHT_ARROW onls (q_name+ | ttype) onls WHERE? onls cdecls?  // seen in Control.Lens.Internal.Indexed
+class_declaration           ::= CLASS (onls scontext onls DOUBLE_RIGHT_ARROW)? onls (q_name+ | ttype) (onls q_name | LEFT_PAREN ttype (onls COMMA onls ttype)* RIGHT_PAREN)*
+                                    (onls VERTICAL_BAR onls ttype (onls COMMA onls ttype)*)? (onls WHERE)? (onls cdecls)? |
+                                  CLASS onls scontext onls DOUBLE_RIGHT_ARROW onls (q_name+ | ttype) (onls WHERE)? (onls cdecls)?  // seen in Control.Lens.Internal.Indexed
 
-instance_declaration        ::= INSTANCE onls ("OVERLAPPABLE_" | "OVERLAPPING_" | pragma)? onls (var_con+ DOT)? onls (scontext onls DOUBLE_RIGHT_ARROW)? onls
+instance_declaration        ::= INSTANCE (onls "OVERLAPPABLE_" | "OVERLAPPING_" | pragma)? (onls varid+ DOT)? (onls scontext onls DOUBLE_RIGHT_ARROW)? onls
                                     (type_equality | q_name onls inst (onls WHERE (onls cidecls)?)?)    // this way of using type equality in Data.Type.Equality
 
 type_equality               ::= q_name+ TILDE q_name+
@@ -121,7 +123,7 @@ type_instance_declaration   ::= TYPE_INSTANCE onls expression
 type_signature              ::= q_names onls COLON_COLON (onls ccontext onls DOUBLE_RIGHT_ARROW)* onls ttype !EQUAL |
                                   q_names onls LEFT_PAREN onls q_names onls COMMA onls ccontext onls DOUBLE_RIGHT_ARROW onls ttype onls RIGHT_PAREN   // seen in  Test.Hspec.Expectations: with_loc(shouldBe, (Show a, Eq a) => a -> a -> Expectation)
 
-fixity_declaration          ::= fixity DECIMAL? q_names
+fixity_declaration          ::= fixity (DECIMAL)? q_names
 
 foreign_declaration         ::= (FOREIGN_IMPORT | FOREIGN_EXPORT) onls expression
 
@@ -130,31 +132,25 @@ type_family_declaration     ::= TYPE_FAMILY onls type_family_type (onls (WHERE |
 deriving_declaration        ::= DERIVING INSTANCE (scontext onls DOUBLE_RIGHT_ARROW)? onls q_name onls inst
 
 text_literal                ::= STRING_LITERAL
+quasi_quote                 ::= QUASIQUOTE
 
 private literal             ::= DECIMAL | HEXADECIMAL | OCTAL | FLOAT | CHARACTER_LITERAL | text_literal
 
 private keyword             ::= DATA | CLASS | INSTANCE | NEWTYPE | DERIVING | DEFAULT | TYPE_FAMILY | TYPE | TYPE_INSTANCE | IMPORT | MODULE
 
-private onl                 ::= (DIRECTIVE? NEWLINE)*
-private semi                ::= DIRECTIVE* SEMICOLON? DIRECTIVE*
-private onls                ::= (&<<containsSpaces>> NEWLINE | DIRECTIVE NEWLINE !keyword)*       // optional multiple (new line and spaces)
-private nls                 ::= (&<<containsSpaces>> NEWLINE)+                          // multiple new lines and spaces
-private oonls               ::= (&<<containsSpaces>> NEWLINE)?                         // optional one (new line and spaces)
+private onl                 ::= (DIRECTIVE | NEWLINE | INCLUDE_DIRECTIVE | pragma)*
+private onls                ::= (&<<containsSpaces>> NEWLINE | (DIRECTIVE | INCLUDE_DIRECTIVE) NEWLINE !keyword | pragma)*       // optional multiple (new line and spaces)
+private nls                 ::= (&<<containsSpaces>> NEWLINE | (DIRECTIVE | INCLUDE_DIRECTIVE) NEWLINE !keyword | pragma)+                          // multiple new lines and spaces
+private oonls               ::= (&<<containsSpaces>> NEWLINE | (DIRECTIVE | INCLUDE_DIRECTIVE) NEWLINE !keyword | pragma)?                         // optional one (new line and spaces)
 
 comments                    ::= COMMENT | NCOMMENT | HADDOCK | NHADDOCK | NOT_TERMINATED_COMMENT // rule is necessary to refer to various comment types in code
 
 modid                       ::= (conid DOT)* conid {pin=1 stubClass = "intellij.haskell.psi.stubs.HaskellModidStub"}
 
-varid                       ::= VAR_ID "#"? {stubClass = "intellij.haskell.psi.stubs.HaskellVaridStub"}
-conid                       ::= CON_ID "#"? {stubClass = "intellij.haskell.psi.stubs.HaskellConidStub"}
+varid                       ::= VAR_ID  {stubClass = "intellij.haskell.psi.stubs.HaskellVaridStub"}
+conid                       ::= CON_ID  {stubClass = "intellij.haskell.psi.stubs.HaskellConidStub"}
 varsym                      ::= VARSYM_ID | DOT+ VARSYM_ID | DOT+ EQUAL | DOT+ BACKSLASH | DOT+ TILDE | DOT+ AT | DOT+ CONSYM_ID | DOT+ VERTICAL_BAR | DOT DOT DOT+ | DOT     {stubClass = "intellij.haskell.psi.stubs.HaskellVarsymStub"}
 consym                      ::= CONSYM_ID   {stubClass = "intellij.haskell.psi.stubs.HaskellConsymStub"}
-
-cname                       ::= var | con | conop | varop
-var                         ::= varid | LEFT_PAREN varsym RIGHT_PAREN
-con                         ::= conid | LEFT_PAREN consym RIGHT_PAREN
-varop                       ::= varsym | BACKQUOTE varid BACKQUOTE
-conop                       ::= consym | BACKQUOTE conid BACKQUOTE
 
 var_con                     ::= varid | consym | varsym | conid
 q_var_con                   ::= &<<noSpaceAfterQualifier>> qualifier DOT (varid | consym | varsym) | q_con
@@ -174,29 +170,29 @@ q_names                     ::= q_name (COMMA q_name)*
 gtycon                      ::= QUOTE? q_name | LEFT_PAREN RIGHT_ARROW RIGHT_PAREN | LEFT_PAREN RIGHT_PAREN | QUOTE? LEFT_BRACKET RIGHT_BRACKET | LEFT_PAREN COMMA (COMMA)* RIGHT_PAREN
 
 private constrs             ::= constr (onls VERTICAL_BAR onls constr)*
-constr                      ::= (type_signature | constr1 | constr2 | constr3)
+constr                      ::= (constr1 | constr2 | constr3)
 constr1                     ::= pragma? (onls q_name)? (onls pragma)? onls LEFT_BRACE onl fielddecl? ((onl COMMA)? onl fielddecl)* onl RIGHT_BRACE
-constr2                     ::= pragma? onls (ttype | q_name | LEFT_PAREN q_name* RIGHT_PAREN | LEFT_BRACKET q_name* RIGHT_BRACKET) (onls pragma onls)? ((onls pragma)? onls ttype (onls pragma)?)*  // Base.hs: data () = () and GHC.Types.hs: data [] a = [] | a : [a]
+constr2                     ::= pragma? onls (type_signature | ttype | q_name | LEFT_PAREN q_name* RIGHT_PAREN | LEFT_BRACKET q_name* RIGHT_BRACKET)+ (onls pragma onls)? ((onls pragma)? onls ttype (onls pragma)?)*  // Base.hs: data () = () and GHC.Types.hs: data [] a = [] | a : [a]
 constr3                     ::= (onls pragma? onls ttype)+
 
 fielddecl                   ::= q_names (onl COLON_COLON pragma? (onls ("forall" | FORALL) (onls q_name)+)? (onls scontext onls DOUBLE_RIGHT_ARROW)? pragma? onls ttype)?
 
-private forall_sym          ::= "forall" | FORALL
-private atype               ::= (forall_sym ((onl q_name+ onl LEFT_PAREN onl (type_signature | ttype) onl (COMMA onl (type_signature | ttype))* onl RIGHT_PAREN)+ | (onl q_name)+) (onl DOUBLE_RIGHT_ARROW onl ttype)? |
-                                  (q_name | UNDERSCORE)* LEFT_PAREN ttype1 RIGHT_PAREN |
-                                  (q_name | UNDERSCORE)* LEFT_BRACE ttype1 RIGHT_BRACE |
-                                  (q_name | UNDERSCORE)* LEFT_PAREN ttype2 RIGHT_PAREN |
-                                  (q_name | UNDERSCORE)* LEFT_BRACE ttype2 RIGHT_BRACE |
+deriving_via                ::= "via"
+
+private atype               ::= (("forall" | FORALL) onl (((q_name onls)+ LEFT_PAREN onl (type_signature | ttype) onl (COMMA onl (type_signature | ttype))* onl RIGHT_PAREN)+ | onl type_signature | (onls q_name)+) (onl DOUBLE_RIGHT_ARROW onl ttype)? |
+                                  (q_name | UNDERSCORE)* QUOTE? LEFT_PAREN ttype1 RIGHT_PAREN |
+                                  (q_name | UNDERSCORE)* QUOTE? LEFT_BRACE ttype1 RIGHT_BRACE |
+                                  (q_name | UNDERSCORE)* QUOTE? LEFT_PAREN ttype2 RIGHT_PAREN |
+                                  (q_name | UNDERSCORE)* QUOTE? LEFT_BRACE ttype2 RIGHT_BRACE |
                                   QUOTE? LEFT_BRACKET oonls ttype (oonls COMMA oonls ttype)* oonls RIGHT_BRACKET |
-                                  QUOTE? (q_name (oonls COLON_COLON oonls ttype)?)+ | QUOTE? LEFT_PAREN RIGHT_PAREN | QUOTE? LEFT_BRACKET RIGHT_BRACKET | LEFT_PAREN COMMA+ RIGHT_PAREN  | literal | LEFT_PAREN RIGHT_ARROW RIGHT_PAREN | NEWLINE DIRECTIVE) !COLON_COLON
+                                  QUOTE? ((deriving_via | q_name) (oonls COLON_COLON oonls ttype)?)+ | QUOTE? LEFT_PAREN RIGHT_PAREN | QUOTE? LEFT_BRACKET RIGHT_BRACKET | LEFT_PAREN COMMA+ RIGHT_PAREN  | literal | LEFT_PAREN RIGHT_ARROW RIGHT_PAREN) !COLON_COLON
 
-ttype1                      ::= (onl "#")? onl ttype ((onl COMMA)? onl ttype)* onl ("#" onl)?
-ttype2                      ::= forall_sym? onl ttype (onl DOUBLE_RIGHT_ARROW onl ttype)? onl
-
+private ttype1              ::= (onl "#")? onl ttype ((onl COMMA)? onl ttype)* onl ("#" onl)?
+private ttype2              ::= ("forall" | FORALL)? onl ttype (onl DOUBLE_RIGHT_ARROW onl ttype)? onl
 
 ttype                       ::= "!"? (btype (oonls RIGHT_ARROW oonls ttype)* | list_type q_name* | LEFT_PAREN RIGHT_ARROW RIGHT_PAREN)
 
-private btype               ::= (atype | TILDE)+     // generalization because left recursive is not supported
+private btype               ::= (atype | TILDE | UNDERSCORE)+     // generalization because left recursive is not supported and UNDERSCORE because of partial type signatures
 
 simpletype                  ::= ttype | (q_name | LEFT_PAREN RIGHT_PAREN)+ |
                                   q_name* oonls LEFT_PAREN q_name RIGHT_PAREN oonls q_name* |
@@ -205,7 +201,7 @@ simpletype                  ::= ttype | (q_name | LEFT_PAREN RIGHT_PAREN)+ |
 
 list_type                   ::= LEFT_BRACKET (COLON_COLON | q_name) RIGHT_BRACKET
 
-type_family_type            ::= (q_name | LEFT_PAREN? q_names COLON_COLON? onls (ccontext DOUBLE_RIGHT_ARROW)? onls ttype? RIGHT_PAREN?)+ (COLON_COLON onls ttype)?
+type_family_type            ::= (q_name | LEFT_PAREN? q_names COLON_COLON? (onls ccontext DOUBLE_RIGHT_ARROW)? (onls ttype)? RIGHT_PAREN?)+ (COLON_COLON onls ttype)?
 
 ccontext                     ::= LEFT_PAREN onls clazz (onls COMMA onls clazz)* onls RIGHT_PAREN |
                                   clazz
@@ -220,7 +216,7 @@ scontext                    ::= simpleclass | simpleclass onls LEFT_PAREN onls s
 simpleclass                 ::= ttype | q_name+ LEFT_PAREN q_name+ RIGHT_PAREN q_name* | q_name+
 
 inst                        ::= gtycon+ instvar* (LEFT_PAREN onls gtycon (instvar)* onls RIGHT_PAREN)* instvar* |
-                                  (LEFT_PAREN onls instvar (onls COMMA onls instvar)+ onls RIGHT_PAREN)+ instvar* |
+                                  (LEFT_PAREN onls instvar (onls COMMA onls instvar)* onls RIGHT_PAREN)+ instvar* |
                                   QUOTE? (LEFT_BRACKET onls instvar onls RIGHT_BRACKET)+ instvar* |
                                   (LEFT_PAREN onls instvar+ onls RIGHT_PAREN)+ instvar* |
                                   ((LEFT_PAREN onls instvar+ (onls RIGHT_ARROW onls instvar+)+ onls RIGHT_PAREN)+ instvar*)+
@@ -229,36 +225,37 @@ instvar                     ::= ttype | q_name | LEFT_BRACKET q_name+ RIGHT_BRAC
 
 private fixity              ::= INFIXL | INFIXR | INFIX
 
-exports                     ::= LEFT_PAREN onl export ((onl COMMA)? onl export)* (onl COMMA)? onl RIGHT_PAREN | LEFT_PAREN RIGHT_PAREN
-export                      ::= export3 | export2 | export4 | export5
-private export3             ::= (q_con | cname) onl LEFT_PAREN (onl cname_dot_dot (onl COMMA onl cname_dot_dot)*)? onl RIGHT_PAREN
-private export2             ::= TYPE? onl cname+
-private export4             ::= MODULE modid
-private export5             ::= conid DOT cname | LEFT_PAREN con DOT cname RIGHT_PAREN
-cname_dot_dot               ::= dot_dot | cname
+exports                     ::= LEFT_PAREN ((onl COMMA)? onl export)* (onl COMMA)? onl RIGHT_PAREN | LEFT_PAREN RIGHT_PAREN
+export                      ::= export1 | export2 | export3
+private export1             ::= MODULE modid
+private export2             ::= q_name (onl LEFT_PAREN (onl (dot_dot | q_name) (onl COMMA onl q_name)*)? onl RIGHT_PAREN)?
+private export3             ::= TYPE onl q_name
 
-newconstr                   ::= newconstr_fielddecl | q_name atype
-newconstr_fielddecl         ::= q_name onls LEFT_BRACE? onls type_signature onls RIGHT_BRACE?
+newconstr                   ::= newconstr_fielddecl | q_name+ (onls ttype)?
+newconstr_fielddecl         ::= q_name+ onl LEFT_PAREN onl ttype onl RIGHT_PAREN
 
 cdecls                      ::= cdecl (nls cdecl)*
 cidecls                     ::= cidecl (nls cidecl)*
 
 // copy of data_declaration but without all onls
-cdecl_data_declaration      ::= DATA (onls pragma)? onls (LEFT_PAREN onls kind_signature onls RIGHT_PAREN)* onls simpletype (onls LEFT_PAREN onls kind_signature onls RIGHT_PAREN)* (onls COLON_COLON ttype)? q_name*
-private cdecl               ::= type_signature | cdecl_data_declaration | cidecl
+cdecl_data_declaration      ::= DATA (onls pragma)? (onls LEFT_PAREN onls kind_signature onls RIGHT_PAREN)* onls simpletype (onls LEFT_PAREN onls kind_signature onls RIGHT_PAREN)* (onls COLON_COLON ttype)? q_name*
+cdecl                       ::= type_signature | cdecl_data_declaration | cidecl
 
-private cidecl              ::= pragma | instance_declaration | default_declaration |
-                                  newtype_declaration | data_declaration | type_declaration | type_family_declaration | implementation_declaration
+cidecl                      ::= pragma | instance_declaration | default_declaration |
+                                  newtype_declaration | data_declaration | type_declaration | type_family_declaration
+                                  | line_expression | implementation_declaration
 
-expression                  ::= let_abstraction | do_notation_expression | if_expression | application_expression | case_of_expression | atom
+expression                  ::= let_abstraction | do_notation_expression | if_expression | application_expression | case_of_expression | atom | line_expression (nls line_expression)*
 paren_expression            ::= LEFT_PAREN expression RIGHT_PAREN
 bracket_expression          ::= LEFT_BRACKET expression RIGHT_BRACKET
 application_expression      ::= expression atom+
 private atom                ::= atom_expression | bracket_expression | paren_expression
 atom_expression             ::= general_id
+private line_expression     ::= (general_id | LIST_COMPREHENSION)+ | NOT_TERMINATED_QQ_EXPRESSION
 
-private general_id          ::= QUASIQUOTE | q_name | symbol_reserved_op | reserved_id | FLOAT |
-                                  literal | COMMA | QUOTE | BACKQUOTE |
+private general_id          ::= quasi_quote | q_name | symbol_reserved_op | reserved_id | LEFT_PAREN | RIGHT_PAREN | FLOAT |
+                                  SEMICOLON | LEFT_BRACKET | RIGHT_BRACKET | literal | LEFT_BRACE | RIGHT_BRACE |
+                                  COMMA | QUOTE | BACKQUOTE | fixity |
                                   pragma | DIRECTIVE | DOUBLE_QUOTES
 let_abstraction             ::= LET LEFT_BRACE let_definition* cdecl? RIGHT_BRACE? semi IN expression {pin=1 extends=expression}
 do_notation_expression      ::= DO LEFT_BRACE do_definition* expression? RIGHT_BRACE? {pin=1}
@@ -271,6 +268,6 @@ private case_definition     ::= case_clause SEMICOLON
 case_clause                 ::= expression RIGHT_ARROW expression {pin=2}
 
 dot_dot                     ::= DOT DOT
-private symbol_reserved_op  ::= dot_dot | COLON_COLON | BACKSLASH | VERTICAL_BAR | LEFT_ARROW | AT | TILDE | DOUBLE_RIGHT_ARROW
+private symbol_reserved_op  ::= dot_dot | COLON_COLON | EQUAL | BACKSLASH | VERTICAL_BAR | LEFT_ARROW | RIGHT_ARROW | AT | TILDE | DOUBLE_RIGHT_ARROW
 
-reserved_id                 ::= CASE | DEFAULT | DERIVING | IMPORT | INSTANCE | NEWTYPE | TYPE | UNDERSCORE
+private reserved_id         ::= CASE | CLASS | DATA | DEFAULT | DERIVING | DO | ELSE | IF | IMPORT | IN | INSTANCE | LET | MODULE | NEWTYPE | OF | THEN | TYPE | WHERE | UNDERSCORE

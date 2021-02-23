@@ -1,5 +1,5 @@
 /*
- * Copyright 2014-2019 Rik van der Kleij
+ * Copyright 2014-2020 Rik van der Kleij
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,17 +17,17 @@
 package intellij.haskell.inspection
 
 import com.intellij.codeInspection._
+import com.intellij.openapi.editor.Document
 import com.intellij.openapi.progress.ProgressManager
+import com.intellij.openapi.util.TextRange
 import com.intellij.openapi.vfs.VirtualFile
-import com.intellij.psi.tree.IElementType
-import com.intellij.psi.{PsiElement, PsiFile, TokenType}
+import com.intellij.psi.PsiFile
 import com.intellij.util.WaitFor
 import intellij.haskell.HaskellNotificationGroup
-import intellij.haskell.external.component.{HLintComponent, HLintInfo}
-import intellij.haskell.psi.HaskellTypes._
+import intellij.haskell.external.component.HLintRefactoringsParser._
+import intellij.haskell.external.component.{HLintComponent, HLintInfo, HLintRefactoringsParser}
 import intellij.haskell.util._
 
-import scala.annotation.tailrec
 import scala.concurrent.duration._
 import scala.concurrent.{Future, blocking}
 
@@ -36,7 +36,8 @@ class HLintInspectionTool extends LocalInspectionTool {
   import scala.concurrent.ExecutionContext.Implicits.global
 
   override def checkFile(psiFile: PsiFile, manager: InspectionManager, isOnTheFly: Boolean): Array[ProblemDescriptor] = {
-    HaskellNotificationGroup.logInfoEvent(psiFile.getProject, s"HLint inspection is started for file ${psiFile.getName}")
+    val project = psiFile.getProject
+    HaskellNotificationGroup.logInfoEvent(project, s"HLint inspection is started for file ${psiFile.getName}")
 
     ProgressManager.checkCanceled()
 
@@ -54,7 +55,7 @@ class HLintInspectionTool extends LocalInspectionTool {
 
         ProgressManager.checkCanceled()
 
-        val result = ScalaFutureUtil.waitWithCheckCancelled(psiFile.getProject,
+        val hlintInfos = ScalaFutureUtil.waitForValue(project,
           Future {
             blocking {
               HLintComponent.check(psiFile)
@@ -66,35 +67,40 @@ class HLintInspectionTool extends LocalInspectionTool {
 
         val problemsHolder = new ProblemsHolder(manager, psiFile, isOnTheFly)
 
-        ProgressManager.checkCanceled()
-
         for {
-          hi <- result
-          problemType = findProblemHighlightType(hi)
+          hlintInfo <- hlintInfos
+          problemType = findProblemHighlightType(hlintInfo)
           if problemType != ProblemHighlightType.GENERIC_ERROR
-          () = ProgressManager.checkCanceled()
-          vf <- HaskellFileUtil.findVirtualFile(psiFile)
-          () = ProgressManager.checkCanceled()
-          se <- findStartHaskellElement(vf, psiFile, hi)
-          () = ProgressManager.checkCanceled()
-          ee <- findEndHaskellElement(vf, psiFile, hi)
-          sl <- fromOffset(vf, se)
-          () = ProgressManager.checkCanceled()
-          el <- fromOffset(vf, ee)
+          virtualFile <- HaskellFileUtil.findVirtualFile(psiFile)
         } yield {
           ProgressManager.checkCanceled()
-          hi.to match {
-            case Some(to) if se.isValid && ee.isValid =>
-              problemsHolder.registerProblem(new ProblemDescriptorBase(se, ee, hi.hint, Array(createQuickfix(hi, se, ee, sl, el, to)), problemType, false, null, true, isOnTheFly))
-            case None =>
-              problemsHolder.registerProblem(new ProblemDescriptorBase(se, ee, hi.hint, Array(), problemType, false, null, true, isOnTheFly))
-            case _ => ()
+
+          val quickFix = if (hlintInfo.refactorings == "[]") {
+            HaskellNotificationGroup.logWarningEvent(project, s"No HLint refactorings for: ${hlintInfo.from} | ${hlintInfo.hint}")
+            None
+          } else {
+            HLintRefactoringsParser.parseRefactoring(hlintInfo.refactorings) match {
+              case Right(Delete(_, pos)) => createDeleteQuickfix(document, virtualFile, psiFile, pos, hlintInfo.hint)
+              case Right(Replace(_, pos, subts, orig, deletes)) => createReplaceQuickfix(document, virtualFile, psiFile, pos, subts, orig, hlintInfo.hint, hlintInfo.note,
+                deletes.flatMap(d => createDeleteQuickfix(document, virtualFile, psiFile, d.pos, hlintInfo.hint)))
+              case Right(ModifyComment(pos, newComment)) => createModifyCommentQuickfix(document, virtualFile, psiFile, pos, newComment, hlintInfo.hint, hlintInfo.note)
+              case Right(InsertComment(pos, insertComment)) => createInsertCommentQuickfix(document, virtualFile, psiFile, pos, insertComment, hlintInfo.hint, hlintInfo.note)
+              case Right(RemoveAsKeyword(_)) => None // Fallback to manual applying suggestion
+              case Left(error) =>
+                HaskellNotificationGroup.logErrorEvent(project, error)
+                None
+            }
+          }
+
+          quickFix match {
+            case Some(qf) => problemsHolder.registerProblem(new ProblemDescriptorBase(qf.getStartElement, qf.getEndElement, hlintInfo.hint, Array(qf), problemType, false, null, true, isOnTheFly))
+            case None => ManualHLintQuickfix.registerProblem(psiFile, virtualFile, hlintInfo, problemsHolder, problemType, isOnTheFly)
           }
         }
 
-        HaskellNotificationGroup.logInfoEvent(psiFile.getProject, s"HLint inspection is finished for file ${psiFile.getName}")
+        HaskellNotificationGroup.logInfoEvent(project, s"HLint inspection is finished for file ${psiFile.getName}")
 
-        if (result.isEmpty) {
+        if (hlintInfos.isEmpty) {
           null
         } else {
           problemsHolder.getResultsArray
@@ -103,58 +109,65 @@ class HLintInspectionTool extends LocalInspectionTool {
     }
   }
 
-  private def createQuickfix(hLintInfo: HLintInfo, startElement: PsiElement, endElement: PsiElement, startLineNumber: Int, endLineNumber: Int, to: String) = {
-    new HLintQuickfix(startElement, endElement, hLintInfo.startLine, hLintInfo.startColumn, removeLineBreaksAndExtraSpaces(startLineNumber, endLineNumber, to), hLintInfo.hint, hLintInfo.note)
-  }
+  private def findOffsets(document: Document, virtualFile: VirtualFile, psiFile: PsiFile, pos: SrcSpan, newText: Option[String]) =
+    for {
+      (replaceStartOffset, replaceEndOffset, originalText) <- findTextWithOffsets(virtualFile, document, pos)
+      startElement <- Option(psiFile.findElementAt(replaceStartOffset))
+      endElement <- Option(psiFile.findElementAt(replaceEndOffset - 1))
+    } yield {
+      val replaceEndOffset2 = if (newText.exists(_.isEmpty) && replaceEndOffset < psiFile.getTextLength - 1) {
+        replaceEndOffset + 1
+      } else {
+        replaceEndOffset
+      }
+      (replaceStartOffset, replaceEndOffset2, startElement, endElement, originalText)
+    }
 
-  private def fromOffset(virtualFile: VirtualFile, psiElement: PsiElement): Option[Int] = {
-    LineColumnPosition.fromOffset(virtualFile, psiElement.getTextOffset).map(_.lineNr)
-  }
-
-  private def removeLineBreaksAndExtraSpaces(sl: Int, el: Int, s: String) = {
-    if (sl == el) {
-      s.replaceAll("""\n""", " ").replaceAll("""\s+""", " ")
-    } else {
-      s
+  private def createModifyCommentQuickfix(document: Document, virtualFile: VirtualFile, psiFile: PsiFile, pos: SrcSpan, newComment: String, hint: String, note: Seq[String]) = {
+    for {
+      (replaceStartOffset, replaceEndOffset, startElement, endElement, _) <- findOffsets(document, virtualFile, psiFile, pos, Some(newComment))
+    } yield {
+      new HLintReplaceQuickfix(document, virtualFile, startElement, endElement, replaceStartOffset, replaceEndOffset, newComment, hint, note, Seq())
     }
   }
 
-  private def findStartHaskellElement(virtualFile: VirtualFile, psiFile: PsiFile, hlintInfo: HLintInfo): Option[PsiElement] = {
-    val offset = LineColumnPosition.getOffset(virtualFile, LineColumnPosition(hlintInfo.startLine, hlintInfo.startColumn))
-    ProgressManager.checkCanceled()
-    val element = offset.flatMap(offset => Option(psiFile.findElementAt(offset)))
-    ProgressManager.checkCanceled()
-    element.filterNot(e => HLintInspectionTool.NotHaskellIdentifiers.contains(e.getNode.getElementType))
-  }
-
-  private def findEndHaskellElement(virtualFile: VirtualFile, psiFile: PsiFile, hlintInfo: HLintInfo): Option[PsiElement] = {
-    val endOffset = if (hlintInfo.endLine >= hlintInfo.startLine && hlintInfo.endColumn > hlintInfo.startColumn) {
-      LineColumnPosition.getOffset(virtualFile, LineColumnPosition(hlintInfo.endLine, hlintInfo.endColumn - 1))
-    } else {
-      LineColumnPosition.getOffset(virtualFile, LineColumnPosition(hlintInfo.endLine, hlintInfo.endColumn))
-    }
-
-    endOffset.flatMap(offset => findHaskellIdentifier(psiFile, offset))
-  }
-
-  @tailrec
-  private def findHaskellIdentifier(psiFile: PsiFile, offset: Int): Option[PsiElement] = {
-    Option(psiFile.findElementAt(offset)) match {
-      case None => findHaskellIdentifier(psiFile, offset - 1)
-      case Some(e) if HLintInspectionTool.NotHaskellIdentifiers.contains(e.getNode.getElementType) => findHaskellIdentifier(psiFile, offset - 1)
-      case e => e
+  private def createInsertCommentQuickfix(document: Document, virtualFile: VirtualFile, psiFile: PsiFile, pos: SrcSpan, insertComment: String, hint: String, note: Seq[String]) = {
+    for {
+      (replaceStartOffset, replaceEndOffset, startElement, endElement, _) <- findOffsets(document, virtualFile, psiFile, pos, None)
+    } yield {
+      new HLintInsertCommentQuickfix(document, virtualFile, startElement, endElement, replaceStartOffset, replaceEndOffset, insertComment + "\n", hint, note)
     }
   }
 
-  private def findProblemHighlightType(hlintInfo: HLintInfo) = {
-    hlintInfo.severity match {
-      case "Warning" => ProblemHighlightType.GENERIC_ERROR_OR_WARNING
-      case "Error" => ProblemHighlightType.GENERIC_ERROR
-      case _ => ProblemHighlightType.GENERIC_ERROR_OR_WARNING
-    }
+  private def createReplaceQuickfix(document: Document, virtualFile: VirtualFile, psiFile: PsiFile, pos: SrcSpan, subts: Subts, orig: String, hint: String, note: Seq[String], deletes: Seq[HLintDeleteQuickfix]) = {
+    for {
+      (replaceStartOffset, replaceEndOffset, startElement, endElement, _) <- findOffsets(document, virtualFile, psiFile, pos, None)
+      newText = subts.map({ case (x, pos) => (x, findText(virtualFile, document, pos)) }).collect {
+        case (w, Some(toReplace)) => (w, toReplace)
+      }.foldLeft(orig)({ case (x, y) => x.replace(y._1, y._2) })
+    } yield new HLintReplaceQuickfix(document, virtualFile, startElement, endElement, replaceStartOffset, replaceEndOffset, newText, hint, note, deletes)
   }
-}
 
-object HLintInspectionTool {
-  val NotHaskellIdentifiers: Seq[IElementType] = Seq(HS_NEWLINE, HS_COMMENT, HS_NCOMMENT, TokenType.WHITE_SPACE, HS_HADDOCK, HS_NHADDOCK)
+  private def createDeleteQuickfix(document: Document, virtualFile: VirtualFile, psiFile: PsiFile, pos: SrcSpan, hint: String) = {
+    for {
+      (replaceStartOffset, replaceEndOffset, startElement, endElement, originalText) <- findOffsets(document, virtualFile, psiFile, pos, Some(""))
+    } yield new HLintDeleteQuickfix(document, virtualFile, startElement, endElement, replaceStartOffset, replaceEndOffset, hint, originalText)
+  }
+
+  private def findTextWithOffsets(virtualFile: VirtualFile, document: Document, pos: SrcSpan) = {
+    for {
+      startOffset <- LineColumnPosition.getOffset(virtualFile, LineColumnPosition(pos.startLine, pos.startCol))
+      endOffset <- LineColumnPosition.getOffset(virtualFile, LineColumnPosition(pos.endLine, pos.endCol))
+      text = document.getText(TextRange.create(startOffset, endOffset))
+    } yield (startOffset, endOffset, text)
+  }
+
+  private def findText(virtualFile: VirtualFile, document: Document, pos: SrcSpan) =
+    findTextWithOffsets(virtualFile, document, pos).map(_._3)
+
+  private def findProblemHighlightType(hlintInfo: HLintInfo) = hlintInfo.severity match {
+    case "Warning" => ProblemHighlightType.GENERIC_ERROR_OR_WARNING
+    case "Error" => ProblemHighlightType.GENERIC_ERROR
+    case _ => ProblemHighlightType.GENERIC_ERROR_OR_WARNING
+  }
 }

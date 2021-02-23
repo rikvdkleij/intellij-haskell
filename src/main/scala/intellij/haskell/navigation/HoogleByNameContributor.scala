@@ -1,5 +1,5 @@
 /*
- * Copyright 2014-2019 Rik van der Kleij
+ * Copyright 2014-2020 Rik van der Kleij
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,17 +19,15 @@ package intellij.haskell.navigation
 import com.intellij.navigation.{ChooseByNameContributor, ItemPresentation, NavigationItem}
 import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.project.Project
-import intellij.haskell.external.component.NameInfoComponentResult.{LibraryNameInfo, ProjectNameInfo}
 import intellij.haskell.external.component._
-import intellij.haskell.psi.{HaskellDeclarationElement, HaskellPsiUtil}
+import intellij.haskell.psi.HaskellPsiUtil
 import intellij.haskell.util.index.HaskellModuleNameIndex
-import intellij.haskell.util.{HaskellFileUtil, StringUtil}
 import javax.swing.Icon
 
 class HoogleByNameContributor extends ChooseByNameContributor {
 
-  private final val DeclarationPattern = """([\w\.\-]+) (.*)""".r
-  private final val ModulePattern = """module ([\w\.\-]+)""".r
+  private final val DeclarationPattern = """([\w.\-]+) (.*)""".r
+  private final val ModulePattern = """module ([\w.\-]+)""".r
   private final val PackagePattern = """package (.*)""".r
 
   override def getNames(project: Project, includeNonProjectItems: Boolean): Array[String] = {
@@ -37,10 +35,6 @@ class HoogleByNameContributor extends ChooseByNameContributor {
   }
 
   override def getItemsByName(name: String, pattern: String, project: Project, includeNonProjectItems: Boolean): Array[NavigationItem] = {
-    def NotFoundResult(moduleName: String, declaration: String): Seq[NotFoundNavigationItem] = {
-      Seq(NotFoundNavigationItem(declaration, Some(moduleName)))
-    }
-
     val hooglePattern =
       if (includeNonProjectItems) {
         pattern
@@ -50,51 +44,34 @@ class HoogleByNameContributor extends ChooseByNameContributor {
 
     ProgressManager.checkCanceled()
 
-    val navigationItems = HoogleComponent.runHoogle(project, hooglePattern, count = 25).getOrElse(Seq()).flatMap {
+    val navigationItems: Seq[NavigationItem] = HoogleComponent.runHoogle(project, hooglePattern, count = 25).getOrElse(Seq()).flatMap {
       case ModulePattern(moduleName) =>
         ProgressManager.checkCanceled()
         HaskellModuleNameIndex.findFilesByModuleName(project, moduleName) match {
           case Right(files) => files
           case _ => Seq()
         }
-      case PackagePattern(packageName) =>
+      case PackagePattern(_) =>
         ProgressManager.checkCanceled()
-        Seq(NotFoundNavigationItem(packageName))
+        Seq()
       case DeclarationPattern(moduleName, declaration) =>
         ProgressManager.checkCanceled()
-        DeclarationLineUtil.findName(declaration).toSeq.flatMap(nd => {
-          val name = StringUtil.removeOuterParens(nd.name)
-          ProgressManager.checkCanceled()
-          val result = HaskellComponentsManager.findNameInfoByModuleName(project, moduleName, name)
-          ProgressManager.checkCanceled()
-          val navigationItemByNameInfo = result.toOption.flatMap(_.headOption) match {
-            case Some(lni: LibraryNameInfo) => HaskellReference.findIdentifiersByLibraryNameInfo(project, lni, name).toOption.
-              flatMap(x => HaskellPsiUtil.findDeclarationElement(x._2)).map(d => createLibraryNavigationItem(d, moduleName)).toSeq
-            case Some(pni: ProjectNameInfo) =>
-              HaskellFileUtil.findFileInRead(project, pni.filePath) match {
-                case (Some(virtualFile), Right(psiFile)) => HaskellReference.findIdentifierByLocation(project, virtualFile, psiFile, pni.lineNr, pni.columnNr, name).flatMap(HaskellPsiUtil.findDeclarationElement).toSeq
-                case (_, _) => Seq()
-              }
-            case _ => Seq()
-          }
-          ProgressManager.checkCanceled()
-          if (navigationItemByNameInfo.nonEmpty) {
-            navigationItemByNameInfo
-          } else {
-            val identifiers = HaskellReference.findIdentifiersByModuleAndName(project, moduleName, name).toOption.map(_._2).toSeq
+        DeclarationUtil.getDeclarationInfo(declaration, containsQualifiedIds = false) match {
+          case Some(declarationInfo) =>
+            val identifiers = HaskellReference.findIdentifiersByModulesAndName(project, Seq(moduleName), declarationInfo.id, prioIdInExpression = false).toOption.map(_._2).toSeq
             if (identifiers.isEmpty) {
-              NotFoundResult(moduleName, declaration)
+              Seq(NotFoundNavigationItem(declaration, moduleName))
             } else {
-              identifiers.flatMap(e => HaskellPsiUtil.findDeclarationElement(e))
+              identifiers.map(e => HaskellPsiUtil.findDeclarationElement(e).getOrElse(e)).map(d => createLibraryNavigationItem(d, moduleName))
             }
-          }
-        })
-      case d =>
+          case None => Seq()
+        }
+      case _ =>
         ProgressManager.checkCanceled()
-        Seq(NotFoundNavigationItem(d))
+        Seq()
     }
 
-    navigationItems.groupBy(_.getPresentation.getLocationString).flatMap(_._2.headOption).zipWithIndex.map({ case (item, i) => new NavigationItem {
+    navigationItems.zipWithIndex.map({ case (item, i) => new NavigationItem {
 
       // Hack to display items in same order as given by Hoogle
       override def getName: String = {
@@ -112,7 +89,7 @@ class HoogleByNameContributor extends ChooseByNameContributor {
     }).toArray
   }
 
-  private def createLibraryNavigationItem(namedElement: HaskellDeclarationElement, moduleNameFromHoogle: String): NavigationItem = {
+  private def createLibraryNavigationItem(namedElement: NavigationItem, moduleNameFromHoogle: String): NavigationItem = {
     new NavigationItem {
 
       override def getName: String = namedElement.getName
@@ -133,13 +110,13 @@ class HoogleByNameContributor extends ChooseByNameContributor {
     }
   }
 
-  case class NotFoundNavigationItem(declaration: String, moduleName: Option[String] = None) extends NavigationItem {
+  case class NotFoundNavigationItem(declaration: String, moduleName: String) extends NavigationItem {
     override def getName: String = declaration
 
     override def getPresentation: ItemPresentation = new ItemPresentation {
       override def getIcon(unused: Boolean): Icon = null
 
-      override def getLocationString: String = moduleName.getOrElse("")
+      override def getLocationString: String = moduleName
 
       override def getPresentableText: String = getName
     }

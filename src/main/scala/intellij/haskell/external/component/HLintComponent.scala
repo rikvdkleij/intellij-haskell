@@ -1,5 +1,5 @@
 /*
- * Copyright 2014-2019 Rik van der Kleij
+ * Copyright 2014-2020 Rik van der Kleij
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -21,72 +21,66 @@ import com.intellij.psi.PsiFile
 import intellij.haskell.external.execution.CommandLine
 import intellij.haskell.settings.HaskellSettingsState
 import intellij.haskell.util.HaskellFileUtil
-import intellij.haskell.{GlobalInfo, HaskellNotificationGroup}
+import intellij.haskell.{HTool, HaskellNotificationGroup}
 import spray.json.JsonParser.ParsingException
 import spray.json.{DefaultJsonProtocol, _}
 
-import scala.concurrent.duration._
-
 object HLintComponent {
 
-  final val HLintName = "hlint"
-  private final val HLintPath = GlobalInfo.toolPath(HLintName).toString
-  private final val Timeout = 500.millis
-
   def check(psiFile: PsiFile): Seq[HLintInfo] = {
-    if (StackProjectManager.isHlintAvailable(psiFile.getProject)) {
-      val project = psiFile.getProject
-      val hlintOptions = if (HaskellSettingsState.getHlintOptions.trim.isEmpty) Array[String]() else HaskellSettingsState.getHlintOptions.split("""\s+""")
-      HaskellFileUtil.getAbsolutePath(psiFile) match {
-        case Some(path) =>
-          val output = runHLint(project, hlintOptions.toSeq ++ Seq("--json", path), ignoreExitCode = true)
-          if (output.getExitCode > 0 && output.getStderr.nonEmpty) {
-            HaskellNotificationGroup.logErrorBalloonEvent(project, s"Error while calling $HLintName: ${output.getStderr}")
+    StackProjectManager.isHlintAvailable(psiFile.getProject) match {
+      case Some(hlintPath) =>
+        val project = psiFile.getProject
+        val hlintOptions = if (HaskellSettingsState.getHlintOptions.trim.isEmpty) Array[String]() else HaskellSettingsState.getHlintOptions.split("""\s+""")
+        HaskellFileUtil.getAbsolutePath(psiFile) match {
+          case Some(path) =>
+            val output = runHLint(project, hlintPath, hlintOptions.toSeq ++ Seq("--json", path), ignoreExitCode = true)
+            if (output.getExitCode > 0 && output.getStderr.nonEmpty) {
+              HaskellNotificationGroup.logErrorBalloonEvent(project, s"Error while calling ${HTool.Hlint.name}: ${output.getStderr}")
+              Seq()
+            } else {
+              parseHLintOutput(project, output.getStdout)
+            }
+          case None => ()
+            HaskellNotificationGroup.logWarningBalloonEvent(psiFile.getProject, s"Can not display HLint suggestions because can not determine path for file `${psiFile.getName}`. File exists only in memory")
             Seq()
-          } else {
-            deserializeHLintInfo(project, output.getStdout)
-          }
-        case None => ()
-          HaskellNotificationGroup.logWarningBalloonEvent(psiFile.getProject, s"Can not display HLint suggestions because can not determine path for file `${psiFile.getName}`. File exists only in memory")
-          Seq()
-      }
-    } else {
-      HaskellNotificationGroup.logInfoEvent(psiFile.getProject, s"$HLintName is not (yet) available")
-      Seq()
+        }
+      case None =>
+        HaskellNotificationGroup.logInfoEvent(psiFile.getProject, s"${HTool.Hlint.name} is not (yet) available")
+        Seq()
     }
   }
 
   def versionInfo(project: Project): String = {
-    if (StackProjectManager.isHlintAvailable(project)) {
-      runHLint(project, Seq("--version"), ignoreExitCode = false).getStdout
-    } else {
-      "-"
+    StackProjectManager.isHlintAvailable(project) match {
+      case Some(hlintPath) => runHLint(project, hlintPath, Seq("--version"), ignoreExitCode = false).getStdout
+      case None => "-"
     }
   }
 
-  private def runHLint(project: Project, arguments: Seq[String], ignoreExitCode: Boolean) = {
-    CommandLine.run(project, HLintPath, arguments, logOutput = true, ignoreExitCode = ignoreExitCode)
+  private def runHLint(project: Project, hlintPath: String, arguments: Seq[String], ignoreExitCode: Boolean) = {
+    CommandLine.run(project, hlintPath, arguments, logOutput = true, ignoreExitCode = ignoreExitCode)
   }
 
   private object HlintJsonProtocol extends DefaultJsonProtocol {
-    implicit val hlintInfoFormat: RootJsonFormat[HLintInfo] = jsonFormat12(HLintInfo)
+    implicit val hlintInfoFormat: RootJsonFormat[HLintInfo] = jsonFormat13(HLintInfo)
   }
 
   import intellij.haskell.external.component.HLintComponent.HlintJsonProtocol._
 
-  private[external] def deserializeHLintInfo(project: Project, hlintInfo: String) = {
-    if (hlintInfo.trim.isEmpty || hlintInfo == "[]") {
+  private[external] def parseHLintOutput(project: Project, hlintOutput: String) = {
+    if (hlintOutput.trim.isEmpty || hlintOutput == "[]") {
       Seq()
     } else {
       try {
-        hlintInfo.parseJson.convertTo[Seq[HLintInfo]]
+        hlintOutput.parseJson.convertTo[Seq[HLintInfo]]
       } catch {
         case e: ParsingException =>
-          HaskellNotificationGroup.logErrorEvent(project, s"Error `${e.getMessage}` while parsing `$hlintInfo`")
+          HaskellNotificationGroup.logErrorEvent(project, s"Error while parsing HLint output | Message: ${e.getMessage} | HLintOutput: $hlintOutput")
           Seq()
       }
     }
   }
 }
 
-case class HLintInfo(module: Seq[String], decl: Seq[String], severity: String, hint: String, file: String, startLine: Int, startColumn: Int, endLine: Int, endColumn: Int, from: String = "", to: Option[String], note: Seq[String])
+case class HLintInfo(module: Seq[String], decl: Seq[String], severity: String, hint: String, file: String, startLine: Int, startColumn: Int, endLine: Int, endColumn: Int, from: String = "", to: Option[String], note: Seq[String], refactorings: String)

@@ -1,5 +1,5 @@
 /*
- * Copyright 2014-2019 Rik van der Kleij
+ * Copyright 2014-2020 Rik van der Kleij
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -23,8 +23,10 @@ import com.intellij.openapi.project.Project
 import com.intellij.psi.{PsiElement, PsiFile}
 import com.intellij.refactoring.listeners.RefactoringElementListener
 import com.intellij.refactoring.rename.RenamePsiElementProcessor
-import intellij.haskell.external.component.{HaskellComponentsManager, ProjectLibraryFileWatcher}
+import intellij.haskell.HaskellFile
+import intellij.haskell.external.component.{HaskellComponentsManager, ProjectLibraryBuilder}
 import intellij.haskell.external.repl.StackRepl.LibType
+import intellij.haskell.psi.HaskellModid
 import intellij.haskell.util.{HaskellFileUtil, HaskellProjectUtil, ScalaUtil}
 
 class HaskellRenameVariableProcessor extends RenamePsiElementProcessor {
@@ -35,33 +37,38 @@ class HaskellRenameVariableProcessor extends RenamePsiElementProcessor {
     val project = targetElement.getProject
     for {
       cf <- getCurrentFile(project)
-      () = HaskellComponentsManager.invalidateDefinitionLocations(cf)
+      () = HaskellComponentsManager.invalidateDefinitionLocations(project)
       tf <- Option(targetElement.getContainingFile).map(_.getOriginalFile)
-      targetInfo <- HaskellComponentsManager.findStackComponentInfo(tf)
-      currentInfo <- HaskellComponentsManager.findStackComponentInfo(cf)
-    } yield if (targetInfo != currentInfo && targetInfo.stanzaType == LibType)
-      ProjectLibraryFileWatcher.addBuild(project, Set(targetInfo)) else ()
+      componentTarget <- HaskellComponentsManager.findStackComponentInfo(tf)
+      currentComponentTarget <- HaskellComponentsManager.findStackComponentInfo(cf)
+    } yield if (componentTarget != currentComponentTarget && componentTarget.stanzaType == LibType)
+      ProjectLibraryBuilder.addBuild(project, Set(componentTarget)) else ()
   }
 
   override def canProcessElement(psiElement: PsiElement): Boolean = {
-    val project = psiElement.getProject
-    Option(psiElement.getContainingFile).exists { psiFile =>
-      HaskellProjectUtil.isHaskellProject(project) &&
-        (psiElement match {
-          case pf: PsiFile => HaskellProjectUtil.isSourceFile(pf)
-          case _ =>
-            Option(psiElement.getReference).map(_.getElement) match {
-              case Some(e: PsiElement) => HaskellProjectUtil.isSourceFile(psiFile)
-              case _ => false
-            }
-        })
+    if (!psiElement.isInstanceOf[HaskellFile] && !psiElement.isInstanceOf[HaskellModid] && psiElement.isValid) {
+      val project = psiElement.getProject
+      Option(psiElement.getContainingFile).exists { psiFile =>
+        HaskellProjectUtil.isHaskellProject(project) &&
+          (psiElement match {
+            case pf: PsiFile => HaskellProjectUtil.isSourceFile(pf)
+            case _ =>
+              Option(psiElement.getReference).flatMap(x => Option(x.resolve)) match {
+                case Some(_: PsiElement) => HaskellProjectUtil.isSourceFile(psiFile)
+                case _ => false
+              }
+          })
+      }
+    } else {
+      false
     }
   }
 
   override def getPostRenameCallback(targetElement: PsiElement, newName: String, elementListener: RefactoringElementListener): Runnable = {
     ScalaUtil.runnable {
       val project = targetElement.getProject
-      HaskellFileUtil.saveAllFiles(project)
+      HaskellComponentsManager.invalidateDefinitionLocations(project)
+      HaskellFileUtil.saveFiles(project)
     }
   }
 

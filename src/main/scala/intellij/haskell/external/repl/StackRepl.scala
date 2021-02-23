@@ -1,5 +1,5 @@
 /*
- * Copyright 2014-2019 Rik van der Kleij
+ * Copyright 2014-2020 Rik van der Kleij
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -20,32 +20,28 @@ import java.io._
 import java.util.concurrent.LinkedBlockingQueue
 
 import com.intellij.openapi.project.Project
-import com.intellij.util.EnvironmentUtil
-import intellij.haskell.external.component.HaskellComponentsManager.StackComponentInfo
 import intellij.haskell.external.execution.StackCommandLine
-import intellij.haskell.external.repl.StackRepl.{BenchmarkType, StackReplOutput, TestSuiteType}
+import intellij.haskell.external.repl.StackRepl.{BenchmarkType, ExeType, StackReplOutput, TestSuiteType}
+import intellij.haskell.external.repl.StackReplsManager.ProjectReplTargets
 import intellij.haskell.sdk.HaskellSdkType
 import intellij.haskell.util.{HaskellEditorUtil, HaskellFileUtil, HaskellProjectUtil, StringUtil}
 import intellij.haskell.{GlobalInfo, HaskellNotificationGroup}
 
-import scala.collection.mutable
 import scala.collection.mutable.ArrayBuffer
 import scala.concurrent.duration._
 import scala.io._
 import scala.jdk.CollectionConverters._
 import scala.sys.process._
 
-abstract class StackRepl(project: Project, componentInfo: Option[StackComponentInfo], extraReplOptions: Seq[String] = Seq(), replTimeout: Int) {
+abstract class StackRepl(project: Project, projectReplTargets: Option[ProjectReplTargets], extraReplOptions: Seq[String] = Seq(), replTimeout: Int, ghcOptions: Seq[String] = Seq()) {
 
-  private val stanzaType = componentInfo.map(_.stanzaType)
+  private val stanzaType = projectReplTargets.map(_.stanzaType)
 
   private object GhciCommand {
 
     trait Command
 
     case object Load extends Command
-
-    case object LocalBrowse extends Command
 
     case object Browse extends Command
 
@@ -85,11 +81,11 @@ abstract class StackRepl(project: Project, componentInfo: Option[StackComponentI
 
   private final val CanNotSatisfyErrorMessageIndicator = "<command line>: cannot satisfy -package"
 
-  private final val LocalBrowseStopReadingIndicator = "-- imported via"
-
   protected def clearLoadedModules(): Unit
 
-  def getComponentName: String = componentInfo.map(_.target).map(t => "project-stack-repl-" + t).getOrElse("global-stack-repl")
+  def getComponentName: String = projectReplTargets.map(_.targetsName).map(name => "project-stack-repl-" + name).getOrElse("global-stack-repl")
+
+  def isGlobalRepl: Boolean = projectReplTargets.isEmpty
 
   private val stdoutResult = new ArrayBuffer[String]
   private val stderrResult = new ArrayBuffer[String]
@@ -99,7 +95,7 @@ abstract class StackRepl(project: Project, componentInfo: Option[StackComponentI
   protected def execute(command: String, forceExecute: Boolean = false): Option[StackReplOutput] = {
 
     if ((!available || starting) && !forceExecute) {
-      HaskellEditorUtil.showStatusBarMessage(project, s"[$getComponentName] Haskell support is only available when Stack REPL is running")
+      HaskellEditorUtil.showStatusBarMessage(project, s"[$getComponentName] Haskell support is only available when REPL is running")
       None
     } else {
 
@@ -135,7 +131,6 @@ abstract class StackRepl(project: Project, componentInfo: Option[StackComponentI
             init()
 
             val ghciCommand = command match {
-              case c if c.startsWith(":browse! *") => GhciCommand.LocalBrowse
               case c if c.startsWith(":browse!") => GhciCommand.Browse
               case c if c.startsWith(":load") | c.startsWith(":reload") => GhciCommand.Load
               case c if c.startsWith(":module") => GhciCommand.Module
@@ -160,41 +155,35 @@ abstract class StackRepl(project: Project, componentInfo: Option[StackComponentI
             output.write(LineSeparator)
             output.flush()
 
-            val timeout = if (ghciCommand == GhciCommand.Load || ghciCommand == GhciCommand.Browse || ghciCommand == GhciCommand.LocalBrowse) LoadTimeout else DefaultTimeout
+            val timeout = if (ghciCommand == GhciCommand.Load || ghciCommand == GhciCommand.Browse) LoadTimeout else DefaultTimeout
 
             val deadline = timeout.fromNow
-            while (deadline.hasTimeLeft && !hasReachedEndOfOutput) {
+            while (deadline.hasTimeLeft() && !hasReachedEndOfOutput && !project.isDisposed) {
               drainQueues()
 
               // We have to wait...
               Thread.sleep(DelayBetweenReadsInMillis)
             }
 
-            if (deadline.hasTimeLeft) {
+            if (deadline.hasTimeLeft()) {
               logInfo(s"Command $command took + ${(timeout - deadline.timeLeft).toMillis} ms")
               logOutput(errorAsInfo = true)
 
-              val result = if (ghciCommand == GhciCommand.LocalBrowse) {
-                stdoutResult.takeWhile(l => !l.startsWith(LocalBrowseStopReadingIndicator))
-              } else {
-                stdoutResult
-              }
-
-              Some(StackReplOutput(convertOutputToOneMessagePerLine(project, removePrompt(result)), convertOutputToOneMessagePerLine(project, stderrResult)))
+              Some(StackReplOutput(convertOutputToOneMessagePerLine(project, removePrompt(stdoutResult.toSeq)), convertOutputToOneMessagePerLine(project, stderrResult.toSeq)))
             } else {
               drainQueues()
-              logError(s"No result from Stack REPL within $timeout. Command was: $command")
+              logError(s"No result from REPL within $timeout. Command was: $command")
               exit(forceExit = true)
               None
             }
           case None =>
-            logError("Can't write to Stack REPL. Check if your Stack project environment is working okay")
+            logError("Can't write to REPL. Check if your Stack project environment is working okay")
             None
         }
       }
       catch {
         case e: Exception =>
-          logError(s"Error in communication with Stack repl: ${e.getMessage}. Check if your Haskell/Stack environment is working okay. Command was: `$command`")
+          logError(s"Error in communication with REPL: ${e.getMessage}. Check if your Haskell/Stack environment is working okay. Command was: `$command`")
           drainQueues()
           logOutput()
           exit()
@@ -223,32 +212,31 @@ abstract class StackRepl(project: Project, componentInfo: Option[StackComponentI
     }
 
     if (available || starting) {
-      logInfo("Stack REPL can't be started because it's already starting / running")
+      logInfo("REPL can't be started because it's already starting / running")
     } else {
       starting = true
       clearLoadedModules()
 
-      HaskellSdkType.getStackBinaryPath(project).foreach(stackPath => {
+      HaskellSdkType.getStackPath(project).foreach(stackPath => {
         try {
           val extraOptions = if (stanzaType.contains(TestSuiteType)) {
             extraReplOptions ++ Seq("--test")
           } else if (stanzaType.contains(BenchmarkType)) {
             extraReplOptions ++ Seq("--bench")
+          } else if (stanzaType.contains(ExeType)) {
+            extraReplOptions ++ Seq("--no-load")
           } else {
             extraReplOptions
           }
 
           val replGhciOptionsFilePath = createGhciOptionsFile.getAbsolutePath
           val command = (Seq(stackPath, "repl") ++
-            componentInfo.map(_.target).toSeq ++
-            Seq("--no-build", "--ghci-options", s"-ghci-script=$replGhciOptionsFilePath", "--silent", "--ghc-options", "-v1") ++ extraOptions).mkString(" ")
+            projectReplTargets.map(_.targetsName).toSeq ++
+            Seq("--no-build", "--ghci-options", s"-ghci-script=$replGhciOptionsFilePath", "--silent", "--ghc-options", s""""-v1 ${ghcOptions.mkString(" ")}"""") ++ extraOptions).mkString(" ")
 
-          logInfo(s"Stack REPL will be started with command: $command")
+          logInfo(s"REPL will be started with command: $command")
 
-          val processBuilder = Option(EnvironmentUtil.getEnvironmentMap) match {
-            case None => Process(command, new File(componentInfo.map(_.modulePath).getOrElse(project.getBasePath)))
-            case Some(envMap) => Process(command, new File(project.getBasePath), envMap.asScala.toIndexedSeq: _*)
-          }
+          val processBuilder = Process(command, new File(project.getBasePath), GlobalInfo.pathVariables.asScala.toSeq: _*)
 
           stdoutQueue.clear()
           stderrQueue.clear()
@@ -256,8 +244,8 @@ abstract class StackRepl(project: Project, componentInfo: Option[StackComponentI
           val process = processBuilder.run(
             new ProcessIO(
               in => outputStreamQueue.put(in),
-              (out: InputStream) => Source.fromInputStream(out).getLines.foreach(stdoutQueue.add),
-              (err: InputStream) => Source.fromInputStream(err).getLines.foreach(stderrQueue.add)
+              (out: InputStream) => Source.fromInputStream(out).getLines().foreach(stdoutQueue.add),
+              (err: InputStream) => Source.fromInputStream(err).getLines().foreach(stderrQueue.add)
             ))
 
           def isStarted = {
@@ -269,7 +257,7 @@ abstract class StackRepl(project: Project, componentInfo: Option[StackComponentI
           }
 
           val deadline = DefaultTimeout.fromNow
-          while (process.isAlive() && deadline.hasTimeLeft && !isStarted && !hasDependencyError) {
+          while (process.isAlive() && deadline.hasTimeLeft() && !isStarted && !hasDependencyError && !project.isDisposed) {
             // We have to wait till REPL is started
             Thread.sleep(DelayBetweenReadsInMillis)
           }
@@ -278,30 +266,30 @@ abstract class StackRepl(project: Project, componentInfo: Option[StackComponentI
             if (stanzaType.isDefined) {
               execute(":set +c", forceExecute = true)
               execute(":set -fdefer-type-errors", forceExecute = true)
-              execute(":set -fno-max-valid-substitutions", forceExecute = true) // TODO Check for min GHC version
+              execute(":set -fshow-loaded-modules", forceExecute = true)
+              execute(":set -fno-max-valid-substitutions", forceExecute = true)
               if (HaskellProjectUtil.setNoDiagnosticsShowCaretFlag(project)) {
                 execute(s":set ${StackCommandLine.NoDiagnosticsShowCaretFlag}", forceExecute = true)
               }
             }
-            logInfo("Stack REPL is started")
+            logInfo("REPL is started")
             available = true
           } else if (hasDependencyError) {
-            val target = componentInfo.map(_.target).getOrElse("-")
+            val target = projectReplTargets.map(_.targetsName).getOrElse("-")
             val error = stderrQueue.asScala.find(_.startsWith(CanNotSatisfyErrorMessageIndicator)).map(_.replace("<command line>:", "").trim).getOrElse("a dependency failed to build")
-            val message = s"Stack REPL couldn't be started for target `$target` due to: $error"
+            val message = s"REPL couldn't be started for target `$target` due to: $error"
             logInfo(message)
             HaskellNotificationGroup.logWarningBalloonEvent(project, message)
             closeResources()
           } else {
-            logError(s"Stack REPL couldn't be started within $DefaultTimeout")
+            logError(s"REPL couldn't be started within $DefaultTimeout")
             writeOutputToLog()
             closeResources()
           }
         }
         catch {
           case e: Exception =>
-            logError("Couldn't start Stack REPL. Make sure you've set the right path to Stack in Settings")
-            logError(s"Error message while trying to start Stack REPL: ${e.getMessage}")
+            logError(s"Couldn't start REPL. Error message ${e.getMessage}")
             writeOutputToLog()
             exit(forceExit = true)
         }
@@ -314,7 +302,7 @@ abstract class StackRepl(project: Project, componentInfo: Option[StackComponentI
 
   def exit(forceExit: Boolean = false): Unit = synchronized {
     if (!available && !forceExit) {
-      logInfo("Stack REPL couldn't be stopped because it's already stopped")
+      logInfo("REPL couldn't be stopped because it's already stopped")
     } else {
       try {
         available = false
@@ -322,16 +310,18 @@ abstract class StackRepl(project: Project, componentInfo: Option[StackComponentI
       }
       catch {
         case e: Exception =>
-          logError(s"Error while shutting down Stack REPL for project ${project.getName}. Error message: ${e.getMessage}")
+          logError(s"Error while shutting down REPL for project ${project.getName}. Error message: ${e.getMessage}")
       } finally {
         closeResources()
       }
-      logInfo("Stack REPL is stopped")
+      logInfo("REPL is stopped")
     }
   }
 
   private def createGhciOptionsFile: File = {
+    // global-repl.ghci was used so can still be in cache directory
     val ghciOptionsFile = new File(GlobalInfo.getIntelliJHaskellDirectory, "repl.ghci")
+
     if (!ghciOptionsFile.exists()) {
       ghciOptionsFile.createNewFile()
       ghciOptionsFile.setWritable(true, true)
@@ -379,7 +369,7 @@ abstract class StackRepl(project: Project, componentInfo: Option[StackComponentI
     HaskellNotificationGroup.logInfoEvent(project, s"[$getComponentName] $message")
   }
 
-  private def removePrompt(output: mutable.Seq[String]): mutable.Seq[String] = {
+  private def removePrompt(output: Seq[String]): Seq[String] = {
     if (output.lastOption.exists(_.trim == EndOfOutputIndicator)) {
       output.init
     } else {
@@ -387,8 +377,9 @@ abstract class StackRepl(project: Project, componentInfo: Option[StackComponentI
     }
   }
 
-  private def convertOutputToOneMessagePerLine(project: Project, output: mutable.Seq[String]) = {
-    StringUtil.joinIndentedLines(project, output.filterNot(_.isEmpty).toSeq)
+  // Loading file in GHCi with `set +c` produces duplicate error/warning messages
+  private def convertOutputToOneMessagePerLine(project: Project, output: Seq[String]): Seq[String] = {
+    StringUtil.joinIndentedLines(project, output.filterNot(_.isEmpty)).distinct
   }
 }
 

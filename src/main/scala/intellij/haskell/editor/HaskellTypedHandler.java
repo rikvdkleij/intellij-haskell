@@ -18,7 +18,6 @@ package intellij.haskell.editor;
 
 import com.intellij.codeInsight.CodeInsightSettings;
 import com.intellij.codeInsight.editorActions.TypedHandlerDelegate;
-import com.intellij.openapi.application.TransactionGuard;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiDocumentManager;
@@ -41,7 +40,7 @@ public class HaskellTypedHandler extends TypedHandlerDelegate {
             return Result.CONTINUE;
         }
 
-        TransactionGuard.getInstance().submitTransactionAndWait(() -> insertMatchedEndComment(project, editor, psiFile, c));
+        insertMatchedEndComment(project, editor, psiFile, c);
         return Result.CONTINUE;
     }
 

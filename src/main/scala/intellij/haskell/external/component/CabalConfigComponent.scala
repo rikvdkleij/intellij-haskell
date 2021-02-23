@@ -74,7 +74,7 @@ object CabalConfigComponent {
     val url = getClass.getResource("/cabal/cabal.config")
     val source = Source.fromURL(url)
     try {
-      source.getLines.flatMap(parseCabalConfigLine).toList
+      source.getLines().flatMap(parseCabalConfigLine).toList
     } finally {
       source.close()
     }
@@ -87,7 +87,7 @@ object CabalConfigComponent {
   private def readCabalConfigFile(project: Project, cabalConfigFile: File): Seq[String] = {
     val bufferedSource = Source.fromFile(cabalConfigFile)
     try {
-      bufferedSource.getLines.flatMap(parseCabalConfigLine).toList
+      bufferedSource.getLines().flatMap(parseCabalConfigLine).toList
     } catch {
       case _: Exception => Seq()
     } finally {

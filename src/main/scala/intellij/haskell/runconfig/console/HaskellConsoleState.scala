@@ -25,7 +25,7 @@ class HaskellConsoleState(val configuration: HaskellConsoleConfiguration, val en
   protected def startProcess: ProcessHandler = {
     val project = configuration.getProject
 
-    HaskellSdkType.getStackBinaryPath(project) match {
+    HaskellSdkType.getStackPath(project) match {
       case Some(stackPath) =>
         val stackTarget = configuration.getStackTarget
         val ghcVersion = HaskellComponentsManager.getGhcVersion(project)
@@ -42,6 +42,7 @@ class HaskellConsoleState(val configuration: HaskellConsoleConfiguration, val en
         val commandLine = new GeneralCommandLine(stackPath)
           .withParameters(configuration.replCommand, "--ghci-options", s"-ghci-script ${ghciScript.getAbsolutePath}")
           .withWorkDirectory(project.getBasePath)
+          .withEnvironment(GlobalInfo.pathVariables)
 
         if (stackTarget.nonEmpty) {
           commandLine.addParameter(stackTarget)

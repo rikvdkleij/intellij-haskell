@@ -1,5 +1,5 @@
 /*
- * Copyright 2014-2018 Rik van der Kleij
+ * Copyright 2014-2020 Rik van der Kleij
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -22,7 +22,6 @@ import com.intellij.lexer.Lexer
 import com.intellij.openapi.project.Project
 import com.intellij.psi._
 import com.intellij.psi.tree.{IFileElementType, TokenSet}
-import intellij.haskell.HaskellParserDefinition.{Comments, StringLiterals, WhiteSpaces}
 import intellij.haskell.parser.HaskellParser
 import intellij.haskell.psi.HaskellTypes
 import intellij.haskell.psi.HaskellTypes._
@@ -75,17 +74,17 @@ class HaskellParserDefinition extends ParserDefinition {
 
   @NotNull
   override def getWhitespaceTokens: TokenSet = {
-    WhiteSpaces
+    HaskellParserDefinition.WhiteSpaces
   }
 
   @NotNull
   def getCommentTokens: TokenSet = {
-    Comments
+    HaskellParserDefinition.Comments
   }
 
   @NotNull
   def getStringLiteralElements: TokenSet = {
-    StringLiterals
+    HaskellParserDefinition.StringLiterals
   }
 
   @NotNull

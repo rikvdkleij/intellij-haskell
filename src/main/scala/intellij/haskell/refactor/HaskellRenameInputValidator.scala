@@ -31,7 +31,7 @@ class HaskellRenameInputValidator extends RenameInputValidator {
         case _: HaskellVarsym => HaskellElementFactory.createVarsym(project, newName).isDefined
         case _: HaskellConid => HaskellPsiUtil.findModIdElement(psiElement).isDefined || HaskellElementFactory.createConid(project, newName).isDefined
         case _: HaskellConsym => HaskellElementFactory.createConsym(project, newName).isDefined
-        case _: HaskellFile => HaskellElementFactory.createConid(project, HaskellFileUtil.removeFileExtension(newName)).isDefined && newName.endsWith("." + HaskellFileType.Instance.getDefaultExtension)
+        case _: HaskellFile => HaskellElementFactory.createConid(project, HaskellFileUtil.removeFileExtension(newName)).isDefined && newName.endsWith("." + HaskellFileType.INSTANCE.getDefaultExtension)
         case _ => false
       }
     }

@@ -1,5 +1,5 @@
 /*
- * Copyright 2014-2019 Rik van der Kleij
+ * Copyright 2014-2020 Rik van der Kleij
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,6 +19,7 @@ package intellij.haskell.external.component
 import com.intellij.codeInsight.documentation.DocumentationManager
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.psi.PsiFile
+import intellij.haskell.annotator.HaskellAnnotator
 import intellij.haskell.external.execution.{CompilationResult, HaskellCompilationResultHelper}
 import intellij.haskell.external.repl.ProjectStackRepl.Loaded
 import intellij.haskell.external.repl._
@@ -37,7 +38,7 @@ private[component] object LoadComponent {
     }.contains(true)
   }
 
-  def load(psiFile: PsiFile, fileChanged: Boolean): Option[CompilationResult] = {
+  def load(psiFile: PsiFile, fileModified: Boolean): Option[CompilationResult] = {
     val project = psiFile.getProject
 
     StackReplsManager.getProjectRepl(psiFile).flatMap(projectRepl => {
@@ -49,29 +50,37 @@ private[component] object LoadComponent {
         }
       }
 
-      ProjectLibraryFileWatcher.checkLibraryBuild(project, projectRepl.stackComponentInfo)
+      ProjectLibraryBuilder.checkLibraryBuild(project, projectRepl.projectReplTargets)
+      val moduleName = HaskellPsiUtil.findModuleName(psiFile)
 
-      projectRepl.load(psiFile, fileChanged, mustBeByteCode = false) match {
+      {
+        if (HaskellAnnotator.getNotLoadedFiles(project).contains(psiFile)) {
+          HaskellAnnotator.removeNotLoadedFile(psiFile)
+          projectRepl.load(psiFile, fileModified, moduleName, forceNoReload = true)
+        } else {
+          projectRepl.load(psiFile, fileModified, moduleName)
+        }
+      } match {
         case Some((loadOutput, loadFailed)) =>
           ApplicationManager.getApplication.executeOnPooledThread(ScalaUtil.runnable {
 
-            TypeInfoComponent.invalidate(psiFile)
-            DefinitionLocationComponent.invalidate(psiFile)
+            DefinitionLocationComponent.invalidate(project)
             HaskellModuleNameIndex.invalidateNotFoundEntries(project)
+            TypeInfoComponent.invalidateAll(project)
+            NameInfoComponent.invalidateProjectInfo(project)
 
-            // Have to refresh because import declarations can be changed
-            FileModuleIdentifiers.refresh(psiFile)
-
-            val moduleName = HaskellPsiUtil.findModuleName(psiFile)
             if (!loadFailed) {
-              NameInfoComponent.invalidate(psiFile)
               moduleName.foreach(mn => {
-                BrowseModuleComponent.invalidateModuleName(project, mn)
+                NameInfoComponent.invalidateNotFound(project)
+                DefinitionLocationComponent.invalidateNotFound(project)
+                BrowseModuleComponent.invalidateModuleNames(project, Seq(mn))
                 FileModuleIdentifiers.invalidate(mn)
               })
 
             }
-            DocumentationManager.getInstance(project).updateToolwindowContext()
+            if (!project.isDisposed) {
+              DocumentationManager.getInstance(project).updateToolwindowContext()
+            }
           })
           Some(HaskellCompilationResultHelper.createCompilationResult(psiFile, loadOutput.stderrLines, loadFailed))
         case _ => None

@@ -1,5 +1,5 @@
 /*
- * Copyright 2014-2019 Rik van der Kleij
+ * Copyright 2014-2020 Rik van der Kleij
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -32,6 +32,7 @@ import com.intellij.openapi.wm.ex.StatusBarEx
 import com.intellij.psi.{PsiElement, PsiFile}
 import com.intellij.ui.LightweightHint
 import com.intellij.ui.awt.RelativePoint
+import com.intellij.util.ui.UIUtil.FontSize
 import com.intellij.util.ui.{PositionTracker, UIUtil}
 import intellij.haskell.HaskellFile
 import javax.swing.Icon
@@ -85,7 +86,7 @@ object HaskellEditorUtil {
 
   def showHint(editor: Editor, text: String, sticky: Boolean = false): Unit = {
     val label = HintUtil.createInformationLabel(text)
-    label.setFont(UIUtil.getLabelFont)
+    label.setFont(UIUtil.getLabelFont(FontSize.NORMAL))
 
     val hint = new LightweightHint(label)
     val hintManager = HintManagerImpl.getInstanceImpl

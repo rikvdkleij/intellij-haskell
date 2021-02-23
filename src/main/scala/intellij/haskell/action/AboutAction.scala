@@ -1,5 +1,5 @@
 /*
- * Copyright 2014-2019 Rik van der Kleij
+ * Copyright 2014-2020 Rik van der Kleij
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -46,7 +46,7 @@ class AboutAction extends AnAction {
     messages.+=(s"${boldToolName("GHC")}: " + HaskellComponentsManager.getGhcVersion(project).map(_.prettyString).getOrElse("-") + "\n")
     messages.+=(s"${boldToolName("HLint")}: " + HLintComponent.versionInfo(project))
     messages.+=(s"${boldToolName("Hoogle")}: " + HoogleComponent.versionInfo(project))
-    messages.+=(s"${boldToolName("Hindent")}: " + HindentReformatAction.versionInfo(project))
+    messages.+=(s"${boldToolName("Ormolu")}: " + OrmoluReformatAction.versionInfo(project))
     messages.+=(s"${boldToolName("Stylish-haskell")}: " + StylishHaskellReformatAction.versionInfo(project))
     Messages.showInfoMessage(project, messages.mkString("\n"), "About Haskell Project")
   }

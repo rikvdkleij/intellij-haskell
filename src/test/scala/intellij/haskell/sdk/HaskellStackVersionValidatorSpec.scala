@@ -1,8 +1,8 @@
 package intellij.haskell.sdk
 
-import org.scalatest._
+import org.scalatest.flatspec.AnyFlatSpec
 
-class HaskellStackVersionValidatorSpec extends FlatSpec {
+class HaskellStackVersionValidatorSpec extends AnyFlatSpec {
 
   import intellij.haskell.sdk.HaskellStackVersionValidator.validate
 

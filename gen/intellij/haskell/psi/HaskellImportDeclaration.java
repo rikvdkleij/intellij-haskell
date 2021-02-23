@@ -1,28 +1,32 @@
 // This is a generated file. Not intended for manual editing.
 package intellij.haskell.psi;
 
-import java.util.List;
-import org.jetbrains.annotations.*;
-import com.intellij.psi.PsiElement;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 import scala.Option;
 
-public interface HaskellImportDeclaration extends HaskellTopDeclaration {
+import java.util.List;
 
-  @Nullable
-  HaskellImportPackageName getImportPackageName();
+public interface HaskellImportDeclaration extends HaskellCompositeElement {
 
-  @Nullable
-  HaskellImportQualified getImportQualified();
+    @Nullable
+    HaskellImportPackageName getImportPackageName();
 
-  @Nullable
-  HaskellImportQualifiedAs getImportQualifiedAs();
+    @Nullable
+    HaskellImportQualified getImportQualified();
 
-  @Nullable
-  HaskellImportSpec getImportSpec();
+    @Nullable
+    HaskellImportQualifiedAs getImportQualifiedAs();
 
-  @Nullable
-  HaskellModid getModid();
+    @Nullable
+    HaskellImportSpec getImportSpec();
 
-  Option<String> getModuleName();
+    @Nullable
+    HaskellModid getModid();
+
+    @NotNull
+    List<HaskellPragma> getPragmaList();
+
+    Option<String> getModuleName();
 
 }

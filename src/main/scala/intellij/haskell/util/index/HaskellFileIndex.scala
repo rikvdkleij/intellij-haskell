@@ -28,7 +28,7 @@ object HaskellFileIndex {
   }
 
   private def findFiles(project: Project, searchScope: GlobalSearchScope): Iterable[VirtualFile] = {
-    FileTypeIndex.getFiles(HaskellFileType.Instance, searchScope).asScala
+    FileTypeIndex.getFiles(HaskellFileType.INSTANCE, searchScope).asScala
   }
 
 }

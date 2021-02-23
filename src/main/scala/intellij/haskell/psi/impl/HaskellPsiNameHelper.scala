@@ -8,14 +8,16 @@ import com.intellij.psi.PsiNameHelper
 
 object HaskellPsiNameHelper {
   def getInstance: PsiNameHelper = new HaskellPsiNameHelper {
-    override protected def getLanguageLevel: LanguageLevel = return LanguageLevel.HIGHEST
+    override protected def getLanguageLevel: LanguageLevel = {
+      LanguageLevel.HIGHEST
+    }
   }
 }
 
 class HaskellPsiNameHelper private() extends PsiNameHelper {
-  final private var myLanguageLevelExtension: LanguageLevelProjectExtension = null
+  final private var myLanguageLevelExtension: LanguageLevelProjectExtension = _
 
-  def this(project: Project) {
+  def this(project: Project) = {
     this()
     myLanguageLevelExtension = LanguageLevelProjectExtension.getInstance(project)
   }
@@ -31,7 +33,7 @@ class HaskellPsiNameHelper private() extends PsiNameHelper {
   override def isQualifiedName(text: String): Boolean = {
     if (text == null) return false
 
-    if (text.contains(".") && text.size > 2) {
+    if (text.contains(".") && text.length > 2) {
       true
     } else {
       false

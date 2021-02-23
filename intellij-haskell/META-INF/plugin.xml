@@ -1,18 +1,194 @@
 <idea-plugin>
     <id>intellij.haskell</id>
     <name>IntelliJ-Haskell</name>
-    <version>1.0.0-beta51</version>
+    <version>1.0.0-beta85</version>
     <vendor email="rikvdkleij@gmail.com">Rik van der Kleij</vendor>
 
     <description><![CDATA[
-        Haskell language support.
-        This plugin depends mainly on Stack.
-        It can create new Stack projects and import existing Stack projects.
+        <p> Haskell language support.</p>
+        <ul>
+            <li>This plugin depends mainly on Stack.</li>
+            <li>It can create new Stack projects and import existing Stack projects.</li>
+            <li>Please <a href="https://github.com/rikvdkleij/intellij-haskell/blob/master/README.md">README</a></li>
+        </ul>
 
-        Please <a href="https://github.com/rikvdkleij/intellij-haskell/blob/master/README.md">README</a>
+        <p>
+            <a href="https://www.paypal.com/cgi-bin/webscr?cmd=_donations&business=H6QKQKFRKJBF2&item_name=IntelliJ-Haskell&currency_code=EUR">
+                <img src="https://www.paypalobjects.com/en_US/i/btn/btn_donateCC_LG.gif">
+            </a>
+        </p>
     ]]></description>
 
     <change-notes><![CDATA[
+        <p>1.0.0-beta85</p>
+           <ul>
+            <li>Various improvements and fixes</li>
+            <li>Improved applying HLint suggestions</li>
+            <li>Making command line processes charset aware by @sgt (#623)</li>
+            <li>Path to cache directory is configurable in Haskell Settings</li>
+           </ul>
+        <p>1.0.0-beta84</p>
+           <ul>
+            <li>Improved parser</li>
+            <li>Improved support for top-level case splitting (#610)</li>
+            <li>Support url as resolver in stack.yaml (#599 and #620)</li>
+           </ul>
+        <p>1.0.0-beta83</p>
+           <ul>
+            <li>Show warning when library source code can't be downloaded</li>
+           </ul>
+        <p>1.0.0-beta82</p>
+           <ul>
+            <li>Indent after enter support (#156 and #187)</li>
+            <li>Fix QuasiQuotes parsing issue</li>
+        </ul>
+        <p>1.0.0-beta81</p>
+           <ul>
+            <li>Improved support for top-level case splitting (#609)</li>
+        </ul>
+        <p>1.0.0-beta80</p>
+           <ul>
+            <li>Improved support for top-level case splitting (#609, #611)</li>
+            <li>Fix parser issue.</li>
+            <li>One REPL per non-library components to prevent conflicts (#608)</li>
+        </ul>
+        <p>1.0.0-beta79</p>
+        <ul>
+            <li>Various improvements and fixes</li>
+            <li>Case split support on top-level (#581)</li>
+            <li>Fix creating new project without already defined Haskell Stack SDK (#605)</li>
+            <li>Check if module name is a valid package name (#567)</li>
+            <li>Use ANSI escape sequence processor in the initial tool setup progress bar by @ForNeVeR (#585)</li>
+            <li>New high resolution Haskell icons by @Sineaggi</li>
+            <li>Default REPL GHC options set in Haskell Settings</li>
+        </ul>
+        <p>1.0.0-beta78</p>
+        <ul>
+            <li>Reverted the change which removed the Haskell SDK.</li>
+            <li>Improvements and fixes in (smart) code completion.</li>
+        </ul>
+        <p>1.0.0-beta77</p>
+        <ul>
+            <li>Better support for stack executable on the PATH</li>
+        </ul>
+        <p>1.0.0-beta76</p>
+        <ul>
+            <li>Various improvements and fixes</li>
+            <li>Removed the Haskell SDK which was containing the location of the stack binary.
+               <br> That is replaced by using the stack binary of the PATH.</li>
+            <li>One REPL per component target is replaced by a solution of one REPL per stanza type to get faster feedback of GHC. <br>
+             So make sure that all component targets of one stanza type do have similar settings as default language extensions (so without conflicts)</li>
+        </ul>
+        <p>1.0.0-beta75</p>
+        <ul>
+            <li>Various improvements and fixes</li>
+            <li>Update Haskell tools to LTS-16 which includes Ormolu 0.1.x and HLint version 3.x</li>
+        </ul>
+        <p>1.0.0-beta74</p>
+        <ul>
+            <li>Various improvements and fixes</li>
+        </ul>
+        <p>1.0.0-beta73</p>
+        <ul>
+            <li>Fix collapse file header setting</li>
+        </ul>
+        <p>1.0.0-beta72</p>
+        <ul>
+            <li>Various improvements and fixes</li>
+            <li>Fixed some deprecation warnings (also by @i-walker)</li>
+            <li>Added support for folding top-level expressions</li>
+            <li>Added Haskell setting to set default code folding per type</li>
+        </ul>
+        <p>1.0.0-beta71</p>
+        <ul>
+            <li>Some optimizations in REPL loads and background builds</li>
+        </ul>
+        <p>1.0.0-beta70</p>
+        <ul>
+            <li>Various improvements and fixes</li>
+            <li>Added support for folding language extensions and imports</li>
+        </ul>
+        <p>1.0.0-beta69</p>
+        <ul>
+            <li>Various improvements and fixes</li>
+            <li>Added Stylish Haskell to custom tools setting</li>
+        </ul>
+        <p>1.0.0-beta68</p>
+        <ul>
+            <li>Improved logging for installing Haskell tools</li>
+        </ul>
+        <p>1.0.0-beta67</p>
+        <ul>
+            <li>Various improvements and fixes</li>
+        </ul>
+        <p>1.0.0-beta66</p>
+        <ul>
+            <li>Various improvements and fixes</li>
+            <li>Support IntelliJ 2020.1</li>
+        </ul>
+        <p>1.0.0-beta65</p>
+        <ul>
+            <li>Various improvements and fixes</li>
+            <li>Upgrade Haskell tools to LTS-15</li>
+            <li>Replace Hindent by Ormolu</li>
+        </ul>
+        <p>1.0.0-beta64</p>
+        <ul>
+            <li>Various improvements and fixes</li>
+            <li>Workaround for base-4.13.0.0 not on Hackage</li>
+        </ul>
+        <p>1.0.0-beta63</p>
+        <ul>
+            <li>Fix IDE freeze issue</li>
+        </ul>
+        <p>1.0.0-beta62</p>
+        <ul>
+            <li>Various (performance) improvements and fixes</li>
+        </ul>
+        <p>1.0.0-beta61</p>
+        <ul>
+            <li>Fix IDE freeze issue</li>
+        </ul>
+        <p>1.0.0-beta59</p>
+        <ul>
+            <li>Various (performance) improvements and fixes</li>
+        </ul>
+
+        <p>1.0.0-beta58</p>
+        <ul>
+            <li>Various (performance) improvements and fixes</li>
+            <li>Initial support for reformatting by Ormolu by replacing custom Hindent and Stylish-Haskell paths by Ormolu path</li>
+        </ul>
+        <p>1.0.0-beta57</p>
+        <ul>
+            <li>Various improvements and fixes</li>
+            <li>Support to cancel the process which builds the Haskell tools</li>
+            <li>Support QuasiQuote injection (@ice1000)</li>
+            <li>Update Haskell tools to LTS-14</li>
+        </ul>
+        <p>1.0.0-beta55</p>
+        <ul>
+            <li>Add setting to add extra Stack arguments (#468)</li>
+        </ul>
+        <p>1.0.0-beta54</p>
+        <ul>
+            <li>Fix issue with environment of REPL process (#461)</li>
+        </ul>
+        <p>1.0.0-beta53</p>
+        <ul>
+            <li>Make `system-ghc` and tool paths configurable (#454 by @friedbrice)</li>
+        </ul>
+        <p>1.0.0-beta52</p>
+        <ul>
+            <li>Various improvements and fixes</li>
+            <li>Improve Cabal parser (#294 and #456)</li>
+            <li>Fix Haskell code style settings (#449)</li>
+            <li>Improved managing global plugin directories (#444)</li>
+            <li>Save file without removing trailing spaces (#459)</li>
+            <li>Improved navigation by Hoogle</li>
+            <li>Prevent duplicate GHC messages in Haskell Problems View (#460)</li>
+        </ul>
+
         <p>1.0.0-beta51</p>
         <ul>
             <li>Build library code always completely in the background. Use Haskell Problems View for project messages overview. Fix issue #443.</li>
@@ -250,11 +426,27 @@
     </change-notes>
 
     <!-- please see http://confluence.jetbrains.com/display/IDEADEV/Build+Number+Ranges for description -->
-    <idea-version since-build="142.0"/>
+    <idea-version since-build="201.6668.113"/>
 
     <extensions defaultExtensionNs="com.intellij">
-        <!-- File-type Factory -->
-        <fileTypeFactory implementation="intellij.haskell.HaskellLanguageFileTypeFactory"/>
+        <!-- File types -->
+        <fileType name="Alex"
+                  language="Alex"
+                  implementationClass="intellij.haskell.alex.AlexFileType"
+                  extensions="x"
+                  fieldName="INSTANCE"/>
+
+        <fileType name="Cabal"
+                  language="Cabal"
+                  implementationClass="intellij.haskell.cabal.CabalFileType"
+                  extensions="cabal"
+                  fieldName="INSTANCE"/>
+
+        <fileType name="Haskell"
+                  language="Haskell"
+                  implementationClass="intellij.haskell.HaskellFileType"
+                  extensions="hs"
+                  fieldName="INSTANCE"/>
 
         <!-- Parser -->
         <lang.parserDefinition language="Haskell" implementationClass="intellij.haskell.HaskellParserDefinition"/>
@@ -284,8 +476,19 @@
                                  implementationClass="intellij.haskell.alex.lang.psi.impl.AlexElementManipulator"/>
         <lang.elementManipulator forClass="intellij.haskell.psi.impl.HaskellStringLiteralElementImpl"
                                  implementationClass="intellij.haskell.psi.impl.HaskellStringLiteralManipulator"/>
+        <lang.elementManipulator forClass="intellij.haskell.psi.impl.HaskellQuasiQuoteElementImpl"
+                                 implementationClass="intellij.haskell.psi.impl.HaskellQuasiQuoteManipulator"/>
         <lang.namesValidator language="Haskell" implementationClass="intellij.haskell.refactor.HaskellNamesValidator"/>
         <languageInjector implementation="intellij.haskell.alex.lang.psi.AlexHaskellInjector"/>
+
+        <lang.elementManipulator forClass="intellij.haskell.cabal.lang.psi.CabalNamedElement"
+                                 implementationClass="intellij.haskell.cabal.lang.psi.CabalNamedElementManipulator"/>
+
+        <!-- Folding -->
+        <lang.foldingBuilder language="Haskell"
+                             implementationClass="intellij.haskell.editor.HaskellFoldingBuilder"/>
+        <applicationService serviceImplementation="intellij.haskell.editor.HaskellFoldingSettings"/>
+        <codeFoldingOptionsProvider instance="intellij.haskell.editor.HaskellCodeFoldingOptionsProvider"/>
 
         <!-- Commenter -->
         <lang.commenter language="Haskell" implementationClass="intellij.haskell.editor.HaskellCommenter"/>
@@ -340,13 +543,15 @@
         <liveTemplateContext implementation="intellij.haskell.editor.HaskellTemplateContextType"/>
         <liveTemplateContext implementation="intellij.haskell.editor.HaskellPragmaTemplateContextType"/>
         <liveTemplateContext implementation="intellij.haskell.editor.HaskellGlobalDefinitionTemplateContextType"/>
-        <defaultLiveTemplatesProvider implementation="intellij.haskell.editor.HaskellLiveTemplateProvider"/>
-
+        <defaultLiveTemplates file="liveTemplates/Haskell"/>
         <!-- Handler -->
         <typedHandler implementation="intellij.haskell.editor.HaskellTypedHandler" id="HaskellFile"/>
-        <extendWordSelectionHandler implementation="intellij.haskell.editor.HaskellExtendWordSelectioner"/>
+        <extendWordSelectionHandler implementation="intellij.haskell.editor.HaskellExtendWordSelectionHandler"/>
         <enterHandlerDelegate implementation="intellij.haskell.editor.EnterInHaddockHandler"
                               id="EnterInHaddockHandler"/>
+        <enterHandlerDelegate implementation="intellij.haskell.editor.IndentAfterEnterHandler"
+                              id="IndentAfterEnterHandler"/>
+
         <quoteHandler fileType="Haskell" className="intellij.haskell.editor.HaskellQuoteHandler"/>
 
         <!-- Code Style -->
@@ -375,11 +580,17 @@
             <className>intellij.haskell.intention.RemoveParensIntention</className>
             <category>Haskell</category>
         </intentionAction>
+        <intentionAction>
+            <className>intellij.haskell.intention.CaseSplitIntention</className>
+            <category>Haskell</category>
+        </intentionAction>
+
 
         <!-- Stack -->
         <sdkType implementation="intellij.haskell.sdk.HaskellSdkType"/>
         <projectImportProvider implementation="intellij.haskell.module.StackProjectImportProvider"/>
         <projectImportBuilder implementation="intellij.haskell.module.StackProjectImportBuilder"/>
+        <projectOpenProcessor implementation="intellij.haskell.module.StackProjectOpenProcessor"/>
 
         <!-- Index -->
         <fileBasedIndex implementation="intellij.haskell.util.index.HaskellModuleNameIndex"/>
@@ -396,9 +607,9 @@
 
         <!-- Configuration -->
         <applicationConfigurable
-            groupId="language"
-            id="Haskell.Configurable"
-            instance="intellij.haskell.settings.HaskellConfigurable"/>
+                groupId="language"
+                id="Haskell.Configurable"
+                instance="intellij.haskell.settings.HaskellConfigurable"/>
         <applicationService serviceImplementation="intellij.haskell.settings.HaskellSettingsPersistentStateComponent"/>
         <framework.type implementation="intellij.haskell.framework.HaskellFrameworkType"/>
         <lang.importOptimizer language="Haskell" implementationClass="intellij.haskell.editor.HaskellImportOptimizer"/>
@@ -417,7 +628,7 @@
         <!-- Notification -->
         <editorNotificationProvider
                 implementation="intellij.haskell.notification.ConfigFileWatcherNotificationProvider"/>
-        <editorNotificationProvider implementation="intellij.haskell.notification.SetupHaskellSdkNotificationProvider"/>
+        <projectSdkSetupValidator implementation="intellij.haskell.notification.HaskellProjectSdkSetupValidator"/>
 
         <!-- Mover -->
         <!--<statementUpDownMover implementation="intellij.haskell.editor.HaskellStatementMover"/>-->
@@ -432,6 +643,10 @@
         <applicationService serviceInterface="com.intellij.codeInsight.TargetElementUtil"
                             serviceImplementation="intellij.haskell.navigation.HaskellTargetElementUtil"
                             overrides="true"/>
+
+        <targetElementEvaluator language="Haskell"
+                                implementationClass="intellij.haskell.navigation.HaskellTargetElementUtil2"/>
+
     </extensions>
 
     <application-components>
@@ -548,15 +763,15 @@
                popup="true">
 
             <action id="Haskell.ReformatCode"
-                    class="intellij.haskell.action.HindentReformatAction"
-                    text="Reformat code by Hindent"
-                    description="Reformat code by Hindent">
+                    class="intellij.haskell.action.OrmoluReformatAction"
+                    text="Reformat Code by Ormolu"
+                    description="Reformat code by Ormolu">
                 <keyboard-shortcut first-keystroke="ctrl alt SEMICOLON" keymap="$default"/>
             </action>
 
             <action id="Haskell.StylishHaskellFormat"
                     class="intellij.haskell.action.StylishHaskellReformatAction"
-                    text="Reformat code by Stylish-Haskell"
+                    text="Reformat Code by Stylish-Haskell"
                     description="Reformat current file by Stylish-Haskell">
                 <keyboard-shortcut first-keystroke="ctrl alt u" keymap="$default"/>
             </action>
@@ -598,4 +813,5 @@
             </action>
         </group>
     </actions>
+    <depends>com.intellij.modules.java</depends>
 </idea-plugin>
