@@ -13,25 +13,21 @@ import scala.collection.immutable.Seq;
 
 import java.util.List;
 
-public class HaskellTypeDeclarationImpl extends HaskellCompositeElementImpl implements HaskellTypeDeclaration {
+public class HaskellTypeDeclarationImpl extends HaskellTopDeclarationImpl implements HaskellTypeDeclaration {
 
     public HaskellTypeDeclarationImpl(ASTNode node) {
         super(node);
     }
 
+    @Override
     public void accept(@NotNull HaskellVisitor visitor) {
         visitor.visitTypeDeclaration(this);
     }
 
+    @Override
     public void accept(@NotNull PsiElementVisitor visitor) {
         if (visitor instanceof HaskellVisitor) accept((HaskellVisitor) visitor);
         else super.accept(visitor);
-    }
-
-    @Override
-    @Nullable
-    public HaskellExpression getExpression() {
-        return PsiTreeUtil.getChildOfType(this, HaskellExpression.class);
     }
 
     @Override
@@ -62,12 +58,6 @@ public class HaskellTypeDeclarationImpl extends HaskellCompositeElementImpl impl
     @Nullable
     public HaskellTtype getTtype() {
         return PsiTreeUtil.getChildOfType(this, HaskellTtype.class);
-    }
-
-    @Override
-    @Nullable
-    public HaskellTypeSignature getTypeSignature() {
-        return PsiTreeUtil.getChildOfType(this, HaskellTypeSignature.class);
     }
 
     @Override

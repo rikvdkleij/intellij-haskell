@@ -13,16 +13,18 @@ import scala.collection.immutable.Seq;
 
 import java.util.List;
 
-public class HaskellNewtypeDeclarationImpl extends HaskellCompositeElementImpl implements HaskellNewtypeDeclaration {
+public class HaskellNewtypeDeclarationImpl extends HaskellTopDeclarationImpl implements HaskellNewtypeDeclaration {
 
     public HaskellNewtypeDeclarationImpl(ASTNode node) {
         super(node);
     }
 
+    @Override
     public void accept(@NotNull HaskellVisitor visitor) {
         visitor.visitNewtypeDeclaration(this);
     }
 
+    @Override
     public void accept(@NotNull PsiElementVisitor visitor) {
         if (visitor instanceof HaskellVisitor) accept((HaskellVisitor) visitor);
         else super.accept(visitor);

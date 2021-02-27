@@ -7,6 +7,7 @@ import com.intellij.lang.PsiBuilder;
 import com.intellij.lang.PsiBuilder.Marker;
 import com.intellij.lang.PsiParser;
 import com.intellij.psi.tree.IElementType;
+import com.intellij.psi.tree.TokenSet;
 
 import static intellij.haskell.psi.HaskellParserUtil.*;
 import static intellij.haskell.psi.HaskellTypes.*;
@@ -21,7 +22,7 @@ public class HaskellParser implements PsiParser, LightPsiParser {
 
     public void parseLight(IElementType t, PsiBuilder b) {
         boolean r;
-        b = adapt_builder_(t, b, this, null);
+        b = adapt_builder_(t, b, this, EXTENDS_SETS_);
         Marker m = enter_section_(b, 0, _COLLAPSE_, null);
         r = parse_root_(t, b);
         exit_section_(b, 0, m, t, r, true, TRUE_CONDITION);
@@ -33,6 +34,65 @@ public class HaskellParser implements PsiParser, LightPsiParser {
 
     static boolean parse_root_(IElementType t, PsiBuilder b, int l) {
         return program(b, l + 1);
+    }
+
+    public static final TokenSet[] EXTENDS_SETS_ = new TokenSet[]{
+            create_token_set_(HS_APPLICATION_EXPRESSION, HS_ATOM_EXPRESSION, HS_BRACKET_EXPRESSION, HS_CASE_OF_EXPRESSION,
+                    HS_DO_NOTATION_EXPRESSION, HS_EXPRESSION, HS_IF_EXPRESSION, HS_LET_ABSTRACTION,
+                    HS_PAREN_EXPRESSION),
+            create_token_set_(HS_CDECL_DATA_DECLARATION, HS_CLASS_DECLARATION, HS_DATA_DECLARATION, HS_DEFAULT_DECLARATION,
+                    HS_DERIVING_DECLARATION, HS_FIXITY_DECLARATION, HS_FOREIGN_DECLARATION, HS_IMPLEMENTATION_DECLARATION,
+                    HS_IMPORT_DECLARATION, HS_INSTANCE_DECLARATION, HS_MODULE_DECLARATION, HS_NEWTYPE_DECLARATION,
+                    HS_TOP_DECLARATION, HS_TYPE_DECLARATION, HS_TYPE_FAMILY_DECLARATION, HS_TYPE_INSTANCE_DECLARATION),
+    };
+
+    /* ********************************************************** */
+    // expression atom+
+    public static boolean application_expression(PsiBuilder b, int l) {
+        if (!recursion_guard_(b, l, "application_expression")) return false;
+        boolean r;
+        Marker m = enter_section_(b, l, _COLLAPSE_, HS_APPLICATION_EXPRESSION, "<application expression>");
+        r = expression(b, l + 1);
+        r = r && application_expression_1(b, l + 1);
+        exit_section_(b, l, m, r, false, null);
+        return r;
+    }
+
+    // atom+
+    private static boolean application_expression_1(PsiBuilder b, int l) {
+        if (!recursion_guard_(b, l, "application_expression_1")) return false;
+        boolean r;
+        Marker m = enter_section_(b);
+        r = atom(b, l + 1);
+        while (r) {
+            int c = current_position_(b);
+            if (!atom(b, l + 1)) break;
+            if (!empty_element_parsed_guard_(b, "application_expression_1", c)) break;
+        }
+        exit_section_(b, m, null, r);
+        return r;
+    }
+
+    /* ********************************************************** */
+    // atom_expression | bracket_expression | paren_expression
+    static boolean atom(PsiBuilder b, int l) {
+        if (!recursion_guard_(b, l, "atom")) return false;
+        boolean r;
+        r = atom_expression(b, l + 1);
+        if (!r) r = bracket_expression(b, l + 1);
+        if (!r) r = paren_expression(b, l + 1);
+        return r;
+    }
+
+    /* ********************************************************** */
+    // general_id
+    public static boolean atom_expression(PsiBuilder b, int l) {
+        if (!recursion_guard_(b, l, "atom_expression")) return false;
+        boolean r;
+        Marker m = enter_section_(b, l, _NONE_, HS_ATOM_EXPRESSION, "<atom expression>");
+        r = general_id(b, l + 1);
+        exit_section_(b, l, m, r, false, null);
+        return r;
     }
 
     /* ********************************************************** */
@@ -649,6 +709,20 @@ public class HaskellParser implements PsiParser, LightPsiParser {
     }
 
     /* ********************************************************** */
+    // LEFT_BRACKET expression RIGHT_BRACKET
+    public static boolean bracket_expression(PsiBuilder b, int l) {
+        if (!recursion_guard_(b, l, "bracket_expression")) return false;
+        if (!nextTokenIs(b, HS_LEFT_BRACKET)) return false;
+        boolean r;
+        Marker m = enter_section_(b);
+        r = consumeToken(b, HS_LEFT_BRACKET);
+        r = r && expression(b, l + 1);
+        r = r && consumeToken(b, HS_RIGHT_BRACKET);
+        exit_section_(b, m, HS_BRACKET_EXPRESSION, r);
+        return r;
+    }
+
+    /* ********************************************************** */
     // (atype | TILDE | UNDERSCORE)+
     static boolean btype(PsiBuilder b, int l) {
         if (!recursion_guard_(b, l, "btype")) return false;
@@ -672,6 +746,75 @@ public class HaskellParser implements PsiParser, LightPsiParser {
         if (!r) r = consumeToken(b, HS_TILDE);
         if (!r) r = consumeToken(b, HS_UNDERSCORE);
         return r;
+    }
+
+    /* ********************************************************** */
+    // expression RIGHT_ARROW expression
+    public static boolean case_clause(PsiBuilder b, int l) {
+        if (!recursion_guard_(b, l, "case_clause")) return false;
+        boolean r, p;
+        Marker m = enter_section_(b, l, _NONE_, HS_CASE_CLAUSE, "<case clause>");
+        r = expression(b, l + 1);
+        r = r && consumeToken(b, HS_RIGHT_ARROW);
+        p = r; // pin = 2
+        r = r && expression(b, l + 1);
+        exit_section_(b, l, m, r, p, null);
+        return r || p;
+    }
+
+    /* ********************************************************** */
+    // case_clause SEMICOLON
+    static boolean case_definition(PsiBuilder b, int l) {
+        if (!recursion_guard_(b, l, "case_definition")) return false;
+        boolean r;
+        Marker m = enter_section_(b);
+        r = case_clause(b, l + 1);
+        r = r && consumeToken(b, HS_SEMICOLON);
+        exit_section_(b, m, null, r);
+        return r;
+    }
+
+    /* ********************************************************** */
+    // CASE expression OF LEFT_BRACE case_definition* case_clause? RIGHT_BRACE?
+    public static boolean case_of_expression(PsiBuilder b, int l) {
+        if (!recursion_guard_(b, l, "case_of_expression")) return false;
+        if (!nextTokenIs(b, HS_CASE)) return false;
+        boolean r, p;
+        Marker m = enter_section_(b, l, _NONE_, HS_CASE_OF_EXPRESSION, null);
+        r = consumeToken(b, HS_CASE);
+        p = r; // pin = 1
+        r = r && report_error_(b, expression(b, l + 1));
+        r = p && report_error_(b, consumeTokens(b, -1, HS_OF, HS_LEFT_BRACE)) && r;
+        r = p && report_error_(b, case_of_expression_4(b, l + 1)) && r;
+        r = p && report_error_(b, case_of_expression_5(b, l + 1)) && r;
+        r = p && case_of_expression_6(b, l + 1) && r;
+        exit_section_(b, l, m, r, p, null);
+        return r || p;
+    }
+
+    // case_definition*
+    private static boolean case_of_expression_4(PsiBuilder b, int l) {
+        if (!recursion_guard_(b, l, "case_of_expression_4")) return false;
+        while (true) {
+            int c = current_position_(b);
+            if (!case_definition(b, l + 1)) break;
+            if (!empty_element_parsed_guard_(b, "case_of_expression_4", c)) break;
+        }
+        return true;
+    }
+
+    // case_clause?
+    private static boolean case_of_expression_5(PsiBuilder b, int l) {
+        if (!recursion_guard_(b, l, "case_of_expression_5")) return false;
+        case_clause(b, l + 1);
+        return true;
+    }
+
+    // RIGHT_BRACE?
+    private static boolean case_of_expression_6(PsiBuilder b, int l) {
+        if (!recursion_guard_(b, l, "case_of_expression_6")) return false;
+        consumeToken(b, HS_RIGHT_BRACE);
+        return true;
     }
 
     /* ********************************************************** */
@@ -894,7 +1037,8 @@ public class HaskellParser implements PsiParser, LightPsiParser {
 
     /* ********************************************************** */
     // pragma | instance_declaration | default_declaration |
-    //                                   newtype_declaration | data_declaration | type_declaration | type_family_declaration | line_expression
+    //                                   newtype_declaration | data_declaration | type_declaration | type_family_declaration
+    //                                   | line_expression | implementation_declaration
     public static boolean cidecl(PsiBuilder b, int l) {
         if (!recursion_guard_(b, l, "cidecl")) return false;
         boolean r;
@@ -907,6 +1051,7 @@ public class HaskellParser implements PsiParser, LightPsiParser {
         if (!r) r = type_declaration(b, l + 1);
         if (!r) r = type_family_declaration(b, l + 1);
         if (!r) r = line_expression(b, l + 1);
+        if (!r) r = implementation_declaration(b, l + 1);
         exit_section_(b, l, m, r, false, null);
         return r;
     }
@@ -2373,6 +2518,59 @@ public class HaskellParser implements PsiParser, LightPsiParser {
     }
 
     /* ********************************************************** */
+    // expression SEMICOLON
+    static boolean do_definition(PsiBuilder b, int l) {
+        if (!recursion_guard_(b, l, "do_definition")) return false;
+        boolean r;
+        Marker m = enter_section_(b);
+        r = expression(b, l + 1);
+        r = r && consumeToken(b, HS_SEMICOLON);
+        exit_section_(b, m, null, r);
+        return r;
+    }
+
+    /* ********************************************************** */
+    // DO LEFT_BRACE do_definition* expression? RIGHT_BRACE?
+    public static boolean do_notation_expression(PsiBuilder b, int l) {
+        if (!recursion_guard_(b, l, "do_notation_expression")) return false;
+        if (!nextTokenIs(b, HS_DO)) return false;
+        boolean r, p;
+        Marker m = enter_section_(b, l, _NONE_, HS_DO_NOTATION_EXPRESSION, null);
+        r = consumeTokens(b, 1, HS_DO, HS_LEFT_BRACE);
+        p = r; // pin = 1
+        r = r && report_error_(b, do_notation_expression_2(b, l + 1));
+        r = p && report_error_(b, do_notation_expression_3(b, l + 1)) && r;
+        r = p && do_notation_expression_4(b, l + 1) && r;
+        exit_section_(b, l, m, r, p, null);
+        return r || p;
+    }
+
+    // do_definition*
+    private static boolean do_notation_expression_2(PsiBuilder b, int l) {
+        if (!recursion_guard_(b, l, "do_notation_expression_2")) return false;
+        while (true) {
+            int c = current_position_(b);
+            if (!do_definition(b, l + 1)) break;
+            if (!empty_element_parsed_guard_(b, "do_notation_expression_2", c)) break;
+        }
+        return true;
+    }
+
+    // expression?
+    private static boolean do_notation_expression_3(PsiBuilder b, int l) {
+        if (!recursion_guard_(b, l, "do_notation_expression_3")) return false;
+        expression(b, l + 1);
+        return true;
+    }
+
+    // RIGHT_BRACE?
+    private static boolean do_notation_expression_4(PsiBuilder b, int l) {
+        if (!recursion_guard_(b, l, "do_notation_expression_4")) return false;
+        consumeToken(b, HS_RIGHT_BRACE);
+        return true;
+    }
+
+    /* ********************************************************** */
     // DOT DOT
     public static boolean dot_dot(PsiBuilder b, int l) {
         if (!recursion_guard_(b, l, "dot_dot")) return false;
@@ -2596,31 +2794,47 @@ public class HaskellParser implements PsiParser, LightPsiParser {
     }
 
     /* ********************************************************** */
-    // line_expression (nls line_expression)*
+    // let_abstraction | do_notation_expression | if_expression | application_expression | case_of_expression | atom | line_expression (nls line_expression)*
     public static boolean expression(PsiBuilder b, int l) {
         if (!recursion_guard_(b, l, "expression")) return false;
         boolean r;
-        Marker m = enter_section_(b, l, _NONE_, HS_EXPRESSION, "<expression>");
-        r = line_expression(b, l + 1);
-        r = r && expression_1(b, l + 1);
+        Marker m = enter_section_(b, l, _COLLAPSE_, HS_EXPRESSION, "<expression>");
+        r = let_abstraction(b, l + 1);
+        if (!r) r = do_notation_expression(b, l + 1);
+        if (!r) r = if_expression(b, l + 1);
+        if (!r) r = application_expression(b, l + 1);
+        if (!r) r = case_of_expression(b, l + 1);
+        if (!r) r = atom(b, l + 1);
+        if (!r) r = expression_6(b, l + 1);
         exit_section_(b, l, m, r, false, null);
         return r;
     }
 
+    // line_expression (nls line_expression)*
+    private static boolean expression_6(PsiBuilder b, int l) {
+        if (!recursion_guard_(b, l, "expression_6")) return false;
+        boolean r;
+        Marker m = enter_section_(b);
+        r = line_expression(b, l + 1);
+        r = r && expression_6_1(b, l + 1);
+        exit_section_(b, m, null, r);
+        return r;
+    }
+
     // (nls line_expression)*
-    private static boolean expression_1(PsiBuilder b, int l) {
-        if (!recursion_guard_(b, l, "expression_1")) return false;
+    private static boolean expression_6_1(PsiBuilder b, int l) {
+        if (!recursion_guard_(b, l, "expression_6_1")) return false;
         while (true) {
             int c = current_position_(b);
-            if (!expression_1_0(b, l + 1)) break;
-            if (!empty_element_parsed_guard_(b, "expression_1", c)) break;
+            if (!expression_6_1_0(b, l + 1)) break;
+            if (!empty_element_parsed_guard_(b, "expression_6_1", c)) break;
         }
         return true;
     }
 
     // nls line_expression
-    private static boolean expression_1_0(PsiBuilder b, int l) {
-        if (!recursion_guard_(b, l, "expression_1_0")) return false;
+    private static boolean expression_6_1_0(PsiBuilder b, int l) {
+        if (!recursion_guard_(b, l, "expression_6_1_0")) return false;
         boolean r;
         Marker m = enter_section_(b);
         r = nls(b, l + 1);
@@ -2999,6 +3213,38 @@ public class HaskellParser implements PsiParser, LightPsiParser {
             if (!empty_element_parsed_guard_(b, "gtycon_4_2", c)) break;
         }
         return true;
+    }
+
+    /* ********************************************************** */
+    // IF expression THEN expression ELSE expression
+    public static boolean if_expression(PsiBuilder b, int l) {
+        if (!recursion_guard_(b, l, "if_expression")) return false;
+        if (!nextTokenIs(b, HS_IF)) return false;
+        boolean r, p;
+        Marker m = enter_section_(b, l, _NONE_, HS_IF_EXPRESSION, null);
+        r = consumeToken(b, HS_IF);
+        p = r; // pin = 1
+        r = r && report_error_(b, expression(b, l + 1));
+        r = p && report_error_(b, consumeToken(b, HS_THEN)) && r;
+        r = p && report_error_(b, expression(b, l + 1)) && r;
+        r = p && report_error_(b, consumeToken(b, HS_ELSE)) && r;
+        r = p && expression(b, l + 1) && r;
+        exit_section_(b, l, m, r, p, null);
+        return r || p;
+    }
+
+    /* ********************************************************** */
+    // expression EQUAL expression
+    public static boolean implementation_declaration(PsiBuilder b, int l) {
+        if (!recursion_guard_(b, l, "implementation_declaration")) return false;
+        boolean r, p;
+        Marker m = enter_section_(b, l, _NONE_, HS_IMPLEMENTATION_DECLARATION, "<implementation declaration>");
+        r = expression(b, l + 1);
+        r = r && consumeToken(b, HS_EQUAL);
+        p = r; // pin = 2
+        r = r && expression(b, l + 1);
+        exit_section_(b, l, m, r, p, null);
+        return r || p;
     }
 
     /* ********************************************************** */
@@ -4186,6 +4432,61 @@ public class HaskellParser implements PsiParser, LightPsiParser {
     }
 
     /* ********************************************************** */
+    // LET LEFT_BRACE let_definition* cdecl? RIGHT_BRACE? semi IN expression
+    public static boolean let_abstraction(PsiBuilder b, int l) {
+        if (!recursion_guard_(b, l, "let_abstraction")) return false;
+        if (!nextTokenIs(b, HS_LET)) return false;
+        boolean r, p;
+        Marker m = enter_section_(b, l, _NONE_, HS_LET_ABSTRACTION, null);
+        r = consumeTokens(b, 1, HS_LET, HS_LEFT_BRACE);
+        p = r; // pin = 1
+        r = r && report_error_(b, let_abstraction_2(b, l + 1));
+        r = p && report_error_(b, let_abstraction_3(b, l + 1)) && r;
+        r = p && report_error_(b, let_abstraction_4(b, l + 1)) && r;
+        r = p && report_error_(b, consumeTokens(b, -1, HS_SEMI, HS_IN)) && r;
+        r = p && expression(b, l + 1) && r;
+        exit_section_(b, l, m, r, p, null);
+        return r || p;
+    }
+
+    // let_definition*
+    private static boolean let_abstraction_2(PsiBuilder b, int l) {
+        if (!recursion_guard_(b, l, "let_abstraction_2")) return false;
+        while (true) {
+            int c = current_position_(b);
+            if (!let_definition(b, l + 1)) break;
+            if (!empty_element_parsed_guard_(b, "let_abstraction_2", c)) break;
+        }
+        return true;
+    }
+
+    // cdecl?
+    private static boolean let_abstraction_3(PsiBuilder b, int l) {
+        if (!recursion_guard_(b, l, "let_abstraction_3")) return false;
+        cdecl(b, l + 1);
+        return true;
+    }
+
+    // RIGHT_BRACE?
+    private static boolean let_abstraction_4(PsiBuilder b, int l) {
+        if (!recursion_guard_(b, l, "let_abstraction_4")) return false;
+        consumeToken(b, HS_RIGHT_BRACE);
+        return true;
+    }
+
+    /* ********************************************************** */
+    // cdecl SEMICOLON
+    static boolean let_definition(PsiBuilder b, int l) {
+        if (!recursion_guard_(b, l, "let_definition")) return false;
+        boolean r;
+        Marker m = enter_section_(b);
+        r = cdecl(b, l + 1);
+        r = r && consumeToken(b, HS_SEMICOLON);
+        exit_section_(b, m, null, r);
+        return r;
+    }
+
+    /* ********************************************************** */
     // (general_id | LIST_COMPREHENSION)+ | NOT_TERMINATED_QQ_EXPRESSION
     static boolean line_expression(PsiBuilder b, int l) {
         if (!recursion_guard_(b, l, "line_expression")) return false;
@@ -4329,7 +4630,7 @@ public class HaskellParser implements PsiParser, LightPsiParser {
     }
 
     /* ********************************************************** */
-    // MODULE modid onl pragma? onl (exports onl)? WHERE
+    // MODULE modid onl pragma? onl (exports onl)? where_clause
     public static boolean module_declaration(PsiBuilder b, int l) {
         if (!recursion_guard_(b, l, "module_declaration")) return false;
         if (!nextTokenIs(b, HS_MODULE)) return false;
@@ -4341,7 +4642,7 @@ public class HaskellParser implements PsiParser, LightPsiParser {
         r = r && module_declaration_3(b, l + 1);
         r = r && onl(b, l + 1);
         r = r && module_declaration_5(b, l + 1);
-        r = r && consumeToken(b, HS_WHERE);
+        r = r && where_clause(b, l + 1);
         exit_section_(b, m, HS_MODULE_DECLARATION, r);
         return r;
     }
@@ -4814,6 +5115,20 @@ public class HaskellParser implements PsiParser, LightPsiParser {
         Marker m = enter_section_(b, l, _NOT_);
         r = !keyword(b, l + 1);
         exit_section_(b, l, m, r, false, null);
+        return r;
+    }
+
+    /* ********************************************************** */
+    // LEFT_PAREN expression RIGHT_PAREN
+    public static boolean paren_expression(PsiBuilder b, int l) {
+        if (!recursion_guard_(b, l, "paren_expression")) return false;
+        if (!nextTokenIs(b, HS_LEFT_PAREN)) return false;
+        boolean r;
+        Marker m = enter_section_(b);
+        r = consumeToken(b, HS_LEFT_PAREN);
+        r = r && expression(b, l + 1);
+        r = r && consumeToken(b, HS_RIGHT_PAREN);
+        exit_section_(b, m, HS_PAREN_EXPRESSION, r);
         return r;
     }
 
@@ -5679,11 +5994,11 @@ public class HaskellParser implements PsiParser, LightPsiParser {
     /* ********************************************************** */
     // (type_declaration | data_declaration | newtype_declaration | class_declaration | instance_declaration | default_declaration |
     //                                   foreign_declaration | type_family_declaration | deriving_declaration | type_instance_declaration | type_signature |
-    //                                   pragma | fixity_declaration | expression | DIRECTIVE) SEMICOLON? NEWLINE?
+    //                                   pragma | fixity_declaration | expression | DIRECTIVE | implementation_declaration) SEMICOLON? NEWLINE?
     public static boolean top_declaration(PsiBuilder b, int l) {
         if (!recursion_guard_(b, l, "top_declaration")) return false;
         boolean r;
-        Marker m = enter_section_(b, l, _NONE_, HS_TOP_DECLARATION, "<top declaration>");
+        Marker m = enter_section_(b, l, _COLLAPSE_, HS_TOP_DECLARATION, "<top declaration>");
         r = top_declaration_0(b, l + 1);
         r = r && top_declaration_1(b, l + 1);
         r = r && top_declaration_2(b, l + 1);
@@ -5693,7 +6008,7 @@ public class HaskellParser implements PsiParser, LightPsiParser {
 
     // type_declaration | data_declaration | newtype_declaration | class_declaration | instance_declaration | default_declaration |
     //                                   foreign_declaration | type_family_declaration | deriving_declaration | type_instance_declaration | type_signature |
-    //                                   pragma | fixity_declaration | expression | DIRECTIVE
+    //                                   pragma | fixity_declaration | expression | DIRECTIVE | implementation_declaration
     private static boolean top_declaration_0(PsiBuilder b, int l) {
         if (!recursion_guard_(b, l, "top_declaration_0")) return false;
         boolean r;
@@ -5712,6 +6027,7 @@ public class HaskellParser implements PsiParser, LightPsiParser {
         if (!r) r = fixity_declaration(b, l + 1);
         if (!r) r = expression(b, l + 1);
         if (!r) r = consumeToken(b, HS_DIRECTIVE);
+        if (!r) r = implementation_declaration(b, l + 1);
         return r;
     }
 
@@ -6805,6 +7121,28 @@ public class HaskellParser implements PsiParser, LightPsiParser {
         }
         exit_section_(b, m, null, r);
         return r;
+    }
+
+    /* ********************************************************** */
+    // WHERE LEFT_BRACE body RIGHT_BRACE?
+    public static boolean where_clause(PsiBuilder b, int l) {
+        if (!recursion_guard_(b, l, "where_clause")) return false;
+        if (!nextTokenIs(b, HS_WHERE)) return false;
+        boolean r, p;
+        Marker m = enter_section_(b, l, _NONE_, HS_WHERE_CLAUSE, null);
+        r = consumeTokens(b, 1, HS_WHERE, HS_LEFT_BRACE);
+        p = r; // pin = 1
+        r = r && report_error_(b, body(b, l + 1));
+        r = p && where_clause_3(b, l + 1) && r;
+        exit_section_(b, l, m, r, p, null);
+        return r || p;
+    }
+
+    // RIGHT_BRACE?
+    private static boolean where_clause_3(PsiBuilder b, int l) {
+        if (!recursion_guard_(b, l, "where_clause_3")) return false;
+        consumeToken(b, HS_RIGHT_BRACE);
+        return true;
     }
 
 }

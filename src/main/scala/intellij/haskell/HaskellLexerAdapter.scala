@@ -179,7 +179,7 @@ class HaskellLayoutLexer(private val lexer: Lexer,
           if (token.isNextLayoutLine) {
             i = insideLayout(i, token, indentStack)
           }
-          if (isSingleLineLetIn(i, tokens, letInTokens)) {
+          if (isSingleLineLetIn(i, tokens.toSeq, letInTokens)) {
             tokens.insert(i, virtualToken(layoutEnd, tokens(i - 1)))
             i += 1
             indentStack.pop()
@@ -218,7 +218,7 @@ class HaskellLayoutLexer(private val lexer: Lexer,
       } yield {
         m
       }
-      }.headOption.getOrElse(i)
+    }.headOption.getOrElse(i)
 
     val precedingToken = tokens(insertAt)
 

@@ -6,7 +6,7 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
 
-public interface HaskellCdeclDataDeclaration extends HaskellCompositeElement {
+public interface HaskellCdeclDataDeclaration extends HaskellTopDeclaration {
 
     @NotNull
     List<HaskellKindSignature> getKindSignatureList();

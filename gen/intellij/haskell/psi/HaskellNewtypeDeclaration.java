@@ -9,7 +9,7 @@ import scala.collection.immutable.Seq;
 
 import java.util.List;
 
-public interface HaskellNewtypeDeclaration extends HaskellDataConstructorDeclarationElement {
+public interface HaskellNewtypeDeclaration extends HaskellTopDeclaration, HaskellDataConstructorDeclarationElement {
 
     @Nullable
     HaskellCcontext getCcontext();

@@ -9,7 +9,7 @@ import scala.collection.immutable.Seq;
 
 import java.util.List;
 
-public interface HaskellModuleDeclaration extends HaskellDeclarationElement {
+public interface HaskellModuleDeclaration extends HaskellTopDeclaration, HaskellDeclarationElement {
 
     @Nullable
     HaskellExports getExports();
@@ -19,6 +19,9 @@ public interface HaskellModuleDeclaration extends HaskellDeclarationElement {
 
     @NotNull
     List<HaskellPragma> getPragmaList();
+
+    @NotNull
+    HaskellWhereClause getWhereClause();
 
     String getName();
 

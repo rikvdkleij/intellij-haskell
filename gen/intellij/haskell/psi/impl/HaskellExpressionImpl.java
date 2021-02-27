@@ -19,6 +19,7 @@ public class HaskellExpressionImpl extends HaskellExpressionElementImpl implemen
         visitor.visitExpression(this);
     }
 
+    @Override
     public void accept(@NotNull PsiElementVisitor visitor) {
         if (visitor instanceof HaskellVisitor) accept((HaskellVisitor) visitor);
         else super.accept(visitor);

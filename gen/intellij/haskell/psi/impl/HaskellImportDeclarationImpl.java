@@ -11,16 +11,18 @@ import scala.Option;
 
 import java.util.List;
 
-public class HaskellImportDeclarationImpl extends HaskellCompositeElementImpl implements HaskellImportDeclaration {
+public class HaskellImportDeclarationImpl extends HaskellTopDeclarationImpl implements HaskellImportDeclaration {
 
     public HaskellImportDeclarationImpl(ASTNode node) {
         super(node);
     }
 
+    @Override
     public void accept(@NotNull HaskellVisitor visitor) {
         visitor.visitImportDeclaration(this);
     }
 
+    @Override
     public void accept(@NotNull PsiElementVisitor visitor) {
         if (visitor instanceof HaskellVisitor) accept((HaskellVisitor) visitor);
         else super.accept(visitor);

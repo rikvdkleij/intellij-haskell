@@ -9,7 +9,7 @@ import scala.collection.immutable.Seq;
 
 import java.util.List;
 
-public interface HaskellInstanceDeclaration extends HaskellDeclarationElement {
+public interface HaskellInstanceDeclaration extends HaskellTopDeclaration, HaskellDeclarationElement {
 
     @Nullable
     HaskellCidecls getCidecls();

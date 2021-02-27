@@ -18,6 +18,7 @@ public class HaskellCdeclImpl extends HaskellCompositeElementImpl implements Has
         visitor.visitCdecl(this);
     }
 
+    @Override
     public void accept(@NotNull PsiElementVisitor visitor) {
         if (visitor instanceof HaskellVisitor) accept((HaskellVisitor) visitor);
         else super.accept(visitor);

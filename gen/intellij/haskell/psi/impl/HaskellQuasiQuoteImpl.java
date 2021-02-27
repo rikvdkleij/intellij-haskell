@@ -17,6 +17,7 @@ public class HaskellQuasiQuoteImpl extends HaskellQuasiQuoteElementImpl implemen
         visitor.visitQuasiQuote(this);
     }
 
+    @Override
     public void accept(@NotNull PsiElementVisitor visitor) {
         if (visitor instanceof HaskellVisitor) accept((HaskellVisitor) visitor);
         else super.accept(visitor);

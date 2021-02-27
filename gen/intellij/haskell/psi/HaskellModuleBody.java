@@ -11,9 +11,6 @@ public interface HaskellModuleBody extends HaskellCompositeElement {
     @Nullable
     HaskellImportDeclarations getImportDeclarations();
 
-    @Nullable
-    HaskellModuleDeclaration getModuleDeclaration();
-
     @NotNull
     List<HaskellPragma> getPragmaList();
 

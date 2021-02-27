@@ -12,16 +12,18 @@ import scala.collection.immutable.Seq;
 
 import java.util.List;
 
-public class HaskellTypeInstanceDeclarationImpl extends HaskellCompositeElementImpl implements HaskellTypeInstanceDeclaration {
+public class HaskellTypeInstanceDeclarationImpl extends HaskellTopDeclarationImpl implements HaskellTypeInstanceDeclaration {
 
     public HaskellTypeInstanceDeclarationImpl(ASTNode node) {
         super(node);
     }
 
+    @Override
     public void accept(@NotNull HaskellVisitor visitor) {
         visitor.visitTypeInstanceDeclaration(this);
     }
 
+    @Override
     public void accept(@NotNull PsiElementVisitor visitor) {
         if (visitor instanceof HaskellVisitor) accept((HaskellVisitor) visitor);
         else super.accept(visitor);

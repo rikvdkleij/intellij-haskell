@@ -19,6 +19,7 @@ public class HaskellConstr2Impl extends HaskellCompositeElementImpl implements H
         visitor.visitConstr2(this);
     }
 
+    @Override
     public void accept(@NotNull PsiElementVisitor visitor) {
         if (visitor instanceof HaskellVisitor) accept((HaskellVisitor) visitor);
         else super.accept(visitor);

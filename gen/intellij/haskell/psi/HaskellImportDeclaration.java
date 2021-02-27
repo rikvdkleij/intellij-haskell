@@ -7,7 +7,7 @@ import scala.Option;
 
 import java.util.List;
 
-public interface HaskellImportDeclaration extends HaskellCompositeElement {
+public interface HaskellImportDeclaration extends HaskellTopDeclaration {
 
     @Nullable
     HaskellImportPackageName getImportPackageName();

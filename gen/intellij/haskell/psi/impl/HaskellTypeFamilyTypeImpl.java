@@ -19,6 +19,7 @@ public class HaskellTypeFamilyTypeImpl extends HaskellCompositeElementImpl imple
         visitor.visitTypeFamilyType(this);
     }
 
+    @Override
     public void accept(@NotNull PsiElementVisitor visitor) {
         if (visitor instanceof HaskellVisitor) accept((HaskellVisitor) visitor);
         else super.accept(visitor);

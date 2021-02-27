@@ -1,34 +1,36 @@
 // This is a generated file. Not intended for manual editing.
 package intellij.haskell.psi.impl;
 
-import java.util.List;
-import org.jetbrains.annotations.*;
 import com.intellij.lang.ASTNode;
-import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiElementVisitor;
 import com.intellij.psi.util.PsiTreeUtil;
-import static intellij.haskell.psi.HaskellTypes.*;
-import intellij.haskell.psi.*;
+import intellij.haskell.psi.HaskellGeneralPragmaContent;
+import intellij.haskell.psi.HaskellPragma;
+import intellij.haskell.psi.HaskellVisitor;
+import org.jetbrains.annotations.NotNull;
+
+import java.util.List;
 
 public class HaskellPragmaImpl extends HaskellCompositeElementImpl implements HaskellPragma {
 
-  public HaskellPragmaImpl(ASTNode node) {
-    super(node);
-  }
+    public HaskellPragmaImpl(ASTNode node) {
+        super(node);
+    }
 
-  public void accept(@NotNull HaskellVisitor visitor) {
-    visitor.visitPragma(this);
-  }
+    public void accept(@NotNull HaskellVisitor visitor) {
+        visitor.visitPragma(this);
+    }
 
-  public void accept(@NotNull PsiElementVisitor visitor) {
-    if (visitor instanceof HaskellVisitor) accept((HaskellVisitor)visitor);
-    else super.accept(visitor);
-  }
+    @Override
+    public void accept(@NotNull PsiElementVisitor visitor) {
+        if (visitor instanceof HaskellVisitor) accept((HaskellVisitor) visitor);
+        else super.accept(visitor);
+    }
 
-  @Override
-  @NotNull
-  public List<HaskellGeneralPragmaContent> getGeneralPragmaContentList() {
-    return PsiTreeUtil.getChildrenOfTypeAsList(this, HaskellGeneralPragmaContent.class);
-  }
+    @Override
+    @NotNull
+    public List<HaskellGeneralPragmaContent> getGeneralPragmaContentList() {
+        return PsiTreeUtil.getChildrenOfTypeAsList(this, HaskellGeneralPragmaContent.class);
+    }
 
 }

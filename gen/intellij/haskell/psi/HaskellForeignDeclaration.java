@@ -8,7 +8,7 @@ import scala.collection.immutable.Seq;
 
 import java.util.List;
 
-public interface HaskellForeignDeclaration extends HaskellDeclarationElement {
+public interface HaskellForeignDeclaration extends HaskellTopDeclaration, HaskellDeclarationElement {
 
     @NotNull
     HaskellExpression getExpression();

@@ -9,10 +9,7 @@ import scala.collection.immutable.Seq;
 
 import java.util.List;
 
-public interface HaskellTypeDeclaration extends HaskellDeclarationElement {
-
-    @Nullable
-    HaskellExpression getExpression();
+public interface HaskellTypeDeclaration extends HaskellTopDeclaration, HaskellDeclarationElement {
 
     @NotNull
     List<HaskellKindSignature> getKindSignatureList();
@@ -28,9 +25,6 @@ public interface HaskellTypeDeclaration extends HaskellDeclarationElement {
 
     @Nullable
     HaskellTtype getTtype();
-
-    @Nullable
-    HaskellTypeSignature getTypeSignature();
 
     String getName();
 

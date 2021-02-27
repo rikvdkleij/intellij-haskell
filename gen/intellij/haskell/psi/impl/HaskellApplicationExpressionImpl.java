@@ -4,21 +4,22 @@ package intellij.haskell.psi.impl;
 import com.intellij.lang.ASTNode;
 import com.intellij.psi.PsiElementVisitor;
 import com.intellij.psi.util.PsiTreeUtil;
-import intellij.haskell.psi.HaskellCaseClause;
+import intellij.haskell.psi.HaskellApplicationExpression;
 import intellij.haskell.psi.HaskellExpression;
 import intellij.haskell.psi.HaskellVisitor;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.List;
 
-public class HaskellCaseClauseImpl extends HaskellCompositeElementImpl implements HaskellCaseClause {
+public class HaskellApplicationExpressionImpl extends HaskellExpressionImpl implements HaskellApplicationExpression {
 
-    public HaskellCaseClauseImpl(ASTNode node) {
+    public HaskellApplicationExpressionImpl(ASTNode node) {
         super(node);
     }
 
+    @Override
     public void accept(@NotNull HaskellVisitor visitor) {
-        visitor.visitCaseClause(this);
+        visitor.visitApplicationExpression(this);
     }
 
     @Override

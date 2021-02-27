@@ -3,9 +3,11 @@ package intellij.haskell.psi;
 
 import org.jetbrains.annotations.NotNull;
 
-public interface HaskellParenExpression extends HaskellExpression {
+import java.util.List;
+
+public interface HaskellApplicationExpression extends HaskellExpression {
 
     @NotNull
-    HaskellExpression getExpression();
+    List<HaskellExpression> getExpressionList();
 
 }
