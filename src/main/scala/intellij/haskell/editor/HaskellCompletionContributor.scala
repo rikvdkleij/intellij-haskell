@@ -462,12 +462,12 @@ class HaskellCompletionContributor extends CompletionContributor {
   }
 
   private def createLookupElement(moduleIdentifier: ModuleIdentifier, addParens: Boolean = false): LookupElementBuilder = {
-    addWiths(LookupElementBuilder.create(
-      if (moduleIdentifier.operator && addParens)
-        s"""(${moduleIdentifier.name})"""
-      else
-        moduleIdentifier.name
-    ), moduleIdentifier)
+    val completion = if (moduleIdentifier.operator && addParens)
+      s"""(${moduleIdentifier.name})"""
+    else
+      moduleIdentifier.name
+
+    addWiths(LookupElementBuilder.create(moduleIdentifier, completion), moduleIdentifier)
   }
 
   def createLocalLookupElement(namedElement: HaskellNamedElement): LookupElementBuilder = {
