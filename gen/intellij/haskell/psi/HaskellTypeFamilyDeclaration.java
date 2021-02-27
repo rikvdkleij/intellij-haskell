@@ -3,16 +3,12 @@ package intellij.haskell.psi;
 
 import com.intellij.navigation.ItemPresentation;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 import scala.Option;
 import scala.collection.immutable.Seq;
 
 import java.util.List;
 
-public interface HaskellTypeFamilyDeclaration extends HaskellDeclarationElement {
-
-    @Nullable
-    HaskellExpression getExpression();
+public interface HaskellTypeFamilyDeclaration extends HaskellTopDeclaration, HaskellDeclarationElement {
 
     @NotNull
     List<HaskellPragma> getPragmaList();

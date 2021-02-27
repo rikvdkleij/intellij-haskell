@@ -13,16 +13,18 @@ import scala.collection.immutable.Seq;
 
 import java.util.List;
 
-public class HaskellDataDeclarationImpl extends HaskellCompositeElementImpl implements HaskellDataDeclaration {
+public class HaskellDataDeclarationImpl extends HaskellTopDeclarationImpl implements HaskellDataDeclaration {
 
     public HaskellDataDeclarationImpl(ASTNode node) {
         super(node);
     }
 
+    @Override
     public void accept(@NotNull HaskellVisitor visitor) {
         visitor.visitDataDeclaration(this);
     }
 
+    @Override
     public void accept(@NotNull PsiElementVisitor visitor) {
         if (visitor instanceof HaskellVisitor) accept((HaskellVisitor) visitor);
         else super.accept(visitor);

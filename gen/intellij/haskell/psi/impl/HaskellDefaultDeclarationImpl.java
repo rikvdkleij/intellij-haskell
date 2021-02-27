@@ -7,22 +7,23 @@ import com.intellij.psi.PsiElementVisitor;
 import com.intellij.psi.util.PsiTreeUtil;
 import intellij.haskell.psi.*;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 import scala.Option;
 import scala.collection.immutable.Seq;
 
 import java.util.List;
 
-public class HaskellDefaultDeclarationImpl extends HaskellCompositeElementImpl implements HaskellDefaultDeclaration {
+public class HaskellDefaultDeclarationImpl extends HaskellTopDeclarationImpl implements HaskellDefaultDeclaration {
 
     public HaskellDefaultDeclarationImpl(ASTNode node) {
         super(node);
     }
 
+    @Override
     public void accept(@NotNull HaskellVisitor visitor) {
         visitor.visitDefaultDeclaration(this);
     }
 
+    @Override
     public void accept(@NotNull PsiElementVisitor visitor) {
         if (visitor instanceof HaskellVisitor) accept((HaskellVisitor) visitor);
         else super.accept(visitor);
@@ -38,12 +39,6 @@ public class HaskellDefaultDeclarationImpl extends HaskellCompositeElementImpl i
     @NotNull
     public List<HaskellTtype> getTtypeList() {
         return PsiTreeUtil.getChildrenOfTypeAsList(this, HaskellTtype.class);
-    }
-
-    @Override
-    @Nullable
-    public HaskellTypeSignature getTypeSignature() {
-        return PsiTreeUtil.getChildOfType(this, HaskellTypeSignature.class);
     }
 
     @Override

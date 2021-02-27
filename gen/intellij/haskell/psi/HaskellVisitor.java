@@ -6,6 +6,26 @@ import org.jetbrains.annotations.NotNull;
 
 public class HaskellVisitor extends PsiElementVisitor {
 
+    public void visitApplicationExpression(@NotNull HaskellApplicationExpression o) {
+        visitExpression(o);
+    }
+
+    public void visitAtomExpression(@NotNull HaskellAtomExpression o) {
+        visitExpression(o);
+    }
+
+    public void visitBracketExpression(@NotNull HaskellBracketExpression o) {
+        visitExpression(o);
+    }
+
+    public void visitCaseClause(@NotNull HaskellCaseClause o) {
+        visitCompositeElement(o);
+    }
+
+    public void visitCaseOfExpression(@NotNull HaskellCaseOfExpression o) {
+        visitExpression(o);
+    }
+
     public void visitCcontext(@NotNull HaskellCcontext o) {
         visitCompositeElement(o);
     }
@@ -15,7 +35,7 @@ public class HaskellVisitor extends PsiElementVisitor {
     }
 
     public void visitCdeclDataDeclaration(@NotNull HaskellCdeclDataDeclaration o) {
-        visitCompositeElement(o);
+        visitTopDeclaration(o);
     }
 
     public void visitCdecls(@NotNull HaskellCdecls o) {
@@ -31,7 +51,8 @@ public class HaskellVisitor extends PsiElementVisitor {
     }
 
     public void visitClassDeclaration(@NotNull HaskellClassDeclaration o) {
-        visitDeclarationElement(o);
+        visitTopDeclaration(o);
+        // visitDeclarationElement(o);
     }
 
     public void visitClazz(@NotNull HaskellClazz o) {
@@ -67,7 +88,8 @@ public class HaskellVisitor extends PsiElementVisitor {
     }
 
     public void visitDataDeclaration(@NotNull HaskellDataDeclaration o) {
-        visitDataConstructorDeclarationElement(o);
+        visitTopDeclaration(o);
+        // visitDataConstructorDeclarationElement(o);
     }
 
     public void visitDataDeclarationDeriving(@NotNull HaskellDataDeclarationDeriving o) {
@@ -75,16 +97,22 @@ public class HaskellVisitor extends PsiElementVisitor {
     }
 
     public void visitDefaultDeclaration(@NotNull HaskellDefaultDeclaration o) {
-        visitDeclarationElement(o);
+        visitTopDeclaration(o);
+        // visitDeclarationElement(o);
         // visitDeclarationElement(o);
     }
 
     public void visitDerivingDeclaration(@NotNull HaskellDerivingDeclaration o) {
-        visitDeclarationElement(o);
+        visitTopDeclaration(o);
+        // visitDeclarationElement(o);
     }
 
     public void visitDerivingVia(@NotNull HaskellDerivingVia o) {
         visitCompositeElement(o);
+    }
+
+    public void visitDoNotationExpression(@NotNull HaskellDoNotationExpression o) {
+        visitExpression(o);
     }
 
     public void visitDotDot(@NotNull HaskellDotDot o) {
@@ -112,11 +140,12 @@ public class HaskellVisitor extends PsiElementVisitor {
     }
 
     public void visitFixityDeclaration(@NotNull HaskellFixityDeclaration o) {
-        visitCompositeElement(o);
+        visitTopDeclaration(o);
     }
 
     public void visitForeignDeclaration(@NotNull HaskellForeignDeclaration o) {
-        visitDeclarationElement(o);
+        visitTopDeclaration(o);
+        // visitDeclarationElement(o);
     }
 
     public void visitGeneralPragmaContent(@NotNull HaskellGeneralPragmaContent o) {
@@ -127,8 +156,16 @@ public class HaskellVisitor extends PsiElementVisitor {
         visitCompositeElement(o);
     }
 
+    public void visitIfExpression(@NotNull HaskellIfExpression o) {
+        visitExpression(o);
+    }
+
+    public void visitImplementationDeclaration(@NotNull HaskellImplementationDeclaration o) {
+        visitTopDeclaration(o);
+    }
+
     public void visitImportDeclaration(@NotNull HaskellImportDeclaration o) {
-        visitCompositeElement(o);
+        visitTopDeclaration(o);
     }
 
     public void visitImportDeclarations(@NotNull HaskellImportDeclarations o) {
@@ -176,7 +213,8 @@ public class HaskellVisitor extends PsiElementVisitor {
     }
 
     public void visitInstanceDeclaration(@NotNull HaskellInstanceDeclaration o) {
-        visitDeclarationElement(o);
+        visitTopDeclaration(o);
+        // visitDeclarationElement(o);
     }
 
     public void visitInstvar(@NotNull HaskellInstvar o) {
@@ -185,6 +223,10 @@ public class HaskellVisitor extends PsiElementVisitor {
 
     public void visitKindSignature(@NotNull HaskellKindSignature o) {
         visitCompositeElement(o);
+    }
+
+    public void visitLetAbstraction(@NotNull HaskellLetAbstraction o) {
+        visitExpression(o);
     }
 
     public void visitListType(@NotNull HaskellListType o) {
@@ -200,7 +242,8 @@ public class HaskellVisitor extends PsiElementVisitor {
     }
 
     public void visitModuleDeclaration(@NotNull HaskellModuleDeclaration o) {
-        visitDeclarationElement(o);
+        visitTopDeclaration(o);
+        // visitDeclarationElement(o);
     }
 
     public void visitNewconstr(@NotNull HaskellNewconstr o) {
@@ -212,7 +255,12 @@ public class HaskellVisitor extends PsiElementVisitor {
     }
 
     public void visitNewtypeDeclaration(@NotNull HaskellNewtypeDeclaration o) {
-        visitDataConstructorDeclarationElement(o);
+        visitTopDeclaration(o);
+        // visitDataConstructorDeclarationElement(o);
+    }
+
+    public void visitParenExpression(@NotNull HaskellParenExpression o) {
+        visitExpression(o);
     }
 
     public void visitPragma(@NotNull HaskellPragma o) {
@@ -299,7 +347,8 @@ public class HaskellVisitor extends PsiElementVisitor {
     }
 
     public void visitTypeDeclaration(@NotNull HaskellTypeDeclaration o) {
-        visitDeclarationElement(o);
+        visitTopDeclaration(o);
+        // visitDeclarationElement(o);
     }
 
     public void visitTypeEquality(@NotNull HaskellTypeEquality o) {
@@ -307,7 +356,8 @@ public class HaskellVisitor extends PsiElementVisitor {
     }
 
     public void visitTypeFamilyDeclaration(@NotNull HaskellTypeFamilyDeclaration o) {
-        visitDeclarationElement(o);
+        visitTopDeclaration(o);
+        // visitDeclarationElement(o);
     }
 
     public void visitTypeFamilyType(@NotNull HaskellTypeFamilyType o) {
@@ -315,7 +365,8 @@ public class HaskellVisitor extends PsiElementVisitor {
     }
 
     public void visitTypeInstanceDeclaration(@NotNull HaskellTypeInstanceDeclaration o) {
-        visitDeclarationElement(o);
+        visitTopDeclaration(o);
+        // visitDeclarationElement(o);
     }
 
     public void visitTypeSignature(@NotNull HaskellTypeSignature o) {
@@ -334,7 +385,7 @@ public class HaskellVisitor extends PsiElementVisitor {
         visitNamedElement(o);
     }
 
-    public void visitDataConstructorDeclarationElement(@NotNull HaskellDataConstructorDeclarationElement o) {
+    public void visitWhereClause(@NotNull HaskellWhereClause o) {
         visitCompositeElement(o);
     }
 

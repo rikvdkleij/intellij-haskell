@@ -9,7 +9,7 @@ import scala.collection.immutable.Seq;
 
 import java.util.List;
 
-public interface HaskellDerivingDeclaration extends HaskellDeclarationElement {
+public interface HaskellDerivingDeclaration extends HaskellTopDeclaration, HaskellDeclarationElement {
 
     @NotNull
     HaskellInst getInst();

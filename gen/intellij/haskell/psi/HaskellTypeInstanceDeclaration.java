@@ -8,7 +8,7 @@ import scala.collection.immutable.Seq;
 
 import java.util.List;
 
-public interface HaskellTypeInstanceDeclaration extends HaskellDeclarationElement {
+public interface HaskellTypeInstanceDeclaration extends HaskellTopDeclaration, HaskellDeclarationElement {
 
     @NotNull
     HaskellExpression getExpression();

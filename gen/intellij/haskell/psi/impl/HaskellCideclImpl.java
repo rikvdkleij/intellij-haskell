@@ -20,39 +20,16 @@ public class HaskellCideclImpl extends HaskellCompositeElementImpl implements Ha
         visitor.visitCidecl(this);
     }
 
+    @Override
     public void accept(@NotNull PsiElementVisitor visitor) {
         if (visitor instanceof HaskellVisitor) accept((HaskellVisitor) visitor);
         else super.accept(visitor);
     }
 
     @Override
-    @Nullable
-    public HaskellDataDeclaration getDataDeclaration() {
-        return PsiTreeUtil.getChildOfType(this, HaskellDataDeclaration.class);
-    }
-
-    @Override
-    @Nullable
-    public HaskellDefaultDeclaration getDefaultDeclaration() {
-        return PsiTreeUtil.getChildOfType(this, HaskellDefaultDeclaration.class);
-    }
-
-    @Override
     @NotNull
     public List<HaskellDotDot> getDotDotList() {
         return PsiTreeUtil.getChildrenOfTypeAsList(this, HaskellDotDot.class);
-    }
-
-    @Override
-    @Nullable
-    public HaskellInstanceDeclaration getInstanceDeclaration() {
-        return PsiTreeUtil.getChildOfType(this, HaskellInstanceDeclaration.class);
-    }
-
-    @Override
-    @Nullable
-    public HaskellNewtypeDeclaration getNewtypeDeclaration() {
-        return PsiTreeUtil.getChildOfType(this, HaskellNewtypeDeclaration.class);
     }
 
     @Override
@@ -81,14 +58,8 @@ public class HaskellCideclImpl extends HaskellCompositeElementImpl implements Ha
 
     @Override
     @Nullable
-    public HaskellTypeDeclaration getTypeDeclaration() {
-        return PsiTreeUtil.getChildOfType(this, HaskellTypeDeclaration.class);
-    }
-
-    @Override
-    @Nullable
-    public HaskellTypeFamilyDeclaration getTypeFamilyDeclaration() {
-        return PsiTreeUtil.getChildOfType(this, HaskellTypeFamilyDeclaration.class);
+    public HaskellTopDeclaration getTopDeclaration() {
+        return PsiTreeUtil.getChildOfType(this, HaskellTopDeclaration.class);
     }
 
 }

@@ -10,16 +10,18 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
 
-public class HaskellCdeclDataDeclarationImpl extends HaskellCompositeElementImpl implements HaskellCdeclDataDeclaration {
+public class HaskellCdeclDataDeclarationImpl extends HaskellTopDeclarationImpl implements HaskellCdeclDataDeclaration {
 
     public HaskellCdeclDataDeclarationImpl(ASTNode node) {
         super(node);
     }
 
+    @Override
     public void accept(@NotNull HaskellVisitor visitor) {
         visitor.visitCdeclDataDeclaration(this);
     }
 
+    @Override
     public void accept(@NotNull PsiElementVisitor visitor) {
         if (visitor instanceof HaskellVisitor) accept((HaskellVisitor) visitor);
         else super.accept(visitor);

@@ -22,6 +22,7 @@ import com.intellij.lexer.Lexer
 import com.intellij.openapi.project.Project
 import com.intellij.psi._
 import com.intellij.psi.tree.{IFileElementType, TokenSet}
+import intellij.haskell.HaskellParserDefinition.{Comments, WhiteSpaces}
 import intellij.haskell.parser.HaskellParser
 import intellij.haskell.psi.HaskellTypes
 import intellij.haskell.psi.HaskellTypes._

@@ -12,16 +12,18 @@ import scala.collection.immutable.Seq;
 
 import java.util.List;
 
-public class HaskellForeignDeclarationImpl extends HaskellCompositeElementImpl implements HaskellForeignDeclaration {
+public class HaskellForeignDeclarationImpl extends HaskellTopDeclarationImpl implements HaskellForeignDeclaration {
 
     public HaskellForeignDeclarationImpl(ASTNode node) {
         super(node);
     }
 
+    @Override
     public void accept(@NotNull HaskellVisitor visitor) {
         visitor.visitForeignDeclaration(this);
     }
 
+    @Override
     public void accept(@NotNull PsiElementVisitor visitor) {
         if (visitor instanceof HaskellVisitor) accept((HaskellVisitor) visitor);
         else super.accept(visitor);

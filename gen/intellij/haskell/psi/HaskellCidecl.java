@@ -8,20 +8,8 @@ import java.util.List;
 
 public interface HaskellCidecl extends HaskellCompositeElement {
 
-    @Nullable
-    HaskellDataDeclaration getDataDeclaration();
-
-    @Nullable
-    HaskellDefaultDeclaration getDefaultDeclaration();
-
     @NotNull
     List<HaskellDotDot> getDotDotList();
-
-    @Nullable
-    HaskellInstanceDeclaration getInstanceDeclaration();
-
-    @Nullable
-    HaskellNewtypeDeclaration getNewtypeDeclaration();
 
     @Nullable
     HaskellPragma getPragma();
@@ -36,9 +24,6 @@ public interface HaskellCidecl extends HaskellCompositeElement {
     List<HaskellTextLiteral> getTextLiteralList();
 
     @Nullable
-    HaskellTypeDeclaration getTypeDeclaration();
-
-    @Nullable
-    HaskellTypeFamilyDeclaration getTypeFamilyDeclaration();
+    HaskellTopDeclaration getTopDeclaration();
 
 }

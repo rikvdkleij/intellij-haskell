@@ -7,31 +7,26 @@ import com.intellij.psi.PsiElementVisitor;
 import com.intellij.psi.util.PsiTreeUtil;
 import intellij.haskell.psi.*;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 import scala.Option;
 import scala.collection.immutable.Seq;
 
 import java.util.List;
 
-public class HaskellTypeFamilyDeclarationImpl extends HaskellCompositeElementImpl implements HaskellTypeFamilyDeclaration {
+public class HaskellTypeFamilyDeclarationImpl extends HaskellTopDeclarationImpl implements HaskellTypeFamilyDeclaration {
 
     public HaskellTypeFamilyDeclarationImpl(ASTNode node) {
         super(node);
     }
 
+    @Override
     public void accept(@NotNull HaskellVisitor visitor) {
         visitor.visitTypeFamilyDeclaration(this);
     }
 
+    @Override
     public void accept(@NotNull PsiElementVisitor visitor) {
         if (visitor instanceof HaskellVisitor) accept((HaskellVisitor) visitor);
         else super.accept(visitor);
-    }
-
-    @Override
-    @Nullable
-    public HaskellExpression getExpression() {
-        return PsiTreeUtil.getChildOfType(this, HaskellExpression.class);
     }
 
     @Override

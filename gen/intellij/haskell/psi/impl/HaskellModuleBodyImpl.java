@@ -20,6 +20,7 @@ public class HaskellModuleBodyImpl extends HaskellCompositeElementImpl implement
         visitor.visitModuleBody(this);
     }
 
+    @Override
     public void accept(@NotNull PsiElementVisitor visitor) {
         if (visitor instanceof HaskellVisitor) accept((HaskellVisitor) visitor);
         else super.accept(visitor);
@@ -29,12 +30,6 @@ public class HaskellModuleBodyImpl extends HaskellCompositeElementImpl implement
     @Nullable
     public HaskellImportDeclarations getImportDeclarations() {
         return PsiTreeUtil.getChildOfType(this, HaskellImportDeclarations.class);
-    }
-
-    @Override
-    @Nullable
-    public HaskellModuleDeclaration getModuleDeclaration() {
-        return PsiTreeUtil.getChildOfType(this, HaskellModuleDeclaration.class);
     }
 
     @Override

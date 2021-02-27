@@ -13,16 +13,18 @@ import scala.collection.immutable.Seq;
 
 import java.util.List;
 
-public class HaskellModuleDeclarationImpl extends HaskellCompositeElementImpl implements HaskellModuleDeclaration {
+public class HaskellModuleDeclarationImpl extends HaskellTopDeclarationImpl implements HaskellModuleDeclaration {
 
     public HaskellModuleDeclarationImpl(ASTNode node) {
         super(node);
     }
 
+    @Override
     public void accept(@NotNull HaskellVisitor visitor) {
         visitor.visitModuleDeclaration(this);
     }
 
+    @Override
     public void accept(@NotNull PsiElementVisitor visitor) {
         if (visitor instanceof HaskellVisitor) accept((HaskellVisitor) visitor);
         else super.accept(visitor);
@@ -44,6 +46,12 @@ public class HaskellModuleDeclarationImpl extends HaskellCompositeElementImpl im
     @NotNull
     public List<HaskellPragma> getPragmaList() {
         return PsiTreeUtil.getChildrenOfTypeAsList(this, HaskellPragma.class);
+    }
+
+    @Override
+    @NotNull
+    public HaskellWhereClause getWhereClause() {
+        return notNullChild(PsiTreeUtil.getChildOfType(this, HaskellWhereClause.class));
     }
 
     @Override

@@ -8,6 +8,11 @@ import intellij.haskell.psi.impl.*;
 
 public interface HaskellTypes {
 
+    IElementType HS_APPLICATION_EXPRESSION = new HaskellCompositeElementType("HS_APPLICATION_EXPRESSION");
+    IElementType HS_ATOM_EXPRESSION = new HaskellCompositeElementType("HS_ATOM_EXPRESSION");
+    IElementType HS_BRACKET_EXPRESSION = new HaskellCompositeElementType("HS_BRACKET_EXPRESSION");
+    IElementType HS_CASE_CLAUSE = new HaskellCompositeElementType("HS_CASE_CLAUSE");
+    IElementType HS_CASE_OF_EXPRESSION = new HaskellCompositeElementType("HS_CASE_OF_EXPRESSION");
     IElementType HS_CCONTEXT = new HaskellCompositeElementType("HS_CCONTEXT");
     IElementType HS_CDECL = new HaskellCompositeElementType("HS_CDECL");
     IElementType HS_CDECLS = new HaskellCompositeElementType("HS_CDECLS");
@@ -29,6 +34,7 @@ public interface HaskellTypes {
     IElementType HS_DERIVING_DECLARATION = new HaskellCompositeElementType("HS_DERIVING_DECLARATION");
     IElementType HS_DERIVING_VIA = new HaskellCompositeElementType("HS_DERIVING_VIA");
     IElementType HS_DOT_DOT = new HaskellCompositeElementType("HS_DOT_DOT");
+    IElementType HS_DO_NOTATION_EXPRESSION = new HaskellCompositeElementType("HS_DO_NOTATION_EXPRESSION");
     IElementType HS_EXPORT = new HaskellCompositeElementType("HS_EXPORT");
     IElementType HS_EXPORTS = new HaskellCompositeElementType("HS_EXPORTS");
     IElementType HS_EXPRESSION = new HaskellCompositeElementType("HS_EXPRESSION");
@@ -38,6 +44,8 @@ public interface HaskellTypes {
     IElementType HS_FOREIGN_DECLARATION = new HaskellCompositeElementType("HS_FOREIGN_DECLARATION");
     IElementType HS_GENERAL_PRAGMA_CONTENT = new HaskellCompositeElementType("HS_GENERAL_PRAGMA_CONTENT");
     IElementType HS_GTYCON = new HaskellCompositeElementType("HS_GTYCON");
+    IElementType HS_IF_EXPRESSION = new HaskellCompositeElementType("HS_IF_EXPRESSION");
+    IElementType HS_IMPLEMENTATION_DECLARATION = new HaskellCompositeElementType("HS_IMPLEMENTATION_DECLARATION");
     IElementType HS_IMPORT_DECLARATION = new HaskellCompositeElementType("HS_IMPORT_DECLARATION");
     IElementType HS_IMPORT_DECLARATIONS = new HaskellCompositeElementType("HS_IMPORT_DECLARATIONS");
     IElementType HS_IMPORT_EMPTY_SPEC = new HaskellCompositeElementType("HS_IMPORT_EMPTY_SPEC");
@@ -53,6 +61,7 @@ public interface HaskellTypes {
     IElementType HS_INSTANCE_DECLARATION = new HaskellCompositeElementType("HS_INSTANCE_DECLARATION");
     IElementType HS_INSTVAR = new HaskellCompositeElementType("HS_INSTVAR");
     IElementType HS_KIND_SIGNATURE = new HaskellCompositeElementType("HS_KIND_SIGNATURE");
+    IElementType HS_LET_ABSTRACTION = new HaskellCompositeElementType("HS_LET_ABSTRACTION");
     IElementType HS_LIST_TYPE = new HaskellCompositeElementType("HS_LIST_TYPE");
     IElementType HS_MODID = HaskellElementTypeFactory.factory("HS_MODID");
     IElementType HS_MODULE_BODY = new HaskellCompositeElementType("HS_MODULE_BODY");
@@ -60,6 +69,7 @@ public interface HaskellTypes {
     IElementType HS_NEWCONSTR = new HaskellCompositeElementType("HS_NEWCONSTR");
     IElementType HS_NEWCONSTR_FIELDDECL = new HaskellCompositeElementType("HS_NEWCONSTR_FIELDDECL");
     IElementType HS_NEWTYPE_DECLARATION = new HaskellCompositeElementType("HS_NEWTYPE_DECLARATION");
+    IElementType HS_PAREN_EXPRESSION = new HaskellCompositeElementType("HS_PAREN_EXPRESSION");
     IElementType HS_PRAGMA = new HaskellCompositeElementType("HS_PRAGMA");
     IElementType HS_QUALIFIER = new HaskellCompositeElementType("HS_QUALIFIER");
     IElementType HS_QUASI_QUOTE = new HaskellCompositeElementType("HS_QUASI_QUOTE");
@@ -88,6 +98,7 @@ public interface HaskellTypes {
     IElementType HS_VARID = HaskellElementTypeFactory.factory("HS_VARID");
     IElementType HS_VARSYM = HaskellElementTypeFactory.factory("HS_VARSYM");
     IElementType HS_VAR_CON = new HaskellCompositeElementType("HS_VAR_CON");
+    IElementType HS_WHERE_CLAUSE = new HaskellCompositeElementType("HS_WHERE_CLAUSE");
 
     IElementType HS_AT = new HaskellTokenType("AT");
     IElementType HS_BACKQUOTE = new HaskellTokenType("BACKQUOTE");
@@ -152,6 +163,7 @@ public interface HaskellTypes {
     IElementType HS_RIGHT_BRACE = new HaskellTokenType("RIGHT_BRACE");
     IElementType HS_RIGHT_BRACKET = new HaskellTokenType("RIGHT_BRACKET");
     IElementType HS_RIGHT_PAREN = new HaskellTokenType("RIGHT_PAREN");
+    IElementType HS_SEMI = new HaskellTokenType("semi");
     IElementType HS_SEMICOLON = new HaskellTokenType("SEMICOLON");
     IElementType HS_STRING_LITERAL = new HaskellTokenType("STRING_LITERAL");
     IElementType HS_THEN = new HaskellTokenType("THEN");
@@ -168,7 +180,17 @@ public interface HaskellTypes {
     class Factory {
         public static PsiElement createElement(ASTNode node) {
             IElementType type = node.getElementType();
-            if (type == HS_CCONTEXT) {
+            if (type == HS_APPLICATION_EXPRESSION) {
+                return new HaskellApplicationExpressionImpl(node);
+            } else if (type == HS_ATOM_EXPRESSION) {
+                return new HaskellAtomExpressionImpl(node);
+            } else if (type == HS_BRACKET_EXPRESSION) {
+                return new HaskellBracketExpressionImpl(node);
+            } else if (type == HS_CASE_CLAUSE) {
+                return new HaskellCaseClauseImpl(node);
+            } else if (type == HS_CASE_OF_EXPRESSION) {
+                return new HaskellCaseOfExpressionImpl(node);
+            } else if (type == HS_CCONTEXT) {
                 return new HaskellCcontextImpl(node);
             } else if (type == HS_CDECL) {
                 return new HaskellCdeclImpl(node);
@@ -210,6 +232,8 @@ public interface HaskellTypes {
                 return new HaskellDerivingViaImpl(node);
             } else if (type == HS_DOT_DOT) {
                 return new HaskellDotDotImpl(node);
+            } else if (type == HS_DO_NOTATION_EXPRESSION) {
+                return new HaskellDoNotationExpressionImpl(node);
             } else if (type == HS_EXPORT) {
                 return new HaskellExportImpl(node);
             } else if (type == HS_EXPORTS) {
@@ -228,6 +252,10 @@ public interface HaskellTypes {
                 return new HaskellGeneralPragmaContentImpl(node);
             } else if (type == HS_GTYCON) {
                 return new HaskellGtyconImpl(node);
+            } else if (type == HS_IF_EXPRESSION) {
+                return new HaskellIfExpressionImpl(node);
+            } else if (type == HS_IMPLEMENTATION_DECLARATION) {
+                return new HaskellImplementationDeclarationImpl(node);
             } else if (type == HS_IMPORT_DECLARATION) {
                 return new HaskellImportDeclarationImpl(node);
             } else if (type == HS_IMPORT_DECLARATIONS) {
@@ -258,6 +286,8 @@ public interface HaskellTypes {
                 return new HaskellInstvarImpl(node);
             } else if (type == HS_KIND_SIGNATURE) {
                 return new HaskellKindSignatureImpl(node);
+            } else if (type == HS_LET_ABSTRACTION) {
+                return new HaskellLetAbstractionImpl(node);
             } else if (type == HS_LIST_TYPE) {
                 return new HaskellListTypeImpl(node);
             } else if (type == HS_MODID) {
@@ -272,6 +302,8 @@ public interface HaskellTypes {
                 return new HaskellNewconstrFielddeclImpl(node);
             } else if (type == HS_NEWTYPE_DECLARATION) {
                 return new HaskellNewtypeDeclarationImpl(node);
+            } else if (type == HS_PAREN_EXPRESSION) {
+                return new HaskellParenExpressionImpl(node);
             } else if (type == HS_PRAGMA) {
                 return new HaskellPragmaImpl(node);
             } else if (type == HS_QUALIFIER) {
@@ -328,6 +360,8 @@ public interface HaskellTypes {
                 return new HaskellVarsymImpl(node);
             } else if (type == HS_VAR_CON) {
                 return new HaskellVarConImpl(node);
+            } else if (type == HS_WHERE_CLAUSE) {
+                return new HaskellWhereClauseImpl(node);
             }
             throw new AssertionError("Unknown element type: " + type);
         }
