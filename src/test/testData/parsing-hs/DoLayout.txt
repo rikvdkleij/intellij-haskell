@@ -1,4 +1,6 @@
 Haskell file
+  HS_FILE_HEADER
+    <empty list>
   HS_MODULE_BODY
     HS_MODULE_DECLARATION
       PsiElement(HaskellTokenType.MODULE)('module')
@@ -12,15 +14,18 @@ Haskell file
         PsiWhiteSpace('\n')
         PsiWhiteSpace('\n')
         PsiWhiteSpace(' ')
-        HS_IMPLEMENTATION_DECLARATION
+        HS_TOP_DECLARATION
           HS_ATOM_EXPRESSION
             HS_Q_NAME
               HS_VAR_CON
                 HaskellVarid(HS_VARID)
                   PsiElement(HaskellTokenType.VAR_ID)('doNotation')
-          PsiWhiteSpace(' ')
-          PsiElement(HaskellTokenType.EQUAL)('=')
-          PsiWhiteSpace(' ')
+        PsiWhiteSpace(' ')
+        HS_TOP_DECLARATION
+          HS_ATOM_EXPRESSION
+            PsiElement(HaskellTokenType.EQUAL)('=')
+        PsiWhiteSpace(' ')
+        HS_TOP_DECLARATION
           HS_DO_NOTATION_EXPRESSION
             PsiElement(HaskellTokenType.DO)('do')
             PsiWhiteSpace('\n')
@@ -40,9 +45,10 @@ Haskell file
                   HS_VAR_CON
                     HaskellVarid(HS_VARID)
                       PsiElement(HaskellTokenType.VAR_ID)('f')
-            PsiWhiteSpace('\n')
-            PsiWhiteSpace('   ')
-            HS_APPLICATION_EXPRESSION
+              HS_ATOM_EXPRESSION
+                <empty list>
+              PsiWhiteSpace('\n')
+              PsiWhiteSpace('   ')
               HS_ATOM_EXPRESSION
                 HS_Q_NAME
                   HS_VAR_CON
@@ -57,9 +63,10 @@ Haskell file
                   HS_VAR_CON
                     HaskellVarid(HS_VARID)
                       PsiElement(HaskellTokenType.VAR_ID)('g')
-            PsiWhiteSpace('\n')
-            PsiWhiteSpace('   ')
-            HS_APPLICATION_EXPRESSION
+              HS_ATOM_EXPRESSION
+                <empty list>
+              PsiWhiteSpace('\n')
+              PsiWhiteSpace('   ')
               HS_ATOM_EXPRESSION
                 HS_Q_NAME
                   HS_VAR_CON

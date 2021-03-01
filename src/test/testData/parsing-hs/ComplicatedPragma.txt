@@ -9,7 +9,7 @@ Haskell file
       HS_GENERAL_PRAGMA_CONTENT
         PsiElement(HaskellTokenType.ONE_PRAGMA)('TheWorldOverHeaven')
       PsiElement(HaskellTokenType.PRAGMA_END)('#-}')
-      PsiElement(HaskellTokenType.NEWLINE)('\n')
+    PsiWhiteSpace('\n')
     HS_PRAGMA
       PsiElement(HaskellTokenType.PRAGMA_START)('{-#')
       PsiWhiteSpace(' ')
@@ -20,7 +20,7 @@ Haskell file
         PsiElement(HaskellTokenType.STRING_LITERAL)('"String"')
       PsiWhiteSpace(' ')
       PsiElement(HaskellTokenType.PRAGMA_END)('#-}')
-      PsiElement(HaskellTokenType.NEWLINE)('\n')
+    PsiWhiteSpace('\n')
     HS_PRAGMA
       PsiElement(HaskellTokenType.PRAGMA_START)('{-#')
       PsiWhiteSpace(' ')
@@ -31,28 +31,25 @@ Haskell file
         PsiElement(HaskellTokenType.STRING_LITERAL)('" \" Escape \' \n"')
       PsiWhiteSpace(' ')
       PsiElement(HaskellTokenType.PRAGMA_END)('#-}')
-      PsiElement(HaskellTokenType.NEWLINE)('\n')
+    PsiWhiteSpace('\n')
     HS_PRAGMA
       PsiElement(HaskellTokenType.PRAGMA_START)('{-#')
       PsiWhiteSpace(' ')
       HS_GENERAL_PRAGMA_CONTENT
         PsiElement(HaskellTokenType.ONE_PRAGMA)('OPTIONS_GHC')
-      HS_GENERAL_PRAGMA_CONTENT
-        PsiElement(HaskellTokenType.NEWLINE)('\n')
+      PsiWhiteSpace('\n')
       PsiWhiteSpace('    ')
       HS_GENERAL_PRAGMA_CONTENT
         PsiElement(HaskellTokenType.ONE_PRAGMA)('MULTI')
-      HS_GENERAL_PRAGMA_CONTENT
-        PsiElement(HaskellTokenType.NEWLINE)('\n')
+      PsiWhiteSpace('\n')
       PsiWhiteSpace('    ')
       HS_GENERAL_PRAGMA_CONTENT
         PsiElement(HaskellTokenType.ONE_PRAGMA)('LINE')
-      HS_GENERAL_PRAGMA_CONTENT
-        PsiElement(HaskellTokenType.NEWLINE)('\n')
+      PsiWhiteSpace('\n')
       PsiWhiteSpace('  ')
       PsiElement(HaskellTokenType.PRAGMA_END)('#-}')
-      PsiElement(HaskellTokenType.NEWLINE)('\n')
-    PsiElement(HaskellTokenType.NEWLINE)('\n')
+    PsiWhiteSpace('\n')
+    PsiWhiteSpace('\n')
     HS_PRAGMA
       PsiElement(HaskellTokenType.PRAGMA_START)('{-#')
       PsiWhiteSpace(' ')

@@ -27,7 +27,7 @@ class HaskellConsymStubElementType(debugName: String) extends HaskellNamedStubEl
     new HaskellConsymImpl(stub, this)
   }
 
-  def createStub(psi: HaskellConsym, parentStub: StubElement[_ <: PsiElement]): HaskellConsymStub = {
+  def createStub(psi: HaskellConsym, parentStub: StubElement[_]): HaskellConsymStub = {
     new HaskellConsymStub(parentStub, this, psi.getName)
   }
 

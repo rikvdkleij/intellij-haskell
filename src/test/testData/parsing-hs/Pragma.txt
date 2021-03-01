@@ -7,7 +7,7 @@ Haskell file
         PsiElement(HaskellTokenType.ONE_PRAGMA)('Hey')
       PsiWhiteSpace(' ')
       PsiElement(HaskellTokenType.PRAGMA_END)('#-}')
-      PsiElement(HaskellTokenType.NEWLINE)('\n')
+    PsiWhiteSpace('\n')
     HS_PRAGMA
       PsiElement(HaskellTokenType.PRAGMA_START)('{-#')
       PsiWhiteSpace(' ')
@@ -18,7 +18,7 @@ Haskell file
         PsiElement(HaskellTokenType.ONE_PRAGMA)('OhMyGod')
       PsiWhiteSpace(' ')
       PsiElement(HaskellTokenType.PRAGMA_END)('#-}')
-      PsiElement(HaskellTokenType.NEWLINE)('\n')
+    PsiWhiteSpace('\n')
     HS_PRAGMA
       PsiElement(HaskellTokenType.PRAGMA_START)('{-#')
       PsiWhiteSpace(' ')

@@ -27,7 +27,7 @@ public class HaskellModidStub extends NamedStubBase<HaskellModid> {
         super(parent, elementType, name);
     }
 
-    public HaskellModidStub(StubElement parent, IStubElementType elementType, String name) {
+    public HaskellModidStub(StubElement<?> parent, IStubElementType elementType, String name) {
         super(parent, elementType, name);
     }
 }

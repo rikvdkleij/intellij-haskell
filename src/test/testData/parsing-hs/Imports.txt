@@ -1,4 +1,6 @@
 Haskell file
+  HS_FILE_HEADER
+    <empty list>
   HS_MODULE_BODY
     HS_IMPORT_DECLARATIONS
       HS_IMPORT_DECLARATION
@@ -42,17 +44,17 @@ Haskell file
           HS_IMPORT_IDS_SPEC
             PsiElement(HaskellTokenType.LEFT_PAREN)('(')
             HS_IMPORT_ID
-              HS_CNAME
-                HS_VAR
-                  PsiElement(HaskellTokenType.LEFT_PAREN)('(')
+              HS_Q_NAME
+                PsiElement(HaskellTokenType.LEFT_PAREN)('(')
+                HS_VAR_CON
                   HaskellVarsym(HS_VARSYM)
                     PsiElement(HaskellTokenType.VARSYM_ID)('$')
-                  PsiElement(HaskellTokenType.RIGHT_PAREN)(')')
+                PsiElement(HaskellTokenType.RIGHT_PAREN)(')')
             PsiElement(HaskellTokenType.COMMA)(',')
             PsiWhiteSpace(' ')
             HS_IMPORT_ID
-              HS_CNAME
-                HS_VAR
+              HS_Q_NAME
+                HS_VAR_CON
                   HaskellVarid(HS_VARID)
                     PsiElement(HaskellTokenType.VAR_ID)('b')
             PsiElement(HaskellTokenType.RIGHT_PAREN)(')')
@@ -68,6 +70,6 @@ Haskell file
             PsiElement(HaskellTokenType.CON_ID)('B')
         PsiWhiteSpace(' ')
         HS_IMPORT_SPEC
-          HS_IMPORT_IDS_SPEC
+          HS_IMPORT_EMPTY_SPEC
             PsiElement(HaskellTokenType.LEFT_PAREN)('(')
             PsiElement(HaskellTokenType.RIGHT_PAREN)(')')
