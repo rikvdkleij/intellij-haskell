@@ -13,6 +13,10 @@ class HaskellParsingTest extends ParsingTestCase("", "hs", new HaskellParserDefi
     doTest(true, true)
   }
 
+  def testMultiLineLetIn(): Unit = {
+    doTest(true, true)
+  }
+
   def testSimpleLayout(): Unit = {
     doTest(true, true)
   }

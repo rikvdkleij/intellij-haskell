@@ -1,17 +1,19 @@
 // This is a generated file. Not intended for manual editing.
 package intellij.haskell.psi;
 
-import org.jetbrains.annotations.Nullable;
+import java.util.List;
+import org.jetbrains.annotations.*;
+import com.intellij.psi.PsiElement;
 
 public interface HaskellImportSpec extends HaskellCompositeElement {
 
-    @Nullable
-    HaskellImportEmptySpec getImportEmptySpec();
+  @Nullable
+  HaskellImportEmptySpec getImportEmptySpec();
 
-    @Nullable
-    HaskellImportHidingSpec getImportHidingSpec();
+  @Nullable
+  HaskellImportHidingSpec getImportHidingSpec();
 
-    @Nullable
-    HaskellImportIdsSpec getImportIdsSpec();
+  @Nullable
+  HaskellImportIdsSpec getImportIdsSpec();
 
 }

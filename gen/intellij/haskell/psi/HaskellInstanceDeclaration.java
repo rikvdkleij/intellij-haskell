@@ -1,43 +1,42 @@
 // This is a generated file. Not intended for manual editing.
 package intellij.haskell.psi;
 
+import java.util.List;
+import org.jetbrains.annotations.*;
+import com.intellij.psi.PsiElement;
 import com.intellij.navigation.ItemPresentation;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 import scala.Option;
 import scala.collection.immutable.Seq;
 
-import java.util.List;
-
 public interface HaskellInstanceDeclaration extends HaskellTopDeclaration, HaskellDeclarationElement {
 
-    @Nullable
-    HaskellCidecls getCidecls();
+  @Nullable
+  HaskellCidecls getCidecls();
 
-    @Nullable
-    HaskellInst getInst();
+  @Nullable
+  HaskellInst getInst();
 
-    @NotNull
-    List<HaskellPragma> getPragmaList();
+  @NotNull
+  List<HaskellPragma> getPragmaList();
 
-    @Nullable
-    HaskellQName getQName();
+  @Nullable
+  HaskellQName getQName();
 
-    @Nullable
-    HaskellScontext getScontext();
+  @Nullable
+  HaskellScontext getScontext();
 
-    @Nullable
-    HaskellTypeEquality getTypeEquality();
+  @Nullable
+  HaskellTypeEquality getTypeEquality();
 
-    @NotNull
-    List<HaskellVarid> getVaridList();
+  @NotNull
+  List<HaskellVarid> getVaridList();
 
-    String getName();
+  String getName();
 
-    ItemPresentation getPresentation();
+  ItemPresentation getPresentation();
 
-    Seq<HaskellNamedElement> getIdentifierElements();
+  Seq<HaskellNamedElement> getIdentifierElements();
 
-    Option<String> getModuleName();
+  Option<String> getModuleName();
 
 }

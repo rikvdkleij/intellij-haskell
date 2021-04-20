@@ -1,7 +1,3 @@
 module TestModule where
 
- these :: declarations are
- insideOfALayout = let
-   test = bla
-   reTest = blllaaa
- in test reTest
+ oneLineLetInWithModuleDecl = let x = 1 in x
