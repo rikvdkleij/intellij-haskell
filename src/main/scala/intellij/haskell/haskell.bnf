@@ -64,7 +64,7 @@ general_pragma_content      ::= ONE_PRAGMA | PRAGMA_SEP | CHARACTER_LITERAL | ST
 
 module_body                 ::= module_declaration onl body | onl body
 module_declaration          ::= MODULE modid onl pragma? onl (exports onl)? where_clause
-where_clause                ::= WHERE LEFT_BRACE body RIGHT_BRACE? {pin=1}
+where_clause                ::= WHERE (LEFT_BRACE body RIGHT_BRACE)? {pin=1}
 
 private body                ::= import_declarations? onl top_declarations onl
 import_declarations         ::= import_declaration (onl import_declaration)* (DIRECTIVE | INCLUDE_DIRECTIVE)*

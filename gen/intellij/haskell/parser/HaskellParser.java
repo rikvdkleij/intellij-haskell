@@ -7123,25 +7123,36 @@ public class HaskellParser implements PsiParser, LightPsiParser {
   }
 
   /* ********************************************************** */
-  // WHERE LEFT_BRACE body RIGHT_BRACE?
+  // WHERE (LEFT_BRACE body RIGHT_BRACE)?
   public static boolean where_clause(PsiBuilder b, int l) {
     if (!recursion_guard_(b, l, "where_clause")) return false;
     if (!nextTokenIs(b, HS_WHERE)) return false;
     boolean r, p;
     Marker m = enter_section_(b, l, _NONE_, HS_WHERE_CLAUSE, null);
-    r = consumeTokens(b, 1, HS_WHERE, HS_LEFT_BRACE);
+    r = consumeToken(b, HS_WHERE);
     p = r; // pin = 1
-    r = r && report_error_(b, body(b, l + 1));
-    r = p && where_clause_3(b, l + 1) && r;
+    r = r && where_clause_1(b, l + 1);
     exit_section_(b, l, m, r, p, null);
     return r || p;
   }
 
-  // RIGHT_BRACE?
-  private static boolean where_clause_3(PsiBuilder b, int l) {
-    if (!recursion_guard_(b, l, "where_clause_3")) return false;
-    consumeToken(b, HS_RIGHT_BRACE);
+  // (LEFT_BRACE body RIGHT_BRACE)?
+  private static boolean where_clause_1(PsiBuilder b, int l) {
+    if (!recursion_guard_(b, l, "where_clause_1")) return false;
+    where_clause_1_0(b, l + 1);
     return true;
+  }
+
+  // LEFT_BRACE body RIGHT_BRACE
+  private static boolean where_clause_1_0(PsiBuilder b, int l) {
+    if (!recursion_guard_(b, l, "where_clause_1_0")) return false;
+    boolean r;
+    Marker m = enter_section_(b);
+    r = consumeToken(b, HS_LEFT_BRACE);
+    r = r && body(b, l + 1);
+    r = r && consumeToken(b, HS_RIGHT_BRACE);
+    exit_section_(b, m, null, r);
+    return r;
   }
 
 }
