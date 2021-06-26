@@ -426,7 +426,7 @@
     </change-notes>
 
     <!-- please see http://confluence.jetbrains.com/display/IDEADEV/Build+Number+Ranges for description -->
-    <idea-version since-build="201.6668.113"/>
+    <idea-version since-build="202.8194.7"/>
 
     <extensions defaultExtensionNs="com.intellij">
         <!-- File types -->
