@@ -20,33 +20,10 @@ public class HaskellTopDeclarationImpl extends HaskellCompositeElementImpl imple
     visitor.visitTopDeclaration(this);
   }
 
+  @Override
   public void accept(@NotNull PsiElementVisitor visitor) {
     if (visitor instanceof HaskellVisitor) accept((HaskellVisitor)visitor);
     else super.accept(visitor);
-  }
-
-  @Override
-  @Nullable
-  public HaskellClassDeclaration getClassDeclaration() {
-    return PsiTreeUtil.getChildOfType(this, HaskellClassDeclaration.class);
-  }
-
-  @Override
-  @Nullable
-  public HaskellDataDeclaration getDataDeclaration() {
-    return PsiTreeUtil.getChildOfType(this, HaskellDataDeclaration.class);
-  }
-
-  @Override
-  @Nullable
-  public HaskellDefaultDeclaration getDefaultDeclaration() {
-    return PsiTreeUtil.getChildOfType(this, HaskellDefaultDeclaration.class);
-  }
-
-  @Override
-  @Nullable
-  public HaskellDerivingDeclaration getDerivingDeclaration() {
-    return PsiTreeUtil.getChildOfType(this, HaskellDerivingDeclaration.class);
   }
 
   @Override
@@ -57,50 +34,14 @@ public class HaskellTopDeclarationImpl extends HaskellCompositeElementImpl imple
 
   @Override
   @Nullable
-  public HaskellFixityDeclaration getFixityDeclaration() {
-    return PsiTreeUtil.getChildOfType(this, HaskellFixityDeclaration.class);
-  }
-
-  @Override
-  @Nullable
-  public HaskellForeignDeclaration getForeignDeclaration() {
-    return PsiTreeUtil.getChildOfType(this, HaskellForeignDeclaration.class);
-  }
-
-  @Override
-  @Nullable
-  public HaskellInstanceDeclaration getInstanceDeclaration() {
-    return PsiTreeUtil.getChildOfType(this, HaskellInstanceDeclaration.class);
-  }
-
-  @Override
-  @Nullable
-  public HaskellNewtypeDeclaration getNewtypeDeclaration() {
-    return PsiTreeUtil.getChildOfType(this, HaskellNewtypeDeclaration.class);
-  }
-
-  @Override
-  @Nullable
   public HaskellPragma getPragma() {
     return PsiTreeUtil.getChildOfType(this, HaskellPragma.class);
   }
 
   @Override
   @Nullable
-  public HaskellTypeDeclaration getTypeDeclaration() {
-    return PsiTreeUtil.getChildOfType(this, HaskellTypeDeclaration.class);
-  }
-
-  @Override
-  @Nullable
-  public HaskellTypeFamilyDeclaration getTypeFamilyDeclaration() {
-    return PsiTreeUtil.getChildOfType(this, HaskellTypeFamilyDeclaration.class);
-  }
-
-  @Override
-  @Nullable
-  public HaskellTypeInstanceDeclaration getTypeInstanceDeclaration() {
-    return PsiTreeUtil.getChildOfType(this, HaskellTypeInstanceDeclaration.class);
+  public HaskellTopDeclaration getTopDeclaration() {
+    return PsiTreeUtil.getChildOfType(this, HaskellTopDeclaration.class);
   }
 
   @Override

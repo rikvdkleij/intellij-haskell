@@ -28,6 +28,7 @@ public class HaskellVarsymImpl extends HaskellNamedStubBasedPsiElementBase<Haske
     visitor.visitVarsym(this);
   }
 
+  @Override
   public void accept(@NotNull PsiElementVisitor visitor) {
     if (visitor instanceof HaskellVisitor) accept((HaskellVisitor)visitor);
     else super.accept(visitor);
@@ -56,6 +57,11 @@ public class HaskellVarsymImpl extends HaskellNamedStubBasedPsiElementBase<Haske
   @Override
   public ItemPresentation getPresentation() {
     return HaskellPsiImplUtil.getPresentation(this);
+  }
+
+  @Override
+  public String toString() {
+    return HaskellPsiImplUtil.toString(this);
   }
 
 }

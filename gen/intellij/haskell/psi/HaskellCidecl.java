@@ -1,44 +1,28 @@
 // This is a generated file. Not intended for manual editing.
 package intellij.haskell.psi;
 
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
-
 import java.util.List;
+import org.jetbrains.annotations.*;
+import com.intellij.psi.PsiElement;
 
 public interface HaskellCidecl extends HaskellCompositeElement {
 
-    @Nullable
-    HaskellDataDeclaration getDataDeclaration();
+  @NotNull
+  List<HaskellDotDot> getDotDotList();
 
-    @Nullable
-    HaskellDefaultDeclaration getDefaultDeclaration();
+  @Nullable
+  HaskellPragma getPragma();
 
-    @NotNull
-    List<HaskellDotDot> getDotDotList();
+  @NotNull
+  List<HaskellQName> getQNameList();
 
-    @Nullable
-    HaskellInstanceDeclaration getInstanceDeclaration();
+  @NotNull
+  List<HaskellQuasiQuote> getQuasiQuoteList();
 
-    @Nullable
-    HaskellNewtypeDeclaration getNewtypeDeclaration();
+  @NotNull
+  List<HaskellTextLiteral> getTextLiteralList();
 
-    @Nullable
-    HaskellPragma getPragma();
-
-    @NotNull
-    List<HaskellQName> getQNameList();
-
-    @NotNull
-    List<HaskellQuasiQuote> getQuasiQuoteList();
-
-    @NotNull
-    List<HaskellTextLiteral> getTextLiteralList();
-
-    @Nullable
-    HaskellTypeDeclaration getTypeDeclaration();
-
-    @Nullable
-    HaskellTypeFamilyDeclaration getTypeFamilyDeclaration();
+  @Nullable
+  HaskellTopDeclaration getTopDeclaration();
 
 }

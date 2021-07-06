@@ -28,6 +28,7 @@ public class HaskellModidImpl extends HaskellNamedStubBasedPsiElementBase<Haskel
     visitor.visitModid(this);
   }
 
+  @Override
   public void accept(@NotNull PsiElementVisitor visitor) {
     if (visitor instanceof HaskellVisitor) accept((HaskellVisitor)visitor);
     else super.accept(visitor);
@@ -62,6 +63,11 @@ public class HaskellModidImpl extends HaskellNamedStubBasedPsiElementBase<Haskel
   @Override
   public ItemPresentation getPresentation() {
     return HaskellPsiImplUtil.getPresentation(this);
+  }
+
+  @Override
+  public String toString() {
+    return HaskellPsiImplUtil.toString(this);
   }
 
 }

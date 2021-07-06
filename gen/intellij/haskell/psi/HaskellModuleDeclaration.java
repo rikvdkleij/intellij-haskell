@@ -1,31 +1,33 @@
 // This is a generated file. Not intended for manual editing.
 package intellij.haskell.psi;
 
+import java.util.List;
+import org.jetbrains.annotations.*;
+import com.intellij.psi.PsiElement;
 import com.intellij.navigation.ItemPresentation;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 import scala.Option;
 import scala.collection.immutable.Seq;
 
-import java.util.List;
+public interface HaskellModuleDeclaration extends HaskellTopDeclaration, HaskellDeclarationElement {
 
-public interface HaskellModuleDeclaration extends HaskellDeclarationElement {
+  @Nullable
+  HaskellExports getExports();
 
-    @Nullable
-    HaskellExports getExports();
+  @NotNull
+  HaskellModid getModid();
 
-    @NotNull
-    HaskellModid getModid();
+  @NotNull
+  List<HaskellPragma> getPragmaList();
 
-    @NotNull
-    List<HaskellPragma> getPragmaList();
+  @NotNull
+  HaskellWhereClause getWhereClause();
 
-    String getName();
+  String getName();
 
-    ItemPresentation getPresentation();
+  ItemPresentation getPresentation();
 
-    Seq<HaskellNamedElement> getIdentifierElements();
+  Seq<HaskellNamedElement> getIdentifierElements();
 
-    Option<String> getModuleName();
+  Option<String> getModuleName();
 
 }

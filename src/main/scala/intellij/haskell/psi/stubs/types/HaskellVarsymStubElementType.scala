@@ -11,7 +11,7 @@ class HaskellVarsymStubElementType(debugName: String) extends HaskellNamedStubEl
     new HaskellVarsymImpl(stub, this)
   }
 
-  def createStub(psi: HaskellVarsym, parentStub: StubElement[_ <: PsiElement]): HaskellVarsymStub = {
+  def createStub(psi: HaskellVarsym, parentStub: StubElement[_]): HaskellVarsymStub = {
     new HaskellVarsymStub(parentStub, this, psi.getName)
   }
 

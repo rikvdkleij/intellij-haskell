@@ -20,6 +20,7 @@ public class HaskellConstr1Impl extends HaskellCompositeElementImpl implements H
     visitor.visitConstr1(this);
   }
 
+  @Override
   public void accept(@NotNull PsiElementVisitor visitor) {
     if (visitor instanceof HaskellVisitor) accept((HaskellVisitor)visitor);
     else super.accept(visitor);

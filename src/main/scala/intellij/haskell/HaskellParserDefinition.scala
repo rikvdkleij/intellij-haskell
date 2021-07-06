@@ -22,14 +22,16 @@ import com.intellij.lexer.Lexer
 import com.intellij.openapi.project.Project
 import com.intellij.psi._
 import com.intellij.psi.tree.{IFileElementType, TokenSet}
+import intellij.haskell.HaskellParserDefinition.{Comments, WhiteSpaces}
 import intellij.haskell.parser.HaskellParser
+import intellij.haskell.psi.HaskellTypes
 import intellij.haskell.psi.HaskellTypes._
 import intellij.haskell.psi.stubs.types.HaskellFileElementType
 import org.jetbrains.annotations.NotNull
 
 //noinspection TypeAnnotation
 object HaskellParserDefinition {
-  final val WhiteSpaces = TokenSet.create(TokenType.WHITE_SPACE)
+  final val WhiteSpaces = TokenSet.create(TokenType.WHITE_SPACE, HS_NEWLINE)
   final val Comments = TokenSet.create(HS_COMMENT, HS_NCOMMENT, HS_HADDOCK, HS_NHADDOCK)
   final val PragmaStartEndIds = TokenSet.create(HS_PRAGMA_START, HS_PRAGMA_END)
   final val ReservedIdS = TokenSet.create(HS_CASE, HS_CLASS, HS_DATA, HS_DEFAULT, HS_DERIVING, HS_DO, HS_ELSE, HS_IF, HS_IMPORT,
@@ -51,7 +53,16 @@ class HaskellParserDefinition extends ParserDefinition {
 
   @NotNull
   def createLexer(project: Project): Lexer = {
-    new HaskellLexerAdapter
+    new HaskellLayoutLexer(
+      new HaskellLexerAdapter,
+      HaskellTypes.HS_NEWLINE,
+      HaskellTypes.HS_LEFT_BRACE,
+      HaskellTypes.HS_SEMICOLON,
+      HaskellTypes.HS_RIGHT_BRACE,
+      TokenSet.orSet(Comments, WhiteSpaces, TokenSet.create(HS_LEFT_BRACE, HS_SEMICOLON, HS_RIGHT_BRACE)),
+      TokenSet.create(HS_WHERE, HS_LET, HS_DO, HS_OF),
+      LetIn(HS_LET, HS_IN)
+    )
   }
 
   def createParser(project: Project): PsiParser = {

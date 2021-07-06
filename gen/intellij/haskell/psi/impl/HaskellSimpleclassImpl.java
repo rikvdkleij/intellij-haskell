@@ -20,6 +20,7 @@ public class HaskellSimpleclassImpl extends HaskellCompositeElementImpl implemen
     visitor.visitSimpleclass(this);
   }
 
+  @Override
   public void accept(@NotNull PsiElementVisitor visitor) {
     if (visitor instanceof HaskellVisitor) accept((HaskellVisitor)visitor);
     else super.accept(visitor);

@@ -22,6 +22,7 @@ public class HaskellQConQualifier2Impl extends HaskellQualifierElementImpl imple
     visitor.visitQConQualifier2(this);
   }
 
+  @Override
   public void accept(@NotNull PsiElementVisitor visitor) {
     if (visitor instanceof HaskellVisitor) accept((HaskellVisitor)visitor);
     else super.accept(visitor);

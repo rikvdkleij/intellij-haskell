@@ -34,6 +34,22 @@ object HaskellPsiImplUtil {
     qVarCon.getText
   }
 
+  def toString(varid: HaskellVarid): String = {
+    s"HaskellVarid(${varid.getElementType})"
+  }
+
+  def toString(varid: HaskellVarsym): String = {
+    s"HaskellVarsym(${varid.getElementType})"
+  }
+
+  def toString(varid: HaskellConid): String = {
+    s"HaskellVarid(${varid.getElementType})"
+  }
+
+  def toString(varid: HaskellModid): String = {
+    s"HaskellVarid(${varid.getElementType})"
+  }
+
   def getIdentifierElement(qVarCon: HaskellQVarCon): HaskellNamedElement = {
     Option(qVarCon.getVarid).orElse(Option(qVarCon.getQCon).map(_.getConid)).orElse(Option(qVarCon.getConsym)).orElse(Option(qVarCon.getVarsym)).
       getOrElse(throw new IllegalStateException(s"Identifier for ${qVarCon.getText} should exist"))

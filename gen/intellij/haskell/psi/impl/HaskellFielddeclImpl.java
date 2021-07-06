@@ -20,6 +20,7 @@ public class HaskellFielddeclImpl extends HaskellCompositeElementImpl implements
     visitor.visitFielddecl(this);
   }
 
+  @Override
   public void accept(@NotNull PsiElementVisitor visitor) {
     if (visitor instanceof HaskellVisitor) accept((HaskellVisitor)visitor);
     else super.accept(visitor);

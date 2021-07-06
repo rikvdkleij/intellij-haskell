@@ -227,6 +227,9 @@ nhaddock_start      = {left_brace}{dash}{white_char}?{vertical_bar}
         return HS_ONE_PRAGMA;
     }
 
+    #[^-]+ {
+        return HS_ONE_PRAGMA;
+    }
 }
 
 {pragma_start} {

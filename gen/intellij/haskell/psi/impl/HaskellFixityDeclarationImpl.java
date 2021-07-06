@@ -10,16 +10,18 @@ import com.intellij.psi.util.PsiTreeUtil;
 import static intellij.haskell.psi.HaskellTypes.*;
 import intellij.haskell.psi.*;
 
-public class HaskellFixityDeclarationImpl extends HaskellCompositeElementImpl implements HaskellFixityDeclaration {
+public class HaskellFixityDeclarationImpl extends HaskellTopDeclarationImpl implements HaskellFixityDeclaration {
 
   public HaskellFixityDeclarationImpl(ASTNode node) {
     super(node);
   }
 
+  @Override
   public void accept(@NotNull HaskellVisitor visitor) {
     visitor.visitFixityDeclaration(this);
   }
 
+  @Override
   public void accept(@NotNull PsiElementVisitor visitor) {
     if (visitor instanceof HaskellVisitor) accept((HaskellVisitor)visitor);
     else super.accept(visitor);

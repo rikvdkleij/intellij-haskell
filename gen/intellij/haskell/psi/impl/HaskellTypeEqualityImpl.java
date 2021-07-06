@@ -20,6 +20,7 @@ public class HaskellTypeEqualityImpl extends HaskellCompositeElementImpl impleme
     visitor.visitTypeEquality(this);
   }
 
+  @Override
   public void accept(@NotNull PsiElementVisitor visitor) {
     if (visitor instanceof HaskellVisitor) accept((HaskellVisitor)visitor);
     else super.accept(visitor);
