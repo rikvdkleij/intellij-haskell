@@ -27,7 +27,7 @@ public class HaskellVaridStub extends NamedStubBase<HaskellVarid> {
         super(parent, elementType, name);
     }
 
-    public HaskellVaridStub(StubElement parent, IStubElementType elementType, String name) {
+    public HaskellVaridStub(StubElement<?> parent, IStubElementType elementType, String name) {
         super(parent, elementType, name);
     }
 }

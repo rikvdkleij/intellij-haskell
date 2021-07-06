@@ -27,7 +27,7 @@ class HaskellVaridStubElementType(debugName: String) extends HaskellNamedStubEle
     new HaskellVaridImpl(stub, this)
   }
 
-  def createStub(psi: HaskellVarid, parentStub: StubElement[_ <: PsiElement]): HaskellVaridStub = {
+  def createStub(psi: HaskellVarid, parentStub: StubElement[_]): HaskellVaridStub = {
     new HaskellVaridStub(parentStub, this, psi.getName)
   }
 

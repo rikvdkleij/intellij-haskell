@@ -27,7 +27,7 @@ public class HaskellConidStub extends NamedStubBase<HaskellConid> {
         super(parent, elementType, name);
     }
 
-    public HaskellConidStub(StubElement parent, IStubElementType elementType, String name) {
+    public HaskellConidStub(StubElement<?> parent, IStubElementType elementType, String name) {
         super(parent, elementType, name);
     }
 }

@@ -27,7 +27,7 @@ public class HaskellVarsymStub extends NamedStubBase<HaskellVarsym> {
         super(parent, elementType, name);
     }
 
-    public HaskellVarsymStub(StubElement parent, IStubElementType elementType, String name) {
+    public HaskellVarsymStub(StubElement<?> parent, IStubElementType elementType, String name) {
         super(parent, elementType, name);
     }
 }

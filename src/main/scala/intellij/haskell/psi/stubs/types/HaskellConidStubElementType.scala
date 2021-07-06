@@ -27,7 +27,7 @@ class HaskellConidStubElementType(debugName: String) extends HaskellNamedStubEle
     new HaskellConidImpl(stub, this)
   }
 
-  def createStub(psi: HaskellConid, parentStub: StubElement[_ <: PsiElement]): HaskellConidStub = {
+  def createStub(psi: HaskellConid, parentStub: StubElement[_]): HaskellConidStub = {
     new HaskellConidStub(parentStub, this, psi.getName)
   }
 
