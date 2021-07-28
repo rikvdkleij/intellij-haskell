@@ -1,7 +1,7 @@
-<idea-plugin>
+<idea-plugin require-restart="true">
     <id>intellij.haskell</id>
     <name>IntelliJ-Haskell</name>
-    <version>1.0.0-beta85</version>
+    <version>1.0.0-beta86</version>
     <vendor email="rikvdkleij@gmail.com">Rik van der Kleij</vendor>
 
     <description><![CDATA[
@@ -20,6 +20,12 @@
     ]]></description>
 
     <change-notes><![CDATA[
+         <p>1.0.0-beta86</p>
+           <ul>
+            <li>Support for 2021.2</li>
+            <li>Improved support for holes by @mbwgh. See #629. </li>
+            <li>Documentation in code completion by @fantostisch</li>
+           </ul>
         <p>1.0.0-beta85</p>
            <ul>
             <li>Various improvements and fixes</li>
