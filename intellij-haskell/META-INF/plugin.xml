@@ -1,7 +1,7 @@
 <idea-plugin require-restart="true">
     <id>intellij.haskell</id>
     <name>IntelliJ-Haskell</name>
-    <version>1.0.0-beta86</version>
+    <version>1.0.0-beta87</version>
     <vendor email="rikvdkleij@gmail.com">Rik van der Kleij</vendor>
 
     <description><![CDATA[
@@ -20,6 +20,10 @@
     ]]></description>
 
     <change-notes><![CDATA[
+         <p>1.0.0-beta87</p>
+           <ul>
+            <li>Fix support for 2021.2</li>
+           </ul>
          <p>1.0.0-beta86</p>
            <ul>
             <li>Support for 2021.2</li>
@@ -659,16 +663,7 @@
         <!-- Add your application components here -->
     </application-components>
 
-    <project-components>
-        <component>
-            <implementation-class>intellij.haskell.external.component.StackProjectManager</implementation-class>
-        </component>
-
-        <component>
-            <implementation-class>intellij.haskell.external.component.HaskellDocumentationProvider
-            </implementation-class>
-        </component>
-    </project-components>
+    <project-components><component><implementation-class>intellij.haskell.external.component.StackProjectManager</implementation-class></component><component><implementation-class>intellij.haskell.external.component.HaskellDocumentationProvider</implementation-class></component></project-components>
 
     <actions>
         <action id="Haskell.HaskellFile" class="intellij.haskell.action.CreateHaskellFileAction"
