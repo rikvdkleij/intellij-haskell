@@ -1,11 +1,11 @@
 package intellij.haskell.runconfig.console
 
-import java.util
-import java.util.Comparator
-
 import com.intellij.openapi.actionSystem.{ActionPromoter, AnAction, DataContext}
 import com.intellij.openapi.editor.actions.EnterAction
 import com.intellij.util.containers.ContainerUtil
+
+import java.util
+import java.util.Comparator
 
 class HaskellConsoleActionPromoter extends ActionPromoter {
   private val Comparator = new Comparator[AnAction]() {
@@ -20,9 +20,10 @@ class HaskellConsoleActionPromoter extends ActionPromoter {
     private def notEnter(o: AnAction) = !o.isInstanceOf[EnterAction]
   }
 
-  def promote(actions: util.List[AnAction], context: DataContext): util.List[AnAction] = {
+  def promote(actions: util.List[_ <: AnAction], context: DataContext): util.List[AnAction] = {
     val result = new util.ArrayList[AnAction](actions)
     ContainerUtil.sort(result, Comparator)
     result
   }
+
 }

@@ -16,9 +16,6 @@
 
 package intellij.haskell.action
 
-import java.text.ParseException
-import java.util.Properties
-
 import com.intellij.ide.actions.CreateFileFromTemplateDialog.Builder
 import com.intellij.ide.actions.{CreateFileAction, CreateFileFromTemplateAction}
 import com.intellij.ide.fileTemplates.{FileTemplate, FileTemplateManager, FileTemplateUtil}
@@ -33,6 +30,9 @@ import icons.HaskellIcons
 import intellij.haskell.util.HaskellFileUtil
 import intellij.haskell.util.index.HaskellModuleNameIndex
 
+import java.text.ParseException
+import java.util.Properties
+
 object CreateHaskellFileAction {
   private final val HaskellModule = "Haskell Module"
 }
@@ -42,11 +42,11 @@ class CreateHaskellFileAction extends CreateFileFromTemplateAction(CreateHaskell
   override def buildDialog(project: Project, directory: PsiDirectory, builder: Builder): Unit = {
     builder.setTitle(CreateHaskellFileAction.HaskellModule).addKind("Empty module", HaskellIcons.HaskellFileLogo, "Haskell Module").setValidator(new InputValidatorEx {
 
-      def checkInput(inputString: String): Boolean = {
+      override def checkInput(inputString: String): Boolean = {
         true
       }
 
-      def canClose(inputString: String): Boolean = {
+      override def canClose(inputString: String): Boolean = {
         !StringUtil.isEmptyOrSpaces(inputString) && getErrorText(inputString) == null
       }
 
@@ -147,8 +147,8 @@ class CreateHaskellFileAction extends CreateFileFromTemplateAction(CreateHaskell
   }
 
   /**
-    * Returns true if any directory name starts with a lower case letter.
-    */
+   * Returns true if any directory name starts with a lower case letter.
+   */
   private def invalidPathItems(pathItems: List[String]): Boolean = {
     pathItems.exists(s => s.isEmpty || !StringUtil.isCapitalized(s.substring(0, 1)))
   }

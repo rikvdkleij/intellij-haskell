@@ -24,8 +24,8 @@ import icons.HaskellIcons
 import intellij.haskell.HaskellFileType
 import intellij.haskell.psi._
 import intellij.haskell.util.StringUtil
-import javax.swing._
 
+import javax.swing._
 import scala.jdk.CollectionConverters._
 
 object HaskellPsiImplUtil {
@@ -171,12 +171,12 @@ object HaskellPsiImplUtil {
 
   private abstract class HaskellItemPresentation(haskellElement: PsiElement) extends ItemPresentation {
 
-    def getLocationString: String = {
+    override def getLocationString: String = {
       val psiFile = haskellElement.getContainingFile.getOriginalFile
       HaskellPsiUtil.findModuleDeclaration(psiFile).flatMap(_.getModuleName).getOrElse("Unknown module")
     }
 
-    def getIcon(unused: Boolean): Icon = {
+    override def getIcon(unused: Boolean): Icon = {
       findIcon(haskellElement)
     }
 
@@ -203,7 +203,7 @@ object HaskellPsiImplUtil {
 
     new HaskellItemPresentation(namedElement) {
 
-      def getPresentableText: String = {
+      override def getPresentableText: String = {
         namedElement.getName
       }
 
