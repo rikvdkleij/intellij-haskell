@@ -14,44 +14,6 @@ GHC 8.2.2 and later is supported.
 
 Any feedback is welcomed!!
 
-# GitHub Sponsors
-![King Lounge](logo/king.png)  
-### King lounge
-* @Nexmean
-* @kor85
-
-___
-![Duke Lounge](logo/duke.png) 
-### Duke lounge
-* @seanjensengrey
-* @paweln1986
-* @0xd34df00d
-* @ditansu
-
-___
-
-### Loyal supporter
-* @gnoireaux
-___
-
-# Sponsors
-* @develop7
-* @liff
-* @stefanscheidt
-* @aryairani
-* @lachezar
-* Value Object Comm.V
-* Simon Looschen
-* Титоренко Алексей
-* @declension
-* Uri Brecher
-* Ушаков Сергей
-* Sjur Millidahl
-* Bogard Guillaume Romain
-* @enolive
-* Amr Sabry
-* Alex Wied
-
 # Installing the plugin
 You can install this plugin using the [Jetbrains plugin repository](https://plugins.jetbrains.com/idea/plugin/8258-intellij-haskell):
   `Settings`/`Plugins`/`Browse repositories`/IntelliJ-Haskell`
