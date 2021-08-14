@@ -16,10 +16,9 @@
 
 package intellij.haskell.external.execution
 
-import java.util.concurrent.{LinkedBlockingDeque, TimeUnit}
-
 import com.intellij.compiler.impl._
 import com.intellij.compiler.progress.CompilerTask
+import com.intellij.concurrency.JobSchedulerImpl.getCPUCoresCount
 import com.intellij.execution.ExecutionException
 import com.intellij.execution.process._
 import com.intellij.openapi.compiler.{CompileContext, CompileTask, CompilerMessageCategory}
@@ -34,6 +33,7 @@ import intellij.haskell.settings.HaskellSettingsState
 import intellij.haskell.stackyaml.StackYamlComponent
 import intellij.haskell.util.{HaskellFileUtil, HaskellProjectUtil}
 
+import java.util.concurrent.{LinkedBlockingDeque, TimeUnit}
 import scala.jdk.CollectionConverters._
 
 object StackCommandLine {
@@ -79,7 +79,10 @@ object StackCommandLine {
     } else {
       Seq("--system-ghc")
     }
-    val arguments = systemGhcOption ++ Seq("-j2", "--stack-root", toolsStackRootPath.getPath, "--resolver", StackageLtsVersion, "--local-bin-path", toolsBinPath.getPath, "install", toolName)
+
+    val cpuCoresCount = getCPUCoresCount
+    val jobsCount = if (cpuCoresCount > 2) (cpuCoresCount / 2) + 1 else 1
+    val arguments = systemGhcOption ++ Seq(s"-j$jobsCount", "--stack-root", toolsStackRootPath.getPath, "--resolver", StackageLtsVersion, "--local-bin-path", toolsBinPath.getPath, "install", toolName)
 
     val result = runWithProgressIndicator(project, workDir = Some(VfsUtil.getUserHomeDir.getPath), arguments, Some(progressIndicator)).exists(handler => {
       val output = handler.runProcessWithProgressIndicator(progressIndicator)
