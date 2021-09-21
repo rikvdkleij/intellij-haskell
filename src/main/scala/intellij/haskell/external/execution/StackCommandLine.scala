@@ -163,7 +163,7 @@ object StackCommandLine {
       val compileTask = new CompileTask {
 
         def execute(compileContext: CompileContext): Boolean = {
-          val adapter = new MessageViewProcessAdapter(compileContext, compilerTask.getIndicator)
+          val adapter = new MessageViewProcessAdapter(compileContext)
           handler.addProcessListener(adapter)
           handler.startNotify()
           handler.waitFor(30 * 60 + 1000) // Wait max half an hour
@@ -188,10 +188,7 @@ object StackCommandLine {
   }
 
 
-  private class MessageViewProcessAdapter(val compileContext: CompileContext, val progressIndicator: ProgressIndicator) extends ProcessAdapter() {
-
-    private final val WhileBuildingText = "--  While building "
-    private final var whileBuildingTextIsPassed = false
+  private class MessageViewProcessAdapter(val compileContext: CompileContext) extends ProcessAdapter() {
 
     private val ansiEscapeDecoder = new AnsiEscapeDecoder()
     private val previousMessageLines = new LinkedBlockingDeque[String]
@@ -199,16 +196,8 @@ object StackCommandLine {
     private var globalError = false
 
     override def onTextAvailable(event: ProcessEvent, outputType: Key[_]): Unit = {
-      // Workaround to remove the indentation after `-- While building` so the error/warning lines can be properly  parsed.
-      val text = AnsiDecoder.decodeAnsiCommandsToString(if (whileBuildingTextIsPassed) {
-        event.getText.drop(4)
-      } else {
-        event.getText
-      }, outputType, ansiEscapeDecoder)
+      val text = AnsiDecoder.decodeAnsiCommandsToString(event.getText, outputType, ansiEscapeDecoder)
       addToMessageView(text, outputType)
-      if (text.startsWith(WhileBuildingText)) {
-        whileBuildingTextIsPassed = true
-      }
     }
 
     def addLastMessage(): Unit = {
