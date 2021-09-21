@@ -16,9 +16,6 @@
 
 package intellij.haskell.external.repl
 
-import java.io._
-import java.util.concurrent.LinkedBlockingQueue
-
 import com.intellij.openapi.project.Project
 import intellij.haskell.external.execution.StackCommandLine
 import intellij.haskell.external.repl.StackRepl.{BenchmarkType, ExeType, StackReplOutput, TestSuiteType}
@@ -27,6 +24,8 @@ import intellij.haskell.sdk.HaskellSdkType
 import intellij.haskell.util.{HaskellEditorUtil, HaskellFileUtil, HaskellProjectUtil, StringUtil}
 import intellij.haskell.{GlobalInfo, HaskellNotificationGroup}
 
+import java.io._
+import java.util.concurrent.LinkedBlockingQueue
 import scala.collection.mutable.ArrayBuffer
 import scala.concurrent.duration._
 import scala.io._
@@ -107,15 +106,11 @@ abstract class StackRepl(project: Project, projectReplTargets: Option[ProjectRep
         stderrResult.clear()
       }
 
-      def logOutput(errorAsInfo: Boolean = false): Unit = {
+      def logOutput(): Unit = {
         if (stdoutResult.nonEmpty) logInfo("stdout: " + stdoutResult.mkString("\n"))
         if (stderrResult.nonEmpty) {
           val stderrMessage = "stderr: " + stderrResult.mkString("\n")
-          if (errorAsInfo) {
-            logInfo(stderrMessage)
-          } else {
-            logError(stderrMessage)
-          }
+          logError(stderrMessage)
         }
       }
 
@@ -167,9 +162,12 @@ abstract class StackRepl(project: Project, projectReplTargets: Option[ProjectRep
 
             if (deadline.hasTimeLeft()) {
               logInfo(s"Command $command took + ${(timeout - deadline.timeLeft).toMillis} ms")
-              logOutput(errorAsInfo = true)
+              val stdout = convertOutputToOneMessagePerLine(project, removePrompt(stdoutResult.toSeq))
+              val stderr = convertOutputToOneMessagePerLine(project, stderrResult.toSeq)
 
-              Some(StackReplOutput(convertOutputToOneMessagePerLine(project, removePrompt(stdoutResult.toSeq)), convertOutputToOneMessagePerLine(project, stderrResult.toSeq)))
+              logInfo("REPL output:\n" + stdout.mkString("\n") + "\n" + stderr.mkString("\n"))
+
+              Some(StackReplOutput(stdout, stderr))
             } else {
               drainQueues()
               logError(s"No result from REPL within $timeout. Command was: $command")
