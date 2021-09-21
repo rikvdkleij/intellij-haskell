@@ -93,7 +93,9 @@ class HLintInspectionTool extends LocalInspectionTool {
           }
 
           quickFix match {
-            case Some(qf) => problemsHolder.registerProblem(new ProblemDescriptorBase(qf.getStartElement, qf.getEndElement, hlintInfo.hint, Array(qf), problemType, false, null, true, isOnTheFly))
+            case Some(qf) =>
+              val endElement = if (qf.getEndElement == null) qf.getStartElement else qf.getEndElement
+              problemsHolder.registerProblem(new ProblemDescriptorBase(qf.getStartElement, endElement, hlintInfo.hint, Array(qf), problemType, false, null, true, isOnTheFly))
             case None => ManualHLintQuickfix.registerProblem(psiFile, virtualFile, hlintInfo, problemsHolder, problemType, isOnTheFly)
           }
         }
