@@ -3,12 +3,12 @@ lazy val commonSettings = Seq(
   scalaVersion := "2.13.6"
 )
 
-val scalaTest = "org.scalatest" %% "scalatest" % "3.2.0" % Test
+val scalaTest = "org.scalatest" %% "scalatest" % "3.2.9" % Test
 val sprayJson = "io.spray" %% "spray-json" % "1.3.6"
-val snakeYaml = "org.yaml" % "snakeyaml" % "1.26"
-val scaffeine = "com.github.blemale" %% "scaffeine" % "4.0.2"
+val snakeYaml = "org.yaml" % "snakeyaml" % "1.29"
+val scaffeine = "com.github.blemale" %% "scaffeine" % "5.1.1"
 val directories = "io.github.soc" % "directories" % "12"
-val fastparse = "com.lihaoyi" %% "fastparse" % "2.3.1"
+val fastparse = "com.lihaoyi" %% "fastparse" % "2.3.3"
 
 intellijPluginName in ThisBuild := "IntelliJ-Haskell"
 
