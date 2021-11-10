@@ -30,6 +30,7 @@ import intellij.haskell.util._
 
 import scala.concurrent.duration._
 import scala.concurrent.{Future, blocking}
+import scala.util.matching.Regex
 
 class HLintInspectionTool extends LocalInspectionTool {
 
@@ -146,7 +147,11 @@ class HLintInspectionTool extends LocalInspectionTool {
       (replaceStartOffset, replaceEndOffset, startElement, endElement, _) <- findOffsets(document, virtualFile, psiFile, pos, None)
       newText = subts.map({ case (x, pos) => (x, findText(virtualFile, document, pos)) }).collect {
         case (w, Some(toReplace)) => (w, toReplace)
-      }.foldLeft(orig)({ case (x, y) => x.replace(y._1, y._2) })
+      }.foldLeft(orig)({ case (x, y) => {
+        val quotedRegex = Regex.quote(y._1)
+        // replace not all occurrences of y._1, which is a subst key, but only those that are words.
+        x.replaceAll(s"\\b${quotedRegex}\\b", y._2)
+      } })
     } yield new HLintReplaceQuickfix(document, virtualFile, startElement, endElement, replaceStartOffset, replaceEndOffset, newText, hint, note, deletes)
   }
 
