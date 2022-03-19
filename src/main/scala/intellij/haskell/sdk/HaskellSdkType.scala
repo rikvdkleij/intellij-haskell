@@ -39,6 +39,8 @@ class HaskellSdkType extends SdkType("Haskell Tool Stack SDK") {
       "/usr/local/bin/stack"
     else if (SystemInfo.isMac)
       "/usr/local/bin/stack"
+    else if (SystemInfo.isWindows)
+      s"${sys.env.get("APPDATA")}\\local\\bin\\stack.exe"
     else null
   }
 
