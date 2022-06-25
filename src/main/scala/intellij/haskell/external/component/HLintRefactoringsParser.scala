@@ -33,12 +33,14 @@ object HLintRefactoringsParser {
     case Failure(label, i, _) => Left(s"Could not parse HLint output | HLintOutput: $hlintOutput | Label: $label | Index: $i")
   }
 
+  @annotation.nowarn
   private def refactoringParser[_: P]: P[Refactoring] = P("[" ~ (deleteParser | replaceParser | modifyCommentParser | insertCommentParser | removeAsKeywordParser) ~ "]")
 
   private[component] def parseSubts(hlintOutput: String): Parsed[Subts] = parse(hlintOutput, subtsParser(_), verboseFailures = true)
 
   private[component] def parsePos(hlintOutput: String): Parsed[SrcSpan] = parse(hlintOutput, posParser(_), verboseFailures = true)
 
+  @annotation.nowarn
   private def deleteParser[_: P]: P[Delete] = P("Delete" ~ keyRtypePosParser(Pass)).map({ case (x, y, _) => Delete(x, y) })
 
   private def replaceParser[_: P]: P[Replace] = P("Replace" ~ keyRtypePosParser(commaParser ~ "subts =" ~ subtsParser ~ commaParser ~ keyValueParser("orig", string)) ~ (commaParser ~ deleteParser).rep)
@@ -83,11 +85,13 @@ object HLintRefactoringsParser {
 
   private def string[_: P] = P("\"" ~/ (strChars | escape).rep.! ~ "\"")
 
+  @annotation.nowarn
   private def digits[_: P] = P(CharsWhileIn("0-9"))
 
+  @annotation.nowarn
   private def keyValueParser[_: P, A](keyName: String, valueParser: => P[A]) = s"$keyName" ~ "=" ~ valueParser
 
-  private def keyDigitsParser[_: P](keyName: String) = keyValueParser[P[String], String](keyName, digits.!).map(_.toInt)
+  private def keyDigitsParser[p: P](keyName: String) = keyValueParser[p, String](keyName, digits.!).map(_.toInt)
 
   private def keyRtypeParser[_: P] = keyValueParser("rtype", rtypeParser)
 

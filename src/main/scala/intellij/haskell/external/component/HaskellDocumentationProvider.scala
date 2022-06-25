@@ -31,12 +31,11 @@ class HaskellDocumentationProvider extends AbstractDocumentationProvider {
   override def getQuickNavigateInfo(element: PsiElement, originalElement: PsiElement): String = {
     val project = Option(element).map(_.getProject)
     if (project.exists(p => !StackProjectManager.isInitializing(p))) {
-      (Option(element), Option(originalElement)) match {
-        case (Some(e), Some(oe)) =>
-          val psiFile = e.getContainingFile.getOriginalFile
+      (Option(element.getContainingFile), Option(originalElement)) match {
+        case (Some(file), Some(oe)) =>
+          val psiFile = file.getOriginalFile
           val moduleName = HaskellPsiUtil.findModuleName(psiFile)
-          val originalPsiFile = e.getContainingFile.getOriginalFile
-          val isSourceFile = HaskellProjectUtil.isSourceFile(originalPsiFile)
+          val isSourceFile = HaskellProjectUtil.isSourceFile(psiFile)
           val typeSignature = if (isSourceFile) {
             TypeInfoComponent.findTypeInfoForElement(oe).toOption.map(_.typeSignature).map(StringUtil.escapeString)
           } else {
