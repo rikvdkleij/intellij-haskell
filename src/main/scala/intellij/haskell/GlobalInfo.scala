@@ -14,7 +14,7 @@ object GlobalInfo {
 
   final val LibrarySourcedDirName = "lib"
   final val StackWorkDirName = ".stack-work"
-  final val StackageLtsVersion = "lts-18"
+  final val StackageLtsVersion = "lts-19"
   private final val ToolsBinDirName = "bin"
 
   final lazy val DefaultCachePath = {
