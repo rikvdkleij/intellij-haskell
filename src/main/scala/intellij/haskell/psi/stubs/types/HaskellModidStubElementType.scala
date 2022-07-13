@@ -27,7 +27,7 @@ class HaskellModidStubElementType(debugName: String) extends HaskellNamedStubEle
     new HaskellModidImpl(stub, this)
   }
 
-  def createStub(psi: HaskellModid, parentStub: StubElement[_ <: PsiElement]): HaskellModidStub = {
+  def createStub(psi: HaskellModid, parentStub: StubElement[_]): HaskellModidStub = {
     new HaskellModidStub(parentStub, this, psi.getName)
   }
 
